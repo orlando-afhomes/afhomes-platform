@@ -2,7 +2,7 @@
 
 ## Stack (unchanging)
 
-npm + next (no task runner). `src/app` (App Router) | `src/panels` presentation | `src/shared` | docs. Business rules in `docs/business-rules/` (01–13), dev docs in `docs/development/` (9 files). No DB yet; local MongoDB planned Phase 2. No secrets committed.
+npm + next (no task runner). `src/app` (App Router) | `src/panels` presentation | `src/shared` | `src/data` mock foundation | docs. Business rules in `docs/business-rules/` (01–13), dev docs in `docs/development/` (9 files). No DB yet; local MongoDB planned Phase 2. No secrets committed.
 
 ## Standing user preferences (apply without asking)
 
@@ -14,38 +14,58 @@ npm + next (no task runner). `src/app` (App Router) | `src/panels` presentation 
 
 ## Repo state (verified 2026-10-25)
 
-- Branch `develop` @ `1ad7b0b` "initial setup".
-- Working tree: 3 tracked modified (docs/business-rules/01, docs/development/architecture, docs/project) + ~31 untracked (docs 02–13, workflow/, Next.js scaffold src/, package.json, etc.). All uncommitted user work; preserve.
-- Pre-existing failures (NOT from this session): none reported.
-- Gates this session: `npm run build` passed (routes `/`, `/admin`, `/login`, `/_not-found`); `npm run lint` passed (0 errors); TypeScript passed during build.
+- Branch `develop` @ `df3b24d` "installation: npm package".
+- Working tree contains Phase 1B-A, R1–R3 remediation, Phase 1B-B01, and B01 production UI cleanup changes (tracked modifications + untracked implementation files). All uncommitted user work; preserve.
+- Pre-existing failures: none reported.
+- Gates this session: `npm test` passed (26 tests); `npm run lint` passed (0 errors); TypeScript passed; `npm run build` passed (routes `/`, `/admin`, `/login`; `/admin/design` removed).
 
 ## Last session's work (UNCOMMITTED)
 
-- Phase 1A frontend foundation implemented: Next.js 16.4.3 App Router + React 19.3 + TS 5 + Tailwind 4 + shadcn/ui + Zod + TanStack Query.
-- Panel shells: public (header/footer/home) at `/`, admin (sidebar/header/dashboard) at `/admin`, login placeholder at `/login`.
-- TanStack Query provider wired in root layout; metadata set to AFhomes.
-- Docs finalized: project.md, architecture.md, frontend.md, database.md, backend.md, security.md, testing.md, implementation.md, deployment.md, README.md, business-rules 01–13 (with 01/architecture/project tracked edits).
-- workflow/SESSION.md renamed to workflow/session.md; references updated.
-- No backend, DB, auth, or app modules beyond scaffold.
+- Phase 1A frontend foundation implemented and accepted.
+- Phase 1B-A mock foundation implemented and remediated through R1–R3:
+  - Centralized browser-scoped in-memory mock store.
+  - Deterministic synthetic seeds with genealogy relationships.
+  - Typed member/customer/product repository contracts.
+  - Genealogy-aware access filtering.
+  - Development-only identity switching.
+  - TanStack Query identity isolation.
+  - Draft-only customer mutations.
+  - Deterministic async delay/error/cancellation support.
+  - 26 passing Vitest tests.
+- Phase 1B-B01 design system implemented and production-cleaned:
+  - Shared UI primitives under `src/components/ui/`.
+  - Semantic tokens and reusable utility classes in `src/app/globals.css`.
+  - Development-only design preview removed.
+  - Admin dashboard cleaned of mock diagnostics and preview link.
+  - Production UI standards documented in `docs/development/frontend.md` and `AGENTS.md`.
+- `AGENTS.md` created and refined as permanent AI-agent governance.
+- No backend, DB, auth, or app modules beyond frontend foundation.
 
 ## Test gotchas
 
 - Next.js 16 prerender rejects `new Date()` in render (fixed footer to static year).
-- Lint rule `@next/next/no-html-link-for-pages` requires `next/link` for internal nav (fixed public header).
-- `cp -r` of node_modules failed due to symlinks; used `npm install` instead; node_modules regenerated.
-- Build produces static routes; no DB required.
+- Lint rule `@next/next/no-html-link-for-pages` requires `next/link` for internal nav (fixed admin sidebar).
+- `next dev` generates an `AGENTS.md` append block; remove it after dev-server use.
+- Dev server can trigger pnpm/npm artifacts; verify `git status` for unexpected files.
+- Build cache may reference removed routes; delete `.next` and rebuild if TypeScript validator complains.
+- Admin sidebar previously used native anchors; now uses `next/link` for client-side navigation.
+- Browser refresh resets mock data; client-side navigation preserves it.
 
 ## Open threads
 
-- Phase 1A complete; awaiting authorization for Phase 1B (mock store, synthetic data, role switching, feature screens) or Phase 2.
-- Unresolved: finance auto-activation conflict in architecture.md §25 vs business rules 05/06/07 (High, blocks Phase 4I only).
-- Other unresolved: Gold/Silver contract prices, Non-Standard commercial rules, Move scheme terms, RA numbering scope, accreditation expiry rules, Better Auth/MongoDB compat, Atlas tier transaction support, audit retention, production domain/sizing.
-- workflow/ and all docs untracked; user must stage/commit when ready (do not auto-commit).
+- Phase 1B-B01 complete and cleaned; awaiting owner visual review and authorization for Phase 1B-B02.
+- Nonblocking: admin sidebar links to unimplemented module routes.
+- Nonblocking: HR/Finance module permissions are represented only as safe denials.
+- Nonblocking: advanced own/team/all scope remains a development simulation.
+- Unresolved business decisions remain: Gold/Silver contract prices, Non-Standard commercial rules, Move scheme terms, RA numbering scope, accreditation expiry rules, Better Auth/MongoDB compat, Atlas tier transaction support, audit retention, production domain/sizing.
+- `workflow/` and all docs may be untracked or modified; user must stage/commit when ready (do not auto-commit).
 
 ## Verify (from root)
 
 ```sh
 npm run lint
+npm test
+npx tsc --noEmit
 npm run build
 git status --short
 git diff --check

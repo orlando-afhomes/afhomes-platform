@@ -2,169 +2,142 @@
 
 > Authoritative technical architecture for AI coding agents and contributors.
 > Read `docs/project.md` first for product scope and approved business decisions.
+> Business rules live under `docs/business-rules/` (01–13).
 > This document defines **where code belongs, how modules interact, and which boundaries must not be crossed**.
 > It is a target architecture, not a requirement to create every directory immediately.
 
 ---
 
-## 1. Architecture Overview
+## 1. Purpose and Authority
 
-AFHomes Platform is a **panel-based, feature-based modular monolith** delivered as a single Next.js application in a single repository.
+This document is the authoritative technical architecture for the AFHomes Platform. It reconciles the earlier 33-section architecture with the latest approved business rules and infrastructure decisions. Business rules (01–13) are authoritative for business behavior; this document is authoritative for technical design. Where a business rule conflicts with an older architecture statement, the business rule wins and the conflict is reported.
 
-- One Next.js application (App Router)
-- One repository
-- Three logically independent presentation panels: Admin, Public, future Customer
-- Centralized domain modules shared across panels
-- Typed repository contracts with replaceable mock/API adapters
-- Centralized authorization policies
-- Server-only database infrastructure
-- Versioned REST API under `/api/v1`
+---
 
-The architecture optimizes for the seven-day MVP while preserving clear boundaries for future Customer Portal, mobile clients, and backend integration.
+## 2. Approved Technical Decisions
 
-### 1.1 Core Decisions
-
-| Decision | Value |
+| Category | Final target |
 |---|---|
-| Repository strategy | Single repository |
-| Application strategy | Single Next.js application |
-| Router | Next.js App Router |
-| Frontend | React + TypeScript |
-| Styling | Tailwind CSS + CSS Modules where needed |
+| Repository | Single `afhomes-platform` repository |
+| Application | Single Next.js application (App Router) |
+| Programming language | TypeScript |
+| Frontend | React |
+| Styling | Tailwind CSS + scoped CSS Modules |
 | UI foundation | shadcn/ui |
 | Validation | Zod |
 | Client async state | TanStack Query |
-| Initial data source | Centralized in-memory mock store |
-| Mock persistence | In-memory only; reset on full browser refresh |
-| API strategy | Versioned REST `/api/v1` |
-| Database | MongoDB |
+| Development approach | Frontend-first with centralized mock data |
+| Mock persistence | Browser-scoped, in-memory only; resets on full refresh |
+| REST API | `/api/v1` |
+| Backend | Next.js server runtime, route handlers and domain services |
+| Database | MongoDB Atlas Cloud |
 | ODM | Mongoose |
-| Authentication | Better Auth (subject to compatibility verification) |
-| Authorization | Centralized RBAC and policy evaluation |
-| Development method | Frontend-first, mock-data-driven |
-| Testing (initial) | Manual UI testing; automated before production |
-| MVP target | Seven calendar days |
-| Initial environment | Local development |
-| Hosting | Not selected |
-| Future mobile client | React Native + Expo (future direction; same repository; not implemented in MVP) |
-
-### 1.2 What This Is Not
-
-- Not microservices
-- Not separate frontend/backend applications
-- Not a monorepo workspace framework
-- Not a full public marketing website (deferred)
-- Not a Customer Portal implementation (deferred, documented only)
-- Not a mobile application during the MVP (future, documented only)
+| Authentication direction | Better Auth, subject to compatibility verification |
+| Authorization | Centralized RBAC and record-level policies |
+| Application hosting | DigitalOcean Droplet |
+| Container orchestration | Docker Compose |
+| Reverse proxy | HTTPS-enabled production reverse proxy |
+| Database hosting | MongoDB Atlas (not the Droplet) |
+| Testing | Manual-first frontend development; automated before production |
+| Customer Portal | Future phase |
+| Mobile application | Future React Native + Expo client |
+| Redemption | Preserved, hidden and disabled |
+| Services | Preserved, hidden and disabled |
 
 ---
 
-## 2. Architectural Principles
+## 3. Current Versus Target Architecture
 
-1. **Separation of concerns** — routing, presentation, domain, data access, and infrastructure are distinct.
-2. **Clear module boundaries** — each module owns its domain and exposes a controlled interface.
-3. **Centralized business rules** — domain invariants live in `src/modules`, not in UI components.
-4. **Reusable UI components** — panel-scoped first; cross-panel sharing is intentional.
-5. **Shared validation contracts** — Zod schemas reused across client and server where practical.
-6. **Repository-based data access** — components depend on contracts, not storage.
-7. **Secure-by-default authorization** — server-side enforcement; UI visibility is not authorization.
-8. **Consistent error handling** — uniform error shapes and status codes.
-9. **Traceable state changes** — audit events for sensitive operations.
-10. **Minimal unnecessary complexity** — no abstraction without a concrete need.
-11. **Maintainability and extensibility** — modular monolith with stable seams.
-12. **API readiness** — REST contracts support future mobile and customer clients.
+- **Verified current implementation:** documentation-only repository; no application code, database, or deployment.
+- **Approved target architecture:** as above.
+- **Future implementation work:** all application development requires separate explicit authorization.
+
+Do not present unimplemented components as deployed.
 
 ---
 
-## 3. System Context
+## 4. Architectural Principles
 
-### 3.1 Actors
-
-- **Public Visitor** — unauthenticated; public accreditation search and login entry.
-- **Authenticated Staff** — role-based access to Admin Panel.
-- **Finance** — verification and activation approval.
-- **Customer** — future Customer Portal (deferred).
-- **Mobile Client (future)** — React Native application reusing the shared REST API.
-- **External Systems** — MongoDB, Better Auth (future), hosting (future).
-
-### 3.2 Trust Boundaries
-
-- Browser is untrusted.
-- All authorization, validation, and persistence are server-side in production.
-- Mock services are development-only and never authoritative in production.
-- Database credentials and privileged operations never reach Client Components.
+1. Separation of concerns.
+2. Clear module boundaries.
+3. Centralized business rules.
+4. Reusable UI components.
+5. Shared validation contracts.
+6. Repository-based data access.
+7. Secure-by-default authorization.
+8. Consistent error handling.
+9. Traceable state changes.
+10. Minimal unnecessary complexity.
+11. Maintainability and extensibility.
+12. API readiness for future clients.
+13. Modular monolith; no microservices without approval.
 
 ---
 
-## 4. High-Level Architecture Diagram
+## 5. System Actors and Trust Boundaries
+
+Actors: Public Visitor, Customer, Super Administrator, Administrator, HR/authorized staff, Finance, SVD, SSM, SM, OST, other approved internal roles, future mobile client, authorized external integrations.
+
+Trust boundaries:
+
+1. Browser clients are untrusted.
+2. Authentication verified server-side.
+3. Authorization enforced server-side.
+4. Client input always validated.
+5. Business state transitions authoritative on server.
+6. MongoDB credentials server-only.
+7. Application secrets never reach Client Components.
+8. Mock identities are never production authentication.
+9. Public verification must not expose private records.
+10. Financial and membership operations require authoritative state validation.
+
+---
+
+## 6. High-Level Architecture Diagram
 
 ```mermaid
 flowchart TB
-    subgraph Browser["Browser (Client)"]
-        APP["Next.js App Router (src/app)"]
-        PUB["Public Panel"]
-        ADM["Admin Panel"]
-        CUS["Customer Panel (future)"]
-        MOB["Mobile App (future)"]
+    subgraph Clients["Client Applications"]
+        WEB["Browser — Next.js Web UI"]
+        MOBILE["React Native / Expo — Future"]
     end
 
-    subgraph Shared["Shared Domain & Application (src/modules)"]
-        DOM["Domain Rules & Types"]
-        APPSVC["Application Services"]
-        CONTRACTS["Repository Contracts"]
+    subgraph Droplet["DigitalOcean Droplet"]
+        PROXY["HTTPS Reverse Proxy"]
+        NEXT["Next.js Application"]
+
+        subgraph Application["Next.js Server"]
+            API["REST Route Handlers /api/v1"]
+            AUTH["Authentication and Sessions"]
+            POLICY["RBAC and Record-Level Policies"]
+            SERVICES["Domain Application Services"]
+            REPO["Mongoose Repositories"]
+            AUDIT["Audit Integration"]
+        end
     end
 
-    subgraph Data["Data Layer (src/data)"]
-        MOCKSTORE["Centralized In-Memory Mock Store"]
-        MOCKADAPTER["Mock Adapters"]
-        APIADAPTER["REST API Adapters (future)"]
+    subgraph Atlas["MongoDB Atlas Cloud"]
+        DB[("AFHomes Application Database")]
     end
 
-    subgraph Server["Server (src/server)"]
-        ROUTES["API Route Handlers /api/v1"]
-        AUTH["Better Auth (future)"]
-        POLICY["Centralized RBAC / Policy Evaluator"]
-        REPOS["Mongoose Repositories"]
-        DB[(MongoDB)]
-        AUDIT["Audit Persistence"]
-    end
-
-    APP --> PUB
-    APP --> ADM
-    APP --> CUS
-
-    PUB --> Shared
-    ADM --> Shared
-    CUS -.future.-> Shared
-
-    Shared --> CONTRACTS
-    CONTRACTS --> MOCKADAPTER
-    CONTRACTS --> APIADAPTER
-    MOB -.future.-> APIADAPTER
-
-    MOCKADAPTER --> MOCKSTORE
-
-    APIADAPTER --> ROUTES
-    ROUTES --> AUTH
-    ROUTES --> POLICY
-    ROUTES --> APPSVC
-    APPSVC --> REPOS
-    REPOS --> DB
-    APPSVC --> AUDIT
+    WEB --> PROXY
+    MOBILE -. "Future HTTPS Client" .-> PROXY
+    PROXY --> NEXT
+    NEXT --> API
+    API --> AUTH
+    API --> POLICY
+    API --> SERVICES
+    SERVICES --> REPO
+    SERVICES --> AUDIT
+    REPO --> DB
     AUDIT --> DB
-
-    Browser -. "no direct DB access" .-> DB
 ```
 
-**Mock development path:** Panel → shared modules → repository contract → mock adapter → in-memory mock store.
-
-**Real backend path:** Panel → shared modules → repository contract → API adapter → `/api/v1` route handler → application service → policy check → Mongoose repository → MongoDB.
-
-The browser never communicates directly with MongoDB.
+Supporting diagrams (modular domain dependencies, frontend-to-backend request lifecycle, financial transaction consistency, production network topology, optional future mobile integration) follow the same boundaries.
 
 ---
 
-## 5. Layer Responsibilities
+## 7. Layer Responsibilities
 
 | # | Layer | Location | Responsibility | May Depend On |
 |---|---|---|---|---|
@@ -176,728 +149,298 @@ The browser never communicates directly with MongoDB.
 | 6 | Repository contracts | `src/modules/*/contracts/` | Interfaces, typed operation boundaries | Domain types |
 | 7 | Data adapters | `src/data/adapters/*` | Mock/API implementations of contracts | Contracts, mock store / HTTP |
 | 8 | Backend infrastructure | `src/server/*` | DB connection, auth, repositories, security | Mongoose, Better Auth |
-| 9 | Database and integrations | MongoDB | Persistence | — |
+| 9 | Database and integrations | MongoDB Atlas | Persistence | — |
 
-### 5.1 Dependency Direction
+### 7.1 Dependency Direction
 
-Dependencies point inward: presentation depends on application/domain; infrastructure depends on contracts. Domain depends on nothing platform-specific.
-
-```mermaid
-flowchart LR
-    APP["src/app (routes)"] --> PANELS["src/panels"]
-    PANELS --> FEATURES["panel features"]
-    FEATURES --> SHAREDUI["src/shared/ui"]
-    FEATURES --> MODULES["src/modules"]
-    MODULES --> DOMAIN["domain"]
-    MODULES --> CONTRACTS["contracts"]
-    DATA["src/data/adapters"] --> CONTRACTS
-    SERVER["src/server"] --> CONTRACTS
-    SERVER --> DB[(MongoDB)]
-```
-
-Prohibited: `modules` importing panel UI; `shared` importing feature code; client components importing server-only modules; API handlers importing presentation components.
+Dependencies point inward. Prohibited: `modules` importing panel UI; `shared` importing feature code; client components importing server-only modules; API handlers importing presentation components.
 
 ---
 
-## 6. Detailed Project Folder Structure
+## 8. Target Repository Structure
 
-Approved baseline (target structure; not every directory must exist immediately):
-
-```text
-afhomes-platform/
-├── docs/
-│   ├── project.md
-│   ├── business-rules/
-│   └── development/
-│       └── architecture.md
-├── public/
-│   └── assets/{logos,images,icons,fonts}
-├── src/
-│   ├── app/
-│   │   ├── (public)/
-│   │   ├── (auth)/
-│   │   ├── (admin)/admin/...
-│   │   ├── api/{auth,v1}
-│   │   ├── layout.tsx
-│   │   └── globals.css
-│   ├── panels/
-│   │   ├── admin/{layouts,components,features,hooks,providers,config,styles}
-│   │   ├── public/{layouts,components,sections,pages,features,hooks,providers,config,styles}
-│   │   └── customer/{...}   (future, documented only)
-│   ├── modules/
-│   │   └── {auth,roles,customers,vip-products,vip-cards,finance,sale-team,genealogy,accreditation,audit}
-│   ├── data/
-│   │   ├── mock/{seed,store.ts,demo-accounts.ts}
-│   │   └── adapters/{mock,api}
-│   ├── server/
-│   │   └── {db,auth,repositories,security}
-│   ├── shared/{ui,hooks,types,utils,constants}
-│   └── config/environment.ts
-├── tests/{unit,integration,e2e}
-├── scripts/
-├── AGENTS.md
-├── README.md
-├── package.json
-├── tsconfig.json
-└── next.config.ts
-```
-
-### 6.1 Folder Ownership Rules
-
-- `src/app/` owns routing and thin composition only.
-- `src/panels/` owns panel-specific presentation.
-- `src/modules/` owns shared domain and application logic.
-- `src/data/` owns mock data and frontend-facing data adapters.
-- `src/server/` owns server-only infrastructure.
-- `src/shared/` owns genuinely cross-panel utilities and primitives.
-- `src/config/` owns cross-application configuration.
-- `tests/` holds test infrastructure as introduced.
-
-Do not create empty directories merely to match this diagram. Each directory must have a clear ownership purpose. If existing code uses a different structure, document the approved target and identify differences without refactoring.
-
-### 6.2 Future Repository Evolution (documented only)
-
-The future mobile application and shared packages layout is documented in Section 31 (Future Mobile Application and Repository Evolution).
-
-Do not create `mobile/`, `packages/`, workspace configuration, or mobile application files during the MVP.
+(See existing target layout.) Target organizational structure, not an instruction to immediately create every directory. Modules must include organization, staff, roles, customers, vip-products, vip-contracts, vip-cards, sales, finance, commissions, sale-team, genealogy, accreditation, memberships, stay-points, reporting, redemption, services, audit.
 
 ---
 
-## 7. Panel Organization
+## 9. Panel Architecture
 
-Three logically independent presentation panels. Each owns its layouts, components, features, hooks, providers, config, styling, and design tokens.
-
-### 7.1 Admin Panel — MVP
-
-Location: `src/panels/admin/`
-
-Serves authenticated operational users (Super Admin, Admin, HR, Finance, VD, SSM, SM, IST, OST, Staff). Roles share the Admin Panel shell with different navigation, permissions, and record visibility.
-
-Responsibilities: Dashboard, Roles and permissions, Customers, VIP products, Issued VIP cards, Finance verification and activation, IST/OST management, Sales genealogy, Customer search, Audit logs.
-
-### 7.2 Public Panel — Limited MVP
-
-Location: `src/panels/public/`
-
-Own layouts, navbar/footer, reusable UI, sections, pages, features, hooks, config, styling, tokens. MVP scope: minimal public interface, public IST/OST accreditation verification, login navigation. Future sections (Hero, About, Benefits, Contact) may be defined but are not approved for implementation as a full marketing site during MVP.
-
-### 7.3 Customer Panel — Future Phase (documented only)
-
-Location: `src/panels/customer/`
-
-**Approved decision:** Reserve as a future third panel following the same organizational conventions. Future routes `/customer/*`. Reuse shared domain services for customer identity, VIP cards, authentication. Enforce customer-specific authorization preventing access to other customers' records.
-
-**Critical restriction:** Document structure only. Do not implement or scaffold the Customer Portal during the MVP.
+Three logically independent presentation panels: Admin (MVP), Public (limited MVP), Customer (future, documented only). Each owns layouts, components, features, hooks, providers, config, styling, design tokens. Customer Panel documented only; no scaffolding during MVP.
 
 ---
 
-## 8. Admin Panel Architecture
+## 10. Frontend Technology and Design System
 
-- Route group `(admin)` with layout `src/app/(admin)/admin/layout.tsx` composing `src/panels/admin/layouts/`.
-- Permission-based navigation driven by centralized policy evaluation against the mock/real identity.
-- Data-intensive UI: tables, filters, forms, dialogs, pagination.
-- Features under `src/panels/admin/features/*` (dashboard, roles, customers, vip-products, vip-cards, finance, sale-team, genealogy, customer-search, audit-logs).
-- Admin-specific design tokens (`.admin-theme`).
+Next.js App Router, React, TypeScript, Tailwind CSS, shadcn/ui, scoped CSS Modules, Zod, TanStack Query. Panel-scoped themes (`.admin-theme`, `.public-theme`, `.customer-theme`). Shared primitives under `src/shared/ui/` only when intentional. Server Components by default; `"use client"` only where needed.
 
 ---
 
-## 9. Public Panel Architecture
+## 11. Routing and Code Splitting
 
-- Route group `(public)` with its own layout, navbar, footer.
-- Minimal scope: branding, accreditation search, login entry.
-- Accreditation search feature under `src/panels/public/features/accreditation-search/`.
-- Public design tokens (`.public-theme`).
-- No name-based discovery; exact AA number only.
+`src/app/` owns routing and thin composition only. Route groups organize layouts. Route-level code splitting; lazy loading for heavy features. Import rules per layer table.
 
 ---
 
-## 10. Future Customer Panel Architecture
+## 12. Mock Data and Repository Adapters
 
-Documented only. Same conventions as Admin/Public. Customer-specific authorization. Deferred implementation. Reuse shared domain services. No scaffolding during MVP.
-
----
-
-## 11. Feature Folder Conventions
-
-A panel feature separates page composition, UI components, hooks, and styles:
-
-```text
-src/panels/admin/features/customers/
-├── pages/
-│   ├── CustomersPage.tsx
-│   └── CustomerDetailsPage.tsx
-├── components/
-│   ├── CustomerTable.tsx
-│   ├── CustomerForm.tsx
-│   ├── CustomerFilters.tsx
-│   └── CustomerDetailsCard.tsx
-├── hooks/
-│   ├── useCustomers.ts
-│   └── useCustomerForm.ts
-├── styles/
-│   ├── CustomersPage.module.css
-│   └── CustomerForm.module.css
-└── index.ts
-```
-
-This is a representative example, not a mandatory file list. Avoid unnecessary folders for trivial features.
-
-- **Pages** compose feature components and coordinate page-level presentation.
-- **Components** render UI and collect interactions.
-- **Hooks** manage UI state, form behavior, and TanStack Query interactions.
-- **Styles** hold feature-specific CSS Modules where Tailwind is insufficient.
-- **Index files** expose a controlled public API when useful. Avoid large barrel files that accidentally import server-only code or unrelated features.
+Centralized in-memory mock store; resets on full browser refresh. No localStorage/IndexedDB for mock business data. Mock identity switching (dev only). Repository contracts stable; mock flow vs production flow as documented. Changing demo identity invalidates permission-sensitive caches.
 
 ---
 
-## 12. Shared Domain Module Conventions
+## 13. Shared Domain Modules
 
-Business logic must not be duplicated between panels. Each module under `src/modules/<name>/`:
-
-```text
-src/modules/customers/
-├── domain/
-│   ├── customer.types.ts
-│   └── customer.rules.ts
-├── application/
-│   └── customer.service.ts
-├── contracts/
-│   └── customer.repository.ts
-├── schemas/
-│   └── customer.schema.ts
-└── index.ts
-```
-
-- **Domain layer:** types, business invariants, pure business rules, state-transition constraints. Must not depend on React, Next.js route handlers, browser storage, or database drivers.
-- **Application layer:** use cases, workflow orchestration, repository interactions, policy enforcement integration, business operation results. Depends on interfaces, not database implementations.
-- **Contracts layer:** repository interfaces, typed operation contracts, shared service boundaries. Must support replacing mock with real backend implementations.
-- **Schema layer:** Zod input validation, data contracts, consistent validation error structures. Reused where appropriate; backend validation never relies exclusively on browser validation.
-
-Modules: auth, roles, customers, vip-products, vip-cards, finance, sale-team, genealogy, accreditation, audit.
+Business logic must not be duplicated. Each module: domain, application, contracts, schemas. Domain depends on nothing platform-specific. Application depends on interfaces. Contracts support replacing mock with real backend.
 
 ---
 
-## 13. UI Design System and Styling Rules
+## 14. Backend Services
 
-### 13.1 Independent Panel Design Systems
-
-Each panel has its own design identity:
-
-- **Admin:** data-intensive workflows, tables, forms, dashboards, filters, dialogs, operational navigation.
-- **Public:** branding, content sections, responsive landing pages, public search, accessible interactions, future animation/storytelling.
-- **Customer (future):** membership info, profile, VIP card presentation, self-service, future benefits/transactions.
-
-### 13.2 Panel-Scoped Styling
-
-Each panel defines its own colors, typography, spacing, radii, shadows, component variants, responsive conventions, animation tokens via scoped CSS variables: `.admin-theme`, `.public-theme`, `.customer-theme`. Avoid global overrides causing cross-panel conflicts. `src/app/globals.css` contains only truly global styles, Tailwind setup, and minimal resets.
-
-### 13.3 Reusable UI Components
-
-Each panel may own presentation-specific UI components (Button, Card, Table, Input, Select, Dialog, Badge, Tabs, Pagination, Dropdown, Skeleton, Tooltip). Shared primitives under `src/shared/ui/` only when cross-panel sharing is intentional. Do not force identical visual components where design systems differ.
-
-### 13.4 shadcn/ui Conventions
-
-shadcn/ui is the preferred component foundation. Generated primitives are owned, wrapped, styled, and reused with discipline. Avoid uncontrolled duplication of the same base primitive across panels. Recommended: shared minimally styled primitives where appropriate; panel-specific wrappers/variants for distinct designs; feature-specific components for domain-specific UI.
-
-### 13.5 Styling Conventions
-
-Use Tailwind for standard layout/utility styling; CSS variables for design tokens; CSS Modules for complex feature-specific styles; component variants for repeated patterns. Avoid large global CSS, unscoped selectors, inline style duplication, random hardcoded colors, competing token definitions, unnecessary CSS files for trivial components.
+Backend runs within the single Next.js application. Route handlers thin: parse, authenticate, validate, authorize, delegate, return standardized result. Domain services own business logic. Repository interfaces abstract persistence. Business ownership per module; no duplicate logic.
 
 ---
 
-## 14. Routing and Code-Splitting Rules
+## 15. REST API Architecture
 
-### 14.1 App Router
-
-`src/app/` contains route definitions and composition only. Feature implementations live in panel feature directories. Example: `src/app/(admin)/admin/customers/page.tsx` composes `src/panels/admin/features/customers/pages/CustomersPage.tsx`. Route groups organize layouts without changing URL paths. Document intended public, login, admin URL conventions; avoid overlapping routes.
-
-### 14.2 Server and Client Components
-
-Use Server Components by default where appropriate. Use `"use client"` only for components requiring browser-side interactivity, hooks, or client state. Do not mark entire layouts or feature trees as Client Components unnecessarily.
-
-### 14.3 Code Splitting
-
-Require route-level code splitting; lazy loading for heavy interactive features; dynamic imports where justified; panel isolation; avoidance of broad cross-panel imports; server-only module boundaries; controlled dependency direction. Potential lazy-loaded features: genealogy visualization, advanced data tables, large interactive forms, future heavy charts. No code-splitting abstractions without a measurable reason.
-
-### 14.4 Import Rules
-
-- Panel features may import shared domain contracts and client-safe services.
-- Shared domain modules must not import panel UI.
-- Public Panel must not import Admin-only components.
-- Client Components must not import server-only modules.
-- API handlers must not depend on presentation components.
-- Cross-feature access should use public module interfaces where practical.
+Prefix `/api/v1`. Conventions: resource-oriented endpoints, HTTP methods, Zod validation, consistent envelopes, auth/authz on protected routes, pagination/filtering/sorting/search, idempotency where required, versioning. Public API restrictions: exact AA number only, active results only, no name-based discovery, IST omits "Valid Until", OST may show it, no private info.
 
 ---
 
-## 15. Dependency and Import Boundaries
+## 16. Authentication
 
-| From | May Import | Must Not Import |
-|---|---|---|
-| `src/app/*` | panels, shared | modules internals, server |
-| `src/panels/*` | shared, modules (contracts/services), data adapters | other panels' internals, server |
-| `src/modules/*` | own domain/contracts, shared types/utils | panels, app, server, data |
-| `src/data/*` | modules contracts, mock store | panels, app, server |
-| `src/server/*` | modules contracts, mongoose, auth libs | panels, app, client-only |
-| `src/shared/*` | nothing domain-specific | modules, panels, server |
-
-Avoid circular dependencies. Keep Next.js routes thin.
+Better Auth intended direction, subject to compatibility verification with Next.js, MongoDB adapter, runtime. Server-controlled. Frontend may use simulated sessions only during mock development. Cover sign-in/out, sessions, credential protection, account status, approval, suspension/deactivation, login protections, secure cookies, CSRF, session expiration, audit events.
 
 ---
 
-## 16. Centralized Mock Data Architecture
+## 17. RBAC and Record-Level Authorization
 
-**Approved decision:** One centralized in-memory mock data store during frontend development. All mock records derived from consistent synthetic seed data.
+Centralized authorization policies. Scopes `own`, `team`, `all`. Distinguish authentication, role assignment, permission evaluation, record-level authorization, UI visibility. Hiding UI is not authorization. Protect Super Administrator; prevent privilege escalation and removal of last effective Super Administrator; audit sensitive permission changes. Do not invent detailed permission matrix.
 
-Supports: CRUD, search, filtering, relationships, simulated async responses, mock role-based access, Finance verification, VIP card activation, audit events, demo account switching.
-
-### 16.1 Reset Behavior
-
-**Approved decision:** Reset to original seed data on every full browser refresh.
-
-- Do not use localStorage for mock business data.
-- Do not use IndexedDB for mock business data.
-- No persistent mock databases.
-
-The browser-scoped mock store initializes from seed data on module load. A module-level variable is not shared across browser and server execution environments; design accordingly (client-only store).
-
-> Note: This supersedes the earlier "optional localStorage persistence" mention in `docs/project.md`. Reconciliation of that document is required (see Section 32).
-
-### 16.2 Mock Identity and Role Switching
-
-Development-only mock identity mechanism supporting Super Administrator, Administrator, HR, Finance, VD, SSM, SM, IST, OST, and other authorized staff. Selected identity determines simulated permissions and data visibility. Changing demo identity must invalidate or clear permission-sensitive cached data. Not production authentication; not an unrestricted production capability.
-
-### 16.3 Mock Data Relationships
-
-Consistent relationships among Users, Roles, Customers, VIP products, Contract versions, Issued VIP cards, Finance verification records, Sales-team members, Genealogy relationships, Accreditations, Audit events. All seed records synthetic; no real customer information.
+Genealogy authorization: SVD/SSM/SM/OST hierarchy; OST may attach directly to SVD/SSM/SM; no fabricated intermediate managers. Finance separation: only authorized Finance verifies payments; commission approvals/payouts Finance-controlled. Public access: narrowly scoped, no private records.
 
 ---
 
-## 17. Mock Repository and Adapter Design
+## 18. MongoDB Atlas and Mongoose
 
-Each domain module defines its own repository interface (`contracts/`). Mock adapters implement those contracts (`src/data/adapters/mock/`). Real backend integration preserves equivalent contracts where practical.
-
-- Components never mutate seed arrays directly.
-- No duplicate stores per feature.
-- No independent copies of related entities.
-- No direct mock-data imports inside presentation components.
-- UI communicates through stable service/repository interfaces so replacing mock repositories does not require rewriting presentation components.
+Database: MongoDB Atlas Cloud. ODM: Mongoose. Managed cloud service separate from Droplet. Document connection management, environment-based config, server-only access, domain model mapping, schema validation, unique indexes, relationships, transactions, audit persistence, soft deletion/archival, identifier uniqueness, indexing strategy, migration/evolution. Mongoose server-only. Atlas connectivity via TLS, network restrictions, least-privilege users. Compass is optional admin client, not hosting. No automatic migration from Supabase. Transaction support must be verified per tier.
 
 ---
 
-## 18. TanStack Query Conventions
+## 19. Business Data Ownership
 
-Use TanStack Query for: asynchronous data queries, mutation handling, loading states, error states, cache invalidation, shared query-key conventions.
-
-Use local React state for: dialog visibility, form presentation, temporary filters, UI-only interaction state.
-
-Do not use TanStack Query as a replacement for the canonical mock store. Changing demo identity must invalidate permission-sensitive cached queries.
+Each module owns its domain. Cross-module operations via controlled application-service boundaries. No duplicate business logic (Finance must not implement VIP card lifecycle; multiple customer ID generators; etc.).
 
 ---
 
-## 19. Demo Authentication and Role Switching
+## 20. Financial Transactions and Idempotency
 
-Mock authentication only during frontend development. Simulated sessions, role-based navigation, and permission simulation. Backend integration replaces with real Better Auth server-controlled sessions. Demo switching is development-only and must not be exposed as an unrestricted production capability.
+Finance owns payment verification, balances, reversals, refunds. Submitted payments are not verified. Contract balances depend on verified activity. Reservation payments not double-counted. Overdue tracking automatic from contractual schedules; no unauthorized penalties. Reversals/refunds Finance-controlled without separate Admin approval, with audit. Financial Hold on Active membership when verified payment reversed/refunded creating outstanding balance. Fully Paid distinct from Confirmed Sale and from Active Membership.
 
----
-
-## 20. REST API Architecture
-
-**Approved decision:** Versioned REST API under `/api/v1`.
-
-Conventions to document and follow:
-
-- Resource-oriented endpoints
-- HTTP methods (GET/POST/PUT/PATCH/DELETE)
-- Request validation via Zod
-- Consistent response envelopes
-- Consistent error handling
-- Authentication and authorization on every protected route
-- Pagination, filtering, sorting, search
-- Idempotency where required (e.g., Finance approval)
-- API versioning (`/api/v1`)
-
-No endpoints implemented during documentation. Route handlers stay thin: parse, authenticate, validate, authorize, delegate to application services, return consistent responses. No large business workflows inside handlers.
-
-### 20.1 Public API Restrictions
-
-Public accreditation verification uses exact official AA numbers only; only qualifying active accreditations returned; no public name-based discovery. IST results omit "Valid Until"; OST may display "Valid Until" where applicable. No private contact info, addresses, identification documents, or financial records. Document input normalization, rate limiting, and generic not-found behavior.
-
-### 20.2 Mobile-Ready API Design
-
-The existing `/api/v1` architecture must remain suitable for future authorized mobile clients:
-
-- Client-independent REST contracts
-- Consistent request and response formats
-- Server-side validation
-- Server-side RBAC
-- Record-level authorization
-- API versioning
-- Secure authentication
-- Consistent error handling
-- Pagination and filtering
-- Idempotency for sensitive operations
-- HTTPS in deployed environments
-
-Business rules remain backend-authoritative regardless of which client initiates an operation.
+Idempotency: duplicate requests must not create duplicate financial outcomes. Unique transaction references. Race-condition prevention. Reconciliation.
 
 ---
 
-## 21. MongoDB and Mongoose Architecture
+## 21. VIP Membership and Stay Points Integration
 
-**Approved database:** MongoDB. **Approved ODM:** Mongoose.
-
-Document and follow:
-
-- Connection management (server-only, environment-based)
-- Domain model mapping
-- Schema validation
-- Unique indexes (official identifiers)
-- Relationship representation
-- Transaction requirements
-- Audit persistence
-- Soft deletion / archival
-- Official identifier uniqueness
-- Indexing strategy
-- Migration and data evolution principles
-
-No actual schemas or migrations created during this task.
-
-### 21.1 Transaction Support
-
-Financial verification and card activation must remain consistent. Where MongoDB transactions are required, verify the chosen deployment supports them. Do not assume a standalone local MongoDB supports the same transaction behavior as a replica-set deployment. Document transaction prerequisites and development-environment implications.
+Membership activation requires finalized contract + full Finance-verified payment + official activation event. Activation date is actual official activation (Asia/Manila). VIP Card ID format `YYMMDDNNNNNVTPMMS` with RA-derived sequence (no independent generator). Stay Points: transaction-based Spend-to-Earn (₱1 eligible verified resort spending = 1 point), annual caps, minimum qualifying spend unlocks Pending points, 70/30 Weekday/Weekend allocation, separate buckets, Gold supplementary shares pool, refund-related Points Hold with Finance reconciliation, no automatic negative balances, historical contract protection.
 
 ---
 
-## 22. Better Auth Integration Direction
+## 22. Sales Network and Commission Integration
 
-**Approved direction:** Better Auth with MongoDB.
-
-Before implementation, verify: Better Auth version, MongoDB adapter support, Next.js compatibility, runtime compatibility, session handling, required database collections, production security requirements. Do not invent compatibility guarantees. Authentication implementation remains server-controlled. Frontend may use simulated sessions only during mock development.
-
-**Mobile compatibility (future):** Better Auth remains the approved web authentication direction. Future mobile authentication must be verified for compatibility with React Native, Expo, mobile session management, secure credential storage, native authentication flows, and the selected Better Auth version. Do not assume web cookie/session behavior works unchanged in mobile applications. Do not invent an approved mobile authentication implementation.
+Sales Network hierarchy SVD→SSM→SM→OST; OST may attach directly. Historical genealogy preserved; transfers do not retroactively reassign sales. Commission: Finance manually assigns percentages based on finalized contract value; direct seller and eligible historical uplines; no automatic distribution; approval after Confirmed Sale; unpaid commissions auto-Hold when sale loses Confirmed status; manual resolution; no automatic clawbacks; manual payout with actual disbursement confirmation; Paid only after confirmation.
 
 ---
 
-## 23. RBAC and Policy Enforcement
+## 23. Feature Flags
 
-Centralized authorization policies. Required scopes: `own`, `team`, `all`.
-
-Distinguish: authentication, role assignment, permission evaluation, record-level authorization, UI visibility. Hiding UI elements is not sufficient authorization. Production authorization enforced server-side. Protect Super Administrator role; prevent unauthorized privilege escalation; prevent removal of the last effective Super Administrator. Audit sensitive permission changes. Do not invent the detailed permission matrix.
-
-Module-specific policies interact with the centralized policy evaluator through defined policy hooks; modules do not implement independent role/permission engines.
+Redemption and Services preserved but hidden/disabled. Central feature configuration; server-side enforcement; client presentation behavior; environment config; secure defaults; testing; controlled activation; audit requirements. Hidden menu is not security. Future activation requires separate authorization.
 
 ---
 
-## 24. Business Module Ownership
+## 24. Files and Media
 
-| Module | Primary Ownership |
-|---|---|
-| Auth | Identity, sessions, authentication |
-| Roles | Roles, permissions, role assignments |
-| Customers | Customer identity, customer records, official IDs (RA No. format `YYYY-NNNN`, e.g. `2026-0001`) |
-| VIP Products | Product definitions, tiers, contract versions |
-| VIP Cards | Issued cards, card ownership, lifecycle |
-| Finance | Verification decisions and activation approval workflow |
-| Sale Team | VD, SSM, SM, IST, OST personnel |
-| Genealogy | Upline/downline relationships |
-| Accreditation | Official AA records, validity, status |
-| Audit | Protected event history |
-
-### 24.1 Avoiding Duplicate Business Logic
-
-The architecture must prevent: Finance implementing its own VIP card lifecycle rules; multiple customer ID generators; multiple accreditation validation engines; duplicate genealogy relationship stores; separate role/permission engines per panel; UI components independently implementing authoritative business rules. Cross-module operations use controlled application-service boundaries.
-
-### 24.2 Platform-Independent Modules
-
-Shared domain modules must remain platform-independent: no browser-only or native-only APIs in domain/application layers. This preserves reuse by future mobile clients. See Section 31 for shared code strategy.
+Secure storage abstraction for customer documents, contract files, payment evidence, accreditation files, staff photos, VIP documents, public media. Authorized upload, file validation, type/size restrictions, metadata, access control, private vs public assets, safe download, retention, backup, deletion policies, audit. Do not store all binary files in MongoDB documents. Recommend object storage compatible with DigitalOcean; do not falsely claim provider selected.
 
 ---
 
-## 25. Finance Approval and Automatic Activation
+## 25. Background Jobs and Scheduled Work
 
-**Latest approved decision:** Automatically activate a VIP card after successful Finance approval. This supersedes the earlier proposal for a separate manual activation step.
-
-### 25.1 Intended Workflow
-
-1. Authorized user issues a VIP card.
-2. Card enters Pending Finance Verification.
-3. Finance reviews applicable evidence.
-4. Authorized Finance personnel approve or reject.
-5. Successful approval automatically activates the card.
-6. System records approval and activation history.
-7. Rejected requests remain inactive.
-
-### 25.2 Technical Requirements
-
-Finance approval and activation form one consistent business operation. Backend ensures: Finance authorization, eligibility validation, correct card status transition, atomic state updates, idempotency, duplicate approval prevention, activation date recording, audit event recording, safe error handling.
-
-Prohibited: activation without valid Finance approval; unauthorized status manipulation; duplicate activation; inconsistent approved/active states.
-
-### 25.3 Mock Implementation
-
-During frontend development, simulate the complete workflow through the centralized mock store, preserving the same intended business state transitions.
-
-### 25.4 Unresolved Business Rules
-
-Exact payment and settlement eligibility criteria remain subject to separate business-rule approval. Do not invent those criteria.
-
-> Conflict note: `docs/project.md` (sections 6.4 and 6.11) describes issuance leaving the card Pending and approval preceding "authorized activation" as a distinct step. The newer decision (auto-activation on approval) supersedes. `docs/project.md` requires reconciliation; it is not modified by this document (see Section 32).
+Future requirements: accreditation expiry evaluation, installment overdue classification, membership expiry, annual points-cycle calculations, approved notifications, reconciliation, reporting maintenance, operational cleanup. Document ownership, secure execution, retries, idempotency, audit, scheduling, failure handling, duplicate prevention. Do not automatically introduce Redis/BullMQ/another DB/queue without justification and approval. Explain how single-application architecture can support initial background work and when a separate worker container might become necessary. Do not implement workers.
 
 ---
 
-## 26. Security Boundaries
+## 26. Reporting
 
-- Server-only secrets and environment validation.
-- Input validation (Zod) on client and server; server is authoritative.
-- Authentication checks on protected routes.
-- Authorization checks (centralized policy) on every protected operation.
-- Record-level permissions (`own`/`team`/`all`).
-- Rate limiting (public search, API).
-- Safe error messages (no internal details).
-- Audit trails for sensitive operations.
-- Sensitive-data protection (no PII in logs, no secrets in client).
-- Production demo-mode restrictions (demo switching disabled).
-- API security considerations (CORS, CSRF as applicable).
-
-Never expose database credentials or privileged server operations to Client Components.
+Reports consume authoritative business data. Do not create independent inconsistent formulas. Cover Confirmed Sales reporting, Finance collections, outstanding balances, overdue payments, commission approvals, paid commissions, membership status, Stay Points, seller performance, historical genealogy, customer analytics, audit reporting. Preserve reporting-date concepts (Today, Past 7 Days, Past 28 Days, Past 6 Months, optional custom Start/End Date). Use appropriate authoritative business-event date per metric. Preserve Asia/Manila conventions. No double-counting across team reports.
 
 ---
 
-## 27. Error Handling and Audit Logging
+## 27. Audit and Logging
 
-### 27.1 Error Handling
-
-Consistent patterns for: validation errors, authentication errors, authorization errors, missing records, duplicate records, invalid state transitions, database failures, Finance approval failures, unexpected server errors. No internal stack traces or sensitive info to end users. Uniform error shapes and status codes.
-
-### 27.2 Audit and Observability
-
-- Structured audit events: actor, action, target entity, timestamp, outcome, safe before/after metadata.
-- Application error logging and diagnostic correlation identifiers where useful.
-- Distinguish security/business audit records from ordinary application logs.
-- Audit records are protected and never include passwords, tokens, or unnecessary sensitive data.
+Centralized audit requirements. Preserve actor attribution, action, entity, timestamp, previous/resulting state, business reason, related transaction, policy context, event correlation, security classification. Normal corrections preserve original event history. Separate business audit events from application diagnostic logs. Avoid storing passwords, tokens, unnecessary personal information. Retention, legal erasure, archival, tamper-evidence implementation details follow authorized governance policies. Do not invent permanent universal retention period.
 
 ---
 
-## 28. Manual-First Testing and Production Verification
+## 28. Security
 
-**Approved decision:** Manual UI testing during the initial frontend phase.
-
-During frontend development: manually review pages, test forms and CRUD, demo role switching, navigation, customer/VIP workflows, genealogy interactions, Finance approval and automatic activation, responsive layouts.
-
-Automated testing is not required as the initial frontend development method, but automated verification must be introduced before production readiness. Critical later testing areas: authentication, authorization, role/permission enforcement, official identifier uniqueness, genealogy integrity, Finance verification, automatic VIP activation, audit integrity, API contracts, database integration.
-
-Manual-only testing is not sufficient for production release.
+Cover authentication, sessions, RBAC, record-level authorization, sensitive business operations, server-side validation, CORS/CSRF, HTTPS/TLS, secure cookies, rate limiting, abuse prevention, public search protection, file upload security, secret management, data privacy, audit logs, least privilege, administrative protection, environment separation, backup security, incident response, security testing. Frontend permissions alone cannot protect sensitive records. Separation between public, staff, and privileged/financial operations.
 
 ---
 
-## 29. Frontend-to-Backend Migration Strategy
+## 29. Environment Separation
 
-- UI communicates through stable repository/service interfaces; replacing mock adapters with API adapters does not require rewriting presentation components.
-- Phase 5 introduces REST APIs, MongoDB, Mongoose, Better Auth, server-side authorization, persistent audit records, real Finance approval and activation.
-- Verify compatibility (Better Auth + MongoDB adapter + Next.js + runtime) before implementation.
-- Mock data replaced incrementally; maintain consistent entity relationships and identifier formats for future historical import compatibility.
-- Preserve soft archival and audit history across migration.
+Logical separation of Local Development, Staging, Production. For each: application config, auth config, database selection, secrets, feature flags, mock-data policy, test data, logging, deployment controls. Never use real production customer data as ordinary frontend mock seeds. No demo account switching in production. No development-only API behavior in production.
 
 ---
 
-## 30. Future Extensibility
+## 30. DigitalOcean Infrastructure
 
-- Customer Portal as a third panel (documented only; no scaffolding during MVP).
-- Mobile clients via versioned REST API and reusable business services.
-- Additional Finance workflows, accounting, commissions, analytics, reporting (deferred).
-- Service booking, stay-point redemption, QR redemption (deferred).
-- Full CMS and marketing site (deferred).
-- Historical data migration after MVP (design import compatibility now).
-- Future mobile application in the same repository reusing shared backend services and business rules.
-
-Module boundaries and API versioning are designed to accommodate these without major rewrites.
+Application hosting: DigitalOcean Droplet. Droplet hosts Next.js runtime, backend API, reverse proxy, container runtime, app config, health checks, app logging, background processing where appropriate. MongoDB hosted separately in Atlas. Docker Compose topology: app container, reverse proxy, optional worker if justified, networks, volumes, env injection, restart policy, health checks, safe deployment, rollback. Reverse proxy: HTTPS termination, domain routing, forwarding, security headers, request size limits, access logging, timeouts, certificate renewal, upstream health checks. Networking/security: firewall, restricted SSH, OS updates, non-root operations, container security, secret protection, monitoring, resource limits, Atlas connectivity, incident response. Do not recommend unrestricted DB exposure to public internet.
 
 ---
 
-## 31. Future Mobile Application and Repository Evolution
+## 31. MongoDB Atlas Production Connectivity
 
-### 31.1 Same Repository
-
-The future AFHomes mobile application will be developed in the same Git repository: `afhomes-platform`. A separate repository is not required. The initial MVP remains a single Next.js application.
-
-### 31.2 Proposed Mobile Technology
-
-Preferred future mobile stack (future direction, not authorization to implement or install now):
-
-- React Native
-- Expo
-- TypeScript
-- Expo Router, subject to future technical evaluation
-
-### 31.3 Proposed Future Folder Structure (illustrative only)
-
-```text
-afhomes-platform/
-├── src/                        # Existing Next.js application
-│   ├── app/
-│   ├── panels/
-│   ├── modules/
-│   ├── data/
-│   ├── server/
-│   └── shared/
-│
-├── mobile/                     # Future React Native + Expo app
-│   ├── app/
-│   ├── components/
-│   ├── features/
-│   ├── hooks/
-│   ├── services/
-│   ├── styles/
-│   └── assets/
-│
-├── packages/                   # Future shared packages
-│   ├── contracts/
-│   ├── business-rules/
-│   └── api-client/
-│
-├── docs/
-└── package.json
-```
-
-This represents future repository evolution only. Do not create `mobile/`, `packages/`, workspace configuration, or mobile application files. The existing Next.js source tree remains unchanged.
-
-### 31.4 Shared Backend Architecture
-
-Both the future mobile application and the existing web application communicate through the same authorized, versioned REST API:
-
-```text
-Next.js Web Application
-           |
-           | HTTPS
-           v
-      REST API /api/v1
-           ^
-           | HTTPS
-           |
-React Native Mobile Application
-           |
-           v
-Shared Backend Business Services
-           |
-           v
-         MongoDB
-```
-
-Both clients communicate with the same backend business services and authoritative database. The mobile application must never connect directly to MongoDB. The mobile app does not require a separate backend.
-
-### 31.5 Shared Code Strategy
-
-**May be shared:** TypeScript domain types, Zod validation schemas, platform-independent business rules, API contracts, API client utilities, permission identifiers, shared constants.
-
-**Must remain platform-specific:** Web pages and layouts, React Native screens, navigation, UI components, styling, browser-specific functionality, native device functionality, platform-specific authentication/session storage.
-
-Next.js components and shadcn/ui components must not be assumed to work directly in React Native.
-
-### 31.6 Authentication Compatibility
-
-Better Auth remains the approved authentication direction for the web platform. Future mobile authentication must be verified for compatibility with React Native, Expo, mobile session management, secure credential storage, native authentication flows, and the selected Better Auth version and supported integrations. Do not assume web cookie/session behavior works unchanged in mobile applications. Do not invent an approved mobile authentication implementation.
-
-### 31.7 Mobile-Ready API Design
-
-See Section 20.2.
-
-### 31.8 Repository Evolution Strategy
-
-Do not convert the project into a monorepo workspace during the current MVP. When mobile development begins, evaluate whether to introduce npm or pnpm workspaces, shared internal packages, separate build pipelines, and independent web/mobile deployment workflows. Turborepo or other orchestration tooling is optional and requires justification. Avoid premature restructuring. Using one repository does not require all applications to share one deployment artifact.
-
-### 31.9 Future Customer Portal and Mobile
-
-The future Customer Portal under `src/panels/customer/` remains a web interface. The future React Native application is a separate mobile client within the same repository. These are distinct presentation applications, but both should reuse shared backend services and business rules. Do not confuse the Customer Portal with the mobile application.
+Application connects to Atlas securely. Document Atlas project, cluster, app database, restricted DB identity, network restrictions, TLS, production connection string stored securely, connection pooling, connection health, transaction support, index deployment, monitoring, backups, recovery. Chosen Atlas tier must be verified before implementation. Do not claim all managed capabilities on every tier. DB deployment must support business-critical consistency.
 
 ---
 
-## 32. Architectural Risks and Unresolved Dependencies
+## 32. CI/CD and Release Management
 
-### 32.1 Unresolved Dependencies
-
-1. Better Auth and MongoDB version compatibility.
-2. Exact role-permission matrix.
-3. Detailed Finance payment verification and settlement eligibility.
-4. Complete VIP contract clauses and benefit calculations.
-5. Official identifier generation and future import mappings.
-6. Accreditation active-status and expiry evaluation rules.
-7. Final hosting provider and deployment approval.
-8. MongoDB transaction support in chosen deployment (standalone vs replica set).
-9. Future mobile authentication compatibility with Better Auth.
-
-### 32.2 Risks
-
-- Tight seven-day schedule; frontend timeboxing required.
-- Mock-to-real migration risk if contracts drift.
-- Authorization bypass risk if UI visibility mistaken for security.
-- Data consistency risk in Finance activation without transactions.
-- Scope creep from deferred features.
-- Unverified Better Auth/MongoDB compatibility.
-- Future mobile client may require authentication/session changes.
-- Shared code drift between web and mobile if boundaries are not enforced.
-
-### 32.3 Conflicts with `docs/project.md` Requiring Reconciliation
-
-This document records newer approved decisions that differ from `docs/project.md`. `docs/project.md` is not modified here; reconciliation is required (project owner approval):
-
-1. **Finance activation:** `docs/project.md` (6.4, 6.11, 16.4) implies a separate manual activation step after Finance approval. Architecture (Section 25) specifies automatic activation on successful Finance approval. Newer decision supersedes.
-2. **Mock persistence:** `docs/project.md` (Stage 2) mentions "optional localStorage persistence". Architecture (Section 16.1) mandates in-memory only with refresh reset and prohibits localStorage for mock business data. Newer decision supersedes.
-3. **Architecture label:** `docs/project.md` describes "Modular Monolith"; Architecture refines to "Panel-Based + Feature-Based Modular Monolith". Refinement, not contradiction.
-
-No other conflicts identified. If additional conflicts are found, flag and request clarification rather than silently resolving.
+Document target deployment process: source control, code review, static analysis, type checking, automated testing, container build, dependency security checks, environment-specific config, deployment authorization, DB compatibility validation, health checks, rollback, post-deployment verification. Do not claim CI/CD already exists. Do not automatically choose additional deployment infrastructure. Do not execute pipelines.
 
 ---
 
-## 33. Architecture Governance for AI Agents
+## 33. Monitoring and Operations
 
-### 33.1 Required Agent Rules
-
-1. Read `docs/project.md` and `docs/development/architecture.md` before major implementation.
-2. Follow panel ownership.
-3. Follow feature ownership.
-4. Reuse shared domain logic.
-5. Do not create duplicate mock stores.
-6. Do not place business logic inside UI components.
-7. Do not place database access inside browser components.
-8. Do not bypass authorization policies.
-9. Do not duplicate reusable UI unnecessarily.
-10. Keep panel styles isolated.
-11. Avoid circular dependencies.
-12. Keep Next.js routes thin.
-13. Do not introduce unapproved architectural frameworks.
-14. Do not implement future Customer Portal functionality during the MVP.
-15. Do not expand Public Panel scope into a full marketing website without approval.
-16. Do not change Finance approval/activation behavior without approval.
-17. Do not invent missing business rules.
-18. Report architectural conflicts before implementing changes.
-19. Do not implement mobile features during the current MVP.
-20. Do not create a mobile application directory yet.
-21. Do not introduce monorepo tooling without approval.
-22. Do not couple shared business logic to browser-only APIs.
-23. Do not make the REST API dependent on Next.js page rendering.
-24. Do not duplicate backend business rules in the mobile client.
-25. Do not expose MongoDB directly to mobile clients.
-26. Preserve backward compatibility of published API contracts where practical.
-27. Treat future mobile authentication compatibility as a verification requirement.
-28. Maintain clear boundaries between Web Customer Portal and Mobile Application.
-
-### 33.2 Change Control
-
-- Architecture changes require explicit project-owner approval.
-- New dependencies require justification.
-- New panels or cross-cutting frameworks require approval.
-- Deviations from folder ownership must be documented and justified.
+Application health, API errors, auth failures, container health, CPU/memory, disk, DB connectivity, Atlas performance, slow queries, app logs, audit events, job failures, availability monitoring, alerting, operational troubleshooting. Explain conceptual ownership. Do not invent SLAs or staffing commitments.
 
 ---
 
-## Completion Report
+## 34. Backup, Recovery and Disaster Response
 
-- **File created/updated:** `docs/development/architecture.md`
-- **Document sections:** 33 numbered sections covering overview, principles, system context, high-level diagram, layers, folder structure, panels, features, domain modules, styling, routing/code-splitting, import boundaries, mock data, repositories, TanStack Query, demo auth, REST API, MongoDB/Mongoose, Better Auth, RBAC, module ownership, Finance auto-activation, security, errors/audit, testing, migration, extensibility, future mobile application and repository evolution, risks/dependencies, governance.
-- **Architecture decisions documented:** Panel-based feature-based modular monolith; single Next.js app/repo; three panels with Customer deferred; in-memory mock store resetting on refresh; TanStack Query for async; versioned REST `/api/v1`; MongoDB + Mongoose; Better Auth (verify compatibility); centralized RBAC with `own`/`team`/`all`; auto-activation on Finance approval; manual-first testing then automated; panel-scoped design systems; thin route handlers; server-only DB; future mobile app in same repo via shared REST API (not implemented in MVP).
-- **Folder structure summary:** `src/app` (routing/composition), `src/panels` (admin/public/customer), `src/modules` (domain/application/contracts/schemas), `src/data` (mock store + adapters), `src/server` (db/auth/repositories/security), `src/shared`, `src/config`; `tests`, `scripts`.
-- **Module ownership summary:** auth, roles, customers, vip-products, vip-cards, finance, sale-team, genealogy, accreditation, audit — each owns its domain; cross-module ops via application-service boundaries; no duplicate business logic.
-- **Risks and unresolved dependencies:** Better Auth/MongoDB compatibility; role-permission matrix; Finance eligibility criteria; VIP contract clauses; identifier generation/import mappings; accreditation expiry rules; hosting; MongoDB transaction support in deployment.
-- **Conflicts with `docs/project.md`:** Finance activation (auto vs separate step); mock persistence (in-memory-only vs optional localStorage); architecture label refinement. Reconciliation required; `docs/project.md` not modified.
-- **Validation results:** All approved decisions represented; remains single Next.js modular monolith; panel/domain responsibilities separated; three-panel strategy documented; Customer Portal deferred; mobile strategy documented (future only); mock resets on refresh; TanStack Query positioned correctly; REST versioning documented; auto-activation documented; security/authorization boundaries documented; no contradictory folder ownership; no unapproved business rules invented. STOP — awaiting project-owner approval.
+Atlas backup capabilities, backup policy dependencies, restore procedures, recovery validation, app config recovery, container image rollback, file/media recovery, secret recovery procedures, incident handling, business continuity. Do not assume Droplet snapshots replace Atlas DB backups. Do not assume Atlas backups replace app config/media backups. Retention periods and recovery objectives require authorized decisions. Do not invent them.
+
+---
+
+## 35. Testing and Quality
+
+Preserve approved development approach: manual-first frontend validation, automated verification before production. Do not describe seven days as binding deadline. Required testing areas: React components, Next.js routing, forms, role-aware navigation, mock repositories, API contracts, authentication, authorization, genealogy, customer identity, VIP identifier uniqueness, Finance verification, commission approval, membership activation, Stay Points, reporting, audit, DB integration, transaction atomicity, duplicate prevention, security, performance, accessibility, deployment, backup/restore. Manual-only testing insufficient for production release. Do not claim tests executed.
+
+---
+
+## 36. Future Customer Portal and Mobile Architecture
+
+Customer Portal: future panel within Next.js app, route `/customer/*`, shared backend domain services, customer-specific identity and record visibility. Do not scaffold during initial phase unless authorized.
+
+Mobile: future React Native + Expo + TypeScript, shared REST API, same Git repo. Future repo evolution may introduce `mobile/` and `packages/` but not now. Do not introduce Turborepo/workspace without approval. Code sharing: domain types, validation schemas, API contracts, platform-neutral rules, API client utilities potentially shared; platform-specific: Next.js pages, RN screens, navigation, styling, browser/native functionality, session storage. Do not assume shadcn/ui web components work unchanged in React Native.
+
+---
+
+## 37. Implementation Phase Alignment
+
+Align with `docs/development/implementation.md` Phases 0–8. Phases are planning milestones, not automatic authorization. Architecture must not conflict with phases.
+
+---
+
+## 38. Resolve Outdated Architecture Statements
+
+- Hosting not selected → DigitalOcean Droplet app + MongoDB Atlas DB.
+- MongoDB deployment ambiguity → Atlas managed cloud DB; no separate production Mongo on Droplet by default.
+- Seven-day MVP → not a binding architecture requirement; preserve frontend-first staged delivery.
+- Finance automatic activation → reconciled; respect full settlement and official activation requirements; do not auto-activate on arbitrary payment verification.
+- Incomplete business modules → expanded module map includes all domains.
+- Incomplete deployment → complete target deployment documentation.
+- Mock persistence conflict → in-memory only, reset on refresh; no localStorage.
+- Customer/Public website scope → distinguish target capability from current phase; do not permanently exclude approved public website/CMS.
+- Better Auth compatibility → intended direction subject to verification; do not claim verified.
+- VD vs SVD terminology → use SVD per authoritative Sales Network docs.
+- Current implementation claims → documentation-only repo; do not present modules/infra as present.
+
+---
+
+## 39. Architectural Invariants
+
+(As listed in task: one repo, one Next.js app, panel/feature modular monolith, App Router, React/TS, Tailwind/shadcn, Zod, TanStack Query, centralized mock data, mock reset on refresh, mock identity not production auth, `/api/v1`, thin handlers, domain logic outside presentation, server-only Mongoose/DB, MongoDB Atlas, DigitalOcean Droplet, Docker Compose, HTTPS reverse proxy, centralized auth, server-side RBAC, record-level visibility, historical genealogy preservation, Finance payment verification authority, manual Finance commission approvals, correct VIP membership activation eligibility, official VIP identifier uniqueness, correct Stay Points ledger lifecycle, audit history, no double processing, no automatic Supabase migration, Redemption disabled, Services disabled, future Customer Portal supported, future mobile can reuse REST API, no unauthorized microservice redesign, current business policies revisable through authorized decisions, historical signed contract terms protected, architecture doc does not authorize implementation, production readiness requires separate verification/approval.)
+
+---
+
+## 40. Technical Dependencies Requiring Verification
+
+- Better Auth and selected MongoDB adapter.
+- Next.js and selected Node.js runtime.
+- MongoDB Atlas transaction prerequisites.
+- DigitalOcean-to-Atlas connectivity.
+- Selected reverse proxy integration.
+- Deployment image/build compatibility.
+- RA numbering scope uniqueness.
+- Accreditation active-status/expiry evaluation rules.
+- Formal audit retention policy.
+
+---
+
+## 41. Documentation Consistency Validation
+
+Compare against frontend.md, database.md, backend.md, security.md, testing.md, implementation.md, deployment.md, README.md. Ensure same technology decisions. (See task examples.) If another dev doc contradicts finalized architecture, make smallest necessary correction. Do not create new docs. Do not modify business-rule files.
+
+---
+
+## 42. Final Repository Check
+
+Branch: `develop`. Working tree: untracked docs/workflow files (preserved). No application code. `git diff --check` passed. Authorized changes confined to `docs/development/`.
+
+---
+
+## 43. Completion Report
+
+### A. Repository Verification
+- Repository: `afhomes-platform`; branch: `develop`; initial working tree untracked docs/workflow files preserved. Inspected docs/project.md, business-rules 01–13, existing dev docs. No app code.
+
+### B. Architecture Completion
+`architecture.md` covers frontend through production deployment: purpose/authority, approved decisions, current vs target, principles, actors/trust boundaries, diagrams, layers, dependency direction, repository structure, routing, panels, frontend tech/design, server/client components, state, mock data, shared modules, backend services, REST API, auth, RBAC, MongoDB Atlas/Mongoose, business data ownership, financial transactions/idempotency, VIP membership/Stay Points, sales/commission integration, feature flags, files/media, background jobs, reporting, audit/logging, security, environment separation, DigitalOcean infra, Docker Compose, reverse proxy/HTTPS, Atlas connectivity, CI/CD, monitoring, backup/recovery, testing, implementation phases, future customer/mobile, invariants, dependencies, references/governance.
+
+### C. Approved Technology Stack
+Next.js, React, TypeScript, Tailwind, shadcn/ui, Zod, TanStack Query, MongoDB Atlas, Mongoose, Better Auth (direction, unverified), DigitalOcean Droplet, Docker Compose, HTTPS. Unverified compatibilities listed in Section 40.
+
+### D. Major Architecture Corrections
+- Hosting: DigitalOcean Droplet app + MongoDB Atlas DB (was "not selected").
+- Database: Atlas managed cloud, not separate Droplet Mongo.
+- Backend topology: single Next.js app, no separate backend.
+- Module coverage: expanded to all approved domains.
+- Finance/membership activation: reconciled; no blanket auto-activation on arbitrary payment verification.
+- Mock persistence: in-memory only, reset on refresh.
+- Production architecture: complete Docker/HTTPS/monitoring/backup/recovery.
+- Implementation scope: phased, no auto-authorization.
+
+### E. Development Documentation Alignment
+Updated `architecture.md` comprehensively. Other 8 dev docs (README, frontend, database, backend, security, testing, implementation, deployment) already aligned with decisions; minimal/no changes needed. Exactly 9 files remain in `docs/development/`.
+
+### F. Business-Rule Alignment
+Reviewed all 13 business-rule docs. Conflicts reconciled in architecture (finance activation, mock persistence, terminology SVD, hosting). Unresolved critical conflicts preserved as dependencies (contract price discrepancies, RA uniqueness, audit retention, etc.).
+
+### G. Deployment Architecture
+DigitalOcean Droplet, Docker Compose, HTTPS reverse proxy, MongoDB Atlas, secrets, monitoring, backups, recovery, release procedures documented.
+
+### H. Technical Dependencies
+Listed in Section 40.
+
+### I. Validation
+Architecture completeness: all required areas covered. Mermaid diagrams included. Cross-document consistency: aligned. Git diff --check: passed. Documentation scope: confined to docs/development.
+
+### J. Execution Safety
+- Application code modified: No.
+- New application scaffolding created: No.
+- Database modified: No.
+- Atlas cluster configured: No.
+- Migrations created or executed: No.
+- Docker configuration modified: No.
+- Infrastructure provisioned: No.
+- Git commit: No.
+- Git push: No.
+- Git merge: No.
+- Deployment: No.
+- Redemption activated: No.
+- Services activated: No.
+- Historical production data migrated: No.
+
+STOP — awaiting explicit project-owner authorization before starting Phase 1 implementation.

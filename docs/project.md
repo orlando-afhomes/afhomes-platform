@@ -1,8 +1,8 @@
 # AFHomes Platform — Master Project Context
 
-> Authoritative project-level context for AI coding agents and contributors.
+> Authoritative master project context for AI coding agents and contributors.
 > Detailed specs live under `docs/business-rules/` and `docs/development/`.
-> This file is the single source of master project context; do not duplicate field schemas or permission matrices here.
+> This file provides orientation and references; it does not duplicate field schemas, permission matrices, or low-level implementation instructions.
 
 ---
 
@@ -15,479 +15,513 @@
 | Project Name | AFHomes Platform |
 | Repository / Root Directory | `afhomes-platform` |
 | Project Type | Full-Stack Web-Based Business Management Platform |
-| Architecture | Modular Monolith |
-| Development Methodology | Accelerated Agile SDLC |
+| Architecture | Modular Monolith (single Next.js application) |
+| Development Methodology | Incremental, phase-based Agile development |
 | Development Strategy | Frontend-First, Mock-Data-Driven |
 | Development Execution | AI-Assisted Development |
-| MVP Target | Seven Calendar Days |
 | Current Phase | Planning and Documentation |
-| Primary Deliverable | Functional Web-Based MVP |
+| Primary Deliverable | Functional Web-Based Platform |
 | Initial Development Environment | Local Development |
-| Planned Database | MongoDB |
-| Planned Authentication | Better Auth |
+| Local Persistent Database | MongoDB (localhost) |
+| Cloud Database | MongoDB Atlas |
+| Application Hosting | DigitalOcean Droplet |
+| Deployment | Docker Compose + HTTPS |
+| Authentication Direction | Better Auth (subject to compatibility verification) |
+
+AFHomes Platform is a new implementation built from scratch. An earlier AFHomes system exists, but its architecture must not dictate the new project's structure. The previous system may be consulted only as a reference for verified business rules, operational workflows, and domain knowledge. Do not automatically copy legacy architecture, implementation patterns, or unverified behavior.
 
 ### 2. Project Background
 
-AFHomes requires a centralized platform for managing business operations, organizational users, customers, VIP membership cards, IST/OST accreditation, sales genealogy, and related administrative processes. The new platform aims for a cleaner, more organized, modular, secure, and scalable foundation. The initial MVP focuses on essential operational functionality rather than every business module, designed for long-term maintainability and future expansion without unnecessary architectural complexity.
+AFHomes requires a centralized platform for managing business operations, organizational users, customers, VIP membership cards, IST/OST accreditation, sales genealogy, and related administrative processes. The new platform aims for a cleaner, more organized, modular, secure, and scalable foundation. The initial work focuses on documentation and architecture; implementation follows the phased roadmap in `docs/development/implementation.md`.
 
 ### 3. Project Objectives
 
-**Primary objective:** Develop a functional, secure, maintainable, and extensible web-based MVP for AFHomes within the seven-day development target.
+**Primary objective:** Build a secure, maintainable, modular, and production-capable AFHomes business management platform using the approved architecture and phased implementation process.
 
 **Specific objectives:**
 
-1. Establish authentication and authorization.
-2. Implement configurable Role-Based Access Control (RBAC).
-3. Provide CRUD operations for system roles and permissions.
-4. Provide CRUD operations for customer records.
-5. Manage VIP card product definitions.
-6. Manage customer-issued VIP cards.
-7. Manage IST/OST personnel and accreditation.
-8. Implement and maintain the AFHomes sales genealogy.
-9. Provide public IST/OST accreditation verification.
-10. Provide authorized customer search for staff.
-11. Maintain audit logs of important system operations.
-12. Implement the minimum Finance verification workflow required for VIP card activation.
-13. Establish reusable business services and API-ready architecture for future expansion.
-14. Prepare the platform for future modules and mobile application integration.
+1. Establish a unified Next.js application.
+2. Implement reusable frontend design foundations.
+3. Provide a centralized authentication system.
+4. Enforce role-based and record-level authorization.
+5. Support Organization Management.
+6. Support Staff and account lifecycle.
+7. Support Sales Network and genealogy.
+8. Support IST/OST accreditation.
+9. Support Customer Management.
+10. Support public customer and accreditation verification.
+11. Support VIP products and contracts.
+12. Support authorized Sales Management.
+13. Support Finance and Payments.
+14. Support Finance-controlled commissions.
+15. Support official VIP Card issuance.
+16. Support VIP Membership lifecycle.
+17. Support Stay Points accounting.
+18. Support reporting and analytics.
+19. Preserve audit history.
+20. Enable local database-backed development.
+21. Support controlled MongoDB Atlas migration.
+22. Prepare secure DigitalOcean deployment.
+23. Preserve architectural support for future Customer and Mobile interfaces.
+24. Preserve Redemption and Services for separately authorized future activation.
+
+Do not imply all objectives are Phase 1 deliverables.
 
 ---
 
-## Part II — System Scope
+## Part II — Business and Application Scope
 
-### 4. System Interfaces
+### 4. Core Business Domains
 
-The initial MVP consists of two primary web interfaces.
+AFHomes operates interconnected workflows involving company organization, personnel and access permissions, Sales Network, genealogy, accreditation, customers, VIP products and contracts, sales, finance, commissions, VIP Membership, Stay Points, public verification, reporting, audit and governance. The platform establishes a centralized, maintainable operating system for these processes, minimizing duplicate business records, maintaining clear sources of truth, enforcing authorized access, preserving important historical information, supporting accurate financial operations, providing auditable business transitions, and remaining extensible without unnecessary complexity.
 
-#### 4.1 Minimal Public Interface
+### 5. Application Interfaces
 
-Accessible without authentication. MVP responsibilities:
+AFHomes has a single Next.js application with logical presentation panels.
 
-- Basic AFHomes branding and navigation
-- Public IST/OST accreditation verification
-- Authorized login entry point
+- **Admin and Operations Panel:** supports authorized operational roles (Super Admin, Admin, HR, Finance, Staff, SVD, SSM, SM, OST, etc.) with shared panel architecture exposing different navigation, dashboards, and data access according to role. Do not create an independent application deployment per role.
+- **Public Panel:** supports approved public-facing capabilities: company branding and navigation, public website, public accreditation verification, Public Customer Lookup, login entry, approved public content/CMS capabilities. Part of the same Next.js application. Do not permanently restrict the target architecture to a minimal three-page MVP; do not automatically implement the full CMS during Phase 1 without authorization.
+- **Future Customer Panel:** planned future web panel (customer profile, membership info, VIP Card details, benefits, transactions, Stay Points, authorized self-service). Not automatically included in initial implementation.
+- **Future Mobile Application:** React Native + Expo may consume versioned backend APIs. Do not create the mobile app during this task.
 
-The public search must use exact official accreditation numbers only. A complete public marketing website is outside the initial MVP; additional public pages, announcements, galleries, marketing content, and other features may come in future phases.
+### 6. Disabled Modules
 
-#### 4.2 Admin and Staff Portal
+- **Redemption:** Preserved but disabled. Future activation requires separate authorization.
+- **Services:** Preserved but disabled. Future activation requires separate authorization.
 
-The primary operational interface. Required modules:
+Disabled means no user-facing navigation, no unauthorized direct route access, no active backend processing, code and architectural support retained where present, future activation requires explicit approval. A hidden menu alone does not enforce a backend feature flag. Do not delete their source code or documented architecture.
 
-- Dashboard and navigation
-- Authentication and account access
-- Role and permission management
-- Customer management
-- VIP product management
-- Customer-issued VIP card management
-- IST/OST management
-- Sales genealogy
-- Staff customer search
-- Finance verification and VIP activation
-- Audit log viewing
+### 7. Target Users and Roles
 
-The portal must support permission-based navigation and access. Different roles may share the same application shell while receiving different menus, actions, and data visibility.
+Relevant users may include: Super Administrator, Administrator, HR, Finance, Staff, Vice Director / applicable official designation, Senior Sales Manager, Sales Manager, Outside Sales Team, Internal Sales Team, Customer, Public Visitor.
 
-**Important:** Hiding a menu item does not constitute authorization. All protected operations must eventually enforce permissions and record-level access on the backend.
+This high-level role description is not the definitive permission matrix. See `docs/business-rules/01-roles-and-permissions.md`. The company requires centralized permission enforcement, applicable multiple-role assignments, protected Super Administrator authority, module permissions, record-level data scopes, business-operation restrictions, auditable permission changes. Do not invent per-action CRUD permission toggles if the canonical policy defines module-level permissions with separate mandatory sensitive-operation restrictions.
 
-#### 4.3 Future Customer Portal (excluded from MVP)
+---
 
-Potential future capabilities: customer profile management, VIP membership information, issued VIP card details, benefits and entitlements, membership status, other self-service features. Architecture must allow future introduction without a major rewrite.
+## Part III — Approved Technical Architecture
 
-#### 4.4 Future Mobile Application (excluded from MVP)
+### 8. Single Next.js Modular Monolith
 
-The platform must maintain reusable business services and versioned API boundaries to support future mobile clients.
+Primary logical layers: App Router; Panels and presentation; Shared UI; Domain modules; Typed repository contracts; API adapters; Server-side authentication and authorization; Application services; Mongoose persistence; MongoDB. See `docs/development/architecture.md` for complete technical design.
 
-### 5. Target Users and Roles
+### 9. Approved Technology Stack
 
-| Role / User | General Responsibility |
+| Area | Approved technology |
 |---|---|
-| Super Administrator | Overall system administration and protected system management |
-| Administrator | Authorized administrative operations |
-| HR | Personnel and organizational administration |
-| Finance | VIP payment/settlement verification and activation authorization |
-| Vice Director (VD) | Sales organization leadership |
-| Senior Sales Manager (SSM) | Sales hierarchy management |
-| Sales Manager (SM) | Sales team management |
-| Internal Sales Team (IST) | Authorized internal sales operations |
-| Outside Sales Team (OST) | Authorized outside sales operations |
-| Staff | Operational tasks based on assigned permissions |
-| Customer | VIP membership holder; future portal access |
-| Public Visitor | Public accreditation verification |
-
-These descriptions are general context only and must not be treated as the final permission matrix. Detailed roles, permissions, access scopes, and restrictions are documented separately under `docs/business-rules/`.
-
----
-
-## Part III — Confirmed MVP Requirements
-
-### 6. Priority 0 (P0) Functional Scope
-
-#### 6.1 Authentication and Authorization
-
-Required: login/logout, secure session handling, protected routes, account status enforcement, role-aware navigation, authorization checks, secure authentication integration.
-
-**Approved auth technology:** Better Auth with MongoDB. Before backend implementation, verify compatibility between Better Auth, the MongoDB adapter, Next.js, and the selected runtime. During frontend development, authentication may be simulated through mock services. During backend integration it must become real and server-enforced. Mock authentication is never production-ready.
-
-#### 6.2 Roles and RBAC Management
-
-**Approved model:** Protected system roles with configurable built-in and custom roles.
-
-Required: create custom roles; view roles; update configurable roles; archive/deactivate eligible roles; manage permissions; assign roles to users; restrict module access; restrict operations by permission; support record-level access scopes (`own`, `team`, `all`); prevent unauthorized privilege escalation; audit role/permission changes.
-
-The Super Administrator role is protected. The system must prevent unauthorized modification/deletion of protected system privileges and removal of the last effective Super Administrator. Permission enforcement must be centralized, not independently hardcoded across components. The exact role-permission matrix is defined in a separate business-rules document.
-
-#### 6.3 VIP Product Management
-
-Manage AFHomes VIP card product definitions. Initial tiers: Bronze, Silver, Gold.
-
-Required: create/view/update/archive-deactivate products; manage pricing, benefits, validity, contract versions, product status.
-
-**Approved source:** Latest approved 2026 AFHomes VIP contracts. Baseline:
-
-| Tier | Official Tier Code | Standard Price | Validity | Discount |
-|---|---|---|---|---|
-| Bronze | B1 | ₱72,000 | 7 years (5+2) | 15% |
-| Silver | S1 | ₱240,000 | 12 years (10+2) | 20% |
-| Gold | G1 | ₱390,000 | 22 years (20+2) | 25% |
-
-Complete terms, benefits, restrictions, and conditions must be reconciled against approved source contracts before final implementation. Product definitions and historical contract versions must remain distinguishable; do not silently overwrite previously approved contract terms.
-
-#### 6.4 Customer-Issued VIP Card Management
-
-Manage individual VIP cards issued to customers. VIP product definitions and customer-issued VIP cards are **separate domain entities**; updating a VIP product must not automatically modify historical contract snapshots of previously issued cards.
-
-Required: issue cards; associate with customers; generate/assign unique card control numbers; view/update permitted info; manage statuses; track Finance verification; track activation info; track validity dates; preserve contract snapshots; deactivate/archive; maintain issuance and activation history.
-
-**Approved activation policy:** Newly issued cards initially remain Pending. A card must not automatically become Active merely because issued. Activation requires Finance verification and approval based on approved payment/settlement eligibility rules. The minimum Finance activation workflow is included in the MVP; detailed eligibility rules documented separately before production.
-
-#### 6.5 Customer Management
-
-Required: create/view/update/archive-deactivate customer records; generate official customer IDs; associate customers with issued VIP cards; validate required fields; prevent defined duplicates.
-
-Approved customer ID format/RA No.: `YYYY-NNNN` (e.g., `2026-0001`). Official IDs must be unique. Historical relationships and audit records must remain intact when a customer is archived.
-
-#### 6.6 IST/OST Management
-
-Required: create/view/update/deactivate IST/OST records; manage official accreditation numbers; manage accreditation status; manage applicable validity and renewal info; associate eligible members with the sales hierarchy.
-
-IST and OST must remain distinguishable accreditation types with their respective identifier formats. Do not assume identical renewal policies. Detailed issuance/renewal/transfer rules maintained in a separate business-rules document.
-
-#### 6.7 Sales Genealogy
-
-Hierarchy: **VD → SSM → SM → OST**. Approved direct OST placement under VD or SSM must be supported without inventing intermediate managers.
-
-Required: parent/upline assignment; hierarchical relationship management; expandable genealogy tree; member search; hierarchical visibility; relationship validation; circular relationship prevention; controlled reassignment; genealogy history.
-
-Genealogy must be based on actual entity relationships, including during mock development. IST must not automatically be inserted into the OST sales genealogy unless an approved business rule requires it.
-
-#### 6.8 Public IST/OST Accreditation Search
-
-**Approved policy:** Exact official AA number only; active results only.
-
-Required: search using exact official AA number; normalize input per approved AA formatting rules; return only qualifying active accreditations; exclude inactive/deactivated/revoked/expired; generic not-found response for nonqualifying searches; validate input; apply rate limiting during backend integration; display only approved public information.
-
-No name-based public discovery. Approved display distinction: **IST** does not display "Valid Until"; **OST** displays "Valid Until" where applicable.
-
-Public search must not expose: private contact info, residential addresses, identification documents, financial information, or other unauthorized personal information. Exact public result field specification maintained separately.
-
-#### 6.9 Staff Customer Search
-
-Authorized staff search customer records by official customer ID and authorized customer name fields; display permitted info; apply role-based and record-level access restrictions; support filtering and appropriate result handling. Internal operational search, separate from any future public customer lookup.
-
-#### 6.10 Audit Logs and Activity History
-
-Record important operations: authentication events; role/permission changes; customer changes; VIP product changes; issued VIP card changes; IST/OST accreditation changes; genealogy changes; Finance verification decisions; VIP card activation events; other sensitive admin actions.
-
-Audit records should contain: actor, action, target entity, timestamp, outcome, relevant safe change metadata. Never record passwords, auth tokens, or unnecessary sensitive information. During frontend development, audit events may be simulated through centralized mock services; during backend integration, logging must be persistent, protected, and server-enforced.
-
-#### 6.11 Finance Verification and VIP Card Activation (P0)
-
-Include the **minimum** Finance module required for VIP card activation — not the entire Finance system.
-
-Required capabilities: view pending activation requests; review customer and issued-card info; review applicable contract info; review payment/authorized settlement evidence; approve/reject verification; record decisions, responsible Finance personnel, timestamps, reasons; enforce activation eligibility; activate eligible cards; record activation date and validity info; maintain verification and activation audit history.
-
-**Workflow:** (1) Authorized staff issues a VIP card → (2) card enters Pending → (3) request appears in Finance verification queue → (4) authorized Finance reviews evidence → (5) approve or reject based on verified eligibility → (6) only Finance-approved requests may proceed to authorized activation → (7) system records activation and audit history.
-
-Finance approval must not be simulated as an unrestricted status toggle in production.
-
-**Frontend mock phase:** simulate pending activation requests, Finance approve/reject, role-based Finance access, mock audit events, realistic success/rejection/validation scenarios.
-
-**Backend phase:** enforce Finance permissions server-side; persist verification records; validate activation eligibility; prevent duplicate/unauthorized activation; preserve audit history; ensure consistent state transitions.
-
-Detailed payment verification and settlement eligibility rules must be defined separately before production implementation.
-
-### 7. Features Outside the Initial MVP
-
-Unless explicitly approved later, defer:
-
-- Finance workflows beyond VIP card verification and activation
-- Full accounting and financial reporting
-- General payment collection workflows
-- Commission calculation and withdrawals
-- Advanced analytics
-- Complex reporting
-- Service booking
-- Stay-point redemption
-- QR-based redemption
-- Full CMS administration
-- Bulk historical data migration
-- Dedicated mobile applications
-- Customer portal
-- Advanced customer self-service
-- Full public marketing website
-
-These may influence module boundaries and data modeling but must not introduce unnecessary implementation work during the seven-day MVP.
-
----
-
-## Part IV — Development Approach
-
-### 8. Frontend-First Development Strategy
-
-**Frontend-first, mock-data-driven.** Establish functional, approved UI/UX before integrating real backend services and MongoDB.
-
-- **Stage 1 — Documentation and Planning:** master project context, MVP scope, business rules, architecture guidelines, frontend guidelines, mock data strategy, AI agent instructions.
-- **Stage 2 — Centralized Mock Data:** one centralized mock data system: typed entity models, consistent relationships, reusable seed data, shared repository interfaces, simulated async operations, mock CRUD, mock auth/authz, mock Finance verification, mock audit events, optional localStorage persistence. Components must not maintain separate conflicting copies of business records; all modules access mock data through defined services/repositories. Mock data must maintain consistent relationships across customers, VIP products, issued cards, sales-team members, accreditations, Finance verification records, and audit events.
-- **Stage 3 — Frontend Implementation:** functional interfaces using centralized mock data: working navigation, functional CRUD forms, search/filtering, form validation, confirmation dialogs, loading/empty/error states, responsive layouts, permission-aware interface simulation, genealogy visualization, Finance verification workflow, VIP card activation workflow, audit log viewing. Must behave like a functional app without a real database; no purely decorative interfaces.
-- **Stage 4 — UI/UX Review and Approval:** project owner reviews/tests; visual inspection, workflow testing, usability review, layout adjustments, form/navigation refinement, module approval. Avoid unnecessary backend work before frontend milestone approved. Timebox frontend refinement to preserve backend integration time.
-- **Stage 5 — Backend and Database Integration:** replace mock implementations with real backend services. Approved/planned tech: MongoDB, Mongoose, Better Auth, application APIs, server-side RBAC, server-side validation, persistent audit logs, database indexes, data consistency safeguards. Verify compatibility between framework, auth library, MongoDB adapter, and runtime before implementation. UI should communicate through stable service interfaces so replacing mock repositories does not require rewriting presentation components.
-- **Stage 6 — Testing and Release Evaluation:** functional, CRUD, authentication, authorization, search, genealogy, Finance verification, VIP card activation, audit log, integration, regression, security testing. Not production-ready while relying on mock auth or localStorage for authoritative business data. Public deployment requires separate hosting approval.
-
----
-
-## Part V — Technical and Architectural Direction
-
-### 9. Preferred Technology Stack
-
-| Layer | Technology |
-|---|---|
-| Full-Stack Framework | Next.js |
-| Frontend | React |
-| Programming Language | TypeScript |
+| Full-stack application | Next.js |
+| Router | Next.js App Router |
+| UI framework | React |
+| Programming language | TypeScript |
 | Styling | Tailwind CSS |
-| UI Components | shadcn/ui |
+| UI components | shadcn/ui |
+| Additional styling | CSS Modules |
 | Validation | Zod |
-| Database | MongoDB |
-| Database Modeling | Mongoose |
-| Authentication | Better Auth |
-| Unit and Integration Testing | Vitest |
-| Browser Testing | Playwright |
-| Local Containerization | Docker Compose |
+| Client asynchronous state | TanStack Query |
+| API architecture | REST `/api/v1` |
+| Backend architecture | Domain services inside Next.js |
+| Authentication | Better Auth direction (subject to compatibility verification) |
+| Authorization | Centralized RBAC and record-level policies |
+| ODM | Mongoose |
+| Development database | Local MongoDB |
+| Production database | MongoDB Atlas |
+| Application hosting | DigitalOcean Droplet |
+| Container deployment | Docker Compose |
+| Production transport | HTTPS |
+| Reverse proxy | Appropriate approved HTTPS reverse proxy |
+| Future Customer Portal | Planned, separately authorized |
+| Future mobile application | React Native + Expo direction |
 
-Preferred architecture: **single deployable modular monolith**.
+Better Auth is the target authentication solution; compatibility with selected Next.js, Node.js, MongoDB, and integration packages must be verified before implementation. Do not claim compatibility has been tested or deployment configured without evidence.
 
-Avoid: microservices, unnecessary monorepo complexity, separate frontend/backend repos without justification, premature infrastructure abstraction, unnecessary dependencies, vendor-specific lock-in where practical alternatives exist.
+If `testing.md` names preferred testing tools, summarize them as approved or candidate tools according to that document. Do not falsely report that Vitest, Playwright, or any other package is already installed.
 
-#### 9.1 Hosting and Deployment
+### 10. Frontend-First Development
 
-**Approved decision:** Local development first. No production hosting provider committed. Potential future options: DigitalOcean, Adaptive Web Hosting. MongoDB is the planned application database.
+The project begins with frontend-first development after documentation approval. Stages: (1) Documentation; (2) Application foundation; (3) Centralized mock repositories; (4) UI implementation and review; (5) Local database foundation; (6) Backend services; (7) Full-stack integration; (8) System testing; (9) Cloud deployment. These are conceptual development steps. The official Phase 0–8 mapping remains in `implementation.md`. Do not create a separate competing implementation roadmap inside `project.md`.
 
-Do not assume a hosting provider supports the selected runtime without verification. Do not provision, purchase, or deploy production infrastructure without explicit approval. The seven-day MVP target includes release-readiness evaluation, but public deployment remains conditional on hosting approval. Prioritize free, local, open-source tools where feasible.
+### 11. Centralized Mock Data Requirements
 
-### 10. Architectural Principles
+Required behavior: one centralized in-memory mock business data store; synthetic records; shared domain identifiers; consistent relationships; mock repository adapters; development-only simulated identities; mock business workflows; appropriate loading/errors; full browser refresh resets mock data. The mock store is not a production database. Do not persist mock business records in localStorage or IndexedDB. Do not allow every feature to maintain conflicting copies of the same business records. Do not present mock approval as real financial verification.
 
-1. Separation of concerns
-2. Clear module boundaries
-3. Centralized business rules
-4. Reusable UI components
-5. Shared validation contracts
-6. Repository-based data access
-7. Secure-by-default authorization
-8. Consistent error handling
-9. Traceable state changes
-10. Minimal unnecessary complexity
-11. Maintainability
-12. Extensibility
-13. API readiness for future clients
+### 12. Local MongoDB Development
 
-Remain a modular monolith unless a future architectural change is justified.
+This is a major approved project decision. Before the cloud database, AFHomes will use real MongoDB running locally.
 
-### 11. Data Management Principles
+- **Local development:** Next.js backend connects to local MongoDB (Docker-hosted or native).
+- **Data persistence:** local MongoDB development records persist across browser refreshes and application restarts.
+- **Transaction support:** appropriate replica-set configuration required for realistic MongoDB multi-document transaction integration tests.
+- **Data isolation:** local development must not accidentally connect to production Atlas.
+- **Detailed reference:** `docs/development/database.md`
 
-Support: centralized mock data during frontend development; consistent IDs and entity relationships; shared data access contracts; unique official identifiers; soft deletion/archival where appropriate; versioned VIP product definitions; historical contract snapshots for issued VIP cards; Finance verification records; activation history; traceable business operations; protected audit records; backend-enforced validation and permissions in production; compatibility with future historical data imports.
+Do not include full Docker configuration or database commands in the master project document.
 
-LocalStorage may be used only for disposable development state. Do not store real sensitive customer information, plaintext passwords, auth tokens, or authoritative business records in localStorage.
+### 13. Cloud and Deployment Strategy
 
-#### 11.1 Historical Data Migration
+Approved production architecture: DigitalOcean Droplet + Docker Compose + Next.js Application + HTTPS Reverse Proxy + MongoDB Atlas Cloud.
 
-**Approved decision:** Design import compatibility now; perform migration after the MVP.
+- **DigitalOcean responsibilities:** hosts the Next.js application (frontend rendering, backend REST API, authentication integration, domain services).
+- **MongoDB Atlas responsibilities:** hosts the managed production database. Do not deploy a second standalone production MongoDB server on the Droplet by default.
+- **Production architecture:** one Next.js application container as standard application runtime; reverse proxy manages HTTPS access; optional background worker may be justified separately.
+- **Deployment security:** production requires firewall, restricted SSH, HTTPS, secrets, Atlas network access control, monitoring, backups, recovery planning, release approval.
+- **Hosting details that may remain open:** final Droplet region, Droplet size, domain, reverse proxy choice, Atlas tier, Atlas region, object storage, monitoring provider. Do not confuse those remaining implementation choices with an undecided overall hosting architecture.
 
-- Use synthetic data during mock development.
-- Preserve official identifier formats.
-- Maintain consistent entity relationships.
-- Consider future import mapping requirements.
-- Avoid architectural decisions that prevent historical imports.
-- Do not import live business data during the seven-day MVP.
-- Do not modify the existing production database.
+### 14. Data Import and Migration Policy
 
-Actual migration procedures will be designed and approved separately.
+Distinguish two different data movement requirements.
+
+- **Local MongoDB to Atlas:** approved planned technical capability. A future authorized process may use source backup, migration rehearsal, database compatibility checks, index validation, business reconciliation, controlled cutover, rollback planning. Do not automatically migrate synthetic local records into production.
+- **Historical or legacy data import:** future application-level imports may be supported. However, **no automatic migration of the earlier Supabase production records is authorized.** Any future legacy import requires separate project-owner approval. The old production database must remain untouched unless specifically authorized.
+- **Historical data integrity:** preserve customer identity, official identifiers, historical contracts, sales attribution, verified financial history, membership dates, Stay Points ledger, audit history. Do not fabricate missing historical payments or membership activation facts. See `docs/development/database.md`.
 
 ---
 
-## Part VI — Project Execution
+## Part IV — Critical Business Principles
 
-### 12. Seven-Day Accelerated Agile SDLC
+### 15. Business-Rule Authority
 
-| Day | Primary Activities |
+`docs/business-rules/` (01–13) defines authoritative business behavior. Implementation must follow the applicable business-rule document. Do not allow frontend, backend, or database agents to invent replacement business rules. Other documents must reference the authoritative source rather than creating independent competing definitions.
+
+### 16. Sales Network and Genealogy
+
+Manages the official seller hierarchy and reporting relationships. Use canonical designation rules. The hierarchy includes Vice Director / applicable official designation → SSM → SM → OST. OST direct sponsorship relationships must follow the authoritative business rules. Transfers must preserve historical sale attribution.
+
+### 17. Customer and VIP Contract Identity
+
+Manages canonical customer identity, profiles, applications, drafts, and authorized searches. Customer creation is not the same as VIP Membership activation. VIP Products and Contracts govern company VIP tiers, payment schemes, benefits, and contracts. Current product configuration and finalized historical contract terms must remain distinguishable.
+
+### 18. Sales and Finance
+
+Sales records qualifying customer purchases, seller attribution, sale state, and reporting recognition. Confirmed Sale follows the authoritative Sales Performance Reporting rules. Finance manages payment submissions, monetary verification, balances, refunds, reversals, and reconciliation. Only authorized Finance personnel verify actual monetary payments. Payment submission is not Finance verification. Contract finalization is not verified payment. Confirmed Sale is not necessarily Fully Paid. Finance collections and Confirmed Sales are different reporting measures. Fully Paid settlement and official VIP Membership activation are separate states. Reversals must be traceable and must not erase original valid transaction history. Sensitive Finance state changes must be attributable to authorized actors.
+
+### 19. Commissions
+
+Manages authorized commission obligations, Finance approval, Holds, and actual payout confirmation. Commission eligibility depends on authorized Sales and historical attribution. Applicable percentages follow approved Finance-controlled processes. Approval is an explicit authorized state. A commission may be Approved but still Unpaid. Paid means actual confirmed payout. Reversals and Holds follow approved rules. Do not assume genealogy automatically distributes Finance-approved commissions. Do not invent a universal commission percentage. See `docs/business-rules/08-commission-management.md`.
+
+### 20. VIP Membership and Stay Points
+
+VIP Membership manages official membership activation, issued VIP Card identity, validity, and contractual entitlements. Activation follows authorized eligibility rules. Stay Points manages transactional points earning, eligibility, balances, holds, reservations, consumption where enabled, and auditable ledger history. The available balance must not be confused with a contractual annual entitlement cap. Weekday and Weekend balances are separate. Gold primary and supplementary holders share the applicable membership entitlement pool. Redemption is preserved but disabled.
+
+### 21. Official Identifiers
+
+The master document identifies distinct categories: MongoDB internal identity, Customer ID, RA number/reference, VIP Card ID, AAI/AAO accreditation number, Sale reference, Payment or financial transaction reference.
+
+- **Customer identity:** use the authoritative Customer Management definition. Do not automatically use RA numbers as Customer IDs.
+- **RA reference:** preserve approved RA scope and uniqueness rules. If RA uniqueness remains unresolved, flag the exact dependency.
+- **VIP Card ID:** established target format `YYMMDDNNNNNVTPMMS`. Verify exact component definitions from document 06. Preserve the authoritative RA-derived sequence relationship where specified. Do not create a competing standalone card serial allocator.
+- **Accreditation:** use the authoritative AAI/AAO numbering rules from document 03.
+- **Identifier governance:** official identifiers must be system-controlled, appropriate to their domain, unique according to approved scope, concurrency-safe, historically preserved, auditable. Do not reproduce the full allocator algorithms in `project.md`.
+
+### 22. Public Verification and Privacy
+
+Two distinct public discovery functions.
+
+- **Public accreditation verification:** uses approved AAI/AAO identity rules. Current established requirements: exact official accreditation number; no unrestricted public name discovery; only qualifying active/eligible results; approved public disclosure; safe generic failures; rate limiting when integrated. Approved display distinction: IST/AAI does not display the same "Valid Until" field as OST; OST/AAO displays the applicable validity date where required. Verify against document 03 before retaining details.
+- **Public Customer Lookup:** not the same feature. Follow document 04. Only approved active and eligible membership records may be publicly verifiable. Respect approved identity masking, exact lookup identifiers, and restricted disclosure.
+
+Do not expose: government ID images; private customer contacts outside authorized disclosure; residential addresses; unrelated financial information; private account details. Do not duplicate the complete public result field schemas here.
+
+### 23. Historical Data Integrity
+
+Preserve customer identity, official identifiers, historical contracts, sales attribution, verified financial history, membership dates, Stay Points ledger, audit history. Do not fabricate missing historical payments or membership activation facts.
+
+---
+
+## Part V — Project Delivery and Governance
+
+### 24. Phase 0–8 Roadmap
+
+| Phase | Name | Purpose |
+|---|---|---|
+| 0 | Documentation Foundation | Complete and reconcile authoritative documentation |
+| 1 | Frontend Foundation | Next.js, UI foundations, panels, mock data |
+| 2 | Local MongoDB Database Foundation | Persistent development database, modeling and indexes |
+| 3 | Backend Foundation | API, authentication, authorization and repositories |
+| 4 | Core Business Modules | Implement domain workflows in dependency order |
+| 5 | Frontend/Backend Integration | Replace mocks with real services |
+| 6 | Testing and System Validation | Verify correctness, security, and financial integrity |
+| 7 | Cloud Deployment and Production Readiness | Atlas, DigitalOcean, HTTPS, monitoring and recovery |
+| 8 | Stabilization and Future Enhancements | Maintain and improve the accepted system |
+
+No phase is automatically authorized by documentation. AI agent implementation completion is not the same as project-owner acceptance. Phase 1 does not automatically authorize every business module. Phase 2 does not require Atlas production provisioning. Phase 7 requires separate cloud and deployment approvals. Use `docs/development/implementation.md` as the authoritative roadmap. Do not duplicate its full subphase matrix in `project.md`.
+
+### 25. Approved Decisions
+
+| Area | Current decision |
 |---|---|
-| Day 1 | Documentation, architecture, mock data contracts, project foundation |
-| Day 2 | Admin/public layouts, authentication UI, Roles CRUD, mock RBAC |
-| Day 3 | Customer CRUD, staff customer search, VIP product CRUD |
-| Day 4 | IST/OST CRUD, accreditation UI, genealogy |
-| Day 5 | Issued VIP card CRUD, Finance verification UI, activation workflow, public AA search, UI/UX review |
-| Day 6 | MongoDB integration, Better Auth, APIs, real RBAC, Finance verification, integration tests |
-| Day 7 | Regression testing, security checks, UAT, deployment-readiness evaluation, handover |
+| Application topology | Single Next.js modular monolith |
+| Frontend | React/TypeScript |
+| Frontend development | Frontend-first |
+| Initial mock data | Browser-scoped in-memory |
+| Real development database | Local MongoDB |
+| Cloud database | MongoDB Atlas |
+| ORM/ODM | Mongoose |
+| API | REST `/api/v1` |
+| Authentication | Better Auth target, verify compatibility |
+| Authorization | Centralized RBAC and record-level access |
+| Production hosting | DigitalOcean Droplet |
+| Deployment | Docker Compose |
+| HTTPS | Required |
+| Core modules | Included in phased roadmap |
+| Redemption | Preserved but disabled |
+| Services | Preserved but disabled |
+| Customer Portal | Future authorized phase |
+| Mobile | Future authorized phase |
+| Local-to-Atlas migration | Planned capability |
+| Legacy Supabase migration | Not automatically authorized |
+| Production release | Explicit approval required |
 
-This schedule is an aggressive target, not a guarantee. Frontend implementation must be timeboxed to preserve sufficient time for backend integration and testing. Security, authorization, audit integrity, and data consistency must not be bypassed to meet the deadline. Defer noncritical enhancements rather than release insecure functionality if necessary.
+Do not repeat the old "hosting selection deferred" decision.
 
-### 13. AI-Driven Development Workflow
+### 26. Critical Dependencies
 
-#### 13.1 Project Owner Responsibilities
+Review `implementation.md` and the actual business documents. Potential examples: conflicting Gold contract price; incomplete Silver contract amount; Non-Standard commercial rules; Move A/B1/B2 payment scheme details; RA numbering scope and uniqueness; accreditation expiry/account eligibility interpretation; Better Auth/MongoDB compatibility; Atlas tier capabilities; formal audit retention; production domain and infrastructure sizing; backup and recovery objectives. Do not declare all of these unresolved without verification. If the canonical business documents now contain an approved resolution, update the master context accordingly. Scope-specific blocking: a pricing discrepancy does not necessarily block frontend scaffolding; an Atlas tier decision does not block local MongoDB development; a card ID allocation conflict may block final issuance logic without blocking unrelated Customer Management. No invented approvals: do not resolve commercial, financial, or security-sensitive conflicts by guessing.
 
-Define requirements; provide business context; approve decisions; review UI/UX; test completed functionality; report defects; approve milestones.
+### 27. Business-Policy Change Governance
 
-#### 13.2 AI Agent Responsibilities
+AFHomes policies may evolve. Future authorized changes can affect product terms, payment schemes, commission rules, membership eligibility, accreditation, account approval, Stay Points rules, reporting, privacy, retention. Changes must follow: (1) Authorized decision; (2) Canonical document update; (3) Impact analysis; (4) Required implementation changes; (5) Migration consideration; (6) Testing; (7) Approval; (8) Controlled release. Historical finalized contracts and monetary transactions must remain protected. Do not silently reinterpret historical records according to a later configuration.
 
-Analyze requirements; read relevant documentation; prepare implementation plans; implement approved tasks; run available tests; report implementation results; identify missing requirements; flag contradictions and risks.
+### 28. Data Import and Migration Policy
 
-#### 13.3 AI Agent Restrictions
+Distinguish two different data movement requirements.
 
-Agents must not:
+- **Local MongoDB to Atlas:** approved planned technical capability. A future authorized process may use source backup, migration rehearsal, database compatibility checks, index validation, business reconciliation, controlled cutover, rollback planning. Do not automatically migrate synthetic local records into production.
+- **Historical or legacy data import:** future application-level imports may be supported. However, **no automatic migration of the earlier Supabase production records is authorized.** Any future legacy import requires separate project-owner approval. The old production database must remain untouched unless specifically authorized.
+- **Historical data integrity:** preserve customer identity, official identifiers, historical contracts, sales attribution, verified financial history, membership dates, Stay Points ledger, audit history. Do not fabricate missing historical payments or membership activation facts. See `docs/development/database.md`.
 
-- Invent missing business rules
-- Modify unrelated modules
-- Introduce unnecessary dependencies
-- Execute production changes without explicit approval
-- Treat mock authorization as production security
-- Claim unverified functionality is complete
-- Silently change approved architecture or scope
+### 29. Quality and Release Readiness
 
-Detailed agent operating instructions are maintained separately in `AGENTS.md`.
+The master context must briefly explain the approved quality strategy.
 
-### 14. Definition of Done
+- **Early frontend work:** manual-first UI testing is permitted during initial frontend development.
+- **Backend development:** introduce appropriate automated unit, integration, API, and database tests.
+- **Financial workflows:** critical financial and membership behavior requires automated validation.
+- **Production:** production release requires authentication verification, authorization verification, financial consistency tests, identifier uniqueness tests, points ledger checks, data privacy tests, relevant E2E tests, backup and recovery readiness, release authorization. Do not claim manual UI review alone is sufficient for production readiness. See `docs/development/testing.md`.
 
-A feature is complete when:
+### 30. Project-Owner Approval
 
-1. Documented requirements are implemented.
-2. UI interactions function correctly.
-3. The approved data access layer is used.
-4. Required validation is enforced.
-5. Permission and visibility rules are respected.
-6. Important changes generate audit events.
-7. Relevant tests pass.
-8. Related modules remain functional.
-9. No critical regressions remain.
-10. The project owner approves the result.
-
-#### 14.1 Mock-Complete
-
-A frontend feature may be marked **Mock-Complete** when it passes applicable acceptance criteria using centralized mock services. Mock-Complete does not mean production-ready.
-
-#### 14.2 Production-Ready
-
-A feature may be marked **Production-Ready** only when: real backend integration is complete; persistent storage is verified; authentication and authorization are enforced server-side; relevant automated tests pass; critical security checks pass; audit and data consistency requirements are verified; required business rules are approved; the project owner accepts the result.
+No phase is automatically authorized by documentation. Every implementation phase, major architecture change, production database change, actual data migration, production deployment, enabling disabled modules, sensitive policy change, or Git operation requires explicit project-owner authorization. Do not invent blanket permission to commit/push.
 
 ---
 
-## Part VII — Documentation Governance and Approved Decisions
+## Part VI — Documentation and AI Agents
 
-### 15. Documentation Structure and Authority
+### 31. Documentation Authority
 
-`docs/project.md` is the master project-level context. Detailed specifications are maintained separately under `docs/business-rules/` and `docs/development/`. The master document must not duplicate detailed field schemas, permission matrices, or low-level implementation instructions; link to relevant documentation as files become available.
+`docs/project.md` is the master project context. Detailed specs live under `docs/business-rules/` and `docs/development/`. The master document must not duplicate detailed field schemas, permission matrices, or low-level implementation instructions. Link to relevant documentation as those files become available.
 
-#### 15.1 Documentation Precedence
+**Documentation precedence:** When resolving conflicting information: (1) Latest explicitly approved business decisions; (2) Approved business-rule specifications; (3) Approved architecture and development specifications; (4) Master project context; (5) Verified legacy references. AI assumptions are not authoritative requirements. If two approved sources conflict, flag the contradiction and request clarification. Do not silently invent a resolution.
 
-When resolving conflicting information:
+### 32. Development Documents
 
-1. Latest explicitly approved business decisions
-2. Approved business-rule specifications
-3. Approved architecture and development specifications
-4. Master project context
-5. Verified legacy references
+| File | Purpose |
+|---|---|
+| `docs/development/README.md` | Documentation entry point |
+| `docs/development/architecture.md` | Full technical architecture |
+| `docs/development/frontend.md` | Frontend design |
+| `docs/development/database.md` | MongoDB architecture |
+| `docs/development/backend.md` | Backend/API architecture |
+| `docs/development/security.md` | Security |
+| `docs/development/testing.md` | Quality assurance |
+| `docs/development/implementation.md` | Phased roadmap |
+| `docs/development/deployment.md` | Hosting and operations |
 
-AI assumptions are not authoritative requirements. If two approved sources conflict, flag the contradiction and request clarification; do not silently invent a resolution.
+### 33. Business-Rule References
 
-### 16. Approved Project Decisions and Remaining Dependencies
+| # | Document | Primary responsibility |
+|---|---|---|
+| 01 | `docs/business-rules/01-roles-and-permissions.md` | Organization, Staff, Roles and Permissions |
+| 02 | `docs/business-rules/02-sales-network-and-genealogy.md` | Sales Network and Genealogy |
+| 03 | `docs/business-rules/03-ist-ost-accreditation.md` | IST/OST Accreditation |
+| 04 | `docs/business-rules/04-customer-management.md` | Customer Management |
+| 05 | `docs/business-rules/05-vip-products-and-contracts.md` | VIP Products, Contracts and Payment Schemes |
+| 06 | `docs/business-rules/06-vip-card-issuance.md` | VIP Card Issuance and Official Identifiers |
+| 07 | `docs/business-rules/07-finance-and-payments.md` | Finance and Payments |
+| 08 | `docs/business-rules/08-commission-management.md` | Commission Management |
+| 09 | `docs/business-rules/09-vip-membership-and-stay-points.md` | VIP Membership and Stay Points |
+| 10 | `docs/business-rules/10-redemption.md` | Redemption Management |
+| 11 | `docs/business-rules/11-reports-and-analytics.md` | Reports and Analytics |
+| 12 | `docs/business-rules/12-audit-logs-and-governance.md` | Audit Logs and Governance |
+| 13 | `docs/business-rules/13-sales-performance-reporting.md` | Sales Performance Reporting |
 
-#### 16.1 Hosting
+### 34. Agent Reading Order
 
-**Decision:** Local development first; hosting selection deferred. No production hosting commitment; maintain deployment portability; do not provision production infrastructure without approval; hosting provider selection remains a future decision.
+Before making changes, AI coding agents must:
 
-#### 16.2 Authentication
+1. Inspect the repository.
+2. Verify the current branch.
+3. Inspect existing changes.
+4. Read the master project context.
+5. Read `docs/development/README.md`.
+6. Read `docs/development/architecture.md`.
+7. Read the relevant authoritative business-rule documents.
+8. Read the development document governing the layer being changed.
+9. Confirm authorization.
+10. Identify dependencies.
 
-**Decision:** Better Auth with MongoDB. Use Better Auth as intended auth solution; validate framework and database compatibility; use replaceable mock authentication during frontend development; enforce real authentication and authorization during backend integration.
+For deployment tasks, also read `docs/development/deployment.md`. For MongoDB work, read `docs/development/database.md`. For frontend work, read `docs/development/frontend.md`. For backend/API work, read `docs/development/backend.md`.
 
-#### 16.3 Roles and RBAC
+Do not treat reading documentation as permission to edit every file. Only the explicitly authorized task scope may be changed.
 
-**Decision:** Protected system roles with configurable built-in and custom roles. Protect Super Administrator privileges; support custom role creation; configurable permissions; `own`, `team`, `all` access scopes; prevent unauthorized privilege escalation; audit permission changes. Detailed permission matrix remains to be specified.
+### 35. AI Development Restrictions
 
-#### 16.4 VIP Card Activation
+Agents must:
 
-**Decision:** Newly issued VIP cards remain Pending until Finance verification. Additional approved requirement: include the minimum Finance verification and activation workflow in the MVP. Issuance does not automatically activate; Finance verification required; approval/rejection recorded; activation follows approved eligibility rules; activation history auditable; full Finance operations outside scope. Detailed payment and settlement eligibility rules remain to be specified.
+- Follow the approved Next.js modular-monolith architecture.
+- Do not introduce separate frontend/backend applications.
+- Do not introduce unapproved frameworks.
+- Keep domain business rules outside UI components.
+- Keep MongoDB access server-only.
+- Follow the authoritative business-rule documents.
+- Do not invent missing commercial policies.
+- Do not bypass server-side RBAC.
+- Enforce record-level privacy.
+- Preserve historical genealogy attribution.
+- Preserve finalized contract snapshots.
+- Preserve official identifier rules.
+- Respect Finance verification authority.
+- Respect manual Finance commission approval.
+- Do not automatically mark Approved commissions Paid.
+- Do not confuse Confirmed Sale with Fully Paid settlement.
+- Do not activate VIP Membership outside the approved workflow.
+- Preserve Stay Points ledger integrity.
+- Do not create competing data stores or identifier allocators.
+- Do not expose secrets in client code.
+- Keep Redemption and Services disabled.
+- Do not automatically migrate legacy production data.
+- Do not deploy without authorization.
+- Do not commit or push without authorization.
+- Do not overwrite unrelated user work.
+- Run applicable authorized tests.
+- Report tests honestly.
+- Stop at the authorized task boundary.
 
-#### 16.5 VIP Contracts and Benefits
+### 36. Definition of Ready and Done
 
-**Decision:** Use the latest approved 2026 AFHomes VIP contracts. Bronze, Silver, Gold are initial tiers; preserve contract version history; preserve issued-card contract snapshots; reconcile complete benefits and restrictions against approved source documents; do not invent missing contract clauses. Actual stay-point redemption remains outside the MVP.
+Briefly define these terms and link to `implementation.md`.
 
-#### 16.6 Historical Data Migration
+- **Definition of Ready:** A task has approved scope, relevant documents, known dependencies, clear acceptance criteria, appropriate authorization, no unresolved blocker affecting the planned behavior.
+- **Mock-Complete:** A frontend feature has been verified using the approved centralized mock architecture. Mock-Complete is not Production-Ready.
+- **Implemented:** The required authorized code exists.
+- **Verified:** Applicable checks and tests have actually run successfully.
+- **Accepted:** The project owner has accepted the result.
+- **Production-Ready:** A feature has appropriate real backend integration, secure persistence, authorization, testing, and required operational readiness.
 
-**Decision:** Design import compatibility now; migrate after the MVP. Preserve official identifiers; maintain compatible data relationships; use synthetic development data; do not import live historical records during the MVP; do not modify the existing production database.
-
-#### 16.7 Public IST/OST Search
-
-**Decision:** Exact AA number search only; active results only. No public name-based discovery; return only qualifying active accreditation records; generic not-found responses for nonqualifying searches; protect private information; IST results do not show "Valid Until"; OST results show "Valid Until" where applicable.
-
-#### 16.8 Remaining Implementation Dependencies
-
-Still requiring verification or separate specifications:
-
-1. Better Auth and MongoDB version compatibility.
-2. Exact role-permission matrix.
-3. Detailed Finance payment verification and settlement eligibility.
-4. Complete VIP contract clauses and benefit calculations.
-5. Official identifier generation and future import mappings.
-6. Accreditation active-status and expiry evaluation rules.
-7. Final hosting provider and deployment approval.
-
-These dependencies must not be silently converted into invented business rules. AI agents may continue documentation and frontend mock development using clearly labeled assumptions, but must not implement unresolved financial eligibility or production security behavior as if approved.
+Do not use these statuses interchangeably.
 
 ---
 
-## Part VIII — Execution Instructions
+## Part VII — Execution Safety
 
-### 17. Required Actions (for agents executing this task)
+### 37. Repository Protection
 
-1. Inspect the existing `afhomes-platform` repository.
-2. Confirm the current documentation directory structure.
-3. Create or update only `docs/project.md`.
-4. Use the complete project context supplied.
-5. Organize using clear Markdown headings and tables.
-6. Preserve all confirmed project requirements.
-7. Clearly distinguish approved decisions, proposed details, and unresolved dependencies.
-8. Avoid excessive repetition.
-9. Keep the document concise but complete enough for future AI agents.
-10. Do not invent missing business rules.
-11. Do not create additional documentation files.
-12. Do not implement application code.
-13. Do not initialize frameworks.
-14. Do not install dependencies.
-15. Do not modify databases or deployments.
-16. Do not modify unrelated files.
-17. Validate the resulting document for completeness and internal consistency.
+- No destructive Git commands without approval.
+- Preserve untracked work.
+- Do not overwrite coworker changes.
+- No unauthorized force-push.
+- No unauthorized merges.
 
-### 18. Expected Deliverable
+### 38. Database Protection
 
-File: `docs/project.md`. The completed document must allow a new AI agent to understand: what AFHomes Platform is; why it is being developed; who will use it; which features are in the MVP; which are deferred; how frontend-first development works; how centralized mock data is used; how backend integration is approached; which technologies are approved or planned; which business and architectural decisions are confirmed; which requirements still need clarification; what restrictions AI agents must follow.
+- No accidental production database reset.
+- No unapproved migrations.
+- No automatic legacy Supabase import.
+- No development test data automatically promoted to production.
 
-**STOP after completing `docs/project.md`. Do not proceed to other documentation or implementation tasks without explicit approval.**
+### 39. Security Protection
+
+- No production credentials in source control.
+- No client-side database secrets.
+- No bypass of RBAC or Finance verification.
+- No activation of disabled workflows.
+
+### 40. Deployment Protection
+
+- Production release requires explicit project-owner authorization.
+- Docker configuration changes and cloud provisioning require appropriate task scope.
+
+### 41. Historical Integrity
+
+- Preserve contract snapshots.
+- Preserve identifiers.
+- Preserve payment records.
+- Preserve genealogy history.
+- Preserve audit records.
 
 ---
 
-## Completion Report
+## Part VIII — What Does Not Belong in project.md
+
+The master project document is not the correct place for complete database schemas, every customer field definition, full role permission matrix, detailed commission percentages, complex VIP contract clauses, MongoDB connection commands, Docker Compose configuration, API endpoint implementation examples, large test-case catalogs, complete daily developer schedules, previous coding-agent completion reports, or one-time task execution instructions. Those belong in the appropriate business-rule, technical, implementation, or operational documents. The project context must provide accurate orientation and references. Do not make this file another duplicate 1,000-line technical specification merely to preserve its historical length.
+
+---
+
+## Part IX — Critical Project Invariants
+
+1. AFHomes Platform is a standalone project.
+2. It uses one Next.js application.
+3. It follows a modular-monolith architecture.
+4. React and TypeScript are approved.
+5. Next.js App Router is approved.
+6. Tailwind and shadcn/ui are approved.
+7. Zod is the selected validation approach.
+8. TanStack Query is the client asynchronous-state solution.
+9. REST APIs use `/api/v1`.
+10. Backend domain services are inside the Next.js project.
+11. Better Auth is the target authentication solution subject to verification.
+12. RBAC is centralized.
+13. Record-level authorization is required.
+14. Frontend-first development is approved.
+15. Mock business data is in-memory and resets on refresh.
+16. Local MongoDB is the first real persistent database.
+17. Local MongoDB development data persists across refreshes.
+18. Mongoose is server-only.
+19. MongoDB Atlas is the target managed production database.
+20. DigitalOcean Droplet is the application host.
+21. Docker Compose is the selected deployment method.
+22. HTTPS is required for production.
+23. No separate backend application by default.
+24. Sales Network relationships follow approved genealogy.
+25. Historical sales attribution is preserved.
+26. Customer identity and RA references must not be improperly conflated.
+27. Official identifiers follow the authoritative generators.
+28. Payment submission is not Finance verification.
+29. Confirmed Sale is not necessarily Fully Paid.
+30. Finance verifies monetary payments.
+31. Commission approval follows authorized Finance procedures.
+32. Approved commission is not automatically Paid.
+33. Membership activation follows official eligibility and activation rules.
+34. VIP Card issuance must not duplicate official identifiers.
+35. Stay Points are ledger-controlled.
+36. Annual points caps are not immediately spendable balances.
+37. Customer privacy is enforced.
+38. Public accreditation and customer lookup follow separate approved policies.
+39. Reports consume authoritative data.
+40. Audit history remains traceable.
+41. Redemption remains disabled.
+42. Services remains disabled.
+43. Future Customer Portal remains separately authorized.
+44. Future mobile application remains separately authorized.
+45. Local-to-Atlas migration is a planned capability.
+46. Synthetic development data is not automatically production data.
+47. Legacy Supabase production migration is not automatically authorized.
+48. Commercial policies may change through authorized decisions.
+49. Historical signed contracts remain protected.
+50. The project follows Phases 0–8 rather than a mandatory seven-day schedule.
+51. Every implementation phase requires authorization.
+52. Production deployment requires explicit authorization.
+53. The master project context must not duplicate low-level specifications.
+54. Documentation completion does not imply application implementation.
+
+---
+
+## Part X — Completion Report
 
 - **File created/updated:** `docs/project.md`
-- **Major sections included:** Part I Project Overview; Part II System Scope; Part III Confirmed MVP Requirements (P0); Part IV Development Approach; Part V Technical and Architectural Direction; Part VI Project Execution; Part VII Documentation Governance and Approved Decisions; Part VIII Execution Instructions.
-- **Confirmed project and architectural decisions:** Modular monolith on Next.js/React/TypeScript/Tailwind/shadcn; MongoDB + Mongoose; Better Auth; frontend-first mock-data-driven; local dev first; protected system roles with configurable built-in/custom roles and `own`/`team`/`all` scopes; VIP cards remain Pending until Finance verification with minimum Finance workflow in MVP; latest approved 2026 VIP contracts with versioned snapshots; exact-AA-number-only public accreditation search (active only); IST hides "Valid Until", OST shows it; import compatibility now, migration after MVP; soft archival preserving history; centralized mock data via services/repositories.
-- **Remaining unresolved dependencies:** Better Auth + MongoDB compatibility; exact role-permission matrix; Finance payment/settlement eligibility rules; complete VIP contract clauses/benefit calculations; official identifier generation and import mappings; accreditation active-status/expiry evaluation rules; final hosting provider and deployment approval.
-- **Contradictions identified:** None identified during documentation. AI assumptions must not be treated as authoritative; flag any future conflict between approved sources rather than resolving silently.
+- **Major sections included:** Part I Project Overview; Part II Business and Application Scope; Part III Approved Technical Architecture; Part IV Critical Business Principles; Part V Project Delivery and Governance; Part VI Documentation and AI Agents; Part VII Execution Safety; Part VIII What Does Not Belong in project.md; Part IX Critical Project Invariants; Part X Completion Report.
+- **Confirmed project and architectural decisions:** Modular monolith on Next.js/React/TypeScript/Tailwind/shadcn; MongoDB + Mongoose; Better Auth; frontend-first mock-data-driven; local MongoDB first then Atlas; DigitalOcean Droplet + Docker Compose + HTTPS; protected system roles with configurable built-in/custom roles and `own`/`team`/`all` scopes; VIP cards remain Pending until Finance verification with minimum Finance workflow in MVP; latest approved 2026 VIP contracts with versioned snapshots; exact-AA-number-only public accreditation search (active only); IST hides "Valid Until", OST shows it; import compatibility now, migration after MVP; soft archival preserving history; centralized mock data via services/repositories.
+- **Remaining unresolved dependencies:** Better Auth + MongoDB compatibility; exact role-permission matrix; Finance payment/settlement eligibility rules; complete VIP contract clauses/benefit calculations; official identifier generation and import mappings; accreditation active-status/expiry evaluation rules; final hosting provider and deployment approval; audit retention policy.
+- **Contradictions identified:** None in this final pass; conflicts flagged in earlier tasks (Finance activation auto vs separate step; mock persistence in-memory-only vs optional localStorage; architecture label refinement) remain documented for reconciliation where applicable.
 - **Documentation validation result:** Structure is internally consistent with the approved scope; no application code, frameworks, dependencies, databases, or unrelated files were modified. Document distinguishes approved decisions, deferred features, and unresolved dependencies.
+
+STOP — awaiting explicit project-owner authorization before beginning application implementation, database setup, Git changes, cloud configuration, or deployment.

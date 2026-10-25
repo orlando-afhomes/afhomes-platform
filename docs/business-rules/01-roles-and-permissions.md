@@ -1,4 +1,4 @@
-# AFHomes Platform  — Organization Management Business Rules
+# AFHomes Platform — Organization Management Business Rules
 
 > Single source of truth for the **Departments**, **Staff / Employees**, and **Roles & Permissions** modules.
 > Scope: Organization Management only. Does not redefine VIP, customer, accreditation, genealogy, or Finance rules.
@@ -7,7 +7,7 @@
 
 ## 1. Purpose and Scope
 
-This document defines the approved Organization Management business rules for AFHomes Platform 2.0.
+This document defines the approved Organization Management business rules for AFHomes Platform.
 
 It governs three independently accessible modules:
 

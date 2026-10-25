@@ -812,7 +812,13 @@ Authorized work must remain within the approved scope. Do not silently expand sc
 
 ---
 
-## 18. Final Notes
+## 18. Production UI Standards
+
+Application-facing screens must not display developer notes, debug controls, temporary design-preview links, milestone labels, mock diagnostics, or internal implementation commentary. Development-only tooling must remain isolated from normal application experiences and unavailable in production builds. Every visible control must serve a legitimate purpose, and incomplete functionality must be represented honestly without misleading production behavior.
+
+---
+
+## 19. Final Notes
 
 - This file is an AI-agent governance document. It must not become a competing source of business truth.
 - Use canonical documents for detailed business rules and technical specifications.

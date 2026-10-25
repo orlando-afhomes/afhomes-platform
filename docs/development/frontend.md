@@ -168,6 +168,10 @@ Feature-based organization (see example in architecture.md). Pages compose featu
 - Responsive design across desktop/tablet/mobile; data-intensive Admin screens use responsive tables, overflow, mobile filters, accessible sidebars, touch targets, responsive forms.
 - Accessibility: semantic HTML, keyboard nav, focus visibility, screen readers, form labels, error announcements, dialog focus, contrast, reduced motion, zoom, WCAG alignment.
 
+### 14.1 Production UI Standards
+
+Application-facing screens must not display developer notes, debug controls, temporary design-preview links, milestone labels, mock diagnostics, or internal implementation commentary. Development-only tooling must remain isolated from normal application experiences and unavailable in production builds. Every visible control must serve a legitimate purpose, and incomplete functionality must be represented honestly without misleading production behavior.
+
 ---
 
 ## 15. Shared UI Components

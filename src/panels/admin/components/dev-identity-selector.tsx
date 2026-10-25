@@ -11,7 +11,7 @@ export function DevIdentitySelector() {
 
   return (
     <div className="rounded-md border border-dashed border-border bg-muted/40 p-3 text-sm">
-      <div className="mb-2 font-medium">Development identity (dev only)</div>
+      <div className="mb-2 font-medium">Development identity</div>
       <select
         className="w-full rounded-md border border-border bg-background px-2 py-1"
         value={identity.id}

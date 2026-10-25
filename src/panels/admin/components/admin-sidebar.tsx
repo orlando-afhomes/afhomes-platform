@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const items = [
   { label: "Dashboard", href: "/admin" },
   { label: "Roles & Permissions", href: "/admin/roles" },
@@ -13,13 +15,13 @@ export function AdminSidebar() {
       <div className="px-4 py-4 text-sm font-semibold">AFhomes Admin</div>
       <nav className="flex flex-col gap-1 px-2">
         {items.map((item) => (
-          <a
+          <Link
             key={item.href}
             href={item.href}
             className="rounded-md px-3 py-2 text-sm hover:bg-sidebar-accent"
           >
             {item.label}
-          </a>
+          </Link>
         ))}
       </nav>
     </aside>

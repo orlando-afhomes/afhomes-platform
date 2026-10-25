@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/shared/providers/query-provider";
+import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,7 +27,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <MockStoreProvider>
+            <DevIdentityProvider>{children}</DevIdentityProvider>
+          </MockStoreProvider>
+        </QueryProvider>
       </body>
     </html>
   );

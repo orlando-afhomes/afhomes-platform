@@ -390,6 +390,48 @@ Approved architecture allows future extension. Customer Portal: future web panel
 
 ---
 
+## 40.8 Organization & Staff Management (Frontend)
+
+Final verification: department transfer count update is covered by `org-transfer-count.test.tsx` (Finance 1→0, HR 1→2). All 116 tests pass. Lint, TypeScript, and build pass. Browser visual verification remains pending owner review.
+
+Final verification: department edit/save/cancel, staff edit/save/cancel, search, filter, sort, and department counts are covered by React Testing Library interaction tests. Unsupported Department Head assignment and staff employment-status editing are blocked at repository level. Tests: 9 department repo + 9 staff repo + 11 org interaction. Total suite 110 passing.
+
+Department create/edit, staff create/edit, search/filter/sort, employee counts, and profile view are implemented. Department Head assignment and staff employment-status editing were removed because canonical eligibility/policy is undefined. Department active/archived status is supported. Tests: 5 department + 5 staff repo tests + 4 RTL interaction tests.
+
+Organization Management is implemented at `/admin/organization` with departments and staff tabs. Departments support create/edit, search, filter, sort, and employee counts. Staff supports create/edit, search, filter, sort, and profile view. Repositories enforce authorization (super_admin/admin/hr). Tests: 5 department + 5 staff repository tests. No backend/DB/auth.
+
+## 40.7 Account Management (Frontend)
+
+Account status transitions are enforced in `MockAccountRepository` via `ALLOWED_TRANSITIONS`. Protected Super Administrator accounts cannot be modified by non-super-admin actors. Super Administrator role assignment/revocation is restricted to super-admin actors. Dashboard KPI cards remain gated by module grants. (R3 corrections applied.)
+
+Account Management is implemented at `/admin/accounts` and gated by the `accounts` module grant (Super Admin/Admin only). It provides list, search, filter, sort, details, create, edit, role assignment/revocation, and status transitions over the centralized in-memory mock store. Forms use inline validation and duplicate-email checks. Dashboard KPI cards are gated by their own module grants (sales-network/customers). No backend, auth, or database work is included.
+
+## 40.6 Dashboard and Analytics (Frontend)
+
+Dashboard KPIs use only scoped mock repositories that exist: visible team members and visible customers (admin/HR/Finance panels) plus visible members, customers, and uplines (Sales Network panel). Metrics are calculated via pure helpers in `dashboard-metrics.ts`. No financial, sales, commission, or membership metrics are displayed because their frontend data contracts do not yet exist. Loading and empty states are handled. Date filters and charts are deferred until dated repositories exist.
+
+## 40.5 Sales Network Panel Shells (Phase 1B-B06)
+
+The `/admin` dashboard title adapts to Sales Network designations (SVD, SSM, SM, IST, OST) in addition to Admin/HR/Finance. Shared layout/navigation/permission components are reused. No dedicated Sales Network routes or business modules are introduced; full Sales Network panels are deferred.
+
+## 40.4 Admin and Operations Panel Shells (Phase 1B-B05)
+
+The `/admin` dashboard is a role-sensitive shell: title and description adapt to effective active roles (Super Administrator, Administrator, HR, Finance, Sales Network, Sales, Staff) and inactive accounts see a restricted state. No fake KPIs or unimplemented module links are rendered. Shared layout/navigation/permission components are reused. Sales Network dedicated panels and business modules remain deferred.
+
+## 40.3 Role-Aware Navigation Baseline (Phase 1B-B04-R3)
+
+R3 aligns the resolver with the approved scoped baseline. Super Admin/Admin receive Dashboard, Organization, Accounts, and VIP Products. HR receives Dashboard and Organization. Finance receives Dashboard and Finance. SVD/SSM/SM/IST/OST receive Dashboard and Sales Network. All other modules remain denied pending canonical grants. Operation-level permissions are modeled separately (`hasOperationPermission`) for Finance verification/refunds/reconciliation, commission approval/payout, HR staff vs role administration, and sales/customer visibility. Dashboard is a neutral landing, not a business-module grant.
+
+## 40.2 Role-Aware Navigation (Phase 1B-B04)
+
+Phase 1B-B04-R1 reconciled grants with canonical docs: Super Admin/Admin receive Dashboard plus Organization and Accounts; HR receives Dashboard plus Organization; Finance receives Dashboard plus Finance; SVD/SSM/SM/IST/OST receive Dashboard plus Sales Network. All other modules (accreditation, customers, VIP products, sales, commissions, membership, stay points, reports, audit logs) are denied by default pending canonical grants. Dashboard is a neutral landing page, not a business-module permission.
+
+Role-aware navigation is resolved in `src/modules/identity/permissions.ts` and consumed through `useRoleAwareAdminNavigation`. Effective active roles are derived from the existing mock identity model, including multiple active roles and inactive assignments. Grants are deny-by-default; inactive accounts receive no modules. Super Admin and Admin receive the full provisional module set; HR, Finance, and Sales Network roles receive only the documented/approved subsets. Desktop and mobile navigation share the same filtered result. Breadcrumbs are filtered through `getRoleAwareAdminBreadcrumbs`. These grants are simulated frontend defaults pending the canonical role matrix; backend authorization remains authoritative. No backend, database, or authentication work is included.
+
+## 40.1 Navigation System (Phase 1B-B03)
+
+The Admin navigation is centralized in `src/panels/admin/navigation.ts`. It defines available and future module entries, recursive availability filtering, normalized route matching (`normalizePath`, `isAdminNavItemActive`), and breadcrumb resolution (`getAdminBreadcrumbs`). Only available destinations render as links; future modules remain unavailable until implemented. Nested groups are supported through `AdminNavList` and `NavGroup`, with accessible disclosure controls and `aria-current`. Unknown routes use the global `src/app/not-found.tsx`. Navigation rendering accepts a filtered item list so future role-aware filtering (B04) can be added without changing rendering components. Mock providers and store behavior are unchanged.
+
 ## 41. Frontend Testing Strategy
 
 Approved initial method is frontend-first and manual-first. Production readiness requires automated verification. Relevant tests: component behavior, navigation, forms, validation, mock repository behavior, permission-aware UI, data visibility, Finance workflow presentation, customer draft behavior, Sales Network genealogy, VIP status presentation, commission lifecycle states, Stay Points balance presentation, loading/error states, accessibility, responsive behavior, API integration, security-sensitive cache clearing. Refer to `docs/development/testing.md`. Do not claim test suites exist or have passed unless verified.

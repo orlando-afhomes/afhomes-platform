@@ -1,12 +1,19 @@
 import type { Customer } from "@/modules/customers/types";
-import type { OrgMember } from "@/modules/organization/types";
+import type { OrgMember, Department, StaffMember } from "@/modules/organization/types";
 import type { VipProduct } from "@/modules/vip/types";
+import type { Account } from "@/modules/accounts/types";
 
 export type MockStore = {
   members: OrgMember[];
   customers: Customer[];
   products: VipProduct[];
+  accounts: Account[];
+  departments: Department[];
+  staff: StaffMember[];
   customerSequence: number;
+  accountSequence: number;
+  departmentSequence: number;
+  staffSequence: number;
 };
 
 const members: OrgMember[] = [
@@ -32,12 +39,38 @@ const products: VipProduct[] = [
   { code: "G1", name: "Gold VIP", tier: "Gold" },
 ];
 
+const accounts: Account[] = [
+  { id: "acct-super-admin", displayName: "Super Admin", email: "superadmin@afhomes.local", roleIds: ["super_admin"], status: "active", departmentId: null, createdAt: "2026-01-01" },
+  { id: "acct-admin", displayName: "Administrator", email: "admin@afhomes.local", roleIds: ["admin"], status: "active", departmentId: null, createdAt: "2026-01-02" },
+  { id: "acct-hr", displayName: "HR User", email: "hr@afhomes.local", roleIds: ["hr"], status: "active", departmentId: null, createdAt: "2026-01-03" },
+  { id: "acct-finance", displayName: "Finance User", email: "finance@afhomes.local", roleIds: ["finance"], status: "active", departmentId: null, createdAt: "2026-01-04" },
+  { id: "acct-pending", displayName: "Pending User", email: "pending@afhomes.local", roleIds: [], status: "pending", departmentId: null, createdAt: "2026-01-05" },
+];
+
+const departments: Department[] = [
+  { id: "dept-hr", name: "Human Resources", code: "HR", description: "Human Resources department", headStaffId: null, status: "active" },
+  { id: "dept-finance", name: "Finance", code: "FIN", description: "Finance department", headStaffId: null, status: "active" },
+  { id: "dept-ops", name: "Operations", code: "OPS", description: "Operations department", headStaffId: null, status: "active" },
+];
+
+const staff: StaffMember[] = [
+  { id: "staff-1", displayName: "HR Staff", position: "HR Specialist", departmentId: "dept-hr", status: "active", email: "hrstaff@afhomes.local", createdAt: "2026-01-01" },
+  { id: "staff-2", displayName: "Finance Staff", position: "Finance Analyst", departmentId: "dept-finance", status: "active", email: "finstaff@afhomes.local", createdAt: "2026-01-02" },
+  { id: "staff-3", displayName: "Operations Staff", position: "Operations Coordinator", departmentId: "dept-ops", status: "active", email: "opsstaff@afhomes.local", createdAt: "2026-01-03" },
+];
+
 export function createSeedStore(): MockStore {
   return {
     members: members.map((item) => ({ ...item })),
     customers: customers.map((item) => ({ ...item })),
     products: products.map((item) => ({ ...item })),
+    accounts: accounts.map((item) => ({ ...item, roleIds: [...item.roleIds] })),
+    departments: departments.map((item) => ({ ...item })),
+    staff: staff.map((item) => ({ ...item })),
     customerSequence: customers.length + 1,
+    accountSequence: accounts.length + 1,
+    departmentSequence: departments.length + 1,
+    staffSequence: staff.length + 1,
   };
 }
 
@@ -46,6 +79,12 @@ export function createMockStore(seed: MockStore = createSeedStore()): MockStore 
     members: seed.members.map((item) => ({ ...item })),
     customers: seed.customers.map((item) => ({ ...item })),
     products: seed.products.map((item) => ({ ...item })),
+    accounts: seed.accounts.map((item) => ({ ...item, roleIds: [...item.roleIds] })),
+    departments: seed.departments.map((item) => ({ ...item })),
+    staff: seed.staff.map((item) => ({ ...item })),
     customerSequence: seed.customerSequence,
+    accountSequence: seed.accountSequence,
+    departmentSequence: seed.departmentSequence,
+    staffSequence: seed.staffSequence,
   };
 }

@@ -12,52 +12,43 @@ npm + next (no task runner). `src/app` (App Router) | `src/panels` presentation 
 - Never persist or echo secrets, credentials, tokens, keys, connection strings, or customer PII.
 - Gate on the project's documented checks (see Verify below).
 
-## Repo state (verified 2026-10-25)
+## Repo state (verified 2026-10-26)
 
-- Branch `develop` @ `df3b24d` "installation: npm package".
-- Working tree contains Phase 1B-A, R1–R3 remediation, Phase 1B-B01, and B01 production UI cleanup changes (tracked modifications + untracked implementation files). All uncommitted user work; preserve.
+- Branch `develop` @ `e5f6079` (post-Phase 1B-B06-R1 + Account/Org verification).
+- Working tree contains extensive uncommitted work: modified tracked files + many untracked implementation files. All uncommitted user work; preserve.
 - Pre-existing failures: none reported.
-- Gates this session: `npm test` passed (26 tests); `npm run lint` passed (0 errors); TypeScript passed; `npm run build` passed (routes `/`, `/admin`, `/login`; `/admin/design` removed).
+- Gates this session: `npm test` passed (115 tests); `npm run lint` passed (0 errors); TypeScript passed; `npm run build` passed (routes `/`, `/admin`, `/admin/accounts`, `/admin/organization`, `/login`).
 
 ## Last session's work (UNCOMMITTED)
 
 - Phase 1A frontend foundation implemented and accepted.
-- Phase 1B-A mock foundation implemented and remediated through R1–R3:
-  - Centralized browser-scoped in-memory mock store.
-  - Deterministic synthetic seeds with genealogy relationships.
-  - Typed member/customer/product repository contracts.
-  - Genealogy-aware access filtering.
-  - Development-only identity switching.
-  - TanStack Query identity isolation.
-  - Draft-only customer mutations.
-  - Deterministic async delay/error/cancellation support.
-  - 26 passing Vitest tests.
-- Phase 1B-B01 design system implemented and production-cleaned:
-  - Shared UI primitives under `src/components/ui/`.
-  - Semantic tokens and reusable utility classes in `src/app/globals.css`.
-  - Development-only design preview removed.
-  - Admin dashboard cleaned of mock diagnostics and preview link.
-  - Production UI standards documented in `docs/development/frontend.md` and `AGENTS.md`.
-- `AGENTS.md` created and refined as permanent AI-agent governance.
-- No backend, DB, auth, or app modules beyond frontend foundation.
+- Phase 1B-A mock foundation implemented and remediated through R1–R3.
+- Phase 1B-B01 design system implemented and production-cleaned.
+- Phase 1B-B02 shared application layouts implemented.
+- Phase 1B-B03 navigation system implemented.
+- Phase 1B-B04 role-aware navigation implemented (R1–R3).
+- Phase 1B-B05 admin/operations panel shells implemented.
+- Phase 1B-B06 sales network panel shells implemented (R1 remediation).
+- Dashboard & Analytics frontend implemented (scoped metrics only).
+- Account Management frontend implemented.
+- Organization & Staff Management frontend implemented and verified (department/staff CRUD, search, filter, sort, counts, repo safeguards).
+- Permission matrix proposal documented (partially approved).
+- No backend, DB, auth, or deployment work.
 
 ## Test gotchas
 
 - Next.js 16 prerender rejects `new Date()` in render (fixed footer to static year).
-- Lint rule `@next/next/no-html-link-for-pages` requires `next/link` for internal nav (fixed admin sidebar).
+- Lint rule `@next/next/no-html-link-for-pages` requires `next/link` for internal nav.
 - `next dev` generates an `AGENTS.md` append block; remove it after dev-server use.
-- Dev server can trigger pnpm/npm artifacts; verify `git status` for unexpected files.
+- Dev server can trigger artifacts; verify `git status` for unexpected files.
 - Build cache may reference removed routes; delete `.next` and rebuild if TypeScript validator complains.
-- Admin sidebar previously used native anchors; now uses `next/link` for client-side navigation.
 - Browser refresh resets mock data; client-side navigation preserves it.
+- jsdom + React Testing Library now installed for component tests.
 
 ## Open threads
 
-- Phase 1B-B01 complete and cleaned; awaiting owner visual review and authorization for Phase 1B-B02.
-- Nonblocking: admin sidebar links to unimplemented module routes.
-- Nonblocking: HR/Finance module permissions are represented only as safe denials.
-- Nonblocking: advanced own/team/all scope remains a development simulation.
-- Unresolved business decisions remain: Gold/Silver contract prices, Non-Standard commercial rules, Move scheme terms, RA numbering scope, accreditation expiry rules, Better Auth/MongoDB compat, Atlas tier transaction support, audit retention, production domain/sizing.
+- Organization & Staff Management: READY FOR OWNER VISUAL APPROVAL (pending browser verification).
+- Unresolved policy decisions: Department Head eligibility, staff employment-status lifecycle, Gold/Silver contract prices, Non-Standard commercial rules, Move scheme terms, RA numbering scope, accreditation expiry rules, Better Auth/MongoDB compat, Atlas tier transaction support, audit retention, production domain/sizing.
 - `workflow/` and all docs may be untracked or modified; user must stage/commit when ready (do not auto-commit).
 
 ## Verify (from root)

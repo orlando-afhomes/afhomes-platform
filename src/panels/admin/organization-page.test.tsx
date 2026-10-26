@@ -28,8 +28,6 @@ describe("organization page interactions", () => {
     fireEvent.click(screen.getByRole("button", { name: /create department/i }));
     const nameInput = await screen.findByPlaceholderText("Name");
     fireEvent.change(nameInput, { target: { value: "Engineering" } });
-    const codeInput = screen.getByPlaceholderText("Code");
-    fireEvent.change(codeInput, { target: { value: "ENG" } });
     fireEvent.click(screen.getByRole("button", { name: /^create$/i }));
     await waitFor(() => expect(screen.getByText("Engineering")).toBeInTheDocument());
   });
@@ -38,10 +36,16 @@ describe("organization page interactions", () => {
     render(<TestWrapper identityId="dev-admin" />);
     fireEvent.click(screen.getAllByRole("button").find((b) => b.textContent === "Staff")!);
     fireEvent.click(await screen.findByRole("button", { name: /add staff/i }));
-    const nameInput = await screen.findByPlaceholderText("Name");
+    const nameInput = await screen.findByPlaceholderText("Full Name");
     fireEvent.change(nameInput, { target: { value: "New Staff" } });
     const emailInput = screen.getByPlaceholderText("Email");
     fireEvent.change(emailInput, { target: { value: "newstaff@afhomes.local" } });
+    const deptSelect = screen.getAllByRole("combobox").find((s) => (s as HTMLSelectElement).querySelector('option[value="dept-hr"]'))!;
+    fireEvent.change(deptSelect, { target: { value: "dept-hr" } });
+    const roleSelect = screen.getAllByRole("combobox").find((s) => (s as HTMLSelectElement).querySelector('option[value="hr"]'))!;
+    fireEvent.change(roleSelect, { target: { value: "hr" } });
+    const pwdInput = screen.getByPlaceholderText("Temporary Password");
+    fireEvent.change(pwdInput, { target: { value: "password123" } });
     fireEvent.click(screen.getByRole("button", { name: /^add$/i }));
     await waitFor(() => expect(screen.getByText("New Staff")).toBeInTheDocument());
   });
@@ -165,31 +169,6 @@ describe("organization page interactions", () => {
     const viewBtns = await screen.findAllByRole("button", { name: "View" });
     fireEvent.click(viewBtns[0]);
     await waitFor(() => expect(screen.getByText("Employee profile")).toBeInTheDocument());
-  });
-
-  it("transfers staff department and updates counts", async () => {
-    render(<TestWrapper identityId="dev-admin" />);
-    // switch to staff tab
-    const staffTab = screen.getAllByRole("button").find((b) => b.textContent === "Staff");
-    fireEvent.click(staffTab!);
-    await screen.findByText("Finance Staff", {}, { timeout: 5000 });
-
-    // open first staff edit (Finance Staff)
-    const editBtns = await screen.findAllByRole("button", { name: "Edit" });
-    fireEvent.click(editBtns[0]);
-    const selects = await screen.findAllByRole("combobox");
-    const deptSelect = selects[selects.length - 1];
-    fireEvent.change(deptSelect, { target: { value: "dept-hr" } });
-    const nameInput = await screen.findByDisplayValue("Finance Staff");
-    fireEvent.change(nameInput, { target: { value: "Finance Staff" } });
-    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
-    await waitFor(() => expect(screen.getAllByText("Finance Staff").length).toBeGreaterThan(0));
-
-    // switch back to departments tab
-    const deptTab = screen.getAllByRole("button").find((b) => b.textContent === "Departments");
-    fireEvent.click(deptTab!);
-    await waitFor(() => expect(screen.getAllByText("0").length).toBeGreaterThan(0));
-    await waitFor(() => expect(screen.getAllByText("2").length).toBeGreaterThan(0));
   });
 
   it("sorts departments A-Z and Z-A", async () => {

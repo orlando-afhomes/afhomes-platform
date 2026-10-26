@@ -59,7 +59,7 @@ describe("department repository", () => {
     const store = createMockStore();
     const repo = createMockRepositories(store, () => getDevIdentity("dev-admin")).departments;
     const created = await repo.create({ name: "Engineering", code: "ENG" });
-    await expect(repo.update(created.id, { status: "archived" })).resolves.toBeDefined();
+    await expect(repo.update(created.id, { status: "deactivated" })).resolves.toBeDefined();
     await expect(repo.update(created.id, { status: "active" })).resolves.toBeDefined();
   });
 

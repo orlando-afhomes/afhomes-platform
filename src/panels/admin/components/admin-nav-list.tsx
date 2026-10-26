@@ -28,7 +28,7 @@ export function AdminNavList({
         if (hasChildren) {
           return (
             <div key={item.id} className="space-y-1">
-              <span className="px-3 py-2 text-xs font-semibold uppercase text-muted-foreground">
+              <span className="px-3 py-2 text-xs font-semibold uppercase text-current/60">
                 {item.label}
               </span>
               <div className="ml-2 space-y-1">
@@ -42,7 +42,7 @@ export function AdminNavList({
                       aria-current={childActive ? "page" : undefined}
                       className={cn(
                         "rounded-md px-3 py-2 text-sm hover:bg-sidebar-accent",
-                        childActive && "bg-sidebar-accent text-foreground",
+                        childActive && "bg-sidebar-accent",
                       )}
                     >
                       {child.label}
@@ -62,7 +62,7 @@ export function AdminNavList({
             aria-current={active ? "page" : undefined}
             className={cn(
               "rounded-md px-3 py-2 text-sm hover:bg-sidebar-accent",
-              active && "bg-sidebar-accent text-foreground",
+              active && "bg-sidebar-accent",
             )}
           >
             {item.label}

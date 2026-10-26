@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select } from "@/components/ui/select";
 import { Dialog, DialogPopup, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { Account, AccountStatus } from "@/modules/accounts/types";
 
@@ -67,13 +68,13 @@ export function AccountManagementPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-2">
             <Input placeholder="Search accounts" value={search} onChange={(e) => setSearch(e.target.value)} />
-            <select className="rounded-md border border-border bg-background px-2 py-1 text-sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <Select className="rounded-md border border-border bg-background px-2 py-1 text-sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="all">All statuses</option>
               <option value="pending">Pending</option>
               <option value="active">Active</option>
               <option value="suspended">Suspended</option>
               <option value="deactivated">Deactivated</option>
-            </select>
+            </Select>
           </div>
           <Button onClick={openCreate}>Create account</Button>
         </div>
@@ -291,12 +292,12 @@ function RoleEditor({ account, assignMutation, revokeMutation, onClose }: { acco
         ))}
       </div>
       <div className="flex gap-2">
-        <select className="rounded-md border border-border bg-background px-2 py-1 text-sm" value={role} onChange={(e) => setRole(e.target.value)}>
+        <Select className="rounded-md border border-border bg-background px-2 py-1 text-sm" value={role} onChange={(e) => setRole(e.target.value)}>
           <option value="">Select role</option>
           {ROLES.filter((r) => !account.roleIds.includes(r)).map((r) => (
             <option key={r} value={r}>{r}</option>
           ))}
-        </select>
+        </Select>
         <Button size="sm" onClick={handleAssign} disabled={!role}>Assign</Button>
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
@@ -323,12 +324,12 @@ function StatusEditor({ account, statusMutation, onClose }: { account: Account; 
 
   return (
     <div className="space-y-3">
-      <select className="w-full rounded-md border border-border bg-background px-2 py-1 text-sm" value={status} onChange={(e) => setStatus(e.target.value as AccountStatus)}>
+      <Select className="w-full rounded-md border border-border bg-background px-2 py-1 text-sm" value={status} onChange={(e) => setStatus(e.target.value as AccountStatus)}>
         <option value="pending">Pending</option>
         <option value="active">Active</option>
         <option value="suspended">Suspended</option>
         <option value="deactivated">Deactivated</option>
-      </select>
+      </Select>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex justify-end gap-2">
         <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>

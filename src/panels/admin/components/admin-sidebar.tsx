@@ -7,7 +7,7 @@ export function AdminSidebar() {
   const items = useRoleAwareAdminNavigation();
 
   return (
-    <aside className="hidden w-60 shrink-0 border-r border-border bg-sidebar md:block">
+    <aside className="hidden w-60 shrink-0 border-r border-border bg-sidebar text-sidebar-foreground md:block">
       <div className="px-4 py-4 text-sm font-semibold">AFhomes Admin</div>
       <div className="px-2">
         <AdminNavList items={items} />

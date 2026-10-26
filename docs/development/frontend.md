@@ -589,3 +589,18 @@ Only mark criteria complete if actually documented. Documentation completion is 
 - **Execution safety:** Application code modified: No. Application scaffold created: No. Database modified: No. APIs implemented: No. Other documentation modified: No. New development files created: No. Git commit: No. Git push: No. Git merge: No. Deployment: No. Redemption enabled: No. Services enabled: No.
 
 STOP — awaiting explicit authorization before beginning Phase 1 implementation.
+
+## 41. Official UI Component Standard — shadcn/ui First
+
+shadcn/ui is the mandatory primary component foundation for all AFHomes frontend work.
+
+1. Official reference: https://ui.shadcn.com/docs/components.
+2. Reuse existing components in `src/components/ui/` before introducing new implementations.
+3. If an appropriate official shadcn/ui component exists but is not installed, integrate it using the official documentation and the project's Base UI-compatible configuration.
+4. Prefer composition of shadcn primitives for complex business interfaces.
+5. Build a custom primitive only when no official component or combination can satisfy the requirement, and document the reason.
+6. Do not use raw custom interactive controls as shortcuts when suitable shadcn components exist.
+7. All components must follow the official AFHomes theme tokens defined in `src/app/globals.css`.
+8. Accessibility and responsiveness are mandatory.
+9. Future AI coding agents must follow these standards.
+10. Existing business functionality must not be changed during UI standardization.

@@ -12,7 +12,7 @@ export type OrgMember = {
   departmentId?: string | null;
 };
 
-export type DepartmentStatus = "active" | "archived";
+export type DepartmentStatus = "active" | "deactivated";
 
 export type Department = {
   id: string;
@@ -33,4 +33,6 @@ export type StaffMember = {
   status: StaffStatus;
   email: string;
   createdAt: string;
+  avatarUrl: string | null;
+  accountId: string | null;
 };

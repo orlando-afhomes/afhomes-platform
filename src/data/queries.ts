@@ -140,3 +140,29 @@ export function useCreateCustomerDraft() {
     },
   });
 }
+
+export function useDeleteDepartment() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  const { identity } = useDevIdentity();
+  return useMutation({
+    mutationFn: (id: string) => repositories.departments.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["departments", identity.id] });
+      queryClient.invalidateQueries({ queryKey: ["staff", identity.id] });
+    },
+  });
+}
+
+export function useDeleteStaff() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  const { identity } = useDevIdentity();
+  return useMutation({
+    mutationFn: (id: string) => repositories.staff.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff", identity.id] });
+      queryClient.invalidateQueries({ queryKey: ["departments", identity.id] });
+    },
+  });
+}

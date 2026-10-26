@@ -818,6 +818,20 @@ Application-facing screens must not display developer notes, debug controls, tem
 
 ---
 
+## 18.5 Official UI Component Standard — shadcn/ui First
+
+shadcn/ui is the mandatory primary component foundation for all AFHomes frontend work.
+
+1. Reuse existing components in `src/components/ui/` before introducing new implementations.
+2. If an appropriate official shadcn/ui component exists but is not installed, integrate it using the official documentation (https://ui.shadcn.com/docs/components) and the project's Base UI-compatible configuration.
+3. Prefer composition of shadcn primitives for complex business interfaces.
+4. Build a custom primitive only when no official component or combination can satisfy the requirement, and document the reason.
+5. Do not use raw custom interactive controls as shortcuts when suitable shadcn components exist.
+6. All components must follow the official AFHomes theme tokens defined in `src/app/globals.css`.
+7. Accessibility and responsiveness are mandatory.
+8. Existing business functionality must not be changed during UI standardization.
+9. Future AI coding agents must follow these standards.
+
 ## 19. Final Notes
 
 - This file is an AI-agent governance document. It must not become a competing source of business truth.

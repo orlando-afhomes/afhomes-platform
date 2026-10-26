@@ -54,9 +54,9 @@ const departments: Department[] = [
 ];
 
 const staff: StaffMember[] = [
-  { id: "staff-1", displayName: "HR Staff", position: "HR Specialist", departmentId: "dept-hr", status: "active", email: "hrstaff@afhomes.local", createdAt: "2026-01-01" },
-  { id: "staff-2", displayName: "Finance Staff", position: "Finance Analyst", departmentId: "dept-finance", status: "active", email: "finstaff@afhomes.local", createdAt: "2026-01-02" },
-  { id: "staff-3", displayName: "Operations Staff", position: "Operations Coordinator", departmentId: "dept-ops", status: "active", email: "opsstaff@afhomes.local", createdAt: "2026-01-03" },
+  { id: "staff-1", displayName: "HR Staff", position: "HR Specialist", departmentId: "dept-hr", status: "active", email: "hrstaff@afhomes.local", createdAt: "2026-01-01", avatarUrl: null, accountId: null },
+  { id: "staff-2", displayName: "Finance Staff", position: "Finance Analyst", departmentId: "dept-finance", status: "active", email: "finstaff@afhomes.local", createdAt: "2026-01-02", avatarUrl: null, accountId: null },
+  { id: "staff-3", displayName: "Operations Staff", position: "Operations Coordinator", departmentId: "dept-ops", status: "active", email: "opsstaff@afhomes.local", createdAt: "2026-01-03", avatarUrl: null, accountId: null },
 ];
 
 export function createSeedStore(): MockStore {

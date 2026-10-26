@@ -1,0 +1,55 @@
+/* Canonical AFHomes brand tokens.
+ * Single source of truth for corporate colors.
+ * Imported by src/app/globals.css; bridged into Ant Design via src/theme/antd-theme.ts.
+ * Keep HEX values here; never scatter them across components. */
+
+:root {
+  /* Official AFHomes theme tokens */
+  --color-brand-primary: #174f3b;
+  --color-brand-primary-hover: #123d2d;
+  --color-brand-secondary: #1f6b4f;
+  --color-brand-soft: #e8f1ec;
+  --color-brand-deep: #0e2b20;
+  --color-brand-deep-hover: #163a2c;
+
+  --color-accent: #b08328;
+  --color-accent-strong: #8a6420;
+  --color-accent-soft: #f7f0df;
+  --color-accent-subtle: #f7f0df;
+  --color-accent-light: #dcc06a;
+
+  --color-on-dark: #ffffff;
+  --color-on-dark-muted: rgba(255, 255, 255, 0.84);
+  --color-on-dark-faint: rgba(255, 255, 255, 0.64);
+  --color-on-dark-hover: rgba(255, 255, 255, 0.1);
+
+  --color-bg-canvas: #fbfaf7;
+  --color-bg-surface: #f4f2ec;
+  --color-bg-surface-raised: #ffffff;
+  --color-bg-subtle: #f8f6f0;
+  --color-bg-sunken: #ede9e0;
+
+  --color-text-primary: #1c2b3a;
+  --color-text-secondary: #40505f;
+  --color-text-muted: #64737f;
+  --color-text-on-brand: #ffffff;
+
+  --color-border-default: #e5e0d4;
+  --color-border-strong: #d3ccb8;
+  --color-border-subtle: #eae6da;
+
+  --color-success: #3f7d4e;
+  --color-success-strong: #2e6b3a;
+  --color-warning: #9a6b1f;
+  --color-warning-strong: #805719;
+  --color-danger: #a63a32;
+  --color-info: #1f6b8f;
+
+  --color-state-focus: var(--color-accent-strong);
+  --color-state-disabled-bg: #ece9e0;
+  --color-state-disabled-text: #5d625d;
+  --color-state-hover: rgba(28, 43, 58, 0.06);
+
+  --color-overlay: rgba(20, 27, 34, 0.45);
+  --color-skeleton: var(--color-border-default);
+}

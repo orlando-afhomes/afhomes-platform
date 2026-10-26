@@ -1,17 +1,29 @@
 "use client";
 
+import { useState } from "react";
+import { Layout } from "antd";
 import { AdminNavList } from "./admin-nav-list";
 import { useRoleAwareAdminNavigation } from "../use-role-aware-navigation";
+import styles from "./admin-sidebar.module.css";
+
+const { Sider } = Layout;
 
 export function AdminSidebar() {
   const items = useRoleAwareAdminNavigation();
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <aside className="hidden w-60 shrink-0 border-r border-border bg-sidebar text-sidebar-foreground md:block">
-      <div className="px-4 py-4 text-sm font-semibold">AFhomes Admin</div>
-      <div className="px-2">
+    <div className={styles.siderWrap}>
+      <Sider
+        collapsible
+        collapsed={collapsed}
+        onCollapse={(value) => setCollapsed(value)}
+        width={240}
+        theme="dark"
+      >
+        <div className={styles.brand}>AFHomes Admin</div>
         <AdminNavList items={items} />
-      </div>
-    </aside>
+      </Sider>
+    </div>
   );
 }

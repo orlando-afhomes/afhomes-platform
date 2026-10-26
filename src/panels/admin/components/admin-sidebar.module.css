@@ -1,0 +1,21 @@
+.siderWrap {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .siderWrap {
+    display: block;
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  height: 64px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+}

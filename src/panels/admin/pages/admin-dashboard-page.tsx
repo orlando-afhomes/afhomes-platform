@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { Card, Skeleton, Statistic } from "antd";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMembers, useCustomers } from "@/data/queries";
 import { PageContainer } from "@/shared/components/layout/page-container";
@@ -9,9 +10,8 @@ import { Breadcrumbs } from "@/shared/components/layout/breadcrumbs";
 import { getRoleAwareAdminBreadcrumbs } from "@/panels/admin/navigation";
 import { getEffectiveRoles, isModuleGranted } from "@/modules/identity/permissions";
 import { countVisibleCustomers, countVisibleMembers } from "../dashboard-metrics";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SalesNetworkPanel } from "../components/sales-network-panel";
+import styles from "./admin-dashboard-page.module.css";
 
 function isSalesRole(roles: string[]) {
   return roles.some((role) => ["svd", "ssm", "sm", "ist", "ost"].includes(role));
@@ -64,33 +64,23 @@ export function AdminDashboardPage() {
         <Breadcrumbs items={getRoleAwareAdminBreadcrumbs(identity, pathname ?? "/admin")} />
         <PageHeader title={title} description={description} />
         {active ? (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className={styles.kpiGrid}>
             {isModuleGranted(identity, "sales-network") ? (
               <Card>
-                <CardHeader>
-                  <CardTitle>Visible team members</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {membersQuery.isLoading ? (
-                    <Skeleton className="h-8 w-20" />
-                  ) : (
-                    <p className="text-2xl font-semibold">{countVisibleMembers(membersQuery.data ?? [])}</p>
-                  )}
-                </CardContent>
+                {membersQuery.isLoading ? (
+                  <Skeleton active paragraph={{ rows: 1 }} />
+                ) : (
+                  <Statistic title="Visible team members" value={countVisibleMembers(membersQuery.data ?? [])} />
+                )}
               </Card>
             ) : null}
             {isModuleGranted(identity, "customers") ? (
               <Card>
-                <CardHeader>
-                  <CardTitle>Visible customers</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {customersQuery.isLoading ? (
-                    <Skeleton className="h-8 w-20" />
-                  ) : (
-                    <p className="text-2xl font-semibold">{countVisibleCustomers(customersQuery.data ?? [])}</p>
-                  )}
-                </CardContent>
+                {customersQuery.isLoading ? (
+                  <Skeleton active paragraph={{ rows: 1 }} />
+                ) : (
+                  <Statistic title="Visible customers" value={countVisibleCustomers(customersQuery.data ?? [])} />
+                )}
               </Card>
             ) : null}
           </div>

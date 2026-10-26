@@ -818,16 +818,24 @@ Application-facing screens must not display developer notes, debug controls, tem
 
 ---
 
-## 18.5 Official UI Component Standard — shadcn/ui First
+## 18.5 Official UI Component Standard — Ant Design First (Stage 1)
 
-shadcn/ui is the mandatory primary component foundation for all AFHomes frontend work.
+> Stage 1 (Ant Design foundation) is installed: `antd` + `@ant-design/nextjs-registry`,
+> centralized theme in `src/theme/antd-theme.ts`, brand tokens in `src/theme/tokens.css`,
+> provider scoped to `/admin` in `src/app/admin/layout.tsx`. Existing pages are NOT
+> yet migrated; Tailwind/shadcn/Base UI remain functional until later stages.
 
-1. Reuse existing components in `src/components/ui/` before introducing new implementations.
-2. If an appropriate official shadcn/ui component exists but is not installed, integrate it using the official documentation (https://ui.shadcn.com/docs/components) and the project's Base UI-compatible configuration.
-3. Prefer composition of shadcn primitives for complex business interfaces.
-4. Build a custom primitive only when no official component or combination can satisfy the requirement, and document the reason.
-5. Do not use raw custom interactive controls as shortcuts when suitable shadcn components exist.
-6. All components must follow the official AFHomes theme tokens defined in `src/app/globals.css`.
+Ant Design is the official primary frontend component foundation for all AFHomes frontend work.
+
+Legacy shadcn/ui primitives in `src/components/ui/` remain functional until their
+authorized Stage 3–5 migration and removal. Do not add new shadcn-based components.
+
+1. Use Ant Design components for all new UI; reuse existing components in `src/components/ui/` only inside not-yet-migrated pages.
+2. Do not install new shadcn/ui components; use the Ant Design equivalent instead.
+3. Prefer composition of Ant Design primitives for complex business interfaces.
+4. Build a custom primitive only when no Ant Design component or combination can satisfy the requirement, and document the reason.
+5. Do not use raw custom interactive controls as shortcuts when suitable Ant Design components exist.
+6. All components must follow the official AFHomes theme tokens defined in `src/theme/tokens.css` and `src/theme/antd-theme.ts`.
 7. Accessibility and responsiveness are mandatory.
 8. Existing business functionality must not be changed during UI standardization.
 9. Future AI coding agents must follow these standards.

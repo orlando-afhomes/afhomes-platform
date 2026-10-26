@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
@@ -24,12 +25,13 @@ afterEach(() => cleanup());
 
 describe("department transfer count verification", () => {
   function departmentCount(name: string) {
-    const row = Array.from(document.querySelectorAll("tr")).find((r) => r.textContent?.includes(name));
+    const row = Array.from(document.querySelectorAll(".ant-table-tbody tr")).find((r) => r.textContent?.includes(name));
     const cells = row?.querySelectorAll("td");
-    return cells?.[3]?.textContent?.trim() ?? "";
+    return cells?.[1]?.textContent?.trim() ?? "";
   }
 
   it("updates both department counts after transfer", async () => {
+    const user = userEvent.setup();
     render(<TestWrapper identityId="dev-admin" />);
     await screen.findByText("Finance", {}, { timeout: 5000 });
 
@@ -37,30 +39,27 @@ describe("department transfer count verification", () => {
     const initialHr = departmentCount("Human Resources");
 
     // switch to staff tab
-    const staffTab = screen.getAllByRole("button").find((b) => b.textContent === "Staff");
-    fireEvent.click(staffTab!);
+    await user.click(screen.getByRole("tab", { name: "Staff" }));
     await screen.findByText("Finance Staff", {}, { timeout: 5000 });
 
     // edit first staff (Finance Staff)
     const editBtns = await screen.findAllByRole("button", { name: "Edit" });
     fireEvent.click(editBtns[0]);
-    const selects = await screen.findAllByRole("combobox");
-    fireEvent.change(selects[selects.length - 1], { target: { value: "dept-hr" } });
+    await user.click(screen.getByRole("combobox", { name: "Staff department" }));
+    await user.click(await screen.findByRole("option", { name: "Human Resources" }));
     const nameInput = await screen.findByDisplayValue("Finance Staff");
     fireEvent.change(nameInput, { target: { value: "Finance Staff" } });
     fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
     await waitFor(() => expect(screen.getAllByText("Finance Staff").length).toBeGreaterThan(0));
 
     // switch back to departments tab
-    const deptTab = screen.getAllByRole("button").find((b) => b.textContent === "Departments");
-    fireEvent.click(deptTab!);
+    await user.click(screen.getByRole("tab", { name: "Departments" }));
     await screen.findByText("Finance", {}, { timeout: 5000 });
 
     const newFinance = departmentCount("Finance");
     const newHr = departmentCount("Human Resources");
 
     expect(Number(newFinance)).toBe(Number(initialFinance) - 1);
-    expect(Number(newHr)).toBe(Number(initialHr) + 1);
     expect(Number(newHr)).toBe(Number(initialHr) + 1);
   });
 });

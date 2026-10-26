@@ -12,7 +12,7 @@ const queryClient = new QueryClient();
 function TestWrapper({ items }: { items: ReturnType<typeof getRoleAwareAdminNavigation> }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <AdminNavList items={items} />
+      <AdminNavList items={items} pathname="/admin" />
     </QueryClientProvider>
   );
 }
@@ -50,5 +50,14 @@ describe("admin nav list rendering", () => {
     const html = renderNav("dev-super-admin");
     expect(html).not.toContain("Customers");
     expect(html).not.toContain("Audit Logs");
+  });
+
+  it("marks the active route selected", () => {
+    const identity = getDevIdentity("dev-admin");
+    const items = getRoleAwareAdminNavigation(identity);
+    const html = renderToStaticMarkup(
+      createElement(TestWrapper, { items }),
+    );
+    expect(html).toContain("ant-menu-item-selected");
   });
 });

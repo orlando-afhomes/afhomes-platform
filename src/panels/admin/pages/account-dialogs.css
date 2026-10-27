@@ -1,0 +1,71 @@
+/* Account dialog content. Imported by src/app/admin/accounts/page.tsx alongside
+ * the route so lazy-loaded dialogs render styled on first open. */
+
+.account-dialog__form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.account-dialog__role-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.account-dialog__role-row {
+  display: flex;
+  gap: 8px;
+}
+
+.account-dialog__role-select {
+  flex: 1;
+}
+
+.account-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.account-dialog__form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.account-dialog__description {
+  color: var(--color-text-muted);
+}
+
+.account-dialog__details {
+  margin: 0;
+  border: 1px solid #e5e0d4;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+.account-dialog__detail-row {
+  display: flex;
+  border-bottom: 1px solid #eae6da;
+}
+
+.account-dialog__detail-row:last-child {
+  border-bottom: 0;
+}
+
+.account-dialog__detail-term {
+  flex: 0 0 140px;
+  padding: 8px 12px;
+  margin: 0;
+  color: var(--color-text-muted);
+  background: #f8f6f0;
+  font-weight: 500;
+}
+
+.account-dialog__detail-value {
+  flex: 1;
+  padding: 8px 12px;
+  margin: 0;
+  color: var(--color-text-primary);
+  word-break: break-word;
+}

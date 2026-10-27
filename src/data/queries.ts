@@ -2,9 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
+import type { AdminModuleId } from "@/modules/identity/permissions";
 import type { CustomerDraftInput } from "@/modules/customers/types";
+import type { DepartmentRole, StaffMember } from "@/modules/organization/types";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
+import { resolveEffectiveModules } from "@/data/mock/authorization";
 import { createMockRepositories } from "@/data/mock/repositories";
 
 export function useMockRepositories() {
@@ -63,6 +66,142 @@ export function useAccounts() {
   return useQuery({
     queryKey: ["accounts", identity.id],
     queryFn: ({ signal }) => repositories.accounts.list({ signal }),
+  });
+}
+
+/** System role grants plus linked department-role grants for the active identity. */
+export function useEffectiveModuleIds(): Set<AdminModuleId> {
+  const store = useMockStore();
+  const { identity } = useDevIdentity();
+  return useMemo(() => resolveEffectiveModules(store, identity), [store, identity]);
+}
+
+export function useCreateDepartment() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  const { identity } = useDevIdentity();
+  return useMutation({
+    mutationFn: (input: { name: string; status?: "active" | "deactivated" }) => repositories.departments.create(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["departments", identity.id] });
+    },
+  });
+}
+
+export function useUpdateDepartment() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  const { identity } = useDevIdentity();
+  return useMutation({
+    mutationFn: (input: { id: string; name?: string; status?: "active" | "deactivated" }) =>
+      repositories.departments.update(input.id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["departments", identity.id] });
+    },
+  });
+}
+
+export function useDepartmentRoles() {
+  const repositories = useMockRepositories();
+  const { identity } = useDevIdentity();
+  return useQuery({
+    queryKey: ["department-roles", identity.id],
+    queryFn: ({ signal }) => repositories.roles.list({ signal }),
+  });
+}
+
+export function useCreateDepartmentRole() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  const { identity } = useDevIdentity();
+  return useMutation({
+    mutationFn: (input: {
+      name: string;
+      departmentId: string;
+      moduleIds: AdminModuleId[];
+      status?: DepartmentRole["status"];
+    }) => repositories.roles.create(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["department-roles", identity.id] });
+    },
+  });
+}
+
+export function useUpdateDepartmentRole() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  const { identity } = useDevIdentity();
+  return useMutation({
+    mutationFn: (input: {
+      id: string;
+      name?: string;
+      departmentId?: string;
+      moduleIds?: AdminModuleId[];
+      status?: DepartmentRole["status"];
+    }) => repositories.roles.update(input.id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["department-roles", identity.id] });
+      queryClient.invalidateQueries({ queryKey: ["staff", identity.id] });
+    },
+  });
+}
+
+export function useDeleteDepartmentRole() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  const { identity } = useDevIdentity();
+  return useMutation({
+    mutationFn: (id: string) => repositories.roles.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["department-roles", identity.id] });
+      queryClient.invalidateQueries({ queryKey: ["staff", identity.id] });
+    },
+  });
+}
+
+export function useCreateStaff() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  const { identity } = useDevIdentity();
+  return useMutation({
+    mutationFn: (input: {
+      displayName: string;
+      position: string;
+      departmentId?: string | null;
+      departmentRoleId?: string | null;
+      email: string;
+      avatarUrl?: string | null;
+      accountId?: string | null;
+    }) => repositories.staff.create(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff", identity.id] });
+      queryClient.invalidateQueries({ queryKey: ["departments", identity.id] });
+      queryClient.invalidateQueries({ queryKey: ["department-roles", identity.id] });
+    },
+  });
+}
+
+export function useUpdateStaff() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  const { identity } = useDevIdentity();
+  return useMutation({
+    mutationFn: (input: {
+      id: string;
+      displayName?: string;
+      position?: string;
+      departmentId?: string | null;
+      departmentRoleId?: string | null;
+      status?: StaffMember["status"];
+      avatarUrl?: string | null;
+      accountId?: string | null;
+      email?: string;
+    }) => repositories.staff.update(input.id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff", identity.id] });
+      queryClient.invalidateQueries({ queryKey: ["departments", identity.id] });
+      queryClient.invalidateQueries({ queryKey: ["department-roles", identity.id] });
+    },
   });
 }
 
@@ -163,6 +302,7 @@ export function useDeleteStaff() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["staff", identity.id] });
       queryClient.invalidateQueries({ queryKey: ["departments", identity.id] });
+      queryClient.invalidateQueries({ queryKey: ["department-roles", identity.id] });
     },
   });
 }

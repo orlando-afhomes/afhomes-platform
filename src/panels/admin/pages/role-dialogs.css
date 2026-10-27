@@ -1,0 +1,92 @@
+.role-dialog__details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.role-dialog__definition-list {
+  margin: 0;
+  padding: 0;
+}
+
+.role-dialog__detail-row {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border, #e5e0d4);
+}
+
+.role-dialog__detail-row:last-child {
+  border-bottom: 0;
+}
+
+.role-dialog__detail-term {
+  flex: 0 0 140px;
+  font-weight: 600;
+  color: var(--color-text-secondary, #595959);
+  margin: 0;
+}
+
+.role-dialog__detail-value {
+  flex: 1;
+  margin: 0;
+}
+
+.role-dialog__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.role-dialog__section-title {
+  font-weight: 600;
+}
+
+.role-dialog__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.role-dialog__empty {
+  color: var(--color-text-secondary, #595959);
+}
+
+.role-dialog__assignees {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.role-dialog__assignee {
+  list-style: disc;
+}
+
+.role-dialog__form {
+  display: flex;
+  flex-direction: column;
+}
+
+.role-dialog__form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.role-dialog__modules {
+  width: 100%;
+}
+
+.role-dialog__module-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.role-dialog__hint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-text-secondary, #595959);
+}

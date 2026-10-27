@@ -1,0 +1,38 @@
+.department-dialog__details {
+  display: flex;
+  flex-direction: column;
+}
+
+.department-dialog__detail-row {
+  display: flex;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border, #e5e0d4);
+}
+
+.department-dialog__detail-row:last-child {
+  border-bottom: 0;
+}
+
+.department-dialog__detail-term {
+  flex: 0 0 120px;
+  font-weight: 600;
+  color: var(--color-text-secondary, #595959);
+  margin: 0;
+}
+
+.department-dialog__detail-value {
+  flex: 1;
+  margin: 0;
+}
+
+.department-dialog__form {
+  display: flex;
+  flex-direction: column;
+}
+
+.department-dialog__form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

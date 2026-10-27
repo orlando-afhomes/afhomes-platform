@@ -22,9 +22,9 @@ It is specific to AFHomes, not a generic React guide.
 | Router | Next.js App Router |
 | UI library | React |
 | Programming language | TypeScript |
-| Styling | Tailwind CSS |
-| Additional styling | CSS Modules where appropriate |
-| UI foundation | shadcn/ui |
+| Styling | Regular CSS stylesheets per layout, page, and feature |
+| Additional styling | None (no CSS-in-JS, no utility framework) |
+| UI foundation | Ant Design 6 |
 | Validation | Zod |
 | Client asynchronous state | TanStack Query |
 | Local UI state | React state/hooks |
@@ -162,7 +162,7 @@ Feature-based organization (see example in architecture.md). Pages compose featu
 
 ## 14. UI Design System
 
-- Tailwind CSS, shadcn/ui, CSS variables, CSS Modules where appropriate.
+- Ant Design 6, CSS variables, namespaced regular CSS per feature; no Tailwind, no CSS Modules.
 - Shared primitives in `src/shared/ui/` when genuinely reusable; panel-specific variants with panel; feature-specific UI within feature.
 - Panel-scoped themes (`.admin-theme`, `.public-theme`, `.customer-theme`) via scoped CSS variables; avoid global overrides.
 - Responsive design across desktop/tablet/mobile; data-intensive Admin screens use responsive tables, overflow, mobile filters, accessible sidebars, touch targets, responsive forms.
@@ -171,6 +171,10 @@ Feature-based organization (see example in architecture.md). Pages compose featu
 ### 14.1 Production UI Standards
 
 Application-facing screens must not display developer notes, debug controls, temporary design-preview links, milestone labels, mock diagnostics, or internal implementation commentary. Development-only tooling must remain isolated from normal application experiences and unavailable in production builds. Every visible control must serve a legitimate purpose, and incomplete functionality must be represented honestly without misleading production behavior.
+
+### 14.2 Class Naming Standard (regular CSS, corrected Stage 4)
+
+Ant Design is the official component foundation; Ant Design internal DOM is exempt from custom naming. AFHomes uses regular `.css` files, not CSS Modules, for custom styling. Every developer-authored, non–Ant Design HTML/JSX element — headings, paragraphs, spans, labels, sections, wrappers, containers — must carry a descriptive kebab-case class with feature namespacing (e.g. `organization-page__title`, `staff-profile__name`, `account-page__toolbar`). Numbered, random, or bare generic names are prohibited. Import feature CSS at the narrowest server route/layout boundary; root CSS keeps tokens, resets, and base only. Global styles persist across navigation, so every feature selector must be namespaced and order-independent. Verify class names in browser DevTools, not only source. No automated class-name lint is enforced (brittle for framework-owned DOM); compliance is verified in code review + browser DOM.
 
 ---
 
@@ -386,7 +390,7 @@ Frontend must not bypass server-side payment verification, membership activation
 
 ## 40. Future Customer and Mobile Compatibility
 
-Approved architecture allows future extension. Customer Portal: future web panel in same Next.js app; do not implement prematurely. Mobile: future React Native + Expo in same repository; uses shared REST APIs; potentially shares domain types, Zod schemas, API contracts, platform-neutral utilities; does not directly share Next.js page components, browser-specific hooks, DOM-based UI components, shadcn/ui components, web navigation. Do not create mobile files or packages now.
+Approved architecture allows future extension. Customer Portal: future web panel in same Next.js app; do not implement prematurely. Mobile: future React Native + Expo in same repository; uses shared REST APIs; potentially shares domain types, Zod schemas, API contracts, platform-neutral utilities; does not directly share Next.js page components, browser-specific hooks, DOM-based UI components, Ant Design web components, web navigation. Do not create mobile files or packages now.
 
 ---
 
@@ -451,7 +455,7 @@ Align with `implementation.md`. Phase 0 documentation; Phase 1 frontend foundati
 3. Feature-based organization.
 4. React and TypeScript.
 5. Next.js App Router.
-6. Tailwind CSS and shadcn/ui.
+6. Ant Design 6 and namespaced regular CSS (Tailwind/shadcn removed in Stage 5).
 7. Zod validation.
 8. TanStack Query for appropriate async state.
 9. Thin route composition.
@@ -516,9 +520,8 @@ Align with `implementation.md`. Phase 0 documentation; Phase 1 frontend foundati
 - [ ] Future Customer/Mobile correctly deferred.
 
 ### Frontend Stack
-- [ ] Tailwind CSS.
-- [ ] shadcn/ui.
-- [ ] CSS Modules where appropriate.
+- [ ] Ant Design 6 with ThemeConfig.
+- [ ] Regular feature-scoped CSS, no CSS Modules.
 - [ ] Zod.
 - [ ] TanStack Query.
 - [ ] Typed API adapters.
@@ -590,17 +593,16 @@ Only mark criteria complete if actually documented. Documentation completion is 
 
 STOP — awaiting explicit authorization before beginning Phase 1 implementation.
 
-## 41. Official UI Component Standard — shadcn/ui First
+## 41. Official UI Component Standard — Ant Design First (supersedes shadcn-first, Stage 5)
 
-shadcn/ui is the mandatory primary component foundation for all AFHomes frontend work.
+Ant Design 6 is the mandatory primary component foundation for all AFHomes frontend work. Tailwind CSS, shadcn/ui, Base UI, and CSS Modules were removed in Stage 5 and must not be reintroduced.
 
-1. Official reference: https://ui.shadcn.com/docs/components.
-2. Reuse existing components in `src/components/ui/` before introducing new implementations.
-3. If an appropriate official shadcn/ui component exists but is not installed, integrate it using the official documentation and the project's Base UI-compatible configuration.
-4. Prefer composition of shadcn primitives for complex business interfaces.
-5. Build a custom primitive only when no official component or combination can satisfy the requirement, and document the reason.
-6. Do not use raw custom interactive controls as shortcuts when suitable shadcn components exist.
-7. All components must follow the official AFHomes theme tokens defined in `src/app/globals.css`.
+1. Official reference: https://ant.design/components/overview.
+2. Use Ant Design components; do not install shadcn/ui or Base UI packages.
+3. Prefer composition of Ant Design primitives for complex business interfaces.
+4. Build a custom primitive only when no Ant Design component or combination can satisfy the requirement, and document the reason.
+5. Do not use raw custom interactive controls as shortcuts when suitable Ant Design components exist.
+6. All custom styling uses regular `.css` with namespaced kebab-case classes; theme comes from `src/theme/tokens.css` + `src/theme/antd-theme.ts`.
 8. Accessibility and responsiveness are mandatory.
 9. Future AI coding agents must follow these standards.
 10. Existing business functionality must not be changed during UI standardization.

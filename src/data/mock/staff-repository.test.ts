@@ -90,4 +90,81 @@ describe("staff repository", () => {
     const after = await repo.getById(created.id);
     expect(after?.displayName).toBe("Staff");
   });
+  it("creates staff with a compatible department role", async () => {
+    const store = createMockStore();
+    const repo = createMockRepositories(store, () => getDevIdentity("dev-admin")).staff;
+    const created = await repo.create({
+      displayName: "Role Staff",
+      position: "Analyst",
+      departmentId: "dept-hr",
+      departmentRoleId: "role-hr-staff",
+      email: "rolestaff@afhomes.local",
+    });
+    expect(created.departmentRoleId).toBe("role-hr-staff");
+  });
+
+  it("rejects a role from another department", async () => {
+    const store = createMockStore();
+    const repo = createMockRepositories(store, () => getDevIdentity("dev-admin")).staff;
+    await expect(
+      repo.create({
+        displayName: "Mismatch",
+        position: "Analyst",
+        departmentId: "dept-hr",
+        departmentRoleId: "role-fin-staff",
+        email: "mismatch@afhomes.local",
+      }),
+    ).rejects.toThrow(/department/);
+  });
+
+  it("rejects a deactivated role on assignment", async () => {
+    const store = createMockStore();
+    const repos = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    await repos.roles.update("role-hr-staff", { status: "deactivated" });
+    await expect(
+      repos.staff.create({
+        displayName: "Deactivated Role",
+        position: "Analyst",
+        departmentId: "dept-hr",
+        departmentRoleId: "role-hr-staff",
+        email: "inactive-role@afhomes.local",
+      }),
+    ).rejects.toThrow(/active/);
+  });
+
+  it("clears an incompatible role on department transfer", async () => {
+    const store = createMockStore();
+    const repo = createMockRepositories(store, () => getDevIdentity("dev-admin")).staff;
+    const created = await repo.create({
+      displayName: "Transfer",
+      position: "Analyst",
+      departmentId: "dept-hr",
+      departmentRoleId: "role-hr-staff",
+      email: "transfer@afhomes.local",
+    });
+    const updated = await repo.update(created.id, { departmentId: "dept-finance" });
+    expect(updated.departmentId).toBe("dept-finance");
+    expect(updated.departmentRoleId).toBeNull();
+  });
+
+  it("accepts a compatible role on department transfer", async () => {
+    const store = createMockStore();
+    const repos = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    const created = await repos.staff.create({
+      displayName: "Transfer Two",
+      position: "Analyst",
+      departmentId: "dept-hr",
+      departmentRoleId: "role-hr-staff",
+      email: "transfer2@afhomes.local",
+    });
+    const finRole = await repos.roles.create({ name: "Finance Staff Two", departmentId: "dept-finance", moduleIds: ["departments"] });
+    const updated = await repos.staff.update(created.id, { departmentId: "dept-finance", departmentRoleId: finRole.id });
+    expect(updated.departmentId).toBe("dept-finance");
+    expect(updated.departmentRoleId).toBe(finRole.id);
+  });
+
+  it("stores staff department role ids in seed data", () => {
+    const store = createMockStore();
+    expect(store.staff.find((item) => item.id === "staff-1")?.departmentRoleId).toBe("role-hr-staff");
+  });
 });

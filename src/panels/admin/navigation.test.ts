@@ -47,6 +47,23 @@ describe("admin navigation", () => {
     expect(getAdminBreadcrumbs("/admin")).toEqual([{ label: "Dashboard" }]);
   });
 
+  it("returns nested breadcrumbs for organization children", () => {
+    expect(getAdminBreadcrumbs("/admin/organization/departments")).toEqual([
+      { label: "Dashboard", href: "/admin" },
+      { label: "Organization" },
+      { label: "Departments" },
+    ]);
+  });
+
+  it("hides Accounts from navigation while keeping its breadcrumb trail", () => {
+    const hrefs = getAvailableAdminNavigation().map((item) => item.href);
+    expect(hrefs).not.toContain("/admin/accounts");
+    expect(getAdminBreadcrumbs("/admin/accounts")).toEqual([
+      { label: "Dashboard", href: "/admin" },
+      { label: "Accounts and Permissions" },
+    ]);
+  });
+
   it("returns a not-found breadcrumb for unknown routes", () => {
     expect(getAdminBreadcrumbs("/admin/unknown")).toEqual([
       { label: "Dashboard", href: "/admin" },

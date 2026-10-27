@@ -1,10 +1,13 @@
+
+import "./login.css";
+
 export default function LoginPage() {
   return (
-    <div className="mx-auto max-w-md px-4 py-16">
-      <h1 className="text-2xl font-semibold">Login</h1>
-      <p className="mt-2 text-muted-foreground">
+    <main className="login-page">
+      <h1 className="login-page__title">Login</h1>
+      <p className="login-page__description">
         Sign in to access authorized AFhomes features.
       </p>
-    </div>
+    </main>
   );
 }

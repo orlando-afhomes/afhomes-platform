@@ -2,14 +2,14 @@ import Link from "next/link";
 
 export function PublicHeader() {
   return (
-    <header className="border-b border-border bg-background">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-        <span className="text-lg font-semibold tracking-tight">AFhomes</span>
-        <nav className="flex items-center gap-4 text-sm">
-          <Link href="/" className="hover:underline">
+    <header className="public-header">
+      <div className="public-header__content">
+        <span className="public-header__brand">AFhomes</span>
+        <nav className="public-header__nav" aria-label="Public">
+          <Link href="/" className="public-header__nav-link">
             Home
           </Link>
-          <Link href="/login" className="hover:underline">
+          <Link href="/login" className="public-header__nav-link">
             Login
           </Link>
         </nav>

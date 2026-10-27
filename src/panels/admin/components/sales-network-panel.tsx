@@ -7,15 +7,13 @@ import { useMembers, useCustomers, useMockRepositories } from "@/data/queries";
 import { PageHeader } from "@/shared/components/layout/page-header";
 import { Breadcrumbs } from "@/shared/components/layout/breadcrumbs";
 import { countVisibleCustomers, countVisibleMembers, countUplines } from "../dashboard-metrics";
-import styles from "./sales-network-panel.module.css";
+import { getSystemRoleLabel } from "../role-label";
 
 function roleTitle(roles: string[]) {
-  if (roles.includes("svd")) return "Senior Vice Director";
-  if (roles.includes("ssm")) return "Senior Sales Manager";
-  if (roles.includes("sm")) return "Sales Manager";
-  if (roles.includes("ist")) return "Internal Sales";
-  if (roles.includes("ost")) return "Outside Sales";
-  return "Sales Network";
+  const label = getSystemRoleLabel(
+    roles.find((role) => ["svd", "ssm", "sm", "ost"].includes(role)) ?? "",
+  );
+  return label === "" ? "Sales Network" : label;
 }
 
 export function SalesNetworkPanel() {
@@ -34,62 +32,62 @@ export function SalesNetworkPanel() {
   const loading = membersQuery.isLoading || uplinesQuery.isLoading;
 
   return (
-    <div className="space-y-4">
+    <div className="sales-network">
       <Breadcrumbs items={[{ label: "Dashboard" }]} />
       <PageHeader title={roleTitle(identity.roles)} description="Authorized Sales Network account context." />
 
-      <div className={styles.kpiGrid}>
+      <div className="sales-network__stats-grid">
         <Card title="Visible team members">
-          {membersQuery.isLoading ? <Skeleton active paragraph={{ rows: 1 }} /> : <p className={styles.kpiValue}>{countVisibleMembers(members)}</p>}
+          {membersQuery.isLoading ? <Skeleton active paragraph={{ rows: 1 }} /> : <p className="sales-network__stat-value">{countVisibleMembers(members)}</p>}
         </Card>
         <Card title="Visible customers">
-          {customersQuery.isLoading ? <Skeleton active paragraph={{ rows: 1 }} /> : <p className={styles.kpiValue}>{countVisibleCustomers(customersQuery.data ?? [])}</p>}
+          {customersQuery.isLoading ? <Skeleton active paragraph={{ rows: 1 }} /> : <p className="sales-network__stat-value">{countVisibleCustomers(customersQuery.data ?? [])}</p>}
         </Card>
         <Card title="Authorized uplines">
-          {uplinesQuery.isLoading ? <Skeleton active paragraph={{ rows: 1 }} /> : <p className={styles.kpiValue}>{countUplines(uplines)}</p>}
+          {uplinesQuery.isLoading ? <Skeleton active paragraph={{ rows: 1 }} /> : <p className="sales-network__stat-value">{countUplines(uplines)}</p>}
         </Card>
       </div>
 
       {loading ? (
-        <div className="space-y-3">
+        <div className="sales-network__loading">
           <Skeleton active />
           <Skeleton active />
         </div>
       ) : (
-        <div className={styles.detailGrid}>
+        <div className="sales-network__detail-grid">
           <Card title="Account context">
             {currentMember ? (
-              <div className={styles.rows}>
-                <div className={styles.row}>
-                  <span className="text-muted-foreground">Name</span>
-                  <span className="font-medium">{currentMember.displayName}</span>
+              <div className="sales-network__rows">
+                <div className="sales-network__row">
+                  <span className="sales-network__context-label">Name</span>
+                  <span className="sales-network__context-name">{currentMember.displayName}</span>
                 </div>
-                <div className={styles.row}>
-                  <span className="text-muted-foreground">Designation</span>
+                <div className="sales-network__row">
+                  <span className="sales-network__context-label">Designation</span>
                   <Tag>{currentMember.designation}</Tag>
                 </div>
-                <div className={styles.row}>
-                  <span className="text-muted-foreground">Branch</span>
-                  <span>{currentMember.branchId}</span>
+                <div className="sales-network__row">
+                  <span className="sales-network__context-label">Branch</span>
+                  <span className="sales-network__context-value">{currentMember.branchId}</span>
                 </div>
-                <div className={styles.row}>
-                  <span className="text-muted-foreground">Status</span>
-                  <span>{currentMember.status}</span>
+                <div className="sales-network__row">
+                  <span className="sales-network__context-label">Status</span>
+                  <span className="sales-network__context-value">{currentMember.status}</span>
                 </div>
               </div>
             ) : (
-              <p className="text-muted-foreground">No account context available.</p>
+              <p className="sales-network__empty-text">No account context available.</p>
             )}
           </Card>
 
           <Card title="Authorized upline">
             {uplines.length === 0 ? (
-              <p className="text-muted-foreground">No upline members.</p>
+              <p className="sales-network__empty-text">No upline members.</p>
             ) : (
-              <ul className={styles.rows}>
+              <ul className="sales-network__rows">
                 {uplines.map((upline) => (
-                  <li key={upline.id} className={styles.row}>
-                    <span>{upline.displayName}</span>
+                  <li key={upline.id} className="sales-network__row">
+                    <span className="sales-network__member-name">{upline.displayName}</span>
                     <Tag>{upline.designation}</Tag>
                   </li>
                 ))}
@@ -97,16 +95,16 @@ export function SalesNetworkPanel() {
             )}
           </Card>
 
-          <Card title="Authorized team members" className={styles.wide}>
+          <Card title="Authorized team members" className="sales-network__detail-wide">
             {members.length === 0 ? (
-              <p className="text-muted-foreground">No authorized members found.</p>
+              <p className="sales-network__empty-text">No authorized members found.</p>
             ) : (
               <>
-                <p className="text-muted-foreground">{members.length} visible member(s)</p>
-                <ul className={styles.rows}>
+                <p className="sales-network__member-count">{members.length} visible member(s)</p>
+                <ul className="sales-network__rows">
                   {members.map((member) => (
-                    <li key={member.id} className={styles.row}>
-                      <span>{member.displayName}</span>
+                    <li key={member.id} className="sales-network__row">
+                      <span className="sales-network__member-name">{member.displayName}</span>
                       <Tag>{member.designation}</Tag>
                     </li>
                   ))}

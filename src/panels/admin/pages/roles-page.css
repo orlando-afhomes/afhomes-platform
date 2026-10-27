@@ -1,0 +1,54 @@
+.roles-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.roles-page__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.roles-page__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  justify-content: space-between;
+  background: var(--color-bg-surface, #fff);
+  border: 1px solid var(--color-border, #e5e0d4);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.roles-page__search {
+  flex: 1 1 220px;
+  max-width: 320px;
+  min-width: 180px;
+}
+
+.roles-page__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.roles-page__filter {
+  min-width: 160px;
+}
+
+.roles-page__table {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-top: 8px;
+}
+
+.roles-page__table .ant-table-pagination.ant-pagination {
+  justify-content: center;
+}
+
+.roles-table__name {
+  font-weight: 600;
+}

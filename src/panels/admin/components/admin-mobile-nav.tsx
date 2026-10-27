@@ -5,18 +5,18 @@ import { Button, Drawer } from "antd";
 import { Menu as MenuIcon } from "lucide-react";
 import { AdminNavList } from "./admin-nav-list";
 import { useRoleAwareAdminNavigation } from "../use-role-aware-navigation";
-import styles from "./admin-mobile-nav.module.css";
 
 export function AdminMobileNav() {
   const [open, setOpen] = useState(false);
   const items = useRoleAwareAdminNavigation();
 
   return (
-    <div className={styles.triggerWrap}>
+    <div className="admin-mobile-nav">
       <Button
         type="text"
         icon={<MenuIcon className="size-4" />}
         aria-label="Open navigation"
+        className="admin-mobile-nav__trigger"
         onClick={() => setOpen(true)}
       />
       <Drawer
@@ -26,9 +26,15 @@ export function AdminMobileNav() {
         open={open}
         onClose={() => setOpen(false)}
         destroyOnHidden
-        styles={{ body: { background: "#0e2b20", padding: 8 } }}
+        className="admin-mobile-nav__drawer"
+        classNames={{
+          header: "admin-mobile-nav__drawer-header",
+          body: "admin-mobile-nav__drawer-body",
+        }}
       >
-        <AdminNavList items={items} onNavigate={() => setOpen(false)} />
+        <nav aria-label="Administration" className="admin-mobile-nav__navigation">
+          <AdminNavList items={items} onNavigate={() => setOpen(false)} />
+        </nav>
       </Drawer>
     </div>
   );

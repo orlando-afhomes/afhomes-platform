@@ -3,12 +3,11 @@ import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { DevIdentity } from "@/modules/identity/types";
 import type { MockStore } from "./seed";
 import { activeRoles } from "./dev-identities";
+import { hasModuleAccess } from "./authorization";
 import { simulateAsync } from "@/data/contracts/async-options";
 
-function canManageAccounts(identity: DevIdentity) {
-  if (identity.status !== "active") return false;
-  const roles = activeRoles(identity);
-  return roles.includes("super_admin") || roles.includes("admin");
+function canManageAccounts(store: MockStore, identity: DevIdentity) {
+  return hasModuleAccess(store, identity, "accounts");
 }
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
@@ -37,7 +36,7 @@ export class MockAccountRepository {
     const merged = this.mergeOptions(options);
     await simulateAsync(merged);
     const identity = this.getIdentity();
-    if (!canManageAccounts(identity)) return [];
+    if (!canManageAccounts(this.store, identity)) return [];
     return this.store.accounts.map((a) => ({ ...a, roleIds: [...a.roleIds] }));
   }
 
@@ -45,7 +44,7 @@ export class MockAccountRepository {
     const merged = this.mergeOptions(options);
     await simulateAsync(merged);
     const identity = this.getIdentity();
-    if (!canManageAccounts(identity)) return null;
+    if (!canManageAccounts(this.store, identity)) return null;
     const account = this.store.accounts.find((a) => a.id === id);
     return account ? { ...account, roleIds: [...account.roleIds] } : null;
   }
@@ -54,7 +53,7 @@ export class MockAccountRepository {
     const merged = this.mergeOptions(options);
     await simulateAsync(merged);
     const identity = this.getIdentity();
-    if (!canManageAccounts(identity)) throw new Error("Account creation is not allowed.");
+    if (!canManageAccounts(this.store, identity)) throw new Error("Account creation is not allowed.");
     if (input.roleIds.includes("super_admin") && !activeRoles(identity).includes("super_admin")) {
       throw new Error("Cannot create a protected Super Administrator account.");
     }
@@ -83,7 +82,7 @@ export class MockAccountRepository {
     const merged = this.mergeOptions(options);
     await simulateAsync(merged);
     const identity = this.getIdentity();
-    if (!canManageAccounts(identity)) throw new Error("Account update is not allowed.");
+    if (!canManageAccounts(this.store, identity)) throw new Error("Account update is not allowed.");
     const account = this.store.accounts.find((a) => a.id === id);
     if (!account) throw new Error("Account not found.");
     if (isProtectedAccount(account) && !activeRoles(identity).includes("super_admin")) {
@@ -110,7 +109,7 @@ export class MockAccountRepository {
     const merged = this.mergeOptions(options);
     await simulateAsync(merged);
     const identity = this.getIdentity();
-    if (!canManageAccounts(identity)) throw new Error("Role assignment is not allowed.");
+    if (!canManageAccounts(this.store, identity)) throw new Error("Role assignment is not allowed.");
     const account = this.store.accounts.find((a) => a.id === id);
     if (!account) throw new Error("Account not found.");
     if (role === "super_admin" && !activeRoles(identity).includes("super_admin")) {
@@ -128,7 +127,7 @@ export class MockAccountRepository {
     const merged = this.mergeOptions(options);
     await simulateAsync(merged);
     const identity = this.getIdentity();
-    if (!canManageAccounts(identity)) throw new Error("Role revocation is not allowed.");
+    if (!canManageAccounts(this.store, identity)) throw new Error("Role revocation is not allowed.");
     const account = this.store.accounts.find((a) => a.id === id);
     if (!account) throw new Error("Account not found.");
     if (role === "super_admin" && !activeRoles(identity).includes("super_admin")) {
@@ -147,7 +146,7 @@ export class MockAccountRepository {
     const merged = this.mergeOptions(options);
     await simulateAsync(merged);
     const identity = this.getIdentity();
-    if (!canManageAccounts(identity)) throw new Error("Status change is not allowed.");
+    if (!canManageAccounts(this.store, identity)) throw new Error("Status change is not allowed.");
     const account = this.store.accounts.find((a) => a.id === id);
     if (!account) throw new Error("Account not found.");
     if (isProtectedAccount(account) && !activeRoles(identity).includes("super_admin")) {

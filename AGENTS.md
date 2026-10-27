@@ -820,18 +820,18 @@ Application-facing screens must not display developer notes, debug controls, tem
 
 ## 18.5 Official UI Component Standard — Ant Design First (Stage 1)
 
-> Stage 1 (Ant Design foundation) is installed: `antd` + `@ant-design/nextjs-registry`,
-> centralized theme in `src/theme/antd-theme.ts`, brand tokens in `src/theme/tokens.css`,
-> provider scoped to `/admin` in `src/app/admin/layout.tsx`. Existing pages are NOT
-> yet migrated; Tailwind/shadcn/Base UI remain functional until later stages.
+> Stage 5 (legacy removal) completed: Tailwind CSS, `@tailwindcss/turbopack`,
+> `tw-animate-css`, shadcn/ui (`src/components/ui/`, `components.json`),
+> `@base-ui/react`, `class-variance-authority`, and the `cn` package are
+> removed. `src/lib/utils.ts` provides a local `cn()` joiner. Styling is
+> Ant Design 6 + regular `.css` + descriptive class names only.
 
 Ant Design is the official primary frontend component foundation for all AFHomes frontend work.
 
-Legacy shadcn/ui primitives in `src/components/ui/` remain functional until their
-authorized Stage 3–5 migration and removal. Do not add new shadcn-based components.
+Legacy shadcn/ui primitives were removed in Stage 5. Do not reintroduce shadcn, Tailwind, Base UI, or CSS Modules.
 
-1. Use Ant Design components for all new UI; reuse existing components in `src/components/ui/` only inside not-yet-migrated pages.
-2. Do not install new shadcn/ui components; use the Ant Design equivalent instead.
+1. Use Ant Design components for all UI; do not reintroduce shadcn/ui, Base UI, or Tailwind-based components.
+2. Do not install shadcn/ui, Base UI, Tailwind, or CSS-Modules-based component packages.
 3. Prefer composition of Ant Design primitives for complex business interfaces.
 4. Build a custom primitive only when no Ant Design component or combination can satisfy the requirement, and document the reason.
 5. Do not use raw custom interactive controls as shortcuts when suitable Ant Design components exist.
@@ -839,6 +839,20 @@ authorized Stage 3–5 migration and removal. Do not add new shadcn-based compon
 7. Accessibility and responsiveness are mandatory.
 8. Existing business functionality must not be changed during UI standardization.
 9. Future AI coding agents must follow these standards.
+
+### 18.6 Mandatory Class Naming and Regular CSS (Stage 4 correction)
+
+AFHomes uses Ant Design 6 and regular `.css` files for custom styling. `.module.css` is not permitted in new AFHomes code; existing modules were converted to namespaced regular CSS.
+
+All developer-authored, non–Ant Design HTML/JSX elements must use descriptive kebab-case class names with feature namespacing (e.g. `account-page__toolbar`, `staff-profile__name`). Ant Design internal DOM is exempt; React Fragments are excluded.
+
+1. Prefer plain string classes (e.g. `className="account-page__toolbar"`).
+2. Never use numbered/random names (`div1`, `box2`) or bare generic names (`wrapper`, `container`, `title`).
+3. Remove truly unnecessary wrappers instead of naming them.
+4. Shared components forward `className` where call-site styling applies (`PageContainer`, `PageHeader`).
+5. Do not target hashed Ant Design classes; use theme tokens, component props, or narrow documented overrides.
+6. Feature CSS lives beside its feature and is imported at the narrowest server route/layout boundary; root CSS keeps tokens, resets, and base only. Global styles persist across navigation — namespace everything, avoid order-dependent overrides.
+7. Verify class names in browser DevTools, not only source. No automated class-name lint (brittle for framework DOM); compliance is verified in code review + browser DOM.
 
 ## 19. Final Notes
 

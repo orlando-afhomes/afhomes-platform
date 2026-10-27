@@ -19,19 +19,17 @@ export function NavGroup({
   const [open, setOpen] = useState(defaultOpen || hasActiveDescendant);
 
   return (
-    <div className="space-y-1">
+    <div className="nav-group">
       <button
         type="button"
         aria-expanded={open}
-        className={cn(
-          "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium hover:bg-sidebar-accent",
-        )}
+        className={cn("nav-group__toggle")}
         onClick={() => setOpen((value) => !value)}
       >
-        <span>{label}</span>
-        <ChevronRight className={cn("size-4 transition-transform", open && "rotate-90")} />
+        <span className="nav-group__label">{label}</span>
+        <ChevronRight className={cn("nav-group__icon", open && "nav-group__icon--open")} />
       </button>
-      {open ? <div className="ml-2 space-y-1">{children}</div> : null}
+      {open ? <div className="nav-group__children">{children}</div> : null}
     </div>
   );
 }

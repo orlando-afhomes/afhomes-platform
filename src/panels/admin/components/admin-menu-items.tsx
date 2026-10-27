@@ -3,6 +3,7 @@ import type { MenuProps } from "antd";
 import {
   LayoutDashboard,
   Building2,
+  Briefcase,
   Users,
   Network,
   BadgeCheck,
@@ -15,6 +16,8 @@ import {
   Coins,
   BarChart3,
   ScrollText,
+  KeyRound,
+  UserCog,
   type LucideIcon,
 } from "lucide-react";
 import type { AdminNavItem } from "../navigation";
@@ -23,6 +26,9 @@ import { normalizePath } from "../navigation";
 const ICONS: Partial<Record<AdminNavItem["id"], LucideIcon>> = {
   dashboard: LayoutDashboard,
   organization: Building2,
+  departments: Briefcase,
+  roles: KeyRound,
+  staff: UserCog,
   accounts: Users,
   "sales-network": Network,
   accreditation: BadgeCheck,

@@ -2,13 +2,11 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { DevIdentity } from "@/modules/identity/types";
 import type { MockStore } from "./seed";
-import { activeRoles } from "./dev-identities";
+import { hasModuleAccess } from "./authorization";
 import { simulateAsync } from "@/data/contracts/async-options";
 
-function canManageOrg(identity: DevIdentity) {
-  if (identity.status !== "active") return false;
-  const roles = activeRoles(identity);
-  return roles.includes("super_admin") || roles.includes("admin") || roles.includes("hr");
+function canManageDepartments(store: MockStore, identity: DevIdentity) {
+  return hasModuleAccess(store, identity, "departments");
 }
 
 function normalizeDepartmentStatus(status: string): "active" | "deactivated" {
@@ -25,7 +23,7 @@ export class MockDepartmentRepository {
     const merged = this.merge(options);
     await simulateAsync(merged);
     const identity = this.getIdentity();
-    if (!canManageOrg(identity)) return [];
+    if (!canManageDepartments(this.store, identity)) return [];
     return this.store.departments.map((d) => ({ ...d, status: normalizeDepartmentStatus(d.status) }));
   }
 
@@ -33,7 +31,7 @@ export class MockDepartmentRepository {
     const merged = this.merge(options);
     await simulateAsync(merged);
     const identity = this.getIdentity();
-    if (!canManageOrg(identity)) return null;
+    if (!canManageDepartments(this.store, identity)) return null;
     const dept = this.store.departments.find((d) => d.id === id);
     return dept ? { ...dept, status: normalizeDepartmentStatus(dept.status) } : null;
   }
@@ -42,7 +40,7 @@ export class MockDepartmentRepository {
     const merged = this.merge(options);
     await simulateAsync(merged);
     const identity = this.getIdentity();
-    if (!canManageOrg(identity)) throw new Error("Department creation is not allowed.");
+    if (!canManageDepartments(this.store, identity)) throw new Error("Department creation is not allowed.");
     if (input.headStaffId) throw new Error("Department Head assignment is not supported.");
     const name = input.name.trim();
     if (!name) throw new Error("Department name is required.");
@@ -58,7 +56,7 @@ export class MockDepartmentRepository {
     const merged = this.merge(options);
     await simulateAsync(merged);
     const identity = this.getIdentity();
-    if (!canManageOrg(identity)) throw new Error("Department update is not allowed.");
+    if (!canManageDepartments(this.store, identity)) throw new Error("Department update is not allowed.");
     const dept = this.store.departments.find((d) => d.id === id);
     if (!dept) throw new Error("Department not found.");
     if (input.name !== undefined) {
@@ -78,9 +76,12 @@ export class MockDepartmentRepository {
     const merged = this.merge(options);
     await simulateAsync(merged);
     const identity = this.getIdentity();
-    if (!canManageOrg(identity)) throw new Error("Department deletion is not allowed.");
+    if (!canManageDepartments(this.store, identity)) throw new Error("Department deletion is not allowed.");
     const index = this.store.departments.findIndex((d) => d.id === id);
     if (index < 0) throw new Error("Department not found.");
+    if (this.store.roles.some((r) => r.departmentId === id)) {
+      throw new Error("Department has assigned roles and cannot be deleted.");
+    }
     if (this.store.staff.some((s) => s.departmentId === id)) {
       throw new Error("Department has assigned employees and cannot be deleted.");
     }

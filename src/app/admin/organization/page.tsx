@@ -1,5 +1,5 @@
-import { OrganizationPage } from "@/panels/admin/pages/organization-page";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <OrganizationPage />;
+  redirect("/admin/organization/departments");
 }

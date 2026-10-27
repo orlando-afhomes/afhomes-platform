@@ -15,15 +15,17 @@ describe("AntdThemeProvider", () => {
     expect(button.className).toContain("ant-btn-primary");
   });
 
-  // jsdom does not process .module.css (vitest css disabled), so scoping is
-  // proven by the production build output, not here. This only checks shape.
-  it("wraps content in the scoped module container", () => {
+  // jsdom does not apply regular CSS, so class presence (not styling) is
+  // checked here; visual scoping is proven by the production build output.
+  it("wraps content in the named smoke container", () => {
     const { container } = render(
       <AntdThemeProvider>
         <AntdSmoke />
       </AntdThemeProvider>,
     );
     expect(container.firstElementChild?.tagName).toBe("DIV");
-    expect(container.firstElementChild?.querySelector("button")).not.toBeNull();
+    const box = container.querySelector(".antd-smoke-box");
+    expect(box?.textContent).toContain("AFhomes theme smoke");
+    expect(box?.querySelector("button")).not.toBeNull();
   });
 });

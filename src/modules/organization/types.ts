@@ -1,4 +1,4 @@
-export type Designation = "SVD" | "SSM" | "SM" | "OST" | "IST";
+export type Designation = "SVD" | "SSM" | "SM" | "OST";
 
 export type MemberStatus = "active" | "inactive" | "suspended";
 
@@ -23,6 +23,17 @@ export type Department = {
   status: DepartmentStatus;
 };
 
+export type DepartmentRoleStatus = "active" | "deactivated";
+
+export type DepartmentRole = {
+  id: string;
+  name: string;
+  departmentId: string;
+  moduleIds: string[];
+  status: DepartmentRoleStatus;
+  createdAt: string;
+};
+
 export type StaffStatus = "active" | "inactive" | "suspended";
 
 export type StaffMember = {
@@ -30,6 +41,8 @@ export type StaffMember = {
   displayName: string;
   position: string;
   departmentId: string | null;
+  /** Primary department role under the Department → Roles → Staff model. */
+  departmentRoleId: string | null;
   status: StaffStatus;
   email: string;
   createdAt: string;

@@ -4,13 +4,12 @@ import { getRoleAwareAdminNavigation } from "../navigation";
 import { getDevIdentity } from "@/data/mock/dev-identities";
 
 describe("admin menu adapter", () => {
-  it("maps authorized items to keyed menu entries", () => {
+  it("maps authorized items to keyed menu entries without hidden Accounts", () => {
     const items = getRoleAwareAdminNavigation(getDevIdentity("dev-admin"));
     const menu = toAntdMenuItems(items) ?? [];
     expect(menu.map((entry) => (entry as { key: string }).key)).toEqual([
       "dashboard",
       "organization",
-      "accounts",
     ]);
   });
 
@@ -21,8 +20,14 @@ describe("admin menu adapter", () => {
 
   it("selects the active route", () => {
     const items = getRoleAwareAdminNavigation(getDevIdentity("dev-admin"));
-    expect(findSelectedKeys(items, "/admin/accounts")).toContain("accounts");
     expect(findSelectedKeys(items, "/admin")).toContain("dashboard");
+  });
+
+  it("never selects the hidden Accounts route in navigation", () => {
+    const items = getRoleAwareAdminNavigation(getDevIdentity("dev-admin"));
+    expect(items.some((item) => item.id === "accounts")).toBe(false);
+    expect(findSelectedKeys(items, "/admin/accounts")).toEqual([]);
+    expect(findOpenKeys(items, "/admin/accounts")).toEqual([]);
   });
 
   it("selects nothing for unknown routes", () => {
@@ -32,10 +37,11 @@ describe("admin menu adapter", () => {
     expect(findOpenKeys(items, "/admin/unknown")).toEqual([]);
   });
 
-  it("matches nested routes and guards prefixes", () => {
+  it("matches nested organization routes", () => {
     const items = getRoleAwareAdminNavigation(getDevIdentity("dev-admin"));
-    expect(findSelectedKeys(items, "/admin/accounts/abc123")).toEqual(["accounts"]);
-    expect(findSelectedKeys(items, "/admin/organization/staff")).toEqual(["organization"]);
+    expect(findSelectedKeys(items, "/admin/organization/departments")).toEqual(["departments"]);
+    expect(findSelectedKeys(items, "/admin/organization/staff")).toEqual(["staff"]);
+    expect(findOpenKeys(items, "/admin/organization/staff")).toEqual(["organization"]);
     expect(findSelectedKeys(items, "/admin/accounts-extra")).toEqual([]);
     expect(findSelectedKeys(items, null)).toEqual([]);
   });

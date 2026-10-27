@@ -26,7 +26,7 @@ function renderPage(identityId: string) {
 
 describe("admin dashboard page", () => {
   it("shows super administrator title", () => {
-    expect(renderPage("dev-super-admin")).toContain("Super Administrator");
+    expect(renderPage("dev-super-admin")).toContain("Super Admin");
   });
 
   it("shows administrator title", () => {
@@ -42,7 +42,7 @@ describe("admin dashboard page", () => {
   });
 
   it("shows SVD title", () => {
-    expect(renderPage("dev-svd-a")).toContain("Senior Vice Director");
+    expect(renderPage("dev-svd-a")).toContain("Sales Vice Director");
   });
 
   it("shows SSM title", () => {
@@ -53,29 +53,25 @@ describe("admin dashboard page", () => {
     expect(renderPage("dev-sm-a")).toContain("Sales Manager");
   });
 
-  it("shows IST title", () => {
-    expect(renderPage("dev-ist-a")).toContain("Internal Sales");
-  });
-
   it("shows OST title", () => {
-    expect(renderPage("dev-ost-a1")).toContain("Outside Sales");
+    expect(renderPage("dev-ost-a1")).toContain("OST");
   });
 
   it("renders sales network panel loading state for SVD", () => {
     const html = renderPage("dev-svd-a");
-    expect(html).toContain("Senior Vice Director");
+    expect(html).toContain("Sales Vice Director");
     expect(html).toContain("ant-skeleton");
   });
 
   it("renders sales network panel loading state for OST", () => {
     const html = renderPage("dev-ost-a1");
-    expect(html).toContain("Outside Sales");
+    expect(html).toContain("OST");
     expect(html).toContain("ant-skeleton");
   });
 
   it("shows restricted state for inactive account", () => {
     const html = renderPage("dev-inactive");
     expect(html).toContain("Access restricted");
-    expect(html).not.toContain("Super Administrator");
+    expect(html).not.toContain("Super Admin");
   });
 });

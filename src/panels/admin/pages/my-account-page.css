@@ -1,0 +1,102 @@
+.my-account-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.my-account-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 640px;
+}
+
+.my-account-page__section {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-surface, #fff);
+  border: 1px solid var(--color-border, #e5e0d4);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.my-account-page__section-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.my-account-page__avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.my-account-page__avatar-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.my-account-page__avatar-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+}
+
+.my-account-page__details {
+  margin: 0;
+  padding: 0;
+}
+
+.my-account-page__detail-row {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border, #e5e0d4);
+}
+
+.my-account-page__detail-row:last-child {
+  border-bottom: 0;
+}
+
+.my-account-page__detail-term {
+  flex: 0 0 140px;
+  font-weight: 600;
+  color: var(--color-text-secondary, #595959);
+  margin: 0;
+}
+
+.my-account-page__detail-value {
+  flex: 1;
+  margin: 0;
+}
+
+.my-account-page__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary, #595959);
+}
+
+.my-account-page__empty-roles {
+  color: var(--color-text-secondary, #595959);
+  background: var(--color-bg-surface, #fafafa);
+  border: 1px dashed var(--color-border, #d9d9d9);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.my-account-page__form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.my-account-page__empty {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+}

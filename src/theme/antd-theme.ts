@@ -17,6 +17,9 @@ export const afhomesTheme: ThemeConfig = {
     colorBorderSecondary: "#eae6da",
     colorText: "#1c2b3a",
     colorTextSecondary: "#40505f",
+    // Light transparent green for hovered + selected dropdown options
+    // (replaces the default blue control-item active-hover fill).
+    controlItemBgActiveHover: "rgba(23, 79, 59, 0.12)",
     colorTextTertiary: "#64737f",
     colorTextPlaceholder: "rgba(28, 43, 58, 0.45)",
     colorBgContainerDisabled: "#ece9e0",
@@ -43,6 +46,9 @@ export const afhomesTheme: ThemeConfig = {
       darkItemColor: "rgba(255, 255, 255, 0.84)",
       darkItemSelectedBg: "rgba(255, 255, 255, 0.1)",
       darkItemSelectedColor: "#ffffff",
+      // Inline subgroup ul renders on the forest-green sider, so it stays
+      // transparent instead of the default near-black sub-menu fill.
+      darkSubMenuItemBg: "transparent",
       itemSelectedBg: "#e8f1ec",
       itemSelectedColor: "#174f3b",
       itemHoverBg: "rgba(28, 43, 58, 0.06)",
@@ -56,6 +62,11 @@ export const afhomesTheme: ThemeConfig = {
       headerColor: "#1c2b3a",
       rowHoverBg: "rgba(28, 43, 58, 0.06)",
       borderColor: "#e5e0d4",
+    },
+    Select: {
+      // Light transparent green for hovered/selected dropdown options.
+      optionActiveBg: "rgba(23, 79, 59, 0.06)",
+      optionSelectedBg: "rgba(23, 79, 59, 0.1)",
     },
     Modal: {
       headerBg: "#ffffff",

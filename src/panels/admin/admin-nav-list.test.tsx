@@ -9,18 +9,18 @@ import { getRoleAwareAdminNavigation } from "@/panels/admin/navigation";
 
 const queryClient = new QueryClient();
 
-function TestWrapper({ items }: { items: ReturnType<typeof getRoleAwareAdminNavigation> }) {
+function TestWrapper({ items, pathname }: { items: ReturnType<typeof getRoleAwareAdminNavigation>; pathname?: string }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <AdminNavList items={items} pathname="/admin" />
+      <AdminNavList items={items} pathname={pathname ?? "/admin"} />
     </QueryClientProvider>
   );
 }
 
-function renderNav(identityId: string) {
+function renderNav(identityId: string, pathname = "/admin") {
   const identity = getDevIdentity(identityId);
   const items = getRoleAwareAdminNavigation(identity);
-  return renderToStaticMarkup(createElement(TestWrapper, { items }));
+  return renderToStaticMarkup(createElement(TestWrapper, { items, pathname }));
 }
 
 describe("admin nav list rendering", () => {
@@ -41,15 +41,34 @@ describe("admin nav list rendering", () => {
     expect(html).not.toContain("Dashboard");
   });
 
+  it("renders organization children for roles with child grants", () => {
+    const html = renderNav("dev-admin", "/admin/organization/departments");
+    expect(html).toContain("Departments");
+    expect(html).toContain("Roles");
+    expect(html).toContain("Staff");
+  });
+
   it("renders dashboard once for a multi-role identity", () => {
     const html = renderNav("dev-multi-role");
     expect(html.match(/Dashboard/g)?.length).toBe(1);
+  });
+
+  it("hides the roles child link when the identity lacks the roles grant", () => {
+    const html = renderNav("dev-hr", "/admin/organization/departments");
+    expect(html).toContain("Departments");
+    expect(html).toContain("Staff");
+    expect(html).not.toContain("Roles");
   });
 
   it("does not render unavailable module links", () => {
     const html = renderNav("dev-super-admin");
     expect(html).not.toContain("Customers");
     expect(html).not.toContain("Audit Logs");
+  });
+
+  it("hides the Accounts entry from the sidebar for authorized identities", () => {
+    const html = renderNav("dev-admin");
+    expect(html).not.toContain("Accounts");
   });
 
   it("marks the active route selected", () => {

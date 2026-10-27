@@ -1,9 +1,0 @@
-.triggerWrap {
-  display: block;
-}
-
-@media (min-width: 768px) {
-  .triggerWrap {
-    display: none;
-  }
-}

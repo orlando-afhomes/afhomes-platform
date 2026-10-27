@@ -10,11 +10,11 @@ export function AppShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="app-shell">
       {sidebar}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="app-shell__main">
         {header}
-        <main id="main-content" className="flex-1">
+        <main id="main-content" className="app-shell__content">
           {children}
         </main>
       </div>

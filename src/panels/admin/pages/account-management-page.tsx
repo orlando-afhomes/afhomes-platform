@@ -3,6 +3,9 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Button, Empty, Input, Select, Skeleton, Space, Table, Tag } from "antd";
+import { getSystemRoleLabel } from "@/panels/admin/role-label";
+import { formatStatusLabel } from "@/shared/utils/input-sanitizers";
+import { SearchOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useAccounts, useCreateAccount, useUpdateAccount, useAssignAccountRole, useRevokeAccountRole, useUpdateAccountStatus } from "@/data/queries";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
@@ -11,14 +14,11 @@ import { PageContainer } from "@/shared/components/layout/page-container";
 import { PageHeader } from "@/shared/components/layout/page-header";
 import { Breadcrumbs } from "@/shared/components/layout/breadcrumbs";
 import type { Account, AccountStatus } from "@/modules/accounts/types";
-import styles from "./account-management-page.module.css";
 
 const AccountDialogs = dynamic(
   () => import("./account-dialogs").then((m) => m.AccountDialogs),
   { loading: () => <Skeleton active />, ssr: true },
 );
-
-const ROLES = ["super_admin", "admin", "hr", "finance", "svd", "ssm", "sm", "ist", "ost"] as const;
 
 export function AccountManagementPage() {
   const { identity } = useDevIdentity();
@@ -37,7 +37,7 @@ export function AccountManagementPage() {
   if (!isModuleGranted(identity, "accounts")) {
     return (
       <PageContainer>
-        <div className="space-y-4">
+        <div className="account-page">
           <PageHeader title="Access restricted" description="This account does not have access to Account Management." />
         </div>
       </PageContainer>
@@ -70,7 +70,7 @@ export function AccountManagementPage() {
       render: (_, record) => (
         <Space size={4} wrap>
           {record.roleIds.map((r: string) => (
-            <Tag key={r}>{r}</Tag>
+            <Tag key={r}>{getSystemRoleLabel(r)}</Tag>
           ))}
         </Space>
       ),
@@ -80,7 +80,7 @@ export function AccountManagementPage() {
       dataIndex: "status",
       key: "status",
       render: (status: AccountStatus) => (
-        <Tag color={status === "active" ? "green" : undefined}>{status}</Tag>
+        <Tag color={status === "active" ? "green" : undefined}>{formatStatusLabel(status)}</Tag>
       ),
     },
     {
@@ -99,14 +99,14 @@ export function AccountManagementPage() {
 
   return (
     <PageContainer>
-      <div className="space-y-4">
+      <div className="account-page">
         <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "Accounts and Permissions" }]} />
         <PageHeader title="Accounts and Permissions" description="Manage system accounts, roles, and account status." />
 
-        <div className={styles.toolbar}>
-          <div className={styles.filters}>
-            <Input placeholder="Search accounts" value={search} onChange={(e) => setSearch(e.target.value)} className={styles.search} />
-            <Select
+        <div className="account-page__toolbar">
+          <div className="account-page__filters">
+            <Input prefix={<SearchOutlined aria-hidden />} placeholder="Search accounts" value={search} onChange={(e) => setSearch(e.target.value)} className="account-page__search" />
+            <Select virtual={false}
               aria-label="Status filter"
               value={statusFilter}
               onChange={(value) => setStatusFilter(value)}

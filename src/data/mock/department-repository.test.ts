@@ -84,4 +84,32 @@ describe("department repository", () => {
     const after = await repo.getById(created.id);
     expect(after?.name).toBe("Engineering");
   });
+
+  it("blocks deleting a department that has roles", async () => {
+    const store = createMockStore();
+    const repo = createMockRepositories(store, () => getDevIdentity("dev-admin")).departments;
+    await expect(repo.delete("dept-hr")).rejects.toThrow(/roles/);
+    expect((await repo.list()).some((dept) => dept.id === "dept-hr")).toBe(true);
+  });
+
+  it("blocks deleting a department that has staff", async () => {
+    const store = createMockStore();
+    const repos = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    const created = await repos.departments.create({ name: "Temporary" });
+    await repos.staff.create({
+      displayName: "Temp Staff",
+      position: "Temp",
+      departmentId: created.id,
+      email: "temp-staff@afhomes.local",
+    });
+    await expect(repos.departments.delete(created.id)).rejects.toThrow(/employees|staff/i);
+  });
+
+  it("deletes an empty department", async () => {
+    const store = createMockStore();
+    const repos = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    const created = await repos.departments.create({ name: "Temporary" });
+    await repos.departments.delete(created.id);
+    expect(await repos.departments.getById(created.id)).toBeNull();
+  });
 });

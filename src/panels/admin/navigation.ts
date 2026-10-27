@@ -9,13 +9,31 @@ export type AdminNavItem = {
   available: boolean;
   icon?: ComponentType<{ className?: string }>;
   children?: AdminNavItem[];
+  /**
+   * Presentation-only: hidden from the sidebar and mobile Drawer, while the
+   * route, permission grants, and breadcrumbs stay intact (e.g. Accounts).
+   */
+  hideFromNav?: boolean;
 };
 
 export const adminNavigation: AdminNavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/admin", available: true },
-  // Reserved for future authorized modules; intentionally unavailable until implemented.
-  { id: "organization", label: "Organization", href: "/admin/organization", available: true },
-  { id: "accounts", label: "Accounts and Permissions", href: "/admin/accounts", available: true },
+  // Organization is a parent scope: visible when at least one child module
+  // is granted. "organization" itself is never granted (deny by default).
+  {
+    id: "organization",
+    label: "Organization",
+    href: "/admin/organization",
+    available: true,
+    children: [
+      { id: "departments", label: "Departments", href: "/admin/organization/departments", available: true },
+      { id: "roles", label: "Roles", href: "/admin/organization/roles", available: true },
+      { id: "staff", label: "Staff", href: "/admin/organization/staff", available: true },
+    ],
+  },
+  // Accounts stays implemented and permission-guarded at /admin/accounts,
+  // but the owner-approved primary navigation no longer lists it.
+  { id: "accounts", label: "Accounts and Permissions", href: "/admin/accounts", available: true, hideFromNav: true },
   { id: "sales-network", label: "Sales Network", href: "/admin/sales-network", available: false },
   { id: "accreditation", label: "Accreditation", href: "/admin/accreditation", available: false },
   { id: "customers", label: "Customers", href: "/admin/customers", available: false },
@@ -38,7 +56,7 @@ export function normalizePath(path: string | null) {
 
 export function getAvailableAdminNavigation(items: AdminNavItem[] = adminNavigation): AdminNavItem[] {
   return items
-    .filter((item) => item.available)
+    .filter((item) => item.available && !item.hideFromNav)
     .map((item) => ({
       ...item,
       children: item.children ? getAvailableAdminNavigation(item.children) : undefined,
@@ -74,10 +92,17 @@ export function getAdminBreadcrumbs(pathname: string): BreadcrumbItem[] {
     return items;
   }
 
-  const match = findNavItem(adminNavigation, current);
-  if (match) {
-    if (match.href !== "/admin") {
-      items.push({ label: match.label });
+  const trail = findNavTrail(adminNavigation, current);
+  if (trail.length > 0) {
+    // Ancestor entries (e.g. the Organization group) render as plain text;
+    // only Dashboard and the final destination link where a route exists.
+    for (const ancestor of trail.slice(0, -1)) {
+      if (normalizePath(ancestor.href) === "/admin") continue;
+      items.push({ label: ancestor.label });
+    }
+    const leaf = trail[trail.length - 1];
+    if (normalizePath(leaf.href) !== "/admin") {
+      items.push({ label: leaf.label });
     }
     return items;
   }
@@ -86,9 +111,12 @@ export function getAdminBreadcrumbs(pathname: string): BreadcrumbItem[] {
   return items;
 }
 
-export function getRoleAwareAdminNavigation(identity: import("@/modules/identity/types").DevIdentity) {
-  const granted = getGrantedModuleIds(identity);
-  return getAvailableAdminNavigation().filter((item) => granted.has(item.id));
+export function getRoleAwareAdminNavigation(
+  identity: import("@/modules/identity/types").DevIdentity,
+  extraModuleIds: Iterable<AdminModuleId> = [],
+) {
+  const granted = new Set<AdminModuleId>([...getGrantedModuleIds(identity), ...extraModuleIds]);
+  return filterNavByGrants(getAvailableAdminNavigation(), granted);
 }
 
 export function getRoleAwareAdminBreadcrumbs(identity: import("@/modules/identity/types").DevIdentity, pathname: string) {
@@ -99,13 +127,24 @@ export function getRoleAwareAdminBreadcrumbs(identity: import("@/modules/identit
   });
 }
 
-function findNavItem(items: AdminNavItem[], pathname: string): AdminNavItem | null {
+function filterNavByGrants(items: AdminNavItem[], granted: Set<AdminModuleId>): AdminNavItem[] {
+  const result: AdminNavItem[] = [];
   for (const item of items) {
-    if (normalizePath(item.href) === pathname) return item;
-    if (item.children) {
-      const child = findNavItem(item.children, pathname);
-      if (child) return child;
+    const children = item.children ? filterNavByGrants(item.children, granted) : undefined;
+    if (granted.has(item.id) || (children && children.length > 0)) {
+      result.push({ ...item, children });
     }
   }
-  return null;
+  return result;
+}
+
+function findNavTrail(items: AdminNavItem[], pathname: string, trail: AdminNavItem[] = []): AdminNavItem[] {
+  for (const item of items) {
+    if (normalizePath(item.href) === pathname) return [...trail, item];
+    if (item.children) {
+      const childTrail = findNavTrail(item.children, pathname, [...trail, item]);
+      if (childTrail.length > 0) return childTrail;
+    }
+  }
+  return [];
 }

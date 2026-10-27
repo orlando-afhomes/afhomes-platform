@@ -10,26 +10,16 @@ import { Breadcrumbs } from "@/shared/components/layout/breadcrumbs";
 import { getRoleAwareAdminBreadcrumbs } from "@/panels/admin/navigation";
 import { getEffectiveRoles, isModuleGranted } from "@/modules/identity/permissions";
 import { countVisibleCustomers, countVisibleMembers } from "../dashboard-metrics";
+import { getRoleDisplayLabel } from "../role-label";
 import { SalesNetworkPanel } from "../components/sales-network-panel";
-import styles from "./admin-dashboard-page.module.css";
 
 function isSalesRole(roles: string[]) {
-  return roles.some((role) => ["svd", "ssm", "sm", "ist", "ost"].includes(role));
+  return roles.some((role) => ["svd", "ssm", "sm", "ost"].includes(role));
 }
 
 function getPanelTitle(roles: string[], active: boolean): string {
   if (!active) return "Access restricted";
-  if (roles.includes("super_admin")) return "Super Administrator";
-  if (roles.includes("admin")) return "Administrator";
-  if (roles.includes("hr")) return "Human Resources";
-  if (roles.includes("finance")) return "Finance";
-  if (roles.includes("svd")) return "Senior Vice Director";
-  if (roles.includes("ssm")) return "Senior Sales Manager";
-  if (roles.includes("sm")) return "Sales Manager";
-  if (roles.includes("ist")) return "Internal Sales";
-  if (roles.includes("ost")) return "Outside Sales";
-  if (roles.length === 0) return "Staff";
-  return "Administration";
+  return getRoleDisplayLabel(roles);
 }
 
 function getPanelDescription(active: boolean): string {
@@ -60,11 +50,11 @@ export function AdminDashboardPage() {
 
   return (
     <PageContainer>
-      <div className="space-y-4">
+      <div className="dashboard-page">
         <Breadcrumbs items={getRoleAwareAdminBreadcrumbs(identity, pathname ?? "/admin")} />
         <PageHeader title={title} description={description} />
         {active ? (
-          <div className={styles.kpiGrid}>
+          <div className="dashboard-page__stats-grid">
             {isModuleGranted(identity, "sales-network") ? (
               <Card>
                 {membersQuery.isLoading ? (

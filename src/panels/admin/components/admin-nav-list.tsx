@@ -21,9 +21,9 @@ export function AdminNavList({
 
   return (
     <Menu
-      aria-label="Administration"
       mode="inline"
       theme="dark"
+      className="admin-sidebar__menu"
       items={toAntdMenuItems(items ?? [], onNavigate)}
       selectedKeys={findSelectedKeys(items ?? [], pathname)}
       openKeys={openKeys}

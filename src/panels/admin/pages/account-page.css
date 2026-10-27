@@ -1,0 +1,36 @@
+/* Account Management page layout. Imported by src/app/admin/accounts/page.tsx. */
+
+.account-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.account-page__toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .account-page__toolbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.account-page__filters {
+  display: flex;
+  gap: 8px;
+}
+
+.account-page__search {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .account-page__search {
+    max-width: 16rem;
+  }
+}

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Checkbox, Descriptions, Form, Input, Modal, Select, Tag } from "antd";
+import { Alert, Button, Checkbox, Form, Input, Modal, Select, Tag } from "antd";
 import type { Account, AccountStatus } from "@/modules/accounts/types";
+import { getSystemRoleLabel } from "@/panels/admin/role-label";
 
-const ROLES = ["super_admin", "admin", "hr", "finance", "svd", "ssm", "sm", "ist", "ost"] as const;
+export const ACCOUNT_SYSTEM_ROLES = ["super_admin", "admin", "hr", "finance", "svd", "ssm", "sm", "ost"] as const;
 
 export type AccountDialogMode = "view" | "edit" | "create" | "role" | "status" | null;
 
@@ -23,16 +24,16 @@ export function AccountDialogs({
   mode: AccountDialogMode;
   selected: Account | null;
   close: () => void;
-  onCreate: (data: { displayName: string; email: string; roleIds: string[]; departmentId: string | null }) => Promise<void>;
-  onUpdate: (id: string, data: { displayName: string; email: string; departmentId: string | null }) => Promise<void>;
-  onAssign: (id: string, role: string) => Promise<void>;
-  onRevoke: (id: string, role: string) => Promise<void>;
-  onUpdateStatus: (id: string, status: AccountStatus) => Promise<void>;
+  onCreate: (data: { displayName: string; email: string; roleIds: string[]; departmentId: string | null }) => Promise<unknown>;
+  onUpdate: (id: string, data: { displayName: string; email: string; departmentId: string | null }) => Promise<unknown>;
+  onAssign: (id: string, role: string) => Promise<unknown>;
+  onRevoke: (id: string, role: string) => Promise<unknown>;
+  onUpdateStatus: (id: string, status: AccountStatus) => Promise<unknown>;
 }) {
   return (
     <>
       <Modal title="Create account" open={mode === "create"} onCancel={close} footer={null} destroyOnHidden>
-        <p className="text-muted-foreground">Provision a new synthetic account.</p>
+        <p className="account-dialog__description">Provision a new synthetic account.</p>
         <AccountForm
           key="create"
           onSubmit={async (data) => {
@@ -45,13 +46,28 @@ export function AccountDialogs({
 
       <Modal title="Account details" open={mode === "view" && !!selected} onCancel={close} footer={null} destroyOnHidden>
         {selected ? (
-          <Descriptions column={1} bordered size="small">
-            <Descriptions.Item label="Name">{selected.displayName}</Descriptions.Item>
-            <Descriptions.Item label="Email">{selected.email}</Descriptions.Item>
-            <Descriptions.Item label="Status">{selected.status}</Descriptions.Item>
-            <Descriptions.Item label="Roles">{selected.roleIds.join(", ") || "—"}</Descriptions.Item>
-            <Descriptions.Item label="Created">{selected.createdAt}</Descriptions.Item>
-          </Descriptions>
+          <dl className="account-dialog__details">
+            <div className="account-dialog__detail-row">
+              <dt className="account-dialog__detail-term">Name</dt>
+              <dd className="account-dialog__detail-value">{selected.displayName}</dd>
+            </div>
+            <div className="account-dialog__detail-row">
+              <dt className="account-dialog__detail-term">Email</dt>
+              <dd className="account-dialog__detail-value">{selected.email}</dd>
+            </div>
+            <div className="account-dialog__detail-row">
+              <dt className="account-dialog__detail-term">Status</dt>
+              <dd className="account-dialog__detail-value">{selected.status}</dd>
+            </div>
+            <div className="account-dialog__detail-row">
+              <dt className="account-dialog__detail-term">Roles</dt>
+              <dd className="account-dialog__detail-value">{selected.roleIds.join(", ") || "—"}</dd>
+            </div>
+            <div className="account-dialog__detail-row">
+              <dt className="account-dialog__detail-term">Created</dt>
+              <dd className="account-dialog__detail-value">{selected.createdAt}</dd>
+            </div>
+          </dl>
         ) : null}
       </Modal>
 
@@ -98,7 +114,7 @@ export function AccountDialogs({
   );
 }
 
-function AccountForm({ initial, onSubmit, submitLabel }: { initial?: Account; onSubmit: (data: { displayName: string; email: string; roleIds: string[]; departmentId: string | null }) => Promise<void>; submitLabel: string }) {
+function AccountForm({ initial, onSubmit, submitLabel }: { initial?: Account; onSubmit: (data: { displayName: string; email: string; roleIds: string[]; departmentId: string | null }) => Promise<unknown>; submitLabel: string }) {
   const [displayName, setDisplayName] = useState(initial?.displayName ?? "");
   const [email, setEmail] = useState(initial?.email ?? "");
   const [roleIds, setRoleIds] = useState<string[]>(initial?.roleIds ?? []);
@@ -131,16 +147,16 @@ function AccountForm({ initial, onSubmit, submitLabel }: { initial?: Account; on
       </Form.Item>
       <Form.Item label="Roles" required>
         <Checkbox.Group value={roleIds} onChange={(values) => setRoleIds(values as string[])}>
-          <div className="flex flex-wrap gap-2">
-            {ROLES.map((role) => (
-              <Checkbox key={role} value={role}>{role}</Checkbox>
+          <div className="account-dialog__role-tags">
+            {ACCOUNT_SYSTEM_ROLES.map((role) => (
+              <Checkbox key={role} value={role}>{getSystemRoleLabel(role)}</Checkbox>
             ))}
           </div>
         </Checkbox.Group>
       </Form.Item>
       {error ? <Alert type="error" title={error} showIcon /> : null}
       <Form.Item>
-        <div className="flex justify-end">
+        <div className="account-dialog__form-actions">
           <Button type="primary" htmlType="submit" loading={submitting}>{submitLabel}</Button>
         </div>
       </Form.Item>
@@ -148,7 +164,7 @@ function AccountForm({ initial, onSubmit, submitLabel }: { initial?: Account; on
   );
 }
 
-function RoleEditor({ account, onAssign, onRevoke, onClose }: { account: Account; onAssign: (role: string) => Promise<void>; onRevoke: (role: string) => Promise<void>; onClose: () => void }) {
+function RoleEditor({ account, onAssign, onRevoke, onClose }: { account: Account; onAssign: (role: string) => Promise<unknown>; onRevoke: (role: string) => Promise<unknown>; onClose: () => void }) {
   const [role, setRole] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -172,32 +188,32 @@ function RoleEditor({ account, onAssign, onRevoke, onClose }: { account: Account
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-1">
+    <div className="account-dialog__form-section">
+      <div className="account-dialog__role-tags">
         {account.roleIds.map((r: string) => (
-          <Tag key={r} closable onClose={() => handleRevoke(r)}>{r}</Tag>
+          <Tag key={r} closable onClose={() => handleRevoke(r)}>{getSystemRoleLabel(r)}</Tag>
         ))}
       </div>
-      <div className="flex gap-2">
-        <Select
+      <div className="account-dialog__role-row">
+        <Select virtual={false}
           aria-label="Role to assign"
-          className="flex-1"
+          className="account-dialog__role-select"
           placeholder="Select role"
           value={role || undefined}
           onChange={(value) => setRole(value)}
-          options={ROLES.filter((r) => !account.roleIds.includes(r)).map((r) => ({ value: r, label: r }))}
+          options={ACCOUNT_SYSTEM_ROLES.filter((r) => !account.roleIds.includes(r)).map((r) => ({ value: r, label: getSystemRoleLabel(r) }))}
         />
         <Button onClick={handleAssign} disabled={!role}>Assign</Button>
       </div>
       {error ? <Alert type="error" title={error} showIcon /> : null}
-      <div className="flex justify-end">
+      <div className="account-dialog__form-actions">
         <Button onClick={onClose}>Close</Button>
       </div>
     </div>
   );
 }
 
-function StatusEditor({ account, onSave, onClose }: { account: Account; onSave: (status: AccountStatus) => Promise<void>; onClose: () => void }) {
+function StatusEditor({ account, onSave, onClose }: { account: Account; onSave: (status: AccountStatus) => Promise<unknown>; onClose: () => void }) {
   const [status, setStatus] = useState<AccountStatus>(account.status);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -215,8 +231,8 @@ function StatusEditor({ account, onSave, onClose }: { account: Account; onSave: 
   };
 
   return (
-    <div className="space-y-3">
-      <Select
+    <div className="account-dialog__form-section">
+      <Select virtual={false}
         aria-label="Account status"
         className="w-full"
         value={status}
@@ -229,7 +245,7 @@ function StatusEditor({ account, onSave, onClose }: { account: Account; onSave: 
         ]}
       />
       {error ? <Alert type="error" title={error} showIcon /> : null}
-      <div className="flex justify-end gap-2">
+      <div className="account-dialog__actions">
         <Button onClick={onClose}>Cancel</Button>
         <Button type="primary" onClick={handleSave} loading={saving}>Save</Button>
       </div>

@@ -1,0 +1,122 @@
+/* Shared layout primitives. Imported by src/app/admin/layout.tsx alongside
+ * the admin shell; all selectors use distinct namespaces. */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-bg-canvas);
+}
+
+.app-shell__main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.app-shell__content {
+  flex: 1;
+}
+
+.page-container {
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: 80rem;
+  padding: 24px 16px;
+}
+
+@media (min-width: 768px) {
+  .page-container {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+@media (min-width: 640px) {
+  .page-header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+}
+
+.page-header__content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.page-header__title {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.page-header__description {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-breadcrumb-link {
+  color: var(--color-text-muted);
+}
+
+.page-breadcrumb-link:hover {
+  color: var(--color-text-primary);
+}
+
+.page-breadcrumb-current {
+  color: var(--color-text-primary);
+}
+
+.sort-toggle-button {
+  white-space: nowrap;
+}
+
+.row-actions-menu {
+  display: inline-flex;
+}
+
+.row-actions-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.row-actions-menu__icon {
+  display: inline-flex;
+}
+
+.row-actions-menu__view {
+  color: #1677ff;
+  font-weight: 500;
+}
+
+.row-actions-menu__edit {
+  color: #b7791f;
+  font-weight: 500;
+}
+
+.row-actions-menu__delete {
+  color: #ff4d4f;
+  font-weight: 500;
+}
+
+.row-actions-menu__confirm-text {
+  margin: 0;
+}

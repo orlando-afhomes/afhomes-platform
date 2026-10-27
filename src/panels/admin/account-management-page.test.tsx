@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
+import { ConfigProvider } from "antd";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
@@ -11,13 +12,15 @@ import { AccountManagementPage } from "./pages/account-management-page";
 function TestWrapper({ identityId }: { identityId: string }) {
   const [queryClient] = useState(() => new QueryClient());
   return (
-    <QueryClientProvider client={queryClient}>
+    <ConfigProvider theme={{ token: { motion: false } }}>
+      <QueryClientProvider client={queryClient}>
       <MockStoreProvider>
         <DevIdentityProvider initialIdentityId={identityId}>
           <AccountManagementPage />
         </DevIdentityProvider>
       </MockStoreProvider>
     </QueryClientProvider>
+    </ConfigProvider>
   );
 }
 
@@ -33,12 +36,12 @@ describe("account management page", () => {
   it("creates an account", async () => {
     const user = userEvent.setup();
     render(<TestWrapper identityId="dev-admin" />);
-    await screen.findByText("Administrator", {}, { timeout: 5000 });
+    await screen.findByText("admin@afhomes.local", {}, { timeout: 5000 });
     await user.click(screen.getByRole("button", { name: /create account/i }));
     await screen.findByText("Provision a new synthetic account.");
     fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "New Account" } });
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "newaccount@afhomes.local" } });
-    await user.click(screen.getByRole("checkbox", { name: "hr" }));
+    await user.click(screen.getByRole("checkbox", { name: "Human Resources" }));
     await user.click(screen.getByRole("button", { name: /^create$/i }));
     await waitFor(() => expect(screen.getByText("New Account")).toBeInTheDocument());
   });
@@ -46,12 +49,12 @@ describe("account management page", () => {
   it("rejects duplicate email on create", async () => {
     const user = userEvent.setup();
     render(<TestWrapper identityId="dev-admin" />);
-    await screen.findByText("Administrator", {}, { timeout: 5000 });
+    await screen.findByText("admin@afhomes.local", {}, { timeout: 5000 });
     await user.click(screen.getByRole("button", { name: /create account/i }));
     await screen.findByText("Provision a new synthetic account.");
     fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "Copy Cat" } });
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "admin@afhomes.local" } });
-    await user.click(screen.getByRole("checkbox", { name: "hr" }));
+    await user.click(screen.getByRole("checkbox", { name: "Human Resources" }));
     await user.click(screen.getByRole("button", { name: /^create$/i }));
     await waitFor(() => expect(screen.getByText(/already exists|duplicate/i)).toBeInTheDocument());
   });
@@ -70,20 +73,35 @@ describe("account management page", () => {
     const user = userEvent.setup();
     render(<TestWrapper identityId="dev-admin" />);
     await openRowDialog(user, "HR User", "View");
-    await waitFor(() => expect(screen.getByText("hr@afhomes.local")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText("hr@afhomes.local").length).toBe(2));
   });
 
   it("assigns and revokes a role", async () => {
     const user = userEvent.setup();
     render(<TestWrapper identityId="dev-admin" />);
-    await openRowDialog(user, "HR User", "Roles");
-    await screen.findByText("Role assignments");
+    // Role dialog shows the record snapshot; reopen to verify mutations.
+    const openRoles = async () => {
+      const r = screen.getByText("HR User").closest("tr")!;
+      await user.click(within(r).getByRole("button", { name: "Roles" }));
+      await screen.findByText("Role assignments");
+    };
+    const hrRow = () => screen.getByText("HR User").closest("tr") as HTMLElement;
+    // Footer "Close" and modal X share the same onCancel; X has a stable selector.
+    const closeDialog = () => fireEvent.click(document.querySelector(".ant-modal .ant-modal-close")!);
+    await screen.findByText("HR User", {}, { timeout: 5000 });
+    await openRoles();
     await user.click(screen.getByRole("combobox", { name: "Role to assign" }));
-    await user.click(await screen.findByRole("option", { name: "finance" }));
+    await user.click(await screen.findByRole("option", { name: "Finance" }));
     await user.click(screen.getByRole("button", { name: "Assign" }));
-    await waitFor(() => expect(screen.getByText("finance", { selector: ".ant-tag" })).toBeInTheDocument());
-    await user.click(screen.getByLabelText("Close", { selector: ".ant-tag-close-icon" }));
-    await waitFor(() => expect(screen.queryByText("finance", { selector: ".ant-tag" })).not.toBeInTheDocument());
+    closeDialog();
+    await waitFor(() => expect(within(hrRow()).getByText("Finance")).toBeInTheDocument());
+    await openRoles();
+    const dialog = () => document.querySelector(".ant-modal") as HTMLElement;
+    const financeTag = () => within(dialog()).getByText("Finance", { selector: ".ant-tag" });
+    await waitFor(() => expect(financeTag()).toBeInTheDocument());
+    await user.click(within(financeTag()).getByLabelText("Close"));
+    closeDialog();
+    await waitFor(() => expect(within(hrRow()).queryByText("Finance")).not.toBeInTheDocument());
   });
 
   it("blocks assigning super_admin as non-super-admin", async () => {
@@ -92,9 +110,9 @@ describe("account management page", () => {
     await openRowDialog(user, "HR User", "Roles");
     await screen.findByText("Role assignments");
     await user.click(screen.getByRole("combobox", { name: "Role to assign" }));
-    await user.click(await screen.findByRole("option", { name: "super_admin" }));
+    await user.click(await screen.findByRole("option", { name: "Super Admin" }));
     await user.click(screen.getByRole("button", { name: "Assign" }));
-    await waitFor(() => expect(screen.getByText(/not allowed|super_admin/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Cannot assign protected Super Administrator role.")).toBeInTheDocument());
   });
 
   it("updates account status", async () => {
@@ -115,7 +133,7 @@ describe("account management page", () => {
 
   it("filters accounts by search", async () => {
     render(<TestWrapper identityId="dev-admin" />);
-    await screen.findByText("Administrator", {}, { timeout: 5000 });
+    await screen.findByText("admin@afhomes.local", {}, { timeout: 5000 });
     fireEvent.change(screen.getByPlaceholderText("Search accounts"), { target: { value: "Finance User" } });
     await waitFor(() => expect(screen.getByText("Finance User")).toBeInTheDocument());
     expect(screen.queryByText("HR User")).not.toBeInTheDocument();

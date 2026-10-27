@@ -33,14 +33,17 @@ describe("role-aware permissions", () => {
     const granted = getGrantedModuleIds(identity);
     // admin assignment is inactive in the fixture
     expect(granted.has("accounts")).toBe(false);
-    expect(granted.has("organization")).toBe(false);
+    expect(granted.has("departments")).toBe(false);
   });
 
-  it("limits HR to departments only", () => {
+  it("limits HR to departments and staff, not roles", () => {
     const identity = getDevIdentity("dev-hr");
     const granted = getGrantedModuleIds(identity);
     expect(granted.has("dashboard")).toBe(true);
-    expect(granted.has("organization")).toBe(true);
+    expect(granted.has("departments")).toBe(true);
+    expect(granted.has("staff")).toBe(true);
+    expect(granted.has("roles")).toBe(false);
+    expect(granted.has("organization")).toBe(false);
     expect(granted.has("accounts")).toBe(false);
     expect(granted.has("finance")).toBe(false);
     expect(granted.has("sales-network")).toBe(false);
@@ -66,7 +69,8 @@ describe("role-aware permissions", () => {
     expect(granted.has("dashboard")).toBe(true);
     expect(granted.has("sales-network")).toBe(true);
     expect(granted.has("finance")).toBe(false);
-    expect(granted.has("organization")).toBe(false);
+    expect(granted.has("departments")).toBe(false);
+    expect(granted.has("roles")).toBe(false);
     expect(hasOperationPermission(identity, "sales.viewOwn")).toBe(true);
     expect(hasOperationPermission(identity, "commission.viewOwn")).toBe(true);
     expect(hasOperationPermission(identity, "finance.verify")).toBe(false);
@@ -74,16 +78,22 @@ describe("role-aware permissions", () => {
 
   it("filters navigation by grants", () => {
     const identity = getDevIdentity("dev-hr");
-    const hrefs = getNav(identity).map((item) => item.href);
-    expect(hrefs).toEqual(["/admin", "/admin/organization"]);
+    const items = getNav(identity);
+    expect(items.map((item) => item.href)).toEqual(["/admin", "/admin/organization"]);
+    expect(items.find((item) => item.id === "organization")?.children?.map((child) => child.id)).toEqual([
+      "departments",
+      "staff",
+    ]);
   });
 
-  it("grants admin organization, accounts, and vip products", () => {
+  it("grants admin departments, roles, accounts and vip products", () => {
     const identity = getDevIdentity("dev-admin");
-    expect(isModuleGranted(identity, "organization")).toBe(true);
+    expect(isModuleGranted(identity, "departments")).toBe(true);
+    expect(isModuleGranted(identity, "roles")).toBe(true);
     expect(isModuleGranted(identity, "accounts")).toBe(true);
     expect(isModuleGranted(identity, "vip-products")).toBe(true);
     expect(isModuleGranted(identity, "finance")).toBe(false);
+    expect(isModuleGranted(identity, "organization")).toBe(false);
     expect(hasOperationPermission(identity, "vip-products.manage")).toBe(true);
     expect(hasOperationPermission(identity, "finance.verify")).toBe(false);
   });

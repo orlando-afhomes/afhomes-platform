@@ -3,7 +3,12 @@ import { activeRoles } from "@/data/mock/dev-identities";
 
 export type AdminModuleId =
   | "dashboard"
+  // Parent navigation scope only; never granted to any role (deny by default).
+  // The standalone Organization page was replaced by Departments/Roles/Staff.
   | "organization"
+  | "departments"
+  | "roles"
+  | "staff"
   | "accounts"
   | "sales-network"
   | "accreditation"
@@ -40,18 +45,60 @@ export type AdminOperation =
 
 const BASE_MODULES: readonly AdminModuleId[] = ["dashboard"];
 
-// Approved scoped module baseline (R3). Unresolved modules remain denied.
+// Approved scoped module baseline. Organization management is split into
+// Departments, Roles, and Staff submodules. Unresolved modules remain denied.
+// HR manages departments and staff but does not delegate module grants (no
+// "roles"), so department-role privilege assignment stays protected.
 const ROLE_MODULE_GRANTS: Record<DevRole, readonly AdminModuleId[]> = {
-  super_admin: [...BASE_MODULES, "organization", "accounts", "vip-products"],
-  admin: [...BASE_MODULES, "organization", "accounts", "vip-products"],
-  hr: [...BASE_MODULES, "organization"],
+  super_admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products"],
+  admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products"],
+  hr: [...BASE_MODULES, "departments", "staff"],
   finance: [...BASE_MODULES, "finance"],
   svd: [...BASE_MODULES, "sales-network"],
   ssm: [...BASE_MODULES, "sales-network"],
   sm: [...BASE_MODULES, "sales-network"],
-  ist: [...BASE_MODULES, "sales-network"],
   ost: [...BASE_MODULES, "sales-network"],
 };
+
+// Modules a department role may grant. Only implemented, separately
+// authorized pages are delegable: no disabled modules, no Finance-controlled
+// operations, and no protected Super Administrator equivalence exist here.
+export const DELEGABLE_MODULES: readonly AdminModuleId[] = [
+  "dashboard",
+  "accounts",
+  "departments",
+  "roles",
+  "staff",
+] as const;
+
+export const MODULE_CATALOG: ReadonlyArray<{ id: AdminModuleId; label: string }> = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "accounts", label: "Accounts and Permissions" },
+  { id: "departments", label: "Departments" },
+  { id: "roles", label: "Roles" },
+  { id: "staff", label: "Staff" },
+];
+
+// Runtime mirror of the AdminModuleId union for validating persisted grants.
+export const ALL_MODULE_IDS: ReadonlySet<AdminModuleId> = new Set([
+  "dashboard",
+  "organization",
+  "departments",
+  "roles",
+  "staff",
+  "accounts",
+  "sales-network",
+  "accreditation",
+  "customers",
+  "vip-products",
+  "sales",
+  "finance",
+  "commissions",
+  "membership",
+  "stay-points",
+  "reports",
+  "audit-logs",
+]);
 
 const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
   super_admin: [
@@ -87,7 +134,6 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
   svd: ["sales.viewTeam", "customers.viewDownline"],
   ssm: ["sales.viewTeam", "customers.viewDownline"],
   sm: ["sales.viewTeam", "customers.viewDownline"],
-  ist: ["sales.viewOwn", "customers.viewOwn", "commission.viewOwn"],
   ost: ["sales.viewOwn", "customers.viewOwn", "commission.viewOwn"],
 };
 

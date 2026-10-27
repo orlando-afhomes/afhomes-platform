@@ -37,7 +37,8 @@ export function getVisibleMemberIds(identity: DevIdentity, store: MockStore): Se
   const member = identity.memberId ? store.members.find((item) => item.id === identity.memberId) : null;
   if (!member) return new Set();
   const visible = new Set<string>([member.id]);
-  const hasManagerRole = roles.some((role) => role === "svd" || role === "ssm" || role === "sm" || (role === "ist" && (member.designation === "SVD" || member.designation === "SSM" || member.designation === "SM")));
+  // SVD/SSM/SM designations are automatically IST (doc 02 §2.1); no separate ist role.
+  const hasManagerRole = roles.some((role) => role === "svd" || role === "ssm" || role === "sm");
   if (hasManagerRole) {
     for (const descendant of getDescendantIds(member.id, store.members)) {
       visible.add(descendant);

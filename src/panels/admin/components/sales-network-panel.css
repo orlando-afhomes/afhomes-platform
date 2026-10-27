@@ -1,0 +1,82 @@
+/* Sales Network panel (rendered inside the admin dashboard route).
+ * Imported by src/app/admin/page.tsx. */
+
+.sales-network {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sales-network__loading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sales-network__stats-grid {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .sales-network__stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.sales-network__stat-value {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.sales-network__detail-grid {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .sales-network__detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sales-network__detail-wide {
+    grid-column: span 2;
+  }
+}
+
+.sales-network__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.sales-network__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sales-network__context-label {
+  color: var(--color-text-muted);
+}
+
+.sales-network__context-name {
+  font-weight: 500;
+}
+
+.sales-network__context-value {
+  color: var(--color-text-primary);
+}
+
+.sales-network__empty-text {
+  color: var(--color-text-muted);
+}
+
+.sales-network__member-count {
+  color: var(--color-text-muted);
+}
+
+.sales-network__member-name {
+  color: var(--color-text-primary);
+}

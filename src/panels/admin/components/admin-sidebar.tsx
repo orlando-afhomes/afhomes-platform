@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Button, Layout } from "antd";
 import { LogoutOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
@@ -32,7 +33,14 @@ export function AdminSidebar({ collapsed, onCollapse }: { collapsed: boolean; on
       >
         <div className="admin-sidebar__brand">
           <span className="admin-sidebar__brand-mark" aria-hidden="true">
-            AF
+            <Image
+              src="/images/logo.png"
+              alt=""
+              width={30}
+              height={34}
+              priority
+              className="admin-sidebar__brand-logo"
+            />
           </span>
           <span className="admin-sidebar__brand-text">
             <span className="admin-sidebar__brand-name">AFHomes</span>

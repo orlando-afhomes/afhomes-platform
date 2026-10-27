@@ -155,18 +155,20 @@ describe("roles page", () => {
   it("deletes an unassigned role after confirm", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
+    // "AAA" prefix keeps the new row on page 1 (pageSize 10, 11 seeded
+    // roles); "Temporary Role" would sort last onto page 2 and be invisible.
     const nameInput = await openCreate(user);
-    fireEvent.change(nameInput, { target: { value: "Temporary Role" } });
+    fireEvent.change(nameInput, { target: { value: "AAA Temporary Role" } });
     await user.click(screen.getByRole("combobox", { name: "Role department" }));
     await pickOption(user, "Human Resources");
     await user.click(screen.getByRole("checkbox", { name: "Departments" }));
     await user.click(screen.getByRole("button", { name: /^create$/i }));
-    await waitFor(() => expect(screen.getByText("Temporary Role")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("AAA Temporary Role")).toBeInTheDocument());
     await clickSwalConfirm(user);
-    const row = screen.getByText("Temporary Role").closest("tr")!;
+    const row = screen.getByText("AAA Temporary Role").closest("tr")!;
     await clickRowAction(user, row, "Delete");
     await clickSwalConfirm(user);
-    await waitFor(() => expect(screen.queryByText("Temporary Role")).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText("AAA Temporary Role")).not.toBeInTheDocument());
     await clickSwalConfirm(user);
   });
 

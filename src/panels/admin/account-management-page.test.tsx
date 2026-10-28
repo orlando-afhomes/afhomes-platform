@@ -72,7 +72,8 @@ describe("account management page", () => {
   it("shows account details", async () => {
     const user = userEvent.setup();
     render(<TestWrapper identityId="dev-admin" />);
-    await openRowDialog(user, "HR User", "View");
+    await screen.findByText("HR User", {}, { timeout: 5000 });
+    await user.click(screen.getByText("HR User").closest("tr")!);
     await waitFor(() => expect(screen.getAllByText("hr@afhomes.local").length).toBe(2));
   });
 

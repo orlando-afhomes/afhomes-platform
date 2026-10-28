@@ -18,6 +18,9 @@ import {
   ScrollText,
   KeyRound,
   UserCog,
+  ContactRound,
+  GitBranch,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 import type { AdminNavItem } from "../navigation";
@@ -31,7 +34,12 @@ const ICONS: Partial<Record<AdminNavItem["id"], LucideIcon>> = {
   staff: UserCog,
   accounts: Users,
   "sales-network": Network,
+  "sales-network-members": ContactRound,
+  "sales-network-genealogy": GitBranch,
   accreditation: BadgeCheck,
+  "accreditation-registrations": FileText,
+  "accreditation-records": ScrollText,
+  "accreditation-renewals": BarChart3,
   customers: Contact,
   "vip-products": Gem,
   sales: ShoppingCart,

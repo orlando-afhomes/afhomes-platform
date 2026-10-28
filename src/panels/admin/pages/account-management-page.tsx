@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { Button, Empty, Input, Select, Skeleton, Space, Table, Tag } from "antd";
+import { Button, Input, Select, Skeleton, Space, Tag } from "antd";
 import { getSystemRoleLabel } from "@/panels/admin/role-label";
-import { formatStatusLabel } from "@/shared/utils/input-sanitizers";
+import { StatusBadge } from "@/shared/components/layout/status-badge";
+import { DirectoryTable } from "@/shared/components/layout/directory-table";
 import { SearchOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useAccounts, useCreateAccount, useUpdateAccount, useAssignAccountRole, useRevokeAccountRole, useUpdateAccountStatus } from "@/data/queries";
@@ -62,7 +63,14 @@ export function AccountManagementPage() {
   const close = () => { setMode(null); setSelected(null); };
 
   const columns: ColumnsType<Account> = [
-    { title: "Name", dataIndex: "displayName", key: "displayName" },
+    {
+      title: "Name",
+      dataIndex: "displayName",
+      key: "displayName",
+      render: (name: string, record) => (
+        <Button type="link" className="account-table__name-link" onClick={() => openView(record)}>{name}</Button>
+      ),
+    },
     { title: "Email", dataIndex: "email", key: "email" },
     {
       title: "Roles",
@@ -80,7 +88,7 @@ export function AccountManagementPage() {
       dataIndex: "status",
       key: "status",
       render: (status: AccountStatus) => (
-        <Tag color={status === "active" ? "green" : undefined}>{formatStatusLabel(status)}</Tag>
+        <StatusBadge status={status} />
       ),
     },
     {
@@ -88,7 +96,6 @@ export function AccountManagementPage() {
       key: "actions",
       render: (_, record) => (
         <Space size={4}>
-          <Button type="link" size="small" onClick={() => openView(record)}>View</Button>
           <Button type="link" size="small" onClick={() => openEdit(record)}>Edit</Button>
           <Button type="link" size="small" onClick={() => openRole(record)}>Roles</Button>
           <Button type="link" size="small" onClick={() => openStatus(record)}>Status</Button>
@@ -122,14 +129,13 @@ export function AccountManagementPage() {
           <Button type="primary" onClick={openCreate}>Create account</Button>
         </div>
 
-        <Table<Account>
+        <DirectoryTable<Account>
           rowKey="id"
           columns={columns}
           dataSource={filtered}
           loading={accountsQuery.isLoading}
-          pagination={false}
-          scroll={{ x: true }}
-          locale={{ emptyText: <Empty description="No accounts found." /> }}
+          emptyText="No accounts found."
+          onRowOpen={(record) => openView(record)}
         />
 
         <AccountDialogs

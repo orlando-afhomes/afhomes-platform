@@ -11,6 +11,11 @@ export type AdminModuleId =
   | "staff"
   | "accounts"
   | "sales-network"
+  | "sales-network-members"
+  | "sales-network-genealogy"
+  | "accreditation-registrations"
+  | "accreditation-records"
+  | "accreditation-renewals"
   | "accreditation"
   | "customers"
   | "vip-products"
@@ -41,7 +46,10 @@ export type AdminOperation =
   | "sales.viewOwn"
   | "sales.viewTeam"
   | "customers.viewOwn"
-  | "customers.viewDownline";
+  | "customers.viewDownline"
+  | "sales-network.manage"
+  | "sales-network.transfer"
+  | "sales-network.status";
 
 const BASE_MODULES: readonly AdminModuleId[] = ["dashboard"];
 
@@ -50,14 +58,14 @@ const BASE_MODULES: readonly AdminModuleId[] = ["dashboard"];
 // HR manages departments and staff but does not delegate module grants (no
 // "roles"), so department-role privilege assignment stays protected.
 const ROLE_MODULE_GRANTS: Record<DevRole, readonly AdminModuleId[]> = {
-  super_admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products"],
-  admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products"],
+  super_admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products", "sales-network", "sales-network-members", "sales-network-genealogy", "accreditation-registrations", "accreditation-records", "accreditation-renewals"],
+  admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products", "sales-network", "sales-network-members", "sales-network-genealogy", "accreditation-registrations", "accreditation-records", "accreditation-renewals"],
   hr: [...BASE_MODULES, "departments", "staff"],
   finance: [...BASE_MODULES, "finance"],
-  svd: [...BASE_MODULES, "sales-network"],
-  ssm: [...BASE_MODULES, "sales-network"],
-  sm: [...BASE_MODULES, "sales-network"],
-  ost: [...BASE_MODULES, "sales-network"],
+  svd: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy"],
+  ssm: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy"],
+  sm: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy"],
+  ost: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy"],
 };
 
 // Modules a department role may grant. Only implemented, separately
@@ -77,6 +85,12 @@ export const MODULE_CATALOG: ReadonlyArray<{ id: AdminModuleId; label: string }>
   { id: "departments", label: "Departments" },
   { id: "roles", label: "Roles" },
   { id: "staff", label: "Staff" },
+  { id: "sales-network", label: "Sales Network" },
+  { id: "sales-network-members", label: "Sales Network Members" },
+  { id: "sales-network-genealogy", label: "Sales Network Genealogy" },
+  { id: "accreditation-registrations", label: "Accreditation Registrations" },
+  { id: "accreditation-records", label: "Accreditation Records" },
+  { id: "accreditation-renewals", label: "Accreditation Renewals" },
 ];
 
 // Runtime mirror of the AdminModuleId union for validating persisted grants.
@@ -88,6 +102,11 @@ export const ALL_MODULE_IDS: ReadonlySet<AdminModuleId> = new Set([
   "staff",
   "accounts",
   "sales-network",
+  "sales-network-members",
+  "sales-network-genealogy",
+  "accreditation-registrations",
+  "accreditation-records",
+  "accreditation-renewals",
   "accreditation",
   "customers",
   "vip-products",
@@ -114,6 +133,9 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "finance.reports.view",
     "commission.approve",
     "commission.payout",
+    "sales-network.manage",
+    "sales-network.transfer",
+    "sales-network.status",
   ],
   admin: [
     "organization.departments.manage",
@@ -121,6 +143,9 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "organization.roles.manage",
     "vip-products.manage",
     "contracts.approve",
+    "sales-network.manage",
+    "sales-network.transfer",
+    "sales-network.status",
   ],
   hr: ["organization.departments.manage", "organization.staff.manage"],
   finance: [
@@ -131,9 +156,9 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "commission.approve",
     "commission.payout",
   ],
-  svd: ["sales.viewTeam", "customers.viewDownline"],
-  ssm: ["sales.viewTeam", "customers.viewDownline"],
-  sm: ["sales.viewTeam", "customers.viewDownline"],
+  svd: ["sales.viewTeam", "customers.viewDownline", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
+  ssm: ["sales.viewTeam", "customers.viewDownline", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
+  sm: ["sales.viewTeam", "customers.viewDownline", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
   ost: ["sales.viewOwn", "customers.viewOwn", "commission.viewOwn"],
 };
 

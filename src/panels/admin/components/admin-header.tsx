@@ -88,7 +88,11 @@ export function AdminHeader({
         <MenuIcon className="size-4" />
       </button>
       <div className="admin-header__profile">
-        <Dropdown menu={{ items: menuItems }} trigger={["click"]} placement="bottomRight">
+        <Dropdown
+          menu={{ items: menuItems }}
+          trigger={["click"]}
+          placement="bottomRight"
+        >
           <button type="button" className="admin-header__profile-button" aria-label={`Account options for ${identity.displayName}`}>
             <Avatar size={32} src={avatarUrl ?? undefined} className="admin-header__profile-avatar">
               {avatarUrl ? null : initials(identity.displayName)}

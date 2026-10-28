@@ -122,7 +122,7 @@ describe("departments page", () => {
     render(<TestWrapper />);
     await screen.findByText("Human Resources");
     const row = screen.getByText("Human Resources").closest("tr")!;
-    await clickRowAction(user, row, "View");
+    await user.click(row);
     expect(await screen.findByText("Department details")).toBeInTheDocument();
   });
 

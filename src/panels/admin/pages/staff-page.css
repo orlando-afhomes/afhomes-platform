@@ -55,7 +55,9 @@
   gap: 8px;
 }
 
-.staff-table__name {
+.staff-table__name-link {
+  padding: 0;
+  height: auto;
   font-weight: 500;
 }
 

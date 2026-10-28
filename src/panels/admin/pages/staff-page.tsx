@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { Avatar, Button, Empty, Input, Select, Skeleton, Table, Tag } from "antd";
+import { Avatar, Button, Input, Select, Skeleton, Tag } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import type { StaffMember } from "@/modules/organization/types";
@@ -13,7 +13,9 @@ import {
   useEffectiveModuleIds,
   useStaff,
 } from "@/data/queries";
-import { cleanTitleInput, formatStatusLabel, isValidName } from "@/shared/utils/input-sanitizers";
+import { cleanTitleInput, isValidName } from "@/shared/utils/input-sanitizers";
+import { StatusBadge } from "@/shared/components/layout/status-badge";
+import { DirectoryTable } from "@/shared/components/layout/directory-table";
 import { getRoleBadgeStyle } from "@/shared/utils/role-badge";
 import { PageContainer } from "@/shared/components/layout/page-container";
 import { PageHeader } from "@/shared/components/layout/page-header";
@@ -96,7 +98,7 @@ export function StaffPage() {
           <Avatar size="small" src={record.avatarUrl ?? undefined}>
             {record.avatarUrl ? null : initials(name)}
           </Avatar>
-          <span className="staff-table__name">{name}</span>
+          <Button type="link" className="staff-table__name-link" onClick={() => setProfileStaff(record)}>{name}</Button>
         </span>
       ),
     },
@@ -124,7 +126,7 @@ export function StaffPage() {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status: StaffMember["status"]) => <Tag color={status === "active" ? "green" : undefined}>{formatStatusLabel(status)}</Tag>,
+      render: (status: StaffMember["status"]) => <StatusBadge status={status} />,
     },
     {
       title: "Actions",
@@ -132,7 +134,6 @@ export function StaffPage() {
       render: (_, record) => (
         <RowActionsMenu
           itemName={record.displayName}
-          onView={() => setProfileStaff(record)}
           onEdit={() => {
             setEditStaff(record);
             setStaffDialog(true);
@@ -213,13 +214,13 @@ export function StaffPage() {
               <Skeleton active paragraph={{ rows: 4 }} />
             </div>
           ) : (
-            <Table<StaffMember>
+            <DirectoryTable<StaffMember>
               rowKey="id"
               columns={columns}
               dataSource={filtered}
-              pagination={{ pageSize: 10, showSizeChanger: false }}
-              scroll={{ x: true }}
-              locale={{ emptyText: <Empty description="No staff found." /> }}
+              emptyText="No staff found."
+              pageSize={10}
+              onRowOpen={(record) => setProfileStaff(record)}
             />
           )}
         </div>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Checkbox, Form, Input, Modal, Select, Tag } from "antd";
+import { Button, Checkbox, Form, Input, Modal, Select, Tag } from "antd";
 import type { Account, AccountStatus } from "@/modules/accounts/types";
 import { getSystemRoleLabel } from "@/panels/admin/role-label";
+import { showError, showFieldErrors } from "@/shared/utils/feedback";
 
 export const ACCOUNT_SYSTEM_ROLES = ["super_admin", "admin", "hr", "finance", "svd", "ssm", "sm", "ost"] as const;
 
@@ -118,20 +119,24 @@ function AccountForm({ initial, onSubmit, submitLabel }: { initial?: Account; on
   const [displayName, setDisplayName] = useState(initial?.displayName ?? "");
   const [email, setEmail] = useState(initial?.email ?? "");
   const [roleIds, setRoleIds] = useState<string[]>(initial?.roleIds ?? []);
-  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const handleFinish = async () => {
-    setError(null);
-    if (!displayName.trim()) { setError("Display name is required."); return; }
-    if (!email.trim()) { setError("Email is required."); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError("Invalid email format."); return; }
-    if (roleIds.length === 0) { setError("At least one role is required."); return; }
+    const fieldErrors = [
+      !displayName.trim() ? "Display name is required." : null,
+      !email.trim() ? "Email is required." : null,
+      email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? "Invalid email format." : null,
+      roleIds.length === 0 ? "At least one role is required." : null,
+    ].filter((message): message is string => message !== null);
+    if (fieldErrors.length > 0) {
+      await showFieldErrors("Complete the required fields.", fieldErrors);
+      return;
+    }
     setSubmitting(true);
     try {
       await onSubmit({ displayName: displayName.trim(), email: email.trim(), roleIds, departmentId: initial?.departmentId ?? null });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save account.");
+      await showError("Save failed.", err instanceof Error ? err.message : "Failed to save account.");
     } finally {
       setSubmitting(false);
     }
@@ -154,7 +159,6 @@ function AccountForm({ initial, onSubmit, submitLabel }: { initial?: Account; on
           </div>
         </Checkbox.Group>
       </Form.Item>
-      {error ? <Alert type="error" title={error} showIcon /> : null}
       <Form.Item>
         <div className="account-dialog__form-actions">
           <Button type="primary" htmlType="submit" loading={submitting}>{submitLabel}</Button>
@@ -166,24 +170,21 @@ function AccountForm({ initial, onSubmit, submitLabel }: { initial?: Account; on
 
 function RoleEditor({ account, onAssign, onRevoke, onClose }: { account: Account; onAssign: (role: string) => Promise<unknown>; onRevoke: (role: string) => Promise<unknown>; onClose: () => void }) {
   const [role, setRole] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
   const handleAssign = async () => {
     if (!role) return;
-    setError(null);
     try {
       await onAssign(role);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to assign role.");
+      await showError("Assign failed.", err instanceof Error ? err.message : "Failed to assign role.");
     }
   };
 
   const handleRevoke = async (r: string) => {
-    setError(null);
     try {
       await onRevoke(r);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to revoke role.");
+      await showError("Revoke failed.", err instanceof Error ? err.message : "Failed to revoke role.");
     }
   };
 
@@ -205,7 +206,6 @@ function RoleEditor({ account, onAssign, onRevoke, onClose }: { account: Account
         />
         <Button onClick={handleAssign} disabled={!role}>Assign</Button>
       </div>
-      {error ? <Alert type="error" title={error} showIcon /> : null}
       <div className="account-dialog__form-actions">
         <Button onClick={onClose}>Close</Button>
       </div>
@@ -215,16 +215,14 @@ function RoleEditor({ account, onAssign, onRevoke, onClose }: { account: Account
 
 function StatusEditor({ account, onSave, onClose }: { account: Account; onSave: (status: AccountStatus) => Promise<unknown>; onClose: () => void }) {
   const [status, setStatus] = useState<AccountStatus>(account.status);
-  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    setError(null);
     setSaving(true);
     try {
       await onSave(status);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update status.");
+      await showError("Status update failed.", err instanceof Error ? err.message : "Failed to update status.");
     } finally {
       setSaving(false);
     }
@@ -244,7 +242,6 @@ function StatusEditor({ account, onSave, onClose }: { account: Account; onSave: 
           { value: "deactivated", label: "Deactivated" },
         ]}
       />
-      {error ? <Alert type="error" title={error} showIcon /> : null}
       <div className="account-dialog__actions">
         <Button onClick={onClose}>Cancel</Button>
         <Button type="primary" onClick={handleSave} loading={saving}>Save</Button>

@@ -10,7 +10,9 @@ describe("admin menu adapter", () => {
     expect(menu.map((entry) => (entry as { key: string }).key)).toEqual([
       "dashboard",
       "organization",
+      "sales-network",
     ]);
+    expect(items.some((item) => item.id === "accreditation")).toBe(false);
   });
 
   it("passes no items for inactive identities", () => {

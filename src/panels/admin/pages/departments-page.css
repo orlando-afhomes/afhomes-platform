@@ -49,7 +49,9 @@
   justify-content: center;
 }
 
-.department-table__name {
+.department-table__name-link {
+  padding: 0;
+  height: auto;
   font-weight: 600;
 }
 

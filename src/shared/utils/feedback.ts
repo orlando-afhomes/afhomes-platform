@@ -85,3 +85,18 @@ export async function showSuccess(title: string, text?: string): Promise<void> {
 export async function showError(title: string, text?: string): Promise<void> {
   await Swal.fire({ title, text, icon: "error", confirmButtonColor: CONFIRM_COLOR });
 }
+
+/**
+ * Validation-failure modal listing every field that needs attention.
+ * Messages are developer-authored constants (never user input), so no
+ * escaping is needed.
+ */
+export async function showFieldErrors(title: string, errors: string[]): Promise<void> {
+  const items = errors.map((error) => `<li>${error}</li>`).join("");
+  await Swal.fire({
+    title,
+    html: `<ul style="margin:0;padding-left:1.25rem;text-align:left;">${items}</ul>`,
+    icon: "error",
+    confirmButtonColor: CONFIRM_COLOR,
+  });
+}

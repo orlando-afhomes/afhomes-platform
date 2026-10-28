@@ -1,0 +1,27 @@
+.genealogy-node {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.genealogy-node__name {
+  font-weight: 600;
+}
+
+.genealogy-node__aa,
+.genealogy-node__team {
+  font-size: 12px;
+  color: #64737f;
+  white-space: nowrap;
+}
+
+.genealogy-node__counts {
+  font-size: 12px;
+  color: #64737f;
+}
+
+.genealogy-node__restricted {
+  font-size: 12px;
+  color: #a63a32;
+}

@@ -1,6 +1,29 @@
 .staff-dialog__form {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+}
+
+.staff-dialog__form .staff-dialog__section {
+  margin: 12px 0 0;
+  font-weight: 600;
+}
+
+.staff-dialog__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.staff-dialog__grid .ant-select {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .staff-dialog__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .staff-dialog__form-actions {
@@ -8,26 +31,6 @@
   justify-content: flex-end;
   gap: 8px;
   margin-top: 8px;
-}
-
-.staff-dialog__avatar-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.staff-dialog__avatar-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-start;
-}
-
-.staff-dialog__avatar-buttons {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  align-items: center;
 }
 
 .staff-dialog__empty-roles {

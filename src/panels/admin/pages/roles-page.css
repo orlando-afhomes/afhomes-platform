@@ -49,6 +49,8 @@
   justify-content: center;
 }
 
-.roles-table__name {
+.roles-table__name-link {
+  padding: 0;
+  height: auto;
   font-weight: 600;
 }

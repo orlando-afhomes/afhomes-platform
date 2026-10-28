@@ -1,31 +1,178 @@
 import type { Customer } from "@/modules/customers/types";
 import type { OrgMember, Department, DepartmentRole, StaffMember } from "@/modules/organization/types";
+import type { AccreditationRecord, RegistrationApplication } from "@/modules/accreditation/types";
 import type { VipProduct } from "@/modules/vip/types";
 import type { Account } from "@/modules/accounts/types";
+import type { AuditEvent } from "@/modules/audit/types";
+import { addOneYear, formatManilaDateParts, parseManilaDateOnly } from "@/modules/accreditation/dates";
+import { buildAaNumber } from "@/modules/accreditation/issuance";
 
 export type MockStore = {
   members: OrgMember[];
+  accreditations: AccreditationRecord[];
+  registrationApplications: RegistrationApplication[];
   customers: Customer[];
   products: VipProduct[];
   accounts: Account[];
   departments: Department[];
   roles: DepartmentRole[];
   staff: StaffMember[];
+  /** Append-only audit history; subject to the mock-store reset lifecycle. */
+  auditEvents: AuditEvent[];
   customerSequence: number;
   accountSequence: number;
   departmentSequence: number;
   roleSequence: number;
   staffSequence: number;
+  memberSequence: number;
+  accreditationSequence: number;
+  registrationSequence: number;
+  auditSequence: number;
 };
 
+// Synthetic demonstration fixtures (owner-authorized). Original date 2026-10-28
+// applies to these fixtures only; expiry follows the canonical annual rule.
+// No audit events are fabricated. Contact and address details below are
+// invented mock data, not real personal information.
+const SAMPLE_ORIGINAL_DATE = "2026-10-28";
+
+function sampleExpiry(): string {
+  const parts = parseManilaDateOnly(SAMPLE_ORIGINAL_DATE);
+  return parts ? formatManilaDateParts(addOneYear(parts)) : "2027-10-28";
+}
+
+const SAMPLE_YYMM = "2610";
+
 const members: OrgMember[] = [
-  { id: "mem-svd-a", displayName: "SVD Alpha", designation: "SVD", branchId: "branch-a", parentId: null, status: "active" },
-  { id: "mem-ssm-a", displayName: "SSM Alpha", designation: "SSM", branchId: "branch-a", parentId: "mem-svd-a", status: "active" },
-  { id: "mem-sm-a", displayName: "SM Alpha", designation: "SM", branchId: "branch-a", parentId: "mem-ssm-a", status: "active" },
-  { id: "mem-ost-a1", displayName: "OST Alpha One", designation: "OST", branchId: "branch-a", parentId: "mem-sm-a", status: "active" },
-  { id: "mem-ost-a2", displayName: "OST Alpha Two", designation: "OST", branchId: "branch-a", parentId: "mem-svd-a", status: "active" },
-  { id: "mem-svd-b", displayName: "SVD Beta", designation: "SVD", branchId: "branch-b", parentId: null, status: "active" },
-  { id: "mem-ost-b1", displayName: "OST Beta One", designation: "OST", branchId: "branch-b", parentId: "mem-svd-b", status: "active" },
+  {
+    id: "mem-svd-a", displayName: "Ramon Del Rosario", designation: "SVD", branchId: "branch-a", parentId: null, status: "active", accountId: null,
+    teamName: "Team Alab", aaNumber: "AAI26100001", mockAccreditationEligible: true,
+    sellerProfile: {
+      firstName: "Ramon", middleName: "Cruz", lastName: "Del Rosario", suffix: null,
+      mobileNumber: "09171234567", dateOfBirth: "1975-03-14", email: "ramon.delrosario@afhomes.local",
+      profilePhotoName: "ramon-del-rosario.jpg",
+      profilePhotoUrl: "https://randomuser.me/api/portraits/men/32.jpg",
+      address: { street: "123 Maharlika Street", province: "Metro Manila", city: "Makati City", barangay: "San Antonio", subdivision: "Bel-Air Village", postalCode: "1203" },
+      governmentIdType: "Philippine National ID", governmentIdNumber: "PHL-1942-0001234",
+      cardApplicationDate: "2026-09-15", programCategory: "vip_privilege_card_holder", vipCardLevel: "G1",
+      gender: "Male", civilStatus: "Married",
+      telephone: "02-8812-3456", facebook: "Ramon Del Rosario", tin: "123-456-789-000",
+      businessEmployer: "Del Rosario Realty", businessAddress: "456 Ayala Avenue, Makati City", jobPosition: "Broker",
+      sellerSource: "manual-admin", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, expiryDate: sampleExpiry(),
+    },
+  },
+  {
+    id: "mem-ssm-a", displayName: "Maria Santos", designation: "SSM", branchId: "branch-a", parentId: "mem-svd-a", status: "active", accountId: null,
+    aaNumber: "AAI26100002", mockAccreditationEligible: true,
+    sellerProfile: {
+      firstName: "Maria", middleName: "Reyes", lastName: "Santos", suffix: null,
+      mobileNumber: "09181234567", dateOfBirth: "1982-07-22", email: "maria.santos@afhomes.local",
+      profilePhotoName: "maria-santos.jpg",
+      profilePhotoUrl: "https://randomuser.me/api/portraits/women/44.jpg",
+      address: { street: "45 Mabini Street", province: "Negros Oriental", city: "Dumaguete City", barangay: "Poblacion", subdivision: null, postalCode: "6200" },
+      governmentIdType: "Driver's License", governmentIdNumber: "N02-11-003456",
+      cardApplicationDate: "2026-09-18", programCategory: "non_vip_client", vipCardLevel: "S1",
+      gender: "Female", civilStatus: "Single",
+      telephone: null, facebook: null, tin: null,
+      businessEmployer: null, businessAddress: null, jobPosition: null,
+      sellerSource: "manual-admin", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, expiryDate: sampleExpiry(),
+    },
+  },
+  {
+    id: "mem-sm-a", displayName: "Jose Reyes Jr.", designation: "SM", branchId: "branch-a", parentId: "mem-ssm-a", status: "active", accountId: null,
+    aaNumber: "AAI26100003", mockAccreditationEligible: true,
+    sellerProfile: {
+      firstName: "Jose", middleName: null, lastName: "Reyes", suffix: "Jr.",
+      mobileNumber: "09192345678", dateOfBirth: "1988-11-05", email: "jose.reyes@afhomes.local",
+      profilePhotoName: "jose-reyes.jpg",
+      profilePhotoUrl: "https://randomuser.me/api/portraits/men/45.jpg",
+      address: { street: "78 Bonifacio Avenue", province: "Metro Manila", city: "Marikina City", barangay: "Barangka", subdivision: "Provident Village", postalCode: "1800" },
+      governmentIdType: "Passport", governmentIdNumber: "P1234567A",
+      cardApplicationDate: "2026-09-20", programCategory: "future_vip_privilege_card_holder", vipCardLevel: "B1",
+      gender: "Male", civilStatus: "Married",
+      telephone: null, facebook: "Jose Reyes", tin: null,
+      businessEmployer: null, businessAddress: null, jobPosition: null,
+      sellerSource: "manual-admin", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, expiryDate: sampleExpiry(),
+    },
+  },
+  {
+    id: "mem-ost-a1", displayName: "Ana Mendoza", designation: "OST", branchId: "branch-a", parentId: "mem-sm-a", status: "active", accountId: null,
+    aaNumber: "AAO26100004", mockAccreditationEligible: false,
+    sellerProfile: {
+      firstName: "Ana", middleName: "Torres", lastName: "Mendoza", suffix: null,
+      mobileNumber: "09203456789", dateOfBirth: "1992-01-30", email: "ana.mendoza@afhomes.local",
+      profilePhotoName: "ana-mendoza.jpg",
+      profilePhotoUrl: "https://randomuser.me/api/portraits/women/68.jpg",
+      address: { street: "12 Rizal Street", province: "South Cotabato", city: "General Santos City", barangay: "Calumpang", postalCode: "9500" },
+      governmentIdType: "SSS ID", governmentIdNumber: "04-1234567-8",
+      cardApplicationDate: "2026-09-25", programCategory: "vip_privilege_card_holder", vipCardLevel: "S1",
+      gender: "Female", civilStatus: "Married",
+      telephone: null, facebook: null, tin: null,
+      businessEmployer: "Mendoza Sari-Sari Store", businessAddress: "12 Rizal Street, General Santos City", jobPosition: "Store Owner",
+      sellerSource: "manual-admin", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, expiryDate: sampleExpiry(),
+    },
+  },
+  {
+    id: "mem-ost-a2", displayName: "Mark Villanueva", designation: "OST", branchId: "branch-a", parentId: "mem-svd-a", status: "active", accountId: null,
+    aaNumber: "AAO26100005", mockAccreditationEligible: false,
+    sellerProfile: {
+      firstName: "Mark", middleName: null, lastName: "Villanueva", suffix: null,
+      mobileNumber: "09214567890", dateOfBirth: "1995-06-12", email: "mark.villanueva@afhomes.local",
+      profilePhotoName: "mark-villanueva.jpg",
+      profilePhotoUrl: "https://randomuser.me/api/portraits/men/22.jpg",
+      address: { street: "90 Lapu-Lapu Street", province: "Cebu", city: "Lapu-Lapu City", barangay: "Pajo", postalCode: "6015" },
+      governmentIdType: "Postal ID", governmentIdNumber: "PHL-9988776",
+      cardApplicationDate: "2026-09-27", programCategory: "non_vip_client", vipCardLevel: "B1",
+      gender: "Male", civilStatus: "Single",
+      telephone: null, facebook: null, tin: "987-654-321-000",
+      businessEmployer: null, businessAddress: null, jobPosition: null,
+      sellerSource: "manual-admin", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, expiryDate: sampleExpiry(),
+    },
+  },
+  {
+    id: "mem-svd-b", displayName: "Liza Aquino", designation: "SVD", branchId: "branch-b", parentId: null, status: "active", accountId: null,
+    teamName: "Team Sinag", aaNumber: "AAI26100006", mockAccreditationEligible: true,
+    sellerProfile: {
+      firstName: "Liza", middleName: "Bautista", lastName: "Aquino", suffix: null,
+      mobileNumber: "09225678901", dateOfBirth: "1978-09-08", email: "liza.aquino@afhomes.local",
+      profilePhotoName: "liza-aquino.jpg",
+      profilePhotoUrl: "https://randomuser.me/api/portraits/women/26.jpg",
+      address: { street: "34 Aguinaldo Highway", province: "Cavite", city: "Bacoor City", barangay: "Aniban", postalCode: "4102" },
+      governmentIdType: "PRC ID", governmentIdNumber: "0012345",
+      cardApplicationDate: "2026-09-16", programCategory: "vip_privilege_card_holder", vipCardLevel: "G1",
+      gender: "Female", civilStatus: "Widowed",
+      telephone: "046-489-0123", facebook: null, tin: null,
+      businessEmployer: "Aquino Travel & Tours", businessAddress: "34 Aguinaldo Highway, Bacoor City", jobPosition: "Owner",
+      sellerSource: "manual-admin", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, expiryDate: sampleExpiry(),
+    },
+  },
+  {
+    id: "mem-ost-b1", displayName: "Paolo Ramos", designation: "OST", branchId: "branch-b", parentId: "mem-svd-b", status: "active", accountId: null,
+    aaNumber: "AAO26100007", mockAccreditationEligible: false,
+    sellerProfile: {
+      firstName: "Paolo", middleName: "Garcia", lastName: "Ramos", suffix: null,
+      mobileNumber: "09236789012", dateOfBirth: "1990-12-19", email: "paolo.ramos@afhomes.local",
+      profilePhotoName: "paolo-ramos.jpg",
+      profilePhotoUrl: "https://randomuser.me/api/portraits/men/77.jpg",
+      address: { street: "56 Del Pilar Street", province: "Batangas", city: "Batangas City", barangay: "Cuta", postalCode: "4200" },
+      governmentIdType: "Voter's ID", governmentIdNumber: "VTN-4455667",
+      cardApplicationDate: "2026-09-28", programCategory: "future_vip_privilege_card_holder", vipCardLevel: "B1",
+      gender: "Male", civilStatus: "Separated",
+      telephone: null, facebook: "Paolo Ramos", tin: null,
+      businessEmployer: null, businessAddress: null, jobPosition: null,
+      sellerSource: "manual-admin", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, expiryDate: sampleExpiry(),
+    },
+  },
+];
+
+const accreditations: AccreditationRecord[] = [
+  { id: "accr-seed-1", memberId: "mem-svd-a", classification: "IST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: sampleExpiry(), aaNumber: buildAaNumber("AAI", SAMPLE_YYMM, 1), history: [] },
+  { id: "accr-seed-2", memberId: "mem-ssm-a", classification: "IST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: sampleExpiry(), aaNumber: buildAaNumber("AAI", SAMPLE_YYMM, 2), history: [] },
+  { id: "accr-seed-3", memberId: "mem-sm-a", classification: "IST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: sampleExpiry(), aaNumber: buildAaNumber("AAI", SAMPLE_YYMM, 3), history: [] },
+  { id: "accr-seed-4", memberId: "mem-ost-a1", classification: "OST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: sampleExpiry(), aaNumber: buildAaNumber("AAO", SAMPLE_YYMM, 4), history: [] },
+  { id: "accr-seed-5", memberId: "mem-ost-a2", classification: "OST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: sampleExpiry(), aaNumber: buildAaNumber("AAO", SAMPLE_YYMM, 5), history: [] },
+  { id: "accr-seed-6", memberId: "mem-svd-b", classification: "IST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: sampleExpiry(), aaNumber: buildAaNumber("AAI", SAMPLE_YYMM, 6), history: [] },
+  { id: "accr-seed-7", memberId: "mem-ost-b1", classification: "OST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: sampleExpiry(), aaNumber: buildAaNumber("AAO", SAMPLE_YYMM, 7), history: [] },
 ];
 
 const customers: Customer[] = [
@@ -88,33 +235,58 @@ const staff: StaffMember[] = [
 export function createSeedStore(): MockStore {
   return {
     members: members.map((item) => ({ ...item })),
+    accreditations: accreditations.map((item) => ({ ...item, history: item.history.map((entry) => ({ ...entry })) })),
+    registrationApplications: [],
     customers: customers.map((item) => ({ ...item })),
     products: products.map((item) => ({ ...item })),
     accounts: accounts.map((item) => ({ ...item, roleIds: [...item.roleIds] })),
     departments: departments.map((item) => ({ ...item })),
     roles: roles.map((item) => ({ ...item, moduleIds: [...item.moduleIds] })),
     staff: staff.map((item) => ({ ...item })),
+    auditEvents: [],
     customerSequence: customers.length + 1,
     accountSequence: accounts.length + 1,
     departmentSequence: departments.length + 1,
     roleSequence: roles.length + 1,
     staffSequence: staff.length + 1,
+    memberSequence: members.length + 1,
+    // Shared AA sequence resumes after the seven seeded reservations (1-7).
+    accreditationSequence: 8,
+    registrationSequence: 1,
+    auditSequence: 1,
+  };
+}
+
+function cloneMember(item: OrgMember): OrgMember {
+  return {
+    ...item,
+    parentHistory: item.parentHistory?.map((entry) => ({ ...entry })),
+    sellerProfile: item.sellerProfile
+      ? { ...item.sellerProfile, address: { ...item.sellerProfile.address } }
+      : item.sellerProfile,
   };
 }
 
 export function createMockStore(seed: MockStore = createSeedStore()): MockStore {
   return {
-    members: seed.members.map((item) => ({ ...item })),
+    members: seed.members.map(cloneMember),
+    accreditations: seed.accreditations.map((item) => ({ ...item, history: item.history.map((entry) => ({ ...entry })) })),
+    registrationApplications: seed.registrationApplications.map((item) => ({ ...item, history: item.history.map((entry) => ({ ...entry })) })),
     customers: seed.customers.map((item) => ({ ...item })),
     products: seed.products.map((item) => ({ ...item })),
     accounts: seed.accounts.map((item) => ({ ...item, roleIds: [...item.roleIds] })),
     departments: seed.departments.map((item) => ({ ...item })),
     roles: seed.roles.map((item) => ({ ...item, moduleIds: [...item.moduleIds] })),
     staff: seed.staff.map((item) => ({ ...item })),
+    auditEvents: seed.auditEvents.map((item) => ({ ...item, relatedRecordIds: item.relatedRecordIds ? [...item.relatedRecordIds] : undefined })),
     customerSequence: seed.customerSequence,
     accountSequence: seed.accountSequence,
     departmentSequence: seed.departmentSequence,
     roleSequence: seed.roleSequence,
     staffSequence: seed.staffSequence,
+    memberSequence: seed.memberSequence,
+    accreditationSequence: seed.accreditationSequence,
+    registrationSequence: seed.registrationSequence,
+    auditSequence: seed.auditSequence,
   };
 }

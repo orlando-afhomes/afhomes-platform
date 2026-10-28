@@ -22,11 +22,11 @@ import {
   MIN_PASSWORD_LENGTH,
   cleanEmailInput,
   cleanTitleInput,
-  formatStatusLabel,
   isValidEmail,
   isValidName,
 } from "@/shared/utils/input-sanitizers";
-import { confirmAction, showError, showSuccess } from "@/shared/utils/feedback";
+import { StatusBadge } from "@/shared/components/layout/status-badge";
+import { confirmAction, showError, showFieldErrors, showSuccess } from "@/shared/utils/feedback";
 
 function initials(name: string) {
   return name
@@ -96,7 +96,6 @@ function MyAccountForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [departmentId, setDepartmentId] = useState(staff?.departmentId ?? "");
   const [departmentRoleId, setDepartmentRoleId] = useState(staff?.departmentRoleId ?? "");
-  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const availableRoles = useMemo(
@@ -136,38 +135,23 @@ function MyAccountForm() {
   };
 
   const handleFinish = async () => {
-    setError(null);
-    if (!name.trim()) {
-      setError("Full name is required.");
+    const fieldErrors = [
+      !name.trim() ? "Full name is required." : null,
+      name.trim() && !isValidName(name) ? "Full name must contain letters only." : null,
+      email.trim() && !isValidEmail(email) ? "Enter a valid email address." : null,
+      newPassword || confirmPassword
+        ? newPassword.length < MIN_PASSWORD_LENGTH
+          ? `New password must be at least ${MIN_PASSWORD_LENGTH} characters.`
+          : newPassword !== confirmPassword
+            ? "Passwords do not match."
+            : null
+        : null,
+      isAdmin && !departmentId ? "Department is required." : null,
+      isAdmin && !departmentRoleId ? "Department role is required." : null,
+    ].filter((message): message is string => message !== null);
+    if (fieldErrors.length > 0) {
+      await showFieldErrors("Complete the required fields.", fieldErrors);
       return;
-    }
-    if (!isValidName(name)) {
-      setError("Full name must contain letters only.");
-      return;
-    }
-    if (email.trim() && !isValidEmail(email)) {
-      setError("Enter a valid email address.");
-      return;
-    }
-    if (newPassword || confirmPassword) {
-      if (newPassword.length < MIN_PASSWORD_LENGTH) {
-        setError(`New password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
-        return;
-      }
-      if (newPassword !== confirmPassword) {
-        setError("Passwords do not match.");
-        return;
-      }
-    }
-    if (isAdmin) {
-      if (!departmentId) {
-        setError("Department is required.");
-        return;
-      }
-      if (!departmentRoleId) {
-        setError("Department role is required.");
-        return;
-      }
     }
     const proceed = await confirmAction({
       title: "Save changes to your account?",
@@ -257,7 +241,7 @@ function MyAccountForm() {
                     </Button>
                   ) : null}
                 </div>
-                {avatarError ? <Alert type="error" message={avatarError} showIcon /> : null}
+                {avatarError ? <Alert type="error" title={avatarError} showIcon /> : null}
               </div>
             ) : null}
           </div>
@@ -284,7 +268,7 @@ function MyAccountForm() {
         <dl className="my-account-page__details">
           <div className="my-account-page__detail-row">
             <dt className="my-account-page__detail-term">Status</dt>
-            <dd className="my-account-page__detail-value">{formatStatusLabel(account?.status ?? staff?.status ?? identity.status)}</dd>
+            <dd className="my-account-page__detail-value"><StatusBadge status={account?.status ?? staff?.status ?? identity.status} /></dd>
           </div>
           <div className="my-account-page__detail-row">
             <dt className="my-account-page__detail-term">Linked account</dt>
@@ -369,7 +353,6 @@ function MyAccountForm() {
         </section>
       )}
 
-      {error ? <Alert type="error" message={error} showIcon /> : null}
       <Form.Item>
         <div className="my-account-page__form-actions">
           <Button type="primary" htmlType="submit" loading={submitting} disabled={!canEditProfile && !newPassword}>

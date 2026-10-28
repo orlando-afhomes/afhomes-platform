@@ -71,8 +71,8 @@ describe("my account page", () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
     await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 });
-    fireEvent.change(screen.getByPlaceholderText("New Password"), { target: { value: "password123" } });
-    fireEvent.change(screen.getByPlaceholderText("Confirm Password"), { target: { value: "different123" } });
+    fireEvent.change(screen.getByPlaceholderText("New Password"), { target: { value: "password1234" } });
+    fireEvent.change(screen.getByPlaceholderText("Confirm Password"), { target: { value: "different1234" } });
     await user.click(screen.getByRole("button", { name: "Save changes" }));
     expect(await screen.findByText("Passwords do not match.")).toBeInTheDocument();
   });

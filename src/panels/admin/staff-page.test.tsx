@@ -42,7 +42,50 @@ async function clickRowAction(user: ReturnType<typeof userEvent.setup>, row: HTM
 
 async function openAdd(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "Add staff" }));
-  return screen.findByPlaceholderText("Full Name");
+  return screen.findByPlaceholderText("First Name");
+}
+
+async function pickSharedSelect(user: ReturnType<typeof userEvent.setup>, placeholder: string, optionLabel: string) {
+  // Scope to the open dialog: the staff table behind the modal renders the
+  // same department/role names as plain text.
+  const dialog = document.querySelector(".ant-modal") as HTMLElement;
+  const ph = within(dialog).getByText(placeholder);
+  const root = ph.closest(".ant-select");
+  if (!root) throw new Error(`Select for ${placeholder} not found`);
+  await user.click(root as HTMLElement);
+  await pickOption(user, optionLabel);
+}
+
+const TEST_PASSWORD = "password1234";
+
+async function fillProfileFields(user: ReturnType<typeof userEvent.setup>) {
+  fireEvent.change(screen.getByPlaceholderText("Mobile Number"), { target: { value: "09171234567" } });
+  fireEvent.change(screen.getByLabelText(/Street Address/), { target: { value: "123 Maharlika Street" } });
+  fireEvent.change(screen.getByLabelText(/Province/), { target: { value: "Metro Manila" } });
+  fireEvent.change(screen.getByLabelText(/^City/), { target: { value: "Makati City" } });
+  fireEvent.change(screen.getByLabelText(/Barangay/), { target: { value: "San Antonio" } });
+  fireEvent.change(screen.getByLabelText(/ZIP Code/), { target: { value: "1203" } });
+  fireEvent.change(screen.getByPlaceholderText("Telephone"), { target: { value: "028123456" } });
+  fireEvent.change(screen.getByPlaceholderText("Facebook"), { target: { value: "johndoe" } });
+  fireEvent.change(screen.getByLabelText(/^TIN/), { target: { value: "123456789" } });
+  await pickSharedSelect(user, "Select gender", "Male");
+  await pickSharedSelect(user, "Select civil status", "Single");
+  await pickSharedSelect(user, "Select ID type", "Passport");
+  fireEvent.change(screen.getByLabelText(/ID Number/), { target: { value: "P1234567" } });
+}
+
+async function fillNewStaffForm(user: ReturnType<typeof userEvent.setup>, overrides: { firstName?: string; lastName?: string; email?: string } = {}) {
+  const firstNameInput = await openAdd(user);
+  fireEvent.change(firstNameInput, { target: { value: overrides.firstName ?? "New" } });
+  fireEvent.change(screen.getByPlaceholderText("Last Name"), { target: { value: overrides.lastName ?? "Hire" } });
+  await user.click(screen.getByLabelText("No middle-name"));
+  await fillProfileFields(user);
+  fireEvent.change(screen.getByPlaceholderText("Email"), { target: { value: overrides.email ?? "newhire@afhomes.local" } });
+  await pickSharedSelect(user, "Select department", "Human Resources");
+  await user.click(screen.getByRole("combobox", { name: "Staff role" }));
+  await pickOption(user, "HR Staff");
+  fireEvent.change(screen.getByPlaceholderText("Temporary Password"), { target: { value: TEST_PASSWORD } });
+  fireEvent.change(screen.getByPlaceholderText("Confirm Password"), { target: { value: TEST_PASSWORD } });
 }
 
 // antd renders dropdown items without role="option" in jsdom (only a
@@ -51,17 +94,6 @@ async function openAdd(user: ReturnType<typeof userEvent.setup>) {
 async function pickOption(user: ReturnType<typeof userEvent.setup>, label: string) {
   const item = await screen.findByTitle(label);
   await user.click(item);
-}
-
-async function fillNewStaffForm(user: ReturnType<typeof userEvent.setup>, overrides: { name?: string; email?: string } = {}) {
-  const nameInput = await openAdd(user);
-  fireEvent.change(nameInput, { target: { value: overrides.name ?? "New Hire" } });
-  fireEvent.change(screen.getByPlaceholderText("Email"), { target: { value: overrides.email ?? "newhire@afhomes.local" } });
-  await user.click(screen.getByRole("combobox", { name: "Staff department" }));
-  await pickOption(user, "Human Resources");
-  await user.click(screen.getByRole("combobox", { name: "Staff role" }));
-  await pickOption(user, "HR Staff");
-  fireEvent.change(screen.getByPlaceholderText("Temporary Password"), { target: { value: "password123" } });
 }
 
 describe("staff page", () => {
@@ -112,12 +144,15 @@ describe("staff page", () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
     await screen.findByText("HR Specialist", {}, { timeout: 5000 });
-    const nameInput = await openAdd(user);
-    fireEvent.change(nameInput, { target: { value: "Roleless" } });
+    const firstNameInput = await openAdd(user);
+    fireEvent.change(firstNameInput, { target: { value: "Roleless" } });
+    fireEvent.change(screen.getByPlaceholderText("Last Name"), { target: { value: "User" } });
+    await user.click(screen.getByLabelText("No middle-name"));
+    await fillProfileFields(user);
     fireEvent.change(screen.getByPlaceholderText("Email"), { target: { value: "roleless@afhomes.local" } });
-    await user.click(screen.getByRole("combobox", { name: "Staff department" }));
-    await pickOption(user, "Human Resources");
-    fireEvent.change(screen.getByPlaceholderText("Temporary Password"), { target: { value: "password123" } });
+    await pickSharedSelect(user, "Select department", "Human Resources");
+    fireEvent.change(screen.getByPlaceholderText("Temporary Password"), { target: { value: TEST_PASSWORD } });
+    fireEvent.change(screen.getByPlaceholderText("Confirm Password"), { target: { value: TEST_PASSWORD } });
     await user.click(screen.getByRole("button", { name: /^add$/i }));
     expect(await screen.findByText("Department role is required.")).toBeInTheDocument();
   });
@@ -126,17 +161,19 @@ describe("staff page", () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
     await screen.findByText("HR Specialist", {}, { timeout: 5000 });
-    const nameInput = await openAdd(user);
-    fireEvent.change(nameInput, { target: { value: "Mover" } });
+    const firstNameInput = await openAdd(user);
+    fireEvent.change(firstNameInput, { target: { value: "Mover" } });
+    fireEvent.change(screen.getByPlaceholderText("Last Name"), { target: { value: "User" } });
+    await user.click(screen.getByLabelText("No middle-name"));
+    await fillProfileFields(user);
     fireEvent.change(screen.getByPlaceholderText("Email"), { target: { value: "mover@afhomes.local" } });
-    await user.click(screen.getByRole("combobox", { name: "Staff department" }));
-    await pickOption(user, "Human Resources");
+    await pickSharedSelect(user, "Select department", "Human Resources");
     await user.click(screen.getByRole("combobox", { name: "Staff role" }));
     await pickOption(user, "HR Staff");
     // Switch departments: the HR role must not carry over.
-    await user.click(screen.getByRole("combobox", { name: "Staff department" }));
-    await pickOption(user, "Finance");
-    fireEvent.change(screen.getByPlaceholderText("Temporary Password"), { target: { value: "password123" } });
+    await pickSharedSelect(user, "Human Resources", "Finance");
+    fireEvent.change(screen.getByPlaceholderText("Temporary Password"), { target: { value: TEST_PASSWORD } });
+    fireEvent.change(screen.getByPlaceholderText("Confirm Password"), { target: { value: TEST_PASSWORD } });
     await user.click(screen.getByRole("button", { name: /^add$/i }));
     expect(await screen.findByText("Department role is required.")).toBeInTheDocument();
   });
@@ -147,11 +184,12 @@ describe("staff page", () => {
     await screen.findByText("HR Specialist", {}, { timeout: 5000 });
     const row = screen.getByText("HR Specialist").closest("tr")!;
     await clickRowAction(user, row, "Edit");
-    const nameInput = await screen.findByDisplayValue("HR Staff");
-    fireEvent.change(nameInput, { target: { value: "HR Staff Updated" } });
+    const firstNameInput = await screen.findByDisplayValue("HR");
+    fireEvent.change(firstNameInput, { target: { value: "HR Updated" } });
+    await fillProfileFields(user);
     await user.click(screen.getByRole("button", { name: /^save$/i }));
     await clickSwalConfirm(user);
-    await waitFor(() => expect(screen.getByText("HR Staff Updated")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("HR Updated Staff")).toBeInTheDocument());
     await clickSwalConfirm(user);
   });
 
@@ -160,7 +198,7 @@ describe("staff page", () => {
     render(<TestWrapper />);
     await screen.findByText("HR Specialist", {}, { timeout: 5000 });
     const row = screen.getByText("HR Specialist").closest("tr")!;
-    await clickRowAction(user, row, "View");
+    await user.click(row);
     expect(await screen.findByText("Employee profile")).toBeInTheDocument();
     const dialog = document.querySelector(".ant-modal") as HTMLElement;
     expect(within(dialog).getByText("Human Resources")).toBeInTheDocument();
@@ -171,7 +209,7 @@ describe("staff page", () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
     await screen.findByText("HR Specialist", {}, { timeout: 5000 });
-    await fillNewStaffForm(user, { name: "Temp Staff", email: "tempstaff@afhomes.local" });
+    await fillNewStaffForm(user, { firstName: "Temp", lastName: "Staff", email: "tempstaff@afhomes.local" });
     await user.click(screen.getByRole("button", { name: /^add$/i }));
     await waitFor(() => expect(screen.getByText("Temp Staff")).toBeInTheDocument());
     await clickSwalConfirm(user);

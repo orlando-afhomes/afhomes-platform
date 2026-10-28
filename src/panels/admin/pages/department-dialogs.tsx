@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Form, Input, Modal, Select } from "antd";
+import { Button, Form, Input, Modal, Select } from "antd";
 import type { Department } from "@/modules/organization/types";
 import { useCreateDepartment, useUpdateDepartment } from "@/data/queries";
 import { cleanTitleInput, isValidName } from "@/shared/utils/input-sanitizers";
-import { confirmAction, showError, showSuccess } from "@/shared/utils/feedback";
+import { confirmAction, showError, showFieldErrors, showSuccess } from "@/shared/utils/feedback";
 
 /** Lazy-loaded department dialog group: view, create, and edit. */
 export function DepartmentDialogs({
@@ -83,18 +83,16 @@ function DepartmentForm({ editDept, onDone }: { editDept: Department | null; onD
   const updateDepartment = useUpdateDepartment();
   const [name, setName] = useState(editDept?.name ?? "");
   const [status, setStatus] = useState<"active" | "deactivated">(editDept?.status ?? "active");
-  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const handleFinish = async () => {
-    setError(null);
     const trimmed = name.trim();
-    if (!trimmed) {
-      setError("Department name is required.");
-      return;
-    }
-    if (!isValidName(trimmed)) {
-      setError("Department name must contain letters only.");
+    const fieldErrors = [
+      !trimmed ? "Department name is required." : null,
+      trimmed && !isValidName(trimmed) ? "Department name must contain letters only." : null,
+    ].filter((message): message is string => message !== null);
+    if (fieldErrors.length > 0) {
+      await showFieldErrors("Complete the required fields.", fieldErrors);
       return;
     }
     setSubmitting(true);
@@ -143,7 +141,6 @@ function DepartmentForm({ editDept, onDone }: { editDept: Department | null; onD
           ]}
         />
       </Form.Item>
-      {error ? <Alert type="error" message={error} showIcon /> : null}
       <Form.Item>
         <div className="department-dialog__form-actions">
           <Button onClick={onDone}>Cancel</Button>

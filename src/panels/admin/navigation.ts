@@ -34,8 +34,10 @@ export const adminNavigation: AdminNavItem[] = [
   // Accounts stays implemented and permission-guarded at /admin/accounts,
   // but the owner-approved primary navigation no longer lists it.
   { id: "accounts", label: "Accounts and Permissions", href: "/admin/accounts", available: true, hideFromNav: true },
-  { id: "sales-network", label: "Sales Network", href: "/admin/sales-network", available: false },
-  { id: "accreditation", label: "Accreditation", href: "/admin/accreditation", available: false },
+  { id: "sales-network", label: "Sales Network", href: "/admin/sales-network", available: true, children: [
+    { id: "sales-network-members", label: "Members", href: "/admin/sales-network/members", available: true },
+    { id: "sales-network-genealogy", label: "Genealogy", href: "/admin/sales-network/genealogy", available: true },
+  ] },
   { id: "customers", label: "Customers", href: "/admin/customers", available: false },
   { id: "vip-products", label: "VIP Products and Contracts", href: "/admin/vip-products", available: false },
   { id: "sales", label: "Sales", href: "/admin/sales", available: false },

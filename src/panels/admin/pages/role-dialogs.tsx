@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Alert, Button, Checkbox, Form, Input, Modal, Select, Tag } from "antd";
+import { Button, Checkbox, Form, Input, Modal, Select, Tag } from "antd";
 import { DELEGABLE_MODULES, MODULE_CATALOG, type AdminModuleId } from "@/modules/identity/permissions";
 import type { DepartmentRole } from "@/modules/organization/types";
 import { cleanTitleInput, isValidName } from "@/shared/utils/input-sanitizers";
-import { confirmAction, showError, showSuccess } from "@/shared/utils/feedback";
+import { confirmAction, showError, showFieldErrors, showSuccess } from "@/shared/utils/feedback";
 import {
   useCreateDepartmentRole,
   useDepartments,
@@ -116,7 +116,6 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
   const [departmentId, setDepartmentId] = useState(editRole?.departmentId ?? "");
   const [moduleIds, setModuleIds] = useState<string[]>(editRole ? [...editRole.moduleIds] : []);
   const [status, setStatus] = useState<"active" | "deactivated">(editRole?.status ?? "active");
-  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // The creator may only delegate implemented modules they hold themselves.
@@ -135,22 +134,15 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
   );
 
   const handleFinish = async () => {
-    setError(null);
     const trimmed = name.trim();
-    if (!trimmed) {
-      setError("Role name is required.");
-      return;
-    }
-    if (!isValidName(trimmed)) {
-      setError("Role name must contain letters only.");
-      return;
-    }
-    if (!departmentId) {
-      setError("Department is required.");
-      return;
-    }
-    if (moduleIds.length === 0) {
-      setError("Select at least one authorized module.");
+    const fieldErrors = [
+      !trimmed ? "Role name is required." : null,
+      trimmed && !isValidName(trimmed) ? "Role name must contain letters only." : null,
+      !departmentId ? "Department is required." : null,
+      moduleIds.length === 0 ? "Select at least one authorized module." : null,
+    ].filter((message): message is string => message !== null);
+    if (fieldErrors.length > 0) {
+      await showFieldErrors("Complete the required fields.", fieldErrors);
       return;
     }
     setSubmitting(true);
@@ -230,7 +222,6 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
           ]}
         />
       </Form.Item>
-      {error ? <Alert type="error" message={error} showIcon /> : null}
       <Form.Item>
         <div className="role-dialog__form-actions">
           <Button onClick={onDone}>Cancel</Button>

@@ -1,5 +1,6 @@
 import type { StaffStatus } from "@/modules/organization/types";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
+import type { StaffProfileInput } from "@/data/contracts/staff-repository";
 import type { DevIdentity } from "@/modules/identity/types";
 import type { MockStore } from "./seed";
 import { hasModuleAccess } from "./authorization";
@@ -16,6 +17,37 @@ function assertCompatibleRole(store: MockStore, roleId: string, departmentId: st
   if (role.departmentId !== departmentId) throw new Error("Assigned department role does not belong to the staff member's department.");
   if (role.status !== "active") throw new Error("Assigned department role is not active.");
   return role;
+}
+
+/** Trim optional profile fields; blank becomes null so "no value" is explicit. */
+function profileFields(input: StaffProfileInput) {
+  const text = (value: string | null | undefined) => {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  };
+  const patch: Record<string, string | null | undefined> = {
+    firstName: text(input.firstName),
+    middleName: text(input.middleName),
+    lastName: text(input.lastName),
+    suffix: text(input.suffix),
+    mobileNumber: text(input.mobileNumber),
+    street: text(input.street),
+    province: text(input.province),
+    city: text(input.city),
+    barangay: text(input.barangay),
+    subdivision: text(input.subdivision),
+    postalCode: text(input.postalCode),
+    telephone: text(input.telephone),
+    facebook: text(input.facebook),
+    tin: input.tin !== undefined ? (input.tin.replace(/\D/g, "") || null) : undefined,
+    gender: text(input.gender),
+    civilStatus: text(input.civilStatus),
+    governmentIdType: text(input.governmentIdType),
+    governmentIdNumber: text(input.governmentIdNumber),
+  };
+  return Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined));
 }
 
 export class MockStaffRepository {
@@ -39,7 +71,7 @@ export class MockStaffRepository {
     return this.store.staff.find((s) => s.id === id) ?? null;
   }
 
-  async create(input: { displayName: string; position: string; departmentId?: string | null; departmentRoleId?: string | null; email: string; avatarUrl?: string | null; accountId?: string | null }, options?: MockAsyncOptions) {
+  async create(input: { displayName: string; position: string; departmentId?: string | null; departmentRoleId?: string | null; email: string; avatarUrl?: string | null; accountId?: string | null } & StaffProfileInput, options?: MockAsyncOptions) {
     const merged = this.merge(options);
     await simulateAsync(merged);
     const identity = this.getIdentity();
@@ -49,13 +81,13 @@ export class MockStaffRepository {
     if (!input.email.trim()) throw new Error("Email is required.");
     if (input.departmentId && !this.store.departments.some((d) => d.id === input.departmentId && d.status === "active")) throw new Error("Invalid department reference.");
     if (input.departmentRoleId) assertCompatibleRole(this.store, input.departmentRoleId, input.departmentId ?? null);
-    const staff = { id: `staff-${this.store.staffSequence}`, displayName, position: input.position.trim(), departmentId: input.departmentId ?? null, departmentRoleId: input.departmentRoleId ?? null, status: "active" as StaffStatus, email: input.email.trim(), createdAt: new Date().toISOString().slice(0, 10), avatarUrl: input.avatarUrl ?? null, accountId: input.accountId ?? null };
+    const staff = { id: `staff-${this.store.staffSequence}`, displayName, position: input.position.trim(), departmentId: input.departmentId ?? null, departmentRoleId: input.departmentRoleId ?? null, status: "active" as StaffStatus, email: input.email.trim(), createdAt: new Date().toISOString().slice(0, 10), avatarUrl: input.avatarUrl ?? null, accountId: input.accountId ?? null, ...profileFields(input) };
     this.store.staffSequence += 1;
     this.store.staff.push(staff);
     return { ...staff };
   }
 
-  async update(id: string, input: { displayName?: string; position?: string; departmentId?: string | null; departmentRoleId?: string | null; status?: StaffStatus; avatarUrl?: string | null; accountId?: string | null; email?: string }, options?: MockAsyncOptions) {
+  async update(id: string, input: { displayName?: string; position?: string; departmentId?: string | null; departmentRoleId?: string | null; status?: StaffStatus; avatarUrl?: string | null; accountId?: string | null; email?: string } & StaffProfileInput, options?: MockAsyncOptions) {
     const merged = this.merge(options);
     await simulateAsync(merged);
     const identity = this.getIdentity();
@@ -89,6 +121,7 @@ export class MockStaffRepository {
     if (input.avatarUrl !== undefined) staff.avatarUrl = input.avatarUrl;
     if (input.accountId !== undefined) staff.accountId = input.accountId;
     if (input.status !== undefined) throw new Error("Employment status changes are not supported.");
+    Object.assign(staff, profileFields(input));
     return { ...staff };
   }
 

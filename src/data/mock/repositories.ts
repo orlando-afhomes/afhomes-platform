@@ -7,6 +7,10 @@ import type { DepartmentRoleRepository } from "@/data/contracts/role-repository"
 import type { StaffRepository } from "@/data/contracts/staff-repository";
 import type { DevIdentity } from "@/modules/identity/types";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
+import type { AccreditationRepository } from "@/data/contracts/accreditation-repository";
+import type { RegistrationRepository } from "@/data/contracts/registration-repository";
+import { MockAccreditationRepository } from "./accreditation-repository";
+import { MockRegistrationRepository } from "./registration-repository";
 import { MockCustomerRepository } from "./customer-repository";
 import { MockMemberRepository } from "./member-repository";
 import { MockProductRepository } from "./product-repository";
@@ -24,6 +28,8 @@ export type MockRepositories = {
   departments: DepartmentRepository;
   roles: DepartmentRoleRepository;
   staff: StaffRepository;
+  accreditations: AccreditationRepository;
+  registrations: RegistrationRepository;
 };
 
 export function createMockRepositories(
@@ -39,5 +45,7 @@ export function createMockRepositories(
     departments: new MockDepartmentRepository(store, getIdentity, asyncOptions),
     roles: new MockDepartmentRoleRepository(store, getIdentity, asyncOptions),
     staff: new MockStaffRepository(store, getIdentity, asyncOptions),
+    accreditations: new MockAccreditationRepository(store, getIdentity, asyncOptions),
+    registrations: new MockRegistrationRepository(store, getIdentity, asyncOptions),
   };
 }

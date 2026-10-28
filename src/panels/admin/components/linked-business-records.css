@@ -1,0 +1,37 @@
+.linked-business-records {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.linked-business-records__row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0ede6;
+}
+
+.linked-business-records__row:last-child {
+  border-bottom: 0;
+}
+
+.linked-business-records__label {
+  flex: 0 0 140px;
+  color: #64737f;
+}
+
+.linked-business-records__value {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.linked-business-records__link {
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.linked-business-records__state {
+  flex-shrink: 0;
+}

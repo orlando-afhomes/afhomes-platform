@@ -6,9 +6,11 @@ import { DeleteOutlined, EditOutlined, EyeOutlined, MoreOutlined } from "@ant-de
 import { confirmAndRun } from "@/shared/utils/feedback";
 
 /**
- * Shared three-dots row action menu for directory tables with more than two
- * row actions. View, Edit, and Delete each carry a distinct color; Delete
- * always asks for SweetAlert2 confirmation, then reports success or failure.
+ * Shared two-dots row action menu for directory tables with more than two
+ * row actions. View is optional: tables with clickable rows omit it because
+ * clicking a row (or its name link) already opens the detail view. Edit and
+ * Delete each carry a distinct color; Delete always asks for SweetAlert2
+ * confirmation, then reports success or failure.
  */
 export function RowActionsMenu({
   itemName,
@@ -19,14 +21,15 @@ export function RowActionsMenu({
   deleteDescription,
 }: {
   itemName: string;
-  onView: () => void;
+  onView?: () => void;
   onEdit: () => void;
   onDelete: () => void | Promise<void>;
   deleteTitle: string;
   deleteDescription: string;
 }) {
-  const items: MenuProps["items"] = [
-    {
+  const items: MenuProps["items"] = [];
+  if (onView) {
+    items.push({
       key: "view",
       label: <span className="row-actions-menu__view">View</span>,
       icon: (
@@ -35,7 +38,9 @@ export function RowActionsMenu({
         </span>
       ),
       onClick: onView,
-    },
+    });
+  }
+  items.push(
     {
       key: "edit",
       label: <span className="row-actions-menu__edit">Edit</span>,
@@ -67,11 +72,15 @@ export function RowActionsMenu({
         });
       },
     },
-  ];
+  );
 
   return (
     <div className="row-actions-menu">
-      <Dropdown menu={{ items }} trigger={["click"]} placement="bottomRight">
+      <Dropdown
+        menu={{ items }}
+        trigger={["click"]}
+        placement="bottomRight"
+      >
         <Button icon={<MoreOutlined />} aria-label={`Actions for ${itemName}`} className="row-actions-menu__trigger" />
       </Dropdown>
     </div>

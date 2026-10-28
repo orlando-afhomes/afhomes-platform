@@ -12,28 +12,29 @@ npm + next (no task runner). `src/app` (App Router) | `src/panels` presentation 
 - Never persist or echo secrets, credentials, tokens, keys, connection strings, or customer PII.
 - Gate on the project's documented checks (see Verify below).
 
-## Repo state (verified 2026-10-26)
+## Repo state (verified 2026-10-28)
 
-- Branch `develop` @ `e5f6079` (post-Phase 1B-B06-R1 + Account/Org verification).
-- Working tree contains extensive uncommitted work: modified tracked files + many untracked implementation files. All uncommitted user work; preserve.
-- Pre-existing failures: none reported.
-- Gates this session: `npm test` passed (115 tests); `npm run lint` passed (0 errors); TypeScript passed; `npm run build` passed (routes `/`, `/admin`, `/admin/accounts`, `/admin/organization`, `/login`).
+- Branch `develop` @ `adf2dca` (`WIP: phase 05.2`).
+- Working tree contains extensive uncommitted work: modified tracked files + many untracked implementation files. All uncommitted user/agent work; preserve.
+- Pre-existing failures: none reported; formal verification deferred by owner instruction.
+- Latest known gates: Phase 05.2 full suite passed (28 files / 254 tests); Phase 06.x formal tests not run.
+- Key untracked additions: Sales Network pages (overview/members/detail/genealogy/dialogs), public OST registration page, accreditation records/renewals/registration queue/detail pages, new domain modules, new shared components, `public/images/`.
 
 ## Last session's work (UNCOMMITTED)
 
-- Phase 1A frontend foundation implemented and accepted.
-- Phase 1B-A mock foundation implemented and remediated through R1–R3.
-- Phase 1B-B01 design system implemented and production-cleaned.
-- Phase 1B-B02 shared application layouts implemented.
-- Phase 1B-B03 navigation system implemented.
-- Phase 1B-B04 role-aware navigation implemented (R1–R3).
-- Phase 1B-B05 admin/operations panel shells implemented.
-- Phase 1B-B06 sales network panel shells implemented (R1 remediation).
-- Dashboard & Analytics frontend implemented (scoped metrics only).
-- Account Management frontend implemented.
-- Organization & Staff Management frontend implemented and verified (department/staff CRUD, search, filter, sort, counts, repo safeguards).
-- Permission matrix proposal documented (partially approved).
-- No backend, DB, auth, or deployment work.
+- Phase 05.2 Sales Network mock domain and repository foundation implemented.
+- Phase 05.3 Sales Network Directory & Member Management implemented.
+- Phase 05.4 Interactive Genealogy Tree implemented.
+- Phase 05.5 read-only referral-code foundation implemented.
+- Phase 05.6 Sales Network integration stabilization implemented.
+- Phase 06.2 Registration & Accreditation mock domain foundation implemented.
+- Phase 06.3 public OST referral-first registration shell implemented (submission disabled).
+- Phase 06.4 administrative registration queue/details implemented (read-only).
+- Phase 06.5 accreditation records directory/details implemented (read-only).
+- Phase 06.6 renewal monitoring and hypothetical preview implemented.
+- Phase 06.7 read-only cross-module reference integration implemented.
+- Phase 06.8 stabilization implemented: Lucide import verified, account-reference privacy gated, authorized descendant counts, accreditation member-profile link gated, canonical current-accreditation selection consolidated, breadcrumb/detail integration reviewed.
+- No backend, DB, auth, deployment, or Git state-changing work.
 
 ## Test gotchas
 
@@ -43,12 +44,14 @@ npm + next (no task runner). `src/app` (App Router) | `src/panels` presentation 
 - Dev server can trigger artifacts; verify `git status` for unexpected files.
 - Build cache may reference removed routes; delete `.next` and rebuild if TypeScript validator complains.
 - Browser refresh resets mock data; client-side navigation preserves it.
-- jsdom + React Testing Library now installed for component tests.
+- jsdom + React Testing Library installed for component tests.
+- Owner has deferred formal testing until full frontend prototype is complete; do not claim tests passed unless actually run.
 
 ## Open threads
 
-- Organization & Staff Management: READY FOR OWNER VISUAL APPROVAL (pending browser verification).
-- Unresolved policy decisions: Department Head eligibility, staff employment-status lifecycle, Gold/Silver contract prices, Non-Standard commercial rules, Move scheme terms, RA numbering scope, accreditation expiry rules, Better Auth/MongoDB compat, Atlas tier transaction support, audit retention, production domain/sizing.
+- Phase 06.8 stabilization: READY FOR OWNER REVIEW; unverified build/typecheck/browser QA deferred.
+- Unresolved policy decisions: referral-code issuance, OST applicant fields, submission/approval authority, account provisioning, AAO issuance timing, renewal operations, portal access on expired accreditation, legacy fixture migration, production domain/sizing.
+- Phase 07 IST/OST portals: planning only; not implemented.
 - `workflow/` and all docs may be untracked or modified; user must stage/commit when ready (do not auto-commit).
 
 ## Verify (from root)

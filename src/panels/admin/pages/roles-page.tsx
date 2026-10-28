@@ -2,13 +2,15 @@
 
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { Button, Empty, Input, Select, Skeleton, Space, Table, Tag } from "antd";
+import { Button, Input, Select, Skeleton, Space, Tag } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { MODULE_CATALOG } from "@/modules/identity/permissions";
 import type { DepartmentRole } from "@/modules/organization/types";
 import { useDeleteDepartmentRole, useDepartments, useDepartmentRoles, useEffectiveModuleIds, useStaff } from "@/data/queries";
-import { cleanTitleInput, formatStatusLabel, isValidName } from "@/shared/utils/input-sanitizers";
+import { cleanTitleInput, isValidName } from "@/shared/utils/input-sanitizers";
+import { StatusBadge } from "@/shared/components/layout/status-badge";
+import { DirectoryTable } from "@/shared/components/layout/directory-table";
 import { PageContainer } from "@/shared/components/layout/page-container";
 import { PageHeader } from "@/shared/components/layout/page-header";
 import { Breadcrumbs } from "@/shared/components/layout/breadcrumbs";
@@ -66,7 +68,9 @@ export function RolesPage() {
       title: "Role Name",
       dataIndex: "name",
       key: "name",
-      render: (name: string) => <span className="roles-table__name">{name}</span>,
+      render: (name: string, record) => (
+        <Button type="link" className="roles-table__name-link" onClick={() => setViewRole(record)}>{name}</Button>
+      ),
     },
     {
       title: "Department",
@@ -100,7 +104,7 @@ export function RolesPage() {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status: DepartmentRole["status"]) => <Tag color={status === "active" ? "green" : undefined}>{formatStatusLabel(status)}</Tag>,
+      render: (status: DepartmentRole["status"]) => <StatusBadge status={status} />,
     },
     {
       title: "Actions",
@@ -108,7 +112,6 @@ export function RolesPage() {
       render: (_, record) => (
         <RowActionsMenu
           itemName={record.name}
-          onView={() => setViewRole(record)}
           onEdit={() => {
             setEditRole(record);
             setRoleDialog(true);
@@ -178,13 +181,13 @@ export function RolesPage() {
               <Skeleton active paragraph={{ rows: 4 }} />
             </div>
           ) : (
-            <Table<DepartmentRole>
+            <DirectoryTable<DepartmentRole>
               rowKey="id"
               columns={columns}
               dataSource={filtered}
-              pagination={{ pageSize: 10, showSizeChanger: false }}
-              scroll={{ x: true }}
-              locale={{ emptyText: <Empty description="No roles found." /> }}
+              emptyText="No roles found."
+              pageSize={10}
+              onRowOpen={(record) => setViewRole(record)}
             />
           )}
         </div>

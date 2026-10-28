@@ -80,3 +80,14 @@
 .sales-network__member-name {
   color: var(--color-text-primary);
 }
+
+.sales-network__member-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sales-network__member-aa {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}

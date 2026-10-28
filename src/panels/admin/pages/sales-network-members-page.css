@@ -1,0 +1,56 @@
+.sales-members-page__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.sales-members-page__search {
+  flex: 1 1 240px;
+  min-width: 200px;
+}
+
+.sales-members-page__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.sales-members-page__filter {
+  min-width: 150px;
+}
+
+.sales-members-page__table {
+  margin-top: 12px;
+}
+
+.sales-members-page__loading {
+  padding: 24px;
+}
+
+.sales-members-table__member {
+  display: flex;
+  flex-direction: column;
+}
+
+.sales-members-table__name-link {
+  font-weight: 600;
+}
+
+.sales-members-table__aa {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.sales-members-table__team {
+  white-space: nowrap;
+}
+
+.sales-row-actions {
+  display: inline-flex;
+}
+
+.sales-row-actions__trigger {
+  min-width: 32px;
+}

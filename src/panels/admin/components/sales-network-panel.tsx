@@ -8,6 +8,7 @@ import { PageHeader } from "@/shared/components/layout/page-header";
 import { Breadcrumbs } from "@/shared/components/layout/breadcrumbs";
 import { countVisibleCustomers, countVisibleMembers, countUplines } from "../dashboard-metrics";
 import { getSystemRoleLabel } from "../role-label";
+import { aaDisplay, designationLabel, DESIGNATION_COLORS, teamDisplayName } from "@/modules/sales-network/display";
 
 function roleTitle(roles: string[]) {
   const label = getSystemRoleLabel(
@@ -64,11 +65,15 @@ export function SalesNetworkPanel() {
                 </div>
                 <div className="sales-network__row">
                   <span className="sales-network__context-label">Designation</span>
-                  <Tag>{currentMember.designation}</Tag>
+                  <Tag color={DESIGNATION_COLORS[currentMember.designation]}>{designationLabel(currentMember.designation)}</Tag>
                 </div>
                 <div className="sales-network__row">
-                  <span className="sales-network__context-label">Branch</span>
-                  <span className="sales-network__context-value">{currentMember.branchId}</span>
+                  <span className="sales-network__context-label">Team</span>
+                  <span className="sales-network__context-value">{teamDisplayName(currentMember, members)}</span>
+                </div>
+                <div className="sales-network__row">
+                  <span className="sales-network__context-label">AA Number</span>
+                  <span className="sales-network__context-value">{aaDisplay(currentMember)}</span>
                 </div>
                 <div className="sales-network__row">
                   <span className="sales-network__context-label">Status</span>
@@ -88,7 +93,7 @@ export function SalesNetworkPanel() {
                 {uplines.map((upline) => (
                   <li key={upline.id} className="sales-network__row">
                     <span className="sales-network__member-name">{upline.displayName}</span>
-                    <Tag>{upline.designation}</Tag>
+                    <Tag color={DESIGNATION_COLORS[upline.designation]}>{upline.designation}</Tag>
                   </li>
                 ))}
               </ul>
@@ -105,7 +110,10 @@ export function SalesNetworkPanel() {
                   {members.map((member) => (
                     <li key={member.id} className="sales-network__row">
                       <span className="sales-network__member-name">{member.displayName}</span>
-                      <Tag>{member.designation}</Tag>
+                      <span className="sales-network__member-meta">
+                        <span className="sales-network__member-aa">{aaDisplay(member)}</span>
+                        <Tag color={DESIGNATION_COLORS[member.designation]}>{member.designation}</Tag>
+                      </span>
                     </li>
                   ))}
                 </ul>

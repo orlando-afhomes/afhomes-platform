@@ -29,6 +29,11 @@
   width: 100%;
 }
 
+.account-table__name-link {
+  padding: 0;
+  height: auto;
+}
+
 @media (min-width: 640px) {
   .account-page__search {
     max-width: 16rem;

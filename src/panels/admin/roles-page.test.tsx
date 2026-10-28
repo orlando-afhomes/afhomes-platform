@@ -134,7 +134,7 @@ describe("roles page", () => {
     render(<TestWrapper />);
     await screen.findByText("HR Staff", {}, { timeout: 5000 });
     const row = screen.getAllByText("HR Staff")[0].closest("tr")!;
-    await clickRowAction(user, row, "View");
+    await user.click(row);
     expect(await screen.findByText("Role details")).toBeInTheDocument();
     const dialog = document.querySelector(".ant-modal") as HTMLElement;
     expect(within(dialog).getByText("Departments")).toBeInTheDocument();

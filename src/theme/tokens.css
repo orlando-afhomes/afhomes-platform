@@ -1,6 +1,6 @@
 /* Canonical AFHomes brand tokens.
  * Single source of truth for corporate colors.
- * Imported by src/app/globals.css; bridged into Ant Design via src/theme/antd-theme.ts.
+ * Imported by src/app/globals.css and mapped to the shadcn variables there.
  * Keep HEX values here; never scatter them across components. */
 
 :root {

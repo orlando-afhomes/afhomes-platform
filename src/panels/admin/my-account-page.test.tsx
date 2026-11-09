@@ -1,8 +1,7 @@
-import Swal from "sweetalert2";
 import { describe, expect, it, afterEach, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ConfigProvider } from "antd";
+import { toast } from "sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
@@ -18,26 +17,24 @@ vi.mock("next/navigation", async (importOriginal) => ({
 function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
   const [queryClient] = useState(() => new QueryClient());
   return (
-    <ConfigProvider theme={{ token: { motion: false } }}>
-      <QueryClientProvider client={queryClient}>
-        <MockStoreProvider>
-          <DevIdentityProvider initialIdentityId={identityId}>
-            <MyAccountPage />
-          </DevIdentityProvider>
-        </MockStoreProvider>
-      </QueryClientProvider>
-    </ConfigProvider>
+    <QueryClientProvider client={queryClient}>
+      <MockStoreProvider>
+        <DevIdentityProvider initialIdentityId={identityId}>
+          <MyAccountPage />
+        </DevIdentityProvider>
+      </MockStoreProvider>
+    </QueryClientProvider>
   );
 }
 
 afterEach(() => {
   cleanup();
-  Swal.close();
+  toast.dismiss();
 });
 
-async function clickSwalConfirm(user: ReturnType<typeof userEvent.setup>) {
-  await waitFor(() => expect(document.querySelector(".swal2-confirm")).not.toBeNull());
-  await user.click(document.querySelector(".swal2-confirm") as HTMLElement);
+async function confirmSave(user: ReturnType<typeof userEvent.setup>) {
+  const dialog = await screen.findByRole("alertdialog");
+  await user.click(within(dialog).getByRole("button", { name: "Save" }));
 }
 
 describe("my account page", () => {
@@ -47,24 +44,38 @@ describe("my account page", () => {
     expect(screen.getByPlaceholderText("New Password")).toBeDefined();
   });
 
-  it("gives admins department and role controls, without account roles", async () => {
+  // S3-04/S3-B: department and role are read-only on My Account, including for admins.
+  it("shows admins their department and role read-only, with no self-assignment controls", async () => {
     render(<TestWrapper />);
     await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 });
-    expect(screen.getByRole("combobox", { name: "My account department" })).toBeDefined();
-    expect(await screen.findByRole("combobox", { name: "My account role" })).toBeDefined();
+    expect(screen.queryByRole("combobox", { name: "My account department" })).toBeNull();
+    expect(screen.queryByRole("combobox", { name: "My account role" })).toBeNull();
     expect(screen.queryByText("Account Roles")).toBeNull();
     expect(screen.queryByRole("checkbox")).toBeNull();
+    await waitFor(() => expect(screen.getByText("HR Staff", { selector: "dd" })).toBeInTheDocument());
+    expect(screen.getByText("Your department, role, and account status are managed by an authorized administrator.")).toBeInTheDocument();
   });
 
-  it("saves profile changes with confirmation and success modal", async () => {
+  it("saves only profile fields and keeps the linked account in step", async () => {
+    const user = userEvent.setup();
+    render(<TestWrapper identityId="dev-hr" />);
+    const emailInput = await screen.findByDisplayValue("hrstaff@afhomes.local", {}, { timeout: 5000 });
+    fireEvent.change(emailInput, { target: { value: "hr.updated@afhomes.local" } });
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await confirmSave(user);
+    expect(await screen.findByText("Account updated successfully.")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("hr.updated@afhomes.local", { selector: "dd" })).toBeInTheDocument());
+  });
+
+  it("saves profile changes after confirmation and reports a toast", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
     const nameInput = await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 });
     fireEvent.change(nameInput, { target: { value: "Admin User Updated" } });
     await user.click(screen.getByRole("button", { name: "Save changes" }));
-    await clickSwalConfirm(user);
-    await waitFor(() => expect(screen.getByDisplayValue("Admin User Updated")).toBeInTheDocument());
-    await clickSwalConfirm(user);
+    await confirmSave(user);
+    expect(await screen.findByText("Account updated successfully.")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Admin User Updated")).toBeInTheDocument();
   });
 
   it("rejects mismatched passwords before saving", async () => {
@@ -75,6 +86,40 @@ describe("my account page", () => {
     fireEvent.change(screen.getByPlaceholderText("Confirm Password"), { target: { value: "different1234" } });
     await user.click(screen.getByRole("button", { name: "Save changes" }));
     expect(await screen.findByText("Passwords do not match.")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Confirm Password")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("requires a name and a long enough new password", async () => {
+    const user = userEvent.setup();
+    render(<TestWrapper />);
+    const nameInput = await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 });
+    fireEvent.change(nameInput, { target: { value: "" } });
+    fireEvent.change(screen.getByPlaceholderText("New Password"), { target: { value: "short" } });
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(await screen.findByText("Full name is required.")).toBeInTheDocument();
+    expect(screen.getByText(/New password must be at least 12 characters\./)).toBeInTheDocument();
+  });
+
+  it("shows and hides the password text", async () => {
+    const user = userEvent.setup();
+    render(<TestWrapper />);
+    const input = await screen.findByPlaceholderText("New Password");
+    expect(input).toHaveAttribute("type", "password");
+    await user.click(screen.getByRole("button", { name: "Show new password" }));
+    expect(input).toHaveAttribute("type", "text");
+  });
+
+  it("rejects non-image and oversized profile pictures", async () => {
+    render(<TestWrapper />);
+    await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 });
+    const file = screen.getByLabelText("Profile picture file");
+    fireEvent.change(file, { target: { files: [new File(["x"], "a.txt", { type: "text/plain" })] } });
+    expect(await screen.findByText("Unsupported image format.")).toBeInTheDocument();
+    const big = new File(["x"], "big.png", { type: "image/png" });
+    Object.defineProperty(big, "size", { value: 3 * 1024 * 1024 });
+    fireEvent.change(file, { target: { files: [big] } });
+    expect(await screen.findByText("Image must be 2MB or smaller.")).toBeInTheDocument();
   });
 
   it("shows read-only employment info without admin controls for HR", async () => {

@@ -1,3 +1,5 @@
+import type { LinkedAccountSummary } from "@/modules/accounts/types";
+
 export type Designation = "SVD" | "SSM" | "SM" | "OST";
 
 export type MemberStatus = "active" | "inactive" | "suspended";
@@ -115,6 +117,33 @@ export type DepartmentRole = {
   moduleIds: string[];
   status: DepartmentRoleStatus;
   createdAt: string;
+  /** Protected Super Admin role: only a Super Administrator may assign, modify, (de)activate, or delete it. */
+  isProtected?: boolean;
+};
+
+/** A department role with the acting identity's authority over it. */
+export type DepartmentRoleOption = DepartmentRole & {
+  /** The actor may modify, reactivate, delete, assign, or remove this role. */
+  manageable: boolean;
+  /** Manageable, active, and in an active department: offered for new assignments. */
+  assignable: boolean;
+};
+
+/**
+ * Hard deletion is disabled until the owner approves the archive and
+ * historical-retention policy (open item R8; doc 01 section 8).
+ */
+export const STAFF_DELETE_DISABLED = "Staff deletion is unavailable until the archive and retention policy is approved.";
+
+/** What the acting identity may do to one staff record. */
+export type StaffActionPolicy = {
+  canDelete: boolean;
+  deleteRestriction: string | null;
+  /** Why department and role cannot be changed, or null when they can. */
+  assignmentRestriction: string | null;
+  /** Why the staff name and email cannot be changed, or null when they can. */
+  identityRestriction: string | null;
+  linkedAccount: LinkedAccountSummary | null;
 };
 
 export type StaffStatus = "active" | "inactive" | "suspended";

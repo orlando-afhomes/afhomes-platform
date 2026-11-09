@@ -1,6 +1,6 @@
 "use client";
 
-import { StatusBadge } from "@/shared/components/layout/status-badge";
+import { StatusBadge, ToneBadge, type BadgeTone } from "@/shared/components/modern/status-badge";
 import type { AccreditationAdminStatus } from "@/modules/accreditation/types";
 import type { AccreditationExpiryState as ExpiryState } from "@/modules/accreditation/dates";
 
@@ -11,27 +11,21 @@ const EXPIRY_LABELS: Record<ExpiryState, string> = {
   incomplete: "Incomplete dates",
 };
 
-const EXPIRY_COLORS: Record<ExpiryState, string | undefined> = {
-  valid: "green",
-  expires_today: "gold",
-  expired: "red",
-  incomplete: undefined,
+const EXPIRY_TONES: Record<ExpiryState, BadgeTone> = {
+  valid: "success",
+  expires_today: "warning",
+  expired: "danger",
+  incomplete: "neutral",
 };
 
 export function AccreditationStatusTag({ status }: { status: AccreditationAdminStatus }) {
-  return <StatusBadge status={status} className="accreditation-status__tag" />;
+  return <StatusBadge status={status} />;
 }
 
 export function AccreditationExpiryTag({ state }: { state: ExpiryState }) {
-  return (
-    <Tag color={EXPIRY_COLORS[state]} className="accreditation-expiry__tag">
-      {EXPIRY_LABELS[state]}
-    </Tag>
-  );
+  return <ToneBadge tone={EXPIRY_TONES[state]}>{EXPIRY_LABELS[state]}</ToneBadge>;
 }
 
 export function AccreditationEligibilityTag({ eligible }: { eligible: boolean }) {
-  return (
-    <StatusBadge status={eligible ? "Eligible" : "Ineligible"} color={eligible ? "green" : "red"} className="accreditation-eligibility__tag" />
-  );
+  return <StatusBadge status={eligible ? "Eligible" : "Ineligible"} tone={eligible ? "success" : "danger"} />;
 }

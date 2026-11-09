@@ -1,7 +1,11 @@
+import { Suspense } from "react";
 import { StaffPage } from "@/panels/admin/pages/staff-page";
-import "@/panels/admin/pages/staff-page.css";
-import "@/panels/admin/pages/staff-dialogs.css";
 
 export default function Page() {
-  return <StaffPage />;
+  // useSearchParams (the ?view= directory view) needs a Suspense boundary.
+  return (
+    <Suspense>
+      <StaffPage />
+    </Suspense>
+  );
 }

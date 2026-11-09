@@ -1,8 +1,11 @@
 
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { DevIdentity } from "@/modules/identity/types";
+import { AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { MockStore } from "./seed";
-import { hasModuleAccess } from "./authorization";
+import { appendAuditEvent } from "./audit";
+import { activeRoles } from "./dev-identities";
+import { PROTECTED_ROLE_ERROR, assertCanDelegate, getRoleEffectiveGrants, hasActiveSystemRole, hasModuleAccess } from "./authorization";
 import { simulateAsync } from "@/data/contracts/async-options";
 
 function canManageDepartments(store: MockStore, identity: DevIdentity) {
@@ -59,16 +62,53 @@ export class MockDepartmentRepository {
     if (!canManageDepartments(this.store, identity)) throw new Error("Department update is not allowed.");
     const dept = this.store.departments.find((d) => d.id === id);
     if (!dept) throw new Error("Department not found.");
+    if (input.headStaffId !== undefined) throw new Error("Department Head assignment is not supported.");
+    // Validate everything first; mutate only after every check passes.
+    const next = { name: dept.name, code: dept.code, description: dept.description, status: dept.status };
     if (input.name !== undefined) {
       const name = input.name.trim();
       if (!name) throw new Error("Department name is required.");
       if (this.store.departments.some((d) => d.id !== id && d.name.toLowerCase() === name.toLowerCase())) throw new Error("Department already exists.");
-      dept.name = name;
+      next.name = name;
     }
-    if (input.code !== undefined) dept.code = input.code.trim();
-    if (input.description !== undefined) dept.description = input.description.trim();
-    if (input.headStaffId !== undefined) throw new Error("Department Head assignment is not supported.");
-    if (input.status !== undefined) dept.status = input.status === "deactivated" ? "deactivated" : "active";
+    if (input.code !== undefined) next.code = input.code.trim();
+    if (input.description !== undefined) next.description = input.description.trim();
+    if (input.status !== undefined) {
+      const currentStatus = normalizeDepartmentStatus(dept.status);
+      const nextStatus = input.status === "deactivated" ? "deactivated" : "active";
+      if (nextStatus !== currentStatus) {
+        const departmentRoles = this.store.roles.filter((role) => role.departmentId === id);
+        // Department status gates its roles' grants, so it gates the protected role too.
+        if (departmentRoles.some((role) => role.isProtected) && !hasActiveSystemRole(this.store, identity, "super_admin")) {
+          throw new Error(PROTECTED_ROLE_ERROR);
+        }
+        // Reactivation restores the grants of the department's active roles.
+        if (nextStatus === "active") {
+          for (const role of departmentRoles.filter((item) => item.status === "active")) {
+            assertCanDelegate(this.store, identity, getRoleEffectiveGrants(role));
+          }
+        }
+      }
+      next.status = nextStatus;
+    }
+    // Status changes gate role grants and are security-sensitive; metadata-only
+    // updates stay unaudited (S3-C1).
+    const previousStatus = normalizeDepartmentStatus(dept.status);
+    const statusChanged = next.status !== previousStatus;
+    Object.assign(dept, next);
+    if (statusChanged) {
+      appendAuditEvent(this.store, {
+        actorId: identity.id,
+        actorRoles: activeRoles(identity),
+        module: "organization",
+        action: AUDIT_ACTIONS.DEPARTMENT_STATUS_CHANGED,
+        entityType: "department",
+        entityId: id,
+        previousValue: previousStatus,
+        newValue: next.status,
+        outcome: "success",
+      });
+    }
     return { ...dept, status: normalizeDepartmentStatus(dept.status) };
   }
 

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Divider, Input, Modal, Radio, Segmented, Select, Space, Steps } from "antd";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { teamDisplayName } from "@/modules/sales-network/display";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { manilaToday } from "@/modules/accreditation/dates";
 import { collectReservedAaNumbers, toAaYearMonth, validateManualAaNumber } from "@/modules/accreditation/issuance";
@@ -43,6 +44,8 @@ import {
   GovernmentIdFields,
   PhilippineAddressFields,
   ProfilePhotoUploader,
+} from "@/shared/forms/modern";
+import {
   validatePersonName,
   validateMiddleName,
   validateSuffix,
@@ -68,7 +71,14 @@ import {
   validatePastDate,
   formatPhilippineLandlineDisplay,
 } from "@/shared/forms";
-import { confirmAction, showError, showFieldErrors, showSuccess } from "@/shared/utils/feedback";
+import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
+import { FormGrid, FormSection } from "@/shared/components/modern/form-layout";
+import { InfoNote } from "@/shared/components/modern/detail-list";
+import { StepIndicator } from "@/shared/components/modern/step-indicator";
+import { Button } from "@/shared/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
+import { Label } from "@/shared/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
 import {
   useAccounts,
   useCreateAccreditedSeller,
@@ -76,11 +86,8 @@ import {
   useMembers,
   useStaff,
 } from "@/data/queries";
-import "./sales-network-accredited-seller-dialog.css";
 
 type IstDesignation = "SVD" | "SSM" | "SM";
-
-const IST_DESIGNATIONS: IstDesignation[] = ["SVD", "SSM", "SM"];
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -156,57 +163,11 @@ export function AccreditedSellerDialog({
   const [manualAaSuffix, setManualAaSuffix] = useState("");
   const [approvedStart, setApprovedStart] = useState(manilaToday());
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      const today = manilaToday();
-      setStep(0);
-      setSellerIdentity("new");
-      setExistingAccountId(undefined);
-      setDesignation("SSM");
-      setTeamName("");
-      setParentId(undefined);
-      setCardApplicationDate(today);
-      setApprovedStart(today);
-      setNoMiddleName(false);
-      setProgramCategory(undefined);
-      setVipCardLevel("B1");
-      setGender(undefined);
-      setCivilStatus(undefined);
-      setGovernmentIdType(undefined);
-      setGovernmentIdNumber("");
-      setAccreditationStatus("pending");
-      setAaMethod("automatic");
-      setManualAaSuffix("");
-      setPhotoError(null);
-      setSubmitting(false);
-      setTempPassword("");
-      setConfirmPassword("");
-      setProfilePhotoName(null);
-      if (profilePhotoUrl) URL.revokeObjectURL(profilePhotoUrl);
-      setProfilePhotoUrl(null);
-      setStreet("");
-      setProvince("");
-      setCity("");
-      setBarangay("");
-      setSubdivision("");
-      setPostalCode("");
-      setTelephone("");
-      setFacebook("");
-      setTin("");
-      setBusinessEmployer("");
-      setBusinessAddress("");
-      setJobPosition("");
-      setFirstName("");
-      setMiddleName("");
-      setLastName("");
-      setSuffix("");
-      setMobileNumber("");
-      setDateOfBirth("");
-      setEmail("");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, mode]);
+  const [confirmCreate, setConfirmCreate] = useState(false);
+  // Steps whose Next was pressed with errors: their messages show on every field of the step.
+  const [shownSteps, setShownSteps] = useState<number[]>([]);
+  const [finalErrors, setFinalErrors] = useState<string[]>([]);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     return () => {
@@ -332,94 +293,67 @@ export function AccreditedSellerDialog({
     manualAaSuffix: aaMethod === "manual" ? manualAaSuffix.trim() : "",
   });
 
-  const collectErrors = (checks: Array<string | null>): string[] => {
-    const errors: string[] = [];
-    for (const check of checks) {
-      if (check && !errors.includes(check)) errors.push(check);
-    }
-    return errors;
-  };
+  const orUndefined = (message: string | null) => message ?? undefined;
 
-  const validateStep = (stepIndex: number): string[] => {
-    if (stepIndex === 0) {
-      return collectErrors([
-        sellerIdentity === "existing" && !existingAccountId ? "Select an employee account." : null,
-        !profilePhotoName ? "Profile photo is required." : null,
-        validatePersonName(firstName, "First name"),
-        validateMiddleName(middleName, noMiddleName),
-        validatePersonName(lastName, "Last name"),
-        validateSuffix(suffix),
-        validateMobileNumber(mobileNumber),
-        validatePastDate(dateOfBirth, "Birth date", "Birth date cannot be future."),
-        validateEmailAddress(email),
-        validateNewAccountStep(),
-      ]);
-    }
-    if (stepIndex === 1) {
-      return collectErrors([
-        validateStreet(street),
-        validateProvince(province),
-        validateCity(city),
-        validateBarangay(barangay),
-        validateSubdivision(subdivision),
-        validatePostalCode(postalCode),
-        validateLandline(telephone),
-        validateFacebook(facebook),
-        validateTinNumber(tin),
-        validateBusinessName(businessEmployer),
-        validateBusinessAddress(businessAddress),
-        validateJobPosition(jobPosition),
-      ]);
-    }
-    if (stepIndex === 2) {
-      return collectErrors([
-        mode === "IST" && !["SVD", "SSM", "SM"].includes(designation) ? "IST needs SVD, SSM, SM." : null,
-        effectiveDesignation !== "SVD" && !parentId ? "Sponsor is required." : null,
-        effectiveDesignation === "SVD" ? validateTeamName(teamName, true) : null,
-        validateDateString(cardApplicationDate, "Application date"),
-        validateProgramCategory(),
-        validateVipTier(),
-        validateRequiredText(gender ?? "", "Gender"),
-        validateRequiredText(civilStatus ?? "", "Civil Status"),
-        validateGovIdType(),
-        validateGovIdNumber(governmentIdNumber),
-      ]);
-    }
-    return collectErrors([
-      !accreditationStatus ? "Accreditation Status is required." : null,
-      accreditationStatus === "cancel" || accreditationStatus === "expired" ? "Pending or Accredited only." : null,
-      validateDateString(approvedStart, "Start date"),
-      leapDay ? "Leap-day starts need policy confirmation." : null,
-      aaMethod === "manual" ? manualError : null,
-      validateAccreditedSellerFields(buildPayload()),
-    ]);
+  /** Every rule runs each render; `stepOf` says which step owns it. */
+  const rules: Record<string, string | undefined> = {
+    existingAccount: sellerIdentity === "existing" && !existingAccountId ? "Select an employee account." : undefined,
+    photo: profilePhotoName ? undefined : "Profile photo is required.",
+    firstName: orUndefined(validatePersonName(firstName, "First name")),
+    middleName: orUndefined(validateMiddleName(middleName, noMiddleName)),
+    lastName: orUndefined(validatePersonName(lastName, "Last name")),
+    suffix: orUndefined(validateSuffix(suffix)),
+    mobile: orUndefined(validateMobileNumber(mobileNumber)),
+    dateOfBirth: orUndefined(validatePastDate(dateOfBirth, "Birth date", "Birth date cannot be future.")),
+    email: orUndefined(validateEmailAddress(email)),
+    tempPassword: sellerIdentity === "new" ? orUndefined(validatePassword(tempPassword)) : undefined,
+    confirmPassword: sellerIdentity === "new" && !validatePassword(tempPassword) ? orUndefined(validateConfirmPassword(tempPassword, confirmPassword)) : undefined,
+    street: orUndefined(validateStreet(street)),
+    province: orUndefined(validateProvince(province)),
+    city: orUndefined(validateCity(city)),
+    barangay: orUndefined(validateBarangay(barangay)),
+    subdivision: orUndefined(validateSubdivision(subdivision)),
+    postalCode: orUndefined(validatePostalCode(postalCode)),
+    telephone: orUndefined(validateLandline(telephone)),
+    facebook: orUndefined(validateFacebook(facebook)),
+    tin: orUndefined(validateTinNumber(tin)),
+    businessEmployer: orUndefined(validateBusinessName(businessEmployer)),
+    businessAddress: orUndefined(validateBusinessAddress(businessAddress)),
+    jobPosition: orUndefined(validateJobPosition(jobPosition)),
+    position: mode === "IST" && !["SVD", "SSM", "SM"].includes(designation) ? "IST needs SVD, SSM, SM." : undefined,
+    sponsor: effectiveDesignation !== "SVD" && !parentId ? "Sponsor is required." : undefined,
+    teamName: effectiveDesignation === "SVD" ? orUndefined(validateTeamName(teamName, true)) : undefined,
+    cardApplicationDate: orUndefined(validateDateString(cardApplicationDate, "Application date")),
+    programCategory: programCategory ? undefined : "Select a program category.",
+    vipCardLevel: ["B1", "S1", "G1"].includes(vipCardLevel) ? undefined : "Card level must be valid.",
+    gender: gender?.trim() ? undefined : "Gender is required.",
+    civilStatus: civilStatus?.trim() ? undefined : "Civil Status is required.",
+    governmentIdType: governmentIdType ? undefined : "Government ID type is required.",
+    governmentIdNumber: orUndefined(validateGovIdNumber(governmentIdNumber)),
+    accreditationStatus: !accreditationStatus
+      ? "Accreditation Status is required."
+      : accreditationStatus === "cancel" || accreditationStatus === "expired"
+        ? "Pending or Accredited only."
+        : undefined,
+    approvedStart: orUndefined(validateDateString(approvedStart, "Start date")),
+    manualAa: aaMethod === "manual" ? (manualError ?? undefined) : undefined,
   };
-
-  const validateNewAccountStep = (): string | null => {
-    if (sellerIdentity !== "new") return null;
-    return validatePassword(tempPassword) ?? validateConfirmPassword(tempPassword, confirmPassword);
+  const stepOf: Record<string, number> = {
+    existingAccount: 0, photo: 0, firstName: 0, middleName: 0, lastName: 0, suffix: 0, mobile: 0, dateOfBirth: 0, email: 0, tempPassword: 0, confirmPassword: 0,
+    street: 1, province: 1, city: 1, barangay: 1, subdivision: 1, postalCode: 1, telephone: 1, facebook: 1, tin: 1, businessEmployer: 1, businessAddress: 1, jobPosition: 1,
+    position: 2, sponsor: 2, teamName: 2, cardApplicationDate: 2, programCategory: 2, vipCardLevel: 2, gender: 2, civilStatus: 2, governmentIdType: 2, governmentIdNumber: 2,
+    accreditationStatus: 3, approvedStart: 3, manualAa: 3,
   };
+  const liveKeys: Record<string, boolean> = { email: Boolean(email), postalCode: Boolean(postalCode), tin: Boolean(tin), mobile: Boolean(mobileNumber.trim()), manualAa: aaMethod === "manual" && Boolean(manualAaSuffix.trim()) };
+  const visible = (key: string): string | undefined => (shownSteps.includes(stepOf[key]) || liveKeys[key] ? rules[key] : undefined);
+  const stepHasErrors = (stepIndex: number) => Object.entries(rules).some(([key, message]) => message && stepOf[key] === stepIndex);
 
-  const validateProgramCategory = (): string | null => {
-    return programCategory ? null : "Select a program category.";
-  };
+  const focusFirstInvalid = () => requestAnimationFrame(() => bodyRef.current?.querySelector<HTMLElement>("[aria-invalid='true']")?.focus());
 
-  const validateVipTier = (): string | null => {
-    return ["B1", "S1", "G1"].includes(vipCardLevel) ? null : "Card level must be valid.";
-  };
-
-  const validateGovIdType = (): string | null => {
-    return governmentIdType ? null : "Government ID type is required.";
-  };
-
-  const validateRequiredText = (value: string | undefined, label: string): string | null => {
-    return value && value.trim() ? null : `${label} is required.`;
-  };
-
-  const handleNext = async () => {
-    const stepErrors = validateStep(step);
-    if (stepErrors.length > 0) {
-      await showFieldErrors("Complete the current step.", stepErrors);
+  const handleNext = () => {
+    if (stepHasErrors(step)) {
+      setShownSteps((previous) => (previous.includes(step) ? previous : [...previous, step]));
+      focusFirstInvalid();
       return;
     }
     setStep((value) => Math.min(value + 1, 3));
@@ -436,51 +370,53 @@ export function AccreditedSellerDialog({
     }
   };
 
-  const handleFinish = async () => {
+  const emailMismatch = (payload: CreateAccreditedSellerInput): boolean => {
+    const account = (accountsQuery.data ?? []).find((item) => item.id === payload.existingAccountId);
+    return Boolean(account && account.email.toLowerCase() !== payload.email.trim().toLowerCase());
+  };
+
+  const handleFinish = () => {
     const payload = buildPayload();
-    const fieldErrors = [
-      ...validateStep(3),
-      ...(sellerIdentity === "existing" && emailMismatch(payload) ? ["Email must match account."] : []),
-    ];
-    if (fieldErrors.length > 0) {
-      await showFieldErrors("Complete the required fields.", fieldErrors);
+    const messages: string[] = [];
+    const repositoryMessage = validateAccreditedSellerFields(payload);
+    if (repositoryMessage) messages.push(repositoryMessage);
+    if (sellerIdentity === "existing" && emailMismatch(payload)) messages.push("Email must match account.");
+    if (stepHasErrors(3) || messages.length > 0) {
+      setShownSteps((previous) => (previous.includes(3) ? previous : [...previous, 3]));
+      setFinalErrors(messages);
+      focusFirstInvalid();
       return;
     }
-    const proceed = await confirmAction({
-      title: payload.accreditationStatus === "accredited" ? `Create and accredit ${mode} seller?` : `Create ${mode} seller as Pending?`,
-      text: payload.accreditationStatus === "accredited"
-        ? `Confirm ${aaMethod} AA issuance for ${fullNameOf(firstName, middleName, noMiddleName, lastName, suffix)}.`
-        : `Confirm ${aaMethod} AA issuance for ${fullNameOf(firstName, middleName, noMiddleName, lastName, suffix)}. Accreditation stays Pending.`,
-      confirmText: payload.accreditationStatus === "accredited" ? "Create & Accredit" : "Create Seller",
-    });
-    if (!proceed) return;
+    setFinalErrors([]);
+    setConfirmCreate(true);
+  };
+
+  const create = async () => {
+    const payload = buildPayload();
     setSubmitting(true);
     try {
       // Temporary passwords are validated locally and inside the repository
       // but never persisted, logged, or included in query keys or summaries.
       const result = await createSeller.mutateAsync(payload);
+      setConfirmCreate(false);
       onClose();
       // Navigate by official AA number so the detail URL shows the seller ID.
       onCreated?.(result.aaNumber ?? result.memberId);
-      await showSuccess(
-        payload.accreditationStatus === "accredited"
-          ? "Seller successfully created and accredited"
-          : "Seller created with Pending accreditation",
-        payload.accreditationStatus === "accredited"
-          ? `Issued ${result.aaNumber}, valid until ${result.expiryDate}.`
-          : `Reserved ${result.aaNumber}; accreditation stays Pending.`,
+      toast.success(
+        payload.accreditationStatus === "accredited" ? "Seller successfully created and accredited" : "Seller created with Pending accreditation",
+        {
+          description:
+            payload.accreditationStatus === "accredited"
+              ? `Issued ${result.aaNumber}, valid until ${result.expiryDate}.`
+              : `Reserved ${result.aaNumber}; accreditation stays Pending.`,
+        },
       );
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to create seller.";
-      await showError("Creation failed.", message);
+      setConfirmCreate(false);
+      toast.error("Creation failed.", { description: err instanceof Error ? err.message : "Failed to create seller." });
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const emailMismatch = (payload: CreateAccreditedSellerInput): boolean => {
-    const account = (accountsQuery.data ?? []).find((item) => item.id === payload.existingAccountId);
-    return Boolean(account && account.email.toLowerCase() !== payload.email.trim().toLowerCase());
   };
 
   const canComplete =
@@ -489,397 +425,326 @@ export function AccreditedSellerDialog({
     (accreditationStatus === "pending" || accreditationStatus === "accredited") &&
     (aaMethod === "automatic" || !manualError);
 
+  const STEPS = ["Personal", "Address", "Assignment", "Accreditation"];
+  const fullName = fullNameOf(firstName, middleName, noMiddleName, lastName, suffix);
+  const radioClass = "tw:flex tw:min-h-11 tw:cursor-pointer tw:items-center tw:gap-2 tw:sm:min-h-8";
+
   return (
-    <Modal
-      title={
-        <div className="sales-network-create-seller__header">
-          <div className="sales-network-create-seller__title">{mode === "IST" ? "Add IST" : "Add OST"}</div>
-          <div className="sales-network-create-seller__subtitle">
-            {mode === "IST" ? "Create an IST member." : "Create an OST member."}
-          </div>
-        </div>
-      }
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      width={760}
-      destroyOnHidden
-      className="sales-network-create-seller__modal"
-    >
-      <div className="sales-network-create-seller__body">
-        {!isSuperAdmin ? (
-          <Alert
-            type="warning"
-            showIcon
-            title="Super Administrator completion required"
-            description="Preview only. Super Administrator required."
-            className="sales-network-create-seller__gate"
-          />
-        ) : null}
+    <Dialog open={open} onOpenChange={(next) => (!next ? onClose() : undefined)}>
+      <DialogContent className="tw:max-h-[calc(100dvh-2rem)] tw:overflow-y-auto tw:sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>{mode === "IST" ? "Add IST" : "Add OST"}</DialogTitle>
+          <DialogDescription>{mode === "IST" ? "Create an IST member." : "Create an OST member."}</DialogDescription>
+        </DialogHeader>
+        <div ref={bodyRef} className="tw:flex tw:flex-col tw:gap-4">
+          {!isSuperAdmin ? <InfoNote title="Super Administrator completion required">Preview only. Super Administrator required.</InfoNote> : null}
 
-        <Steps
-          current={step}
-          size="small"
-          className="sales-network-create-seller__steps"
-          items={[
-            { title: "Personal" },
-            { title: "Address" },
-            { title: "Assignment" },
-            { title: "Accreditation" },
-          ]}
-        />
+          <StepIndicator steps={STEPS} current={step} />
 
-        {step === 0 ? (
-          <div className="sales-network-create-seller__pane">
-            <Divider titlePlacement="start" className="sales-network-create-seller__section">Seller Identity</Divider>
-            <div className="sales-network-create-seller__field">
-              <span className="sales-network-create-seller__label" id="seller-identity-label">Seller Identity</span>
-              <Radio.Group
-                aria-labelledby="seller-identity-label"
-                value={sellerIdentity}
-                onChange={(event) => setSellerIdentity(event.target.value)}
-                className="sales-network-create-seller__radio"
-              >
-                <Radio value="new">New Individual</Radio>
-                <Radio value="existing">Existing Employee</Radio>
-              </Radio.Group>
-            </div>
-            {sellerIdentity === "existing" ? (
-              <div className="sales-network-create-seller__field">
-                <Select
-                  id="existing-employee"
-                  aria-label="Existing Employee"
-                  placeholder="Search employees"
-                  showSearch
-                  optionFilterProp="label"
-                  value={existingAccountId}
-                  onChange={handleSelectEmployee}
-                  loading={staffQuery.isLoading || accountsQuery.isLoading}
-                  options={employeeOptions}
-                  className="sales-network-create-seller__select"
-                />
-                <p className="sales-network-create-seller__hint">Links account. Preserves employee record.</p>
-              </div>
-            ) : null}
-
-            <Divider titlePlacement="start" className="sales-network-create-seller__section">Profile Photo *</Divider>
-            <ProfilePhotoUploader
-              value={profilePhotoUrl}
-              fileName={profilePhotoName}
-              onSelect={acceptPhotoFile}
-              onClear={clearPhoto}
-              error={photoError}
-            />
-
-            <Divider titlePlacement="start" className="sales-network-create-seller__section">Name & Contact</Divider>
-            <div className="sales-network-create-seller__grid">
-              <div className="sales-network-create-seller__field">
-                <PersonNameField id="first-name" label="First Name" required value={firstName} onChange={setFirstName} />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <MiddleNameField
-                  id="middle-name"
-                  label="Middle Name"
-                  required
-                  value={middleName}
-                  onChange={setMiddleName}
-                  noMiddleName={noMiddleName}
-                  onNoMiddleNameChange={setNoMiddleName}
-                />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <PersonNameField id="last-name" label="Last Name" required value={lastName} onChange={setLastName} />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <SuffixField id="seller-suffix" value={suffix || undefined} onChange={setSuffix} />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <PhilippineMobileField id="mobile" label="Mobile Number" required value={mobileNumber} onChange={setMobileNumber} placeholder="09xx xxx xxxx" />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <StandardDateField id="dob" label="Birth Date" required value={dateOfBirth} onChange={setDateOfBirth} className="sales-network-create-seller__picker" />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <EmailField id="seller-email" label="Email" required value={email} onChange={setEmail} error={email ? validateEmailAddress(email) ?? undefined : undefined} />
-              </div>
-            </div>
-
-            <Divider titlePlacement="start" className="sales-network-create-seller__section">Credentials</Divider>
-            {sellerIdentity === "new" ? (
-              <div className="sales-network-create-seller__grid">
-                <div className="sales-network-create-seller__field">
-                  <PasswordField id="temp-password" label="Temporary Password" required value={tempPassword} onChange={setTempPassword} hint="Minimum 12 characters." />
-                </div>
-                <div className="sales-network-create-seller__field">
-                  <ConfirmPasswordField id="confirm-password" label="Confirm Password" required value={confirmPassword} onChange={setConfirmPassword} />
-                </div>
-              </div>
-            ) : (
-              <p className="sales-network-create-seller__hint">Existing credentials remain unchanged.</p>
-            )}
-          </div>
-        ) : null}
-
-        {step === 1 ? (
-          <div className="sales-network-create-seller__pane">
-            <Divider titlePlacement="start" className="sales-network-create-seller__section">Address Information</Divider>
-              <PhilippineAddressFields
-                value={{ street, province, city, barangay, subdivision, postalCode }}
-                onChange={(next) => {
-                  setStreet(next.street);
-                  setProvince(next.province);
-                  setCity(next.city);
-                  setBarangay(next.barangay);
-                  setSubdivision(next.subdivision);
-                  setPostalCode(next.postalCode);
-                }}
-                errors={{ postalCode: postalCode ? validatePostalCode(postalCode) ?? undefined : undefined }}
-              />
-<Divider titlePlacement="start" className="sales-network-create-seller__section">Additional Information (Optional)</Divider>
-            <div className="sales-network-create-seller__grid">
-              <div className="sales-network-create-seller__field">
-                <TextField id="telephone" label="Telephone" value={telephone} onChange={setTelephone} onBlur={() => setTelephone(formatPhilippineLandlineDisplay(telephone))} maxLength={15} inputMode="tel" />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <TextField id="facebook" label="Facebook" value={facebook} onChange={setFacebook} onBlur={() => setFacebook(facebook.trim())} maxLength={150} />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <TinField id="tin" label="TIN" value={tin} onChange={setTin} error={tin ? validateTinNumber(tin) ?? undefined : undefined} />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <TextField id="job-position" label="Job Position" value={jobPosition} onChange={(value) => setJobPosition(cleanTitleInput(value))} onBlur={() => setJobPosition(jobPosition.trim())} maxLength={100} />
-              </div>
-              <div className="sales-network-create-seller__field sales-network-create-seller__field--full">
-                <TextField id="business" label="Business" value={businessEmployer} onChange={setBusinessEmployer} onBlur={() => setBusinessEmployer(businessEmployer.trim())} maxLength={150} />
-              </div>
-              <div className="sales-network-create-seller__field sales-network-create-seller__field--full">
-                <TextField id="business-address" label="Business Address" value={businessAddress} onChange={setBusinessAddress} onBlur={() => setBusinessAddress(businessAddress.trim())} maxLength={200} />
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        {step === 2 ? (
-          <div className="sales-network-create-seller__pane">
-            <Divider titlePlacement="start" className="sales-network-create-seller__section">Sales Network Assignment</Divider>
-            <div className="sales-network-create-seller__grid">
-              <div className="sales-network-create-seller__field">
-                <SelectField
-                  id="assigned-position"
-                  label="Assigned Position"
-                  required
-                  value={mode === "OST" ? "OST" : designation}
-                  onChange={(value) => {
-                    if (value === "OST") return;
-                    setDesignation(value as IstDesignation);
-                    setTeamName("");
-                    setParentId(undefined);
-                  }}
-                  disabled={mode === "OST"}
-                  options={mode === "OST" ? [{ value: "OST", label: "OST" }] : [{ value: "SVD", label: "SVD — Sales Vice Director" }, { value: "SSM", label: "SSM — Senior Sales Manager" }, { value: "SM", label: "SM — Sales Manager" }]}
-                />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <SelectField
-                  id="sponsor"
-                  label="Sponsor"
-                  required
-                  value={effectiveDesignation === "SVD" ? undefined : parentId}
-                  options={(eligibleQuery.data ?? []).map((member) => ({ value: member.id, label: `${member.displayName} (${member.designation})` }))}
-                  onChange={setParentId}
-                  placeholder={effectiveDesignation === "SVD" ? "Root — no sponsor" : (eligibleQuery.data ?? []).length === 0 ? "No eligible sponsor available" : "Select eligible sponsor"}
-                  showSearch
-                  loading={eligibleQuery.isLoading}
-                  disabled={effectiveDesignation === "SVD"}
-                />
-              </div>
-              {effectiveDesignation === "SVD" ? (
-                <div className="sales-network-create-seller__field">
-                  <TextField id="team-name" label="Team Name" required value={teamName} onChange={(value) => setTeamName(cleanTitleInput(value))} onBlur={() => setTeamName(teamName.trim())} maxLength={100} placeholder="Enter Team Name" />
-                </div>
-              ) : (
-                <div className="sales-network-create-seller__field">
-                  <label className="sales-network-create-seller__label" htmlFor="inherited-team">Team</label>
-                  <Input
-                    id="inherited-team"
-                    value={inheritedTeam ?? "Select sponsor first"}
-                    disabled
+          {step === 0 ? (
+            <div className="tw:flex tw:flex-col tw:gap-5">
+              <FormSection title="Seller Identity">
+                <fieldset className="tw:m-0 tw:flex tw:min-w-0 tw:flex-col tw:gap-1.5 tw:border-0 tw:p-0">
+                  <legend className="tw:mb-1.5 tw:p-0 tw:text-sm tw:font-medium">Seller Identity</legend>
+                  <RadioGroup value={sellerIdentity} onValueChange={(value) => setSellerIdentity(value as "new" | "existing")} className="tw:flex tw:flex-wrap tw:gap-4" aria-label="Seller Identity">
+                    <Label className={radioClass}>
+                      <RadioGroupItem value="new" />
+                      New Individual
+                    </Label>
+                    <Label className={radioClass}>
+                      <RadioGroupItem value="existing" />
+                      Existing Employee
+                    </Label>
+                  </RadioGroup>
+                </fieldset>
+                {sellerIdentity === "existing" ? (
+                  <SelectField
+                    id="existing-employee"
+                    label="Existing Employee"
+                    required
+                    value={existingAccountId}
+                    options={employeeOptions}
+                    onChange={handleSelectEmployee}
+                    placeholder="Search employees"
+                    showSearch
+                    loading={staffQuery.isLoading || accountsQuery.isLoading}
+                    hint="Links account. Preserves employee record."
+                    error={visible("existingAccount")}
                   />
-                </div>
-              )}
-            </div>
+                ) : null}
+              </FormSection>
 
-            <Divider titlePlacement="start" className="sales-network-create-seller__section">Program Details</Divider>
-            <div className="sales-network-create-seller__grid">
-              <div className="sales-network-create-seller__field">
-                <StandardDateField id="card-application" label="Application Date" required value={cardApplicationDate} onChange={setCardApplicationDate} className="sales-network-create-seller__picker" />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <SelectField
-                  id="program-category"
-                  label="Program Category"
-                  required
-                  value={programCategory}
-                  options={PROGRAM_CATEGORY_OPTIONS}
-                  onChange={setProgramCategory}
-                  placeholder="Select program category"
-                  showSearch
-                />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <SelectField
-                  id="vip-level"
-                  label="Card Level"
-                  required
-                  value={vipCardLevel}
-                  options={VIP_LEVEL_OPTIONS}
-                  onChange={setVipCardLevel}
-                />
-              </div>
-            </div>
+              <FormSection title="Profile Photo *">
+                <ProfilePhotoUploader value={profilePhotoUrl} fileName={profilePhotoName} onSelect={acceptPhotoFile} onClear={clearPhoto} error={photoError ?? visible("photo")} />
+              </FormSection>
 
-            <Divider titlePlacement="start" className="sales-network-create-seller__section">Personal Details</Divider>
-            <div className="sales-network-create-seller__grid">
-              <div className="sales-network-create-seller__field">
-                <SelectField id="gender" label="Gender" required value={gender} options={GENDER_OPTIONS} onChange={setGender} placeholder="Select gender" />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <SelectField id="civil-status" label="Civil Status" required value={civilStatus} options={CIVIL_STATUS_OPTIONS} onChange={setCivilStatus} placeholder="Select civil status" />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <GovernmentIdFields
-                  idType={governmentIdType}
-                  onIdTypeChange={setGovernmentIdType}
-                  idNumber={governmentIdNumber}
-                  onIdNumberChange={setGovernmentIdNumber}
-                  idTypeOptions={GOV_ID_OPTIONS}
-                  required
-                />
-              </div>
-            </div>
-          </div>
-        ) : null}
+              <FormSection title="Name & Contact">
+                <FormGrid>
+                  <PersonNameField id="first-name" label="First Name" required value={firstName} onChange={setFirstName} error={visible("firstName")} />
+                  <MiddleNameField
+                    id="middle-name"
+                    label="Middle Name"
+                    required
+                    value={middleName}
+                    onChange={setMiddleName}
+                    noMiddleName={noMiddleName}
+                    onNoMiddleNameChange={setNoMiddleName}
+                    error={visible("middleName")}
+                  />
+                  <PersonNameField id="last-name" label="Last Name" required value={lastName} onChange={setLastName} error={visible("lastName")} />
+                  <SuffixField id="seller-suffix" value={suffix || undefined} onChange={setSuffix} error={visible("suffix")} />
+                  <PhilippineMobileField id="mobile" label="Mobile Number" required value={mobileNumber} onChange={setMobileNumber} placeholder="09xx xxx xxxx" error={visible("mobile")} />
+                  <StandardDateField id="dob" label="Birth Date" required value={dateOfBirth} onChange={setDateOfBirth} error={visible("dateOfBirth")} />
+                  <EmailField id="seller-email" label="Email" required value={email} onChange={setEmail} error={visible("email")} className="tw:sm:col-span-2" />
+                </FormGrid>
+              </FormSection>
 
-        {step === 3 ? (
-          <div className="sales-network-create-seller__pane">
-            <Divider titlePlacement="start" className="sales-network-create-seller__section">Accreditation and Completion</Divider>
-            <div className="sales-network-create-seller__grid">
-              <div className="sales-network-create-seller__field">
-                <label className="sales-network-create-seller__label" htmlFor="result">Result</label>
-                <Input id="result" value="Complete Now" disabled />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <SelectField
-                  id="accreditation-status"
-                  label="Accreditation Status"
-                  required
-                  value={accreditationStatus}
-                  options={ACCREDITATION_STATUS_OPTIONS}
-                  onChange={(value) => {
-                    setAccreditationStatus(value);
+              <FormSection title="Credentials">
+                {sellerIdentity === "new" ? (
+                  <FormGrid>
+                    <PasswordField id="temp-password" label="Temporary Password" required value={tempPassword} onChange={setTempPassword} hint="Minimum 12 characters." error={visible("tempPassword")} />
+                    <ConfirmPasswordField id="confirm-password" label="Confirm Password" required value={confirmPassword} onChange={setConfirmPassword} error={visible("confirmPassword")} />
+                  </FormGrid>
+                ) : (
+                  <p className="tw:text-sm tw:text-muted-foreground">Existing credentials remain unchanged.</p>
+                )}
+              </FormSection>
+            </div>
+          ) : null}
+
+          {step === 1 ? (
+            <div className="tw:flex tw:flex-col tw:gap-5">
+              <FormSection title="Address Information">
+                <PhilippineAddressFields
+                  value={{ street, province, city, barangay, subdivision, postalCode }}
+                  onChange={(next) => {
+                    setStreet(next.street);
+                    setProvince(next.province);
+                    setCity(next.city);
+                    setBarangay(next.barangay);
+                    setSubdivision(next.subdivision);
+                    setPostalCode(next.postalCode);
                   }}
-                  placeholder="Select status"
+                  errors={{
+                    street: visible("street"),
+                    province: visible("province"),
+                    city: visible("city"),
+                    barangay: visible("barangay"),
+                    subdivision: visible("subdivision"),
+                    postalCode: visible("postalCode"),
+                  }}
                 />
-              </div>
+              </FormSection>
+              <FormSection title="Additional Information (Optional)">
+                <FormGrid>
+                  <TextField id="telephone" label="Telephone" value={telephone} onChange={setTelephone} onBlur={() => setTelephone(formatPhilippineLandlineDisplay(telephone))} maxLength={15} inputMode="tel" error={visible("telephone")} />
+                  <TextField id="facebook" label="Facebook" value={facebook} onChange={setFacebook} onBlur={() => setFacebook(facebook.trim())} maxLength={150} error={visible("facebook")} />
+                  <TinField id="tin" label="TIN" value={tin} onChange={setTin} error={visible("tin")} />
+                  <TextField id="job-position" label="Job Position" value={jobPosition} onChange={(value) => setJobPosition(cleanTitleInput(value))} onBlur={() => setJobPosition(jobPosition.trim())} maxLength={100} error={visible("jobPosition")} />
+                  <TextField id="business" label="Business" value={businessEmployer} onChange={setBusinessEmployer} onBlur={() => setBusinessEmployer(businessEmployer.trim())} maxLength={150} error={visible("businessEmployer")} className="tw:sm:col-span-2" />
+                  <TextField id="business-address" label="Business Address" value={businessAddress} onChange={setBusinessAddress} onBlur={() => setBusinessAddress(businessAddress.trim())} maxLength={200} error={visible("businessAddress")} className="tw:sm:col-span-2" />
+                </FormGrid>
+              </FormSection>
             </div>
-            <div className="sales-network-create-seller__field">
-              <span className="sales-network-create-seller__label" id="aa-method-label">AA Method</span>
-              <Segmented
-                aria-labelledby="aa-method-label"
-                value={aaMethod}
-                onChange={(value) => switchAaMethod(value as AaIssuanceMethod)}
-                options={[
-                  { value: "automatic", label: "Automatic" },
-                  { value: "manual", label: "Manual" },
-                ]}
-                className="sales-network-create-seller__segmented"
-              />
-              {aaMethod === "automatic" ? (
-                <p className="sales-network-create-seller__hint">Auto-issues next number on completion.</p>
-              ) : null}
-            </div>
-            {aaMethod === "manual" ? (
-              <div className="sales-network-create-seller__field">
-                <TextField
-                  id="aa-number"
-                  label="AA Number"
-                  required
-                  value={manualAaSuffix}
-                  onChange={(value) => setManualAaSuffix(value.toUpperCase())}
-                  addonBefore={prefix}
-                  maxLength={12}
-                  autoComplete="off"
-                  placeholder={toAaYearMonth(approvedStart) ?? "YYMM####"}
-                  error={manualError ?? undefined}
-                />
-              </div>
-            ) : null}
-            <div className="sales-network-create-seller__grid">
-              <div className="sales-network-create-seller__field">
-                <StandardDateField id="approved-start" label="Start Date" required value={approvedStart} onChange={setApprovedStart} className="sales-network-create-seller__picker" />
-              </div>
-              <div className="sales-network-create-seller__field">
-                <label className="sales-network-create-seller__label" htmlFor="approved-expiry">Expiry Date</label>
-                <Input id="approved-expiry" value={expiryPreview ?? "—"} disabled />
-              </div>
-            </div>
-            {leapDay ? (
-              <Alert
-                type="warning"
-                showIcon
-                title="February 29 start"
-                description="Leap-day rule provisional. Completion blocked."
-                className="sales-network-create-seller__gate"
-              />
-            ) : null}
-            {(accreditationStatus === "cancel" || accreditationStatus === "expired") ? (
-              <Alert
-                type="info"
-                showIcon
-                title="Status preview only"
-                description="Pending or Accredited only."
-                className="sales-network-create-seller__gate"
-              />
-            ) : null}
+          ) : null}
 
-            <Divider titlePlacement="start" className="sales-network-create-seller__section">Review and Confirmation</Divider>
-            <div className="sales-network-create-seller__review">
-              <p className="sales-network-create-seller__review-line"><span className="sales-network-create-seller__review-key">Name:</span> {fullNameOf(firstName, middleName, noMiddleName, lastName, suffix) || "—"}</p>
-              <p className="sales-network-create-seller__review-line"><span className="sales-network-create-seller__review-key">Identity:</span> {sellerIdentity === "new" ? "New Individual" : "Existing Employee"}</p>
-              <p className="sales-network-create-seller__review-line"><span className="sales-network-create-seller__review-key">Position:</span> {effectiveDesignation}</p>
-              <p className="sales-network-create-seller__review-line"><span className="sales-network-create-seller__review-key">Sponsor:</span> {effectiveDesignation === "SVD" ? "Root — no sponsor" : sponsorName ? `${sponsorName.displayName} (${sponsorName.designation})` : "—"}</p>
-              <p className="sales-network-create-seller__review-line"><span className="sales-network-create-seller__review-key">Team:</span> {effectiveDesignation === "SVD" ? teamName.trim() || "—" : inheritedTeam ?? "—"}</p>
-              <p className="sales-network-create-seller__review-line"><span className="sales-network-create-seller__review-key">Program Category:</span> {programCategory ? programCategoryLabel(programCategory) : "—"}</p>
-              <p className="sales-network-create-seller__review-line"><span className="sales-network-create-seller__review-key">Accreditation Status:</span> {accreditationStatus ? ACCREDITATION_STATUS_OPTIONS.find((option) => option.value === accreditationStatus)?.label : "—"}</p>
-              <p className="sales-network-create-seller__review-line"><span className="sales-network-create-seller__review-key">Issuance Method:</span> {aaMethod === "automatic" ? "Automatic" : "Manual"}</p>
-              {aaMethod === "manual" ? (
-                <p className="sales-network-create-seller__review-line"><span className="sales-network-create-seller__review-key">AA Number:</span> {manualFull}</p>
-              ) : null}
-              <p className="sales-network-create-seller__review-line"><span className="sales-network-create-seller__review-key">Approved Start:</span> {approvedStart || "—"}</p>
-              <p className="sales-network-create-seller__review-line"><span className="sales-network-create-seller__review-key">Approved Expiry:</span> {expiryPreview ?? "—"}</p>
-            </div>
-          </div>
-        ) : null}
+          {step === 2 ? (
+            <div className="tw:flex tw:flex-col tw:gap-5">
+              <FormSection title="Sales Network Assignment">
+                <FormGrid>
+                  <SelectField
+                    id="assigned-position"
+                    label="Assigned Position"
+                    required
+                    value={mode === "OST" ? "OST" : designation}
+                    onChange={(value) => {
+                      if (value === "OST") return;
+                      setDesignation(value as IstDesignation);
+                      setTeamName("");
+                      setParentId(undefined);
+                    }}
+                    disabled={mode === "OST"}
+                    options={
+                      mode === "OST"
+                        ? [{ value: "OST", label: "OST" }]
+                        : [
+                            { value: "SVD", label: "SVD — Sales Vice Director" },
+                            { value: "SSM", label: "SSM — Senior Sales Manager" },
+                            { value: "SM", label: "SM — Sales Manager" },
+                          ]
+                    }
+                    error={visible("position")}
+                  />
+                  <SelectField
+                    id="sponsor"
+                    label="Sponsor"
+                    required
+                    value={effectiveDesignation === "SVD" ? undefined : parentId}
+                    options={(eligibleQuery.data ?? []).map((member) => ({ value: member.id, label: `${member.displayName} (${member.designation})` }))}
+                    onChange={setParentId}
+                    placeholder={effectiveDesignation === "SVD" ? "Root — no sponsor" : (eligibleQuery.data ?? []).length === 0 ? "No eligible sponsor available" : "Select eligible sponsor"}
+                    showSearch
+                    loading={eligibleQuery.isLoading}
+                    disabled={effectiveDesignation === "SVD"}
+                    error={visible("sponsor")}
+                  />
+                  {effectiveDesignation === "SVD" ? (
+                    <TextField id="team-name" label="Team Name" required value={teamName} onChange={(value) => setTeamName(cleanTitleInput(value))} onBlur={() => setTeamName(teamName.trim())} maxLength={100} placeholder="Enter Team Name" error={visible("teamName")} />
+                  ) : (
+                    <TextField id="inherited-team" label="Team" value={inheritedTeam ?? "Select sponsor first"} onChange={() => undefined} disabled />
+                  )}
+                </FormGrid>
+              </FormSection>
 
-        <div className="sales-network-create-seller__actions">
-          <Space>
-            <Button onClick={onClose}>Cancel</Button>
-            {step > 0 ? <Button onClick={handleBack}>Back</Button> : null}
+              <FormSection title="Program Details">
+                <FormGrid>
+                  <StandardDateField id="card-application" label="Application Date" required value={cardApplicationDate} onChange={setCardApplicationDate} error={visible("cardApplicationDate")} />
+                  <SelectField id="program-category" label="Program Category" required value={programCategory} options={PROGRAM_CATEGORY_OPTIONS} onChange={setProgramCategory} placeholder="Select program category" showSearch error={visible("programCategory")} />
+                  <SelectField id="vip-level" label="Card Level" required value={vipCardLevel} options={VIP_LEVEL_OPTIONS} onChange={setVipCardLevel} error={visible("vipCardLevel")} />
+                </FormGrid>
+              </FormSection>
+
+              <FormSection title="Personal Details">
+                <FormGrid>
+                  <SelectField id="gender" label="Gender" required value={gender} options={GENDER_OPTIONS} onChange={setGender} placeholder="Select gender" error={visible("gender")} />
+                  <SelectField id="civil-status" label="Civil Status" required value={civilStatus} options={CIVIL_STATUS_OPTIONS} onChange={setCivilStatus} placeholder="Select civil status" error={visible("civilStatus")} />
+                  <GovernmentIdFields
+                    idType={governmentIdType}
+                    onIdTypeChange={setGovernmentIdType}
+                    idNumber={governmentIdNumber}
+                    onIdNumberChange={setGovernmentIdNumber}
+                    idTypeOptions={GOV_ID_OPTIONS}
+                    required
+                    errorType={visible("governmentIdType")}
+                    errorIdNumber={visible("governmentIdNumber")}
+                  />
+                </FormGrid>
+              </FormSection>
+            </div>
+          ) : null}
+
+          {step === 3 ? (
+            <div className="tw:flex tw:flex-col tw:gap-5">
+              <FormSection title="Accreditation and Completion">
+                <FormGrid>
+                  <TextField id="result" label="Result" value="Complete Now" onChange={() => undefined} disabled />
+                  <SelectField
+                    id="accreditation-status"
+                    label="Accreditation Status"
+                    required
+                    value={accreditationStatus}
+                    options={ACCREDITATION_STATUS_OPTIONS}
+                    onChange={(value) => setAccreditationStatus(value)}
+                    placeholder="Select status"
+                    error={visible("accreditationStatus")}
+                  />
+                </FormGrid>
+                <fieldset className="tw:m-0 tw:flex tw:min-w-0 tw:flex-col tw:gap-1.5 tw:border-0 tw:p-0">
+                  <legend className="tw:mb-1.5 tw:p-0 tw:text-sm tw:font-medium">AA Method</legend>
+                  <RadioGroup value={aaMethod} onValueChange={(value) => switchAaMethod(value as AaIssuanceMethod)} className="tw:flex tw:gap-4" aria-label="AA Method">
+                    <Label className={radioClass}>
+                      <RadioGroupItem value="automatic" />
+                      Automatic
+                    </Label>
+                    <Label className={radioClass}>
+                      <RadioGroupItem value="manual" />
+                      Manual
+                    </Label>
+                  </RadioGroup>
+                  {aaMethod === "automatic" ? <p className="tw:text-xs tw:text-muted-foreground">Auto-issues next number on completion.</p> : null}
+                </fieldset>
+                {aaMethod === "manual" ? (
+                  <TextField
+                    id="aa-number"
+                    label="AA Number"
+                    required
+                    value={manualAaSuffix}
+                    onChange={(value) => setManualAaSuffix(value.toUpperCase())}
+                    addonBefore={prefix}
+                    maxLength={12}
+                    autoComplete="off"
+                    placeholder={toAaYearMonth(approvedStart) ?? "YYMM####"}
+                    error={visible("manualAa")}
+                  />
+                ) : null}
+                <FormGrid>
+                  <StandardDateField id="approved-start" label="Start Date" required value={approvedStart} onChange={setApprovedStart} error={visible("approvedStart")} />
+                  <TextField id="approved-expiry" label="Expiry Date" value={expiryPreview ?? "—"} onChange={() => undefined} disabled />
+                </FormGrid>
+                {leapDay ? <InfoNote title="February 29 start">Leap-day rule provisional. Completion blocked.</InfoNote> : null}
+                {accreditationStatus === "cancel" || accreditationStatus === "expired" ? (
+                  <InfoNote title="Status preview only">Pending or Accredited only.</InfoNote>
+                ) : null}
+              </FormSection>
+
+              <FormSection title="Review and Confirmation">
+                <dl className="tw:m-0 tw:flex tw:flex-col tw:gap-1 tw:text-sm">
+                  <ReviewLine term="Name" value={fullName || "—"} />
+                  <ReviewLine term="Identity" value={sellerIdentity === "new" ? "New Individual" : "Existing Employee"} />
+                  <ReviewLine term="Position" value={effectiveDesignation} />
+                  <ReviewLine term="Sponsor" value={effectiveDesignation === "SVD" ? "Root — no sponsor" : sponsorName ? `${sponsorName.displayName} (${sponsorName.designation})` : "—"} />
+                  <ReviewLine term="Team" value={effectiveDesignation === "SVD" ? teamName.trim() || "—" : (inheritedTeam ?? "—")} />
+                  <ReviewLine term="Program Category" value={programCategory ? programCategoryLabel(programCategory) : "—"} />
+                  <ReviewLine term="Accreditation Status" value={accreditationStatus ? (ACCREDITATION_STATUS_OPTIONS.find((option) => option.value === accreditationStatus)?.label ?? "—") : "—"} />
+                  <ReviewLine term="Issuance Method" value={aaMethod === "automatic" ? "Automatic" : "Manual"} />
+                  {aaMethod === "manual" ? <ReviewLine term="AA Number" value={manualFull} /> : null}
+                  <ReviewLine term="Approved Start" value={approvedStart || "—"} />
+                  <ReviewLine term="Approved Expiry" value={expiryPreview ?? "—"} />
+                </dl>
+                {finalErrors.length > 0 ? (
+                  <ul role="alert" className="tw:m-0 tw:list-disc tw:pl-5 tw:text-sm tw:text-destructive">
+                    {finalErrors.map((message) => (
+                      <li key={message}>{message}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </FormSection>
+            </div>
+          ) : null}
+
+          <DialogFooter>
+            <Button type="button" variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={onClose}>
+              Cancel
+            </Button>
+            {step > 0 ? (
+              <Button type="button" variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={handleBack}>
+                Back
+              </Button>
+            ) : null}
             {step < 3 ? (
-              <Button type="primary" onClick={() => void handleNext()}>Next</Button>
+              <Button type="button" className="tw:min-h-11 tw:sm:min-h-8" onClick={handleNext}>
+                Next
+              </Button>
             ) : (
-              <Button
-                type="primary"
-                loading={submitting || createSeller.isPending}
-                disabled={!canComplete}
-                onClick={() => void handleFinish()}
-              >
+              <Button type="button" className="tw:min-h-11 tw:sm:min-h-8" disabled={!canComplete || submitting || createSeller.isPending} onClick={handleFinish}>
                 {accreditationStatus === "pending" ? "Create Seller" : "Create & Accredit Seller"}
               </Button>
             )}
-          </Space>
+          </DialogFooter>
         </div>
-      </div>
-    </Modal>
+        <ConfirmDialog
+          open={confirmCreate}
+          title={accreditationStatus === "accredited" ? `Create and accredit ${mode} seller?` : `Create ${mode} seller as Pending?`}
+          description={
+            accreditationStatus === "accredited"
+              ? `Confirm ${aaMethod} AA issuance for ${fullName}.`
+              : `Confirm ${aaMethod} AA issuance for ${fullName}. Accreditation stays Pending.`
+          }
+          confirmText={accreditationStatus === "accredited" ? "Create & Accredit" : "Create Seller"}
+          pending={submitting}
+          onConfirm={() => void create()}
+          onClose={() => setConfirmCreate(false)}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ReviewLine({ term, value }: { term: string; value: string }) {
+  return (
+    <div className="tw:flex tw:gap-2">
+      <dt className="tw:w-44 tw:shrink-0 tw:font-medium tw:text-muted-foreground">{term}:</dt>
+      <dd className="tw:m-0 tw:min-w-0 tw:break-words">{value}</dd>
+    </div>
   );
 }

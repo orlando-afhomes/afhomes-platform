@@ -1,23 +1,34 @@
 "use client";
 
 import { useState } from "react";
-import Layout, { Content } from "antd/es/layout/layout";
+import { cn } from "@/shared/lib/utils";
 import { AdminHeader } from "../components/admin-header";
 import { AdminSidebar } from "../components/admin-sidebar";
 
-// Owns the sidebar collapsed state so the header toggle and the Sider stay in sync.
+// Owns the sidebar collapsed state so the header toggle and the rail stay in sync.
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <Layout className="admin-layout" hasSider>
+    <div className="tw:flex tw:min-h-screen tw:bg-background">
+      <a
+        href="#main-content"
+        className="tw:sr-only tw:focus:not-sr-only tw:focus:fixed tw:focus:top-2 tw:focus:left-2 tw:focus:z-50 tw:focus:rounded-md tw:focus:bg-primary tw:focus:px-3 tw:focus:py-2 tw:focus:text-primary-foreground"
+      >
+        Skip to main content
+      </a>
       <AdminSidebar collapsed={collapsed} onCollapse={setCollapsed} />
-      <Layout className={`admin-layout__inner ${collapsed ? "admin-layout__inner--collapsed" : "admin-layout__inner--expanded"}`}>
+      <div
+        className={cn(
+          "tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:transition-[margin] tw:duration-200 tw:motion-reduce:transition-none",
+          collapsed ? "tw:md:ml-20" : "tw:md:ml-60",
+        )}
+      >
         <AdminHeader collapsed={collapsed} onCollapse={setCollapsed} />
-        <Content id="main-content" className="admin-layout__content">
+        <main id="main-content" className="tw:min-w-0 tw:flex-1 tw:bg-background">
           {children}
-        </Content>
-      </Layout>
-    </Layout>
+        </main>
+      </div>
+    </div>
   );
 }

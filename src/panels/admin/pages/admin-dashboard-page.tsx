@@ -1,12 +1,12 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Card, Skeleton, Statistic } from "antd";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMembers, useCustomers } from "@/data/queries";
-import { PageContainer } from "@/shared/components/layout/page-container";
-import { PageHeader } from "@/shared/components/layout/page-header";
-import { Breadcrumbs } from "@/shared/components/layout/breadcrumbs";
+import { PageContainer } from "@/shared/components/modern/page-container";
+import { PageHeader } from "@/shared/components/modern/page-header";
+import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { getRoleAwareAdminBreadcrumbs } from "@/panels/admin/navigation";
 import { getEffectiveRoles, isModuleGranted } from "@/modules/identity/permissions";
 import { countVisibleCustomers, countVisibleMembers } from "../dashboard-metrics";
@@ -50,32 +50,31 @@ export function AdminDashboardPage() {
 
   return (
     <PageContainer>
-      <div className="dashboard-page">
-        <Breadcrumbs items={getRoleAwareAdminBreadcrumbs(identity, pathname ?? "/admin")} />
-        <PageHeader title={title} description={description} />
-        {active ? (
-          <div className="dashboard-page__stats-grid">
-            {isModuleGranted(identity, "sales-network") ? (
-              <Card>
-                {membersQuery.isLoading ? (
-                  <Skeleton active paragraph={{ rows: 1 }} />
-                ) : (
-                  <Statistic title="Visible team members" value={countVisibleMembers(membersQuery.data ?? [])} />
-                )}
-              </Card>
-            ) : null}
-            {isModuleGranted(identity, "customers") ? (
-              <Card>
-                {customersQuery.isLoading ? (
-                  <Skeleton active paragraph={{ rows: 1 }} />
-                ) : (
-                  <Statistic title="Visible customers" value={countVisibleCustomers(customersQuery.data ?? [])} />
-                )}
-              </Card>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
+      <Breadcrumbs items={getRoleAwareAdminBreadcrumbs(identity, pathname ?? "/admin")} />
+      <PageHeader title={title} description={description} />
+      {active ? (
+        <div className="tw:mt-4 tw:grid tw:gap-4 tw:md:grid-cols-2">
+          {isModuleGranted(identity, "sales-network") ? (
+            <StatCard title="Visible team members" loading={membersQuery.isLoading} value={countVisibleMembers(membersQuery.data ?? [])} />
+          ) : null}
+          {isModuleGranted(identity, "customers") ? (
+            <StatCard title="Visible customers" loading={customersQuery.isLoading} value={countVisibleCustomers(customersQuery.data ?? [])} />
+          ) : null}
+        </div>
+      ) : null}
     </PageContainer>
+  );
+}
+
+function StatCard({ title, value, loading }: { title: string; value: number; loading: boolean }) {
+  return (
+    <section aria-label={title} className="tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4">
+      <h2 className="tw:text-sm tw:font-medium tw:text-muted-foreground">{title}</h2>
+      {loading ? (
+        <Skeleton className="tw:mt-2 tw:h-8 tw:w-16" />
+      ) : (
+        <p className="tw:mt-1 tw:text-3xl tw:font-semibold">{value.toLocaleString()}</p>
+      )}
+    </section>
   );
 }

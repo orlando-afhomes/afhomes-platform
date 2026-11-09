@@ -3,6 +3,8 @@
 export type FieldOption<T extends string = string> = {
   value: T;
   label: string;
+  /** Shown but not selectable (honored by the modern select field). */
+  disabled?: boolean;
 };
 
 export type BaseFieldProps = {

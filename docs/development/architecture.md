@@ -22,8 +22,8 @@ This document is the authoritative technical architecture for the AFHomes Platfo
 | Application | Single Next.js application (App Router) |
 | Programming language | TypeScript |
 | Frontend | React |
-| Styling | Regular CSS stylesheets per layout, page, and feature |
-| UI foundation | Ant Design 6 |
+| Styling | Tailwind CSS 4 utilities plus namespaced regular CSS per feature |
+| UI foundation | shadcn/ui on Base UI + Tailwind CSS 4 + namespaced custom CSS; TanStack Table; Lucide (Ant Design 6 temporary, unmigrated modules only; `AGENTS.md` section 8) |
 | Validation | Zod |
 | Client async state | TanStack Query |
 | Development approach | Frontend-first with centralized mock data |
@@ -171,7 +171,7 @@ Three logically independent presentation panels: Admin (MVP), Public (limited MV
 
 ## 10. Frontend Technology and Design System
 
-Next.js App Router, React, TypeScript, Ant Design 6, namespaced regular CSS, Zod, TanStack Query. Panel-scoped themes (`.admin-theme`, `.public-theme`, `.customer-theme`). Shared primitives under `src/shared/ui/` only when intentional. Server Components by default; `"use client"` only where needed.
+Next.js App Router, React, TypeScript, shadcn/ui on Base UI, Tailwind CSS 4, namespaced custom CSS, Zod, TanStack Query (Ant Design 6 temporary in unmigrated modules). Panel-scoped themes (`.admin-theme`, `.public-theme`, `.customer-theme`). Shared shadcn/ui primitives under `src/shared/ui/` only when intentional. Server Components by default; `"use client"` only where needed.
 
 ---
 
@@ -361,7 +361,7 @@ Align with `docs/development/implementation.md` Phases 0–8. Phases are plannin
 
 ## 39. Architectural Invariants
 
-(As listed in task: one repo, one Next.js app, panel/feature modular monolith, App Router, React/TS, Ant Design/regular CSS, Zod, TanStack Query, centralized mock data, mock reset on refresh, mock identity not production auth, `/api/v1`, thin handlers, domain logic outside presentation, server-only Mongoose/DB, MongoDB Atlas, DigitalOcean Droplet, Docker Compose, HTTPS reverse proxy, centralized auth, server-side RBAC, record-level visibility, historical genealogy preservation, Finance payment verification authority, manual Finance commission approvals, correct VIP membership activation eligibility, official VIP identifier uniqueness, correct Stay Points ledger lifecycle, audit history, no double processing, no automatic Supabase migration, Redemption disabled, Services disabled, future Customer Portal supported, future mobile can reuse REST API, no unauthorized microservice redesign, current business policies revisable through authorized decisions, historical signed contract terms protected, architecture doc does not authorize implementation, production readiness requires separate verification/approval.)
+(As listed in task: one repo, one Next.js app, panel/feature modular monolith, App Router, React/TS, shadcn/ui/Base UI/Tailwind 4/custom CSS (Ant Design temporary; superseded Nov 8, 2026), Zod, TanStack Query, centralized mock data, mock reset on refresh, mock identity not production auth, `/api/v1`, thin handlers, domain logic outside presentation, server-only Mongoose/DB, MongoDB Atlas, DigitalOcean Droplet, Docker Compose, HTTPS reverse proxy, centralized auth, server-side RBAC, record-level visibility, historical genealogy preservation, Finance payment verification authority, manual Finance commission approvals, correct VIP membership activation eligibility, official VIP identifier uniqueness, correct Stay Points ledger lifecycle, audit history, no double processing, no automatic Supabase migration, Redemption disabled, Services disabled, future Customer Portal supported, future mobile can reuse REST API, no unauthorized microservice redesign, current business policies revisable through authorized decisions, historical signed contract terms protected, architecture doc does not authorize implementation, production readiness requires separate verification/approval.)
 
 ---
 
@@ -400,7 +400,7 @@ Branch: `develop`. Working tree: untracked docs/workflow files (preserved). No a
 `architecture.md` covers frontend through production deployment: purpose/authority, approved decisions, current vs target, principles, actors/trust boundaries, diagrams, layers, dependency direction, repository structure, routing, panels, frontend tech/design, server/client components, state, mock data, shared modules, backend services, REST API, auth, RBAC, MongoDB Atlas/Mongoose, business data ownership, financial transactions/idempotency, VIP membership/Stay Points, sales/commission integration, feature flags, files/media, background jobs, reporting, audit/logging, security, environment separation, DigitalOcean infra, Docker Compose, reverse proxy/HTTPS, Atlas connectivity, CI/CD, monitoring, backup/recovery, testing, implementation phases, future customer/mobile, invariants, dependencies, references/governance.
 
 ### C. Approved Technology Stack
-Next.js, React, TypeScript, Ant Design 6, regular CSS, Zod, TanStack Query, MongoDB Atlas, Mongoose, Better Auth (direction, unverified), DigitalOcean Droplet, Docker Compose, HTTPS. Unverified compatibilities listed in Section 40.
+Next.js, React, TypeScript, shadcn/ui on Base UI, Tailwind CSS 4, custom CSS, Zod, TanStack Query, MongoDB Atlas, Mongoose, Better Auth (direction, unverified), DigitalOcean Droplet, Docker Compose, HTTPS. Unverified compatibilities listed in Section 40.
 
 ### D. Major Architecture Corrections
 - Hosting: DigitalOcean Droplet app + MongoDB Atlas DB (was "not selected").

@@ -2,43 +2,83 @@
 
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { Button, Input, Select, Skeleton, Space, Tag } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
-import type { ColumnsType } from "antd/es/table";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowDownAZ, ArrowUpAZ, Search } from "lucide-react";
 import type { OrgMember } from "@/modules/organization/types";
+import type { AccreditationRecord } from "@/modules/accreditation/types";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { useAccreditations, useChangeSalesNetworkMemberStatus, useMembers } from "@/data/queries";
-import {
-  aaDisplay,
-  designationLabel,
-  DESIGNATION_COLORS,
-  resolveAccreditationDisplay,
-  teamDisplayName,
-} from "@/modules/sales-network/display";
+import { aaDisplay, designationLabel, resolveAccreditationDisplay, teamDisplayName } from "@/modules/sales-network/display";
 import { hasOperationPermission } from "@/modules/identity/permissions";
-import { confirmAndRun } from "@/shared/utils/feedback";
 import { resolveEffectiveModules } from "@/data/mock/authorization";
-import { PageContainer } from "@/shared/components/layout/page-container";
-import { PageHeader } from "@/shared/components/layout/page-header";
-import { Breadcrumbs } from "@/shared/components/layout/breadcrumbs";
-import { SortToggleButton } from "@/shared/components/layout/sort-toggle-button";
-import { DirectoryTable } from "@/shared/components/layout/directory-table";
-import { StatusBadge } from "@/shared/components/layout/status-badge";
+import { PageContainer } from "@/shared/components/modern/page-container";
+import { PageHeader } from "@/shared/components/modern/page-header";
+import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
+import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
+import { StatusBadge } from "@/shared/components/modern/status-badge";
+import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { Toaster } from "@/shared/ui/sonner";
 import { SalesNetworkRowActions } from "../components/sales-network-row-actions";
 import { AccreditationStatusAction } from "../components/accreditation-status-action";
-import "../components/accreditation-status-action.css";
+import { DesignationBadge } from "../components/sales-badges";
 import { AccreditedSellerDialog } from "./sales-network-accredited-seller-dialog";
-import "./sales-network-accredited-seller-dialog.css";
 
 const SalesNetworkMemberDialogs = dynamic(() => import("./sales-network-member-dialogs").then((mod) => mod.SalesNetworkMemberDialogs), {
-  loading: () => <Skeleton active />,
+  loading: () => <Skeleton className="tw:h-8 tw:w-full" />,
 });
 
-function teamLabelFor(member: OrgMember, members: readonly OrgMember[]): string {
-  return teamDisplayName(member, members);
+// Narrow screens keep member, status, and actions; the accreditation control
+// moves under the member name below 768px so it stays reachable.
+const FROM_SM: DataTableColumnMeta = { className: "tw:hidden tw:sm:table-cell" };
+const FROM_MD: DataTableColumnMeta = { className: "tw:hidden tw:md:table-cell" };
+const FROM_LG: DataTableColumnMeta = { className: "tw:hidden tw:lg:table-cell" };
+const FROM_XL: DataTableColumnMeta = { className: "tw:hidden tw:xl:table-cell" };
+
+const withAll = (label: string, items: Array<{ value: string; label: string }>) => [{ value: "all", label }, ...items];
+const DESIGNATION_ITEMS = withAll("All designations", ["SVD", "SSM", "SM", "OST"].map((value) => ({ value, label: value })));
+const STATUS_ITEMS = withAll("All statuses", [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+  { value: "suspended", label: "Suspended" },
+]);
+const ACCREDITATION_ITEMS = withAll("All accreditation", [
+  { value: "pending", label: "Pending" },
+  { value: "accredited", label: "Accredited" },
+  { value: "expired", label: "Expired" },
+  { value: "none", label: "No record" },
+]);
+
+function FilterSelect({
+  label,
+  items,
+  value,
+  onChange,
+}: {
+  label: string;
+  items: Array<{ value: string; label: string }>;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Select items={items} value={value} onValueChange={(next) => onChange(next ?? "all")}>
+      <SelectTrigger aria-label={label} className="tw:h-11 tw:min-w-40 tw:sm:h-8">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {items.map((item) => (
+          <SelectItem key={item.value} value={item.value} className="tw:min-h-11 tw:sm:min-h-8">
+            {item.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
 
 export function SalesNetworkMembersPage() {
@@ -48,6 +88,7 @@ export function SalesNetworkMembersPage() {
   const granted = resolveEffectiveModules(store, identity);
   const membersQuery = useMembers();
   const accreditationsQuery = useAccreditations();
+  const { confirmRun, dialog: confirmDialog } = useConfirmRun();
 
   const [search, setSearch] = useState("");
   const [designationFilter, setDesignationFilter] = useState("all");
@@ -57,28 +98,11 @@ export function SalesNetworkMembersPage() {
   const [sortAsc, setSortAsc] = useState(true);
 
   const [accreditedMode, setAccreditedMode] = useState<"IST" | "OST" | null>(null);
-  const [editMember, setEditMember] = useState<any>(null);
-  const [transferMember, setTransferMember] = useState<any>(null);
-  const changeStatus = useChangeSalesNetworkMemberStatus();
-
-  const handleToggleStatus = async (record: any) => {
-    const reactivate = record.status !== "active";
-    await confirmAndRun({
-      title: reactivate ? `Reactivate ${record.displayName}?` : `Deactivate ${record.displayName}?`,
-      text: reactivate
-        ? "The member will regain active access."
-        : "The member will lose active access and move to Inactive.",
-      confirmText: reactivate ? "Reactivate" : "Deactivate",
-      danger: !reactivate,
-      action: () => changeStatus.mutateAsync({ id: record.id, status: reactivate ? "active" : "inactive" }),
-      successTitle: reactivate ? "Member reactivated." : "Member deactivated.",
-      successText: `${record.displayName} is now ${reactivate ? "active" : "inactive"}.`,
-      errorTitle: "Status update failed.",
-    });
-  };
+  const [editMember, setEditMember] = useState<OrgMember | null>(null);
+  const [transferMember, setTransferMember] = useState<OrgMember | null>(null);
+  const { mutateAsync: changeStatus } = useChangeSalesNetworkMemberStatus();
 
   const members = useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
-  const visibleMembers = members;
 
   const canManage = hasOperationPermission(identity, "sales-network.manage");
   const canTransfer = hasOperationPermission(identity, "sales-network.transfer");
@@ -90,18 +114,21 @@ export function SalesNetworkMembersPage() {
     const map = new Map<string, AccreditationRecord[]>();
     const records = accreditationsQuery.data ?? [];
     for (const member of members) {
-      map.set(member.id, records.filter((record) => record.memberId === member.id));
+      map.set(
+        member.id,
+        records.filter((record) => record.memberId === member.id),
+      );
     }
     return map;
   }, [accreditationsQuery.data, members]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return visibleMembers
+    return members
       .filter((member) => {
         if (designationFilter !== "all" && member.designation !== designationFilter) return false;
         if (statusFilter !== "all" && member.status !== statusFilter) return false;
-        if (teamFilter !== "all" && teamLabelFor(member, members) !== teamFilter) return false;
+        if (teamFilter !== "all" && teamDisplayName(member, members) !== teamFilter) return false;
         if (accreditationFilter !== "all") {
           const state = resolveAccreditationDisplay(accreditationRecordsByMember.get(member.id));
           if (accreditationFilter === "none" && state.kind !== "none") return false;
@@ -109,193 +136,164 @@ export function SalesNetworkMembersPage() {
           if (accreditationFilter === "accredited" && !(state.kind === "action" && state.value === "active")) return false;
           if (accreditationFilter === "expired" && !(state.kind === "static" && state.label === "Expired")) return false;
         }
-        return (
-          term === "" ||
-          member.displayName.toLowerCase().includes(term) ||
-          (member.aaNumber ?? "").toLowerCase().includes(term)
-        );
+        return term === "" || member.displayName.toLowerCase().includes(term) || (member.aaNumber ?? "").toLowerCase().includes(term);
       })
       .sort((a, b) => (sortAsc ? a.displayName.localeCompare(b.displayName) : b.displayName.localeCompare(a.displayName)));
-  }, [visibleMembers, search, designationFilter, statusFilter, teamFilter, accreditationFilter, accreditationRecordsByMember, sortAsc, members]);
+  }, [members, search, designationFilter, statusFilter, teamFilter, accreditationFilter, accreditationRecordsByMember, sortAsc]);
 
-  const teams = useMemo(() => Array.from(new Set(members.map((member) => teamLabelFor(member, members)))).sort(), [members]);
+  const teamItems = useMemo(
+    () => withAll("All teams", Array.from(new Set(members.map((member) => teamDisplayName(member, members)))).sort().map((team) => ({ value: team, label: team }))),
+    [members],
+  );
+
+  // Memoized: TanStack renders cell functions as components, so a new columns
+  // array on every render would remount every cell (and its open menus).
+  const columns = useMemo<ColumnDef<OrgMember, unknown>[]>(() => {
+    const toggleStatus = (record: OrgMember) => {
+      const reactivate = record.status !== "active";
+      confirmRun({
+        title: reactivate ? `Reactivate ${record.displayName}?` : `Deactivate ${record.displayName}?`,
+        description: reactivate ? "The member will regain active access." : "The member will lose active access and move to Inactive.",
+        confirmText: reactivate ? "Reactivate" : "Deactivate",
+        danger: !reactivate,
+        action: () => changeStatus({ id: record.id, status: reactivate ? "active" : "inactive" }),
+        successTitle: reactivate ? "Member reactivated." : "Member deactivated.",
+        successDescription: `${record.displayName} is now ${reactivate ? "active" : "inactive"}.`,
+        errorTitle: "Status update failed.",
+      });
+    };
+    const accreditation = (record: OrgMember) => (
+      <AccreditationStatusAction
+        records={accreditationRecordsByMember.get(record.id)}
+        aaNumber={record.aaNumber ?? null}
+        canEdit={canEditAccreditation}
+        memberId={record.id}
+        memberName={record.displayName}
+      />
+    );
+    return [
+      { id: "aaNumber", header: "AA Number", meta: FROM_LG, cell: ({ row }) => <span className="tw:text-muted-foreground">{aaDisplay(row.original)}</span> },
+      {
+        id: "displayName",
+        header: "Member",
+        cell: ({ row }) => (
+          <div className="tw:flex tw:flex-col tw:gap-1">
+            <Link className="tw:inline-flex tw:min-h-11 tw:items-center tw:font-semibold tw:text-primary tw:underline-offset-4 tw:hover:underline tw:sm:min-h-0" href={`/admin/sales-network/members/${row.original.aaNumber ?? row.original.id}`}>
+              {row.original.displayName}
+            </Link>
+            <div className="tw:md:hidden">{accreditation(row.original)}</div>
+          </div>
+        ),
+      },
+      {
+        id: "designation",
+        header: "Position",
+        meta: FROM_MD,
+        cell: ({ row }) => <DesignationBadge designation={row.original.designation} full />,
+      },
+      { id: "team", header: "Team", meta: FROM_XL, cell: ({ row }) => teamDisplayName(row.original, members) },
+      {
+        id: "parent",
+        header: "Parent",
+        meta: FROM_XL,
+        cell: ({ row }) => {
+          const parent = members.find((member) => member.id === row.original.parentId);
+          if (!parent) return "—";
+          const firstName = parent.displayName.trim().split(/\s+/)[0] ?? parent.displayName;
+          return `${firstName} (${designationLabel(parent.designation)})`;
+        },
+      },
+      { id: "status", header: "Status", meta: FROM_SM, cell: ({ row }) => <StatusBadge status={row.original.status} /> },
+      { id: "accreditationStatus", header: "Accreditation Status", meta: FROM_MD, cell: ({ row }) => accreditation(row.original) },
+      {
+        id: "actions",
+        header: () => <span className="tw:sr-only">Actions</span>,
+        cell: ({ row }) => {
+          const record = row.original;
+          return (
+            <SalesNetworkRowActions
+              itemName={record.displayName}
+              onEdit={() => setEditMember(record)}
+              onTransfer={() => setTransferMember(record)}
+              transferLabel={record.designation === "OST" ? "Transfer to IST" : "Transfer to OST"}
+              onChangeStatus={() => toggleStatus(record)}
+              canEdit={canManage}
+              canTransfer={canTransfer && record.designation !== "SVD"}
+              canChangeStatus={canChangeStatus}
+              canReactivate={isAdmin}
+              status={record.status}
+            />
+          );
+        },
+      },
+    ];
+  }, [members, accreditationRecordsByMember, canEditAccreditation, canManage, canTransfer, canChangeStatus, isAdmin, changeStatus, confirmRun, setEditMember, setTransferMember]);
 
   if (!granted.has("sales-network")) {
     return (
-      <div className="sales-members-page">
-        <PageContainer>
-          <PageHeader title="Access restricted" description="This account does not have access to Sales Network." />
-        </PageContainer>
-      </div>
+      <PageContainer>
+        <PageHeader title="Access restricted" description="This account does not have access to Sales Network." />
+      </PageContainer>
     );
   }
 
-  const columns: ColumnsType<any> = [
-    {
-      title: "AA Number",
-      dataIndex: "aaNumber",
-      key: "aaNumber",
-      render: (_: string | null, record: any) => (
-        <span className="sales-members-table__aa">{aaDisplay(record)}</span>
-      ),
-    },
-    {
-      title: "Member",
-      dataIndex: "displayName",
-      key: "displayName",
-      render: (name: string, record: any) => (
-        <Link className="sales-members-table__name-link" href={`/admin/sales-network/members/${record.aaNumber ?? record.id}`}>{name}</Link>
-      ),
-    },
-    {
-      title: "Position",
-      dataIndex: "designation",
-      key: "designation",
-      render: (designation: string) => <Tag color={DESIGNATION_COLORS[designation]} className="sales-members-table__designation">{designationLabel(designation)}</Tag>,
-    },
-    {
-      title: "Team",
-      dataIndex: "teamName",
-      key: "team",
-      render: (_: unknown, record: any) => <span className="sales-members-table__team">{teamLabelFor(record, members)}</span>,
-    },
-    {
-      title: "Parent",
-      key: "parent",
-      render: (_, record: any) => {
-        const parent = members.find((member) => member.id === record.parentId);
-        if (!parent) return <span className="sales-members-table__parent">—</span>;
-        const firstName = parent.displayName.trim().split(/\s+/)[0] ?? parent.displayName;
-        return <span className="sales-members-table__parent">{`${firstName} (${designationLabel(parent.designation)})`}</span>;
-      },
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status: string) => <StatusBadge status={status} />,
-    },
-    {
-      title: "Accreditation Status",
-      key: "accreditationStatus",
-      render: (_, record: any) => (
-        <AccreditationStatusAction records={accreditationRecordsByMember.get(record.id)} aaNumber={record.aaNumber ?? null} canEdit={canEditAccreditation} memberId={record.id} memberName={record.displayName} />
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record: any) => (
-        <SalesNetworkRowActions
-          itemName={record.displayName}
-          onEdit={() => {
-            setEditMember(record);
-          }}
-          onTransfer={() => setTransferMember(record)}
-          transferLabel={record.designation === "OST" ? "Transfer to IST" : "Transfer to OST"}
-          onChangeStatus={() => void handleToggleStatus(record)}
-          canEdit={canManage}
-          canTransfer={canTransfer && record.designation !== "SVD"}
-          canChangeStatus={canChangeStatus}
-          canReactivate={isAdmin}
-          status={record.status}
-        />
-      ),
-    },
-  ];
+  const sortLabel = sortAsc ? "Sort A-Z" : "Sort Z-A";
 
   return (
-    <div className="sales-members-page">
-      <PageContainer>
-        <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "Sales Network", href: "/admin/sales-network" }, { label: "Members" }]} />
-        <PageHeader
-          title="Sales Network Members"
-          description="Authorized member directory, scoped by genealogy permissions."
-          actions={
-            canManage ? (
-              <Space wrap>
-                <Button type="primary" onClick={() => setAccreditedMode("IST")}>Add IST</Button>
-                <Button onClick={() => setAccreditedMode("OST")}>Add OST</Button>
-              </Space>
-            ) : null
-          }
+    <PageContainer>
+      <Toaster position="top-right" />
+      <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "Sales Network", href: "/admin/sales-network" }, { label: "Members" }]} />
+      <PageHeader
+        title="Sales Network Members"
+        description="Authorized member directory, scoped by genealogy permissions."
+        actions={
+          canManage ? (
+            <>
+              <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setAccreditedMode("IST")}>
+                Add IST
+              </Button>
+              <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setAccreditedMode("OST")}>
+                Add OST
+              </Button>
+            </>
+          ) : null
+        }
+      />
+      <div className="tw:mt-3 tw:flex tw:flex-col tw:gap-3 tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4">
+        <div className="tw:relative tw:w-full tw:xl:max-w-xs">
+          <Search aria-hidden="true" className="tw:pointer-events-none tw:absolute tw:top-1/2 tw:left-2.5 tw:size-4 tw:-translate-y-1/2 tw:text-muted-foreground" />
+          <Input
+            type="search"
+            aria-label="Search members"
+            placeholder="Search members"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            className="tw:h-11 tw:pl-8 tw:sm:h-8"
+          />
+        </div>
+        <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
+          <FilterSelect label="Designation filter" items={DESIGNATION_ITEMS} value={designationFilter} onChange={setDesignationFilter} />
+          <FilterSelect label="Status filter" items={STATUS_ITEMS} value={statusFilter} onChange={setStatusFilter} />
+          <FilterSelect label="Team filter" items={teamItems} value={teamFilter} onChange={setTeamFilter} />
+          <FilterSelect label="Accreditation status filter" items={ACCREDITATION_ITEMS} value={accreditationFilter} onChange={setAccreditationFilter} />
+          <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
+            {sortAsc ? <ArrowDownAZ aria-hidden="true" /> : <ArrowUpAZ aria-hidden="true" />}
+            {sortLabel}
+          </Button>
+        </div>
+      </div>
+      <div className="tw:mt-3">
+        <DataTable<OrgMember>
+          caption="Sales Network members"
+          data={filtered}
+          columns={columns}
+          getRowId={(member) => member.id}
+          emptyText="No members found."
+          loading={membersQuery.isLoading}
+          pageSize={10}
+          onRowOpen={(record) => router.push(`/admin/sales-network/members/${record.aaNumber ?? record.id}`)}
         />
-        <div className="sales-members-page__toolbar">
-          <div className="sales-members-page__search">
-            <Input
-              allowClear
-              prefix={<SearchOutlined aria-hidden />}
-              placeholder="Search members"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </div>
-          <div className="sales-members-page__filters">
-            <Select
-              aria-label="Designation filter"
-              value={designationFilter}
-              onChange={setDesignationFilter}
-              className="sales-members-page__filter"
-              options={[
-                { value: "all", label: "All designations" },
-                { value: "SVD", label: "SVD" },
-                { value: "SSM", label: "SSM" },
-                { value: "SM", label: "SM" },
-                { value: "OST", label: "OST" },
-              ]}
-            />
-            <Select
-              aria-label="Status filter"
-              value={statusFilter}
-              onChange={setStatusFilter}
-              className="sales-members-page__filter"
-              options={[
-                { value: "all", label: "All statuses" },
-                { value: "active", label: "Active" },
-                { value: "inactive", label: "Inactive" },
-                { value: "suspended", label: "Suspended" },
-              ]}
-            />
-            <Select
-              aria-label="Team filter"
-              value={teamFilter}
-              onChange={setTeamFilter}
-              className="sales-members-page__filter"
-              options={[{ value: "all", label: "All teams" }, ...teams.map((team) => ({ value: team, label: team }))]}
-            />
-            <Select
-              aria-label="Accreditation status filter"
-              value={accreditationFilter}
-              onChange={setAccreditationFilter}
-              className="sales-members-page__filter"
-              options={[
-                { value: "all", label: "All accreditation" },
-                { value: "pending", label: "Pending" },
-                { value: "accredited", label: "Accredited" },
-                { value: "expired", label: "Expired" },
-                { value: "none", label: "No record" },
-              ]}
-            />
-            <SortToggleButton ascending={sortAsc} onToggle={() => setSortAsc((value) => !value)} />
-          </div>
-        </div>
-        <div className="sales-members-page__table">
-          {membersQuery.isLoading ? (
-            <div className="sales-members-page__loading">
-              <Skeleton active paragraph={{ rows: 6 }} />
-            </div>
-          ) : (
-            <DirectoryTable<any>
-              rowKey="id"
-              columns={columns}
-              dataSource={filtered}
-              emptyText="No members found."
-              pageSize={10}
-              onRowOpen={(record: any) => router.push(`/admin/sales-network/members/${record.aaNumber ?? record.id}`)}
-            />
-          )}
-        </div>
-      </PageContainer>
+      </div>
       <SalesNetworkMemberDialogs
         editMember={editMember}
         transferMember={transferMember}
@@ -313,6 +311,7 @@ export function SalesNetworkMembersPage() {
           }}
         />
       ) : null}
-    </div>
+      {confirmDialog}
+    </PageContainer>
   );
 }

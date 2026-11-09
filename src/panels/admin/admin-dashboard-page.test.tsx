@@ -60,13 +60,13 @@ describe("admin dashboard page", () => {
   it("renders sales network panel loading state for SVD", () => {
     const html = renderPage("dev-svd-a");
     expect(html).toContain("Sales Vice Director");
-    expect(html).toContain("ant-skeleton");
+    expect(html).toContain('data-slot="skeleton"');
   });
 
   it("renders sales network panel loading state for OST", () => {
     const html = renderPage("dev-ost-a1");
     expect(html).toContain("OST");
-    expect(html).toContain("ant-skeleton");
+    expect(html).toContain('data-slot="skeleton"');
   });
 
   it("shows restricted state for inactive account", () => {

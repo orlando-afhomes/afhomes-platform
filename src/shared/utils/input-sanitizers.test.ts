@@ -7,6 +7,7 @@ import {
   formatStatusLabel,
   isValidEmail,
   isValidName,
+  normalizeTin,
 } from "./input-sanitizers";
 
 describe("input sanitizers", () => {
@@ -39,5 +40,19 @@ describe("input sanitizers", () => {
     expect(formatStatusLabel("active")).toBe("Active");
     expect(formatStatusLabel("deactivated")).toBe("Deactivated");
     expect(formatStatusLabel("suspended")).toBe("Suspended");
+  });
+});
+
+describe("normalizeTin", () => {
+  it("keeps undefined and null as they are", () => {
+    expect(normalizeTin(undefined)).toBeUndefined();
+    expect(normalizeTin(null)).toBeNull();
+  });
+
+  it("strips formatting and turns blank into null", () => {
+    expect(normalizeTin("123-456-789")).toBe("123456789");
+    expect(normalizeTin("123-456-789-000")).toBe("123456789000");
+    expect(normalizeTin("")).toBeNull();
+    expect(normalizeTin(" - ")).toBeNull();
   });
 });

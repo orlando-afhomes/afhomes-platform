@@ -13,6 +13,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
+      "@seed": path.resolve(__dirname, "data/database"),
     },
   },
 });

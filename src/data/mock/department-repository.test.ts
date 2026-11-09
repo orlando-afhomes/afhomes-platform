@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { AUDIT_ACTIONS } from "@/modules/audit/types";
 import { createMockStore } from "./seed";
 import { createMockRepositories } from "./repositories";
 import { getDevIdentity } from "./dev-identities";
+import { PROTECTED_ROLE_ERROR } from "./authorization";
 
 describe("department repository", () => {
   it("lists departments for authorized user", async () => {
@@ -105,11 +107,100 @@ describe("department repository", () => {
     await expect(repos.departments.delete(created.id)).rejects.toThrow(/employees|staff/i);
   });
 
+  it("reserves status changes of the department holding the protected role for super admins", async () => {
+    const store = createMockStore();
+    const admin = createMockRepositories(store, () => getDevIdentity("dev-admin")).departments;
+    await expect(admin.update("dept-admin", { status: "deactivated" })).rejects.toThrow(PROTECTED_ROLE_ERROR);
+    expect(store.departments.find((dept) => dept.id === "dept-admin")?.status).toBe("active");
+    const superAdmin = createMockRepositories(store, () => getDevIdentity("dev-super-admin")).departments;
+    await superAdmin.update("dept-admin", { status: "deactivated" });
+    await expect(admin.update("dept-admin", { status: "active" })).rejects.toThrow(PROTECTED_ROLE_ERROR);
+    expect(store.departments.find((dept) => dept.id === "dept-admin")?.status).toBe("deactivated");
+  });
+
+  it("lets non-super-admins edit protected department metadata but never its status", async () => {
+    const store = createMockStore();
+    const admin = createMockRepositories(store, () => getDevIdentity("dev-admin")).departments;
+    const auditCount = store.auditEvents.length;
+    const updated = await admin.update("dept-admin", { name: "Administration", code: "ADMIN", description: "Central administration" });
+    expect(updated).toMatchObject({ name: "Administration", code: "ADMIN", description: "Central administration", status: "active" });
+    await expect(admin.update("dept-admin", { name: "Administration", description: "Central administration", status: "deactivated" })).rejects.toThrow(PROTECTED_ROLE_ERROR);
+    expect(store.departments.find((dept) => dept.id === "dept-admin")).toMatchObject({ name: "Administration", status: "active" });
+    expect(store.auditEvents).toHaveLength(auditCount);
+  });
+
+  it("rejects reactivation that restores grants beyond the actor's authority", async () => {
+    const store = createMockStore();
+    const adminRepos = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    await adminRepos.roles.create({ name: "Ops Roles", departmentId: "dept-ops", moduleIds: ["roles"] });
+    await adminRepos.departments.update("dept-ops", { status: "deactivated" });
+    const auditCount = store.auditEvents.length;
+    const hr = createMockRepositories(store, () => getDevIdentity("dev-hr")).departments;
+    await expect(hr.update("dept-ops", { name: "Ops Renamed", status: "active" })).rejects.toThrow("outside the acting account");
+    const dept = store.departments.find((item) => item.id === "dept-ops");
+    expect(dept?.status).toBe("deactivated");
+    expect(dept?.name).toBe("Operations");
+    expect(store.auditEvents).toHaveLength(auditCount);
+  });
+
+  it("lets HR reactivate a department whose roles stay within its authority", async () => {
+    const store = createMockStore();
+    await createMockRepositories(store, () => getDevIdentity("dev-admin")).departments.update("dept-finance", { status: "deactivated" });
+    const hr = createMockRepositories(store, () => getDevIdentity("dev-hr")).departments;
+    expect((await hr.update("dept-finance", { status: "active" })).status).toBe("active");
+  });
+
   it("deletes an empty department", async () => {
     const store = createMockStore();
     const repos = createMockRepositories(store, () => getDevIdentity("dev-admin"));
     const created = await repos.departments.create({ name: "Temporary" });
     await repos.departments.delete(created.id);
     expect(await repos.departments.getById(created.id)).toBeNull();
+  });
+});
+
+describe("department repository S3-C1 audit events", () => {
+  it("records exactly one DEPARTMENT_STATUS_CHANGED with before and after values", async () => {
+    const store = createMockStore();
+    const repos = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    store.auditEvents.length = 0;
+    await repos.departments.update("dept-ops", { status: "deactivated" });
+    await repos.departments.update("dept-ops", { status: "active" });
+    const events = store.auditEvents.filter((item) => item.action === AUDIT_ACTIONS.DEPARTMENT_STATUS_CHANGED);
+    expect(events).toHaveLength(2);
+    expect(events[0]).toMatchObject({
+      actorId: "dev-admin",
+      module: "organization",
+      entityType: "department",
+      entityId: "dept-ops",
+      previousValue: "active",
+      newValue: "deactivated",
+      outcome: "success",
+    });
+    expect(events[1]).toMatchObject({ previousValue: "deactivated", newValue: "active" });
+  });
+
+  it("records no event for metadata-only updates, creation, deletion, or rejections", async () => {
+    const store = createMockStore();
+    const repos = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    const created = await repos.departments.create({ name: "Unaudited" });
+    await repos.departments.update(created.id, { name: "Unaudited Renamed", code: "U" });
+    await expect(repos.departments.update("dept-admin", { status: "deactivated" })).rejects.toThrow(PROTECTED_ROLE_ERROR);
+    await repos.departments.delete(created.id);
+    expect(store.auditEvents).toHaveLength(0);
+  });
+
+  it("attributes protected-department status changes to the super admin actor", async () => {
+    const store = createMockStore();
+    const repos = createMockRepositories(store, () => getDevIdentity("dev-super-admin"));
+    await repos.departments.update("dept-admin", { status: "deactivated" });
+    expect(store.auditEvents).toHaveLength(1);
+    expect(store.auditEvents[0]).toMatchObject({
+      actorId: "dev-super-admin",
+      action: AUDIT_ACTIONS.DEPARTMENT_STATUS_CHANGED,
+      entityId: "dept-admin",
+      previousValue: "active",
+      newValue: "deactivated",
+    });
   });
 });

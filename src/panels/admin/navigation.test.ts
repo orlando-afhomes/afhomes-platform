@@ -12,11 +12,13 @@ describe("admin navigation", () => {
     expect(getAvailableAdminNavigation().some((item) => item.href === "/admin")).toBe(true);
   });
 
-  it("excludes unimplemented module routes", () => {
-    const hrefs = getAvailableAdminNavigation().map((item) => item.href);
-    expect(hrefs).not.toContain("/admin/customers");
-    expect(hrefs).not.toContain("/admin/finance");
-    expect(hrefs).not.toContain("/admin/audit-logs");
+  it("lists the business modules and keeps Redemption and Services out of navigation", () => {
+    const items = getAvailableAdminNavigation();
+    const hrefs = items.map((item) => item.href);
+    for (const href of ["/admin/customers", "/admin/vip-products", "/admin/sales", "/admin/finance", "/admin/commissions", "/admin/membership", "/admin/stay-points", "/admin/reports", "/admin/audit-logs"]) {
+      expect(hrefs).toContain(href);
+    }
+    expect(JSON.stringify(items).toLowerCase()).not.toMatch(/redemption|services/);
   });
 
   it("normalizes trailing slashes", () => {
@@ -55,9 +57,15 @@ describe("admin navigation", () => {
     ]);
   });
 
-  it("hides Accounts from navigation while keeping its breadcrumb trail", () => {
-    const hrefs = getAvailableAdminNavigation().map((item) => item.href);
+  it("serves account administration from Staff & Access, keeping /admin/accounts as a hidden compatibility route", () => {
+    const hrefs = getAvailableAdminNavigation().flatMap((item) => [item.href, ...(item.children ?? []).map((child) => child.href)]);
     expect(hrefs).not.toContain("/admin/accounts");
+    expect(hrefs).toContain("/admin/organization/staff");
+    expect(getAdminBreadcrumbs("/admin/organization/staff")).toEqual([
+      { label: "Dashboard", href: "/admin" },
+      { label: "Organization" },
+      { label: "Staff & Access" },
+    ]);
     expect(getAdminBreadcrumbs("/admin/accounts")).toEqual([
       { label: "Dashboard", href: "/admin" },
       { label: "Accounts and Permissions" },

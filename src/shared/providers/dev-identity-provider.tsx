@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { useQueryClient } from "@tanstack/react-query";
 import type { DevIdentity } from "@/modules/identity/types";
 import { DEV_IDENTITIES } from "@/data/mock/dev-identities";
+import { queryKeys } from "@/data/query-keys";
 
 type DevIdentityContextValue = {
   identity: DevIdentity;
@@ -27,6 +28,8 @@ export function DevIdentityProvider({ children, initialIdentityId }: { children:
         query.queryKey[1] !== identityId &&
         (query.queryKey[0] === "members" || query.queryKey[0] === "customers"),
     });
+    // Protected audit history never survives an identity change.
+    queryClient.removeQueries({ queryKey: queryKeys.audit.all, predicate: (query) => query.queryKey[1] !== identityId });
     previousIdentityId.current = identityId;
   }, [identityId, queryClient]);
 

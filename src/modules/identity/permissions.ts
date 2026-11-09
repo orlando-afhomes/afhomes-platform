@@ -1,3 +1,4 @@
+import type { AccountStatus } from "@/modules/accounts/types";
 import type { DevIdentity, DevRole } from "@/modules/identity/types";
 import { activeRoles } from "@/data/mock/dev-identities";
 
@@ -43,6 +44,13 @@ export type AdminOperation =
   | "commission.approve"
   | "commission.payout"
   | "commission.viewOwn"
+  | "commission.viewTeam"
+  | "customers.manage"
+  | "contracts.prepare"
+  | "payments.submit"
+  | "membership.activate"
+  | "stay-points.reconcile"
+  | "audit.read"
   | "sales.viewOwn"
   | "sales.viewTeam"
   | "customers.viewOwn"
@@ -53,38 +61,76 @@ export type AdminOperation =
 
 const BASE_MODULES: readonly AdminModuleId[] = ["dashboard"];
 
+// Business modules (interim grants pending the D-series decisions). Record-level scope and
+// operation grants below decide what each role can actually do inside a module.
+const BUSINESS_ADMIN_MODULES: readonly AdminModuleId[] = ["customers", "sales", "commissions", "membership", "stay-points", "reports", "audit-logs"];
+const SELLER_BUSINESS_MODULES: readonly AdminModuleId[] = ["customers", "sales", "commissions", "membership", "stay-points", "reports"];
+const OST_BUSINESS_MODULES: readonly AdminModuleId[] = ["customers", "sales", "commissions", "membership", "stay-points", "reports"];
+
 // Approved scoped module baseline. Organization management is split into
 // Departments, Roles, and Staff submodules. Unresolved modules remain denied.
 // HR manages departments and staff but does not delegate module grants (no
 // "roles"), so department-role privilege assignment stays protected.
 const ROLE_MODULE_GRANTS: Record<DevRole, readonly AdminModuleId[]> = {
-  super_admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products", "sales-network", "sales-network-members", "sales-network-genealogy", "accreditation-registrations", "accreditation-records", "accreditation-renewals"],
-  admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products", "sales-network", "sales-network-members", "sales-network-genealogy", "accreditation-registrations", "accreditation-records", "accreditation-renewals"],
+  super_admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products", "sales-network", "sales-network-members", "sales-network-genealogy", "accreditation-registrations", "accreditation-records", "accreditation-renewals", ...BUSINESS_ADMIN_MODULES],
+  admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products", "sales-network", "sales-network-members", "sales-network-genealogy", "accreditation-registrations", "accreditation-records", "accreditation-renewals", ...BUSINESS_ADMIN_MODULES],
   hr: [...BASE_MODULES, "departments", "staff"],
-  finance: [...BASE_MODULES, "finance"],
-  svd: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy"],
-  ssm: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy"],
-  sm: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy"],
-  ost: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy"],
+  finance: [...BASE_MODULES, "finance", "commissions", "membership", "stay-points", "reports"],
+  svd: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy", ...SELLER_BUSINESS_MODULES],
+  ssm: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy", ...SELLER_BUSINESS_MODULES],
+  sm: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy", ...SELLER_BUSINESS_MODULES],
+  ost: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy", ...OST_BUSINESS_MODULES],
 };
+
+/** Every system role, in display order. */
+export const SYSTEM_ROLES = Object.keys(ROLE_MODULE_GRANTS) as DevRole[];
+
+/** Module grants of a system role (static mock baseline). */
+export function getRoleModuleGrants(role: DevRole): readonly AdminModuleId[] {
+  return ROLE_MODULE_GRANTS[role] ?? [];
+}
 
 // Modules a department role may grant. Only implemented, separately
 // authorized pages are delegable: no disabled modules, no Finance-controlled
 // operations, and no protected Super Administrator equivalence exist here.
+// Accounts management is restricted to Admin/Super Admin (owner decision S3-01)
+// and is therefore not delegable.
 export const DELEGABLE_MODULES: readonly AdminModuleId[] = [
   "dashboard",
-  "accounts",
   "departments",
   "roles",
   "staff",
 ] as const;
 
+/**
+ * Grants a department role can actually confer: delegable modules only,
+ * deduplicated. Non-delegable ids stored on a role (legacy "accounts",
+ * "finance", unknown ids) are inert and never become effective access.
+ */
+export function getDelegableGrants(moduleIds: readonly string[]): AdminModuleId[] {
+  const delegable: readonly string[] = DELEGABLE_MODULES;
+  return [...new Set(moduleIds.filter((moduleId) => delegable.includes(moduleId)))] as AdminModuleId[];
+}
+
+/**
+ * A department role confers access only while the employee, the role, and the
+ * role's department are all present and active.
+ */
+export function departmentRoleConfersAccess(chain: {
+  staffStatus: string | null | undefined;
+  roleStatus: string | null | undefined;
+  departmentStatus: string | null | undefined;
+}): boolean {
+  return chain.staffStatus === "active" && chain.roleStatus === "active" && chain.departmentStatus === "active";
+}
+
 export const MODULE_CATALOG: ReadonlyArray<{ id: AdminModuleId; label: string }> = [
   { id: "dashboard", label: "Dashboard" },
   { id: "accounts", label: "Accounts and Permissions" },
   { id: "departments", label: "Departments" },
-  { id: "roles", label: "Roles" },
-  { id: "staff", label: "Staff" },
+  { id: "roles", label: "Roles & Permissions" },
+  { id: "staff", label: "Staff & Access" },
+  { id: "vip-products", label: "VIP Products and Contracts" },
   { id: "sales-network", label: "Sales Network" },
   { id: "sales-network-members", label: "Sales Network Members" },
   { id: "sales-network-genealogy", label: "Sales Network Genealogy" },
@@ -120,6 +166,8 @@ export const ALL_MODULE_IDS: ReadonlySet<AdminModuleId> = new Set([
 ]);
 
 const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
+  // Owner decision OD-1 (2026-11-09): Super Admin is authorized Finance personnel and keeps the
+  // finance and commission operations; docs 07 section 5.2 and 08 section 11.2 to be amended in P13.
   super_admin: [
     "organization.departments.manage",
     "organization.staff.manage",
@@ -136,6 +184,12 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "sales-network.manage",
     "sales-network.transfer",
     "sales-network.status",
+    "customers.manage",
+    "contracts.prepare",
+    "payments.submit",
+    "membership.activate",
+    "stay-points.reconcile",
+    "audit.read",
   ],
   admin: [
     "organization.departments.manage",
@@ -146,6 +200,11 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "sales-network.manage",
     "sales-network.transfer",
     "sales-network.status",
+    "customers.manage",
+    "contracts.prepare",
+    "payments.submit",
+    "membership.activate",
+    "audit.read",
   ],
   hr: ["organization.departments.manage", "organization.staff.manage"],
   finance: [
@@ -155,11 +214,12 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "finance.reports.view",
     "commission.approve",
     "commission.payout",
+    "stay-points.reconcile",
   ],
-  svd: ["sales.viewTeam", "customers.viewDownline", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
-  ssm: ["sales.viewTeam", "customers.viewDownline", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
-  sm: ["sales.viewTeam", "customers.viewDownline", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
-  ost: ["sales.viewOwn", "customers.viewOwn", "commission.viewOwn"],
+  svd: ["sales.viewTeam", "customers.viewDownline", "commission.viewOwn", "commission.viewTeam", "customers.manage", "contracts.prepare", "payments.submit", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
+  ssm: ["sales.viewTeam", "customers.viewDownline", "commission.viewOwn", "commission.viewTeam", "customers.manage", "contracts.prepare", "payments.submit", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
+  sm: ["sales.viewTeam", "customers.viewDownline", "commission.viewOwn", "commission.viewTeam", "customers.manage", "contracts.prepare", "payments.submit", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
+  ost: ["sales.viewOwn", "customers.viewOwn", "commission.viewOwn", "payments.submit"],
 };
 
 export function getEffectiveRoles(identity: DevIdentity) {
@@ -196,4 +256,27 @@ export function getGrantedOperations(identity: DevIdentity): Set<AdminOperation>
 
 export function hasOperationPermission(identity: DevIdentity, operation: AdminOperation) {
   return getGrantedOperations(identity).has(operation);
+}
+
+/**
+ * Read-only display of what a linked account can reach: system-role grants plus
+ * the delegable grants of the employee's department role. It mirrors the
+ * session rule in resolveEffectiveModules (data/mock/authorization.ts) for a
+ * record other than the actor's own, and never authorizes anything. No linked
+ * account, or one that is not Active, means no access. The department role
+ * counts only when `departmentRoleModuleIds` is given, which the caller does
+ * only when the employee, role, and department are all active.
+ */
+export function resolveEmployeeEffectiveModules(input: {
+  accountStatus: AccountStatus | null;
+  systemRoles: readonly DevRole[];
+  departmentRoleModuleIds: readonly string[] | null;
+}): AdminModuleId[] {
+  if (input.accountStatus !== "active") return [];
+  const granted = new Set<AdminModuleId>();
+  for (const role of input.systemRoles) {
+    for (const moduleId of ROLE_MODULE_GRANTS[role] ?? []) granted.add(moduleId);
+  }
+  for (const moduleId of getDelegableGrants(input.departmentRoleModuleIds ?? [])) granted.add(moduleId);
+  return [...granted];
 }

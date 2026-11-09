@@ -1,4 +1,5 @@
-import type { AccreditationRepository, AccreditationStatusRequest } from "@/data/contracts/accreditation-repository";
+import type { AccreditationRepository, AccreditationStatusRequest, PublicAccreditationResult } from "@/data/contracts/accreditation-repository";
+import { validateExistingAaIdentifier } from "@/modules/accreditation/identifiers";
 import type { AccreditationAdminStatus } from "@/modules/accreditation/types";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { DevIdentity } from "@/modules/identity/types";
@@ -80,6 +81,21 @@ export class MockAccreditationRepository implements AccreditationRepository {
   async getCurrentForMember(memberId: string, options?: MockAsyncOptions): Promise<AccreditationRecord | null> {
     const records = await this.listByMember(memberId, options);
     return getCurrentAccreditationRecord(records);
+  }
+
+  async verifyPublic(aaNumber: string, options?: MockAsyncOptions): Promise<PublicAccreditationResult | null> {
+    await simulateAsync(this.merge(options));
+    const parsed = validateExistingAaIdentifier(aaNumber);
+    if (!parsed.ok) return null;
+    const normalized = aaNumber.trim().toUpperCase();
+    const record = this.store.accreditations.find((item) => item.aaNumber?.toUpperCase() === normalized);
+    if (!record || record.adminStatus !== "active") return null;
+    // Only the member's single current record can verify; superseded or ambiguous records return the generic result.
+    const memberRecords = this.store.accreditations.filter((item) => item.memberId === record.memberId);
+    if (hasAmbiguousAccreditation(memberRecords) || getCurrentAccreditationRecord(memberRecords)?.id !== record.id) return null;
+    // Both IST and OST accreditation expire (doc 03); IST only hides its "Valid Until" date, OST shows it (project 22).
+    if (!isAccreditationEligibleOnDate(record.expiryDate, manilaToday())) return null;
+    return { aaNumber: normalized, classification: record.classification, validUntil: record.classification === "OST" ? record.expiryDate : null };
   }
 
   async checkEligibility(memberId: string, asOfDate: string = manilaToday(), options?: MockAsyncOptions): Promise<AccreditationEligibilityCheck> {

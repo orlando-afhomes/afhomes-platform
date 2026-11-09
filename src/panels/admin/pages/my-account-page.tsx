@@ -1,23 +1,24 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Alert, Avatar, Button, Empty, Form, Input, Select, Skeleton, Upload } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
-import type { Account } from "@/modules/accounts/types";
+import { useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import { Upload } from "lucide-react";
+import type { LinkedAccountSummary } from "@/modules/accounts/types";
 import type { StaffMember } from "@/modules/organization/types";
-import { activeRoles } from "@/data/mock/dev-identities";
 import {
   useDepartments,
-  useDepartmentRoles,
   useEffectiveModuleIds,
-  useUpdateAccount,
+  useMyProfile,
+  useRoleOptions,
   useUpdateStaff,
 } from "@/data/queries";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
-import { useMockStore } from "@/shared/providers/mock-store-provider";
-import { PageContainer } from "@/shared/components/layout/page-container";
-import { PageHeader } from "@/shared/components/layout/page-header";
-import { Breadcrumbs } from "@/shared/components/layout/breadcrumbs";
+import { PageContainer } from "@/shared/components/modern/page-container";
+import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
+import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
+import { PageHeader } from "@/shared/components/modern/page-header";
+import { StatusBadge } from "@/shared/components/modern/status-badge";
+import { EmailField, PasswordField, TextField } from "@/shared/forms/modern";
 import {
   MIN_PASSWORD_LENGTH,
   cleanEmailInput,
@@ -25,8 +26,10 @@ import {
   isValidEmail,
   isValidName,
 } from "@/shared/utils/input-sanitizers";
-import { StatusBadge } from "@/shared/components/layout/status-badge";
-import { confirmAction, showError, showFieldErrors, showSuccess } from "@/shared/utils/feedback";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
+import { Button } from "@/shared/ui/button";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { Toaster } from "@/shared/ui/sonner";
 
 function initials(name: string) {
   return name
@@ -38,85 +41,89 @@ function initials(name: string) {
 }
 
 /** Self-service profile page: name, email, avatar, and password for the
- *  signed-in identity; department and one role for admins. */
+ *  signed-in identity; department and role are read-only. */
 export function MyAccountPage() {
   const { identity } = useDevIdentity();
 
   if (identity.status !== "active") {
     return (
-      <div className="my-account-page">
-        <PageContainer>
-          <PageHeader title="Access restricted" description="This account does not have access to My Account." />
-        </PageContainer>
-      </div>
+      <PageContainer>
+        <PageHeader title="Access restricted" description="This account does not have access to My Account." />
+      </PageContainer>
     );
   }
 
   return (
-    <div className="my-account-page">
-      <PageContainer>
-        <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "My Account" }]} />
-        <PageHeader title="My Account" description="View and update your profile information." />
-        <MyAccountForm key={identity.id} />
-      </PageContainer>
-    </div>
+    <PageContainer>
+      <Toaster position="top-right" />
+      <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "My Account" }]} />
+      <PageHeader title="My Account" description="View and update your profile information." />
+      <MyAccountForm key={identity.id} />
+    </PageContainer>
   );
 }
 
 function MyAccountForm() {
-  const { identity } = useDevIdentity();
-  const store = useMockStore();
+  const profileQuery = useMyProfile();
+  if (profileQuery.isLoading) return <Skeleton className="tw:mt-3 tw:h-48 tw:w-full" />;
+  const profile = profileQuery.data ?? null;
+  if (!profile) {
+    return (
+      <p className="tw:mt-6 tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-8 tw:text-center tw:text-muted-foreground">
+        No linked staff or account record found for this identity.
+      </p>
+    );
+  }
+  return <MyAccountProfileForm key={profile.staff.id} staff={profile.staff} linkedAccount={profile.linkedAccount} />;
+}
+
+type FieldErrors = { name?: string; email?: string; newPassword?: string; confirmPassword?: string };
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section aria-label={title} className="tw:flex tw:flex-col tw:gap-4 tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4">
+      <h2 className="tw:text-base tw:font-semibold">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+function DetailRow({ term, children }: { term: string; children: React.ReactNode }) {
+  return (
+    <div className="tw:flex tw:items-center tw:gap-3 tw:border-b tw:border-border tw:py-2 tw:last:border-b-0">
+      <dt className="tw:w-32 tw:shrink-0 tw:font-medium tw:text-muted-foreground">{term}</dt>
+      <dd className="tw:min-w-0 tw:flex-1 tw:break-words">{children}</dd>
+    </div>
+  );
+}
+
+/**
+ * Personal profile only. Department, role, permissions, and account status
+ * are read-only here: they cannot be self-modified (S3-04) and are not sent.
+ */
+function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; linkedAccount: LinkedAccountSummary | null }) {
   const granted = useEffectiveModuleIds();
   const departmentsQuery = useDepartments();
-  const rolesQuery = useDepartmentRoles();
+  const rolesQuery = useRoleOptions();
   const updateStaff = useUpdateStaff();
-  const updateAccount = useUpdateAccount();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const staff: StaffMember | null = useMemo(
-    () => (identity.staffId ? (store.staff.find((item) => item.id === identity.staffId) ?? null) : null),
-    [store, identity],
-  );
-  const account: Account | null = useMemo(
-    () => (staff?.accountId ? (store.accounts.find((item) => item.id === staff.accountId) ?? null) : null),
-    [store, staff],
-  );
-
-  const rolesList = useMemo(() => activeRoles(identity), [identity]);
-  const isAdmin = rolesList.includes("super_admin") || rolesList.includes("admin");
-  const canEditProfile = granted.has("staff") || isAdmin;
-
+  const canEditProfile = granted.has("staff");
   const departments = useMemo(() => departmentsQuery.data ?? [], [departmentsQuery.data]);
   const roles = useMemo(() => rolesQuery.data ?? [], [rolesQuery.data]);
 
-  const [name, setName] = useState(staff?.displayName ?? account?.displayName ?? identity.displayName);
-  const [email, setEmail] = useState(staff?.email ?? account?.email ?? "");
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(staff?.avatarUrl ?? null);
+  const [name, setName] = useState(staff.displayName);
+  const [email, setEmail] = useState(staff.email);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(staff.avatarUrl ?? null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [departmentId, setDepartmentId] = useState(staff?.departmentId ?? "");
-  const [departmentRoleId, setDepartmentRoleId] = useState(staff?.departmentRoleId ?? "");
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [confirmSave, setConfirmSave] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const availableRoles = useMemo(
-    () => roles.filter((role) => role.departmentId === departmentId && role.status === "active"),
-    [roles, departmentId],
-  );
-
-  if (!staff && !account) {
-    return (
-      <div className="my-account-page__empty">
-        <Empty description="No linked staff or account record found for this identity." />
-      </div>
-    );
-  }
-
-  const handleDepartmentChange = (value: string) => {
-    setDepartmentId(value);
-    const current = roles.find((role) => role.id === departmentRoleId);
-    if (!current || current.departmentId !== value) {
-      setDepartmentRoleId("");
-    }
+  const clearError = (key: keyof FieldErrors) => {
+    if (errors[key]) setErrors((current) => ({ ...current, [key]: undefined }));
   };
 
   const handleAvatarFile = (file: File) => {
@@ -134,232 +141,172 @@ function MyAccountForm() {
     reader.readAsDataURL(file);
   };
 
-  const handleFinish = async () => {
-    const fieldErrors = [
-      !name.trim() ? "Full name is required." : null,
-      name.trim() && !isValidName(name) ? "Full name must contain letters only." : null,
-      email.trim() && !isValidEmail(email) ? "Enter a valid email address." : null,
-      newPassword || confirmPassword
-        ? newPassword.length < MIN_PASSWORD_LENGTH
-          ? `New password must be at least ${MIN_PASSWORD_LENGTH} characters.`
-          : newPassword !== confirmPassword
-            ? "Passwords do not match."
-            : null
-        : null,
-      isAdmin && !departmentId ? "Department is required." : null,
-      isAdmin && !departmentRoleId ? "Department role is required." : null,
-    ].filter((message): message is string => message !== null);
-    if (fieldErrors.length > 0) {
-      await showFieldErrors("Complete the required fields.", fieldErrors);
-      return;
+  const validate = (): FieldErrors => {
+    const next: FieldErrors = {};
+    if (!name.trim()) next.name = "Full name is required.";
+    else if (!isValidName(name)) next.name = "Full name must contain letters only.";
+    if (email.trim() && !isValidEmail(email)) next.email = "Enter a valid email address.";
+    if (newPassword || confirmPassword) {
+      if (newPassword.length < MIN_PASSWORD_LENGTH) next.newPassword = `New password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+      else if (newPassword !== confirmPassword) next.confirmPassword = "Passwords do not match.";
     }
-    const proceed = await confirmAction({
-      title: "Save changes to your account?",
-      text: "Your profile information will be updated.",
-      confirmText: "Save",
-    });
-    if (!proceed) return;
+    return next;
+  };
+
+  const save = async () => {
     setSubmitting(true);
     try {
-      const trimmedEmail = email.trim();
-      if (staff && trimmedEmail && trimmedEmail.toLowerCase() !== staff.email.toLowerCase()) {
-        const staffAccounts = store.staff.filter((member) => member.id !== staff.id);
-        if (staffAccounts.some((member) => member.email.toLowerCase() === trimmedEmail.toLowerCase())) {
-          throw new Error("An employee with this email already exists.");
-        }
-        const systemAccounts = store.accounts.filter((item) => item.id !== staff.accountId);
-        if (systemAccounts.some((item) => item.email.toLowerCase() === trimmedEmail.toLowerCase())) {
-          throw new Error("An account with this email already exists.");
-        }
+      if (canEditProfile) {
+        // Profile fields only. The repository checks email uniqueness and keeps
+        // the linked account's name and email in step with the staff record.
+        await updateStaff.mutateAsync({ id: staff.id, displayName: name.trim(), email: email.trim() || staff.email, avatarUrl });
       }
-      if (staff && canEditProfile) {
-        const payload: {
-          displayName: string;
-          email: string;
-          avatarUrl: string | null;
-          departmentId?: string | null;
-          departmentRoleId?: string | null;
-          position?: string;
-        } = { displayName: name.trim(), email: trimmedEmail || staff.email, avatarUrl };
-        if (isAdmin) {
-          const role = roles.find((item) => item.id === departmentRoleId);
-          if (!role || role.departmentId !== departmentId) {
-            throw new Error("Selected role does not belong to the selected department.");
-          }
-          payload.departmentId = departmentId;
-          payload.departmentRoleId = departmentRoleId;
-          payload.position = role.name;
-        }
-        await updateStaff.mutateAsync({ id: staff.id, ...payload });
-      }
-      if (account && isAdmin) {
-        await updateAccount.mutateAsync({
-          id: account.id,
-          displayName: name.trim(),
-          email: trimmedEmail || account.email,
-          departmentId: departmentId || null,
-        });
-      }
+      const changedPassword = newPassword !== "";
       setNewPassword("");
       setConfirmPassword("");
-      await showSuccess(
-        "Account updated successfully.",
-        newPassword ? "Your profile and password change have been recorded." : "Your profile has been saved.",
-      );
+      setConfirmSave(false);
+      toast.success("Account updated successfully.", {
+        description: changedPassword ? "Your profile and password change have been recorded." : "Your profile has been saved.",
+      });
     } catch (err) {
-      await showError("Update failed.", err instanceof Error ? err.message : "Failed to update account.");
+      setConfirmSave(false);
+      toast.error("Update failed.", { description: err instanceof Error ? err.message : "Failed to update account." });
     } finally {
       setSubmitting(false);
     }
   };
 
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const found = validate();
+    setErrors(found);
+    if (Object.keys(found).length > 0) return;
+    setConfirmSave(true);
+  };
+
   return (
-    <Form layout="vertical" onFinish={() => void handleFinish()} className="my-account-page__form">
-      <section aria-label="Profile information" className="my-account-page__section">
-        <h2 className="my-account-page__section-title">Profile information</h2>
-        <Form.Item label="Profile picture">
-          <div className="my-account-page__avatar-row">
-            <Avatar size={64} src={avatarUrl ?? undefined}>
-              {avatarUrl ? null : initials(name || "Staff")}
+    <form onSubmit={handleSubmit} noValidate className="tw:mt-3 tw:flex tw:max-w-2xl tw:flex-col tw:gap-4">
+      <Section title="Profile information">
+        <div className="tw:flex tw:flex-col tw:gap-1.5">
+          <span className="tw:text-sm tw:font-medium">Profile picture</span>
+          <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-4">
+            <Avatar className="tw:size-16 tw:text-lg">
+              {avatarUrl ? <AvatarImage src={avatarUrl} alt="Profile picture preview" /> : null}
+              <AvatarFallback>{initials(name || "Staff")}</AvatarFallback>
             </Avatar>
             {canEditProfile ? (
-              <div className="my-account-page__avatar-controls">
-                <div className="my-account-page__avatar-buttons">
-                  <Upload
+              <div className="tw:flex tw:flex-col tw:gap-2">
+                <div className="tw:flex tw:flex-wrap tw:gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
                     accept="image/*"
-                    showUploadList={false}
-                    beforeUpload={(file) => {
-                      handleAvatarFile(file as unknown as File);
-                      return false;
+                    className="tw:sr-only"
+                    tabIndex={-1}
+                    aria-label="Profile picture file"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) handleAvatarFile(file);
+                      event.target.value = "";
                     }}
-                  >
-                    <Button icon={<UploadOutlined />}>Select image</Button>
-                  </Upload>
+                  />
+                  <Button type="button" variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => fileInputRef.current?.click()}>
+                    <Upload aria-hidden="true" /> Select image
+                  </Button>
                   {avatarUrl ? (
-                    <Button type="primary" danger onClick={() => setAvatarUrl(null)}>
+                    <Button type="button" variant="destructive" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setAvatarUrl(null)}>
                       Remove
                     </Button>
                   ) : null}
                 </div>
-                {avatarError ? <Alert type="error" title={avatarError} showIcon /> : null}
+                {avatarError ? (
+                  <p role="alert" className="tw:text-sm tw:text-destructive">
+                    {avatarError}
+                  </p>
+                ) : null}
               </div>
             ) : null}
           </div>
-        </Form.Item>
-        <Form.Item label="Full Name" required>
-          <Input
-            placeholder="Full Name"
-            value={name}
-            maxLength={80}
-            showCount
-            disabled={!canEditProfile}
-            onChange={(event) => setName(cleanTitleInput(event.target.value))}
-          />
-        </Form.Item>
-        <Form.Item label="Email">
-          <Input
-            placeholder="Email"
-            value={email}
-            maxLength={120}
-            disabled={!canEditProfile}
-            onChange={(event) => setEmail(cleanEmailInput(event.target.value))}
-          />
-        </Form.Item>
-        <dl className="my-account-page__details">
-          <div className="my-account-page__detail-row">
-            <dt className="my-account-page__detail-term">Status</dt>
-            <dd className="my-account-page__detail-value"><StatusBadge status={account?.status ?? staff?.status ?? identity.status} /></dd>
-          </div>
-          <div className="my-account-page__detail-row">
-            <dt className="my-account-page__detail-term">Linked account</dt>
-            <dd className="my-account-page__detail-value">{account?.id ?? "—"}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section aria-label="Change password" className="my-account-page__section">
-        <h2 className="my-account-page__section-title">Change password</h2>
-        <Form.Item label="New Password">
-          <Input.Password
-            placeholder="New Password"
-            value={newPassword}
-            minLength={MIN_PASSWORD_LENGTH}
-            onChange={(event) => setNewPassword(event.target.value)}
-            visibilityToggle
-          />
-        </Form.Item>
-        <Form.Item label="Confirm Password">
-          <Input.Password
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            visibilityToggle
-          />
-        </Form.Item>
-        <p className="my-account-page__hint">Mock build: passwords are validated, not stored.</p>
-      </section>
-
-      {isAdmin ? (
-        <section aria-label="Employment and access" className="my-account-page__section">
-          <h2 className="my-account-page__section-title">Employment and access</h2>
-          <Form.Item label="Department" required>
-            <Select
-              aria-label="My account department"
-              placeholder="Select department"
-              value={departmentId || undefined}
-              onChange={handleDepartmentChange}
-              options={departments
-                .filter((dept) => dept.status === "active" || dept.id === staff?.departmentId)
-                .map((dept) => ({ value: dept.id, label: dept.name }))}
-              loading={departmentsQuery.isLoading}
-            />
-          </Form.Item>
-          <Form.Item label="Role" required>
-            {availableRoles.length === 0 ? (
-              <div className="my-account-page__empty-roles">
-                {departmentId
-                  ? "No active roles in this department. Ask an administrator to create one first."
-                  : "Select a department first to see its available roles."}
-              </div>
-            ) : (
-              <Select
-                aria-label="My account role"
-                placeholder="Select role"
-                value={departmentRoleId || undefined}
-                onChange={setDepartmentRoleId}
-                options={availableRoles.map((role) => ({ value: role.id, label: role.name }))}
-                loading={rolesQuery.isLoading}
-              />
-            )}
-          </Form.Item>
-        </section>
-      ) : (
-        <section aria-label="Employment and access" className="my-account-page__section">
-          <h2 className="my-account-page__section-title">Employment and access</h2>
-          <dl className="my-account-page__details">
-            <div className="my-account-page__detail-row">
-              <dt className="my-account-page__detail-term">Department</dt>
-              <dd className="my-account-page__detail-value">
-                {departments.find((item) => item.id === staff?.departmentId)?.name ?? "—"}
-              </dd>
-            </div>
-            <div className="my-account-page__detail-row">
-              <dt className="my-account-page__detail-term">Role</dt>
-              <dd className="my-account-page__detail-value">
-                {roles.find((item) => item.id === staff?.departmentRoleId)?.name ?? "—"}
-              </dd>
-            </div>
-          </dl>
-        </section>
-      )}
-
-      <Form.Item>
-        <div className="my-account-page__form-actions">
-          <Button type="primary" htmlType="submit" loading={submitting} disabled={!canEditProfile && !newPassword}>
-            Save changes
-          </Button>
         </div>
-      </Form.Item>
-    </Form>
+        <TextField
+          label="Full Name"
+          required
+          placeholder="Full Name"
+          value={name}
+          maxLength={80}
+          disabled={!canEditProfile}
+          error={errors.name}
+          onChange={(value) => {
+            setName(cleanTitleInput(value));
+            clearError("name");
+          }}
+        />
+        <EmailField
+          label="Email"
+          placeholder="Email"
+          value={email}
+          maxLength={120}
+          disabled={!canEditProfile}
+          error={errors.email}
+          onChange={(value) => {
+            setEmail(cleanEmailInput(value));
+            clearError("email");
+          }}
+        />
+        <dl className="tw:flex tw:flex-col">
+          <DetailRow term="Status">
+            <StatusBadge status={linkedAccount?.status ?? staff.status} />
+          </DetailRow>
+          <DetailRow term="Linked account">{linkedAccount?.email ?? "—"}</DetailRow>
+        </dl>
+      </Section>
+
+      <Section title="Change password">
+        <PasswordField
+          label="New Password"
+          placeholder="New Password"
+          value={newPassword}
+          error={errors.newPassword}
+          onChange={(value) => {
+            setNewPassword(value);
+            clearError("newPassword");
+          }}
+        />
+        <PasswordField
+          label="Confirm Password"
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          error={errors.confirmPassword}
+          hint="Mock build: passwords are validated, not stored."
+          onChange={(value) => {
+            setConfirmPassword(value);
+            clearError("confirmPassword");
+          }}
+        />
+      </Section>
+
+      <Section title="Employment and access">
+        <dl className="tw:flex tw:flex-col">
+          <DetailRow term="Department">{departments.find((item) => item.id === staff.departmentId)?.name ?? "—"}</DetailRow>
+          <DetailRow term="Role">{roles.find((item) => item.id === staff.departmentRoleId)?.name ?? "—"}</DetailRow>
+        </dl>
+        <p className="tw:text-xs tw:text-muted-foreground">Your department, role, and account status are managed by an authorized administrator.</p>
+      </Section>
+
+      <div className="tw:flex tw:justify-end">
+        <Button type="submit" disabled={submitting || (!canEditProfile && !newPassword)} className="tw:min-h-11 tw:w-full tw:sm:min-h-8 tw:sm:w-auto">
+          Save changes
+        </Button>
+      </div>
+      <ConfirmDialog
+        open={confirmSave}
+        title="Save changes to your account?"
+        description="Your profile information will be updated."
+        confirmText="Save"
+        pending={submitting}
+        onConfirm={() => void save()}
+        onClose={() => setConfirmSave(false)}
+      />
+    </form>
   );
 }

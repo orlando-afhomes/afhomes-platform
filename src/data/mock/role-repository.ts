@@ -1,31 +1,18 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { DepartmentRoleRepository } from "@/data/contracts/role-repository";
 import type { AdminModuleId } from "@/modules/identity/permissions";
-import { DELEGABLE_MODULES } from "@/modules/identity/permissions";
+import { AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { DevIdentity } from "@/modules/identity/types";
-import type { DepartmentRole, DepartmentRoleStatus } from "@/modules/organization/types";
-import { hasModuleAccess, resolveEffectiveModules } from "./authorization";
+import type { DepartmentRole, DepartmentRoleOption, DepartmentRoleStatus } from "@/modules/organization/types";
+import { assertCanDelegate, assertCanManageRoleGrants, canManageRoleGrants, hasModuleAccess } from "./authorization";
 import type { MockStore } from "./seed";
+import { appendAuditEvent } from "./audit";
+import { activeRoles } from "./dev-identities";
 import { simulateAsync } from "@/data/contracts/async-options";
-
-const DELEGABLE = new Set<AdminModuleId>(DELEGABLE_MODULES);
 
 /** Actors who may manage roles: explicit delegation right holders (admin/super-admin via "roles" module). */
 function canManageRoles(store: MockStore, identity: DevIdentity): boolean {
   return hasModuleAccess(store, identity, "roles");
-}
-
-/** The acting identity may only delegate modules it effectively holds itself. */
-function assertDelegable(store: MockStore, identity: DevIdentity, moduleIds: AdminModuleId[]) {
-  const granted = resolveEffectiveModules(store, identity);
-  for (const moduleId of moduleIds) {
-    if (!DELEGABLE.has(moduleId)) {
-      throw new Error(`Module "${moduleId}" cannot be delegated through a department role.`);
-    }
-    if (!granted.has(moduleId)) {
-      throw new Error(`Module "${moduleId}" is outside the acting account's authorized scope.`);
-    }
-  }
 }
 
 function normalizeRoleStatus(status: string | undefined): DepartmentRoleStatus {
@@ -49,6 +36,23 @@ export class MockDepartmentRoleRepository implements DepartmentRoleRepository {
     const identity = this.getIdentity();
     if (!canManageRoles(this.store, identity)) return [];
     return this.store.roles.map((role) => ({ ...role, moduleIds: [...role.moduleIds] }));
+  }
+
+  /**
+   * Roles with the actor's authority over each, for Staff assignment and role
+   * actions. Staff/Employees holders may read this to assign permitted roles
+   * (doc 01 §5) without gaining Roles management.
+   */
+  async listForAssignment(options?: MockAsyncOptions): Promise<DepartmentRoleOption[]> {
+    const merged = this.merge(options);
+    await simulateAsync(merged);
+    const identity = this.getIdentity();
+    if (!canManageRoles(this.store, identity) && !hasModuleAccess(this.store, identity, "staff")) return [];
+    return this.store.roles.map((role) => {
+      const manageable = canManageRoleGrants(this.store, identity, role);
+      const departmentActive = this.store.departments.some((dept) => dept.id === role.departmentId && dept.status === "active");
+      return { ...role, moduleIds: [...role.moduleIds], manageable, assignable: manageable && role.status === "active" && departmentActive };
+    });
   }
 
   async getById(id: string, options?: MockAsyncOptions) {
@@ -79,7 +83,7 @@ export class MockDepartmentRoleRepository implements DepartmentRoleRepository {
     if (this.store.roles.some((item) => item.departmentId === input.departmentId && item.name.toLowerCase() === name.toLowerCase())) {
       throw new Error("A role with this name already exists in the department.");
     }
-    assertDelegable(this.store, identity, input.moduleIds);
+    assertCanDelegate(this.store, identity, input.moduleIds);
     const role: DepartmentRole = {
       id: `role-${this.store.roleSequence}`,
       name,
@@ -90,6 +94,17 @@ export class MockDepartmentRoleRepository implements DepartmentRoleRepository {
     };
     this.store.roleSequence += 1;
     this.store.roles.push(role);
+    appendAuditEvent(this.store, {
+      actorId: identity.id,
+      actorRoles: activeRoles(identity),
+      module: "organization",
+      action: AUDIT_ACTIONS.ROLE_CREATED,
+      entityType: "department-role",
+      entityId: role.id,
+      newValue: `${name} [${role.moduleIds.join(",")}]`,
+      outcome: "success",
+      relatedRecordIds: [role.departmentId],
+    });
     return { ...role, moduleIds: [...role.moduleIds] };
   }
 
@@ -104,6 +119,11 @@ export class MockDepartmentRoleRepository implements DepartmentRoleRepository {
     if (!canManageRoles(this.store, identity)) throw new Error("Department role update is not allowed.");
     const role = this.store.roles.find((item) => item.id === id);
     if (!role) throw new Error("Department role not found.");
+    // Any modification (rename, transfer, module change, deactivation,
+    // reactivation) requires authority over everything the role confers.
+    assertCanManageRoleGrants(this.store, identity, role);
+    // Validate everything first; mutate only after every check passes.
+    const next = { name: role.name, departmentId: role.departmentId, moduleIds: role.moduleIds, status: role.status };
     if (input.name !== undefined) {
       const name = input.name.trim();
       if (!name) throw new Error("Role name is required.");
@@ -114,7 +134,7 @@ export class MockDepartmentRoleRepository implements DepartmentRoleRepository {
       ) {
         throw new Error("A role with this name already exists in the department.");
       }
-      role.name = name;
+      next.name = name;
     }
     if (input.departmentId !== undefined && input.departmentId !== role.departmentId) {
       const assigned = this.store.staff.some((item) => item.departmentRoleId === id);
@@ -126,26 +146,52 @@ export class MockDepartmentRoleRepository implements DepartmentRoleRepository {
       if (department.status !== "active") throw new Error("Roles cannot be moved to a deactivated department.");
       if (
         this.store.roles.some(
-          (item) => item.id !== id && item.departmentId === input.departmentId && item.name.toLowerCase() === role.name.toLowerCase(),
+          (item) => item.id !== id && item.departmentId === input.departmentId && item.name.toLowerCase() === next.name.toLowerCase(),
         )
       ) {
         throw new Error("A role with this name already exists in the department.");
       }
-      role.departmentId = input.departmentId;
+      next.departmentId = input.departmentId;
     }
     if (input.moduleIds !== undefined) {
       if (!Array.isArray(input.moduleIds) || input.moduleIds.length === 0) {
         throw new Error("At least one authorized module is required.");
       }
-      // Unchanged grants are not re-validated: keeping existing modules broadens nothing.
+      // Newly added modules must be delegable and held by the actor. Retained
+      // non-delegable legacy ids stay inert (see getRoleEffectiveGrants).
       const current = new Set(role.moduleIds);
-      const next = new Set(input.moduleIds);
-      const unchanged = current.size === next.size && [...next].every((moduleId) => current.has(moduleId));
-      if (!unchanged) assertDelegable(this.store, identity, input.moduleIds);
-      role.moduleIds = [...new Set(input.moduleIds)];
+      assertCanDelegate(this.store, identity, input.moduleIds.filter((moduleId) => !current.has(moduleId)));
+      next.moduleIds = [...new Set(input.moduleIds)];
     }
     if (input.status !== undefined) {
-      role.status = normalizeRoleStatus(input.status);
+      next.status = normalizeRoleStatus(input.status);
+    }
+    // One event per update call, limited to covered identity/grant changes.
+    const changedCovered: Array<[field: string, before: string, after: string]> = [];
+    if (next.name !== role.name) changedCovered.push(["name", role.name, next.name]);
+    if (next.departmentId !== role.departmentId) changedCovered.push(["department", role.departmentId, next.departmentId]);
+    if (next.moduleIds.join(",") !== role.moduleIds.join(",")) {
+      // Order-only resends are not permission changes.
+      const sameSet =
+        next.moduleIds.length === role.moduleIds.length &&
+        next.moduleIds.every((moduleId) => role.moduleIds.includes(moduleId));
+      if (!sameSet) changedCovered.push(["modules", role.moduleIds.join(","), next.moduleIds.join(",")]);
+    }
+    if (next.status !== role.status) changedCovered.push(["status", role.status, next.status]);
+    Object.assign(role, next);
+    if (changedCovered.length > 0) {
+      appendAuditEvent(this.store, {
+        actorId: identity.id,
+        actorRoles: activeRoles(identity),
+        module: "organization",
+        action: AUDIT_ACTIONS.ROLE_UPDATED,
+        entityType: "department-role",
+        entityId: id,
+        previousValue: changedCovered.map(([field, before]) => `${field}:${before}`).join(";"),
+        newValue: changedCovered.map(([field, , after]) => `${field}:${after}`).join(";"),
+        outcome: "success",
+        relatedRecordIds: [next.departmentId],
+      });
     }
     return { ...role, moduleIds: [...role.moduleIds] };
   }
@@ -157,6 +203,7 @@ export class MockDepartmentRoleRepository implements DepartmentRoleRepository {
     if (!canManageRoles(this.store, identity)) throw new Error("Department role deletion is not allowed.");
     const index = this.store.roles.findIndex((item) => item.id === id);
     if (index < 0) throw new Error("Department role not found.");
+    assertCanManageRoleGrants(this.store, identity, this.store.roles[index]);
     const assigned = this.store.staff.filter((item) => item.departmentRoleId === id);
     if (assigned.length > 0) {
       throw new Error(`Role is assigned to ${assigned.length} staff member(s) and cannot be deleted.`);

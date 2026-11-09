@@ -5,6 +5,7 @@ import { getCurrentAccreditationRecord } from "@/modules/accreditation/eligibili
 import type { DevIdentity } from "@/modules/identity/types";
 import { getVisibleMemberIds, getUplineSummaries } from "@/data/mock/scope";
 import { getDescendantIds } from "@/data/mock/scope";
+import type { MockStore } from "@/data/mock/seed";
 
 export type SalesParentValidationResult =
   | { ok: true }
@@ -127,9 +128,9 @@ export type GenealogyTreeNode = {
   totalDescendantCount: number;
 };
 
-export function getAuthorizedGenealogyMemberIds(identity: DevIdentity, store: { members: readonly OrgMember[] }): Set<string> {
-  const visible = getVisibleMemberIds(identity, store as any);
-  const uplines = getUplineSummaries(identity, store as any);
+export function getAuthorizedGenealogyMemberIds(identity: DevIdentity, store: MockStore): Set<string> {
+  const visible = getVisibleMemberIds(identity, store);
+  const uplines = getUplineSummaries(identity, store);
   const ids = new Set(visible);
   for (const upline of uplines) ids.add(upline.id);
   return ids;

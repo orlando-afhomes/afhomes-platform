@@ -12,6 +12,9 @@ import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { resolveEffectiveModules } from "@/data/mock/authorization";
 import { createMockRepositories } from "@/data/mock/repositories";
+import { canReadAuditHistory } from "@/data/mock/audit-repository";
+import { queryKeys } from "@/data/query-keys";
+import type { AuditQuery } from "@/modules/audit/types";
 
 export function useMockRepositories() {
   const store = useMockStore();
@@ -72,6 +75,92 @@ export function useAccounts() {
   });
 }
 
+/** Account Management actions the active identity may take (presentation only). */
+export function useAccountPolicies() {
+  const repositories = useMockRepositories();
+  const { identity } = useDevIdentity();
+  return useQuery({
+    queryKey: ["account-policies", identity.id],
+    queryFn: ({ signal }) => repositories.accounts.getPolicies({ signal }),
+  });
+}
+
+/** Department roles with the active identity's assign/manage authority. */
+export function useRoleOptions() {
+  const repositories = useMockRepositories();
+  const { identity } = useDevIdentity();
+  return useQuery({
+    queryKey: ["role-options", identity.id],
+    queryFn: ({ signal }) => repositories.roles.listForAssignment({ signal }),
+  });
+}
+
+/** Staff record actions and linked-account summaries for the active identity. */
+export function useStaffPolicies() {
+  const repositories = useMockRepositories();
+  const { identity } = useDevIdentity();
+  return useQuery({
+    queryKey: ["staff-policies", identity.id],
+    queryFn: ({ signal }) => repositories.staff.listPolicies({ signal }),
+  });
+}
+
+/** The active identity's own staff record and linked-account summary. */
+export function useMyProfile() {
+  const repositories = useMockRepositories();
+  const { identity } = useDevIdentity();
+  return useQuery({
+    queryKey: ["my-profile", identity.id],
+    queryFn: ({ signal }) => repositories.staff.getSelf({ signal }),
+  });
+}
+
+/**
+ * Read-only, privacy-projected audit history (Admin and Super Admin only).
+ * Partitioned by identity and eligibility; unobserved results are discarded
+ * immediately (gcTime 0) and never carried across key changes. Errors from
+ * authorization or validation are deterministic, so they are not retried.
+ */
+export function useAuditEvents(query?: AuditQuery) {
+  const repositories = useMockRepositories();
+  const store = useMockStore();
+  const { identity } = useDevIdentity();
+  const access = canReadAuditHistory(store, identity) ? "read" : "denied";
+  return useQuery({
+    queryKey: queryKeys.audit.list(identity.id, access, query),
+    queryFn: ({ signal }) => repositories.audit.list(query, { signal }),
+    retry: false,
+    gcTime: 0,
+  });
+}
+
+/** Audited mutations append events, so every cached audit view is refreshed after one succeeds. */
+function invalidateAudit(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: queryKeys.audit.all });
+}
+
+/**
+ * Organization and account records affect each other (linked accounts,
+ * role options, policies), so their mutations refresh every dependent view.
+ */
+function invalidateOrganization(queryClient: ReturnType<typeof useQueryClient>, identityId: string) {
+  invalidateAudit(queryClient);
+  for (const key of ["staff", "staff-policies", "my-profile", "accounts", "account-policies", "departments", "department-roles", "role-options"]) {
+    queryClient.invalidateQueries({ queryKey: [key, identityId] });
+  }
+}
+
+export function useUpdateLinkedAccountStatus() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  const { identity } = useDevIdentity();
+  return useMutation({
+    mutationFn: (input: { staffId: string; status: "suspended" | "deactivated" }) =>
+      repositories.staff.updateLinkedAccountStatus(input.staffId, input.status),
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
+  });
+}
+
 /** System role grants plus linked department-role grants for the active identity. */
 export function useEffectiveModuleIds(): Set<AdminModuleId> {
   const store = useMockStore();
@@ -85,9 +174,7 @@ export function useCreateDepartment() {
   const { identity } = useDevIdentity();
   return useMutation({
     mutationFn: (input: { name: string; status?: "active" | "deactivated" }) => repositories.departments.create(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["departments", identity.id] });
-    },
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
 
@@ -98,9 +185,7 @@ export function useUpdateDepartment() {
   return useMutation({
     mutationFn: (input: { id: string; name?: string; status?: "active" | "deactivated" }) =>
       repositories.departments.update(input.id, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["departments", identity.id] });
-    },
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
 
@@ -124,9 +209,7 @@ export function useCreateDepartmentRole() {
       moduleIds: AdminModuleId[];
       status?: DepartmentRole["status"];
     }) => repositories.roles.create(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["department-roles", identity.id] });
-    },
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
 
@@ -142,10 +225,7 @@ export function useUpdateDepartmentRole() {
       moduleIds?: AdminModuleId[];
       status?: DepartmentRole["status"];
     }) => repositories.roles.update(input.id, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["department-roles", identity.id] });
-      queryClient.invalidateQueries({ queryKey: ["staff", identity.id] });
-    },
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
 
@@ -155,10 +235,7 @@ export function useDeleteDepartmentRole() {
   const { identity } = useDevIdentity();
   return useMutation({
     mutationFn: (id: string) => repositories.roles.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["department-roles", identity.id] });
-      queryClient.invalidateQueries({ queryKey: ["staff", identity.id] });
-    },
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
 
@@ -175,6 +252,8 @@ export function useCreateStaff() {
       email: string;
       avatarUrl?: string | null;
       accountId?: string | null;
+      provisionPendingAccount?: boolean;
+      systemRoleIds?: string[];
       firstName?: string | null;
       middleName?: string | null;
       lastName?: string | null;
@@ -194,11 +273,7 @@ export function useCreateStaff() {
       governmentIdType?: string | null;
       governmentIdNumber?: string | null;
     }) => repositories.staff.create(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["staff", identity.id] });
-      queryClient.invalidateQueries({ queryKey: ["departments", identity.id] });
-      queryClient.invalidateQueries({ queryKey: ["department-roles", identity.id] });
-    },
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
 
@@ -236,24 +311,17 @@ export function useUpdateStaff() {
       governmentIdType?: string | null;
       governmentIdNumber?: string | null;
     }) => repositories.staff.update(input.id, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["staff", identity.id] });
-      queryClient.invalidateQueries({ queryKey: ["departments", identity.id] });
-      queryClient.invalidateQueries({ queryKey: ["department-roles", identity.id] });
-    },
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
 
-export function useCreateAccount() {
+export function useDeleteAccount() {
   const repositories = useMockRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
-    mutationFn: (input: { displayName: string; email: string; roleIds: string[]; departmentId?: string | null }) =>
-      repositories.accounts.create(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts", identity.id] });
-    },
+    mutationFn: (id: string) => repositories.accounts.delete(id),
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
 
@@ -264,9 +332,7 @@ export function useUpdateAccount() {
   return useMutation({
     mutationFn: (input: { id: string; displayName?: string; email?: string; departmentId?: string | null }) =>
       repositories.accounts.update(input.id, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts", identity.id] });
-    },
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
 
@@ -276,9 +342,7 @@ export function useAssignAccountRole() {
   const { identity } = useDevIdentity();
   return useMutation({
     mutationFn: (input: { id: string; role: string }) => repositories.accounts.assignRole(input.id, input.role),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts", identity.id] });
-    },
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
 
@@ -288,9 +352,7 @@ export function useRevokeAccountRole() {
   const { identity } = useDevIdentity();
   return useMutation({
     mutationFn: (input: { id: string; role: string }) => repositories.accounts.revokeRole(input.id, input.role),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts", identity.id] });
-    },
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
 
@@ -301,9 +363,7 @@ export function useUpdateAccountStatus() {
   return useMutation({
     mutationFn: (input: { id: string; status: "pending" | "active" | "suspended" | "deactivated" }) =>
       repositories.accounts.updateStatus(input.id, input.status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts", identity.id] });
-    },
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
 
@@ -325,10 +385,7 @@ export function useDeleteDepartment() {
   const { identity } = useDevIdentity();
   return useMutation({
     mutationFn: (id: string) => repositories.departments.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["departments", identity.id] });
-      queryClient.invalidateQueries({ queryKey: ["staff", identity.id] });
-    },
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
 
@@ -338,11 +395,7 @@ export function useDeleteStaff() {
   const { identity } = useDevIdentity();
   return useMutation({
     mutationFn: (id: string) => repositories.staff.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["staff", identity.id] });
-      queryClient.invalidateQueries({ queryKey: ["departments", identity.id] });
-      queryClient.invalidateQueries({ queryKey: ["department-roles", identity.id] });
-    },
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
 
@@ -376,6 +429,7 @@ export function useCreateSalesNetworkMember() {
   return useMutation({
     mutationFn: (input: CreateSalesNetworkMemberInput) => repositories.members.create(input),
     onSuccess: () => {
+      invalidateAudit(queryClient);
       queryClient.invalidateQueries({ queryKey: ["members", identity.id] });
       queryClient.invalidateQueries({ queryKey: ["sales-network-members", identity.id] });
       queryClient.invalidateQueries({ queryKey: ["sales-network-member"] });
@@ -392,6 +446,7 @@ export function useTransferSalesNetworkMember() {
     mutationFn: (input: { id: string; newParentId: string | null; designation?: Designation; teamName?: string | null }) =>
       repositories.members.transfer(input.id, input.newParentId, input),
     onSuccess: () => {
+      invalidateAudit(queryClient);
       queryClient.invalidateQueries({ queryKey: ["members", identity.id] });
       queryClient.invalidateQueries({ queryKey: ["sales-network-members", identity.id] });
       queryClient.invalidateQueries({ queryKey: ["sales-network-member"] });
@@ -408,6 +463,7 @@ export function useChangeSalesNetworkMemberStatus() {
     mutationFn: (input: { id: string; status: "active" | "inactive" | "suspended" }) =>
       repositories.members.changeStatus(input.id, input.status),
     onSuccess: () => {
+      invalidateAudit(queryClient);
       queryClient.invalidateQueries({ queryKey: ["members", identity.id] });
       queryClient.invalidateQueries({ queryKey: ["sales-network-members", identity.id] });
       queryClient.invalidateQueries({ queryKey: ["sales-network-member"] });
@@ -432,6 +488,7 @@ export function useUpdateSalesNetworkMember() {
     mutationFn: (input: { id: string } & UpdateSalesNetworkMemberInput) =>
       repositories.members.update(input.id, input),
     onSuccess: () => {
+      invalidateAudit(queryClient);
       queryClient.invalidateQueries({ queryKey: ["members", identity.id] });
       queryClient.invalidateQueries({ queryKey: ["sales-network-members", identity.id] });
       queryClient.invalidateQueries({ queryKey: ["sales-network-member"] });
@@ -446,6 +503,7 @@ export function useCreateAccreditedSeller() {
   return useMutation({
     mutationFn: (input: CreateAccreditedSellerInput) => repositories.members.createAccreditedSeller(input),
     onSuccess: () => {
+      invalidateAudit(queryClient);
       queryClient.invalidateQueries({ queryKey: ["members", identity.id] });
       queryClient.invalidateQueries({ queryKey: ["sales-network-members", identity.id] });
       queryClient.invalidateQueries({ queryKey: ["sales-network-member"] });
@@ -464,6 +522,7 @@ export function useUpdateAccreditationStatus() {
     mutationFn: (input: { recordId: string; requested: AccreditationStatusRequest; expectedPrevious?: AccreditationAdminStatus; reason?: string }) =>
       repositories.accreditations.updateStatus(input.recordId, input.requested, undefined, input.expectedPrevious, input.reason),
     onSuccess: () => {
+      invalidateAudit(queryClient);
       queryClient.invalidateQueries({ queryKey: ["accreditations", identity.id] });
       queryClient.invalidateQueries({ queryKey: ["member-accreditations"] });
       queryClient.invalidateQueries({ queryKey: ["accreditation-record"] });
@@ -479,6 +538,7 @@ export function useIssuePendingAccreditation() {
   return useMutation({
     mutationFn: (memberId: string) => repositories.accreditations.issuePendingAccreditation(memberId),
     onSuccess: () => {
+      invalidateAudit(queryClient);
       queryClient.invalidateQueries({ queryKey: ["members", identity.id] });
       queryClient.invalidateQueries({ queryKey: ["accreditations", identity.id] });
       queryClient.invalidateQueries({ queryKey: ["member-accreditations"] });

@@ -1,8 +1,6 @@
-import Swal from "sweetalert2";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ConfigProvider } from "antd";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AdminSidebar } from "./admin-sidebar";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
@@ -15,33 +13,34 @@ vi.mock("next/navigation", async (importOriginal) => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
-afterEach(() => {
-  cleanup();
-  Swal.close();
-});
+afterEach(() => cleanup());
 
-function renderSidebar(collapsed = false) {
+function renderSidebar(collapsed = false, identityId = "dev-admin") {
   return render(
-    <ConfigProvider theme={{ token: { motion: false } }}>
-      <QueryClientProvider client={new QueryClient()}>
-        <MockStoreProvider>
-          <DevIdentityProvider initialIdentityId="dev-admin">
-            <AdminSidebar collapsed={collapsed} onCollapse={() => {}} />
-          </DevIdentityProvider>
-        </MockStoreProvider>
-      </QueryClientProvider>
-    </ConfigProvider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <MockStoreProvider>
+        <DevIdentityProvider initialIdentityId={identityId}>
+          <AdminSidebar collapsed={collapsed} onCollapse={() => {}} />
+        </DevIdentityProvider>
+      </MockStoreProvider>
+    </QueryClientProvider>,
   );
 }
 
 describe("admin sidebar", () => {
-  it("renders brand, navigation landmark, and logout footer without Accounts", () => {
+  it("renders brand, navigation landmark, and logout footer without a separate Accounts entry", async () => {
     renderSidebar();
     expect(screen.getByText("AFHomes")).toBeDefined();
     expect(screen.getByText("Management Platform")).toBeDefined();
     expect(screen.getByRole("navigation", { name: "Administration" })).toBeDefined();
-    expect(screen.getByText("Organization")).toBeDefined();
+    expect(await screen.findByText("Organization")).toBeDefined();
+    expect(screen.queryByText("Accounts and Permissions")).toBeNull();
     expect(screen.getByRole("button", { name: "Log out" })).toBeDefined();
+  });
+
+  it("shows no Accounts entry to HR either", async () => {
+    renderSidebar(false, "dev-hr");
+    await screen.findByText("Organization");
     expect(screen.queryByText("Accounts and Permissions")).toBeNull();
   });
 
@@ -49,14 +48,26 @@ describe("admin sidebar", () => {
     const user = userEvent.setup();
     renderSidebar();
     await user.click(screen.getByRole("button", { name: "Log out" }));
-    expect(await screen.findByText("Log out?")).toBeDefined();
-    await user.click(document.querySelector(".swal2-cancel") as HTMLElement);
-    expect(screen.queryByText("Log out?")).toBeNull();
+    const dialog = await screen.findByRole("alertdialog", { name: "Log out?" });
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
   });
 
-  it("applies the collapsed rail class when collapsed", () => {
+  it("collapses to an icon rail whose links are still named", async () => {
     const { container } = renderSidebar(true);
-    expect(container.querySelector(".ant-layout-sider-collapsed")).not.toBeNull();
-    expect(screen.getByText("AFHomes")).toBeDefined();
+    expect(container.querySelector("aside[data-collapsed='true']")).not.toBeNull();
+    expect(screen.queryByText("AFHomes")).toBeNull();
+    expect(await screen.findByRole("link", { name: "Departments" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Log out" })).toBeDefined();
+  });
+
+  it("expands the Organization group on demand", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+    const group = await screen.findByRole("button", { name: /Organization/ });
+    expect(group).toHaveAttribute("aria-expanded", "false");
+    await user.click(group);
+    expect(group).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("link", { name: "Staff & Access" })).toBeDefined();
   });
 });

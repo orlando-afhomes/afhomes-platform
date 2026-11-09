@@ -36,9 +36,9 @@ This directory (`docs/development/`) contains the authoritative development arch
 | Application | Next.js |
 | Router | Next.js App Router |
 | Frontend | React + TypeScript |
-| Styling | Regular CSS stylesheets per layout, page, and feature |
-| UI foundation | Ant Design 6 |
-| Additional styling | CSS Modules where appropriate |
+| Styling | Tailwind CSS 4 utilities plus namespaced regular CSS per feature |
+| UI foundation | shadcn/ui on Base UI; TanStack Table; Lucide (Ant Design 6 temporary, unmigrated modules only; `AGENTS.md` section 8) |
+| Additional styling | None (no CSS Modules, no new project-authored CSS-in-JS) |
 | Validation | Zod |
 | Client asynchronous state | TanStack Query |
 | Initial frontend data | Browser-scoped in-memory mock store |
@@ -385,7 +385,7 @@ Do not run deployment procedures merely because an example exists in README.
 
 - **File created/updated:** `docs/development/README.md` (rewritten/expanded).
 - **Documentation navigation:** Nine development documents indexed; thirteen business-rule documents referenced; relative links valid; AI agent reading order defined.
-- **Architecture alignment:** Next.js App Router, React/TypeScript, Ant Design/regular CSS, Zod, TanStack Query, REST `/api/v1`, Better Auth direction, Mongoose, Local MongoDB, MongoDB Atlas, DigitalOcean, Docker Compose, HTTPS.
+- **Architecture alignment:** Next.js App Router, React/TypeScript, shadcn/ui/Base UI/Tailwind 4/custom CSS (Ant Design temporary), Zod, TanStack Query, REST `/api/v1`, Better Auth direction, Mongoose, Local MongoDB, MongoDB Atlas, DigitalOcean, Docker Compose, HTTPS.
 - **Business scope:** Organization, Staff, Roles, Sales Network, Genealogy, Accreditation, Customers, VIP Products/Contracts, Sales, Finance, Commissions, Membership, Stay Points, Reports, Audit, Redemption disabled, Services disabled.
 - **Implementation roadmap:** Phases 0–8 included; Phase 2 local MongoDB correction; Phase 7 cloud deployment.
 - **Agent governance:** Required reading order, source-of-truth hierarchy, authorization boundaries, Git safety, historical data protection, security requirements.

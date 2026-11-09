@@ -7,7 +7,8 @@ import {
   resolveLinkedDepartmentRole,
 } from "@/data/mock/authorization";
 import { getDevIdentity } from "@/data/mock/dev-identities";
-import type { DevIdentity } from "@/modules/identity/types";
+import type { DevIdentity, DevRole } from "@/modules/identity/types";
+import { departmentRoleConfersAccess, getDelegableGrants, resolveEmployeeEffectiveModules } from "@/modules/identity/permissions";
 
 /** An admin actor linked to a staff record through the optional `staffId`. */
 function linkedIdentity(overrides: Partial<DevIdentity> = {}): DevIdentity {
@@ -112,6 +113,106 @@ describe("effective module grants", () => {
     const granted = resolveEffectiveModules(store, linkedIdentity({ staffId: "staff-x" }));
     expect(granted.has("super-admin" as never)).toBe(false);
     expect(granted.size).toBe(0);
+  });
+});
+
+describe("display and authorization parity", () => {
+  const sorted = (ids: Iterable<string>) => [...ids].sort();
+
+  it("resolveEmployeeEffectiveModules equals resolveEffectiveModules for equivalent fixtures", () => {
+    const accountStatuses = ["active", "pending", "suspended", "deactivated"] as const;
+    const roleSets: DevRole[][] = [[], ["hr"], ["admin"], ["super_admin"], ["hr", "finance"]];
+    const staffStatuses = ["active", "suspended"] as const;
+    const statuses = ["active", "deactivated"] as const;
+    const roleModules = [["staff", "roles"], ["accounts", "finance", "legacy", "staff"], []];
+    for (const accountStatus of accountStatuses) {
+      for (const systemRoles of roleSets) {
+        for (const staffStatus of staffStatuses) {
+          for (const roleStatus of statuses) {
+            for (const departmentStatus of statuses) {
+              for (const moduleIds of roleModules) {
+                const store = createMockStore();
+                const account = store.accounts.find((item) => item.id === "acct-hr")!;
+                account.status = accountStatus;
+                account.roleIds = systemRoles;
+                store.staff.find((item) => item.id === "staff-1")!.status = staffStatus;
+                const role = store.roles.find((item) => item.id === "role-hr-staff")!;
+                role.status = roleStatus;
+                role.moduleIds = moduleIds;
+                store.departments.find((item) => item.id === "dept-hr")!.status = departmentStatus;
+                const identity = linkedIdentity({ roles: systemRoles, staffId: "staff-1" });
+                const conferred = departmentRoleConfersAccess({ staffStatus, roleStatus, departmentStatus });
+                const display = resolveEmployeeEffectiveModules({
+                  accountStatus,
+                  systemRoles,
+                  departmentRoleModuleIds: conferred ? moduleIds : null,
+                });
+                expect(sorted(display)).toEqual(sorted(resolveEffectiveModules(store, identity)));
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
+  it("treats a missing linked account as no access in both evaluators", () => {
+    const store = createMockStore();
+    store.staff.find((item) => item.id === "staff-1")!.accountId = "acct-missing";
+    const identity = linkedIdentity({ roles: ["hr"], staffId: "staff-1" });
+    expect(resolveEffectiveModules(store, identity).size).toBe(0);
+    expect(resolveEmployeeEffectiveModules({ accountStatus: null, systemRoles: ["hr"], departmentRoleModuleIds: ["staff"] })).toEqual([]);
+  });
+
+  it("keeps Super Admin system-role grants and drops non-delegable department-role ids", () => {
+    const display = resolveEmployeeEffectiveModules({ accountStatus: "active", systemRoles: ["super_admin"], departmentRoleModuleIds: ["finance", "legacy"] });
+    expect(display).toEqual(expect.arrayContaining(["accounts", "roles", "staff", "vip-products"]));
+    expect(display).not.toContain("finance");
+    expect(getDelegableGrants(["accounts", "finance", "staff", "staff", "legacy"])).toEqual(["staff"]);
+  });
+});
+
+describe("S3-A effective access restrictions", () => {
+  it("ignores non-delegable module grants stored on department roles", () => {
+    const store = createMockStore();
+    // staff-2 holds role-fin-staff, which stores the non-delegable "finance" grant.
+    const financeStaff = resolveEffectiveModules(store, linkedIdentity({ staffId: "staff-2" }));
+    expect(financeStaff.has("finance")).toBe(false);
+    expect(financeStaff.has("dashboard")).toBe(true);
+    // role-admin stores the now non-delegable "accounts" grant.
+    store.staff.find((item) => item.id === "staff-3")!.departmentId = "dept-admin";
+    store.staff.find((item) => item.id === "staff-3")!.departmentRoleId = "role-admin";
+    const adminRoleHolder = resolveEffectiveModules(store, linkedIdentity({ staffId: "staff-3" }));
+    expect(adminRoleHolder.has("accounts")).toBe(false);
+    expect(adminRoleHolder.has("roles")).toBe(true);
+  });
+
+  it.each(["suspended", "deactivated", "pending"] as const)("removes all protected access when the linked account is %s", (status) => {
+    const store = createMockStore();
+    expect(hasModuleAccess(store, getDevIdentity("dev-hr"), "staff")).toBe(true);
+    store.accounts.find((item) => item.id === "acct-hr")!.status = status;
+    expect(resolveEffectiveModules(store, getDevIdentity("dev-hr")).size).toBe(0);
+    expect(hasModuleAccess(store, getDevIdentity("dev-hr"), "departments")).toBe(false);
+  });
+
+  it("removes access through the repository suspension path", async () => {
+    const store = createMockStore();
+    const adminRepos = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    await adminRepos.accounts.updateStatus("acct-hr", "suspended");
+    const hrRepos = createMockRepositories(store, () => getDevIdentity("dev-hr"));
+    expect(await hrRepos.staff.list()).toEqual([]);
+    await expect(hrRepos.departments.create({ name: "Blocked" })).rejects.toThrow("not allowed");
+  });
+
+  it("treats a missing linked account as blocked", () => {
+    const store = createMockStore();
+    store.staff.find((item) => item.id === "staff-1")!.accountId = "acct-missing";
+    expect(resolveEffectiveModules(store, getDevIdentity("dev-hr")).size).toBe(0);
+  });
+
+  it("keeps identity-status gating for identities without a linked account", () => {
+    const store = createMockStore();
+    expect(hasModuleAccess(store, getDevIdentity("dev-finance"), "finance")).toBe(true);
   });
 });
 

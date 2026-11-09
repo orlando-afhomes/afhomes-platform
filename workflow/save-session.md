@@ -108,83 +108,62 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 ## Part B — Latest Session Snapshot
 
 <!-- SESSION_SNAPSHOT_START -->
-
 # Latest Session Snapshot
 
-Migrated from the retired `workflow/session.md` (its last verified date was 2026-10-29) and checked against live Git state on 2026-11-06. Where the two disagree, the live state below wins.
-
 ## 1. Session Metadata
-- Saved at: 2026-11-06 (live `/save` run; Git state re-read at save time)
-- Repository: afhomes-platform
+- Saved at: 2026-11-09
+- Repository: afhomes-platform (remote `https://github.com/orlando-afhomes/afhomes-platform.git`)
 - Branch: develop
-- HEAD: 5e238ac (`frontend: polished sales network and organization ui`)
-- Session objective: finish the session-handoff workflow (`/save` and `/load`), relocate the audit, and clean `workflow/`. Workflow cleanup is complete; `/save` was run once to verify the snapshot path.
-- Development phase: Phase 05–06 frontend prototype. Mock data only. No backend, auth, database, or deployment.
+- HEAD: 6e1e031; nothing staged (`git diff --cached` empty); 252 status entries, 86 untracked (HEAD and counts unchanged by this session's work)
+- Session objective: /load, final QA and business-rule reconciliation review (read-only, 8-agent workflow), then C1 integrity corrections, then C2 owner-decided restrictions.
+- Development phase: frontend prototype with mock data; P0-P12 implemented; C1 and C2 done; comprehensive QA and further decisions pending. Only the owner declares frontend completion.
+- Context note: model switched Sonnet to Opus to Sonnet by the user; Ultracode OFF for builds. The plan file `C:\Users\SSD-ORLANDO\.claude\plans\pasted-content-id-5072-afhomes-agile-sky.md` now holds the C2 plan; the earlier review register was overwritten, so its open items are summarized in section 6.
 
 ## 2. Current Project State
-- Stack: Next.js App Router, React, TypeScript, Ant Design 6, regular namespaced CSS, TanStack Query, Vitest. Zod installed, not yet used in `src/`.
-- Directories: `src/app`, `src/panels`, `src/modules`, `src/shared`, `src/data` (mock repositories and contracts), `src/theme`. No `src/server`.
-- Shared form system in `src/shared/forms/`: typed field components, formatting, validation, barrel `@/shared/forms`. Business-rule free.
-- Sales Network and Staff UI wired to shared components. Staff form has split names, suffix, address, and government ID. Reusable `ProfilePhotoUploader` and `SuffixField`.
-- Reusable `DirectoryTable`; table rows open detail views.
-- `showFieldErrors()` modal lists every invalid field on the major forms.
-- Cross-classification transfers (IST ↔ OST) implemented in the sales-network repository; blocks moves that would orphan a downline.
-- Current focus: owner review of committed work and of the uncommitted workflow changes.
+- Verified: C1 and C2 changes are in the working tree; `tsc` clean, lint 0 errors (2 old warnings), build succeeds, full vitest 528/530 (only the known flaky staff-page test failed under load; 20/20 alone).
+- Central seed `data/database/afhomes-seed.js`; business repositories in `src/data/mock/`; domain rules in `src/modules/*`; admin pages in `src/panels/admin/pages/`.
+- New this session: `src/modules/commissions/rules.ts` (40% payout release), contract cancellation types (`CANCELLATION_GROUNDS`, `ContractCancellation`), `ownerHold` on payment schemes, audit actions CONTRACT_CANCELLATION_REQUESTED/DECLINED, SALE_CANCELLED, PAYMENTS_FORFEITED, MEMBERSHIP_CANCELLED, `holdUnpaidCommissions` in `business-effects.ts`.
 
 ## 3. Important Decisions
-- Owner-approved: frontend-first with mock data that resets on refresh. Nothing persists in browser storage or servers.
-- Owner-approved: AI agents never stage, commit, push, merge, reset, or deploy. Only the owner does these (AGENTS.md).
-- Owner-approved: formal gates (lint, full test, typecheck, build, browser QA) are deferred until the full frontend prototype is complete.
-- Behavior notes flagged for review: non-admins get no status action on non-active members, and direct active→Suspended is no longer offered. Cross-classification transfers keep the original accreditation records, because no reclassification policy exists. The Edit member modal does not change the profile photo.
-- Restrictions: the Phase 07 IST/OST portals are planning only. Do not implement them.
+- Owner rulings (2026-11-09): OD-1 Super Admin keeps Finance operations (counts as authorized Finance personnel; docs 07/08 to be amended in P13). OD-2 cancellation with forfeiture on Reservation Agreement grounds, two-step (Admin requests, Finance confirms, requester cannot decide). OD-4 adopt the AFhomes 40% stage-1 payout threshold (recording a payout needs 40% of contract value Finance-verified). OD-11 Spot Cash unavailable (price pending; owner hold). OD-12 reservation fee non-refundable (reversal allowed).
+- Earlier interim choices still need confirmation: sale confirms at reservation + first installment (D25); Admin/Super Admin activate memberships; manual RA number; public verification omits holder name; Gold held on 390,000 vs 780,000; Move A/B1/B2 unusable; Non-Standard held; overpayments rejected; no fractional commissions.
+- Source classification: A1/A3/A5/B1/B3/B5/B7 are JA&D; C2 header covers both companies; A2/A4/A6/A7 are AFhomes workbook material not adopted into canon except as ruled; Closed Deal (25%) and BA/PA/PB are engagement statistics, not sales commissions; DRI goes to the recruiting referrer.
+- Restrictions: no Git writes by agents; AGENTS.md, CLAUDE.md and docs edits need owner authorization (P13 not done).
 
 ## 4. Completed Work
-- Committed in `5e238ac` (owner-committed 2026-10-28): the shared forms, Sales Network and Staff UI, directory tables, validation UX, transfer workflows, and profile editing listed above.
-- Files: `src/shared/forms/`, `src/modules/sales-network/`, `src/modules/organization/`, `src/panels/admin/`, `src/data/`.
-- Verification (2026-10-29, targeted only): vitest green for staff (11), departments (14), roles (13), accounts (9), my-account (7), sales-network repo, mock store, and genealogy (59).
-- Workflow work this task: `/save` and `/load` skills registered in `.claude/skills/`; workflow files `save-session.md` and `load-session.md`; `graphidian/` and `opencode/` deleted; `docs/audits/afhomes-v3-project-audit.md` created as a copy of the audit.
+- Review: 8-agent read-only review produced the decision register, blockers and QA plan (full text no longer saved; see section 6).
+- C1 (tested in `business-flow.test.ts`): payout steps re-check Confirmed sale; initiated unconfirmed payouts preserved, flagged and not cancellable; no payment verification on cancelled contracts; no verification by the person who corrected a returned payment; RA must be exactly 4 digits, finalized contract only, previous/new RA audited; public `/verify` checks expiry for IST and OST and current record only; blocked linked accounts lose business authority (`business-base.ts`); finalize and Customer ID audit before/after fixed; `public.css` imported on `/verify` and `/register/ost`.
+- C2: reservation refund blocked (repository and dialog); Spot Cash seed set pending/unavailable with `ownerHold`; 40% payout gate; two-step cancellation (repository, hooks, contract page, Finance "Cancellation requests" tab). 7 new tests (6 in business-flow, 1 in business-pages); 3 payout tests now verify installment MA2 first; one C1 test sets the sale status directly.
+- Files touched: contract, payment, commission, product, customer and accreditation repositories; business-base; business-effects; contract-detail, finance and commissions pages; payment-actions; permissions comments; seed; contract, audit and vip types; business-queries.
 
 ## 5. Git Working Tree
-- Staged changes: none.
-- Unstaged changes (`git diff --stat`: 14 files, 109 insertions, 1983 deletions):
-  - `AGENTS.md`: modified (governance condensation; 109 insertions, 747 deletions; reference updates to the session snapshot).
-  - `workflow/graphidian/*` and `workflow/opencode/*` (12 files): deleted. Recoverable from HEAD.
-  - `workflow/session.md`: deleted (its uncommitted edits were migrated into this snapshot, then the file was removed).
-- Untracked files: `.claude/skills/save/SKILL.md`, `.claude/skills/load/SKILL.md`, `CLAUDE.md`, `workflow/load-session.md`, `workflow/save-session.md`, `docs/audits/afhomes-v3-project-audit.md` (relocated copy of the former `workflow/claude/project-audit.md`, which was removed after a byte-identical check).
-- Deleted or renamed: the deletions above. Git records no renames.
-- Origin: all listed changes came from this session's authorized work (governance condensation, workflow cleanup). No unrelated changes were found at save time.
-- Unfinished work: none in progress. Owner decides what to commit. Do not auto-commit.
+- Staged: none.
+- Unstaged and untracked: 252 entries (86 untracked) mixing earlier sessions (Ant Design removal, P0-P12) and this session's C1/C2 edits; origin not separated per file.
+- Deleted files in the tree come from the earlier Ant Design removal, not this session.
+- Unfinished work: none in progress.
 
 ## 6. Pending Tasks
-- Owner to review and commit the uncommitted changes listed in section 5.
-- Formal gates, deferred by owner: `npm run lint`, `npm test`, `npx tsc --noEmit`, `npm run build`, browser QA.
-- Known baseline failures (from the project audit, `docs/audits/afhomes-v3-project-audit.md`): lint errors, typecheck errors (partly from stale `.next` types), and one load-sensitive full-suite test in staff. Not re-verified this session.
-- Open policy items: referral-code issuance, OST applicant fields, submission and approval authority, account provisioning, AAO issuance timing, renewal operations, portal access on expired accreditation, legacy fixture migration, production domain and sizing.
-- Unresolved conflict: module-level versus operation-level permissions (doc 01 versus code). Owner decision required.
-- Blockers: none that stop frontend work.
+- Owner decisions open: OD-5 activation role and second approver; OD-6 RA vs Customer ID; OD-7 RA scope and reuse after cancellation; OD-8 Card Claim vs Activation Date cutover and legacy IDs; OD-9 commission recipients, rates, aggregate cap, referrer; OD-10 engagement pay scope; OD-13 public verification fields and suspended-account wording; OD-14 `/register/ost` vs doc 02 section 4.2; OD-15 P10 Customer Lookup; OD-16 smaller items (Silver hold, rounding, overpayment, audit amount visibility, who corrects a returned payment, maker-checker); refund or waiver after forfeiture.
+- Remaining work: C4 test hardening (staff-page 5000 ms timeouts, financial idempotency and audit-event assertions, identity x page matrix including dev-svd-b); C5 accessibility (TabBar ARIA, row keyboard access, dialog focus return, combobox size, loading role=status); returned-payment correction UI missing; paid-commission recovery flag; P13 doc reconciliation (Ant Design text, documentation-only claims, OD-1/2/4/11/12 rulings in docs 05/07/08) needs authorization.
 
 ## 7. Verification State
-- Tests: targeted suites passed on 2026-10-29. Full suite not run this session.
-- Lint: not run this session.
-- Typecheck: not run this session.
-- Build: not run this session. `.next/` may be stale (about 1.8 GB). Delete it only with owner approval.
-- Browser QA: not run this session.
-- Known failures: see section 6.
-- Checks not performed: all of the above for this session. Structural checks, `git status` and `git diff --stat` only. The `/save` run did not run the project's test or build commands.
+- Tests: full `npx vitest run` 528/530 (2 staff-page timeouts under load, 20/20 alone); business-flow 30/30; business-pages and seed-integrity 23/23.
+- Lint: 0 errors, 2 pre-existing warnings. Typecheck: clean. Build: succeeded.
+- Browser QA: not performed this session (only Super Admin was checked earlier). Not performed: role matrix, accessibility pass, mobile sheet, finance-to-activation chain in browser.
+- Known failures: flaky staff-page test.
 
 ## 8. Next Session Instructions
-- Recommended first action: run `/load`, then have the owner decide whether to commit the uncommitted changes.
-- Relevant files: `AGENTS.md`, `CLAUDE.md`, `docs/audits/afhomes-v3-project-audit.md` (historical; not authority), `docs/business-rules/01-roles-and-permissions.md`, `src/modules/identity/permissions.ts`.
-- Required approvals: any commit, push, or deletion of `.next/`; the permission-model decision; any frontend change beyond the approved scope.
-- Warnings: do not treat the audit as current authority. Browser refresh resets mock data. A dev server adds an `AGENTS.md` append block (remove it). The `workflow/session.md` file was retired by this task.
+- Recommended first action: run `/load`, get owner decisions on the open OD list, then do the browser QA pass (role matrix, financial chain including cancellation with forfeiture, public pages) and C4/C5 fixes.
+- Relevant files: `src/data/mock/{contract,payment,commission,business-effects,business-base}.ts`, `src/modules/commissions/rules.ts`, `src/panels/admin/pages/{contract-detail,finance,commissions}-page.tsx`, `data/database/afhomes-seed.js`, `src/data/mock/business-flow.test.ts`.
+- Required approvals: any new milestone, P13 doc edits, dependency changes, Git writes (owner only).
+- Warnings: do not run build and tests concurrently; use `tw:` prefix; memoize DataTable columns; shell heredocs with apostrophes break (use Write tool); stop any `next start` server on port 3107; each UI test render creates its own mock store.
 
 ## 9. Execution Recommendation
-- Phase: Verification (session handoff set up; no implementation pending)
-- Recommended next mode: Plan, for the owner's commit decision and any next frontend task
-- Recommended model: Haiku 5.5 for `/load`; Sonnet 5.5 for any substantive frontend work
-- Effort: low for `/load`; medium for frontend work
+- Phase: QA
+- Recommended next mode: default (ask before edits)
+- Recommended model: Sonnet 5.5
+- Effort: high
 - Ultracode: OFF
-- Token optimization: `/load` reads only the snapshot, `CLAUDE.md`, `package.json` and targeted files; the snapshot is replaced on each save, not appended
-- Reason: the handoff system is in place, and the next real checkpoint is a live `/load` in a new session.
-
+- Token optimization: one role-by-role browser pass, targeted tests per fix, one full-suite run at the end.
+- Reason: remaining work is verification and small fixes once the owner decides the open items.
 <!-- SESSION_SNAPSHOT_END -->

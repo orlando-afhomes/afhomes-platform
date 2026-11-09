@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Button, Card, Descriptions } from "antd";
-import { ArrowRightOutlined } from "@ant-design/icons";
+import { ArrowRight } from "lucide-react";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMembers } from "@/data/queries";
-import { PageContainer } from "@/shared/components/layout/page-container";
+import { PageContainer } from "@/shared/components/modern/page-container";
+import { DetailList, DetailRow } from "@/shared/components/modern/detail-list";
+import { buttonVariants } from "@/shared/ui/button";
+import { cn } from "@/shared/lib/utils";
 import { SalesNetworkPanel } from "../components/sales-network-panel";
 
 export function SalesNetworkOverviewPage() {
@@ -15,21 +17,20 @@ export function SalesNetworkOverviewPage() {
 
   return (
     <PageContainer>
-      <div className="sales-network-overview">
+      <div className="tw:flex tw:flex-col tw:gap-4">
         <SalesNetworkPanel />
         {currentMember ? (
-          <Card title="My referral code" className="sales-network-overview__referral">
-            <Descriptions column={1} size="small">
-              <Descriptions.Item label="Code">{currentMember.referralCode ?? "—"}</Descriptions.Item>
-              <Descriptions.Item label="Status">{currentMember.referralCode ? "Existing code" : "No code assigned"}</Descriptions.Item>
-            </Descriptions>
-          </Card>
+          <section aria-label="My referral code" className="tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4">
+            <h2 className="tw:mb-2 tw:text-base tw:font-semibold">My referral code</h2>
+            <DetailList>
+              <DetailRow term="Code">{currentMember.referralCode ?? "—"}</DetailRow>
+              <DetailRow term="Status">{currentMember.referralCode ? "Existing code" : "No code assigned"}</DetailRow>
+            </DetailList>
+          </section>
         ) : null}
-        <div className="sales-network-overview__actions">
-          <Link href="/admin/sales-network/members">
-            <Button type="primary" icon={<ArrowRightOutlined />}>
-              Open members directory
-            </Button>
+        <div>
+          <Link href="/admin/sales-network/members" className={cn(buttonVariants({}), "tw:min-h-11 tw:sm:min-h-8")}>
+            Open members directory <ArrowRight aria-hidden="true" />
           </Link>
         </div>
       </div>

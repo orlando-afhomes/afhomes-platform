@@ -1,19 +1,17 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
-import { Avatar, Dropdown, Layout } from "antd";
-import type { MenuProps } from "antd";
-import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
-import { ChevronDown, Menu as MenuIcon } from "lucide-react";
+import { ChevronDown, LogOut, Menu as MenuIcon, User } from "lucide-react";
 import { AdminMobileNav } from "./admin-mobile-nav";
 import { useLogout } from "../use-logout";
 import { getRoleDisplayLabel } from "../role-label";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { activeRoles } from "@/data/mock/dev-identities";
-import { useMemo } from "react";
-
-const { Header } = Layout;
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
+import { Button } from "@/shared/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
 
 function initials(name: string) {
   return name
@@ -24,8 +22,6 @@ function initials(name: string) {
     .join("");
 }
 
-// Layout-critical values use the style prop: antd injects its component
-// styles at runtime after static CSS, so a module class would lose ties.
 export function AdminHeader({
   collapsed,
   onCollapse,
@@ -35,7 +31,7 @@ export function AdminHeader({
 }) {
   const { identity } = useDevIdentity();
   const store = useMockStore();
-  const logout = useLogout();
+  const { logout, dialog } = useLogout();
   const roles = useMemo(() => activeRoles(identity), [identity]);
 
   const avatarUrl = useMemo(() => {
@@ -43,68 +39,53 @@ export function AdminHeader({
     return store.staff.find((member) => member.id === identity.staffId)?.avatarUrl ?? null;
   }, [store, identity]);
 
-  const menuItems: MenuProps["items"] = [
-    {
-      key: "account",
-      label: <Link href="/admin/account">My Account</Link>,
-      icon: (
-        <span aria-hidden="true" className="admin-header__menu-icon">
-          <UserOutlined />
-        </span>
-      ),
-    },
-    {
-      key: "logout",
-      danger: true,
-      label: <span className="admin-header__menu-logout">Log out</span>,
-      icon: (
-        <span aria-hidden="true" className="admin-header__menu-icon">
-          <LogoutOutlined />
-        </span>
-      ),
-      onClick: () => logout(),
-    },
-  ];
-
   return (
-    <Header
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        height: 64,
-        padding: "0 16px",
-        background: "#fbfaf7",
-        borderBottom: "1px solid #e5e0d4",
-      }}
-    >
+    <header className="tw:sticky tw:top-0 tw:z-20 tw:flex tw:h-16 tw:shrink-0 tw:items-center tw:gap-2 tw:border-b tw:border-border tw:bg-background tw:px-4">
       <AdminMobileNav />
-      <button
+      <Button
         type="button"
-        aria-label="Open navigation"
-        className="admin-header__collapse-btn"
+        variant="ghost"
+        size="icon"
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        aria-pressed={collapsed}
+        className="tw:hidden tw:md:inline-flex"
         onClick={() => onCollapse(!collapsed)}
       >
-        <MenuIcon className="size-4" />
-      </button>
-      <div className="admin-header__profile">
-        <Dropdown
-          menu={{ items: menuItems }}
-          trigger={["click"]}
-          placement="bottomRight"
-        >
-          <button type="button" className="admin-header__profile-button" aria-label={`Account options for ${identity.displayName}`}>
-            <Avatar size={32} src={avatarUrl ?? undefined} className="admin-header__profile-avatar">
-              {avatarUrl ? null : initials(identity.displayName)}
+        <MenuIcon aria-hidden="true" />
+      </Button>
+      <div className="tw:ml-auto tw:flex tw:items-center">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <button
+                type="button"
+                aria-label={`Account options for ${identity.displayName}`}
+                className="tw:inline-flex tw:min-h-11 tw:items-center tw:gap-2.5 tw:rounded-lg tw:px-2 tw:py-1 tw:text-left tw:hover:bg-muted tw:focus-visible:ring-3 tw:focus-visible:ring-ring/50 tw:focus-visible:outline-none"
+              />
+            }
+          >
+            <Avatar className="tw:size-8 tw:text-xs">
+              {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
+              <AvatarFallback>{initials(identity.displayName)}</AvatarFallback>
             </Avatar>
-            <span className="admin-header__profile-text">
-              <span className="admin-header__profile-name">{identity.displayName}</span>
-              <span className="admin-header__profile-role">{getRoleDisplayLabel(roles)}</span>
+            <span className="tw:hidden tw:min-w-0 tw:flex-col tw:leading-tight tw:sm:flex">
+              <span className="tw:text-[13px] tw:font-semibold tw:whitespace-nowrap tw:text-foreground">{identity.displayName}</span>
+              <span className="tw:text-[11px] tw:whitespace-nowrap tw:text-muted-foreground">{getRoleDisplayLabel(roles)}</span>
             </span>
-            <ChevronDown className="size-4 admin-header__profile-chevron" aria-hidden />
-          </button>
-        </Dropdown>
+            <ChevronDown aria-hidden="true" className="tw:hidden tw:size-4 tw:shrink-0 tw:text-muted-foreground tw:sm:block" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="tw:w-48">
+            <DropdownMenuItem render={<Link href="/admin/account" />} className="tw:min-h-11 tw:sm:min-h-8">
+              <User aria-hidden="true" /> My Account
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onClick={logout} className="tw:min-h-11 tw:sm:min-h-8">
+              <LogOut aria-hidden="true" /> Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-    </Header>
+      {dialog}
+    </header>
   );
 }

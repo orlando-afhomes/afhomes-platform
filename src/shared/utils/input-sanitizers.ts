@@ -86,6 +86,12 @@ export function formatTin(value: string): string {
   return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6, 9)}-${digits.slice(9)}`;
 }
 
+/** Digits-only TIN for storage. undefined stays "not provided", null stays null, blank becomes null. */
+export function normalizeTin(value: string | null | undefined): string | null | undefined {
+  if (value === undefined || value === null) return value;
+  return value.replace(/\D/g, "") || null;
+}
+
 /** Validate a TIN (9 or 12 digits). */
 export function isValidTin(value: string): boolean {
   const digits = value.replace(/\D/g, "");

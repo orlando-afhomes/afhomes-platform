@@ -98,12 +98,22 @@ describe("role-aware permissions", () => {
     expect(hasOperationPermission(identity, "finance.verify")).toBe(false);
   });
 
-  it("denies unresolved modules for every role", () => {
-    const identity = getDevIdentity("dev-super-admin");
-    expect(isModuleGranted(identity, "audit-logs")).toBe(false);
-    expect(isModuleGranted(identity, "customers")).toBe(false);
-    expect(isModuleGranted(identity, "reports")).toBe(false);
-    expect(isModuleGranted(identity, "accreditation")).toBe(false);
+  it("keeps parent and unresolved scopes denied while business modules follow the interim grants", () => {
+    const admin = getDevIdentity("dev-super-admin");
+    expect(isModuleGranted(admin, "accreditation")).toBe(false);
+    expect(isModuleGranted(admin, "organization")).toBe(false);
+    for (const moduleId of ["customers", "sales", "commissions", "membership", "stay-points", "reports", "audit-logs"] as const) {
+      expect(isModuleGranted(admin, moduleId)).toBe(true);
+    }
+    const hr = getDevIdentity("dev-hr");
+    expect(isModuleGranted(hr, "customers")).toBe(false);
+    expect(isModuleGranted(hr, "audit-logs")).toBe(false);
+    const ost = getDevIdentity("dev-ost-a1");
+    expect(isModuleGranted(ost, "audit-logs")).toBe(false);
+    expect(isModuleGranted(ost, "finance")).toBe(false);
+    expect(hasOperationPermission(ost, "customers.manage")).toBe(false);
+    expect(hasOperationPermission(ost, "payments.submit")).toBe(true);
+    expect(hasOperationPermission(getDevIdentity("dev-admin"), "finance.verify")).toBe(false);
   });
 
   it("grants super admin protected operations", () => {

@@ -3,7 +3,19 @@ import type { AccreditationAdminStatus, AccreditationRecord } from "@/modules/ac
 
 export type AccreditationStatusRequest = "pending" | "active" | "cancel" | "expired";
 
+/** Restricted public projection: no holder name, contact or internal ids. "Valid until" only for OST. */
+export type PublicAccreditationResult = {
+  aaNumber: string;
+  classification: "IST" | "OST";
+  validUntil: string | null;
+};
+
 export interface AccreditationRepository {
+  /**
+   * Public verification by exact official AA number only. Returns null with no
+   * distinguishing detail for malformed, unknown, inactive or expired numbers.
+   */
+  verifyPublic(aaNumber: string, options?: MockAsyncOptions): Promise<PublicAccreditationResult | null>;
   list(options?: MockAsyncOptions): Promise<AccreditationRecord[]>;
   getById(id: string, options?: MockAsyncOptions): Promise<AccreditationRecord | null>;
   listByMember(memberId: string, options?: MockAsyncOptions): Promise<AccreditationRecord[]>;

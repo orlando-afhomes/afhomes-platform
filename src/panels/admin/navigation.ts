@@ -11,7 +11,7 @@ export type AdminNavItem = {
   children?: AdminNavItem[];
   /**
    * Presentation-only: hidden from the sidebar and mobile Drawer, while the
-   * route, permission grants, and breadcrumbs stay intact (e.g. Accounts).
+   * route, permission grants, and breadcrumbs stay intact.
    */
   hideFromNav?: boolean;
 };
@@ -27,26 +27,28 @@ export const adminNavigation: AdminNavItem[] = [
     available: true,
     children: [
       { id: "departments", label: "Departments", href: "/admin/organization/departments", available: true },
-      { id: "roles", label: "Roles", href: "/admin/organization/roles", available: true },
-      { id: "staff", label: "Staff", href: "/admin/organization/staff", available: true },
+      { id: "roles", label: "Roles & Permissions", href: "/admin/organization/roles", available: true },
+      // Staff & Access also hosts account administration; its account
+      // columns and actions are gated by the non-delegable "accounts" grant.
+      { id: "staff", label: "Staff & Access", href: "/admin/organization/staff", available: true },
     ],
   },
-  // Accounts stays implemented and permission-guarded at /admin/accounts,
-  // but the owner-approved primary navigation no longer lists it.
+  // Compatibility entry point only: /admin/accounts forwards authorized users to
+  // the Account-only view of Staff & Access. Never listed in the sidebar or Drawer.
   { id: "accounts", label: "Accounts and Permissions", href: "/admin/accounts", available: true, hideFromNav: true },
   { id: "sales-network", label: "Sales Network", href: "/admin/sales-network", available: true, children: [
     { id: "sales-network-members", label: "Members", href: "/admin/sales-network/members", available: true },
     { id: "sales-network-genealogy", label: "Genealogy", href: "/admin/sales-network/genealogy", available: true },
   ] },
-  { id: "customers", label: "Customers", href: "/admin/customers", available: false },
-  { id: "vip-products", label: "VIP Products and Contracts", href: "/admin/vip-products", available: false },
-  { id: "sales", label: "Sales", href: "/admin/sales", available: false },
-  { id: "finance", label: "Finance", href: "/admin/finance", available: false },
-  { id: "commissions", label: "Commissions", href: "/admin/commissions", available: false },
-  { id: "membership", label: "Membership", href: "/admin/membership", available: false },
-  { id: "stay-points", label: "Stay Points", href: "/admin/stay-points", available: false },
-  { id: "reports", label: "Reports", href: "/admin/reports", available: false },
-  { id: "audit-logs", label: "Audit Logs", href: "/admin/audit-logs", available: false },
+  { id: "customers", label: "Customers", href: "/admin/customers", available: true },
+  { id: "vip-products", label: "VIP Products and Contracts", href: "/admin/vip-products", available: true },
+  { id: "sales", label: "Sales", href: "/admin/sales", available: true },
+  { id: "finance", label: "Finance", href: "/admin/finance", available: true },
+  { id: "commissions", label: "Commissions", href: "/admin/commissions", available: true },
+  { id: "membership", label: "Membership", href: "/admin/membership", available: true },
+  { id: "stay-points", label: "Stay Points", href: "/admin/stay-points", available: true },
+  { id: "reports", label: "Reports", href: "/admin/reports", available: true },
+  { id: "audit-logs", label: "Audit Logs", href: "/admin/audit-logs", available: true },
 ];
 
 export function normalizePath(path: string | null) {

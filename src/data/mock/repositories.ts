@@ -5,6 +5,20 @@ import type { AccountRepository } from "@/data/contracts/account-repository";
 import type { DepartmentRepository } from "@/data/contracts/department-repository";
 import type { DepartmentRoleRepository } from "@/data/contracts/role-repository";
 import type { StaffRepository } from "@/data/contracts/staff-repository";
+import type { ContractRepository } from "@/data/contracts/contract-repository";
+import type { SaleRepository } from "@/data/contracts/sale-repository";
+import type { PaymentRepository } from "@/data/contracts/payment-repository";
+import type { MembershipRepository } from "@/data/contracts/membership-repository";
+import type { CommissionRepository } from "@/data/contracts/commission-repository";
+import type { StayPointsRepository } from "@/data/contracts/stay-points-repository";
+import { MockContractRepository } from "./contract-repository";
+import { MockSaleRepository } from "./sale-repository";
+import { MockPaymentRepository } from "./payment-repository";
+import { MockMembershipRepository } from "./membership-repository";
+import { MockCommissionRepository } from "./commission-repository";
+import { MockStayPointsRepository } from "./stay-points-repository";
+import type { AuditRepository } from "@/data/contracts/audit-repository";
+import { MockAuditRepository } from "./audit-repository";
 import type { DevIdentity } from "@/modules/identity/types";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { AccreditationRepository } from "@/data/contracts/accreditation-repository";
@@ -30,6 +44,13 @@ export type MockRepositories = {
   staff: StaffRepository;
   accreditations: AccreditationRepository;
   registrations: RegistrationRepository;
+  audit: AuditRepository;
+  contracts: ContractRepository;
+  sales: SaleRepository;
+  payments: PaymentRepository;
+  memberships: MembershipRepository;
+  commissions: CommissionRepository;
+  stayPoints: StayPointsRepository;
 };
 
 export function createMockRepositories(
@@ -40,12 +61,19 @@ export function createMockRepositories(
   return {
     members: new MockMemberRepository(store, getIdentity, asyncOptions),
     customers: new MockCustomerRepository(store, getIdentity, asyncOptions),
-    products: new MockProductRepository(store, asyncOptions),
+    products: new MockProductRepository(store, getIdentity, asyncOptions),
     accounts: new MockAccountRepository(store, getIdentity, asyncOptions),
     departments: new MockDepartmentRepository(store, getIdentity, asyncOptions),
     roles: new MockDepartmentRoleRepository(store, getIdentity, asyncOptions),
     staff: new MockStaffRepository(store, getIdentity, asyncOptions),
     accreditations: new MockAccreditationRepository(store, getIdentity, asyncOptions),
     registrations: new MockRegistrationRepository(store, getIdentity, asyncOptions),
+    audit: new MockAuditRepository(store, getIdentity, asyncOptions),
+    contracts: new MockContractRepository(store, getIdentity, asyncOptions),
+    sales: new MockSaleRepository(store, getIdentity, asyncOptions),
+    payments: new MockPaymentRepository(store, getIdentity, asyncOptions),
+    memberships: new MockMembershipRepository(store, getIdentity, asyncOptions),
+    commissions: new MockCommissionRepository(store, getIdentity, asyncOptions),
+    stayPoints: new MockStayPointsRepository(store, getIdentity, asyncOptions),
   };
 }

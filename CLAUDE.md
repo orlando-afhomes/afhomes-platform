@@ -10,24 +10,24 @@ Claude Code entry point. `AGENTS.md` (imported above) is mandatory governance an
 - Progress: run `/load` to restore the latest session snapshot (`workflow/save-session.md`), then check the code. Neither overrides governing documents.
 
 ## Stack (verify in package.json)
-- Next.js App Router, React, TypeScript; Ant Design 6 with regular namespaced `.css`.
+- Next.js App Router, React, TypeScript; target UI is shadcn/ui on Base UI, Tailwind CSS 4, and namespaced custom CSS, with TanStack Table and Lucide (`AGENTS.md` section 8, effective November 8, 2026). Ant Design 6 remains only in unmigrated modules.
 - TanStack Query, typed repository contracts, Vitest + Testing Library.
 - Zod is installed but not yet used in `src/`.
-- Never add Tailwind, shadcn/ui, Base UI, CSS Modules, or another component system.
+- No new Ant Design usage. Never add CSS Modules, project-authored CSS-in-JS, or another component system. Each UI migration milestone needs explicit owner approval; installing or initializing the new stack is not authorized until a milestone is approved.
 
 ## Source map
 - `src/app/`: routes and layouts; keep thin.
 - `src/panels/`: panel UI (`admin`, `public`).
 - `src/modules/`: domain types, rules, logic per feature.
-- `src/shared/`: reusable components, forms, providers, utils.
+- `src/shared/`: composed components, forms, providers, utils; `src/shared/ui/` for shadcn/ui primitives.
 - `src/data/`: repository contracts, mock repositories, query keys and hooks.
-- `src/theme/`: Ant Design theme and `tokens.css`.
+- `src/theme/`: `tokens.css` (preserved) and the Ant Design theme until Ant Design is removed.
 
 ## Where to look (load only what the task needs)
 - Business rules: `docs/business-rules/NN-*.md`. Roles 01, network 02, accreditation 03, customers 04, products 05, card issuance 06, finance 07, commissions 08, membership and points 09, redemption 10, reports 11, audit 12, sales reporting 13.
 - Technical design: `docs/development/` (`frontend.md` for UI, `testing.md` for tests, `implementation.md` for phases).
 - Historical audit (not current authority): `docs/audits/afhomes-v3-project-audit.md`. Read it only when relevant; do not import it.
-- Docs may still describe the project as documentation-only or list Tailwind/shadcn. Trust the code and `AGENTS.md` section 8.
+- Docs may still describe the project as documentation-only or describe Ant Design as the permanent UI foundation. Trust the code and `AGENTS.md` section 8.
 
 ## Working method
 1. Inspect relevant files before changing them.

@@ -113,9 +113,9 @@ Primary logical layers: App Router; Panels and presentation; Shared UI; Domain m
 | Router | Next.js App Router |
 | UI framework | React |
 | Programming language | TypeScript |
-| Styling | Tailwind CSS |
-| UI components | shadcn/ui |
-| Additional styling | CSS Modules |
+| Styling | Tailwind CSS 4 + namespaced custom CSS |
+| UI components | shadcn/ui on Base UI; TanStack Table; Lucide (Ant Design 6 temporary, unmigrated modules only) |
+| Additional styling | None (no CSS Modules, no new project-authored CSS-in-JS) |
 | Validation | Zod |
 | Client asynchronous state | TanStack Query |
 | API architecture | REST `/api/v1` |
@@ -463,7 +463,7 @@ The master project document is not the correct place for complete database schem
 3. It follows a modular-monolith architecture.
 4. React and TypeScript are approved.
 5. Next.js App Router is approved.
-6. Tailwind and shadcn/ui are approved.
+6. shadcn/ui on Base UI, Tailwind CSS 4, and namespaced custom CSS are approved (owner decision November 8, 2026; see `AGENTS.md` section 8). CSS Modules and other component systems are not.
 7. Zod is the selected validation approach.
 8. TanStack Query is the client asynchronous-state solution.
 9. REST APIs use `/api/v1`.
@@ -519,7 +519,7 @@ The master project document is not the correct place for complete database schem
 
 - **File created/updated:** `docs/project.md`
 - **Major sections included:** Part I Project Overview; Part II Business and Application Scope; Part III Approved Technical Architecture; Part IV Critical Business Principles; Part V Project Delivery and Governance; Part VI Documentation and AI Agents; Part VII Execution Safety; Part VIII What Does Not Belong in project.md; Part IX Critical Project Invariants; Part X Completion Report.
-- **Confirmed project and architectural decisions:** Modular monolith on Next.js/React/TypeScript/Tailwind/shadcn; MongoDB + Mongoose; Better Auth; frontend-first mock-data-driven; local MongoDB first then Atlas; DigitalOcean Droplet + Docker Compose + HTTPS; protected system roles with configurable built-in/custom roles and `own`/`team`/`all` scopes; VIP cards remain Pending until Finance verification with minimum Finance workflow in MVP; latest approved 2026 VIP contracts with versioned snapshots; exact-AA-number-only public accreditation search (active only); IST hides "Valid Until", OST shows it; import compatibility now, migration after MVP; soft archival preserving history; centralized mock data via services/repositories.
+- **Confirmed project and architectural decisions:** Modular monolith on Next.js/React/TypeScript/Tailwind 4/shadcn/Base UI; MongoDB + Mongoose; Better Auth; frontend-first mock-data-driven; local MongoDB first then Atlas; DigitalOcean Droplet + Docker Compose + HTTPS; protected system roles with configurable built-in/custom roles and `own`/`team`/`all` scopes; VIP cards remain Pending until Finance verification with minimum Finance workflow in MVP; latest approved 2026 VIP contracts with versioned snapshots; exact-AA-number-only public accreditation search (active only); IST hides "Valid Until", OST shows it; import compatibility now, migration after MVP; soft archival preserving history; centralized mock data via services/repositories.
 - **Remaining unresolved dependencies:** Better Auth + MongoDB compatibility; exact role-permission matrix; Finance payment/settlement eligibility rules; complete VIP contract clauses/benefit calculations; official identifier generation and import mappings; accreditation active-status/expiry evaluation rules; final hosting provider and deployment approval; audit retention policy.
 - **Contradictions identified:** None in this final pass; conflicts flagged in earlier tasks (Finance activation auto vs separate step; mock persistence in-memory-only vs optional localStorage; architecture label refinement) remain documented for reconciliation where applicable.
 - **Documentation validation result:** Structure is internally consistent with the approved scope; no application code, frameworks, dependencies, databases, or unrelated files were modified. Document distinguishes approved decisions, deferred features, and unresolved dependencies.

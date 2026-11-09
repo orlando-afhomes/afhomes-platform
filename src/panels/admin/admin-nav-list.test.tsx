@@ -60,23 +60,32 @@ describe("admin nav list rendering", () => {
     expect(html).not.toContain("Roles");
   });
 
-  it("does not render unavailable module links", () => {
-    const html = renderNav("dev-super-admin");
-    expect(html).not.toContain("Customers");
-    expect(html).not.toContain("Audit Logs");
+  it("renders business links only for roles granted them", () => {
+    const admin = renderNav("dev-super-admin");
+    expect(admin).toContain("Customers");
+    expect(admin).toContain("Audit Logs");
+    const ost = renderNav("dev-ost-a1");
+    expect(ost).toContain("Customers");
+    expect(ost).not.toContain("Audit Logs");
+    expect(ost).not.toContain("Finance");
+    expect(renderNav("dev-hr")).not.toContain("Customers");
   });
 
-  it("hides the Accounts entry from the sidebar for authorized identities", () => {
-    const html = renderNav("dev-admin");
-    expect(html).not.toContain("Accounts");
+  it("shows Staff & Access instead of a separate Accounts entry", () => {
+    for (const identityId of ["dev-admin", "dev-super-admin", "dev-hr"]) {
+      const html = renderNav(identityId, "/admin/organization/staff");
+      expect(html).not.toContain("Accounts and Permissions");
+      expect(html).toContain("Staff &amp; Access");
+    }
   });
 
-  it("marks the active route selected", () => {
+  it("marks only the active route as the current page", () => {
     const identity = getDevIdentity("dev-admin");
     const items = getRoleAwareAdminNavigation(identity);
     const html = renderToStaticMarkup(
       createElement(TestWrapper, { items }),
     );
-    expect(html).toContain("ant-menu-item-selected");
+    expect(html.match(/aria-current="page"/g)?.length).toBe(1);
+    expect(html).toContain('aria-current="page"');
   });
 });

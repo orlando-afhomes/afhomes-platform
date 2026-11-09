@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Tag } from "antd";
 import type { ReactNode } from "react";
+import { ToneBadge, type BadgeTone } from "@/shared/components/modern/status-badge";
 
 export type LinkedRecordState =
   | "linked"
@@ -23,14 +23,14 @@ const STATE_LABELS: Record<LinkedRecordState, string> = {
   incomplete: "Incomplete",
 };
 
-const STATE_COLORS: Record<LinkedRecordState, string | undefined> = {
-  linked: "green",
-  "not-linked": undefined,
-  missing: "orange",
-  restricted: undefined,
-  conflicting: "red",
-  ambiguous: "gold",
-  incomplete: "orange",
+const STATE_TONES: Record<LinkedRecordState, BadgeTone> = {
+  linked: "success",
+  "not-linked": "neutral",
+  missing: "warning",
+  restricted: "neutral",
+  conflicting: "danger",
+  ambiguous: "warning",
+  incomplete: "warning",
 };
 
 export type LinkedRecordItem = {
@@ -44,21 +44,19 @@ export type LinkedRecordItem = {
 
 export function LinkedBusinessRecords({ items }: { items: LinkedRecordItem[] }) {
   return (
-    <ul className="linked-business-records">
+    <ul className="tw:m-0 tw:flex tw:list-none tw:flex-col tw:p-0">
       {items.map((item) => (
-        <li key={item.key} className="linked-business-records__row">
-          <span className="linked-business-records__label">{item.label}</span>
-          <span className="linked-business-records__value">
+        <li key={item.key} className="tw:flex tw:flex-wrap tw:items-center tw:gap-x-3 tw:gap-y-1 tw:border-b tw:border-border tw:py-2 tw:last:border-b-0">
+          <span className="tw:w-40 tw:shrink-0 tw:font-medium tw:text-muted-foreground">{item.label}</span>
+          <span className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-wrap tw:items-center tw:gap-2">
             {item.content ?? "—"}
             {item.href ? (
-              <Link href={item.href} className="linked-business-records__link">
+              <Link href={item.href} className="tw:text-primary tw:underline-offset-4 tw:hover:underline">
                 {item.linkLabel ?? "View"}
               </Link>
             ) : null}
           </span>
-          <Tag color={STATE_COLORS[item.state]} className="linked-business-records__state">
-            {STATE_LABELS[item.state]}
-          </Tag>
+          <ToneBadge tone={STATE_TONES[item.state]}>{STATE_LABELS[item.state]}</ToneBadge>
         </li>
       ))}
     </ul>

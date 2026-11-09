@@ -1,7 +1,5 @@
-import { AccountManagementPage } from "@/panels/admin/pages/account-management-page";
-import "@/panels/admin/pages/account-page.css";
-import "@/panels/admin/pages/account-dialogs.css";
+import { AccountsCompatibilityPage } from "@/panels/admin/pages/accounts-compat-page";
 
 export default function Page() {
-  return <AccountManagementPage />;
+  return <AccountsCompatibilityPage />;
 }

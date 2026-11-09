@@ -15,6 +15,7 @@ import { getDescendantIds } from "./scope";
 import { hasModuleAccess } from "./authorization";
 import { appendAuditEvent } from "./audit";
 import { activeRoles } from "./dev-identities";
+import { normalizeTin } from "@/shared/utils/input-sanitizers";
 import { simulateAsync } from "@/data/contracts/async-options";
 import type { MockStore } from "./seed";
 
@@ -163,130 +164,112 @@ export class MockMemberRepository implements MemberRepository {
     const previousName = member.displayName;
     let changed = false;
 
-    const profile = member.sellerProfile ?? {
-      firstName: "",
-      middleName: null,
-      lastName: "",
-      suffix: null,
-      mobileNumber: "",
-      dateOfBirth: "",
-      email: "",
-      profilePhotoName: null,
-      profilePhotoUrl: null,
-      address: { street: "", province: "", city: "", barangay: "", subdivision: null, postalCode: "" },
-      governmentIdType: "",
-      governmentIdNumber: "",
-      cardApplicationDate: "",
-      programCategory: "",
-      vipCardLevel: "B1" as const,
-      gender: "",
-      civilStatus: "",
-      telephone: null,
-      facebook: null,
-      tin: null,
-      businessEmployer: null,
-      businessAddress: null,
-      jobPosition: null,
-    };
-    member.sellerProfile = profile;
+    const profile = member.sellerProfile ?? null;
+    const hasProfileInput = Object.entries(input).some(([key, value]) => key !== "displayName" && value !== undefined);
+    if (!profile && hasProfileInput) {
+      throw new Error("This member has no seller profile, so profile fields cannot be edited.");
+    }
 
-    const setText = (key: "firstName" | "lastName" | "mobileNumber" | "dateOfBirth" | "governmentIdType" | "governmentIdNumber" | "cardApplicationDate" | "programCategory" | "gender" | "civilStatus", value: string | undefined) => {
-      if (value === undefined) return;
-      const trimmed = value.trim();
-      if ((profile[key] as string) !== trimmed) {
-        (profile as Record<string, unknown>)[key] = trimmed;
-        changed = true;
-      }
-    };
-    const setNullableText = (key: "middleName" | "suffix" | "telephone" | "facebook" | "tin" | "businessEmployer" | "businessAddress" | "jobPosition", value: string | null | undefined) => {
-      if (value === undefined) return;
-      const trimmed = value?.trim() ? value.trim() : null;
-      if ((profile[key] as string | null) !== trimmed) {
-        (profile as Record<string, unknown>)[key] = trimmed;
-        changed = true;
-      }
-    };
-    const setAddressText = (key: "street" | "province" | "city" | "barangay" | "postalCode", value: string | undefined) => {
-      if (value === undefined) return;
-      const trimmed = value.trim();
-      if (profile.address[key] !== trimmed) {
-        profile.address[key] = trimmed;
-        changed = true;
-      }
-    };
-
-    const nameParts = [input.firstName, input.middleName, input.noMiddleName, input.lastName, input.suffix].some(
-      (part) => part !== undefined,
-    );
-    if (nameParts) {
-      const pickText = (inputValue: string | null | undefined, current: string | null | undefined): string | null => {
-        if (inputValue === undefined) return current?.trim() ? current.trim() : null;
-        return inputValue?.trim() ? inputValue.trim() : null;
+    if (profile) {
+      const setText = (key: "firstName" | "lastName" | "mobileNumber" | "dateOfBirth" | "governmentIdType" | "governmentIdNumber" | "cardApplicationDate" | "programCategory" | "gender" | "civilStatus", value: string | undefined) => {
+        if (value === undefined) return;
+        const trimmed = value.trim();
+        if ((profile[key] as string) !== trimmed) {
+          (profile as Record<string, unknown>)[key] = trimmed;
+          changed = true;
+        }
       };
-      const firstName = (input.firstName ?? profile.firstName).trim();
-      const middleName = input.noMiddleName ? null : pickText(input.middleName, profile.middleName);
-      const lastName = (input.lastName ?? profile.lastName).trim();
-      const suffix = pickText(input.suffix, profile.suffix);
-      const displayName = [firstName, middleName, lastName, suffix].filter(Boolean).join(" ");
-      if (!displayName) throw new Error("Member name is required.");
-      if (displayName !== member.displayName) {
-        member.displayName = displayName;
+      const setNullableText = (key: "middleName" | "suffix" | "telephone" | "facebook" | "tin" | "businessEmployer" | "businessAddress" | "jobPosition", value: string | null | undefined) => {
+        if (value === undefined) return;
+        const trimmed = value?.trim() ? value.trim() : null;
+        if ((profile[key] as string | null) !== trimmed) {
+          (profile as Record<string, unknown>)[key] = trimmed;
+          changed = true;
+        }
+      };
+      const setAddressText = (key: "street" | "province" | "city" | "barangay" | "postalCode", value: string | undefined) => {
+        if (value === undefined) return;
+        const trimmed = value.trim();
+        if (profile.address[key] !== trimmed) {
+          profile.address[key] = trimmed;
+          changed = true;
+        }
+      };
+
+      const nameParts = [input.firstName, input.middleName, input.noMiddleName, input.lastName, input.suffix].some(
+        (part) => part !== undefined,
+      );
+      if (nameParts) {
+        const pickText = (inputValue: string | null | undefined, current: string | null | undefined): string | null => {
+          if (inputValue === undefined) return current?.trim() ? current.trim() : null;
+          return inputValue?.trim() ? inputValue.trim() : null;
+        };
+        const firstName = (input.firstName ?? profile.firstName).trim();
+        const middleName = input.noMiddleName ? null : pickText(input.middleName, profile.middleName);
+        const lastName = (input.lastName ?? profile.lastName).trim();
+        const suffix = pickText(input.suffix, profile.suffix);
+        const displayName = [firstName, middleName, lastName, suffix].filter(Boolean).join(" ");
+        if (!displayName) throw new Error("Member name is required.");
+        if (displayName !== member.displayName) {
+          member.displayName = displayName;
+          changed = true;
+        }
+        setText("firstName", firstName);
+        setNullableText("middleName", middleName);
+        setText("lastName", lastName);
+        setNullableText("suffix", suffix);
+      }
+      setText("mobileNumber", input.mobileNumber !== undefined ? input.mobileNumber.trim() : undefined);
+      setText("dateOfBirth", input.dateOfBirth);
+      if (input.email !== undefined) {
+        const normalizedEmail = input.email.trim().toLowerCase();
+        if (!normalizedEmail) throw new Error("Email is required.");
+        if (
+          this.store.members.some(
+            (item) => item.id !== id && item.sellerProfile?.email.toLowerCase() === normalizedEmail,
+          )
+        ) {
+          throw new Error("Email already has seller.");
+        }
+        if (this.store.accounts.some((item) => item.id !== member.accountId && item.email.toLowerCase() === normalizedEmail)) {
+          throw new Error("Email already has account.");
+        }
+        if (profile.email.toLowerCase() !== normalizedEmail) {
+          profile.email = input.email.trim();
+          changed = true;
+          const account = member.accountId ? this.store.accounts.find((item) => item.id === member.accountId) : null;
+          if (account && account.email.toLowerCase() !== normalizedEmail) account.email = input.email.trim();
+        }
+      }
+      setAddressText("street", input.street);
+      setAddressText("province", input.province);
+      setAddressText("city", input.city);
+      setAddressText("barangay", input.barangay);
+      if (input.subdivision !== undefined) {
+        const trimmedSubdivision = input.subdivision?.trim() ? input.subdivision.trim() : null;
+        if ((profile.address.subdivision ?? null) !== trimmedSubdivision) {
+          profile.address.subdivision = trimmedSubdivision;
+          changed = true;
+        }
+      }
+      setAddressText("postalCode", input.postalCode !== undefined ? input.postalCode.trim() : undefined);
+      setNullableText("telephone", input.telephone);
+      setNullableText("facebook", input.facebook);
+      const tin = normalizeTin(input.tin);
+    if (tin !== undefined) setNullableText("tin", tin);
+      setNullableText("businessEmployer", input.businessEmployer);
+      setNullableText("businessAddress", input.businessAddress);
+      setNullableText("jobPosition", input.jobPosition);
+      setText("gender", input.gender);
+      setText("civilStatus", input.civilStatus);
+      setText("governmentIdType", input.governmentIdType);
+      setText("governmentIdNumber", input.governmentIdNumber !== undefined ? input.governmentIdNumber.trim() : undefined);
+      setText("cardApplicationDate", input.cardApplicationDate);
+      setText("programCategory", input.programCategory);
+      if (input.vipCardLevel !== undefined && profile.vipCardLevel !== input.vipCardLevel) {
+        profile.vipCardLevel = input.vipCardLevel;
         changed = true;
       }
-      setText("firstName", firstName);
-      setNullableText("middleName", middleName);
-      setText("lastName", lastName);
-      setNullableText("suffix", suffix);
-    }
-    setText("mobileNumber", input.mobileNumber !== undefined ? input.mobileNumber.trim() : undefined);
-    setText("dateOfBirth", input.dateOfBirth);
-    if (input.email !== undefined) {
-      const normalizedEmail = input.email.trim().toLowerCase();
-      if (!normalizedEmail) throw new Error("Email is required.");
-      if (
-        this.store.members.some(
-          (item) => item.id !== id && item.sellerProfile?.email.toLowerCase() === normalizedEmail,
-        )
-      ) {
-        throw new Error("Email already has seller.");
-      }
-      if (this.store.accounts.some((item) => item.id !== member.accountId && item.email.toLowerCase() === normalizedEmail)) {
-        throw new Error("Email already has account.");
-      }
-      if (profile.email.toLowerCase() !== normalizedEmail) {
-        profile.email = input.email.trim();
-        changed = true;
-        const account = member.accountId ? this.store.accounts.find((item) => item.id === member.accountId) : null;
-        if (account && account.email.toLowerCase() !== normalizedEmail) account.email = input.email.trim();
-      }
-    }
-    setAddressText("street", input.street);
-    setAddressText("province", input.province);
-    setAddressText("city", input.city);
-    setAddressText("barangay", input.barangay);
-    if (input.subdivision !== undefined) {
-      const trimmedSubdivision = input.subdivision?.trim() ? input.subdivision.trim() : null;
-      if ((profile.address.subdivision ?? null) !== trimmedSubdivision) {
-        profile.address.subdivision = trimmedSubdivision;
-        changed = true;
-      }
-    }
-    setAddressText("postalCode", input.postalCode !== undefined ? input.postalCode.trim() : undefined);
-    setNullableText("telephone", input.telephone);
-    setNullableText("facebook", input.facebook);
-    if (input.tin !== undefined) setNullableText("tin", input.tin.replace(/\D/g, "") || null);
-    setNullableText("businessEmployer", input.businessEmployer);
-    setNullableText("businessAddress", input.businessAddress);
-    setNullableText("jobPosition", input.jobPosition);
-    setText("gender", input.gender);
-    setText("civilStatus", input.civilStatus);
-    setText("governmentIdType", input.governmentIdType);
-    setText("governmentIdNumber", input.governmentIdNumber !== undefined ? input.governmentIdNumber.trim() : undefined);
-    setText("cardApplicationDate", input.cardApplicationDate);
-    setText("programCategory", input.programCategory);
-    if (input.vipCardLevel !== undefined && profile.vipCardLevel !== input.vipCardLevel) {
-      profile.vipCardLevel = input.vipCardLevel;
-      changed = true;
     }
 
     const account = member.accountId ? this.store.accounts.find((item) => item.id === member.accountId) : null;
@@ -532,7 +515,8 @@ export class MockMemberRepository implements MemberRepository {
       return { ok: false, reason: "INELIGIBLE_ACCREDITATION", publicMessage: "Referral code is invalid or currently unavailable." };
     }
 
-    const eligible = validateSalesParent("OST", sponsor, this.store.members, sponsor.id, this.store.accreditations);
+    // No child id: the applicant is new, so passing the sponsor as the child made every sponsor a cycle.
+    const eligible = validateSalesParent("OST", sponsor, this.store.members, undefined, this.store.accreditations);
     if (!eligible.ok) {
       return { ok: false, reason: "INVALID_SPONSOR", publicMessage: "Referral code is invalid or currently unavailable." };
     }
@@ -575,12 +559,13 @@ export class MockMemberRepository implements MemberRepository {
 
     let account: Account | null = null;
     if (input.sellerIdentity === "existing") {
-      account = this.store.accounts.find((item) => item.id === input.existingAccountId) ?? null;
-      if (!account) throw new Error("Selected employee account missing.");
+      const existingAccount = this.store.accounts.find((item) => item.id === input.existingAccountId);
+      if (!existingAccount) throw new Error("Selected employee account missing.");
+      account = existingAccount;
       if (account.email.toLowerCase() !== normalizedEmail) {
         throw new Error("Email must match account.");
       }
-      const linked = this.store.members.find((member) => member.accountId === account.id);
+      const linked = this.store.members.find((member) => member.accountId === existingAccount.id);
       if (linked) throw new Error("Employee already has affiliation.");
     } else {
       if (this.store.accounts.some((item) => item.email.toLowerCase() === normalizedEmail)) {

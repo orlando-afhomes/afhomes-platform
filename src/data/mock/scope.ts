@@ -3,7 +3,8 @@ import type { OrgMember } from "@/modules/organization/types";
 import type { MockStore } from "./seed";
 import { activeRoles } from "./dev-identities";
 
-const BROAD_ROLES = new Set(["super_admin", "admin"]);
+/** Roles with unrestricted record scope in the mock repositories. */
+export const BROAD_ROLES = new Set(["super_admin", "admin"]);
 
 export function isActiveIdentity(identity: DevIdentity) {
   return identity.status === "active";

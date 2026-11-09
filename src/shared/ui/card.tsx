@@ -2,13 +2,13 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/shared/lib/utils";
 
-const cardVariants = cva("tw:flex tw:flex-col tw:gap-3 tw:rounded-lg tw:border tw:p-4", {
+const cardVariants = cva("tw:flex tw:flex-col tw:gap-3 tw:rounded-xl tw:border tw:p-4 tw:shadow-(--shadow-soft)", {
   variants: {
     variant: {
       default: "tw:border-border tw:bg-card tw:text-card-foreground",
       muted: "tw:border-border tw:bg-muted/40 tw:text-card-foreground",
       interactive:
-        "tw:border-border tw:bg-card tw:text-card-foreground tw:transition-colors tw:hover:bg-muted/40 tw:focus-within:border-ring",
+        "tw:border-border tw:bg-card tw:text-card-foreground tw:transition-[background-color,box-shadow,border-color] tw:hover:bg-muted/40 tw:hover:shadow-(--shadow-raised) tw:focus-within:border-ring",
     },
   },
   defaultVariants: {

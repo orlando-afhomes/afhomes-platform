@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { AppToaster } from "@/shared/components/modern/app-toaster";
 import { StaffPage } from "./pages/staff-page";
 
 // Unified Staff & Access directory: account administration merged from the
@@ -20,6 +21,7 @@ function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
     <QueryClientProvider client={queryClient}>
       <MockStoreProvider>
         <DevIdentityProvider initialIdentityId={identityId}>
+          <AppToaster />
           <StaffPage />
         </DevIdentityProvider>
       </MockStoreProvider>

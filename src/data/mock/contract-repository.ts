@@ -6,14 +6,12 @@ import { CANCELLATION_GROUNDS, CANCELLATION_GROUND_LABELS, type Contract, type C
 import { totalVerifiedCentavos } from "@/modules/finance/rules";
 import type { DevIdentity } from "@/modules/identity/types";
 import { extractRaSequence } from "@/modules/membership/rules";
-import { BusinessRepository, canSeeContract, customerName, genealogyFor, nowIso, today } from "./business-base";
+import { BusinessRepository, DATE_ONLY, canSeeContract, customerName, genealogyFor, nowIso, today } from "./business-base";
 import { holdUnpaidCommissions, paymentsOfContract, reconcileContract } from "./business-effects";
 import { nextId } from "./ids";
 import type { MockStore } from "./seed";
-import { activeIdentityRoles } from "./scope";
+import { BROAD_ROLES, activeIdentityRoles } from "./scope";
 
-const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
-const BROAD = new Set(["super_admin", "admin"]);
 
 export function viewContract(store: MockStore, contract: Contract): ContractView {
   const sale = store.sales.find((item) => item.contractId === contract.id);
@@ -23,7 +21,7 @@ export function viewContract(store: MockStore, contract: Contract): ContractView
       ...contract,
       customerName: customerName(store, contract.customerId),
       sellerName: seller?.displayName ?? null,
-      sale: sale ? { id: sale.id, status: sale.status } : null,
+      sale: sale ? { id: sale.id, status: sale.status, confirmedDate: sale.confirmedDate } : null,
       holds: finalizationHolds(contract),
     }),
   ) as ContractView;
@@ -41,7 +39,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
   }
 
   private isPreparer(identity: DevIdentity, contract: Contract): boolean {
-    const broad = activeIdentityRoles(identity).some((role) => BROAD.has(role));
+    const broad = activeIdentityRoles(identity).some((role) => BROAD_ROLES.has(role));
     return this.can(identity, "contracts.prepare") && (broad || contract.sellerMemberId === identity.memberId);
   }
 
@@ -75,7 +73,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
     return this.run(options, (identity) => {
       this.require(identity, "contracts.prepare", "Preparing contracts is not allowed for this identity.");
       const customer = this.store.customers.find((item) => item.id === input.customerId);
-      const broad = activeIdentityRoles(identity).some((role) => BROAD.has(role));
+      const broad = activeIdentityRoles(identity).some((role) => BROAD_ROLES.has(role));
       if (!customer || (!broad && customer.ownerMemberId !== identity.memberId)) throw new Error("Customer not found.");
       if (customer.status !== "submitted") throw new Error("Only a submitted customer can have a contract prepared.");
       if (this.store.contracts.some((item) => item.customerId === customer.id && item.status !== "cancelled")) {
@@ -86,15 +84,19 @@ export class MockContractRepository extends BusinessRepository implements Contra
       if (!product) throw new Error("The customer has no active VIP plan.");
       const scheme = this.store.paymentSchemes.find((item) => item.id === input.schemeId);
       if (!scheme || scheme.availability !== "available") throw new Error("The selected payment scheme is not available.");
-      const built = buildSchedule(product, scheme);
+      const reservationDate = input.reservationDate ?? today();
+      if (!DATE_ONLY.test(reservationDate)) throw new Error("The reservation date must be a valid date.");
+      const built = buildSchedule(product, scheme, reservationDate);
       if (built.errors.length > 0) throw new Error(built.errors[0]);
+      // A scheme with its own contract-stated price (Spot Cash) is not affected by a catalog price conflict.
+      const ownPrice = scheme.priceCentavosByTier[product.code] != null;
       const contract: Contract = {
         id: nextId(this.store, "contract", "ctr"),
         customerId: customer.id,
         productCode: product.code,
         productConfigVersion: product.configVersion,
-        priceCentavos: product.priceCentavos,
-        priceStatus: product.priceStatus,
+        priceCentavos: built.priceCentavos,
+        priceStatus: ownPrice ? "contract_stated" : product.priceStatus,
         schemeId: scheme.id,
         schemeLabel: scheme.label,
         schemeStatus: scheme.commercialStatus,
@@ -116,6 +118,8 @@ export class MockContractRepository extends BusinessRepository implements Contra
         finalizedAt: null,
         returnReason: null,
         cancelReason: null,
+        // Move A and Move B need Super Admin written approval before finalization; tracked apart from the payment code.
+        arrangement: scheme.category === "move" ? { schemeLabel: scheme.label, status: "pending", approvedBy: null, approvedAt: null, approvalReference: null } : null,
         history: [],
       };
       this.applyDueDates(contract, input.dueDates);
@@ -167,6 +171,9 @@ export class MockContractRepository extends BusinessRepository implements Contra
         this.store.sales.push(sale);
         this.audit(identity, { module: "sales", action: BUSINESS_AUDIT_ACTIONS.SALE_RECORDED, entityType: "sale", entityId: sale.id, newValue: "pending", relatedRecordIds: [contract.id] });
       }
+      // A reservation can be submitted while the contract is still a draft, before any sale exists: link it now.
+      const recorded = this.store.sales.find((item) => item.contractId === contract.id);
+      if (recorded) for (const payment of this.store.payments) if (payment.contractId === contract.id && !payment.saleId) payment.saleId = recorded.id;
       return viewContract(this.store, contract);
     });
   }
@@ -259,12 +266,21 @@ export class MockContractRepository extends BusinessRepository implements Contra
       const previous = contract.status;
       contract.status = "cancelled";
       contract.cancelReason = reason.trim();
-      const sale = this.store.sales.find((item) => item.contractId === contract.id);
-      if (sale) sale.status = "cancelled";
-      const membership = this.store.memberships.find((item) => item.contractId === contract.id);
-      if (membership) membership.status = "cancelled";
       this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLED, reason.trim());
       this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLED, entityType: "contract", entityId: contract.id, previousValue: previous, newValue: "cancelled", reason: reason.trim() });
+      const sale = this.store.sales.find((item) => item.contractId === contract.id);
+      if (sale && sale.status !== "cancelled") {
+        const saleWas = sale.status;
+        sale.status = "cancelled";
+        this.audit(identity, { module: "sales", action: BUSINESS_AUDIT_ACTIONS.SALE_CANCELLED, entityType: "sale", entityId: sale.id, previousValue: saleWas, newValue: "cancelled", relatedRecordIds: [contract.id] });
+      }
+      const membership = this.store.memberships.find((item) => item.contractId === contract.id);
+      if (membership && membership.status !== "cancelled") {
+        const membershipWas = membership.status;
+        membership.status = "cancelled";
+        membership.history.push({ at: nowIso(), actorId: identity.id, event: BUSINESS_AUDIT_ACTIONS.MEMBERSHIP_CANCELLED, note: null });
+        this.audit(identity, { module: "membership", action: BUSINESS_AUDIT_ACTIONS.MEMBERSHIP_CANCELLED, entityType: "membership", entityId: membership.id, previousValue: membershipWas, newValue: "cancelled", relatedRecordIds: [contract.id] });
+      }
       return viewContract(this.store, contract);
     });
   }
@@ -333,6 +349,23 @@ export class MockContractRepository extends BusinessRepository implements Contra
         membership.history.push({ at: nowIso(), actorId: identity.id, event: BUSINESS_AUDIT_ACTIONS.MEMBERSHIP_CANCELLED, note: null });
         this.audit(identity, { module: "membership", action: BUSINESS_AUDIT_ACTIONS.MEMBERSHIP_CANCELLED, entityType: "membership", entityId: membership.id, previousValue: membershipWas, newValue: "cancelled", relatedRecordIds: [contract.id] });
       }
+      return viewContract(this.store, contract);
+    });
+  }
+
+  async approveArrangement(id: string, approvalReference: string, options?: MockAsyncOptions): Promise<ContractView> {
+    return this.run(options, (identity) => {
+      // Only Super Admin approves; Super Admin may also be the preparer (owner decision 2026-11-09).
+      if (!activeIdentityRoles(identity).includes("super_admin")) throw new Error("Only a Super Administrator can approve a special arrangement.");
+      const reference = approvalReference.trim();
+      if (!reference) throw new Error("Enter the reference of the written approval.");
+      const contract = this.find(identity, id);
+      if (!contract.arrangement) throw new Error("This contract has no special arrangement.");
+      if (contract.arrangement.status === "approved") throw new Error("This arrangement is already approved.");
+      if (contract.status === "cancelled" || contract.status === "finalized") throw new Error("Only an open contract's arrangement can be approved.");
+      contract.arrangement = { ...contract.arrangement, status: "approved", approvedBy: identity.id, approvedAt: nowIso(), approvalReference: reference };
+      this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_ARRANGEMENT_APPROVED, reference);
+      this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_ARRANGEMENT_APPROVED, entityType: "contract", entityId: contract.id, previousValue: "pending", newValue: "approved", reason: reference });
       return viewContract(this.store, contract);
     });
   }

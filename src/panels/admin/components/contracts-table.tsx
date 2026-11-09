@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useContracts } from "@/data/business-queries";
+import { useRouter } from "next/navigation";
+import { useContracts, useOperation } from "@/data/business-queries";
+import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { BizBadge } from "@/shared/components/business/biz-badge";
@@ -23,9 +25,12 @@ const STATUS_OPTIONS = [
 ];
 
 /** Contract list with search and status filter, scoped by the repository to what the viewer may see. */
-export function ContractsTable({ initialStatus = "all" }: { initialStatus?: string }) {
+export function ContractsTable({ initialStatus = "all", contractHref: hrefOverride }: { initialStatus?: string; contractHref?: (id: string) => string }) {
+  const router = useRouter();
   const contracts = useContracts();
-  const contractHref = useContractHref();
+  const canPrepare = useOperation("contracts.prepare");
+  const defaultHref = useContractHref();
+  const contractHref = hrefOverride ?? defaultHref;
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState(initialStatus);
 
@@ -53,7 +58,22 @@ export function ContractsTable({ initialStatus = "all" }: { initialStatus?: stri
     <div className="tw:flex tw:flex-col tw:gap-3">
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search contracts" filters={[{ label: "Contract status filter", value: status, onChange: setStatus, options: STATUS_OPTIONS }]} />
       <QueryState isLoading={contracts.isLoading} error={contracts.error}>
-        <DataTable data={rows} columns={columns} getRowId={(row) => row.id} emptyText="No contracts match." caption="Contracts" />
+        <DataTable
+          data={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          emptyText="No contracts match."
+          caption="Contracts"
+          onRowOpen={(row) => router.push(contractHref(row.id))}
+          getRowLabel={(row) => `Open contract ${row.id.toUpperCase()}`}
+          rowActions={(row) => (
+            <RowActionsMenu
+              itemName={`contract ${row.id.toUpperCase()}`}
+              onView={() => router.push(contractHref(row.id))}
+              onEdit={canPrepare && ["draft", "returned"].includes(row.status) ? () => router.push(contractHref(row.id)) : undefined}
+            />
+          )}
+        />
       </QueryState>
     </div>
   );

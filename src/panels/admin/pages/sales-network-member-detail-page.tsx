@@ -27,6 +27,8 @@ import { Card } from "@/shared/ui/card";
 import { CardSection } from "@/shared/components/modern/card-section";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
+import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
+import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { AccreditationEligibilityTag } from "../components/accreditation-status";
 import { DesignationBadge, toneFromColor } from "@/shared/components/business/designation-badge";
 import { GenealogyTree } from "./sales-network-genealogy-page";
@@ -71,6 +73,8 @@ export function SalesNetworkMemberDetailPage() {
   }, [member, members]);
   // The downline is fully expanded by default; the user can collapse branches.
   const [collapsed, setCollapsed] = useState<string[]>([]);
+  const [historyKey, setHistoryKey] = useState<string | null>(null);
+  const historyDetail = historyKey ? (member?.parentHistory ?? []).find((item) => `${item.changedAt}-${item.operation}-${item.actorId}` === historyKey) ?? null : null;
   const expandedKeys = useMemo(() => collectKeys(downlineTree).filter((key) => !collapsed.includes(key)), [downlineTree, collapsed]);
   const historyColumns = useMemo<ColumnDef<NonNullable<OrgMember["parentHistory"]>[number], unknown>[]>(
     () => [
@@ -243,6 +247,31 @@ export function SalesNetworkMemberDetailPage() {
               emptyText="No relationship history."
               paginate={false}
               caption="Relationship history"
+              onRowOpen={(row) => setHistoryKey(`${row.changedAt}-${row.operation}-${row.actorId}`)}
+              getRowLabel={(row) => `Open ${row.operation} change`}
+              rowActions={(row) => <RowActionsMenu itemName={`${row.operation} change`} onView={() => setHistoryKey(`${row.changedAt}-${row.operation}-${row.actorId}`)} />}
+            />
+            <RecordDetailsSheet
+              open={historyDetail !== null}
+              onClose={() => setHistoryKey(null)}
+              title={historyDetail ? historyDetail.operation : "Relationship change"}
+              subtitle={historyDetail?.changedAt}
+              sections={
+                historyDetail
+                  ? [
+                      {
+                        title: "Change",
+                        rows: [
+                          { label: "Previous parent", value: historyDetail.previousParentId },
+                          { label: "New parent", value: historyDetail.newParentId },
+                          { label: "Previous branch", value: historyDetail.previousBranchId },
+                          { label: "New branch", value: historyDetail.newBranchId },
+                          { label: "Actor", value: historyDetail.actorId },
+                        ],
+                      },
+                    ]
+                  : []
+              }
             />
           </CardSection>
         ) : null}

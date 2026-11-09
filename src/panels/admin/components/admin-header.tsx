@@ -40,7 +40,7 @@ export function AdminHeader({
   }, [store, identity]);
 
   return (
-    <header className="tw:sticky tw:top-0 tw:z-20 tw:flex tw:h-16 tw:shrink-0 tw:items-center tw:gap-2 tw:border-b tw:border-border tw:bg-background tw:px-4">
+    <header className="tw:sticky tw:top-0 tw:z-20 tw:flex tw:h-16 tw:shrink-0 tw:items-center tw:gap-2 tw:border-b tw:border-border tw:bg-background/85 tw:px-4 tw:backdrop-blur-md">
       <AdminMobileNav />
       <Button
         type="button"

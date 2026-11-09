@@ -6,7 +6,7 @@ import { useCreatePaymentScheme, useUpdatePaymentScheme, useUpdateProduct } from
 import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
 import { CheckboxField, MoneyField, PointsField, SelectField, TextAreaField, TextField } from "@/shared/forms/modern";
 import { FormGrid } from "@/shared/components/modern/form-layout";
-import { centavosToInputText, formatIntegerInput, parsePesoToCentavos } from "@/shared/lib/money";
+import { centavosToInputText, formatIntegerInput, parsePercentToBasisPoints, parsePesoToCentavos } from "@/shared/lib/money";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 
 const TIERS: VipTierCode[] = ["B1", "S1", "G1"];
@@ -96,6 +96,9 @@ function SchemeForm({ scheme, onClose }: { scheme: PaymentScheme | null; onClose
   const [reservation, setReservation] = useState(toPesoText(scheme?.reservationCentavos));
   const [count, setCount] = useState(scheme?.installmentCount ? String(scheme.installmentCount) : "");
   const [amounts, setAmounts] = useState<Record<string, string>>(() => Object.fromEntries(TIERS.map((tier) => [tier, toPesoText(scheme?.installmentCentavosByTier[tier])])));
+  const [prices, setPrices] = useState<Record<string, string>>(() => Object.fromEntries(TIERS.map((tier) => [tier, toPesoText(scheme?.priceCentavosByTier[tier])])));
+  const [tierCounts, setTierCounts] = useState<Record<string, string>>(() => Object.fromEntries(TIERS.map((tier) => [tier, scheme?.installmentCountByTier?.[tier] ? String(scheme.installmentCountByTier[tier]) : ""])));
+  const [downPercent, setDownPercent] = useState(scheme?.downPaymentBasisPoints ? String(scheme.downPaymentBasisPoints / 100) : "");
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | undefined>();
   const pending = create.isPending || update.isPending;
@@ -103,9 +106,17 @@ function SchemeForm({ scheme, onClose }: { scheme: PaymentScheme | null; onClose
   const submit = async () => {
     setError(undefined);
     const installmentCentavosByTier: Partial<Record<VipTierCode, number>> = {};
+    const priceCentavosByTier: Partial<Record<VipTierCode, number>> = {};
+    const installmentCountByTier: Partial<Record<VipTierCode, number>> = {};
+    const downPaymentBasisPoints = downPercent.trim() ? parsePercentToBasisPoints(downPercent) : null;
+    if (downPercent.trim() && downPaymentBasisPoints == null) return setError("Enter the down payment as a percentage, for example 40.");
     for (const tier of tiers) {
+      const tierCount = tierCounts[tier] ? toInt(tierCounts[tier]) : null;
+      if (tierCount) installmentCountByTier[tier] = tierCount;
       const parsed = amounts[tier] ? parsePesoToCentavos(amounts[tier]) : null;
       if (parsed) installmentCentavosByTier[tier] = parsed;
+      const price = prices[tier] ? parsePesoToCentavos(prices[tier]) : null;
+      if (price) priceCentavosByTier[tier] = price;
     }
     const input = {
       label: label.trim(),
@@ -114,6 +125,9 @@ function SchemeForm({ scheme, onClose }: { scheme: PaymentScheme | null; onClose
       reservationCentavos: reservation ? parsePesoToCentavos(reservation) : null,
       installmentCount: count ? toInt(count) : null,
       installmentCentavosByTier,
+      priceCentavosByTier,
+      installmentCountByTier,
+      downPaymentBasisPoints,
     };
     try {
       if (scheme) {
@@ -135,14 +149,17 @@ function SchemeForm({ scheme, onClose }: { scheme: PaymentScheme | null; onClose
         <TextField label="Scheme name" required value={label} onChange={setLabel} />
         <TextField label="Card ID payment code" value={code} onChange={setCode} hint="For example C01 or T04." maxLength={3} />
         <MoneyField label="Reservation fee" value={reservation} onChange={setReservation} />
-        <TextField label="Number of monthly installments" inputMode="numeric" value={count} onChange={setCount} />
+        <TextField label="Number of monthly installments" inputMode="numeric" value={count} onChange={setCount} hint="Leave blank when the count differs by tier." />
+        <TextField label="Down payment (% of price)" inputMode="decimal" value={downPercent} onChange={setDownPercent} hint="Includes the reservation fee. Leave blank when there is none." />
       </FormGrid>
       <fieldset className="tw:flex tw:flex-col tw:gap-2">
-        <legend className="tw:text-sm tw:font-medium">Applicable tiers and monthly installment</legend>
+        <legend className="tw:text-sm tw:font-medium">Applicable tiers, package price and monthly installment</legend>
         {TIERS.map((tier) => (
-          <div key={tier} className="tw:grid tw:grid-cols-1 tw:gap-2 tw:sm:grid-cols-2 tw:sm:items-end">
+          <div key={tier} className="tw:grid tw:grid-cols-1 tw:gap-2 tw:sm:grid-cols-2 tw:lg:grid-cols-4 tw:sm:items-end">
             <CheckboxField label={tier} checked={tiers.includes(tier)} onChange={(checked) => setTiers((current) => (checked ? [...current, tier] : current.filter((item) => item !== tier)))} />
+            {tiers.includes(tier) ? <MoneyField label={`${tier} package price`} hint="Leave blank to use the catalog price." value={prices[tier] ?? ""} onChange={(value) => setPrices((current) => ({ ...current, [tier]: value }))} /> : null}
             {tiers.includes(tier) ? <MoneyField label={`${tier} monthly installment`} value={amounts[tier] ?? ""} onChange={(value) => setAmounts((current) => ({ ...current, [tier]: value }))} /> : null}
+            {tiers.includes(tier) ? <TextField label={`${tier} number of installments`} inputMode="numeric" hint="Only when it differs from the scheme count." value={tierCounts[tier] ?? ""} onChange={(value) => setTierCounts((current) => ({ ...current, [tier]: value }))} /> : null}
           </div>
         ))}
       </fieldset>

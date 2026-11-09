@@ -11,7 +11,9 @@ import { findOpenKeys, findSelectedKeys } from "./admin-nav-match";
 
 const ROW =
   "tw:flex tw:w-full tw:min-h-11 tw:items-center tw:gap-3 tw:rounded-lg tw:px-3 tw:py-2 tw:text-left tw:text-sm tw:font-medium tw:text-sidebar-foreground/90 tw:transition-colors tw:hover:bg-sidebar-accent tw:hover:text-sidebar-foreground tw:focus-visible:ring-2 tw:focus-visible:ring-sidebar-ring tw:focus-visible:outline-none tw:motion-reduce:transition-none";
-const ROW_SELECTED = "tw:bg-white/10 tw:text-sidebar-foreground";
+// The current page is marked by a highlighted background and aria-current.
+const ROW_SELECTED =
+  "tw:bg-white/10 tw:text-sidebar-foreground";
 
 /**
  * Authorized navigation as a landmark list: links for pages, disclosure buttons
@@ -36,8 +38,8 @@ export function AdminNavList({
   const selected = new Set(findSelectedKeys(list, pathname));
   const [openKeys, setOpenKeys] = useState<string[]>(() => findOpenKeys(list, pathname));
 
-  const toggle = (id: string) =>
-    setOpenKeys((current) => (current.includes(id) ? current.filter((key) => key !== id) : [...current, id]));
+  // Accordion: opening one group closes the others.
+  const toggle = (id: string) => setOpenKeys((current) => (current.includes(id) ? [] : [id]));
 
   return (
     <ul className="tw:m-0 tw:flex tw:list-none tw:flex-col tw:gap-0.5 tw:p-0">
@@ -131,9 +133,14 @@ function NavGroup({
           className={cn("tw:size-4 tw:shrink-0 tw:transition-transform tw:motion-reduce:transition-none", open && "tw:rotate-180")}
         />
       </button>
-      <ul id={panelId} hidden={!open} className="tw:m-0 tw:mt-0.5 tw:ml-4 tw:flex tw:list-none tw:flex-col tw:gap-0.5 tw:border-l tw:border-sidebar-border tw:p-0 tw:pl-2">
-        {children}
-      </ul>
+      <div
+        className={cn("tw:grid tw:transition-[grid-template-rows] tw:duration-200 tw:ease-out", open ? "tw:grid-rows-[1fr]" : "tw:grid-rows-[0fr]")}
+        inert={!open}
+      >
+        <ul id={panelId} className="tw:m-0 tw:mt-0.5 tw:ml-4 tw:flex tw:min-h-0 tw:list-none tw:flex-col tw:gap-0.5 tw:overflow-hidden tw:border-l tw:border-sidebar-border tw:p-0 tw:pl-2">
+          {children}
+        </ul>
+      </div>
     </li>
   );
 }

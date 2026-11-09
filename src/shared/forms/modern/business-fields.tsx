@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef } from "react";
 import type { BaseFieldProps } from "@/shared/forms/types";
 import { formatIntegerInput, formatMoneyInput } from "@/shared/lib/money";
+import { cn } from "@/shared/lib/utils";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { Textarea } from "@/shared/ui/textarea";
 import { FieldShell, describedBy, useFieldIds } from "./field-shell";
@@ -104,6 +105,7 @@ export function CheckboxField({
   disabled,
   error,
   id,
+  variant = "plain",
 }: {
   label: string;
   checked: boolean;
@@ -111,11 +113,20 @@ export function CheckboxField({
   disabled?: boolean;
   error?: string;
   id?: string;
+  /** `card` renders a bordered, fully clickable row that highlights when checked. */
+  variant?: "plain" | "card";
 }) {
   const ids = useFieldIds(id);
   return (
     <div className="tw:flex tw:flex-col tw:gap-1">
-      <label className="tw:flex tw:min-h-11 tw:cursor-pointer tw:items-start tw:gap-2 tw:text-sm tw:sm:min-h-8">
+      <label
+        className={cn(
+          "tw:flex tw:min-h-11 tw:cursor-pointer tw:items-start tw:gap-3 tw:text-sm tw:sm:min-h-8",
+          variant === "card" &&
+            "tw:rounded-lg tw:border tw:bg-card tw:p-3 tw:shadow-(--shadow-soft) tw:transition-colors tw:hover:border-primary/40 tw:has-[[data-checked]]:border-primary tw:has-[[data-checked]]:bg-primary/5",
+          variant === "card" && error && "tw:border-destructive",
+        )}
+      >
         <Checkbox id={ids.id} checked={checked} disabled={disabled} onCheckedChange={(next) => onChange(next === true)} />
         <span>{label}</span>
       </label>

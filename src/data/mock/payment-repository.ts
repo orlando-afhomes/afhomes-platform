@@ -2,18 +2,15 @@ import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { PaymentRepository, PaymentView, SubmitPaymentInput } from "@/data/contracts/payment-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { Contract } from "@/modules/contracts/types";
-import { adjustableCentavos, findDuplicatePayment, totalVerifiedCentavos } from "@/modules/finance/rules";
+import { adjustableCentavos, exceedsContractPrice, findDuplicatePayment } from "@/modules/finance/rules";
 import { PAYMENT_METHODS, PAYMENT_PURPOSES, type Payment } from "@/modules/finance/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { DEV_IDENTITIES } from "./dev-identities";
-import { BusinessRepository, canSeeContract, customerName, nowIso, today } from "./business-base";
+import { BusinessRepository, DATE_ONLY, canSeeContract, customerName, nowIso, today } from "./business-base";
 import { paymentsOfContract, reconcileContract } from "./business-effects";
 import { nextId } from "./ids";
 import type { MockStore } from "./seed";
-import { activeIdentityRoles } from "./scope";
-
-const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
-const BROAD = new Set(["super_admin", "admin"]);
+import { BROAD_ROLES, activeIdentityRoles } from "./scope";
 
 export class MockPaymentRepository extends BusinessRepository implements PaymentRepository {
   constructor(store: MockStore, getIdentity: () => DevIdentity, asyncOptions: MockAsyncOptions = {}) {
@@ -57,9 +54,8 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
     if (!Number.isInteger(input.amountCentavos) || input.amountCentavos <= 0) throw new Error("Enter an amount greater than zero.");
     if (!DATE_ONLY.test(input.paidDate)) throw new Error("Enter the date on the receipt.");
     if (input.paidDate > today()) throw new Error("The payment date cannot be in the future.");
-    const verified = totalVerifiedCentavos(paymentsOfContract(this.store, contract.id).filter((item) => item.id !== selfId));
     // Overpayment and credit handling are an open decision (D17): amounts above the balance are rejected.
-    if (verified + input.amountCentavos > contract.priceCentavos) throw new Error("This amount exceeds the outstanding balance of the contract.");
+    if (exceedsContractPrice(contract, paymentsOfContract(this.store, contract.id).filter((item) => item.id !== selfId), input.amountCentavos)) throw new Error("This amount exceeds the outstanding balance of the contract.");
   }
 
   async list(options?: MockAsyncOptions): Promise<PaymentView[]> {
@@ -114,7 +110,7 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
     return this.run(options, (identity) => {
       this.require(identity, "payments.submit", "Submitting payments is not allowed for this identity.");
       const payment = this.paymentFor(identity, id);
-      const broad = activeIdentityRoles(identity).some((role) => BROAD.has(role));
+      const broad = activeIdentityRoles(identity).some((role) => BROAD_ROLES.has(role));
       if (!broad && payment.submittedBy !== identity.id) throw new Error("Only the submitter can correct this payment.");
       if (payment.status !== "returned") throw new Error("Only a payment returned for correction can be resubmitted.");
       const contract = this.contractFor(identity, payment.contractId);
@@ -132,7 +128,7 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
       if (input.evidenceFileName !== undefined) payment.evidenceFileName = input.evidenceFileName?.trim() || null;
       payment.status = "submitted";
       payment.decisionReason = null;
-      this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.PAYMENT_RESUBMITTED, entityType: "payment", entityId: payment.id, previousValue: "returned", newValue: "submitted" });
+      this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.PAYMENT_RESUBMITTED, entityType: "payment", entityId: payment.id, previousValue: "returned", newValue: "submitted", relatedRecordIds: [contract.id] });
       return this.view(payment);
     });
   }
@@ -144,7 +140,7 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
       if (payment.status !== "submitted") throw new Error("Only a submitted payment can enter review.");
       payment.status = "under_review";
       this.event(payment, identity, BUSINESS_AUDIT_ACTIONS.PAYMENT_REVIEW_STARTED);
-      this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.PAYMENT_REVIEW_STARTED, entityType: "payment", entityId: payment.id, previousValue: "submitted", newValue: "under_review" });
+      this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.PAYMENT_REVIEW_STARTED, entityType: "payment", entityId: payment.id, previousValue: "submitted", newValue: "under_review", relatedRecordIds: [payment.contractId] });
       return this.view(payment);
     });
   }
@@ -162,14 +158,14 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
       const others = paymentsOfContract(this.store, contract.id).filter((item) => item.id !== payment.id && item.status === "verified");
       const duplicate = findDuplicatePayment(others, payment);
       if (duplicate) throw new Error(`A matching verified payment (${duplicate.id}) already exists. A duplicate is never verified twice.`);
-      if (totalVerifiedCentavos(others) + payment.amountCentavos > contract.priceCentavos) throw new Error("Verifying this payment would exceed the contract price.");
+      if (exceedsContractPrice(contract, others, payment.amountCentavos)) throw new Error("Verifying this payment would exceed the contract price.");
       const previous = payment.status;
       payment.status = "verified";
       payment.verifiedBy = identity.id;
       payment.verifiedAt = nowIso();
       payment.verifiedDate = today();
       this.event(payment, identity, BUSINESS_AUDIT_ACTIONS.PAYMENT_VERIFIED);
-      this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.PAYMENT_VERIFIED, entityType: "payment", entityId: payment.id, previousValue: previous, newValue: "verified", relatedRecordIds: [contract.id] });
+      this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.PAYMENT_VERIFIED, entityType: "payment", entityId: payment.id, previousValue: previous, newValue: String(payment.amountCentavos), relatedRecordIds: [contract.id] });
       reconcileContract(this.store, contract.id, identity);
       return this.view(payment);
     });
@@ -184,7 +180,7 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
     payment.status = status;
     payment.decisionReason = reason.trim();
     this.event(payment, identity, action, reason.trim());
-    this.audit(identity, { module: "finance", action, entityType: "payment", entityId: payment.id, previousValue: previous, newValue: status, reason: reason.trim() });
+    this.audit(identity, { module: "finance", action, entityType: "payment", entityId: payment.id, previousValue: previous, newValue: status, reason: reason.trim(), relatedRecordIds: [payment.contractId] });
     return this.view(payment);
   }
 

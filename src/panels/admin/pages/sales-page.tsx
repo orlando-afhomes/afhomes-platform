@@ -2,15 +2,15 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useContracts, useOperation, useSales } from "@/data/business-queries";
+import { useRouter } from "next/navigation";
+import { useOperation, useSales } from "@/data/business-queries";
+import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import type { SaleView } from "@/data/contracts/sale-repository";
 import { confirmedValueInPeriod, mySales, teamSales, totalsFor } from "@/modules/sales/rules";
 import { manilaToday } from "@/shared/lib/dates";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
-import { InfoNote } from "@/shared/components/modern/detail-list";
 import { StandardDateField } from "@/shared/forms/modern";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
-import { ContractsTable } from "../components/contracts-table";
 import { useContractHref } from "../components/use-contract-href";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
@@ -31,8 +31,8 @@ const STATUS_OPTIONS = [
 ];
 
 export function SalesPage() {
+  const router = useRouter();
   const sales = useSales();
-  const contracts = useContracts();
   const { identity } = useDevIdentity();
   const viewTeam = useOperation("sales.viewTeam");
   const contractHref = useContractHref();
@@ -73,7 +73,7 @@ export function SalesPage() {
   const tabs = identity.memberId ? [{ value: "mine", label: "My sales" }, ...(viewTeam ? [{ value: "team", label: "Team sales" }] : [])] : [{ value: "all", label: "All sales" }];
 
   return (
-    <ModulePage anyOf={["sales"]} title="Sales" description="Confirmed sales count once at the full contract value, on the date Finance confirms them." crumbs={[{ label: "Sales" }]}>
+    <ModulePage anyOf={["sales"]} title="Sales" description="Confirmed sales count once at the full contract value, on the date Finance confirms them." crumbs={[{ label: "Sales", href: "/admin/sales" }, { label: "Sales" }]}>
       <TabBar label="Sales view" tabs={tabs} value={scope} onChange={(value) => setScope(value as "mine" | "team" | "all")} />
       <StatTiles items={[{ label: "Confirmed", value: <Money value={totals.confirmed} />, hint: `${totals.confirmedCount} sale(s)` }, { label: "Pending", value: <Money value={totals.pending} />, hint: `${totals.pendingCount} sale(s)` }, { label: "Overall recorded", value: <Money value={totals.overall} />, hint: "Confirmed plus pending" }, { label: "Confirmed in period", value: <Money value={inPeriod} />, hint: "Net of reversals, by confirmation date" }]} />
       <div className="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-2 tw:sm:max-w-md">
@@ -83,16 +83,18 @@ export function SalesPage() {
       <Section title="Sales">
         <FilterBar search={search} onSearch={setSearch} searchLabel="Search sales" filters={[{ label: "Sale status filter", value: status, onChange: setStatus, options: STATUS_OPTIONS }]} />
         <QueryState isLoading={sales.isLoading} error={sales.error}>
-          <DataTable data={rows} columns={columns} getRowId={(row) => row.id} emptyText="No sales match." caption="Sales" />
+          <DataTable
+            data={rows}
+            columns={columns}
+            getRowId={(row) => row.id}
+            emptyText="No sales match."
+            caption="Sales"
+            onRowOpen={(row) => router.push(contractHref(row.contractId))}
+            getRowLabel={(row) => `Open the sale for ${row.customerName}`}
+            rowActions={(row) => <RowActionsMenu itemName={`sale for ${row.customerName}`} onView={() => router.push(contractHref(row.contractId))} />}
+          />
         </QueryState>
       </Section>
-      {(contracts.data?.length ?? 0) > 0 ? (
-        <Section title="Contracts" description="Open a contract to submit payments or follow its review.">
-          <ContractsTable />
-        </Section>
-      ) : (
-        <InfoNote>No contracts yet. Prepare one from a submitted customer.</InfoNote>
-      )}
     </ModulePage>
   );
 }

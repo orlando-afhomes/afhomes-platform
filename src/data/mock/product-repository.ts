@@ -2,6 +2,7 @@ import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { PaymentSchemeInput, ProductRepository, ProductUpdateInput } from "@/data/contracts/product-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { DevIdentity } from "@/modules/identity/types";
+import { installmentCountFor, schemeTermErrors } from "@/modules/vip/rules";
 import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
 import { BusinessRepository, today } from "./business-base";
 import { nextId } from "./ids";
@@ -14,10 +15,11 @@ function clone<T>(value: T): T {
 /** Scheme terms are complete only when every documented field for its category is present. */
 function termsComplete(scheme: PaymentScheme): boolean {
   if (scheme.ownerHold) return false;
-  if (!scheme.paymentCode || scheme.applicableTiers.length === 0) return false;
+  // A Move scheme's Card ID code is an open owner decision (06 section 6.3): it is enforced at membership
+  // activation, not at configuration, so approved Move terms stay available.
+  if ((scheme.category !== "move" && !scheme.paymentCode) || scheme.applicableTiers.length === 0) return false;
   if (scheme.category === "cash") return true;
-  if (!scheme.installmentCount) return false;
-  return scheme.applicableTiers.every((tier) => (scheme.installmentCentavosByTier[tier] ?? 0) > 0);
+  return scheme.applicableTiers.every((tier) => (installmentCountFor(scheme, tier) ?? 0) > 0 && (scheme.installmentCentavosByTier[tier] ?? 0) > 0);
 }
 
 export class MockProductRepository extends BusinessRepository implements ProductRepository {
@@ -84,12 +86,16 @@ export class MockProductRepository extends BusinessRepository implements Product
         reservationCentavos: input.reservationCentavos ?? null,
         installmentCount: input.installmentCount ?? null,
         installmentCentavosByTier: input.installmentCentavosByTier ?? {},
-        interestPercent: input.interestPercent ?? null,
+        priceCentavosByTier: input.priceCentavosByTier ?? {},
         commercialStatus: "pending_owner_decision",
         source: "Configured by an authorized Admin.",
         availability: "unavailable",
         configVersion: 1,
+        effectiveDate: today(),
+        changes: [{ version: 1, date: today(), actorId: identity.id, reason: "Created", summary: "created" }],
       };
+      const invalid = schemeTermErrors(scheme, this.store.products);
+      if (invalid.length > 0) throw new Error(invalid[0]);
       scheme.commercialStatus = termsComplete(scheme) ? "configured" : "pending_owner_decision";
       if (scheme.commercialStatus === "configured") scheme.availability = input.availability ?? "available";
       this.store.paymentSchemes.push(scheme);
@@ -105,11 +111,20 @@ export class MockProductRepository extends BusinessRepository implements Product
       const scheme = this.store.paymentSchemes.find((item) => item.id === id);
       if (!scheme) throw new Error("Payment scheme not found.");
       const before = scheme.commercialStatus;
-      Object.assign(scheme, input);
-      if (input.installmentCount) scheme.category = "installment";
+      const changed = (Object.keys(input) as Array<keyof PaymentSchemeInput>).filter((key) => input[key] !== undefined && JSON.stringify(input[key]) !== JSON.stringify(scheme[key]));
+      if (changed.length === 0) throw new Error("Nothing was changed.");
+      const next: PaymentScheme = { ...scheme, ...input };
+      // Only a cash scheme becomes an installment scheme by gaining installments; a Move scheme keeps its category.
+      if (input.installmentCount && next.category === "cash") next.category = "installment";
+      const invalid = schemeTermErrors(next, this.store.products);
+      if (invalid.length > 0) throw new Error(invalid[0]);
+      Object.assign(scheme, next);
       scheme.commercialStatus = termsComplete(scheme) ? "configured" : "pending_owner_decision";
       if (scheme.commercialStatus !== "configured") scheme.availability = "unavailable";
       scheme.configVersion += 1;
+      // Contracts already prepared keep their snapshot; the new version applies from today.
+      scheme.effectiveDate = today();
+      scheme.changes.push({ version: scheme.configVersion, date: today(), actorId: identity.id, reason: reason.trim(), summary: changed.join(", ") });
       this.audit(identity, {
         module: "vip-products",
         action: BUSINESS_AUDIT_ACTIONS.PAYMENT_SCHEME_UPDATED,

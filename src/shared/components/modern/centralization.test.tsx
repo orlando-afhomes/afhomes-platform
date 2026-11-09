@@ -44,7 +44,7 @@ describe("centralized Card", () => {
       </Card>,
     );
     const card = screen.getByText("Body").closest("div[data-slot='card']")!;
-    expect(card.className).toContain("tw:rounded-lg");
+    expect(card.className).toContain("tw:rounded-xl");
     expect(card.className).toContain("tw:bg-card");
     expect(screen.getByText("Title")).toBeInTheDocument();
   });

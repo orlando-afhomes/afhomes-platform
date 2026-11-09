@@ -141,7 +141,7 @@ Summary only; canonical documents govern. Never assume module visibility grants 
 
 Do not silently resolve these during development; verify canonical documents before treating a historical blocker as open or closed:
 
-- Gold price (₱390,000 vs ₱780,000); unfinished Silver contractual amount; Non-Standard contract authorization; Move A/B1/B2 commercial terms.
+- Gold installment price (₱390,000 vs ₱780,000); unfinished Silver contractual amount; Non-Standard contract authorization. (Spot Cash, Move A and Move B terms were approved by the owner on 2026-11-09; see the doc 05 amendment.)
 - RA numbering scope and uniqueness; Card Claim Date versus Activation Date validity start.
 - Accreditation expiry/access cutoff interpretation.
 - Module-level versus operation-level permission policy (doc 01 versus operation grants in code; `docs/development/role-module-permission-matrix-proposal.md` is only partially approved).

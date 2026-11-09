@@ -1,11 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { buildCardId } from "@/modules/membership/rules";
-import { meetsRequiredInitial } from "@/modules/finance/rules";
+import { buildCollectionLedger, meetsRequiredInitial, outstandingBalanceCentavos, totalVerifiedCentavos } from "@/modules/finance/rules";
 import { createMockStore, createSeedStore } from "./seed";
 
 describe("centralized seed integrity", () => {
   const store = createSeedStore();
   const ids = (items: ReadonlyArray<{ id: string }>) => new Set(items.map((item) => item.id));
+
+  it("keeps ledger, balance, sale value and schedule totals in step for every contract", () => {
+    for (const contract of store.contracts) {
+      const own = store.payments.filter((payment) => payment.contractId === contract.id);
+      const ledger = buildCollectionLedger(contract, own);
+      expect(ledger.at(-1)?.netCentavos ?? 0).toBe(totalVerifiedCentavos(own));
+      expect(ledger.at(-1)?.balanceCentavos ?? contract.priceCentavos).toBe(outstandingBalanceCentavos(contract, own));
+      expect(contract.schedule.reduce((sum, line) => sum + line.amountCentavos, 0)).toBe(contract.priceCentavos);
+      const sale = store.sales.find((item) => item.contractId === contract.id);
+      if (sale) expect(sale.valueCentavos).toBe(contract.priceCentavos);
+      for (const payment of own) expect(payment.saleId).toBe(sale?.id ?? null);
+    }
+  });
 
   it("has unique ids in every collection", () => {
     for (const collection of [store.members as Array<{ id: string }>, store.customers, store.contracts, store.sales, store.payments, store.memberships, store.resortSpends, store.paymentSchemes]) {

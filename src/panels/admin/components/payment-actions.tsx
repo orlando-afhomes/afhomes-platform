@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, type ReactElement, type ReactNode } from "react";
-import { useOperation, usePaymentAction, useSubmitPayment } from "@/data/business-queries";
+import { useOperation, usePaymentAction, usePayments, useSubmitPayment } from "@/data/business-queries";
 import type { PaymentView } from "@/data/contracts/payment-repository";
-import { adjustableCentavos } from "@/modules/finance/rules";
+import { adjustableCentavos, adjustmentTotalCentavos } from "@/modules/finance/rules";
 import { PAYMENT_METHODS, PAYMENT_PURPOSES, type PaymentMethod, type PaymentPurpose } from "@/modules/finance/types";
 import { manilaToday } from "@/shared/lib/dates";
 import { formatPeso, parsePesoToCentavos } from "@/shared/lib/money";
@@ -14,6 +14,10 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { toast } from "sonner";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
+import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
+import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
+import { BizBadge } from "@/shared/components/business/biz-badge";
+import { formatDate } from "@/shared/lib/format-date";
 
 const PURPOSE_LABELS: Record<PaymentPurpose, string> = { reservation: "Reservation", down_payment: "Down payment", installment: "Installment", full: "Full payment" };
 
@@ -103,50 +107,58 @@ function AdjustDialog({ payment, onClose }: { payment: PaymentView | null; onClo
   );
 }
 
+/** A single payment-row action; the same list feeds the row menu and the details sheet footer. */
+type PaymentItem = { key: string; label: string; danger?: boolean; onClick: () => void };
+
+const PURPOSE_TEXT = (value: string) => value.replace(/_/g, " ");
+
 /**
- * Finance row actions for payments (verify, review, reject, return, reverse or
- * refund) with one shared set of dialogs. Render `dialogs` once in the parent.
+ * Finance row actions for payments (start review, verify, return, reject, reverse
+ * or refund) with one shared set of dialogs and a details sheet. Render `dialogs`
+ * once in the parent. `rowActions` is the trailing Actions column menu and `open`
+ * opens the details sheet, which is what a row click does.
  */
-export function usePaymentActions(): { actions: (payment: PaymentView) => ReactNode; dialogs: ReactElement } {
+export function usePaymentActions(): { rowActions: (payment: PaymentView) => ReactNode; open: (payment: PaymentView) => void; dialogs: ReactElement } {
   const action = usePaymentAction();
+  const payments = usePayments();
   const { confirmRun, dialog } = useConfirmRun();
   const canVerify = useOperation("finance.verify");
   const canRefund = useOperation("finance.refund");
   const [reasonFor, setReasonFor] = useState<{ payment: PaymentView; kind: "reject" | "return" } | null>(null);
   const [adjusting, setAdjusting] = useState<PaymentView | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const detail = detailId ? (payments.data ?? []).find((item) => item.id === detailId) ?? null : null;
 
-  const actions = (payment: PaymentView): ReactNode => {
+  const itemsFor = (payment: PaymentView): PaymentItem[] => {
     const open = payment.status === "submitted" || payment.status === "under_review";
-    const buttons: ReactNode[] = [];
+    const items: PaymentItem[] = [];
     if (canVerify && open) {
       if (payment.status === "submitted") {
-        buttons.push(
-          <Button key="review" variant="outline" size="sm" className="tw:min-h-11 tw:sm:min-h-7" onClick={() => void action.mutateAsync({ id: payment.id, action: "startReview" }).catch((error: Error) => toast.error(error.message))}>
-            Start review
-          </Button>,
-        );
+        items.push({ key: "review", label: "Start review", onClick: () => void action.mutateAsync({ id: payment.id, action: "startReview" }).catch((error: Error) => toast.error(error.message)) });
       }
-      buttons.push(
-        <Button key="verify" size="sm" className="tw:min-h-11 tw:sm:min-h-7" onClick={() => confirmRun({ title: "Verify this payment?", description: `${formatPeso(payment.amountCentavos)} for ${payment.customerName} will be counted as paid. A reservation alone never confirms a sale.`, confirmText: "Verify", action: () => action.mutateAsync({ id: payment.id, action: "verify" }), successTitle: "Payment verified.", errorTitle: "Could not verify" })}>
-          Verify
-        </Button>,
-        <Button key="return" variant="outline" size="sm" className="tw:min-h-11 tw:sm:min-h-7" onClick={() => setReasonFor({ payment, kind: "return" })}>
-          Return
-        </Button>,
-        <Button key="reject" variant="outline" size="sm" className="tw:min-h-11 tw:sm:min-h-7" onClick={() => setReasonFor({ payment, kind: "reject" })}>
-          Reject
-        </Button>,
+      items.push(
+        { key: "verify", label: "Verify", onClick: () => confirmRun({ title: "Verify this payment?", description: `${formatPeso(payment.amountCentavos)} for ${payment.customerName} will be counted as paid. A reservation alone never confirms a sale.`, confirmText: "Verify", action: () => action.mutateAsync({ id: payment.id, action: "verify" }), successTitle: "Payment verified.", errorTitle: "Could not verify" }) },
+        { key: "return", label: "Return for correction", onClick: () => setReasonFor({ payment, kind: "return" }) },
+        { key: "reject", label: "Reject", danger: true, onClick: () => setReasonFor({ payment, kind: "reject" }) },
       );
     }
     if (canRefund && payment.status === "verified" && adjustableCentavos(payment) > 0) {
-      buttons.push(
-        <Button key="adjust" variant="outline" size="sm" className="tw:min-h-11 tw:sm:min-h-7" onClick={() => setAdjusting(payment)}>
-          Reverse or refund
-        </Button>,
-      );
+      items.push({ key: "adjust", label: "Reverse or refund", onClick: () => setAdjusting(payment) });
     }
-    return buttons.length > 0 ? <div className="tw:flex tw:flex-wrap tw:gap-1">{buttons}</div> : null;
+    return items;
   };
+
+  const rowActions = (payment: PaymentView): ReactNode => (
+    <RowActionsMenu itemName={`payment for ${payment.customerName}`} onView={() => setDetailId(payment.id)} extraItems={itemsFor(payment)} />
+  );
+
+  const detailFooter = detail
+    ? itemsFor(detail).map((item) => (
+        <Button key={item.key} type="button" variant={item.danger ? "danger" : item.key === "verify" ? "primary" : "outline"} onClick={item.onClick}>
+          {item.label}
+        </Button>
+      ))
+    : null;
 
   const dialogs = (
     <>
@@ -162,7 +174,41 @@ export function usePaymentActions(): { actions: (payment: PaymentView) => ReactN
         onSubmit={(reason) => (reasonFor ? action.mutateAsync({ id: reasonFor.payment.id, action: reasonFor.kind === "reject" ? "reject" : "return", reason }) : Promise.resolve())}
       />
       <AdjustDialog payment={adjusting} onClose={() => setAdjusting(null)} />
+      <RecordDetailsSheet
+        open={detail !== null}
+        onClose={() => setDetailId(null)}
+        title={detail ? `${formatPeso(detail.amountCentavos)} · ${PURPOSE_TEXT(detail.purpose)}` : "Payment"}
+        subtitle={detail ? `${detail.customerName} · ${detail.contractLabel}` : undefined}
+        badge={detail ? <BizBadge status={detail.status} /> : undefined}
+        sections={
+          detail
+            ? [
+                {
+                  title: "Payment",
+                  rows: [
+                    { label: "Method", value: detail.method },
+                    { label: "Date on receipt", value: formatDate(detail.paidDate) },
+                    { label: "Reference no.", value: detail.referenceNo },
+                    { label: "Receipt file", value: detail.evidenceFileName },
+                    { label: "Submitted by", value: detail.submitterName },
+                    { label: "Submitted", value: formatDate(detail.submittedAt) },
+                  ],
+                },
+                {
+                  title: "Finance review",
+                  rows: [
+                    { label: "Verified on", value: detail.verifiedDate ? formatDate(detail.verifiedDate) : null },
+                    { label: "Decision note", value: detail.decisionReason },
+                    { label: "Adjusted", value: detail.adjustments.length > 0 ? `${detail.adjustments.length} adjustment(s), ${formatPeso(adjustmentTotalCentavos(detail.adjustments))}` : null },
+                  ],
+                },
+              ]
+            : []
+        }
+        history={detail ? detail.history.map((item, index) => ({ key: `${item.at}-${index}`, when: formatDate(item.at), text: `${item.event.replace(/_/g, " ").toLowerCase()}${item.note ? `: ${item.note}` : ""}` })) : []}
+        footer={detailFooter && detailFooter.length > 0 ? detailFooter : undefined}
+      />
     </>
   );
-  return { actions, dialogs };
+  return { rowActions, open: (payment) => setDetailId(payment.id), dialogs };
 }

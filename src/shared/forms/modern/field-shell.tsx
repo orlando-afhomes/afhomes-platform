@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, type ReactNode } from "react";
+import { CircleAlert } from "lucide-react";
 import { Label } from "@/shared/ui/label";
 import { cn } from "@/shared/lib/utils";
 
@@ -45,15 +46,16 @@ export function FieldShell({
   const caption = (
     <>
       {label}
-      {required ? <span aria-hidden="true"> *</span> : null}
+      {required ? <span aria-hidden="true" className="tw:-ml-1 tw:text-destructive">*</span> : null}
     </>
   );
   return (
-    <div className={cn("tw:flex tw:min-w-0 tw:flex-col tw:gap-1.5", className)}>
+    <div className={cn("tw:flex tw:min-w-0 tw:flex-col tw:gap-2", className)}>
       {labelFor ? <Label htmlFor={ids.id}>{caption}</Label> : <Label>{caption}</Label>}
       {children}
       {error ? (
-        <p id={ids.errorId} role="alert" className="tw:text-sm tw:text-destructive">
+        <p id={ids.errorId} role="alert" className="tw:flex tw:items-start tw:gap-1.5 tw:text-sm tw:text-destructive">
+          <CircleAlert aria-hidden="true" className="tw:mt-0.5 tw:size-4 tw:shrink-0" />
           {error}
         </p>
       ) : null}

@@ -8,9 +8,8 @@ import type { DevIdentity } from "@/modules/identity/types";
 import { BusinessRepository, nowIso, today } from "./business-base";
 import { nextId, randomNumericId } from "./ids";
 import type { MockStore } from "./seed";
-import { getVisibleCustomerIds, getVisibleMemberIds, isActiveIdentity, activeIdentityRoles } from "./scope";
+import { BROAD_ROLES, getVisibleCustomerIds, getVisibleMemberIds, isActiveIdentity, activeIdentityRoles } from "./scope";
 
-const BROAD = new Set(["super_admin", "admin"]);
 
 const COPY_KEYS = [
   "customerNumber", "firstName", "middleName", "lastName", "suffix", "gender", "civilStatus", "dateOfBirth", "mobileNumber",
@@ -28,7 +27,7 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
     if (!isActiveIdentity(identity)) return [];
     const members = getVisibleMemberIds(identity, this.store);
     const ids = getVisibleCustomerIds(identity, this.store, members);
-    const broad = activeIdentityRoles(identity).some((role) => BROAD.has(role));
+    const broad = activeIdentityRoles(identity).some((role) => BROAD_ROLES.has(role));
     return this.store.customers
       .filter((customer) => ids.has(customer.id))
       .map((customer) => (broad || customer.ownerMemberId === identity.memberId ? this.copy(customer) : restrictCustomer(customer)));
@@ -45,7 +44,7 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
   private ownRecord(identity: DevIdentity, id: string): Customer {
     const customer = this.store.customers.find((item) => item.id === id);
     if (!customer) throw new Error("Customer not found.");
-    const broad = activeIdentityRoles(identity).some((role) => BROAD.has(role));
+    const broad = activeIdentityRoles(identity).some((role) => BROAD_ROLES.has(role));
     if (!broad && customer.ownerMemberId !== identity.memberId) throw new Error("Customer not visible to this identity.");
     return customer;
   }

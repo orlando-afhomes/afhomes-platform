@@ -5,12 +5,11 @@ import type { Commission } from "@/modules/commissions/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { applyBasisPoints } from "@/shared/lib/money";
 import { collectedPercent, meetsPayoutRelease, PAYOUT_RELEASE_WAIT_DAYS, payoutReleaseDate } from "@/modules/commissions/rules";
-import { BusinessRepository, customerName, nowIso, today } from "./business-base";
+import { BusinessRepository, DATE_ONLY, customerName, nowIso, today } from "./business-base";
 import { paymentsOfContract } from "./business-effects";
 import type { MockStore } from "./seed";
 import { getDescendantIds } from "./scope";
 
-const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
 export class MockCommissionRepository extends BusinessRepository implements CommissionRepository {
   constructor(store: MockStore, getIdentity: () => DevIdentity, asyncOptions: MockAsyncOptions = {}) {

@@ -1,5 +1,5 @@
 import type { Contract } from "@/modules/contracts/types";
-import { netVerifiedCentavos, totalVerifiedCentavos } from "@/modules/finance/rules";
+import { collectionPercent, netVerifiedCentavos, totalVerifiedCentavos } from "@/modules/finance/rules";
 import type { Payment } from "@/modules/finance/types";
 import { addDaysToDate } from "@/shared/lib/dates";
 
@@ -42,7 +42,4 @@ export function payoutReleaseDate(contract: Pick<Contract, "priceCentavos">, pay
 }
 
 /** Verified share of the contract value in whole percent, rounded down, for messages only. */
-export function collectedPercent(contract: Pick<Contract, "priceCentavos">, payments: readonly Payment[]): number {
-  if (contract.priceCentavos <= 0) return 0;
-  return Math.floor((totalVerifiedCentavos(payments) * 100) / contract.priceCentavos);
-}
+export const collectedPercent = collectionPercent;

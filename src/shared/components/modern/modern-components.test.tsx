@@ -160,6 +160,32 @@ describe("DataTable", () => {
     await user.click(screen.getByText("Name 2"));
     expect(onRowOpen).toHaveBeenCalledWith({ id: "r2", name: "Name 2" });
   });
+
+  it("adds an Actions column and opens a focused row with Enter or Space, but not from a control inside it", async () => {
+    const user = userEvent.setup();
+    const onRowOpen = vi.fn();
+    render(
+      <DataTable
+        data={rows(2)}
+        columns={[columns[0]]}
+        getRowId={(row) => row.id}
+        emptyText="-"
+        onRowOpen={onRowOpen}
+        getRowLabel={(row) => `Open ${row.name}`}
+        rowActions={(row) => <button type="button">More {row.id}</button>}
+      />,
+    );
+    expect(screen.getByRole("columnheader", { name: "Actions" })).toBeInTheDocument();
+    const row = screen.getByRole("row", { name: "Open Name 1" });
+    row.focus();
+    await user.keyboard("{Enter}");
+    await user.keyboard(" ");
+    expect(onRowOpen).toHaveBeenCalledTimes(2);
+    onRowOpen.mockClear();
+    screen.getByRole("button", { name: "More r1" }).focus();
+    await user.keyboard("{Enter}");
+    expect(onRowOpen).not.toHaveBeenCalled();
+  });
 });
 
 describe("StatusBadge, PageHeader, and Breadcrumbs", () => {

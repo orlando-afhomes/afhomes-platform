@@ -13,7 +13,7 @@ function ComboboxInput({ className, ...props }: ComboboxPrimitive.Input.Props) {
       <ComboboxPrimitive.Input
         data-slot="combobox-input"
         className={cn(
-          "tw:h-10 tw:w-full tw:min-w-0 tw:rounded-lg tw:border tw:border-input tw:bg-transparent tw:py-1 tw:pr-8 tw:pl-2.5 tw:text-sm tw:transition-colors tw:outline-none tw:placeholder:text-muted-foreground tw:focus-visible:border-ring tw:focus-visible:ring-3 tw:focus-visible:ring-ring/50 tw:disabled:cursor-not-allowed tw:disabled:opacity-50 tw:aria-invalid:border-destructive tw:aria-invalid:ring-3 tw:aria-invalid:ring-destructive/20 tw:sm:h-8",
+          "tw:h-10 tw:w-full tw:min-w-0 tw:rounded-lg tw:border tw:border-input tw:bg-card tw:py-1 tw:pr-8 tw:pl-3 tw:text-sm tw:shadow-(--shadow-soft) tw:transition-[border-color,box-shadow] tw:outline-none tw:hover:border-foreground/30 tw:placeholder:text-muted-foreground tw:focus-visible:border-ring tw:focus-visible:ring-3 tw:focus-visible:ring-ring/30 tw:disabled:cursor-not-allowed tw:disabled:opacity-50 tw:aria-invalid:border-destructive tw:aria-invalid:ring-3 tw:aria-invalid:ring-destructive/20",
           className
         )}
         {...props}

@@ -21,6 +21,11 @@ export type AdminModuleId =
   | "customers"
   | "vip-products"
   | "sales"
+  // Parent navigation scopes only; never granted to any role (deny by default).
+  | "sales-group"
+  | "finance-group"
+  | "membership-group"
+  | "insights-group"
   | "finance"
   | "commissions"
   | "membership"

@@ -302,7 +302,7 @@ export function GenealogyTree({
   detailed?: boolean;
 }) {
   return (
-    <ul className={cn("tw:m-0 tw:flex tw:list-none tw:flex-col tw:gap-0.5 tw:p-0", nested && "tw:ml-4 tw:border-l tw:border-border tw:pl-2")}>
+    <ul className={cn("tw:m-0 tw:flex tw:list-none tw:flex-col tw:gap-0.5 tw:p-0", nested && "tw:ml-4 tw:animate-in tw:fade-in-0 tw:slide-in-from-top-1 tw:border-l tw:border-border tw:pl-2 tw:duration-200 tw:ease-out")}>
       {nodes.map((node) => {
         const expanded = expandedKeys.includes(node.key);
         const selected = selectedKey === node.key;

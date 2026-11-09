@@ -12,7 +12,7 @@ export type ProductUpdateInput = Partial<
 export type PaymentSchemeInput = Partial<
   Pick<
     PaymentScheme,
-    "label" | "paymentCode" | "applicableTiers" | "reservationCentavos" | "installmentCount" | "installmentCentavosByTier" | "interestPercent" | "availability"
+    "label" | "paymentCode" | "applicableTiers" | "reservationCentavos" | "installmentCount" | "installmentCentavosByTier" | "priceCentavosByTier" | "installmentCountByTier" | "downPaymentBasisPoints" | "availability"
   >
 >;
 

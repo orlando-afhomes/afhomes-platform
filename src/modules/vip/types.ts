@@ -53,9 +53,17 @@ export type PaymentScheme = {
   applicableTiers: VipTierCode[];
   reservationCentavos: number | null;
   installmentCount: number | null;
-  /** Equal monthly installment per tier, in centavos. */
+  /** Equal monthly installment per tier, in centavos. No interest is ever charged (07 section 13). */
   installmentCentavosByTier: Partial<Record<VipTierCode, number>>;
-  interestPercent: number | null;
+  /**
+   * Package price per tier for this scheme, in centavos. Empty for a tier means the
+   * catalog price applies. Spot Cash carries its own Full Payment contract price (OD-11).
+   */
+  priceCentavosByTier: Partial<Record<VipTierCode, number>>;
+  /** Monthly payment count per tier when it differs by tier (Move B: 4, 8, 12); falls back to installmentCount. */
+  installmentCountByTier?: Partial<Record<VipTierCode, number>>;
+  /** Down payment as basis points of the package price, including the reservation fee (Move B: 4,000). */
+  downPaymentBasisPoints?: number | null;
   commercialStatus: "configured" | "pending_owner_decision";
   source: string;
   availability: "available" | "unavailable";
@@ -65,6 +73,10 @@ export type PaymentScheme = {
    */
   ownerHold?: string | null;
   configVersion: number;
+  /** Business date the current configuration version took effect. */
+  effectiveDate: string | null;
+  /** Audited configuration history; finalized contracts keep their own snapshot. */
+  changes: ProductChange[];
 };
 
 /** Historical and reserved tier codes: shown for reference, never auto-activated (05 sections 4 and 19). */

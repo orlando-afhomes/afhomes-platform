@@ -12,6 +12,7 @@ export {
   TextField,
 } from "./text-field";
 export { SelectField, SuffixField } from "./select-field";
+export { RadioCardField } from "./radio-card-field";
 export { PhilippineLandlineField, PhilippineMobileField, TIN_DISPLAY_LENGTH, TinField } from "./masked-fields";
 export { GovernmentIdFields, PhilippineAddressFields } from "./structured-fields";
 export { ProfilePhotoUploader } from "./profile-photo-uploader";

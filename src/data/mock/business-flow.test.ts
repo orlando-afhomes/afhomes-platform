@@ -348,6 +348,85 @@ describe("integrity guards (C1)", () => {
   });
 });
 
+describe("payment and cancellation audit trail", () => {
+  it("records the verified amount and the contract on the verification audit event", async () => {
+    const store = createMockStore();
+    await as(store, "dev-finance").payments.verify("pay-4");
+    const event = store.auditEvents.find((e) => e.action === "PAYMENT_VERIFIED" && e.entityId === "pay-4")!;
+    expect(event.newValue).toBe(String(pesos(10000)));
+    expect(event.relatedRecordIds).toEqual(["ctr-4"]);
+  });
+
+  it("audits the sale cancellation when a contract is cancelled directly", async () => {
+    const store = createMockStore();
+    await as(store, "dev-admin").contracts.cancel("ctr-4", "Customer withdrew before payment");
+    expect(store.sales.find((s) => s.id === "sale-4")!.status).toBe("cancelled");
+    expect(store.auditEvents.some((e) => e.action === "SALE_CANCELLED" && e.entityId === "sale-4")).toBe(true);
+  });
+
+  it("links a draft-stage payment to the sale when the contract is submitted", async () => {
+    const store = createMockStore();
+    store.contracts.find((c) => c.id === "ctr-4")!.status = "draft";
+    store.payments.find((p) => p.id === "pay-4")!.saleId = null;
+    await as(store, "dev-admin").contracts.submit("ctr-4");
+    expect(store.payments.find((p) => p.id === "pay-4")!.saleId).toBe("sale-4");
+  });
+});
+
+describe("Move schemes without an authorized Card ID payment code (06 section 6.3)", () => {
+  it.each([
+    ["scheme-move-a", pesos(54000)],
+    ["scheme-move-b", pesos(72000)],
+  ])("%s: pays and finalizes, but activation fails and no Card ID is generated", async (schemeId, price) => {
+    const store = createMockStore();
+    const superAdmin = as(store, "dev-super-admin");
+    const finance = as(store, "dev-finance");
+    await superAdmin.contracts.cancel("ctr-4", "Re-prepare under a Move scheme");
+    const prepared = await superAdmin.contracts.prepare({ customerId: "cust-a4", schemeId, customerAccepted: true });
+    expect(prepared).toMatchObject({ paymentCode: null, priceCentavos: price, arrangement: { status: "pending" } });
+    await superAdmin.contracts.approveArrangement(prepared.id, "Signed approval");
+    await superAdmin.contracts.submit(prepared.id);
+    await superAdmin.contracts.startReview(prepared.id);
+    const finalized = await superAdmin.contracts.finalize(prepared.id);
+    expect(finalized.status).toBe("finalized");
+
+    for (const [index, line] of prepared.schedule.entries()) {
+      const payment = await superAdmin.payments.submit({ contractId: prepared.id, purpose: line.purpose, amountCentavos: line.amountCentavos, method: "Cash", paidDate: manilaToday(), referenceNo: `${schemeId}-${index}` });
+      expect((await finance.payments.verify(payment.id)).status).toBe("verified");
+    }
+    const verified = store.payments.filter((p) => p.contractId === prepared.id && p.status === "verified").reduce((sum, p) => sum + p.amountCentavos, 0);
+    expect(verified).toBe(price);
+    expect(store.sales.find((s) => s.contractId === prepared.id)!.status).toBe("confirmed");
+
+    await superAdmin.contracts.recordRaNumber(prepared.id, "2026-0009");
+    const membership = store.memberships.find((m) => m.contractId === prepared.id)!;
+    await expect(finance.memberships.activate(membership.id)).rejects.toThrow(/no documented Card ID payment code/);
+    expect(membership).toMatchObject({ status: "pending", cardId: null, activationDate: null });
+    expect(store.auditEvents.some((e) => e.action === "CARD_ID_ISSUED" && e.relatedRecordIds?.includes(prepared.id))).toBe(false);
+  });
+
+  it("keeps the official codes and the historical Card ID: Spot Cash C01, 4-month installment T04", () => {
+    const store = createMockStore();
+    expect(store.paymentSchemes.find((s) => s.id === "scheme-spot-cash")!.paymentCode).toBe("C01");
+    expect(store.paymentSchemes.find((s) => s.id === "scheme-installment-4m")!.paymentCode).toBe("T04");
+    expect(store.memberships.find((m) => m.id === "memb-1")!.cardId).toBe("26110200001B1T04S");
+  });
+
+  it("holds only installment-priced Gold contracts on the Gold price conflict, not Gold Spot Cash or Gold Move A", async () => {
+    const holdsFor = async (schemeId: string) => {
+      const store = createMockStore();
+      const admin = as(store, "dev-admin");
+      await admin.contracts.cancel("ctr-3", "Re-prepare");
+      const contract = await admin.contracts.prepare({ customerId: "cust-a3", schemeId, customerAccepted: true });
+      return contract.holds.filter((hold) => /price is in conflict/.test(hold));
+    };
+    expect(await holdsFor("scheme-installment-4m")).toHaveLength(1);
+    expect(await holdsFor("scheme-move-b")).toHaveLength(1);
+    expect(await holdsFor("scheme-spot-cash")).toHaveLength(0);
+    expect(await holdsFor("scheme-move-a")).toHaveLength(0);
+  });
+});
+
 describe("owner-decided restrictions (C2)", () => {
   it("never refunds the Reservation Fee but still allows a reversal (OD-12)", async () => {
     const store = createMockStore();
@@ -358,16 +437,79 @@ describe("owner-decided restrictions (C2)", () => {
     expect(reversed.adjustments.at(-1)?.kind).toBe("reversal");
   });
 
-  it("keeps Spot Cash unavailable without touching the finalized Spot Cash contract (OD-11)", async () => {
+  it("prepares Spot Cash at the Full Payment price with the balance due 7 days after reservation (OD-11 released)", async () => {
     const store = createMockStore();
     const admin = as(store, "dev-admin");
     await admin.contracts.cancel("ctr-3", "Free the customer for a new contract");
-    await expect(admin.contracts.prepare({ customerId: "cust-a3", schemeId: "scheme-spot-cash", customerAccepted: true })).rejects.toThrow(/not available/);
-    expect((await admin.contracts.prepare({ customerId: "cust-a3", schemeId: "scheme-installment-4m", customerAccepted: true })).schemeId).toBe("scheme-installment-4m");
-    await admin.products.updateScheme("scheme-spot-cash", { availability: "available" }, "Try to reopen");
-    expect(store.paymentSchemes.find((s) => s.id === "scheme-spot-cash")!.availability).toBe("unavailable");
-    expect(store.contracts.find((c) => c.id === "ctr-2")).toMatchObject({ status: "finalized", paymentCode: "C01" });
-    expect(store.memberships.find((m) => m.id === "memb-1")!.cardId).toBe("26110200001B1C01S");
+    const contract = await admin.contracts.prepare({ customerId: "cust-a3", schemeId: "scheme-spot-cash", customerAccepted: true, reservationDate: "2026-11-10" });
+    expect(contract).toMatchObject({ priceCentavos: pesos(312000), priceStatus: "contract_stated", paymentCode: "C01", requiredInitialCentavos: pesos(312000) });
+    expect(contract.schedule.map((line) => [line.label, line.amountCentavos, line.dueDate])).toEqual([
+      ["Reservation fee", pesos(10000), "2026-11-10"],
+      ["Balance", pesos(302000), "2026-11-17"],
+    ]);
+    // Gold's installment price conflict does not hold a Spot Cash contract with its own stated price.
+    expect(contract.holds.some((hold) => /price is in conflict/.test(hold))).toBe(false);
+  });
+
+  it("derives installment due dates monthly from the reservation date, clamped to month end", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    await admin.contracts.cancel("ctr-3", "Free the customer for a new contract");
+    const contract = await admin.contracts.prepare({ customerId: "cust-a3", schemeId: "scheme-installment-4m", customerAccepted: true, reservationDate: "2027-01-31" });
+    expect(contract.schedule.map((line) => line.dueDate)).toEqual(["2027-01-31", "2027-02-28", "2027-03-31", "2027-04-30", "2027-05-31"]);
+  });
+
+  it("keeps a scheme without complete terms unavailable whatever an Admin edits", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const draft = await admin.products.createScheme({ label: "Unapproved plan" });
+    await admin.products.updateScheme(draft.id, { availability: "available" }, "Try to open");
+    expect(store.paymentSchemes.find((s) => s.id === draft.id)!.availability).toBe("unavailable");
+    expect(store.contracts.find((c) => c.id === "ctr-2")).toMatchObject({ status: "finalized", paymentCode: "T04" });
+  });
+
+  it("builds Move B with a 40% down payment and holds finalization until Super Admin approves the arrangement", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    await admin.contracts.cancel("ctr-4", "Re-prepare under Move B");
+    const contract = await admin.contracts.prepare({ customerId: "cust-a4", schemeId: "scheme-move-b", customerAccepted: true, reservationDate: "2026-11-10" });
+    expect(contract.schedule.map((line) => [line.label, line.amountCentavos, line.dueDate])).toEqual([
+      ["Reservation fee", pesos(10000), "2026-11-10"],
+      ["Down payment", pesos(18800), null],
+      ["MA1", pesos(10800), "2026-12-10"],
+      ["MA2", pesos(10800), "2027-01-10"],
+      ["MA3", pesos(10800), "2027-02-10"],
+      ["MA4", pesos(10800), "2027-03-10"],
+    ]);
+    expect(contract).toMatchObject({ priceCentavos: pesos(72000), paymentCode: null, requiredInitialCentavos: pesos(28800), arrangement: { status: "pending" } });
+    expect(contract.holds).toContain("The Move B arrangement needs Super Admin written approval.");
+    await expect(admin.contracts.approveArrangement(contract.id, "Memo 12")).rejects.toThrow(/Super Administrator/);
+    const superAdmin = as(store, "dev-super-admin");
+    await expect(superAdmin.contracts.approveArrangement(contract.id, "  ")).rejects.toThrow(/reference/);
+    const approved = await superAdmin.contracts.approveArrangement(contract.id, "Memo 12");
+    expect(approved.arrangement).toMatchObject({ status: "approved", approvedBy: "dev-super-admin", approvalReference: "Memo 12" });
+    expect(approved.holds.some((hold) => /arrangement/.test(hold))).toBe(false);
+    expect(store.auditEvents.some((e) => e.action === "CONTRACT_ARRANGEMENT_APPROVED" && e.entityId === contract.id)).toBe(true);
+  });
+
+  it("lets Super Admin approve an arrangement on a contract they prepared, and prices Move A from Spot Cash", async () => {
+    const store = createMockStore();
+    const superAdmin = as(store, "dev-super-admin");
+    await superAdmin.contracts.cancel("ctr-3", "Re-prepare under Move A");
+    const contract = await superAdmin.contracts.prepare({ customerId: "cust-a3", schemeId: "scheme-move-a", customerAccepted: true, reservationDate: "2026-11-10" });
+    expect(contract).toMatchObject({ priceCentavos: pesos(312000), priceStatus: "contract_stated", paymentCode: null, preparedBy: "dev-super-admin" });
+    expect(contract.schedule.slice(1).map((line) => line.amountCentavos)).toEqual([pesos(75500), pesos(75500), pesos(75500), pesos(75500)]);
+    expect((await superAdmin.contracts.approveArrangement(contract.id, "Signed approval SA-1")).arrangement?.status).toBe("approved");
+  });
+
+  it("validates scheme amounts and records each configuration version", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    await expect(admin.products.updateScheme("scheme-installment-4m", { installmentCentavosByTier: { B1: pesos(15000), S1: pesos(57500), G1: pesos(95000) } }, "Typo")).rejects.toThrow(/must equal the package price/);
+    await expect(admin.products.updateScheme("scheme-spot-cash", { reservationCentavos: 0 }, "Bad")).rejects.toThrow(/positive amount/);
+    const updated = await admin.products.updateScheme("scheme-spot-cash", { paymentCode: "C01", applicableTiers: ["B1", "S1"] }, "Gold withdrawn by memo");
+    expect(updated.configVersion).toBe(3);
+    expect(updated.changes.at(-1)).toMatchObject({ version: 3, reason: "Gold withdrawn by memo", summary: "applicableTiers" });
   });
 
   it("releases a payout only at 40% of the contract value verified (OD-4)", async () => {

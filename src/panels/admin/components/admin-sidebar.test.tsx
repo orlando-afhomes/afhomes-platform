@@ -44,6 +44,22 @@ describe("admin sidebar", () => {
     expect(screen.queryByText("Accounts and Permissions")).toBeNull();
   });
 
+  it("lists process pages under their department parent and keeps Audit Logs top level", async () => {
+    const user = userEvent.setup();
+    renderSidebar(false, "dev-finance");
+    const finance = await screen.findByRole("button", { name: /Finance/ });
+    await user.click(finance);
+    for (const name of ["Payment Verification", "Collections", "Payment History", "Commission Payouts"]) {
+      expect(screen.getByRole("link", { name })).toBeDefined();
+    }
+    expect(screen.queryByRole("button", { name: /VIP Products/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Insights/ })).toBeNull();
+    cleanup();
+    renderSidebar(false, "dev-admin");
+    expect(await screen.findByRole("link", { name: "Audit Logs" })).toBeDefined();
+    expect(screen.getByRole("button", { name: /VIP Products/ })).toBeDefined();
+  });
+
   it("asks for confirmation before logging out", async () => {
     const user = userEvent.setup();
     renderSidebar();
@@ -68,6 +84,6 @@ describe("admin sidebar", () => {
     expect(group).toHaveAttribute("aria-expanded", "false");
     await user.click(group);
     expect(group).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("link", { name: "Staff & Access" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Staff" })).toBeDefined();
   });
 });

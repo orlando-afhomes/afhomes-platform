@@ -333,3 +333,11 @@ See `05-vip-products-and-contracts.md` Section 19. Additional card-specific conf
 - **VIP Card ID generator verification:** YYMMDD = Actual official Membership Activation Date; NNNNN = RA No. four-digit sequence padded to five digits; VT = Approved VIP Tier; P+MM = Approved Payment Category and Term; S/N = Contract Classification. Example: RA No. 2027-0001, Activation Date 2027-03-20, Tier G1, Payment C01, Classification S → **27032000001G1C01S**.
 - **Outstanding approval dependencies:** Listed above.
 - **Validation:** All required sections included; no invented rules; documentation only. No code, database, Git, or deployment changes.
+
+
+## Owner rulings amendment (2026-11-09)
+
+These rulings are authoritative and take precedence over earlier text in this document where they differ.
+
+1. **Move A and Move B payment codes are unresolved.** Their commercial terms are approved (doc 05 amendment), but no Card ID payment-code mapping is authorized for them. C01 applies only to Spot Cash and TXX only to installments, where XX is the actual approved number of months; neither is assigned automatically to a Move arrangement. Move contracts may be prepared, approved, finalized and paid, but membership activation and Card ID issuance stay blocked for them until the owner authorizes the mapping. Existing finalized contracts and issued Card IDs are unchanged. Move B1 and Move B2 are removed (see doc 05 amendment).
+2. **Card ID date.** The Card ID uses the official Membership Activation Date, as stated in section 6; the transaction date is not used.

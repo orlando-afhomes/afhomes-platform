@@ -66,7 +66,23 @@ export type Contract = {
   cancelReason: string | null;
   /** Two-step cancellation with forfeiture (owner decision OD-2); absent or null when none was requested. */
   cancellation?: ContractCancellation | null;
+  /**
+   * Special arrangement (Move A or Move B), tracked separately from the payment code,
+   * which records only the pricing category (owner decision 2026-11-09). Absent or null
+   * for standard schemes.
+   */
+  arrangement?: SpecialArrangement | null;
   history: ContractEvent[];
+};
+
+/** Written approval of a Move arrangement by Super Admin (deck slide 16; owner decision 2026-11-09). */
+export type SpecialArrangement = {
+  schemeLabel: string;
+  status: "pending" | "approved";
+  approvedBy: string | null;
+  approvedAt: string | null;
+  /** Reference to the signed written approval. */
+  approvalReference: string | null;
 };
 
 /** Grounds from the Reservation Agreement CANCELLATION clause. */

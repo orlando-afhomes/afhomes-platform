@@ -100,7 +100,8 @@ export type ContractAction =
   | { id: string; action: "return" | "cancel"; reason: string }
   | { id: string; action: "ra"; raNumber: string }
   | { id: string; action: "requestCancel"; ground: ContractCancellationGround; reason: string }
-  | { id: string; action: "decideCancel"; decision: "confirm" | "decline"; reason: string };
+  | { id: string; action: "decideCancel"; decision: "confirm" | "decline"; reason: string }
+  | { id: string; action: "approveArrangement"; reference: string };
 export function useContractAction() {
   return useBusinessMutation((r, v: ContractAction) => {
     switch (v.action) {
@@ -112,6 +113,7 @@ export function useContractAction() {
       case "ra": return r.contracts.recordRaNumber(v.id, v.raNumber);
       case "requestCancel": return r.contracts.requestCancellation(v.id, v.ground, v.reason);
       case "decideCancel": return r.contracts.decideCancellation(v.id, v.decision, v.reason);
+      case "approveArrangement": return r.contracts.approveArrangement(v.id, v.reference);
     }
   });
 }

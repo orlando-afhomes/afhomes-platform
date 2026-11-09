@@ -184,6 +184,7 @@ export function SalesNetworkMembersPage() {
           return (
             <SalesNetworkRowActions
               itemName={record.displayName}
+              onView={() => router.push(`/admin/sales-network/members/${record.aaNumber ?? record.id}`)}
               onEdit={() => setEditMember(record)}
               onTransfer={() => setTransferMember(record)}
               transferLabel={record.designation === "OST" ? "Transfer to IST" : "Transfer to OST"}
@@ -198,7 +199,7 @@ export function SalesNetworkMembersPage() {
         },
       },
     ];
-  }, [members, accreditationRecordsByMember, canEditAccreditation, canManage, canTransfer, canChangeStatus, isAdmin, changeStatus, confirmRun, setEditMember, setTransferMember]);
+  }, [members, accreditationRecordsByMember, canEditAccreditation, canManage, canTransfer, canChangeStatus, isAdmin, changeStatus, confirmRun, setEditMember, setTransferMember, router]);
 
   if (!granted.has("sales-network")) {
     return (

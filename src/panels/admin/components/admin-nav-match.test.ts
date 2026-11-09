@@ -6,8 +6,34 @@ import { getDevIdentity } from "@/data/mock/dev-identities";
 describe("admin navigation matching", () => {
   it("lists authorized top-level items without a separate Accounts entry", () => {
     const items = getRoleAwareAdminNavigation(getDevIdentity("dev-admin"));
-    expect(items.map((item) => item.id)).toEqual(["dashboard", "organization", "sales-network", "customers", "vip-products", "sales", "commissions", "membership", "stay-points", "reports", "audit-logs"]);
+    expect(items.map((item) => item.id)).toEqual(["dashboard", "sales-group", "finance-group", "membership-group", "vip-products-group", "sales-network", "organization", "reports-group", "audit-logs"]);
     expect(items.some((item) => item.id === "accreditation")).toBe(false);
+  });
+
+  it("groups processes under parent scopes that are never granted", () => {
+    const items = getRoleAwareAdminNavigation(getDevIdentity("dev-admin"));
+    const childIds = (id: string) => items.find((item) => item.id === id)?.children?.map((child) => child.id);
+    expect(childIds("finance-group")).toEqual(["commission-assignment", "commissions"]);
+    expect(childIds("membership-group")).toEqual(["membership-activation", "membership", "stay-points"]);
+    expect(childIds("reports-group")).toEqual(["customer-growth", "sales-performance", "commission-report", "membership-report", "stay-points-report"]);
+    expect(childIds("sales-group")).toEqual(["customers", "customer-import", "sales-contracts", "contract-review", "sales"]);
+    expect(childIds("vip-products-group")).toEqual(["vip-products", "payment-schemes", "scheme-guide", "tier-codes"]);
+    expect(items.some((item) => item.id === ("insights-group" as string))).toBe(false);
+    expect(findOpenKeys(items, "/admin/customers")).toEqual(["sales-group"]);
+    expect(findOpenKeys(items, "/admin/sales/contract-review/c1")).toEqual(["sales-group"]);
+    expect(findSelectedKeys(items, "/admin/sales/contract-review/c1")).toEqual(["contract-review"]);
+    expect(findSelectedKeys(items, "/admin/sales")).toEqual(["sales"]);
+    expect(findSelectedKeys(items, "/admin/customers/import-export")).toEqual(["customer-import"]);
+    expect(findOpenKeys(items, "/admin/vip-products/schemes")).toEqual(["vip-products-group"]);
+    expect(findOpenKeys(items, "/admin/commissions")).toEqual(["finance-group"]);
+    expect(findSelectedKeys(items, "/admin/stay-points")).toEqual(["stay-points"]);
+    expect(findSelectedKeys(items, "/admin/reports/stay-points")).toEqual(["stay-points-report"]);
+    expect(findOpenKeys(items, "/admin/reports/stay-points")).toEqual(["reports-group"]);
+    expect(findSelectedKeys(items, "/admin/audit-logs")).toEqual(["audit-logs"]);
+    const finance = getRoleAwareAdminNavigation(getDevIdentity("dev-finance"));
+    expect(finance.find((item) => item.id === "finance-group")?.children?.map((child) => child.id)).toContain("finance");
+    expect(findSelectedKeys(finance, "/admin/finance/collections/c1")).toEqual(["collections"]);
+    expect(getRoleAwareAdminNavigation(getDevIdentity("dev-hr")).some((item) => item.id === "finance-group")).toBe(false);
   });
 
   it("passes no items for inactive identities", () => {

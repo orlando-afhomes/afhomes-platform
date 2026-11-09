@@ -88,6 +88,7 @@ export function DepartmentsPage() {
       cell: ({ row }) => (
         <RowActionsMenu
           itemName={row.original.name}
+          onView={() => setViewDept(row.original)}
           onEdit={() => {
             setEditDept(row.original);
             setDeptDialog(true);

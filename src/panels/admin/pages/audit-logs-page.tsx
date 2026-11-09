@@ -9,6 +9,8 @@ import { StandardDateField } from "@/shared/forms/modern";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
+import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { Section } from "@/shared/components/modern/section";
 import { StatTiles } from "@/shared/components/modern/stat-tiles";
@@ -35,11 +37,14 @@ export function AuditLogsPage() {
     if (entityFilter !== ALL) next.entityType = entityFilter as AuditQuery["entityType"];
     if (action.trim()) next.action = action.trim().toUpperCase();
     if (actor.trim()) next.actorId = actor.trim();
-    if (from) next.from = from;
-    if (to) next.to = `${to}T23:59:59.999Z`;
+    // Business dates are Asia/Manila (UTC+8, no daylight saving).
+    if (from) next.from = `${from}T00:00:00.000+08:00`;
+    if (to) next.to = `${to}T23:59:59.999+08:00`;
     return next;
   }, [moduleFilter, entityFilter, action, actor, from, to, page]);
   const result = useAuditEvents(query);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const detail = detailId ? (result.data?.items ?? []).find((item) => item.id === detailId) ?? null : null;
 
   const columns = useMemo<ColumnDef<AuditEventView, unknown>[]>(
     () => [
@@ -73,13 +78,54 @@ export function AuditLogsPage() {
       <QueryState isLoading={result.isLoading} error={result.error}>
         <StatTiles items={[{ label: "Matching events", value: total }, { label: "Page", value: `${page} of ${pages}` }]} />
         <Section title="Events">
-          <DataTable data={result.data?.items ?? []} columns={columns} getRowId={(row) => row.id} emptyText="No audit events match." caption="Audit events" pageSize={PAGE_SIZE} />
+          <DataTable
+            data={result.data?.items ?? []}
+            columns={columns}
+            getRowId={(row) => row.id}
+            emptyText="No audit events match."
+            caption="Audit events"
+            pageSize={PAGE_SIZE}
+            onRowOpen={(row) => setDetailId(row.id)}
+            getRowLabel={(row) => `Open audit event ${row.action.replace(/_/g, " ").toLowerCase()}`}
+            rowActions={(row) => <RowActionsMenu itemName={`audit event ${row.action.replace(/_/g, " ").toLowerCase()}`} onView={() => setDetailId(row.id)} />}
+          />
           <div className="tw:flex tw:gap-2">
             <Button variant="outline" disabled={page <= 1} onClick={() => setPage((current) => current - 1)} className="tw:min-h-11 tw:sm:min-h-8">Previous page</Button>
             <Button variant="outline" disabled={page >= pages} onClick={() => setPage((current) => current + 1)} className="tw:min-h-11 tw:sm:min-h-8">Next page</Button>
           </div>
         </Section>
       </QueryState>
+      <RecordDetailsSheet
+        open={detail !== null}
+        onClose={() => setDetailId(null)}
+        title={detail ? detail.action.replace(/_/g, " ").toLowerCase() : "Audit event"}
+        subtitle={detail ? new Date(detail.timestamp).toLocaleString("en-PH", { timeZone: "Asia/Manila" }) : undefined}
+        sections={
+          detail
+            ? [
+                {
+                  title: "Event",
+                  rows: [
+                    { label: "Module", value: detail.module },
+                    { label: "Record", value: `${detail.entityType.replace(/-/g, " ")} · ${detail.displayReference ?? detail.entityId}` },
+                    { label: "Actor", value: detail.actorId },
+                    { label: "Actor roles", value: detail.actorRoles.join(", ") },
+                    { label: "Outcome", value: detail.outcome },
+                  ],
+                },
+                {
+                  title: "Change",
+                  rows: [
+                    { label: "Previous value", value: detail.previousValue },
+                    { label: "New value", value: detail.newValue },
+                    { label: "Reason", value: detail.reason ?? (detail.reasonRecorded ? "Recorded (restricted)" : null) },
+                    { label: "Related records", value: detail.relatedRecordIds.join(", ") },
+                  ],
+                },
+              ]
+            : []
+        }
+      />
     </ModulePage>
   );
 }

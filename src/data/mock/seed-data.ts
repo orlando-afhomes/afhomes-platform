@@ -3,6 +3,7 @@ import type { OrgMember, Department, DepartmentRole, StaffMember } from "@/modul
 import type { AccreditationRecord } from "@/modules/accreditation/types";
 import type { VipProduct, PaymentScheme, VipTierCode } from "@/modules/vip/types";
 import type { Account } from "@/modules/accounts/types";
+import { buildSchedule } from "@/modules/contracts/rules";
 import type { Contract, ScheduleItem } from "@/modules/contracts/types";
 import type { Sale } from "@/modules/sales/types";
 import type { Payment, PaymentPurpose } from "@/modules/finance/types";
@@ -237,7 +238,7 @@ const customers: Customer[] = [
     firstName: "Customer", lastName: "B One", gender: "Male", civilStatus: "Single", dateOfBirth: "1990-08-03",
     mobileNumber: "09171110002", email: "customer.b1@afhomes.local",
     address: { street: "5 Orchid Lane", province: "Batangas", city: "Batangas City", barangay: "Cuta", subdivision: "", postalCode: "4200" },
-    vipPlan: "B1", paymentSchemeId: "scheme-spot-cash", contractClassification: "S", recommenderMemberId: "mem-ost-b1", acquisitionChannel: "FB Ads",
+    vipPlan: "B1", paymentSchemeId: "scheme-installment-4m", contractClassification: "S", recommenderMemberId: "mem-ost-b1", acquisitionChannel: "FB Ads",
     consentDataPrivacy: true, idReceivedCertified: true, createdAt: "2026-10-20", submittedAt: "2026-10-21" },
   { id: "cust-a3", displayName: "Elena Bautista", branchId: "branch-a", ownerMemberId: "mem-sm-a", status: "submitted",
     firstName: "Elena", middleName: "Cruz", lastName: "Bautista", gender: "Female", civilStatus: "Married", dateOfBirth: "1979-11-30",
@@ -273,25 +274,38 @@ const products: VipProduct[] = [
 
 const paymentSchemes: PaymentScheme[] = [
   { id: "scheme-spot-cash", label: "Spot Cash", historicalLabel: "Spot cash", category: "cash", paymentCode: "C01",
-    applicableTiers: ["B1", "S1", "G1"], reservationCentavos: null, installmentCount: null, installmentCentavosByTier: {}, interestPercent: null,
-    commercialStatus: "pending_owner_decision",
-    source: "Price pending owner decision: Full Payment contracts state Php 54,000 / 192,000 / 312,000 (OD-11). Card ID payment code in 06 section 6.3.",
-    availability: "unavailable", ownerHold: "OD-11 (2026-11-09): Spot Cash price pending owner decision.", configVersion: 1 },
+    applicableTiers: ["B1", "S1", "G1"], reservationCentavos: peso(10000), installmentCount: null, installmentCentavosByTier: {},
+    priceCentavosByTier: { B1: peso(54000), S1: peso(192000), G1: peso(312000) },
+    commercialStatus: "configured",
+    source: "Full Payment contracts: Php 54,000 / 192,000 / 312,000, Php 10,000 reservation fee, balance within 7 days (OD-11 released by the owner on 2026-11-09). Card ID payment code in 06 section 6.3.",
+    availability: "available", ownerHold: null, configVersion: 2, effectiveDate: "2026-11-09",
+    changes: [{ version: 2, date: "2026-11-09", actorId: "owner", reason: "OD-11 released by the owner", summary: "priceCentavosByTier, reservationCentavos, availability" }] },
   { id: "scheme-installment-4m", label: "4-Month Installment", historicalLabel: "Installment 4_month", category: "installment", paymentCode: "T04",
     applicableTiers: ["B1", "S1", "G1"], reservationCentavos: peso(10000), installmentCount: 4,
-    installmentCentavosByTier: { B1: peso(15500), S1: peso(57500), G1: peso(95000) }, interestPercent: 0,
+    installmentCentavosByTier: { B1: peso(15500), S1: peso(57500), G1: peso(95000) }, priceCentavosByTier: {},
     commercialStatus: "configured",
     source: "Standard Pricing contracts: Php 10,000 non-refundable reservation fee plus four monthly installments at 0% interest (Annex A).",
-    availability: "available", configVersion: 1 },
+    availability: "available", configVersion: 1, effectiveDate: null, changes: [] },
+  // Move schemes (owner decision 2026-11-09). Commercial terms are approved, but no Card ID
+  // payment code is authorized for them (06 section 6.3): paymentCode stays null, so membership
+  // activation and Card ID issuance are blocked until the owner authorizes a mapping. The special
+  // arrangement is tracked on each contract and needs Super Admin written approval.
   { id: "scheme-move-a", label: "Move A", historicalLabel: "Move a", category: "move", paymentCode: null,
-    applicableTiers: [], reservationCentavos: null, installmentCount: null, installmentCentavosByTier: {}, interestPercent: null,
-    commercialStatus: "pending_owner_decision", source: "Workbook option label only. Terms are not documented (05 section 8).", availability: "unavailable", configVersion: 1 },
-  { id: "scheme-move-b1", label: "Move B1", historicalLabel: "Move b1 40 12", category: "move", paymentCode: null,
-    applicableTiers: [], reservationCentavos: null, installmentCount: null, installmentCentavosByTier: {}, interestPercent: null,
-    commercialStatus: "pending_owner_decision", source: "Workbook option label only. Terms are not documented (05 section 8).", availability: "unavailable", configVersion: 1 },
-  { id: "scheme-move-b2", label: "Move B2", historicalLabel: "Move b2 25 12", category: "move", paymentCode: null,
-    applicableTiers: [], reservationCentavos: null, installmentCount: null, installmentCentavosByTier: {}, interestPercent: null,
-    commercialStatus: "pending_owner_decision", source: "Workbook option label only. Terms are not documented (05 section 8).", availability: "unavailable", configVersion: 1 },
+    applicableTiers: ["B1", "S1", "G1"], reservationCentavos: peso(10000), installmentCount: 4,
+    installmentCentavosByTier: { B1: peso(11000), S1: peso(45500), G1: peso(75500) },
+    priceCentavosByTier: { B1: peso(54000), S1: peso(192000), G1: peso(312000) },
+    commercialStatus: "configured",
+    source: "Group VIP IST Presentation slides 13 to 16: Spot Cash price paid as the reservation fee plus 4 monthly payments (Bronze per slide 15). Approved by the owner on 2026-11-09. Card ID payment code not authorized yet.",
+    availability: "available", configVersion: 2, effectiveDate: "2026-11-09",
+    changes: [{ version: 2, date: "2026-11-09", actorId: "owner", reason: "Move A approved by the owner", summary: "terms, availability" }] },
+  { id: "scheme-move-b", label: "Move B", historicalLabel: null, category: "move", paymentCode: null,
+    applicableTiers: ["B1", "S1", "G1"], reservationCentavos: peso(10000), installmentCount: null, downPaymentBasisPoints: 4_000,
+    installmentCountByTier: { B1: 4, S1: 8, G1: 12 },
+    installmentCentavosByTier: { B1: peso(10800), S1: peso(18000), G1: peso(19500) }, priceCentavosByTier: {},
+    commercialStatus: "configured",
+    source: "Group VIP IST Presentation slide 14: installment price, 40% down payment including the reservation fee, then 4, 8 or 12 monthly payments. Approved by the owner on 2026-11-09; replaces the unsourced Move B1 and Move B2 entries. Card ID payment code not authorized yet.",
+    availability: "available", configVersion: 1, effectiveDate: "2026-11-09",
+    changes: [{ version: 1, date: "2026-11-09", actorId: "owner", reason: "Move B approved by the owner", summary: "created" }] },
 ];
 
 const benefitsOf = (p: VipProduct) => ({
@@ -323,16 +337,10 @@ const team = {
   ],
 };
 
-const installmentSchedule = (code: VipTierCode, dues: (string | null)[]): ScheduleItem[] => {
-  const each = { B1: peso(15500), S1: peso(57500), G1: peso(95000) }[code];
-  return [
-    { seq: 1, label: "Reservation fee", purpose: "reservation", amountCentavos: peso(10000), dueDate: dues[0] },
-    { seq: 2, label: "MA1", purpose: "installment", amountCentavos: each, dueDate: dues[1] },
-    { seq: 3, label: "MA2", purpose: "installment", amountCentavos: each, dueDate: dues[2] },
-    { seq: 4, label: "MA3", purpose: "installment", amountCentavos: each, dueDate: dues[3] },
-    { seq: 5, label: "MA4", purpose: "installment", amountCentavos: each, dueDate: dues[4] },
-  ];
-};
+/** 4-Month Installment schedule built by the same rule the app uses, with seed due dates applied by position. */
+const installmentSchedule = (code: VipTierCode, dues: (string | null)[]): ScheduleItem[] =>
+  buildSchedule(byCode(code), paymentSchemes.find((s) => s.id === "scheme-installment-4m")!).schedule.map((line, index) => ({ ...line, dueDate: dues[index] ?? null }));
+const requiredInitialOf = (code: VipTierCode) => buildSchedule(byCode(code), paymentSchemes.find((s) => s.id === "scheme-installment-4m")!).requiredInitialCentavos;
 
 const baseContract = (id: string, customerId: string, code: VipTierCode, schemeId: string, seller: keyof typeof team) => {
   const product = byCode(code);
@@ -348,22 +356,22 @@ const baseContract = (id: string, customerId: string, code: VipTierCode, schemeI
 const contracts: Contract[] = [
   { ...baseContract("ctr-1", "cust-a1", "S1", "scheme-installment-4m", "mem-ost-a1"),
     schedule: installmentSchedule("S1", ["2026-09-30", "2026-10-30", "2026-11-05", "2026-12-05", "2027-01-05"]),
-    requiredInitialCentavos: peso(67500), raNumber: null, status: "finalized", preparedBy: "dev-ost-a1", createdAt: "2026-09-29",
+    requiredInitialCentavos: requiredInitialOf("S1"), raNumber: null, status: "finalized", preparedBy: "dev-ost-a1", createdAt: "2026-09-29",
     submittedAt: "2026-09-30", reviewedBy: "dev-admin", finalizedAt: "2026-10-01",
     history: [{ at: "2026-09-30", actorId: "dev-ost-a1", event: "CONTRACT_SUBMITTED", note: null }, { at: "2026-10-01", actorId: "dev-admin", event: "CONTRACT_FINALIZED", note: null }] },
-  { ...baseContract("ctr-2", "cust-b1", "B1", "scheme-spot-cash", "mem-ost-b1"),
-    schedule: [{ seq: 1, label: "Full payment", purpose: "full", amountCentavos: peso(72000), dueDate: "2026-10-31" }],
-    requiredInitialCentavos: peso(72000), raNumber: "2026-0001", status: "finalized", preparedBy: "dev-ost-b1", createdAt: "2026-10-21",
+  { ...baseContract("ctr-2", "cust-b1", "B1", "scheme-installment-4m", "mem-ost-b1"),
+    schedule: installmentSchedule("B1", ["2026-10-22", "2026-10-30", "2026-10-31", "2026-11-01", "2026-11-02"]),
+    requiredInitialCentavos: requiredInitialOf("B1"), raNumber: "2026-0001", status: "finalized", preparedBy: "dev-ost-b1", createdAt: "2026-10-21",
     submittedAt: "2026-10-22", reviewedBy: "dev-admin", finalizedAt: "2026-10-23",
     history: [{ at: "2026-10-22", actorId: "dev-ost-b1", event: "CONTRACT_SUBMITTED", note: null }, { at: "2026-10-23", actorId: "dev-admin", event: "CONTRACT_FINALIZED", note: null }] },
   { ...baseContract("ctr-3", "cust-a3", "G1", "scheme-installment-4m", "mem-sm-a"),
     schedule: installmentSchedule("G1", [null, null, null, null, null]),
-    requiredInitialCentavos: peso(105000), raNumber: null, status: "under_review", preparedBy: "dev-sm-a", createdAt: "2026-11-03",
+    requiredInitialCentavos: requiredInitialOf("G1"), raNumber: null, status: "under_review", preparedBy: "dev-sm-a", createdAt: "2026-11-03",
     submittedAt: "2026-11-04",
     history: [{ at: "2026-11-04", actorId: "dev-sm-a", event: "CONTRACT_SUBMITTED", note: null }] },
   { ...baseContract("ctr-4", "cust-a4", "B1", "scheme-installment-4m", "mem-ost-a2"),
     schedule: installmentSchedule("B1", ["2026-11-10", null, null, null, null]),
-    requiredInitialCentavos: peso(25500), raNumber: null, status: "under_review", preparedBy: "dev-ost-a2", createdAt: "2026-11-05",
+    requiredInitialCentavos: requiredInitialOf("B1"), raNumber: null, status: "under_review", preparedBy: "dev-ost-a2", createdAt: "2026-11-05",
     submittedAt: "2026-11-06",
     history: [{ at: "2026-11-06", actorId: "dev-ost-a2", event: "CONTRACT_SUBMITTED", note: null }] },
 ];
@@ -393,13 +401,17 @@ const pay = (id: string, contractId: string, customerId: string, saleId: string,
 const payments: Payment[] = [
   pay("pay-1", "ctr-1", "cust-a1", "sale-1", "reservation", peso(10000), "2026-09-30", "verified"),
   pay("pay-2", "ctr-1", "cust-a1", "sale-1", "installment", peso(57500), "2026-10-28", "verified"),
-  pay("pay-3", "ctr-2", "cust-b1", "sale-2", "full", peso(72000), "2026-10-30", "verified", { submittedBy: "dev-ost-b1" }),
+  pay("pay-3", "ctr-2", "cust-b1", "sale-2", "reservation", peso(10000), "2026-10-22", "verified", { submittedBy: "dev-ost-b1" }),
   pay("pay-4", "ctr-4", "cust-a4", "sale-4", "reservation", peso(10000), "2026-11-07", "submitted", { submittedBy: "dev-ost-a2" }),
+  pay("pay-5", "ctr-2", "cust-b1", "sale-2", "installment", peso(15500), "2026-10-30", "verified", { submittedBy: "dev-ost-b1" }),
+  pay("pay-6", "ctr-2", "cust-b1", "sale-2", "installment", peso(15500), "2026-10-31", "verified", { submittedBy: "dev-ost-b1" }),
+  pay("pay-7", "ctr-2", "cust-b1", "sale-2", "installment", peso(15500), "2026-11-01", "verified", { submittedBy: "dev-ost-b1" }),
+  pay("pay-8", "ctr-2", "cust-b1", "sale-2", "installment", peso(15500), "2026-11-02", "verified", { submittedBy: "dev-ost-b1" }),
 ];
 
 const memberships: Membership[] = [
   { id: "memb-1", customerId: "cust-b1", contractId: "ctr-2", productCode: "B1", status: "active", activationDate: "2026-11-02",
-    validityEndDate: "2033-11-02", cardId: "26110200001B1C01S", raNumber: "2026-0001", financialHold: false, createdAt: "2026-10-30",
+    validityEndDate: "2033-11-02", cardId: "26110200001B1T04S", raNumber: "2026-0001", financialHold: false, createdAt: "2026-10-30",
     history: [{ at: "2026-11-02", actorId: "dev-admin", event: "MEMBERSHIP_ACTIVATED", note: null }] },
   { id: "memb-2", customerId: "cust-a1", contractId: "ctr-1", productCode: "S1", status: "pending", activationDate: null,
     validityEndDate: null, cardId: null, raNumber: null, financialHold: false, createdAt: "2026-10-01", history: [] },
@@ -413,7 +425,7 @@ const resortSpends: ResortSpend[] = [
 
 const commissions: Commission[] = [];
 
-const counters: Record<string, number> = { contract: 5, sale: 5, payment: 5, membership: 3, commission: 1, adjustment: 3, resortSpend: 4 };
+const counters: Record<string, number> = { contract: 5, sale: 5, payment: 9, membership: 3, commission: 1, adjustment: 3, resortSpend: 4 };
 
 export const seedData = {
   members,

@@ -138,6 +138,7 @@ export function RolesPage() {
           return (
             <RowActionsMenu
               itemName={record.name}
+              onView={() => setViewRole(record)}
               onEdit={() => {
                 setEditRole(record);
                 setRoleDialog(true);

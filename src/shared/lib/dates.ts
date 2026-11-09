@@ -14,6 +14,14 @@ export {
 
 import { formatManilaDateParts, parseManilaDateOnly } from "@/modules/accreditation/dates";
 
+/** Asia/Manila business date of a date-only value or an ISO timestamp (a UTC instant is shifted, never sliced). */
+export function manilaDateOf(value: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const time = Date.parse(value);
+  if (!Number.isFinite(time)) return value.slice(0, 10);
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(time));
+}
+
 /** Adds whole years to a date-only value (Feb 29 clamps to Feb 28). */
 export function addYearsToDate(dateOnly: string, years: number): string | null {
   const parts = parseManilaDateOnly(dateOnly);

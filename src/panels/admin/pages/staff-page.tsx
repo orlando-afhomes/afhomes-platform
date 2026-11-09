@@ -226,6 +226,7 @@ export function StaffPage() {
         menu = (
           <RowActionsMenu
             itemName={member.displayName}
+            onView={() => setProfileStaffId(member.id)}
             onEdit={() => {
               setEditStaffId(member.id);
               setStaffDialog(true);
@@ -238,6 +239,7 @@ export function StaffPage() {
         menu = (
           <RowActionsMenu
             itemName={row.account.displayName}
+            onView={() => openAccount("view", row.account.id)}
             onEdit={policy.canEdit ? () => openAccount("edit", row.account.id) : undefined}
             extraItems={[...activateItems, ...accountItems(row.account)]}
             deleteDisabledReason={policy.deleteRestriction}

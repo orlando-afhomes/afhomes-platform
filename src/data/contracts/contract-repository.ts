@@ -6,7 +6,7 @@ import type { Sale } from "@/modules/sales/types";
 export type ContractView = Contract & {
   customerName: string;
   sellerName: string | null;
-  sale: Pick<Sale, "id" | "status"> | null;
+  sale: Pick<Sale, "id" | "status" | "confirmedDate"> | null;
   /** Reasons finalization is currently held; empty when the contract can be finalized. */
   holds: string[];
 };
@@ -14,7 +14,9 @@ export type ContractView = Contract & {
 export type PrepareContractInput = {
   customerId: string;
   schemeId: string;
-  /** Optional due dates per schedule sequence (YYYY-MM-DD). */
+  /** Reservation date (YYYY-MM-DD, Asia/Manila) that due dates derive from; defaults to the preparation date. */
+  reservationDate?: string;
+  /** Optional due dates per schedule sequence (YYYY-MM-DD); they override the derived dates. */
   dueDates?: Record<number, string>;
   customerAccepted: boolean;
 };
@@ -42,4 +44,6 @@ export interface ContractRepository {
   decideCancellation(id: string, decision: "confirm" | "decline", reason: string, options?: MockAsyncOptions): Promise<ContractView>;
   /** Records the Reservation Agreement reference from the signed form; collisions are flagged, not suffixed. */
   recordRaNumber(id: string, raNumber: string, options?: MockAsyncOptions): Promise<ContractView>;
+  /** Super Admin records the written approval of a Move arrangement (owner decision 2026-11-09). */
+  approveArrangement(id: string, approvalReference: string, options?: MockAsyncOptions): Promise<ContractView>;
 }

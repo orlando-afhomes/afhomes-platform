@@ -355,7 +355,14 @@ Given / When / Then for core scenarios (see Section 28 of the master prompt for 
 
 These rulings are authoritative and take precedence over earlier text in this document where they differ.
 
-1. **Spot Cash** is unavailable while its price is pending the owner decision (OD-11). Existing finalized Spot Cash contracts are untouched.
-2. **Payment scheme register:** all five schemes are listed; terms and tier applicability appear only where an approved document or Admin configuration supports them. Move A, Move B1 and Move B2 stay unavailable until their terms are approved.
+1. **Spot Cash** was held pending the owner decision (OD-11). Superseded by item 5 below, which releases it. Existing finalized Spot Cash contracts are untouched.
+2. **Payment scheme register:** terms and tier applicability appear only where an approved document or Admin configuration supports them. The earlier hold on Move A, Move B1 and Move B2 is superseded by items 6 and 7 below.
 3. **Supplementary holder** is allowed only when the selected product permits one (currently Gold).
 4. **Internal customer identifier:** new customers receive a secure random, numeric-only, pattern-free internal id. The RA number rule is unchanged.
+
+5. **Spot Cash released (OD-11, 2026-11-09).** Spot Cash is available at the Full Payment contract prices: Bronze Php 54,000, Silver Php 192,000, Gold Php 312,000. It takes the Php 10,000 reservation fee (part of the price), with the balance due within 7 days of the reservation. A scheme may carry its own package price per tier; a contract snapshots that price. Gold Spot Cash is not held by the Gold installment price conflict.
+6. **Move A approved (2026-11-09).** The Spot Cash package price is paid as the Php 10,000 reservation fee plus 4 equal monthly payments: Bronze Php 11,000 (slide 15 of the Group VIP IST Presentation, over slide 13), Silver Php 45,500, Gold Php 75,500.
+7. **Move B approved (2026-11-09) as one scheme.** The installment package price is paid as a 40% down payment that includes the reservation fee, then equal monthly payments: Bronze 4 x Php 10,800, Silver 8 x Php 18,000, Gold 12 x Php 19,500. Move B1 and Move B2 are removed from the register because no official source supports that split. The Gold installment price conflict still holds Gold Move B at finalization. No source dates the down payment; it stays undated until staff enter a date.
+8. **Special arrangement approval.** Each Move A or Move B contract needs written approval before finalization. Only a Super Administrator records it, with the reference of the signed approval, and a Super Administrator may approve a contract they prepared. The approval is audited and kept on the contract separately from the payment code.
+9. **Due dates** derive from the reservation date: the reservation fee is due that day, monthly installment N is due N months later (clamped to the month end), and a Spot Cash balance is due 7 days later. Staff may override the dates while a contract is Draft or Returned.
+10. **No interest** is ever charged; a scheme has no interest field. Scheme configuration changes are validated (exact positive centavo amounts that add up to the package price per tier), versioned with an effective date and audited, and need no second approver.

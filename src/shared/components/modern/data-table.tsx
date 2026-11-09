@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type KeyboardEvent, type ReactNode } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -44,6 +44,8 @@ export function DataTable<T>({
   paginate = true,
   onRowOpen,
   caption,
+  rowActions,
+  getRowLabel,
 }: {
   data: T[];
   columns: ColumnDef<T, unknown>[];
@@ -53,9 +55,14 @@ export function DataTable<T>({
   pageSize?: number;
   /** Set false for short read-only history tables that should show all rows. */
   paginate?: boolean;
+  /** Opens the record when anywhere on the row is clicked, or Enter/Space is pressed on a focused row. */
   onRowOpen?: (row: T) => void;
   /** Accessible table name. */
   caption?: string;
+  /** Renders a trailing Actions column (usually a `RowActionsMenu`) for every row. */
+  rowActions?: (row: T) => ReactNode;
+  /** Names a row for assistive tech, e.g. "Open Maria Santos". */
+  getRowLabel?: (row: T) => string;
 }) {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize });
   // TanStack Table returns functions that React Compiler cannot memoize safely.
@@ -70,6 +77,7 @@ export function DataTable<T>({
     getPaginationRowModel: paginate ? getPaginationRowModel() : undefined,
   });
   const rows = table.getRowModel().rows;
+  const columnCount = columns.length + (rowActions ? 1 : 0);
   const pageCount = table.getPageCount();
 
   return (
@@ -87,6 +95,11 @@ export function DataTable<T>({
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
+                {rowActions ? (
+                  <TableHead className="tw:h-11 tw:w-16 tw:px-3 tw:text-right tw:font-semibold tw:text-foreground">
+                    <span className="tw:sr-only">Actions</span>
+                  </TableHead>
+                ) : null}
               </TableRow>
             ))}
           </TableHeader>
@@ -94,14 +107,14 @@ export function DataTable<T>({
             {loading ? (
               Array.from({ length: 4 }, (_, index) => (
                 <TableRow key={`loading-${index}`}>
-                  <TableCell colSpan={columns.length} className="tw:px-3 tw:py-3">
+                  <TableCell colSpan={columnCount} className="tw:px-3 tw:py-3">
                     <Skeleton className="tw:h-5 tw:w-full" />
                   </TableCell>
                 </TableRow>
               ))
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="tw:px-3 tw:py-10 tw:text-center tw:text-muted-foreground">
+                <TableCell colSpan={columnCount} className="tw:px-3 tw:py-10 tw:text-center tw:text-muted-foreground">
                   {emptyText}
                 </TableCell>
               </TableRow>
@@ -110,11 +123,24 @@ export function DataTable<T>({
                 <TableRow
                   key={row.id}
                   data-row-key={row.id}
-                  className={onRowOpen ? "tw:cursor-pointer" : undefined}
+                  tabIndex={onRowOpen ? 0 : undefined}
+                  aria-label={onRowOpen ? getRowLabel?.(row.original) : undefined}
+                  className={onRowOpen ? "tw:cursor-pointer tw:outline-none tw:focus-visible:bg-muted/60 tw:focus-visible:ring-2 tw:focus-visible:ring-inset tw:focus-visible:ring-ring/50" : undefined}
                   onClick={
                     onRowOpen
                       ? (event) => {
                           if (!isRowControlClick(event)) onRowOpen(row.original);
+                        }
+                      : undefined
+                  }
+                  onKeyDown={
+                    onRowOpen
+                      ? (event: KeyboardEvent) => {
+                          // Only when the row itself has focus, never for keys typed in a control inside it.
+                          if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+                            event.preventDefault();
+                            onRowOpen(row.original);
+                          }
                         }
                       : undefined
                   }
@@ -124,6 +150,7 @@ export function DataTable<T>({
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
+                  {rowActions ? <TableCell className="tw:px-3 tw:py-2 tw:text-right">{rowActions(row.original)}</TableCell> : null}
                 </TableRow>
               ))
             )}

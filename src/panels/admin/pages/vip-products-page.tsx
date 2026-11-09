@@ -1,27 +1,26 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { Pencil, Plus } from "lucide-react";
-import { useOperation, usePaymentSchemes, useVipProducts } from "@/data/business-queries";
-import { NON_ACTIVE_TIER_CODES, type PaymentScheme, type VipProduct } from "@/modules/vip/types";
+import { Pencil } from "lucide-react";
+import { useOperation, useVipProducts } from "@/data/business-queries";
+import type { VipProduct } from "@/modules/vip/types";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { InfoNote } from "@/shared/components/modern/detail-list";
-import { Button, buttonVariants } from "@/shared/ui/button";
+import { Button } from "@/shared/ui/button";
 import { ModulePage } from "../components/module-page";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { Money } from "@/shared/components/modern/money";
+import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
+import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { Section } from "@/shared/components/modern/section";
-import { ProductDialog, SchemeDialog } from "../components/vip-product-dialogs";
+import { ProductDialog } from "../components/vip-product-dialogs";
 
 export function VipProductsPage() {
   const products = useVipProducts();
-  const schemes = usePaymentSchemes();
   const canManage = useOperation("vip-products.manage");
   const [editing, setEditing] = useState<VipProduct | null>(null);
-  const [schemeOpen, setSchemeOpen] = useState(false);
-  const [editingScheme, setEditingScheme] = useState<PaymentScheme | null>(null);
+  const [productCode, setProductCode] = useState<string | null>(null);
 
   const productColumns = useMemo<ColumnDef<VipProduct, unknown>[]>(
     () => [
@@ -31,95 +30,58 @@ export function VipProductsPage() {
       { id: "benefits", header: "Benefits", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => `${row.original.vipDiscountPercent}% discount · ${row.original.lifetimePoints.toLocaleString("en-PH")} points` },
       { id: "version", header: "Version", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => `v${row.original.configVersion}` },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
-      {
-        id: "actions",
-        header: () => <span className="tw:sr-only">Actions</span>,
-        cell: ({ row }) =>
-          canManage ? (
-            <Button variant="ghost" size="sm" className="tw:min-h-11 tw:sm:min-h-7" aria-label={`Edit ${row.original.name}`} onClick={() => setEditing(row.original)}>
-              <Pencil aria-hidden="true" /> Edit
-            </Button>
-          ) : null,
-      },
     ],
-    [canManage],
+    [],
   );
-
-  const schemeColumns = useMemo<ColumnDef<PaymentScheme, unknown>[]>(
-    () => [
-      { id: "label", header: "Scheme", cell: ({ row }) => <div><div className="tw:font-semibold">{row.original.label}</div>{row.original.historicalLabel ? <div className="tw:text-xs tw:text-muted-foreground">Source label: {row.original.historicalLabel}</div> : null}</div> },
-      { id: "code", header: "Card code", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.paymentCode ?? "—" },
-      { id: "terms", header: "Terms", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => (row.original.commercialStatus === "configured" ? termsSummary(row.original) : "Not configured") },
-      { id: "state", header: "Status", cell: ({ row }) => <div className="tw:flex tw:flex-col tw:gap-1"><BizBadge status={row.original.commercialStatus} label={row.original.commercialStatus === "configured" ? "Configured" : "Pending owner decision"} /><BizBadge status={row.original.availability} /></div> },
-      {
-        id: "actions",
-        header: () => <span className="tw:sr-only">Actions</span>,
-        cell: ({ row }) =>
-          canManage ? (
-            <Button variant="ghost" size="sm" className="tw:min-h-11 tw:sm:min-h-7" aria-label={`Edit ${row.original.label}`} onClick={() => { setEditingScheme(row.original); setSchemeOpen(true); }}>
-              <Pencil aria-hidden="true" /> Edit
-            </Button>
-          ) : null,
-      },
-    ],
-    [canManage],
-  );
+  const productDetail = (products.data ?? []).find((item) => item.code === productCode) ?? null;
 
   return (
     <ModulePage
       anyOf={["vip-products"]}
-      title="VIP Products and Contracts"
-      description="Tier catalog, payment schemes, and contract review."
-      crumbs={[{ label: "VIP Products and Contracts" }]}
-      actions={
-        <div className="tw:flex tw:flex-wrap tw:gap-2">
-          <Link href="/admin/vip-products/scheme-guide" className={buttonVariants({ variant: "outline", className: "tw:min-h-11 tw:sm:min-h-8" })}>
-            Scheme guide
-          </Link>
-          <Link href="/admin/vip-products/contracts" className={buttonVariants({ variant: "outline", className: "tw:min-h-11 tw:sm:min-h-8" })}>
-            Contract review
-          </Link>
-        </div>
-      }
+      title="Product Catalog"
+      description="VIP tier catalog."
+      crumbs={[{ label: "VIP Products", href: "/admin/vip-products" }, { label: "Product Catalog" }]}
     >
-      <InfoNote title="Contract-stated values">Prices and benefits are the values written in the standard contracts. The Gold price carries a source conflict that management must resolve before Gold contracts can be finalized.</InfoNote>
+      <InfoNote title="Contract-stated values">Prices and benefits are the values written in the standard contracts. The Gold installment price carries a source conflict that management must resolve before Gold installment contracts can be finalized. Spot Cash uses the Full Payment contract prices.</InfoNote>
       <Section title="Product catalog">
         <QueryState isLoading={products.isLoading} error={products.error}>
-          <DataTable data={products.data ?? []} columns={productColumns} getRowId={(row) => row.code} emptyText="No products." caption="VIP product catalog" />
+          <DataTable data={products.data ?? []} columns={productColumns} getRowId={(row) => row.code} emptyText="No products." caption="VIP product catalog" onRowOpen={(row) => setProductCode(row.code)} getRowLabel={(row) => `Open ${row.name}`} rowActions={(row) => <RowActionsMenu itemName={row.name} onView={() => setProductCode(row.code)} onEdit={canManage ? () => setEditing(row) : undefined} />} />
         </QueryState>
       </Section>
-      <Section
-        title="Payment scheme register"
-        description="Move A, Move B1 and Move B2 are listed from the source workbook but have no approved terms, so they cannot be selected."
-        actions={
-          canManage ? (
-            <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => { setEditingScheme(null); setSchemeOpen(true); }}>
-              <Plus aria-hidden="true" /> New scheme
-            </Button>
-          ) : null
+      <RecordDetailsSheet
+        open={productDetail !== null}
+        onClose={() => setProductCode(null)}
+        title={productDetail ? `${productDetail.name} (${productDetail.code})` : "Product"}
+        subtitle={productDetail ? `${productDetail.tier} tier · version ${productDetail.configVersion}` : undefined}
+        badge={productDetail ? <BizBadge status={productDetail.status} /> : undefined}
+        sections={
+          productDetail
+            ? [
+                {
+                  title: "Terms",
+                  rows: [
+                    { label: "Price", value: <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2"><Money value={productDetail.priceCentavos} /><BizBadge status={productDetail.priceStatus} label={productDetail.priceStatus === "conflict" ? "Source conflict" : "Contract-stated"} /></div> },
+                    { label: "Price note", value: productDetail.priceNote },
+                    { label: "Validity", value: `${productDetail.validityYears} years (${productDetail.earningCycles} earning cycles)` },
+                    { label: "VIP discount", value: `${productDetail.vipDiscountPercent}%` },
+                    { label: "Supplementary holders", value: String(productDetail.supplementaryHolders) },
+                  ],
+                },
+                {
+                  title: "Stay Points",
+                  rows: [
+                    { label: "Lifetime points", value: productDetail.lifetimePoints.toLocaleString("en-PH") },
+                    { label: "Per cycle", value: `${productDetail.pointsPerCycle.toLocaleString("en-PH")} (${productDetail.weekdayPointsPerCycle.toLocaleString("en-PH")} weekday, ${productDetail.weekendPointsPerCycle.toLocaleString("en-PH")} weekend)` },
+                    { label: "Minimum spend per cycle", value: <Money value={productDetail.minSpendPerCycleCentavos} /> },
+                  ],
+                },
+              ]
+            : []
         }
-      >
-        <QueryState isLoading={schemes.isLoading} error={schemes.error}>
-          <DataTable data={schemes.data ?? []} columns={schemeColumns} getRowId={(row) => row.id} emptyText="No schemes." caption="Payment schemes" />
-        </QueryState>
-      </Section>
-      <Section title="Historical and reserved tier codes" description="Shown for reference only. These codes are not active and are never activated automatically.">
-        <ul className="tw:flex tw:flex-wrap tw:gap-2">
-          {NON_ACTIVE_TIER_CODES.map((item) => (
-            <li key={item.code} className="tw:rounded-md tw:border tw:border-border tw:px-2 tw:py-1 tw:text-sm">
-              {item.code} · {item.label} <span className="tw:text-muted-foreground">({item.state})</span>
-            </li>
-          ))}
-        </ul>
-      </Section>
+        history={productDetail ? productDetail.changes.map((item) => ({ key: `v${item.version}`, when: `Version ${item.version} · ${item.date}`, text: `${item.summary} (${item.reason})` })) : []}
+        footer={productDetail && canManage ? <Button type="button" variant="outline" onClick={() => { setEditing(productDetail); setProductCode(null); }}><Pencil aria-hidden="true" /> Edit product</Button> : undefined}
+      />
       <ProductDialog product={editing} onClose={() => setEditing(null)} />
-      <SchemeDialog open={schemeOpen} scheme={editingScheme} onClose={() => setSchemeOpen(false)} />
     </ModulePage>
   );
-}
-
-function termsSummary(scheme: PaymentScheme): string {
-  if (scheme.category === "cash") return "One full payment";
-  const reservation = scheme.reservationCentavos ? "Reservation fee + " : "";
-  return `${reservation}${scheme.installmentCount} monthly installments${scheme.interestPercent === 0 ? " at 0% interest" : ""}`;
 }

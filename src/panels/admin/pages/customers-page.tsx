@@ -3,7 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { useOperation } from "@/data/business-queries";
+import { useRouter } from "next/navigation";
+import { useDiscardCustomerDraft, useOperation } from "@/data/business-queries";
+import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { useCustomers, useMembers } from "@/data/queries";
 import { ACQUISITION_CHANNELS, type Customer } from "@/modules/customers/types";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
@@ -22,8 +24,10 @@ const STATUS_OPTIONS = [
 ];
 
 export function CustomersPage() {
+  const router = useRouter();
   const customers = useCustomers();
   const members = useMembers();
+  const discard = useDiscardCustomerDraft();
   const canManage = useOperation("customers.manage");
   const canImport = useOperation("customers.import");
   const [search, setSearch] = useState("");
@@ -71,7 +75,7 @@ export function CustomersPage() {
       anyOf={["customers"]}
       title="Customers"
       description="Customer master records and VIP applications."
-      crumbs={[{ label: "Customers" }]}
+      crumbs={[{ label: "Sales" }, { label: "Customers" }]}
       actions={
         canManage || canImport ? (
           <div className="tw:flex tw:flex-wrap tw:gap-2">
@@ -91,7 +95,28 @@ export function CustomersPage() {
     >
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search customers" filters={[{ label: "Customer status filter", value: status, onChange: setStatus, options: STATUS_OPTIONS }]} />
       <QueryState isLoading={customers.isLoading} error={customers.error}>
-        <DataTable data={rows} columns={columns} getRowId={(row) => row.id} emptyText="No customers match." caption="Customers" />
+        <DataTable
+          data={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          emptyText="No customers match."
+          caption="Customers"
+          onRowOpen={(row) => router.push(`/admin/customers/${row.id}`)}
+          getRowLabel={(row) => `Open ${row.displayName}`}
+          rowActions={(row) => {
+            const editable = canManage && !row.restricted;
+            return (
+              <RowActionsMenu
+                itemName={row.displayName}
+                onView={() => router.push(`/admin/customers/${row.id}`)}
+                onEdit={editable ? () => router.push(`/admin/customers/${row.id}/edit`) : undefined}
+                onDelete={editable && row.status === "draft" ? () => discard.mutateAsync(row.id) : undefined}
+                deleteTitle={`Discard the draft for ${row.displayName}?`}
+                deleteDescription="Only drafts can be discarded. Submitted customers are never deleted."
+              />
+            );
+          }}
+        />
       </QueryState>
       <p className="tw:text-xs tw:text-muted-foreground">Acquisition channels in use: {ACQUISITION_CHANNELS.join(", ")}.</p>
     </ModulePage>

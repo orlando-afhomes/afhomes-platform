@@ -24,6 +24,33 @@
   [data-slot] {
     border-color: var(--border);
   }
+
+  /* One smooth default for every hover/focus colour change on interactive
+   * elements. Components that set their own tw:transition-* utility win (the
+   * utilities layer outranks base). */
+  a,
+  button,
+  summary,
+  [role="tab"],
+  [role="menuitem"],
+  [role="option"],
+  [role="button"] {
+    transition-property: color, background-color, border-color, box-shadow, opacity;
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
+  }
+}
+
+/* Reduced motion: collapse every transition and animation (popups, collapses,
+ * hovers) to an instant state change. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* AFHomes global foundations: design-token mappings, minimal reset, base
@@ -93,7 +120,7 @@
   --accent-foreground: var(--color-text-primary);
   --destructive: var(--color-danger);
   --border: var(--color-border-default);
-  --input: var(--color-border-default);
+  --input: var(--color-border-strong);
   --ring: var(--color-state-focus);
   --chart-1: var(--color-brand-primary);
   --chart-2: var(--color-brand-secondary);

@@ -3,15 +3,16 @@
 import { useCallback } from "react";
 import { useEffectiveModuleIds } from "@/data/queries";
 
-/** Contract detail lives under the module the viewer can open: Admin products, seller sales, or Finance. */
+/** Contract detail: Sales contract for Sales or VIP Products viewers, otherwise the Finance collection detail. */
 export function useContractHref() {
   const granted = useEffectiveModuleIds();
   return useCallback(
-    (id: string) => {
-      if (granted.has("vip-products")) return `/admin/vip-products/contracts/${id}`;
-      if (granted.has("sales")) return `/admin/sales/contracts/${id}`;
-      return `/admin/finance/contracts/${id}`;
-    },
+    (id: string) => (granted.has("sales") || granted.has("vip-products") ? `/admin/sales/contracts/${id}` : `/admin/finance/collections/${id}`),
     [granted],
   );
+}
+
+/** Admin review of a contract. */
+export function useContractReviewHref() {
+  return useCallback((id: string) => `/admin/sales/contract-review/${id}`, []);
 }

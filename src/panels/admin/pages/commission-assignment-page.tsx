@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useApproveCommission, useEligibleSales, useOperation } from "@/data/business-queries";
 import type { EligibleSale } from "@/data/contracts/commission-repository";
+import { PAYOUT_RELEASE_THRESHOLD_BP, PAYOUT_RELEASE_WAIT_DAYS } from "@/modules/commissions/rules";
 import { applyBasisPoints, MoneyError, parsePercentToBasisPoints } from "@/shared/lib/money";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { InfoNote } from "@/shared/components/modern/detail-list";
@@ -12,6 +13,8 @@ import { CheckboxField, PercentField } from "@/shared/forms/modern";
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { Money } from "@/shared/components/modern/money";
+import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
+import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { Section } from "@/shared/components/modern/section";
 import { formatDate } from "@/shared/lib/format-date";
@@ -27,6 +30,7 @@ export function CommissionAssignmentPage() {
   const canApprove = useOperation("commission.approve");
   const eligible = useEligibleSales(canApprove);
   const [selected, setSelected] = useState<EligibleSale | null>(null);
+  const [viewingId, setViewingId] = useState<string | null>(null);
 
   const columns = useMemo<ColumnDef<EligibleSale, unknown>[]>(
     () => [
@@ -35,25 +39,18 @@ export function CommissionAssignmentPage() {
       { id: "value", header: "Contract value", cell: ({ row }) => <Money value={row.original.valueCentavos} /> },
       { id: "confirmed", header: "Confirmed", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => formatDate(row.original.confirmedDate) },
       { id: "recipients", header: "Recipients", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => `${row.original.recipients.filter((item) => item.existingCommissionId).length} of ${row.original.recipients.length} assigned` },
-      {
-        id: "actions",
-        header: () => <span className="tw:sr-only">Actions</span>,
-        cell: ({ row }) => (
-          <Button size="sm" className="tw:min-h-11 tw:sm:min-h-7" disabled={row.original.recipients.every((item) => item.existingCommissionId)} onClick={() => setSelected(row.original)}>
-            Assign percentages
-          </Button>
-        ),
-      },
     ],
     [],
   );
+  const fullyAssigned = (sale: EligibleSale) => sale.recipients.every((item) => item.existingCommissionId);
+  const viewing = viewingId ? (eligible.data ?? []).find((item) => item.saleId === viewingId) ?? null : null;
 
   return (
     <ModulePage
       anyOf={["commissions"]}
       title="Commission Assignment"
       description="Assign each seller's commission percentage for a Confirmed Sale."
-      crumbs={[{ label: "Commissions", href: "/admin/commissions" }, { label: "Commission Assignment" }]}
+      crumbs={[{ label: "Finance" }, { label: "Commission Assignment" }]}
       actions={
         <Link href="/admin/commissions" className={buttonVariants({ variant: "outline", className: "tw:min-h-11 tw:sm:min-h-8" })}>
           Commission records
@@ -63,11 +60,26 @@ export function CommissionAssignmentPage() {
       {canApprove ? (
         <>
           <InfoNote title="No default rates">
-            Enter each recipient&apos;s percentage. The system never proposes a rate. Payout opens 7 days after 40% of the contract value is Finance-verified.
+            Enter each recipient&apos;s percentage. The system never proposes a rate. Payout opens {PAYOUT_RELEASE_WAIT_DAYS} days after {PAYOUT_RELEASE_THRESHOLD_BP / 100}% of the contract value is Finance-verified.
           </InfoNote>
           <Section title="Confirmed sales" description="Recipients come from the genealogy recorded at the time of sale.">
             <QueryState isLoading={eligible.isLoading} error={eligible.error}>
-              <DataTable data={eligible.data ?? []} columns={columns} getRowId={(row) => row.saleId} emptyText="No confirmed sales yet." caption="Confirmed sales awaiting commission assignment" />
+              <DataTable
+                data={eligible.data ?? []}
+                columns={columns}
+                getRowId={(row) => row.saleId}
+                emptyText="No confirmed sales yet."
+                caption="Confirmed sales awaiting commission assignment"
+                onRowOpen={(row) => setViewingId(row.saleId)}
+                getRowLabel={(row) => `Open the sale for ${row.customerName}`}
+                rowActions={(row) => (
+                  <RowActionsMenu
+                    itemName={`sale for ${row.customerName}`}
+                    onView={() => setViewingId(row.saleId)}
+                    extraItems={fullyAssigned(row) ? [] : [{ key: "assign", label: "Assign percentages", onClick: () => setSelected(row) }]}
+                  />
+                )}
+              />
             </QueryState>
           </Section>
         </>
@@ -75,6 +87,33 @@ export function CommissionAssignmentPage() {
         <InfoNote title="Not available">Only authorized Finance personnel assign commission percentages.</InfoNote>
       )}
       {selected ? <AssignDialog sale={selected} onClose={() => setSelected(null)} /> : null}
+      <RecordDetailsSheet
+        open={viewing !== null}
+        onClose={() => setViewingId(null)}
+        title={viewing?.customerName ?? "Confirmed sale"}
+        subtitle={viewing ? `${viewing.productCode} · confirmed ${formatDate(viewing.confirmedDate)}` : undefined}
+        sections={
+          viewing
+            ? [
+                { title: "Sale", rows: [{ label: "Contract value", value: <Money value={viewing.valueCentavos} /> }, { label: "Confirmed", value: formatDate(viewing.confirmedDate) }] },
+                { title: "Recipients", rows: viewing.recipients.map((item) => ({ label: `${item.displayName} (${item.designation})`, value: item.existingCommissionId ? "Assigned" : "Not assigned" })) },
+              ]
+            : []
+        }
+        footer={
+          viewing && !fullyAssigned(viewing) ? (
+            <Button
+              type="button"
+              onClick={() => {
+                setSelected(viewing);
+                setViewingId(null);
+              }}
+            >
+              Assign percentages
+            </Button>
+          ) : undefined
+        }
+      />
     </ModulePage>
   );
 }

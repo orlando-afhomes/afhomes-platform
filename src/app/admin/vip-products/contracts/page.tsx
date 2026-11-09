@@ -1,5 +1,5 @@
-import { ContractsPage } from "@/panels/admin/pages/contracts-page";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <ContractsPage />;
+  redirect("/admin/sales/contract-review");
 }

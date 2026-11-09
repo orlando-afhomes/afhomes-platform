@@ -1,8 +1,9 @@
 "use client";
 
 import { Printer } from "lucide-react";
-import { usePaymentSchemes } from "@/data/business-queries";
-import type { PaymentScheme, VipTierCode } from "@/modules/vip/types";
+import { usePaymentSchemes, useVipProducts } from "@/data/business-queries";
+import { downPaymentCentavos, installmentCountFor, schemeHowItWorks, schemePriceCentavos } from "@/modules/vip/rules";
+import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Button } from "@/shared/ui/button";
 import { BizBadge } from "@/shared/components/business/biz-badge";
@@ -17,11 +18,20 @@ const TIERS: Array<{ code: VipTierCode; label: string }> = [
   { code: "G1", label: "Gold (G1)" },
 ];
 
-/** Total payable under an installment scheme: reservation fee plus the equal installments (05 section 8). */
-function installmentTotal(scheme: PaymentScheme, tier: VipTierCode): number | null {
-  const each = scheme.installmentCentavosByTier[tier];
-  if (!scheme.installmentCount || !each) return null;
-  return (scheme.reservationCentavos ?? 0) + scheme.installmentCount * each;
+/** One line per tier: package price and how it is split (05 section 8). */
+function TierTerms({ scheme, product }: { scheme: PaymentScheme; product: VipProduct }) {
+  const price = schemePriceCentavos(product, scheme);
+  const count = installmentCountFor(scheme, product.code);
+  const each = scheme.installmentCentavosByTier[product.code];
+  const down = downPaymentCentavos(price, scheme);
+  return (
+    <dd>
+      Total <Money value={price} />
+      {down != null ? <> · down payment <Money value={down} /></> : null}
+      {scheme.category === "cash" && scheme.reservationCentavos ? <> · balance <Money value={price - scheme.reservationCentavos} /></> : null}
+      {scheme.category !== "cash" && count && each ? <> · <Money value={each} /> × {count}</> : null}
+    </dd>
+  );
 }
 
 /**
@@ -31,12 +41,13 @@ function installmentTotal(scheme: PaymentScheme, tier: VipTierCode): number | nu
  */
 export function SchemeGuidePage() {
   const schemes = usePaymentSchemes();
+  const products = useVipProducts();
   return (
     <ModulePage
       anyOf={["vip-products", "sales"]}
       title="Payment Scheme Guide"
       description="How each official payment scheme works. Read only."
-      crumbs={[{ label: "VIP Products and Contracts", href: "/admin/vip-products" }, { label: "Payment Scheme Guide" }]}
+      crumbs={[{ label: "VIP Products", href: "/admin/vip-products" }, { label: "Scheme Guide" }]}
       actions={
         <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => window.print()}>
           <Printer aria-hidden="true" /> Print guide
@@ -44,7 +55,7 @@ export function SchemeGuidePage() {
       }
     >
       <InfoNote title="Confidential">For authorized staff only. Amounts shown are the approved contract terms; a scheme without approved terms cannot be offered.</InfoNote>
-      <QueryState isLoading={schemes.isLoading} error={schemes.error}>
+      <QueryState isLoading={schemes.isLoading || products.isLoading} error={schemes.error ?? products.error}>
         <div className="tw:flex tw:flex-col tw:gap-4">
           {(schemes.data ?? []).map((scheme) => (
             <Section key={scheme.id} title={scheme.label} actions={<BizBadge status={scheme.availability} />}>
@@ -52,7 +63,7 @@ export function SchemeGuidePage() {
                 <dl className="tw:grid tw:grid-cols-1 tw:gap-3 tw:text-sm tw:sm:grid-cols-2">
                   <div>
                     <dt className="tw:text-muted-foreground">How it works</dt>
-                    <dd>{scheme.category === "cash" ? "One full payment." : `${scheme.reservationCentavos ? "A non-refundable reservation fee, then " : ""}${scheme.installmentCount} equal monthly installments${scheme.interestPercent === 0 ? " at 0% interest" : ""}.`}</dd>
+                    <dd>{schemeHowItWorks(scheme)}</dd>
                   </div>
                   {scheme.reservationCentavos ? (
                     <div>
@@ -60,17 +71,15 @@ export function SchemeGuidePage() {
                       <dd><Money value={scheme.reservationCentavos} /> (counted in the total)</dd>
                     </div>
                   ) : null}
-                  {scheme.installmentCount
-                    ? TIERS.filter((tier) => scheme.applicableTiers.includes(tier.code)).map((tier) => (
-                        <div key={tier.code}>
-                          <dt className="tw:text-muted-foreground">{tier.label}</dt>
-                          <dd>
-                            <Money value={scheme.installmentCentavosByTier[tier.code] ?? 0} /> × {scheme.installmentCount}
-                            {installmentTotal(scheme, tier.code) ? <> · total <Money value={installmentTotal(scheme, tier.code)!} /></> : null}
-                          </dd>
-                        </div>
-                      ))
-                    : null}
+                  {TIERS.filter((tier) => scheme.applicableTiers.includes(tier.code)).map((tier) => {
+                    const product = (products.data ?? []).find((item) => item.code === tier.code);
+                    return product ? (
+                      <div key={tier.code}>
+                        <dt className="tw:text-muted-foreground">{tier.label}</dt>
+                        <TierTerms scheme={scheme} product={product} />
+                      </div>
+                    ) : null;
+                  })}
                 </dl>
               ) : (
                 <p className="tw:text-sm tw:text-muted-foreground">Terms are pending owner approval, so this scheme cannot be offered yet. {scheme.ownerHold ?? scheme.source}</p>

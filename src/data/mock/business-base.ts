@@ -83,7 +83,9 @@ export function genealogyFor(store: MockStore, memberId: string | null): Genealo
   return chain;
 }
 
-const BROAD_BUSINESS_ROLES = new Set(["super_admin", "admin", "finance"]);
+export const BROAD_BUSINESS_ROLES = new Set(["super_admin", "admin", "finance"]);
+/** Date-only business dates (YYYY-MM-DD, Asia/Manila). */
+export const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Admin, Super Admin and Finance see every contract; sellers see contracts whose recorded team includes them. */
 export function canSeeContract(identity: DevIdentity, contract: Pick<Contract, "genealogy">): boolean {

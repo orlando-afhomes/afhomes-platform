@@ -2,11 +2,10 @@ import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { SaleRepository, SaleView } from "@/data/contracts/sale-repository";
 import type { DevIdentity } from "@/modules/identity/types";
 import { activeRoles } from "./dev-identities";
-import { BusinessRepository, canSeeContract, customerName } from "./business-base";
+import { BROAD_BUSINESS_ROLES, BusinessRepository, canSeeContract, customerName } from "./business-base";
 import type { MockStore } from "./seed";
 import { isActiveIdentity } from "./scope";
 
-const BROAD = new Set(["super_admin", "admin", "finance"]);
 
 export class MockSaleRepository extends BusinessRepository implements SaleRepository {
   constructor(store: MockStore, getIdentity: () => DevIdentity, asyncOptions: MockAsyncOptions = {}) {
@@ -15,7 +14,7 @@ export class MockSaleRepository extends BusinessRepository implements SaleReposi
 
   private visible(identity: DevIdentity): SaleView[] {
     if (!isActiveIdentity(identity)) return [];
-    const broad = activeRoles(identity).some((role) => BROAD.has(role));
+    const broad = activeRoles(identity).some((role) => BROAD_BUSINESS_ROLES.has(role));
     const result: SaleView[] = [];
     for (const sale of this.store.sales) {
       const contract = this.store.contracts.find((item) => item.id === sale.contractId);

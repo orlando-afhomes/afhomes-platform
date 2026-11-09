@@ -8,6 +8,7 @@ Claude Code entry point. `AGENTS.md` (imported above) is mandatory governance an
 - Repository `https://github.com/orlando-afhomes/afhomes-platform`, branch `develop`.
 - Frontend-first with typed in-memory mock data. Backend, real auth, databases, migrations, infrastructure, and deployment need explicit owner authorization.
 - Progress: run `/load` to restore the latest session snapshot (`workflow/save-session.md`), then check the code. Neither overrides governing documents.
+- Start every reply with my nickname. My nickname is Dos.
 
 ## Stack (verify in package.json)
 - Next.js App Router, React, TypeScript; target UI is shadcn/ui on Base UI, Tailwind CSS 4, and namespaced custom CSS, with TanStack Table and Lucide (`AGENTS.md` section 8, effective November 8, 2026). Ant Design 6 remains only in unmigrated modules.

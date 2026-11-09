@@ -7,8 +7,10 @@ import { confirmedValueInPeriod, totalsFor } from "@/modules/sales/rules";
 import { addMonthsToDate, manilaToday } from "@/shared/lib/dates";
 import { StandardDateField } from "@/shared/forms/modern";
 import { InfoNote } from "@/shared/components/modern/detail-list";
-import { Money, Section, StatTiles } from "../components/business-ui";
-import { FilterBar } from "../components/business-ui";
+import { Money } from "@/shared/components/modern/money";
+import { Section } from "@/shared/components/modern/section";
+import { StatTiles } from "@/shared/components/modern/stat-tiles";
+import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { ModulePage } from "../components/module-page";
 
 const PRESETS = [

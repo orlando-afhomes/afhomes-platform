@@ -11,6 +11,16 @@ export const CUSTOMER_CIVIL_STATUSES = ["Single", "Married", "Widowed", "Separat
 
 export type ContractClassification = "S" | "N";
 
+/** Supplementary cardholder, allowed only when the selected VIP product permits one (Gold: product.supplementaryHolders > 0). */
+export type SupplementaryHolder = {
+  firstName: string;
+  middleName: string | null;
+  lastName: string;
+  suffix: string | null;
+  gender: string | null;
+  dateOfBirth: string | null;
+};
+
 /**
  * Customer master record (doc 04). Fields beyond the first five are optional so
  * drafts can be blank (04 section 9) and the original seeded records stay valid.
@@ -37,6 +47,7 @@ export type Customer = {
   /** Restricted: shown only to the owning seller and Admin views, never in downline projections. */
   governmentIdNumber?: string | null;
   vipPlan?: VipTierCode | null;
+  supplementaryHolder?: SupplementaryHolder | null;
   paymentSchemeId?: string | null;
   contractClassification?: ContractClassification | null;
   /** Referrer = VIP Recommender: one OST member (04 section 7.8). */

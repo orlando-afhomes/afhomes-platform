@@ -8,7 +8,13 @@ import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { Button } from "@/shared/ui/button";
-import { BizBadge, FilterBar, QueryState, Section, StatTiles, TabBar, formatDate } from "../components/business-ui";
+import { BizBadge } from "@/shared/components/business/biz-badge";
+import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { QueryState } from "@/shared/components/modern/query-state";
+import { Section } from "@/shared/components/modern/section";
+import { StatTiles } from "@/shared/components/modern/stat-tiles";
+import { TabBar } from "@/shared/components/modern/tab-bar";
+import { formatDate } from "@/shared/lib/format-date";
 import { ModulePage } from "../components/module-page";
 import { useContractHref } from "../components/use-contract-href";
 

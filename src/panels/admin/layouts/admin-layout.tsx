@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/shared/lib/utils";
+import { AppToaster } from "@/shared/components/modern/app-toaster";
 import { AdminHeader } from "../components/admin-header";
 import { AdminSidebar } from "../components/admin-sidebar";
 
@@ -28,6 +29,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         <main id="main-content" className="tw:min-w-0 tw:flex-1 tw:bg-background">
           {children}
         </main>
+        <AppToaster />
       </div>
     </div>
   );

@@ -116,6 +116,7 @@ function NavGroup({
   const panelId = useId();
   return (
     <li>
+      {/* Raw button exception: navigation disclosure, not an action button. */}
       <button
         type="button"
         aria-expanded={open}

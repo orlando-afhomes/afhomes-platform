@@ -4,7 +4,7 @@ export type AuditModule =
 
 export type AuditEntityType =
   | "member" | "accreditation" | "account" | "staff" | "department-role" | "department"
-  | "customer" | "product" | "payment-scheme" | "contract" | "sale" | "payment" | "membership" | "commission" | "resort-spend";
+  | "customer" | "customer-import" | "customer-export" | "product" | "payment-scheme" | "contract" | "sale" | "payment" | "membership" | "commission" | "resort-spend";
 
 /** Minimal append-only mock audit event for Sales Network / Accreditation / Organization actions. */
 export type AuditEvent = {
@@ -119,6 +119,8 @@ export const BUSINESS_AUDIT_ACTIONS = {
   CUSTOMER_DRAFT_DISCARDED: "CUSTOMER_DRAFT_DISCARDED",
   CUSTOMER_SUBMITTED: "CUSTOMER_SUBMITTED",
   CUSTOMER_CORRECTED: "CUSTOMER_CORRECTED",
+  CUSTOMER_IMPORT_COMPLETED: "CUSTOMER_IMPORT_COMPLETED",
+  CUSTOMERS_EXPORTED: "CUSTOMERS_EXPORTED",
   PRODUCT_UPDATED: "PRODUCT_UPDATED",
   PRODUCT_RETIRED: "PRODUCT_RETIRED",
   PAYMENT_SCHEME_CREATED: "PAYMENT_SCHEME_CREATED",

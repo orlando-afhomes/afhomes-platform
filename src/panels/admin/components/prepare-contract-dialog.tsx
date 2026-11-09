@@ -9,7 +9,9 @@ import type { Customer } from "@/modules/customers/types";
 import { CheckboxField, SelectField } from "@/shared/forms/modern";
 import { StandardDateField } from "@/shared/forms/modern/date-field";
 import { InfoNote } from "@/shared/components/modern/detail-list";
-import { FormDialog, Money, formatDate } from "./business-ui";
+import { FormDialog } from "@/shared/components/modern/form-dialog";
+import { Money } from "@/shared/components/modern/money";
+import { formatDate } from "@/shared/lib/format-date";
 import { useContractHref } from "./use-contract-href";
 
 /** Prepares a contract for a submitted customer: scheme, schedule preview with due dates, customer acceptance. */

@@ -41,6 +41,7 @@ export function DataTable<T>({
   emptyText,
   loading = false,
   pageSize = 10,
+  paginate = true,
   onRowOpen,
   caption,
 }: {
@@ -50,6 +51,8 @@ export function DataTable<T>({
   emptyText: string;
   loading?: boolean;
   pageSize?: number;
+  /** Set false for short read-only history tables that should show all rows. */
+  paginate?: boolean;
   onRowOpen?: (row: T) => void;
   /** Accessible table name. */
   caption?: string;
@@ -61,10 +64,10 @@ export function DataTable<T>({
     data,
     columns,
     getRowId,
-    state: { pagination },
-    onPaginationChange: setPagination,
+    state: paginate ? { pagination } : undefined,
+    onPaginationChange: paginate ? setPagination : undefined,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    getPaginationRowModel: paginate ? getPaginationRowModel() : undefined,
   });
   const rows = table.getRowModel().rows;
   const pageCount = table.getPageCount();
@@ -127,7 +130,7 @@ export function DataTable<T>({
           </TableBody>
         </Table>
       </div>
-      {!loading && pageCount > 1 ? (
+      {!loading && paginate && pageCount > 1 ? (
         <nav aria-label="Pagination" className="tw:flex tw:items-center tw:justify-center tw:gap-3">
           <Button
             variant="outline"

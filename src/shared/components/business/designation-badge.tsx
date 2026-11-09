@@ -13,7 +13,15 @@ const DESIGNATION_CLASSES: Record<string, string> = {
 };
 
 /** Designation as a badge; `full` shows the long position title instead of the code. */
-export function DesignationBadge({ designation, full = false, className }: { designation: string; full?: boolean; className?: string }) {
+export function DesignationBadge({
+  designation,
+  full = false,
+  className,
+}: {
+  designation: string;
+  full?: boolean;
+  className?: string;
+}) {
   return (
     <Badge variant="secondary" className={cn(DESIGNATION_CLASSES[designation] ?? "tw:bg-muted tw:text-muted-foreground", className)}>
       {full ? designationLabel(designation) : designation}

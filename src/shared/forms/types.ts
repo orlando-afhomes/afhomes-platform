@@ -17,7 +17,7 @@ export type BaseFieldProps = {
   error?: string;
   maxLength?: number;
   autoComplete?: string;
-  inputMode?: "text" | "numeric" | "tel" | "email" | "search";
+  inputMode?: "text" | "numeric" | "decimal" | "tel" | "email" | "search";
   className?: string;
 };
 

@@ -18,6 +18,9 @@ import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { PageHeader } from "@/shared/components/modern/page-header";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
+import { CardSection } from "@/shared/components/modern/card-section";
+import { Card } from "@/shared/ui/card";
+import { DetailList, DetailRow } from "@/shared/components/modern/detail-list";
 import { EmailField, PasswordField, TextField } from "@/shared/forms/modern";
 import {
   MIN_PASSWORD_LENGTH,
@@ -29,7 +32,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { Toaster } from "@/shared/ui/sonner";
 
 function initials(name: string) {
   return name
@@ -55,7 +57,6 @@ export function MyAccountPage() {
 
   return (
     <PageContainer>
-      <Toaster position="top-right" />
       <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "My Account" }]} />
       <PageHeader title="My Account" description="View and update your profile information." />
       <MyAccountForm key={identity.id} />
@@ -69,9 +70,9 @@ function MyAccountForm() {
   const profile = profileQuery.data ?? null;
   if (!profile) {
     return (
-      <p className="tw:mt-6 tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-8 tw:text-center tw:text-muted-foreground">
+      <Card className="tw:mt-6 tw:p-8 tw:text-center tw:text-muted-foreground">
         No linked staff or account record found for this identity.
-      </p>
+      </Card>
     );
   }
   return <MyAccountProfileForm key={profile.staff.id} staff={profile.staff} linkedAccount={profile.linkedAccount} />;
@@ -79,23 +80,6 @@ function MyAccountForm() {
 
 type FieldErrors = { name?: string; email?: string; newPassword?: string; confirmPassword?: string };
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section aria-label={title} className="tw:flex tw:flex-col tw:gap-4 tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4">
-      <h2 className="tw:text-base tw:font-semibold">{title}</h2>
-      {children}
-    </section>
-  );
-}
-
-function DetailRow({ term, children }: { term: string; children: React.ReactNode }) {
-  return (
-    <div className="tw:flex tw:items-center tw:gap-3 tw:border-b tw:border-border tw:py-2 tw:last:border-b-0">
-      <dt className="tw:w-32 tw:shrink-0 tw:font-medium tw:text-muted-foreground">{term}</dt>
-      <dd className="tw:min-w-0 tw:flex-1 tw:break-words">{children}</dd>
-    </div>
-  );
-}
 
 /**
  * Personal profile only. Department, role, permissions, and account status
@@ -186,7 +170,7 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
 
   return (
     <form onSubmit={handleSubmit} noValidate className="tw:mt-3 tw:flex tw:max-w-2xl tw:flex-col tw:gap-4">
-      <Section title="Profile information">
+      <CardSection title="Profile information">
         <div className="tw:flex tw:flex-col tw:gap-1.5">
           <span className="tw:text-sm tw:font-medium">Profile picture</span>
           <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-4">
@@ -253,15 +237,15 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
             clearError("email");
           }}
         />
-        <dl className="tw:flex tw:flex-col">
+        <DetailList>
           <DetailRow term="Status">
             <StatusBadge status={linkedAccount?.status ?? staff.status} />
           </DetailRow>
           <DetailRow term="Linked account">{linkedAccount?.email ?? "—"}</DetailRow>
-        </dl>
-      </Section>
+        </DetailList>
+      </CardSection>
 
-      <Section title="Change password">
+      <CardSection title="Change password">
         <PasswordField
           label="New Password"
           placeholder="New Password"
@@ -283,15 +267,15 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
             clearError("confirmPassword");
           }}
         />
-      </Section>
+      </CardSection>
 
-      <Section title="Employment and access">
-        <dl className="tw:flex tw:flex-col">
+      <CardSection title="Employment and access">
+        <DetailList>
           <DetailRow term="Department">{departments.find((item) => item.id === staff.departmentId)?.name ?? "—"}</DetailRow>
           <DetailRow term="Role">{roles.find((item) => item.id === staff.departmentRoleId)?.name ?? "—"}</DetailRow>
-        </dl>
+        </DetailList>
         <p className="tw:text-xs tw:text-muted-foreground">Your department, role, and account status are managed by an authorized administrator.</p>
-      </Section>
+      </CardSection>
 
       <div className="tw:flex tw:justify-end">
         <Button type="submit" disabled={submitting || (!canEditProfile && !newPassword)} className="tw:min-h-11 tw:w-full tw:sm:min-h-8 tw:sm:w-auto">

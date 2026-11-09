@@ -9,7 +9,9 @@ import { ACQUISITION_CHANNELS, type Customer } from "@/modules/customers/types";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { buttonVariants } from "@/shared/ui/button";
 import { ModulePage } from "../components/module-page";
-import { BizBadge, FilterBar, QueryState } from "../components/business-ui";
+import { BizBadge } from "@/shared/components/business/biz-badge";
+import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { QueryState } from "@/shared/components/modern/query-state";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
@@ -23,6 +25,7 @@ export function CustomersPage() {
   const customers = useCustomers();
   const members = useMembers();
   const canManage = useOperation("customers.manage");
+  const canImport = useOperation("customers.import");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
 
@@ -70,10 +73,19 @@ export function CustomersPage() {
       description="Customer master records and VIP applications."
       crumbs={[{ label: "Customers" }]}
       actions={
-        canManage ? (
-          <Link href="/admin/customers/new" className={buttonVariants({ className: "tw:min-h-11 tw:sm:min-h-8" })}>
-            <Plus aria-hidden="true" /> New customer
-          </Link>
+        canManage || canImport ? (
+          <div className="tw:flex tw:flex-wrap tw:gap-2">
+            {canImport ? (
+              <Link href="/admin/customers/import-export" className={buttonVariants({ variant: "outline", className: "tw:min-h-11 tw:sm:min-h-8" })}>
+                Import / Export
+              </Link>
+            ) : null}
+            {canManage ? (
+              <Link href="/admin/customers/new" className={buttonVariants({ className: "tw:min-h-11 tw:sm:min-h-8" })}>
+                <Plus aria-hidden="true" /> New customer
+              </Link>
+            ) : null}
+          </div>
         ) : null
       }
     >

@@ -6,6 +6,7 @@ import type { PublicAccreditationResult } from "@/data/contracts/accreditation-r
 import { TextField } from "@/shared/forms/modern";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Button } from "@/shared/ui/button";
+import { Card } from "@/shared/ui/card";
 
 const GENERIC_FAILURE = "No active accreditation was found for that number. Check the number and try again.";
 
@@ -37,23 +38,23 @@ export function AccreditationVerificationPage() {
     <div className="tw:mx-auto tw:flex tw:w-full tw:max-w-xl tw:flex-col tw:gap-4 tw:px-4 tw:py-10">
       <h1 className="tw:text-2xl tw:font-semibold">Verify an accreditation</h1>
       <p className="tw:text-sm tw:text-muted-foreground">Enter the full accreditation number exactly as issued. Searching by name is not available.</p>
-      <form onSubmit={(event) => void submit(event)} className="tw:flex tw:flex-col tw:gap-3 tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4">
+      <Card><form onSubmit={(event) => void submit(event)} className="tw:flex tw:flex-col tw:gap-3">
         <TextField label="Accreditation number" required value={value} onChange={(next) => setValue(next.toUpperCase())} maxLength={16} autoComplete="off" />
         <Button type="submit" disabled={busy || value.trim() === ""} className="tw:min-h-11 tw:sm:min-h-8">
           {busy ? "Checking…" : "Verify"}
         </Button>
-      </form>
+        </form></Card>
       <div role="status" aria-live="polite">
         {failed ? <InfoNote>{GENERIC_FAILURE}</InfoNote> : null}
         {result ? (
-          <section aria-label="Verification result" className="tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4">
+          <Card><section aria-label="Verification result">
             <h2 className="tw:text-lg tw:font-semibold">Accreditation is active</h2>
             <dl className="tw:mt-2 tw:flex tw:flex-col tw:gap-1 tw:text-sm">
               <div><dt className="tw:inline tw:text-muted-foreground">Number: </dt><dd className="tw:inline">{result.aaNumber}</dd></div>
               <div><dt className="tw:inline tw:text-muted-foreground">Type: </dt><dd className="tw:inline">{result.classification}</dd></div>
               {result.validUntil ? <div><dt className="tw:inline tw:text-muted-foreground">Valid until: </dt><dd className="tw:inline">{result.validUntil}</dd></div> : null}
             </dl>
-          </section>
+            </section></Card>
         ) : null}
       </div>
     </div>

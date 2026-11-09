@@ -1,3 +1,4 @@
+import type { CustomerImportJob } from "@/modules/customers/import";
 import type { Customer } from "@/modules/customers/types";
 import type { OrgMember, Department, DepartmentRole, StaffMember } from "@/modules/organization/types";
 import type { AccreditationRecord, RegistrationApplication } from "@/modules/accreditation/types";
@@ -31,6 +32,8 @@ export type MockStore = {
   staff: StaffMember[];
   /** Append-only audit history; subject to the mock-store reset lifecycle. */
   auditEvents: AuditEvent[];
+  /** Customer import batches (job history); browser memory only. */
+  customerImportJobs: CustomerImportJob[];
   customerSequence: number;
   accountSequence: number;
   departmentSequence: number;
@@ -69,6 +72,7 @@ export function createSeedStore(): MockStore {
     roles: roles.map((item) => ({ ...item, moduleIds: [...item.moduleIds] })),
     staff: staff.map((item) => ({ ...item })),
     auditEvents: [],
+    customerImportJobs: [],
     customerSequence: customers.length + 1,
     accountSequence: accounts.length + 1,
     departmentSequence: departments.length + 1,
@@ -112,6 +116,7 @@ export function createMockStore(seed: MockStore = createSeedStore()): MockStore 
     roles: seed.roles.map((item) => ({ ...item, moduleIds: [...item.moduleIds] })),
     staff: seed.staff.map((item) => ({ ...item })),
     auditEvents: seed.auditEvents.map((item) => ({ ...item, relatedRecordIds: item.relatedRecordIds ? [...item.relatedRecordIds] : undefined })),
+    customerImportJobs: seed.customerImportJobs.map((item) => ({ ...item, createdCustomerIds: [...item.createdCustomerIds] })),
     customerSequence: seed.customerSequence,
     accountSequence: seed.accountSequence,
     departmentSequence: seed.departmentSequence,

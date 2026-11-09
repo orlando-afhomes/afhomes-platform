@@ -7,6 +7,7 @@ import { PageContainer } from "@/shared/components/modern/page-container";
 import { PageHeader } from "@/shared/components/modern/page-header";
 import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { Card } from "@/shared/ui/card";
 import { getRoleAwareAdminBreadcrumbs } from "@/panels/admin/navigation";
 import { getEffectiveRoles, isModuleGranted } from "@/modules/identity/permissions";
 import { countVisibleCustomers, countVisibleMembers } from "../dashboard-metrics";
@@ -68,13 +69,13 @@ export function AdminDashboardPage() {
 
 function StatCard({ title, value, loading }: { title: string; value: number; loading: boolean }) {
   return (
-    <section aria-label={title} className="tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4">
+    <Card aria-label={title}>
       <h2 className="tw:text-sm tw:font-medium tw:text-muted-foreground">{title}</h2>
       {loading ? (
         <Skeleton className="tw:mt-2 tw:h-8 tw:w-16" />
       ) : (
         <p className="tw:mt-1 tw:text-3xl tw:font-semibold">{value.toLocaleString()}</p>
       )}
-    </section>
+    </Card>
   );
 }

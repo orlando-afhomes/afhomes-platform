@@ -2,7 +2,7 @@ import type { OrgMember } from "@/modules/organization/types";
 import { aaDisplay, teamDisplayName } from "@/modules/sales-network/display";
 import type { GenealogyTreeNode } from "@/modules/sales-network/genealogy";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
-import { DesignationBadge } from "./sales-badges";
+import { DesignationBadge } from "@/shared/components/business/designation-badge";
 
 /**
  * Shared genealogy node content. Full mode shows name, official AA number,

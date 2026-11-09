@@ -351,3 +351,11 @@ Given / When / Then for core scenarios (see Section 28 of the master prompt for 
 - **Official dropdown source mapping:** VIP tiers B1/S1/G1 (plus historical/reserved); payment schemes Spot Cash, Move A, 4-Month Installment, Move B1, Move B2 (plus Admin-configurable); payment types Cash, Bank Transfer, GCash, Maya, Card, Cheque; contract classifications Standard (S), Non-Standard (N).
 - **Outstanding approval dependencies:** Gold/Silver contract price corrections, Non-Standard commercial rules, complete payment scheme canonical register from approved docs, tier-code format expansion if needed.
 - **Validation:** All required sections included; no invented commercial terms; documentation only. No code, database, Git, or deployment changes.
+## Owner rulings amendment (2026-11-09)
+
+These rulings are authoritative and take precedence over earlier text in this document where they differ.
+
+1. **Spot Cash** is unavailable while its price is pending the owner decision (OD-11). Existing finalized Spot Cash contracts are untouched.
+2. **Payment scheme register:** all five schemes are listed; terms and tier applicability appear only where an approved document or Admin configuration supports them. Move A, Move B1 and Move B2 stay unavailable until their terms are approved.
+3. **Supplementary holder** is allowed only when the selected product permits one (currently Gold).
+4. **Internal customer identifier:** new customers receive a secure random, numeric-only, pattern-free internal id. The RA number rule is unchanged.

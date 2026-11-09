@@ -114,56 +114,62 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 - Saved at: 2026-11-09
 - Repository: afhomes-platform (remote `https://github.com/orlando-afhomes/afhomes-platform.git`)
 - Branch: develop
-- HEAD: 6e1e031; nothing staged (`git diff --cached` empty); 252 status entries, 86 untracked (HEAD and counts unchanged by this session's work)
-- Session objective: /load, final QA and business-rule reconciliation review (read-only, 8-agent workflow), then C1 integrity corrections, then C2 owner-decided restrictions.
-- Development phase: frontend prototype with mock data; P0-P12 implemented; C1 and C2 done; comprehensive QA and further decisions pending. Only the owner declares frontend completion.
-- Context note: model switched Sonnet to Opus to Sonnet by the user; Ultracode OFF for builds. The plan file `C:\Users\SSD-ORLANDO\.claude\plans\pasted-content-id-5072-afhomes-agile-sky.md` now holds the C2 plan; the earlier review register was overwritten, so its open items are summarized in section 6.
+- HEAD: 22c9b4f (unchanged; owner commits only); nothing staged; 72 diff entries + 39 untracked files (prior session's G1-G7/P13/money work still uncommitted underneath)
+- Session objective: /load, then plan component centralization, then owner's "proceed" authorized implementation with the recommended approach.
+- Development phase: frontend prototype with mock data; G1-G7, P13 doc amendments, and money/points grouping done (prior session); component centralization implemented this session. Only the owner declares frontend completion.
+- Context note: Plan mode was active during /load and planning (plan written to `C:\Users\SSD-ORLANDO\.opencode\plan\2026-11-09-component-centralization.md`); owner lifted Plan mode, then authorized implementation ("proceed, do what is the best approach and recommended"). Ultracode OFF.
 
 ## 2. Current Project State
-- Verified: C1 and C2 changes are in the working tree; `tsc` clean, lint 0 errors (2 old warnings), build succeeds, full vitest 528/530 (only the known flaky staff-page test failed under load; 20/20 alone).
-- Central seed `data/database/afhomes-seed.js`; business repositories in `src/data/mock/`; domain rules in `src/modules/*`; admin pages in `src/panels/admin/pages/`.
-- New this session: `src/modules/commissions/rules.ts` (40% payout release), contract cancellation types (`CANCELLATION_GROUNDS`, `ContractCancellation`), `ownerHold` on payment schemes, audit actions CONTRACT_CANCELLATION_REQUESTED/DECLINED, SALE_CANCELLED, PAYMENTS_FORFEITED, MEMBERSHIP_CANCELLED, `holdUnpaidCommissions` in `business-effects.ts`.
+- Verified this session: `npx tsc --noEmit` clean, lint 0 errors (2 pre-existing warnings), `npm run build` succeeds, full vitest 555/557 (2 known flaky staff-page tests under load; 20/20 alone).
+- All application-facing UI now comes from `src/shared/ui/` primitives or `src/shared/components/` composed components. No page-level card surfaces, search boxes, tables, badges, standard dialogs, or toast hosts remain (6 documented raw-button exceptions with comments; 1 sr-only file input; DataTable wrapper keeps card classes intentionally as an overflow-hidden table container).
+- Prior-session state preserved: commission 7-day release, Commission Assignment page, Finance membership activation, customer import/export (read-excel-file/write-excel-file), supplementary holder (Gold), random numeric customer ids, Scheme Guide, grouped money/points inputs.
 
 ## 3. Important Decisions
-- Owner rulings (2026-11-09): OD-1 Super Admin keeps Finance operations (counts as authorized Finance personnel; docs 07/08 to be amended in P13). OD-2 cancellation with forfeiture on Reservation Agreement grounds, two-step (Admin requests, Finance confirms, requester cannot decide). OD-4 adopt the AFhomes 40% stage-1 payout threshold (recording a payout needs 40% of contract value Finance-verified). OD-11 Spot Cash unavailable (price pending; owner hold). OD-12 reservation fee non-refundable (reversal allowed).
-- Earlier interim choices still need confirmation: sale confirms at reservation + first installment (D25); Admin/Super Admin activate memberships; manual RA number; public verification omits holder name; Gold held on 390,000 vs 780,000; Move A/B1/B2 unusable; Non-Standard held; overpayments rejected; no fractional commissions.
-- Source classification: A1/A3/A5/B1/B3/B5/B7 are JA&D; C2 header covers both companies; A2/A4/A6/A7 are AFhomes workbook material not adopted into canon except as ruled; Closed Deal (25%) and BA/PA/PB are engagement statistics, not sales commissions; DRI goes to the recruiting referrer.
-- Restrictions: no Git writes by agents; AGENTS.md, CLAUDE.md and docs edits need owner authorization (P13 not done).
+- Owner decisions this session: proceed with recommended approach — all application-facing screens including public pages; keep Sonner + Base UI AlertDialog (no SweetAlert2); semantic `primary`/`danger` button aliases with old names kept; pure refactor with exact visual parity; docs/frontend.md update and test-gate enforcement left undecided (not done).
+- Architecture: pages → shared components → shared primitives; `src/shared` never imports `src/panels`; domain-aware shared components live in `src/shared/components/business/` (`biz-badge`, `designation-badge`, `role-badge` with caller-supplied labels).
+- Preserved unchanged by design: both badge tone registries (account vs business `approved` conflict kept), Button gray `secondary` variant, shadcn variant names as aliases; direct `toast.*` calls remain in 16 files (host centralized; `notify`/`useActionRunner` preferred for new code).
+- Prior owner rulings (2026-11-09, unchanged): allocation waterfall; 40% gate + 7-day release; manual Commission Assignment (Finance, Super Admin); doc-05 schemes with Spot Cash unavailable; random numeric internal ids; Finance/Admin/Super Admin may activate memberships; imports create drafts only; XLSX approved; comma grouping for money/Stay Points only.
+- Restrictions: no Git writes by agents; AGENTS.md/CLAUDE.md edits need owner authorization. One `git stash` + `stash pop` cycle was used read-only mid-session to isolate a test failure (tree fully restored; disclosed in session, not repeated).
 
 ## 4. Completed Work
-- Review: 8-agent read-only review produced the decision register, blockers and QA plan (full text no longer saved; see section 6).
-- C1 (tested in `business-flow.test.ts`): payout steps re-check Confirmed sale; initiated unconfirmed payouts preserved, flagged and not cancellable; no payment verification on cancelled contracts; no verification by the person who corrected a returned payment; RA must be exactly 4 digits, finalized contract only, previous/new RA audited; public `/verify` checks expiry for IST and OST and current record only; blocked linked accounts lose business authority (`business-base.ts`); finalize and Customer ID audit before/after fixed; `public.css` imported on `/verify` and `/register/ost`.
-- C2: reservation refund blocked (repository and dialog); Spot Cash seed set pending/unavailable with `ownerHold`; 40% payout gate; two-step cancellation (repository, hooks, contract page, Finance "Cancellation requests" tab). 7 new tests (6 in business-flow, 1 in business-pages); 3 payout tests now verify installment MA2 first; one C1 test sets the sale status directly.
-- Files touched: contract, payment, commission, product, customer and accreditation repositories; business-base; business-effects; contract-detail, finance and commissions pages; payment-actions; permissions comments; seed; contract, audit and vip types; business-queries.
+- Primitives: `src/shared/ui/card.tsx` (new Card system); `button.tsx` gained `primary`/`danger` aliases; `status-badge.tsx` gained shared `toneClass`; `data-table.tsx` gained `paginate` prop (default true).
+- New composed components: `search-input`, `filter-bar`, `section`, `card-section`, `stat-tiles`, `tab-bar`, `query-state`, `money`, `form-dialog` (FormDialog + ReasonDialog), `use-action-runner`, `app-toaster` (+ `notify`), `business/biz-badge`, `business/designation-badge`, `business/role-badge`, `lib/format-date.ts`.
+- Migrations: 20 `business-ui` importers rewritten to shared imports; `business-ui.tsx` and `sales-badges.tsx` shims deleted; 5 directory pages to FilterBar (departments, roles, staff, members; + RoleBadge in staff); single AppToaster in AdminLayout with 6 duplicate mounts removed; member-detail raw table to DataTable; my-account/member-detail/overview/dashboard/sales-panel/customer-form/public pages to Card/CardSection; 6 raw-button exception comments.
+- Regression found and fixed: ModulePage Toaster removal hid toast text asserted by business-pages.test (customer-form validation error surfaces via toast) — fixed by mounting AppToaster in the test wrapper (Card wrapper proven innocent via isolated revert).
+- Tests added: `centralization.test.tsx` (11 tests); AppToaster added to 5 test wrappers (business-pages, departments, roles, staff, my-account).
 
 ## 5. Git Working Tree
 - Staged: none.
-- Unstaged and untracked: 252 entries (86 untracked) mixing earlier sessions (Ant Design removal, P0-P12) and this session's C1/C2 edits; origin not separated per file.
-- Deleted files in the tree come from the earlier Ant Design removal, not this session.
-- Unfinished work: none in progress.
+- Unstaged this-session (centralization): `src/shared/ui/button.tsx`, `src/shared/components/modern/{data-table,status-badge}.tsx`, `src/panels/admin/components/{module-page,accreditation-status-action,admin-header,admin-nav-list,contracts-table,payment-actions,prepare-contract-dialog,sales-network-panel,sales-network-tree-node,vip-product-dialogs}.tsx`, `src/panels/admin/layouts/admin-layout.tsx`, 22 admin pages, `src/panels/public/pages/{accreditation-verification,ost-registration}-page.tsx`, 5 test files, `workflow/save-session.md` (this save).
+- Unstaged pre-existing (prior session, untouched this session): `docs/business-rules/05,07,08-*.md`, `package.json`, `package-lock.json`, `src/data/*`, `src/data/mock/*`, `src/modules/*`, `src/shared/forms/*`, `src/shared/lib/{money,dates}.ts`, etc.
+- Untracked this-session: `src/shared/components/business/`, `src/shared/components/modern/{app-toaster,card-section,centralization.test,filter-bar,form-dialog,money,query-state,search-input,section,stat-tiles,tab-bar,use-action-runner}.tsx`, `src/shared/lib/format-date.ts`, `src/shared/ui/card.tsx`.
+- Untracked pre-existing: `docs/system-flow/`, 3 route dirs, `ids.test.ts`, `import.{ts,test.ts}`, 3 new pages, `spreadsheet.ts`.
+- Deleted this-session: `src/panels/admin/components/business-ui.tsx`, `src/panels/admin/components/sales-badges.tsx` (zero importers; verified). Renamed: none. Unfinished work: none in progress.
 
 ## 6. Pending Tasks
-- Owner decisions open: OD-5 activation role and second approver; OD-6 RA vs Customer ID; OD-7 RA scope and reuse after cancellation; OD-8 Card Claim vs Activation Date cutover and legacy IDs; OD-9 commission recipients, rates, aggregate cap, referrer; OD-10 engagement pay scope; OD-13 public verification fields and suspended-account wording; OD-14 `/register/ost` vs doc 02 section 4.2; OD-15 P10 Customer Lookup; OD-16 smaller items (Silver hold, rounding, overpayment, audit amount visibility, who corrects a returned payment, maker-checker); refund or waiver after forfeiture.
-- Remaining work: C4 test hardening (staff-page 5000 ms timeouts, financial idempotency and audit-event assertions, identity x page matrix including dev-svd-b); C5 accessibility (TabBar ARIA, row keyboard access, dialog focus return, combobox size, loading role=status); returned-payment correction UI missing; paid-commission recovery flag; P13 doc reconciliation (Ant Design text, documentation-only claims, OD-1/2/4/11/12 rulings in docs 05/07/08) needs authorization.
+- Owner decisions open (unchanged): OD-8 (Card Claim vs Activation Date, legacy ids; blocks Historical import), OD-5, OD-6, OD-7, OD-9, OD-10, OD-13 to OD-16, refund/waiver after forfeiture, supplementary holder field list and age limit, reservation expiry rule, whether Admin may assign commissions; plus new: unify `approved` badge mapping? update `docs/development/frontend.md`? centralization check in CI?
+- Optional: Zod migration one form at a time; full accessibility audit; migrate 16 files' direct `toast.*` calls to `notify`/`useActionRunner`; browser walk-through of other roles; returned-payment correction UI; paid-commission recovery flag.
+- Not built (not defined in business rules): QR token, fallback member code, customer activation link, printable membership card.
 
 ## 7. Verification State
-- Tests: full `npx vitest run` 528/530 (2 staff-page timeouts under load, 20/20 alone); business-flow 30/30; business-pages and seed-integrity 23/23.
-- Lint: 0 errors, 2 pre-existing warnings. Typecheck: clean. Build: succeeded.
-- Browser QA: not performed this session (only Super Admin was checked earlier). Not performed: role matrix, accessibility pass, mobile sheet, finance-to-activation chain in browser.
-- Known failures: flaky staff-page test.
+- Tests: full `npx vitest run` 555/557; the 2 failures are the known flaky staff-page tests under load (staff-page alone 20/20). Targeted: centralization 11/11, foundation+modern 33/33, departments+roles 38/38, business-pages 22/22, sales-network 9/9.
+- Lint: 0 errors, 2 pre-existing warnings. Typecheck: clean. Build: succeeded (all routes).
+- Browser QA: not performed this session (no visual-parity screenshot pass; recommended before owner acceptance).
+- Known failures: staff-page flakiness under full-run load only (pre-existing pattern).
+- Checks not performed: accessibility audit, other-role browser walk-through, exported-XLSX opening.
 
 ## 8. Next Session Instructions
-- Recommended first action: run `/load`, get owner decisions on the open OD list, then do the browser QA pass (role matrix, financial chain including cancellation with forfeiture, public pages) and C4/C5 fixes.
-- Relevant files: `src/data/mock/{contract,payment,commission,business-effects,business-base}.ts`, `src/modules/commissions/rules.ts`, `src/panels/admin/pages/{contract-detail,finance,commissions}-page.tsx`, `data/database/afhomes-seed.js`, `src/data/mock/business-flow.test.ts`.
-- Required approvals: any new milestone, P13 doc edits, dependency changes, Git writes (owner only).
-- Warnings: do not run build and tests concurrently; use `tw:` prefix; memoize DataTable columns; shell heredocs with apostrophes break (use Write tool); stop any `next start` server on port 3107; each UI test render creates its own mock store.
+- Recommended first action: run `/load`, then do the visual-parity browser pass (desktop 1440px + mobile 390px, one page per wave; keyboard focus/dialog/menu checks) before asking the owner to accept the milestone.
+- Relevant files: `src/shared/components/modern/*`, `src/shared/components/business/*`, `src/shared/ui/card.tsx`, `src/shared/ui/button.tsx`, `src/panels/admin/layouts/admin-layout.tsx`, plan at `C:\Users\SSD-ORLANDO\.opencode\plan\2026-11-09-component-centralization.md`.
+- Required approvals: milestone acceptance and any commit/push (owner only); new features; Zod migration; Historical import; doc or AGENTS.md edits.
+- Warnings: reloading a browser page resets the mock store (use in-page navigation); do not run build and tests concurrently; port 3000 may host the owner's dev server; use `tw:` prefix; memoize DataTable columns; shell heredocs with apostrophes break (use Write tool); `git stash` is prohibited by AGENTS.md even read-only (used once this session, disclosed, do not repeat — use targeted reverts instead).
 
 ## 9. Execution Recommendation
 - Phase: QA
 - Recommended next mode: default (ask before edits)
 - Recommended model: Sonnet 5.5
-- Effort: high
+- Effort: medium
 - Ultracode: OFF
-- Token optimization: one role-by-role browser pass, targeted tests per fix, one full-suite run at the end.
-- Reason: remaining work is verification and small fixes once the owner decides the open items.
+- Token optimization: one visual-parity browser pass per wave first, then owner acceptance; resolve open owner decisions before any new feature.
+- Reason: centralization implementation and automated verification are complete; what remains is visual/keyboard parity confirmation and owner decisions.
 <!-- SESSION_SNAPSHOT_END -->

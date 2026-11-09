@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useContracts } from "@/data/business-queries";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
-import { BizBadge, FilterBar, Money, QueryState, formatDate } from "./business-ui";
+import { BizBadge } from "@/shared/components/business/biz-badge";
+import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { Money } from "@/shared/components/modern/money";
+import { QueryState } from "@/shared/components/modern/query-state";
+import { formatDate } from "@/shared/lib/format-date";
 import { useContractHref } from "./use-contract-href";
 
 const STATUS_OPTIONS = [

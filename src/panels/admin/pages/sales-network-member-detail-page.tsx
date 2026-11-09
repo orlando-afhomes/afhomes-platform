@@ -23,20 +23,13 @@ import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { buttonVariants } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
+import { Card } from "@/shared/ui/card";
+import { CardSection } from "@/shared/components/modern/card-section";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
+import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { AccreditationEligibilityTag } from "../components/accreditation-status";
-import { DesignationBadge, toneFromColor } from "../components/sales-badges";
+import { DesignationBadge, toneFromColor } from "@/shared/components/business/designation-badge";
 import { GenealogyTree } from "./sales-network-genealogy-page";
-
-function Section({ title, className, children }: { title: string; className?: string; children: React.ReactNode }) {
-  return (
-    <section aria-label={title} className={`tw:flex tw:flex-col tw:gap-2 tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4 ${className ?? ""}`}>
-      <h2 className="tw:text-base tw:font-semibold">{title}</h2>
-      {children}
-    </section>
-  );
-}
 
 const TWO_COLUMNS = "tw:sm:grid tw:sm:grid-cols-2 tw:sm:gap-x-8";
 
@@ -79,6 +72,18 @@ export function SalesNetworkMemberDetailPage() {
   // The downline is fully expanded by default; the user can collapse branches.
   const [collapsed, setCollapsed] = useState<string[]>([]);
   const expandedKeys = useMemo(() => collectKeys(downlineTree).filter((key) => !collapsed.includes(key)), [downlineTree, collapsed]);
+  const historyColumns = useMemo<ColumnDef<NonNullable<OrgMember["parentHistory"]>[number], unknown>[]>(
+    () => [
+      { id: "operation", header: "Operation", cell: ({ row }) => row.original.operation },
+      { id: "previousParent", header: "Previous parent", cell: ({ row }) => row.original.previousParentId ?? "—" },
+      { id: "newParent", header: "New parent", cell: ({ row }) => row.original.newParentId ?? "—" },
+      { id: "previousBranch", header: "Previous branch", cell: ({ row }) => row.original.previousBranchId },
+      { id: "newBranch", header: "New branch", cell: ({ row }) => row.original.newBranchId },
+      { id: "actor", header: "Actor", cell: ({ row }) => row.original.actorId },
+      { id: "timestamp", header: "Timestamp", cell: ({ row }) => row.original.changedAt },
+    ],
+    [],
+  );
 
   if (!granted.has("sales-network")) {
     return (
@@ -99,7 +104,7 @@ export function SalesNetworkMemberDetailPage() {
   if (!member) {
     return (
       <PageContainer>
-        <p className="tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-8 tw:text-center tw:text-muted-foreground">Member not found or restricted.</p>
+        <Card className="tw:p-8 tw:text-center tw:text-muted-foreground">Member not found or restricted.</Card>
         <div className="tw:mt-3 tw:flex tw:justify-center">
           <Link href="/admin/sales-network/members" className={cn(buttonVariants({ variant: "outline" }), "tw:min-h-11 tw:sm:min-h-8")}>
             Back to members
@@ -133,7 +138,7 @@ export function SalesNetworkMemberDetailPage() {
         }
       />
       <div className="tw:mt-3 tw:grid tw:gap-4 tw:md:grid-cols-2">
-        <Section title="Identity">
+        <CardSection title="Identity">
           <DetailList>
             <DetailRow term="AA Number">{aaDisplay(member)}</DetailRow>
             <DetailRow term="Position">
@@ -144,8 +149,8 @@ export function SalesNetworkMemberDetailPage() {
             </DetailRow>
             <DetailRow term="Team">{teamDisplayName(member, members)}</DetailRow>
           </DetailList>
-        </Section>
-        <Section title="Accreditation">
+        </CardSection>
+        <CardSection title="Accreditation">
           <DetailList>
             <DetailRow term="AA Number">{currentAccreditation?.aaNumber ?? member.aaNumber ?? "Pending AA Issuance"}</DetailRow>
             <DetailRow term="Classification">{currentAccreditation?.classification ?? classification}</DetailRow>
@@ -170,9 +175,9 @@ export function SalesNetworkMemberDetailPage() {
               Multiple accreditation records share the latest date; status cannot be resolved automatically.
             </p>
           ) : null}
-        </Section>
+        </CardSection>
         {profile ? (
-          <Section title="Seller Profile" className="tw:md:col-span-2">
+          <CardSection title="Seller Profile" className="tw:md:col-span-2">
             <DetailList className={TWO_COLUMNS}>
               <DetailRow term="First Name">{profile.firstName}</DetailRow>
               <DetailRow term="Middle Name">{profile.middleName ?? "—"}</DetailRow>
@@ -210,9 +215,9 @@ export function SalesNetworkMemberDetailPage() {
               </DetailRow>
               <DetailRow term="Seller Source">Manual admin creation</DetailRow>
             </DetailList>
-          </Section>
+          </CardSection>
         ) : null}
-        <Section title="Team downline" className="tw:md:col-span-2">
+        <CardSection title="Team downline" className="tw:md:col-span-2">
           {directDownline.length === 0 ? (
             <p className="tw:p-4 tw:text-center tw:text-muted-foreground">No direct downline members.</p>
           ) : (
@@ -228,38 +233,18 @@ export function SalesNetworkMemberDetailPage() {
               />
             </div>
           )}
-        </Section>
+        </CardSection>
         {member.parentHistory && member.parentHistory.length > 0 ? (
-          <Section title="Relationship history" className="tw:md:col-span-2">
-            <div className="tw:overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Operation</TableHead>
-                    <TableHead>Previous parent</TableHead>
-                    <TableHead>New parent</TableHead>
-                    <TableHead>Previous branch</TableHead>
-                    <TableHead>New branch</TableHead>
-                    <TableHead>Actor</TableHead>
-                    <TableHead>Timestamp</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {member.parentHistory.map((record, index) => (
-                    <TableRow key={`${record.changedAt}-${index}`}>
-                      <TableCell>{record.operation}</TableCell>
-                      <TableCell>{record.previousParentId ?? "—"}</TableCell>
-                      <TableCell>{record.newParentId ?? "—"}</TableCell>
-                      <TableCell>{record.previousBranchId}</TableCell>
-                      <TableCell>{record.newBranchId}</TableCell>
-                      <TableCell>{record.actorId}</TableCell>
-                      <TableCell>{record.changedAt}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </Section>
+          <CardSection title="Relationship history" className="tw:md:col-span-2">
+            <DataTable
+              data={member.parentHistory}
+              columns={historyColumns}
+              getRowId={(row) => `${row.changedAt}-${row.operation}-${row.actorId}`}
+              emptyText="No relationship history."
+              paginate={false}
+              caption="Relationship history"
+            />
+          </CardSection>
         ) : null}
       </div>
     </PageContainer>

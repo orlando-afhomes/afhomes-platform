@@ -8,10 +8,11 @@ import { PageHeader } from "@/shared/components/modern/page-header";
 import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
 import { DetailList, DetailRow } from "@/shared/components/modern/detail-list";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { CardSection } from "@/shared/components/modern/card-section";
 import { countVisibleCustomers, countVisibleMembers, countUplines } from "../dashboard-metrics";
 import { getSystemRoleLabel } from "../role-label";
 import { aaDisplay, teamDisplayName } from "@/modules/sales-network/display";
-import { DesignationBadge } from "./sales-badges";
+import { DesignationBadge } from "@/shared/components/business/designation-badge";
 
 function roleTitle(roles: string[]) {
   const label = getSystemRoleLabel(roles.find((role) => ["svd", "ssm", "sm", "ost"].includes(role)) ?? "");
@@ -20,10 +21,9 @@ function roleTitle(roles: string[]) {
 
 function Card({ title, className, children }: { title: string; className?: string; children: ReactNode }) {
   return (
-    <section aria-label={title} className={`tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4 ${className ?? ""}`}>
-      <h2 className="tw:mb-2 tw:text-base tw:font-semibold">{title}</h2>
+    <CardSection title={title} className={className}>
       {children}
-    </section>
+    </CardSection>
   );
 }
 

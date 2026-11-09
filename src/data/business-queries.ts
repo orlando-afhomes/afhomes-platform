@@ -9,6 +9,7 @@ import type { MockRepositories } from "@/data/mock/repositories";
 import { useMockRepositories } from "@/data/queries";
 import { queryKeys } from "@/data/query-keys";
 import type { ContractCancellationGround } from "@/modules/contracts/types";
+import type { CustomerImportRecord } from "@/modules/customers/import";
 import type { CustomerDraftInput } from "@/modules/customers/types";
 import type { VipTierCode } from "@/modules/vip/types";
 import { hasOperationPermission, type AdminOperation } from "@/modules/identity/permissions";
@@ -53,6 +54,15 @@ export function useDiscardCustomerDraft() {
 }
 export function useSubmitCustomer() {
   return useBusinessMutation((r, v: { id: string; input: CustomerDraftInput }) => r.customers.submit(v.id, v.input));
+}
+export function useCustomerImportJobs(enabled: boolean) {
+  return useBusinessQuery("customer-imports", (r, signal) => (enabled ? r.customers.listImportJobs({ signal }) : Promise.resolve([])));
+}
+export function useImportCustomers() {
+  return useBusinessMutation((r, v: { fileName: string; records: CustomerImportRecord[]; declaration: boolean }) => r.customers.importCustomers(v));
+}
+export function useExportCustomers() {
+  return useBusinessMutation((r, v: { format: "xlsx" | "csv"; count: number }) => r.customers.exportCustomers(v));
 }
 export function useCorrectCustomer() {
   return useBusinessMutation((r, v: { id: string; input: CustomerDraftInput; reason: string }) => r.customers.correct(v.id, v.input, v.reason));

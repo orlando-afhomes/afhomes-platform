@@ -4,15 +4,19 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useCreatePaymentScheme, useUpdatePaymentScheme, useUpdateProduct } from "@/data/business-queries";
 import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
-import { CheckboxField, MoneyField, SelectField, TextAreaField, TextField } from "@/shared/forms/modern";
+import { CheckboxField, MoneyField, PointsField, SelectField, TextAreaField, TextField } from "@/shared/forms/modern";
 import { FormGrid } from "@/shared/components/modern/form-layout";
-import { parsePesoToCentavos } from "@/shared/lib/money";
-import { FormDialog } from "./business-ui";
+import { centavosToInputText, formatIntegerInput, parsePesoToCentavos } from "@/shared/lib/money";
+import { FormDialog } from "@/shared/components/modern/form-dialog";
 
 const TIERS: VipTierCode[] = ["B1", "S1", "G1"];
 
-const toPesoText = (centavos: number | null | undefined) => (centavos ? String(centavos / 100) : "");
-const toInt = (value: string) => (/^\d+$/.test(value.trim()) ? Number(value.trim()) : null);
+const toPesoText = centavosToInputText;
+const toInt = (value: string) => {
+  const plain = value.trim().replace(/,/g, "");
+  return /^\d+$/.test(plain) ? Number(plain) : null;
+};
+const groupedInt = (value: number) => formatIntegerInput(String(value));
 
 /** Edit a VIP product. Saving creates a new configuration version; finalized contracts keep their snapshot. */
 export function ProductDialog({ product, onClose }: { product: VipProduct | null; onClose: () => void }) {
@@ -26,10 +30,10 @@ function ProductForm({ product, onClose }: { product: VipProduct; onClose: () =>
   const [validity, setValidity] = useState(String(product.validityYears));
   const [cycles, setCycles] = useState(String(product.earningCycles));
   const [discount, setDiscount] = useState(String(product.vipDiscountPercent));
-  const [perCycle, setPerCycle] = useState(String(product.pointsPerCycle));
-  const [weekday, setWeekday] = useState(String(product.weekdayPointsPerCycle));
-  const [weekend, setWeekend] = useState(String(product.weekendPointsPerCycle));
-  const [lifetime, setLifetime] = useState(String(product.lifetimePoints));
+  const [perCycle, setPerCycle] = useState(groupedInt(product.pointsPerCycle));
+  const [weekday, setWeekday] = useState(groupedInt(product.weekdayPointsPerCycle));
+  const [weekend, setWeekend] = useState(groupedInt(product.weekendPointsPerCycle));
+  const [lifetime, setLifetime] = useState(groupedInt(product.lifetimePoints));
   const [minSpend, setMinSpend] = useState(toPesoText(product.minSpendPerCycleCentavos));
   const [holders, setHolders] = useState(String(product.supplementaryHolders));
   const [status, setStatus] = useState<"active" | "retired">(product.status);
@@ -64,10 +68,10 @@ function ProductForm({ product, onClose }: { product: VipProduct; onClose: () =>
         <TextField label="Validity (years)" required inputMode="numeric" value={validity} onChange={setValidity} />
         <TextField label="Earning cycles" required inputMode="numeric" value={cycles} onChange={setCycles} />
         <TextField label="VIP discount (%)" required inputMode="numeric" value={discount} onChange={setDiscount} />
-        <TextField label="Points per cycle" required inputMode="numeric" value={perCycle} onChange={setPerCycle} />
-        <TextField label="Weekday points per cycle" required inputMode="numeric" value={weekday} onChange={setWeekday} />
-        <TextField label="Weekend points per cycle" required inputMode="numeric" value={weekend} onChange={setWeekend} />
-        <TextField label="Lifetime points" required inputMode="numeric" value={lifetime} onChange={setLifetime} />
+        <PointsField label="Points per cycle" required value={perCycle} onChange={setPerCycle} />
+        <PointsField label="Weekday points per cycle" required value={weekday} onChange={setWeekday} />
+        <PointsField label="Weekend points per cycle" required value={weekend} onChange={setWeekend} />
+        <PointsField label="Lifetime points" required value={lifetime} onChange={setLifetime} />
         <MoneyField label="Minimum spend per cycle" required value={minSpend} onChange={setMinSpend} />
         <TextField label="Supplementary holders" required inputMode="numeric" value={holders} onChange={setHolders} />
         <SelectField label="Availability" value={status} options={[{ value: "active", label: "Active" }, { value: "retired", label: "Retired" }]} onChange={(value) => setStatus(value)} hint="Products are retired, never deleted." />

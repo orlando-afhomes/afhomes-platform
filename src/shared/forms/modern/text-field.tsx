@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type Ref } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { MAX_NAME_LENGTH, MAX_PASSWORD_LENGTH, cleanEmailInput } from "@/shared/utils/input-sanitizers";
 import { cleanTitleInput } from "@/shared/forms/formatting/text";
@@ -18,6 +18,8 @@ export type TextFieldProps = BaseFieldProps & {
   transform?: (value: string) => string;
   /** Fixed text shown inside the left edge of the input. */
   addonBefore?: string;
+  /** Lets a wrapper restore the caret after reformatting the value as it is typed. */
+  inputRef?: Ref<HTMLInputElement>;
 };
 
 const INPUT_HEIGHT = "tw:h-10 tw:sm:h-8";
@@ -46,6 +48,7 @@ export function TextField({
   type = "text",
   addonBefore,
   className,
+  inputRef,
 }: TextFieldProps) {
   const ids = useFieldIds(explicitId);
   const [visible, setVisible] = useState(false);
@@ -62,6 +65,7 @@ export function TextField({
           </span>
         ) : null}
         <Input
+          ref={inputRef}
           id={ids.id}
           type={isPassword && visible ? "text" : type}
           value={value}

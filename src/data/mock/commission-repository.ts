@@ -4,8 +4,8 @@ import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { Commission } from "@/modules/commissions/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { applyBasisPoints } from "@/shared/lib/money";
-import { collectedPercent, meetsPayoutRelease } from "@/modules/commissions/rules";
-import { BusinessRepository, customerName, nowIso } from "./business-base";
+import { collectedPercent, meetsPayoutRelease, PAYOUT_RELEASE_WAIT_DAYS, payoutReleaseDate } from "@/modules/commissions/rules";
+import { BusinessRepository, customerName, nowIso, today } from "./business-base";
 import { paymentsOfContract } from "./business-effects";
 import type { MockStore } from "./seed";
 import { getDescendantIds } from "./scope";
@@ -19,7 +19,9 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
 
   private view(commission: Commission, restrictDetails: boolean): CommissionView {
     const sale = this.store.sales.find((item) => item.id === commission.saleId);
-    const full = { ...commission, customerName: sale ? customerName(this.store, sale.customerId) : "Unknown customer" };
+    const contract = this.store.contracts.find((item) => item.id === commission.contractId);
+    const releaseDate = contract ? payoutReleaseDate(contract, paymentsOfContract(this.store, contract.id)) : null;
+    const full = { ...commission, customerName: sale ? customerName(this.store, sale.customerId) : "Unknown customer", payoutReleaseDate: releaseDate };
     // Team views never carry payout reference, method or history (08 section 17.2).
     if (restrictDetails) Object.assign(full, { payout: null, history: [] });
     return JSON.parse(JSON.stringify(full)) as CommissionView;
@@ -206,6 +208,10 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
       const payments = paymentsOfContract(this.store, contract.id);
       if (!meetsPayoutRelease(contract, payments)) {
         throw new Error(`Commission pays out once 40% of the contract value is Finance-verified (currently ${collectedPercent(contract, payments)}%).`);
+      }
+      const releaseDate = payoutReleaseDate(contract, payments);
+      if (releaseDate && today() < releaseDate) {
+        throw new Error(`Commission release opens on ${releaseDate}, ${PAYOUT_RELEASE_WAIT_DAYS} days after 40% of the contract value was verified.`);
       }
       if (!input.reference.trim()) throw new Error("Enter the payment reference.");
       if (!DATE_ONLY.test(input.payoutDate)) throw new Error("Enter the payout date.");

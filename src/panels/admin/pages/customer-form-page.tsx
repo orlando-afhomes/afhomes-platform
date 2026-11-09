@@ -16,9 +16,10 @@ import { FormGrid, FormSection } from "@/shared/components/modern/form-layout";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { Card } from "@/shared/ui/card";
 import { normalizePhilippineMobile } from "@/shared/utils/input-sanitizers";
 import { ModulePage } from "../components/module-page";
-import { ReasonDialog } from "../components/business-ui";
+import { ReasonDialog } from "@/shared/components/modern/form-dialog";
 
 const EMPTY_ADDRESS: AddressValue = { street: "", province: "", city: "", barangay: "", subdivision: "", postalCode: "" };
 
@@ -37,6 +38,11 @@ type Draft = {
   governmentIdType: string;
   governmentIdNumber: string;
   vipPlan: string;
+  suppFirstName: string;
+  suppMiddleName: string;
+  suppLastName: string;
+  suppGender: string;
+  suppDateOfBirth: string;
   paymentSchemeId: string;
   contractClassification: string;
   recommenderMemberId: string;
@@ -63,6 +69,11 @@ function toDraft(customer?: Customer): Draft {
     governmentIdType: customer?.governmentIdType ?? "",
     governmentIdNumber: customer?.governmentIdNumber ?? "",
     vipPlan: customer?.vipPlan ?? "",
+    suppFirstName: customer?.supplementaryHolder?.firstName ?? "",
+    suppMiddleName: customer?.supplementaryHolder?.middleName ?? "",
+    suppLastName: customer?.supplementaryHolder?.lastName ?? "",
+    suppGender: customer?.supplementaryHolder?.gender ?? "",
+    suppDateOfBirth: customer?.supplementaryHolder?.dateOfBirth ?? "",
     paymentSchemeId: customer?.paymentSchemeId ?? "",
     contractClassification: customer?.contractClassification ?? "",
     recommenderMemberId: customer?.recommenderMemberId ?? "",
@@ -90,6 +101,9 @@ function toInput(draft: Draft): CustomerDraftInput {
     governmentIdType: draft.governmentIdType || null,
     governmentIdNumber: draft.governmentIdNumber || null,
     vipPlan: (draft.vipPlan || null) as CustomerDraftInput["vipPlan"],
+    supplementaryHolder: draft.suppFirstName.trim() || draft.suppLastName.trim()
+      ? { firstName: draft.suppFirstName.trim(), middleName: draft.suppMiddleName.trim() || null, lastName: draft.suppLastName.trim(), suffix: null, gender: draft.suppGender || null, dateOfBirth: draft.suppDateOfBirth || null }
+      : null,
     paymentSchemeId: draft.paymentSchemeId || null,
     contractClassification: (draft.contractClassification || null) as CustomerDraftInput["contractClassification"],
     recommenderMemberId: draft.recommenderMemberId || null,
@@ -131,6 +145,7 @@ function CustomerForm({ existing }: { existing?: Customer }) {
   const [busy, setBusy] = useState(false);
   const isDraft = !existing || existing.status === "draft";
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((current) => ({ ...current, [key]: value }));
+  const supplementaryAllowed = (products.data ?? []).some((product) => product.code === draft.vipPlan && product.supplementaryHolders > 0);
 
   const osts = (members.data ?? []).filter((member) => member.designation === "OST").map((member) => ({ value: member.id, label: member.displayName }));
   const sellers = (members.data ?? []).map((member) => ({ value: member.id, label: `${member.displayName} (${member.designation})` }));
@@ -187,8 +202,9 @@ function CustomerForm({ existing }: { existing?: Customer }) {
   const planOptions = (products.data ?? []).filter((item) => item.status === "active").map((item) => ({ value: item.code, label: `${item.name} (${item.code})` }));
 
   return (
+    <Card className="tw:gap-6 tw:md:p-6">
     <form
-      className="tw:flex tw:flex-col tw:gap-6 tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4 tw:md:p-6"
+      className="tw:flex tw:flex-col tw:gap-6"
       onSubmit={(event) => {
         event.preventDefault();
         if (isDraft) void submitCustomer();
@@ -198,11 +214,22 @@ function CustomerForm({ existing }: { existing?: Customer }) {
       {!isDraft ? <InfoNote title="Correcting a submitted customer">Changes are saved as an audited data correction with a reason.</InfoNote> : null}
       <FormSection title="VIP application">
         <FormGrid>
-          <SelectField label="VIP plan" required value={draft.vipPlan || undefined} options={planOptions} onChange={(value) => set("vipPlan", value)} placeholder="Select a plan" error={errors.vipPlan} />
+          <SelectField label="VIP plan" required value={draft.vipPlan || undefined} options={planOptions} onChange={(value) => setDraft((current) => ({ ...current, vipPlan: value, ...((products.data ?? []).some((product) => product.code === value && product.supplementaryHolders > 0) ? {} : { suppFirstName: "", suppMiddleName: "", suppLastName: "", suppGender: "", suppDateOfBirth: "" }) }))} placeholder="Select a plan" error={errors.vipPlan} />
           <SelectField label="Payment scheme" required value={draft.paymentSchemeId || undefined} options={schemeOptions} onChange={(value) => set("paymentSchemeId", value)} placeholder="Select a scheme" error={errors.paymentSchemeId} />
           <SelectField label="Contract classification" required value={(draft.contractClassification || undefined) as "S" | "N" | undefined} options={[{ value: "S", label: "Standard (S)" }, { value: "N", label: "Non-Standard (N)" }]} onChange={(value) => set("contractClassification", value)} placeholder="Select" error={errors.contractClassification} hint="Non-Standard contracts are held at finalization until their rules are approved." />
         </FormGrid>
       </FormSection>
+      {supplementaryAllowed ? (
+        <FormSection title="Supplementary holder (optional)">
+          <FormGrid>
+            <PersonNameField label="First name" value={draft.suppFirstName} onChange={(value) => set("suppFirstName", value)} error={errors.supplementaryHolder} />
+            <PersonNameField label="Middle name" value={draft.suppMiddleName} onChange={(value) => set("suppMiddleName", value)} />
+            <PersonNameField label="Last name" value={draft.suppLastName} onChange={(value) => set("suppLastName", value)} />
+            <SelectField label="Gender" value={draft.suppGender || undefined} options={GENDER_OPTIONS} onChange={(value) => set("suppGender", value)} allowClear placeholder="Select gender" />
+            <StandardDateField label="Date of birth" value={draft.suppDateOfBirth} onChange={(value) => set("suppDateOfBirth", value)} />
+          </FormGrid>
+        </FormSection>
+      ) : null}
       <FormSection title="Personal details">
         <FormGrid>
           <PersonNameField label="First name" required value={draft.firstName} onChange={(value) => set("firstName", value)} error={errors.firstName} />
@@ -281,5 +308,6 @@ function CustomerForm({ existing }: { existing?: Customer }) {
         />
       ) : null}
     </form>
+    </Card>
   );
 }

@@ -23,6 +23,14 @@ export function addYearsToDate(dateOnly: string, years: number): string | null {
   return formatManilaDateParts({ year, month: parts.month, day: Math.min(parts.day, dim) });
 }
 
+/** Adds whole calendar days to a date-only value. */
+export function addDaysToDate(dateOnly: string, days: number): string | null {
+  const parts = parseManilaDateOnly(dateOnly);
+  if (!parts) return null;
+  const shifted = new Date(Date.UTC(parts.year, parts.month - 1, parts.day + days));
+  return formatManilaDateParts({ year: shifted.getUTCFullYear(), month: shifted.getUTCMonth() + 1, day: shifted.getUTCDate() });
+}
+
 /** Adds whole months to a date-only value, clamping to the month end. */
 export function addMonthsToDate(dateOnly: string, months: number): string | null {
   const parts = parseManilaDateOnly(dateOnly);

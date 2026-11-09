@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
-import { meetsPayoutRelease } from "@/modules/commissions/rules";
+import { meetsPayoutRelease, PAYOUT_RELEASE_WAIT_DAYS } from "@/modules/commissions/rules";
+import { buildScheduleState } from "@/modules/finance/rules";
 import type { Payment } from "@/modules/finance/types";
 import { buildCardId, extractRaSequence } from "@/modules/membership/rules";
 import { computePointsLedger } from "@/modules/stay-points/engine";
 import { confirmedValueInPeriod, totalsFor } from "@/modules/sales/rules";
-import { manilaToday } from "@/shared/lib/dates";
+import { addDaysToDate, manilaToday } from "@/shared/lib/dates";
 import { pesos } from "@/shared/lib/money";
 import { getDevIdentity } from "./dev-identities";
 import { createMockRepositories } from "./repositories";
@@ -19,7 +20,14 @@ function as(store: ReturnType<typeof createMockStore>, id: string) {
 async function collectMa2(store: ReturnType<typeof createMockStore>) {
   const payment = await as(store, "dev-ost-a1").payments.submit({ contractId: "ctr-1", purpose: "installment", amountCentavos: pesos(57500), method: "Cash", paidDate: manilaToday(), referenceNo: "MA2" });
   await as(store, "dev-finance").payments.verify(payment.id);
+  ageVerifications(store, "ctr-1");
   return payment.id;
+}
+
+/** Moves a contract's verification dates back 8 days so the 7-day payout release has passed. */
+function ageVerifications(store: ReturnType<typeof createMockStore>, contractId: string) {
+  const past = addDaysToDate(manilaToday(), -8)!;
+  for (const payment of store.payments) if (payment.contractId === contractId && payment.verifiedDate) payment.verifiedDate = past;
 }
 
 describe("card id and points rules", () => {
@@ -103,6 +111,20 @@ describe("customer rules", () => {
   });
 });
 
+describe("supplementary holder and internal ids (G5)", () => {
+  const holder = { firstName: "Jose", middleName: null, lastName: "Santos", suffix: null, gender: "Male", dateOfBirth: "1992-08-20" };
+
+  it("allows a supplementary holder on Gold only, and gives new customers a random numeric id", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const gold = await admin.customers.createDraft({ displayName: "Gold Buyer", vipPlan: "G1", supplementaryHolder: holder });
+    expect(gold.id).toMatch(/^[1-9]\d{11}$/);
+    expect(gold.supplementaryHolder?.lastName).toBe("Santos");
+    await expect(admin.customers.createDraft({ displayName: "Silver Buyer", vipPlan: "S1", supplementaryHolder: holder })).rejects.toThrow(/does not allow/);
+    await expect(admin.customers.updateDraft(gold.id, { displayName: "Gold Buyer", vipPlan: "S1", supplementaryHolder: holder })).rejects.toThrow(/does not allow/);
+  });
+});
+
 describe("contract, payment, sale and membership workflow", () => {
   it("limits contract visibility to the recorded team", async () => {
     const store = createMockStore();
@@ -144,6 +166,21 @@ describe("contract, payment, sale and membership workflow", () => {
     await finance.payments.verify((await ost.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(15500), method: "Cash", paidDate: manilaToday(), referenceNo: "new" })).id);
     expect(sale.status).toBe("confirmed");
     expect(sale.adjustments.at(-1)?.kind).toBe("reconfirmation");
+  });
+
+  it("lets one full payment, with no separate reservation fee, settle every schedule line and confirm the sale", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const finance = as(store, "dev-finance");
+    await admin.contracts.finalize("ctr-4");
+    await finance.payments.reject("pay-4", "Customer pays in full instead");
+    const full = await as(store, "dev-ost-a2").payments.submit({ contractId: "ctr-4", purpose: "full", amountCentavos: pesos(72000), method: "Bank Transfer", paidDate: manilaToday(), referenceNo: "FULL-1" });
+    await finance.payments.verify(full.id);
+    expect(store.sales.find((s) => s.id === "sale-4")!.status).toBe("confirmed");
+    const contract = store.contracts.find((c) => c.id === "ctr-4")!;
+    const lines = buildScheduleState(contract, store.payments.filter((p) => p.contractId === "ctr-4"), manilaToday());
+    expect(lines[0].label).toBe("Reservation fee");
+    expect(lines.every((line) => line.status === "paid")).toBe(true);
   });
 
   it("rejects duplicate, over-balance and self-verified payments", async () => {
@@ -190,7 +227,8 @@ describe("contract, payment, sale and membership workflow", () => {
     await expect(admin.memberships.activate(membership.id)).rejects.toThrow(/RA/);
     await admin.contracts.recordRaNumber("ctr-4", "2026-0002");
     await expect(admin.contracts.recordRaNumber("ctr-1", "2026-0002")).rejects.toThrow(/already/);
-    const active = await admin.memberships.activate(membership.id);
+    await expect(ost.memberships.activate(membership.id)).rejects.toThrow();
+    const active = await finance.memberships.activate(membership.id); // Finance activates too (owner ruling 2026-11-09)
     const today = manilaToday().replace(/-/g, "").slice(2);
     expect(active.cardId).toBe(`${today}00002B1T04S`);
     expect(active.cardId).toHaveLength(17);
@@ -344,7 +382,12 @@ describe("owner-decided restrictions (C2)", () => {
     const [commission] = await finance.commissions.approve({ saleId: "sale-1", entries: [{ memberId: "mem-ost-a1", percentBp: 500 }] });
     await expect(finance.commissions.recordPayout(commission.id, { reference: "P1", payoutDate: manilaToday() })).rejects.toThrow(/40%.*currently 28%/);
     expect(store.commissions.find((c) => c.id === commission.id)!.payout).toBeNull();
-    await collectMa2(store);
+    const ma2 = await as(store, "dev-ost-a1").payments.submit({ contractId: "ctr-1", purpose: "installment", amountCentavos: pesos(57500), method: "Cash", paidDate: manilaToday(), referenceNo: "MA2" });
+    await finance.payments.verify(ma2.id);
+    const view = (await finance.commissions.list()).find((c) => c.id === commission.id)!;
+    expect(view.payoutReleaseDate).toBe(addDaysToDate(manilaToday(), PAYOUT_RELEASE_WAIT_DAYS));
+    await expect(finance.commissions.recordPayout(commission.id, { reference: "P1", payoutDate: manilaToday() })).rejects.toThrow(/release opens on/);
+    ageVerifications(store, "ctr-1");
     expect((await finance.commissions.recordPayout(commission.id, { reference: "P1", payoutDate: manilaToday() })).payout?.reference).toBe("P1");
   });
 

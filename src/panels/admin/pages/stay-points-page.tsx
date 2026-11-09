@@ -8,7 +8,13 @@ import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { SelectField } from "@/shared/forms/modern";
 import { Button } from "@/shared/ui/button";
-import { BizBadge, Money, QueryState, ReasonDialog, Section, StatTiles, formatDate } from "../components/business-ui";
+import { BizBadge } from "@/shared/components/business/biz-badge";
+import { ReasonDialog } from "@/shared/components/modern/form-dialog";
+import { Money } from "@/shared/components/modern/money";
+import { QueryState } from "@/shared/components/modern/query-state";
+import { Section } from "@/shared/components/modern/section";
+import { StatTiles } from "@/shared/components/modern/stat-tiles";
+import { formatDate } from "@/shared/lib/format-date";
 import { ModulePage } from "../components/module-page";
 
 export function StayPointsPage() {

@@ -10,7 +10,10 @@ import { buttonVariants, Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { LinkedBusinessRecords, type LinkedRecordItem } from "../components/linked-business-records";
 import { ModulePage } from "../components/module-page";
-import { BizBadge, Money, Section, formatDate } from "../components/business-ui";
+import { BizBadge } from "@/shared/components/business/biz-badge";
+import { Money } from "@/shared/components/modern/money";
+import { Section } from "@/shared/components/modern/section";
+import { formatDate } from "@/shared/lib/format-date";
 import { PrepareContractDialog } from "../components/prepare-contract-dialog";
 import { useContractHref } from "../components/use-contract-href";
 

@@ -1,10 +1,12 @@
 import { CustomerValidationError, type CustomerRepository } from "@/data/contracts/customer-repository";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
+import { buildImportRows, MAX_EXPORT_ROWS, MAX_IMPORT_ROWS, type CustomerImportJob, type CustomerImportRecord } from "@/modules/customers/import";
 import { composeCustomerName, restrictCustomer, validateCustomerForSubmit } from "@/modules/customers/rules";
 import type { Customer, CustomerDraftInput } from "@/modules/customers/types";
 import type { DevIdentity } from "@/modules/identity/types";
-import { BusinessRepository, today } from "./business-base";
+import { BusinessRepository, nowIso, today } from "./business-base";
+import { nextId, randomNumericId } from "./ids";
 import type { MockStore } from "./seed";
 import { getVisibleCustomerIds, getVisibleMemberIds, isActiveIdentity, activeIdentityRoles } from "./scope";
 
@@ -12,7 +14,7 @@ const BROAD = new Set(["super_admin", "admin"]);
 
 const COPY_KEYS = [
   "customerNumber", "firstName", "middleName", "lastName", "suffix", "gender", "civilStatus", "dateOfBirth", "mobileNumber",
-  "email", "address", "governmentIdType", "governmentIdNumber", "vipPlan", "paymentSchemeId", "contractClassification",
+  "email", "address", "governmentIdType", "governmentIdNumber", "vipPlan", "supplementaryHolder", "paymentSchemeId", "contractClassification",
   "recommenderMemberId", "acquisitionChannel", "consentDataPrivacy", "idReceivedCertified",
 ] as const;
 
@@ -59,6 +61,14 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
     if (input.paymentSchemeId && !this.store.paymentSchemes.some((item) => item.id === input.paymentSchemeId)) {
       throw new Error("The selected payment scheme does not exist.");
     }
+    if (input.supplementaryHolder && !this.supplementaryAllowed(input.vipPlan)) {
+      throw new Error("The selected VIP plan does not allow a supplementary holder.");
+    }
+  }
+
+  /** Whether the chosen VIP product permits a supplementary cardholder (Gold). */
+  private supplementaryAllowed(plan: CustomerDraftInput["vipPlan"]): boolean {
+    return (this.store.products.find((item) => item.code === plan)?.supplementaryHolders ?? 0) > 0;
   }
 
   private apply(customer: Customer, input: CustomerDraftInput) {
@@ -82,26 +92,83 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
   async createDraft(input: CustomerDraftInput, options?: MockAsyncOptions): Promise<Customer> {
     return this.run(options, (identity) => {
       if (!this.canManage(identity)) throw new Error("Customer draft creation is not allowed for this identity.");
-      const displayName = (composeCustomerName(input) || input.displayName).trim();
-      if (!displayName) throw new Error("Customer display name is required.");
-      this.assertReferences(input);
-      const ownerFromInput = !identity.memberId && input.ownerMemberId ? this.store.members.find((m) => m.id === input.ownerMemberId) : undefined;
-      const ownerMemberId = identity.memberId ?? ownerFromInput?.id ?? null;
-      const owner = this.store.members.find((member) => member.id === ownerMemberId);
-      const customer: Customer = {
-        id: `cust-draft-${this.store.customerSequence}`,
-        displayName,
-        branchId: input.branchId ?? owner?.branchId ?? identity.branchId ?? "branch-a",
-        ownerMemberId,
-        status: "draft",
-        createdAt: today(),
-        submittedAt: null,
-      };
-      this.store.customerSequence += 1;
-      this.apply(customer, input);
-      this.store.customers.push(customer);
+      const customer = this.newDraft(identity, input);
       this.audit(identity, { module: "customers", action: BUSINESS_AUDIT_ACTIONS.CUSTOMER_DRAFT_CREATED, entityType: "customer", entityId: customer.id, newValue: "draft" });
       return this.copy(customer);
+    });
+  }
+
+  private newDraft(identity: DevIdentity, input: CustomerDraftInput): Customer {
+    const displayName = (composeCustomerName(input) || input.displayName).trim();
+    if (!displayName) throw new Error("Customer display name is required.");
+    this.assertReferences(input);
+    const ownerFromInput = !identity.memberId && input.ownerMemberId ? this.store.members.find((m) => m.id === input.ownerMemberId) : undefined;
+    const ownerMemberId = identity.memberId ?? ownerFromInput?.id ?? null;
+    const owner = this.store.members.find((member) => member.id === ownerMemberId);
+    const customer: Customer = {
+      // Internal id: secure random, numeric only, no pattern (owner ruling 2026-11-09); it carries over to the database.
+      id: randomNumericId(new Set(this.store.customers.map((item) => item.id))),
+      displayName,
+      branchId: input.branchId ?? owner?.branchId ?? identity.branchId ?? "branch-a",
+      ownerMemberId,
+      status: "draft",
+      createdAt: today(),
+      submittedAt: null,
+    };
+    this.store.customerSequence += 1;
+    this.apply(customer, input);
+    this.store.customers.push(customer);
+    return customer;
+  }
+
+  /**
+   * Confirms an import. Re-validates every record against the live store (the
+   * preview is never trusted) and creates drafts for "ready" rows only.
+   */
+  async importCustomers(input: { fileName: string; records: CustomerImportRecord[]; declaration: boolean }, options?: MockAsyncOptions): Promise<CustomerImportJob> {
+    return this.run(options, (identity) => {
+      this.require(identity, "customers.import", "Customer import is not allowed for this identity.");
+      if (!input.declaration) throw new Error("Confirm that the rows come from official company records.");
+      if (input.records.length === 0) throw new Error("The file has no rows to import.");
+      if (input.records.length > MAX_IMPORT_ROWS) throw new Error(`A file may contain at most ${MAX_IMPORT_ROWS} rows.`);
+      const rows = buildImportRows(input.records, { existing: this.store.customers, products: this.store.products, schemes: this.store.paymentSchemes });
+      const job: CustomerImportJob = {
+        id: nextId(this.store, "customerImport", "imp"),
+        fileName: input.fileName.trim().slice(0, 200) || "upload",
+        createdAt: nowIso(),
+        actorId: identity.id,
+        totalRows: rows.length,
+        createdCount: 0,
+        needsReviewCount: rows.filter((row) => row.status === "needs_review").length,
+        invalidCount: rows.filter((row) => row.status === "invalid").length,
+        createdCustomerIds: [],
+      };
+      for (const row of rows.filter((item) => item.status === "ready")) {
+        const customer = this.newDraft(identity, row.input);
+        job.createdCustomerIds.push(customer.id);
+        this.audit(identity, { module: "customers", action: BUSINESS_AUDIT_ACTIONS.CUSTOMER_DRAFT_CREATED, entityType: "customer", entityId: customer.id, newValue: "draft", reason: `Imported in ${job.id}` });
+      }
+      job.createdCount = job.createdCustomerIds.length;
+      this.store.customerImportJobs.push(job);
+      this.audit(identity, { module: "customers", action: BUSINESS_AUDIT_ACTIONS.CUSTOMER_IMPORT_COMPLETED, entityType: "customer-import", entityId: job.id, newValue: `created:${job.createdCount}/review:${job.needsReviewCount}/invalid:${job.invalidCount}`, relatedRecordIds: job.createdCustomerIds });
+      return JSON.parse(JSON.stringify(job)) as CustomerImportJob;
+    });
+  }
+
+  async listImportJobs(options?: MockAsyncOptions): Promise<CustomerImportJob[]> {
+    return this.run(options, (identity) => {
+      if (!this.can(identity, "customers.import")) return [];
+      return JSON.parse(JSON.stringify([...this.store.customerImportJobs].reverse())) as CustomerImportJob[];
+    });
+  }
+
+  /** Full records for export, audited with the row count only (doc 12: no personal data in the audit payload). */
+  async exportCustomers(input: { format: "xlsx" | "csv"; count: number }, options?: MockAsyncOptions): Promise<Customer[]> {
+    return this.run(options, (identity) => {
+      this.require(identity, "customers.import", "Customer export is not allowed for this identity.");
+      const records = this.visible(identity).filter((customer) => !customer.restricted).slice(0, MAX_EXPORT_ROWS);
+      this.audit(identity, { module: "customers", action: BUSINESS_AUDIT_ACTIONS.CUSTOMERS_EXPORTED, entityType: "customer-export", entityId: input.format, newValue: `rows:${Math.min(input.count, records.length)}` });
+      return records;
     });
   }
 
@@ -134,7 +201,7 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
       const customer = this.ownRecord(identity, id);
       if (customer.status !== "draft") throw new Error("Only draft customers can be submitted.");
       const merged = { ...this.copy(customer), ...input, displayName: input.displayName || customer.displayName } as CustomerDraftInput;
-      const errors = validateCustomerForSubmit(merged, this.store.customers, customer.id);
+      const errors = validateCustomerForSubmit(merged, this.store.customers, customer.id, this.supplementaryAllowed(merged.vipPlan));
       if (Object.keys(errors).length > 0) throw new CustomerValidationError(errors);
       this.assertReferences(merged);
       this.apply(customer, input);
@@ -152,7 +219,7 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
       const customer = this.ownRecord(identity, id);
       if (customer.status === "draft") throw new Error("Draft customers are edited directly.");
       const merged = { ...this.copy(customer), ...input, displayName: input.displayName || customer.displayName } as CustomerDraftInput;
-      const errors = validateCustomerForSubmit(merged, this.store.customers, customer.id);
+      const errors = validateCustomerForSubmit(merged, this.store.customers, customer.id, this.supplementaryAllowed(merged.vipPlan));
       if (Object.keys(errors).length > 0) throw new CustomerValidationError(errors);
       this.assertReferences(merged);
       const previousNumber = customer.customerNumber ?? null;

@@ -8,6 +8,12 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "tw:bg-primary tw:text-primary-foreground tw:hover:bg-primary/80",
+        // Semantic aliases: `primary` is the main action (same as `default`);
+        // `secondary` in the AFHomes sense is `outline` (cancel, filter,
+        // alternate actions). `danger` is the destructive action (same as
+        // `destructive`). Prefer primary/outline/danger in new code; `default`
+        // and `destructive` remain as deprecated aliases.
+        primary: "tw:bg-primary tw:text-primary-foreground tw:hover:bg-primary/80",
         outline:
           "tw:border-border tw:bg-background tw:hover:bg-muted tw:hover:text-foreground tw:aria-expanded:bg-muted tw:aria-expanded:text-foreground tw:dark:border-input tw:dark:bg-input/30 tw:dark:hover:bg-input/50",
         secondary:
@@ -15,6 +21,8 @@ const buttonVariants = cva(
         ghost:
           "tw:hover:bg-muted tw:hover:text-foreground tw:aria-expanded:bg-muted tw:aria-expanded:text-foreground tw:dark:hover:bg-muted/50",
         destructive:
+          "tw:bg-destructive/10 tw:text-destructive tw:hover:bg-destructive/20 tw:focus-visible:border-destructive/40 tw:focus-visible:ring-destructive/20 tw:dark:bg-destructive/20 tw:dark:hover:bg-destructive/30 tw:dark:focus-visible:ring-destructive/40",
+        danger:
           "tw:bg-destructive/10 tw:text-destructive tw:hover:bg-destructive/20 tw:focus-visible:border-destructive/40 tw:focus-visible:ring-destructive/20 tw:dark:bg-destructive/20 tw:dark:hover:bg-destructive/30 tw:dark:focus-visible:ring-destructive/40",
         link: "tw:text-primary tw:underline-offset-4 tw:hover:underline",
       },

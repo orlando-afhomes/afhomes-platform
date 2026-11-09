@@ -9,6 +9,7 @@ import { DetailList, DetailRow } from "@/shared/components/modern/detail-list";
 import { buttonVariants } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { SalesNetworkPanel } from "../components/sales-network-panel";
+import { CardSection } from "@/shared/components/modern/card-section";
 
 export function SalesNetworkOverviewPage() {
   const { identity } = useDevIdentity();
@@ -20,13 +21,12 @@ export function SalesNetworkOverviewPage() {
       <div className="tw:flex tw:flex-col tw:gap-4">
         <SalesNetworkPanel />
         {currentMember ? (
-          <section aria-label="My referral code" className="tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4">
-            <h2 className="tw:mb-2 tw:text-base tw:font-semibold">My referral code</h2>
+          <CardSection title="My referral code">
             <DetailList>
               <DetailRow term="Code">{currentMember.referralCode ?? "—"}</DetailRow>
               <DetailRow term="Status">{currentMember.referralCode ? "Existing code" : "No code assigned"}</DetailRow>
             </DetailList>
-          </section>
+          </CardSection>
         ) : null}
         <div>
           <Link href="/admin/sales-network/members" className={cn(buttonVariants({}), "tw:min-h-11 tw:sm:min-h-8")}>

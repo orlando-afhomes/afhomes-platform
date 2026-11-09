@@ -57,6 +57,8 @@ export function AdminHeader({
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
+              // Raw button exception: composite avatar+name+chevron trigger; the
+              // Button primitive cannot render this composite trigger content.
               <button
                 type="button"
                 aria-label={`Account options for ${identity.displayName}`}

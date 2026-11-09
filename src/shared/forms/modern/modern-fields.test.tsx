@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { PasswordField, PhilippineMobileField, SelectField, SuffixField, TextField, TinField } from ".";
+import { MoneyField, PointsField, PasswordField, PhilippineMobileField, SelectField, SuffixField, TextField, TinField } from ".";
 
 afterEach(cleanup);
 
@@ -98,5 +98,34 @@ describe("SelectField showSearch", () => {
     expect(screen.queryByRole("option", { name: "Ana Mendoza" })).toBeNull();
     await user.click(await screen.findByRole("option", { name: "Mark Villanueva" }));
     expect(onChange).toHaveBeenCalledWith("b");
+  });
+});
+
+function AmountHarness({ points = false }: { points?: boolean }) {
+  const [value, setValue] = useState("");
+  const Field = points ? PointsField : MoneyField;
+  return <Field id="amount" label="Amount" value={value} onChange={setValue} />;
+}
+
+describe("grouped number fields", () => {
+  it("shows commas while typing a peso amount and keeps the decimals", async () => {
+    render(<AmountHarness />);
+    const input = screen.getByLabelText("Amount") as HTMLInputElement;
+    await userEvent.type(input, "1000000.5");
+    expect(input.value).toBe("1,000,000.5");
+    await userEvent.clear(input);
+    await userEvent.type(input, "abc12.345");
+    expect(input.value).toBe("12.34");
+  });
+
+  it("keeps the caret in place when editing in the middle of a grouped number", () => {
+    render(<AmountHarness points />);
+    const input = screen.getByLabelText("Amount") as HTMLInputElement;
+    input.focus(); // a real edit happens in the focused input; the caret is only restored there
+    insertInMiddle(input, 0, "25000");
+    expect(input.value).toBe("25,000");
+    insertInMiddle(input, 3, "9"); // "25," + "9" + "000" -> 259,000 with the caret after the 9
+    expect(input.value).toBe("259,000");
+    expect(input.selectionStart).toBe(3); // right after the typed 9, before the comma
   });
 });

@@ -603,3 +603,11 @@ Record only unresolved issues that materially affect correct implementation. Do 
 - **Outstanding dependencies:** Listed in Section 24.
 - **Acceptance results:** All checklist items covered in the document. Documentation completeness does not prove implementation readiness.
 - **Change scope:** Documentation only. No application code, database, migrations, other documentation files, Git commit/push/merge, or deployment. Only `docs/business-rules/08-commission-management.md` created.
+## Owner rulings amendment (2026-11-09)
+
+These rulings are authoritative and take precedence over earlier text in this document where they differ.
+
+1. **Payout threshold (stage 1):** a payout may be recorded only once net Finance-verified collections reach 40% of the finalized contract value.
+2. **Release wait:** the payout opens 7 days after the Finance verification of the payment that brought verified money to 40%. Before that date the commission stays Approved and cannot be paid.
+3. **Commission Assignment:** Finance and Super Administrator manually enter each seller's percentage on a dedicated page for sellers of a Confirmed Sale. No default or proposed rate exists; maximums, aggregate caps and the referrer rule remain open (OD-9).
+4. **Super Administrator** keeps commission operations and counts as authorized Finance personnel.

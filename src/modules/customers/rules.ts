@@ -15,7 +15,7 @@ export function composeCustomerName(input: Pick<CustomerDraftInput, "firstName" 
  * mandatory matrix is an open owner decision (D3); the interim set below is the
  * minimum needed to start a VIP application. A failed Submit keeps the draft.
  */
-export function validateCustomerForSubmit(input: CustomerDraftInput, existing: readonly Customer[], selfId?: string): CustomerErrors {
+export function validateCustomerForSubmit(input: CustomerDraftInput, existing: readonly Customer[], selfId?: string, supplementaryAllowed = false): CustomerErrors {
   const errors: CustomerErrors = {};
   const need = (key: string, value: unknown, message: string) => {
     if (value === undefined || value === null || (typeof value === "string" && value.trim() === "")) errors[key] = message;
@@ -37,6 +37,7 @@ export function validateCustomerForSubmit(input: CustomerDraftInput, existing: r
   if (number && existing.some((item) => item.id !== selfId && item.customerNumber?.toLowerCase() === number.toLowerCase())) {
     errors.customerNumber = "This Customer ID is already in use.";
   }
+  Object.assign(errors, validateSupplementaryHolder(input.supplementaryHolder, supplementaryAllowed));
   if (!input.consentDataPrivacy) errors.consentDataPrivacy = "The RA 10173 data privacy consent must be certified.";
   if (!input.idReceivedCertified) errors.idReceivedCertified = "Certify that a valid government ID with specimen signatures was received.";
   return errors;
@@ -53,4 +54,14 @@ export function restrictCustomer(customer: Customer): Customer {
     vipPlan: customer.vipPlan ?? null,
     restricted: true,
   };
+}
+
+/** A supplementary holder needs a plan that allows one and a first and last name; a birth date, when given, must be in the past. */
+export function validateSupplementaryHolder(holder: CustomerDraftInput["supplementaryHolder"], allowed: boolean): CustomerErrors {
+  const errors: CustomerErrors = {};
+  if (!holder) return errors;
+  if (!allowed) errors.supplementaryHolder = "The selected VIP plan does not allow a supplementary holder.";
+  else if (!holder.firstName?.trim() || !holder.lastName?.trim()) errors.supplementaryHolder = "Enter the supplementary holder's first and last name.";
+  else if (holder.dateOfBirth && !(holder.dateOfBirth < new Date().toISOString().slice(0, 10))) errors.supplementaryHolder = "The supplementary holder's birth date must be in the past.";
+  return errors;
 }

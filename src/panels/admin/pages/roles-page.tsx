@@ -2,22 +2,20 @@
 
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { ArrowDownAZ, ArrowUpAZ, Plus, Search } from "lucide-react";
+import { ArrowDownAZ, ArrowUpAZ, Plus } from "lucide-react";
 import { MODULE_CATALOG } from "@/modules/identity/permissions";
 import type { DepartmentRole } from "@/modules/organization/types";
 import { useDeleteDepartmentRole, useDepartments, useDepartmentRoles, useEffectiveModuleIds, useRoleOptions, useStaff } from "@/data/queries";
 import { PageContainer } from "@/shared/components/modern/page-container";
 import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
 import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
+import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { PageHeader } from "@/shared/components/modern/page-header";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { Toaster } from "@/shared/ui/sonner";
 
 const STATUS_FILTER_ITEMS = [
   { value: "all", label: "All statuses" },
@@ -166,7 +164,6 @@ export function RolesPage() {
 
   return (
     <PageContainer>
-      <Toaster position="top-right" />
       <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "Organization" }, { label: "Roles & Permissions" }]} />
       <PageHeader
         title="Roles & Permissions"
@@ -183,48 +180,21 @@ export function RolesPage() {
           </Button>
         }
       />
-      <div className="tw:mt-3 tw:flex tw:flex-col tw:gap-3 tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4 tw:lg:flex-row tw:lg:items-center tw:lg:justify-between">
-        <div className="tw:relative tw:w-full tw:lg:max-w-xs">
-          <Search aria-hidden="true" className="tw:pointer-events-none tw:absolute tw:top-1/2 tw:left-2.5 tw:size-4 tw:-translate-y-1/2 tw:text-muted-foreground" />
-          <Input
-            type="search"
-            aria-label="Search roles"
-            placeholder="Search roles"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            className="tw:h-11 tw:pl-8 tw:sm:h-8"
-          />
-        </div>
-        <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
-          <Select items={departmentItems} value={departmentFilter} onValueChange={(next) => setDepartmentFilter(next ?? "all")}>
-            <SelectTrigger aria-label="Role department filter" className="tw:h-11 tw:min-w-44 tw:sm:h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {departmentItems.map((item) => (
-                <SelectItem key={item.value} value={item.value} className="tw:min-h-11 tw:sm:min-h-8">
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select items={STATUS_FILTER_ITEMS} value={statusFilter} onValueChange={(next) => setStatusFilter(next ?? "all")}>
-            <SelectTrigger aria-label="Role status filter" className="tw:h-11 tw:min-w-40 tw:sm:h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_FILTER_ITEMS.map((item) => (
-                <SelectItem key={item.value} value={item.value} className="tw:min-h-11 tw:sm:min-h-8">
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="tw:mt-3">
+        <FilterBar
+          search={search}
+          onSearch={setSearch}
+          searchLabel="Search roles"
+          filters={[
+            { label: "Role department filter", value: departmentFilter, onChange: setDepartmentFilter, options: departmentItems },
+            { label: "Role status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_FILTER_ITEMS },
+          ]}
+        >
           <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
             {sortAsc ? <ArrowDownAZ aria-hidden="true" /> : <ArrowUpAZ aria-hidden="true" />}
             {sortLabel}
           </Button>
-        </div>
+        </FilterBar>
       </div>
       <div className="tw:mt-3">
         <DataTable<DepartmentRole>

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowDownAZ, ArrowUpAZ, Search } from "lucide-react";
+import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
 import type { OrgMember } from "@/modules/organization/types";
 import type { AccreditationRecord } from "@/modules/accreditation/types";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
@@ -17,16 +17,14 @@ import { PageContainer } from "@/shared/components/modern/page-container";
 import { PageHeader } from "@/shared/components/modern/page-header";
 import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
 import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
+import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { Toaster } from "@/shared/ui/sonner";
 import { SalesNetworkRowActions } from "../components/sales-network-row-actions";
 import { AccreditationStatusAction } from "../components/accreditation-status-action";
-import { DesignationBadge } from "../components/sales-badges";
+import { DesignationBadge } from "@/shared/components/business/designation-badge";
 import { AccreditedSellerDialog } from "./sales-network-accredited-seller-dialog";
 
 const SalesNetworkMemberDialogs = dynamic(() => import("./sales-network-member-dialogs").then((mod) => mod.SalesNetworkMemberDialogs), {
@@ -53,33 +51,6 @@ const ACCREDITATION_ITEMS = withAll("All accreditation", [
   { value: "expired", label: "Expired" },
   { value: "none", label: "No record" },
 ]);
-
-function FilterSelect({
-  label,
-  items,
-  value,
-  onChange,
-}: {
-  label: string;
-  items: Array<{ value: string; label: string }>;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <Select items={items} value={value} onValueChange={(next) => onChange(next ?? "all")}>
-      <SelectTrigger aria-label={label} className="tw:h-11 tw:min-w-40 tw:sm:h-8">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {items.map((item) => (
-          <SelectItem key={item.value} value={item.value} className="tw:min-h-11 tw:sm:min-h-8">
-            {item.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
 
 export function SalesNetworkMembersPage() {
   const router = useRouter();
@@ -241,7 +212,6 @@ export function SalesNetworkMembersPage() {
 
   return (
     <PageContainer>
-      <Toaster position="top-right" />
       <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "Sales Network", href: "/admin/sales-network" }, { label: "Members" }]} />
       <PageHeader
         title="Sales Network Members"
@@ -259,28 +229,23 @@ export function SalesNetworkMembersPage() {
           ) : null
         }
       />
-      <div className="tw:mt-3 tw:flex tw:flex-col tw:gap-3 tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4">
-        <div className="tw:relative tw:w-full tw:xl:max-w-xs">
-          <Search aria-hidden="true" className="tw:pointer-events-none tw:absolute tw:top-1/2 tw:left-2.5 tw:size-4 tw:-translate-y-1/2 tw:text-muted-foreground" />
-          <Input
-            type="search"
-            aria-label="Search members"
-            placeholder="Search members"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            className="tw:h-11 tw:pl-8 tw:sm:h-8"
-          />
-        </div>
-        <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
-          <FilterSelect label="Designation filter" items={DESIGNATION_ITEMS} value={designationFilter} onChange={setDesignationFilter} />
-          <FilterSelect label="Status filter" items={STATUS_ITEMS} value={statusFilter} onChange={setStatusFilter} />
-          <FilterSelect label="Team filter" items={teamItems} value={teamFilter} onChange={setTeamFilter} />
-          <FilterSelect label="Accreditation status filter" items={ACCREDITATION_ITEMS} value={accreditationFilter} onChange={setAccreditationFilter} />
+      <div className="tw:mt-3">
+        <FilterBar
+          search={search}
+          onSearch={setSearch}
+          searchLabel="Search members"
+          filters={[
+            { label: "Designation filter", value: designationFilter, onChange: setDesignationFilter, options: DESIGNATION_ITEMS },
+            { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_ITEMS },
+            { label: "Team filter", value: teamFilter, onChange: setTeamFilter, options: teamItems },
+            { label: "Accreditation status filter", value: accreditationFilter, onChange: setAccreditationFilter, options: ACCREDITATION_ITEMS },
+          ]}
+        >
           <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
             {sortAsc ? <ArrowDownAZ aria-hidden="true" /> : <ArrowUpAZ aria-hidden="true" />}
             {sortLabel}
           </Button>
-        </div>
+        </FilterBar>
       </div>
       <div className="tw:mt-3">
         <DataTable<OrgMember>

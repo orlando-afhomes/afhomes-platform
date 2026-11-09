@@ -21,6 +21,7 @@ import { Button, buttonVariants } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { Card } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/utils";
 import { SalesNetworkTreeNodeTitle } from "../components/sales-network-tree-node";
 
@@ -111,7 +112,7 @@ export function SalesNetworkGenealogyPage() {
     <PageContainer>
       <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "Sales Network", href: "/admin/sales-network" }, { label: "Genealogy" }]} />
       <PageHeader title="Sales Network Genealogy" description="Authorized hierarchy visualization." />
-      <div className="tw:mt-3 tw:flex tw:flex-col tw:gap-3 tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4 tw:lg:flex-row tw:lg:items-start">
+      <Card className="tw:mt-3 tw:flex-col tw:lg:flex-row tw:lg:items-start">
         <div className="tw:relative tw:w-full tw:lg:max-w-sm">
           <Search aria-hidden="true" className="tw:pointer-events-none tw:absolute tw:top-3 tw:left-2.5 tw:size-4 tw:text-muted-foreground tw:sm:top-2" />
           <Input
@@ -126,6 +127,7 @@ export function SalesNetworkGenealogyPage() {
             <ul className="tw:absolute tw:top-full tw:right-0 tw:left-0 tw:z-10 tw:mt-1 tw:max-h-64 tw:list-none tw:overflow-y-auto tw:rounded-lg tw:border tw:border-border tw:bg-popover tw:p-1 tw:shadow-md">
               {searchResults.map((member) => (
                 <li key={member.id}>
+                  {/* Raw button exception: search-result option with listbox semantics. */}
                   <button
                     type="button"
                     className="tw:flex tw:min-h-11 tw:w-full tw:items-center tw:rounded-md tw:px-2 tw:text-left tw:text-sm tw:hover:bg-accent tw:focus-visible:bg-accent tw:focus-visible:outline-none tw:sm:min-h-8"
@@ -160,9 +162,10 @@ export function SalesNetworkGenealogyPage() {
             Collapse all
           </Button>
         </div>
-      </div>
+      </Card>
       <div className="tw:mt-3 tw:grid tw:gap-3 tw:lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <section aria-label="Genealogy tree" className="tw:min-w-0 tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-3">
+        <Card className="tw:min-w-0 tw:p-3">
+          <section aria-label="Genealogy tree" className="tw:min-w-0">
           {membersQuery.isLoading ? (
             <Skeleton className="tw:h-64 tw:w-full" />
           ) : tree.length === 0 ? (
@@ -177,10 +180,11 @@ export function SalesNetworkGenealogyPage() {
               onToggle={(key) => setExpandedKeys((previous) => (previous.includes(key) ? previous.filter((item) => item !== key) : [...previous, key]))}
             />
           )}
-        </section>
+          </section>
+        </Card>
         <aside aria-label="Member summary">
           {selectedNode ? <MemberSummary node={selectedNode} members={members} /> : (
-            <p className="tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-6 tw:text-center tw:text-muted-foreground">Select a member to view details.</p>
+            <Card className="tw:p-6 tw:text-center tw:text-muted-foreground">Select a member to view details.</Card>
           )}
         </aside>
       </div>
@@ -198,7 +202,7 @@ function MemberSummary({ node, members }: { node: GenealogyTreeNode; members: re
     .join("")
     .toUpperCase();
   return (
-    <div className="tw:flex tw:flex-col tw:gap-4 tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4">
+    <Card className="tw:gap-4">
       <h2 className="tw:text-base tw:font-semibold">Member summary</h2>
       <div className="tw:flex tw:items-center tw:gap-3">
         <Avatar className="tw:size-12">
@@ -225,7 +229,7 @@ function MemberSummary({ node, members }: { node: GenealogyTreeNode; members: re
       >
         View profile
       </Link>
-    </div>
+    </Card>
   );
 }
 
@@ -305,6 +309,7 @@ export function GenealogyTree({
         return (
           <li key={node.key}>
             <div className={cn("tw:flex tw:items-start tw:gap-1 tw:rounded-md", selected && "tw:bg-secondary")}>
+              {/* Raw button exception: tree expand/collapse control with tree semantics. */}
               {node.children.length > 0 ? (
                 <button
                   type="button"
@@ -323,6 +328,7 @@ export function GenealogyTree({
                   <SalesNetworkTreeNodeTitle node={node} members={members} />
                 </div>
               ) : (
+                // Raw button exception: tree node select control with tree semantics.
                 <button
                   type="button"
                   aria-pressed={selected}

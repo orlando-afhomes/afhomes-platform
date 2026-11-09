@@ -16,4 +16,4 @@ export { PhilippineLandlineField, PhilippineMobileField, TIN_DISPLAY_LENGTH, Tin
 export { GovernmentIdFields, PhilippineAddressFields } from "./structured-fields";
 export { ProfilePhotoUploader } from "./profile-photo-uploader";
 export { StandardDateField } from "./date-field";
-export { CheckboxField, MoneyField, PercentField, TextAreaField } from "./business-fields";
+export { CheckboxField, MoneyField, PercentField, PointsField, TextAreaField } from "./business-fields";

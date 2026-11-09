@@ -592,3 +592,13 @@ A previously verified payment affects a reported Confirmed Sale. The correction 
 - **Outstanding dependencies:** Listed in Section 28.
 - **Limitations of documentation-only verification:** No implementation tested; no DB or code changes.
 - **Change scope:** Documentation only. No application code, database, migrations, Git commit/push/merge, or deployment. Other documentation files unchanged. Only `docs/business-rules/07-finance-and-payments.md` created.
+## Owner rulings amendment (2026-11-09)
+
+These rulings are authoritative and take precedence over earlier text in this document where they differ.
+
+1. **Super Administrator** keeps Finance operations and counts as authorized Finance personnel.
+2. **Membership activation** may be performed by Finance, Admin and Super Administrator. Activation remains a separate event from Finance verification and from Fully Paid; none of them triggers the next automatically.
+3. **Payment allocation:** verified money is applied in order to the reservation fee, then the down payment, then installments. The reservation fee is part of the contract total, never added on top. One full payment with no separate reservation-fee payment therefore satisfies the reservation fee and every later line.
+4. **Reservation fee** is non-refundable. A reversal to correct an error is still allowed.
+5. **Contract cancellation with verified money** is two-step: Admin requests, Finance confirms or declines, and the requester cannot decide. Confirmed forfeiture preserves history and holds unpaid commissions.
+6. **Imported payment claims** are claims, not money. Each must be verified by Finance in the normal queue. Records already verified outside the system need a separate Historical import, which is not yet defined (open decision OD-8).

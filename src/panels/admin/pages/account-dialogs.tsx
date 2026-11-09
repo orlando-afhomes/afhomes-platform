@@ -264,6 +264,7 @@ function RoleEditor({
         {account.roleIds.map((value: string) => (
           <Badge key={value} variant="outline" className="tw:h-auto tw:gap-1 tw:py-1">
             {getSystemRoleLabel(value)}
+            {/* Raw button exception: inline icon-only remove control inside a Badge. */}
             {revocable.has(value) ? (
               <button
                 type="button"

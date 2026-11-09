@@ -13,7 +13,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { toast } from "sonner";
-import { FormDialog, ReasonDialog } from "./business-ui";
+import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
 
 const PURPOSE_LABELS: Record<PaymentPurpose, string> = { reservation: "Reservation", down_payment: "Down payment", installment: "Installment", full: "Full payment" };
 

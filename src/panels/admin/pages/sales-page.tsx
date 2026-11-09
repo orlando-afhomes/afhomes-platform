@@ -12,7 +12,14 @@ import { StandardDateField } from "@/shared/forms/modern";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { ContractsTable } from "../components/contracts-table";
 import { useContractHref } from "../components/use-contract-href";
-import { BizBadge, FilterBar, Money, QueryState, Section, StatTiles, TabBar, formatDate } from "../components/business-ui";
+import { BizBadge } from "@/shared/components/business/biz-badge";
+import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { Money } from "@/shared/components/modern/money";
+import { QueryState } from "@/shared/components/modern/query-state";
+import { Section } from "@/shared/components/modern/section";
+import { StatTiles } from "@/shared/components/modern/stat-tiles";
+import { TabBar } from "@/shared/components/modern/tab-bar";
+import { formatDate } from "@/shared/lib/format-date";
 import { ModulePage } from "../components/module-page";
 
 const STATUS_OPTIONS = [

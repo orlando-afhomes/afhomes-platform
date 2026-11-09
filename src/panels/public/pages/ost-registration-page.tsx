@@ -9,6 +9,7 @@ import { TextField } from "@/shared/forms/modern";
 import { isValidEmail } from "@/shared/utils/input-sanitizers";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import { CardSection } from "@/shared/components/modern/card-section";
 
 type RegistrationStep = 0 | 1 | 2 | 3;
 
@@ -16,12 +17,7 @@ const STEPS = ["Referral", "Applicant", "Information", "Review"] as const;
 const BUTTON_CLASS = "tw:min-h-11 tw:sm:min-h-8";
 
 function StepCard({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section aria-label={title} className="tw:flex tw:flex-col tw:gap-4 tw:rounded-lg tw:border tw:border-border tw:bg-card tw:p-4">
-      <h2 className="tw:text-base tw:font-semibold">{title}</h2>
-      {children}
-    </section>
-  );
+  return <CardSection title={title} className="tw:gap-4">{children}</CardSection>;
 }
 
 function Actions({ children }: { children: ReactNode }) {

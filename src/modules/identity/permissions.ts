@@ -46,6 +46,8 @@ export type AdminOperation =
   | "commission.viewOwn"
   | "commission.viewTeam"
   | "customers.manage"
+  /** Customer import and export (personal data in bulk): Admin and Super Administrator only. */
+  | "customers.import"
   | "contracts.prepare"
   | "payments.submit"
   | "membership.activate"
@@ -185,6 +187,7 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "sales-network.transfer",
     "sales-network.status",
     "customers.manage",
+    "customers.import",
     "contracts.prepare",
     "payments.submit",
     "membership.activate",
@@ -201,6 +204,7 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "sales-network.transfer",
     "sales-network.status",
     "customers.manage",
+    "customers.import",
     "contracts.prepare",
     "payments.submit",
     "membership.activate",
@@ -214,6 +218,8 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "finance.reports.view",
     "commission.approve",
     "commission.payout",
+    // Owner ruling 2026-11-09: Finance activates memberships alongside Admin and Super Administrator.
+    "membership.activate",
     "stay-points.reconcile",
   ],
   svd: ["sales.viewTeam", "customers.viewDownline", "commission.viewOwn", "commission.viewTeam", "customers.manage", "contracts.prepare", "payments.submit", "sales-network.manage", "sales-network.transfer", "sales-network.status"],

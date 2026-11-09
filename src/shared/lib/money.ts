@@ -64,3 +64,32 @@ export function formatBasisPoints(basisPoints: number): string {
   const frac = basisPoints % 100;
   return frac === 0 ? `${whole}%` : `${whole}.${String(frac).padStart(2, "0").replace(/0$/, "")}%`;
 }
+
+const groupThousands = (digits: string) => digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+/**
+ * Live peso formatting while typing: "10000" becomes "10,000". Keeps digits and
+ * the first dot, at most 12 whole digits and 2 decimals, no leading zeros, and a
+ * trailing dot so decimals can still be typed. parsePesoToCentavos reads the result.
+ */
+export function formatMoneyInput(raw: string): string {
+  const cleaned = raw.replace(/[^\d.]/g, "");
+  const dot = cleaned.indexOf(".");
+  const whole = (dot === -1 ? cleaned : cleaned.slice(0, dot)).replace(/\./g, "").slice(0, 12).replace(/^0+(?=\d)/, "");
+  if (dot === -1) return groupThousands(whole);
+  const decimals = cleaned.slice(dot + 1).replace(/\./g, "").slice(0, 2);
+  return `${groupThousands(whole || "0")}.${decimals}`;
+}
+
+/** Live whole-number formatting for points and similar counts: "25000" becomes "25,000". */
+export function formatIntegerInput(raw: string): string {
+  return groupThousands(raw.replace(/\D/g, "").slice(0, 12).replace(/^0+(?=\d)/, ""));
+}
+
+/** Initial text for a peso input from stored centavos: grouped, decimals only when not whole. */
+export function centavosToInputText(centavos: Centavos | null | undefined): string {
+  if (!centavos) return "";
+  const whole = Math.floor(centavos / 100);
+  const cents = centavos % 100;
+  return `${groupThousands(String(whole))}${cents ? `.${String(cents).padStart(2, "0").replace(/0$/, "")}` : ""}`;
+}

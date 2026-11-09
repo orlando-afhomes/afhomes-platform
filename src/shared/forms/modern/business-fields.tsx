@@ -1,6 +1,8 @@
 "use client";
 
+import { useLayoutEffect, useRef } from "react";
 import type { BaseFieldProps } from "@/shared/forms/types";
+import { formatIntegerInput, formatMoneyInput } from "@/shared/lib/money";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { Textarea } from "@/shared/ui/textarea";
 import { FieldShell, describedBy, useFieldIds } from "./field-shell";
@@ -8,18 +10,45 @@ import { TextField } from "./text-field";
 
 type ValueProps = { value: string; onChange: (value: string) => void };
 
-/** Peso amount input. The value stays text; the owning form converts it with parsePesoToCentavos. */
+/**
+ * Wraps a formatter (comma grouping) so the caret stays where the user is
+ * typing: the number of digits and dots before the caret is kept across the
+ * reformat, even when commas appear or disappear.
+ */
+function useGroupedInput(format: (raw: string) => string, onChange: (value: string) => void) {
+  const ref = useRef<HTMLInputElement>(null);
+  const pending = useRef<number | null>(null);
+  const significant = (text: string) => text.replace(/[^\d.]/g, "").length;
+  useLayoutEffect(() => {
+    const input = ref.current;
+    if (!input || pending.current === null) return;
+    let seen = 0;
+    let position = 0;
+    while (position < input.value.length && seen < pending.current) {
+      if (/[\d.]/.test(input.value[position])) seen += 1;
+      position += 1;
+    }
+    input.setSelectionRange(position, position);
+    pending.current = null;
+  });
+  const handle = (raw: string) => {
+    const input = ref.current;
+    if (input && document.activeElement === input) pending.current = significant(raw.slice(0, input.selectionStart ?? raw.length));
+    onChange(format(raw));
+  };
+  return { ref, handle };
+}
+
+/** Peso amount input shown as "10,000" while typing. The value stays text; convert with parsePesoToCentavos. */
 export function MoneyField({ onChange, ...rest }: Omit<BaseFieldProps, "inputMode"> & ValueProps) {
-  return (
-    <TextField
-      {...rest}
-      addonBefore="₱"
-      inputMode="numeric"
-      maxLength={16}
-      transform={(next) => next.replace(/[^\d.,]/g, "")}
-      onChange={onChange}
-    />
-  );
+  const { ref, handle } = useGroupedInput(formatMoneyInput, onChange);
+  return <TextField {...rest} inputRef={ref} addonBefore="₱" inputMode="decimal" maxLength={19} onChange={handle} />;
+}
+
+/** Whole-number input with comma grouping, for Stay Points and similar counts. */
+export function PointsField({ onChange, ...rest }: Omit<BaseFieldProps, "inputMode"> & ValueProps) {
+  const { ref, handle } = useGroupedInput(formatIntegerInput, onChange);
+  return <TextField {...rest} inputRef={ref} inputMode="numeric" maxLength={16} onChange={handle} />;
 }
 
 /** Percentage input (up to two decimals). Convert with parsePercentToBasisPoints. */

@@ -17,7 +17,12 @@ import { CheckboxField, SelectField, StandardDateField, TextAreaField, TextField
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { ModulePage } from "../components/module-page";
-import { BizBadge, FormDialog, Money, ReasonDialog, Section, StatTiles, formatDate } from "../components/business-ui";
+import { BizBadge } from "@/shared/components/business/biz-badge";
+import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
+import { Money } from "@/shared/components/modern/money";
+import { Section } from "@/shared/components/modern/section";
+import { StatTiles } from "@/shared/components/modern/stat-tiles";
+import { formatDate } from "@/shared/lib/format-date";
 import { PaymentSubmitDialog, usePaymentActions } from "../components/payment-actions";
 
 const CRUMBS = [{ label: "Contracts" }];

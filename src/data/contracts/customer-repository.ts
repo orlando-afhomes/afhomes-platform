@@ -1,4 +1,5 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
+import type { CustomerImportJob, CustomerImportRecord } from "@/modules/customers/import";
 import type { Customer, CustomerDraftInput } from "@/modules/customers/types";
 
 export interface CustomerRepository {
@@ -11,6 +12,11 @@ export interface CustomerRepository {
   submit(id: string, input: CustomerDraftInput, options?: MockAsyncOptions): Promise<Customer>;
   /** Audited data correction of a submitted customer (04 section 16). */
   correct(id: string, input: CustomerDraftInput, reason: string, options?: MockAsyncOptions): Promise<Customer>;
+  /** Re-validates every record and creates drafts for ready rows only; possible duplicates are skipped for review. */
+  importCustomers(input: { fileName: string; records: CustomerImportRecord[]; declaration: boolean }, options?: MockAsyncOptions): Promise<CustomerImportJob>;
+  listImportJobs(options?: MockAsyncOptions): Promise<CustomerImportJob[]>;
+  /** Audited export of the records visible to the identity (capped at 5,000). */
+  exportCustomers(input: { format: "xlsx" | "csv"; count: number }, options?: MockAsyncOptions): Promise<Customer[]>;
 }
 
 /** Thrown by submit with field-level messages so the form can show them. */

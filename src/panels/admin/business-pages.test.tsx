@@ -2,13 +2,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
+import { AppToaster } from "@/shared/components/modern/app-toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { AccreditationVerificationPage } from "@/panels/public/pages/accreditation-verification-page";
 import { AuditLogsPage } from "./pages/audit-logs-page";
+import { CommissionAssignmentPage } from "./pages/commission-assignment-page";
 import { CommissionsPage } from "./pages/commissions-page";
+import { SchemeGuidePage } from "./pages/scheme-guide-page";
+import { CustomerImportExportPage } from "./pages/customer-import-export-page";
 import { ContractDetailPage } from "./pages/contract-detail-page";
 import { ContractsPage } from "./pages/contracts-page";
 import { CustomerDetailPage } from "./pages/customer-detail-page";
@@ -32,7 +36,10 @@ function Wrapper({ identityId, children }: { identityId: string; children: React
   return (
     <QueryClientProvider client={queryClient}>
       <MockStoreProvider>
-        <DevIdentityProvider initialIdentityId={identityId}>{children}</DevIdentityProvider>
+        <DevIdentityProvider initialIdentityId={identityId}>
+          <AppToaster />
+          {children}
+        </DevIdentityProvider>
       </MockStoreProvider>
     </QueryClientProvider>
   );
@@ -120,10 +127,44 @@ describe("business pages render for the intended roles", () => {
     expect(screen.queryByText("Customer B One")).toBeNull();
   });
 
-  it("lets Finance see confirmed sales for commission review", async () => {
-    show("dev-finance", <CommissionsPage />);
+  it("lets Finance see confirmed sales on the Commission Assignment page", async () => {
+    show("dev-finance", <CommissionAssignmentPage />);
     expect(await screen.findByText("No default rates")).toBeInTheDocument();
-    expect((await screen.findAllByRole("button", { name: "Review and approve" })).length).toBeGreaterThan(0);
+    expect((await screen.findAllByRole("button", { name: "Assign percentages" })).length).toBeGreaterThan(0);
+  });
+
+  it("shows Administrators the customer import steps and templates", async () => {
+    show("dev-admin", <CustomerImportExportPage />);
+    expect(await screen.findByRole("tab", { name: /Import/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "XLSX template" })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Customer file/)).toHaveAttribute("accept", ".xlsx,.csv");
+  });
+
+  it("keeps customer import and commission assignment away from roles without the permission", async () => {
+    show("dev-finance", <CustomerImportExportPage />);
+    // Finance has no Customers module, so the page is refused before any import control renders.
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Customer Import and Export" })).toBeNull());
+    expect(screen.queryByRole("tab", { name: /Import/ })).toBeNull();
+    expect(screen.queryByLabelText(/Customer file/)).toBeNull();
+  });
+
+  it("tells a seller that only Finance assigns commission percentages", async () => {
+    show("dev-ost-a1", <CommissionAssignmentPage />);
+    expect(await screen.findByText("Only authorized Finance personnel assign commission percentages.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Assign percentages" })).toBeNull();
+  });
+
+  it("lists every official scheme in the guide and gives pending ones no figures", async () => {
+    show("dev-admin", <SchemeGuidePage />);
+    expect(await screen.findByRole("heading", { name: "4-Month Installment" })).toBeInTheDocument();
+    for (const name of ["Spot Cash", "Move A", "Move B1", "Move B2"]) expect(screen.getByRole("heading", { name })).toBeInTheDocument();
+    expect(screen.getAllByText(/Terms are pending owner approval/).length).toBeGreaterThanOrEqual(4);
+    expect(screen.getByRole("button", { name: "Print guide" })).toBeInTheDocument();
+  });
+
+  it("links Finance from Commissions to Commission Assignment", async () => {
+    show("dev-finance", <CommissionsPage />);
+    expect(await screen.findByRole("link", { name: "Commission assignment" })).toHaveAttribute("href", "/admin/commissions/assignment");
   });
 
   it("shows memberships and the activation queue to Admin", async () => {

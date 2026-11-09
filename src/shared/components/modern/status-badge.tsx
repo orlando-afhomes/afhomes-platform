@@ -13,6 +13,11 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   neutral: "tw:bg-muted tw:text-muted-foreground",
 };
 
+/** Shared Tailwind tone classes so business and account badges never duplicate strings. */
+export function toneClass(tone: BadgeTone): string {
+  return TONE_CLASSES[tone];
+}
+
 // Same status vocabulary as the legacy badge. Text always carries the meaning;
 // color only reinforces it.
 const STATUS_TONES: Record<string, BadgeTone> = {
@@ -33,7 +38,7 @@ const STATUS_TONES: Record<string, BadgeTone> = {
 /** Labelled badge with an explicit tone, for values that are not account or record statuses. */
 export function ToneBadge({ tone = "neutral", className, children }: { tone?: BadgeTone; className?: string; children: ReactNode }) {
   return (
-    <Badge variant="secondary" className={cn(TONE_CLASSES[tone], className)}>
+    <Badge variant="secondary" className={cn(toneClass(tone), className)}>
       {children}
     </Badge>
   );
@@ -42,7 +47,7 @@ export function ToneBadge({ tone = "neutral", className, children }: { tone?: Ba
 export function StatusBadge({ status, tone, className }: { status: string; tone?: BadgeTone; className?: string }) {
   const resolved = tone ?? STATUS_TONES[status.trim().toLowerCase()] ?? "neutral";
   return (
-    <Badge variant="secondary" className={cn(TONE_CLASSES[resolved], className)}>
+    <Badge variant="secondary" className={cn(toneClass(resolved), className)}>
       {formatStatusLabel(status)}
     </Badge>
   );

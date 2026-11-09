@@ -16,7 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
 import { cn } from "@/shared/lib/utils";
-import { toneFromColor } from "./sales-badges";
+import { toneFromColor } from "@/shared/components/business/designation-badge";
 
 const DOT_CLASSES = {
   pending: "tw:bg-warning",

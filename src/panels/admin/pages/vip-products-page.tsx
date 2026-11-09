@@ -9,7 +9,10 @@ import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { ModulePage } from "../components/module-page";
-import { BizBadge, Money, QueryState, Section } from "../components/business-ui";
+import { BizBadge } from "@/shared/components/business/biz-badge";
+import { Money } from "@/shared/components/modern/money";
+import { QueryState } from "@/shared/components/modern/query-state";
+import { Section } from "@/shared/components/modern/section";
 import { ProductDialog, SchemeDialog } from "../components/vip-product-dialogs";
 
 export function VipProductsPage() {
@@ -69,9 +72,14 @@ export function VipProductsPage() {
       description="Tier catalog, payment schemes, and contract review."
       crumbs={[{ label: "VIP Products and Contracts" }]}
       actions={
-        <Link href="/admin/vip-products/contracts" className={buttonVariants({ variant: "outline", className: "tw:min-h-11 tw:sm:min-h-8" })}>
-          Contract review
-        </Link>
+        <div className="tw:flex tw:flex-wrap tw:gap-2">
+          <Link href="/admin/vip-products/scheme-guide" className={buttonVariants({ variant: "outline", className: "tw:min-h-11 tw:sm:min-h-8" })}>
+            Scheme guide
+          </Link>
+          <Link href="/admin/vip-products/contracts" className={buttonVariants({ variant: "outline", className: "tw:min-h-11 tw:sm:min-h-8" })}>
+            Contract review
+          </Link>
+        </div>
       }
     >
       <InfoNote title="Contract-stated values">Prices and benefits are the values written in the standard contracts. The Gold price carries a source conflict that management must resolve before Gold contracts can be finalized.</InfoNote>

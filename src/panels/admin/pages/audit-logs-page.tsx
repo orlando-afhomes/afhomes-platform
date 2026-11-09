@@ -8,7 +8,10 @@ import { InfoNote } from "@/shared/components/modern/detail-list";
 import { StandardDateField } from "@/shared/forms/modern";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { FilterBar, QueryState, Section, StatTiles } from "../components/business-ui";
+import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { QueryState } from "@/shared/components/modern/query-state";
+import { Section } from "@/shared/components/modern/section";
+import { StatTiles } from "@/shared/components/modern/stat-tiles";
 import { ModulePage } from "../components/module-page";
 
 const ALL = "all";

@@ -1,7 +1,11 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { Commission } from "@/modules/commissions/types";
 
-export type CommissionView = Commission & { customerName: string };
+export type CommissionView = Commission & {
+  customerName: string;
+  /** First date a payout may be recorded (7 days after 40% was verified); null while 40% is not reached. */
+  payoutReleaseDate: string | null;
+};
 
 export type EligibleSale = {
   saleId: string;

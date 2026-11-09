@@ -2,6 +2,7 @@ import { describe, expect, it, afterEach } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
+import { AppToaster } from "@/shared/components/modern/app-toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
@@ -18,6 +19,7 @@ function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
     <QueryClientProvider client={queryClient}>
       <MockStoreProvider>
         <DevIdentityProvider initialIdentityId={identityId}>
+          <AppToaster />
           <RolesPage />
         </DevIdentityProvider>
       </MockStoreProvider>

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Button } from "./button";
+import { Button, buttonVariants } from "./button";
 import { Input } from "./input";
 import { Label } from "./label";
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "./dialog";
@@ -114,5 +114,13 @@ describe("global stylesheet contract", () => {
     const rootStart = css.indexOf(":root {");
     const root = css.slice(rootStart, css.indexOf("\n}", rootStart));
     for (const name of new Set(referenced)) expect(root, `--${name}`).toContain(`--${name}:`);
+  });
+});
+
+describe("buttonVariants", () => {
+  it("resolves the base transparent background in favour of the variant background", () => {
+    const classes = buttonVariants().split(" ");
+    expect(classes).toContain("tw:bg-primary");
+    expect(classes).not.toContain("tw:bg-transparent");
   });
 });

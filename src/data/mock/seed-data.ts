@@ -1,3 +1,15 @@
+import type { Customer } from "@/modules/customers/types";
+import type { OrgMember, Department, DepartmentRole, StaffMember } from "@/modules/organization/types";
+import type { AccreditationRecord } from "@/modules/accreditation/types";
+import type { VipProduct, PaymentScheme, VipTierCode } from "@/modules/vip/types";
+import type { Account } from "@/modules/accounts/types";
+import type { Contract, ScheduleItem } from "@/modules/contracts/types";
+import type { Sale } from "@/modules/sales/types";
+import type { Payment, PaymentPurpose } from "@/modules/finance/types";
+import type { Membership } from "@/modules/membership/types";
+import type { Commission } from "@/modules/commissions/types";
+import type { ResortSpend } from "@/modules/stay-points/types";
+
 /**
  * AFHomes Platform — centralized synthetic seed data (frontend mock phase).
  *
@@ -5,8 +17,7 @@
  * relationally consistent demonstration data; contact and address details are
  * not real personal information. Nothing in this file is a database, is
  * persisted, or is read by server code: the application deep-clones it into a
- * browser-memory store (src/data/mock/seed.ts) that resets on every refresh.
- * TypeScript types, repositories, adapters and runtime state stay under src/data/.
+ * browser-memory store (seed.ts) that resets on every refresh.
  *
  * Original date 2026-10-28 applies to the sales-network fixtures only; expiry
  * follows the canonical annual rule (one year, Asia/Manila date-only).
@@ -17,11 +28,11 @@ const SAMPLE_EXPIRY = "2027-10-28";
 const SAMPLE_YYMM = "2610";
 
 /** AA number: prefix + YYMM + shared sequence padded to four digits. */
-function aaNumber(prefix, sequence) {
+function aaNumber(prefix: string, sequence: number) {
   return prefix + SAMPLE_YYMM + String(sequence).padStart(4, "0");
 }
 
-const members = [
+const members: OrgMember[] = [
   {
     id: "mem-svd-a", displayName: "Ramon Del Rosario", designation: "SVD", branchId: "branch-a", parentId: null, status: "active", accountId: null,
     teamName: "Team Alab", aaNumber: "AAI26100001", mockAccreditationEligible: true,
@@ -144,7 +155,7 @@ const members = [
   },
 ];
 
-const accreditations = [
+const accreditations: AccreditationRecord[] = [
   { id: "accr-seed-1", memberId: "mem-svd-a", classification: "IST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: SAMPLE_EXPIRY, aaNumber: aaNumber("AAI", 1), history: [] },
   { id: "accr-seed-2", memberId: "mem-ssm-a", classification: "IST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: SAMPLE_EXPIRY, aaNumber: aaNumber("AAI", 2), history: [] },
   { id: "accr-seed-3", memberId: "mem-sm-a", classification: "IST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: SAMPLE_EXPIRY, aaNumber: aaNumber("AAI", 3), history: [] },
@@ -156,7 +167,7 @@ const accreditations = [
 
 
 
-const accounts = [
+const accounts: Account[] = [
   { id: "acct-super-admin", displayName: "Super Admin", email: "superadmin@afhomes.local", roleIds: ["super_admin"], status: "active", departmentId: null, createdAt: "2026-01-01" },
   { id: "acct-admin", displayName: "Administrator", email: "admin@afhomes.local", roleIds: ["admin"], status: "active", departmentId: null, createdAt: "2026-01-02" },
   { id: "acct-hr", displayName: "HR User", email: "hr@afhomes.local", roleIds: ["hr"], status: "active", departmentId: null, createdAt: "2026-01-03" },
@@ -164,7 +175,7 @@ const accounts = [
   { id: "acct-pending", displayName: "Pending User", email: "pending@afhomes.local", roleIds: [], status: "pending", departmentId: null, createdAt: "2026-01-05" },
 ];
 
-const departments = [
+const departments: Department[] = [
   { id: "dept-hr", name: "Human Resources", code: "HR", description: "Human Resources department", headStaffId: null, status: "active" },
   { id: "dept-finance", name: "Finance", code: "FIN", description: "Finance department", headStaffId: null, status: "active" },
   { id: "dept-ops", name: "Operations", code: "OPS", description: "Operations department", headStaffId: null, status: "active" },
@@ -172,7 +183,7 @@ const departments = [
   { id: "dept-sales", name: "Sales", code: "SLS", description: "Sales department", headStaffId: null, status: "active" },
 ];
 
-const roles = [
+const roles: DepartmentRole[] = [
   { id: "role-hr-staff", name: "HR Staff", departmentId: "dept-hr", moduleIds: ["dashboard", "departments", "staff"], status: "active", createdAt: "2026-01-01" },
   { id: "role-fin-staff", name: "Finance Staff", departmentId: "dept-finance", moduleIds: ["dashboard", "finance"], status: "active", createdAt: "2026-01-01" },
   { id: "role-ops-staff", name: "Operations Staff", departmentId: "dept-ops", moduleIds: ["dashboard"], status: "active", createdAt: "2026-01-01" },
@@ -193,7 +204,7 @@ const roles = [
   { id: "role-ost", name: "OST", departmentId: "dept-sales", moduleIds: ["dashboard"], status: "active", createdAt: "2026-01-01" },
 ];
 
-const staff = [
+const staff: StaffMember[] = [
   { id: "staff-1", displayName: "HR Staff", position: "HR Specialist", departmentId: "dept-hr", departmentRoleId: "role-hr-staff", status: "active", email: "hrstaff@afhomes.local", createdAt: "2026-01-01", avatarUrl: null, accountId: "acct-hr" },
   { id: "staff-2", displayName: "Finance Staff", position: "Finance Analyst", departmentId: "dept-finance", departmentRoleId: "role-fin-staff", status: "active", email: "finstaff@afhomes.local", createdAt: "2026-01-02", avatarUrl: null, accountId: null },
   { id: "staff-3", displayName: "Operations Staff", position: "Operations Coordinator", departmentId: "dept-ops", departmentRoleId: "role-ops-staff", status: "active", email: "opsstaff@afhomes.local", createdAt: "2026-01-03", avatarUrl: null, accountId: null },
@@ -212,9 +223,9 @@ const staff = [
 // examples in doc 06 section 17.
 // ---------------------------------------------------------------------------
 
-const peso = (amount) => amount * 100;
+const peso = (amount: number) => amount * 100;
 
-const customers = [
+const customers: Customer[] = [
   { id: "cust-a1", displayName: "Customer A One", branchId: "branch-a", ownerMemberId: "mem-ost-a1", status: "submitted",
     firstName: "Customer", lastName: "A One", gender: "Female", civilStatus: "Married", dateOfBirth: "1985-04-12",
     mobileNumber: "09171110001", email: "customer.a1@afhomes.local",
@@ -242,7 +253,7 @@ const customers = [
     consentDataPrivacy: true, idReceivedCertified: true, createdAt: "2026-11-04", submittedAt: "2026-11-05" },
 ];
 
-const products = [
+const products: VipProduct[] = [
   { code: "B1", name: "Bronze VIP", tier: "Bronze", priceCentavos: peso(72000), priceStatus: "contract_stated",
     priceNote: "Stated in the Bronze VIP Grant Contract, Standard Pricing (Section II and Annex A).",
     validityYears: 7, earningCycles: 5, vipDiscountPercent: 15, lifetimePoints: 50000, pointsPerCycle: 10000,
@@ -260,7 +271,7 @@ const products = [
     status: "active", configVersion: 1, effectiveDate: null, changes: [] },
 ];
 
-const paymentSchemes = [
+const paymentSchemes: PaymentScheme[] = [
   { id: "scheme-spot-cash", label: "Spot Cash", historicalLabel: "Spot cash", category: "cash", paymentCode: "C01",
     applicableTiers: ["B1", "S1", "G1"], reservationCentavos: null, installmentCount: null, installmentCentavosByTier: {}, interestPercent: null,
     commercialStatus: "pending_owner_decision",
@@ -283,12 +294,12 @@ const paymentSchemes = [
     commercialStatus: "pending_owner_decision", source: "Workbook option label only. Terms are not documented (05 section 8).", availability: "unavailable", configVersion: 1 },
 ];
 
-const benefitsOf = (p) => ({
+const benefitsOf = (p: VipProduct) => ({
   vipDiscountPercent: p.vipDiscountPercent, earningCycles: p.earningCycles, lifetimePoints: p.lifetimePoints,
   pointsPerCycle: p.pointsPerCycle, weekdayPointsPerCycle: p.weekdayPointsPerCycle, weekendPointsPerCycle: p.weekendPointsPerCycle,
   minSpendPerCycleCentavos: p.minSpendPerCycleCentavos, supplementaryHolders: p.supplementaryHolders,
 });
-const byCode = (code) => products.find((p) => p.code === code);
+const byCode = (code: string) => products.find((p) => p.code === code)!;
 
 const team = {
   "mem-ost-a1": [
@@ -312,7 +323,7 @@ const team = {
   ],
 };
 
-const installmentSchedule = (code, dues) => {
+const installmentSchedule = (code: VipTierCode, dues: (string | null)[]): ScheduleItem[] => {
   const each = { B1: peso(15500), S1: peso(57500), G1: peso(95000) }[code];
   return [
     { seq: 1, label: "Reservation fee", purpose: "reservation", amountCentavos: peso(10000), dueDate: dues[0] },
@@ -323,18 +334,18 @@ const installmentSchedule = (code, dues) => {
   ];
 };
 
-const baseContract = (id, customerId, code, schemeId, seller) => {
+const baseContract = (id: string, customerId: string, code: VipTierCode, schemeId: string, seller: keyof typeof team) => {
   const product = byCode(code);
-  const scheme = paymentSchemes.find((s) => s.id === schemeId);
+  const scheme = paymentSchemes.find((s) => s.id === schemeId)!;
   return {
     id, customerId, productCode: code, productConfigVersion: product.configVersion, priceCentavos: product.priceCentavos,
     priceStatus: product.priceStatus, schemeId, schemeLabel: scheme.label, schemeStatus: scheme.commercialStatus, paymentCode: scheme.paymentCode,
-    classification: "S", validityYears: product.validityYears, benefits: benefitsOf(product),
+    classification: "S" as const, validityYears: product.validityYears, benefits: benefitsOf(product),
     sellerMemberId: seller, genealogy: team[seller], customerAccepted: true, reviewedBy: null, finalizedAt: null, returnReason: null, cancelReason: null,
   };
 };
 
-const contracts = [
+const contracts: Contract[] = [
   { ...baseContract("ctr-1", "cust-a1", "S1", "scheme-installment-4m", "mem-ost-a1"),
     schedule: installmentSchedule("S1", ["2026-09-30", "2026-10-30", "2026-11-05", "2026-12-05", "2027-01-05"]),
     requiredInitialCentavos: peso(67500), raNumber: null, status: "finalized", preparedBy: "dev-ost-a1", createdAt: "2026-09-29",
@@ -357,7 +368,7 @@ const contracts = [
     history: [{ at: "2026-11-06", actorId: "dev-ost-a2", event: "CONTRACT_SUBMITTED", note: null }] },
 ];
 
-const sales = [
+const sales: Sale[] = [
   { id: "sale-1", contractId: "ctr-1", customerId: "cust-a1", productCode: "S1", branchId: "branch-a", valueCentavos: peso(240000), recordedDate: "2026-09-30",
     sellerMemberId: "mem-ost-a1", team: team["mem-ost-a1"], status: "confirmed", confirmedDate: "2026-10-28",
     adjustments: [{ id: "adj-1", date: "2026-10-28", amountCentavos: peso(240000), kind: "confirmation", reason: "Required initial payment verified by Finance", actorId: "dev-finance" }] },
@@ -370,7 +381,7 @@ const sales = [
     sellerMemberId: "mem-ost-a2", team: team["mem-ost-a2"], status: "pending", confirmedDate: null, adjustments: [] },
 ];
 
-const pay = (id, contractId, customerId, saleId, purpose, amount, paidDate, status, extra) => ({
+const pay = (id: string, contractId: string, customerId: string, saleId: string, purpose: PaymentPurpose, amount: number, paidDate: string, status: Payment["status"], extra?: Partial<Payment>): Payment => ({
   id, contractId, customerId, saleId, purpose, amountCentavos: amount, method: "Bank Transfer", paidDate, referenceNo: null,
   evidenceFileName: "receipt-" + id + ".jpg", submittedBy: "dev-ost-a1", submittedAt: paidDate, status,
   verifiedBy: status === "verified" ? "dev-finance" : null, verifiedAt: status === "verified" ? paidDate : null,
@@ -379,14 +390,14 @@ const pay = (id, contractId, customerId, saleId, purpose, amount, paidDate, stat
   ...extra,
 });
 
-const payments = [
+const payments: Payment[] = [
   pay("pay-1", "ctr-1", "cust-a1", "sale-1", "reservation", peso(10000), "2026-09-30", "verified"),
   pay("pay-2", "ctr-1", "cust-a1", "sale-1", "installment", peso(57500), "2026-10-28", "verified"),
   pay("pay-3", "ctr-2", "cust-b1", "sale-2", "full", peso(72000), "2026-10-30", "verified", { submittedBy: "dev-ost-b1" }),
   pay("pay-4", "ctr-4", "cust-a4", "sale-4", "reservation", peso(10000), "2026-11-07", "submitted", { submittedBy: "dev-ost-a2" }),
 ];
 
-const memberships = [
+const memberships: Membership[] = [
   { id: "memb-1", customerId: "cust-b1", contractId: "ctr-2", productCode: "B1", status: "active", activationDate: "2026-11-02",
     validityEndDate: "2033-11-02", cardId: "26110200001B1C01S", raNumber: "2026-0001", financialHold: false, createdAt: "2026-10-30",
     history: [{ at: "2026-11-02", actorId: "dev-admin", event: "MEMBERSHIP_ACTIVATED", note: null }] },
@@ -394,15 +405,15 @@ const memberships = [
     validityEndDate: null, cardId: null, raNumber: null, financialHold: false, createdAt: "2026-10-01", history: [] },
 ];
 
-const resortSpends = [
+const resortSpends: ResortSpend[] = [
   { id: "rs-1", membershipId: "memb-1", date: "2026-11-04", amountCentavos: peso(400), description: "Resort restaurant", status: "verified", verificationRef: null },
   { id: "rs-2", membershipId: "memb-1", date: "2026-11-06", amountCentavos: peso(600), description: "Resort accommodation extras", status: "verified", verificationRef: null },
   { id: "rs-3", membershipId: "memb-1", date: "2026-11-07", amountCentavos: peso(500), description: "Resort activity pass (refunded)", status: "refund_hold", verificationRef: null },
 ];
 
-const commissions = [];
+const commissions: Commission[] = [];
 
-const counters = { contract: 5, sale: 5, payment: 5, membership: 3, commission: 1, adjustment: 3, resortSpend: 4 };
+const counters: Record<string, number> = { contract: 5, sale: 5, payment: 5, membership: 3, commission: 1, adjustment: 3, resortSpend: 4 };
 
 export const seedData = {
   members,

@@ -2,7 +2,7 @@ import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/shared/lib/utils"
 
-const buttonVariants = cva(
+const buttonVariantsBase = cva(
   "tw:group/button tw:bg-transparent tw:inline-flex tw:shrink-0 tw:items-center tw:justify-center tw:rounded-lg tw:border tw:border-transparent tw:bg-clip-padding tw:text-sm tw:font-medium tw:whitespace-nowrap tw:transition-all tw:outline-none tw:select-none tw:focus-visible:border-ring tw:focus-visible:ring-3 tw:focus-visible:ring-ring/50 tw:active:not-aria-[haspopup]:translate-y-px tw:disabled:pointer-events-none tw:disabled:opacity-50 tw:aria-invalid:border-destructive tw:aria-invalid:ring-3 tw:aria-invalid:ring-destructive/20 tw:dark:aria-invalid:border-destructive/50 tw:dark:aria-invalid:ring-destructive/40 tw:[&_svg]:pointer-events-none tw:[&_svg]:shrink-0 tw:[&_svg:not([class*=size-])]:size-4",
   {
     variants: {
@@ -47,6 +47,12 @@ const buttonVariants = cva(
   }
 )
 
+// Merge conflicting utilities (e.g. base `bg-transparent` vs variant `bg-primary`)
+// for every caller, including links styled with `buttonVariants()` directly.
+function buttonVariants(props?: Parameters<typeof buttonVariantsBase>[0]) {
+  return cn(buttonVariantsBase(props))
+}
+
 function Button({
   className,
   variant = "default",
@@ -56,7 +62,7 @@ function Button({
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={buttonVariants({ variant, size, className })}
       {...props}
     />
   )

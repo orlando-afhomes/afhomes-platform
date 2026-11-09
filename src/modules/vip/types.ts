@@ -36,7 +36,7 @@ export type VipProduct = {
   supplementaryHolders: number;
   status: "active" | "retired";
   configVersion: number;
-  effectiveDate: string;
+  effectiveDate: string | null;
   changes: ProductChange[];
 };
 

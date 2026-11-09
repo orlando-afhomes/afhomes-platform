@@ -11,7 +11,7 @@ import type { Commission } from "@/modules/commissions/types";
 import type { ResortSpend } from "@/modules/stay-points/types";
 import type { Account } from "@/modules/accounts/types";
 import type { AuditEvent } from "@/modules/audit/types";
-import { seedData } from "@seed/afhomes-seed";
+import { seedData } from "./seed-data";
 
 export type MockStore = {
   members: OrgMember[];
@@ -47,7 +47,7 @@ export type MockStore = {
   counters: Record<string, number>;
 };
 
-// Seed records live in the centralized synthetic seed file (data/database/afhomes-seed.js).
+// Seed records live in the centralized synthetic seed file (seed-data.ts).
 // They are deep-cloned here into browser-memory state; a refresh restores them.
 const { members, accreditations, customers, products, paymentSchemes, contracts, sales, payments, memberships, commissions, resortSpends, accounts, departments, roles, staff } = seedData;
 

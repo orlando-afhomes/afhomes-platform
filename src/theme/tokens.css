@@ -44,6 +44,13 @@
   --color-warning-strong: #805719;
   --color-danger: #a63a32;
   --color-info: #1f6b8f;
+  /* Dashboard KPI accent (fourth card tone in the dashboard design). */
+  --color-dashboard-violet: #6d4fc2;
+  --color-dashboard-violet-soft: #f0ebfa;
+  /* VIP tier metals (each at least 3:1 against white for chart marks). */
+  --color-tier-gold: #b8891f;
+  --color-tier-silver: #8a939c;
+  --color-tier-bronze: #9a5b2b;
 
   --color-state-focus: var(--color-accent-strong);
   --color-state-disabled-bg: #ece9e0;

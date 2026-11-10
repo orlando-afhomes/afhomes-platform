@@ -1,5 +1,57 @@
 import { describe, expect, it } from "vitest";
-import { compactPeso, formatShare, niceDomain, tickIndexes, xPercent, yPercent } from "./dashboard-chart-model";
+import {
+  axisPeso,
+  compactPeso,
+  formatShare,
+  monotonePath,
+  monotoneSegments,
+  niceDomain,
+  tickIndexes,
+  xPercent,
+  yPercent,
+} from "./dashboard-chart-model";
+
+describe("monotone curve", () => {
+  const points = [
+    { x: 0, y: 100 },
+    { x: 10, y: 100 },
+    { x: 20, y: 20 },
+    { x: 30, y: 60 },
+    { x: 40, y: 60 },
+  ];
+
+  it("passes through every point", () => {
+    const segments = monotoneSegments(points);
+    expect(segments).toHaveLength(4);
+    expect(segments.map((segment) => segment.end)).toEqual(points.slice(1));
+    expect(monotonePath(points).startsWith("M 0.000 100.000 C")).toBe(true);
+  });
+
+  it("never overshoots between neighbouring points, so flat days stay flat", () => {
+    monotoneSegments(points).forEach((segment, index) => {
+      const low = Math.min(points[index].y, points[index + 1].y);
+      const high = Math.max(points[index].y, points[index + 1].y);
+      for (const control of [segment.c1, segment.c2]) {
+        expect(control.y).toBeGreaterThanOrEqual(low - 1e-9);
+        expect(control.y).toBeLessThanOrEqual(high + 1e-9);
+      }
+    });
+  });
+
+  it("handles short inputs", () => {
+    expect(monotonePath([])).toBe("");
+    expect(monotonePath([{ x: 50, y: 10 }])).toBe("M 50.000 10.000");
+    expect(monotoneSegments([{ x: 0, y: 0 }, { x: 10, y: 10 }])).toHaveLength(1);
+  });
+});
+
+describe("axis labels", () => {
+  it("formats full whole-peso labels", () => {
+    expect(axisPeso(250_000_000)).toBe("₱2,500,000");
+    expect(axisPeso(0)).toBe("₱0");
+    expect(axisPeso(-24_000_000)).toBe("-₱240,000");
+  });
+});
 
 describe("dashboard chart model", () => {
   it("formats compact peso axis labels, including negatives", () => {

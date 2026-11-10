@@ -1,15 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Network } from "lucide-react";
 import type { UplineSummary } from "@/data/contracts/member-repository";
 import type { OrgMember } from "@/modules/organization/types";
 import { aaDisplay, teamDisplayName } from "@/modules/sales-network/display";
 import { DesignationBadge } from "@/shared/components/business/designation-badge";
-import { CardSection } from "@/shared/components/modern/card-section";
 import { DetailList, DetailRow } from "@/shared/components/modern/detail-list";
 import { Money } from "@/shared/components/modern/money";
-import { DashboardEmptyState, DashboardError } from "@/shared/components/dashboard/dashboard-layout";
+import { DashboardCard, DashboardEmptyState, DashboardError } from "@/shared/components/dashboard/dashboard-layout";
 import { Skeleton } from "@/shared/ui/skeleton";
 import type { TeamContribution } from "../dashboard-metrics";
 
@@ -64,7 +63,8 @@ export function SalesTeamOverview({
     ) : undefined;
 
   return (
-    <CardSection
+    <DashboardCard
+      icon={Network}
       title={showTeam ? "Team overview" : "Account overview"}
       description={showTeam ? "Your account, authorized upline, and direct downline." : "Your account and authorized upline."}
       actions={actions}
@@ -135,6 +135,6 @@ export function SalesTeamOverview({
           ) : null}
         </div>
       )}
-    </CardSection>
+    </DashboardCard>
   );
 }

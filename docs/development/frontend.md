@@ -433,7 +433,7 @@ Account Management is part of **Staff & Access** at `/admin/organization/staff` 
 - **Sales**: my and team confirmed sales value (OST: my customers instead of team), confirmed and pending counts; my/team trend; confirmed sales by tier; activity; own returned contracts and customer drafts; account, upline, and direct-downline contributions by recording-time team.
 - **Finance**: pending verifications, verified collections (gross with net note), outstanding receivables (with overdue), approved unpaid commissions; gross/reversals-and-refunds/net trend; receivables by state; payment and payout activity; six gated Finance queues.
 
-No comparison or trend badges are shown until an approved comparison definition exists (doc 11 section 32).
+The visual design follows `docs/ui-redesign/dashboard.png`: KPI cards with a tinted icon chip, a comparison or "Current" pill, and a faint decorative corner wave; chart cards with a segmented series switch (one series at a time, monotone curve, full-peso axis, hover tooltip, and a screen-reader-only summary and data table); equal-width activity and pending-approval cards. Period KPIs (Confirmed Sales Value, Verified Collections, Confirmed Sales Count) compare with the preceding period of equal length via `src/modules/reports/kpi-comparison.ts` (doc 11 section 32.1); snapshot KPIs never show a percentage.
 
 ## 40.5 Sales Network Panel Shells (Phase 1B-B06)
 

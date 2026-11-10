@@ -1,20 +1,19 @@
 "use client";
 
 import { useMemo } from "react";
-import { Ban, Coins, HandCoins, Landmark, ListChecks, ReceiptText, ShieldAlert, UserCheck, Wallet } from "lucide-react";
+import { Ban, ChartColumn, Coins, HandCoins, Landmark, ListChecks, PieChart, ReceiptText, ShieldAlert, UserCheck, Wallet } from "lucide-react";
 import { useEffectiveModuleIds } from "@/data/queries";
 import { useCommissions, useContracts, useEligibleSales, useMemberships, useOperation, usePayments } from "@/data/business-queries";
 import { periodCollections } from "@/modules/finance/rules";
-import { PageHeader } from "@/shared/components/modern/page-header";
 import { Money } from "@/shared/components/modern/money";
+import { InfoNote } from "@/shared/components/modern/detail-list";
 import { DashboardActivityList } from "@/shared/components/dashboard/dashboard-activity-list";
 import { DashboardDateFilter, useDashboardRange } from "@/shared/components/dashboard/dashboard-date-filter";
 import { DashboardDistributionChart, type DistributionRow } from "@/shared/components/dashboard/dashboard-distribution-chart";
 import { DashboardKpiCard, DashboardKpiGrid } from "@/shared/components/dashboard/dashboard-kpi";
-import { DashboardSplit } from "@/shared/components/dashboard/dashboard-layout";
+import { DashboardHeader, DashboardSplit } from "@/shared/components/dashboard/dashboard-layout";
 import { DashboardPendingActions, DashboardPendingItem } from "@/shared/components/dashboard/dashboard-pending-actions";
 import { DashboardTrendChart } from "@/shared/components/dashboard/dashboard-trend-chart";
-import { InfoNote } from "@/shared/components/modern/detail-list";
 import { formatPeso } from "@/shared/lib/money";
 import { manilaToday } from "@/shared/lib/dates";
 import {
@@ -29,11 +28,11 @@ import {
   receivablesBreakdown,
   type DashboardActivityItem,
 } from "../dashboard-metrics";
-import { CURRENT_SCOPE, SERIES_COLORS, periodScope, toActivityEntries } from "./dashboard-presentation";
+import { CURRENT_SCOPE, SERIES_COLORS, periodScope, periodTrend, toActivityEntries } from "./dashboard-presentation";
 
 const RECEIVABLE_ROWS = [
-  { state: "settled", label: "Settled", color: "var(--color-success)" },
-  { state: "outstanding", label: "Outstanding, not overdue", color: "var(--color-accent)" },
+  { state: "settled", label: "Settled", color: "var(--color-brand-primary)" },
+  { state: "outstanding", label: "Outstanding, not overdue", color: "var(--color-accent-light)" },
   { state: "overdue", label: "Overdue", color: "var(--color-danger)" },
 ] as const;
 
@@ -46,6 +45,7 @@ function isFinanceEvent(item: DashboardActivityItem) {
 export function FinanceDashboard() {
   const granted = useEffectiveModuleIds();
   const range = useDashboardRange();
+  const { from, to, valid } = range;
   const today = manilaToday();
   const canViewCollections = useOperation("finance.reports.view");
   const canVerify = useOperation("finance.verify");
@@ -64,13 +64,17 @@ export function FinanceDashboard() {
   const memberships = useMemberships();
   const eligible = useEligibleSales(hasCommissions && canAssign);
 
-  const dates = useMemo(() => (range.valid ? dateSpan(range.from, range.to) : []), [range.valid, range.from, range.to]);
+  const dates = useMemo(() => (valid ? dateSpan(from, to) : []), [valid, from, to]);
   const daily = useMemo(() => dailyCollections(payments.data ?? [], dates), [payments.data, dates]);
-  const collections = range.valid ? periodCollections(payments.data ?? [], range.from, range.to) : null;
+  const collections = valid ? periodCollections(payments.data ?? [], from, to) : null;
+  const collectionsTrend = useMemo(
+    () => (canViewCollections ? periodTrend({ from, to, valid }, (start, end) => periodCollections(payments.data ?? [], start, end).gross) : undefined),
+    [canViewCollections, from, to, valid, payments.data],
+  );
   const receivables = useMemo(() => receivablesBreakdown(contracts.data ?? [], payments.data ?? [], today), [contracts.data, payments.data, today]);
   const payouts = useMemo(() => commissionPayoutSummary(commissions.data ?? [], today), [commissions.data, today]);
   const activity = useMemo(
-    () => toActivityEntries(buildActivityFeed({ payments: payments.data, commissions: commissions.data }, 6, isFinanceEvent)),
+    () => toActivityEntries(buildActivityFeed({ payments: payments.data, commissions: commissions.data }, 5, isFinanceEvent)),
     [payments.data, commissions.data],
   );
   const receivableRows: DistributionRow[] = RECEIVABLE_ROWS.map((row) => {
@@ -99,13 +103,13 @@ export function FinanceDashboard() {
 
   return (
     <>
-      <PageHeader
+      <DashboardHeader
         title="Finance overview"
         description="Verified collections, receivables, commissions, and the Finance queues you can act on."
         actions={canViewCollections ? <DashboardDateFilter range={range} /> : undefined}
       />
 
-      <div className="tw:mt-5 tw:flex tw:flex-col tw:gap-6">
+      <div className="tw:mt-6 tw:flex tw:flex-col tw:gap-6">
         {kpiCount > 0 ? (
           <DashboardKpiGrid columns={kpiCount}>
             {hasFinance ? (
@@ -115,7 +119,6 @@ export function FinanceDashboard() {
                 icon={Wallet}
                 tone="accent"
                 scope={CURRENT_SCOPE}
-                description="Submitted or under review"
                 loading={payments.isLoading}
                 error={payments.error}
               />
@@ -125,12 +128,10 @@ export function FinanceDashboard() {
                 label="Verified collections"
                 value={collections ? <Money value={collections.gross} /> : "—"}
                 icon={Landmark}
+                tone="brand"
                 scope={periodScope(range)}
-                description={
-                  collections && collections.adjusted !== 0
-                    ? `Net ${formatPeso(collections.net)} after reversals and refunds`
-                    : "Gross, by Finance verification date"
-                }
+                trend={collectionsTrend}
+                description={collections && collections.adjusted !== 0 ? `Net ${formatPeso(collections.net)} after reversals and refunds` : undefined}
                 loading={payments.isLoading}
                 error={payments.error}
               />
@@ -142,9 +143,7 @@ export function FinanceDashboard() {
                 icon={ReceiptText}
                 tone="info"
                 scope={CURRENT_SCOPE}
-                description={
-                  receivables.overdueCentavos > 0 ? `${formatPeso(receivables.overdueCentavos)} overdue` : "Finalized contracts, none overdue"
-                }
+                description={receivables.overdueCentavos > 0 ? `${formatPeso(receivables.overdueCentavos)} overdue` : undefined}
                 loading={receivablesLoading}
                 error={receivablesError}
               />
@@ -154,7 +153,7 @@ export function FinanceDashboard() {
                 label="Approved unpaid commissions"
                 value={<Money value={payouts.approvedUnpaidCentavos} />}
                 icon={Coins}
-                tone="soft"
+                tone="violet"
                 scope={CURRENT_SCOPE}
                 description={`${payouts.approvedCount} approved, ${payouts.awaitingConfirmation} awaiting disbursement confirmation`}
                 loading={commissions.isLoading}
@@ -172,17 +171,18 @@ export function FinanceDashboard() {
           primary={
             canViewCollections ? (
               <DashboardTrendChart
-                title="Collections performance"
+                title="Collections Performance"
                 description="Finance-verified collections, reversals and refunds, and net collections, each on its own event date."
+                icon={ChartColumn}
                 dates={dates}
                 series={[
-                  { key: "gross", label: "Verified collections", color: SERIES_COLORS.primary, values: daily.gross, area: true },
-                  { key: "adjustments", label: "Reversals and refunds", color: SERIES_COLORS.secondary, values: daily.adjustments },
-                  { key: "net", label: "Net collections", color: SERIES_COLORS.tertiary, values: daily.net },
+                  { key: "gross", label: "Verified", color: SERIES_COLORS.primary, values: daily.gross, emptyText: "No verified collections in this period." },
+                  { key: "adjustments", label: "Reversals & refunds", color: SERIES_COLORS.secondary, values: daily.adjustments, emptyText: "No reversals or refunds in this period." },
+                  { key: "net", label: "Net", color: SERIES_COLORS.tertiary, values: daily.net, emptyText: "No net collections in this period." },
                 ]}
                 loading={payments.isLoading}
                 error={payments.error}
-                invalidRange={!range.valid}
+                invalidRange={!valid}
                 emptyText="No verified collections, reversals, or refunds in this period."
               />
             ) : undefined
@@ -190,8 +190,9 @@ export function FinanceDashboard() {
           secondary={
             hasFinance ? (
               <DashboardDistributionChart
-                title="Receivables overview"
+                title="Receivables Overview"
                 description="Finalized contracts by collection state (current). Amounts are remaining balances."
+                icon={PieChart}
                 rows={receivableRows}
                 unit={["contract", "contracts"]}
                 loading={receivablesLoading}
@@ -204,10 +205,11 @@ export function FinanceDashboard() {
 
         <DashboardSplit
           at="lg"
+          ratio="1-1"
           primary={
             hasFinance ? (
               <DashboardActivityList
-                description="Latest payment events and commission payouts."
+                description="Latest payment events and commission payouts"
                 items={activity}
                 loading={payments.isLoading || commissions.isLoading}
                 error={payments.error ?? commissions.error}
@@ -218,14 +220,14 @@ export function FinanceDashboard() {
           }
           secondary={
             hasQueues ? (
-              <DashboardPendingActions title="Pending Finance actions">
+              <DashboardPendingActions>
                 {queues.payments ? (
                   <DashboardPendingItem
                     href="/admin/finance"
                     label="Payment Verification"
                     count={countPendingPaymentVerifications(payments.data ?? [])}
                     icon={Wallet}
-                    tone="accent"
+                    tone="info"
                     loading={payments.isLoading}
                     error={payments.error}
                   />
@@ -236,6 +238,7 @@ export function FinanceDashboard() {
                     label="Commission Assignment"
                     count={eligible.data?.length ?? 0}
                     icon={UserCheck}
+                    tone="brand"
                     loading={eligible.isLoading}
                     error={eligible.error}
                   />
@@ -246,7 +249,7 @@ export function FinanceDashboard() {
                     label="Commission Payouts"
                     count={payouts.ready + payouts.awaitingConfirmation}
                     icon={HandCoins}
-                    tone="soft"
+                    tone="violet"
                     loading={commissions.isLoading}
                     error={commissions.error}
                   />
@@ -257,7 +260,7 @@ export function FinanceDashboard() {
                     label="Cancellation Requests"
                     count={countCancellationRequests(contracts.data ?? [])}
                     icon={Ban}
-                    tone="info"
+                    tone="accent"
                     loading={contracts.isLoading}
                     error={contracts.error}
                   />
@@ -279,7 +282,7 @@ export function FinanceDashboard() {
                     label="Membership Activation"
                     count={countPendingMembershipActivations(memberships.data ?? [])}
                     icon={ListChecks}
-                    tone="soft"
+                    tone="brand"
                     loading={memberships.isLoading}
                     error={memberships.error}
                   />

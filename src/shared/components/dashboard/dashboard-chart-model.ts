@@ -14,6 +14,13 @@ export function compactPeso(centavos: number): string {
   return `${sign}₱${size.toLocaleString("en-PH")}`;
 }
 
+/** Full whole-peso axis label, for example "₱2,500,000" (axis ticks are whole pesos). */
+export function axisPeso(centavos: number): string {
+  const pesos = Math.round(centavos / 100);
+  const sign = pesos < 0 ? "-" : "";
+  return `${sign}₱${Math.abs(pesos).toLocaleString("en-PH")}`;
+}
+
 function trim(value: number) {
   return value.toFixed(1).replace(/\.0$/, "");
 }
@@ -60,15 +67,66 @@ export function xPercent(index: number, length: number): number {
   return (index / (length - 1)) * 100;
 }
 
-/** Evenly spaced x-axis labels, including the first and last date. */
+/**
+ * X-axis labels at a whole-day step (for example every 3 days), always
+ * including the first and last date; a label too close to the last is dropped.
+ */
 export function tickIndexes(length: number, maxTicks = 6): number[] {
   if (length <= 0) return [];
   if (length <= maxTicks) return Array.from({ length }, (_, index) => index);
-  const indexes = new Set<number>();
-  for (let index = 0; index < maxTicks; index += 1) {
-    indexes.add(Math.round((index * (length - 1)) / (maxTicks - 1)));
+  const step = Math.ceil((length - 1) / (maxTicks - 1));
+  const indexes: number[] = [];
+  for (let index = 0; index < length - 1; index += step) indexes.push(index);
+  if (indexes.length > 1 && length - 1 - indexes[indexes.length - 1] < step / 2) indexes.pop();
+  indexes.push(length - 1);
+  return indexes;
+}
+
+export type ChartPoint = { x: number; y: number };
+export type CurveSegment = { c1: ChartPoint; c2: ChartPoint; end: ChartPoint };
+
+/**
+ * Monotone cubic (Fritsch-Carlson) segments: a smooth line that never
+ * overshoots between two points, so a flat day stays flat and the curve never
+ * suggests a value that was not recorded.
+ */
+export function monotoneSegments(points: readonly ChartPoint[]): CurveSegment[] {
+  const n = points.length;
+  if (n < 2) return [];
+  const dx: number[] = [];
+  const slope: number[] = [];
+  for (let i = 0; i < n - 1; i += 1) {
+    dx.push(points[i + 1].x - points[i].x || 1e-9);
+    slope.push((points[i + 1].y - points[i].y) / dx[i]);
   }
-  return [...indexes].sort((a, b) => a - b);
+  const tangent: number[] = new Array(n).fill(0);
+  tangent[0] = slope[0];
+  tangent[n - 1] = slope[n - 2];
+  for (let i = 1; i < n - 1; i += 1) {
+    if (slope[i - 1] * slope[i] <= 0) continue;
+    tangent[i] = (3 * (dx[i - 1] + dx[i])) / ((2 * dx[i] + dx[i - 1]) / slope[i - 1] + (dx[i] + 2 * dx[i - 1]) / slope[i]);
+  }
+
+  return points.slice(1).map((end, index) => {
+    const start = points[index];
+    const third = dx[index] / 3;
+    return {
+      c1: { x: start.x + third, y: start.y + tangent[index] * third },
+      c2: { x: end.x - third, y: end.y - tangent[index + 1] * third },
+      end,
+    };
+  });
+}
+
+/** SVG path for the monotone curve through the points. */
+export function monotonePath(points: readonly ChartPoint[]): string {
+  if (points.length === 0) return "";
+  const fmt = (value: number) => value.toFixed(3);
+  const head = `M ${fmt(points[0].x)} ${fmt(points[0].y)}`;
+  return [
+    head,
+    ...monotoneSegments(points).map(({ c1, c2, end }) => `C ${fmt(c1.x)} ${fmt(c1.y)} ${fmt(c2.x)} ${fmt(c2.y)} ${fmt(end.x)} ${fmt(end.y)}`),
+  ].join(" ");
 }
 
 /** Display-only share with at most one decimal, for example "41.7%". */

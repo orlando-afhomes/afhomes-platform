@@ -2,18 +2,17 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BadgeCheck, BadgeDollarSign, Contact, FilePenLine, Hourglass, UserPen, UsersRound } from "lucide-react";
+import { BadgeCheck, ChartColumn, Coins, FilePenLine, Hourglass, Layers, UserPen, UserPlus, UsersRound } from "lucide-react";
 import { useCustomers, useEffectiveModuleIds, useMembers, useMockRepositories } from "@/data/queries";
 import { useContracts, useOperation, useSales } from "@/data/business-queries";
 import type { DevIdentity } from "@/modules/identity/types";
 import { confirmedCountInPeriod, confirmedValueInPeriod, mySales, snapshotCounts, teamSales } from "@/modules/sales/rules";
-import { PageHeader } from "@/shared/components/modern/page-header";
 import { Money } from "@/shared/components/modern/money";
 import { DashboardActivityList } from "@/shared/components/dashboard/dashboard-activity-list";
 import { DashboardDateFilter, useDashboardRange } from "@/shared/components/dashboard/dashboard-date-filter";
 import { DashboardDistributionChart } from "@/shared/components/dashboard/dashboard-distribution-chart";
 import { DashboardKpiCard, DashboardKpiGrid } from "@/shared/components/dashboard/dashboard-kpi";
-import { DashboardSplit } from "@/shared/components/dashboard/dashboard-layout";
+import { DashboardHeader, DashboardSplit } from "@/shared/components/dashboard/dashboard-layout";
 import { DashboardPendingActions, DashboardPendingItem } from "@/shared/components/dashboard/dashboard-pending-actions";
 import { DashboardTrendChart, type TrendSeries } from "@/shared/components/dashboard/dashboard-trend-chart";
 import { InfoNote } from "@/shared/components/modern/detail-list";
@@ -28,7 +27,7 @@ import {
   dateSpan,
   teamContributions,
 } from "../dashboard-metrics";
-import { CURRENT_SCOPE, SERIES_COLORS, periodScope, tierRows, toActivityEntries } from "./dashboard-presentation";
+import { CURRENT_SCOPE, SERIES_COLORS, periodScope, periodTrend, tierRows, toActivityEntries } from "./dashboard-presentation";
 import { primarySalesRole } from "./resolve-dashboard";
 import { SalesTeamOverview } from "./sales-team-overview";
 
@@ -62,23 +61,36 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
   const mine = useMemo(() => mySales(sales.data ?? [], memberId), [sales.data, memberId]);
   const team = useMemo(() => (isManager ? teamSales(sales.data ?? [], memberId) : mine), [isManager, sales.data, memberId, mine]);
   const counts = snapshotCounts(team);
-  const dates = useMemo(() => (range.valid ? dateSpan(range.from, range.to) : []), [range.valid, range.from, range.to]);
+  const { from, to, valid } = range;
+  const dates = useMemo(() => (valid ? dateSpan(from, to) : []), [valid, from, to]);
   const series = useMemo(() => {
-    const list: TrendSeries[] = [{ key: "mine", label: "My sales", color: SERIES_COLORS.primary, values: dailyConfirmedSales(mine, dates), area: true }];
-    if (isManager) list.push({ key: "team", label: "Team sales", color: SERIES_COLORS.secondary, values: dailyConfirmedSales(team, dates) });
+    const list: TrendSeries[] = [
+      { key: "mine", label: "My sales", color: SERIES_COLORS.primary, values: dailyConfirmedSales(mine, dates), emptyText: "You have no confirmed sales in this period." },
+    ];
+    if (isManager) {
+      list.push({ key: "team", label: "Team sales", color: SERIES_COLORS.secondary, values: dailyConfirmedSales(team, dates), emptyText: "Your team has no confirmed sales in this period." });
+    }
     return list;
   }, [mine, team, dates, isManager]);
+  const trends = useMemo(() => {
+    const period = { from, to, valid };
+    return {
+      mine: periodTrend(period, (start, end) => confirmedValueInPeriod(mine, start, end)),
+      team: periodTrend(period, (start, end) => confirmedValueInPeriod(team, start, end)),
+      count: periodTrend(period, (start, end) => confirmedCountInPeriod(team, start, end)),
+    };
+  }, [from, to, valid, mine, team]);
   const tiers = useMemo(() => tierRows(confirmedSalesTierDistribution(team).rows), [team]);
   const activity = useMemo(
     () =>
       toActivityEntries(
-        buildActivityFeed({ customers: canSeeCustomers ? customers.data : [], contracts: contracts.data, sales: team }),
+        buildActivityFeed({ customers: canSeeCustomers ? customers.data : [], contracts: contracts.data, sales: team }, 3),
       ),
     [canSeeCustomers, customers.data, contracts.data, team],
   );
   const contributions = useMemo(
-    () => (isManager && range.valid ? teamContributions(members.data ?? [], memberId, sales.data ?? [], range.from, range.to) : []),
-    [isManager, range.valid, range.from, range.to, members.data, memberId, sales.data],
+    () => (isManager && valid ? teamContributions(members.data ?? [], memberId, sales.data ?? [], from, to) : []),
+    [isManager, valid, from, to, members.data, memberId, sales.data],
   );
   const currentMember = (members.data ?? []).find((member) => member.id === memberId) ?? null;
   // Only the member's own records wait on them; downline records are visible but not theirs to correct.
@@ -92,31 +104,33 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
 
   return (
     <>
-      <PageHeader
+      <DashboardHeader
         title={`Welcome back, ${role ? getSystemRoleLabel(role) : "Sales Network"}`}
-        description={isManager ? "Your sales and your authorized team's performance." : "Your personal sales performance."}
+        description={isManager ? "Here's an overview of your sales and your authorized team's performance." : "Here's an overview of your personal sales performance."}
         actions={canSeeSales ? <DashboardDateFilter range={range} /> : undefined}
       />
 
-      <div className="tw:mt-5 tw:flex tw:flex-col tw:gap-6">
+      <div className="tw:mt-6 tw:flex tw:flex-col tw:gap-6">
         {canSeeSales ? (
           <DashboardKpiGrid columns={4}>
             <DashboardKpiCard
               label="My confirmed sales value"
-              value={range.valid ? <Money value={confirmedValueInPeriod(mine, range.from, range.to)} /> : "—"}
-              icon={BadgeDollarSign}
+              value={valid ? <Money value={confirmedValueInPeriod(mine, from, to)} /> : "—"}
+              icon={Coins}
+              tone="brand"
               scope={periodScope(range)}
-              description="Sales you recorded, by Finance confirmation date"
+              trend={trends.mine}
               loading={sales.isLoading}
               error={sales.error}
             />
             {isManager ? (
               <DashboardKpiCard
                 label="Team confirmed sales value"
-                value={range.valid ? <Money value={confirmedValueInPeriod(team, range.from, range.to)} /> : "—"}
+                value={valid ? <Money value={confirmedValueInPeriod(team, from, to)} /> : "—"}
                 icon={UsersRound}
-                tone="accent"
+                tone="info"
                 scope={periodScope(range)}
+                trend={trends.team}
                 description="Your own plus authorized downline, each sale once"
                 loading={sales.isLoading}
                 error={sales.error}
@@ -125,21 +139,21 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
               <DashboardKpiCard
                 label="My customers"
                 value={canSeeCustomers ? countVisibleCustomers(customers.data ?? []).toLocaleString() : "—"}
-                icon={Contact}
+                icon={UserPlus}
                 tone="info"
                 scope={CURRENT_SCOPE}
-                description="Customers you own"
                 loading={customers.isLoading}
                 error={customers.error}
               />
             )}
             <DashboardKpiCard
               label="Confirmed sales"
-              value={range.valid ? confirmedCountInPeriod(team, range.from, range.to).toLocaleString() : "—"}
+              value={valid ? confirmedCountInPeriod(team, from, to).toLocaleString() : "—"}
               icon={BadgeCheck}
-              tone="soft"
+              tone="violet"
               scope={periodScope(range)}
-              description={`Distinct ${scopeNoun} sales confirmed in the period`}
+              trend={trends.count}
+              description={`Distinct ${scopeNoun} sales`}
               loading={sales.isLoading}
               error={sales.error}
             />
@@ -162,24 +176,26 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
           <DashboardSplit
             primary={
               <DashboardTrendChart
-                title="Sales performance trend"
+                title="Sales Performance"
                 description={
                   isManager
-                    ? "Confirmed sales value by Finance confirmation date. Team sales include your own sales."
+                    ? "Confirmed sales value by Finance confirmation date. Team sales include your own."
                     : "Your confirmed sales value by Finance confirmation date."
                 }
+                icon={ChartColumn}
                 dates={dates}
                 series={series}
                 loading={sales.isLoading}
                 error={sales.error}
-                invalidRange={!range.valid}
+                invalidRange={!valid}
                 emptyText="No confirmed sales in this period."
               />
             }
             secondary={
               <DashboardDistributionChart
-                title="Confirmed sales by VIP product"
+                title="Sales by VIP Product"
                 description={`Currently confirmed ${scopeNoun} sales (current).`}
+                icon={Layers}
                 rows={tiers}
                 unit={["sale", "sales"]}
                 loading={sales.isLoading}
@@ -192,10 +208,10 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
 
         <DashboardSplit
           at="lg"
+          ratio="1-1"
           primary={
             <DashboardActivityList
-              title="Sales activity"
-              description="Latest customer submissions, contract updates, and sale confirmations in your scope."
+              description="Latest customer, contract, and sale updates in your scope"
               items={activity}
               loading={sales.isLoading || contracts.isLoading || (canSeeCustomers && customers.isLoading)}
               error={sales.error ?? contracts.error ?? (canSeeCustomers ? customers.error : null)}
@@ -205,7 +221,7 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
           }
           secondary={
             showReturned || showDrafts ? (
-              <DashboardPendingActions title="Needs your attention" description="Records waiting on you.">
+              <DashboardPendingActions title="Needs Your Attention" description="Your records waiting on you">
                 {showReturned ? (
                   <DashboardPendingItem
                     href="/admin/sales/contracts"

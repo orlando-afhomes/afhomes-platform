@@ -1,22 +1,21 @@
 "use client";
 
 import { useMemo } from "react";
-import { BadgeDollarSign, ClipboardCheck, Contact, ListChecks, Users, Wallet } from "lucide-react";
+import { ChartColumn, ClipboardCheck, Coins, FileText, Layers, ListChecks, UserPlus, Users, Wallet } from "lucide-react";
 import { useCustomers, useEffectiveModuleIds, useMembers } from "@/data/queries";
 import { useContracts, useMemberships, useOperation, usePayments, useSales } from "@/data/business-queries";
 import { periodCollections } from "@/modules/finance/rules";
 import { confirmedValueInPeriod } from "@/modules/sales/rules";
-import { PageHeader } from "@/shared/components/modern/page-header";
 import { Money } from "@/shared/components/modern/money";
+import { InfoNote } from "@/shared/components/modern/detail-list";
 import { DashboardActivityList } from "@/shared/components/dashboard/dashboard-activity-list";
 import { compactPeso } from "@/shared/components/dashboard/dashboard-chart-model";
 import { DashboardDateFilter, useDashboardRange } from "@/shared/components/dashboard/dashboard-date-filter";
 import { DashboardDistributionChart } from "@/shared/components/dashboard/dashboard-distribution-chart";
 import { DashboardKpiCard, DashboardKpiGrid } from "@/shared/components/dashboard/dashboard-kpi";
-import { DashboardSplit } from "@/shared/components/dashboard/dashboard-layout";
+import { DashboardHeader, DashboardSplit } from "@/shared/components/dashboard/dashboard-layout";
 import { DashboardPendingActions, DashboardPendingItem } from "@/shared/components/dashboard/dashboard-pending-actions";
 import { DashboardTrendChart, type TrendSeries } from "@/shared/components/dashboard/dashboard-trend-chart";
-import { InfoNote } from "@/shared/components/modern/detail-list";
 import { getRoleDisplayLabel } from "../role-label";
 import {
   buildActivityFeed,
@@ -30,7 +29,7 @@ import {
   dailyConfirmedSales,
   dateSpan,
 } from "../dashboard-metrics";
-import { CURRENT_SCOPE, SERIES_COLORS, periodScope, tierRows, toActivityEntries } from "./dashboard-presentation";
+import { CURRENT_SCOPE, SERIES_COLORS, periodScope, periodTrend, tierRows, toActivityEntries } from "./dashboard-presentation";
 
 /** Super Administrator and Administrator overview. Each widget checks its own grant. */
 export function AdminDashboard({ roles }: { roles: string[] }) {
@@ -62,24 +61,44 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
   const series = useMemo(() => {
     const list: TrendSeries[] = [];
     if (canSeeSales) {
-      list.push({ key: "sales", label: "Confirmed sales value", color: SERIES_COLORS.primary, values: dailyConfirmedSales(sales.data ?? [], dates), area: true });
+      list.push({
+        key: "sales",
+        label: "Sales",
+        color: SERIES_COLORS.primary,
+        values: dailyConfirmedSales(sales.data ?? [], dates),
+        emptyText: "No confirmed sales in this period.",
+      });
     }
     if (canViewCollections) {
-      list.push({ key: "collections", label: "Verified collections", color: SERIES_COLORS.secondary, values: dailyCollections(payments.data ?? [], dates).gross });
+      list.push({
+        key: "collections",
+        label: "Collections",
+        color: SERIES_COLORS.secondary,
+        values: dailyCollections(payments.data ?? [], dates).gross,
+        emptyText: "No verified collections in this period.",
+      });
     }
     return list;
   }, [canSeeSales, canViewCollections, sales.data, payments.data, dates]);
+  const { from, to, valid } = range;
+  const salesTrend = useMemo(
+    () => (canSeeSales ? periodTrend({ from, to, valid }, (start, end) => confirmedValueInPeriod(sales.data ?? [], start, end)) : undefined),
+    [canSeeSales, from, to, valid, sales.data],
+  );
   const adjusted = canViewCollections && range.valid ? periodCollections(payments.data ?? [], range.from, range.to).adjusted : 0;
   const tiers = useMemo(() => tierRows(contractTierDistribution(contracts.data ?? []).rows), [contracts.data]);
   const activity = useMemo(
     () =>
       toActivityEntries(
-        buildActivityFeed({
-          customers: canSeeCustomers ? customers.data : [],
-          contracts: contracts.data,
-          payments: payments.data,
-          memberships: memberships.data,
-        }),
+        buildActivityFeed(
+          {
+            customers: canSeeCustomers ? customers.data : [],
+            contracts: contracts.data,
+            payments: payments.data,
+            memberships: memberships.data,
+          },
+          3,
+        ),
       ),
     [canSeeCustomers, customers.data, contracts.data, payments.data, memberships.data],
   );
@@ -91,46 +110,44 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
 
   return (
     <>
-      <PageHeader
+      <DashboardHeader
         title={`Welcome back, ${getRoleDisplayLabel(roles)}`}
-        description="An overview of your sales network, contracts, and operations."
+        description="Here's an overview of your organization, sales network, and operations."
         actions={series.length > 0 ? <DashboardDateFilter range={range} /> : undefined}
       />
 
-      <div className="tw:mt-5 tw:flex tw:flex-col tw:gap-6">
+      <div className="tw:mt-6 tw:flex tw:flex-col tw:gap-6">
         {kpiCount > 0 ? (
           <DashboardKpiGrid columns={kpiCount}>
-            {canSeeCustomers ? (
-              <DashboardKpiCard
-                label="Customers"
-                value={countVisibleCustomers(customers.data ?? []).toLocaleString()}
-                icon={Contact}
-                tone="info"
-                scope={CURRENT_SCOPE}
-                description="Visible to your role"
-                loading={customers.isLoading}
-                error={customers.error}
-              />
-            ) : null}
             {canSeeMembers ? (
               <DashboardKpiCard
                 label="Sales network members"
                 value={countVisibleMembers(members.data ?? []).toLocaleString()}
                 icon={Users}
+                tone="brand"
                 scope={CURRENT_SCOPE}
-                description="Visible to your role"
                 loading={members.isLoading}
                 error={members.error}
+              />
+            ) : null}
+            {canSeeCustomers ? (
+              <DashboardKpiCard
+                label="Customers"
+                value={countVisibleCustomers(customers.data ?? []).toLocaleString()}
+                icon={UserPlus}
+                tone="info"
+                scope={CURRENT_SCOPE}
+                loading={customers.isLoading}
+                error={customers.error}
               />
             ) : null}
             {canReview ? (
               <DashboardKpiCard
                 label="Contracts requiring review"
                 value={countPendingContractReviews(contracts.data ?? []).toLocaleString()}
-                icon={ClipboardCheck}
+                icon={FileText}
                 tone="accent"
                 scope={CURRENT_SCOPE}
-                description="Submitted or under review"
                 loading={contracts.isLoading}
                 error={contracts.error}
               />
@@ -139,10 +156,10 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
               <DashboardKpiCard
                 label="Confirmed sales value"
                 value={range.valid ? <Money value={confirmedValueInPeriod(sales.data ?? [], range.from, range.to)} /> : "—"}
-                icon={BadgeDollarSign}
-                tone="soft"
+                icon={Coins}
+                tone="violet"
                 scope={periodScope(range)}
-                description="By Finance confirmation date"
+                trend={salesTrend}
                 loading={sales.isLoading}
                 error={sales.error}
               />
@@ -158,14 +175,13 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
           primary={
             series.length > 0 ? (
               <DashboardTrendChart
-                title="Sales performance"
+                title="Sales Performance"
                 description={
-                  canViewCollections && canSeeSales
-                    ? "Confirmed sales value and verified collections over time. They are separate measures and are never added together."
-                    : canSeeSales
-                      ? "Confirmed sales value over time, by Finance confirmation date."
-                      : "Verified collections over time, by verification date."
+                  series.length > 1
+                    ? "Confirmed sales value or verified collections over time"
+                    : "Confirmed sales value over time, by Finance confirmation date."
                 }
+                icon={ChartColumn}
                 dates={dates}
                 series={series}
                 loading={chartLoading}
@@ -179,8 +195,9 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
           secondary={
             canSeeContracts ? (
               <DashboardDistributionChart
-                title="Contracts by VIP product"
-                description="Visible contracts, cancelled excluded (current)."
+                title="Contracts by VIP Product"
+                description="Distribution of visible contracts, cancelled excluded (current)."
+                icon={Layers}
                 rows={tiers}
                 unit={["contract", "contracts"]}
                 loading={contracts.isLoading}
@@ -193,10 +210,10 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
 
         <DashboardSplit
           at="lg"
+          ratio="1-1"
           primary={
             canSeeActivity ? (
               <DashboardActivityList
-                description="Latest customer, contract, payment, and membership events you can access."
                 items={activity}
                 loading={contracts.isLoading || payments.isLoading || memberships.isLoading || (canSeeCustomers && customers.isLoading)}
                 error={contracts.error ?? payments.error ?? memberships.error ?? (canSeeCustomers ? customers.error : null)}
@@ -214,6 +231,7 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
                     label="Contract Review"
                     count={countPendingContractReviews(contracts.data ?? [])}
                     icon={ClipboardCheck}
+                    tone="accent"
                     loading={contracts.isLoading}
                     error={contracts.error}
                   />
@@ -224,7 +242,7 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
                     label="Payment Verification"
                     count={countPendingPaymentVerifications(payments.data ?? [])}
                     icon={Wallet}
-                    tone="accent"
+                    tone="info"
                     loading={payments.isLoading}
                     error={payments.error}
                   />
@@ -235,7 +253,7 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
                     label="Membership Activation"
                     count={countPendingMembershipActivations(memberships.data ?? [])}
                     icon={ListChecks}
-                    tone="soft"
+                    tone="brand"
                     loading={memberships.isLoading}
                     error={memberships.error}
                   />

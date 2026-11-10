@@ -22,7 +22,7 @@ export function AdminDashboardPage() {
   const roles = getEffectiveRoles(identity);
 
   return (
-    <PageContainer>
+    <PageContainer className="tw:max-w-[88rem] tw:lg:px-8">
       <Breadcrumbs items={getRoleAwareAdminBreadcrumbs(identity, pathname ?? "/admin")} />
       {kind === "restricted" ? (
         <PageHeader title="Access restricted" description="This account does not have access to administration functions." />

@@ -59,13 +59,36 @@ describe("Admin dashboard with loaded records", () => {
     expect(await kpi("Sales network members")).toBe("7");
     expect(await kpi("Contracts requiring review")).toBe("2");
 
-    const chart = screen.getByRole("region", { name: "Sales performance" });
-    await within(chart).findByText("View chart data");
-    expect(chart.querySelector("figcaption")?.textContent).toContain(
-      "Confirmed sales value ₱312,000.00; Verified collections ₱129,500.00 from Oct 13, 2026 to Nov 10, 2026 (Asia/Manila).",
-    );
+    // Confirmed sales value is a period KPI: compared with Sep 14 - Oct 12, which had no confirmed sales.
+    const salesCard = (await screen.findByText("Confirmed sales value", { selector: "dt" })).closest("dl") as HTMLElement;
+    expect(within(salesCard).getByText("New")).toBeInTheDocument();
+    expect(within(salesCard).getByText(/compared with Sep 14, 2026 to Oct 12, 2026/)).toBeInTheDocument();
+    // Snapshot KPIs never show a percentage.
+    for (const label of ["Customers", "Sales network members", "Contracts requiring review"]) {
+      const card = screen.getByText(label, { selector: "dt" }).closest("dl") as HTMLElement;
+      expect(within(card).getByText("Current")).toBeInTheDocument();
+      expect(card.textContent).not.toMatch(/%|previous period/);
+    }
 
-    const distribution = screen.getByRole("region", { name: "Contracts by VIP product" });
+    const chart = screen.getByRole("region", { name: "Sales Performance" });
+    await waitFor(() =>
+      expect(chart.querySelector("figcaption")?.textContent).toContain(
+        "Sales ₱312,000.00; Collections ₱129,500.00 from Oct 13, 2026 to Nov 10, 2026 (Asia/Manila).",
+      ),
+    );
+    expect(within(chart).getByRole("radio", { name: "Sales" })).toHaveAttribute("aria-checked", "true");
+    expect(within(chart).getByRole("radio", { name: "Collections" })).toHaveAttribute("aria-checked", "false");
+
+    const distribution = screen.getByRole("region", { name: "Contracts by VIP Product" });
+    expect(distribution).toHaveAccessibleDescription("Distribution of visible contracts, cancelled excluded (current).");
+    expect(
+      await within(distribution).findByRole("img", {
+        name: "Contracts by VIP Product: 4 contracts. VIP Gold: 1 contract, 25%. VIP Silver: 1 contract, 25%. VIP Bronze: 2 contracts, 50%.",
+      }),
+    ).toBeInTheDocument();
+    // Each tier is drawn in its own metal color.
+    const strokes = [...distribution.querySelectorAll("circle[pathLength]")].map((circle) => circle.getAttribute("stroke"));
+    expect(strokes).toEqual(["var(--color-tier-gold)", "var(--color-tier-silver)", "var(--color-tier-bronze)"]);
     expect(await within(distribution).findByText("50%")).toBeInTheDocument();
     expect(within(distribution).getAllByText("25%")).toHaveLength(2);
 
@@ -74,16 +97,17 @@ describe("Admin dashboard with loaded records", () => {
     expect(screen.queryByRole("link", { name: /Payment Verification/ })).toBeNull();
     expect(screen.queryByText(/Account Approvals/)).toBeNull();
     expect((await screen.findAllByText("Customer submitted")).length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: "View all" })).toHaveAttribute("href", "/admin/audit-logs");
+    expect(screen.getByRole("link", { name: "View All" })).toHaveAttribute("href", "/admin/audit-logs");
   });
 
   it("keeps collections away from the Administrator", async () => {
     show("dev-admin");
 
     await waitFor(async () => expect(await kpi("Confirmed sales value")).toBe("₱312,000.00"));
-    const chart = screen.getByRole("region", { name: "Sales performance" });
-    await within(chart).findByText("View chart data");
-    expect(within(chart).queryByText("Verified collections")).toBeNull();
+    const chart = screen.getByRole("region", { name: "Sales Performance" });
+    await waitFor(() => expect(chart.querySelector("figcaption")?.textContent).toContain("Sales ₱312,000.00 from"));
+    expect(within(chart).queryByRole("radiogroup")).toBeNull();
+    expect(chart.textContent).not.toContain("Collections");
     expect(screen.queryByRole("link", { name: /Payment Verification/ })).toBeNull();
   });
 
@@ -115,13 +139,22 @@ describe("Finance dashboard with loaded records", () => {
     expect(await kpi("Approved unpaid commissions")).toBe("₱0.00");
     expect(screen.getByText(/₱57,500.00 overdue/)).toBeInTheDocument();
 
-    const chart = screen.getByRole("region", { name: "Collections performance" });
-    await within(chart).findByText("View chart data");
-    expect(chart.querySelector("figcaption")?.textContent).toContain(
-      "Verified collections ₱129,500.00; Reversals and refunds ₱0.00; Net collections ₱129,500.00",
-    );
+    const collectionsCard = screen.getByText("Verified collections", { selector: "dt" }).closest("dl") as HTMLElement;
+    // ₱129,500 verified this period against ₱10,000 verified between Sep 14 and Oct 12, 2026.
+    expect(within(collectionsCard).getByText("+1,195%")).toBeInTheDocument();
+    expect(within(collectionsCard).getByText("Up +1,195% compared with Sep 14, 2026 to Oct 12, 2026")).toBeInTheDocument();
+    for (const label of ["Pending payment verifications", "Outstanding receivables", "Approved unpaid commissions"]) {
+      const card = screen.getByText(label, { selector: "dt" }).closest("dl") as HTMLElement;
+      expect(card.textContent).not.toMatch(/%|previous period/);
+    }
 
-    const receivables = screen.getByRole("region", { name: "Receivables overview" });
+    const chart = screen.getByRole("region", { name: "Collections Performance" });
+    await waitFor(() =>
+      expect(chart.querySelector("figcaption")?.textContent).toContain("Verified ₱129,500.00; Reversals & refunds ₱0.00; Net ₱129,500.00"),
+    );
+    expect(within(chart).getAllByRole("radio").map((radio) => radio.textContent)).toEqual(["Verified", "Reversals & refunds", "Net"]);
+
+    const receivables = screen.getByRole("region", { name: "Receivables Overview" });
     expect(within(receivables).getByText("Settled")).toBeInTheDocument();
     expect(within(receivables).getByText("Overdue")).toBeInTheDocument();
 
@@ -170,6 +203,14 @@ describe("Sales dashboard with loaded records", () => {
     expect(await kpi("Confirmed sales")).toBe("1");
     expect(await kpi("Pending sales")).toBe("2");
     expect(screen.getByText(/3 recorded in total/)).toBeInTheDocument();
+    // Period KPIs compare with Sep 14 - Oct 12 (no confirmed team sales then); Pending is a snapshot.
+    const teamCard = screen.getByText("Team confirmed sales value", { selector: "dt" }).closest("dl") as HTMLElement;
+    expect(within(teamCard).getByText("New")).toBeInTheDocument();
+    const pendingCard = screen.getByText("Pending sales", { selector: "dt" }).closest("dl") as HTMLElement;
+    expect(within(pendingCard).getByText("Current")).toBeInTheDocument();
+    expect(pendingCard.textContent).not.toMatch(/%|previous period/);
+    const chart = screen.getByRole("region", { name: "Sales Performance" });
+    expect(within(chart).getAllByRole("radio").map((radio) => radio.textContent)).toEqual(["My sales", "Team sales"]);
 
     const overview = screen.getByRole("region", { name: "Team overview" });
     expect(await within(overview).findByText("Maria Santos")).toBeInTheDocument();

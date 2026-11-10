@@ -58,11 +58,11 @@ describe("dashboard page role gating (initial render)", () => {
       "Sales network members",
       "Contracts requiring review",
       "Confirmed sales value",
-      "Sales performance",
-      "verified collections over time",
-      "Contracts by VIP product",
-      "Recent activity",
-      "Pending actions",
+      "Sales Performance",
+      "Confirmed sales value or verified collections over time",
+      "Contracts by VIP Product",
+      "Recent Activities",
+      "Pending Approvals",
       "Contract Review",
       "Membership Activation",
       "Dashboard date range",
@@ -72,7 +72,7 @@ describe("dashboard page role gating (initial render)", () => {
 
   it("keeps Finance reporting off the Administrator dashboard", () => {
     const html = renderPage("dev-admin");
-    expectAll(html, ["Contracts requiring review", "Contract Review", "Sales performance"]);
+    expectAll(html, ["Contracts requiring review", "Contract Review", "Sales Performance"]);
     expectNone(html, ["verified collections", "Payment Verification"]);
   });
 
@@ -83,9 +83,9 @@ describe("dashboard page role gating (initial render)", () => {
       "Verified collections",
       "Outstanding receivables",
       "Approved unpaid commissions",
-      "Collections performance",
-      "Receivables overview",
-      "Pending Finance actions",
+      "Collections Performance",
+      "Receivables Overview",
+      "Pending Approvals",
       "Payment Verification",
       "Commission Assignment",
       "Commission Payouts",
@@ -94,7 +94,7 @@ describe("dashboard page role gating (initial render)", () => {
       "Membership Activation",
       "Dashboard date range",
     ]);
-    expectNone(html, ["Sales network members", "Contracts by VIP product", "Contract Review", "Team overview"]);
+    expectNone(html, ["Sales network members", "Contracts by VIP Product", "Contract Review", "Team overview"]);
   });
 
   it("gives sales managers team figures and the team overview", () => {
@@ -105,9 +105,9 @@ describe("dashboard page role gating (initial render)", () => {
         "Team confirmed sales value",
         "Confirmed sales",
         "Pending sales",
-        "Sales performance trend",
-        "Confirmed sales by VIP product",
-        "Sales activity",
+        "Sales Performance",
+        "Sales by VIP Product",
+        "Recent Activities",
         "Team overview",
         "My returned contracts",
         "My customer drafts",
@@ -119,12 +119,12 @@ describe("dashboard page role gating (initial render)", () => {
   it("gives an OST only individual figures", () => {
     const html = renderPage("dev-ost-a1");
     expectAll(html, ["My confirmed sales value", "My customers", "Pending sales", "Account overview"]);
-    expectNone(html, ["Team confirmed sales value", "Team overview", "Needs your attention", "Outstanding receivables"]);
+    expectNone(html, ["Team confirmed sales value", "Team overview", "Needs Your Attention", "Outstanding receivables"]);
   });
 
   it("shows an honest empty dashboard for HR", () => {
     const html = renderPage("dev-hr");
     expect(html).toContain("No dashboard metrics");
-    expectNone(html, ["Customers", "Pending actions", "Recent activity", "Dashboard date range"]);
+    expectNone(html, ["Customers", "Pending Approvals", "Recent Activities", "Dashboard date range"]);
   });
 });

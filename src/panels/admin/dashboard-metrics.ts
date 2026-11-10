@@ -273,6 +273,8 @@ export type DashboardActivityItem = {
   label: string;
   /** Record reference already visible to the role; no customer details are copied. */
   reference: string;
+  /** VIP tier of a contract or sale, when the record carries one. */
+  productCode?: string;
   timestamp: string;
 };
 
@@ -316,8 +318,8 @@ function activityTime(value: string) {
 
 export type ActivitySources = {
   customers?: readonly Pick<Customer, "id" | "submittedAt">[];
-  contracts?: readonly Pick<ContractView, "id" | "history">[];
-  sales?: readonly Pick<SaleView, "id" | "adjustments">[];
+  contracts?: readonly (Pick<ContractView, "id" | "history"> & { productCode?: string })[];
+  sales?: readonly (Pick<SaleView, "id" | "adjustments"> & { productCode?: string })[];
   payments?: readonly Pick<PaymentView, "id" | "history">[];
   memberships?: readonly Pick<MembershipView, "id" | "history">[];
   commissions?: readonly Pick<CommissionView, "id" | "history">[];
@@ -335,9 +337,10 @@ export function buildActivityFeed(
 ): DashboardActivityItem[] {
   const items: DashboardActivityItem[] = [];
   let sequence = 0;
-  const push = (kind: DashboardActivityKind, reference: string, action: string, timestamp: string) => {
+  const push = (kind: DashboardActivityKind, reference: string, action: string, timestamp: string, productCode?: string) => {
     sequence += 1;
-    const item = { id: `${kind}-${reference}-${sequence}`, kind, action, label: activityLabel(action), reference, timestamp };
+    const item: DashboardActivityItem = { id: `${kind}-${reference}-${sequence}`, kind, action, label: activityLabel(action), reference, timestamp };
+    if (productCode) item.productCode = productCode;
     if (include(item)) items.push(item);
   };
 
@@ -345,11 +348,11 @@ export function buildActivityFeed(
     if (customer.submittedAt) push("customer", customer.id.toUpperCase(), "CUSTOMER_SUBMITTED", customer.submittedAt);
   }
   for (const contract of sources.contracts ?? []) {
-    for (const event of contract.history) push("contract", contract.id.toUpperCase(), event.event, event.at);
+    for (const event of contract.history) push("contract", contract.id.toUpperCase(), event.event, event.at, contract.productCode);
   }
   for (const sale of sources.sales ?? []) {
     for (const adjustment of sale.adjustments) {
-      push("sale", sale.id.toUpperCase(), `SALE_${adjustment.kind.toUpperCase()}`, adjustment.date);
+      push("sale", sale.id.toUpperCase(), `SALE_${adjustment.kind.toUpperCase()}`, adjustment.date, sale.productCode);
     }
   }
   for (const payment of sources.payments ?? []) {

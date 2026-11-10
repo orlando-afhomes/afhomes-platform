@@ -71,7 +71,7 @@ export function DashboardDateFilter({ range }: { range: DashboardRange }) {
         value={range.preset}
         onValueChange={(next) => range.setPreset((next ?? "28d") as DashboardRangePreset)}
       >
-        <SelectTrigger aria-label="Dashboard date range" className="tw:h-10 tw:min-w-44 tw:bg-card">
+        <SelectTrigger aria-label="Dashboard date range" className="tw:h-11 tw:min-w-48 tw:gap-2.5 tw:rounded-xl tw:bg-card tw:px-4 tw:text-sm tw:font-medium tw:shadow-(--shadow-soft)">
           <CalendarDays aria-hidden="true" className="tw:size-4 tw:text-muted-foreground" />
           <SelectValue />
         </SelectTrigger>

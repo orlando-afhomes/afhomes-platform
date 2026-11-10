@@ -485,6 +485,21 @@ Some reporting details may require future authorization. Potential unresolved ma
 
 Do not introduce assumptions as approved business rules. For every material unresolved issue: describe the missing definition; explain why it matters; identify the governing source where possible; keep it marked as unresolved; avoid inventing numerical targets. Minor implementation choices should not become unnecessary business questions.
 
+### 32.1 Dashboard KPI Comparison Policy (owner decision, 2026-11-10)
+
+Status: **APPROVED** for dashboard KPI cards. This resolves dashboard period comparisons only; the other matters listed above, including formal growth-rate methods and other cross-period formulas, remain unresolved.
+
+1. Percentage trend indicators appear only on period-based KPIs: Confirmed Sales Value, Verified Collections, and Confirmed Sales Count.
+2. Comparisons are calculated dynamically from the authoritative business records. The selected reporting period is compared with the immediately preceding period of equal duration, using Asia/Manila business dates.
+3. Each comparison follows the existing Sales and Finance rules for its KPI (Finance confirmation dates and dated adjustments for sales, verification dates for collections, reversals and historical adjustments) and never double-counts a transaction.
+4. Snapshot KPIs, including Total Customers, Active Members, and Contracts Requiring Review, display a neutral "Current" label without a percentage trend.
+5. An increase is shown in green and a decrease in red only where that interpretation fits the KPI. Neutral or unavailable comparisons must not imply improvement or decline.
+6. When the previous period has no valid (positive) baseline, no percentage is calculated: the indicator reads "New" when the current period has activity, otherwise "No comparison available".
+7. No hardcoded or illustrative trend percentages may be shown.
+8. KPI values and comparisons recalculate whenever the reporting period, the underlying records, or the authorized record scope changes.
+9. One centralized calculation and one reusable KPI presentation serve the Admin, Sales, and Finance dashboards.
+10. Historical snapshots are never fabricated. Comparisons for snapshot KPIs may be introduced later only when reliable, effective-dated historical data exists.
+
 ---
 
 ## 33. Implementation Acceptance Checklist

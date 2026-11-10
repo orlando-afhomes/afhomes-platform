@@ -425,7 +425,15 @@ Account Management is part of **Staff & Access** at `/admin/organization/staff` 
 
 ## 40.6 Dashboard and Analytics (Frontend)
 
-Dashboard KPIs use only scoped mock repositories that exist: visible team members and visible customers (admin/HR/Finance panels) plus visible members, customers, and uplines (Sales Network panel). Metrics are calculated via pure helpers in `dashboard-metrics.ts`. No financial, sales, commission, or membership metrics are displayed because their frontend data contracts do not yet exist. Loading and empty states are handled. Date filters and charts are deferred until dated repositories exist.
+`/admin` renders one of three role-based dashboards, chosen by `resolveDashboard` in `src/panels/admin/dashboard/` (inactive accounts are restricted; Super Admin/Admin get the Admin dashboard; Finance gets the Finance dashboard; SVD/SSM/SM/OST get the Sales dashboard; other roles such as HR get an honest "No dashboard metrics" note). The layout choice grants nothing: every KPI, chart, activity list, and queue checks its own module or operation grant, and every list comes from the identity-scoped repositories.
+
+- **Shared kit** (`src/shared/components/dashboard/`): KPI card and grid, native-SVG trend chart with caption and data table, donut distribution, date filter (doc 11 presets, Asia/Manila), activity list, pending-actions card, split layout, and empty/error states. Components take values as props and never fetch.
+- **Calculations**: sales values and counts from `src/modules/sales/rules.ts` (doc 13 section 3.1: Confirmed Count by period, Pending and Overall Recorded as current snapshots); collections and receivables from `src/modules/finance/rules.ts`; dashboard selectors (daily series, tier mix, queues, team contributions, activity feed) in `src/panels/admin/dashboard-metrics.ts`. Money stays in integer centavos.
+- **Admin**: customers, sales network members, contracts requiring review, confirmed sales value; sales trend (plus verified collections with `finance.reports.view`); contracts by tier; activity; Contract Review, Payment Verification, and Membership Activation queues by grant.
+- **Sales**: my and team confirmed sales value (OST: my customers instead of team), confirmed and pending counts; my/team trend; confirmed sales by tier; activity; own returned contracts and customer drafts; account, upline, and direct-downline contributions by recording-time team.
+- **Finance**: pending verifications, verified collections (gross with net note), outstanding receivables (with overdue), approved unpaid commissions; gross/reversals-and-refunds/net trend; receivables by state; payment and payout activity; six gated Finance queues.
+
+No comparison or trend badges are shown until an approved comparison definition exists (doc 11 section 32).
 
 ## 40.5 Sales Network Panel Shells (Phase 1B-B06)
 

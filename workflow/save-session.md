@@ -111,57 +111,66 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-09
+- Saved at: 2026-11-10
 - Repository: afhomes-platform (remote `https://github.com/orlando-afhomes/afhomes-platform.git`)
 - Branch: develop
-- HEAD: 7e17fcd "update: mock data". Nothing staged (verified this run).
-- Session objective: separate every business process into its own page and sidebar parent ("process by process"), then refine the sidebar (Reports dropdown, unique icons and labels, no yellow active bar, process order, Sales first, Reports above Audit Logs).
+- HEAD: 4d35fab "feat: split admin flows into process-by-process pages and add VIP payment schemes". Nothing staged (verified this run).
+- Session objective: redesign only the Admin Dashboard main content using `docs/ui-redesign/dashboard.png` as the visual reference, preserving branding, role scoping, and all business definitions.
 - Development phase: frontend prototype with mock data, QA stage. Only the owner declares frontend completion.
-- Context note: work this session was done with six parallel subagents; their reports were read and I re-ran the checks myself afterwards. No compaction notice in this session.
+- Context note: no compaction notice this session. The reference image is gitignored by the owner's uncommitted `.gitignore` change.
 
 ## 2. Current Project State
-- Sidebar order (top to bottom, `src/panels/admin/navigation.ts`): Dashboard, Sales (Customers, Customer Import, Contracts, Contract Review, Sales Records), Finance (Payment Verification, Collections, Commission Assignment, Commissions, Commission Payouts, Payment History, Financial Holds, Cancellation Requests), Membership (Activation Queue, VIP Memberships, Stay Points), VIP Products (Product Catalog, Payment Schemes, Scheme Guide, Tier Codes), Sales Network (Members, Genealogy), Organization (Departments, Roles, Staff), Reports (Customer Growth, Sales Performance, Collections Report, Commission Report, Membership Report, Stay Points Report), Audit Logs. The Insights group was removed. `/admin/accounts` stays a hidden compatibility route.
-- Every visible nav item has a unique label and a unique icon (enforced by a test in `navigation.test.ts`). The active link has no gold bar, only a highlighted background and `aria-current`.
-- One page per process. Routes: `/admin/sales`, `/admin/sales/contracts`, `/admin/sales/contract-review`; `/admin/vip-products`, `/schemes`, `/scheme-guide`, `/tier-codes`; `/admin/finance`, `/collections`, `/payments`, `/holds`, `/cancellations`; `/admin/commissions`, `/assignment`, `/payouts`; `/admin/membership`, `/activation`; `/admin/stay-points`; `/admin/reports/{sales-performance,customer-growth,collections,commissions,membership,stay-points}`.
-- Contract detail is four pages sharing `components/contract-sections.tsx`, `contract-dialogs.tsx` and `useContractRecord`: Sales contract `/admin/sales/contracts/[id]`, Contract Review `/admin/sales/contract-review/[id]`, Finance collection `/admin/finance/collections/[id]`, Finance cancellation `/admin/finance/cancellations/[id]`. Old routes `/admin/vip-products/contracts`, `/admin/vip-products/contracts/[id]` and `/admin/finance/contracts/[id]` are redirects. `useContractHref` and `useContractReviewHref` build the links.
-- Navigation model: `AdminNavKey`, optional `grants` (any-of) and `operation` per item, one shared `filterNavForAccess` used by `getRoleAwareAdminNavigation` and `use-role-aware-navigation.ts`.
-- Earlier payment-scheme work (Spot Cash, Move A and B, milestones, due dates) is unchanged and still governed by docs 05, 06, 07.
+- Dashboard redesign implemented. Seller roles still render `SalesNetworkPanel`; inactive accounts still see the restricted state.
+- Admin/Super Admin/Finance/HR use the new dashboard: header with compact range selector, KPI grid, performance chart, VIP donut, recent activity, pending actions.
+- Gating: team members = `sales-network`; customers = `customers`; contracts/donut/activity = `vip-products` or `sales`; Contract Review queue = `vip-products`; Verified Collections and chart collections = `finance.reports.view`; Payment Verification queue = `finance`; Activation queue = `membership` + `membership.activate`.
+- Super Admin: 4 KPIs, both chart series, donut, activity, Contract Review + Activation queues. Admin: 3 KPIs (no collections), sales-only chart, donut, activity, Contract Review + Activation. Finance: collections KPI, collections-only chart, no donut/contract queues, Payment Verification + Activation, activity. HR: "No dashboard metrics" note. No sidebar/topbar changes.
+- Native SVG charts, no new dependency. Chart uses Confirmed Sales Value by signed adjustment date (doc 13) and gross Verified Collections by `verifiedDate` (doc 11), zero-filled Asia/Manila days, accessible summary and expandable data table.
+- Contract Review pending = `submitted` + `under_review`; Payment Verification = `submitted` + `under_review`; Activation = `pending`. Total Contracts and the donut are current snapshots excluding cancelled; the date filter affects the chart and Verified Collections only.
+- Activity uses visible contract/payment/membership history, not audit. "View all" goes to `/admin/audit-logs` for audit-authorized roles, otherwise `/admin/finance/payments`.
 
 ## 3. Important Decisions
-- Owner rules this session: one page per process; a process involving Finance sits under the Finance parent; VIP Products is its own dropdown; all report pages sit in one Reports dropdown; the sidebar follows the business process, Sales first, Reports directly above Audit Logs (last); all nav labels and icons unique.
-- Audit Logs stays top-level (not inside Reports). Setup groups (VIP Products, Sales Network, Organization) sit below the operational flow; offered to move them up if the owner prefers.
-- No change to `ROLE_MODULE_GRANTS`, operation grants, repositories, business rules or seed data. Each page keeps its module grant, and some also need an operation (Contract Review needs vip-products; Commission Payouts needs `commission.payout`; Activation Queue needs `membership.activate`; Customer Import needs `customers.import`; Collections Report needs `finance.reports.view`).
-- Carried over from the prior snapshot: Move A and B Card ID codes stay `paymentCode: null`; Gold installment price (390,000 vs 780,000) unresolved; Super Admin only approves Move arrangements; no Git writes by agents; mock data in memory only; AGENTS.md edits need owner authorization.
-- Admin and Super Admin do not see the Finance queue pages because neither holds the `finance` module (same as before this change).
+- Owner approved the recommended approach: native SVG instead of installing d3/recharts; keep `SalesNetworkPanel` for seller roles; Contract Review count includes submitted + under_review; Super Admin sees the collections KPI/chart but not the Payment Verification queue, mirroring current module grants.
+- No changes to `ROLE_MODULE_GRANTS`, operations, repositories, seed data, navigation, sidebar, header, layout, tokens, business-rule documents, or dependencies.
+- No trend/comparison badges: there are no historical KPI snapshots or an approved comparison definition.
+- Carried over: Move A/B Card ID codes stay `paymentCode: null`; Gold installment price (390,000 vs 780,000) unresolved; Super Admin only approves Move arrangements; mock data in memory only; no agent Git writes; AGENTS.md/CLAUDE.md edits need owner authorization.
+- `docs/development/frontend.md` section 40.6 still says dated metrics/charts are deferred; it is stale and was not edited.
 
 ## 4. Completed Work
-- Pages split: VIP Products (3 pages), Finance (5 pages), Sales and Contracts and Contract Review, Memberships and Activation, Commissions and Payouts, six report pages with `components/report-shell.tsx` (`useReportRange`, `ReportShell`). Old combined `reports-page.tsx`, `contract-detail-page.tsx` and `/admin/reports` route deleted.
-- Shared code: `membership-table.tsx`, `commission-shared.tsx`, `contract-sections.tsx`, `contract-dialogs.tsx`, `report-shell.tsx`.
-- New tests: `contract-detail-pages.test.tsx`, `finance-pages.test.tsx`, `vip-products-pages.test.tsx`, `sales-pages.test.tsx`, `reports-pages.test.tsx`; nav tests (`navigation.test.ts`, `admin-nav-list.test.tsx`, `admin-sidebar.test.tsx`, `admin-nav-match.test.ts`) rewritten for the new tree; `business-pages.test.tsx` repointed (payment schemes test split from the catalog test; reports and membership tests use the new pages).
-- Removed unused `confirmRun` in `commissions-page.tsx`.
+- Rewrote `src/panels/admin/pages/admin-dashboard-page.tsx`.
+- Extended `src/panels/admin/dashboard-metrics.ts` with contract/tier/pending/activity/daily-series helpers; tests in `dashboard-metrics.test.ts`.
+- New components: `dashboard-date-range.tsx`, `dashboard-kpi-grid.tsx`, `dashboard-performance-chart.tsx`, `dashboard-product-distribution.tsx`, `dashboard-activity-list.tsx`, `dashboard-pending-actions.tsx`, `dashboard-chart-model.ts` plus test.
+- New loaded-data test `dashboard-page.test.tsx`; extended `admin-dashboard-page.test.tsx` for role gating.
+- Verification: targeted dashboard tests 33/33; TypeScript clean; lint 0 errors (2 pre-existing warnings); build clean; browser QA as Super Admin at 1440/768/390 including date presets, custom-range validation, chart data table, donut, activity, pending links, keyboard order, and no console errors.
 
 ## 5. Git Working Tree
 - Staged: none.
-- Unstaged: 93 modified or deleted tracked files, including this session's nav, page, route and test files plus earlier-session work (`AGENTS.md`, `CLAUDE.md`, docs 05 to 07, repositories, UI primitives, tokens). Deleted tracked files: `src/app/admin/reports/page.tsx`, `src/panels/admin/pages/contract-detail-page.tsx`, `src/panels/admin/pages/reports-page.tsx`.
-- Untracked (new this session): routes under `src/app/admin/{reports/*,finance/{collections,payments,holds,cancellations}(+[id]),sales/{contracts,contract-review}(+[id]),commissions/payouts,membership/activation,vip-products/{schemes,tier-codes}}`; pages `{collections,commission,customer-growth,membership,sales-performance,stay-points}-report-page`, `finance-{collections,payments,holds,cancellations}-page`, `finance-{collection,cancellation}-detail-page`, `sales-contract-detail-page`, `contract-review-page`, `contract-review-detail-page`, `commission-payouts-page`, `membership-activation-page`, `payment-schemes-page`, `tier-codes-page`; components `commission-shared`, `contract-dialogs`, `contract-sections`, `membership-table`, `report-shell`; the five new test files. Earlier-session untracked files (card images, finance milestones, vip rules, wizard, radio card, etc.) are still untracked.
-- 154 changed paths in total per `git status --short`. Line-ending warnings (LF to CRLF) appear on many files; CRLF was preserved in edited files.
+- Unstaged tracked: `.gitignore` (owner change adding `/docs/ui-redesign`, pre-existing and preserved), `src/panels/admin/pages/admin-dashboard-page.tsx`, `dashboard-metrics.ts`, `dashboard-metrics.test.ts`, `admin-dashboard-page.test.tsx`.
+- Untracked: `dashboard-activity-list`, `dashboard-chart-model` plus test, `dashboard-date-range`, `dashboard-kpi-grid`, `dashboard-pending-actions`, `dashboard-performance-chart`, `dashboard-product-distribution`, `dashboard-page.test.tsx`.
+- No deleted or renamed files. Line-ending warnings (LF to CRLF) on edited files; CRLF preserved where edited.
+- Reference image `docs/ui-redesign/dashboard.png` is gitignored, not tracked.
 
 ## 6. Pending Tasks
 - Owner review and commit (owner only).
-- Browser QA of the new structure (see section 7).
-- Open owner decisions (carried over): Move A and B Card ID code mapping; Gold installment price; Move B down-payment due date; required initial payment per scheme; overpayment, refund timing, Welcome Gift lapse, template authority, commission default rates.
-- Optional owner calls: move VIP Products, Sales Network or Organization higher in the sidebar; put Audit Logs inside Reports; split account administration out of Staff & Access.
+- Optional: extend the redesign to seller dashboards (unchanged by decision).
+- Browser QA for Admin/Finance/HR layouts is blocked by the absence of a dev identity switcher; tests cover them.
+- Open owner decisions (carried over): Move A/B Card ID mapping; Gold installment price; Move B down-payment due date; required initial payment per scheme; overpayment/refund timing; Welcome Gift lapse; template authority; commission default rates.
+- Possible follow-ups: approved trend/comparison definition; Super Admin finance-queue module gap; stale `frontend.md` section 40.6.
 
 ## 7. Verification State
-- Last full runs (after the Reports move): `npx vitest run` 656/656 (56 files); `npm run lint` 0 errors, 2 pre-existing warnings (`sales-network/genealogy.ts`, `shared/forms/validation/contact.ts`); `npm run build` compiled and lists all new routes; `npx tsc --noEmit` clean.
-- After that, only UI-order changes were made (icons, labels, yellow bar, sidebar order). Those were checked with the 51 nav and sidebar tests, `npx tsc --noEmit` and ESLint on the changed files, all passing. The full suite and the build were NOT re-run after them.
-- Not performed: any browser check of the new pages, the sidebar, the four contract detail pages, other roles, 390px width, accessibility audit. The Confirm cancellation button is untested because the seed data has no pending cancellation request. `staff-page.test.tsx` can time out under full-suite load; it passes alone.
+- Targeted: dashboard tests 33/33 passed (metrics, chart model, static role gating, loaded Super Admin/Finance/Admin).
+- Full: `npx vitest run` 675/676 passed, 57/58 files. Single failure: `staff-page.test.tsx > adds staff with cascading department role` timed out at 15000ms under full-suite load; it passes alone (20/20).
+- Typecheck: `npx tsc --noEmit` clean.
+- Lint: `npm run lint` 0 errors, 2 pre-existing warnings (`sales-network/genealogy.ts`, `shared/forms/validation/contact.ts`).
+- Build: `npm run build` compiled successfully; all routes generated.
+- Browser QA: Super Admin only, using the pre-existing dev server on port 3000. 1440/768/390 checked; Past 7 Days, Today, Past 6 Months and Custom verified; invalid range shows the alert and no figures; 29/185-row data table; pending links correct; keyboard order and focus reachable; no console errors.
+- Not performed: browser QA for Admin/Finance/HR, manual screen-reader audit, manual reduced-motion check (global CSS collapses transitions; charts have no animation), production-build browser pass.
+- Known limitation: activity "View all" uses Audit Logs for audit-authorized roles, which is empty in the seed, so it may show fewer entries than the business-history feed.
 
 ## 8. Next Session Instructions
-- Recommended first action: `/load`, then run `npx vitest run` and `npm run build` one after the other (not together) to re-confirm the final state, then one browser pass as Super Admin over every sidebar item.
-- Relevant files: `src/panels/admin/navigation.ts`, `components/admin-nav-icons.ts`, `components/admin-nav-list.tsx`, `use-role-aware-navigation.ts`, `components/contract-sections.tsx`, `use-contract-href.ts`, `components/report-shell.tsx`, and the new pages and tests listed above.
-- Required approvals: any commit or push (owner only), AGENTS.md or CLAUDE.md edits, new schemes or payment codes, an identity switcher for browser QA.
-- Warnings: a full page load resets mock data; do not run build and tests together; do not delete `.next`; no dev identity switcher exists, so other roles are covered by tests only.
+- Recommended first action: `/load`, then inspect `git status --short`; review the dashboard in the browser as Super Admin if desired; owner commits when ready.
+- Relevant files: the nine dashboard files listed above, `admin-dashboard-page.test.tsx`, `dashboard-page.test.tsx`, `dashboard-metrics.test.ts`; reporting rules `src/modules/sales/rules.ts`, `src/modules/finance/rules.ts`.
+- Required approvals: any commit or push (owner only), AGENTS.md/CLAUDE.md edits, new dependencies (e.g. d3), an identity switcher, RBAC changes.
+- Warnings: do not run build and tests together; do not delete `.next`; a full page load resets mock data; the owner's dev server on port 3000 was left running; line-ending warnings are expected.
 
 ## 9. Execution Recommendation
 - Phase: QA
@@ -169,5 +178,6 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 - Recommended model: Sonnet 5.5
 - Effort: low
 - Ultracode: OFF
-- Token optimization: one full suite run, one build, one browser pass; use targeted tests for any fixes.
-- Reason: the restructure and automated checks are done; only final re-verification, browser confirmation and owner decisions remain.<!-- SESSION_SNAPSHOT_END -->
+- Token optimization: one targeted dashboard test run, one build, one browser pass; avoid re-running the full suite unless shared code changes.
+- Reason: implementation and automated checks are complete; remaining work is owner review/commit and optional decisions.
+<!-- SESSION_SNAPSHOT_END -->

@@ -2,80 +2,49 @@
 
 import { usePathname } from "next/navigation";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
-import { useMembers, useCustomers } from "@/data/queries";
 import { PageContainer } from "@/shared/components/modern/page-container";
 import { PageHeader } from "@/shared/components/modern/page-header";
 import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { Card } from "@/shared/ui/card";
+import { InfoNote } from "@/shared/components/modern/detail-list";
 import { getRoleAwareAdminBreadcrumbs } from "@/panels/admin/navigation";
-import { getEffectiveRoles, isModuleGranted } from "@/modules/identity/permissions";
-import { countVisibleCustomers, countVisibleMembers } from "../dashboard-metrics";
+import { getEffectiveRoles } from "@/modules/identity/permissions";
 import { getRoleDisplayLabel } from "../role-label";
-import { SalesNetworkPanel } from "../components/sales-network-panel";
+import { AdminDashboard } from "../dashboard/admin-dashboard";
+import { FinanceDashboard } from "../dashboard/finance-dashboard";
+import { SalesDashboard } from "../dashboard/sales-dashboard";
+import { resolveDashboard } from "../dashboard/resolve-dashboard";
 
-function isSalesRole(roles: string[]) {
-  return roles.some((role) => ["svd", "ssm", "sm", "ost"].includes(role));
-}
-
-function getPanelTitle(roles: string[], active: boolean): string {
-  if (!active) return "Access restricted";
-  return getRoleDisplayLabel(roles);
-}
-
-function getPanelDescription(active: boolean): string {
-  if (!active) {
-    return "This account does not have access to administration functions.";
-  }
-  return "Authorized modules are available in the navigation.";
-}
-
+/** Dashboard home: picks the Admin, Finance, or Sales layout. The layout grants nothing by itself. */
 export function AdminDashboardPage() {
   const pathname = usePathname();
   const { identity } = useDevIdentity();
-  const active = identity.status === "active";
+  const kind = resolveDashboard(identity);
   const roles = getEffectiveRoles(identity);
-  const membersQuery = useMembers();
-  const customersQuery = useCustomers();
-
-  if (active && isSalesRole(roles)) {
-    return (
-      <PageContainer>
-        <SalesNetworkPanel />
-      </PageContainer>
-    );
-  }
-
-  const title = getPanelTitle(roles, active);
-  const description = getPanelDescription(active);
 
   return (
     <PageContainer>
       <Breadcrumbs items={getRoleAwareAdminBreadcrumbs(identity, pathname ?? "/admin")} />
-      <PageHeader title={title} description={description} />
-      {active ? (
-        <div className="tw:mt-4 tw:grid tw:gap-4 tw:md:grid-cols-2">
-          {isModuleGranted(identity, "sales-network") ? (
-            <StatCard title="Visible team members" loading={membersQuery.isLoading} value={countVisibleMembers(membersQuery.data ?? [])} />
-          ) : null}
-          {isModuleGranted(identity, "customers") ? (
-            <StatCard title="Visible customers" loading={customersQuery.isLoading} value={countVisibleCustomers(customersQuery.data ?? [])} />
-          ) : null}
-        </div>
-      ) : null}
-    </PageContainer>
-  );
-}
-
-function StatCard({ title, value, loading }: { title: string; value: number; loading: boolean }) {
-  return (
-    <Card aria-label={title}>
-      <h2 className="tw:text-sm tw:font-medium tw:text-muted-foreground">{title}</h2>
-      {loading ? (
-        <Skeleton className="tw:mt-2 tw:h-8 tw:w-16" />
+      {kind === "restricted" ? (
+        <PageHeader title="Access restricted" description="This account does not have access to administration functions." />
+      ) : kind === "admin" ? (
+        <AdminDashboard roles={roles} />
+      ) : kind === "finance" ? (
+        <FinanceDashboard />
+      ) : kind === "sales" ? (
+        <SalesDashboard identity={identity} />
       ) : (
-        <p className="tw:mt-1 tw:text-3xl tw:font-semibold">{value.toLocaleString()}</p>
+        <>
+          <PageHeader
+            title={`Welcome back, ${getRoleDisplayLabel(roles)}`}
+            description="Your authorized administration modules are available in the navigation."
+          />
+          <div className="tw:mt-5">
+            <InfoNote title="No dashboard metrics">
+              No operational dashboard metrics are available for this role. Authorized modules remain available in the navigation.
+            </InfoNote>
+          </div>
+        </>
       )}
-    </Card>
+    </PageContainer>
   );
 }

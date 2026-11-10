@@ -50,6 +50,18 @@ Display separately:
 
 Cancelled and Rejected sales are excluded from those totals. Keep Cancelled and Rejected records available for authorized historical review and audit.
 
+### 3.1 Dashboard Sales Counts (owner decision, 2026-11-10)
+
+Status: **RESOLVED.** This settles the dashboard count presentation. Do not reopen it merely because earlier sections do not specify counts.
+
+1. **Confirmed Sales Count** — number of distinct sales currently Confirmed whose effective Finance confirmation date falls within the selected reporting period. Confirmation requires a finalized contract and Finance verification of the required contractual payment (section 4).
+2. **Pending Sales Count** — number of distinct sales currently awaiting confirmation. This is a real-time snapshot, independent of the selected date range. It includes reservation-only and other unconfirmed sales and excludes Cancelled and Rejected sales.
+3. **Overall Recorded Sales Count** — number of distinct sales currently Confirmed or Pending, taken from the same current snapshot for both statuses. Never add a period-filtered Confirmed Count to an unfiltered Pending Count.
+4. **Sales Value** — monetary values stay separate from transaction counts. Confirmed Sales Value uses the full qualifying contract value and the applicable dated adjustments (sections 4.2, 5, 6), not collected payments.
+5. **Reversals** — a reversal updates the sale's current status while the original reporting history and dated adjustments are preserved. A reconfirmation never duplicates the underlying sale.
+6. **Centralization** — one shared sales KPI calculation serves the Admin, Sales, Finance, and Reporting dashboards, with role-based record visibility applied consistently.
+7. **Labeling** — each KPI states whether it covers the selected reporting period or is a current snapshot.
+
 ---
 
 ## 4. Confirmed Sales Recognition
@@ -169,6 +181,7 @@ Original ₱240,000 → amended ₱220,000; adjustment −₱20,000 in approval 
 - Finance confirmation date determines the reporting period.
 - Reversals, reconfirmations, and price amendments use dated adjustments.
 - No unapproved commission formulas introduced.
+- Dashboard counts follow section 3.1: Confirmed Count by period, Pending and Overall Recorded Counts as current snapshots, each labeled accordingly.
 
 ---
 

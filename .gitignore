@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/docs/ui-redesign
 
 # next.js
 /.next/

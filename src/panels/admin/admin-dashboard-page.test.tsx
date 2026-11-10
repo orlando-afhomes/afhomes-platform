@@ -6,11 +6,9 @@ import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { AdminDashboardPage } from "./pages/admin-dashboard-page";
 
-const queryClient = new QueryClient();
-
 function TestWrapper({ identityId }: { identityId: string }) {
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={new QueryClient()}>
       <MockStoreProvider>
         <DevIdentityProvider initialIdentityId={identityId}>
           <AdminDashboardPage />
@@ -24,54 +22,109 @@ function renderPage(identityId: string) {
   return renderToStaticMarkup(createElement(TestWrapper, { identityId }));
 }
 
-describe("admin dashboard page", () => {
-  it("shows super administrator title", () => {
-    expect(renderPage("dev-super-admin")).toContain("Super Admin");
+function expectAll(html: string, texts: string[]) {
+  for (const text of texts) expect(html).toContain(text);
+}
+
+function expectNone(html: string, texts: string[]) {
+  for (const text of texts) expect(html).not.toContain(text);
+}
+
+describe("dashboard page role gating (initial render)", () => {
+  it.each([
+    ["dev-super-admin", "Welcome back, Super Admin"],
+    ["dev-admin", "Welcome back, Administrator"],
+    ["dev-hr", "Welcome back, Human Resources"],
+    ["dev-finance", "Finance overview"],
+    ["dev-svd-a", "Welcome back, Sales Vice Director"],
+    ["dev-ssm-a", "Welcome back, Senior Sales Manager"],
+    ["dev-sm-a", "Welcome back, Sales Manager"],
+    ["dev-ost-a1", "Welcome back, OST"],
+    ["dev-multi-role", "Welcome back, Sales Manager"],
+  ])("%s sees its dashboard heading", (identityId, heading) => {
+    expect(renderPage(identityId)).toContain(heading);
   });
 
-  it("shows administrator title", () => {
-    expect(renderPage("dev-admin")).toContain("Administrator");
-  });
-
-  it("shows human resources title", () => {
-    expect(renderPage("dev-hr")).toContain("Human Resources");
-  });
-
-  it("shows finance title", () => {
-    expect(renderPage("dev-finance")).toContain("Finance");
-  });
-
-  it("shows SVD title", () => {
-    expect(renderPage("dev-svd-a")).toContain("Sales Vice Director");
-  });
-
-  it("shows SSM title", () => {
-    expect(renderPage("dev-ssm-a")).toContain("Senior Sales Manager");
-  });
-
-  it("shows SM title", () => {
-    expect(renderPage("dev-sm-a")).toContain("Sales Manager");
-  });
-
-  it("shows OST title", () => {
-    expect(renderPage("dev-ost-a1")).toContain("OST");
-  });
-
-  it("renders sales network panel loading state for SVD", () => {
-    const html = renderPage("dev-svd-a");
-    expect(html).toContain("Sales Vice Director");
-    expect(html).toContain('data-slot="skeleton"');
-  });
-
-  it("renders sales network panel loading state for OST", () => {
-    const html = renderPage("dev-ost-a1");
-    expect(html).toContain("OST");
-    expect(html).toContain('data-slot="skeleton"');
-  });
-
-  it("shows restricted state for inactive account", () => {
+  it("shows the restricted state for an inactive account", () => {
     const html = renderPage("dev-inactive");
     expect(html).toContain("Access restricted");
-    expect(html).not.toContain("Super Admin");
+    expectNone(html, ["Welcome back", "Dashboard date range", "My confirmed sales value"]);
+  });
+
+  it("renders the full Admin dashboard for the Super Administrator", () => {
+    const html = renderPage("dev-super-admin");
+    expectAll(html, [
+      "Customers",
+      "Sales network members",
+      "Contracts requiring review",
+      "Confirmed sales value",
+      "Sales performance",
+      "verified collections over time",
+      "Contracts by VIP product",
+      "Recent activity",
+      "Pending actions",
+      "Contract Review",
+      "Membership Activation",
+      "Dashboard date range",
+    ]);
+    expectNone(html, ["Payment Verification", "Account Approvals", "Finance overview", "Team overview"]);
+  });
+
+  it("keeps Finance reporting off the Administrator dashboard", () => {
+    const html = renderPage("dev-admin");
+    expectAll(html, ["Contracts requiring review", "Contract Review", "Sales performance"]);
+    expectNone(html, ["verified collections", "Payment Verification"]);
+  });
+
+  it("gives Finance its own dashboard without customer, network, or contract-review widgets", () => {
+    const html = renderPage("dev-finance");
+    expectAll(html, [
+      "Pending payment verifications",
+      "Verified collections",
+      "Outstanding receivables",
+      "Approved unpaid commissions",
+      "Collections performance",
+      "Receivables overview",
+      "Pending Finance actions",
+      "Payment Verification",
+      "Commission Assignment",
+      "Commission Payouts",
+      "Cancellation Requests",
+      "Financial Holds",
+      "Membership Activation",
+      "Dashboard date range",
+    ]);
+    expectNone(html, ["Sales network members", "Contracts by VIP product", "Contract Review", "Team overview"]);
+  });
+
+  it("gives sales managers team figures and the team overview", () => {
+    for (const identityId of ["dev-svd-a", "dev-ssm-a", "dev-sm-a"]) {
+      const html = renderPage(identityId);
+      expectAll(html, [
+        "My confirmed sales value",
+        "Team confirmed sales value",
+        "Confirmed sales",
+        "Pending sales",
+        "Sales performance trend",
+        "Confirmed sales by VIP product",
+        "Sales activity",
+        "Team overview",
+        "My returned contracts",
+        "My customer drafts",
+      ]);
+      expectNone(html, ["Contracts requiring review", "Outstanding receivables", "Approved unpaid commissions"]);
+    }
+  });
+
+  it("gives an OST only individual figures", () => {
+    const html = renderPage("dev-ost-a1");
+    expectAll(html, ["My confirmed sales value", "My customers", "Pending sales", "Account overview"]);
+    expectNone(html, ["Team confirmed sales value", "Team overview", "Needs your attention", "Outstanding receivables"]);
+  });
+
+  it("shows an honest empty dashboard for HR", () => {
+    const html = renderPage("dev-hr");
+    expect(html).toContain("No dashboard metrics");
+    expectNone(html, ["Customers", "Pending actions", "Recent activity", "Dashboard date range"]);
   });
 });

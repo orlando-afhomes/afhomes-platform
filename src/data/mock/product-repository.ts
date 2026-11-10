@@ -48,13 +48,15 @@ export class MockProductRepository extends BusinessRepository implements Product
       if (next.earningCycles > next.validityYears) throw new Error("Earning cycles cannot exceed the validity years.");
       const changed = (Object.keys(input) as Array<keyof ProductUpdateInput>).filter((key) => input[key] !== undefined && input[key] !== product[key]);
       if (changed.length === 0) throw new Error("Nothing was changed.");
+      if (input.priceStatus !== undefined && input.priceStatus !== "contract_stated" && input.priceStatus !== "conflict") throw new Error("The price status must be contract_stated or conflict.");
       const priceChanged = changed.includes("priceCentavos");
+      const statusChanged = changed.includes("priceStatus");
       const retired = changed.includes("status") && next.status === "retired";
       Object.assign(product, next, {
         configVersion: product.configVersion + 1,
         effectiveDate: today(),
-        priceStatus: priceChanged ? "contract_stated" : product.priceStatus,
-        priceNote: priceChanged ? `Updated in configuration version ${product.configVersion + 1}: ${reason.trim()}` : product.priceNote,
+        priceStatus: statusChanged ? next.priceStatus : product.priceStatus,
+        priceNote: priceChanged || statusChanged ? `Updated in configuration version ${product.configVersion + 1}: ${reason.trim()}` : product.priceNote,
       });
       product.changes.push({ version: product.configVersion, date: today(), actorId: identity.id, reason: reason.trim(), summary: changed.join(", ") });
       this.audit(identity, {

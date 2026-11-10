@@ -116,6 +116,24 @@ The October 2026 contract reference identifies critical inconsistencies.
 
 The Gold standard contract records ₱390,000 in Section II and Annex A, and ₱780,000 in Section IV. This is a contractual inconsistency.
 
+### 6.1.1 Proposed correction (superseded by owner ruling item 11, 2026-11-10)
+
+Retained as history only; no longer operative following owner ruling item 11 (2026-11-10), which finalized Gold pricing.
+
+The proposed correction is to amend Section IV of the Gold standard contract from ₱780,000 to ₱390,000 so it matches Section II, Annex A, and the approved 4-Month Installment schedule basis. This proposal is not approved and changes no approved price.
+
+Pricing-basis distinction: Spot Cash and Move A Gold carry their own contract-stated package price of ₱312,000 under the Full Payment contracts, the OD-11 Spot Cash release, and the Move A approval, and are not affected by the installment-path conflict; 4-Month Installment and Move B Gold fall back to the catalog ₱390,000 and remain held at finalization until the correction is approved. A scheme may carry its own package price per tier and a contract snapshots that price (see Owner rulings amendment items 5–7).
+
+Affected sources: Gold standard contract Sections II and IV and Annex A. Explicitly unaffected: Full Payment / Spot Cash Gold price ₱312,000, Move A Gold pricing ₱312,000, and the Move B schedule basis.
+
+Approval requirement: a signed management/owner correction recording the contract revision and its effective date.
+
+Revised contract master reference: TBD (record official revision/version + source document when the owner supplies it).
+
+Effective date: TBD (prospective only; set on formal approval).
+
+Effective-date rule: prospective only. Finalized or signed contracts keep their snapshots under §3.1. The original Section II/Annex A versus Section IV discrepancy is retained in the historical record. No backfill, no automatic change of priceStatus, and no automatic finalization of held contracts.
+
 ### 6.2 Silver Contract
 
 The referenced Silver contract contains an unfinished amount placeholder in Section IV.
@@ -295,7 +313,7 @@ Audit requirements: record authorized actor, time of change, previous value, new
 | Dynamic tiers | New business decision vs two-character tier codes | Admin can create tiers; validate compatibility with VT segment |
 | Payment schemes | Official workbook options vs Admin-configurable offers | Recognize all five; complete canonical register from approved docs |
 | Contract classification | S/N selection vs legacy Non-Standard restriction | Both selectable; Non-Standard finalization subject to approved commercial rules |
-| Contract prices | Gold and Silver source inconsistencies | Reported, not silently corrected; management-approved correction required |
+| Contract prices | Gold and Silver source inconsistencies | Gold resolved by owner ruling item 11 (2026-11-10); Silver still reported, not silently corrected; management-approved correction required |
 | VIP Card ID | Revised activation-based format vs legacy transaction-date format | Use actual activation date for YYMMDD |
 | VIP sequence | RA No. NNNN → VIP NNNNN vs independent legacy counter | RA-derived, no independent counter |
 | RA scope | RA uniqueness and possible collision scenarios | Flag collisions; do not fabricate |
@@ -366,3 +384,4 @@ These rulings are authoritative and take precedence over earlier text in this do
 8. **Special arrangement approval.** Each Move A or Move B contract needs written approval before finalization. Only a Super Administrator records it, with the reference of the signed approval, and a Super Administrator may approve a contract they prepared. The approval is audited and kept on the contract separately from the payment code.
 9. **Due dates** derive from the reservation date: the reservation fee is due that day, monthly installment N is due N months later (clamped to the month end), and a Spot Cash balance is due 7 days later. Staff may override the dates while a contract is Draft or Returned.
 10. **No interest** is ever charged; a scheme has no interest field. Scheme configuration changes are validated (exact positive centavo amounts that add up to the package price per tier), versioned with an effective date and audited, and need no second approver.
+11. **Gold pricing finalized (2026-11-10).** Effective date 2026-11-10. Final Gold prices: Spot Cash ₱312,000 / Move A ₱312,000 / 4-Month Installment ₱390,000 / Move B ₱390,000. The ₱780,000 figure is rejected and is no longer active or unresolved. This ruling supersedes the pending-price-resolution requirement (the previous §6.1.1 proposal and any hold-pending-resolution language for Gold).

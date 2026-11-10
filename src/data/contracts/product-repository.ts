@@ -4,7 +4,7 @@ import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types
 export type ProductUpdateInput = Partial<
   Pick<
     VipProduct,
-    | "name" | "priceCentavos" | "validityYears" | "earningCycles" | "vipDiscountPercent" | "lifetimePoints"
+    | "name" | "priceCentavos" | "priceStatus" | "validityYears" | "earningCycles" | "vipDiscountPercent" | "lifetimePoints"
     | "pointsPerCycle" | "weekdayPointsPerCycle" | "weekendPointsPerCycle" | "minSpendPerCycleCentavos" | "supplementaryHolders" | "status"
   >
 >;

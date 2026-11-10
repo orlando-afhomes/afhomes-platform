@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { TriangleAlert } from "lucide-react";
 import { schemePriceCentavos } from "@/modules/vip/rules";
+import { applicablePriceStatus, displayPriceFor } from "@/modules/vip/pricing";
 import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
 import { formatPeso } from "@/shared/lib/money";
 import { cn } from "@/shared/lib/utils";
@@ -28,17 +29,17 @@ export function PlanCardImage({ code, className }: { code: VipTierCode; classNam
 }
 
 /** Price, key facts, and the Gold price-conflict note for a VIP card. */
-export function PlanFacts({ product }: { product: VipProduct }) {
+export function PlanFacts({ product, scheme }: { product: VipProduct; scheme?: PaymentScheme }) {
   return (
     <span className="tw:flex tw:flex-col tw:gap-2">
-      <span className="tw:text-xl tw:font-semibold">{formatPeso(product.priceCentavos)}</span>
+      <span className="tw:text-xl tw:font-semibold">{formatPeso(displayPriceFor(product, scheme))}</span>
       <span className="tw:grid tw:grid-cols-2 tw:gap-x-3 tw:gap-y-1 tw:text-xs tw:text-muted-foreground">
         <span>{product.validityYears} years validity</span>
         <span>{product.vipDiscountPercent}% VIP discount</span>
         <span>{product.lifetimePoints.toLocaleString("en-PH")} Stay Points</span>
         <span>{product.supplementaryHolders > 0 ? `${product.supplementaryHolders} supplementary holder` : "No supplementary holder"}</span>
       </span>
-      {product.priceStatus === "conflict" ? (
+      {applicablePriceStatus(product, scheme) === "conflict" ? (
         <span className="tw:flex tw:items-start tw:gap-1.5 tw:rounded-md tw:bg-warning/10 tw:p-2 tw:text-xs">
           <TriangleAlert aria-hidden="true" className="tw:mt-0.5 tw:size-3.5 tw:shrink-0" />
           <span>Price under review: the contract sources disagree. Contract finalization stays on hold until the owner decides.</span>
@@ -77,7 +78,7 @@ export function PlanSummary({ product, scheme, onChange }: { product: VipProduct
             <h2 className="tw:text-base tw:font-semibold">{product.name} ({product.code})</h2>
             <p className="tw:text-xs tw:text-muted-foreground">{product.tier} tier</p>
           </div>
-          <PlanFacts product={product} />
+          <PlanFacts product={product} scheme={scheme} />
           <SchemeLine product={product} scheme={scheme} />
           <Button type="button" variant="outline" size="sm" onClick={onChange}>
             Change card
@@ -91,7 +92,7 @@ export function PlanSummary({ product, scheme, onChange }: { product: VipProduct
           <div className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col">
             <span className="tw:truncate tw:text-sm tw:font-semibold">{product.name} ({product.code})</span>
             <span className="tw:truncate tw:text-xs tw:text-muted-foreground">
-              {formatPeso(scheme ? schemePriceCentavos(product, scheme) : product.priceCentavos)}
+              {formatPeso(displayPriceFor(product, scheme))}
               {scheme ? ` · ${scheme.label}` : ""}
             </span>
           </div>
@@ -108,7 +109,7 @@ export function PlanSummary({ product, scheme, onChange }: { product: VipProduct
             <DialogDescription>{product.tier} tier</DialogDescription>
           </DialogHeader>
           <PlanCardImage code={product.code} className="tw:mx-auto tw:w-3/4 tw:max-w-xs" />
-          <PlanFacts product={product} />
+          <PlanFacts product={product} scheme={scheme} />
           <SchemeLine product={product} scheme={scheme} />
           <Button
             type="button"

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, ArrowLeftRight, Banknote, CalendarClock, CreditCard, FileUp, Landmark, Pencil, Printer, Receipt, Smartphone, WalletCards, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowLeftRight, Banknote, CalendarClock, CreditCard, FileUp, Landmark, Pencil, Printer, Receipt, Smartphone, TriangleAlert, WalletCards, X } from "lucide-react";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import { useCreateCustomerDraft, useCustomers, useMembers } from "@/data/queries";
 import { useOperation, usePaymentSchemes, usePrepareContract, useSubmitCustomer, useSubmitPayment, useVipProducts } from "@/data/business-queries";
@@ -11,6 +11,7 @@ import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { validateCustomerForSubmit } from "@/modules/customers/rules";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/modules/finance/types";
 import { downPaymentCentavos, installmentCountFor, schemePriceCentavos } from "@/modules/vip/rules";
+import { applicablePriceStatus, displayPriceFor } from "@/modules/vip/pricing";
 import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
 import { manilaToday } from "@/shared/lib/dates";
 import { formatPeso } from "@/shared/lib/money";
@@ -40,13 +41,13 @@ import { PlanSummary } from "../components/customer-plan-summary";
 import { VipCardChoiceGrid } from "../components/vip-card-choice";
 import { useAdminSidebar } from "../layouts/admin-sidebar-context";
 
-const STEPS = ["VIP card", "Payment plan", "Customer", "Sales and consent", "Review", "Reservation"] as const;
+const STEPS = ["VIP card", "Payment plan", "Customer", "Sales and consent", "Reservation", "Review"] as const;
 const STEP_CARD = 0;
 const STEP_PLAN = 1;
 const STEP_CUSTOMER = 2;
 const STEP_SALES = 3;
-const STEP_REVIEW = 4;
-const STEP_RESERVATION = 5;
+const STEP_RESERVATION = 4;
+const STEP_REVIEW = 5;
 
 /** Validation keys that belong to each step, so Next only blocks on what the step shows. */
 const STEP_KEYS: Record<number, string[]> = {
@@ -97,6 +98,15 @@ function schemeDescription(scheme: PaymentScheme, tier: VipTierCode | "", produc
 function addressLine(draft: CustomerDraft) {
   const a = draft.address;
   return [a.street, a.subdivision, a.barangay, a.city, a.province, a.postalCode].filter(Boolean).join(", ") || "Not provided";
+}
+
+function PriceConflictNote() {
+  return (
+    <p className="customer-application__price-warning tw:flex tw:items-start tw:gap-1.5 tw:rounded-md tw:border tw:border-warning/30 tw:bg-warning/10 tw:p-2 tw:text-xs tw:leading-snug">
+      <TriangleAlert aria-hidden="true" className="tw:mt-0.5 tw:size-3.5 tw:shrink-0 tw:text-warning" />
+      <span>Price under review: the contract sources disagree. Contract finalization stays on hold until the owner decides.</span>
+    </p>
+  );
 }
 
 function Row({ label, value }: { label: string; value: ReactNode }) {
@@ -214,7 +224,7 @@ export function CustomerApplicationWizard() {
     const all = allErrors();
     for (let from = step; from < target; from += 1) {
       const found = pick(all, STEP_KEYS[from] ?? []);
-      const blocked = Object.keys(found).length > 0 || (from === STEP_REVIEW && Object.keys(all).length > 0);
+      const blocked = Object.keys(found).length > 0 || (from === STEP_RESERVATION && Object.keys(all).length > 0);
       if (blocked) {
         setErrors(found);
         setStep(from);
@@ -311,6 +321,7 @@ export function CustomerApplicationWizard() {
 
   const reviewErrors = step === STEP_REVIEW ? allErrors() : {};
   const reviewErrorList = Object.values(reviewErrors).filter(Boolean) as string[];
+  const priceConflict = product != null && applicablePriceStatus(product, scheme) === "conflict";
 
   return (
     <div ref={rootRef} className={cn("customer-application tw:scroll-mt-20 tw:gap-6", step > STEP_CARD ? "tw:grid tw:grid-cols-1 tw:lg:grid-cols-[20rem_minmax(0,1fr)] tw:lg:items-start" : "tw:flex tw:flex-col")}>
@@ -340,12 +351,11 @@ export function CustomerApplicationWizard() {
               <h2 className="tw:shrink-0 tw:text-lg tw:font-semibold tw:text-primary">Choose a VIP card</h2>
               <span aria-hidden="true" className="tw:h-px tw:flex-1 tw:bg-border" />
             </div>
-            <p className="tw:mt-2 tw:text-sm tw:text-muted-foreground">Select the card the customer is applying for. The application form opens after you choose.</p>
           </div>
           {products.isLoading ? (
             <p className="tw:text-sm tw:text-muted-foreground">Loading VIP cards</p>
           ) : (
-            <VipCardChoiceGrid products={activeProducts} value={(draft.vipPlan || "") as VipTierCode | ""} onChange={choosePlan} invalid={Boolean(errors.vipPlan)} />
+            <VipCardChoiceGrid products={activeProducts} schemes={schemes.data ?? []} value={(draft.vipPlan || "") as VipTierCode | ""} onChange={choosePlan} invalid={Boolean(errors.vipPlan)} />
           )}
           {errors.vipPlan ? (
             <p role="alert" className="tw:text-sm tw:text-destructive">
@@ -363,6 +373,7 @@ export function CustomerApplicationWizard() {
           <SectionBlock title="Contract terms">
             <RadioCardField label="Contract classification" required value={(draft.contractClassification || undefined) as "S" | "N" | undefined} options={CLASSIFICATION_OPTIONS} onChange={(value) => set("contractClassification", value)} error={errors.contractClassification} />
           </SectionBlock>
+          {priceConflict ? <PriceConflictNote /> : null}
         </div>
       ) : null}
 
@@ -396,10 +407,11 @@ export function CustomerApplicationWizard() {
           ) : null}
           <ReviewBlock title="VIP card and payment plan" onEdit={() => setStep(STEP_CARD)}>
             <Row label="VIP card" value={product ? `${product.name} (${product.code})` : ""} />
-            <Row label="Price" value={product ? formatPeso(product.priceCentavos) : ""} />
+            <Row label="Price" value={product ? formatPeso(displayPriceFor(product, scheme)) : ""} />
             <Row label="Payment scheme" value={scheme?.label} />
             <Row label="Contract classification" value={draft.contractClassification === "N" ? "Non-Standard (N)" : draft.contractClassification === "S" ? "Standard (S)" : ""} />
           </ReviewBlock>
+          {priceConflict ? <PriceConflictNote /> : null}
           <ReviewBlock title="Customer" onEdit={() => setStep(STEP_CUSTOMER)}>
             <Row label="Name" value={[draft.firstName, draft.noMiddleName ? "" : draft.middleName, draft.lastName, draft.suffix].filter(Boolean).join(" ")} />
             <Row label="Gender" value={draft.gender} />
@@ -418,6 +430,17 @@ export function CustomerApplicationWizard() {
             <Row label="Data privacy consent" value={draft.consentDataPrivacy ? "Certified" : "Not certified"} />
             <Row label="Government ID received" value={draft.idReceivedCertified ? "Certified" : "Not certified"} />
           </ReviewBlock>
+          <ReviewBlock title="Reservation and acceptance" onEdit={() => setStep(STEP_RESERVATION)}>
+            <Row label="Payment scheme" value={scheme?.label} />
+            <Row label="Reservation fee" value={reservationCentavos ? formatPeso(reservationCentavos) : "None for this scheme"} />
+            <Row label="Payment method" value={reservationCentavos && canPay ? method : "—"} />
+            <Row label="Date on receipt" value={paidDate || "—"} />
+            <Row label="Receipt/reference" value={reference || "—"} />
+            <Row label="Proof" value={proofName || "—"} />
+            <div className="tw:sm:col-span-2">
+              <CheckboxField variant="card" label="The customer reviewed and accepted the payment schedule." checked={accepted} onChange={setAccepted} error={reservationErrors.accepted} />
+            </div>
+          </ReviewBlock>
         </div>
       ) : null}
 
@@ -433,7 +456,7 @@ export function CustomerApplicationWizard() {
                 <Row label="Customer ID" value={draft.customerNumber || "Assigned on submission"} />
                 <Row label="Applicant" value={[draft.firstName, draft.noMiddleName ? "" : draft.middleName, draft.lastName, draft.suffix].filter(Boolean).join(" ")} />
                 <Row label="Mobile number" value={draft.mobileNumber} />
-                <Row label="VIP card" value={product ? `${product.name} (${product.code}) · ${formatPeso(product.priceCentavos)}` : ""} />
+                <Row label="VIP card" value={product ? `${product.name} (${product.code}) · ${formatPeso(displayPriceFor(product, scheme))}` : ""} />
                 <Row label="Payment scheme" value={scheme?.label} />
                 <Row label="Reservation fee" value={reservationCentavos ? formatPeso(reservationCentavos) : "None for this scheme"} />
                 <div className="tw:sm:col-span-2">
@@ -497,7 +520,6 @@ export function CustomerApplicationWizard() {
               ) : reservationCentavos ? (
                 <InfoNote title="Payment not available">This account cannot submit payments. Submit the reservation fee from the contract page after the application.</InfoNote>
               ) : null}
-              <CheckboxField variant="card" label="The customer reviewed and accepted the payment schedule." checked={accepted} onChange={setAccepted} error={reservationErrors.accepted} />
             </SectionBlock>
           )}
         </div>
@@ -515,7 +537,7 @@ export function CustomerApplicationWizard() {
           ) : null}
         </div>
         {step > STEP_CARD ? <span className="tw:hidden tw:text-sm tw:text-muted-foreground tw:lg:inline">Step {step + 1} of {STEPS.length}</span> : null}
-        {step < STEP_RESERVATION ? (
+        {step < STEP_REVIEW ? (
           <Button type="button" disabled={busy || (step === STEP_CARD && !draft.vipPlan) || (step === STEP_REVIEW && reviewErrorList.length > 0)} className="tw:min-h-11 tw:sm:min-h-8" onClick={next}>
             Continue <ArrowRight aria-hidden="true" className="tw:size-4" />
           </Button>

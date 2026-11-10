@@ -135,10 +135,11 @@ describe("contract, payment, sale and membership workflow", () => {
     expect(await as(store, "dev-ost-b1").contracts.getById("ctr-1")).toBeNull();
   });
 
-  it("holds Gold finalization on the price conflict and denies IST finalization", async () => {
+  it("finalizes Gold now that the price conflict is resolved, and still denies finalization without Admin approval", async () => {
     const store = createMockStore();
-    await expect(as(store, "dev-admin").contracts.finalize("ctr-3")).rejects.toThrow(/conflict/i);
     await expect(as(store, "dev-sm-a").contracts.finalize("ctr-3")).rejects.toThrow();
+    const finalized = await as(store, "dev-admin").contracts.finalize("ctr-3");
+    expect(finalized.status).toBe("finalized");
   });
 
   it("confirms the sale only after the required initial payment, and reverses it with holds", async () => {
@@ -423,18 +424,26 @@ describe("Move schemes without an authorized Card ID payment code (06 section 6.
     expect(store.memberships.find((m) => m.id === "memb-1")!.cardId).toBe("26110200001B1T04S");
   });
 
-  it("holds only installment-priced Gold contracts on the Gold price conflict, not Gold Spot Cash or Gold Move A", async () => {
-    const holdsFor = async (schemeId: string) => {
+  it("prices all Gold schemes without a price conflict hold", async () => {
+    const prepareFor = async (schemeId: string) => {
       const store = createMockStore();
       const admin = as(store, "dev-admin");
       await admin.contracts.cancel("ctr-3", "Re-prepare");
-      const contract = await admin.contracts.prepare({ customerId: "cust-a3", schemeId, customerAccepted: true });
-      return contract.holds.filter((hold) => /price is in conflict/.test(hold));
+      return admin.contracts.prepare({ customerId: "cust-a3", schemeId, customerAccepted: true });
     };
-    expect(await holdsFor("scheme-installment-4m")).toHaveLength(1);
-    expect(await holdsFor("scheme-move-b")).toHaveLength(1);
-    expect(await holdsFor("scheme-spot-cash")).toHaveLength(0);
-    expect(await holdsFor("scheme-move-a")).toHaveLength(0);
+    const spotCash = await prepareFor("scheme-spot-cash");
+    expect(spotCash).toMatchObject({ priceCentavos: pesos(312000), priceStatus: "contract_stated" });
+    expect(spotCash.holds.filter((hold) => /price is in conflict/.test(hold))).toHaveLength(0);
+    const installment = await prepareFor("scheme-installment-4m");
+    expect(installment).toMatchObject({ priceCentavos: pesos(390000), priceStatus: "contract_stated" });
+    expect(installment.holds.filter((hold) => /price is in conflict/.test(hold))).toHaveLength(0);
+    const moveA = await prepareFor("scheme-move-a");
+    expect(moveA).toMatchObject({ priceCentavos: pesos(312000), priceStatus: "contract_stated" });
+    expect(moveA.holds.filter((hold) => /price is in conflict/.test(hold))).toHaveLength(0);
+    const moveB = await prepareFor("scheme-move-b");
+    expect(moveB).toMatchObject({ priceCentavos: pesos(390000), priceStatus: "contract_stated" });
+    expect(moveB.holds.filter((hold) => /price is in conflict/.test(hold))).toHaveLength(0);
+    expect(moveB.arrangement).toMatchObject({ status: "pending" });
   });
 });
 
@@ -604,6 +613,55 @@ describe("owner-decided restrictions (C2)", () => {
   it("still cancels a contract with no verified money directly", async () => {
     const store = createMockStore();
     expect((await as(store, "dev-admin").contracts.cancel("ctr-3", "Customer withdrew before paying")).status).toBe("cancelled");
+  });
+
+  it("prices Gold exactly across all four schemes", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    await admin.contracts.cancel("ctr-3", "Re-prepare Gold across schemes");
+
+    const spotCash = await admin.contracts.prepare({ customerId: "cust-a3", schemeId: "scheme-spot-cash", customerAccepted: true, reservationDate: "2026-11-10" });
+    expect(spotCash).toMatchObject({ priceCentavos: pesos(312000), priceStatus: "contract_stated" });
+    expect(spotCash.holds.filter((hold) => /price is in conflict/.test(hold))).toHaveLength(0);
+    expect(spotCash.schedule.map((line) => [line.label, line.amountCentavos, line.dueDate])).toEqual([
+      ["Reservation fee", pesos(10000), "2026-11-10"],
+      ["Balance", pesos(302000), "2026-11-17"],
+    ]);
+    await admin.contracts.cancel(spotCash.id, "Next scheme");
+
+    const moveA = await admin.contracts.prepare({ customerId: "cust-a3", schemeId: "scheme-move-a", customerAccepted: true, reservationDate: "2026-11-10" });
+    expect(moveA).toMatchObject({ priceCentavos: pesos(312000), priceStatus: "contract_stated" });
+    expect(moveA.holds.filter((hold) => /price is in conflict/.test(hold))).toHaveLength(0);
+    await admin.contracts.cancel(moveA.id, "Next scheme");
+
+    const installment = await admin.contracts.prepare({ customerId: "cust-a3", schemeId: "scheme-installment-4m", customerAccepted: true, reservationDate: "2026-11-10" });
+    expect(installment).toMatchObject({ priceCentavos: pesos(390000), priceStatus: "contract_stated" });
+    expect(installment.holds.filter((hold) => /price is in conflict/.test(hold))).toHaveLength(0);
+    await admin.contracts.cancel(installment.id, "Next scheme");
+
+    const moveB = await admin.contracts.prepare({ customerId: "cust-a3", schemeId: "scheme-move-b", customerAccepted: true, reservationDate: "2026-11-10" });
+    expect(moveB).toMatchObject({ priceCentavos: pesos(390000), priceStatus: "contract_stated" });
+    expect(moveB.holds.filter((hold) => /price is in conflict/.test(hold))).toHaveLength(0);
+    expect(moveB.arrangement).toMatchObject({ status: "pending" });
+  });
+
+  it("keeps a conflict through ordinary edits and clears it only via explicit status resolution", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+
+    const flagged = await admin.products.update("S1", { priceStatus: "conflict" }, "Test: flag conflict");
+    expect(flagged).toMatchObject({ priceStatus: "conflict", configVersion: 2 });
+
+    const edited = await admin.products.update("S1", { priceCentavos: pesos(241000) }, "Test: ordinary price edit");
+    expect(edited).toMatchObject({ priceStatus: "conflict", configVersion: 3 });
+
+    const resolved = await admin.products.update("S1", { priceStatus: "contract_stated" }, "Test: resolution");
+    expect(resolved).toMatchObject({ priceStatus: "contract_stated", configVersion: 4 });
+    expect(resolved.changes.at(-1)).toMatchObject({ version: 4, reason: "Test: resolution" });
+
+    expect(store.contracts.find((c) => c.id === "ctr-3")).toMatchObject({ priceStatus: "contract_stated" });
+    expect(store.contracts.find((c) => c.id === "ctr-1")?.status).toBe("finalized");
+    expect(store.contracts.find((c) => c.id === "ctr-2")?.status).toBe("finalized");
   });
 });
 

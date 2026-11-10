@@ -1,8 +1,9 @@
 "use client";
 
 import { Radio as RadioPrimitive } from "@base-ui/react/radio";
-import { CalendarDays, Check, Database, Tag, TriangleAlert, Users } from "lucide-react";
-import type { VipProduct, VipTierCode } from "@/modules/vip/types";
+import { CalendarDays, Check, Database, Tag, Users } from "lucide-react";
+import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
+import { fromPriceFor } from "@/modules/vip/pricing";
 import { formatPeso } from "@/shared/lib/money";
 import { cn } from "@/shared/lib/utils";
 import { RadioGroup } from "@/shared/ui/radio-group";
@@ -34,7 +35,7 @@ function VipCardFact({ icon, label, value }: { icon: React.ReactNode; label: str
   );
 }
 
-export function VipCardChoiceCard({ product, invalid }: { product: VipProduct; invalid?: boolean }) {
+export function VipCardChoiceCard({ product, fromPrice, invalid }: { product: VipProduct; fromPrice?: number | null; invalid?: boolean }) {
   const supplementary =
     product.supplementaryHolders > 0
       ? `${product.supplementaryHolders} supplementary holder${product.supplementaryHolders === 1 ? "" : "s"}`
@@ -64,7 +65,7 @@ export function VipCardChoiceCard({ product, invalid }: { product: VipProduct; i
         <VipCardRadioMark />
       </span>
       <span className="vip-card-choice__price tw:block tw:rounded-lg tw:bg-muted tw:px-3 tw:py-2 tw:text-xl tw:font-bold tw:tracking-tight tw:text-foreground tw:transition-colors tw:group-data-checked/vip-card:text-primary">
-        {formatPeso(product.priceCentavos)}
+        {fromPrice != null ? `From ${formatPeso(fromPrice)}` : formatPeso(product.priceCentavos)}
       </span>
       <span className="vip-card-choice__facts tw:flex tw:flex-col tw:gap-1.5">
         <VipCardFact icon={<CalendarDays className="tw:size-4" />} label="Validity" value={`${product.validityYears} ${product.validityYears === 1 ? "year" : "years"}`} />
@@ -72,27 +73,24 @@ export function VipCardChoiceCard({ product, invalid }: { product: VipProduct; i
         <VipCardFact icon={<Tag className="tw:size-4" />} label="VIP Discount" value={`${product.vipDiscountPercent}%`} />
         <VipCardFact icon={<Users className="tw:size-4" />} label="Supplementary Holder" value={supplementary} />
       </span>
-      {product.priceStatus === "conflict" ? (
-        <span className="vip-card-choice__warning tw:flex tw:items-start tw:gap-1.5 tw:rounded-md tw:border tw:border-warning/30 tw:bg-warning/10 tw:p-2 tw:text-xs tw:leading-snug">
-          <TriangleAlert aria-hidden="true" className="tw:mt-0.5 tw:size-3.5 tw:shrink-0 tw:text-warning" />
-          <span>Price under review: the contract sources disagree. Contract finalization stays on hold until the owner decides.</span>
-        </span>
-      ) : null}
     </RadioPrimitive.Root>
   );
 }
 
 export function VipCardChoiceGrid({
   products,
+  schemes,
   value,
   onChange,
   invalid,
 }: {
   products: ReadonlyArray<VipProduct>;
+  schemes?: ReadonlyArray<PaymentScheme>;
   value: VipTierCode | "";
   onChange: (code: VipTierCode) => void;
   invalid?: boolean;
 }) {
+  const priced = schemes != null && schemes.length > 0 ? schemes : null;
   return (
     <RadioGroup
       aria-label="VIP card"
@@ -104,7 +102,7 @@ export function VipCardChoiceGrid({
       className="vip-card-choice tw:grid tw:grid-cols-1 tw:gap-4 tw:lg:grid-cols-3"
     >
       {products.map((product) => (
-        <VipCardChoiceCard key={product.code} product={product} invalid={invalid} />
+        <VipCardChoiceCard key={product.code} product={product} fromPrice={priced ? fromPriceFor(product, priced) : null} invalid={invalid} />
       ))}
     </RadioGroup>
   );

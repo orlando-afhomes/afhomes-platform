@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import { AppToaster } from "@/shared/components/modern/app-toaster";
@@ -26,6 +26,8 @@ import { SalesPage } from "./pages/sales-page";
 import { StayPointsPage } from "./pages/stay-points-page";
 import { PaymentSchemesPage } from "./pages/payment-schemes-page";
 import { VipProductsPage } from "./pages/vip-products-page";
+import { PrepareContractDialog } from "./components/prepare-contract-dialog";
+import type { Customer } from "@/modules/customers/types";
 
 vi.mock("next/navigation", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/navigation")>()),
@@ -157,10 +159,13 @@ describe("business pages render for the intended roles", () => {
     expect(await screen.findByText(/first name is required/i)).toBeInTheDocument();
   });
 
-  it("renders the catalog with the Gold conflict", async () => {
+  it("renders the catalog with Gold resolved to Contract-stated", async () => {
     show("dev-admin", <VipProductsPage />);
     expect(await screen.findByRole("table", { name: "VIP product catalog" })).toBeInTheDocument();
-    expect(await screen.findByText("Source conflict")).toBeInTheDocument();
+    expect(await screen.findByText("Gold VIP")).toBeInTheDocument();
+    expect(screen.queryByText("Source conflict")).toBeNull();
+    // Bronze, Silver, and Gold each carry a Contract-stated price badge.
+    expect((await screen.findAllByText("Contract-stated")).length).toBe(3);
   });
 
   it("renders the payment schemes as configured, Move ones flagged for Super Admin approval", async () => {
@@ -170,10 +175,11 @@ describe("business pages render for the intended roles", () => {
     expect((await screen.findAllByText("Configured")).length).toBe(4);
   });
 
-  it("shows contract review holds and finalize availability to Admin", async () => {
+  it("shows finalization available to Admin for the resolved Gold contract", async () => {
     show("dev-admin", <ContractReviewDetailPage contractId="ctr-3" />);
-    expect(await screen.findByText("Finalization is on hold")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Finalize" })).toBeDisabled();
+    await screen.findByRole("button", { name: "Finalize" });
+    expect(screen.queryByText("Finalization is on hold")).toBeNull();
+    expect(screen.getByRole("button", { name: "Finalize" })).toBeEnabled();
   });
 
   it("asks Admin to request a cancellation with forfeiture when the contract has verified money", async () => {
@@ -294,6 +300,165 @@ describe("business pages render for the intended roles", () => {
   it("shows audit history to Admin", async () => {
     show("dev-admin", <AuditLogsPage />);
     expect(await screen.findByText("Restricted view")).toBeInTheDocument();
+  });
+});
+
+describe("customer application wizard scheme pricing", () => {
+  function wizardMain() {
+    const element = document.querySelector(".customer-application__main");
+    if (!(element instanceof HTMLElement)) throw new Error("Wizard main column not found.");
+    return element;
+  }
+
+  async function startApplication(user: ReturnType<typeof userEvent.setup>, card: RegExp) {
+    show("dev-sm-a", <CustomerFormPage />);
+    await user.click(await screen.findByRole("radio", { name: card }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await screen.findByRole("radiogroup", { name: "Payment scheme" });
+  }
+
+  async function fillCustomerStep(user: ReturnType<typeof userEvent.setup>) {
+    // Required-field captions carry an aria-hidden asterisk, so match loosely.
+    await user.type(screen.getByLabelText(/first name/i), "Maria");
+    await user.type(screen.getByLabelText(/last name/i), "Reyes");
+    fireEvent.change(screen.getByLabelText(/date of birth/i), { target: { value: "1990-05-01" } });
+    await user.click(within(screen.getByRole("radiogroup", { name: "Gender" })).getByRole("radio", { name: "Male" }));
+    await user.click(within(screen.getByRole("radiogroup", { name: "Civil status" })).getByRole("radio", { name: "Single" }));
+    await user.type(screen.getByLabelText(/mobile number/i), "09171110009");
+    await user.type(screen.getByLabelText(/^province/i), "Cebu");
+    await user.type(screen.getByLabelText(/^city/i), "Lapu-Lapu City");
+    await user.type(screen.getByLabelText(/^barangay/i), "Pajo");
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+  }
+
+  async function certifySalesStep(user: ReturnType<typeof userEvent.setup>) {
+    await screen.findByText("Sales attribution");
+    await user.click(screen.getByRole("checkbox", { name: /processing of personal data/i }));
+    await user.click(screen.getByRole("checkbox", { name: /specimen signatures/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+  }
+
+  it("shows the Spot Cash price for Gold with no conflict notice", async () => {
+    const user = userEvent.setup();
+    await startApplication(user, /gold vip/i);
+    expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
+    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    await user.click(within(schemes).getByRole("radio", { name: /spot cash/i }));
+    expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
+    await user.click(screen.getByRole("radio", { name: /standard \(s\)/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await fillCustomerStep(user);
+    await certifySalesStep(user);
+    expect(await screen.findByRole("heading", { name: "Application form" })).toBeInTheDocument();
+    expect(within(wizardMain()).getByText(/Gold VIP \(G1\) · ₱312,000/)).toBeInTheDocument();
+    expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    expect(await screen.findByRole("heading", { name: "Review the application" })).toBeInTheDocument();
+    expect(within(wizardMain()).getByText("₱312,000.00")).toBeInTheDocument();
+    expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
+    expect(within(wizardMain()).getByText("Reservation and acceptance")).toBeInTheDocument();
+  });
+
+  it("shows the catalog price for Gold installments with no conflict notice", async () => {
+    const user = userEvent.setup();
+    await startApplication(user, /gold vip/i);
+    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    await user.click(within(schemes).getByRole("radio", { name: /4-month installment/i }));
+    expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
+    await user.click(screen.getByRole("radio", { name: /standard \(s\)/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await fillCustomerStep(user);
+    await certifySalesStep(user);
+    expect(await screen.findByRole("heading", { name: "Application form" })).toBeInTheDocument();
+    expect(within(wizardMain()).getByText(/Gold VIP \(G1\) · ₱390,000/)).toBeInTheDocument();
+    expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    expect(await screen.findByRole("heading", { name: "Review the application" })).toBeInTheDocument();
+    expect(within(wizardMain()).getByText("₱390,000.00")).toBeInTheDocument();
+    expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
+    expect(within(wizardMain()).getByText("Reservation and acceptance")).toBeInTheDocument();
+  });
+
+  it("clears the conflict notice for Gold under Move A", async () => {
+    const user = userEvent.setup();
+    await startApplication(user, /gold vip/i);
+    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    await user.click(within(schemes).getByRole("radio", { name: /move a/i }));
+    expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
+  });
+
+  it("keeps the exact installment price for Bronze with no conflict notice", async () => {
+    const user = userEvent.setup();
+    await startApplication(user, /bronze vip/i);
+    expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
+    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    await user.click(within(schemes).getByRole("radio", { name: /4-month installment/i }));
+    expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
+    await user.click(screen.getByRole("radio", { name: /standard \(s\)/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await fillCustomerStep(user);
+    await certifySalesStep(user);
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    expect(await screen.findByRole("heading", { name: "Review the application" })).toBeInTheDocument();
+    expect(within(wizardMain()).getByText("₱72,000.00")).toBeInTheDocument();
+    expect(screen.queryByText(/Price under review/)).toBeNull();
+    expect(within(wizardMain()).getByText("Reservation and acceptance")).toBeInTheDocument();
+  });
+
+  it("keeps the exact Spot Cash price for Silver with no conflict notice", async () => {
+    const user = userEvent.setup();
+    await startApplication(user, /silver vip/i);
+    expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
+    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    await user.click(within(schemes).getByRole("radio", { name: /spot cash/i }));
+    expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
+    await user.click(screen.getByRole("radio", { name: /standard \(s\)/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await fillCustomerStep(user);
+    await certifySalesStep(user);
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    expect(await screen.findByRole("heading", { name: "Review the application" })).toBeInTheDocument();
+    expect(within(wizardMain()).getByText("₱192,000.00")).toBeInTheDocument();
+    expect(screen.queryByText(/Price under review/)).toBeNull();
+    expect(within(wizardMain()).getByText("Reservation and acceptance")).toBeInTheDocument();
+  });
+});
+
+describe("gold contract preview and tiles", () => {
+  const goldCustomer = (paymentSchemeId: string): Customer => ({
+    id: "cust-gold-preview",
+    displayName: "Gold Preview",
+    branchId: "branch-a",
+    ownerMemberId: "mem-sm-a",
+    status: "submitted",
+    vipPlan: "G1",
+    paymentSchemeId,
+  }) as Customer;
+
+  it("previews the exact Spot Cash schedule lines from buildSchedule in the prepare dialog", async () => {
+    show("dev-admin", <PrepareContractDialog customer={goldCustomer("scheme-spot-cash")} open onClose={() => {}} />);
+    expect(await screen.findByRole("heading", { name: "Payment schedule" })).toBeInTheDocument();
+    expect(screen.getByText("Reservation fee")).toBeInTheDocument();
+    expect(screen.getByText("₱10,000.00")).toBeInTheDocument();
+    expect(screen.getByText("Balance")).toBeInTheDocument();
+    expect(screen.getByText("₱302,000.00")).toBeInTheDocument();
+  });
+
+  it("previews the exact installment schedule lines from buildSchedule in the prepare dialog", async () => {
+    show("dev-admin", <PrepareContractDialog customer={goldCustomer("scheme-installment-4m")} open onClose={() => {}} />);
+    expect(await screen.findByRole("heading", { name: "Payment schedule" })).toBeInTheDocument();
+    expect(screen.getByText("Reservation fee")).toBeInTheDocument();
+    expect(screen.getByText("MA1")).toBeInTheDocument();
+    expect(screen.getAllByText("₱95,000.00")).toHaveLength(4);
+  });
+
+  it("snapshots the resolved Gold price on the contract tiles", async () => {
+    show("dev-admin", <ContractReviewDetailPage contractId="ctr-3" />);
+    const tiles = await screen.findByRole("group", { name: "Contract summary" });
+    // Contract price and outstanding balance (nothing verified yet on ctr-3).
+    expect(within(tiles).getAllByText("₱390,000.00")).toHaveLength(2);
+    expect(within(tiles).getByText("Snapshot at preparation")).toBeInTheDocument();
+    expect(within(tiles).queryByText("Source conflict")).toBeNull();
   });
 });
 

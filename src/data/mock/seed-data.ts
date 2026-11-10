@@ -221,7 +221,7 @@ const staff: StaffMember[] = [
 // Business-module fixtures (customers, VIP catalog, contracts, sales, payments,
 // memberships, resort spend). Money is integer centavos. Figures come only from
 // the October/November 2026 standard contracts and business rules; nothing here
-// is an approved price list. Gold price carries its documented conflict (05 6.1).
+// is an approved price list. Gold price resolved by owner ruling 2026-11-10 (05 amendment item 11); Section IV ₱780,000 rejected.
 // No commission, receipt number or Card ID is fabricated beyond the synthetic
 // examples in doc 06 section 17.
 // ---------------------------------------------------------------------------
@@ -267,8 +267,8 @@ const products: VipProduct[] = [
     validityYears: 12, earningCycles: 10, vipDiscountPercent: 20, lifetimePoints: 200000, pointsPerCycle: 20000,
     weekdayPointsPerCycle: 14000, weekendPointsPerCycle: 6000, minSpendPerCycleCentavos: peso(2000), supplementaryHolders: 0,
     status: "active", configVersion: 1, effectiveDate: null, changes: [] },
-  { code: "G1", name: "Gold VIP", tier: "Gold", priceCentavos: peso(390000), priceStatus: "conflict",
-    priceNote: "Section II and Annex A state 390,000. Section IV of the Gold contract states 780,000. Management must resolve this (05 6.1).",
+  { code: "G1", name: "Gold VIP", tier: "Gold", priceCentavos: peso(390000), priceStatus: "contract_stated",
+    priceNote: "Gold VIP ₱390,000 confirmed by owner ruling effective 2026-11-10 (doc 05 amendment item 11). Section IV ₱780,000 rejected.",
     validityYears: 22, earningCycles: 20, vipDiscountPercent: 25, lifetimePoints: 500000, pointsPerCycle: 25000,
     weekdayPointsPerCycle: 17500, weekendPointsPerCycle: 7500, minSpendPerCycleCentavos: peso(3000), supplementaryHolders: 1,
     status: "active", configVersion: 1, effectiveDate: null, changes: [] },
@@ -348,8 +348,8 @@ const baseContract = (id: string, customerId: string, code: VipTierCode, schemeI
   const product = byCode(code);
   const scheme = paymentSchemes.find((s) => s.id === schemeId)!;
   return {
-    id, customerId, productCode: code, productConfigVersion: product.configVersion, priceCentavos: product.priceCentavos,
-    priceStatus: product.priceStatus, schemeId, schemeLabel: scheme.label, schemeStatus: scheme.commercialStatus, paymentCode: scheme.paymentCode,
+    id, customerId, productCode: code, productConfigVersion: product.configVersion, priceCentavos: buildSchedule(product, scheme).priceCentavos,
+    priceStatus: scheme.priceCentavosByTier[code] != null ? "contract_stated" : product.priceStatus, schemeId, schemeLabel: scheme.label, schemeStatus: scheme.commercialStatus, paymentCode: scheme.paymentCode,
     classification: "S" as const, validityYears: product.validityYears, benefits: benefitsOf(product),
     sellerMemberId: seller, genealogy: team[seller], customerAccepted: true, reviewedBy: null, finalizedAt: null, returnReason: null, cancelReason: null,
   };
@@ -374,7 +374,7 @@ const contracts: Contract[] = [
     schedule: installmentSchedule("G1", [null, null, null, null, null]),
     requiredInitialCentavos: requiredInitialOf("G1"), raNumber: null, status: "under_review", preparedBy: "dev-sm-a", createdAt: "2026-11-03",
     submittedAt: "2026-11-04",
-    history: [{ at: "2026-11-04", actorId: "dev-sm-a", event: "CONTRACT_SUBMITTED", note: null }] },
+    history: [{ at: "2026-11-04", actorId: "dev-sm-a", event: "CONTRACT_SUBMITTED", note: null }, { at: "2026-11-10", actorId: "owner", event: "CONTRACT_REVISED", note: "Owner ruling 2026-11-10 (doc 05 item 11): Gold price conflict resolved; snapshot at ₱390,000." }] },
   { ...baseContract("ctr-4", "cust-a4", "B1", "scheme-installment-4m", "mem-ost-a2"),
     schedule: installmentSchedule("B1", ["2026-11-10", null, null, null, null]),
     requiredInitialCentavos: requiredInitialOf("B1"), raNumber: null, status: "under_review", preparedBy: "dev-ost-a2", createdAt: "2026-11-05",

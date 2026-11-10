@@ -410,7 +410,7 @@ These values describe the updated standard-contract baselines and do not authori
 
 Known source-document concerns:
 
-1. A discrepancy between ₱390,000 and ₱780,000 in different sections of the Gold contract.
+1. A discrepancy between ₱390,000 and ₱780,000 in different sections of the Gold contract (Gold portion resolved by owner ruling 2026-11-10, doc 05 item 11).
 2. Unfinished payment amount wording in the Silver contract.
 3. Differences between historical Card Claim Date language and the newer official Membership Activation Date policy.
 4. Missing definitive commercial details for some Move payment schemes.

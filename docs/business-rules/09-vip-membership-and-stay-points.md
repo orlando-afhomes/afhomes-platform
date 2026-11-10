@@ -99,7 +99,7 @@ Updated October 2026 VIP contracts establish (source-documented baselines, not r
 | Primary holders | 1 | 1 | 1 |
 | Supplementary holders | 0 | 0 | 1 |
 
-Gold contract source contains a previously identified pricing inconsistency (₱390,000 vs ₱780,000) and Silver contains unfinished amount wording. Those require authoritative contractual correction; do not silently resolve.
+Gold contract source contains a previously identified pricing inconsistency (₱390,000 vs ₱780,000), now resolved by owner ruling 2026-11-10 (doc 05 item 11), and Silver contains unfinished amount wording which still requires correction. Those require authoritative contractual correction; do not silently resolve.
 
 ---
 

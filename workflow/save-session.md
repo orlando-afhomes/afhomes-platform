@@ -114,63 +114,51 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 - Saved at: 2026-11-10
 - Repository: afhomes-platform (remote `https://github.com/orlando-afhomes/afhomes-platform.git`)
 - Branch: develop
-- HEAD: 4d35fab "feat: split admin flows into process-by-process pages and add VIP payment schemes". Nothing staged (verified this run).
-- Session objective: redesign only the Admin Dashboard main content using `docs/ui-redesign/dashboard.png` as the visual reference, preserving branding, role scoping, and all business definitions.
+- HEAD: d302dc7 "feat: grant Super Admin full control and centralize the admin UI kit". Working tree clean (verified this run: nothing staged, unstaged, or untracked).
+- Session objective: implement a series of owner-approved workstreams — Super Admin full control + SoD bypasses, seed records for all Sales-to-Audit-Logs pages, Customers redesign, Customer detail + Export/History redesign, Contracts redesign, admin-wide UI unification kit, stat-card differentiation, reference card design, dashboard KPI restyle — verify everything, then hand off for owner commit.
 - Development phase: frontend prototype with mock data, QA stage. Only the owner declares frontend completion.
-- Context note: no compaction notice this session. The reference image is gitignored by the owner's uncommitted `.gitignore` change.
+- Context note: no compaction notice this session. All implementation was done by the agent (many parallel subagents plus direct edits); the owner committed the finished work as d302dc7 (97 files, +3414/-961) after final verification.
 
 ## 2. Current Project State
-- Dashboard redesign implemented. Seller roles still render `SalesNetworkPanel`; inactive accounts still see the restricted state.
-- Admin/Super Admin/Finance/HR use the new dashboard: header with compact range selector, KPI grid, performance chart, VIP donut, recent activity, pending actions.
-- Gating: team members = `sales-network`; customers = `customers`; contracts/donut/activity = `vip-products` or `sales`; Contract Review queue = `vip-products`; Verified Collections and chart collections = `finance.reports.view`; Payment Verification queue = `finance`; Activation queue = `membership` + `membership.activate`.
-- Super Admin: 4 KPIs, both chart series, donut, activity, Contract Review + Activation queues. Admin: 3 KPIs (no collections), sales-only chart, donut, activity, Contract Review + Activation. Finance: collections KPI, collections-only chart, no donut/contract queues, Payment Verification + Activation, activity. HR: "No dashboard metrics" note. No sidebar/topbar changes.
-- Native SVG charts, no new dependency. Chart uses Confirmed Sales Value by signed adjustment date (doc 13) and gross Verified Collections by `verifiedDate` (doc 11), zero-filled Asia/Manila days, accessible summary and expandable data table.
-- Contract Review pending = `submitted` + `under_review`; Payment Verification = `submitted` + `under_review`; Activation = `pending`. Total Contracts and the donut are current snapshots excluding cancelled; the date filter affects the chart and Verified Collections only.
-- Activity uses visible contract/payment/membership history, not audit. "View all" goes to `/admin/audit-logs` for audit-authorized roles, otherwise `/admin/finance/payments`.
+- Committed state: role-based Admin/Finance/Sales dashboards with KPI comparisons; Super Admin = union of all module+operation grants (incl. finance); SoD blockers bypassed for Super Admin only.
+- Shared admin kit: `src/shared/components/admin/` (AdminPage, AdminKpi/Stat cards + grids, AdminSection/Empty/Error, AdminTabs, AdminFilterBar, StepBlock, InfoSplitCard/InfoMiniCard, StatusPill). `BizBadge` delegates to `StatusPillForStatus`; `DataTable` carries the beige header + even-row tint globally.
+- All admin pages migrated to the kit; duplicates deleted (`module-page`, `stat-tiles`, `modern/section`, `customer-stat-cards`, `customers-table-card` +css, `contracts-table.css`). `ContractTiles` renders AdminStatCards in a `role="group"`.
+- Seed covers every page: 3 commissions (approved/paid/cancelled on sale-2), memb-1 financial hold, ctr-2 cancellation requested, 2 import jobs, 8 audit events. Reference images in `docs/ui-redesign/` remain gitignored.
+- Docs amended: 01 §3.6 (Super Admin full control + SoD bypass list), 07 §5.2 + owner-ruling item 5, 08 §11.2, 11 §32.1 (KPI comparisons), 13 §3.1 (dashboard sales counts), frontend.md §40.6 (admin kit).
 
 ## 3. Important Decisions
-- Owner approved the recommended approach: native SVG instead of installing d3/recharts; keep `SalesNetworkPanel` for seller roles; Contract Review count includes submitted + under_review; Super Admin sees the collections KPI/chart but not the Payment Verification queue, mirroring current module grants.
-- No changes to `ROLE_MODULE_GRANTS`, operations, repositories, seed data, navigation, sidebar, header, layout, tokens, business-rule documents, or dependencies.
-- No trend/comparison badges: there are no historical KPI snapshots or an approved comparison definition.
-- Carried over: Move A/B Card ID codes stay `paymentCode: null`; Gold installment price (390,000 vs 780,000) unresolved; Super Admin only approves Move arrangements; mock data in memory only; no agent Git writes; AGENTS.md/CLAUDE.md edits need owner authorization.
-- `docs/development/frontend.md` section 40.6 still says dated metrics/charts are deferred; it is stale and was not edited.
+- Owner approvals this session: Super Admin union-grant full control; SoD bypass for Super Admin EXCEPT last-Super-Admin lockout protection (kept for everyone); native SVG charts (no d3); no new dependencies; AdminPage/AdminStat/AdminTabs/StatusPill kit with `DataTable` global theme; reference card design (icon chip + tone divider + big value + faint wave, no pills) for all non-dashboard cards; dashboard KPI restyle kept truthful "vs. previous period" copy.
+- Carried over unresolved: Move A/B Card ID mapping; Gold installment price (390,000 vs 780,000); Move B down-payment due date; required initial payment per scheme; overpayment/refund timing; Welcome Gift lapse; template authority; commission default rates; `frontend.md` stale-section follow-ups none remaining (40.6 updated); no identity switcher for browser QA of restricted roles.
+- Restrictions: mock data in browser memory only (seed restores on refresh); no agent Git writes (owner committed); AGENTS.md/CLAUDE.md edits need owner authorization.
 
 ## 4. Completed Work
-- Rewrote `src/panels/admin/pages/admin-dashboard-page.tsx`.
-- Extended `src/panels/admin/dashboard-metrics.ts` with contract/tier/pending/activity/daily-series helpers; tests in `dashboard-metrics.test.ts`.
-- New components: `dashboard-date-range.tsx`, `dashboard-kpi-grid.tsx`, `dashboard-performance-chart.tsx`, `dashboard-product-distribution.tsx`, `dashboard-activity-list.tsx`, `dashboard-pending-actions.tsx`, `dashboard-chart-model.ts` plus test.
-- New loaded-data test `dashboard-page.test.tsx`; extended `admin-dashboard-page.test.tsx` for role gating.
-- Verification: targeted dashboard tests 33/33; TypeScript clean; lint 0 errors (2 pre-existing warnings); build clean; browser QA as Super Admin at 1440/768/390 including date presets, custom-range validation, chart data table, donut, activity, pending links, keyboard order, and no console errors.
+- Implemented: role-based dashboards + KPI comparisons; Super Admin module union (`grantsSourceRoles`) + SoD bypasses (payment self-verify, cancellation requester-decides, self-modification) with tests; seed expansion + audit-absolute test updates (+SEED_AUDIT_EVENT_COUNT); customers list/import/VIP-card redesign; customer detail tabs + export/history cards; contracts list/detail/MA1-sheet redesign; admin kit + full page migration + deletions; stat-card differentiation + reference card restyle; dashboard KPI restyle.
+- Verification each workstream: targeted suites green, `tsc` clean, `lint` 0 errors, `build` clean, Super Admin browser QA at 1440/390 across all touched pages, no console errors.
 
 ## 5. Git Working Tree
 - Staged: none.
-- Unstaged tracked: `.gitignore` (owner change adding `/docs/ui-redesign`, pre-existing and preserved), `src/panels/admin/pages/admin-dashboard-page.tsx`, `dashboard-metrics.ts`, `dashboard-metrics.test.ts`, `admin-dashboard-page.test.tsx`.
-- Untracked: `dashboard-activity-list`, `dashboard-chart-model` plus test, `dashboard-date-range`, `dashboard-kpi-grid`, `dashboard-pending-actions`, `dashboard-performance-chart`, `dashboard-product-distribution`, `dashboard-page.test.tsx`.
-- No deleted or renamed files. Line-ending warnings (LF to CRLF) on edited files; CRLF preserved where edited.
-- Reference image `docs/ui-redesign/dashboard.png` is gitignored, not tracked.
+- Unstaged tracked: none (clean).
+- Untracked: none (clean).
+- Deleted or renamed files: none pending (all deletions already committed in d302dc7).
+- Relevant unfinished work: none in the tree; everything implemented this session is committed.
 
 ## 6. Pending Tasks
-- Owner review and commit (owner only).
-- Optional: extend the redesign to seller dashboards (unchanged by decision).
-- Browser QA for Admin/Finance/HR layouts is blocked by the absence of a dev identity switcher; tests cover them.
-- Open owner decisions (carried over): Move A/B Card ID mapping; Gold installment price; Move B down-payment due date; required initial payment per scheme; overpayment/refund timing; Welcome Gift lapse; template authority; commission default rates.
-- Possible follow-ups: approved trend/comparison definition; Super Admin finance-queue module gap; stale `frontend.md` section 40.6.
+- Owner review of HEAD d302dc7 (already committed; review only).
+- Open owner decisions (carried over, unchanged): Move A/B Card ID mapping; Gold installment price; Move B down-payment due date; required initial payment per scheme; overpayment/refund timing; Welcome Gift lapse; template authority; commission default rates.
+- Optional follow-ups: dev identity switcher for restricted-role browser QA; manual screen-reader audit; production-build browser pass.
+- No blockers.
 
 ## 7. Verification State
-- Targeted: dashboard tests 33/33 passed (metrics, chart model, static role gating, loaded Super Admin/Finance/Admin).
-- Full: `npx vitest run` 675/676 passed, 57/58 files. Single failure: `staff-page.test.tsx > adds staff with cascading department role` timed out at 15000ms under full-suite load; it passes alone (20/20).
-- Typecheck: `npx tsc --noEmit` clean.
-- Lint: `npm run lint` 0 errors, 2 pre-existing warnings (`sales-network/genealogy.ts`, `shared/forms/validation/contact.ts`).
-- Build: `npm run build` compiled successfully; all routes generated.
-- Browser QA: Super Admin only, using the pre-existing dev server on port 3000. 1440/768/390 checked; Past 7 Days, Today, Past 6 Months and Custom verified; invalid range shows the alert and no figures; 29/185-row data table; pending links correct; keyboard order and focus reachable; no console errors.
-- Not performed: browser QA for Admin/Finance/HR, manual screen-reader audit, manual reduced-motion check (global CSS collapses transitions; charts have no animation), production-build browser pass.
-- Known limitation: activity "View all" uses Audit Logs for audit-authorized roles, which is empty in the seed, so it may show fewer entries than the business-history feed.
+- Last full `npx vitest run` before the owner commit: 63 files, 740+ tests, all passing (the only failures seen across runs were the known `staff-page.test.tsx` 15s timeouts under parallel load; the file passes 20/20 in isolation).
+- Typecheck: `npx tsc --noEmit` clean. Lint: 0 errors, 2 pre-existing warnings (`sales-network/genealogy.ts`, `shared/forms/validation/contact.ts`). Build: compiled, all routes generated.
+- Browser QA: Super Admin at 1440/390 over dashboards, Finance queues, commissions, memberships, customers, contracts + MA1 sheet, import/export history, audit logs, reports — all matching references, no access regressions, no console errors.
+- Not performed: restricted-role browser QA (no switcher), manual screen-reader audit, manual reduced-motion check beyond global CSS, production-build browser pass.
 
 ## 8. Next Session Instructions
-- Recommended first action: `/load`, then inspect `git status --short`; review the dashboard in the browser as Super Admin if desired; owner commits when ready.
-- Relevant files: the nine dashboard files listed above, `admin-dashboard-page.test.tsx`, `dashboard-page.test.tsx`, `dashboard-metrics.test.ts`; reporting rules `src/modules/sales/rules.ts`, `src/modules/finance/rules.ts`.
-- Required approvals: any commit or push (owner only), AGENTS.md/CLAUDE.md edits, new dependencies (e.g. d3), an identity switcher, RBAC changes.
-- Warnings: do not run build and tests together; do not delete `.next`; a full page load resets mock data; the owner's dev server on port 3000 was left running; line-ending warnings are expected.
+- Recommended first action: `/load`, then `git status --short` to confirm the clean tree at d302dc7, and pick up the owner's next task.
+- Relevant files: `src/modules/identity/permissions.ts` (`grantsSourceRoles`), `src/shared/components/admin/*`, `src/shared/components/business/biz-badge.tsx`, `src/shared/components/modern/data-table.tsx`, `src/data/mock/seed-data.ts`, governance docs 01/07/08/11/13 + `frontend.md` §40.6.
+- Required approvals: any commit or push (owner only), AGENTS.md/CLAUDE.md edits, new dependencies, identity switcher, RBAC or business-rule changes.
+- Warnings: do not run build and tests together; do not delete `.next`; a full page load resets mock data to seed; line-ending warnings (LF->CRLF) are expected on Windows checkouts.
 
 ## 9. Execution Recommendation
 - Phase: QA
@@ -178,6 +166,7 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 - Recommended model: Sonnet 5.5
 - Effort: low
 - Ultracode: OFF
-- Token optimization: one targeted dashboard test run, one build, one browser pass; avoid re-running the full suite unless shared code changes.
-- Reason: implementation and automated checks are complete; remaining work is owner review/commit and optional decisions.
+- Token optimization: one targeted test run + one build + one browser pass per task; full suite only when shared code changes.
+- Reason: the tree is committed and verified; next work starts from a clean state on the owner's next instruction.
+
 <!-- SESSION_SNAPSHOT_END -->

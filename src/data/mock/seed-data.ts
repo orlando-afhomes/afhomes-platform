@@ -1,4 +1,6 @@
 import type { Customer } from "@/modules/customers/types";
+import type { CustomerImportJob } from "@/modules/customers/import";
+import type { AuditEvent } from "@/modules/audit/types";
 import type { OrgMember, Department, DepartmentRole, StaffMember } from "@/modules/organization/types";
 import type { AccreditationRecord } from "@/modules/accreditation/types";
 import type { VipProduct, PaymentScheme, VipTierCode } from "@/modules/vip/types";
@@ -363,6 +365,10 @@ const contracts: Contract[] = [
     schedule: installmentSchedule("B1", ["2026-10-22", "2026-10-30", "2026-10-31", "2026-11-01", "2026-11-02"]),
     requiredInitialCentavos: requiredInitialOf("B1"), raNumber: "2026-0001", status: "finalized", preparedBy: "dev-ost-b1", createdAt: "2026-10-21",
     submittedAt: "2026-10-22", reviewedBy: "dev-admin", finalizedAt: "2026-10-23",
+    // Seeded so Cancellation Requests shows a record. assertCancellable still
+    // rejects new requests on this contract (Active membership), so the
+    // request-cancellation validation tests are unaffected.
+    cancellation: { ground: "non_payment", reason: "Two missed installments after the reservation fee.", requestedBy: "dev-admin", requestedAt: "2026-11-08T09:00:00+08:00", status: "requested", decidedBy: null, decidedAt: null, forfeitedCentavos: null },
     history: [{ at: "2026-10-22", actorId: "dev-ost-b1", event: "CONTRACT_SUBMITTED", note: null }, { at: "2026-10-23", actorId: "dev-admin", event: "CONTRACT_FINALIZED", note: null }] },
   { ...baseContract("ctr-3", "cust-a3", "G1", "scheme-installment-4m", "mem-sm-a"),
     schedule: installmentSchedule("G1", [null, null, null, null, null]),
@@ -411,7 +417,7 @@ const payments: Payment[] = [
 
 const memberships: Membership[] = [
   { id: "memb-1", customerId: "cust-b1", contractId: "ctr-2", productCode: "B1", status: "active", activationDate: "2026-11-02",
-    validityEndDate: "2033-11-02", cardId: "26110200001B1T04S", raNumber: "2026-0001", financialHold: false, createdAt: "2026-10-30",
+    validityEndDate: "2033-11-02", cardId: "26110200001B1T04S", raNumber: "2026-0001", financialHold: true, createdAt: "2026-10-30",
     history: [{ at: "2026-11-02", actorId: "dev-admin", event: "MEMBERSHIP_ACTIVATED", note: null }] },
   { id: "memb-2", customerId: "cust-a1", contractId: "ctr-1", productCode: "S1", status: "pending", activationDate: null,
     validityEndDate: null, cardId: null, raNumber: null, financialHold: false, createdAt: "2026-10-01", history: [] },
@@ -423,9 +429,62 @@ const resortSpends: ResortSpend[] = [
   { id: "rs-3", membershipId: "memb-1", date: "2026-11-07", amountCentavos: peso(500), description: "Resort activity pass (refunded)", status: "refund_hold", verificationRef: null },
 ];
 
-const commissions: Commission[] = [];
+const commissions: Commission[] = [
+  // Seeded so Commissions, Payouts and the Commission Report show records.
+  // All three attach to the confirmed sale-2, which no test mutates, and use
+  // recipients no test approves for that sale (tests only approve sale-1/sale-4).
+  { id: "comm-1", saleId: "sale-2", contractId: "ctr-2", recipientMemberId: "mem-ost-b1", recipientName: "Paolo Ramos", recipientDesignation: "OST",
+    basisCentavos: peso(72000), percentBp: 500, amountCentavos: peso(3600), status: "approved",
+    approvedBy: "dev-finance", approvedAt: "2026-10-30", holdReason: null, payout: null,
+    history: [{ at: "2026-10-30", actorId: "dev-finance", event: "COMMISSION_APPROVED", note: null }] },
+  { id: "comm-2", saleId: "sale-2", contractId: "ctr-2", recipientMemberId: "mem-svd-b", recipientName: "Liza Aquino", recipientDesignation: "SVD",
+    basisCentavos: peso(72000), percentBp: 200, amountCentavos: peso(1440), status: "paid",
+    approvedBy: "dev-finance", approvedAt: "2026-10-28", holdReason: null,
+    payout: { reference: "PAY-2026-0011", method: "Bank Transfer", payoutDate: "2026-11-04", processedBy: "dev-finance", initiatedAt: "2026-11-04", confirmedAt: "2026-11-05" },
+    history: [
+      { at: "2026-10-28", actorId: "dev-finance", event: "COMMISSION_APPROVED", note: null },
+      { at: "2026-11-04", actorId: "dev-finance", event: "COMMISSION_PAYOUT_RECORDED", note: null },
+      { at: "2026-11-05", actorId: "dev-finance", event: "COMMISSION_PAID", note: null },
+    ] },
+  // A replaced approval, kept on record: cancelled commissions never block a new approval for the same sale.
+  { id: "comm-3", saleId: "sale-2", contractId: "ctr-2", recipientMemberId: "mem-ost-b1", recipientName: "Paolo Ramos", recipientDesignation: "OST",
+    basisCentavos: peso(72000), percentBp: 300, amountCentavos: peso(2160), status: "cancelled",
+    approvedBy: "dev-finance", approvedAt: "2026-10-29", holdReason: null, payout: null,
+    history: [
+      { at: "2026-10-29", actorId: "dev-finance", event: "COMMISSION_APPROVED", note: null },
+      { at: "2026-10-30", actorId: "dev-finance", event: "COMMISSION_CANCELLED", note: "Replaced by the approved 5% entry." },
+    ] },
+];
 
-const counters: Record<string, number> = { contract: 5, sale: 5, payment: 9, membership: 3, commission: 1, adjustment: 3, resortSpend: 4 };
+const counters: Record<string, number> = { contract: 5, sale: 5, payment: 9, membership: 3, commission: 4, adjustment: 3, resortSpend: 4, customerImport: 3 };
+
+const customerImportJobs: CustomerImportJob[] = [
+  { id: "imp-1", fileName: "branch-b-customers.xlsx", createdAt: "2026-11-03T10:15:00+08:00", actorId: "dev-admin",
+    totalRows: 12, createdCount: 12, needsReviewCount: 0, invalidCount: 0, createdCustomerIds: [] },
+  { id: "imp-2", fileName: "walkin-october.csv", createdAt: "2026-10-25T14:40:00+08:00", actorId: "dev-admin",
+    totalRows: 8, createdCount: 5, needsReviewCount: 2, invalidCount: 1, createdCustomerIds: [] },
+];
+
+/**
+ * Seeded audit history so Audit Logs (and the customer Audit Log tab) show
+ * records on a fresh load. Every event mirrors a real repository payload for
+ * an existing record; all timestamps predate the mock "today" so runtime
+ * events always sort newer. Tests that assert absolute audit counts add
+ * SEED_AUDIT_EVENT_COUNT (exported below) to their expectations.
+ */
+const auditEvents: AuditEvent[] = [
+  { id: "audit-1", timestamp: "2026-09-29T10:05:00+08:00", actorId: "dev-ost-a1", actorRoles: ["ost"], module: "customers", action: "CUSTOMER_SUBMITTED", entityType: "customer", entityId: "cust-a1", newValue: "submitted", outcome: "success" },
+  { id: "audit-2", timestamp: "2026-09-29T10:06:00+08:00", actorId: "dev-ost-a1", actorRoles: ["ost"], module: "contracts", action: "CONTRACT_PREPARED", entityType: "contract", entityId: "ctr-1", newValue: "draft", outcome: "success", relatedRecordIds: ["cust-a1"] },
+  { id: "audit-3", timestamp: "2026-09-30T09:12:00+08:00", actorId: "dev-ost-a1", actorRoles: ["ost"], module: "contracts", action: "CONTRACT_SUBMITTED", entityType: "contract", entityId: "ctr-1", newValue: "submitted", outcome: "success", relatedRecordIds: ["cust-a1"] },
+  { id: "audit-4", timestamp: "2026-10-01T11:20:00+08:00", actorId: "dev-admin", actorRoles: ["admin"], module: "contracts", action: "CONTRACT_FINALIZED", entityType: "contract", entityId: "ctr-1", previousValue: "submitted", newValue: "finalized", outcome: "success", relatedRecordIds: ["cust-a1"] },
+  { id: "audit-5", timestamp: "2026-10-22T13:45:00+08:00", actorId: "dev-admin", actorRoles: ["admin"], module: "contracts", action: "CONTRACT_FINALIZED", entityType: "contract", entityId: "ctr-2", previousValue: "submitted", newValue: "finalized", outcome: "success", relatedRecordIds: ["cust-b1"] },
+  { id: "audit-6", timestamp: "2026-10-28T15:30:00+08:00", actorId: "dev-finance", actorRoles: ["finance"], module: "finance", action: "PAYMENT_VERIFIED", entityType: "payment", entityId: "pay-2", newValue: "verified", outcome: "success", relatedRecordIds: ["ctr-1"] },
+  { id: "audit-7", timestamp: "2026-10-28T15:31:00+08:00", actorId: "dev-finance", actorRoles: ["finance"], module: "sales", action: "SALE_CONFIRMED", entityType: "sale", entityId: "sale-1", newValue: "confirmed", outcome: "success", relatedRecordIds: ["ctr-1"] },
+  { id: "audit-8", timestamp: "2026-10-30T09:00:00+08:00", actorId: "dev-finance", actorRoles: ["finance"], module: "commissions", action: "COMMISSION_APPROVED", entityType: "commission", entityId: "comm-1", newValue: "500bp/360000", outcome: "success", relatedRecordIds: ["sale-2"] },
+];
+
+/** Absolute audit assertions in tests add this to their expectations. */
+export const SEED_AUDIT_EVENT_COUNT = auditEvents.length;
 
 export const seedData = {
   members,
@@ -439,6 +498,8 @@ export const seedData = {
   memberships,
   commissions,
   resortSpends,
+  customerImportJobs,
+  auditEvents,
   accounts,
   departments,
   roles,

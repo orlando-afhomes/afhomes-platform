@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useId, useMemo, useState, type ReactNode } from "react";
+import { Award, Calendar, CalendarCheck, CalendarDays, Check, Clock, CreditCard, Diamond, FileText, IdCard, Layers, Receipt, Star, Tag, User, UserCheck, type LucideIcon } from "lucide-react";
 import { useContracts, useMemberships, usePayments } from "@/data/business-queries";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import type { PaymentView } from "@/data/contracts/payment-repository";
@@ -15,12 +16,10 @@ import type { BreadcrumbItem } from "@/shared/components/modern/breadcrumbs";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { DetailList, DetailRow, InfoNote } from "@/shared/components/modern/detail-list";
 import { Money } from "@/shared/components/modern/money";
-import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
-import { Section } from "@/shared/components/modern/section";
-import { StatTiles } from "@/shared/components/modern/stat-tiles";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { ModulePage } from "./module-page";
+import { AdminPage, AdminSection, AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
 
 /** Contract with its payments, membership, schedule, ledger and milestones, derived once for every detail page. */
 export function useContractRecord(contractId: string) {
@@ -59,56 +58,115 @@ export function ContractPageFrame({
   const record = useContractRecord(contractId);
   if (record.isLoading) {
     return (
-      <ModulePage anyOf={anyOf} title="Contract" crumbs={parentCrumbs}>
+      <AdminPage anyOf={anyOf} title="Contract" crumbs={parentCrumbs}>
         <Skeleton className="tw:h-48 tw:w-full" />
-      </ModulePage>
+      </AdminPage>
     );
   }
   const { contract } = record;
   if (!contract) {
     return (
-      <ModulePage anyOf={anyOf} title="Contract not found" crumbs={parentCrumbs}>
+      <AdminPage anyOf={anyOf} title="Contract not found" crumbs={parentCrumbs}>
         <InfoNote>This contract does not exist or is not visible to this account.</InfoNote>
-      </ModulePage>
+      </AdminPage>
     );
   }
   const full: ContractRecord = { ...record, contract };
   return (
-    <ModulePage anyOf={anyOf} title={`Contract ${contract.id.toUpperCase()}`} description={`${contract.customerName} · ${contract.productCode} · ${contract.schemeLabel}`} crumbs={[...parentCrumbs, { label: contract.id.toUpperCase() }]} actions={actions?.(full)}>
+    <AdminPage anyOf={anyOf} title={`Contract ${contract.id.toUpperCase()}`} description={`${contract.customerName} · ${contract.productCode} · ${contract.schemeLabel}`} crumbs={[...parentCrumbs, { label: contract.id.toUpperCase() }]} actions={actions?.(full)}>
       {children(full)}
-    </ModulePage>
+    </AdminPage>
+  );
+}
+
+/** White feature card with an icon-led heading, local to the contract detail pages. */
+function ContractCard({ icon: Icon, title, description, children }: { icon: LucideIcon; title: string; description?: string; children: ReactNode }) {
+  const id = useId();
+  const titleId = `${id}-title`;
+  const descriptionId = `${id}-description`;
+  return (
+    // Named by its visible heading and described by its subtitle, so the region's accessible name never drifts from the screen.
+    <section
+      aria-labelledby={titleId}
+      aria-describedby={description ? descriptionId : undefined}
+      className="contract-detail__card tw:flex tw:h-full tw:min-w-0 tw:flex-col tw:rounded-2xl tw:border tw:border-border tw:bg-card tw:p-5 tw:text-card-foreground tw:shadow-(--shadow-soft) tw:sm:p-6"
+    >
+      <div className="tw:flex tw:flex-wrap tw:items-start tw:gap-x-3 tw:gap-y-3">
+        <Icon aria-hidden="true" className="contract-detail__card-icon tw:mt-0.5 tw:size-6 tw:shrink-0 tw:text-primary" strokeWidth={1.75} />
+        {/* A 14rem basis lets the heading wrap below the icon on narrow cards instead of squeezing it. */}
+        <div className="tw:min-w-0 tw:flex-[1_1_14rem]">
+          <h2 id={titleId} className="tw:text-lg tw:leading-snug tw:font-semibold tw:text-foreground">
+            {title}
+          </h2>
+          {description ? (
+            <p id={descriptionId} className="tw:mt-0.5 tw:text-sm tw:text-muted-foreground">
+              {description}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      <div className="tw:mt-5 tw:flex tw:min-w-0 tw:flex-1 tw:flex-col">{children}</div>
+    </section>
   );
 }
 
 export function ContractTiles({ contract, payments }: { contract: ContractView; payments: PaymentView[] }) {
   return (
-    <StatTiles items={[{ label: "Contract price", value: <Money value={contract.priceCentavos} />, hint: contract.priceStatus === "conflict" ? "Source conflict" : "Snapshot at preparation" }, { label: "Verified payments", value: <Money value={totalVerifiedCentavos(payments)} /> }, { label: "Outstanding balance", value: <Money value={outstandingBalanceCentavos(contract, payments)} /> }, { label: "Status", value: <BizBadge status={contract.status} /> }]} />
+    <div role="group" aria-label="Contract summary">
+      <AdminStatGrid columns={4}>
+        <AdminStatCard label="Contract price" value={<Money value={contract.priceCentavos} />} icon={Layers} tone="brand" description={contract.priceStatus === "conflict" ? "Source conflict" : "Snapshot at preparation"} />
+        <AdminStatCard label="Verified payments" value={<Money value={totalVerifiedCentavos(payments)} />} icon={CreditCard} tone="success" />
+        <AdminStatCard label="Outstanding balance" value={<Money value={outstandingBalanceCentavos(contract, payments)} />} icon={Clock} tone="warning" />
+        <AdminStatCard label="Status" value={<BizBadge status={contract.status} />} icon={Tag} tone="neutral" />
+      </AdminStatGrid>
+    </div>
   );
 }
 
 export function ContractTermsSection({ record }: { record: ContractRecord }) {
   const { contract, membership } = record;
+  const rows: Array<{ icon: LucideIcon; term: string; value: ReactNode }> = [
+    { icon: User, term: "Customer", value: contract.customerName },
+    { icon: UserCheck, term: "Seller", value: contract.sellerName ?? "Company" },
+    { icon: Layers, term: "Plan", value: `${contract.productCode} · version ${contract.productConfigVersion} · ${contract.validityYears} years` },
+    { icon: CalendarDays, term: "Scheme", value: `${contract.schemeLabel}${contract.paymentCode ? ` (${contract.paymentCode})` : ""}` },
+    ...(contract.arrangement
+      ? [
+          {
+            icon: FileText,
+            term: "Special arrangement",
+            value:
+              contract.arrangement.status === "approved"
+                ? `Approved ${formatDate(contract.arrangement.approvedAt)} · ${contract.arrangement.approvalReference}`
+                : "Awaiting Super Admin written approval",
+          },
+        ]
+      : []),
+    { icon: Diamond, term: "Classification", value: contract.classification === "S" ? "Standard (S)" : "Non-Standard (N)" },
+    { icon: Star, term: "Benefits", value: `${contract.benefits.vipDiscountPercent}% VIP discount · ${contract.benefits.lifetimePoints.toLocaleString("en-PH")} lifetime points · ${contract.benefits.pointsPerCycle.toLocaleString("en-PH")} per cycle` },
+    { icon: IdCard, term: "RA number", value: contract.raNumber ?? "Not recorded" },
+    { icon: Check, term: "Customer accepted", value: contract.customerAccepted ? "Yes" : "No" },
+    { icon: CalendarCheck, term: "Finalized", value: formatDate(contract.finalizedAt) },
+    { icon: Receipt, term: "Sale", value: contract.sale ? <BizBadge status={contract.sale.status} /> : "Not recorded yet" },
+    { icon: Award, term: "Membership", value: membership ? <span>{membership.status}{membership.cardId ? ` · Card ${membership.cardId}` : ""}{membership.financialHold ? " · Financial Hold" : ""}</span> : "Not created yet" },
+  ];
   return (
-    <Section title="Contract terms" description="Fixed snapshot. Later catalog changes never alter this contract.">
-      <DetailList>
-        <DetailRow term="Customer">{contract.customerName}</DetailRow>
-        <DetailRow term="Seller">{contract.sellerName ?? "Company"}</DetailRow>
-        <DetailRow term="Plan">{contract.productCode} · version {contract.productConfigVersion} · {contract.validityYears} years</DetailRow>
-        <DetailRow term="Scheme">{contract.schemeLabel}{contract.paymentCode ? ` (${contract.paymentCode})` : ""}</DetailRow>
-        {contract.arrangement ? (
-          <DetailRow term="Special arrangement">
-            {contract.arrangement.status === "approved" ? `Approved ${formatDate(contract.arrangement.approvedAt)} · ${contract.arrangement.approvalReference}` : "Awaiting Super Admin written approval"}
-          </DetailRow>
-        ) : null}
-        <DetailRow term="Classification">{contract.classification === "S" ? "Standard (S)" : "Non-Standard (N)"}</DetailRow>
-        <DetailRow term="Benefits">{contract.benefits.vipDiscountPercent}% VIP discount · {contract.benefits.lifetimePoints.toLocaleString("en-PH")} lifetime points · {contract.benefits.pointsPerCycle.toLocaleString("en-PH")} per cycle</DetailRow>
-        <DetailRow term="RA number">{contract.raNumber ?? "Not recorded"}</DetailRow>
-        <DetailRow term="Customer accepted">{contract.customerAccepted ? "Yes" : "No"}</DetailRow>
-        <DetailRow term="Finalized">{formatDate(contract.finalizedAt)}</DetailRow>
-        <DetailRow term="Sale">{contract.sale ? <BizBadge status={contract.sale.status} /> : "Not recorded yet"}</DetailRow>
-        <DetailRow term="Membership">{membership ? <span>{membership.status}{membership.cardId ? ` · Card ${membership.cardId}` : ""}{membership.financialHold ? " · Financial Hold" : ""}</span> : "Not created yet"}</DetailRow>
-      </DetailList>
-    </Section>
+    <ContractCard icon={FileText} title="Contract terms" description="Fixed snapshot. Later catalog changes never alter this contract.">
+      <dl className="contract-detail__terms tw:m-0 tw:flex tw:flex-col">
+        {rows.map((row) => {
+          const Icon = row.icon;
+          return (
+            <div key={row.term} className="tw:flex tw:items-start tw:gap-3 tw:border-b tw:border-border tw:py-2.5 tw:last:border-b-0">
+              <span aria-hidden="true" className="tw:mt-0.5 tw:flex tw:size-5 tw:shrink-0 tw:items-center tw:justify-center tw:text-muted-foreground">
+                <Icon className="tw:size-4" strokeWidth={1.75} />
+              </span>
+              <dt className="tw:w-32 tw:shrink-0 tw:font-medium tw:text-muted-foreground tw:sm:w-40">{row.term}</dt>
+              <dd className="tw:m-0 tw:min-w-0 tw:flex-1 tw:break-words">{row.value}</dd>
+            </div>
+          );
+        })}
+      </dl>
+    </ContractCard>
   );
 }
 
@@ -125,30 +183,66 @@ export function ContractScheduleSection({ record }: { record: ContractRecord }) 
     ],
     [],
   );
+  const sheetRows: Array<{ icon: LucideIcon; label: string; value: ReactNode }> = line
+    ? [
+        { icon: Calendar, label: "Due", value: line.dueDate ? formatDate(line.dueDate) : "Date not set" },
+        { icon: Layers, label: "Amount", value: <Money value={line.amountCentavos} /> },
+        { icon: CreditCard, label: "Paid", value: <Money value={line.allocatedCentavos} /> },
+        { icon: Layers, label: "Remaining", value: <Money value={line.amountCentavos - line.allocatedCentavos} /> },
+      ]
+    : [];
   return (
     <>
-      <RecordDetailsSheet
-        open={line !== null}
-        onClose={() => setLine(null)}
-        title={line?.label ?? "Installment"}
-        subtitle={`${contract.customerName} · ${contract.productCode}`}
-        badge={line ? <BizBadge status={line.status} /> : undefined}
-        sections={
-          line
-            ? [{ title: "Installment", rows: [{ label: "Due", value: line.dueDate ? formatDate(line.dueDate) : "Date not set" }, { label: "Amount", value: <Money value={line.amountCentavos} /> }, { label: "Paid", value: <Money value={line.allocatedCentavos} /> }, { label: "Remaining", value: <Money value={line.amountCentavos - line.allocatedCentavos} /> }] }]
-            : []
-        }
-      />
-      <Section title="Payment schedule" description="Verified money is applied to the schedule in order. No penalty or interest is ever added.">
-        <DataTable data={schedule} columns={columns} getRowId={(row) => String(row.seq)} emptyText="No schedule." caption="Payment schedule" pageSize={10} onRowOpen={setLine} getRowLabel={(row) => `Open ${row.label}`} rowActions={(row) => <RowActionsMenu itemName={row.label} onView={() => setLine(row)} />} />
-      </Section>
+      <Sheet open={line !== null} onOpenChange={(next) => (next ? undefined : setLine(null))}>
+        <SheetContent className="contract-detail__sheet tw:overflow-y-auto tw:data-[side=right]:w-full tw:sm:data-[side=right]:max-w-md">
+          <SheetHeader className="tw:gap-2 tw:border-b tw:border-border tw:pr-12">
+            <SheetTitle className="tw:text-lg tw:font-semibold tw:tracking-tight">{line?.label ?? "Installment"}</SheetTitle>
+            <SheetDescription>{`${contract.customerName} · ${contract.productCode}`}</SheetDescription>
+            {line ? <div><BizBadge status={line.status} /></div> : null}
+          </SheetHeader>
+          <div className="tw:flex tw:flex-col tw:gap-5 tw:px-4">
+            {line ? (
+              <section aria-label="Installment Details" className="contract-detail__sheet-card tw:flex tw:flex-col tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-4 tw:shadow-(--shadow-soft)">
+                <div className="tw:flex tw:items-start tw:gap-3">
+                  <span aria-hidden="true" className="tw:flex tw:size-9 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-lg tw:bg-[var(--color-brand-soft)] tw:text-primary">
+                    <FileText className="tw:size-5" strokeWidth={1.75} />
+                  </span>
+                  <div className="tw:min-w-0">
+                    <h3 className="tw:text-sm tw:font-semibold tw:text-foreground">Installment Details</h3>
+                    <p className="tw:mt-0.5 tw:text-sm tw:text-muted-foreground">Payment information for this installment.</p>
+                  </div>
+                </div>
+                <dl className="tw:m-0 tw:mt-3 tw:flex tw:flex-col">
+                  {sheetRows.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.label} className="tw:flex tw:items-center tw:gap-3 tw:border-b tw:border-border tw:py-2 tw:last:border-b-0">
+                        <span aria-hidden="true" className="tw:flex tw:size-5 tw:shrink-0 tw:items-center tw:justify-center tw:text-muted-foreground">
+                          <Icon className="tw:size-4" strokeWidth={1.75} />
+                        </span>
+                        <dt className="tw:w-20 tw:shrink-0 tw:font-medium tw:text-muted-foreground">{item.label}</dt>
+                        <dd className="tw:m-0 tw:min-w-0 tw:flex-1 tw:break-words">{item.value}</dd>
+                      </div>
+                    );
+                  })}
+                </dl>
+              </section>
+            ) : null}
+          </div>
+        </SheetContent>
+      </Sheet>
+      <ContractCard icon={CalendarDays} title="Payment schedule" description="Verified money is applied to the schedule in order. No penalty or interest is ever added.">
+        <div className="contract-detail__table tw:[&_[data-slot=table-header]]:bg-[var(--color-bg-surface)] tw:motion-reduce:[&_[data-slot=table-row]]:transition-none">
+          <DataTable data={schedule} columns={columns} getRowId={(row) => String(row.seq)} emptyText="No schedule." caption="Payment schedule" pageSize={10} onRowOpen={setLine} getRowLabel={(row) => `Open ${row.label}`} rowActions={(row) => <RowActionsMenu itemName={row.label} onView={() => setLine(row)} />} />
+        </div>
+      </ContractCard>
     </>
   );
 }
 
 export function ContractMilestonesSection({ record }: { record: ContractRecord }) {
   return (
-    <Section title="Collection milestones" description="Each step is separate: a verified payment never activates a membership.">
+    <AdminSection title="Collection milestones" description="Each step is separate: a verified payment never activates a membership.">
       <DetailList>
         {record.milestones.map((milestone) => (
           <DetailRow key={milestone.key} term={milestone.label}>
@@ -157,7 +251,7 @@ export function ContractMilestonesSection({ record }: { record: ContractRecord }
           </DetailRow>
         ))}
       </DetailList>
-    </Section>
+    </AdminSection>
   );
 }
 
@@ -173,9 +267,9 @@ export function ContractLedgerSection({ record }: { record: ContractRecord }) {
     [],
   );
   return (
-    <Section title="Payment ledger" description="Verified payments, reversals and refunds in date order. Original payments are never changed.">
+    <AdminSection title="Payment ledger" description="Verified payments, reversals and refunds in date order. Original payments are never changed.">
       <DataTable data={record.ledger} columns={columns} getRowId={(row) => `${row.paymentId}-${row.kind}-${row.date}-${row.netCentavos}`} emptyText="No verified payments yet." caption="Payment ledger" pageSize={10} />
-    </Section>
+    </AdminSection>
   );
 }
 
@@ -192,21 +286,29 @@ export function ContractPaymentsSection({ record, actions }: { record: ContractR
     [],
   );
   return (
-    <Section title="Payments">
-      <DataTable data={record.payments} columns={columns} getRowId={(row) => row.id} emptyText="No payments submitted yet." caption="Payments" rowActions={actions?.rowActions} onRowOpen={actions?.open} getRowLabel={(row) => `Open payment of ${formatDate(row.paidDate)}`} />
-    </Section>
+    <ContractCard icon={CreditCard} title="Payments">
+      <div className="contract-detail__table tw:[&_[data-slot=table-header]]:bg-[var(--color-bg-surface)] tw:motion-reduce:[&_[data-slot=table-row]]:transition-none">
+        <DataTable data={record.payments} columns={columns} getRowId={(row) => row.id} emptyText="No payments submitted yet." caption="Payments" rowActions={actions?.rowActions} onRowOpen={actions?.open} getRowLabel={(row) => `Open payment of ${formatDate(row.paidDate)}`} />
+      </div>
+    </ContractCard>
   );
 }
 
 export function ContractHistorySection({ contract }: { contract: ContractView }) {
   return (
-    <Section title="History">
-      <ol className="tw:flex tw:flex-col tw:gap-1 tw:text-sm">
-        {contract.history.map((event, index) => (
-          <li key={`${event.at}-${index}`}>{formatDate(event.at)} · {event.event.replace(/_/g, " ").toLowerCase()}{event.note ? ` — ${event.note}` : ""}</li>
-        ))}
-        {contract.history.length === 0 ? <li className="tw:text-muted-foreground">No events yet.</li> : null}
-      </ol>
-    </Section>
+    <ContractCard icon={Clock} title="History">
+      {contract.history.length === 0 ? (
+        <p className="tw:text-sm tw:text-muted-foreground">No events yet.</p>
+      ) : (
+        <ol className="contract-detail__history tw:m-0 tw:flex tw:list-none tw:flex-col tw:gap-2 tw:p-0">
+          {contract.history.map((event, index) => (
+            <li key={`${event.at}-${index}`} className="tw:flex tw:items-start tw:gap-2.5 tw:rounded-lg tw:bg-[var(--color-bg-subtle)] tw:px-3 tw:py-2.5 tw:text-sm">
+              <FileText aria-hidden="true" className="tw:mt-0.5 tw:size-4 tw:shrink-0 tw:text-muted-foreground" strokeWidth={1.75} />
+              <span>{formatDate(event.at)} · {event.event.replace(/_/g, " ").toLowerCase()}{event.note ? ` — ${event.note}` : ""}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </ContractCard>
   );
 }

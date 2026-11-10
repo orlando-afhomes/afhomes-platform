@@ -3,20 +3,19 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Wallet } from "lucide-react";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { useContracts, usePayments } from "@/data/business-queries";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import { collectionStateFor, type CollectionState } from "@/modules/finance/rules";
 import { manilaToday } from "@/shared/lib/dates";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
+import { AdminStatCard, AdminStatGrid, AdminPage, AdminSection } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { Section } from "@/shared/components/modern/section";
-import { StatTiles } from "@/shared/components/modern/stat-tiles";
 import { formatDate } from "@/shared/lib/format-date";
-import { ModulePage } from "../components/module-page";
 import { useContractHref } from "../components/use-contract-href";
 
 type CollectionRow = CollectionState & { contract: ContractView };
@@ -63,14 +62,16 @@ export function FinanceCollectionsPage() {
   );
 
   return (
-    <ModulePage anyOf={["finance"]} title="Collections" description="Monitor verified balances and overdue installments of finalized contracts." crumbs={[{ label: "Finance" }, { label: "Collections" }]}>
-      <StatTiles items={[{ label: "Receivables", value: <Money value={receivables} />, hint: "Open balance of finalized contracts" }]} />
+    <AdminPage anyOf={["finance"]} title="Collections" description="Monitor verified balances and overdue installments of finalized contracts." crumbs={[{ label: "Finance" }, { label: "Collections" }]}>
+      <AdminStatGrid>
+        <AdminStatCard label="Receivables" value={<Money value={receivables} />} icon={Wallet} tone="accent" description="Open balance of finalized contracts" />
+      </AdminStatGrid>
       <QueryState isLoading={payments.isLoading || contracts.isLoading} error={payments.error ?? contracts.error}>
-        <Section title="Collections monitor" description="Finalized contracts, their verified balances and overdue installments.">
+        <AdminSection title="Collections monitor" description="Finalized contracts, their verified balances and overdue installments.">
           <FilterBar search={search} onSearch={setSearch} searchLabel="Search customers" filters={[{ label: "Collection state filter", value: collectionState, onChange: setCollectionState, options: COLLECTION_FILTERS }]} />
           <DataTable data={collections} columns={columns} getRowId={(row) => row.contract.id} emptyText="No contracts match." caption="Collections" onRowOpen={(row) => router.push(contractHref(row.contract.id))} getRowLabel={(row) => `Open contract for ${row.contract.customerName}`} rowActions={(row) => <RowActionsMenu itemName={`collection for ${row.contract.customerName}`} onView={() => router.push(contractHref(row.contract.id))} />} />
-        </Section>
+        </AdminSection>
       </QueryState>
-    </ModulePage>
+    </AdminPage>
   );
 }

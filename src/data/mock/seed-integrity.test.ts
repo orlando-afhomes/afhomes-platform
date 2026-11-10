@@ -71,13 +71,20 @@ describe("centralized seed integrity", () => {
     expect(buildCardId({ activationDate: membership.activationDate!, raNumber: contract.raNumber, tierCode: contract.productCode, paymentCode: contract.paymentCode, classification: contract.classification })).toEqual({ cardId: membership.cardId });
   });
 
-  it("starts counters above every seeded id and never invents commissions", () => {
+  it("starts counters above every seeded id and seeds display commissions", () => {
     const highest = (items: Array<{ id: string }>) => Math.max(0, ...items.map((item) => Number(item.id.split("-").pop())));
     expect(store.counters.contract).toBeGreaterThan(highest(store.contracts));
     expect(store.counters.sale).toBeGreaterThan(highest(store.sales));
     expect(store.counters.payment).toBeGreaterThan(highest(store.payments));
     expect(store.counters.membership).toBeGreaterThan(highest(store.memberships));
-    expect(store.commissions).toEqual([]);
+    expect(store.counters.commission).toBeGreaterThan(highest(store.commissions));
+    // Seeded so Commissions, Payouts and the Commission Report show records.
+    expect(store.commissions.map((item) => item.id).sort()).toEqual(["comm-1", "comm-2", "comm-3"]);
+    for (const commission of store.commissions) {
+      expect(store.sales.some((item) => item.id === commission.saleId)).toBe(true);
+      expect(store.contracts.some((item) => item.id === commission.contractId)).toBe(true);
+      expect(store.members.some((item) => item.id === commission.recipientMemberId)).toBe(true);
+    }
   });
 
   it("returns isolated clones so a refresh-equivalent store is always pristine", () => {

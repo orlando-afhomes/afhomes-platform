@@ -5,6 +5,8 @@ import { useAuditEvents } from "@/data/queries";
 import { AUDIT_ENTITY_TYPES, AUDIT_MODULES, type AuditEventView, type AuditQuery } from "@/modules/audit/types";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { InfoNote } from "@/shared/components/modern/detail-list";
+import { FileText, ScrollText } from "lucide-react";
+import { AdminStatCard, AdminStatGrid, AdminPage, AdminSection } from "@/shared/components/admin";
 import { StandardDateField } from "@/shared/forms/modern";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -12,9 +14,6 @@ import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { Section } from "@/shared/components/modern/section";
-import { StatTiles } from "@/shared/components/modern/stat-tiles";
-import { ModulePage } from "../components/module-page";
 
 const ALL = "all";
 const MODULE_OPTIONS = [{ value: ALL, label: "All modules" }, ...AUDIT_MODULES.map((value) => ({ value, label: value.replace(/-/g, " ") }))];
@@ -66,7 +65,7 @@ export function AuditLogsPage() {
   };
 
   return (
-    <ModulePage anyOf={["audit-logs"]} title="Audit Logs" description="Append-only history of sensitive actions. Entries cannot be edited or deleted." crumbs={[{ label: "Audit Logs" }]}>
+    <AdminPage anyOf={["audit-logs"]} title="Audit Logs" description="Append-only history of sensitive actions. Entries cannot be edited or deleted." crumbs={[{ label: "Audit Logs" }]}>
       <InfoNote title="Restricted view">Access is limited to Administrators for now. User-entered reasons and sensitive values are withheld. Retention and export rules are not yet defined, so there is no export.</InfoNote>
       <FilterBar search={action} onSearch={reset(setAction)} searchLabel="Filter by action code" filters={[{ label: "Module filter", value: moduleFilter, onChange: reset(setModuleFilter), options: MODULE_OPTIONS }, { label: "Record type filter", value: entityFilter, onChange: reset(setEntityFilter), options: ENTITY_OPTIONS }]}>
         <Input aria-label="Filter by actor" placeholder="Actor id" value={actor} onChange={(event) => reset(setActor)(event.target.value)} className="tw:h-11 tw:sm:h-8 tw:sm:max-w-40" />
@@ -76,8 +75,11 @@ export function AuditLogsPage() {
         </div>
       </FilterBar>
       <QueryState isLoading={result.isLoading} error={result.error}>
-        <StatTiles items={[{ label: "Matching events", value: total }, { label: "Page", value: `${page} of ${pages}` }]} />
-        <Section title="Events">
+        <AdminStatGrid>
+          <AdminStatCard label="Matching events" value={total} icon={ScrollText} tone="info" />
+          <AdminStatCard label="Page" value={`${page} of ${pages}`} icon={FileText} tone="neutral" />
+        </AdminStatGrid>
+        <AdminSection title="Events">
           <DataTable
             data={result.data?.items ?? []}
             columns={columns}
@@ -93,7 +95,7 @@ export function AuditLogsPage() {
             <Button variant="outline" disabled={page <= 1} onClick={() => setPage((current) => current - 1)} className="tw:min-h-11 tw:sm:min-h-8">Previous page</Button>
             <Button variant="outline" disabled={page >= pages} onClick={() => setPage((current) => current + 1)} className="tw:min-h-11 tw:sm:min-h-8">Next page</Button>
           </div>
-        </Section>
+        </AdminSection>
       </QueryState>
       <RecordDetailsSheet
         open={detail !== null}
@@ -126,6 +128,6 @@ export function AuditLogsPage() {
             : []
         }
       />
-    </ModulePage>
+    </AdminPage>
   );
 }

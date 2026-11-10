@@ -2,16 +2,15 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { Hourglass } from "lucide-react";
 import { usePayments } from "@/data/business-queries";
 import type { PaymentView } from "@/data/contracts/payment-repository";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
+import { AdminStatCard, AdminStatGrid, AdminPage, AdminSection } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { Section } from "@/shared/components/modern/section";
-import { StatTiles } from "@/shared/components/modern/stat-tiles";
 import { formatDate } from "@/shared/lib/format-date";
-import { ModulePage } from "../components/module-page";
 import { usePaymentActions } from "../components/payment-actions";
 import { useContractHref } from "../components/use-contract-href";
 
@@ -39,14 +38,16 @@ export function FinancePage() {
   const queue = useMemo(() => (payments.data ?? []).filter((item) => item.status === "submitted" || item.status === "under_review").sort((a, b) => a.submittedAt.localeCompare(b.submittedAt)), [payments.data]);
 
   return (
-    <ModulePage anyOf={["finance"]} title="Payment Verification" description="Verify, reject or return submitted payments." crumbs={[{ label: "Finance" }, { label: "Payment Verification" }]}>
+    <AdminPage anyOf={["finance"]} title="Payment Verification" description="Verify, reject or return submitted payments." crumbs={[{ label: "Finance" }, { label: "Payment Verification" }]}>
       {paymentActions.dialogs}
-      <StatTiles items={[{ label: "Awaiting verification", value: queue.length }]} />
+      <AdminStatGrid>
+        <AdminStatCard label="Awaiting verification" value={queue.length} icon={Hourglass} tone="warning" />
+      </AdminStatGrid>
       <QueryState isLoading={payments.isLoading} error={payments.error}>
-        <Section title="Verification queue" description="Only Finance verifies, rejects or returns a payment. Nobody verifies their own submission.">
+        <AdminSection title="Verification queue" description="Only authorized Finance personnel verify, reject or return payments. Other submitters cannot verify their own submission.">
           <DataTable data={queue} columns={columns} getRowId={(row) => row.id} emptyText="Nothing is waiting for verification." caption="Verification queue" rowActions={paymentActions.rowActions} onRowOpen={paymentActions.open} getRowLabel={(row) => `Open payment from ${row.customerName}`} />
-        </Section>
+        </AdminSection>
       </QueryState>
-    </ModulePage>
+    </AdminPage>
   );
 }

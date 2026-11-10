@@ -167,7 +167,10 @@ describe("display and authorization parity", () => {
   it("keeps Super Admin system-role grants and drops non-delegable department-role ids", () => {
     const display = resolveEmployeeEffectiveModules({ accountStatus: "active", systemRoles: ["super_admin"], departmentRoleModuleIds: ["finance", "legacy"] });
     expect(display).toEqual(expect.arrayContaining(["accounts", "roles", "staff", "vip-products"]));
-    expect(display).not.toContain("finance");
+    // Owner rule 2026-11-10: Super Admin holds the union of every role's grants, so finance arrives via system roles.
+    expect(display).toContain("finance");
+    // "legacy" exists in no role's grants, proving non-delegable department-role ids confer nothing on their own.
+    expect(display).not.toContain("legacy");
     expect(getDelegableGrants(["accounts", "finance", "staff", "staff", "legacy"])).toEqual(["staff"]);
   });
 });

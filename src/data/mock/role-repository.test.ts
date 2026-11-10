@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { AdminModuleId } from "@/modules/identity/permissions";
 import { AUDIT_ACTIONS } from "@/modules/audit/types";
 import { createMockStore } from "./seed";
+import { SEED_AUDIT_EVENT_COUNT } from "./seed-data";
 import { createMockRepositories } from "./repositories";
 import { getDevIdentity } from "./dev-identities";
 import { PROTECTED_ROLE_ERROR } from "./authorization";
@@ -283,7 +284,7 @@ describe("department role repository S3-A protections", () => {
     const before = roleSnapshot(store, "role-hr");
     await expect(adminRepos(store).roles.update("role-hr", { name: "Mutated", status: "deactivated", moduleIds: ["finance"] })).rejects.toThrow();
     expect(roleSnapshot(store, "role-hr")).toEqual(before);
-    expect(store.auditEvents).toHaveLength(0);
+    expect(store.auditEvents).toHaveLength(SEED_AUDIT_EVENT_COUNT);
   });
 });
 
@@ -291,8 +292,8 @@ describe("department role repository S3-C1 audit events", () => {
   it("records exactly one ROLE_CREATED with name, modules, and department correlation", async () => {
     const store = createMockStore();
     const role = await adminRepos(store).roles.create({ name: "Audit Desk", departmentId: "dept-hr", moduleIds: ["departments", "staff"] });
-    expect(store.auditEvents).toHaveLength(1);
-    expect(store.auditEvents[0]).toMatchObject({
+    expect(store.auditEvents).toHaveLength(1 + SEED_AUDIT_EVENT_COUNT);
+    expect(store.auditEvents.at(-1)!).toMatchObject({
       actorId: "dev-admin",
       module: "organization",
       action: AUDIT_ACTIONS.ROLE_CREATED,
@@ -340,14 +341,14 @@ describe("department role repository S3-C1 audit events", () => {
   it("attributes protected-role changes to the super admin actor", async () => {
     const store = createMockStore();
     await superRepos(store).roles.update("role-super-admin", { name: "Super Administrator" });
-    expect(store.auditEvents).toHaveLength(1);
-    expect(store.auditEvents[0]).toMatchObject({
+    expect(store.auditEvents).toHaveLength(1 + SEED_AUDIT_EVENT_COUNT);
+    expect(store.auditEvents.at(-1)!).toMatchObject({
       actorId: "dev-super-admin",
       action: AUDIT_ACTIONS.ROLE_UPDATED,
       entityId: "role-super-admin",
       previousValue: "name:Super Admin",
       newValue: "name:Super Administrator",
     });
-    expect(store.auditEvents[0].actorRoles).toContain("super_admin");
+    expect(store.auditEvents.at(-1)!.actorRoles).toContain("super_admin");
   });
 });

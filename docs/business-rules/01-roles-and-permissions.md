@@ -83,6 +83,12 @@ The Super Admin role is protected. Ordinary managers must never create, assign, 
 
 An employee assigned both "HR Manager" and "Dept Head" has Departments and Staff/Employees access (union). Neither can manage roles.
 
+### 3.6 Super Admin Full Control (owner decision, 2026-11-10)
+
+The Super Admin role holds the **union of every role's module and operation grants**, including all Finance work (payment verification, reversals and refunds, reconciliation, Finance reporting, commission approval and payout, membership activation). There are no module or operation blockers on Super Admin access.
+
+Separation-of-duties blockers do not apply to Super Admin (owner decision, 2026-11-10): a Super Administrator may (a) verify a payment submission they made themselves, (b) both request and confirm/decline the same contract cancellation, and (c) modify their own account, roles, and status. Carve-out: last-Super-Admin lockout protection still applies to everyone, including Super Administrators. Other protected-account restrictions remain in force.
+
 ---
 
 ## 4. Departments
@@ -237,6 +243,7 @@ The document establishes that:
 - Multiple roles are supported.
 - Role assignments are bounded.
 - Super Admin is protected.
+- Super Admin holds the union of every role's module and operation grants, including all Finance work (owner decision, 2026-11-10).
 - Every newly created employee account requires manual approval.
 - Admin/Super Admin self-approval is allowed.
 - Rejected accounts can be corrected and resubmitted.

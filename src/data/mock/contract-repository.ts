@@ -308,7 +308,8 @@ export class MockContractRepository extends BusinessRepository implements Contra
       const contract = this.find(identity, id);
       const request = contract.cancellation;
       if (!request || request.status !== "requested") throw new Error("No cancellation is awaiting confirmation for this contract.");
-      if (request.requestedBy === identity.id) throw new Error("The person who requested the cancellation cannot also decide it.");
+      // Separation of duties: requester cannot decide — except Super Admin, who has full control (owner decision 2026-11-10).
+      if (request.requestedBy === identity.id && !activeIdentityRoles(identity).includes("super_admin")) throw new Error("The person who requested the cancellation cannot also decide it.");
 
       if (decision === "decline") {
         contract.cancellation = null;

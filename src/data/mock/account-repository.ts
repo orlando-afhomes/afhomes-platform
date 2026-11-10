@@ -206,7 +206,8 @@ export class MockAccountRepository {
     if (input.departmentId !== undefined && input.departmentId !== account.departmentId) {
       // Own account: the department may only mirror the actor's own staff
       // department (profile sync), never move to another department.
-      if (this.isSelf(identity, id) && input.departmentId !== (resolveActorStaff(this.store, identity)?.departmentId ?? null)) {
+      // Owner decision 2026-11-10: Super Admin has full control; the self-modification ban does not apply to Super Admin.
+      if (this.isSelf(identity, id) && !isSuperAdmin(this.store, identity) && input.departmentId !== (resolveActorStaff(this.store, identity)?.departmentId ?? null)) {
         throw new Error(SELF_MODIFICATION_ERROR);
       }
       if (input.departmentId) assertAssignableDepartment(this.store, input.departmentId);
@@ -229,7 +230,8 @@ export class MockAccountRepository {
     if (isProtectedAccount(account) && !isSuperAdmin(this.store, identity)) {
       throw new Error("Protected account roles cannot be modified by this actor.");
     }
-    if (this.isSelf(identity, id)) throw new Error(SELF_MODIFICATION_ERROR);
+    // Owner decision 2026-11-10: Super Admin has full control; the self-modification ban does not apply to Super Admin.
+    if (this.isSelf(identity, id) && !isSuperAdmin(this.store, identity)) throw new Error(SELF_MODIFICATION_ERROR);
     assertCanAssignSystemRole(this.store, identity, role);
     if (account.roleIds.includes(role)) throw new Error("Role already assigned.");
     account.roleIds.push(role);
@@ -259,7 +261,8 @@ export class MockAccountRepository {
     if (isProtectedAccount(account) && !isSuperAdmin(this.store, identity)) {
       throw new Error("Protected account roles cannot be modified by this actor.");
     }
-    if (this.isSelf(identity, id)) throw new Error(SELF_MODIFICATION_ERROR);
+    // Owner decision 2026-11-10: Super Admin has full control; the self-modification ban does not apply to Super Admin.
+    if (this.isSelf(identity, id) && !isSuperAdmin(this.store, identity)) throw new Error(SELF_MODIFICATION_ERROR);
     assertCanAssignSystemRole(this.store, identity, role);
     const index = account.roleIds.indexOf(role);
     if (index < 0) throw new Error("Role not assigned.");
@@ -288,7 +291,8 @@ export class MockAccountRepository {
     if (isProtectedAccount(account) && !isSuperAdmin(this.store, identity)) {
       throw new Error("Protected account status cannot be modified by this actor.");
     }
-    if (this.isSelf(identity, id)) throw new Error(SELF_MODIFICATION_ERROR);
+    // Owner decision 2026-11-10: Super Admin has full control; the self-modification ban does not apply to Super Admin.
+    if (this.isSelf(identity, id) && !isSuperAdmin(this.store, identity)) throw new Error(SELF_MODIFICATION_ERROR);
     if (!ACCOUNT_STATUS_TRANSITIONS[account.status].includes(status)) {
       throw new Error(`Invalid status transition from ${account.status} to ${status}.`);
     }

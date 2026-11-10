@@ -1,19 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Pencil } from "lucide-react";
+import { Package, Pencil } from "lucide-react";
 import { useOperation, useVipProducts } from "@/data/business-queries";
 import type { VipProduct } from "@/modules/vip/types";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Button } from "@/shared/ui/button";
-import { ModulePage } from "../components/module-page";
+import { AdminPage, AdminSection } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { Money } from "@/shared/components/modern/money";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { Section } from "@/shared/components/modern/section";
 import { ProductDialog } from "../components/vip-product-dialogs";
 
 export function VipProductsPage() {
@@ -36,18 +35,18 @@ export function VipProductsPage() {
   const productDetail = (products.data ?? []).find((item) => item.code === productCode) ?? null;
 
   return (
-    <ModulePage
+    <AdminPage
       anyOf={["vip-products"]}
       title="Product Catalog"
       description="VIP tier catalog."
       crumbs={[{ label: "VIP Products", href: "/admin/vip-products" }, { label: "Product Catalog" }]}
     >
       <InfoNote title="Contract-stated values">Prices and benefits are the values written in the standard contracts. The Gold installment price carries a source conflict that management must resolve before Gold installment contracts can be finalized. Spot Cash uses the Full Payment contract prices.</InfoNote>
-      <Section title="Product catalog">
+      <AdminSection title="Product catalog" icon={Package}>
         <QueryState isLoading={products.isLoading} error={products.error}>
           <DataTable data={products.data ?? []} columns={productColumns} getRowId={(row) => row.code} emptyText="No products." caption="VIP product catalog" onRowOpen={(row) => setProductCode(row.code)} getRowLabel={(row) => `Open ${row.name}`} rowActions={(row) => <RowActionsMenu itemName={row.name} onView={() => setProductCode(row.code)} onEdit={canManage ? () => setEditing(row) : undefined} />} />
         </QueryState>
-      </Section>
+      </AdminSection>
       <RecordDetailsSheet
         open={productDetail !== null}
         onClose={() => setProductCode(null)}
@@ -82,6 +81,6 @@ export function VipProductsPage() {
         footer={productDetail && canManage ? <Button type="button" variant="outline" onClick={() => { setEditing(productDetail); setProductCode(null); }}><Pencil aria-hidden="true" /> Edit product</Button> : undefined}
       />
       <ProductDialog product={editing} onClose={() => setEditing(null)} />
-    </ModulePage>
+    </AdminPage>
   );
 }

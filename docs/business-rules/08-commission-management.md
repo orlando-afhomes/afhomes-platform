@@ -198,7 +198,7 @@ The system may identify potential eligible sales and display their genealogy. It
 
 ### 11.2 Commission Approval
 
-Only authorized Finance personnel may approve commissions. Approval must establish commission recipient, associated sale, finalized contractual calculation basis, assigned commission percentage, approved commission amount, approving Finance user, approval date and time, approval status, and relevant audit references.
+Only authorized Finance personnel may approve commissions. The Super Administrator counts as authorized Finance personnel (owner decision, 2026-11-10; confirms the 2026-11-09 ruling) and may approve commissions. Approval must establish commission recipient, associated sale, finalized contractual calculation basis, assigned commission percentage, approved commission amount, approving Finance user, approval date and time, approval status, and relevant audit references.
 
 Do not allow a direct seller or upline member to approve their own commission through their Sales Network account permissions. Do not equate viewing a commission with approving it. Do not allow ordinary Staff, IST, or OST payment-submission authorization to become commission approval authority.
 

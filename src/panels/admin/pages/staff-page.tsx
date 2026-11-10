@@ -22,11 +22,9 @@ import {
 import { getSystemRoleLabel } from "@/panels/admin/role-label";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { RoleBadge } from "@/shared/components/business/role-badge";
-import { PageContainer } from "@/shared/components/modern/page-container";
-import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
 import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
-import { PageHeader } from "@/shared/components/modern/page-header";
+import { AdminPage } from "@/shared/components/admin";
 import { RowActionsMenu, type RowActionItem } from "@/shared/components/modern/row-actions-menu";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
@@ -375,14 +373,6 @@ export function StaffPage() {
     [rows, canManageAccounts, chip, search, deptFilter, roleFilter, statusFilter, sortAsc],
   );
 
-  if (!granted.has("staff")) {
-    return (
-      <PageContainer>
-        <PageHeader title="Access restricted" description="This account does not have access to Staff & Access." />
-      </PageContainer>
-    );
-  }
-
   // Dialogs read current records, so they reflect each successful mutation.
   const editStaff = editStaffId ? (staff.find((member) => member.id === editStaffId) ?? null) : null;
   const profileStaff = profileStaffId ? (staff.find((member) => member.id === profileStaffId) ?? null) : null;
@@ -415,24 +405,24 @@ export function StaffPage() {
   const sortLabel = sortAsc ? "Sort A-Z" : "Sort Z-A";
 
   return (
-    <PageContainer>
-      <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "Organization" }, { label: "Staff & Access" }]} />
-      <PageHeader
-        title="Staff & Access"
-        description="Manage employees, their system access, and pending account approvals in one place."
-        actions={
-          <Button
-            className="tw:min-h-11 tw:sm:min-h-8"
-            onClick={() => {
-              setEditStaffId(null);
-              setStaffDialog(true);
-            }}
-          >
-            <Plus aria-hidden="true" /> Add staff
-          </Button>
-        }
-      />
-      <Card className="tw:mt-3">
+    <AdminPage
+      anyOf={["staff"]}
+      title="Staff & Access"
+      description="Manage employees, their system access, and pending account approvals in one place."
+      crumbs={[{ label: "Organization" }, { label: "Staff & Access" }]}
+      actions={
+        <Button
+          className="tw:min-h-11 tw:sm:min-h-8"
+          onClick={() => {
+            setEditStaffId(null);
+            setStaffDialog(true);
+          }}
+        >
+          <Plus aria-hidden="true" /> Add staff
+        </Button>
+      }
+    >
+      <Card>
         {canManageAccounts ? (
           <div className="tw:flex tw:flex-wrap tw:gap-2" role="group" aria-label="Directory view">
             {chips.map((item) => (
@@ -474,18 +464,16 @@ export function StaffPage() {
           </Button>
         </FilterBar>
       </Card>
-      <div className="tw:mt-3">
-        <DataTable<AccessRow>
-          caption="Staff and access"
-          data={filtered}
-          columns={columns}
-          getRowId={(row) => row.id}
-          emptyText={chip === "pending" && canManageAccounts ? "No pending accounts." : "No staff or accounts found."}
-          loading={loading}
-          pageSize={10}
-          onRowOpen={(row) => (row.kind === "employee" ? setProfileStaffId(row.staff.id) : openAccount("view", row.account.id))}
-        />
-      </div>
+      <DataTable<AccessRow>
+        caption="Staff and access"
+        data={filtered}
+        columns={columns}
+        getRowId={(row) => row.id}
+        emptyText={chip === "pending" && canManageAccounts ? "No pending accounts." : "No staff or accounts found."}
+        loading={loading}
+        pageSize={10}
+        onRowOpen={(row) => (row.kind === "employee" ? setProfileStaffId(row.staff.id) : openAccount("view", row.account.id))}
+      />
       <StaffDialogs
         open={staffDialog}
         editStaff={editStaff}
@@ -514,6 +502,6 @@ export function StaffPage() {
         />
       ) : null}
       {confirmDialog}
-    </PageContainer>
+    </AdminPage>
   );
 }

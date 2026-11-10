@@ -3,12 +3,10 @@
 import { useCallback, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { ArrowDownAZ, ArrowUpAZ, Plus } from "lucide-react";
-import { useDepartments, useDeleteDepartment, useDepartmentRoles, useEffectiveModuleIds, useStaff } from "@/data/queries";
-import { PageContainer } from "@/shared/components/modern/page-container";
-import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
+import { useDepartments, useDeleteDepartment, useDepartmentRoles, useStaff } from "@/data/queries";
 import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
-import { PageHeader } from "@/shared/components/modern/page-header";
+import { AdminPage } from "@/shared/components/admin";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { Button } from "@/shared/ui/button";
@@ -30,7 +28,6 @@ const DepartmentDialogs = dynamic(() => import("./department-dialogs").then((mod
 });
 
 export function DepartmentsPage() {
-  const granted = useEffectiveModuleIds();
   const departmentsQuery = useDepartments();
   const rolesQuery = useDepartmentRoles();
   const staffQuery = useStaff();
@@ -103,59 +100,47 @@ export function DepartmentsPage() {
     [roleCountByDept, staffCountByDept, removeDepartment],
   );
 
-  if (!granted.has("departments")) {
-    return (
-      <PageContainer>
-        <PageHeader title="Access restricted" description="This account does not have access to Departments." />
-      </PageContainer>
-    );
-  }
-
   const sortLabel = sortAsc ? "Sort A-Z" : "Sort Z-A";
 
   return (
-    <PageContainer>
-      <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "Organization" }, { label: "Departments" }]} />
-      <PageHeader
-        title="Departments"
-        description="Manage departments and their roles."
-        actions={
-          <Button
-            className="tw:min-h-11 tw:sm:min-h-8"
-            onClick={() => {
-              setEditDept(null);
-              setDeptDialog(true);
-            }}
-          >
-            <Plus aria-hidden="true" /> Create department
-          </Button>
-        }
-      />
-      <div className="tw:mt-3">
-        <FilterBar
-          search={search}
-          onSearch={setSearch}
-          searchLabel="Search departments"
-          filters={[{ label: "Department status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_FILTER_ITEMS }]}
+    <AdminPage
+      anyOf={["departments"]}
+      title="Departments"
+      description="Manage departments and their roles."
+      crumbs={[{ label: "Organization" }, { label: "Departments" }]}
+      actions={
+        <Button
+          className="tw:min-h-11 tw:sm:min-h-8"
+          onClick={() => {
+            setEditDept(null);
+            setDeptDialog(true);
+          }}
         >
-          <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
-            {sortAsc ? <ArrowDownAZ aria-hidden="true" /> : <ArrowUpAZ aria-hidden="true" />}
-            {sortLabel}
-          </Button>
-        </FilterBar>
-      </div>
-      <div className="tw:mt-3">
-        <DataTable<Department>
-          caption="Departments"
-          data={filtered}
-          columns={columns}
-          getRowId={(dept) => dept.id}
-          emptyText="No departments found."
-          loading={departmentsQuery.isLoading || rolesQuery.isLoading || staffQuery.isLoading}
-          pageSize={10}
-          onRowOpen={(dept) => setViewDept(dept)}
-        />
-      </div>
+          <Plus aria-hidden="true" /> Create department
+        </Button>
+      }
+    >
+      <FilterBar
+        search={search}
+        onSearch={setSearch}
+        searchLabel="Search departments"
+        filters={[{ label: "Department status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_FILTER_ITEMS }]}
+      >
+        <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
+          {sortAsc ? <ArrowDownAZ aria-hidden="true" /> : <ArrowUpAZ aria-hidden="true" />}
+          {sortLabel}
+        </Button>
+      </FilterBar>
+      <DataTable<Department>
+        caption="Departments"
+        data={filtered}
+        columns={columns}
+        getRowId={(dept) => dept.id}
+        emptyText="No departments found."
+        loading={departmentsQuery.isLoading || rolesQuery.isLoading || staffQuery.isLoading}
+        pageSize={10}
+        onRowOpen={(dept) => setViewDept(dept)}
+      />
       <DepartmentDialogs
         open={deptDialog}
         editDept={editDept}
@@ -168,6 +153,6 @@ export function DepartmentsPage() {
         }}
         onCloseView={() => setViewDept(null)}
       />
-    </PageContainer>
+    </AdminPage>
   );
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createMockStore } from "./seed";
+import { SEED_AUDIT_EVENT_COUNT } from "./seed-data";
 import { createMockRepositories } from "./repositories";
 import { AUDIT_ACTIONS } from "@/modules/audit/types";
 import { getDevIdentity } from "./dev-identities";
@@ -90,6 +91,16 @@ describe("staff repository S3-A protections", () => {
     expect(updated.displayName).toBe("Admin Renamed");
   });
 
+  it("lets a super admin change its own department and role", async () => {
+    const store = createMockStore();
+    const superAdmin = createMockRepositories(store, () => getDevIdentity("dev-super-admin")).staff;
+    // Owner decision 2026-11-10: the self-modification ban does not apply to Super Admin.
+    // Moving to Operations clears the incompatible HR role; both changes succeed on the actor's own record.
+    const updated = await superAdmin.update("staff-super", { departmentId: "dept-ops" });
+    expect(updated.departmentId).toBe("dept-ops");
+    expect(updated.departmentRoleId).toBeNull();
+  });
+
   it("rejects moving staff into a deactivated department", async () => {
     const store = createMockStore();
     const repos = createMockRepositories(store, () => getDevIdentity("dev-admin"));
@@ -158,7 +169,7 @@ describe("staff repository S3-B workflows", () => {
     const finance = createMockRepositories(store, () => getDevIdentity("dev-finance")).staff;
     await expect(finance.updateLinkedAccountStatus("staff-admin", "suspended")).rejects.toThrow("not allowed");
     expect(store.accounts.map((item) => item.status)).toEqual(statuses);
-    expect(store.auditEvents).toHaveLength(0);
+    expect(store.auditEvents).toHaveLength(SEED_AUDIT_EVENT_COUNT);
   });
 
   it("reports per-record staff policies", async () => {
@@ -457,8 +468,8 @@ describe("staff repository S3-C1 audit events", () => {
       ...provisionedHire,
       provisionPendingAccount: true,
     });
-    expect(store.auditEvents).toHaveLength(1);
-    expect(store.auditEvents[0]).toMatchObject({
+    expect(store.auditEvents).toHaveLength(1 + SEED_AUDIT_EVENT_COUNT);
+    expect(store.auditEvents.at(-1)!).toMatchObject({
       actorId: "dev-admin",
       module: "organization",
       action: AUDIT_ACTIONS.STAFF_CREATED,
@@ -539,7 +550,7 @@ describe("staff repository S3-C1 audit events", () => {
     const hr = createMockRepositories(store, () => getDevIdentity("dev-hr")).staff;
     await expect(hr.updateLinkedAccountStatus("staff-super", "suspended")).rejects.toThrow();
     await expect(hr.update("staff-super", { email: "takeover@afhomes.local" })).rejects.toThrow();
-    expect(store.auditEvents).toHaveLength(0);
+    expect(store.auditEvents).toHaveLength(SEED_AUDIT_EVENT_COUNT);
   });
 
   it("rejects every staff deletion without changing records, accounts, or audit history", async () => {
@@ -570,8 +581,8 @@ describe("staff repository system roles at creation", () => {
       systemRoleIds: ["hr", "hr"],
     });
     expect(store.accounts.find((item) => item.id === created.accountId)).toMatchObject({ status: "pending", roleIds: ["hr"] });
-    expect(store.auditEvents).toHaveLength(1);
-    expect(store.auditEvents[0]).toMatchObject({
+    expect(store.auditEvents).toHaveLength(1 + SEED_AUDIT_EVENT_COUNT);
+    expect(store.auditEvents.at(-1)!).toMatchObject({
       action: AUDIT_ACTIONS.STAFF_CREATED,
       newValue: "active; system roles [hr]",
       relatedRecordIds: [created.accountId],

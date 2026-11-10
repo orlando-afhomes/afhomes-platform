@@ -1,19 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Pencil, Plus } from "lucide-react";
+import { Landmark, Pencil, Plus } from "lucide-react";
 import { useOperation, usePaymentSchemes } from "@/data/business-queries";
 import type { PaymentScheme } from "@/modules/vip/types";
 import { schemeHowItWorks as termsSummary } from "@/modules/vip/rules";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { Button } from "@/shared/ui/button";
-import { ModulePage } from "../components/module-page";
+import { AdminPage, AdminSection } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { Money } from "@/shared/components/modern/money";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { Section } from "@/shared/components/modern/section";
 import { formatPeso } from "@/shared/lib/money";
 import { SchemeDialog } from "../components/vip-product-dialogs";
 
@@ -40,14 +39,15 @@ export function PaymentSchemesPage() {
   const schemeDetail = (schemes.data ?? []).find((item) => item.id === schemeId) ?? null;
 
   return (
-    <ModulePage
+    <AdminPage
       anyOf={["vip-products"]}
       title="Payment Schemes"
       description="Register of official payment schemes."
       crumbs={[{ label: "VIP Products", href: "/admin/vip-products" }, { label: "Payment Schemes" }]}
     >
-      <Section
+      <AdminSection
         title="Payment scheme register"
+        icon={Landmark}
         description="Move A and Move B need Super Admin written approval on each contract. They have no Card ID payment code until the owner authorizes a mapping, so their memberships cannot be activated yet."
         actions={
           canManage ? (
@@ -60,7 +60,7 @@ export function PaymentSchemesPage() {
         <QueryState isLoading={schemes.isLoading} error={schemes.error}>
           <DataTable data={schemes.data ?? []} columns={schemeColumns} getRowId={(row) => row.id} emptyText="No schemes." caption="Payment schemes" onRowOpen={(row) => setSchemeId(row.id)} getRowLabel={(row) => `Open ${row.label}`} rowActions={(row) => <RowActionsMenu itemName={row.label} onView={() => setSchemeId(row.id)} onEdit={canManage ? () => openSchemeEditor(row) : undefined} />} />
         </QueryState>
-      </Section>
+      </AdminSection>
       <RecordDetailsSheet
         open={schemeDetail !== null}
         onClose={() => setSchemeId(null)}
@@ -90,7 +90,7 @@ export function PaymentSchemesPage() {
         footer={schemeDetail && canManage ? <Button type="button" variant="outline" onClick={() => { openSchemeEditor(schemeDetail); setSchemeId(null); }}><Pencil aria-hidden="true" /> Edit scheme</Button> : undefined}
       />
       <SchemeDialog open={schemeOpen} scheme={editingScheme} onClose={() => setSchemeOpen(false)} />
-    </ModulePage>
+    </AdminPage>
   );
 }
 

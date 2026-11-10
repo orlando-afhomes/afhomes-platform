@@ -67,7 +67,7 @@ describe("admin navigation", () => {
       "sales-network": ["sales-network-members", "sales-network-genealogy"],
       "sales-group": SALES_ALL,
       "vip-products-group": VIP_ALL,
-      "finance-group": ["commission-assignment", "commissions", "commission-payouts"],
+      "finance-group": ["finance", "collections", "commission-assignment", "commissions", "commission-payouts", "payment-history", "financial-holds", "cancellation-requests"],
       "membership-group": ["membership-activation", "membership", "stay-points"],
       "reports-group": ["customer-growth", "sales-performance", "collections-report", "commission-report", "membership-report", "stay-points-report"],
       "audit-logs": null,

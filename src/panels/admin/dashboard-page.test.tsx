@@ -93,8 +93,8 @@ describe("Admin dashboard with loaded records", () => {
     expect(within(distribution).getAllByText("25%")).toHaveLength(2);
 
     expect(await screen.findByRole("link", { name: "Contract Review: 2 pending" })).toHaveAttribute("href", "/admin/sales/contract-review");
+    expect(await screen.findByRole("link", { name: "Payment Verification: 1 pending" })).toHaveAttribute("href", "/admin/finance");
     expect(screen.getByRole("link", { name: "Membership Activation: 1 pending" })).toHaveAttribute("href", "/admin/membership/activation");
-    expect(screen.queryByRole("link", { name: /Payment Verification/ })).toBeNull();
     expect(screen.queryByText(/Account Approvals/)).toBeNull();
     expect((await screen.findAllByText("Customer submitted")).length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "View All" })).toHaveAttribute("href", "/admin/audit-logs");
@@ -136,7 +136,7 @@ describe("Finance dashboard with loaded records", () => {
     await waitFor(async () => expect(await kpi("Verified collections")).toBe("₱129,500.00"));
     expect(await kpi("Pending payment verifications")).toBe("1");
     expect(await kpi("Outstanding receivables")).toBe("₱172,500.00");
-    expect(await kpi("Approved unpaid commissions")).toBe("₱0.00");
+    expect(await kpi("Approved unpaid commissions")).toBe("₱3,600.00");
     expect(screen.getByText(/₱57,500.00 overdue/)).toBeInTheDocument();
 
     const collectionsCard = screen.getByText("Verified collections", { selector: "dt" }).closest("dl") as HTMLElement;
@@ -161,9 +161,9 @@ describe("Finance dashboard with loaded records", () => {
     for (const [name, href] of [
       ["Payment Verification: 1 pending", "/admin/finance"],
       ["Commission Assignment: 2 pending", "/admin/commissions/assignment"],
-      ["Commission Payouts: 0 pending", "/admin/commissions/payouts"],
-      ["Cancellation Requests: 0 pending", "/admin/finance/cancellations"],
-      ["Financial Holds: 0 pending", "/admin/finance/holds"],
+      ["Commission Payouts: 1 pending", "/admin/commissions/payouts"],
+      ["Cancellation Requests: 1 pending", "/admin/finance/cancellations"],
+      ["Financial Holds: 1 pending", "/admin/finance/holds"],
       ["Membership Activation: 1 pending", "/admin/membership/activation"],
     ]) {
       expect(await screen.findByRole("link", { name })).toHaveAttribute("href", href);

@@ -14,10 +14,9 @@ import { Money } from "@/shared/components/modern/money";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { Section } from "@/shared/components/modern/section";
-import { StatTiles } from "@/shared/components/modern/stat-tiles";
+import { AdminPage, AdminStatGrid, AdminStatCard, AdminSection } from "@/shared/components/admin";
+import { Clock, Coins, Gauge, Gift, Hourglass, Wallet } from "lucide-react";
 import { formatDate } from "@/shared/lib/format-date";
-import { ModulePage } from "../components/module-page";
 
 export function StayPointsPage() {
   const points = useStayPoints();
@@ -66,7 +65,7 @@ export function StayPointsPage() {
 
   const balances = current?.ledger.balances;
   return (
-    <ModulePage anyOf={["stay-points"]} title="Stay Points" description="Points ledger by membership. ₱1 of verified resort spend earns 1 point, split 70% Weekday and 30% Weekend." crumbs={[{ label: "Stay Points" }]}>
+    <AdminPage anyOf={["stay-points"]} title="Stay Points" description="Points ledger by membership. ₱1 of verified resort spend earns 1 point, split 70% Weekday and 30% Weekend." crumbs={[{ label: "Stay Points" }]}>
       <InfoNote title="Redemption is not available">Redemption and Services are disabled. Points are earned and tracked here but cannot be redeemed or reserved yet, and 1 point is not a peso value.</InfoNote>
       <QueryState isLoading={points.isLoading} error={points.error}>
         {!current ? (
@@ -75,13 +74,20 @@ export function StayPointsPage() {
           <>
             <SelectField label="Membership" value={current.membershipId} options={list.map((item) => ({ value: item.membershipId, label: `${item.customerName} · ${item.productCode}${item.cardId ? ` · ${item.cardId}` : ""}` }))} onChange={setPicked} showSearch={list.length > 6} />
             {current.financialHold ? <InfoNote title="Financial Hold">New VIP benefit usage is restricted while this membership has a Financial Hold. Finance reconciliation restores eligibility. Points already earned stay on the ledger.</InfoNote> : null}
-            <StatTiles items={[{ label: "Spendable weekday", value: balances?.spendableWeekday.toLocaleString("en-PH") }, { label: "Spendable weekend", value: balances?.spendableWeekend.toLocaleString("en-PH") }, { label: "Pending", value: balances?.pending.toLocaleString("en-PH"), hint: "Unlocks when the cycle minimum is reached" }, { label: "Held", value: balances?.held.toLocaleString("en-PH"), hint: "Awaiting Finance reconciliation" }, { label: "Remaining capacity", value: balances?.remainingCapacity.toLocaleString("en-PH"), hint: "Current cycle" }, { label: "Redeemed", value: balances?.redeemed.toLocaleString("en-PH"), hint: "Redemption disabled" }]} />
-            <Section title="Cycles" description="Caps apply per bucket and in total. Redeeming never gives cap back, and refund-driven cap restoration is not defined yet.">
+            <AdminStatGrid columns={3}>
+              <AdminStatCard label="Spendable weekday" value={balances?.spendableWeekday.toLocaleString("en-PH")} icon={Wallet} tone="success" />
+              <AdminStatCard label="Spendable weekend" value={balances?.spendableWeekend.toLocaleString("en-PH")} icon={Coins} tone="success" />
+              <AdminStatCard label="Pending" value={balances?.pending.toLocaleString("en-PH")} icon={Clock} tone="warning" description="Unlocks when the cycle minimum is reached" />
+              <AdminStatCard label="Held" value={balances?.held.toLocaleString("en-PH")} icon={Hourglass} tone="warning" description="Awaiting Finance reconciliation" />
+              <AdminStatCard label="Remaining capacity" value={balances?.remainingCapacity.toLocaleString("en-PH")} icon={Gauge} tone="info" description="Current cycle" />
+              <AdminStatCard label="Redeemed" value={balances?.redeemed.toLocaleString("en-PH")} icon={Gift} tone="neutral" description="Redemption disabled" />
+            </AdminStatGrid>
+            <AdminSection title="Cycles" description="Caps apply per bucket and in total. Redeeming never gives cap back, and refund-driven cap restoration is not defined yet.">
               <DataTable data={current.ledger.cycles} columns={cycleColumns} getRowId={(row) => String(row.cycle)} emptyText="No spend has been recorded in a cycle yet." caption="Cycles" onRowOpen={(row) => setCycleNo(row.cycle)} getRowLabel={(row) => `Open cycle ${row.cycle}`} rowActions={(row) => <RowActionsMenu itemName={`cycle ${row.cycle}`} onView={() => setCycleNo(row.cycle)} />} />
-            </Section>
-            <Section title="Ledger" description="Entries come from Finance-verified direct resort spending. Fractional amounts are blocked until a rounding policy is approved.">
+            </AdminSection>
+            <AdminSection title="Ledger" description="Entries come from Finance-verified direct resort spending. Fractional amounts are blocked until a rounding policy is approved.">
               <DataTable data={current.ledger.entries} columns={entryColumns} getRowId={(row) => row.spendId} emptyText="No points entries." caption="Points ledger" onRowOpen={(row) => setEntryId(row.spendId)} getRowLabel={(row) => `Open points entry of ${formatDate(row.date)}`} rowActions={(row) => <RowActionsMenu itemName={`points entry of ${formatDate(row.date)}`} onView={() => setEntryId(row.spendId)} extraItems={reconcileItems(row)} />} />
-            </Section>
+            </AdminSection>
           </>
         )}
       </QueryState>
@@ -136,6 +142,6 @@ export function StayPointsPage() {
         footer={entryDetail && reconcileItems(entryDetail).length > 0 ? reconcileItems(entryDetail).map((item) => <Button key={item.key} type="button" variant={item.danger ? "danger" : "outline"} onClick={item.onClick}>{item.label}</Button>) : undefined}
       />
       <ReasonDialog open={reconciling !== null} title={reconciling?.decision === "release" ? "Release held points" : "Void held points"} description={reconciling?.decision === "release" ? "The refund was reversed, so the points are restored to Pending or Spendable." : "The points are removed. Cap capacity is not restored."} confirmText={reconciling?.decision === "release" ? "Release" : "Void"} danger={reconciling?.decision === "void"} successText="Held points reconciled." onClose={() => setReconciling(null)} onSubmit={(reason) => (reconciling ? reconcile.mutateAsync({ spendId: reconciling.spendId, decision: reconciling.decision, reason }) : Promise.resolve())} />
-    </ModulePage>
+    </AdminPage>
   );
 }

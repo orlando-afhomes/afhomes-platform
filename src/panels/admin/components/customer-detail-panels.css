@@ -1,0 +1,28 @@
+/* Customer detail record panels (redesign reference: docs/ui-redesign/customer-detail.png).
+ * Token-only surface, timeline rails, and value bars. Imported at the owning
+ * route (the panels file itself stays a server component). */
+
+.customer-detail__card {
+  background: var(--color-bg-surface-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-soft);
+}
+
+/* Vertical connector for the progress steps and activity timeline. */
+.customer-detail__rail {
+  width: 2px;
+  background: var(--color-border-subtle);
+}
+
+/* Sage tint bar for the sale value footer. */
+.customer-detail__valuebar {
+  background: var(--color-brand-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .customer-detail__card,
+  .customer-detail__card * {
+    transition: none;
+  }
+}

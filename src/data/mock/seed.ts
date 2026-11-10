@@ -49,7 +49,7 @@ export type MockStore = {
 
 // Seed records live in the centralized synthetic seed file (seed-data.ts).
 // They are deep-cloned here into browser-memory state; a refresh restores them.
-const { members, accreditations, customers, products, paymentSchemes, contracts, sales, payments, memberships, commissions, resortSpends, accounts, departments, roles, staff } = seedData;
+const { members, accreditations, customers, products, paymentSchemes, contracts, sales, payments, memberships, commissions, resortSpends, customerImportJobs, auditEvents, accounts, departments, roles, staff } = seedData;
 
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
@@ -71,8 +71,8 @@ export function createSeedStore(): MockStore {
     departments: departments.map((item) => ({ ...item })),
     roles: roles.map((item) => ({ ...item, moduleIds: [...item.moduleIds] })),
     staff: staff.map((item) => ({ ...item })),
-    auditEvents: [],
-    customerImportJobs: [],
+    auditEvents: clone(auditEvents),
+    customerImportJobs: customerImportJobs.map((item) => ({ ...item, createdCustomerIds: [...item.createdCustomerIds] })),
     customerSequence: customers.length + 1,
     accountSequence: accounts.length + 1,
     departmentSequence: departments.length + 1,
@@ -82,7 +82,8 @@ export function createSeedStore(): MockStore {
     // Shared AA sequence resumes after the seven seeded reservations (1-7).
     accreditationSequence: 8,
     registrationSequence: 1,
-    auditSequence: 1,
+    // Continues after the seeded audit-1..audit-8 display records.
+    auditSequence: 9,
     counters: { ...seedData.counters },
   };
 }

@@ -2,13 +2,15 @@
 
 import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Contact, Network, Users } from "lucide-react";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMembers, useCustomers, useMockRepositories } from "@/data/queries";
 import { PageHeader } from "@/shared/components/modern/page-header";
 import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
 import { DetailList, DetailRow } from "@/shared/components/modern/detail-list";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { CardSection } from "@/shared/components/modern/card-section";
+import { AdminSection } from "@/shared/components/admin";
+import { AdminStatCard, AdminStatGrid } from "@/shared/components/admin/admin-stat";
 import { countVisibleCustomers, countVisibleMembers, countUplines } from "../dashboard-metrics";
 import { getSystemRoleLabel } from "../role-label";
 import { aaDisplay, teamDisplayName } from "@/modules/sales-network/display";
@@ -21,17 +23,9 @@ function roleTitle(roles: string[]) {
 
 function Card({ title, className, children }: { title: string; className?: string; children: ReactNode }) {
   return (
-    <CardSection title={title} className={className}>
+    <AdminSection title={title} className={className}>
       {children}
-    </CardSection>
-  );
-}
-
-function Stat({ title, loading, value }: { title: string; loading: boolean; value: number }) {
-  return (
-    <Card title={title}>
-      {loading ? <Skeleton className="tw:h-8 tw:w-16" /> : <p className="tw:text-2xl tw:font-semibold">{value.toLocaleString()}</p>}
-    </Card>
+    </AdminSection>
   );
 }
 
@@ -57,11 +51,11 @@ export function SalesNetworkPanel() {
         <PageHeader title={roleTitle(identity.roles)} description="Authorized Sales Network account context." />
       </div>
 
-      <div className="tw:grid tw:gap-4 tw:md:grid-cols-3">
-        <Stat title="Visible team members" loading={membersQuery.isLoading} value={countVisibleMembers(members)} />
-        <Stat title="Visible customers" loading={customersQuery.isLoading} value={countVisibleCustomers(customersQuery.data ?? [])} />
-        <Stat title="Authorized uplines" loading={uplinesQuery.isLoading} value={countUplines(uplines)} />
-      </div>
+      <AdminStatGrid columns={3}>
+        <AdminStatCard label="Visible team members" value={countVisibleMembers(members).toLocaleString()} icon={Users} tone="brand" loading={membersQuery.isLoading} />
+        <AdminStatCard label="Visible customers" value={(countVisibleCustomers(customersQuery.data ?? [])).toLocaleString()} icon={Contact} tone="info" loading={customersQuery.isLoading} />
+        <AdminStatCard label="Authorized uplines" value={countUplines(uplines).toLocaleString()} icon={Network} tone="neutral" loading={uplinesQuery.isLoading} />
+      </AdminStatGrid>
 
       {loading ? (
         <div className="tw:flex tw:flex-col tw:gap-3">

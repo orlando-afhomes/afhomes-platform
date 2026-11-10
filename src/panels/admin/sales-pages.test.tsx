@@ -42,10 +42,12 @@ describe("process pages are separated", () => {
     expect(screen.queryByRole("table", { name: "Contracts" })).toBeNull();
   });
 
-  it("Contracts shows the contracts list", async () => {
+  it("Contracts shows the contracts list with a New contract action and a count footer", async () => {
     show("dev-admin", <ContractsPage />);
     expect(await screen.findByRole("table", { name: "Contracts" })).toBeInTheDocument();
     expect(screen.queryByRole("table", { name: "Sales" })).toBeNull();
+    expect(screen.getByRole("link", { name: /new contract/i })).toHaveAttribute("href", "/admin/customers/new");
+    expect(await screen.findByText("Showing 4 contracts")).toBeInTheDocument();
   });
 
   it("Contract Review defaults to the Submitted filter", async () => {

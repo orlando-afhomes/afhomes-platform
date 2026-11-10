@@ -62,7 +62,7 @@ export function ContractReviewDetailPage({ contractId }: { contractId: string })
               </InfoNote>
             ) : null}
             {contract.status === "returned" && contract.returnReason ? <InfoNote title="Returned for correction">{contract.returnReason}</InfoNote> : null}
-            {pendingCancel ? <InfoNote title="Cancellation awaiting Finance confirmation">Finance confirms or declines this request from Cancellation Requests. The requester cannot decide it.</InfoNote> : null}
+            {pendingCancel ? <InfoNote title="Cancellation awaiting Finance confirmation">Finance confirms or declines this request from Cancellation Requests. The requester cannot decide it (unless Super Admin).</InfoNote> : null}
             <ContractTiles contract={contract} payments={record.payments} />
             <ContractTermsSection record={record} />
             <ContractHistorySection contract={contract} />

@@ -8,6 +8,7 @@ import { AUDIT_ACTIONS, AuditQueryError, type AuditQuery } from "@/modules/audit
 import { DevIdentityProvider, useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider, useMockStore } from "@/shared/providers/mock-store-provider";
 import { AUDIT_READ_RESTRICTION } from "@/data/mock/audit-repository";
+import { SEED_AUDIT_EVENT_COUNT } from "./mock/seed-data";
 import { queryKeys } from "@/data/query-keys";
 import { useAuditEvents, useChangeSalesNetworkMemberStatus, useUpdateAccountStatus } from "@/data/queries";
 
@@ -47,7 +48,8 @@ describe("useAuditEvents", () => {
   it("loads pages and applies validated filters through the repository", async () => {
     const { result, rerender } = setup("dev-admin");
     await waitFor(() => expect(result.current.audit.isSuccess).toBe(true));
-    expect(result.current.audit.data).toMatchObject({ items: [], total: 0, page: 1, pageSize: 25 });
+    expect(result.current.audit.data).toMatchObject({ total: SEED_AUDIT_EVENT_COUNT, page: 1, pageSize: 25 });
+    expect(result.current.audit.data?.items).toHaveLength(SEED_AUDIT_EVENT_COUNT);
 
     await act(async () => {
       await result.current.accountStatus.mutateAsync({ id: "acct-pending", status: "active" });
@@ -84,7 +86,7 @@ describe("useAuditEvents", () => {
     await act(async () => {
       await result.current.accountStatus.mutateAsync({ id: "acct-pending", status: "active" });
     });
-    await waitFor(() => expect(result.current.audit.data?.total).toBe(1));
+    await waitFor(() => expect(result.current.audit.data?.total).toBe(1 + SEED_AUDIT_EVENT_COUNT));
 
     act(() => result.current.identity.setIdentityId("dev-hr"));
     await waitFor(() => expect(result.current.audit.isError).toBe(true));
@@ -96,7 +98,7 @@ describe("useAuditEvents", () => {
 
     // Switching back refetches fresh data for the eligible identity.
     act(() => result.current.identity.setIdentityId("dev-super-admin"));
-    await waitFor(() => expect(result.current.audit.data?.total).toBe(1));
+    await waitFor(() => expect(result.current.audit.data?.total).toBe(1 + SEED_AUDIT_EVENT_COUNT));
   });
 
   it("stops serving cached records when the identity's own eligibility is lost", async () => {
@@ -104,7 +106,7 @@ describe("useAuditEvents", () => {
     await act(async () => {
       await result.current.accountStatus.mutateAsync({ id: "acct-pending", status: "active" });
     });
-    await waitFor(() => expect(result.current.audit.data?.total).toBe(1));
+    await waitFor(() => expect(result.current.audit.data?.total).toBe(1 + SEED_AUDIT_EVENT_COUNT));
     // The Admin's linked account becomes Suspended; the next render uses the denied partition.
     result.current.store.accounts.find((item) => item.id === "acct-admin")!.status = "suspended";
     rerender({ query: undefined });
@@ -118,18 +120,18 @@ describe("audit invalidation", () => {
   it("refetches the active audit view after audited Account and Sales Network mutations", async () => {
     const { result } = setup("dev-super-admin");
     await waitFor(() => expect(result.current.audit.isSuccess).toBe(true));
-    expect(result.current.audit.data?.total).toBe(0);
+    expect(result.current.audit.data?.total).toBe(0 + SEED_AUDIT_EVENT_COUNT);
 
     await act(async () => {
       await result.current.accountStatus.mutateAsync({ id: "acct-pending", status: "active" });
     });
-    await waitFor(() => expect(result.current.audit.data?.total).toBe(1));
+    await waitFor(() => expect(result.current.audit.data?.total).toBe(1 + SEED_AUDIT_EVENT_COUNT));
 
     const member = result.current.store.members.find((item) => item.status === "active")!;
     await act(async () => {
       await result.current.memberStatus.mutateAsync({ id: member.id, status: "suspended" });
     });
-    await waitFor(() => expect(result.current.audit.data?.total).toBe(2));
+    await waitFor(() => expect(result.current.audit.data?.total).toBe(2 + SEED_AUDIT_EVENT_COUNT));
     expect(result.current.audit.data?.items[0]).toMatchObject({ action: "MEMBER_STATUS_CHANGED", newValue: "suspended" });
   });
 
@@ -139,7 +141,7 @@ describe("audit invalidation", () => {
     await act(async () => {
       await expect(result.current.accountStatus.mutateAsync({ id: "acct-admin", status: "suspended" })).rejects.toThrow();
     });
-    expect(result.current.store.auditEvents).toHaveLength(0);
+    expect(result.current.store.auditEvents).toHaveLength(SEED_AUDIT_EVENT_COUNT);
   });
 
   it("covers every audited emitter: each emitting mutation hook invalidates audit queries", () => {

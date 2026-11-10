@@ -3,6 +3,7 @@ import type { DevIdentity } from "@/modules/identity/types";
 import { AUDIT_ACTIONS } from "@/modules/audit/types";
 import { ACCOUNT_DELETE_DISABLED } from "@/modules/accounts/types";
 import { createMockStore } from "./seed";
+import { SEED_AUDIT_EVENT_COUNT } from "./seed-data";
 import { createMockRepositories } from "./repositories";
 import { getDevIdentity } from "./dev-identities";
 import { LAST_SUPER_ADMIN_ERROR, SELF_MODIFICATION_ERROR } from "./authorization";
@@ -142,8 +143,26 @@ describe("account repository S3-A protections", () => {
     expect(snapshot(store, "acct-admin")).toEqual(before);
 
     const superAdmin = createMockRepositories(store, () => getDevIdentity("dev-super-admin")).accounts;
-    await expect(superAdmin.revokeRole("acct-super-admin", "super_admin")).rejects.toThrow(SELF_MODIFICATION_ERROR);
+    // Owner decision 2026-11-10: Super Admin bypasses the self-modification ban, so removing its own
+    // last Super Admin role is still rejected, but now by the last-Super-Admin protection.
+    await expect(superAdmin.revokeRole("acct-super-admin", "super_admin")).rejects.toThrow(LAST_SUPER_ADMIN_ERROR);
     expect(snapshot(store, "acct-super-admin")?.roleIds).toEqual(["super_admin"]);
+  });
+
+  it("lets a super admin change its own roles, status, and department", async () => {
+    const store = createMockStore();
+    const superAdmin = createMockRepositories(store, () => getDevIdentity("dev-super-admin")).accounts;
+    // Owner decision 2026-11-10: the self-modification ban does not apply to Super Admin.
+    // Role changes that keep the Super Admin role succeed on the actor's own account.
+    expect((await superAdmin.assignRole("acct-super-admin", "hr")).roleIds).toContain("hr");
+    expect((await superAdmin.update("acct-super-admin", { departmentId: "dept-hr" })).departmentId).toBe("dept-hr");
+    expect((await superAdmin.revokeRole("acct-super-admin", "hr")).roleIds).not.toContain("hr");
+    // Suspending the last active Super Admin is still blocked for everyone, including Super Admin.
+    await expect(superAdmin.updateStatus("acct-super-admin", "suspended")).rejects.toThrow(LAST_SUPER_ADMIN_ERROR);
+    // Once another active Super Admin exists, suspending its own account succeeds.
+    const second = await superAdmin.create({ displayName: "Second", email: "second@afhomes.local", roleIds: ["super_admin"] });
+    await superAdmin.updateStatus(second.id, "active");
+    expect((await superAdmin.updateStatus("acct-super-admin", "suspended")).status).toBe("suspended");
   });
 
   it("rejects own identity edits for staff-linked accounts but keeps the department mirror", async () => {
@@ -283,8 +302,8 @@ describe("account repository S3-C1 audit events", () => {
       email: "audited@afhomes.local",
       roleIds: ["hr", "svd"],
     });
-    expect(store.auditEvents).toHaveLength(1);
-    const [event] = store.auditEvents;
+    expect(store.auditEvents).toHaveLength(1 + SEED_AUDIT_EVENT_COUNT);
+    const event = store.auditEvents.find((item) => item.entityId === created.id)!;
     expect(event).toMatchObject({
       actorId: "dev-admin",
       actorRoles: ["admin"],
@@ -305,12 +324,12 @@ describe("account repository S3-C1 audit events", () => {
     const account = await admin.create({ displayName: "Role Audit", email: "roleaudit@afhomes.local", roleIds: [] });
     await admin.assignRole(account.id, "hr");
     await admin.revokeRole(account.id, "hr");
-    const actions = store.auditEvents.map((item) => item.action);
+    const actions = store.auditEvents.slice(SEED_AUDIT_EVENT_COUNT).map((item) => item.action);
     expect(actions).toEqual([AUDIT_ACTIONS.ACCOUNT_CREATED, AUDIT_ACTIONS.ACCOUNT_ROLE_ASSIGNED, AUDIT_ACTIONS.ACCOUNT_ROLE_REVOKED]);
-    expect(store.auditEvents[1]).toMatchObject({ entityId: account.id, newValue: "hr" });
-    expect(store.auditEvents[1]).not.toHaveProperty("previousValue");
-    expect(store.auditEvents[2]).toMatchObject({ entityId: account.id, previousValue: "hr" });
-    expect(store.auditEvents[2]).not.toHaveProperty("newValue");
+    expect(store.auditEvents[SEED_AUDIT_EVENT_COUNT + 1]).toMatchObject({ entityId: account.id, newValue: "hr" });
+    expect(store.auditEvents[SEED_AUDIT_EVENT_COUNT + 1]).not.toHaveProperty("previousValue");
+    expect(store.auditEvents[SEED_AUDIT_EVENT_COUNT + 2]).toMatchObject({ entityId: account.id, previousValue: "hr" });
+    expect(store.auditEvents[SEED_AUDIT_EVENT_COUNT + 2]).not.toHaveProperty("newValue");
   });
 
   it("records status transitions with before and after values", async () => {
@@ -341,11 +360,11 @@ describe("account repository S3-C1 audit events", () => {
     await expect(admin.create({ displayName: "Dup", email: "admin@afhomes.local", roleIds: ["hr"] })).rejects.toThrow();
     await expect(admin.assignRole("acct-hr", "finance")).rejects.toThrow();
     await expect(admin.updateStatus("acct-super-admin", "suspended")).rejects.toThrow();
-    expect(store.auditEvents).toHaveLength(0);
+    expect(store.auditEvents).toHaveLength(SEED_AUDIT_EVENT_COUNT);
   });
 
-  it("starts with no fabricated history", () => {
-    expect(createMockStore().auditEvents).toEqual([]);
+  it("starts from the seeded display history", () => {
+    expect(createMockStore().auditEvents).toHaveLength(SEED_AUDIT_EVENT_COUNT);
   });
 });
 

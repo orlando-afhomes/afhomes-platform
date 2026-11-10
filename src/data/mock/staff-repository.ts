@@ -178,7 +178,8 @@ export class MockStaffRepository {
       throw new Error("Only an Administrator or Super Administrator can activate or reactivate accounts.");
     }
     if (account.roleIds.includes("super_admin")) throw new Error("Protected account status cannot be modified by this actor.");
-    if (identity.staffId === staff.id) throw new Error(SELF_MODIFICATION_ERROR);
+    // Owner decision 2026-11-10: Super Admin has full control; the self-modification ban does not apply to Super Admin.
+    if (identity.staffId === staff.id && !isSuperAdmin(this.store, identity)) throw new Error(SELF_MODIFICATION_ERROR);
     if (!ACCOUNT_STATUS_TRANSITIONS[account.status].includes(status)) {
       throw new Error(`Invalid status transition from ${account.status} to ${status}.`);
     }
@@ -332,7 +333,8 @@ export class MockStaffRepository {
     const roleChanged = next.departmentRoleId !== staff.departmentRoleId;
     const accountChanged = next.accountId !== staff.accountId;
     if (departmentChanged || roleChanged || accountChanged) {
-      if (identity.staffId === staff.id) throw new Error(SELF_MODIFICATION_ERROR);
+      // Owner decision 2026-11-10: Super Admin has full control; the self-modification ban does not apply to Super Admin.
+      if (identity.staffId === staff.id && !isSuperAdmin(this.store, identity)) throw new Error(SELF_MODIFICATION_ERROR);
       if (isProtectedStaff(this.store, staff) && !hasActiveSystemRole(this.store, identity, "super_admin")) {
         throw new Error(PROTECTED_STAFF_ERROR);
       }

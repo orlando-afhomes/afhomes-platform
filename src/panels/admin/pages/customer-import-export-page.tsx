@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Download, Upload } from "lucide-react";
+import { CircleCheck, CircleX, Download, Hourglass, ListOrdered, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useCustomerImportJobs, useExportCustomers, useImportCustomers, useOperation, usePaymentSchemes, useVipProducts } from "@/data/business-queries";
 import { useCustomers } from "@/data/queries";
@@ -18,19 +18,18 @@ import {
 } from "@/modules/customers/import";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { InfoNote } from "@/shared/components/modern/detail-list";
-import { CheckboxField, SelectField } from "@/shared/forms/modern";
+import { CheckboxField } from "@/shared/forms/modern";
 import { downloadCsv, downloadXlsx, readSpreadsheet, SPREADSHEET_ACCEPT } from "@/shared/lib/spreadsheet";
 import { Button, buttonVariants } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { BizBadge } from "@/shared/components/business/biz-badge";
-import { QueryState } from "@/shared/components/modern/query-state";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
-import { Section } from "@/shared/components/modern/section";
-import { StatTiles } from "@/shared/components/modern/stat-tiles";
-import { TabBar } from "@/shared/components/modern/tab-bar";
-import { ModulePage } from "../components/module-page";
+import { AdminPage, AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
+import { ExportCustomersCard, HistoryCard } from "../components/customer-export-history";
+import { CustomerImportHowItWorks } from "../components/customer-import-how-it-works";
+import { TemplateStep, UploadDropzone } from "../components/customer-import-steps";
+import { CustomerImportTabs } from "../components/customer-import-tabs";
 
 const SHEET_NAME = "Customers";
 const EXAMPLE_ROW = ["", "Maria", "Reyes", "Santos", "", "1990-05-14", "Female", "Married", "09171234567", "maria.santos@example.com", "123 Rizal Street", "Laguna", "Calauan", "Poblacion", "4012", "G1", "4-Month Installment", "Standard", "Walk-In"];
@@ -49,7 +48,7 @@ export function CustomerImportExportPage() {
   const jobs = useCustomerImportJobs(canImport);
 
   return (
-    <ModulePage
+    <AdminPage
       anyOf={["customers"]}
       title="Customer Import and Export"
       description="Bring company customer records in as drafts, or export customer records."
@@ -62,7 +61,7 @@ export function CustomerImportExportPage() {
     >
       {canImport ? (
         <>
-          <TabBar label="Import and export views" value={tab} onChange={setTab} tabs={[{ value: "import", label: "Import" }, { value: "export", label: "Export" }, { value: "history", label: "Job history", count: jobs.data?.length }]} />
+          <CustomerImportTabs value={tab} onChange={setTab} jobCount={jobs.data?.length ?? 0} />
           {tab === "import" ? <ImportPanel onImported={() => setTab("history")} /> : null}
           {tab === "export" ? <ExportPanel /> : null}
           {tab === "history" ? <HistoryPanel jobs={jobs.data ?? []} isLoading={jobs.isLoading} error={jobs.error} /> : null}
@@ -70,7 +69,7 @@ export function CustomerImportExportPage() {
       ) : (
         <InfoNote title="Not available">Customer import and export are limited to Administrators.</InfoNote>
       )}
-    </ModulePage>
+    </AdminPage>
   );
 }
 
@@ -144,36 +143,45 @@ function ImportPanel({ onImported }: { onImported: () => void }) {
 
   return (
     <>
-      <InfoNote title="How import works">
-        Each valid row becomes a customer draft. Staff then open the draft, confirm the details, tick both certifications and submit it. Rows that may duplicate an existing customer are skipped and listed for review; nothing is merged or overwritten. Nothing is saved until you confirm.
-      </InfoNote>
-      <Section
-        title="1. Get the template"
+      <CustomerImportHowItWorks />
+      <TemplateStep
+        step={1}
+        title="Get the template"
+        description="Required in every row: First name and Last name. Dates use YYYY-MM-DD. VIP tier accepts Bronze, Silver, Gold or B1, S1, G1. Payment scheme uses the register name. The Example sheet shows one filled row."
+        connector
         actions={
-          <div className="tw:flex tw:flex-wrap tw:gap-2">
+          <>
             <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => void downloadXlsx("customer-import-template.xlsx", [{ name: SHEET_NAME, rows: template }, { name: "Example", rows: [...template, EXAMPLE_ROW] }]).catch(() => toast.error("The template could not be created."))}>
               <Download aria-hidden="true" /> XLSX template
             </Button>
             <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => downloadCsv("customer-import-template.csv", template)}>
               <Download aria-hidden="true" /> CSV template
             </Button>
-          </div>
+          </>
         }
+      />
+      <TemplateStep
+        step={2}
+        title="Upload and review"
+        description={<Label htmlFor="customer-import-file">Customer file (.xlsx or .csv, up to 10 MB)</Label>}
+        connector={preview !== null}
       >
-        <p className="tw:text-sm tw:text-muted-foreground">
-          Required in every row: First name and Last name. Dates use YYYY-MM-DD. VIP tier accepts Bronze, Silver, Gold or B1, S1, G1. Payment scheme uses the register name. The Example sheet shows one filled row.
-        </p>
-      </Section>
-      <Section title="2. Upload and review">
-        <div className="tw:flex tw:flex-col tw:gap-2 tw:sm:max-w-md">
-          <Label htmlFor="customer-import-file">Customer file (.xlsx or .csv, up to 10 MB)</Label>
-          <Input id="customer-import-file" type="file" accept={SPREADSHEET_ACCEPT} disabled={reading || importCustomers.isPending} onChange={(event) => void onFile(event.target.files?.[0])} aria-describedby={fileError ? "customer-import-file-error" : undefined} />
-          {reading ? <p role="status" className="tw:text-sm tw:text-muted-foreground">Reading the file…</p> : null}
-          {fileError ? <p id="customer-import-file-error" role="alert" className="tw:text-sm tw:text-destructive">{fileError}</p> : null}
-        </div>
+        <UploadDropzone
+          inputId="customer-import-file"
+          accept={SPREADSHEET_ACCEPT}
+          disabled={importCustomers.isPending}
+          reading={reading}
+          error={fileError}
+          onFile={(file) => void onFile(file)}
+        />
         {preview ? (
           <div className="tw:mt-4 tw:flex tw:flex-col tw:gap-4">
-            <StatTiles items={[{ label: "Rows", value: rows.length }, { label: "Ready", value: counts.ready }, { label: "Needs review", value: counts.review }, { label: "Invalid", value: counts.invalid }]} />
+            <AdminStatGrid>
+              <AdminStatCard label="Rows" value={rows.length} icon={ListOrdered} tone="info" />
+              <AdminStatCard label="Ready" value={counts.ready} icon={CircleCheck} tone="success" />
+              <AdminStatCard label="Needs review" value={counts.review} icon={Hourglass} tone="warning" />
+              <AdminStatCard label="Invalid" value={counts.invalid} icon={CircleX} tone="danger" />
+            </AdminStatGrid>
             <DataTable
               data={rows}
               columns={columns}
@@ -201,9 +209,9 @@ function ImportPanel({ onImported }: { onImported: () => void }) {
             />
           </div>
         ) : null}
-      </Section>
+      </TemplateStep>
       {preview ? (
-        <Section title="3. Confirm">
+        <TemplateStep step={3} title="Confirm">
           <div className="tw:flex tw:flex-col tw:gap-3">
             <CheckboxField label="I confirm these rows come from official company records." checked={declaration} onChange={setDeclaration} />
             <div>
@@ -212,25 +220,11 @@ function ImportPanel({ onImported }: { onImported: () => void }) {
               </Button>
             </div>
           </div>
-        </Section>
+        </TemplateStep>
       ) : null}
     </>
   );
 }
-
-const STATUS_OPTIONS = [
-  { value: "all", label: "All statuses" },
-  { value: "draft", label: "Draft" },
-  { value: "submitted", label: "Submitted" },
-  { value: "active_member", label: "Active member" },
-  { value: "inactive", label: "Inactive" },
-];
-const PLAN_OPTIONS = [
-  { value: "all", label: "All VIP tiers" },
-  { value: "B1", label: "Bronze (B1)" },
-  { value: "S1", label: "Silver (S1)" },
-  { value: "G1", label: "Gold (G1)" },
-];
 
 function ExportPanel() {
   const customers = useCustomers();
@@ -261,71 +255,22 @@ function ExportPanel() {
   };
 
   return (
-    <Section title="Export customers" description={`Exports use the template columns. At most ${MAX_EXPORT_ROWS.toLocaleString("en-PH")} rows per file. Every export is recorded in the audit log.`}>
-      <div className="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-3">
-        <SelectField label="Status" value={status} options={STATUS_OPTIONS} onChange={setStatus} />
-        <SelectField label="VIP tier" value={plan} options={PLAN_OPTIONS} onChange={setPlan} />
-        <SelectField label="Format" value={format} options={[{ value: "xlsx", label: "Excel (.xlsx)" }, { value: "csv", label: "CSV (.csv)" }]} onChange={setFormat} />
-      </div>
-      <div className="tw:mt-4 tw:flex tw:flex-wrap tw:items-center tw:gap-3">
-        <Button className="tw:min-h-11 tw:sm:min-h-8" disabled={customers.isLoading || matching.length === 0 || exportCustomers.isPending} onClick={() => void run()}>
-          <Download aria-hidden="true" /> {exportCustomers.isPending ? "Exporting…" : "Export"}
-        </Button>
-        <span className="tw:text-sm tw:text-muted-foreground" role="status">{matching.length} matching customer(s)</span>
-      </div>
-    </Section>
+    <ExportCustomersCard
+      status={status}
+      setStatus={setStatus}
+      plan={plan}
+      setPlan={setPlan}
+      format={format}
+      setFormat={setFormat}
+      matchingCount={matching.length}
+      loading={customers.isLoading}
+      exporting={exportCustomers.isPending}
+      onExport={() => void run()}
+    />
   );
 }
 
 function HistoryPanel({ jobs, isLoading, error }: { jobs: CustomerImportJob[]; isLoading: boolean; error: unknown }) {
-  const columns = useMemo<ColumnDef<CustomerImportJob, unknown>[]>(
-    () => [
-      { id: "id", header: "Job", cell: ({ row }) => <span className="tw:font-semibold">{row.original.id}</span> },
-      { id: "file", header: "File", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.fileName },
-      { id: "when", header: "Imported", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => new Date(row.original.createdAt).toLocaleString("en-PH", { timeZone: "Asia/Manila" }) },
-      { id: "created", header: "Drafts created", cell: ({ row }) => `${row.original.createdCount} of ${row.original.totalRows}` },
-      { id: "skipped", header: "Skipped", cell: ({ row }) => `${row.original.needsReviewCount} for review, ${row.original.invalidCount} invalid` },
-    ],
-    [],
-  );
   const [jobId, setJobId] = useState<string | null>(null);
-  const job = jobId ? jobs.find((item) => item.id === jobId) ?? null : null;
-  return (
-    <Section title="Job history" description="Recent customer imports, newest first.">
-      <QueryState isLoading={isLoading} error={error}>
-        <DataTable
-          data={jobs}
-          columns={columns}
-          getRowId={(row) => row.id}
-          emptyText="No imports yet."
-          caption="Customer import jobs"
-          onRowOpen={(row) => setJobId(row.id)}
-          getRowLabel={(row) => `Open import job ${row.id}`}
-          rowActions={(row) => <RowActionsMenu itemName={`import job ${row.id}`} onView={() => setJobId(row.id)} />}
-        />
-        <RecordDetailsSheet
-          open={job !== null}
-          onClose={() => setJobId(null)}
-          title={job ? `Import ${job.id}` : "Import job"}
-          subtitle={job?.fileName}
-          sections={
-            job
-              ? [
-                  {
-                    title: "Result",
-                    rows: [
-                      { label: "Imported", value: new Date(job.createdAt).toLocaleString("en-PH", { timeZone: "Asia/Manila" }) },
-                      { label: "Total rows", value: String(job.totalRows) },
-                      { label: "Drafts created", value: String(job.createdCount) },
-                      { label: "Needs review", value: String(job.needsReviewCount) },
-                      { label: "Invalid", value: String(job.invalidCount) },
-                    ],
-                  },
-                ]
-              : []
-          }
-        />
-      </QueryState>
-    </Section>
-  );
+  return <HistoryCard jobs={jobs} isLoading={isLoading} error={error} jobId={jobId} setJobId={setJobId} />;
 }

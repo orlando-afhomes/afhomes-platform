@@ -2,8 +2,8 @@
 
 import { useCommissions } from "@/data/business-queries";
 import { Money } from "@/shared/components/modern/money";
-import { Section } from "@/shared/components/modern/section";
-import { StatTiles } from "@/shared/components/modern/stat-tiles";
+import { AdminStatGrid, AdminStatCard, AdminSection } from "@/shared/components/admin";
+import { BadgeCheck, Banknote, Clock, Hourglass } from "lucide-react";
 import { ReportShell, useReportRange } from "../components/report-shell";
 
 export function CommissionReportPage() {
@@ -14,9 +14,14 @@ export function CommissionReportPage() {
   const paidInPeriod = commissionList.filter((item) => range.inRange(item.payout?.confirmedAt)).reduce((sum, item) => sum + item.amountCentavos, 0);
   return (
     <ReportShell range={range} title="Commission Report" description="Role-scoped figures built from the source records." crumbs={[{ label: "Reports" }, { label: "Commission Report" }]}>
-      <Section title="Commission obligations" description="Approved is not Paid. Approvals use the approval date; payouts use the confirmed disbursement date.">
-        <StatTiles items={[{ label: "Approved in period", value: <Money value={approvedInPeriod} /> }, { label: "Paid in period", value: <Money value={paidInPeriod} /> }, { label: "Approved, unpaid", value: <Money value={commissionList.filter((item) => item.status === "approved").reduce((sum, item) => sum + item.amountCentavos, 0)} /> }, { label: "On hold", value: <Money value={commissionList.filter((item) => item.status === "on_hold").reduce((sum, item) => sum + item.amountCentavos, 0)} /> }]} />
-      </Section>
+      <AdminSection title="Commission obligations" description="Approved is not Paid. Approvals use the approval date; payouts use the confirmed disbursement date.">
+        <AdminStatGrid>
+          <AdminStatCard label="Approved in period" value={<Money value={approvedInPeriod} />} icon={BadgeCheck} tone="brand" />
+          <AdminStatCard label="Paid in period" value={<Money value={paidInPeriod} />} icon={Banknote} tone="success" />
+          <AdminStatCard label="Approved, unpaid" value={<Money value={commissionList.filter((item) => item.status === "approved").reduce((sum, item) => sum + item.amountCentavos, 0)} />} icon={Clock} tone="accent" />
+          <AdminStatCard label="On hold" value={<Money value={commissionList.filter((item) => item.status === "on_hold").reduce((sum, item) => sum + item.amountCentavos, 0)} />} icon={Hourglass} tone="warning" />
+        </AdminStatGrid>
+      </AdminSection>
     </ReportShell>
   );
 }

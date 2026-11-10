@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { DevIdentity } from "@/modules/identity/types";
 import { AUDIT_ACTIONS, AuditQueryError, type AuditEvent, type AuditQuery } from "@/modules/audit/types";
 import { createMockStore } from "./seed";
+import { SEED_AUDIT_EVENT_COUNT } from "./seed-data";
 import { createMockRepositories } from "./repositories";
 import { getDevIdentity } from "./dev-identities";
 import { AUDIT_READ_RESTRICTION } from "./audit-repository";
@@ -98,13 +99,17 @@ describe("audit read filters, ordering, and paging", () => {
     expect(await ids({ relatedRecordId: "mem-1" })).toEqual(["acct-2", "acc-1"]);
     expect(await ids({ relatedRecordId: "mem" })).toEqual([]);
     expect(await ids({ from: "2026-01-02", to: "2026-01-02T23:59:59.999Z" })).toEqual(["acct-2", "mem-1"]);
-    expect(await ids({ from: "2026-01-03" })).toEqual(["staff-9"]);
+    expect(await ids({ from: "2026-01-03", to: "2026-01-03T23:59:59.999Z" })).toEqual(["staff-9"]);
   });
 
   it("orders newest first with the audit sequence as a stable tiebreak", async () => {
     const page = await auditAs(seeded(), "dev-admin").list();
-    expect(page.items.map((item) => item.entityId)).toEqual(["staff-9", "acct-2", "mem-1", "acc-1"]);
-    expect(page.total).toBe(4);
+    // Seeded display events (Oct 2026) sort before the pushed Jan-2026 events.
+    expect(page.items.map((item) => item.entityId)).toEqual([
+      "comm-1", "sale-1", "pay-2", "ctr-2", "ctr-1", "ctr-1", "ctr-1", "cust-a1",
+      "staff-9", "acct-2", "mem-1", "acc-1",
+    ]);
+    expect(page.total).toBe(12);
   });
 
   it("applies the default page size of 25 and the maximum of 100", async () => {
@@ -112,12 +117,12 @@ describe("audit read filters, ordering, and paging", () => {
     for (let index = 0; index < 120; index += 1) pushEvent(store, { action: AUDIT_ACTIONS.ACCOUNT_CREATED, entityId: `acct-${index}` });
     const repo = auditAs(store, "dev-admin");
     const first = await repo.list();
-    expect(first).toMatchObject({ page: 1, pageSize: 25, total: 120 });
+    expect(first).toMatchObject({ page: 1, pageSize: 25, total: 128 });
     expect(first.items).toHaveLength(25);
     expect((await repo.list({ pageSize: 100 })).items).toHaveLength(100);
     const last = await repo.list({ page: 5 });
-    expect(last.items).toHaveLength(20);
-    expect((await repo.list({ page: 6 })).items).toEqual([]);
+    expect(last.items).toHaveLength(25);
+    expect((await repo.list({ page: 6 })).items).toHaveLength(3);
     // Pages are disjoint and continuous.
     const second = await repo.list({ page: 2 });
     expect(new Set([...first.items, ...second.items].map((item) => item.id)).size).toBe(50);
@@ -179,7 +184,7 @@ describe("audit safe projection", () => {
     const store = createMockStore();
     const event = pushEvent(store, { action: "FUTURE_ACTION", displayReference: "AA-9999", previousValue: "secret-a", newValue: "secret-b", reason: "free text" });
     (event as Record<string, unknown>).passwordHash = "should-never-appear";
-    const [view] = (await auditAs(store, "dev-admin").list()).items;
+    const view = (await auditAs(store, "dev-admin").list()).items.find((item) => item.action === "FUTURE_ACTION")!;
     expect(view).toMatchObject({ displayReference: null, previousValue: null, newValue: null, reason: null, reasonRecorded: true });
     expect(JSON.stringify(view)).not.toMatch(/secret|AA-9999|free text|passwordHash|should-never/);
     expect(Object.keys(view).sort()).toEqual(
@@ -205,11 +210,12 @@ describe("audit read integrity", () => {
     const before = JSON.stringify({ events: store.auditEvents, sequence: store.auditSequence });
     const repo = auditAs(store, "dev-admin");
     const page = await repo.list();
-    page.items[0].actorRoles.push("super_admin");
-    page.items[0].relatedRecordIds.push("tamper");
-    page.items[0].newValue = "tampered";
+    const target = page.items.find((item) => item.action === AUDIT_ACTIONS.ACCOUNT_CREATED)!;
+    target.actorRoles.push("super_admin");
+    target.relatedRecordIds.push("tamper");
+    target.newValue = "tampered";
     expect(JSON.stringify({ events: store.auditEvents, sequence: store.auditSequence })).toBe(before);
-    expect((await repo.list()).items[0].actorRoles).toEqual(["admin"]);
+    expect((await repo.list()).items.find((item) => item.action === AUDIT_ACTIONS.ACCOUNT_CREATED)!.actorRoles).toEqual(["admin"]);
   });
 
   it("exposes no write operation and records nothing for rejected mutations", async () => {
@@ -218,18 +224,18 @@ describe("audit read integrity", () => {
     for (const name of ["create", "update", "delete", "append", "clear"]) expect(repo[name]).toBeUndefined();
     const hr = createMockRepositories(store, () => getDevIdentity("dev-hr"));
     await expect(hr.accounts.updateStatus("acct-admin", "suspended")).rejects.toThrow();
-    expect(store.auditEvents).toHaveLength(0);
-    expect((await auditAs(store, "dev-admin").list()).total).toBe(0);
+    expect(store.auditEvents).toHaveLength(SEED_AUDIT_EVENT_COUNT);
+    expect((await auditAs(store, "dev-admin").list()).total).toBe(SEED_AUDIT_EVENT_COUNT);
   });
 
-  it("starts with no fabricated history and leaves existing S3-C1 events untouched", async () => {
+  it("starts from the seeded display history and leaves existing S3-C1 events untouched", async () => {
     const store = createMockStore();
-    expect((await auditAs(store, "dev-super-admin").list()).items).toEqual([]);
+    expect((await auditAs(store, "dev-super-admin").list()).items).toHaveLength(SEED_AUDIT_EVENT_COUNT);
     const admin = createMockRepositories(store, () => getDevIdentity("dev-admin"));
     await admin.accounts.create({ displayName: "History User", email: "history@afhomes.local", roleIds: ["hr"] });
     const stored = JSON.stringify(store.auditEvents);
     await auditAs(store, "dev-admin").list({ page: 1 });
     expect(JSON.stringify(store.auditEvents)).toBe(stored);
-    expect(store.auditEvents).toHaveLength(1);
+    expect(store.auditEvents).toHaveLength(1 + SEED_AUDIT_EVENT_COUNT);
   });
 });

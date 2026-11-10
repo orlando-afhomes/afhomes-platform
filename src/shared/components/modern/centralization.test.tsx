@@ -2,6 +2,7 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { Users } from "lucide-react";
 import userEvent from "@testing-library/user-event";
 import * as React from "react";
 import { toast } from "sonner";
@@ -13,8 +14,7 @@ import { FormDialog, ReasonDialog } from "./form-dialog";
 import { Money } from "./money";
 import { QueryState } from "./query-state";
 import { SearchInput } from "./search-input";
-import { Section } from "./section";
-import { StatTiles } from "./stat-tiles";
+import { AdminKpiCard, AdminKpiGrid, AdminSection } from "@/shared/components/admin";
 import { TabBar } from "./tab-bar";
 import { useActionRunner } from "./use-action-runner";
 import { DataTable, type ColumnDef } from "./data-table";
@@ -152,16 +152,18 @@ describe("centralized feedback", () => {
 });
 
 describe("centralized presentation", () => {
-  it("renders Money, Section, StatTiles, TabBar, and QueryState", async () => {
+  it("renders Money, AdminSection, AdminKpi, TabBar, and QueryState", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
       <>
         <Money value={1550000} />
-        <Section title="Team" description="Desc" actions={<button type="button">Add</button>}>
+        <AdminSection title="Team" description="Desc" actions={<button type="button">Add</button>}>
           Body
-        </Section>
-        <StatTiles items={[{ label: "Total", value: "3" }]} />
+        </AdminSection>
+        <AdminKpiGrid columns={1}>
+          <AdminKpiCard label="Total" value="3" icon={Users} scope="Current" />
+        </AdminKpiGrid>
         <TabBar tabs={[{ value: "a", label: "A" }, { value: "b", label: "B" }]} value="a" onChange={onChange} label="Views" />
         <QueryState isLoading={false} error={null}>
           Loaded

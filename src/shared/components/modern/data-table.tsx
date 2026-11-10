@@ -82,11 +82,11 @@ export function DataTable<T>({
 
   return (
     <div className="tw:flex tw:flex-col tw:gap-3">
-      <div className="tw:overflow-hidden tw:rounded-lg tw:border tw:border-border tw:bg-card">
+      <div className="tw:overflow-hidden tw:rounded-2xl tw:border tw:border-border tw:bg-card tw:shadow-(--shadow-soft)">
         <Table aria-label={caption}>
           <TableHeader>
             {table.getHeaderGroups().map((group) => (
-              <TableRow key={group.id}>
+              <TableRow key={group.id} className="tw:bg-[var(--color-bg-surface)] tw:hover:bg-[var(--color-bg-surface)]">
                 {group.headers.map((header) => (
                   <TableHead
                     key={header.id}
@@ -125,7 +125,10 @@ export function DataTable<T>({
                   data-row-key={row.id}
                   tabIndex={onRowOpen ? 0 : undefined}
                   aria-label={onRowOpen ? getRowLabel?.(row.original) : undefined}
-                  className={onRowOpen ? "tw:cursor-pointer tw:outline-none tw:focus-visible:bg-muted/60 tw:focus-visible:ring-2 tw:focus-visible:ring-inset tw:focus-visible:ring-ring/50" : undefined}
+                  className={cn(
+                    "tw:even:bg-[var(--color-bg-subtle)]",
+                    onRowOpen ? "tw:cursor-pointer tw:outline-none tw:focus-visible:bg-muted/60 tw:focus-visible:ring-2 tw:focus-visible:ring-inset tw:focus-visible:ring-ring/50" : undefined,
+                  )}
                   onClick={
                     onRowOpen
                       ? (event) => {

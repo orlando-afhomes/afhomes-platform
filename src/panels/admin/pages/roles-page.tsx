@@ -5,12 +5,10 @@ import dynamic from "next/dynamic";
 import { ArrowDownAZ, ArrowUpAZ, Plus } from "lucide-react";
 import { MODULE_CATALOG } from "@/modules/identity/permissions";
 import type { DepartmentRole } from "@/modules/organization/types";
-import { useDeleteDepartmentRole, useDepartments, useDepartmentRoles, useEffectiveModuleIds, useRoleOptions, useStaff } from "@/data/queries";
-import { PageContainer } from "@/shared/components/modern/page-container";
-import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
+import { useDeleteDepartmentRole, useDepartments, useDepartmentRoles, useRoleOptions, useStaff } from "@/data/queries";
 import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
-import { PageHeader } from "@/shared/components/modern/page-header";
+import { AdminPage } from "@/shared/components/admin";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { Badge } from "@/shared/ui/badge";
@@ -33,7 +31,6 @@ const RoleDialogs = dynamic(() => import("./role-dialogs").then((mod) => mod.Rol
 });
 
 export function RolesPage() {
-  const granted = useEffectiveModuleIds();
   const rolesQuery = useDepartmentRoles();
   const roleOptionsQuery = useRoleOptions();
   const departmentsQuery = useDepartments();
@@ -153,62 +150,50 @@ export function RolesPage() {
     ];
   }, [departments, staff, manageable, removeRole]);
 
-  if (!granted.has("roles")) {
-    return (
-      <PageContainer>
-        <PageHeader title="Access restricted" description="This account does not have access to Roles & Permissions." />
-      </PageContainer>
-    );
-  }
-
   const sortLabel = sortAsc ? "Sort A-Z" : "Sort Z-A";
 
   return (
-    <PageContainer>
-      <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "Organization" }, { label: "Roles & Permissions" }]} />
-      <PageHeader
-        title="Roles & Permissions"
-        description="Manage department roles and the modules they may access."
-        actions={
-          <Button
-            className="tw:min-h-11 tw:sm:min-h-8"
-            onClick={() => {
-              setEditRole(null);
-              setRoleDialog(true);
-            }}
-          >
-            <Plus aria-hidden="true" /> Create role
-          </Button>
-        }
-      />
-      <div className="tw:mt-3">
-        <FilterBar
-          search={search}
-          onSearch={setSearch}
-          searchLabel="Search roles"
-          filters={[
-            { label: "Role department filter", value: departmentFilter, onChange: setDepartmentFilter, options: departmentItems },
-            { label: "Role status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_FILTER_ITEMS },
-          ]}
+    <AdminPage
+      anyOf={["roles"]}
+      title="Roles & Permissions"
+      description="Manage department roles and the modules they may access."
+      crumbs={[{ label: "Organization" }, { label: "Roles & Permissions" }]}
+      actions={
+        <Button
+          className="tw:min-h-11 tw:sm:min-h-8"
+          onClick={() => {
+            setEditRole(null);
+            setRoleDialog(true);
+          }}
         >
-          <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
-            {sortAsc ? <ArrowDownAZ aria-hidden="true" /> : <ArrowUpAZ aria-hidden="true" />}
-            {sortLabel}
-          </Button>
-        </FilterBar>
-      </div>
-      <div className="tw:mt-3">
-        <DataTable<DepartmentRole>
-          caption="Roles"
-          data={filtered}
-          columns={columns}
-          getRowId={(role) => role.id}
-          emptyText="No roles found."
-          loading={rolesQuery.isLoading || departmentsQuery.isLoading || staffQuery.isLoading}
-          pageSize={10}
-          onRowOpen={(role) => setViewRole(role)}
-        />
-      </div>
+          <Plus aria-hidden="true" /> Create role
+        </Button>
+      }
+    >
+      <FilterBar
+        search={search}
+        onSearch={setSearch}
+        searchLabel="Search roles"
+        filters={[
+          { label: "Role department filter", value: departmentFilter, onChange: setDepartmentFilter, options: departmentItems },
+          { label: "Role status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_FILTER_ITEMS },
+        ]}
+      >
+        <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
+          {sortAsc ? <ArrowDownAZ aria-hidden="true" /> : <ArrowUpAZ aria-hidden="true" />}
+          {sortLabel}
+        </Button>
+      </FilterBar>
+      <DataTable<DepartmentRole>
+        caption="Roles"
+        data={filtered}
+        columns={columns}
+        getRowId={(role) => role.id}
+        emptyText="No roles found."
+        loading={rolesQuery.isLoading || departmentsQuery.isLoading || staffQuery.isLoading}
+        pageSize={10}
+        onRowOpen={(role) => setViewRole(role)}
+      />
       <RoleDialogs
         open={roleDialog}
         editRole={editRole}
@@ -219,7 +204,7 @@ export function RolesPage() {
         }}
         onCloseView={() => setViewRole(null)}
       />
-    </PageContainer>
+    </AdminPage>
   );
 }
 

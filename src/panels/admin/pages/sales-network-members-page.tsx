@@ -15,9 +15,9 @@ import { hasOperationPermission } from "@/modules/identity/permissions";
 import { resolveEffectiveModules } from "@/data/mock/authorization";
 import { PageContainer } from "@/shared/components/modern/page-container";
 import { PageHeader } from "@/shared/components/modern/page-header";
-import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
 import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { AdminPage } from "@/shared/components/admin";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { Button } from "@/shared/ui/button";
@@ -212,54 +212,50 @@ export function SalesNetworkMembersPage() {
   const sortLabel = sortAsc ? "Sort A-Z" : "Sort Z-A";
 
   return (
-    <PageContainer>
-      <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "Sales Network", href: "/admin/sales-network" }, { label: "Members" }]} />
-      <PageHeader
-        title="Sales Network Members"
-        description="Authorized member directory, scoped by genealogy permissions."
-        actions={
-          canManage ? (
-            <>
-              <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setAccreditedMode("IST")}>
-                Add IST
-              </Button>
-              <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setAccreditedMode("OST")}>
-                Add OST
-              </Button>
-            </>
-          ) : null
-        }
+    <AdminPage
+      anyOf={["sales-network"]}
+      title="Sales Network Members"
+      description="Authorized member directory, scoped by genealogy permissions."
+      crumbs={[{ label: "Sales Network", href: "/admin/sales-network" }, { label: "Members" }]}
+      actions={
+        canManage ? (
+          <>
+            <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setAccreditedMode("IST")}>
+              Add IST
+            </Button>
+            <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setAccreditedMode("OST")}>
+              Add OST
+            </Button>
+          </>
+        ) : null
+      }
+    >
+      <FilterBar
+        search={search}
+        onSearch={setSearch}
+        searchLabel="Search members"
+        filters={[
+          { label: "Designation filter", value: designationFilter, onChange: setDesignationFilter, options: DESIGNATION_ITEMS },
+          { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_ITEMS },
+          { label: "Team filter", value: teamFilter, onChange: setTeamFilter, options: teamItems },
+          { label: "Accreditation status filter", value: accreditationFilter, onChange: setAccreditationFilter, options: ACCREDITATION_ITEMS },
+        ]}
+      >
+        <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
+          {sortAsc ? <ArrowDownAZ aria-hidden="true" /> : <ArrowUpAZ aria-hidden="true" />}
+          {sortLabel}
+        </Button>
+      </FilterBar>
+      <DataTable<OrgMember>
+        caption="Sales Network members"
+        data={filtered}
+        columns={columns}
+        getRowId={(member) => member.id}
+        emptyText="No members found."
+        loading={membersQuery.isLoading}
+        pageSize={10}
+        onRowOpen={(record) => router.push(`/admin/sales-network/members/${record.aaNumber ?? record.id}`)}
       />
-      <div className="tw:mt-3">
-        <FilterBar
-          search={search}
-          onSearch={setSearch}
-          searchLabel="Search members"
-          filters={[
-            { label: "Designation filter", value: designationFilter, onChange: setDesignationFilter, options: DESIGNATION_ITEMS },
-            { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_ITEMS },
-            { label: "Team filter", value: teamFilter, onChange: setTeamFilter, options: teamItems },
-            { label: "Accreditation status filter", value: accreditationFilter, onChange: setAccreditationFilter, options: ACCREDITATION_ITEMS },
-          ]}
-        >
-          <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
-            {sortAsc ? <ArrowDownAZ aria-hidden="true" /> : <ArrowUpAZ aria-hidden="true" />}
-            {sortLabel}
-          </Button>
-        </FilterBar>
-      </div>
-      <div className="tw:mt-3">
-        <DataTable<OrgMember>
-          caption="Sales Network members"
-          data={filtered}
-          columns={columns}
-          getRowId={(member) => member.id}
-          emptyText="No members found."
-          loading={membersQuery.isLoading}
-          pageSize={10}
-          onRowOpen={(record) => router.push(`/admin/sales-network/members/${record.aaNumber ?? record.id}`)}
-        />
-      </div>
       <SalesNetworkMemberDialogs
         editMember={editMember}
         transferMember={transferMember}
@@ -278,6 +274,6 @@ export function SalesNetworkMembersPage() {
         />
       ) : null}
       {confirmDialog}
-    </PageContainer>
+    </AdminPage>
   );
 }

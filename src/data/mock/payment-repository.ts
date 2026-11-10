@@ -151,8 +151,11 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
       const payment = this.paymentFor(identity, id);
       if (payment.status !== "submitted" && payment.status !== "under_review") throw new Error("Only a submitted payment can be verified.");
       // A correction resubmitted by someone else keeps the original submitter, so the corrector is checked too (07 section 5.2).
+      // Owner decision 2026-11-10: Super Admin has full control, so the separation-of-duties block below does not apply to Super Admin.
+      // Last-Super-Admin/self-modification protections are separate and untouched.
+      const isSuperAdmin = activeIdentityRoles(identity).includes("super_admin");
       const corrected = payment.history.some((entry) => entry.event === BUSINESS_AUDIT_ACTIONS.PAYMENT_RESUBMITTED && entry.actorId === identity.id);
-      if (payment.submittedBy === identity.id || corrected) throw new Error("A payment cannot be verified by the person who submitted or corrected it.");
+      if (!isSuperAdmin && (payment.submittedBy === identity.id || corrected)) throw new Error("A payment cannot be verified by the person who submitted or corrected it.");
       const contract = this.contractFor(identity, payment.contractId);
       if (contract.status === "cancelled") throw new Error("This contract is cancelled. Its payment can be rejected or returned, not verified.");
       const others = paymentsOfContract(this.store, contract.id).filter((item) => item.id !== payment.id && item.status === "verified");

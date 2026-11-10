@@ -6,11 +6,10 @@ import { downPaymentCentavos, installmentCountFor, schemeHowItWorks, schemePrice
 import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Button } from "@/shared/ui/button";
+import { AdminPage, AdminSection } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { Section } from "@/shared/components/modern/section";
-import { ModulePage } from "../components/module-page";
 
 const TIERS: Array<{ code: VipTierCode; label: string }> = [
   { code: "B1", label: "Bronze (B1)" },
@@ -43,7 +42,7 @@ export function SchemeGuidePage() {
   const schemes = usePaymentSchemes();
   const products = useVipProducts();
   return (
-    <ModulePage
+    <AdminPage
       anyOf={["vip-products", "sales"]}
       title="Payment Scheme Guide"
       description="How each official payment scheme works. Read only."
@@ -58,7 +57,7 @@ export function SchemeGuidePage() {
       <QueryState isLoading={schemes.isLoading || products.isLoading} error={schemes.error ?? products.error}>
         <div className="tw:flex tw:flex-col tw:gap-4">
           {(schemes.data ?? []).map((scheme) => (
-            <Section key={scheme.id} title={scheme.label} actions={<BizBadge status={scheme.availability} />}>
+            <AdminSection key={scheme.id} title={scheme.label} actions={<BizBadge status={scheme.availability} />}>
               {scheme.commercialStatus === "configured" ? (
                 <dl className="tw:grid tw:grid-cols-1 tw:gap-3 tw:text-sm tw:sm:grid-cols-2">
                   <div>
@@ -84,10 +83,10 @@ export function SchemeGuidePage() {
               ) : (
                 <p className="tw:text-sm tw:text-muted-foreground">Terms are pending owner approval, so this scheme cannot be offered yet. {scheme.ownerHold ?? scheme.source}</p>
               )}
-            </Section>
+            </AdminSection>
           ))}
         </div>
       </QueryState>
-    </ModulePage>
+    </AdminPage>
   );
 }

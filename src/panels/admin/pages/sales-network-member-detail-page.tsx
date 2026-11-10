@@ -17,14 +17,13 @@ import { programCategoryLabel } from "@/modules/sales-network/accredited-seller"
 import { maskGovIdNumber } from "@/shared/forms";
 import { PageContainer } from "@/shared/components/modern/page-container";
 import { PageHeader } from "@/shared/components/modern/page-header";
-import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
 import { DetailList, DetailRow } from "@/shared/components/modern/detail-list";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { buttonVariants } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { Card } from "@/shared/ui/card";
-import { CardSection } from "@/shared/components/modern/card-section";
+import { AdminPage, AdminSection } from "@/shared/components/admin";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
@@ -123,26 +122,23 @@ export function SalesNetworkMemberDetailPage() {
   const display = resolveAccreditationDisplay(accreditations);
 
   return (
-    <PageContainer>
-      <Breadcrumbs
-        items={[
-          { label: "Dashboard", href: "/admin" },
-          { label: "Sales Network", href: "/admin/sales-network" },
-          { label: "Members", href: "/admin/sales-network/members" },
-          { label: member.displayName },
-        ]}
-      />
-      <PageHeader
-        title={member.displayName}
-        description={`${designationLabel(member.designation)} · ${classification} · Team ${teamDisplayName(member, members)}`}
-        actions={
-          <Link href="/admin/sales-network/members" className={cn(buttonVariants({ variant: "outline" }), "tw:min-h-11 tw:sm:min-h-8")}>
-            Back
-          </Link>
-        }
-      />
-      <div className="tw:mt-3 tw:grid tw:gap-4 tw:md:grid-cols-2">
-        <CardSection title="Identity">
+    <AdminPage
+      anyOf={["sales-network"]}
+      title={member.displayName}
+      description={`${designationLabel(member.designation)} · ${classification} · Team ${teamDisplayName(member, members)}`}
+      crumbs={[
+        { label: "Sales Network", href: "/admin/sales-network" },
+        { label: "Members", href: "/admin/sales-network/members" },
+        { label: member.displayName },
+      ]}
+      actions={
+        <Link href="/admin/sales-network/members" className={cn(buttonVariants({ variant: "outline" }), "tw:min-h-11 tw:sm:min-h-8")}>
+          Back
+        </Link>
+      }
+    >
+      <div className="tw:grid tw:gap-4 tw:md:grid-cols-2">
+        <AdminSection title="Identity">
           <DetailList>
             <DetailRow term="AA Number">{aaDisplay(member)}</DetailRow>
             <DetailRow term="Position">
@@ -153,8 +149,8 @@ export function SalesNetworkMemberDetailPage() {
             </DetailRow>
             <DetailRow term="Team">{teamDisplayName(member, members)}</DetailRow>
           </DetailList>
-        </CardSection>
-        <CardSection title="Accreditation">
+        </AdminSection>
+        <AdminSection title="Accreditation">
           <DetailList>
             <DetailRow term="AA Number">{currentAccreditation?.aaNumber ?? member.aaNumber ?? "Pending AA Issuance"}</DetailRow>
             <DetailRow term="Classification">{currentAccreditation?.classification ?? classification}</DetailRow>
@@ -179,9 +175,9 @@ export function SalesNetworkMemberDetailPage() {
               Multiple accreditation records share the latest date; status cannot be resolved automatically.
             </p>
           ) : null}
-        </CardSection>
+        </AdminSection>
         {profile ? (
-          <CardSection title="Seller Profile" className="tw:md:col-span-2">
+          <AdminSection title="Seller Profile" className="tw:md:col-span-2">
             <DetailList className={TWO_COLUMNS}>
               <DetailRow term="First Name">{profile.firstName}</DetailRow>
               <DetailRow term="Middle Name">{profile.middleName ?? "—"}</DetailRow>
@@ -219,9 +215,9 @@ export function SalesNetworkMemberDetailPage() {
               </DetailRow>
               <DetailRow term="Seller Source">Manual admin creation</DetailRow>
             </DetailList>
-          </CardSection>
+          </AdminSection>
         ) : null}
-        <CardSection title="Team downline" className="tw:md:col-span-2">
+        <AdminSection title="Team downline" className="tw:md:col-span-2">
           {directDownline.length === 0 ? (
             <p className="tw:p-4 tw:text-center tw:text-muted-foreground">No direct downline members.</p>
           ) : (
@@ -237,9 +233,9 @@ export function SalesNetworkMemberDetailPage() {
               />
             </div>
           )}
-        </CardSection>
+        </AdminSection>
         {member.parentHistory && member.parentHistory.length > 0 ? (
-          <CardSection title="Relationship history" className="tw:md:col-span-2">
+          <AdminSection title="Relationship history" className="tw:md:col-span-2">
             <DataTable
               data={member.parentHistory}
               columns={historyColumns}
@@ -273,9 +269,9 @@ export function SalesNetworkMemberDetailPage() {
                   : []
               }
             />
-          </CardSection>
+          </AdminSection>
         ) : null}
       </div>
-    </PageContainer>
+    </AdminPage>
   );
 }

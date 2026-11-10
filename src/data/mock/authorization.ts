@@ -186,9 +186,10 @@ export function assertCanAssignSystemRole(store: AuthorizationStore, identity: D
     return;
   }
   // The protected Super Administrator is the root of system-role delegation
-  // (doc 01 §1, §3.4). Its static module baseline omits unresolved modules
-  // such as "finance", which must not block it from assigning those roles.
-  // Self-modification and last-Super-Admin rules still apply in the repository.
+  // (doc 01 §1, §3.4). A Super Administrator holds the union of every role's
+  // grants (owner rule 2026-11-10), so no baseline omission can block it from
+  // assigning those roles. Self-modification and last-Super-Admin rules still
+  // apply in the repository.
   if (isSuperAdmin) return;
   const granted = resolveEffectiveModules(store, identity);
   if (getRoleModuleGrants(role).some((moduleId) => !granted.has(moduleId))) {

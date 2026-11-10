@@ -64,10 +64,11 @@ describe("dashboard page role gating (initial render)", () => {
       "Recent Activities",
       "Pending Approvals",
       "Contract Review",
+      "Payment Verification",
       "Membership Activation",
       "Dashboard date range",
     ]);
-    expectNone(html, ["Payment Verification", "Account Approvals", "Finance overview", "Team overview"]);
+    expectNone(html, ["Account Approvals", "Finance overview", "Team overview"]);
   });
 
   it("keeps Finance reporting off the Administrator dashboard", () => {

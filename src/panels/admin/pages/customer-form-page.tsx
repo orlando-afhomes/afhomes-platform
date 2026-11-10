@@ -11,7 +11,7 @@ import { RadioCardField } from "@/shared/forms/modern";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { ModulePage } from "../components/module-page";
+import { AdminPage } from "@/shared/components/admin";
 import { ReasonDialog } from "@/shared/components/modern/form-dialog";
 import {
   AddressSection,
@@ -35,9 +35,9 @@ export function CustomerFormPage({ customerId }: { customerId?: string }) {
   const existing = customerId ? customers.data?.find((item) => item.id === customerId) : undefined;
   const loading = Boolean(customerId) && customers.isLoading;
   return (
-    <ModulePage anyOf={["customers"]} title={customerId ? "Edit customer" : "New customer"} description={customerId ? "VIP application details. A draft can be saved incomplete." : "Choose a VIP card, then complete the application."} crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: customerId ? "Edit" : "New" }]}>
+    <AdminPage anyOf={["customers"]} title={customerId ? "Edit customer" : "New customer"} description={customerId ? "VIP application details. A draft can be saved incomplete." : "Choose a VIP card, then complete the application."} crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: customerId ? "Edit" : "New" }]}>
       {!customerId ? <CustomerApplicationWizard /> : loading ? <Skeleton className="tw:h-64 tw:w-full" /> : !existing ? <InfoNote title="Customer not found">This customer does not exist or is not visible to this account.</InfoNote> : <CustomerForm key={existing.id} existing={existing} />}
-    </ModulePage>
+    </AdminPage>
   );
 }
 

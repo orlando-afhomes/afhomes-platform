@@ -4,10 +4,9 @@ import { useMemo } from "react";
 import { useMemberships, useOperation } from "@/data/business-queries";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { Section } from "@/shared/components/modern/section";
-import { StatTiles } from "@/shared/components/modern/stat-tiles";
+import { AdminPage, AdminStatGrid, AdminStatCard, AdminSection } from "@/shared/components/admin";
+import { BadgeCheck, Clock } from "lucide-react";
 import { MembershipTable } from "../components/membership-table";
-import { ModulePage } from "../components/module-page";
 
 /** Activation queue: pending memberships. Activating requires the membership.activate operation. */
 export function MembershipActivationPage() {
@@ -16,19 +15,22 @@ export function MembershipActivationPage() {
   const pending = useMemo(() => (memberships.data ?? []).filter((item) => item.status === "pending"), [memberships.data]);
 
   return (
-    <ModulePage anyOf={["membership"]} title="Activation Queue" description="Activate eligible memberships and issue Card IDs. Fully Paid is not Active until activation." crumbs={[{ label: "Membership" }, { label: "Activation Queue" }]}>
+    <AdminPage anyOf={["membership"]} title="Activation Queue" description="Activate eligible memberships and issue Card IDs. Fully Paid is not Active until activation." crumbs={[{ label: "Membership" }, { label: "Activation Queue" }]}>
       {canActivate ? (
         <>
-          <StatTiles items={[{ label: "Pending activation", value: pending.length }, { label: "Ready to activate", value: pending.filter((item) => item.eligible).length }]} />
+          <AdminStatGrid columns={2}>
+            <AdminStatCard label="Pending activation" value={pending.length} icon={Clock} tone="warning" />
+            <AdminStatCard label="Ready to activate" value={pending.filter((item) => item.eligible).length} icon={BadgeCheck} tone="success" />
+          </AdminStatGrid>
           <QueryState isLoading={memberships.isLoading} error={memberships.error}>
-            <Section title="Activation queue" description="Eligible means a finalized contract, Finance-verified full payment, and a valid RA number.">
+            <AdminSection title="Activation queue" description="Eligible means a finalized contract, Finance-verified full payment, and a valid RA number.">
               <MembershipTable data={pending} caption="Activation queue" emptyText="No memberships are waiting for activation." />
-            </Section>
+            </AdminSection>
           </QueryState>
         </>
       ) : (
         <InfoNote title="Access restricted">This account is not authorized to activate memberships.</InfoNote>
       )}
-    </ModulePage>
+    </AdminPage>
   );
 }

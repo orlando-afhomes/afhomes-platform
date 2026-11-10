@@ -1,8 +1,8 @@
 "use client";
 
+import { UserPlus, Users } from "lucide-react";
 import { useCustomers } from "@/data/queries";
-import { Section } from "@/shared/components/modern/section";
-import { StatTiles } from "@/shared/components/modern/stat-tiles";
+import { AdminStatCard, AdminStatGrid, AdminSection } from "@/shared/components/admin";
 import { ReportShell, useReportRange } from "../components/report-shell";
 
 export function CustomerGrowthReportPage() {
@@ -12,9 +12,12 @@ export function CustomerGrowthReportPage() {
   const newCustomers = customerList.filter((item) => range.inRange(item.createdAt)).length;
   return (
     <ReportShell range={range} title="Customer Growth" description="Role-scoped figures built from the source records." crumbs={[{ label: "Reports" }, { label: "Customer Growth" }]}>
-      <Section title="Customer growth">
-        <StatTiles items={[{ label: "New customers in period", value: newCustomers, hint: "By record creation date" }, { label: "Visible customers", value: customerList.length }]} />
-      </Section>
+      <AdminSection title="Customer growth">
+        <AdminStatGrid>
+          <AdminStatCard label="New customers in period" value={newCustomers} icon={UserPlus} tone="success" description="By record creation date" />
+          <AdminStatCard label="Visible customers" value={customerList.length} icon={Users} tone="info" />
+        </AdminStatGrid>
+      </AdminSection>
     </ReportShell>
   );
 }

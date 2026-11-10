@@ -15,7 +15,7 @@ import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types
 import { manilaToday } from "@/shared/lib/dates";
 import { formatPeso } from "@/shared/lib/money";
 import { cn } from "@/shared/lib/utils";
-import { RadioCardGroup, type RadioCardOption } from "@/shared/components/modern/radio-card-group";
+import type { RadioCardOption } from "@/shared/components/modern/radio-card-group";
 import { StepIndicator } from "@/shared/components/modern/step-indicator";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { CheckboxField, FieldShell, RadioCardField, StandardDateField, TextField, useFieldIds } from "@/shared/forms/modern";
@@ -36,7 +36,8 @@ import {
   type CustomerErrors,
   type SetDraft,
 } from "../components/customer-form-sections";
-import { PlanCardImage, PlanFacts, PlanSummary } from "../components/customer-plan-summary";
+import { PlanSummary } from "../components/customer-plan-summary";
+import { VipCardChoiceGrid } from "../components/vip-card-choice";
 import { useAdminSidebar } from "../layouts/admin-sidebar-context";
 
 const STEPS = ["VIP card", "Payment plan", "Customer", "Sales and consent", "Review", "Reservation"] as const;
@@ -298,13 +299,6 @@ export function CustomerApplicationWizard() {
     router.push(`/admin/customers/${customerId}`);
   };
 
-  const planOptions: RadioCardOption<VipTierCode>[] = activeProducts.map((item) => ({
-    value: item.code,
-    label: `${item.name} (${item.code})`,
-    description: `${item.tier} tier`,
-    media: <PlanCardImage code={item.code} />,
-    details: <PlanFacts product={item} />,
-  }));
   const schemeOptions: RadioCardOption[] = (schemes.data ?? [])
     .filter((item) => draft.vipPlan && item.applicableTiers.includes(draft.vipPlan as VipTierCode))
     .map((item) => ({
@@ -337,13 +331,27 @@ export function CustomerApplicationWizard() {
       ) : null}
 
       {step === STEP_CARD ? (
-        <section aria-label="Choose a VIP card" className="tw:flex tw:flex-col tw:gap-4">
+        <section aria-label="Choose a VIP card" className="vip-card-step tw:flex tw:flex-col tw:gap-4">
           <div>
-            <h2 className="tw:text-lg tw:font-semibold">Choose a VIP card</h2>
-            <p className="tw:text-sm tw:text-muted-foreground">Select the card the customer is applying for. The application form opens after you choose.</p>
+            <div className="vip-card-step__heading tw:flex tw:items-center tw:gap-3">
+              <span aria-hidden="true" className="tw:flex tw:size-7 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-full tw:bg-primary tw:text-sm tw:font-semibold tw:text-primary-foreground">
+                1
+              </span>
+              <h2 className="tw:shrink-0 tw:text-lg tw:font-semibold tw:text-primary">Choose a VIP card</h2>
+              <span aria-hidden="true" className="tw:h-px tw:flex-1 tw:bg-border" />
+            </div>
+            <p className="tw:mt-2 tw:text-sm tw:text-muted-foreground">Select the card the customer is applying for. The application form opens after you choose.</p>
           </div>
-          {products.isLoading ? <p className="tw:text-sm tw:text-muted-foreground">Loading VIP cards</p> : <RadioCardGroup label="VIP card" variant="card" value={(draft.vipPlan || undefined) as VipTierCode | undefined} onChange={choosePlan} options={planOptions} invalid={Boolean(errors.vipPlan)} />}
-          {errors.vipPlan ? <p role="alert" className="tw:text-sm tw:text-destructive">{errors.vipPlan}</p> : null}
+          {products.isLoading ? (
+            <p className="tw:text-sm tw:text-muted-foreground">Loading VIP cards</p>
+          ) : (
+            <VipCardChoiceGrid products={activeProducts} value={(draft.vipPlan || "") as VipTierCode | ""} onChange={choosePlan} invalid={Boolean(errors.vipPlan)} />
+          )}
+          {errors.vipPlan ? (
+            <p role="alert" className="tw:text-sm tw:text-destructive">
+              {errors.vipPlan}
+            </p>
+          ) : null}
         </section>
       ) : null}
 

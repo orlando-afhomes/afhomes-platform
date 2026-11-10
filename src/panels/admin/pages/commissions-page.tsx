@@ -11,10 +11,9 @@ import { ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { Money } from "@/shared/components/modern/money";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { Section } from "@/shared/components/modern/section";
-import { StatTiles } from "@/shared/components/modern/stat-tiles";
+import { AdminPage, AdminStatGrid, AdminStatCard, AdminSection } from "@/shared/components/admin";
+import { BadgeCheck, Clock, CircleCheck, ReceiptText } from "lucide-react";
 import { AdjustDialog, COMMISSION_COLUMNS, CommissionDetailsSheet, HoldDialog, type CommissionMenuItem } from "../components/commission-shared";
-import { ModulePage } from "../components/module-page";
 
 type DialogState = { kind: "adjust" | "cancel" | "hold"; commission: CommissionView } | null;
 
@@ -43,7 +42,7 @@ export function CommissionsPage() {
   };
   const detail = detailId ? all.find((item) => item.id === detailId) ?? null : null;
   return (
-    <ModulePage
+    <AdminPage
       anyOf={["commissions"]}
       title="Commissions"
       description={canApprove ? "Finance approves and confirms payouts. Approved is not Paid." : "Your commissions. Approved is not Paid; only confirmed disbursement makes a commission Paid."}
@@ -57,8 +56,13 @@ export function CommissionsPage() {
       }
     >
       {dialog}
-      <StatTiles items={[{ label: "Approved, unpaid", value: <Money value={totals.approved} /> }, { label: "On hold", value: <Money value={totals.held} /> }, { label: "Paid", value: <Money value={totals.paid} /> }, { label: "Records", value: all.length }]} />
-      <Section title="Commission records">
+      <AdminStatGrid>
+        <AdminStatCard label="Approved, unpaid" value={<Money value={totals.approved} />} icon={BadgeCheck} tone="brand" />
+        <AdminStatCard label="On hold" value={<Money value={totals.held} />} icon={Clock} tone="warning" />
+        <AdminStatCard label="Paid" value={<Money value={totals.paid} />} icon={CircleCheck} tone="success" />
+        <AdminStatCard label="Records" value={all.length} icon={ReceiptText} tone="neutral" />
+      </AdminStatGrid>
+      <AdminSection title="Commission records">
         <QueryState isLoading={commissions.isLoading} error={commissions.error}>
           <DataTable
             data={all}
@@ -71,12 +75,12 @@ export function CommissionsPage() {
             rowActions={(row) => <RowActionsMenu itemName={`commission for ${row.recipientName}`} onView={() => setDetailId(row.id)} extraItems={itemsFor(row)} />}
           />
         </QueryState>
-      </Section>
+      </AdminSection>
       <CommissionDetailsSheet detail={detail} onClose={() => setDetailId(null)} items={detail ? itemsFor(detail) : []} />
       {state?.kind === "adjust" ? <AdjustDialog commission={state.commission} onClose={() => setState(null)} /> : null}
       <ReasonDialog open={state?.kind === "cancel"} title="Cancel commission" description="A cancelled commission can no longer be paid. This is recorded in the audit history." confirmText="Cancel commission" danger successText="Commission cancelled." onClose={() => setState(null)} onSubmit={(reason) => (state?.kind === "cancel" ? action.mutateAsync({ id: state.commission.id, action: "cancel", reason }) : Promise.resolve())} />
       {state?.kind === "hold" ? <HoldDialog commission={state.commission} onClose={() => setState(null)} /> : null}
-    </ModulePage>
+    </AdminPage>
   );
 }
 

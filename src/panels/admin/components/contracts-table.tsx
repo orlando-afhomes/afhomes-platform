@@ -3,11 +3,13 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Hourglass } from "lucide-react";
 import { useContracts, useOperation } from "@/data/business-queries";
+import { BizBadge } from "@/shared/components/business/biz-badge";
+import { StatusPill } from "@/shared/components/admin";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
-import { BizBadge } from "@/shared/components/business/biz-badge";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
@@ -49,13 +51,13 @@ export function ContractsTable({ initialStatus = "all", contractHref: hrefOverri
       { id: "price", header: "Price", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => <Money value={row.original.priceCentavos} /> },
       { id: "date", header: "Submitted", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => formatDate(row.original.submittedAt) },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
-      { id: "holds", header: "Holds", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => (["submitted", "under_review"].includes(row.original.status) && row.original.holds.length > 0 ? <BizBadge status="on_hold" label={`${row.original.holds.length} hold${row.original.holds.length > 1 ? "s" : ""}`} /> : "—") },
+      { id: "holds", header: "Holds", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => (["submitted", "under_review"].includes(row.original.status) && row.original.holds.length > 0 ? <StatusPill tone="warning" icon={Hourglass}>{`${row.original.holds.length} hold${row.original.holds.length > 1 ? "s" : ""}`}</StatusPill> : "—") },
     ],
     [contractHref],
   );
 
   return (
-    <div className="tw:flex tw:flex-col tw:gap-3">
+    <div className="contracts-table__wrap tw:flex tw:flex-col tw:gap-3">
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search contracts" filters={[{ label: "Contract status filter", value: status, onChange: setStatus, options: STATUS_OPTIONS }]} />
       <QueryState isLoading={contracts.isLoading} error={contracts.error}>
         <DataTable
@@ -74,6 +76,9 @@ export function ContractsTable({ initialStatus = "all", contractHref: hrefOverri
             />
           )}
         />
+        <p aria-live="polite" className="tw:text-sm tw:text-muted-foreground">
+          Showing {rows.length} contract{rows.length === 1 ? "" : "s"}
+        </p>
       </QueryState>
     </div>
   );

@@ -2,18 +2,20 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { ArrowRight, FileCheck, FileText, Info, Plus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDiscardCustomerDraft, useOperation } from "@/data/business-queries";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { useCustomers, useMembers } from "@/data/queries";
 import { ACQUISITION_CHANNELS, type Customer } from "@/modules/customers/types";
-import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
+import type { ColumnDef } from "@/shared/components/modern/data-table";
 import { buttonVariants } from "@/shared/ui/button";
-import { ModulePage } from "../components/module-page";
-import { BizBadge } from "@/shared/components/business/biz-badge";
-import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { AdminPage } from "@/shared/components/admin";
+import { AdminFilterBar } from "@/shared/components/admin";
 import { QueryState } from "@/shared/components/modern/query-state";
+import { AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
+import { BizBadge } from "@/shared/components/business/biz-badge";
+import { DataTable } from "@/shared/components/modern/data-table";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
@@ -41,6 +43,10 @@ export function CustomersPage() {
       .sort((a, b) => a.displayName.localeCompare(b.displayName));
   }, [customers.data, search, status]);
 
+  const totalCustomers = rows.length;
+  const submittedCount = rows.filter((customer) => customer.status === "submitted").length;
+  const draftCount = rows.filter((customer) => customer.status === "draft").length;
+
   const columns = useMemo<ColumnDef<Customer, unknown>[]>(
     () => [
       {
@@ -64,14 +70,27 @@ export function CustomersPage() {
         id: "view",
         header: "Detail",
         meta: { className: "tw:hidden tw:md:table-cell" },
-        cell: ({ row }) => (row.original.restricted ? "Summary only" : "Full record"),
+        cell: ({ row }) =>
+          row.original.restricted ? (
+            "Summary only"
+          ) : (
+            <Link
+              href={`/admin/customers/${row.original.id}`}
+              aria-label={`Open full record for ${row.original.displayName}`}
+              className="customers-page__detail-link tw:inline-flex tw:items-center tw:gap-1.5 tw:font-medium tw:text-primary tw:underline-offset-4 tw:hover:underline"
+            >
+              <FileText aria-hidden="true" className="tw:size-4" />
+              Full record
+              <ArrowRight aria-hidden="true" className="tw:size-4" />
+            </Link>
+          ),
       },
     ],
     [memberName],
   );
 
   return (
-    <ModulePage
+    <AdminPage
       anyOf={["customers"]}
       title="Customers"
       description="Customer master records and VIP applications."
@@ -93,7 +112,19 @@ export function CustomersPage() {
         ) : null
       }
     >
-      <FilterBar search={search} onSearch={setSearch} searchLabel="Search customers" filters={[{ label: "Customer status filter", value: status, onChange: setStatus, options: STATUS_OPTIONS }]} />
+      <AdminStatGrid columns={3}>
+        <AdminStatCard label="Total customers" value={totalCustomers.toLocaleString()} icon={Users} tone="brand" loading={customers.isLoading} error={customers.error} />
+        <AdminStatCard
+          label="Submitted applications"
+          value={submittedCount.toLocaleString()}
+          icon={FileCheck}
+          tone="info"
+          loading={customers.isLoading}
+          error={customers.error}
+        />
+        <AdminStatCard label="Draft records" value={draftCount.toLocaleString()} icon={FileText} tone="accent" loading={customers.isLoading} error={customers.error} />
+      </AdminStatGrid>
+      <AdminFilterBar search={search} onSearch={setSearch} searchLabel="Search customers" filters={[{ label: "Customer status filter", value: status, onChange: setStatus, options: STATUS_OPTIONS }]} />
       <QueryState isLoading={customers.isLoading} error={customers.error}>
         <DataTable
           data={rows}
@@ -118,7 +149,12 @@ export function CustomersPage() {
           }}
         />
       </QueryState>
-      <p className="tw:text-xs tw:text-muted-foreground">Acquisition channels in use: {ACQUISITION_CHANNELS.join(", ")}.</p>
-    </ModulePage>
+      <p className="customers-page__channels tw:flex tw:items-start tw:gap-2 tw:rounded-xl tw:bg-[var(--color-brand-soft)] tw:px-4 tw:py-3 tw:text-sm">
+        <Info aria-hidden="true" className="tw:mt-0.5 tw:size-4 tw:shrink-0 tw:text-primary" />
+        <span>
+          <strong className="tw:font-semibold">Acquisition channels in use:</strong> {ACQUISITION_CHANNELS.join(", ")}.
+        </span>
+      </p>
+    </AdminPage>
   );
 }

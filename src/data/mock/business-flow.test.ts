@@ -3,6 +3,7 @@ import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import { meetsPayoutRelease, PAYOUT_RELEASE_WAIT_DAYS } from "@/modules/commissions/rules";
 import { buildScheduleState } from "@/modules/finance/rules";
 import type { Payment } from "@/modules/finance/types";
+import type { DevIdentity } from "@/modules/identity/types";
 import { buildCardId, extractRaSequence } from "@/modules/membership/rules";
 import { computePointsLedger } from "@/modules/stay-points/engine";
 import { confirmedValueInPeriod, totalsFor } from "@/modules/sales/rules";
@@ -200,10 +201,10 @@ describe("contract, payment, sale and membership workflow", () => {
     await expect(finance.commissions.confirmPayout(commission.id)).rejects.toThrow();
     await collectMa2(store);
     await finance.commissions.recordPayout(commission.id, { reference: "PAYREF", payoutDate: manilaToday() });
-    expect(store.commissions[0].status).toBe("approved");
+    expect(store.commissions.find((item) => item.id === commission.id)!.status).toBe("approved");
     await expect(finance.commissions.recordPayout(commission.id, { reference: "PAYREF2", payoutDate: manilaToday() })).rejects.toThrow(/duplicate/i);
     await finance.commissions.confirmPayout(commission.id);
-    expect(store.commissions[0].status).toBe("paid");
+    expect(store.commissions.find((item) => item.id === commission.id)!.status).toBe("paid");
     // Team members see their own amounts, upline sees no payout details.
     const upline = await as(store, "dev-svd-a").commissions.list();
     expect(upline).toHaveLength(1);
@@ -292,15 +293,25 @@ describe("integrity guards (C1)", () => {
     expect((await finance.payments.reject("pay-4", "Contract cancelled")).status).toBe("rejected");
   });
 
-  it("does not let the person who corrected a returned payment verify it", async () => {
+  it("lets a Super Admin verify a payment they corrected, but still blocks anyone else from self-verification", async () => {
     const store = createMockStore();
     const finance = as(store, "dev-finance");
     const superAdmin = as(store, "dev-super-admin");
     await finance.payments.returnForCorrection("pay-4", "Wrong date");
     await superAdmin.payments.resubmit("pay-4", { paidDate: "2026-11-06" });
     expect(store.payments.find((p) => p.id === "pay-4")!.submittedBy).toBe("dev-ost-a2");
-    await expect(superAdmin.payments.verify("pay-4")).rejects.toThrow(/submitted or corrected/);
-    expect((await finance.payments.verify("pay-4")).status).toBe("verified");
+    // Owner decision 2026-11-10: the separation-of-duties block does not apply to Super Admin.
+    const verified = await superAdmin.payments.verify("pay-4");
+    expect(verified.status).toBe("verified");
+    expect(verified.verifiedBy).toBe("dev-super-admin");
+    expect(store.payments.find((p) => p.id === "pay-4")!.status).toBe("verified");
+
+    // Anyone else who submits a payment still cannot verify it themselves.
+    const dual: DevIdentity = { id: "test-finance-ost", displayName: "Finance OST (Test)", roles: ["finance", "ost"], memberId: "mem-ost-a2", branchId: "branch-a", status: "active" };
+    const dualRepos = createMockRepositories(store, () => dual);
+    const own = await dualRepos.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(15500), method: "Cash", paidDate: manilaToday(), referenceNo: "SELF-1" });
+    await expect(dualRepos.payments.verify(own.id)).rejects.toThrow(/submitted or corrected/);
+    expect(store.payments.find((p) => p.id === own.id)!.status).toBe("submitted");
   });
 
   it("records an RA only on a finalized contract, with an exact 4-digit sequence and its previous value audited", async () => {
@@ -565,16 +576,29 @@ describe("owner-decided restrictions (C2)", () => {
     await expect(finance.contracts.decideCancellation("ctr-1", "confirm", "Twice")).rejects.toThrow(/No cancellation is awaiting/);
   });
 
-  it("lets Finance decline a request, and never lets the requester decide it", async () => {
+  it("lets Finance decline a request, and still blocks a non-Super-Admin requester from deciding it", async () => {
     const store = createMockStore();
-    const superAdmin = as(store, "dev-super-admin");
-    await superAdmin.contracts.requestCancellation("ctr-1", "non_payment", "Missed MA2");
-    await expect(superAdmin.contracts.decideCancellation("ctr-1", "confirm", "Self")).rejects.toThrow(/cannot also decide/);
+    // Admin + Finance authority without Super Admin: can both request and decide, so the requester check still applies.
+    const adminFinance: DevIdentity = { id: "test-admin-finance", displayName: "Admin Finance (Test)", roles: ["admin", "finance"], memberId: null, branchId: null, status: "active" };
+    const both = createMockRepositories(store, () => adminFinance);
+    await both.contracts.requestCancellation("ctr-1", "non_payment", "Missed MA2");
+    await expect(both.contracts.decideCancellation("ctr-1", "confirm", "Self")).rejects.toThrow(/cannot also decide/);
     const declined = await as(store, "dev-finance").contracts.decideCancellation("ctr-1", "decline", "Customer paid MA2");
     expect(declined.cancellation).toBeNull();
     expect(declined.status).toBe("finalized");
     expect(store.sales.find((s) => s.id === "sale-1")!.status).toBe("confirmed");
     expect(store.auditEvents.some((e) => e.action === "CONTRACT_CANCELLATION_DECLINED" && e.entityId === "ctr-1")).toBe(true);
+  });
+
+  it("lets a Super Admin requester decide their own cancellation request", async () => {
+    const store = createMockStore();
+    const superAdmin = as(store, "dev-super-admin");
+    await superAdmin.contracts.requestCancellation("ctr-1", "non_payment", "Missed MA2");
+    // Owner decision 2026-11-10: Super Admin has full control, so the requester check does not apply.
+    const confirmed = await superAdmin.contracts.decideCancellation("ctr-1", "confirm", "Forfeiture per Reservation Agreement");
+    expect(confirmed.status).toBe("cancelled");
+    expect(confirmed.cancellation).toMatchObject({ status: "confirmed", ground: "non_payment", decidedBy: "dev-super-admin", forfeitedCentavos: pesos(67500) });
+    expect(store.sales.find((s) => s.id === "sale-1")!.status).toBe("cancelled");
   });
 
   it("still cancels a contract with no verified money directly", async () => {

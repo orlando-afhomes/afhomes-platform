@@ -8,7 +8,7 @@ import { formatDate } from "@/shared/lib/format-date";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { DetailList, DetailRow, InfoNote } from "@/shared/components/modern/detail-list";
 import { Money } from "@/shared/components/modern/money";
-import { Section } from "@/shared/components/modern/section";
+import { AdminSection } from "@/shared/components/admin";
 import { Button } from "@/shared/ui/button";
 import { ConfirmCancellationDialog, DeclineCancellationDialog } from "../components/contract-dialogs";
 import { ContractLedgerSection, ContractPageFrame } from "../components/contract-sections";
@@ -44,7 +44,7 @@ export function FinanceCancellationDetailPage({ contractId }: { contractId: stri
         return (
           <>
             {request ? (
-              <Section title="Cancellation request" description="Verified payments are forfeited if Finance confirms. The requester cannot decide it.">
+              <AdminSection title="Cancellation request" description="Verified payments are forfeited if Finance confirms. The requester cannot decide it (unless Super Admin).">
                 <DetailList>
                   <DetailRow term="Status">{request.status === "requested" ? "Awaiting Finance decision" : "Confirmed"}</DetailRow>
                   <DetailRow term="Ground">{CANCELLATION_GROUND_LABELS[request.ground]}</DetailRow>
@@ -53,7 +53,7 @@ export function FinanceCancellationDetailPage({ contractId }: { contractId: stri
                   <DetailRow term="Requested on">{formatDate(request.requestedAt)}</DetailRow>
                   <DetailRow term="Amount to forfeit"><Money value={request.status === "confirmed" ? (request.forfeitedCentavos ?? 0) : totalVerifiedCentavos(record.payments)} /></DetailRow>
                 </DetailList>
-              </Section>
+              </AdminSection>
             ) : (
               <InfoNote title="No cancellation request">This contract has no cancellation request.</InfoNote>
             )}

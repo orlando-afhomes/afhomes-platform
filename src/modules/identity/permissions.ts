@@ -173,8 +173,9 @@ export const ALL_MODULE_IDS: ReadonlySet<AdminModuleId> = new Set([
 ]);
 
 const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
-  // Owner decision OD-1 (2026-11-09): Super Admin is authorized Finance personnel and keeps the
-  // finance and commission operations; docs 07 section 5.2 and 08 section 11.2 to be amended in P13.
+  // Owner decisions OD-1 (2026-11-09) and full-control rule (2026-11-10):
+  // Super Admin is authorized Finance personnel and holds the union of every
+  // role's operations; docs 07 section 5.2 and 08 section 11.2 record this.
   super_admin: [
     "organization.departments.manage",
     "organization.staff.manage",
@@ -237,11 +238,24 @@ export function getEffectiveRoles(identity: DevIdentity) {
   return activeRoles(identity);
 }
 
+/**
+ * Owner rule (2026-11-10): a Super Administrator has full control with no
+ * blockers. Whenever super_admin is among the identity's active roles, the
+ * identity holds the union of every role's grants, so it can do everything
+ * any other role can do (including all Finance work). Separation-of-duties
+ * rules enforced inside the repositories (own-submission verification ban,
+ * requester-cannot-decide, self-modification and last-Super-Admin
+ * protections) are unaffected: they restrict actions, not access.
+ */
+function grantsSourceRoles(roles: readonly DevRole[]): readonly DevRole[] {
+  return roles.includes("super_admin") ? SYSTEM_ROLES : roles;
+}
+
 export function getGrantedModuleIds(identity: DevIdentity): Set<AdminModuleId> {
   if (identity.status !== "active") return new Set();
 
   const granted = new Set<AdminModuleId>();
-  for (const role of getEffectiveRoles(identity)) {
+  for (const role of grantsSourceRoles(getEffectiveRoles(identity))) {
     for (const moduleId of ROLE_MODULE_GRANTS[role] ?? []) {
       granted.add(moduleId);
     }
@@ -257,7 +271,7 @@ export function getGrantedOperations(identity: DevIdentity): Set<AdminOperation>
   if (identity.status !== "active") return new Set();
 
   const granted = new Set<AdminOperation>();
-  for (const role of getEffectiveRoles(identity)) {
+  for (const role of grantsSourceRoles(getEffectiveRoles(identity))) {
     for (const operation of ROLE_OPERATION_GRANTS[role] ?? []) {
       granted.add(operation);
     }
@@ -285,7 +299,8 @@ export function resolveEmployeeEffectiveModules(input: {
 }): AdminModuleId[] {
   if (input.accountStatus !== "active") return [];
   const granted = new Set<AdminModuleId>();
-  for (const role of input.systemRoles) {
+  const source: readonly DevRole[] = input.systemRoles.includes("super_admin") ? SYSTEM_ROLES : input.systemRoles;
+  for (const role of source) {
     for (const moduleId of ROLE_MODULE_GRANTS[role] ?? []) granted.add(moduleId);
   }
   for (const moduleId of getDelegableGrants(input.departmentRoleModuleIds ?? [])) granted.add(moduleId);

@@ -3,12 +3,10 @@
 import { useMemo, useState } from "react";
 import { useMemberships } from "@/data/business-queries";
 import { InfoNote } from "@/shared/components/modern/detail-list";
-import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { Section } from "@/shared/components/modern/section";
-import { StatTiles } from "@/shared/components/modern/stat-tiles";
+import { AdminPage, AdminStatGrid, AdminStatCard, AdminSection, AdminFilterBar } from "@/shared/components/admin";
+import { BadgeCheck, CircleCheck, Clock, Hourglass } from "lucide-react";
 import { MembershipTable } from "../components/membership-table";
-import { ModulePage } from "../components/module-page";
 
 /** All memberships. Activation lives on its own page (Membership / Activation Queue). */
 export function MembershipPage() {
@@ -22,15 +20,20 @@ export function MembershipPage() {
   }, [all, search]);
 
   return (
-    <ModulePage anyOf={["membership"]} title="Memberships" description="Card IDs and membership status. A Confirmed sale is not a Fully Paid sale, and Fully Paid is not Active." crumbs={[{ label: "Membership" }, { label: "Memberships" }]}>
-      <StatTiles items={[{ label: "Active", value: all.filter((item) => item.status === "active").length }, { label: "Pending activation", value: pending.length }, { label: "Ready to activate", value: pending.filter((item) => item.eligible).length }, { label: "Financial holds", value: all.filter((item) => item.financialHold).length }]} />
+    <AdminPage anyOf={["membership"]} title="Memberships" description="Card IDs and membership status. A Confirmed sale is not a Fully Paid sale, and Fully Paid is not Active." crumbs={[{ label: "Membership" }, { label: "Memberships" }]}>
+      <AdminStatGrid>
+        <AdminStatCard label="Active" value={all.filter((item) => item.status === "active").length} icon={BadgeCheck} tone="success" />
+        <AdminStatCard label="Pending activation" value={pending.length} icon={Clock} tone="warning" />
+        <AdminStatCard label="Ready to activate" value={pending.filter((item) => item.eligible).length} icon={CircleCheck} tone="info" />
+        <AdminStatCard label="Financial holds" value={all.filter((item) => item.financialHold).length} icon={Hourglass} tone="warning" />
+      </AdminStatGrid>
       <InfoNote title="Expiration boundary">Validity runs from the activation date for the contract term. The exact expiration boundary convention is still an open owner decision, so end dates are provisional.</InfoNote>
       <QueryState isLoading={memberships.isLoading} error={memberships.error}>
-        <Section title="All memberships">
-          <FilterBar search={search} onSearch={setSearch} searchLabel="Search memberships" />
+        <AdminSection title="All memberships">
+          <AdminFilterBar search={search} onSearch={setSearch} searchLabel="Search memberships" />
           <MembershipTable data={directory} caption="Memberships" emptyText="No memberships match." />
-        </Section>
+        </AdminSection>
       </QueryState>
-    </ModulePage>
+    </AdminPage>
   );
 }

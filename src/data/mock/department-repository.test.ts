@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AUDIT_ACTIONS } from "@/modules/audit/types";
 import { createMockStore } from "./seed";
+import { SEED_AUDIT_EVENT_COUNT } from "./seed-data";
 import { createMockRepositories } from "./repositories";
 import { getDevIdentity } from "./dev-identities";
 import { PROTECTED_ROLE_ERROR } from "./authorization";
@@ -187,15 +188,15 @@ describe("department repository S3-C1 audit events", () => {
     await repos.departments.update(created.id, { name: "Unaudited Renamed", code: "U" });
     await expect(repos.departments.update("dept-admin", { status: "deactivated" })).rejects.toThrow(PROTECTED_ROLE_ERROR);
     await repos.departments.delete(created.id);
-    expect(store.auditEvents).toHaveLength(0);
+    expect(store.auditEvents).toHaveLength(SEED_AUDIT_EVENT_COUNT);
   });
 
   it("attributes protected-department status changes to the super admin actor", async () => {
     const store = createMockStore();
     const repos = createMockRepositories(store, () => getDevIdentity("dev-super-admin"));
     await repos.departments.update("dept-admin", { status: "deactivated" });
-    expect(store.auditEvents).toHaveLength(1);
-    expect(store.auditEvents[0]).toMatchObject({
+    expect(store.auditEvents).toHaveLength(1 + SEED_AUDIT_EVENT_COUNT);
+    expect(store.auditEvents.at(-1)!).toMatchObject({
       actorId: "dev-super-admin",
       action: AUDIT_ACTIONS.DEPARTMENT_STATUS_CHANGED,
       entityId: "dept-admin",

@@ -12,7 +12,7 @@ import { getAuthorizedGenealogyMemberIds, buildAuthorizedGenealogyTree, type Gen
 import { aaDisplay, designationLabel, teamDisplayName } from "@/modules/sales-network/display";
 import { PageContainer } from "@/shared/components/modern/page-container";
 import { PageHeader } from "@/shared/components/modern/page-header";
-import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
+import { AdminPage } from "@/shared/components/admin";
 import { DetailList, DetailRow } from "@/shared/components/modern/detail-list";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
@@ -109,10 +109,13 @@ export function SalesNetworkGenealogyPage() {
   }
 
   return (
-    <PageContainer>
-      <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "Sales Network", href: "/admin/sales-network" }, { label: "Genealogy" }]} />
-      <PageHeader title="Sales Network Genealogy" description="Authorized hierarchy visualization." />
-      <Card className="tw:mt-3 tw:flex-col tw:lg:flex-row tw:lg:items-start">
+    <AdminPage
+      anyOf={["sales-network"]}
+      title="Sales Network Genealogy"
+      description="Authorized hierarchy visualization."
+      crumbs={[{ label: "Sales Network", href: "/admin/sales-network" }, { label: "Genealogy" }]}
+    >
+      <Card className="tw:flex-col tw:lg:flex-row tw:lg:items-start">
         <div className="tw:relative tw:w-full tw:lg:max-w-sm">
           <Search aria-hidden="true" className="tw:pointer-events-none tw:absolute tw:top-3 tw:left-2.5 tw:size-4 tw:text-muted-foreground tw:sm:top-2" />
           <Input
@@ -163,7 +166,7 @@ export function SalesNetworkGenealogyPage() {
           </Button>
         </div>
       </Card>
-      <div className="tw:mt-3 tw:grid tw:gap-3 tw:lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="tw:grid tw:gap-3 tw:lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Card className="tw:min-w-0 tw:p-3">
           <section aria-label="Genealogy tree" className="tw:min-w-0">
           {membersQuery.isLoading ? (
@@ -188,7 +191,7 @@ export function SalesNetworkGenealogyPage() {
           )}
         </aside>
       </div>
-    </PageContainer>
+    </AdminPage>
   );
 }
 

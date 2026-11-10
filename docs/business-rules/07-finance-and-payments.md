@@ -90,7 +90,7 @@ Having an IST/OST account does not automatically grant unrestricted access to ev
 
 ### 5.2 Payment Verification Authority
 
-**Only authorized Finance personnel may verify and confirm payment receipt.** Submitting users must never self-verify.
+**Only authorized Finance personnel may verify and confirm payment receipt.** Ordinarily, submitting users must never self-verify. The Super Administrator counts as authorized Finance personnel (owner decision, 2026-11-10; confirms the 2026-11-09 ruling) and may perform all Finance verification work. Exception (owner decision, 2026-11-10): the Super Administrator bypasses the no-self-verification separation-of-duties blocker and may verify a payment submission they made themselves.
 
 ### 5.3 Finance Authority
 
@@ -600,7 +600,7 @@ These rulings are authoritative and take precedence over earlier text in this do
 2. **Membership activation** may be performed by Finance, Admin and Super Administrator. Activation remains a separate event from Finance verification and from Fully Paid; none of them triggers the next automatically.
 3. **Payment allocation:** verified money is applied in order to the reservation fee, then the down payment, then installments. The reservation fee is part of the contract total, never added on top. One full payment with no separate reservation-fee payment therefore satisfies the reservation fee and every later line.
 4. **Reservation fee** is non-refundable. A reversal to correct an error is still allowed.
-5. **Contract cancellation with verified money** is two-step: Admin requests, Finance confirms or declines, and the requester cannot decide. Confirmed forfeiture preserves history and holds unpaid commissions.
+5. **Contract cancellation with verified money** is two-step: Admin requests, Finance confirms or declines, and the requester cannot decide. Exception (owner decision, 2026-11-10): a Super Administrator bypasses this requester-cannot-decide separation-of-duties blocker and may both request and confirm/decline the same cancellation. Confirmed forfeiture preserves history and holds unpaid commissions.
 6. **Imported payment claims** are claims, not money. Each must be verified by Finance in the normal queue. Records already verified outside the system need a separate Historical import, which is not yet defined (open decision OD-8).
 
 7. **Spot Cash, Move A and Move B (2026-11-09)** are released with the terms recorded in the doc 05 amendment. Finance consumes the finalized contract schedule: the Spot Cash balance is due 7 days after the reservation, Move B has a 40% down payment line that includes the reservation fee, and all lines follow the allocation order in item 3. A Move contract cannot be finalized until a Super Administrator records its written approval.

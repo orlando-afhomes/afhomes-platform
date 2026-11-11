@@ -92,11 +92,12 @@ describe("admin nav list rendering", () => {
 
   it("renders process pages under their department parent, gated by operation", () => {
     const superAdmin = renderNav("dev-super-admin");
-    for (const label of ["Contract Review", "Customer Import", "Commission Payouts", "Activation Queue", "Collections Report", "Product Catalog", "Tier Codes"]) {
+    for (const label of ["Contract Review", "Commission Payouts", "Activation Queue", "Collections Report", "Product Catalog", "Tier Codes"]) {
       expect(superAdmin).toContain(label);
     }
+    expect(superAdmin).not.toContain("Customer Import");
     const admin = renderNav("dev-admin");
-    expect(admin).toContain("Customer Import");
+    expect(admin).not.toContain("Customer Import");
     expect(admin).not.toContain("Commission Payouts");
     expect(admin).not.toContain("Collections Report");
     const finance = renderNav("dev-finance");
@@ -106,7 +107,7 @@ describe("admin nav list rendering", () => {
     expect(finance).not.toContain("VIP Products");
     const ost = renderNav("dev-ost-a1");
     expect(ost).toContain("Scheme Guide");
-    for (const label of ["Contract Review", "Customer Import", "Commission Payouts", "Activation Queue", "Payment Verification"]) {
+    for (const label of ["Contract Review", "Commission Payouts", "Activation Queue", "Payment Verification"]) {
       expect(ost).not.toContain(label);
     }
   });

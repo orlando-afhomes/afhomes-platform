@@ -16,8 +16,8 @@ export function CommissionReportPage() {
     <ReportShell range={range} title="Commission Report" description="Role-scoped figures built from the source records." crumbs={[{ label: "Reports" }, { label: "Commission Report" }]}>
       <AdminSection title="Commission obligations" description="Approved is not Paid. Approvals use the approval date; payouts use the confirmed disbursement date.">
         <AdminStatGrid>
-          <AdminStatCard label="Approved in period" value={<Money value={approvedInPeriod} />} icon={BadgeCheck} tone="brand" />
-          <AdminStatCard label="Paid in period" value={<Money value={paidInPeriod} />} icon={Banknote} tone="success" />
+          <AdminStatCard label="Approved" value={<Money value={approvedInPeriod} />} icon={BadgeCheck} tone="brand" />
+          <AdminStatCard label="Paid" value={<Money value={paidInPeriod} />} icon={Banknote} tone="success" />
           <AdminStatCard label="Approved, unpaid" value={<Money value={commissionList.filter((item) => item.status === "approved").reduce((sum, item) => sum + item.amountCentavos, 0)} />} icon={Clock} tone="accent" />
           <AdminStatCard label="On hold" value={<Money value={commissionList.filter((item) => item.status === "on_hold").reduce((sum, item) => sum + item.amountCentavos, 0)} />} icon={Hourglass} tone="warning" />
         </AdminStatGrid>

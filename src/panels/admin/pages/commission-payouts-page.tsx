@@ -42,7 +42,7 @@ export function CommissionPayoutsPage() {
         <>
           <AdminStatGrid columns={3}>
             <AdminStatCard label="Approved, unpaid" value={<Money value={approved.reduce((total, item) => total + item.amountCentavos, 0)} />} icon={BadgeCheck} tone="brand" />
-            <AdminStatCard label="Ready for payout" value={ready.length} icon={Banknote} tone="warning" />
+            <AdminStatCard label="Payout ready" value={ready.length} icon={Banknote} tone="warning" />
             <AdminStatCard label="Awaiting confirmation" value={awaiting.length} icon={Clock} tone="info" />
           </AdminStatGrid>
           <InfoNote title="Payout release">A payout can be recorded {PAYOUT_RELEASE_WAIT_DAYS} days after {RELEASE_PERCENT}% of the contract value is Finance-verified.</InfoNote>

@@ -43,6 +43,86 @@ function validCustomerInput(overrides: Partial<CustomerDraftInput> = {}): Custom
 describe("Customer Registration workflow", () => {
   const contract = { schemeId: "scheme-installment-4m", customerAccepted: true };
 
+  it("saves an unnamed draft and preserves partial customer details without issuing a Customer ID", async () => {
+    const { customers } = as(createMockStore(), "dev-super-admin");
+    const supplementaryHolder = { firstName: "", lastName: "", middleName: null, suffix: null, gender: null, dateOfBirth: null, citizenship: "Filipino" };
+    const draft = await customers.createDraft({ displayName: "", vipPlan: "G1", landline: "8123456", occupation: "Teacher", customerIdMode: "manual", supplementaryHolder });
+    expect(await customers.getById(draft.id)).toMatchObject({ status: "draft", displayName: "", vipPlan: "G1", landline: "8123456", occupation: "Teacher", customerIdMode: "manual", supplementaryHolder });
+    expect(draft.customerNumber).toBeFalsy();
+  });
+
+  it.each(["recommenderMemberId", "referrerMemberId"] as const)("rejects a pending OST supplied as %s", async (field) => {
+    const store = createMockStore();
+    const pending = store.accreditations.find((record) => record.memberId === "mem-ost-a1")!;
+    pending.adminStatus = "pending";
+    const { customers } = as(store, "dev-super-admin");
+    const input = validCustomerInput({ [field]: pending.memberId });
+    const expected = { errors: { [field]: expect.stringMatching(/pending accreditation/i) } };
+
+    await expect(customers.createDraft(input)).rejects.toMatchObject(expected);
+    const draft = await customers.createDraft(validCustomerInput());
+    await expect(customers.updateDraft(draft.id, input)).rejects.toMatchObject(expected);
+    await expect(customers.submit(draft.id, input)).rejects.toMatchObject(expected);
+    await expect(customers.submit(draft.id, validCustomerInput())).resolves.toMatchObject({ status: "submitted" });
+  });
+
+  it.each(["recommenderMemberId", "referrerMemberId"] as const)("rechecks saved %s when accreditation changes before submission", async (field) => {
+    const store = createMockStore();
+    const current = store.accreditations.find((record) => record.memberId === "mem-ost-a1")!;
+    const { customers } = as(store, "dev-super-admin");
+    const input = validCustomerInput({ [field]: current.memberId });
+    const draft = await customers.createDraft(input);
+    store.accreditations.push({ ...current, id: "older-approval", adminStatus: "active", effectiveDate: "2025-01-01" });
+    current.adminStatus = "pending";
+
+    const expected = { errors: { [field]: expect.stringMatching(/pending accreditation/i) } };
+    await expect(customers.submit(draft.id, validCustomerInput())).rejects.toMatchObject(expected);
+    await expect(customers.submit(draft.id, validCustomerInput({ [field]: undefined }))).rejects.toMatchObject(expected);
+    expect((await customers.getById(draft.id))?.status).toBe("draft");
+    await expect(customers.submit(draft.id, validCustomerInput({ [field]: null }))).resolves.toMatchObject({ status: "submitted", [field]: null });
+  });
+
+  it.each([
+    ["older record", false],
+    ["tied record", true],
+  ] as const)("uses pending status from the latest effective date (%s)", async (_scenario, blocked) => {
+    const store = createMockStore();
+    const current = store.accreditations.find((record) => record.memberId === "mem-ost-a1")!;
+    const effectiveDate = blocked ? current.effectiveDate : "2025-01-01";
+    store.accreditations.push({ ...current, id: "other-accreditation", adminStatus: "pending", effectiveDate });
+    const { customers } = as(store, "dev-super-admin");
+    const creation = customers.createDraft(validCustomerInput({ recommenderMemberId: current.memberId }));
+    if (blocked) {
+      await expect(creation).rejects.toMatchObject({ errors: { recommenderMemberId: expect.stringMatching(/pending accreditation/i) } });
+    } else {
+      await expect(creation).resolves.toMatchObject({ recommenderMemberId: current.memberId });
+    }
+  });
+
+  it.each(["mem-svd-a", "mem-ost-b1", "missing-member"])("rejects an unavailable referrer without disclosing accreditation status (%s)", async (referrerMemberId) => {
+    const store = createMockStore();
+    store.accreditations.find((record) => record.memberId === "mem-ost-b1")!.adminStatus = "pending";
+    const { customers } = as(store, "dev-svd-a");
+    await expect(customers.createDraft(validCustomerInput({ referrerMemberId }))).rejects.toMatchObject({
+      errors: { referrerMemberId: "Choose an OST available to your account." },
+    });
+  });
+
+  it("preserves submitted attribution when correcting a customer after the OST becomes pending", async () => {
+    const store = createMockStore();
+    const current = store.accreditations.find((record) => record.memberId === "mem-ost-a1")!;
+    const { customers } = as(store, "dev-super-admin");
+    const input = validCustomerInput({ recommenderMemberId: current.memberId, referrerMemberId: current.memberId });
+    const draft = await customers.createDraft(input);
+    await customers.submit(draft.id, input);
+    current.adminStatus = "pending";
+    await expect(customers.correct(draft.id, { ...input, email: "updated@example.test" }, "Correct email")).resolves.toMatchObject({
+      recommenderMemberId: current.memberId,
+      referrerMemberId: current.memberId,
+      email: "updated@example.test",
+    });
+  });
+
   it("uses the receipt date for the schedule and leaves payment pending Finance verification", async () => {
     const store = createMockStore();
     const repositories = as(store, "dev-super-admin");

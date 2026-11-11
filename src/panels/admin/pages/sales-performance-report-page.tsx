@@ -17,8 +17,8 @@ export function SalesPerformanceReportPage() {
     <ReportShell range={range} title="Sales Performance" description="Role-scoped figures built from the source records." crumbs={[{ label: "Reports" }, { label: "Sales Performance" }]}>
       <AdminSection title="Sales performance" description="Confirmed Sales Value counts each sale once at its full contract value on the Finance confirmation date.">
         <AdminStatGrid>
-          <AdminStatCard label="Confirmed sales value (period)" value={<Money value={confirmedInPeriod} />} icon={TrendingUp} tone="brand" description="Net of reversals" />
-          <AdminStatCard label="Confirmed (all time)" value={<Money value={totals.confirmed} />} icon={BadgeCheck} tone="brand" description={`${totals.confirmedCount} sale(s)`} />
+          <AdminStatCard label="Period sales" value={<Money value={confirmedInPeriod} />} icon={TrendingUp} tone="brand" description="Net reversals" />
+          <AdminStatCard label="All-time confirmed" value={<Money value={totals.confirmed} />} icon={BadgeCheck} tone="brand" description={`${totals.confirmedCount} sale(s)`} />
           <AdminStatCard label="Pending" value={<Money value={totals.pending} />} icon={Clock} tone="warning" description={`${totals.pendingCount} sale(s)`} />
           <AdminStatCard label="Overall recorded" value={<Money value={totals.overall} />} icon={Wallet} tone="info" />
         </AdminStatGrid>

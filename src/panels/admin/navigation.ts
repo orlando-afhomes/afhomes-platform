@@ -62,7 +62,9 @@ export const adminNavigation: AdminNavItem[] = [
     available: true,
     children: [
       { id: "customers", label: "Customers", href: "/admin/customers", available: true },
-      { id: "customer-import", label: "Customer Import", href: "/admin/customers/import-export", available: true, grants: ["customers"], operation: "customers.import" },
+      // Entered from the Customers page; kept out of the sidebar and Drawer
+      // while the route, permission grant, and breadcrumbs stay intact.
+      { id: "customer-import", label: "Customer Import", href: "/admin/customers/import-export", available: true, grants: ["customers"], operation: "customers.import", hideFromNav: true },
       { id: "sales-contracts", label: "Contracts", href: "/admin/sales/contracts", available: true, grants: ["sales", "vip-products"] },
       { id: "contract-review", label: "Contract Review", href: "/admin/sales/contract-review", available: true, grants: ["vip-products"] },
       { id: "sales", label: "Sales Records", href: "/admin/sales", available: true },

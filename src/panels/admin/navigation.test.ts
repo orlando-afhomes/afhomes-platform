@@ -18,7 +18,7 @@ function visibleTree(identityId: string) {
   );
 }
 
-const SALES_ALL = ["customers", "customer-import", "sales-contracts", "contract-review", "sales"];
+const SALES_ALL = ["customers", "sales-contracts", "contract-review", "sales"];
 const VIP_ALL = ["vip-products", "payment-schemes", "scheme-guide", "tier-codes"];
 const SELLER_TREE = {
   dashboard: null,
@@ -107,9 +107,9 @@ describe("admin navigation", () => {
     const modules = new Set(["customers", "commissions", "membership", "reports"] as const);
     const ids = (ops: string[]) =>
       filterNavForAccess(getAvailableAdminNavigation(), modules, new Set(ops as never[])).flatMap((item) => (item.children ?? []).map((child) => child.id));
-    expect(ids([])).not.toEqual(expect.arrayContaining(["customer-import", "commission-payouts", "membership-activation", "collections-report"]));
+    expect(ids([])).not.toEqual(expect.arrayContaining(["commission-payouts", "membership-activation", "collections-report"]));
     expect(ids(["customers.import", "commission.payout", "membership.activate", "finance.reports.view"])).toEqual(
-      expect.arrayContaining(["customer-import", "commission-payouts", "membership-activation", "collections-report"]),
+      expect.arrayContaining(["commission-payouts", "membership-activation", "collections-report"]),
     );
   });
 
@@ -169,6 +169,17 @@ describe("admin navigation", () => {
     expect(getAdminBreadcrumbs("/admin/accounts")).toEqual([
       { label: "Dashboard", href: "/admin" },
       { label: "Accounts and Permissions" },
+    ]);
+  });
+
+  it("hides the Customer Import sidebar link while keeping its route and breadcrumbs", () => {
+    const hrefs = getAvailableAdminNavigation().flatMap((item) => [item.href, ...(item.children ?? []).map((child) => child.href)]);
+    expect(hrefs).not.toContain("/admin/customers/import-export");
+    expect(adminNavigation.flatMap((item) => item.children ?? []).find((item) => item.id === "customer-import")?.hideFromNav).toBe(true);
+    expect(getAdminBreadcrumbs("/admin/customers/import-export")).toEqual([
+      { label: "Dashboard", href: "/admin" },
+      { label: "Sales" },
+      { label: "Customer Import" },
     ]);
   });
 

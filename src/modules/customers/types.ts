@@ -15,6 +15,7 @@ export type ContractClassification = "S" | "N";
 export type SupplementaryHolder = {
   firstName: string;
   middleName: string | null;
+  noMiddleName?: boolean;
   lastName: string;
   suffix: string | null;
   gender: string | null;
@@ -49,8 +50,11 @@ export type Customer = {
   status: CustomerStatus;
   /** Official Customer ID / RA reference in the owner-approved `YYYY-NNNN` format (for example `2026-0001`); automatic or manual. */
   customerNumber?: string | null;
+  /** Draft selection for how the Customer ID will be assigned at submission. */
+  customerIdMode?: "auto" | "manual";
   firstName?: string;
   middleName?: string | null;
+  noMiddleName?: boolean;
   lastName?: string;
   suffix?: string | null;
   gender?: string | null;
@@ -106,6 +110,4 @@ export type CustomerDraftInput = Partial<
   /** Admin-created customers may name the owning seller; ignored for sellers, who own their own customers. */
   ownerMemberId?: string | null;
   branchId?: string;
-  /** `auto` assigns the next Customer ID at submit; `manual` uses the staff-entered value. */
-  customerIdMode?: "auto" | "manual";
 };

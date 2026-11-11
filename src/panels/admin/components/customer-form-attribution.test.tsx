@@ -6,11 +6,13 @@ import type { Customer } from "@/modules/customers/types";
 import type { OrgMember } from "@/modules/organization/types";
 import { currentManilaYear } from "@/modules/customers/customer-number";
 import { createMockStore } from "@/data/mock/seed";
+import { pendingAttributionMemberIds } from "@/modules/customers/attribution";
 import { AttributionSection, toDraft, toInput, type CustomerDraft, type CustomerErrors, type SetDraft } from "./customer-form-sections";
 
 const store = createMockStore();
 const members = store.members;
 const existing = store.customers;
+const seedPendingIds = pendingAttributionMemberIds(store.accreditations);
 
 afterEach(cleanup);
 
@@ -24,15 +26,17 @@ function Harness({
   errors = {},
   members: roster = members,
   existing: onFile = existing,
+  pendingOstIds = seedPendingIds,
 }: {
   initial?: Partial<CustomerDraft>;
   errors?: CustomerErrors;
   members?: readonly OrgMember[];
   existing?: readonly Customer[];
+  pendingOstIds?: ReadonlySet<string> | null;
 }) {
   const [draft, setDraft] = useState<CustomerDraft>(() => ({ ...toDraft(), ...initial }));
   const set: SetDraft = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
-  return <AttributionSection draft={draft} set={set} errors={errors} members={roster} existing={onFile} />;
+  return <AttributionSection draft={draft} set={set} errors={errors} members={roster} existing={onFile} pendingOstIds={pendingOstIds} />;
 }
 
 async function pickOst(user: ReturnType<typeof userEvent.setup>, index: number, filter: string, name: RegExp) {
@@ -42,6 +46,48 @@ async function pickOst(user: ReturnType<typeof userEvent.setup>, index: number, 
 }
 
 describe("sales attribution section", () => {
+  it.each([0, 1])("offers all three seeded OSTs in default picker %i", async (index) => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(ostCombos()[index]);
+    for (const name of [/Ana Mendoza/, /Mark Villanueva/, /Paolo Ramos/]) {
+      expect(screen.getByRole("option", { name })).toBeVisible();
+    }
+  });
+
+  it.each([0, 1])("excludes pending OSTs from picker %i", async (index) => {
+    const user = userEvent.setup();
+    const accreditations = store.accreditations.map((record) =>
+      record.memberId === "mem-ost-a1" ? { ...record, adminStatus: "pending" as const } : record,
+    );
+    const teamAlab = members.filter((member) => member.branchId === "branch-a");
+    render(<Harness members={teamAlab} pendingOstIds={pendingAttributionMemberIds(accreditations)} />);
+    await user.click(ostCombos()[index]);
+    expect(screen.queryByRole("option", { name: /Ana Mendoza/ })).toBeNull();
+    expect(screen.getByRole("option", { name: /Mark Villanueva/ })).toBeVisible();
+    expect(screen.queryByRole("option", { name: /Paolo Ramos/ })).toBeNull();
+  });
+
+  it("shows a restored pending selection as invalid and allows clearing it", async () => {
+    const user = userEvent.setup();
+    render(<Harness initial={{ recommenderMemberId: "mem-ost-a1" }} pendingOstIds={new Set(["mem-ost-a1"])} />);
+    expect(ostCombos()[0]).toHaveAccessibleDescription(/pending accreditation/i);
+    await user.click(ostCombos()[0]);
+    await user.click(screen.getByRole("option", { name: "No recommender" }));
+    expect(ostCombos()[0]).not.toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("disables both pickers when accreditation cannot be checked and lets users clear saved selections", async () => {
+    const user = userEvent.setup();
+    render(<Harness pendingOstIds={null} initial={{ referrerMemberId: "mem-ost-a1" }} />);
+    expect(ostCombos()[0]).toBeDisabled();
+    expect(ostCombos()[1]).toBeDisabled();
+    expect(ostCombos()[1]).toHaveAccessibleDescription(/could not be checked/i);
+    await user.click(screen.getByRole("button", { name: "Clear OST selections" }));
+    expect(ostCombos()[1]).not.toHaveAttribute("aria-invalid", "true");
+    expect(screen.queryByRole("button", { name: "Clear OST selections" })).toBeNull();
+  });
+
   it("labels the pair as OST (Recommender) and OST (Referrer) and drops the old labels and derived hint", () => {
     render(<Harness />);
 

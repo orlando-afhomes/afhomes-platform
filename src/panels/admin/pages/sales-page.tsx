@@ -77,8 +77,8 @@ export function SalesPage() {
       <AdminStatGrid>
         <AdminStatCard label="Confirmed" value={<Money value={totals.confirmed} />} icon={BadgeCheck} tone="brand" description={`${totals.confirmedCount} sale(s)`} />
         <AdminStatCard label="Pending" value={<Money value={totals.pending} />} icon={Clock} tone="warning" description={`${totals.pendingCount} sale(s)`} />
-        <AdminStatCard label="Overall recorded" value={<Money value={totals.overall} />} icon={Receipt} tone="info" description="Confirmed plus pending" />
-        <AdminStatCard label="Confirmed in period" value={<Money value={inPeriod} />} icon={CalendarCheck} tone="violet" description="Net of reversals, by confirmation date" />
+        <AdminStatCard label="Overall recorded" value={<Money value={totals.overall} />} icon={Receipt} tone="info" description="Combined" />
+        <AdminStatCard label="Period confirmed" value={<Money value={inPeriod} />} icon={CalendarCheck} tone="violet" description="Net reversals" />
       </AdminStatGrid>
       <div className="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-2 tw:sm:max-w-md">
         <StandardDateField label="Period from" value={from} onChange={setFrom} />

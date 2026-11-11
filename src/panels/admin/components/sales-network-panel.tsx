@@ -52,7 +52,7 @@ export function SalesNetworkPanel() {
       </div>
 
       <AdminStatGrid columns={3}>
-        <AdminStatCard label="Visible team members" value={countVisibleMembers(members).toLocaleString()} icon={Users} tone="brand" loading={membersQuery.isLoading} />
+        <AdminStatCard label="Team members" value={countVisibleMembers(members).toLocaleString()} icon={Users} tone="brand" loading={membersQuery.isLoading} />
         <AdminStatCard label="Visible customers" value={(countVisibleCustomers(customersQuery.data ?? [])).toLocaleString()} icon={Contact} tone="info" loading={customersQuery.isLoading} />
         <AdminStatCard label="Authorized uplines" value={countUplines(uplines).toLocaleString()} icon={Network} tone="neutral" loading={uplinesQuery.isLoading} />
       </AdminStatGrid>

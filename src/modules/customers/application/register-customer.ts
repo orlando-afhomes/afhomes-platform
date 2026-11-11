@@ -18,7 +18,8 @@ export type CustomerRegistrationInput = {
 };
 
 type RegistrationOutcome = { customerId: string } & (
-  | { status: "draft-kept" | "customer-submitted" }
+  | { status: "draft-kept"; errors: CustomerValidationError["errors"] }
+  | { status: "customer-submitted" }
   | { status: "contract-prepared" | "reservation-submitted"; contractId: string }
   | { status: "contract-failed"; error: unknown }
   | { status: "reservation-failed"; contractId: string; error: unknown }
@@ -36,7 +37,7 @@ export async function registerCustomer(
   try {
     await repositories.customers.submit(customerId, customer);
   } catch (error) {
-    if (error instanceof CustomerValidationError) return { status: "draft-kept", customerId };
+    if (error instanceof CustomerValidationError) return { status: "draft-kept", customerId, errors: error.errors };
     throw error;
   }
 

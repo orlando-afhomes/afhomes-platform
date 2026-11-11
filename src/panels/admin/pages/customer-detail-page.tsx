@@ -1,5 +1,7 @@
 "use client";
 
+import { customerRecordName } from "@/modules/customers/rules";
+
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
@@ -103,9 +105,9 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
   return (
     <AdminPage
       anyOf={["customers"]}
-      title={customer.displayName}
+      title={customerRecordName(customer)}
       description="Customer record and related business information."
-      crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: customer.displayName }]}
+      crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: customerRecordName(customer) }]}
       actions={
         <>
           {canManage && ownRecord ? (
@@ -123,7 +125,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
     >
       {customer.restricted ? <InfoNote title="Summary view">This customer belongs to your downline. Contact details, address, government ID and payment details are not shown.</InfoNote> : null}
       <CustomerDetailHero
-        displayName={customer.displayName}
+        displayName={customerRecordName(customer)}
         status={customer.status}
         vipPlan={customer.vipPlan ?? null}
         customerNumber={ownRecord ? (customer.customerNumber ?? null) : null}

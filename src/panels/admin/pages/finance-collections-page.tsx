@@ -64,7 +64,7 @@ export function FinanceCollectionsPage() {
   return (
     <AdminPage anyOf={["finance"]} title="Collections" description="Monitor verified balances and overdue installments of finalized contracts." crumbs={[{ label: "Finance" }, { label: "Collections" }]}>
       <AdminStatGrid>
-        <AdminStatCard label="Receivables" value={<Money value={receivables} />} icon={Wallet} tone="accent" description="Open balance of finalized contracts" />
+        <AdminStatCard label="Receivables" value={<Money value={receivables} />} icon={Wallet} tone="accent" description="Open balance" />
       </AdminStatGrid>
       <QueryState isLoading={payments.isLoading || contracts.isLoading} error={payments.error ?? contracts.error}>
         <AdminSection title="Collections monitor" description="Finalized contracts, their verified balances and overdue installments.">

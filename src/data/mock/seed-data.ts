@@ -162,10 +162,10 @@ const accreditations: AccreditationRecord[] = [
   { id: "accr-seed-1", memberId: "mem-svd-a", classification: "IST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: SAMPLE_EXPIRY, aaNumber: aaNumber("AAI", 1), history: [] },
   { id: "accr-seed-2", memberId: "mem-ssm-a", classification: "IST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: SAMPLE_EXPIRY, aaNumber: aaNumber("AAI", 2), history: [] },
   { id: "accr-seed-3", memberId: "mem-sm-a", classification: "IST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: SAMPLE_EXPIRY, aaNumber: aaNumber("AAI", 3), history: [] },
-  { id: "accr-seed-4", memberId: "mem-ost-a1", classification: "OST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: SAMPLE_EXPIRY, aaNumber: aaNumber("AAO", 4), history: [] },
-  { id: "accr-seed-5", memberId: "mem-ost-a2", classification: "OST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: SAMPLE_EXPIRY, aaNumber: aaNumber("AAO", 5), history: [] },
+  { id: "accr-seed-4", memberId: "mem-ost-a1", classification: "OST", adminStatus: "active", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: SAMPLE_EXPIRY, aaNumber: aaNumber("AAO", 4), history: [] },
+  { id: "accr-seed-5", memberId: "mem-ost-a2", classification: "OST", adminStatus: "active", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: SAMPLE_EXPIRY, aaNumber: aaNumber("AAO", 5), history: [] },
   { id: "accr-seed-6", memberId: "mem-svd-b", classification: "IST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: SAMPLE_EXPIRY, aaNumber: aaNumber("AAI", 6), history: [] },
-  { id: "accr-seed-7", memberId: "mem-ost-b1", classification: "OST", adminStatus: "pending", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: SAMPLE_EXPIRY, aaNumber: aaNumber("AAO", 7), history: [] },
+  { id: "accr-seed-7", memberId: "mem-ost-b1", classification: "OST", adminStatus: "active", originalAccreditationDate: SAMPLE_ORIGINAL_DATE, effectiveDate: SAMPLE_ORIGINAL_DATE, expiryDate: SAMPLE_EXPIRY, aaNumber: aaNumber("AAO", 7), history: [] },
 ];
 
 

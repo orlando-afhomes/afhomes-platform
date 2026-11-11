@@ -24,7 +24,7 @@ export function MembershipPage() {
       <AdminStatGrid>
         <AdminStatCard label="Active" value={all.filter((item) => item.status === "active").length} icon={BadgeCheck} tone="success" />
         <AdminStatCard label="Pending activation" value={pending.length} icon={Clock} tone="warning" />
-        <AdminStatCard label="Ready to activate" value={pending.filter((item) => item.eligible).length} icon={CircleCheck} tone="info" />
+        <AdminStatCard label="Ready" value={pending.filter((item) => item.eligible).length} icon={CircleCheck} tone="info" />
         <AdminStatCard label="Financial holds" value={all.filter((item) => item.financialHold).length} icon={Hourglass} tone="warning" />
       </AdminStatGrid>
       <InfoNote title="Expiration boundary">Validity runs from the activation date for the contract term. The exact expiration boundary convention is still an open owner decision, so end dates are provisional.</InfoNote>

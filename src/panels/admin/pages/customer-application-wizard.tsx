@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, ArrowLeftRight, Banknote, CalendarClock, CreditCard, FileText, FileUp, Landmark, Layers, Pencil, Printer, Receipt, ShieldCheck, Smartphone, TriangleAlert, WalletCards, X } from "lucide-react";
+import Swal from "sweetalert2";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
-import { useCreateCustomerDraft, useCustomers, useMembers } from "@/data/queries";
+import { useAccreditations, useCreateCustomerDraft, useCustomers, useMembers } from "@/data/queries";
 import type { Customer } from "@/modules/customers/types";
 import { useCorrectCustomer, useOperation, usePaymentSchemes, useRegisterCustomer, useUpdateCustomerDraft, useVipProducts } from "@/data/business-queries";
+import { customerAttributionErrors, pendingAttributionMemberIds } from "@/modules/customers/attribution";
 import { validateCustomerForSubmit } from "@/modules/customers/rules";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/modules/finance/types";
 import { applicablePriceStatus, displayPriceFor } from "@/modules/vip/pricing";
@@ -20,8 +22,9 @@ import { StepIndicator } from "@/shared/components/modern/step-indicator";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { CheckboxField, FieldShell, RadioCardField, StandardDateField, TextField, describedBy, useFieldIds } from "@/shared/forms/modern";
 import { REFERENCE_LIMITS, cleanReferenceNumber, referencePolicyFor, validateReferenceNumber, type ReferencePolicy } from "@/shared/forms/validation/reference-number";
-import { Button } from "@/shared/ui/button";
+import { Button, buttonVariants } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/shared/ui/alert-dialog";
 import {
   AddressSection,
   AttributionSection,
@@ -41,6 +44,7 @@ import {
 } from "../components/customer-form-sections";
 import { PlanSummary } from "../components/customer-plan-summary";
 import { useCustomerIdImagePreview } from "../components/customer-id-image-preview";
+import { useNewCustomerExit } from "../components/use-new-customer-exit";
 import { ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { PaymentOptionGrid, type PaymentOption } from "../components/payment-option-card";
 import { schemeCardContent } from "../components/scheme-card-content";
@@ -54,21 +58,33 @@ const STEP_CUSTOMER = 2;
 const STEP_SALES = 3;
 const STEP_RESERVATION = 4;
 const STEP_REVIEW = 5;
+const SUBMISSION_SUCCESS_DURATION_MS = 3_000;
+const SUBMISSION_FEEDBACK = {
+  "customer-submitted": {
+    toast: "Customer submitted.",
+    description: "The customer record is ready to view.",
+  },
+  "contract-prepared": {
+    toast: "Application submitted and contract drafted.",
+    description: "The contract was saved as a draft.",
+  },
+  "reservation-submitted": {
+    toast: "Application submitted. The reservation fee is waiting for Finance verification.",
+    description: "The reservation fee is awaiting Finance verification.",
+  },
+};
 
 /** Validation keys that belong to each step, so Next only blocks on what the step shows. */
 const STEP_KEYS: Record<number, string[]> = {
   [STEP_CARD]: ["vipPlan"],
   [STEP_PLAN]: ["paymentSchemeId", "contractClassification"],
   [STEP_CUSTOMER]: ["firstName", "lastName", "dateOfBirth", "gender", "civilStatus", "mobileNumber", "address", "email", "citizenship", "tinNumber", "landline", "governmentIdNumber", "supplementaryHolder"],
-  [STEP_SALES]: ["customerNumber", "consentDataPrivacy", "idReceivedCertified"],
+  [STEP_SALES]: ["recommenderMemberId", "referrerMemberId", "customerNumber", "consentDataPrivacy", "idReceivedCertified"],
 };
 
-/**
- * In-progress new-customer form state, kept for the browser session so a refresh
- * does not throw away the wizard. Only unsaved form input is stored here — never
- * mock business records, which stay in memory and reset to seed on reload.
- */
-const WIZARD_STORAGE_KEY = "afhomes.customer-wizard.v1";
+const LEGACY_WIZARD_STORAGE_KEY = "afhomes.customer-wizard.v1";
+const EMPTY_DRAFT = JSON.stringify(toDraft());
+const DEFAULT_PAYMENT_METHOD: PaymentMethod = "Bank Transfer";
 
 const METHOD_ICONS: Record<PaymentMethod, ReactNode> = {
   Cash: <Banknote className="tw:size-4" />,
@@ -144,6 +160,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const products = useVipProducts();
   const schemes = usePaymentSchemes();
   const members = useMembers();
+  const accreditations = useAccreditations();
   const customers = useCustomers();
   const create = useCreateCustomerDraft();
   const updateDraft = useUpdateCustomerDraft();
@@ -156,10 +173,54 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const [draft, setDraft] = useState<CustomerDraft>(() => toDraft(existing));
   const [correcting, setCorrecting] = useState(false);
   const isSubmitted = existing != null && existing.status !== "draft";
+  const pendingOstIds = useMemo(() => {
+    if (isSubmitted) return new Set<string>();
+    if (!accreditations.isSuccess || accreditations.isFetching) return null;
+    return pendingAttributionMemberIds(accreditations.data);
+  }, [isSubmitted, accreditations.isSuccess, accreditations.isFetching, accreditations.data]);
   const [errors, setErrors] = useState<CustomerErrors>({});
-  const [busy, setBusy] = useState(false);
-  const [method, setMethod] = useState<PaymentMethod>("Bank Transfer");
-  const [paidDate, setPaidDate] = useState(manilaToday());
+  const [saving, setBusy] = useState(false);
+  const [submissionSuccess, setSubmissionSuccess] = useState<string | null>(null);
+  const busy = saving || submissionSuccess !== null;
+
+  useEffect(() => {
+    if (!submissionSuccess) return;
+    let active = true;
+    const returnToCustomers = () => {
+      if (!active) return;
+      active = false;
+      router.replace("/admin/customers");
+    };
+    const alert = Swal.fire({
+      icon: "success",
+      title: "Application submitted",
+      text: submissionSuccess,
+      timer: SUBMISSION_SUCCESS_DURATION_MS,
+      timerProgressBar: true,
+      confirmButtonText: "Go to Customers",
+      buttonsStyling: false,
+      customClass: { confirmButton: buttonVariants({ className: "tw:min-h-11" }) },
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      returnFocus: false,
+      willClose: () => { Swal.stopTimer(); },
+      didClose: returnToCustomers,
+    });
+    const popup = Swal.getPopup();
+    void alert.then(() => undefined).catch(() => {
+      if (!active) return;
+      toast.success(`Application submitted. ${submissionSuccess}`);
+      returnToCustomers();
+    });
+    return () => {
+      active = false;
+      if (popup && Swal.getPopup() === popup) Swal.close();
+    };
+  }, [submissionSuccess, router]);
+
+  const [method, setMethod] = useState<PaymentMethod>(DEFAULT_PAYMENT_METHOD);
+  const [initialPaidDate] = useState(manilaToday);
+  const [paidDate, setPaidDate] = useState(initialPaidDate);
   const [reference, setReference] = useState("");
   const [referenceTouched, setReferenceTouched] = useState(false);
   const [proofName, setProofName] = useState("");
@@ -175,53 +236,23 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const [focusTick, setFocusTick] = useState(0);
   const [proofKey, setProofKey] = useState(0);
 
-  // Restore the in-progress form after a refresh (new customers only; an edit is
-  // loaded from the saved record). Runs once, after mount, so SSR stays stable.
-  const restoredRef = useRef(false);
-  // Restoring after mount keeps the server-rendered markup stable; a lazy
-  // initializer would read browser storage during prerender.
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (restoredRef.current) return;
-    restoredRef.current = true;
     if (existing) return;
     try {
-      const raw = sessionStorage.getItem(WIZARD_STORAGE_KEY);
-      if (!raw) return;
-      const saved = JSON.parse(raw) as {
-        step?: number;
-        draft?: Partial<CustomerDraft>;
-        accepted?: boolean;
-        method?: PaymentMethod;
-        paidDate?: string;
-        reference?: string;
-        proofName?: string;
-      };
-      if (saved.draft) setDraft({ ...toDraft(), ...saved.draft });
-      if (typeof saved.step === "number" && saved.step >= STEP_CARD && saved.step <= STEP_REVIEW) setStep(saved.step);
-      if (typeof saved.accepted === "boolean") setAccepted(saved.accepted);
-      if (saved.method) setMethod(saved.method);
-      if (saved.paidDate) setPaidDate(saved.paidDate);
-      if (typeof saved.reference === "string") setReference(saved.reference);
-      if (typeof saved.proofName === "string") setProofName(saved.proofName);
+      sessionStorage.removeItem(LEGACY_WIZARD_STORAGE_KEY);
     } catch {
-      // A corrupt entry is ignored; the wizard simply starts fresh.
+      // Storage may be unavailable.
     }
   }, [existing]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Persist on every change once restored, so a refresh lands on the same step.
-  useEffect(() => {
-    if (existing || !restoredRef.current) return;
-    try {
-      sessionStorage.setItem(
-        WIZARD_STORAGE_KEY,
-        JSON.stringify({ step, draft, accepted, method, paidDate, reference, proofName }),
-      );
-    } catch {
-      // Storage may be unavailable (private mode); the form still works in memory.
-    }
-  }, [existing, step, draft, accepted, method, paidDate, reference, proofName]);
+  const hasReservationChanges = method !== DEFAULT_PAYMENT_METHOD || paidDate !== initialPaidDate || Boolean(reference || proofName || accepted);
+  const hasIdPreview = Boolean(primaryIdPreview.value || secondaryIdPreview.value);
+  const exit = useNewCustomerExit({
+    enabled: !existing && !submissionSuccess,
+    dirty: JSON.stringify(draft) !== EMPTY_DRAFT || hasReservationChanges || hasIdPreview,
+    busy,
+    navigate: router.push,
+  });
 
   // Each new step starts at the top of the form, below the sticky header.
   useEffect(() => {
@@ -257,7 +288,26 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
   if (!canManage) return <InfoNote title="View only">This account cannot create or edit customers.</InfoNote>;
 
-  const allErrors = (): CustomerErrors => validateCustomerForSubmit(toInput(draft), customers.data ?? [], undefined, supplementaryAllowed);
+  const attributionErrors = customerAttributionErrors(draft, pendingOstIds);
+  const allErrors = (): CustomerErrors => ({
+    ...validateCustomerForSubmit(toInput(draft), customers.data ?? [], undefined, supplementaryAllowed),
+    ...attributionErrors,
+  });
+
+  const reportAttributionErrors = (fieldErrors: CustomerErrors) => {
+    const message = fieldErrors.recommenderMemberId ?? fieldErrors.referrerMemberId;
+    if (!message) return false;
+    setStep(STEP_SALES);
+    setFocusTick((tick) => tick + 1);
+    toast.error(message);
+    return true;
+  };
+
+  const handleAttributionFailure = (failure: unknown) => {
+    if (!(failure instanceof CustomerValidationError) || !reportAttributionErrors(failure.errors)) return false;
+    void accreditations.refetch();
+    return true;
+  };
 
   const choosePlan = (code: VipTierCode) => {
     const next = activeProducts.find((item) => item.code === code);
@@ -334,29 +384,50 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
   const next = () => goTo(step + 1);
 
-  const saveDraft = async () => {
-    const input = toInput(draft);
-    if (!input.displayName) {
-      toast.error("Enter at least a first or last name to save a draft.");
+  const resetNewApplication = () => {
+    setStep(STEP_CARD);
+    setDraft(toDraft());
+    setErrors({});
+    setFocusTick(0);
+    setMethod(DEFAULT_PAYMENT_METHOD);
+    setPaidDate(initialPaidDate);
+    setReference("");
+    setReferenceTouched(false);
+    setProofName("");
+    setProofKey((key) => key + 1);
+    setAccepted(false);
+    setReservationErrors({});
+    primaryIdPreview.onClear();
+    secondaryIdPreview.onClear();
+  };
+
+  const saveDraft = async (leave?: () => void) => {
+    if (busy) return;
+    if (reportAttributionErrors(attributionErrors)) {
+      exit.dismiss();
       return;
     }
+    const input = toInput(draft, { saveAsDraft: true });
     setBusy(true);
     try {
       const saved = existing
         ? await updateDraft.mutateAsync({ id: existing.id, input })
         : await create.mutateAsync(input);
-      primaryIdPreview.onClear();
-      secondaryIdPreview.onClear();
+      if (!existing) resetNewApplication();
       toast.success("Draft saved.");
-      router.push(`/admin/customers/${saved.id}`);
+      exit.dismiss();
+      if (leave) leave();
+      else router.push(`/admin/customers/${saved.id}`);
     } catch (failure) {
-      toast.error(failure instanceof Error ? failure.message : "Request failed.");
+      exit.dismiss();
+      if (!handleAttributionFailure(failure)) toast.error(failure instanceof Error ? failure.message : "Request failed.");
     } finally {
       setBusy(false);
     }
   };
 
   const submitApplication = async () => {
+    if (busy) return;
     // Editing a submitted customer is an audited correction: collect the reason
     // first. Reservation evidence and acceptance belong to the original sale and
     // are not re-required for a data correction.
@@ -364,6 +435,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
       setCorrecting(true);
       return;
     }
+    if (reportAttributionErrors(attributionErrors)) return;
     const found: Record<string, string | undefined> = {};
     if (canPrepare && !accepted) found.accepted = "Confirm that the customer accepted the payment schedule.";
     if (canPrepare && canPay && reservationCentavos) {
@@ -402,33 +474,37 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
       primaryIdPreview.onClear();
       secondaryIdPreview.onClear();
+      let successMessage: string | undefined;
       switch (result.status) {
-        case "draft-kept":
+        case "draft-kept": {
+          const attributionMessage = result.errors.recommenderMemberId ?? result.errors.referrerMemberId;
+          if (attributionMessage) {
+            void accreditations.refetch();
+            if (existing && reportAttributionErrors(result.errors)) return;
+          }
           router.replace(`/admin/customers/${result.customerId}/edit`);
-          toast.error("The application has incomplete fields. Your draft was kept.");
+          toast.error(attributionMessage ?? "The application has incomplete fields. Your draft was kept.");
           return;
+        }
         case "customer-submitted":
-          toast.success("Customer submitted.");
-          break;
         case "contract-prepared":
-          toast.success("Application submitted and contract drafted.");
-          break;
         case "reservation-submitted":
-          toast.success("Application submitted. The reservation fee is waiting for Finance verification.");
+          if (existing) toast.success(SUBMISSION_FEEDBACK[result.status].toast);
+          else successMessage = SUBMISSION_FEEDBACK[result.status].description;
           break;
         case "contract-failed":
         case "reservation-failed":
           toast.error(`The customer was submitted, but the next step failed: ${result.error instanceof Error ? result.error.message : "Request failed."} Continue from the customer page.`);
           break;
       }
-      try {
-        sessionStorage.removeItem(WIZARD_STORAGE_KEY);
-      } catch {
-        // Storage may be unavailable.
+      if (successMessage) {
+        resetNewApplication();
+        setSubmissionSuccess(successMessage);
+        return;
       }
       router.push(`/admin/customers/${result.customerId}`);
     } catch (failure) {
-      toast.error(failure instanceof Error ? failure.message : "Request failed.");
+      if (!handleAttributionFailure(failure)) toast.error(failure instanceof Error ? failure.message : "Request failed.");
     } finally {
       setBusy(false);
     }
@@ -536,7 +612,15 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
       {step === STEP_SALES ? (
         <div className="tw:flex tw:flex-col tw:gap-4">
-          <AttributionSection draft={draft} set={set} errors={errors} members={members.data ?? []} existing={customers.data ?? []} />
+          <AttributionSection
+            draft={draft}
+            set={set}
+            errors={errors}
+            members={members.data ?? []}
+            existing={customers.data ?? []}
+            pendingOstIds={pendingOstIds}
+            accreditationLoading={accreditations.isFetching}
+          />
           <CertificationsSection draft={draft} set={set} errors={errors} />
         </div>
       ) : null}
@@ -682,10 +766,10 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
       <Card className="customer-application__actions tw:sticky tw:bottom-2 tw:z-10 tw:flex-col-reverse tw:gap-2 tw:p-3 tw:shadow-md tw:sm:flex-row tw:sm:items-center tw:sm:justify-between tw:lg:static tw:lg:shadow-none">
         <div className="tw:flex tw:gap-2">
-          <Button type="button" variant="outline" disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => (step === STEP_CARD ? router.back() : setStep(step - 1))}>
+          <Button type="button" variant="outline" disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => (step === STEP_CARD ? exit.requestExit(() => router.back()) : setStep(step - 1))}>
             {step === STEP_CARD ? "Cancel" : (<><ArrowLeft aria-hidden="true" className="tw:size-4" /> Back</>)}
           </Button>
-          {step > STEP_CARD && !isSubmitted ? (
+          {!isSubmitted ? (
             <Button type="button" variant="outline" disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => void saveDraft()}>
               Save as draft
             </Button>
@@ -701,6 +785,33 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
           </Button>
         )}
       </Card>
+
+      {exit.destination ? (
+        <AlertDialog open onOpenChange={(open) => { if (!open && !busy) exit.dismiss(); }}>
+          <AlertDialogContent className="tw:w-11/12 tw:sm:max-w-lg">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Leave this application?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Save the application as a customer draft to continue it later.
+                {hasReservationChanges ? " Re-enter reservation details and payment evidence when you reopen the draft." : ""}
+                {hasIdPreview ? " Government ID previews are temporary." : ""}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={busy}>Stay</AlertDialogCancel>
+              <AlertDialogAction type="button" variant="destructive" disabled={busy} onClick={() => {
+                const leave = exit.destination;
+                exit.dismiss();
+                resetNewApplication();
+                leave?.();
+              }}>Discard all Changes</AlertDialogAction>
+              <AlertDialogAction type="button" disabled={busy} onClick={() => void saveDraft(exit.destination ?? undefined)}>
+                {saving ? "Saving…" : "Save Draft"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
 
       {isSubmitted ? (
         <ReasonDialog

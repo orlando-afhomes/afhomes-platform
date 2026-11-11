@@ -12,9 +12,11 @@ import { genealogyTeamOstIds, resolveAttributionChain, type AttributionPerson } 
 import type { AddressValue, OfficeAddressValue } from "@/shared/forms/types";
 import { computeAge } from "@/shared/lib/dates";
 import { dialingPrefixFor } from "@/shared/data/philippine-locations";
+import { customerAttributionErrors } from "@/modules/customers/attribution";
 import { CustomerIdImagePreview, type CustomerIdImagePreviewState } from "./customer-id-image-preview";
 import { CheckboxField, EmailField, GovernmentIdFields, MiddleNameField, PersonNameField, PhilippineAddressFields, PhilippineLandlineField, PhilippineMobileField, RadioCardField, SelectField, StandardDateField, SuffixField, TextField, TIN_DISPLAY_LENGTH, TinField } from "@/shared/forms/modern";
 import { OfficeAddressFields } from "@/shared/forms/modern/structured-fields";
+import { Button } from "@/shared/ui/button";
 import { Switch } from "@/shared/ui/switch";
 import { FormGrid } from "@/shared/components/modern/form-layout";
 import { cleanBusinessInput, cleanBusinessLiveInput, cleanOccupationInput, cleanOccupationLiveInput, cleanTitleInput, govIdPolicyFor, MAX_BUSINESS_TEXT, MAX_LANDLINE_DIGITS, normalizePhilippineMobile, uppercaseGovId } from "@/shared/utils/input-sanitizers";
@@ -107,7 +109,7 @@ export function toDraft(customer?: Customer): CustomerDraft {
   return {
     firstName: customer?.firstName ?? "",
     middleName: customer?.middleName ?? "",
-    noMiddleName: Boolean(customer && customer.firstName && !customer.middleName),
+    noMiddleName: customer?.noMiddleName ?? Boolean(customer && customer.firstName && !customer.middleName),
     lastName: customer?.lastName ?? "",
     suffix: customer?.suffix ?? "",
     gender: customer?.gender ?? "",
@@ -126,10 +128,10 @@ export function toDraft(customer?: Customer): CustomerDraft {
     employedPosition: customer?.employedPosition ?? "",
     officeAddress: customer?.officeAddress ? { ...customer.officeAddress } : { ...EMPTY_OFFICE },
     vipPlan: customer?.vipPlan ?? "",
-    secEnabled: Boolean(holder?.firstName || holder?.lastName),
+    secEnabled: Boolean(holder),
     secFirstName: holder?.firstName ?? "",
     secMiddleName: holder?.middleName ?? "",
-    secNoMiddleName: Boolean(holder && holder.firstName && !holder.middleName),
+    secNoMiddleName: holder?.noMiddleName ?? Boolean(holder && holder.firstName && !holder.middleName),
     secLastName: holder?.lastName ?? "",
     secSuffix: holder?.suffix ?? "",
     secGender: holder?.gender ?? "",
@@ -153,7 +155,9 @@ export function toDraft(customer?: Customer): CustomerDraft {
     referrerMemberId: customer?.referrerMemberId ?? "",
     acquisitionChannel: customer?.acquisitionChannel ?? "",
     // Saved numbers are fixed: editing them reopens the manual path.
-    customerIdMode: customer?.customerNumber ? "manual" : "auto",
+    customerIdMode: customer?.status === "draft" && customer.customerIdMode
+      ? customer.customerIdMode
+      : customer?.customerNumber ? "manual" : "auto",
     customerNumber: customer?.customerNumber ?? "",
     ownerMemberId: customer?.ownerMemberId ?? "",
     consentDataPrivacy: customer?.consentDataPrivacy ?? false,
@@ -161,10 +165,11 @@ export function toDraft(customer?: Customer): CustomerDraft {
   };
 }
 
-export function toInput(draft: CustomerDraft): CustomerDraftInput {
+export function toInput(draft: CustomerDraft, { saveAsDraft = false } = {}): CustomerDraftInput {
   const secondaryProfile = {
     firstName: draft.secFirstName.trim(),
     middleName: draft.secNoMiddleName ? null : draft.secMiddleName.trim() || null,
+    noMiddleName: draft.secNoMiddleName,
     lastName: draft.secLastName.trim(),
     suffix: draft.secSuffix || null,
     gender: draft.secGender || null,
@@ -183,6 +188,9 @@ export function toInput(draft: CustomerDraft): CustomerDraftInput {
     employedPosition: draft.secEmployedPosition.trim() || null,
     officeAddress: draft.secOfficeAddress,
   };
+  const secondaryProfileStarted = Object.values(secondaryProfile).some((value) =>
+    value && (typeof value !== "object" || Object.values(value).some(Boolean)),
+  );
   // Built as an unannotated literal so the full holder profile flows through
   // at runtime (the landed SupplementaryHolder type is narrower than the
   // spec's sec mirror; see HolderSource). Non-literal assignment skips excess
@@ -191,6 +199,7 @@ export function toInput(draft: CustomerDraft): CustomerDraftInput {
     displayName: composeCustomerName({ firstName: draft.firstName, middleName: draft.noMiddleName ? "" : draft.middleName, lastName: draft.lastName, suffix: draft.suffix }),
     firstName: draft.firstName.trim(),
     middleName: draft.noMiddleName ? null : draft.middleName.trim() || null,
+    noMiddleName: draft.noMiddleName,
     lastName: draft.lastName.trim(),
     suffix: draft.suffix || null,
     gender: draft.gender || null,
@@ -210,7 +219,7 @@ export function toInput(draft: CustomerDraft): CustomerDraftInput {
     officeAddress: draft.officeAddress,
     vipPlan: (draft.vipPlan || null) as CustomerDraftInput["vipPlan"],
     supplementaryHolder:
-      draft.secEnabled && (secondaryProfile.firstName || secondaryProfile.lastName) ? secondaryProfile : null,
+      draft.secEnabled && (saveAsDraft || secondaryProfileStarted) ? secondaryProfile : null,
     paymentSchemeId: draft.paymentSchemeId || null,
     contractClassification: (draft.contractClassification || null) as CustomerDraftInput["contractClassification"],
     recommenderMemberId: draft.recommenderMemberId || null,
@@ -687,34 +696,42 @@ const CUSTOMER_ID_MODE_OPTIONS: ReadonlyArray<{ value: CustomerDraft["customerId
 export type AttributionSectionProps = SectionProps & {
   /** Sales Network roster: active OSTs become options and the derived upline comes from its genealogy. */
   members: readonly OrgMember[];
+  pendingOstIds: ReadonlySet<string> | null;
+  accreditationLoading?: boolean;
   /** Customers already on file, used to preview the next automatic Customer ID. */
   existing: readonly Customer[];
 };
 
-export function AttributionSection({ draft, set, errors, members, existing }: AttributionSectionProps) {
+export function AttributionSection({ draft, set, errors, members, existing, pendingOstIds, accreditationLoading }: AttributionSectionProps) {
+  const attributionErrors = customerAttributionErrors(draft, pendingOstIds);
+  const recommenderId = attributionErrors.recommenderMemberId ? "" : draft.recommenderMemberId;
+  const referrerId = attributionErrors.referrerMemberId ? "" : draft.referrerMemberId;
+  const accreditationHint = pendingOstIds === null
+    ? (accreditationLoading ? "Checking OST accreditation…" : "OST accreditation is unavailable.")
+    : undefined;
   const ostOptions = useMemo(
     () =>
       members
-        .filter((member) => member.designation === "OST" && member.status === "active")
+        .filter((member) => member.designation === "OST" && member.status === "active" && pendingOstIds && !pendingOstIds.has(member.id))
         .slice()
         .sort((left, right) => left.displayName.localeCompare(right.displayName))
         .map((member) => ({ value: member.id, label: attributionPartyLabel(member) })),
-    [members],
+    [members, pendingOstIds],
   );
 
   // Both parties must sit in the same genealogy team: the referrer list is
   // limited to the recommender's team and vice versa. Before either is chosen,
   // the full active-OST roster is offered.
-  const recommenderTeam = useMemo(() => genealogyTeamOstIds(members, draft.recommenderMemberId), [members, draft.recommenderMemberId]);
-  const referrerTeam = useMemo(() => genealogyTeamOstIds(members, draft.referrerMemberId), [members, draft.referrerMemberId]);
+  const recommenderTeam = useMemo(() => genealogyTeamOstIds(members, recommenderId), [members, recommenderId]);
+  const referrerTeam = useMemo(() => genealogyTeamOstIds(members, referrerId), [members, referrerId]);
   const recommenderOptions = referrerTeam.size > 0 ? ostOptions.filter((option) => referrerTeam.has(option.value)) : ostOptions;
   const referrerOptions = recommenderTeam.size > 0 ? ostOptions.filter((option) => recommenderTeam.has(option.value)) : ostOptions;
 
   // The resolver falls back to the recommender when no referrer is set and walks
   // the actual genealogy, so the read-only upline always matches network records.
   const chain = useMemo(
-    () => resolveAttributionChain(members, draft.referrerMemberId || null, draft.recommenderMemberId || null),
-    [members, draft.referrerMemberId, draft.recommenderMemberId],
+    () => resolveAttributionChain(members, referrerId, recommenderId),
+    [members, referrerId, recommenderId],
   );
 
   const customerIdMode = draft.customerIdMode === "manual" ? "manual" : "auto";
@@ -734,43 +751,54 @@ export function AttributionSection({ draft, set, errors, members, existing }: At
         <SelectField
           label="OST (Recommender)"
           showSearch
-          value={draft.recommenderMemberId || undefined}
+          disabled={pendingOstIds === null}
+          error={attributionErrors.recommenderMemberId}
+          value={recommenderId || undefined}
           options={recommenderOptions}
           onChange={(value) => {
             set("recommenderMemberId", value);
             const chosenTeam = genealogyTeamOstIds(members, value);
-            const referrerOutside = value && draft.referrerMemberId && chosenTeam.size > 0 && !chosenTeam.has(draft.referrerMemberId);
-            if (referrerOutside) {
-              set("referrerMemberId", value);
-            } else if (value && !draft.referrerMemberId) {
+            if (value && (!referrerId || (chosenTeam.size > 0 && !chosenTeam.has(referrerId)))) {
               set("referrerMemberId", value);
             }
           }}
           allowClear
           clearLabel="No recommender"
           placeholder="Type to search OST members"
-          hint="Optional for direct IST sales."
+          hint={accreditationHint ?? "Optional for direct IST sales."}
         />
         <SelectField
           label="OST (Referrer)"
           showSearch
-          value={draft.referrerMemberId || undefined}
+          disabled={pendingOstIds === null}
+          error={attributionErrors.referrerMemberId}
+          value={referrerId || undefined}
           options={referrerOptions}
           onChange={(value) => {
             set("referrerMemberId", value);
             const chosenTeam = genealogyTeamOstIds(members, value);
-            const recommenderOutside = value && draft.recommenderMemberId && chosenTeam.size > 0 && !chosenTeam.has(draft.recommenderMemberId);
+            const recommenderOutside = value && recommenderId && chosenTeam.size > 0 && !chosenTeam.has(recommenderId);
             if (recommenderOutside) set("recommenderMemberId", value);
           }}
           allowClear
           clearLabel="No referrer"
           placeholder="Type to search OST members"
-          hint="Same team as the recommender."
+          hint={accreditationHint ?? "Same team as the recommender."}
         />
         <TextField label="SM" value={derivedAttributionValue(chain.sm)} onChange={() => {}} disabled />
         <TextField label="SSM" value={derivedAttributionValue(chain.ssm)} onChange={() => {}} disabled />
         <TextField label="SVD" value={derivedAttributionValue(chain.svd)} onChange={() => {}} disabled />
       </FormGrid>
+      {pendingOstIds === null && (draft.recommenderMemberId || draft.referrerMemberId) ? (
+        <div>
+          <Button type="button" variant="outline" onClick={() => {
+            set("recommenderMemberId", "");
+            set("referrerMemberId", "");
+          }}>
+            Clear OST selections
+          </Button>
+        </div>
+      ) : null}
       <div className="tw:flex tw:flex-col tw:gap-3 tw:border-t tw:border-border tw:pt-4">
         <RadioCardField
           label="Customer ID assignment"

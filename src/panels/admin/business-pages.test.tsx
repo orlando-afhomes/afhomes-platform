@@ -12,6 +12,8 @@ import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { AccreditationVerificationPage } from "@/panels/public/pages/accreditation-verification-page";
 import { AdminSidebarContext } from "./layouts/admin-sidebar-context";
+import { AdminMobileNav } from "./components/admin-mobile-nav";
+import { AdminSidebar } from "./components/admin-sidebar";
 import { AuditLogsPage } from "./pages/audit-logs-page";
 import { CommissionAssignmentPage } from "./pages/commission-assignment-page";
 import { CommissionsPage } from "./pages/commissions-page";
@@ -34,10 +36,15 @@ import { useCustomers } from "@/data/queries";
 import { currentManilaYear } from "@/modules/customers/customer-number";
 import type { Customer } from "@/modules/customers/types";
 import { MockCustomerRepository } from "@/data/mock/customer-repository";
+import { MockAccreditationRepository } from "@/data/mock/accreditation-repository";
+import * as registration from "@/modules/customers/application/register-customer";
+import Swal from "sweetalert2";
+
+const navigation = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }));
 
 vi.mock("next/navigation", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/navigation")>()),
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+  useRouter: () => navigation,
   usePathname: () => "/admin",
 }));
 
@@ -57,9 +64,13 @@ function Wrapper({ identityId, children }: { identityId: string; children: React
 
 afterEach(() => {
   cleanup();
+  Swal.close();
   toast.dismiss();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  navigation.push.mockClear();
+  navigation.replace.mockClear();
+  navigation.back.mockClear();
 });
 
 /** Test probe: watches the shared customer list so a saved draft is visible before the next click. */
@@ -596,10 +607,11 @@ describe("customer application new fields and secondary holder", () => {
   }
 
   async function startApplication(user: ReturnType<typeof userEvent.setup>, card: RegExp) {
-    show("dev-sm-a", <CustomerFormPage />);
+    const view = show("dev-sm-a", <CustomerFormPage />);
     await user.click(await screen.findByRole("radio", { name: card }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await screen.findByRole("radiogroup", { name: "Payment scheme" });
+    return view;
   }
 
   async function choosePlanAndContinue(user: ReturnType<typeof userEvent.setup>) {
@@ -611,9 +623,10 @@ describe("customer application new fields and secondary holder", () => {
   }
 
   async function reachCustomerStep(user: ReturnType<typeof userEvent.setup>, card: RegExp) {
-    await startApplication(user, card);
+    const view = await startApplication(user, card);
     await choosePlanAndContinue(user);
     await screen.findByRole("heading", { name: "Personal details" });
+    return view;
   }
 
   function stubImagePreviews() {
@@ -645,7 +658,7 @@ describe("customer application new fields and secondary holder", () => {
     await user.click(screen.getByRole("button", { name: /continue/i }));
     expect(screen.getByText("primary.png")).toBeVisible();
     expect(screen.getByText("secondary.png")).toBeVisible();
-    expect(sessionStorage.getItem("afhomes.customer-wizard.v1")).not.toMatch(/primary\.png|secondary\.png|blob:/);
+    expect(sessionStorage.getItem("afhomes.customer-wizard.v1")).toBeNull();
     selectIdImage("replacement.webp", false, "image/webp");
     expect(revoke).toHaveBeenCalledWith("blob:primary.png");
     expect(screen.getByRole("img", { name: "Government ID image preview" })).toHaveAttribute("src", "blob:replacement.webp");
@@ -659,7 +672,7 @@ describe("customer application new fields and secondary holder", () => {
     cleanup();
     expect(revoke).toHaveBeenCalledWith("blob:exit.png");
     show("dev-sm-a", <CustomerFormPage />);
-    expect(await screen.findByRole("heading", { name: "Personal details" })).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Choose a VIP card" })).toBeVisible();
     expect(screen.queryByText("exit.png")).toBeNull();
   });
 
@@ -1186,10 +1199,119 @@ describe("customer application new fields and secondary holder", () => {
     const notifications = await screen.findByLabelText(/notifications/i);
     expect(within(notifications).getByText("Confirm that the customer accepted the payment schedule.")).toBeInTheDocument();
   });
+  describe("new customer submission feedback", () => {
+    type Outcome = Awaited<ReturnType<typeof registration.registerCustomer>>;
+    const customerId = "cust-new";
+    const contractId = "ctr-new";
+    const storageKey = "afhomes.customer-wizard.v1";
+
+    async function submit(outcome: Outcome) {
+      vi.spyOn(registration, "registerCustomer").mockResolvedValue(outcome);
+      const user = userEvent.setup();
+      const view = await reachCustomerStep(user, /silver vip/i);
+      await fillValidPrimary(user);
+      await attachProofAndReachReview(user);
+      expect(screen.queryByRole("alertdialog")).toBeNull();
+      await acceptAndSubmit(user);
+      return view;
+    }
+
+    it("shows SweetAlert2 success, resets the wizard, and automatically returns to Customers", { timeout: 30_000 }, async () => {
+      await submit({ status: "reservation-submitted", customerId, contractId });
+      const alert = await screen.findByRole("dialog", { name: "Application submitted" });
+      expect(alert).toBe(Swal.getPopup());
+      expect(within(alert).getByText(/awaiting Finance verification/i)).toBeVisible();
+      expect(sessionStorage.getItem(storageKey)).toBeNull();
+      expect(Swal.getTimerLeft()).toBeGreaterThan(0);
+      expect(navigation.replace).not.toHaveBeenCalled();
+      expect(navigation.push).not.toHaveBeenCalled();
+      await waitFor(() => expect(navigation.replace.mock.calls).toEqual([["/admin/customers"]]), { timeout: 4_500 });
+      await waitFor(() => expect(screen.queryByRole("dialog", { name: "Application submitted" })).toBeNull());
+      expect(screen.getByRole("radio", { name: /silver vip/i })).toHaveAttribute("aria-checked", "false");
+    });
+
+    it.each([
+      { status: "customer-submitted", customerId },
+      { status: "contract-prepared", customerId, contractId },
+    ] satisfies Outcome[])("lets users return early after $status and cancels the timer", { timeout: 30_000 }, async (outcome) => {
+      await submit(outcome);
+      const alert = await screen.findByRole("dialog", { name: "Application submitted" });
+      expect(Swal.getTimerLeft()).toBeGreaterThan(0);
+      fireEvent.click(within(alert).getByRole("button", { name: "Go to Customers" }));
+      await waitFor(() => expect(navigation.replace.mock.calls).toEqual([["/admin/customers"]]));
+      expect(Swal.isTimerRunning()).toBeFalsy();
+    });
+
+    it("cancels the pending redirect when the wizard unmounts", { timeout: 30_000 }, async () => {
+      const view = await submit({ status: "customer-submitted", customerId });
+      await screen.findByRole("dialog", { name: "Application submitted" });
+      view.unmount();
+      await waitFor(() => expect(Swal.getPopup()).toBeNull());
+      expect(Swal.isTimerRunning()).toBeFalsy();
+      expect(navigation.replace).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      { status: "draft-kept", customerId, errors: {} },
+      { status: "contract-failed", customerId, error: new Error("Could not prepare the contract.") },
+      { status: "reservation-failed", customerId, contractId, error: new Error("Could not submit the reservation.") },
+    ] satisfies Outcome[])("keeps the recovery route for $status", { timeout: 30_000 }, async (outcome) => {
+      await submit(outcome);
+      await waitFor(() => {
+        if (outcome.status === "draft-kept") {
+          expect(navigation.replace.mock.calls).toEqual([[`/admin/customers/${customerId}/edit`]]);
+        } else {
+          expect(navigation.push.mock.calls).toEqual([[`/admin/customers/${customerId}`]]);
+        }
+      });
+      expect(Swal.getPopup()).toBeNull();
+    });
+  });
+
+  it("blocks saving a saved draft with a pending OST and allows clearing the selection", { timeout: 30_000 }, async () => {
+    const user = userEvent.setup();
+    const accreditationList = MockAccreditationRepository.prototype.list;
+    vi.spyOn(MockAccreditationRepository.prototype, "list").mockImplementation(async function (this: MockAccreditationRepository, options) {
+      return (await accreditationList.call(this, options)).map((record) =>
+        record.memberId === "mem-ost-a1" ? { ...record, adminStatus: "pending" } : record,
+      );
+    });
+    const customerList = MockCustomerRepository.prototype.list;
+    vi.spyOn(MockCustomerRepository.prototype, "list").mockImplementation(async function (this: MockCustomerRepository, options) {
+      return (await customerList.call(this, options)).map((record) =>
+        record.id === "cust-a2" ? { ...record, recommenderMemberId: "mem-ost-a1" } : record,
+      );
+    });
+    const update = vi.spyOn(MockCustomerRepository.prototype, "updateDraft");
+    show("dev-sm-a", <CustomerFormPage customerId="cust-a2" />);
+    await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await choosePlanAndContinue(user);
+    await fillValidPrimary(user);
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    const recommender = await screen.findByRole("combobox", { name: "OST (Recommender)" });
+    await waitFor(() => expect(recommender).toHaveAccessibleDescription(/pending accreditation/i));
+    await user.click(screen.getByRole("button", { name: "Save as draft" }));
+    expect(update).not.toHaveBeenCalled();
+    await user.click(recommender);
+    expect(screen.queryByRole("option", { name: /Ana Mendoza|Paolo Ramos/ })).toBeNull();
+    await user.click(screen.getByRole("option", { name: "No recommender" }));
+    await user.click(screen.getByRole("button", { name: "Save as draft" }));
+    expect(await screen.findByText("Draft saved.")).toBeVisible();
+    expect(update.mock.calls[0]?.[1].recommenderMemberId).toBeNull();
+  });
 });
 
-describe("customer application wizard refresh persistence", () => {
-  it("restores the Payment plan step and the chosen card after a refresh", async () => {
+describe("new customer unsaved changes", () => {
+  it("validates the names on a partially entered secondary profile when submitting a saved draft", () => {
+    const draft = { ...toDraft(), vipPlan: "G1", secEnabled: true, secEmail: "holder@example.test" };
+    const input = toInput(draft);
+    expect(input.supplementaryHolder).toMatchObject({ email: "holder@example.test" });
+    expect(validateCustomerForSubmit(input, [], undefined, true).supplementaryHolder).toMatch(/first and last name/i);
+    expect(toInput({ ...draft, secEmail: "" }).supplementaryHolder).toBeNull();
+  });
+
+  it("starts fresh after a refresh and removes the old autosaved input", async () => {
     const user = userEvent.setup();
     const before = show("dev-sm-a", <CustomerFormPage />);
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
@@ -1197,16 +1319,92 @@ describe("customer application wizard refresh persistence", () => {
     expect(await screen.findByRole("heading", { name: "Payment plan" })).toBeInTheDocument();
     expect(await screen.findByRole("complementary", { name: "Selected VIP card" })).toHaveTextContent("Silver VIP (S1)");
 
-    // A refresh is a fresh mount in the same browser session: sessionStorage survives.
     before.unmount();
+    sessionStorage.setItem("afhomes.customer-wizard.v1", JSON.stringify({ step: 1, draft: { vipPlan: "S1" } }));
     show("dev-sm-a", <CustomerFormPage />);
 
-    expect(await screen.findByRole("heading", { name: "Payment plan" })).toBeInTheDocument();
-    expect(screen.queryByRole("radiogroup", { name: "VIP card" })).toBeNull();
-    expect(await screen.findByRole("complementary", { name: "Selected VIP card" })).toHaveTextContent("Silver VIP (S1)");
-    // The restored draft still carries the chosen card on the first step.
-    await user.click(within(screen.getByRole("list", { name: "Progress" })).getByText(/vip card/i));
+    expect(await screen.findByRole("heading", { name: "Choose a VIP card" })).toBeInTheDocument();
+    expect(await screen.findByRole("radio", { name: /silver vip/i })).toHaveAttribute("aria-checked", "false");
+    expect(sessionStorage.getItem("afhomes.customer-wizard.v1")).toBeNull();
+  });
+
+  it("lets the user stay or discard an unsaved application before leaving", async () => {
+    const user = userEvent.setup();
+    show("dev-super-admin", <CustomerFormPage />);
+    const silver = await screen.findByRole("radio", { name: /silver vip/i });
+    await user.click(silver);
+    const breadcrumb = within(screen.getByRole("navigation", { name: "Breadcrumb" })).getByRole("link", { name: "Customers" });
+    await user.click(breadcrumb);
+    const prompt = await screen.findByRole("alertdialog", { name: "Leave this application?" });
+    await user.click(within(prompt).getByRole("button", { name: "Stay" }));
+    expect(silver).toHaveAttribute("aria-checked", "true");
+    expect(navigation.push).not.toHaveBeenCalled();
+    await user.click(breadcrumb);
+    await user.click(within(await screen.findByRole("alertdialog", { name: "Leave this application?" })).getByRole("button", { name: "Discard all Changes" }));
+    expect(navigation.push.mock.calls).toEqual([["/admin/customers"]]);
+    expect(silver).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("saves an unnamed draft on Cancel and reopens it separately from a blank New Customer form", async () => {
+    const user = userEvent.setup();
+    const view = show("dev-super-admin", <CustomerFormPage />);
+    await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    const prompt = await screen.findByRole("alertdialog", { name: "Leave this application?" });
+    await user.click(within(prompt).getByRole("button", { name: "Save Draft" }));
+    await waitFor(() => expect(navigation.back).toHaveBeenCalledTimes(1));
+
+    view.rerender(<Wrapper identityId="dev-super-admin"><CustomersPage /></Wrapper>);
+    const draftLink = await screen.findByRole("link", { name: "Untitled draft" });
+    expect(draftLink.closest("tr")).toHaveTextContent("Draft");
+    const customerId = draftLink.getAttribute("href")!.split("/").at(-1);
+    view.rerender(<Wrapper identityId="dev-super-admin"><CustomerFormPage customerId={customerId} /></Wrapper>);
     expect(await screen.findByRole("radio", { name: /silver vip/i })).toHaveAttribute("aria-checked", "true");
+
+    view.rerender(<Wrapper identityId="dev-super-admin"><CustomerFormPage /></Wrapper>);
+    expect(await screen.findByRole("radio", { name: /silver vip/i })).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("stays on New Customer when saving before exit fails", async () => {
+    vi.spyOn(MockCustomerRepository.prototype, "createDraft").mockRejectedValue(new Error("Draft save failed."));
+    const user = userEvent.setup();
+    show("dev-super-admin", <CustomerFormPage />);
+    const silver = await screen.findByRole("radio", { name: /silver vip/i });
+    await user.click(silver);
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Save Draft" }));
+    expect(await screen.findByText("Draft save failed.")).toBeVisible();
+    expect(silver).toHaveAttribute("aria-checked", "true");
+    expect(navigation.back).not.toHaveBeenCalled();
+  });
+
+  it.each(["desktop", "mobile"])("guards same-tab links from the %s navigation", async (mode) => {
+    const user = userEvent.setup();
+    show("dev-super-admin", <>
+      {mode === "desktop" ? <AdminSidebar collapsed={false} /> : <AdminMobileNav />}
+      <CustomerFormPage />
+    </>);
+    await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
+    if (mode === "mobile") await user.click(screen.getByRole("button", { name: "Open navigation" }));
+    const nav = screen.getByRole("navigation", { name: "Administration" });
+    await user.click(within(nav).getByRole("link", { name: "Dashboard" }));
+    const prompt = await screen.findByRole("alertdialog", { name: "Leave this application?" });
+    expect(navigation.push).not.toHaveBeenCalled();
+    await user.click(within(prompt).getByRole("button", { name: "Discard all Changes" }));
+    expect(navigation.push.mock.calls).toEqual([["/admin"]]);
+  });
+
+  it("warns on hard unload only when there are unsaved changes", async () => {
+    const user = userEvent.setup();
+    show("dev-super-admin", <CustomerFormPage />);
+    const silver = await screen.findByRole("radio", { name: /silver vip/i });
+    const clean = new Event("beforeunload", { cancelable: true });
+    fireEvent(window, clean);
+    expect(clean.defaultPrevented).toBe(false);
+    await user.click(silver);
+    const dirty = new Event("beforeunload", { cancelable: true });
+    fireEvent(window, dirty);
+    expect(dirty.defaultPrevented).toBe(true);
   });
 });
 
@@ -1553,7 +1751,7 @@ describe("gold contract preview and tiles", () => {
     const tiles = await screen.findByRole("group", { name: "Contract summary" });
     // Contract price and outstanding balance (nothing verified yet on ctr-3).
     expect(within(tiles).getAllByText("₱390,000.00")).toHaveLength(2);
-    expect(within(tiles).getByText("Snapshot at preparation")).toBeInTheDocument();
+    expect(within(tiles).getByText("Snapshot")).toBeInTheDocument();
     expect(within(tiles).queryByText("Source conflict")).toBeNull();
   });
 });

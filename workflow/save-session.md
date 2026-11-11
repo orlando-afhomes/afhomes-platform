@@ -114,55 +114,57 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 - Saved at: 2026-11-11
 - Repository: afhomes-platform (remote `https://github.com/orlando-afhomes/afhomes-platform.git`)
 - Branch: develop
-- HEAD: dcc53bc "feat: orchestrate customer registration and centralize contract cancellation effects" (acd6f95 and d3c0b18 are its parents). Verified this run: nothing staged.
-- Session objective: provide owner-requested commit messages for successive batches (no agent Git writes), then save the current state. The uncommitted workstream visible at save time adds fixed-prefix mobile/landline entry and temporary Government ID image previews to the new-customer wizard.
+- HEAD: bc1f0e9 "feat: add fixed-prefix phone entry and temporary Government ID image preview" (owner-committed; parent dcc53bc). Verified this run: nothing staged.
+- Session objective: (1) `/delete-archived` of four old sessions; (2) responsive `AdminStatCard` with auto-shrinking values and 2-word labels/descriptions; (3) pointer cursor on every clickable control. Both UI tasks were planned, owner-approved, implemented, and browser-verified.
 - Development phase: frontend prototype with mock data, QA stage. Only the owner declares frontend completion.
-- Context note: no compaction notice. Commit-message work covered acd6f95 and dcc53bc; the remaining uncommitted phone/ID-preview set appeared after dcc53bc and was not produced by this session's visible context.
+- Context note: no compaction notice. Several uncommitted files in the tree come from a parallel workstream not visible to this session (see section 5).
 
 ## 2. Current Project State
-- Committed (dcc53bc): `registerCustomer` application service + `useRegisterCustomer` orchestrates draft, customer submit, contract preparation, and reservation submission with typed outcomes; `CustomerApplicationWizard` now uses it. `cancelRelatedContractRecords` centralizes cancellation side effects (sale cancellation, forfeiture reversal, commission holds, membership cancellation, audits) for both contract-cancel paths. `paymentSchemeTierTerms` centralizes per-tier price/reservation/count/installment terms used by `buildSchedule`, scheme cards, and the scheme guide.
-- Earlier committed (acd6f95): customer onboarding wizard is the single New + Edit layout (`CustomerFormPage` renders `CustomerApplicationWizard` with optional `existing`); Sales attribution is genealogy-driven (`resolveAttributionChain`, `genealogyTeamOstIds`) with team-scoped OST options, labels `OST (Recommender)` / `OST (Referrer)`, and missing rungs filled from the recommender's chain; Customer ID is `YYYY-NNNN` automatic/manual (`modules/customers/customer-number.ts`), auto-allocated at submit only; address uses PSGC data with province-first selects and a derived, disabled ZIP; government IDs are uppercase-only with per-type rules; the wizard persists in-progress form state to `sessionStorage`.
-- Current uncommitted workstream: new-customer phone controls (fixed `09` mobile prefix; landline local digits with address-derived area code and length limit); temporary Government ID image preview for the primary and Gold secondary holder; `ProfilePhotoUploader` gains a document preview mode. Only new applications use the fixed-prefix/local-digit controls; edit mode keeps existing full-value inputs.
-- Data/docs already committed: `src/shared/data/philippine-locations.ts` + generated `psgc-data.generated.ts` (1,634 cities, 84 provinces); docs 04 (TIN sensitivity, secondary holder §7.3.1, office-address shape), 05 (Gold pricing item 11, Move schemes item 12), 06 (Move payment codes item 3).
+- Committed through bc1f0e9: customer wizard (single New/Edit layout), genealogy-driven attribution, `registerCustomer` orchestration, centralized contract cancellation, scheme-aware VIP pricing, fixed-prefix phone entry and temporary Government ID preview. Details live in git history and the decisions in section 3.
+- This session (uncommitted): `src/shared/components/admin/admin-stat.tsx` now sizes by container queries (`tw:@container`; the icon chip stacks below 14rem) and has an internal `FitValue` that shrinks the value from 30px to a 12px floor (exported pure `fitValueSize`, 2% safety margin, `title` shown only at the floor). The label is clamped to 2 lines and the description is truncated. Labels and descriptions across 15 admin pages were shortened to at most 2 words.
+- This session (uncommitted): `src/app/globals.css` has a base-layer rule giving `button, summary, [role=button|tab|menuitem*|option]` and button-type inputs `cursor: pointer`, and `not-allowed` for disabled ones. `cursor-default` became `cursor-pointer` on dropdown-menu items, select items, and combobox items (select scroll arrows keep the arrow).
+- Navigation (not from this session): the `customer-import` item has `hideFromNav: true` (entered from the Customers page); related nav tests were adjusted.
 
 ## 3. Important Decisions
-- Owner rulings implemented earlier: Gold pricing finalized (Spot/Move A 312,000; Installment/Move B 390,000; 780,000 rejected); Move A/B are standard schemes with Card ID codes Spot C01, Installment/Move A T04, Move B B1 T04 / S1 T08 / G1 T12; government IDs uppercase-only with National ID 12/16 numeric; Customer ID format `YYYY-NNNN` with automatic assignment at submit.
-- Phone UX decision (uncommitted): new applications show a fixed `09` mobile prefix and store the full `09XXXXXXXXX` value; landline shows the address-derived area code and accepts only local digits up to the area-code limit (8 for 02, 7 otherwise). Edit mode retains the previous full-value entry behavior.
-- Government ID preview decision (uncommitted): previews are temporary object URLs only, never persisted to the customer record; cleared after save/submit, when leaving Gold, when the secondary toggle is off, and on `pagehide`/unmount.
-- Wizard draft persistence remains the only `sessionStorage` use (key `afhomes.customer-wizard.v1`); mock business records stay in browser memory.
+- Owner ruled the 2-word limit covers both labels and descriptions of stat cards (the wording was proposed by Claude; no business meaning changed).
+- Owner ruled menu items and select/combobox options also show the pointer cursor.
+- Earlier owner rulings still apply: Gold pricing finalized (Spot/Move A 312,000; Installment/Move B 390,000); Move A/B standard schemes; government IDs uppercase-only; Customer ID `YYYY-NNNN` assigned at submit; the wizard draft in `sessionStorage` (`afhomes.customer-wizard.v1`) is the only persisted browser state.
 - Restrictions: agents perform no Git writes; AGENTS.md/CLAUDE.md edits need owner authorization.
 
 ## 4. Completed Work
-- This session: generated commit messages for acd6f95 and dcc53bc; the owner performed both commits. No source changes were made by this session.
-- Uncommitted workstream (not from this session's visible context): `masked-fields.tsx` fixed-prefix mobile and local-digit landline controls with paste/limit handling; `customer-id-image-preview.tsx` hook/component; `profile-photo-uploader.tsx` document mode; wizard and customer-form-sections integration; `customer-phone-fields.test.tsx` added; `business-pages.test.tsx` and `payment-reference-fields.test.tsx` updated.
-- Verification: no tests, lint, typecheck, build, or browser QA were run during this save. The new phone tests and updated customer-page tests are unverified.
+- Deleted sessions c474e373, 28cff7c7, 8870f768, aadde5fa (permanent, no backups).
+- Stat card responsive/fit work: `admin-stat.tsx`, `admin-kit.test.tsx` (new `fitValueSize` test), `reports-pages.test.tsx` and `business-pages.test.tsx` (label text updates), and label/description edits in the collections-report, commission-payouts, commission-report, customer-growth-report, finance-collections, finance-payments, membership, membership-activation, membership-report, sales, sales-performance-report, stay-points, and stay-points-report pages plus `contract-sections.tsx` and `sales-network-panel.tsx`.
+- Cursor work: `globals.css`, `dropdown-menu.tsx`, `select.tsx`, `combobox.tsx`.
+- Verified: `admin-kit` 8/8, `reports-pages` 7/7, `business-pages` 83/83, `src/shared/ui` 14/14; `tsc` 0 errors; ESLint clean on touched folders; `npm run build` succeeded (after the cursor change). Browser: long amounts shrink without clipping at 360/768/1280 px on Customers and Sales; computed cursor was correct on 90 controls across 8 pages, and the row "..." menu items and status select options show the pointer.
 
 ## 5. Git Working Tree
 - Staged: none.
-- Unstaged tracked (6 files): `src/panels/admin/business-pages.test.tsx`, `src/panels/admin/components/customer-form-sections.tsx`, `src/panels/admin/pages/customer-application-wizard.tsx`, `src/panels/admin/payment-reference-fields.test.tsx`, `src/shared/forms/modern/masked-fields.tsx`, `src/shared/forms/modern/profile-photo-uploader.tsx` (236 insertions, 54 deletions).
-- Untracked: `src/panels/admin/components/customer-id-image-preview.tsx`, `src/shared/forms/modern/customer-phone-fields.test.tsx`.
-- Attribution: **not produced by this session's visible context.** It is a later/parallel workstream; do not revert.
-- Deleted or renamed: none pending.
+- Unstaged tracked (40 files, 796 insertions, 197 deletions). From this session: `globals.css`, `admin-stat.tsx`, `admin-kit.test.tsx`, `dropdown-menu.tsx`, `select.tsx`, `combobox.tsx`, `reports-pages.test.tsx`, `business-pages.test.tsx`, the 13 report/finance/sales/membership/stay-points pages, `contract-sections.tsx`, `sales-network-panel.tsx`.
+- Pre-existing or unknown (not made by this session; do not revert): `package.json`, `package-lock.json`, `business-flow.test.ts`, `customer-repository.ts`, `seed-data.ts`, `register-customer.ts`, `modules/customers/rules.ts`, `modules/customers/types.ts`, `customer-form-attribution.test.tsx`, `customer-form-sections.tsx`, `customer-application-wizard.tsx`, `customer-detail-page.tsx`, `customers-page.tsx`, and the nav edits (`navigation.ts`, `navigation.test.ts`, `admin-nav-list.test.tsx`, `admin-nav-match.test.ts`).
+- Untracked: `src/modules/customers/attribution.ts`, `src/panels/admin/components/use-new-customer-exit.ts` (pre-existing or unknown).
+- Deleted or renamed: none.
+- Note: the `package.json` and lockfile changes are unexplained by this session; the owner should confirm no dependency was added unintentionally.
 
 ## 6. Pending Tasks
-- Verify and owner-commit the uncommitted phone/ID-preview workstream (§5).
+- Owner review and commit of the uncommitted work (suggested split: stat card, cursor, nav hiding, and the parallel customer/attribution set).
+- Verify the parallel workstream (customer attribution, `use-new-customer-exit`, rules/types changes) before commit; the full customer suites have not been re-run for it.
 - Open owner decisions carried over: Move B down-payment due date, required initial payment per scheme, overpayment/refund timing, Welcome Gift lapse, template authority, commission default rates.
-- Doc follow-ups: doc 04 §7.8 still says Referrer and VIP Recommender must be the same OST while the implemented flow allows two (same-team) OSTs; doc 04 still records the Customer ID format as pending decision D2.
-- Optional: identity switcher for restricted-role QA; screen-reader audit; production-build browser pass.
+- Doc follow-ups: doc 04 §7.8 (Referrer and VIP Recommender must be the same OST vs two same-team OSTs implemented) and the Customer ID format still listed as pending D2.
+- Optional: restricted-role browser QA, screen-reader audit, and a check of the disabled-control cursor (no disabled control was on the pages swept).
 - No blockers.
 
 ## 7. Verification State
-- This save run: no tests, lint, typecheck, build, or browser QA were run.
-- Last verified state (before the current uncommitted workstream): `business-pages` 80/80, customer/validation suites 111/111 and 135/135, attribution 20/20 + 10/10 UI; `tsc` clean; `lint` 0 errors with 1 pre-existing warning; `build` succeeded; browser checks passed for button styling, refresh persistence, row-click navigation, and the Ana/Mark attribution chain.
-- New phone/ID-preview tests have not been run.
-- Known flake: heavy jsdom suites (`business-pages`, `staff-page`) hit 15s timeouts under parallel load and pass in isolation.
-- Not performed: restricted-role browser QA, manual screen-reader audit, production-build browser pass.
+- Tests: targeted suites listed in section 4 passed; the full suite was not run. Heavy jsdom suites (`business-pages`, `staff-page`) can time out at 15s in parallel and pass alone.
+- Lint: clean on touched folders; full `npm run lint` not run this session.
+- Typecheck: 0 errors on the last run (an earlier run once showed a transient error in `customer-form-attribution.test.tsx`, attributed to parallel edits).
+- Build: succeeded after the cursor change.
+- Browser QA: done for the stat card and cursors as above; not done for restricted roles, dialogs, screen reader, or a production-build pass.
 
 ## 8. Next Session Instructions
-- Recommended first action: `/load`, then `git status --short`; run targeted tests for the uncommitted workstream (`customer-phone-fields.test.tsx`, `business-pages.test.tsx`, `payment-reference-fields.test.tsx`), then `npx tsc --noEmit`, `npm run lint`, and one build. Owner reviews/commits afterward.
-- Relevant files: `src/shared/forms/modern/masked-fields.tsx`, `src/panels/admin/components/customer-id-image-preview.tsx`, `src/shared/forms/modern/profile-photo-uploader.tsx`, `src/panels/admin/components/customer-form-sections.tsx`, `src/panels/admin/pages/customer-application-wizard.tsx`, `src/shared/forms/modern/customer-phone-fields.test.tsx`, `src/modules/customers/application/register-customer.ts`, `src/modules/vip/rules.ts` (`paymentSchemeTierTerms`).
-- Required approvals: any commit or push (owner only), AGENTS.md/CLAUDE.md edits, new dependencies, doc-04 amendments for the two flagged inconsistencies.
-- Warnings: do not run build and tests together; do not delete `.next`; a full page load resets mock data to seed (wizard draft is the only sessionStorage exception); line-ending warnings (LF→CRLF) are expected on Windows.
+- Recommended first action: `/load`, `git status --short`, then owner commits in logical groups; run the full `npx vitest run` once (alone, not alongside a build) before committing the parallel customer workstream.
+- Relevant files: `src/shared/components/admin/admin-stat.tsx`, `src/app/globals.css`, `src/shared/ui/{dropdown-menu,select,combobox}.tsx`, `src/modules/customers/attribution.ts`, `src/panels/admin/components/use-new-customer-exit.ts`, `package.json`.
+- Required approvals: any commit or push (owner only), AGENTS.md/CLAUDE.md edits, new dependencies, doc-04 amendments.
+- Warnings: do not run build and tests together; do not delete `.next`; a full reload resets mock data; LF to CRLF warnings are expected on Windows; the dev server was already running on port 3000.
 
 ## 9. Execution Recommendation
 - Phase: QA
@@ -170,7 +172,6 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 - Recommended model: Sonnet 5.5
 - Effort: medium
 - Ultracode: OFF
-- Token optimization: one targeted test run + one build + one browser pass; avoid the full suite unless shared code changes.
-- Reason: the committed state is verified, but the current phone/ID-preview workstream is unverified and needs owner review before commit.
-
+- Token optimization: one full test run and one lint, no further browser passes unless new UI changes.
+- Reason: the two UI tasks are verified, so the remaining work is owner review and commit of a mixed working tree.
 <!-- SESSION_SNAPSHOT_END -->

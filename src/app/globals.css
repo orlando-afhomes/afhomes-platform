@@ -39,6 +39,24 @@
     transition-duration: 150ms;
     transition-timing-function: ease-out;
   }
+
+  /* Every clickable control shows the pointer; Tailwind 4 preflight leaves
+   * buttons on the arrow cursor. Disabled controls show not-allowed. */
+  button,
+  summary,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  [role="menuitemcheckbox"],
+  [role="menuitemradio"],
+  [role="option"],
+  input:is([type="button"], [type="submit"], [type="reset"], [type="file"]) {
+    cursor: pointer;
+  }
+
+  :is(button, input, [role="button"], [role="tab"], [role="option"], [role^="menuitem"]):is(:disabled, [aria-disabled="true"], [data-disabled]) {
+    cursor: not-allowed;
+  }
 }
 
 /* Reduced motion: collapse every transition and animation (popups, collapses,

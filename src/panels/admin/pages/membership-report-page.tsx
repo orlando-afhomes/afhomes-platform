@@ -15,7 +15,7 @@ export function MembershipReportPage() {
     <ReportShell range={range} title="Membership Report" description="Role-scoped figures built from the source records." crumbs={[{ label: "Reports" }, { label: "Membership Report" }]}>
       <AdminSection title="Membership distribution" description="Memberships count from official activation.">
         <AdminStatGrid>
-          <AdminStatCard label="Activated in period" value={activatedInPeriod} icon={UserCheck} tone="success" />
+          <AdminStatCard label="Activated" value={activatedInPeriod} icon={UserCheck} tone="success" />
           {byTier.map((tier) => (
             <AdminStatCard key={tier.code} label={`Active ${tier.code}`} value={tier.count} icon={Medal} tone="info" />
           ))}

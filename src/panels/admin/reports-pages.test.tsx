@@ -35,12 +35,12 @@ function show(identityId: string, page: ReactElement) {
 }
 
 const TILES = {
-  sales: "Confirmed sales value (period)",
-  growth: "New customers in period",
+  sales: "Period sales",
+  growth: "New customers",
   collections: "Verified collections",
-  commissions: "Approved in period",
-  membership: "Activated in period",
-  points: "Points earned in period",
+  commissions: "Approved",
+  membership: "Activated",
+  points: "Points earned",
 };
 
 describe("report pages", () => {

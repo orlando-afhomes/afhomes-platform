@@ -77,8 +77,8 @@ export function StayPointsPage() {
             <AdminStatGrid columns={3}>
               <AdminStatCard label="Spendable weekday" value={balances?.spendableWeekday.toLocaleString("en-PH")} icon={Wallet} tone="success" />
               <AdminStatCard label="Spendable weekend" value={balances?.spendableWeekend.toLocaleString("en-PH")} icon={Coins} tone="success" />
-              <AdminStatCard label="Pending" value={balances?.pending.toLocaleString("en-PH")} icon={Clock} tone="warning" description="Unlocks when the cycle minimum is reached" />
-              <AdminStatCard label="Held" value={balances?.held.toLocaleString("en-PH")} icon={Hourglass} tone="warning" description="Awaiting Finance reconciliation" />
+              <AdminStatCard label="Pending" value={balances?.pending.toLocaleString("en-PH")} icon={Clock} tone="warning" description="Cycle minimum" />
+              <AdminStatCard label="Held" value={balances?.held.toLocaleString("en-PH")} icon={Hourglass} tone="warning" description="Finance review" />
               <AdminStatCard label="Remaining capacity" value={balances?.remainingCapacity.toLocaleString("en-PH")} icon={Gauge} tone="info" description="Current cycle" />
               <AdminStatCard label="Redeemed" value={balances?.redeemed.toLocaleString("en-PH")} icon={Gift} tone="neutral" description="Redemption disabled" />
             </AdminStatGrid>

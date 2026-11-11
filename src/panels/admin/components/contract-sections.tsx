@@ -114,7 +114,7 @@ export function ContractTiles({ contract, payments }: { contract: ContractView; 
   return (
     <div role="group" aria-label="Contract summary">
       <AdminStatGrid columns={4}>
-        <AdminStatCard label="Contract price" value={<Money value={contract.priceCentavos} />} icon={Layers} tone="brand" description={contract.priceStatus === "conflict" ? "Source conflict" : "Snapshot at preparation"} />
+        <AdminStatCard label="Contract price" value={<Money value={contract.priceCentavos} />} icon={Layers} tone="brand" description={contract.priceStatus === "conflict" ? "Source conflict" : "Snapshot"} />
         <AdminStatCard label="Verified payments" value={<Money value={totalVerifiedCentavos(payments)} />} icon={CreditCard} tone="success" />
         <AdminStatCard label="Outstanding balance" value={<Money value={outstandingBalanceCentavos(contract, payments)} />} icon={Clock} tone="warning" />
         <AdminStatCard label="Status" value={<BizBadge status={contract.status} />} icon={Tag} tone="neutral" />

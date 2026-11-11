@@ -29,9 +29,9 @@ export function FinancePaymentsPage() {
     <AdminPage anyOf={["finance"]} title="Payment History" description="Every payment, with reversals and refunds of verified payments." crumbs={[{ label: "Finance" }, { label: "Payment History" }]}>
       {paymentActions.dialogs}
       <AdminStatGrid>
-        <AdminStatCard label="Verified in period" value={<Money value={verifiedInPeriod} />} icon={BadgeCheck} tone="success" />
-        <AdminStatCard label="Reversed or refunded in period" value={<Money value={adjustedInPeriod} />} icon={Undo2} tone="danger" />
-        <AdminStatCard label="Net verified collections" value={<Money value={verifiedInPeriod - adjustedInPeriod} />} icon={Scale} tone="brand" description="By Finance verification date" />
+        <AdminStatCard label="Verified" value={<Money value={verifiedInPeriod} />} icon={BadgeCheck} tone="success" />
+        <AdminStatCard label="Reversals" value={<Money value={adjustedInPeriod} />} icon={Undo2} tone="danger" />
+        <AdminStatCard label="Net collections" value={<Money value={verifiedInPeriod - adjustedInPeriod} />} icon={Scale} tone="brand" description="Verification date" />
       </AdminStatGrid>
       <div className="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:max-w-md tw:sm:grid-cols-2">
         <StandardDateField label="Period from" value={from} onChange={setFrom} />

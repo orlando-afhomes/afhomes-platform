@@ -6,7 +6,7 @@ import { useState, type ReactNode } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { AdminPage } from "./admin-page";
-import { AdminStatCard, AdminStatGrid } from "./admin-stat";
+import { AdminStatCard, AdminStatGrid, fitValueSize } from "./admin-stat";
 import { Clock } from "lucide-react";
 import { AdminTabs } from "./admin-tabs";
 import { StatusPill, StatusPillForStatus } from "./status-pill";
@@ -68,6 +68,16 @@ describe("admin kit", () => {
     expect(html).not.toContain("Current");
     expect(html).not.toContain("vs. previous period");
     expect(html).toContain("M0 100");
+  });
+
+  it("shrinks a long stat value to fit and never below the floor", () => {
+    expect(fitValueSize(200, 100)).toBe(30);
+    expect(fitValueSize(100, 200)).toBe(14.7);
+    expect(fitValueSize(10, 1000)).toBe(12);
+    expect(fitValueSize(0, 100)).toBe(30);
+    const html = render(<AdminStatCard label="Net collections" value="₱123,456,789,012.00" icon={Clock} />);
+    expect(html).toContain("data-fit-value");
+    expect(html).toContain("₱123,456,789,012.00");
   });
 
   it("renders StatusPill with explicit tone and label", () => {

@@ -1,5 +1,7 @@
 "use client";
 
+import { customerRecordName } from "@/modules/customers/rules";
+
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { FileCheck, FileText, Info, Plus, Users } from "lucide-react";
@@ -39,8 +41,8 @@ export function CustomersPage() {
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
     return (customers.data ?? [])
-      .filter((customer) => (status === "all" || customer.status === status) && (term === "" || customer.displayName.toLowerCase().includes(term) || (customer.customerNumber ?? "").toLowerCase().includes(term)))
-      .sort((a, b) => a.displayName.localeCompare(b.displayName));
+      .filter((customer) => (status === "all" || customer.status === status) && (term === "" || customerRecordName(customer).toLowerCase().includes(term) || (customer.customerNumber ?? "").toLowerCase().includes(term)))
+      .sort((a, b) => customerRecordName(a).localeCompare(customerRecordName(b)));
   }, [customers.data, search, status]);
 
   const totalCustomers = rows.length;
@@ -54,7 +56,7 @@ export function CustomersPage() {
         header: "Customer",
         cell: ({ row }) => (
           <Link href={`/admin/customers/${row.original.id}`} className="tw:font-semibold tw:underline-offset-4 tw:hover:underline">
-            {row.original.displayName}
+            {customerRecordName(row.original)}
           </Link>
         ),
       },
@@ -114,16 +116,16 @@ export function CustomersPage() {
           emptyText="No customers match."
           caption="Customers"
           onRowOpen={(row) => router.push(`/admin/customers/${row.id}`)}
-          getRowLabel={(row) => `Open ${row.displayName}`}
+          getRowLabel={(row) => `Open ${customerRecordName(row)}`}
           rowActions={(row) => {
             const editable = canManage && !row.restricted;
             return (
               <RowActionsMenu
-                itemName={row.displayName}
+                itemName={customerRecordName(row)}
                 onView={() => router.push(`/admin/customers/${row.id}`)}
                 onEdit={editable ? () => router.push(`/admin/customers/${row.id}/edit`) : undefined}
                 onDelete={editable && row.status === "draft" ? () => discard.mutateAsync(row.id) : undefined}
-                deleteTitle={`Discard the draft for ${row.displayName}?`}
+                deleteTitle={`Discard the draft for ${customerRecordName(row)}?`}
                 deleteDescription="Only drafts can be discarded. Submitted customers are never deleted."
               />
             );

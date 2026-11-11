@@ -17,6 +17,10 @@ export function composeCustomerName(input: Pick<CustomerDraftInput, "firstName" 
   return [input.firstName, input.middleName, input.lastName, input.suffix].map((part) => (part ?? "").trim()).filter(Boolean).join(" ");
 }
 
+export function customerRecordName(customer: Pick<Customer, "displayName" | "status">): string {
+  return customer.displayName || (customer.status === "draft" ? "Untitled draft" : "—");
+}
+
 /**
  * Submit validation (04 section 10), in the documented order. The exhaustive
  * mandatory matrix is an open owner decision (D3); the interim set below is the

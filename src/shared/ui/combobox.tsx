@@ -65,7 +65,7 @@ function ComboboxItem({ className, children, ...props }: ComboboxPrimitive.Item.
     <ComboboxPrimitive.Item
       data-slot="combobox-item"
       className={cn(
-        "tw:relative tw:flex tw:min-h-11 tw:w-full tw:cursor-default tw:items-center tw:gap-1.5 tw:rounded-md tw:py-1.5 tw:pr-8 tw:pl-2 tw:text-sm tw:outline-hidden tw:select-none tw:data-highlighted:bg-accent tw:data-highlighted:text-accent-foreground tw:data-disabled:pointer-events-none tw:data-disabled:opacity-50 tw:sm:min-h-8",
+        "tw:relative tw:flex tw:min-h-11 tw:w-full tw:cursor-pointer tw:items-center tw:gap-1.5 tw:rounded-md tw:py-1.5 tw:pr-8 tw:pl-2 tw:text-sm tw:outline-hidden tw:select-none tw:data-highlighted:bg-accent tw:data-highlighted:text-accent-foreground tw:data-disabled:pointer-events-none tw:data-disabled:opacity-50 tw:sm:min-h-8",
         className
       )}
       {...props}

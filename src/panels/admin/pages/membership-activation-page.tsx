@@ -20,7 +20,7 @@ export function MembershipActivationPage() {
         <>
           <AdminStatGrid columns={2}>
             <AdminStatCard label="Pending activation" value={pending.length} icon={Clock} tone="warning" />
-            <AdminStatCard label="Ready to activate" value={pending.filter((item) => item.eligible).length} icon={BadgeCheck} tone="success" />
+            <AdminStatCard label="Ready" value={pending.filter((item) => item.eligible).length} icon={BadgeCheck} tone="success" />
           </AdminStatGrid>
           <QueryState isLoading={memberships.isLoading} error={memberships.error}>
             <AdminSection title="Activation queue" description="Eligible means a finalized contract, Finance-verified full payment, and a valid RA number.">

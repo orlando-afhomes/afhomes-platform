@@ -33,7 +33,7 @@ export function StandardDateField({ id: explicitId, label, required, disabled, v
         aria-required={required ? "true" : undefined}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(ids, error, hint)}
-        className="tw:h-10 tw:sm:h-8"
+        className="tw:h-11"
         onChange={(event) => onChange(event.target.value)}
       />
     </FieldShell>

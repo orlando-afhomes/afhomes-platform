@@ -75,14 +75,12 @@ describe("sales network repository", () => {
       suffix: "Jr.",
       mobileNumber: "09171234567",
       gender: "Male",
-      subdivision: "Bel-Air Village",
       tin: "123-456-789",
     });
     expect(updated.displayName).toBe("Ramon Cruz Del Rosario Jr.");
     expect(updated.sellerProfile?.suffix).toBe("Jr.");
     expect(updated.sellerProfile?.mobileNumber).toBe("09171234567");
     expect(updated.sellerProfile?.gender).toBe("Male");
-    expect(updated.sellerProfile?.address.subdivision).toBe("Bel-Air Village");
     expect(updated.sellerProfile?.tin).toBe("123456789");
     const stored = store.members.find((item) => item.id === "mem-ssm-a")!;
     expect(stored.displayName).toBe("Ramon Cruz Del Rosario Jr.");

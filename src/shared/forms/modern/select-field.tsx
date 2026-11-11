@@ -64,6 +64,7 @@ export function SelectField<T extends string = string>({
             aria-required={required ? "true" : undefined}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy(ids, error, hint)}
+            className="tw:h-11"
           />
           <ComboboxContent>
             <ComboboxEmpty>No matches</ComboboxEmpty>
@@ -93,7 +94,7 @@ export function SelectField<T extends string = string>({
           aria-required={required ? "true" : undefined}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(ids, error, hint)}
-          className="tw:h-10 tw:w-full tw:sm:h-8"
+          className="tw:h-11 tw:w-full tw:data-[size=default]:h-11"
         >
           <SelectValue placeholder={loading ? "Loading…" : placeholder} />
         </SelectTrigger>

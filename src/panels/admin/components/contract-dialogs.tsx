@@ -58,9 +58,15 @@ export function RequestCancellationDialog({ contract, onClose }: DialogProps) {
   );
 }
 
-export function RaDialog({ contract, onClose }: DialogProps) {
+/** Owner ruling: the RA number uses the NNNN of the Customer ID `YYYY-NNNN`. */
+type RaDialogProps = DialogProps & { suggestedRa?: string | null };
+
+export function RaDialog({ contract, suggestedRa, onClose }: RaDialogProps) {
   const action = useContractAction();
-  const [value, setValue] = useState(contract.raNumber ?? "");
+  // An RA already on the contract always wins; the Customer ID sequence only fills a blank field.
+  const existingRa = contract.raNumber?.trim() || null;
+  const suggestion = suggestedRa?.trim() || null;
+  const [value, setValue] = useState(existingRa ?? suggestion ?? "");
   const [error, setError] = useState<string | undefined>();
   const send = async () => {
     try {
@@ -73,7 +79,7 @@ export function RaDialog({ contract, onClose }: DialogProps) {
   };
   return (
     <FormDialog open title="Record RA number" description="Copy the number from the signed Reservation Agreement. It is needed to issue the VIP Card ID." submitText="Record" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
-      <TextField label="RA number" required value={value} onChange={setValue} hint="For example 2027-0001. The official numbering format is pending an owner decision." />
+      <TextField label="RA number" required value={value} onChange={setValue} hint={!existingRa && suggestion ? "Matches the customer's Customer ID sequence." : "For example 2027-0001. The official numbering format is pending an owner decision."} />
     </FormDialog>
   );
 }
@@ -91,6 +97,11 @@ export function CancelContractDialog({ contract, open, onClose }: ReasonProps) {
 export function ApproveArrangementDialog({ contract, open, onClose }: ReasonProps) {
   const action = useContractAction();
   return <ReasonDialog open={open} title="Approve special arrangement" description={`Record the written approval for ${contract.arrangement?.schemeLabel ?? "this arrangement"}. Enter the reference of the signed approval.`} confirmText="Approve" successText="Arrangement approved." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "approveArrangement", reference: reason })} />;
+}
+
+export function ResolvePaymentCodeDialog({ contract, open, onClose }: ReasonProps) {
+  const action = useContractAction();
+  return <ReasonDialog open={open} title="Record payment code" description="Resolves the Card ID payment segment from the approved mapping for this scheme and tier. Enter the reference of the approval." confirmText="Record payment code" successText="Payment code recorded." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "resolvePaymentCode", reference: reason })} />;
 }
 
 export function ConfirmCancellationDialog({ contract, open, onClose }: ReasonProps) {

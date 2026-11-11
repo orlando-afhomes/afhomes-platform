@@ -102,13 +102,17 @@ Payment Scheme uses the official payment schemes established by VIP Products, Co
 
 ### 7.2 Section B — Government Identification
 
-Fields: Valid ID; Image of Government ID; ID Number (optional).
+Fields: Valid ID; Image of Government ID; ID Number (optional); TIN Number (optional).
 
 Valid ID supports selection/recording of the customer's government identification type using the official company-approved list where defined. Do not invent an unsupported ID list.
 
 Government ID image is sensitive personal information. It must be accessible only to appropriately authorized personnel, not visible in ordinary Sales Network reporting, not exposed through public customer lookup, and handled per privacy and security controls. Uploading an image is not automatic verification of authenticity.
 
 ID Number is explicitly optional. Do not change to mandatory without business approval.
+
+TIN Number is explicitly optional. Do not change to mandatory without business approval.
+
+TIN Number, ID Number, and the Government ID image are sensitive personal information. They must be accessible only to appropriately authorized personnel, never included in downline, public, or otherwise restricted projections, never recorded as values in audit logs (reference the affected operation without reproducing the sensitive value), and handled per privacy and security controls.
 
 ### 7.3 Section C — Personal Information
 
@@ -121,6 +125,12 @@ Gender options (approved form values): Male, Female.
 Civil Status options: Single, Married, Widowed, Separated.
 
 Preserve actual entered name components. Do not require middle name or suffix for every customer unless a separate approved rule requires it. Do not introduce automatic customer-name masking in authorized internal Customer Management records.
+
+Citizenship is collected as inventoried above. Age, where shown, is a derived display computed from Birth Date only; it is never stored as a customer attribute.
+
+#### 7.3.1 Secondary card holder (Gold)
+
+Gold-tier registrations support an optional secondary card holder toggle. This toggle applies to Gold only; do not offer it for Silver or Bronze. When the toggle is on, a full mirror of Personal → Government ID (+ Employment/Business) is captured as the supplementary holder profile. The supplementary holder profile is optional at Submit: First Name and Last Name are required only when the profile has been started; an untouched profile does not block submission. The exact per-field mandatory matrix remains open per §10 and §20; do not invent it as finalized policy.
 
 ### 7.4 Section D — Permanent Address
 
@@ -136,7 +146,7 @@ Fields: Landline, Mobile, Email. Support incomplete contact information in Draft
 
 ### 7.6 Section F — Employment / Business
 
-Fields: Occupation / Business, Office / Business Address, Business / Industry, Employed Position. Support partial information during Draft. Do not require customers to be formally employed. Do not invent mandatory employer names, income declarations, or employment documents. The form should remain usable for customers whose employment or business circumstances do not apply to every field.
+Fields: Occupation / Business, Office / Business Address, Business / Industry, Employed Position. The accepted Office / Business Address shape is: No./Street, Municipality, Province, Zip Code. Support partial information during Draft. Do not require customers to be formally employed. Do not invent mandatory employer names, income declarations, or employment documents. The form should remain usable for customers whose employment or business circumstances do not apply to every field.
 
 ### 7.7 Section G — Customer ID (RA Number)
 

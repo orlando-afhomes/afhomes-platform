@@ -1,7 +1,5 @@
 import { isValidPostalCode, MAX_ADDRESS_LENGTH, MAX_CITY_LENGTH, MAX_ZIP_LENGTH } from "@/shared/utils/input-sanitizers";
 
-const MAX_SUBDIVISION_LENGTH = 120;
-
 /** Street address: 2–160 characters, digits and punctuation allowed. */
 export function validateStreet(value: string): string | null {
   const trimmed = value.trim();
@@ -38,17 +36,6 @@ export function validateBarangay(value: string): string | null {
   if (!trimmed) return "Barangay is required.";
   if (trimmed.length > MAX_CITY_LENGTH) {
     return "Barangay must be 100 characters or fewer.";
-  }
-  return null;
-}
-
-/** Subdivision/Village: optional, 2–120 characters when present. */
-export function validateSubdivision(value: string): string | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  if (trimmed.length < 2) return "Subdivision must be longer.";
-  if (trimmed.length > MAX_SUBDIVISION_LENGTH) {
-    return "Subdivision must be 120 characters or fewer.";
   }
   return null;
 }

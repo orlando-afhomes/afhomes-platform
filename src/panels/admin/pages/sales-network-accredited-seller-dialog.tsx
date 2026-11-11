@@ -57,7 +57,6 @@ import {
   validateProvince,
   validateCity,
   validateBarangay,
-  validateSubdivision,
   validatePostalCode,
   validateTeamName,
   validateGovIdNumber,
@@ -140,7 +139,6 @@ export function AccreditedSellerDialog({
   const [province, setProvince] = useState("");
   const [city, setCity] = useState("");
   const [barangay, setBarangay] = useState("");
-  const [subdivision, setSubdivision] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [designation, setDesignation] = useState<IstDesignation>("SSM");
   const [teamName, setTeamName] = useState("");
@@ -269,7 +267,6 @@ export function AccreditedSellerDialog({
     province,
     city,
     barangay,
-    subdivision,
     postalCode: normalizePostalCode(postalCode),
     designation: effectiveDesignation,
     teamName: effectiveDesignation === "SVD" ? teamName.trim() : null,
@@ -312,7 +309,6 @@ export function AccreditedSellerDialog({
     province: orUndefined(validateProvince(province)),
     city: orUndefined(validateCity(city)),
     barangay: orUndefined(validateBarangay(barangay)),
-    subdivision: orUndefined(validateSubdivision(subdivision)),
     postalCode: orUndefined(validatePostalCode(postalCode)),
     telephone: orUndefined(validateLandline(telephone)),
     facebook: orUndefined(validateFacebook(facebook)),
@@ -340,7 +336,7 @@ export function AccreditedSellerDialog({
   };
   const stepOf: Record<string, number> = {
     existingAccount: 0, photo: 0, firstName: 0, middleName: 0, lastName: 0, suffix: 0, mobile: 0, dateOfBirth: 0, email: 0, tempPassword: 0, confirmPassword: 0,
-    street: 1, province: 1, city: 1, barangay: 1, subdivision: 1, postalCode: 1, telephone: 1, facebook: 1, tin: 1, businessEmployer: 1, businessAddress: 1, jobPosition: 1,
+    street: 1, province: 1, city: 1, barangay: 1, postalCode: 1, telephone: 1, facebook: 1, tin: 1, businessEmployer: 1, businessAddress: 1, jobPosition: 1,
     position: 2, sponsor: 2, teamName: 2, cardApplicationDate: 2, programCategory: 2, vipCardLevel: 2, gender: 2, civilStatus: 2, governmentIdType: 2, governmentIdNumber: 2,
     accreditationStatus: 3, approvedStart: 3, manualAa: 3,
   };
@@ -516,13 +512,12 @@ export function AccreditedSellerDialog({
             <div className="tw:flex tw:flex-col tw:gap-5">
               <FormSection title="Address Information">
                 <PhilippineAddressFields
-                  value={{ street, province, city, barangay, subdivision, postalCode }}
+                  value={{ street, province, city, barangay, postalCode }}
                   onChange={(next) => {
                     setStreet(next.street);
                     setProvince(next.province);
                     setCity(next.city);
                     setBarangay(next.barangay);
-                    setSubdivision(next.subdivision);
                     setPostalCode(next.postalCode);
                   }}
                   errors={{
@@ -530,7 +525,6 @@ export function AccreditedSellerDialog({
                     province: visible("province"),
                     city: visible("city"),
                     barangay: visible("barangay"),
-                    subdivision: visible("subdivision"),
                     postalCode: visible("postalCode"),
                   }}
                 />

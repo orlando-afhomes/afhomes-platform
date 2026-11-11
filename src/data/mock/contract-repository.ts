@@ -6,12 +6,19 @@ import { CANCELLATION_GROUNDS, CANCELLATION_GROUND_LABELS, type Contract, type C
 import { totalVerifiedCentavos } from "@/modules/finance/rules";
 import type { DevIdentity } from "@/modules/identity/types";
 import { extractRaSequence } from "@/modules/membership/rules";
+import type { PaymentScheme, VipTierCode } from "@/modules/vip/types";
 import { BusinessRepository, DATE_ONLY, canSeeContract, customerName, genealogyFor, nowIso, today } from "./business-base";
 import { holdUnpaidCommissions, paymentsOfContract, reconcileContract } from "./business-effects";
 import { nextId } from "./ids";
 import type { MockStore } from "./seed";
 import { BROAD_ROLES, activeIdentityRoles } from "./scope";
 
+
+// TODO: replace with the central paymentCodeFor(scheme, tier) from @/modules/vip/rules
+// once the sibling workstream lands it; this fallback is identical.
+function snapshotPaymentCode(scheme: PaymentScheme, tier: VipTierCode): string | null {
+  return scheme.paymentCode ?? (scheme as { paymentCodeByTier?: Partial<Record<VipTierCode, string | null>> }).paymentCodeByTier?.[tier] ?? null;
+}
 
 export function viewContract(store: MockStore, contract: Contract): ContractView {
   const sale = store.sales.find((item) => item.contractId === contract.id);
@@ -100,7 +107,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
         schemeId: scheme.id,
         schemeLabel: scheme.label,
         schemeStatus: scheme.commercialStatus,
-        paymentCode: scheme.paymentCode,
+        paymentCode: snapshotPaymentCode(scheme, product.code),
         classification: customer.contractClassification ?? "S",
         validityYears: product.validityYears,
         benefits: snapshotBenefits(product),
@@ -118,8 +125,9 @@ export class MockContractRepository extends BusinessRepository implements Contra
         finalizedAt: null,
         returnReason: null,
         cancelReason: null,
-        // Move A and Move B need Super Admin written approval before finalization; tracked apart from the payment code.
-        arrangement: scheme.category === "move" ? { schemeLabel: scheme.label, status: "pending", approvedBy: null, approvedAt: null, approvalReference: null } : null,
+        // Standard Move A/B need no arrangement since the owner ruling; the field is
+        // retained (null for new contracts) for historical contracts.
+        arrangement: null,
         history: [],
       };
       this.applyDueDates(contract, input.dueDates);
@@ -367,6 +375,25 @@ export class MockContractRepository extends BusinessRepository implements Contra
       contract.arrangement = { ...contract.arrangement, status: "approved", approvedBy: identity.id, approvedAt: nowIso(), approvalReference: reference };
       this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_ARRANGEMENT_APPROVED, reference);
       this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_ARRANGEMENT_APPROVED, entityType: "contract", entityId: contract.id, previousValue: "pending", newValue: "approved", reason: reference });
+      return viewContract(this.store, contract);
+    });
+  }
+
+  async resolvePaymentCode(id: string, approvalReference: string, options?: MockAsyncOptions): Promise<ContractView> {
+    return this.run(options, (identity) => {
+      this.require(identity, "contracts.approve", "Resolving the payment code needs Admin approval rights. An IST designation does not grant them.");
+      const reference = approvalReference.trim();
+      if (!reference) throw new Error("Enter the reference of the written approval.");
+      const contract = this.find(identity, id);
+      if (contract.status === "cancelled") throw new Error("The contract is cancelled; the payment code can no longer change.");
+      if (this.store.memberships.some((item) => item.contractId === contract.id && item.cardId)) throw new Error("A Card ID was already issued; the payment code can no longer change.");
+      if (contract.paymentCode != null) throw new Error("The payment code is already resolved.");
+      const scheme = this.store.paymentSchemes.find((item) => item.id === contract.schemeId)!;
+      const code = snapshotPaymentCode(scheme, contract.productCode);
+      if (!code) throw new Error("There is no documented payment code for this scheme and tier.");
+      contract.paymentCode = code;
+      this.event(contract, identity, "CONTRACT_PAYMENT_CODE_RESOLVED", reference);
+      this.audit(identity, { module: "contracts", action: "CONTRACT_PAYMENT_CODE_RESOLVED", entityType: "contract", entityId: contract.id, previousValue: "not recorded", newValue: code, reason: reference });
       return viewContract(this.store, contract);
     });
   }

@@ -385,3 +385,15 @@ These rulings are authoritative and take precedence over earlier text in this do
 9. **Due dates** derive from the reservation date: the reservation fee is due that day, monthly installment N is due N months later (clamped to the month end), and a Spot Cash balance is due 7 days later. Staff may override the dates while a contract is Draft or Returned.
 10. **No interest** is ever charged; a scheme has no interest field. Scheme configuration changes are validated (exact positive centavo amounts that add up to the package price per tier), versioned with an effective date and audited, and need no second approver.
 11. **Gold pricing finalized (2026-11-10).** Effective date 2026-11-10. Final Gold prices: Spot Cash ₱312,000 / Move A ₱312,000 / 4-Month Installment ₱390,000 / Move B ₱390,000. The ₱780,000 figure is rejected and is no longer active or unresolved. This ruling supersedes the pending-price-resolution requirement (the previous §6.1.1 proposal and any hold-pending-resolution language for Gold).
+12. **Move A and Move B are standard approved schemes.** Effective date: to be confirmed by the owner (proposed: date of approval). Move A and Move B are standard approved schemes — no per-selection Super Admin written approval is required; the normal Standard preparation/acceptance/review/finalization path is mandatory. Non-Standard exceptions keep their restrictions. Historical arrangement approvals and audits are preserved. Approved Card ID payment-code mapping (T = installment category plus monthly count; no promotional names appear in IDs; the contract keeps the exact scheme, price, schedule, and version):
+
+    | Scheme | Tier | Card ID payment code |
+    |---|---|---|
+    | Spot Cash | B1, S1, G1 | C01 |
+    | 4-Month Installment | B1, S1, G1 | T04 |
+    | Move A | B1, S1, G1 | T04 |
+    | Move B | B1 | T04 |
+    | Move B | S1 | T08 |
+    | Move B | G1 | T12 |
+
+    Card issuance only on activation after finalization, full settlement, and Finance verification. This item supersedes item 7 (Gold hold language for Move B) and item 8 (per-contract written approval); it preserves items 5, 6, 9, 10, 11.

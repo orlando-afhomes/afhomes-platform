@@ -29,7 +29,6 @@ import {
   validatePostalCode,
   validateProvince,
   validateStreet,
-  validateSubdivision,
   validateSuffix,
   validateTinNumber,
   validatePastDate,
@@ -123,7 +122,6 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
   const [province, setProvince] = useState(profile?.address.province ?? "");
   const [city, setCity] = useState(profile?.address.city ?? "");
   const [barangay, setBarangay] = useState(profile?.address.barangay ?? "");
-  const [subdivision, setSubdivision] = useState(profile?.address.subdivision ?? "");
   const [postalCode, setPostalCode] = useState(profile?.address.postalCode ?? "");
   const [telephone, setTelephone] = useState(profile?.telephone ?? "");
   const [facebook, setFacebook] = useState(profile?.facebook ?? "");
@@ -156,7 +154,6 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
       province: orUndefined(validateProvince(province)),
       city: orUndefined(validateCity(city)),
       barangay: orUndefined(validateBarangay(barangay)),
-      subdivision: orUndefined(validateSubdivision(subdivision)),
       postalCode: orUndefined(validatePostalCode(postalCode)),
       telephone: orUndefined(validateLandline(telephone)),
       facebook: orUndefined(validateFacebook(facebook)),
@@ -192,7 +189,6 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
         province: province.trim(),
         city: city.trim(),
         barangay: barangay.trim(),
-        subdivision: subdivision.trim() ? subdivision.trim() : null,
         postalCode: normalizePostalCode(postalCode),
         telephone: telephone.trim() ? normalizeLandline(telephone) : null,
         facebook: facebook.trim() || null,
@@ -249,13 +245,12 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
       </FormSection>
       <FormSection title="Address Information">
         <PhilippineAddressFields
-          value={{ street, province, city, barangay, subdivision, postalCode }}
+          value={{ street, province, city, barangay, postalCode }}
           onChange={(next) => {
             setStreet(next.street);
             setProvince(next.province);
             setCity(next.city);
             setBarangay(next.barangay);
-            setSubdivision(next.subdivision);
             setPostalCode(next.postalCode);
           }}
           errors={{
@@ -263,7 +258,6 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
             province: visible("province"),
             city: visible("city"),
             barangay: visible("barangay"),
-            subdivision: visible("subdivision"),
             postalCode: visible("postalCode"),
           }}
         />

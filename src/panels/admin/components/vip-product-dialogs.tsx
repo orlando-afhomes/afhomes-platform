@@ -11,6 +11,10 @@ import { FormDialog } from "@/shared/components/modern/form-dialog";
 
 const TIERS: VipTierCode[] = ["B1", "S1", "G1"];
 
+/** Per-tier Card ID payment codes for move-category schemes (doc 06 §6.3 mapping). */
+type SchemeTierCodes = Partial<Record<VipTierCode, string>>;
+type SchemeWithTierCodes = PaymentScheme & { paymentCodeByTier?: SchemeTierCodes };
+
 const toPesoText = centavosToInputText;
 const toInt = (value: string) => {
   const plain = value.trim().replace(/,/g, "");
@@ -99,9 +103,12 @@ function SchemeForm({ scheme, onClose }: { scheme: PaymentScheme | null; onClose
   const [prices, setPrices] = useState<Record<string, string>>(() => Object.fromEntries(TIERS.map((tier) => [tier, toPesoText(scheme?.priceCentavosByTier[tier])])));
   const [tierCounts, setTierCounts] = useState<Record<string, string>>(() => Object.fromEntries(TIERS.map((tier) => [tier, scheme?.installmentCountByTier?.[tier] ? String(scheme.installmentCountByTier[tier]) : ""])));
   const [downPercent, setDownPercent] = useState(scheme?.downPaymentBasisPoints ? String(scheme.downPaymentBasisPoints / 100) : "");
+  const [tierCodes, setTierCodes] = useState<Record<string, string>>(() => Object.fromEntries(TIERS.map((tier) => [tier, (scheme as SchemeWithTierCodes | null)?.paymentCodeByTier?.[tier] ?? ""])));
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | undefined>();
   const pending = create.isPending || update.isPending;
+  /** The form has no category control: new schemes default to non-move (hidden), edits mirror the stored category. */
+  const isMove = scheme?.category === "move";
 
   const submit = async () => {
     setError(undefined);
@@ -118,9 +125,15 @@ function SchemeForm({ scheme, onClose }: { scheme: PaymentScheme | null; onClose
       const price = prices[tier] ? parsePesoToCentavos(prices[tier]) : null;
       if (price) priceCentavosByTier[tier] = price;
     }
+    const paymentCodeByTier: SchemeTierCodes = {};
+    for (const tier of tiers) {
+      const entry = (tierCodes[tier] ?? "").trim().toUpperCase();
+      if (entry) paymentCodeByTier[tier] = entry;
+    }
     const input = {
       label: label.trim(),
       paymentCode: code.trim().toUpperCase() || null,
+      paymentCodeByTier,
       applicableTiers: tiers,
       reservationCentavos: reservation ? parsePesoToCentavos(reservation) : null,
       installmentCount: count ? toInt(count) : null,
@@ -152,6 +165,16 @@ function SchemeForm({ scheme, onClose }: { scheme: PaymentScheme | null; onClose
         <TextField label="Number of monthly installments" inputMode="numeric" value={count} onChange={setCount} hint="Leave blank when the count differs by tier." />
         <TextField label="Down payment (% of price)" inputMode="decimal" value={downPercent} onChange={setDownPercent} hint="Includes the reservation fee. Leave blank when there is none." />
       </FormGrid>
+      {isMove ? (
+        <fieldset className="tw:flex tw:flex-col tw:gap-2">
+          <legend className="tw:text-sm tw:font-medium">Per-tier Card ID codes</legend>
+          <div className="tw:grid tw:grid-cols-1 tw:gap-2 tw:sm:grid-cols-3">
+            {TIERS.map((tier) => (
+              <TextField key={tier} label={`${tier} Card ID code`} value={tierCodes[tier] ?? ""} onChange={(value) => setTierCodes((current) => ({ ...current, [tier]: value }))} hint="For example T04." maxLength={3} />
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
       <fieldset className="tw:flex tw:flex-col tw:gap-2">
         <legend className="tw:text-sm tw:font-medium">Applicable tiers, package price and monthly installment</legend>
         {TIERS.map((tier) => (

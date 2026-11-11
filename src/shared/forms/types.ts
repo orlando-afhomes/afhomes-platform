@@ -26,8 +26,9 @@ export type AddressValue = {
   province: string;
   city: string;
   barangay: string;
-  subdivision: string;
   postalCode: string;
 };
 
 export type AddressFieldKey = keyof AddressValue;
+
+export type OfficeAddressValue = { street: string; municipality: string; province: string; postalCode: string };

@@ -4,6 +4,8 @@ import { meetsPayoutRelease, PAYOUT_RELEASE_WAIT_DAYS } from "@/modules/commissi
 import { buildScheduleState } from "@/modules/finance/rules";
 import type { Payment } from "@/modules/finance/types";
 import type { DevIdentity } from "@/modules/identity/types";
+import type { CustomerDraftInput } from "@/modules/customers/types";
+import { currentManilaYear } from "@/modules/customers/customer-number";
 import { buildCardId, extractRaSequence } from "@/modules/membership/rules";
 import { computePointsLedger } from "@/modules/stay-points/engine";
 import { confirmedValueInPeriod, totalsFor } from "@/modules/sales/rules";
@@ -15,6 +17,26 @@ import { createMockStore } from "./seed";
 
 function as(store: ReturnType<typeof createMockStore>, id: string) {
   return createMockRepositories(store, () => getDevIdentity(id));
+}
+
+/** Minimum Submit-ready customer; Customer ID tests override only the ID fields. */
+function validCustomerInput(overrides: Partial<CustomerDraftInput> = {}): CustomerDraftInput {
+  return {
+    displayName: "Ida Test",
+    firstName: "Ida",
+    lastName: "Test",
+    dateOfBirth: "1990-01-01",
+    gender: "Female",
+    civilStatus: "Single",
+    mobileNumber: "09171119999",
+    address: { street: "1 Test Street", province: "Cebu", city: "Lapu-Lapu City", barangay: "Pajo", postalCode: "6015" },
+    vipPlan: "S1",
+    paymentSchemeId: "scheme-installment-4m",
+    contractClassification: "S",
+    consentDataPrivacy: true,
+    idReceivedCertified: true,
+    ...overrides,
+  };
 }
 
 /** Verifies ctr-1 installment MA2: Silver 240,000 moves from 67,500 (28%) to 125,000 (52%) verified, past the 40% payout release (OD-4). */
@@ -339,10 +361,94 @@ describe("integrity guards (C1)", () => {
 
     const customer = store.customers.find((c) => c.id === "cust-a1")!;
     const before = customer.customerNumber ?? null;
-    await admin.customers.correct("cust-a1", { displayName: customer.displayName, customerNumber: "CUST-9001" }, "Typo in Customer ID");
+    // The legacy free-text form is no longer valid; a correction must use YYYY-NNNN.
+    await expect(
+      admin.customers.correct("cust-a1", { displayName: customer.displayName, customerNumber: "CUST-9001" }, "Typo in Customer ID"),
+    ).rejects.toMatchObject({ errors: { customerNumber: "Customer ID must use the format YYYY-NNNN, for example 2026-0001." } });
+    await admin.customers.correct("cust-a1", { displayName: customer.displayName, customerNumber: "2026-0901" }, "Typo in Customer ID");
+    // Another record cannot reuse an assigned Customer ID.
+    await expect(
+      admin.customers.correct("cust-a3", { displayName: "Elena Bautista", customerNumber: "2026-0901" }, "Duplicate Customer ID"),
+    ).rejects.toMatchObject({ errors: { customerNumber: "This Customer ID is already in use." } });
+    expect(store.customers.find((c) => c.id === "cust-a1")!.customerNumber).toBe("2026-0901");
     const corrected = store.auditEvents.filter((e) => e.action === "CUSTOMER_CORRECTED").at(-1)!;
     expect(corrected.previousValue).toBe(`customerNumber:${before ?? "none"}`);
-    expect(corrected.newValue).toBe("customerNumber:CUST-9001");
+    expect(corrected.newValue).toBe("customerNumber:2026-0901");
+  });
+
+  it("assigns the next automatic Customer ID only at Submit and audits the assigned value", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const year = currentManilaYear();
+    const draft = await admin.customers.createDraft({ displayName: "Ida Test", customerIdMode: "auto" });
+    expect(draft.customerNumber ?? null).toBeNull();
+
+    const submitted = await admin.customers.submit(draft.id, validCustomerInput({ customerIdMode: "auto" }));
+    expect(submitted.status).toBe("submitted");
+    expect(submitted.customerNumber).toMatch(new RegExp(`^${year}-\\d{4}$`));
+    expect(submitted.customerNumber).toBe(`${year}-0001`);
+    const audit = store.auditEvents.find((e) => e.action === "CUSTOMER_SUBMITTED" && e.entityId === draft.id)!;
+    expect(audit.newValue).toContain(`${year}-0001`);
+
+    const second = await admin.customers.createDraft({ displayName: "Ida Second", customerIdMode: "auto" });
+    const submittedSecond = await admin.customers.submit(second.id, validCustomerInput({ displayName: "Ida Second", lastName: "Second", customerIdMode: "auto" }));
+    expect(submittedSecond.customerNumber).toBe(`${year}-0002`);
+  });
+
+  it("rejects a blank, malformed, or duplicate manual Customer ID and keeps the draft", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const year = currentManilaYear();
+    const draft = await admin.customers.createDraft({ displayName: "Manual One" });
+
+    await expect(admin.customers.submit(draft.id, validCustomerInput({ customerIdMode: "manual", customerNumber: null }))).rejects.toMatchObject({
+      errors: { customerNumber: "Enter a Customer ID or choose Automatic." },
+    });
+    await expect(admin.customers.submit(draft.id, validCustomerInput({ customerIdMode: "manual", customerNumber: "2024-1" }))).rejects.toMatchObject({
+      errors: { customerNumber: "Customer ID must use the format YYYY-NNNN, for example 2026-0001." },
+    });
+    expect((await admin.customers.getById(draft.id))?.status).toBe("draft");
+
+    await admin.customers.correct("cust-a1", { displayName: "Customer A One", customerNumber: `${year}-0123` }, "Assign Customer ID");
+    await expect(admin.customers.submit(draft.id, validCustomerInput({ customerIdMode: "manual", customerNumber: `${year}-0123` }))).rejects.toMatchObject({
+      errors: { customerNumber: "This Customer ID is already in use." },
+    });
+
+    const submitted = await admin.customers.submit(draft.id, validCustomerInput({ customerIdMode: "manual", customerNumber: `${year}-0124` }));
+    expect(submitted.customerNumber).toBe(`${year}-0124`);
+  });
+
+  it("never allocates a Customer ID on drafts or imports", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const draft = await admin.customers.createDraft({ displayName: "Pending Draft", customerIdMode: "auto" });
+    expect(draft.customerNumber ?? null).toBeNull();
+
+    const job = await admin.customers.importCustomers({
+      fileName: "customers.csv",
+      declaration: true,
+      records: [
+        {
+          "First name": "Imported",
+          "Last name": "Ready",
+          "Birth date": "1990-02-03",
+          "Gender": "Female",
+          "Civil status": "Single",
+          "Mobile number": "09171234599",
+          Email: "imported.ready@afhomes.local",
+          Province: "Cebu",
+          "City / Municipality": "Lapu-Lapu City",
+          Barangay: "Pajo",
+          "VIP tier": "Silver",
+          "Payment scheme": "4-Month Installment",
+          "Contract classification": "Standard",
+        },
+      ],
+    });
+    expect(job.createdCount).toBe(1);
+    const imported = store.customers.find((customer) => customer.id === job.createdCustomerIds[0])!;
+    expect(imported.status).toBe("draft");
+    expect(imported.customerNumber ?? null).toBeNull();
   });
 
   it("removes business authority and visibility from an identity whose linked account is suspended", async () => {
@@ -385,18 +491,18 @@ describe("payment and cancellation audit trail", () => {
   });
 });
 
-describe("Move schemes without an authorized Card ID payment code (06 section 6.3)", () => {
+describe("Move schemes with an authorized Card ID payment code (06 section 6.3, doc 05 item 12)", () => {
   it.each([
     ["scheme-move-a", pesos(54000)],
     ["scheme-move-b", pesos(72000)],
-  ])("%s: pays and finalizes, but activation fails and no Card ID is generated", async (schemeId, price) => {
+  ])("%s: pays and finalizes, and activation issues a B1 T04 Card ID", async (schemeId, price) => {
     const store = createMockStore();
     const superAdmin = as(store, "dev-super-admin");
     const finance = as(store, "dev-finance");
     await superAdmin.contracts.cancel("ctr-4", "Re-prepare under a Move scheme");
     const prepared = await superAdmin.contracts.prepare({ customerId: "cust-a4", schemeId, customerAccepted: true });
-    expect(prepared).toMatchObject({ paymentCode: null, priceCentavos: price, arrangement: { status: "pending" } });
-    await superAdmin.contracts.approveArrangement(prepared.id, "Signed approval");
+    expect(prepared).toMatchObject({ paymentCode: "T04", priceCentavos: price, arrangement: null });
+    expect(prepared.holds.filter((hold) => /arrangement/.test(hold))).toHaveLength(0);
     await superAdmin.contracts.submit(prepared.id);
     await superAdmin.contracts.startReview(prepared.id);
     const finalized = await superAdmin.contracts.finalize(prepared.id);
@@ -412,9 +518,11 @@ describe("Move schemes without an authorized Card ID payment code (06 section 6.
 
     await superAdmin.contracts.recordRaNumber(prepared.id, "2026-0009");
     const membership = store.memberships.find((m) => m.contractId === prepared.id)!;
-    await expect(finance.memberships.activate(membership.id)).rejects.toThrow(/no documented Card ID payment code/);
-    expect(membership).toMatchObject({ status: "pending", cardId: null, activationDate: null });
-    expect(store.auditEvents.some((e) => e.action === "CARD_ID_ISSUED" && e.relatedRecordIds?.includes(prepared.id))).toBe(false);
+    const active = await finance.memberships.activate(membership.id);
+    const today = manilaToday().replace(/-/g, "").slice(2);
+    expect(active.cardId).toBe(`${today}00009B1T04S`);
+    expect(active.cardId).toMatch(/^\d{6}0\d{4}B1T04S$/);
+    expect(store.auditEvents.some((e) => e.action === "CARD_ID_ISSUED" && e.relatedRecordIds?.includes(prepared.id))).toBe(true);
   });
 
   it("keeps the official codes and the historical Card ID: Spot Cash C01, 4-month installment T04", () => {
@@ -438,12 +546,13 @@ describe("Move schemes without an authorized Card ID payment code (06 section 6.
     expect(installment).toMatchObject({ priceCentavos: pesos(390000), priceStatus: "contract_stated" });
     expect(installment.holds.filter((hold) => /price is in conflict/.test(hold))).toHaveLength(0);
     const moveA = await prepareFor("scheme-move-a");
-    expect(moveA).toMatchObject({ priceCentavos: pesos(312000), priceStatus: "contract_stated" });
+    expect(moveA).toMatchObject({ priceCentavos: pesos(312000), priceStatus: "contract_stated", paymentCode: "T04", arrangement: null });
     expect(moveA.holds.filter((hold) => /price is in conflict/.test(hold))).toHaveLength(0);
+    expect(moveA.holds.filter((hold) => /arrangement/.test(hold))).toHaveLength(0);
     const moveB = await prepareFor("scheme-move-b");
-    expect(moveB).toMatchObject({ priceCentavos: pesos(390000), priceStatus: "contract_stated" });
+    expect(moveB).toMatchObject({ priceCentavos: pesos(390000), priceStatus: "contract_stated", paymentCode: "T12", arrangement: null });
     expect(moveB.holds.filter((hold) => /price is in conflict/.test(hold))).toHaveLength(0);
-    expect(moveB.arrangement).toMatchObject({ status: "pending" });
+    expect(moveB.holds.filter((hold) => /arrangement/.test(hold))).toHaveLength(0);
   });
 });
 
@@ -488,7 +597,7 @@ describe("owner-decided restrictions (C2)", () => {
     expect(store.contracts.find((c) => c.id === "ctr-2")).toMatchObject({ status: "finalized", paymentCode: "T04" });
   });
 
-  it("builds Move B with a 40% down payment and holds finalization until Super Admin approves the arrangement", async () => {
+  it("builds Move B with a 40% down payment and no arrangement hold (B1 T04)", async () => {
     const store = createMockStore();
     const admin = as(store, "dev-admin");
     await admin.contracts.cancel("ctr-4", "Re-prepare under Move B");
@@ -501,25 +610,140 @@ describe("owner-decided restrictions (C2)", () => {
       ["MA3", pesos(10800), "2027-02-10"],
       ["MA4", pesos(10800), "2027-03-10"],
     ]);
-    expect(contract).toMatchObject({ priceCentavos: pesos(72000), paymentCode: null, requiredInitialCentavos: pesos(28800), arrangement: { status: "pending" } });
-    expect(contract.holds).toContain("The Move B arrangement needs Super Admin written approval.");
-    await expect(admin.contracts.approveArrangement(contract.id, "Memo 12")).rejects.toThrow(/Super Administrator/);
-    const superAdmin = as(store, "dev-super-admin");
-    await expect(superAdmin.contracts.approveArrangement(contract.id, "  ")).rejects.toThrow(/reference/);
-    const approved = await superAdmin.contracts.approveArrangement(contract.id, "Memo 12");
-    expect(approved.arrangement).toMatchObject({ status: "approved", approvedBy: "dev-super-admin", approvalReference: "Memo 12" });
-    expect(approved.holds.some((hold) => /arrangement/.test(hold))).toBe(false);
-    expect(store.auditEvents.some((e) => e.action === "CONTRACT_ARRANGEMENT_APPROVED" && e.entityId === contract.id)).toBe(true);
+    expect(contract).toMatchObject({ priceCentavos: pesos(72000), paymentCode: "T04", requiredInitialCentavos: pesos(28800), arrangement: null });
+    expect(contract.holds.some((hold) => /arrangement/.test(hold))).toBe(false);
+    await admin.contracts.submit(contract.id);
+    expect((await admin.contracts.finalize(contract.id)).status).toBe("finalized");
   });
 
-  it("lets Super Admin approve an arrangement on a contract they prepared, and prices Move A from Spot Cash", async () => {
+  it("prices Move A from Spot Cash with a T04 code and no arrangement", async () => {
     const store = createMockStore();
     const superAdmin = as(store, "dev-super-admin");
     await superAdmin.contracts.cancel("ctr-3", "Re-prepare under Move A");
     const contract = await superAdmin.contracts.prepare({ customerId: "cust-a3", schemeId: "scheme-move-a", customerAccepted: true, reservationDate: "2026-11-10" });
-    expect(contract).toMatchObject({ priceCentavos: pesos(312000), priceStatus: "contract_stated", paymentCode: null, preparedBy: "dev-super-admin" });
+    expect(contract).toMatchObject({ priceCentavos: pesos(312000), priceStatus: "contract_stated", paymentCode: "T04", preparedBy: "dev-super-admin", arrangement: null });
     expect(contract.schedule.slice(1).map((line) => line.amountCentavos)).toEqual([pesos(75500), pesos(75500), pesos(75500), pesos(75500)]);
-    expect((await superAdmin.contracts.approveArrangement(contract.id, "Signed approval SA-1")).arrangement?.status).toBe("approved");
+    expect(contract.holds.some((hold) => /arrangement/.test(hold))).toBe(false);
+  });
+
+  it("keeps Super Admin arrangement approval for pre-resolution legacy contracts", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const superAdmin = as(store, "dev-super-admin");
+    await admin.contracts.cancel("ctr-4", "Re-prepare under Move B");
+    const prepared = await admin.contracts.prepare({ customerId: "cust-a4", schemeId: "scheme-move-b", customerAccepted: true, reservationDate: "2026-11-10" });
+    expect(prepared.arrangement).toBeNull();
+    const legacy = JSON.parse(JSON.stringify(store.contracts.find((c) => c.id === prepared.id)!));
+    legacy.id = "ctr-legacy-arr";
+    legacy.paymentCode = null;
+    legacy.arrangement = { schemeLabel: "Move B", status: "pending", approvedBy: null, approvedAt: null, approvalReference: null };
+    await admin.contracts.cancel(prepared.id, "Superseded by legacy fixture");
+    store.contracts.push(legacy);
+
+    await expect(admin.contracts.approveArrangement(legacy.id, "Memo 12")).rejects.toThrow(/Super Administrator/);
+    await expect(superAdmin.contracts.approveArrangement(legacy.id, "  ")).rejects.toThrow(/reference/);
+    const approved = await superAdmin.contracts.approveArrangement(legacy.id, "Memo 12");
+    expect(approved.arrangement).toMatchObject({ status: "approved", approvedBy: "dev-super-admin", approvalReference: "Memo 12" });
+    expect(approved.holds.some((hold) => /arrangement/.test(hold))).toBe(false);
+    expect(store.auditEvents.some((e) => e.action === "CONTRACT_ARRANGEMENT_APPROVED" && e.entityId === legacy.id)).toBe(true);
+
+    await admin.contracts.submit(legacy.id);
+    const finalized = await admin.contracts.finalize(legacy.id);
+    expect(finalized.status).toBe("finalized");
+    expect(finalized.paymentCode).toBeNull();
+  });
+
+  it("resolves the Card ID payment code per tier at prepare (Move A T04; Move B T04/T08/T12; Spot C01; installment T04)", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const finance = as(store, "dev-finance");
+    await admin.contracts.requestCancellation("ctr-1", "voluntary_withdrawal", "Matrix test frees S1");
+    await finance.contracts.decideCancellation("ctr-1", "confirm", "Forfeiture per Reservation Agreement");
+    await admin.contracts.cancel("ctr-3", "Matrix test frees G1");
+    await admin.contracts.cancel("ctr-4", "Matrix test frees B1");
+
+    const check = async (customerId: string, schemeId: string, expected: string) => {
+      const prepared = await admin.contracts.prepare({ customerId, schemeId, customerAccepted: true });
+      expect(prepared.paymentCode).toBe(expected);
+      expect(prepared.arrangement).toBeNull();
+      await admin.contracts.cancel(prepared.id, "Matrix next");
+    };
+
+    await check("cust-a4", "scheme-move-a", "T04");
+    await check("cust-a4", "scheme-move-b", "T04");
+    await check("cust-a4", "scheme-spot-cash", "C01");
+    await check("cust-a4", "scheme-installment-4m", "T04");
+    await check("cust-a1", "scheme-move-a", "T04");
+    await check("cust-a1", "scheme-move-b", "T08");
+    await check("cust-a3", "scheme-move-a", "T04");
+    await check("cust-a3", "scheme-move-b", "T12");
+  });
+
+  it("finalizes a standard Move B Gold contract with no arrangement hold (G1 T12)", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    await admin.contracts.cancel("ctr-3", "Re-prepare Move B Gold");
+    const prepared = await admin.contracts.prepare({ customerId: "cust-a3", schemeId: "scheme-move-b", customerAccepted: true });
+    expect(prepared).toMatchObject({ priceCentavos: pesos(390000), paymentCode: "T12", arrangement: null });
+    expect(prepared.holds.some((hold) => /arrangement/.test(hold))).toBe(false);
+    await admin.contracts.submit(prepared.id);
+    await admin.contracts.startReview(prepared.id);
+    const finalized = await admin.contracts.finalize(prepared.id);
+    expect(finalized.status).toBe("finalized");
+    expect(finalized.paymentCode).toBe("T12");
+  });
+
+  it("activates a fully paid Move B Gold contract with a G1T12S Card ID", async () => {
+    const store = createMockStore();
+    const superAdmin = as(store, "dev-super-admin");
+    const finance = as(store, "dev-finance");
+    await superAdmin.contracts.cancel("ctr-3", "Re-prepare Move B Gold");
+    const prepared = await superAdmin.contracts.prepare({ customerId: "cust-a3", schemeId: "scheme-move-b", customerAccepted: true });
+    await superAdmin.contracts.submit(prepared.id);
+    await superAdmin.contracts.finalize(prepared.id);
+    const full = await superAdmin.payments.submit({ contractId: prepared.id, purpose: "full", amountCentavos: pesos(390000), method: "Bank Transfer", paidDate: manilaToday(), referenceNo: "MOVE-B-GOLD-FULL" });
+    await finance.payments.verify(full.id);
+    expect(store.sales.find((s) => s.contractId === prepared.id)!.status).toBe("confirmed");
+    await superAdmin.contracts.recordRaNumber(prepared.id, "2026-0011");
+    const membership = store.memberships.find((m) => m.contractId === prepared.id)!;
+    const active = await finance.memberships.activate(membership.id);
+    const today = manilaToday().replace(/-/g, "").slice(2);
+    expect(active.cardId).toBe(`${today}00011G1T12S`);
+    expect(active.cardId).toMatch(/^\d{6}0\d{4}G1T12S$/);
+  });
+
+  it("resolves the payment code on a finalized pre-resolution legacy contract", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    await admin.contracts.cancel("ctr-4", "Re-prepare under Move B");
+    const prepared = await admin.contracts.prepare({ customerId: "cust-a4", schemeId: "scheme-move-b", customerAccepted: true });
+    await admin.contracts.submit(prepared.id);
+    await admin.contracts.finalize(prepared.id);
+    expect(store.contracts.find((c) => c.id === prepared.id)!.paymentCode).toBe("T04");
+    store.contracts.find((c) => c.id === prepared.id)!.paymentCode = null;
+    const resolved = await admin.contracts.resolvePaymentCode(prepared.id, "Owner mapping 2026-11-10");
+    expect(resolved.paymentCode).toBe("T04");
+    expect(store.auditEvents.some((e) => e.action === "CONTRACT_PAYMENT_CODE_RESOLVED" && e.entityId === prepared.id)).toBe(true);
+    await expect(admin.contracts.resolvePaymentCode(prepared.id, "Again")).rejects.toThrow(/already/);
+  });
+
+  it("guards payment code resolution (approver, reference, cancelled, issued card, resolved)", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const owner = as(store, "dev-ost-a2");
+    await admin.contracts.cancel("ctr-4", "Free B1");
+    const prepared = await admin.contracts.prepare({ customerId: "cust-a4", schemeId: "scheme-move-b", customerAccepted: true });
+    store.contracts.find((c) => c.id === prepared.id)!.paymentCode = null;
+    await expect(admin.contracts.resolvePaymentCode(prepared.id, "   ")).rejects.toThrow(/reference|Enter/);
+    await expect(owner.contracts.resolvePaymentCode(prepared.id, "Ref")).rejects.toThrow();
+    await admin.contracts.cancel(prepared.id, "Cancel for guard");
+    await expect(admin.contracts.resolvePaymentCode(prepared.id, "Ref")).rejects.toThrow(/cancelled/);
+    await admin.contracts.cancel("ctr-3", "Free G1");
+    const gold = await admin.contracts.prepare({ customerId: "cust-a3", schemeId: "scheme-move-b", customerAccepted: true });
+    expect(gold.paymentCode).toBe("T12");
+    await expect(admin.contracts.resolvePaymentCode(gold.id, "Ref")).rejects.toThrow(/already/);
+    store.contracts.find((c) => c.id === "ctr-2")!.paymentCode = null;
+    await expect(admin.contracts.resolvePaymentCode("ctr-2", "Ref")).rejects.toThrow(/already issued|Card ID/);
   });
 
   it("validates scheme amounts and records each configuration version", async () => {
@@ -640,9 +864,9 @@ describe("owner-decided restrictions (C2)", () => {
     await admin.contracts.cancel(installment.id, "Next scheme");
 
     const moveB = await admin.contracts.prepare({ customerId: "cust-a3", schemeId: "scheme-move-b", customerAccepted: true, reservationDate: "2026-11-10" });
-    expect(moveB).toMatchObject({ priceCentavos: pesos(390000), priceStatus: "contract_stated" });
+    expect(moveB).toMatchObject({ priceCentavos: pesos(390000), priceStatus: "contract_stated", paymentCode: "T12", arrangement: null });
     expect(moveB.holds.filter((hold) => /price is in conflict/.test(hold))).toHaveLength(0);
-    expect(moveB.arrangement).toMatchObject({ status: "pending" });
+    expect(moveB.holds.filter((hold) => /arrangement/.test(hold))).toHaveLength(0);
   });
 
   it("keeps a conflict through ordinary edits and clears it only via explicit status resolution", async () => {

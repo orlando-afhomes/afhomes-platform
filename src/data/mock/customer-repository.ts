@@ -2,6 +2,7 @@ import { CustomerValidationError, type CustomerRepository } from "@/data/contrac
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import { buildImportRows, MAX_EXPORT_ROWS, MAX_IMPORT_ROWS, type CustomerImportJob, type CustomerImportRecord } from "@/modules/customers/import";
+import { currentManilaYear, nextCustomerId } from "@/modules/customers/customer-number";
 import { composeCustomerName, restrictCustomer, validateCustomerForSubmit } from "@/modules/customers/rules";
 import type { Customer, CustomerDraftInput } from "@/modules/customers/types";
 import type { DevIdentity } from "@/modules/identity/types";
@@ -200,13 +201,22 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
       const customer = this.ownRecord(identity, id);
       if (customer.status !== "draft") throw new Error("Only draft customers can be submitted.");
       const merged = { ...this.copy(customer), ...input, displayName: input.displayName || customer.displayName } as CustomerDraftInput;
+      // 04 section 7.7: only Submit consumes the official Customer ID sequence; drafts never do.
+      // Automatic (or the legacy/import blank request) generates the next id, and the
+      // assignment is part of the audited submission change.
+      const customerIdMode = input.customerIdMode;
+      const requestedNumber = typeof merged.customerNumber === "string" ? merged.customerNumber.trim() : "";
+      const assignsNumber = customerIdMode === "auto" || (customerIdMode === undefined && requestedNumber === "");
+      if (assignsNumber) merged.customerNumber = nextCustomerId(this.store.customers, currentManilaYear());
       const errors = validateCustomerForSubmit(merged, this.store.customers, customer.id, this.supplementaryAllowed(merged.vipPlan));
       if (Object.keys(errors).length > 0) throw new CustomerValidationError(errors);
       this.assertReferences(merged);
       this.apply(customer, input);
+      if (assignsNumber) customer.customerNumber = merged.customerNumber;
       customer.status = "submitted";
       customer.submittedAt = today();
-      this.audit(identity, { module: "customers", action: BUSINESS_AUDIT_ACTIONS.CUSTOMER_SUBMITTED, entityType: "customer", entityId: customer.id, previousValue: "draft", newValue: "submitted" });
+      const assignedNumber = assignsNumber ? merged.customerNumber : null;
+      this.audit(identity, { module: "customers", action: BUSINESS_AUDIT_ACTIONS.CUSTOMER_SUBMITTED, entityType: "customer", entityId: customer.id, previousValue: "draft", newValue: assignedNumber ? `submitted; customerNumber:${assignedNumber}` : "submitted" });
       return this.copy(customer);
     });
   }

@@ -68,14 +68,15 @@ export type Contract = {
   cancellation?: ContractCancellation | null;
   /**
    * Special arrangement (Move A or Move B), tracked separately from the payment code,
-   * which records only the pricing category (owner decision 2026-11-09). Absent or null
-   * for standard schemes.
+   * which records only the pricing category (owner decision 2026-11-09). Legacy:
+   * standard Move A/B need no arrangement since the owner ruling; the field is
+   * retained (null for new contracts) for historical contracts only.
    */
   arrangement?: SpecialArrangement | null;
   history: ContractEvent[];
 };
 
-/** Written approval of a Move arrangement by Super Admin (deck slide 16; owner decision 2026-11-09). */
+/** Written approval of a Move arrangement by Super Admin (deck slide 16; owner decision 2026-11-09). Legacy: retained for historical contracts; new contracts carry no arrangement. */
 export type SpecialArrangement = {
   schemeLabel: string;
   status: "pending" | "approved";

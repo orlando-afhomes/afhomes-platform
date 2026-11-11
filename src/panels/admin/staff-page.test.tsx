@@ -73,15 +73,29 @@ async function pickSharedSelect(user: ReturnType<typeof userEvent.setup>, placeh
   await pickOption(user, optionLabel);
 }
 
+/** Types into a searchable address combobox and clicks the exact option. */
+async function pickAddressOption(user: ReturnType<typeof userEvent.setup>, label: string, filter: string, option: RegExp) {
+  const combo = screen.getByRole("combobox", { name: label }) as HTMLInputElement;
+  await user.click(combo);
+  if (combo.value) await user.clear(combo);
+  await user.type(combo, filter);
+  await user.click(await screen.findByRole("option", { name: option }));
+}
+
 const TEST_PASSWORD = "password1234";
 
 async function fillProfileFields(user: ReturnType<typeof userEvent.setup>) {
   fireEvent.change(screen.getByPlaceholderText("Mobile Number"), { target: { value: "09171234567" } });
-  fireEvent.change(screen.getByLabelText(/Street Address/), { target: { value: "123 Maharlika Street" } });
-  fireEvent.change(screen.getByLabelText(/Province/), { target: { value: "Metro Manila" } });
-  fireEvent.change(screen.getByLabelText(/^City/), { target: { value: "Makati City" } });
-  fireEvent.change(screen.getByLabelText(/Barangay/), { target: { value: "San Antonio" } });
-  fireEvent.change(screen.getByLabelText(/ZIP Code/), { target: { value: "1203" } });
+  const street = screen.getByRole("textbox", { name: "No./Street/Subdivision" }) as HTMLInputElement;
+  fireEvent.change(street, { target: { value: "123 Maharlika Street, acacia subdivision" } });
+  // The subdivision is typed inline in the street line, never a separate field.
+  expect(street.value).toBe("123 Maharlika Street, Acacia Subdivision");
+  await pickAddressOption(user, "Province", "Metro Manila", /^metro manila$/i);
+  await waitFor(() => expect(screen.getByRole("combobox", { name: "City/Municipality" })).toBeEnabled());
+  await pickAddressOption(user, "City/Municipality", "Makati", /^makati city$/i);
+  await pickAddressOption(user, "Barangay", "San Antonio", /^san antonio$/i);
+  // ZIP is derived from the selected city and stays locked.
+  expect(screen.getByLabelText("ZIP Code")).toBeDisabled();
   fireEvent.change(screen.getByPlaceholderText("Telephone"), { target: { value: "028123456" } });
   fireEvent.change(screen.getByPlaceholderText("Facebook"), { target: { value: "johndoe" } });
   fireEvent.change(screen.getByLabelText(/^TIN/), { target: { value: "123456789" } });

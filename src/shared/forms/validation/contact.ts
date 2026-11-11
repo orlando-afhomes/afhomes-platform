@@ -2,7 +2,6 @@ import {
   isValidEmail,
   isValidLandline,
   isValidPhilippineMobile,
-  isValidTin,
   MIN_PASSWORD_LENGTH,
   MAX_PASSWORD_LENGTH,
 } from "@/shared/utils/input-sanitizers";
@@ -44,13 +43,19 @@ export function validateConfirmPassword(password: string, confirm: string): stri
   return null;
 }
 
-/** Optional landline: blank or 7–11 digits. */
-export function validateLandline(value: string): string | null {
+/**
+ * Optional landline. When an area code is shown as the field prefix the value is
+ * the local subscriber number only: 8 digits for Metro Manila (02) and 7 for
+ * every provincial code. Without an area code the 7–10 digit domestic form is
+ * accepted. Never blocks an empty submit.
+ */
+export function validateLandline(value: string, areaCode?: string | null): string | null {
   if (!value.trim()) return null;
-  if (!isValidLandline(value)) {
-    return "Landline must be 7 to 11 digits.";
-  }
-  return null;
+  if (isValidLandline(value, areaCode)) return null;
+  const code = (areaCode ?? "").replace(/\D/g, "");
+  if (code === "2" || code === "02") return "Landline must be 8 digits for Metro Manila (02).";
+  if (code) return "Landline must be 7 digits for this area code.";
+  return "Landline must be 7 to 10 digits.";
 }
 
 /** Optional Facebook handle/URL: 2–150 characters, no whitespace. */

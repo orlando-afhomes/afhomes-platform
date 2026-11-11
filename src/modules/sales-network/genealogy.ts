@@ -170,3 +170,159 @@ export function buildAuthorizedGenealogyTree(members: readonly OrgMember[], auth
     .sort((a, b) => a.displayName.localeCompare(b.displayName))
     .map(build);
 }
+
+export type AttributionPerson = {
+  id: string;
+  displayName: string;
+  aaNumber: string | null;
+  designation: Designation;
+};
+
+export type AttributionChain = {
+  recommender: AttributionPerson | null;
+  referrer: AttributionPerson | null;
+  sm: AttributionPerson | null;
+  ssm: AttributionPerson | null;
+  svd: AttributionPerson | null;
+};
+
+/** Upper bound on genealogy hops; protects against malformed or very deep data. */
+const ATTRIBUTION_MAX_DEPTH = 32;
+
+function toAttributionPerson(member: OrgMember): AttributionPerson {
+  const aaNumber = member.aaNumber?.trim();
+  return {
+    id: member.id,
+    displayName: member.displayName,
+    aaNumber: aaNumber ? aaNumber : null,
+    designation: member.designation,
+  };
+}
+
+/** Direct attribution parties must be active OSTs; anything else resolves to null. */
+function isActiveOst(member: OrgMember | undefined): member is OrgMember {
+  return Boolean(member && member.designation === "OST" && member.status === "active");
+}
+
+/**
+ * Derive the sales attribution chain from the genealogy only. The referrer (or,
+ * failing that, the recommender) anchors the walk; the upline is then walked
+ * upwards and the first SM, SSM, and SVD found are reported. Inactive or
+ * suspended uplines are skipped rather than treated as chain breakers, so a
+ * temporarily deactivated manager does not erase genuine ancestors above them;
+ * no placeholder person is ever invented. Missing parents, cycles, and the
+ * depth cap stop the walk.
+ */
+export function resolveAttributionChain(
+  members: readonly OrgMember[],
+  referrerId: string | null | undefined,
+  recommenderId?: string | null,
+): AttributionChain {
+  const byId = new Map(members.map((member) => [member.id, member]));
+
+  const referrerMember = referrerId ? byId.get(referrerId) : undefined;
+  const referrer = isActiveOst(referrerMember) ? referrerMember : null;
+
+  const recommenderMember = recommenderId ? byId.get(recommenderId) : undefined;
+  const recommender = isActiveOst(recommenderMember) ? recommenderMember : null;
+
+  const chain: AttributionChain = {
+    recommender: recommender ? toAttributionPerson(recommender) : null,
+    referrer: referrer ? toAttributionPerson(referrer) : null,
+    sm: null,
+    ssm: null,
+    svd: null,
+  };
+
+  /**
+   * Walks one OST's upline and returns the first active SM, SSM, and SVD.
+   * Stops at the SVD root, a missing parent, a cycle, or the depth cap.
+   */
+  const walkUpline = (start: OrgMember): Pick<AttributionChain, "sm" | "ssm" | "svd"> => {
+    const found: Pick<AttributionChain, "sm" | "ssm" | "svd"> = { sm: null, ssm: null, svd: null };
+    const visited = new Set<string>([start.id]);
+    let current: OrgMember | null = start;
+    let depth = 0;
+
+    while (current.parentId && depth < ATTRIBUTION_MAX_DEPTH) {
+      const parentId = current.parentId;
+      if (visited.has(parentId)) break;
+      visited.add(parentId);
+
+      const parent = byId.get(parentId);
+      if (!parent) break;
+      depth += 1;
+
+      if (parent.status === "active") {
+        if (parent.designation === "SM" && !found.sm) found.sm = toAttributionPerson(parent);
+        else if (parent.designation === "SSM" && !found.ssm) found.ssm = toAttributionPerson(parent);
+        else if (parent.designation === "SVD" && !found.svd) found.svd = toAttributionPerson(parent);
+      }
+
+      if (found.svd) break;
+      current = parent;
+    }
+
+    return found;
+  };
+
+  // The referrer anchors the chain. An OST may report straight to the SVD (no SM
+  // or SSM of their own), so any missing rung is filled from the recommender's
+  // chain — both parties are the same genealogy team, so this shows the team's
+  // actual managers rather than blanks.
+  const anchor = referrer ?? recommender;
+  if (!anchor) return chain;
+
+  const fromReferrer = referrer ? walkUpline(referrer) : { sm: null, ssm: null, svd: null };
+  const fromRecommender = recommender ? walkUpline(recommender) : { sm: null, ssm: null, svd: null };
+
+  chain.sm = fromReferrer.sm ?? fromRecommender.sm;
+  chain.ssm = fromReferrer.ssm ?? fromRecommender.ssm;
+  chain.svd = fromReferrer.svd ?? fromRecommender.svd;
+
+  return chain;
+}
+
+/**
+ * IDs of every active OST that shares the anchor member's team in genealogy —
+ * the same SVD root. Returns an empty set when the anchor is unknown or the
+ * team cannot be resolved, so callers can fall back to the full roster.
+ */
+export function genealogyTeamOstIds(members: readonly OrgMember[], anchorId: string | null | undefined): Set<string> {
+  const byId = new Map(members.map((member) => [member.id, member]));
+  const anchor = anchorId ? byId.get(anchorId) : undefined;
+  if (!anchor) return new Set();
+
+  // Walk to the SVD root; the team is everything below it.
+  let root: OrgMember = anchor;
+  const visited = new Set<string>([anchor.id]);
+  let depth = 0;
+  while (root.parentId && depth < ATTRIBUTION_MAX_DEPTH) {
+    const parent = byId.get(root.parentId);
+    if (!parent || visited.has(parent.id)) break;
+    visited.add(parent.id);
+    root = parent;
+    depth += 1;
+  }
+
+  if (root.designation !== "SVD") return new Set();
+
+  const teamIds = new Set<string>([root.id]);
+  let added = true;
+  while (added) {
+    added = false;
+    for (const member of members) {
+      if (member.parentId && teamIds.has(member.parentId) && !teamIds.has(member.id)) {
+        teamIds.add(member.id);
+        added = true;
+      }
+    }
+  }
+
+  const ostIds = new Set<string>();
+  for (const id of teamIds) {
+    const member = byId.get(id);
+    if (isActiveOst(member)) ostIds.add(id);
+  }
+  return ostIds;
+}

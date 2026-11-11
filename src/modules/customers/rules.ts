@@ -1,5 +1,12 @@
+import { validateCustomerId } from "./customer-number";
+import { dialingPrefixFor } from "@/shared/data/philippine-locations";
 import type { Customer, CustomerDraftInput } from "./types";
 import { CUSTOMER_CIVIL_STATUSES, CUSTOMER_GENDERS } from "./types";
+import { validateLandline } from "@/shared/forms/validation/contact";
+import { validateGovIdNumber, validateCitizenship, validateTinNumber } from "@/shared/forms/validation/identification";
+
+/** Citizenship validation lives with the other identification rules; re-exported for customer-rule callers. */
+export { validateCitizenship };
 
 export type CustomerErrors = Partial<Record<string, string>>;
 
@@ -33,9 +40,34 @@ export function validateCustomerForSubmit(input: CustomerDraftInput, existing: r
   if (input.gender && !(CUSTOMER_GENDERS as readonly string[]).includes(input.gender)) errors.gender = "Select Male or Female.";
   if (input.civilStatus && !(CUSTOMER_CIVIL_STATUSES as readonly string[]).includes(input.civilStatus)) errors.civilStatus = "Select a valid civil status.";
   if (input.email && !EMAIL_PATTERN.test(input.email)) errors.email = "Enter a valid email address.";
+  if (input.landline) {
+    // The field shows the area code as a fixed prefix, so the stored value is the
+    // local subscriber number and its required length depends on that code.
+    const areaCode = input.address ? dialingPrefixFor(input.address.province, input.address.city).areaCode : null;
+    const landlineError = validateLandline(input.landline, areaCode);
+    if (landlineError) errors.landline = landlineError;
+  }
+  if (input.tinNumber) {
+    const tinError = validateTinNumber(input.tinNumber);
+    if (tinError) errors.tinNumber = tinError;
+  }
+  if (input.citizenship?.trim()) {
+    const citizenshipError = validateCitizenship(input.citizenship);
+    if (citizenshipError) errors.citizenship = citizenshipError;
+  }
+  if (input.governmentIdNumber?.trim()) {
+    const governmentIdError = validateGovIdNumber(input.governmentIdNumber, input.governmentIdType ?? undefined);
+    if (governmentIdError) errors.governmentIdNumber = governmentIdError;
+  }
   const number = input.customerNumber?.trim();
-  if (number && existing.some((item) => item.id !== selfId && item.customerNumber?.toLowerCase() === number.toLowerCase())) {
-    errors.customerNumber = "This Customer ID is already in use.";
+  // Customer ID mode (04 section 7.7): Manual requires a value; Automatic (or the
+  // legacy blank request) generates one at Submit, so a blank value does not block.
+  const customerIdMode = input.customerIdMode;
+  if (!number && customerIdMode === "manual") {
+    errors.customerNumber = "Enter a Customer ID or choose Automatic.";
+  } else if (number) {
+    const customerNumberError = validateCustomerId(number, existing, selfId);
+    if (customerNumberError) errors.customerNumber = customerNumberError;
   }
   Object.assign(errors, validateSupplementaryHolder(input.supplementaryHolder, supplementaryAllowed));
   if (!input.consentDataPrivacy) errors.consentDataPrivacy = "The RA 10173 data privacy consent must be certified.";
@@ -63,5 +95,43 @@ export function validateSupplementaryHolder(holder: CustomerDraftInput["suppleme
   if (!allowed) errors.supplementaryHolder = "The selected VIP plan does not allow a supplementary holder.";
   else if (!holder.firstName?.trim() || !holder.lastName?.trim()) errors.supplementaryHolder = "Enter the supplementary holder's first and last name.";
   else if (holder.dateOfBirth && !(holder.dateOfBirth < new Date().toISOString().slice(0, 10))) errors.supplementaryHolder = "The supplementary holder's birth date must be in the past.";
+  if (!errors.supplementaryHolder) {
+    // Email, government ID type/number are not typed holder fields; read them
+    // tolerantly so a future caller passing them still gets the format check.
+    const holderRecord = holder as unknown as {
+      email?: unknown;
+      governmentIdType?: unknown;
+      governmentIdNumber?: unknown;
+    };
+    const holderEmail = holderRecord.email;
+    if (typeof holderEmail === "string" && holderEmail.trim() !== "" && !EMAIL_PATTERN.test(holderEmail.trim())) {
+      errors.supplementaryHolder = "Enter a valid email address.";
+    }
+    if (!errors.supplementaryHolder) {
+      // Mirror the primary rule: the area code shown as the prefix decides the
+      // local-number length, using the holder's own residential address.
+      const holderAreaCode = holder.address
+        ? dialingPrefixFor(holder.address.province, holder.address.city).areaCode
+        : null;
+      const holderLandlineError = validateLandline(holder.landline ?? "", holderAreaCode);
+      if (holderLandlineError) errors.supplementaryHolder = holderLandlineError;
+    }
+    if (!errors.supplementaryHolder) {
+      const holderTinError = validateTinNumber(holder.tinNumber ?? "");
+      if (holderTinError) errors.supplementaryHolder = holderTinError;
+    }
+    if (!errors.supplementaryHolder) {
+      const holderCitizenshipError = validateCitizenship(holder.citizenship ?? "");
+      if (holderCitizenshipError) errors.supplementaryHolder = holderCitizenshipError;
+    }
+    if (!errors.supplementaryHolder) {
+      const holderGovId = typeof holderRecord.governmentIdNumber === "string" ? holderRecord.governmentIdNumber : "";
+      if (holderGovId.trim()) {
+        const holderGovIdType = typeof holderRecord.governmentIdType === "string" ? holderRecord.governmentIdType : undefined;
+        const holderGovIdError = validateGovIdNumber(holderGovId, holderGovIdType);
+        if (holderGovIdError) errors.supplementaryHolder = holderGovIdError;
+      }
+    }
+  }
   return errors;
 }

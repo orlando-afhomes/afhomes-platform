@@ -53,7 +53,7 @@ export function VipCardChoiceCard({ product, fromPrice, invalid }: { product: Vi
       )}
     >
       <span className="vip-card-choice__art tw:block tw:overflow-hidden tw:rounded-lg">
-        <PlanCardImage code={product.code} />
+        <PlanCardImage code={product.code} priority />
       </span>
       <span className="vip-card-choice__title-row tw:flex tw:items-start tw:gap-3">
         <span className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:gap-0.5">

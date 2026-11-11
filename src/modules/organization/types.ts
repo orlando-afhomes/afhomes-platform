@@ -68,8 +68,6 @@ export type SellerProfile = {
     province: string;
     city: string;
     barangay: string;
-    /** Optional subdivision/village; blank when not applicable. */
-    subdivision?: string | null;
     /** Preserved as text so leading zeros survive. */
     postalCode: string;
   };
@@ -172,8 +170,6 @@ export type StaffMember = {
   province?: string | null;
   city?: string | null;
   barangay?: string | null;
-  /** Optional subdivision/village; blank when not applicable. */
-  subdivision?: string | null;
   /** Preserved as text so leading zeros survive. */
   postalCode?: string | null;
   telephone?: string | null;

@@ -50,6 +50,8 @@ export type PaymentScheme = {
   category: PaymentSchemeCategory;
   /** Card ID payment segment, e.g. C01 or T04 (06 section 6.3). Null where not documented. */
   paymentCode: string | null;
+  /** Per-tier Card ID codes, e.g. Move B T04/T08/T12; falls back to paymentCode (06 section 6.3). */
+  paymentCodeByTier?: Partial<Record<VipTierCode, string>>;
   applicableTiers: VipTierCode[];
   reservationCentavos: number | null;
   installmentCount: number | null;

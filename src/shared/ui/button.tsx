@@ -21,8 +21,11 @@ const buttonVariantsBase = cva(
         // `destructive`). Prefer primary/outline/danger in new code; `default`
         // and `destructive` remain as deprecated aliases.
         primary: PRIMARY,
+        // Soft brand-tinted button: a visible resting fill, a hairline outline
+        // for definition, and a clearly perceptible hover. `--muted` is the same
+        // tone as the page background, so it is not used here.
         outline:
-          "tw:border-border tw:bg-card tw:shadow-xs tw:hover:border-primary/40 tw:hover:bg-muted tw:hover:text-foreground tw:aria-expanded:bg-muted tw:aria-expanded:text-foreground tw:dark:border-input tw:dark:bg-input/30 tw:dark:hover:bg-input/50",
+          "tw:border-border tw:bg-secondary tw:text-secondary-foreground tw:shadow-none tw:hover:border-primary/35 tw:hover:bg-[color-mix(in_oklch,var(--secondary),var(--primary)_10%)] tw:hover:text-primary tw:aria-expanded:border-primary/35 tw:aria-expanded:bg-[color-mix(in_oklch,var(--secondary),var(--primary)_10%)] tw:aria-expanded:text-primary tw:dark:border-white/15 tw:dark:bg-white/5 tw:dark:text-foreground tw:dark:hover:border-white/25 tw:dark:hover:bg-white/10",
         secondary:
           "tw:border-primary/15 tw:bg-secondary tw:text-secondary-foreground tw:shadow-xs tw:hover:border-primary/30 tw:hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_6%)] tw:aria-expanded:bg-secondary tw:aria-expanded:text-secondary-foreground",
         ghost:

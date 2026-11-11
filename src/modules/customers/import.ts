@@ -1,6 +1,7 @@
 import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
 import { isValidEmail, isValidPhilippineMobile, isValidPostalCode, normalizePhilippineMobile } from "@/shared/utils/input-sanitizers";
 import { composeCustomerName, validateCustomerForSubmit } from "./rules";
+import { validateCustomerId } from "./customer-number";
 import { ACQUISITION_CHANNELS, CUSTOMER_CIVIL_STATUSES, CUSTOMER_GENDERS, type Customer, type CustomerDraftInput } from "./types";
 
 /**
@@ -158,7 +159,11 @@ function mapRecord(record: CustomerImportRecord, context: ImportContext) {
   }
 
   const customerNumber = text("Customer ID");
-  if (customerNumber.length > 40) errors.push("Customer ID must be 40 characters or fewer.");
+  if (customerNumber) {
+    // Format check only; register and in-file uniqueness are reported in buildImportRows (04 section 7.7).
+    const customerNumberError = validateCustomerId(customerNumber, []);
+    if (customerNumberError) errors.push(customerNumberError);
+  }
   input.customerNumber = customerNumber || null;
 
   const birth = text("Birth date");
@@ -190,7 +195,7 @@ function mapRecord(record: CustomerImportRecord, context: ImportContext) {
   for (const [label, value, max] of [["Address line 1", street, 160], ["Province", province, 100], ["City / Municipality", city, 100], ["Barangay", barangay, 100]] as const) {
     if (value.length > max) errors.push(`${label} must be ${max} characters or fewer.`);
   }
-  input.address = street || province || city || barangay || postalCode ? { street, province, city, barangay, subdivision: "", postalCode } : null;
+  input.address = street || province || city || barangay || postalCode ? { street, province, city, barangay, postalCode } : null;
 
   const tier = text("VIP tier");
   input.vipPlan = tier ? TIER_ALIASES[tier.toLowerCase()] ?? null : null;

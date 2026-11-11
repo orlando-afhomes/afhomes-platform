@@ -9,6 +9,7 @@ import { manilaToday } from "@/shared/lib/dates";
 import { formatPeso, parsePesoToCentavos } from "@/shared/lib/money";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { MoneyField, SelectField, StandardDateField, TextAreaField, TextField } from "@/shared/forms/modern";
+import { REFERENCE_LIMITS, cleanReferenceNumber, referencePolicyFor, validateReferenceNumber, type ReferencePolicy } from "@/shared/forms/validation/reference-number";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -21,6 +22,13 @@ import { formatDate } from "@/shared/lib/format-date";
 
 const PURPOSE_LABELS: Record<PaymentPurpose, string> = { reservation: "Reservation", down_payment: "Down payment", installment: "Installment", full: "Full payment" };
 
+/** Per-policy guidance for the receipt/reference field. */
+function referenceHint(policy: ReferencePolicy): string {
+  if (policy === "digital") return "12-16 letters or digits, uppercase; no spaces or symbols.";
+  if (policy === "bank") return "6-20 letters or digits, uppercase; no spaces or symbols.";
+  return "Letters, digits, spaces, and , . / - only.";
+}
+
 /** Submit a payment for a contract (Staff, IST and OST for their own scope). Only the receipt file name is kept. */
 export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId: string; open: boolean; onClose: () => void }) {
   const submit = useSubmitPayment();
@@ -29,8 +37,10 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
   const [method, setMethod] = useState<PaymentMethod>("Bank Transfer");
   const [paidDate, setPaidDate] = useState(manilaToday());
   const [reference, setReference] = useState("");
+  const [referenceTouched, setReferenceTouched] = useState(false);
   const [file, setFile] = useState("");
   const [error, setError] = useState<string | undefined>();
+  const refPolicy = referencePolicyFor(method);
 
   const send = async () => {
     const amountCentavos = parsePesoToCentavos(amount);
@@ -38,11 +48,18 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
       setError("Enter a valid amount.");
       return;
     }
+    const referenceError = validateReferenceNumber(reference, refPolicy);
+    if (referenceError) {
+      setReferenceTouched(true);
+      setError(referenceError);
+      return;
+    }
     try {
       await submit.mutateAsync({ contractId, purpose, amountCentavos, method, paidDate, referenceNo: reference || null, evidenceFileName: file || null });
       toast.success("Payment submitted for Finance verification.");
       setAmount("");
       setReference("");
+      setReferenceTouched(false);
       setFile("");
       setError(undefined);
       onClose();
@@ -55,9 +72,17 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
     <FormDialog open={open} title="Submit payment" description="Finance verifies every payment. A submitted payment is not yet counted as paid." submitText="Submit payment" pending={submit.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <SelectField label="Purpose" required value={purpose} options={PAYMENT_PURPOSES.map((value) => ({ value, label: PURPOSE_LABELS[value] }))} onChange={setPurpose} />
       <MoneyField label="Amount" required value={amount} onChange={setAmount} />
-      <SelectField label="Method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value }))} onChange={setMethod} />
+      <SelectField label="Method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value }))} onChange={(value) => { setMethod(value); setReference(cleanReferenceNumber(reference, referencePolicyFor(value))); }} />
       <StandardDateField label="Date on the receipt" required value={paidDate} onChange={setPaidDate} />
-      <TextField label="Receipt or reference number" value={reference} onChange={setReference} hint="Enter it exactly as printed. Never guess a receipt number." />
+      <TextField
+        label="Receipt or reference number"
+        value={reference}
+        onChange={(value) => setReference(cleanReferenceNumber(value, refPolicy))}
+        onBlur={() => setReferenceTouched(true)}
+        maxLength={REFERENCE_LIMITS[refPolicy].max}
+        hint={referenceHint(refPolicy)}
+        error={referenceTouched ? (validateReferenceNumber(reference, refPolicy) ?? undefined) : undefined}
+      />
       <div className="tw:flex tw:flex-col tw:gap-1.5">
         <Label htmlFor="payment-evidence">Receipt file</Label>
         <Input id="payment-evidence" type="file" accept="image/*,application/pdf" onChange={(event) => setFile(event.target.files?.[0]?.name ?? "")} />

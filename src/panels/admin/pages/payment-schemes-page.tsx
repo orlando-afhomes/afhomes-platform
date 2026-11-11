@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Landmark, Pencil, Plus } from "lucide-react";
 import { useOperation, usePaymentSchemes } from "@/data/business-queries";
-import type { PaymentScheme } from "@/modules/vip/types";
+import type { PaymentScheme, VipTierCode } from "@/modules/vip/types";
 import { schemeHowItWorks as termsSummary } from "@/modules/vip/rules";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { Button } from "@/shared/ui/button";
@@ -26,7 +26,7 @@ export function PaymentSchemesPage() {
   const schemeColumns = useMemo<ColumnDef<PaymentScheme, unknown>[]>(
     () => [
       { id: "label", header: "Scheme", cell: ({ row }) => <div><div className="tw:font-semibold">{row.original.label}</div>{row.original.historicalLabel ? <div className="tw:text-xs tw:text-muted-foreground">Source label: {row.original.historicalLabel}</div> : null}</div> },
-      { id: "code", header: "Card code", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.paymentCode ?? "—" },
+      { id: "code", header: "Card code", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => cardCodeValue(row.original) },
       { id: "terms", header: "Terms", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => (row.original.commercialStatus === "configured" ? termsSummary(row.original) : "Not configured") },
       { id: "state", header: "Status", cell: ({ row }) => <div className="tw:flex tw:flex-col tw:gap-1"><BizBadge status={row.original.commercialStatus} label={row.original.commercialStatus === "configured" ? "Configured" : "Pending owner decision"} /><BizBadge status={row.original.availability} /></div> },
     ],
@@ -74,7 +74,7 @@ export function PaymentSchemesPage() {
                   title: "Terms",
                   rows: [
                     { label: "Category", value: schemeDetail.category },
-                    { label: "Card code", value: schemeDetail.paymentCode },
+                    { label: "Card code", value: schemeDetail ? cardCodeValue(schemeDetail) : "—" },
                     { label: "Applies to", value: schemeDetail.applicableTiers.join(", ") },
                     { label: "Summary", value: schemeDetail.commercialStatus === "configured" ? termsSummary(schemeDetail) : "Not configured" },
                     { label: "Package price", value: schemePrices(schemeDetail) ?? "Catalog price" },
@@ -92,6 +92,15 @@ export function PaymentSchemesPage() {
       <SchemeDialog open={schemeOpen} scheme={editingScheme} onClose={() => setSchemeOpen(false)} />
     </AdminPage>
   );
+}
+
+/** Card code display: the single code when present, else per-tier codes in B1/S1/G1 order, else an em dash. */
+function cardCodeValue(scheme: Pick<PaymentScheme, "paymentCode"> & { paymentCodeByTier?: Partial<Record<VipTierCode, string>> }): string {
+  if (scheme.paymentCode) return scheme.paymentCode;
+  const entries = (["B1", "S1", "G1"] as VipTierCode[])
+    .map((tier) => (scheme.paymentCodeByTier?.[tier] ? `${tier} ${scheme.paymentCodeByTier[tier]}` : null))
+    .filter((entry): entry is string => entry !== null);
+  return entries.length > 0 ? entries.join(" · ") : "—";
 }
 
 function schemePrices(scheme: PaymentScheme): string | null {

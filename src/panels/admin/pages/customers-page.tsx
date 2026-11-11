@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, FileCheck, FileText, Info, Plus, Users } from "lucide-react";
+import { FileCheck, FileText, Info, Plus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDiscardCustomerDraft, useOperation } from "@/data/business-queries";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
@@ -65,25 +65,6 @@ export function CustomersPage() {
         header: "Seller",
         meta: { className: "tw:hidden tw:sm:table-cell" },
         cell: ({ row }) => (row.original.ownerMemberId ? (memberName.get(row.original.ownerMemberId) ?? row.original.ownerMemberId) : "Company"),
-      },
-      {
-        id: "view",
-        header: "Detail",
-        meta: { className: "tw:hidden tw:md:table-cell" },
-        cell: ({ row }) =>
-          row.original.restricted ? (
-            "Summary only"
-          ) : (
-            <Link
-              href={`/admin/customers/${row.original.id}`}
-              aria-label={`Open full record for ${row.original.displayName}`}
-              className="customers-page__detail-link tw:inline-flex tw:items-center tw:gap-1.5 tw:font-medium tw:text-primary tw:underline-offset-4 tw:hover:underline"
-            >
-              <FileText aria-hidden="true" className="tw:size-4" />
-              Full record
-              <ArrowRight aria-hidden="true" className="tw:size-4" />
-            </Link>
-          ),
       },
     ],
     [memberName],

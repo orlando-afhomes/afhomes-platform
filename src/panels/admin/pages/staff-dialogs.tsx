@@ -23,7 +23,6 @@ import {
   validatePostalCode,
   validateProvince,
   validateStreet,
-  validateSubdivision,
   validateSuffix,
   validateTinNumber,
 } from "@/shared/forms";
@@ -199,7 +198,6 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
   const [province, setProvince] = useState(editStaff?.province ?? "");
   const [city, setCity] = useState(editStaff?.city ?? "");
   const [barangay, setBarangay] = useState(editStaff?.barangay ?? "");
-  const [subdivision, setSubdivision] = useState(editStaff?.subdivision ?? "");
   const [postalCode, setPostalCode] = useState(editStaff?.postalCode ?? "");
   const [telephone, setTelephone] = useState(editStaff?.telephone ?? "");
   const [facebook, setFacebook] = useState(editStaff?.facebook ?? "");
@@ -279,7 +277,6 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
     province: validateProvince(province) ?? undefined,
     city: validateCity(city) ?? undefined,
     barangay: validateBarangay(barangay) ?? undefined,
-    subdivision: validateSubdivision(subdivision) ?? undefined,
     postalCode: validatePostalCode(postalCode) ?? undefined,
     telephone: validateLandline(telephone) ?? undefined,
     facebook: validateFacebook(facebook) ?? undefined,
@@ -311,7 +308,6 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
     province: province.trim(),
     city: city.trim(),
     barangay: barangay.trim(),
-    subdivision: subdivision.trim() ? subdivision.trim() : null,
     postalCode: normalizePostalCode(postalCode),
     telephone: telephone.trim() ? normalizeLandline(telephone) : null,
     facebook: facebook.trim() || null,
@@ -473,13 +469,12 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
       </FormSection>
       <FormSection title="Address">
         <PhilippineAddressFields
-          value={{ street, province, city, barangay, subdivision, postalCode }}
+          value={{ street, province, city, barangay, postalCode }}
           onChange={(next) => {
             setStreet(next.street);
             setProvince(next.province);
             setCity(next.city);
             setBarangay(next.barangay);
-            setSubdivision(next.subdivision);
             setPostalCode(next.postalCode);
           }}
           errors={{
@@ -487,7 +482,6 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
             province: visible("province"),
             city: visible("city"),
             barangay: visible("barangay"),
-            subdivision: visible("subdivision"),
             postalCode: visible("postalCode"),
           }}
         />
@@ -690,7 +684,6 @@ function StaffProfileDialog({
                       .join(", ")}
                   </DetailRow>
                 ) : null}
-                {profileStaff.subdivision ? <DetailRow term="Subdivision / Village">{profileStaff.subdivision}</DetailRow> : null}
                 {profileStaff.telephone ? <DetailRow term="Telephone">{profileStaff.telephone}</DetailRow> : null}
                 {profileStaff.facebook ? <DetailRow term="Facebook">{profileStaff.facebook}</DetailRow> : null}
                 {profileStaff.tin ? <DetailRow term="TIN">{profileStaff.tin}</DetailRow> : null}

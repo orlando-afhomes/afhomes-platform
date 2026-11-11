@@ -22,7 +22,7 @@ export type TextFieldProps = BaseFieldProps & {
   inputRef?: Ref<HTMLInputElement>;
 };
 
-const INPUT_HEIGHT = "tw:h-10 tw:sm:h-8";
+const INPUT_HEIGHT = "tw:h-11";
 
 /**
  * Labelled text input (Base UI input). Same props as the legacy field, so a

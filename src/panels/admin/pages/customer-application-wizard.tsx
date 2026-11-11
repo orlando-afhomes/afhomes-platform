@@ -3,23 +3,23 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, ArrowLeftRight, Banknote, CalendarClock, CreditCard, FileUp, Landmark, Pencil, Printer, Receipt, Smartphone, TriangleAlert, WalletCards, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowLeftRight, Banknote, CalendarClock, CreditCard, FileText, FileUp, Landmark, Layers, Pencil, Printer, Receipt, ShieldCheck, Smartphone, TriangleAlert, WalletCards, X } from "lucide-react";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import { useCreateCustomerDraft, useCustomers, useMembers } from "@/data/queries";
-import { useOperation, usePaymentSchemes, usePrepareContract, useSubmitCustomer, useSubmitPayment, useVipProducts } from "@/data/business-queries";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import type { Customer } from "@/modules/customers/types";
+import { useCorrectCustomer, useOperation, usePaymentSchemes, usePrepareContract, useSubmitCustomer, useSubmitPayment, useUpdateCustomerDraft, useVipProducts } from "@/data/business-queries";
 import { validateCustomerForSubmit } from "@/modules/customers/rules";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/modules/finance/types";
-import { downPaymentCentavos, installmentCountFor, schemePriceCentavos } from "@/modules/vip/rules";
 import { applicablePriceStatus, displayPriceFor } from "@/modules/vip/pricing";
-import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
+import type { VipTierCode } from "@/modules/vip/types";
 import { manilaToday } from "@/shared/lib/dates";
 import { formatPeso } from "@/shared/lib/money";
 import { cn } from "@/shared/lib/utils";
 import type { RadioCardOption } from "@/shared/components/modern/radio-card-group";
 import { StepIndicator } from "@/shared/components/modern/step-indicator";
 import { InfoNote } from "@/shared/components/modern/detail-list";
-import { CheckboxField, FieldShell, RadioCardField, StandardDateField, TextField, useFieldIds } from "@/shared/forms/modern";
+import { CheckboxField, FieldShell, RadioCardField, StandardDateField, TextField, describedBy, useFieldIds } from "@/shared/forms/modern";
+import { REFERENCE_LIMITS, cleanReferenceNumber, referencePolicyFor, validateReferenceNumber, type ReferencePolicy } from "@/shared/forms/validation/reference-number";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import {
@@ -27,10 +27,12 @@ import {
   AttributionSection,
   CertificationsSection,
   ContactSection,
+  EmploymentSection,
   GovernmentIdSection,
   IdentitySection,
+  SecondaryHolderSection,
+  SecondaryHolderToggle,
   SectionBlock,
-  SupplementarySection,
   toDraft,
   toInput,
   type CustomerDraft,
@@ -38,6 +40,9 @@ import {
   type SetDraft,
 } from "../components/customer-form-sections";
 import { PlanSummary } from "../components/customer-plan-summary";
+import { ReasonDialog } from "@/shared/components/modern/form-dialog";
+import { PaymentOptionGrid, type PaymentOption } from "../components/payment-option-card";
+import { schemeCardContent } from "../components/scheme-card-content";
 import { VipCardChoiceGrid } from "../components/vip-card-choice";
 import { useAdminSidebar } from "../layouts/admin-sidebar-context";
 
@@ -53,9 +58,16 @@ const STEP_REVIEW = 5;
 const STEP_KEYS: Record<number, string[]> = {
   [STEP_CARD]: ["vipPlan"],
   [STEP_PLAN]: ["paymentSchemeId", "contractClassification"],
-  [STEP_CUSTOMER]: ["firstName", "lastName", "dateOfBirth", "gender", "civilStatus", "mobileNumber", "address", "email"],
-  [STEP_SALES]: ["customerNumber", "supplementaryHolder", "consentDataPrivacy", "idReceivedCertified"],
+  [STEP_CUSTOMER]: ["firstName", "lastName", "dateOfBirth", "gender", "civilStatus", "mobileNumber", "address", "email", "citizenship", "tinNumber", "landline", "governmentIdNumber", "supplementaryHolder"],
+  [STEP_SALES]: ["customerNumber", "consentDataPrivacy", "idReceivedCertified"],
 };
+
+/**
+ * In-progress new-customer form state, kept for the browser session so a refresh
+ * does not throw away the wizard. Only unsaved form input is stored here — never
+ * mock business records, which stay in memory and reset to seed on reload.
+ */
+const WIZARD_STORAGE_KEY = "afhomes.customer-wizard.v1";
 
 const METHOD_ICONS: Record<PaymentMethod, ReactNode> = {
   Cash: <Banknote className="tw:size-4" />,
@@ -66,9 +78,17 @@ const METHOD_ICONS: Record<PaymentMethod, ReactNode> = {
   Cheque: <WalletCards className="tw:size-4" />,
 };
 const SCHEME_ICONS = { cash: <Banknote className="tw:size-5" />, installment: <CalendarClock className="tw:size-5" />, move: <ArrowLeftRight className="tw:size-5" /> };
+
+/** Per-policy guidance for the receipt/reference field. */
+function referenceHint(policy: ReferencePolicy): string {
+  if (policy === "digital") return "12-16 letters or digits, uppercase; no spaces or symbols.";
+  if (policy === "bank") return "6-20 letters or digits, uppercase; no spaces or symbols.";
+  return "Letters, digits, spaces, and , . / - only.";
+}
+
 const CLASSIFICATION_OPTIONS: RadioCardOption<"S" | "N">[] = [
-  { value: "S", label: "Standard (S)", description: "Standard contract terms." },
-  { value: "N", label: "Non-Standard (N)", description: "Held at finalization until the rules are approved." },
+  { value: "S", label: "Standard (S)", description: "Standard contract terms.", icon: <Layers className="tw:size-4" /> },
+  { value: "N", label: "Non-Standard (N)", description: "Held at finalization until the rules are approved.", icon: <ShieldCheck className="tw:size-4" /> },
 ];
 
 function pick(errors: CustomerErrors, keys: string[]): CustomerErrors {
@@ -77,27 +97,9 @@ function pick(errors: CustomerErrors, keys: string[]): CustomerErrors {
   return out;
 }
 
-function schemeDescription(scheme: PaymentScheme, tier: VipTierCode | "", product?: VipProduct): string {
-  if (scheme.availability !== "available") return "Not available: terms are pending an owner decision.";
-  const parts: string[] = [];
-  const price = product ? schemePriceCentavos(product, scheme) : null;
-  if (price != null) parts.push(`${formatPeso(price)} total`);
-  if (scheme.category === "cash") parts.push(scheme.reservationCentavos ? "Balance due within 7 days of the reservation" : "Single full payment");
-  const down = price != null ? downPaymentCentavos(price, scheme) : null;
-  if (down != null) parts.push(`${formatPeso(down)} down payment including the reservation fee`);
-  const count = tier ? installmentCountFor(scheme, tier) : scheme.installmentCount;
-  if (scheme.category !== "cash" && count) {
-    const monthly = tier ? scheme.installmentCentavosByTier[tier] : undefined;
-    parts.push(`${count} monthly installments${monthly ? ` of ${formatPeso(monthly)}` : ""}`);
-  }
-  parts.push(scheme.reservationCentavos ? `${formatPeso(scheme.reservationCentavos)} reservation fee` : "No reservation fee");
-  if (scheme.category === "move") parts.push("Needs Super Admin written approval");
-  return parts.join(" · ");
-}
-
 function addressLine(draft: CustomerDraft) {
   const a = draft.address;
-  return [a.street, a.subdivision, a.barangay, a.city, a.province, a.postalCode].filter(Boolean).join(", ") || "Not provided";
+  return [a.street, a.barangay, a.city, a.province, a.postalCode].filter(Boolean).join(", ") || "Not provided";
 }
 
 function PriceConflictNote() {
@@ -133,9 +135,8 @@ function ReviewBlock({ title, onEdit, children }: { title: string; onEdit: () =>
   );
 }
 
-export function CustomerApplicationWizard() {
+export function CustomerApplicationWizard({ existing }: { existing?: Customer } = {}) {
   const router = useRouter();
-  const { identity } = useDevIdentity();
   const canManage = useOperation("customers.manage");
   const canPrepare = useOperation("contracts.prepare");
   const canPay = useOperation("payments.submit");
@@ -144,27 +145,82 @@ export function CustomerApplicationWizard() {
   const members = useMembers();
   const customers = useCustomers();
   const create = useCreateCustomerDraft();
+  const updateDraft = useUpdateCustomerDraft();
+  const correct = useCorrectCustomer();
   const submitCustomer = useSubmitCustomer();
   const prepare = usePrepareContract();
   const submitPayment = useSubmitPayment();
 
   const [step, setStep] = useState(STEP_CARD);
-  const [draft, setDraft] = useState<CustomerDraft>(() => toDraft());
+  const [draft, setDraft] = useState<CustomerDraft>(() => toDraft(existing));
+  const [correcting, setCorrecting] = useState(false);
+  const isSubmitted = existing != null && existing.status !== "draft";
   const [errors, setErrors] = useState<CustomerErrors>({});
   const [busy, setBusy] = useState(false);
   const [method, setMethod] = useState<PaymentMethod>("Bank Transfer");
   const [paidDate, setPaidDate] = useState(manilaToday());
   const [reference, setReference] = useState("");
+  const [referenceTouched, setReferenceTouched] = useState(false);
   const [proofName, setProofName] = useState("");
   const [accepted, setAccepted] = useState(false);
   const [reservationErrors, setReservationErrors] = useState<Record<string, string | undefined>>({});
   const proofIds = useFieldIds();
+  const schemeIds = useFieldIds();
+  const classificationIds = useFieldIds();
   const { collapsed: sidebarCollapsed, setCollapsed: setSidebarCollapsed } = useAdminSidebar();
   const sidebarBefore = useRef<boolean | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const previousStep = useRef(step);
   const [focusTick, setFocusTick] = useState(0);
   const [proofKey, setProofKey] = useState(0);
+
+  // Restore the in-progress form after a refresh (new customers only; an edit is
+  // loaded from the saved record). Runs once, after mount, so SSR stays stable.
+  const restoredRef = useRef(false);
+  // Restoring after mount keeps the server-rendered markup stable; a lazy
+  // initializer would read browser storage during prerender.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    if (existing) return;
+    try {
+      const raw = sessionStorage.getItem(WIZARD_STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as {
+        step?: number;
+        draft?: Partial<CustomerDraft>;
+        accepted?: boolean;
+        method?: PaymentMethod;
+        paidDate?: string;
+        reference?: string;
+        proofName?: string;
+      };
+      if (saved.draft) setDraft({ ...toDraft(), ...saved.draft });
+      if (typeof saved.step === "number" && saved.step >= STEP_CARD && saved.step <= STEP_REVIEW) setStep(saved.step);
+      if (typeof saved.accepted === "boolean") setAccepted(saved.accepted);
+      if (saved.method) setMethod(saved.method);
+      if (saved.paidDate) setPaidDate(saved.paidDate);
+      if (typeof saved.reference === "string") setReference(saved.reference);
+      if (typeof saved.proofName === "string") setProofName(saved.proofName);
+    } catch {
+      // A corrupt entry is ignored; the wizard simply starts fresh.
+    }
+  }, [existing]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Persist on every change once restored, so a refresh lands on the same step.
+  useEffect(() => {
+    if (existing || !restoredRef.current) return;
+    try {
+      sessionStorage.setItem(
+        WIZARD_STORAGE_KEY,
+        JSON.stringify({ step, draft, accepted, method, paidDate, reference, proofName }),
+      );
+    } catch {
+      // Storage may be unavailable (private mode); the form still works in memory.
+    }
+  }, [existing, step, draft, accepted, method, paidDate, reference, proofName]);
 
   // Each new step starts at the top of the form, below the sticky header.
   useEffect(() => {
@@ -195,8 +251,8 @@ export function CustomerApplicationWizard() {
   const scheme = (schemes.data ?? []).find((item) => item.id === draft.paymentSchemeId);
   const supplementaryAllowed = Boolean(product && product.supplementaryHolders > 0);
   const reservationCentavos = scheme?.reservationCentavos ?? null;
+  const refPolicy = referencePolicyFor(method);
   const osts = (members.data ?? []).filter((member) => member.designation === "OST").map((member) => ({ value: member.id, label: member.displayName }));
-  const sellers = (members.data ?? []).map((member) => ({ value: member.id, label: `${member.displayName} (${member.designation})` }));
 
   if (!canManage) return <InfoNote title="View only">This account cannot create or edit customers.</InfoNote>;
 
@@ -209,7 +265,31 @@ export function CustomerApplicationWizard() {
       ...current,
       vipPlan: code,
       paymentSchemeId: keepScheme ? current.paymentSchemeId : "",
-      ...(next && next.supplementaryHolders > 0 ? {} : { suppFirstName: "", suppMiddleName: "", suppLastName: "", suppGender: "", suppDateOfBirth: "" }),
+      ...(next && next.supplementaryHolders > 0
+        ? {}
+        : {
+            secEnabled: false,
+            secFirstName: "",
+            secMiddleName: "",
+            secNoMiddleName: false,
+            secLastName: "",
+            secSuffix: "",
+            secGender: "",
+            secCivilStatus: "",
+            secDateOfBirth: "",
+            secMobileNumber: "",
+            secEmail: "",
+            secAddress: { street: "", province: "", city: "", barangay: "", postalCode: "" },
+            secGovernmentIdType: "",
+            secGovernmentIdNumber: "",
+            secCitizenship: "",
+            secTinNumber: "",
+            secLandline: "",
+            secOccupation: "",
+            secBusinessIndustry: "",
+            secEmployedPosition: "",
+            secOfficeAddress: { street: "", municipality: "", province: "", postalCode: "" },
+          }),
     }));
     setErrors((current) => ({ ...current, vipPlan: undefined }));
   };
@@ -226,9 +306,18 @@ export function CustomerApplicationWizard() {
       const found = pick(all, STEP_KEYS[from] ?? []);
       const blocked = Object.keys(found).length > 0 || (from === STEP_RESERVATION && Object.keys(all).length > 0);
       if (blocked) {
-        setErrors(found);
-        setStep(from);
-        toast.error("Complete the highlighted fields to continue.");
+        const failingKey = Object.keys(found)[0] ?? Object.keys(all)[0];
+        // A step can block on a field it does not render (Reservation checks the
+        // whole form). Point at the step that owns the first failing field and
+        // show its own message, so Continue is never silent.
+        const owningStep = failingKey
+          ? Number(Object.keys(STEP_KEYS).find((index) => STEP_KEYS[Number(index)].includes(failingKey)) ?? from)
+          : from;
+        setErrors(failingKey ? { ...found, [failingKey]: all[failingKey] } : found);
+        setStep(owningStep);
+        // Normal steps already highlight their own fields; only the cross-step
+        // case (Reservation validating the whole form) needs the message read out.
+        toast.error(Object.keys(found).length > 0 ? "Complete the highlighted fields to continue." : (all[failingKey ?? ""] ?? "Complete the highlighted fields to continue."));
         setFocusTick((tick) => tick + 1);
         return;
       }
@@ -251,7 +340,9 @@ export function CustomerApplicationWizard() {
     }
     setBusy(true);
     try {
-      const saved = await create.mutateAsync(input);
+      const saved = existing
+        ? await updateDraft.mutateAsync({ id: existing.id, input })
+        : await create.mutateAsync(input);
       toast.success("Draft saved.");
       router.push(`/admin/customers/${saved.id}`);
     } catch (failure) {
@@ -262,20 +353,42 @@ export function CustomerApplicationWizard() {
   };
 
   const submitApplication = async () => {
+    // Editing a submitted customer is an audited correction: collect the reason
+    // first. Reservation evidence and acceptance belong to the original sale and
+    // are not re-required for a data correction.
+    if (isSubmitted) {
+      setCorrecting(true);
+      return;
+    }
     const found: Record<string, string | undefined> = {};
     if (canPrepare && !accepted) found.accepted = "Confirm that the customer accepted the payment schedule.";
     if (canPrepare && canPay && reservationCentavos) {
       if (!proofName) found.proof = "Attach the proof of the reservation fee payment.";
       if (paidDate > manilaToday()) found.paidDate = "The payment date cannot be in the future.";
+      const referenceError = validateReferenceNumber(reference, refPolicy);
+      if (referenceError) {
+        found.reference = referenceError;
+        setReferenceTouched(true);
+      }
     }
     setReservationErrors(found);
-    if (Object.keys(found).length > 0) return;
+    if (Object.keys(found).length > 0) {
+      // Acceptance is checked on Review; proof, date, and reference live on the
+      // Reservation step. Go where the failing control is, and always say what
+      // is missing so Submit never appears to do nothing.
+      const onlyAcceptance = Object.keys(found).every((key) => key === "accepted");
+      if (!onlyAcceptance) setStep(STEP_RESERVATION);
+      toast.error(Object.values(found)[0] ?? "Complete the highlighted fields to continue.");
+      return;
+    }
 
     const input = toInput(draft);
     setBusy(true);
     let customerId: string | null = null;
     try {
-      customerId = (await create.mutateAsync(input)).id;
+      customerId = existing
+        ? (await updateDraft.mutateAsync({ id: existing.id, input })).id
+        : (await create.mutateAsync(input)).id;
       try {
         await submitCustomer.mutateAsync({ id: customerId, input });
       } catch (failure) {
@@ -306,18 +419,34 @@ export function CustomerApplicationWizard() {
     } finally {
       setBusy(false);
     }
+    try {
+      sessionStorage.removeItem(WIZARD_STORAGE_KEY);
+    } catch {
+      // Ignore: nothing to clear.
+    }
     router.push(`/admin/customers/${customerId}`);
   };
 
-  const schemeOptions: RadioCardOption[] = (schemes.data ?? [])
+  const schemeOptions: PaymentOption<string>[] = (schemes.data ?? [])
     .filter((item) => draft.vipPlan && item.applicableTiers.includes(draft.vipPlan as VipTierCode))
-    .map((item) => ({
-      value: item.id,
-      label: item.commercialStatus === "configured" ? item.label : `${item.label} (terms pending)`,
-      description: schemeDescription(item, draft.vipPlan as VipTierCode, product),
-      icon: SCHEME_ICONS[item.category],
-      disabled: item.availability !== "available",
-    }));
+    .map((item) => {
+      const content = schemeCardContent(item, product);
+      return {
+        value: item.id,
+        label: item.commercialStatus === "configured" ? item.label : `${item.label} (terms pending)`,
+        sub: content.total ? `${content.total} total` : undefined,
+        icon: SCHEME_ICONS[item.category],
+        disabled: item.availability !== "available",
+        pill: content.pill ?? undefined,
+        pillIcon: content.pill ? (
+          item.category === "cash" ? (
+            <Banknote aria-hidden className="tw:size-3.5" />
+          ) : (
+            <CalendarClock aria-hidden className="tw:size-3.5" />
+          )
+        ) : undefined,
+      };
+    });
 
   const reviewErrors = step === STEP_REVIEW ? allErrors() : {};
   const reviewErrorList = Object.values(reviewErrors).filter(Boolean) as string[];
@@ -325,13 +454,13 @@ export function CustomerApplicationWizard() {
 
   return (
     <div ref={rootRef} className={cn("customer-application tw:scroll-mt-20 tw:gap-6", step > STEP_CARD ? "tw:grid tw:grid-cols-1 tw:lg:grid-cols-[20rem_minmax(0,1fr)] tw:lg:items-start" : "tw:flex tw:flex-col")}>
-      {step > STEP_CARD && product ? <PlanSummary product={product} scheme={scheme} onChange={() => setStep(STEP_CARD)} /> : null}
+      {step > STEP_CARD && product ? <PlanSummary product={product} scheme={scheme} onChange={() => setStep(STEP_CARD)} onPlanChange={() => setStep(STEP_PLAN)} /> : null}
       <div className="customer-application__main tw:flex tw:min-w-0 tw:flex-col tw:gap-5">
       {step > STEP_CARD ? (
         <>
           <div className="tw:flex tw:flex-col tw:gap-1.5 tw:lg:hidden">
             <p className="tw:text-sm tw:font-medium">
-              Step {step + 1} of {STEPS.length} · {STEPS[step]}
+              {STEPS[step]}
             </p>
             <div role="progressbar" aria-label="Application progress" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={step + 1} className="tw:h-1.5 tw:rounded-full tw:bg-border">
               <div className="tw:h-full tw:rounded-full tw:bg-primary tw:transition-[width] tw:motion-reduce:transition-none" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
@@ -367,11 +496,15 @@ export function CustomerApplicationWizard() {
 
       {step === STEP_PLAN ? (
         <div className="tw:flex tw:flex-col tw:gap-4">
-          <SectionBlock title="How the customer pays" description={`How the customer pays for ${product?.name ?? "the card"}.`} icon={<Banknote className="tw:size-4" />}>
-            <RadioCardField label="Payment scheme" required variant="card" value={draft.paymentSchemeId || undefined} options={schemeOptions} onChange={(value) => set("paymentSchemeId", value)} error={errors.paymentSchemeId} />
+          <SectionBlock title="Payment plan" description="Choose how the customer pays." icon={<Banknote className="tw:size-4" />}>
+            <FieldShell ids={schemeIds} label="Payment scheme" required error={errors.paymentSchemeId} labelFor={false}>
+              <PaymentOptionGrid label="Payment scheme" value={draft.paymentSchemeId || undefined} onChange={(value: string) => set("paymentSchemeId", value)} options={schemeOptions} columns="three" describedBy={describedBy(schemeIds, errors.paymentSchemeId)} invalid={Boolean(errors.paymentSchemeId)} />
+            </FieldShell>
           </SectionBlock>
-          <SectionBlock title="Contract terms">
-            <RadioCardField label="Contract classification" required value={(draft.contractClassification || undefined) as "S" | "N" | undefined} options={CLASSIFICATION_OPTIONS} onChange={(value) => set("contractClassification", value)} error={errors.contractClassification} />
+          <SectionBlock title="Contract terms" description="Select contract type." icon={<FileText className="tw:size-4" />}>
+            <FieldShell ids={classificationIds} label="Contract classification" required error={errors.contractClassification} labelFor={false}>
+              <PaymentOptionGrid label="Contract classification" value={(draft.contractClassification || undefined) as "S" | "N" | undefined} onChange={(value: "S" | "N") => set("contractClassification", value)} options={CLASSIFICATION_OPTIONS.map((option) => ({ value: option.value, label: option.label, icon: option.icon }))} columns="two" describedBy={describedBy(classificationIds, errors.contractClassification)} invalid={Boolean(errors.contractClassification)} />
+            </FieldShell>
           </SectionBlock>
           {priceConflict ? <PriceConflictNote /> : null}
         </div>
@@ -380,16 +513,18 @@ export function CustomerApplicationWizard() {
       {step === STEP_CUSTOMER ? (
         <div className="tw:flex tw:flex-col tw:gap-4">
           <IdentitySection draft={draft} set={set} errors={errors} />
-          <ContactSection draft={draft} set={set} errors={errors} />
           <AddressSection draft={draft} set={set} errors={errors} />
+          <ContactSection draft={draft} set={set} errors={errors} />
           <GovernmentIdSection draft={draft} set={set} errors={errors} />
+          <EmploymentSection draft={draft} set={set} errors={errors} />
+          <SecondaryHolderToggle visible={draft.vipPlan === "G1"} enabled={draft.secEnabled} onChange={(v) => set("secEnabled", v)} />
+          {draft.vipPlan === "G1" && draft.secEnabled ? <SecondaryHolderSection draft={draft} set={set} errors={errors} /> : null}
         </div>
       ) : null}
 
       {step === STEP_SALES ? (
         <div className="tw:flex tw:flex-col tw:gap-4">
-          {supplementaryAllowed ? <SupplementarySection draft={draft} set={set} errors={errors} /> : null}
-          <AttributionSection draft={draft} set={set} errors={errors} osts={osts} sellers={sellers} showOwner={!identity.memberId} />
+          <AttributionSection draft={draft} set={set} errors={errors} members={members.data ?? []} existing={customers.data ?? []} />
           <CertificationsSection draft={draft} set={set} errors={errors} />
         </div>
       ) : null}
@@ -409,7 +544,7 @@ export function CustomerApplicationWizard() {
             <Row label="VIP card" value={product ? `${product.name} (${product.code})` : ""} />
             <Row label="Price" value={product ? formatPeso(displayPriceFor(product, scheme)) : ""} />
             <Row label="Payment scheme" value={scheme?.label} />
-            <Row label="Contract classification" value={draft.contractClassification === "N" ? "Non-Standard (N)" : draft.contractClassification === "S" ? "Standard (S)" : ""} />
+            <Row label="Contract classification" value={draft.contractClassification === "N" ? "Non-Standard (N) — held at finalization until rules are approved" : draft.contractClassification === "S" ? "Standard (S)" : ""} />
           </ReviewBlock>
           {priceConflict ? <PriceConflictNote /> : null}
           <ReviewBlock title="Customer" onEdit={() => setStep(STEP_CUSTOMER)}>
@@ -423,7 +558,7 @@ export function CustomerApplicationWizard() {
             <Row label="Government ID" value={[draft.governmentIdType, draft.governmentIdNumber].filter(Boolean).join(" · ")} />
           </ReviewBlock>
           <ReviewBlock title="Sales and consent" onEdit={() => setStep(STEP_SALES)}>
-            {supplementaryAllowed ? <Row label="Supplementary holder" value={[draft.suppFirstName, draft.suppMiddleName, draft.suppLastName].filter(Boolean).join(" ")} /> : null}
+            {supplementaryAllowed ? <Row label="Supplementary holder" value={[draft.secFirstName, draft.secNoMiddleName ? "" : draft.secMiddleName, draft.secLastName, draft.secSuffix].filter(Boolean).join(" ")} /> : null}
             <Row label="Recommender" value={osts.find((item) => item.value === draft.recommenderMemberId)?.label} />
             <Row label="Acquisition channel" value={draft.acquisitionChannel} />
             <Row label="Customer ID" value={draft.customerNumber} />
@@ -438,7 +573,7 @@ export function CustomerApplicationWizard() {
             <Row label="Receipt/reference" value={reference || "—"} />
             <Row label="Proof" value={proofName || "—"} />
             <div className="tw:sm:col-span-2">
-              <CheckboxField variant="card" label="The customer reviewed and accepted the payment schedule." checked={accepted} onChange={setAccepted} error={reservationErrors.accepted} />
+              <CheckboxField variant="card" label="The customer reviewed and accepted the payment schedule." checked={accepted} onChange={(value) => { setAccepted(value); setReservationErrors((current) => ({ ...current, accepted: undefined })); }} error={reservationErrors.accepted} />
             </div>
           </ReviewBlock>
         </div>
@@ -477,10 +612,18 @@ export function CustomerApplicationWizard() {
             <SectionBlock title="Reservation fee and proof" description={reservationCentavos ? `Submit the ${formatPeso(reservationCentavos)} reservation fee with its proof. Finance verifies it before the sale moves on.` : "This payment scheme has no reservation fee. The contract is drafted without a payment."} icon={<Banknote className="tw:size-4" />}>
               {reservationCentavos && canPay ? (
                 <>
-                  <RadioCardField label="Payment method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value, icon: METHOD_ICONS[value] }))} onChange={setMethod} />
+                  <RadioCardField label="Payment method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value, icon: METHOD_ICONS[value] }))} onChange={(value) => { setMethod(value); setReference(cleanReferenceNumber(reference, referencePolicyFor(value))); }} />
                   <div className="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-2">
                     <StandardDateField label="Date on the receipt" required value={paidDate} onChange={setPaidDate} error={reservationErrors.paidDate} />
-                    <TextField label="Receipt or reference number" value={reference} onChange={setReference} hint="Enter it exactly as printed. Never guess a receipt number." />
+                    <TextField
+                      label="Receipt or reference number"
+                      value={reference}
+                      onChange={(value) => setReference(cleanReferenceNumber(value, refPolicy))}
+                      onBlur={() => setReferenceTouched(true)}
+                      maxLength={REFERENCE_LIMITS[refPolicy].max}
+                      hint={referenceHint(refPolicy)}
+                      error={referenceTouched ? (validateReferenceNumber(reference, refPolicy) ?? undefined) : undefined}
+                    />
                   </div>
                   <FieldShell ids={proofIds} label="Proof of payment" required error={reservationErrors.proof} hint="Only the file name is kept in this prototype.">
                     <div className="tw:flex tw:items-stretch tw:gap-2">
@@ -488,16 +631,16 @@ export function CustomerApplicationWizard() {
                       <label
                         htmlFor={proofIds.id}
                         className={cn(
-                          "customer-application__upload tw:flex tw:min-w-0 tw:flex-1 tw:cursor-pointer tw:items-center tw:gap-3 tw:rounded-xl tw:border-2 tw:border-dashed tw:bg-card tw:p-4 tw:transition-colors tw:hover:border-primary/60 tw:hover:bg-primary/5 tw:peer-focus-visible:ring-3 tw:peer-focus-visible:ring-ring/40",
+                          "customer-application__upload tw:flex tw:min-h-11 tw:min-w-0 tw:flex-1 tw:cursor-pointer tw:items-center tw:gap-3 tw:rounded-xl tw:border-2 tw:border-dashed tw:bg-card tw:px-3 tw:py-2 tw:transition-colors tw:hover:border-primary/60 tw:hover:bg-primary/5 tw:peer-focus-visible:ring-3 tw:peer-focus-visible:ring-ring/40",
                           reservationErrors.proof ? "tw:border-destructive" : proofName ? "tw:border-primary tw:bg-primary/5" : "tw:border-input",
                         )}
                       >
-                        <span aria-hidden="true" className="tw:flex tw:size-10 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-full tw:bg-secondary tw:text-primary">
-                          <FileUp className="tw:size-5" />
+                        <span aria-hidden="true" className="tw:flex tw:size-7 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-full tw:bg-secondary tw:text-primary">
+                          <FileUp className="tw:size-4" />
                         </span>
-                        <span className="tw:flex tw:min-w-0 tw:flex-col">
+                        <span className="tw:flex tw:min-w-0 tw:flex-1 tw:items-baseline tw:gap-1.5">
                           <span className="tw:truncate tw:text-sm tw:font-medium">{proofName || "Choose a file"}</span>
-                          <span className="tw:text-xs tw:text-muted-foreground">{proofName ? "Click to replace" : "Image or PDF"}</span>
+                          <span className="tw:shrink-0 tw:text-xs tw:text-muted-foreground">{proofName ? "Click to replace" : "Image or PDF"}</span>
                         </span>
                       </label>
                       {proofName ? (
@@ -530,23 +673,42 @@ export function CustomerApplicationWizard() {
           <Button type="button" variant="outline" disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => (step === STEP_CARD ? router.back() : setStep(step - 1))}>
             {step === STEP_CARD ? "Cancel" : (<><ArrowLeft aria-hidden="true" className="tw:size-4" /> Back</>)}
           </Button>
-          {step > STEP_CARD ? (
+          {step > STEP_CARD && !isSubmitted ? (
             <Button type="button" variant="outline" disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => void saveDraft()}>
               Save as draft
             </Button>
           ) : null}
         </div>
-        {step > STEP_CARD ? <span className="tw:hidden tw:text-sm tw:text-muted-foreground tw:lg:inline">Step {step + 1} of {STEPS.length}</span> : null}
         {step < STEP_REVIEW ? (
           <Button type="button" disabled={busy || (step === STEP_CARD && !draft.vipPlan) || (step === STEP_REVIEW && reviewErrorList.length > 0)} className="tw:min-h-11 tw:sm:min-h-8" onClick={next}>
             Continue <ArrowRight aria-hidden="true" className="tw:size-4" />
           </Button>
         ) : (
           <Button type="button" disabled={busy} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => void submitApplication()}>
-            Submit application
+            {isSubmitted ? "Save correction" : "Submit application"}
           </Button>
         )}
       </Card>
+
+      {isSubmitted ? (
+        <ReasonDialog
+          open={correcting}
+          title="Save data correction"
+          description="Corrections to a submitted customer are audited. Explain what changed and why."
+          confirmText="Save correction"
+          successText="Correction saved."
+          onClose={() => setCorrecting(false)}
+          onSubmit={async (reason) => {
+            try {
+              await correct.mutateAsync({ id: existing.id, input: toInput(draft), reason });
+              router.push(`/admin/customers/${existing.id}`);
+            } catch (failure) {
+              if (failure instanceof CustomerValidationError) setCorrecting(false);
+              throw failure;
+            }
+          }}
+        />
+      ) : null}
       </div>
     </div>
   );

@@ -12,7 +12,6 @@ export type StaffProfileInput = {
   province?: string | null;
   city?: string | null;
   barangay?: string | null;
-  subdivision?: string | null;
   postalCode?: string | null;
   telephone?: string | null;
   facebook?: string | null;

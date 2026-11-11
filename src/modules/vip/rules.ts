@@ -11,6 +11,45 @@ export function installmentCountFor(scheme: Pick<PaymentScheme, "installmentCoun
   return scheme.installmentCountByTier?.[tier] ?? scheme.installmentCount;
 }
 
+/** Card ID payment segment for a tier: the single scheme code when set, otherwise the per-tier code. Never throws. */
+export function paymentCodeFor(
+  scheme: Pick<PaymentScheme, "category" | "paymentCode" | "priceCentavosByTier"> & {
+    paymentCodeByTier?: Partial<Record<VipTierCode, string>>;
+  },
+  tier: VipTierCode,
+): string | null {
+  if (scheme.category === "move") return scheme.paymentCode ?? scheme.paymentCodeByTier?.[tier] ?? null;
+  return scheme.paymentCode ?? null;
+}
+
+/** Human-readable payment code problems, one per applicable tier with a resolving code. */
+export function paymentCodeIssues(
+  scheme: Pick<PaymentScheme, "category" | "paymentCode" | "priceCentavosByTier" | "applicableTiers" | "installmentCount" | "installmentCountByTier"> & {
+    paymentCodeByTier?: Partial<Record<VipTierCode, string>>;
+  },
+): string[] {
+  const issues: string[] = [];
+  for (const tier of scheme.applicableTiers) {
+    const code = paymentCodeFor(scheme, tier);
+    if (code == null) continue;
+    if (!/^[CT]\d{2}$/.test(code)) {
+      issues.push(`The ${tier} payment code "${code}" is invalid; it must look like C01 or T04.`);
+      continue;
+    }
+    if (code.startsWith("T")) {
+      const count = installmentCountFor(scheme, tier);
+      if (count == null || Number(code.slice(1)) !== count) {
+        issues.push(
+          count == null
+            ? `The ${tier} payment code "${code}" needs an installment count to match.`
+            : `The ${tier} payment code "${code}" must match the ${count} monthly installments.`,
+        );
+      }
+    }
+  }
+  return issues;
+}
+
 /** Down payment including the reservation fee, exact in centavos; null when the scheme has none. Throws MoneyError when inexact. */
 export function downPaymentCentavos(price: number, scheme: Pick<PaymentScheme, "downPaymentBasisPoints">): number | null {
   return scheme.downPaymentBasisPoints ? applyBasisPoints(price, scheme.downPaymentBasisPoints) : null;
@@ -21,9 +60,8 @@ export function schemeHowItWorks(scheme: Pick<PaymentScheme, "category" | "reser
   const reservation = scheme.reservationCentavos ? "A non-refundable reservation fee, then " : "";
   if (scheme.category === "cash") return scheme.reservationCentavos ? "A non-refundable reservation fee, then the balance within 7 days." : "One full payment.";
   if (scheme.category === "installment") return `${reservation}${scheme.installmentCount} equal monthly installments at 0% interest, due monthly from the reservation date.`;
-  const approval = "Needs Super Admin written approval for each deal.";
-  if (scheme.downPaymentBasisPoints) return `A ${scheme.downPaymentBasisPoints / 100}% down payment that includes the reservation fee, then equal monthly payments at 0% interest. ${approval}`;
-  return `${reservation}equal monthly payments at 0% interest. ${approval}`;
+  if (scheme.downPaymentBasisPoints) return `A ${scheme.downPaymentBasisPoints / 100}% down payment that includes the reservation fee, then equal monthly payments at 0% interest.`;
+  return `${reservation}equal monthly payments at 0% interest.`;
 }
 
 const positiveInteger =(value: number | null | undefined) => value == null || (Number.isInteger(value) && value > 0);
@@ -31,7 +69,10 @@ const positiveInteger =(value: number | null | undefined) => value == null || (N
 type SchemeTerms = Pick<
   PaymentScheme,
   "category" | "applicableTiers" | "reservationCentavos" | "installmentCount" | "installmentCountByTier" | "installmentCentavosByTier" | "priceCentavosByTier" | "downPaymentBasisPoints"
->;
+> & {
+  paymentCode?: string | null;
+  paymentCodeByTier?: Partial<Record<VipTierCode, string>>;
+};
 
 /**
  * Validates entered scheme terms against the catalog. Blank terms are allowed
@@ -71,5 +112,6 @@ export function schemeTermErrors(scheme: SchemeTerms, products: ReadonlyArray<Pi
       errors.push(`For ${tier}, the ${down != null ? "down payment" : "reservation fee"} plus ${count} installments must equal the package price.`);
     }
   }
+  errors.push(...paymentCodeIssues({ ...scheme, paymentCode: scheme.paymentCode ?? null }));
   return errors;
 }

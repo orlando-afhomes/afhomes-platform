@@ -190,7 +190,6 @@ export function SalesNetworkMemberDetailPage() {
               <DetailRow term="Barangay">{profile.address.barangay}</DetailRow>
               <DetailRow term="City / Municipality">{profile.address.city}</DetailRow>
               <DetailRow term="Province">{profile.address.province}</DetailRow>
-              {profile.address.subdivision ? <DetailRow term="Subdivision / Village">{profile.address.subdivision}</DetailRow> : null}
               <DetailRow term="ZIP / Postal Code">{profile.address.postalCode}</DetailRow>
               <DetailRow term="Government ID">{profile.governmentIdType}</DetailRow>
               <DetailRow term="Government ID Number">{maskGovIdNumber(profile.governmentIdNumber)}</DetailRow>

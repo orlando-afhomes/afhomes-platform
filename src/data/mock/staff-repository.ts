@@ -92,7 +92,6 @@ function profileFields(input: StaffProfileInput) {
     province: text(input.province),
     city: text(input.city),
     barangay: text(input.barangay),
-    subdivision: text(input.subdivision),
     postalCode: text(input.postalCode),
     telephone: text(input.telephone),
     facebook: text(input.facebook),

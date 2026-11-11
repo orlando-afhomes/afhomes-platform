@@ -46,4 +46,6 @@ export interface ContractRepository {
   recordRaNumber(id: string, raNumber: string, options?: MockAsyncOptions): Promise<ContractView>;
   /** Super Admin records the written approval of a Move arrangement (owner decision 2026-11-09). */
   approveArrangement(id: string, approvalReference: string, options?: MockAsyncOptions): Promise<ContractView>;
+  /** Auditable recode of the Card ID payment segment for pre-resolution Move contracts; new contracts snapshot it at prepare. */
+  resolvePaymentCode(id: string, approvalReference: string, options?: MockAsyncOptions): Promise<ContractView>;
 }

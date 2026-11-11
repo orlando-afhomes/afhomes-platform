@@ -3,6 +3,9 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import { AppToaster } from "@/shared/components/modern/app-toaster";
+import { manilaToday, computeAge } from "@/shared/lib/dates";
+import { validateCustomerForSubmit } from "@/modules/customers/rules";
+import { AddressSection, ContactSection, GovernmentIdSection, IdentitySection, SecondaryHolderSection, toDraft, toInput, type SetDraft } from "./components/customer-form-sections";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
@@ -27,6 +30,8 @@ import { StayPointsPage } from "./pages/stay-points-page";
 import { PaymentSchemesPage } from "./pages/payment-schemes-page";
 import { VipProductsPage } from "./pages/vip-products-page";
 import { PrepareContractDialog } from "./components/prepare-contract-dialog";
+import { useCustomers } from "@/data/queries";
+import { currentManilaYear } from "@/modules/customers/customer-number";
 import type { Customer } from "@/modules/customers/types";
 
 vi.mock("next/navigation", async (importOriginal) => ({
@@ -54,6 +59,28 @@ afterEach(() => {
   toast.dismiss();
 });
 
+/** Test probe: watches the shared customer list so a saved draft is visible before the next click. */
+function CustomerDraftProbe({ customerNumber }: { customerNumber: string }) {
+  const customers = useCustomers();
+  const saved = customers.data?.some((customer) => customer.customerNumber === customerNumber);
+  return <output data-testid="draft-probe">{saved ? "saved" : "pending"}</output>;
+}
+
+/** Test probe: exposes the list size and one record's name so an edit can be checked for duplicates. */
+function CustomerRecordProbe({ id }: { id: string }) {
+  const customers = useCustomers();
+  const list = customers.data ?? [];
+  const record = list.find((customer) => customer.id === id);
+  return (
+    <output
+      data-testid="customer-record-probe"
+      data-count={list.length}
+      data-first-name={record?.firstName ?? ""}
+      data-last-name={record?.lastName ?? ""}
+    />
+  );
+}
+
 function show(identityId: string, page: ReactElement) {
   return render(<Wrapper identityId={identityId}>{page}</Wrapper>);
 }
@@ -68,6 +95,40 @@ async function openMenuWith(triggerName: string, itemName: string) {
     await user.keyboard("{Escape}");
   }
   throw new Error(`No row menu offered "${itemName}".`);
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Types into a searchable combobox and clicks the exact option. */
+async function pickFilteredOption(user: ReturnType<typeof userEvent.setup>, combo: HTMLElement, filter: string, name: string | RegExp) {
+  await user.click(combo);
+  if ((combo as HTMLInputElement).value) await user.clear(combo);
+  await user.type(combo, filter);
+  await user.click(await screen.findByRole("option", { name }));
+}
+
+/**
+ * Residential address completion, province-first: the province enables and
+ * scopes the city list, the city enables the barangay list, and the ZIP is
+ * derived and locked. Street stays editable text.
+ */
+async function fillResidentialAddress(
+  user: ReturnType<typeof userEvent.setup>,
+  card: HTMLElement,
+  province: string,
+  city: string,
+  barangay: string,
+) {
+  const cityCombo = () => within(card).getByRole("combobox", { name: /city/i });
+  const provinceCombo = () => within(card).getByRole("combobox", { name: /^province/i });
+  await pickFilteredOption(user, provinceCombo(), province, new RegExp(`^${escapeRegExp(province)}$`, "i"));
+  await waitFor(() => expect((provinceCombo() as HTMLInputElement).value).toBe(province));
+  await waitFor(() => expect(cityCombo()).toBeEnabled());
+  await pickFilteredOption(user, cityCombo(), city, new RegExp(`^${escapeRegExp(city)}$`, "i"));
+  await waitFor(() => expect((cityCombo() as HTMLInputElement).value).toBe(city));
+  await pickFilteredOption(user, within(card).getByRole("combobox", { name: /^barangay/i }), barangay, new RegExp(`^${escapeRegExp(barangay)}$`, "i"));
 }
 describe("business pages render for the intended roles", () => {
   it("lists customers for a seller and restricts the OST view of others", async () => {
@@ -266,7 +327,7 @@ describe("business pages render for the intended roles", () => {
     // Spot Cash (OD-11) and the Move schemes are configured by owner decision (2026-11-09); none is pending.
     expect(screen.queryAllByText(/Terms are pending owner approval/)).toHaveLength(0);
     expect(screen.getByText("A non-refundable reservation fee, then the balance within 7 days.")).toBeInTheDocument();
-    expect(screen.getAllByText(/Super Admin written approval/).length).toBe(2);
+    expect(screen.queryAllByText(/Super Admin written approval/)).toHaveLength(0);
     expect(screen.getByRole("button", { name: "Print guide" })).toBeInTheDocument();
   });
 
@@ -319,15 +380,15 @@ describe("customer application wizard scheme pricing", () => {
 
   async function fillCustomerStep(user: ReturnType<typeof userEvent.setup>) {
     // Required-field captions carry an aria-hidden asterisk, so match loosely.
+    // Province also exists in the office address block, so scope it to the Address card.
+    const addressCard = screen.getByRole("heading", { name: "Address" }).closest(".customer-application__block") as HTMLElement;
     await user.type(screen.getByLabelText(/first name/i), "Maria");
     await user.type(screen.getByLabelText(/last name/i), "Reyes");
     fireEvent.change(screen.getByLabelText(/date of birth/i), { target: { value: "1990-05-01" } });
     await user.click(within(screen.getByRole("radiogroup", { name: "Gender" })).getByRole("radio", { name: "Male" }));
     await user.click(within(screen.getByRole("radiogroup", { name: "Civil status" })).getByRole("radio", { name: "Single" }));
     await user.type(screen.getByLabelText(/mobile number/i), "09171110009");
-    await user.type(screen.getByLabelText(/^province/i), "Cebu");
-    await user.type(screen.getByLabelText(/^city/i), "Lapu-Lapu City");
-    await user.type(screen.getByLabelText(/^barangay/i), "Pajo");
+    await fillResidentialAddress(user, addressCard, "Cebu", "Lapu-Lapu City", "Pajo");
     await user.click(screen.getByRole("button", { name: /continue/i }));
   }
 
@@ -343,7 +404,16 @@ describe("customer application wizard scheme pricing", () => {
     await startApplication(user, /gold vip/i);
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
     const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
-    await user.click(within(schemes).getByRole("radio", { name: /spot cash/i }));
+    const spotCash = within(schemes).getByRole("radio", { name: /spot cash/i });
+    expect(within(spotCash).getByText(/₱312,000\.00 total/)).toBeInTheDocument();
+    expect(within(spotCash).getByText(/pay in 7 days/i)).toBeInTheDocument();
+    expect(spotCash).toHaveAccessibleName("Spot Cash₱312,000.00 totalPay in 7 days");
+    // Detail and term lines no longer render on the cards.
+    expect(within(spotCash).queryByText(/reservation fee/i)).toBeNull();
+    await user.click(spotCash);
+    // No Move approval block for Spot Cash.
+    expect(within(wizardMain()).queryByText("Needs Super Admin written approval for each deal.")).toBeNull();
+    expect(within(wizardMain()).queryByText("Card ID mapping pending owner decision.")).toBeNull();
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
     await user.click(screen.getByRole("radio", { name: /standard \(s\)/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
@@ -363,7 +433,16 @@ describe("customer application wizard scheme pricing", () => {
     const user = userEvent.setup();
     await startApplication(user, /gold vip/i);
     const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
-    await user.click(within(schemes).getByRole("radio", { name: /4-month installment/i }));
+    const installment = within(schemes).getByRole("radio", { name: /4-month installment/i });
+    expect(within(installment).getByText(/₱390,000\.00 total/)).toBeInTheDocument();
+    expect(within(installment).getByText(/4 monthly payments/i)).toBeInTheDocument();
+    expect(installment).toHaveAccessibleName("4-Month Installment₱390,000.00 total4 monthly payments");
+    // Detail and term lines no longer render on the cards.
+    expect(within(installment).queryByText(/reservation fee/i)).toBeNull();
+    await user.click(installment);
+    // No Move approval block for installments.
+    expect(within(wizardMain()).queryByText("Needs Super Admin written approval for each deal.")).toBeNull();
+    expect(within(wizardMain()).queryByText("Card ID mapping pending owner decision.")).toBeNull();
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
     await user.click(screen.getByRole("radio", { name: /standard \(s\)/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
@@ -379,11 +458,21 @@ describe("customer application wizard scheme pricing", () => {
     expect(within(wizardMain()).getByText("Reservation and acceptance")).toBeInTheDocument();
   });
 
-  it("clears the conflict notice for Gold under Move A", async () => {
+  it("clears the conflict notice for Gold under Move A with no approval note", async () => {
     const user = userEvent.setup();
     await startApplication(user, /gold vip/i);
     const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
-    await user.click(within(schemes).getByRole("radio", { name: /move a/i }));
+    const moveA = within(schemes).getByRole("radio", { name: /move a/i });
+    expect(within(moveA).getByText(/₱312,000\.00 total/)).toBeInTheDocument();
+    expect(within(moveA).getByText(/4 monthly payments/i)).toBeInTheDocument();
+    expect(moveA).toHaveAccessibleName("Move A₱312,000.00 total4 monthly payments");
+    // Cards carry no detail lines or approval copy; no notice appears once selected.
+    expect(within(moveA).queryByText(/reservation fee/i)).toBeNull();
+    expect(within(moveA).queryByText(/needs super admin/i)).toBeNull();
+    expect(within(wizardMain()).queryByText("Needs Super Admin written approval for each deal.")).toBeNull();
+    await user.click(moveA);
+    expect(within(wizardMain()).queryByText("Needs Super Admin written approval for each deal.")).toBeNull();
+    expect(within(wizardMain()).queryByText("Card ID mapping pending owner decision.")).toBeNull();
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
   });
 
@@ -392,7 +481,16 @@ describe("customer application wizard scheme pricing", () => {
     await startApplication(user, /bronze vip/i);
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
     const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
-    await user.click(within(schemes).getByRole("radio", { name: /4-month installment/i }));
+    const installment = within(schemes).getByRole("radio", { name: /4-month installment/i });
+    expect(within(installment).getByText(/₱72,000\.00 total/)).toBeInTheDocument();
+    expect(within(installment).getByText(/4 monthly payments/i)).toBeInTheDocument();
+    expect(installment).toHaveAccessibleName("4-Month Installment₱72,000.00 total4 monthly payments");
+    // Detail and term lines no longer render on the cards.
+    expect(within(installment).queryByText(/reservation fee/i)).toBeNull();
+    await user.click(installment);
+    // No Move approval block for installments.
+    expect(within(wizardMain()).queryByText("Needs Super Admin written approval for each deal.")).toBeNull();
+    expect(within(wizardMain()).queryByText("Card ID mapping pending owner decision.")).toBeNull();
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
     await user.click(screen.getByRole("radio", { name: /standard \(s\)/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
@@ -410,7 +508,16 @@ describe("customer application wizard scheme pricing", () => {
     await startApplication(user, /silver vip/i);
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
     const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
-    await user.click(within(schemes).getByRole("radio", { name: /spot cash/i }));
+    const spotCash = within(schemes).getByRole("radio", { name: /spot cash/i });
+    expect(within(spotCash).getByText(/₱192,000\.00 total/)).toBeInTheDocument();
+    expect(within(spotCash).getByText(/pay in 7 days/i)).toBeInTheDocument();
+    expect(spotCash).toHaveAccessibleName("Spot Cash₱192,000.00 totalPay in 7 days");
+    // Detail and term lines no longer render on the cards.
+    expect(within(spotCash).queryByText(/reservation fee/i)).toBeNull();
+    await user.click(spotCash);
+    // No Move approval block for Spot Cash.
+    expect(within(wizardMain()).queryByText("Needs Super Admin written approval for each deal.")).toBeNull();
+    expect(within(wizardMain()).queryByText("Card ID mapping pending owner decision.")).toBeNull();
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
     await user.click(screen.getByRole("radio", { name: /standard \(s\)/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
@@ -421,6 +528,911 @@ describe("customer application wizard scheme pricing", () => {
     expect(within(wizardMain()).getByText("₱192,000.00")).toBeInTheDocument();
     expect(screen.queryByText(/Price under review/)).toBeNull();
     expect(within(wizardMain()).getByText("Reservation and acceptance")).toBeInTheDocument();
+  });
+
+  it("shows Move B with a 12-month pill and no approval notice once selected", async () => {
+    const user = userEvent.setup();
+    await startApplication(user, /gold vip/i);
+    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    const moveB = within(schemes).getByRole("radio", { name: /move b/i });
+    expect(within(moveB).getByText(/₱390,000\.00 total/)).toBeInTheDocument();
+    expect(within(moveB).getByText(/12 monthly payments/i)).toBeInTheDocument();
+    expect(moveB).toHaveAccessibleName("Move B₱390,000.00 total12 monthly payments");
+    // Cards carry no detail lines or approval copy; no notice appears once selected.
+    expect(within(moveB).queryByText(/reservation fee/i)).toBeNull();
+    expect(within(moveB).queryByText(/needs super admin/i)).toBeNull();
+    expect(within(wizardMain()).queryByText("Needs Super Admin written approval for each deal.")).toBeNull();
+    await user.click(moveB);
+    expect(within(wizardMain()).queryByText("Needs Super Admin written approval for each deal.")).toBeNull();
+    expect(within(wizardMain()).queryByText("Card ID mapping pending owner decision.")).toBeNull();
+    expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
+  });
+
+  it("titles the plan step Payment plan and Contract terms with chooser guidance", async () => {
+    const user = userEvent.setup();
+    await startApplication(user, /silver vip/i);
+    const main = wizardMain();
+    expect(within(main).getByRole("heading", { name: "Payment plan" })).toBeInTheDocument();
+    expect(within(main).getByText("Choose how the customer pays.")).toBeInTheDocument();
+    expect(within(main).getByRole("heading", { name: "Contract terms" })).toBeInTheDocument();
+    expect(within(main).getByText("Select contract type.")).toBeInTheDocument();
+  });
+
+  it("keeps the Standard and Non-Standard classification cards selectable", async () => {
+    const user = userEvent.setup();
+    await startApplication(user, /gold vip/i);
+    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    await user.click(within(schemes).getByRole("radio", { name: /spot cash/i }));
+    const classification = screen.getByRole("radiogroup", { name: "Contract classification" });
+    const standard = within(classification).getByRole("radio", { name: "Standard (S)" });
+    const nonStandard = within(classification).getByRole("radio", { name: "Non-Standard (N)" });
+    await user.click(nonStandard);
+    await user.click(standard);
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    expect(await screen.findByRole("heading", { name: "Personal details" })).toBeInTheDocument();
+  });
+
+  it("shows the chosen scheme in the plan summary once a scheme is picked", async () => {
+    const user = userEvent.setup();
+    await startApplication(user, /gold vip/i);
+    const aside = screen.getByRole("complementary", { name: "Selected VIP card" });
+    expect(within(aside).queryByText("Spot Cash")).toBeNull();
+    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    await user.click(within(schemes).getByRole("radio", { name: /spot cash/i }));
+    // The aside renders one scheme row under a "Payment scheme" caption.
+    expect(within(aside).getByText("Payment scheme")).toBeInTheDocument();
+    expect(within(aside).getByText("Spot Cash")).toBeInTheDocument();
+  });
+});
+
+describe("customer application new fields and secondary holder", () => {
+  function wizardMain() {
+    const element = document.querySelector(".customer-application__main");
+    if (!(element instanceof HTMLElement)) throw new Error("Wizard main column not found.");
+    return element;
+  }
+
+  async function startApplication(user: ReturnType<typeof userEvent.setup>, card: RegExp) {
+    show("dev-sm-a", <CustomerFormPage />);
+    await user.click(await screen.findByRole("radio", { name: card }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await screen.findByRole("radiogroup", { name: "Payment scheme" });
+  }
+
+  async function choosePlanAndContinue(user: ReturnType<typeof userEvent.setup>) {
+    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    const target = within(schemes).getAllByRole("radio").find((item) => item.getAttribute("aria-disabled") !== "true" && !item.hasAttribute("data-disabled"))!;
+    await user.click(target);
+    await user.click(screen.getByRole("radio", { name: /standard \(s\)/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+  }
+
+  async function reachCustomerStep(user: ReturnType<typeof userEvent.setup>, card: RegExp) {
+    await startApplication(user, card);
+    await choosePlanAndContinue(user);
+    await screen.findByRole("heading", { name: "Personal details" });
+  }
+
+  async function fillValidPrimary(user: ReturnType<typeof userEvent.setup>) {
+    // Required-field captions carry an aria-hidden asterisk, so match loosely.
+    // Province also exists in the office address block, so scope it to the Address card.
+    const addressCard = screen.getByRole("heading", { name: "Address" }).closest(".customer-application__block") as HTMLElement;
+    await user.type(screen.getByLabelText(/first name/i), "Maria");
+    await user.type(screen.getByLabelText(/last name/i), "Reyes");
+    fireEvent.change(screen.getByLabelText(/date of birth/i), { target: { value: "1990-05-01" } });
+    await user.click(within(screen.getByRole("radiogroup", { name: "Gender" })).getByRole("radio", { name: "Male" }));
+    await user.click(within(screen.getByRole("radiogroup", { name: "Civil status" })).getByRole("radio", { name: "Single" }));
+    await user.type(screen.getByLabelText(/mobile number/i), "09171110009");
+    await fillResidentialAddress(user, addressCard, "Cebu", "Lapu-Lapu City", "Pajo");
+  }
+
+  async function attachProofAndReachReview(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await screen.findByText("Sales attribution");
+    await user.click(screen.getByRole("checkbox", { name: /processing of personal data/i }));
+    await user.click(screen.getByRole("checkbox", { name: /specimen signatures/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await screen.findByRole("heading", { name: "Application form" });
+    const proof = screen.getByLabelText(/proof of payment/i) as HTMLInputElement;
+    fireEvent.change(proof, { target: { files: [new File(["proof"], "receipt.png", { type: "image/png" })] } });
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await screen.findByRole("heading", { name: "Review the application" });
+  }
+
+  async function acceptAndSubmit(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole("checkbox", { name: /customer reviewed and accepted/i }));
+    await user.click(screen.getByRole("button", { name: /submit application/i }));
+  }
+
+  function secondaryToggle() {
+    return screen.queryByRole("switch", { name: /secondary card holder/i });
+  }
+
+  it.each([/silver vip/i, /bronze vip/i])("hides the secondary toggle for %s", async (card) => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, card);
+    expect(secondaryToggle()).toBeNull();
+    expect(within(wizardMain()).queryByText("Add a secondary card holder")).toBeNull();
+  });
+
+  it("shows the secondary toggle for Gold but no mirror until it is on", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /gold vip/i);
+    expect(await screen.findByRole("switch", { name: /secondary card holder/i })).toBeInTheDocument();
+    expect(screen.getByText("Add a secondary card holder")).toBeInTheDocument();
+    expect(screen.queryByLabelText("First name (Secondary holder)")).toBeNull();
+  });
+
+  it("reveals the full secondary mirror when the toggle is on", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /gold vip/i);
+    await user.click(await screen.findByRole("switch", { name: /secondary card holder/i }));
+    expect(await screen.findByLabelText("First name (Secondary holder)")).toBeInTheDocument();
+    for (const name of [
+      "Last name (Secondary holder)",
+      "Citizenship (Secondary holder)",
+      "Date of birth (Secondary holder)",
+      "Mobile number (Secondary holder)",
+      "Email (Secondary holder)",
+      "Landline (Secondary holder)",
+      "TIN number (Secondary holder)",
+      "Occupation/Business Name (Secondary holder)",
+      "Type of Business/Industry (Secondary holder)",
+      "Employed Position (Secondary holder)",
+    ]) {
+      expect(screen.getByLabelText(name)).toBeInTheDocument();
+    }
+    for (const heading of [
+      "Personal details (Secondary holder)",
+      "Contact (Secondary holder)",
+      "Address (Secondary holder)",
+      "Government ID (Secondary holder)",
+      "Employment (Secondary holder)",
+    ]) {
+      expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument();
+    }
+    expect(screen.getByRole("radiogroup", { name: "Gender (Secondary holder)" })).toBeInTheDocument();
+    expect(screen.getByRole("radiogroup", { name: "Civil status (Secondary holder)" })).toBeInTheDocument();
+  });
+
+  it("renders the new primary fields with exact labels", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /silver vip/i);
+    expect(screen.getByRole("heading", { name: "Employment" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Citizenship")).toBeInTheDocument();
+    expect(screen.getByLabelText("TIN number")).toBeInTheDocument();
+    expect(screen.getByLabelText("Landline")).toBeInTheDocument();
+    expect(screen.getByLabelText("Occupation/Business Name")).toBeInTheDocument();
+    expect(screen.getByLabelText("Type of Business/Industry")).toBeInTheDocument();
+    expect(screen.getByLabelText("Employed Position")).toBeInTheDocument();
+    expect(document.getElementById("afhomes-office-street") as HTMLInputElement).toHaveAccessibleName("No./Street/Subdivision");
+    expect(document.getElementById("afhomes-office-municipality") as HTMLInputElement).toHaveAccessibleName("Municipality");
+    expect(document.getElementById("afhomes-office-province") as HTMLInputElement).toHaveAccessibleName("Province");
+    expect(document.getElementById("afhomes-office-zip") as HTMLInputElement).toHaveAccessibleName("ZIP Code");
+  });
+
+  it("shows Age as a disabled derived field next to Date of birth", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /silver vip/i);
+    const personalCard = screen.getByRole("heading", { name: "Personal details" }).closest(".customer-application__block") as HTMLElement;
+    const dob = within(personalCard).getByLabelText(/date of birth/i) as HTMLInputElement;
+    const age = within(personalCard).getByLabelText("Age") as HTMLInputElement;
+    expect(age).toBeDisabled();
+    expect(age).toHaveAccessibleDescription("Derived from date of birth.");
+    expect(age.value).toBe("");
+    fireEvent.change(dob, { target: { value: "1990-05-01" } });
+    await waitFor(() => expect(age.value).toBe(String(computeAge("1990-05-01", manilaToday()))));
+    fireEvent.change(dob, { target: { value: "" } });
+    await waitFor(() => expect(age.value).toBe(""));
+  });
+
+  it("derives the secondary holder Age the same way", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /gold vip/i);
+    await user.click(await screen.findByRole("switch", { name: /secondary card holder/i }));
+    const secHeading = await screen.findByRole("heading", { name: "Personal details (Secondary holder)" });
+    const secCard = secHeading.closest(".customer-application__block") as HTMLElement;
+    const secDob = within(secCard).getByLabelText(/date of birth/i) as HTMLInputElement;
+    const secAge = within(secCard).getByLabelText("Age") as HTMLInputElement;
+    expect(secAge).toBeDisabled();
+    expect(secAge).toHaveAccessibleDescription("Derived from date of birth.");
+    expect(secAge.value).toBe("");
+    fireEvent.change(secDob, { target: { value: "2000-01-01" } });
+    await waitFor(() => expect(secAge.value).toBe(String(computeAge("2000-01-01", manilaToday()))));
+    // The secondary landline carries the same +63 prefix contract.
+    const secLandline = screen.getByLabelText("Landline (Secondary holder)") as HTMLInputElement;
+    expect(secLandline.parentElement?.querySelector('[aria-hidden="true"]')?.textContent).toContain("+63");
+    fireEvent.change(secDob, { target: { value: "" } });
+    await waitFor(() => expect(secAge.value).toBe(""));
+  });
+
+  it("shows no Step N of 6 counter anywhere; the mobile caption is the step name with a progressbar", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /silver vip/i);
+    const bar = await screen.findByRole("progressbar", { name: "Application progress" });
+    expect(bar).toHaveAttribute("aria-valuemin", "1");
+    expect(bar).toHaveAttribute("aria-valuemax", "6");
+    expect(bar).toHaveAttribute("aria-valuenow", "3");
+    const caption = bar.parentElement as HTMLElement;
+    expect(within(caption).getByText("Customer")).toBeInTheDocument();
+    expect(within(caption).queryByText(/step \d+ of \d+/i)).toBeNull();
+    const actions = document.querySelector(".customer-application__actions") as HTMLElement;
+    expect(actions).toBeInTheDocument();
+    expect(within(actions).queryByText(/step \d+ of \d+/i)).toBeNull();
+    expect(screen.queryByText(/step \d+ of \d+/i)).toBeNull();
+    // Still true on the next step.
+    await fillValidPrimary(user);
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await screen.findByText("Sales attribution");
+    expect(screen.queryByText(/step \d+ of \d+/i)).toBeNull();
+    const nextBar = await screen.findByRole("progressbar", { name: "Application progress" });
+    expect(within(nextBar.parentElement as HTMLElement).getByText("Sales and consent")).toBeInTheDocument();
+  });
+
+  it("gates the city list until a province is chosen and scopes it to that province", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /silver vip/i);
+    const addressCard = screen.getByRole("heading", { name: "Address" }).closest(".customer-application__block") as HTMLElement;
+    const provinceCombo = () => within(addressCard).getByRole("combobox", { name: /^province/i }) as HTMLInputElement;
+    const cityCombo = () => within(addressCard).getByRole("combobox", { name: /city/i }) as HTMLInputElement;
+    expect(provinceCombo().value).toBe("");
+    // The city combo waits for the province that supplies its options.
+    expect(cityCombo()).toBeDisabled();
+    expect(cityCombo()).toHaveAttribute("placeholder", "Select a province first");
+    await pickFilteredOption(user, provinceCombo(), "Cebu", /^cebu$/i);
+    await waitFor(() => expect(provinceCombo().value).toBe("Cebu"));
+    expect(cityCombo()).toBeEnabled();
+    await user.click(cityCombo());
+    // The list is scoped to Cebu: Lapu-Lapu City is present, Quezon City is not.
+    expect(await screen.findByRole("option", { name: "Lapu-Lapu City" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Quezon City" })).toBeNull();
+  });
+
+  it("gates barangay on a chosen city and scopes its options to that city", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /silver vip/i);
+    const addressCard = screen.getByRole("heading", { name: "Address" }).closest(".customer-application__block") as HTMLElement;
+    const provinceCombo = () => within(addressCard).getByRole("combobox", { name: /^province/i }) as HTMLInputElement;
+    const cityCombo = () => within(addressCard).getByRole("combobox", { name: /city/i }) as HTMLInputElement;
+    const barangayCombo = () => within(addressCard).getByRole("combobox", { name: /^barangay/i }) as HTMLInputElement;
+    await pickFilteredOption(user, provinceCombo(), "Cebu", /^cebu$/i);
+    await waitFor(() => expect(cityCombo()).toBeEnabled());
+    // Barangay needs a city before it offers anything.
+    expect(barangayCombo()).toBeDisabled();
+    expect(barangayCombo()).toHaveAttribute("placeholder", "Select a city first");
+    await pickFilteredOption(user, cityCombo(), "Lapu-Lapu City", /^lapu-lapu city$/i);
+    await waitFor(() => expect(barangayCombo()).toBeEnabled());
+    // The unscoped list holds Lapu-Lapu's barangays only; Laguna's Alipit is
+    // never offered here.
+    await user.click(barangayCombo());
+    expect(await screen.findByRole("option", { name: "Pajo" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /^alipit$/i })).toBeNull();
+    await user.click(screen.getByRole("option", { name: "Pajo" }));
+    await waitFor(() => expect(barangayCombo().value).toBe("Pajo"));
+  });
+
+  it("locks the principal ZIP for a city, including multi-ZIP cities", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /silver vip/i);
+    const addressCard = screen.getByRole("heading", { name: "Address" }).closest(".customer-application__block") as HTMLElement;
+    const provinceCombo = () => within(addressCard).getByRole("combobox", { name: /^province/i }) as HTMLInputElement;
+    const cityCombo = () => within(addressCard).getByRole("combobox", { name: /city/i }) as HTMLInputElement;
+    const zip = () => within(addressCard).getByRole("textbox", { name: /zip code/i }) as HTMLInputElement;
+    // Street stays editable text ahead of the province-first selects and carries
+    // the subdivision inline, never as a separate field.
+    const street = within(addressCard).getByRole("textbox", { name: "No./Street/Subdivision" });
+    expect(street).toBeInTheDocument();
+    expect(within(addressCard).getByRole("textbox", { name: /subdivision/i })).toBe(street);
+
+    await pickFilteredOption(user, provinceCombo(), "Cebu", /^cebu$/i);
+    await pickFilteredOption(user, cityCombo(), "Lapu-Lapu City", /^lapu-lapu city$/i);
+    // The mapped city auto-fills its single ZIP (never a guessed value) and locks it.
+    await waitFor(() => expect(zip().value).toBe("6015"));
+    expect(zip()).toBeDisabled();
+    expect(within(addressCard).getByText("Principal ZIP for the selected city.")).toBeInTheDocument();
+
+    // A multi-ZIP NCR city resolves its municipality's principal ZIP and
+    // stays locked; the field never accepts a user-typed value. Changing
+    // provinces resets the city first (component rule), so Metro Manila is
+    // picked before choosing from its now-scoped city list.
+    await pickFilteredOption(user, provinceCombo(), "Metro Manila", /^metro manila$/i);
+    await waitFor(() => expect(cityCombo().value).toBe(""));
+    await pickFilteredOption(user, cityCombo(), "Quezon City", /^quezon city$/i);
+    await waitFor(() => expect(cityCombo().value).toBe("Quezon City"));
+    await waitFor(() => expect(zip().value).toBe("1100"));
+    expect(zip()).toBeDisabled();
+    // The field stays derived and locked; the hint states the source.
+    expect(within(addressCard).getByText("Principal ZIP for the selected city.")).toBeInTheDocument();
+    fireEvent.change(zip(), { target: { value: "1101" } });
+    expect(zip().value).toBe("1100");
+  });
+
+  it("resets dependent address children and ZIP when the province changes", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /silver vip/i);
+    const addressCard = screen.getByRole("heading", { name: "Address" }).closest(".customer-application__block") as HTMLElement;
+    const provinceCombo = () => within(addressCard).getByRole("combobox", { name: /^province/i }) as HTMLInputElement;
+    const cityCombo = () => within(addressCard).getByRole("combobox", { name: /city/i }) as HTMLInputElement;
+    const barangayCombo = () => within(addressCard).getByRole("combobox", { name: /^barangay/i }) as HTMLInputElement;
+    const zip = () => within(addressCard).getByRole("textbox", { name: /zip code/i }) as HTMLInputElement;
+    await fillResidentialAddress(user, addressCard, "Cebu", "Lapu-Lapu City", "Pajo");
+    await waitFor(() => expect(zip().value).toBe("6015"));
+
+    // Switching province resets the dependent children and ZIP.
+    await pickFilteredOption(user, provinceCombo(), "Metro Manila", /^metro manila$/i);
+    await waitFor(() => expect(provinceCombo().value).toBe("Metro Manila"));
+    await waitFor(() => expect(cityCombo().value).toBe(""));
+    await waitFor(() => expect(barangayCombo().value).toBe(""));
+    await waitFor(() => expect(zip().value).toBe(""));
+    expect(zip()).toBeDisabled();
+    // The newly set province gates and scopes the city list again.
+    expect(cityCombo()).toBeEnabled();
+    expect(barangayCombo()).toBeDisabled();
+    await user.click(cityCombo());
+    expect(await screen.findByRole("option", { name: "Quezon City" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /^lapu-lapu city$/i })).toBeNull();
+  });
+
+  it("derives the landline prefix per selected city and keeps digits user-entered", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /silver vip/i);
+    const landline = screen.getByLabelText("Landline") as HTMLInputElement;
+    const adornment = () => landline.parentElement?.querySelector('[aria-hidden="true"]');
+    // With no city resolved, only the +63 country code shows.
+    expect(adornment()?.textContent).toBe("+63");
+    const addressCard = screen.getByRole("heading", { name: "Address" }).closest(".customer-application__block") as HTMLElement;
+    await fillResidentialAddress(user, addressCard, "Cebu", "Lapu-Lapu City", "Pajo");
+    // Lapu-Lapu City maps to area code 032 in the curated dataset.
+    await waitFor(() => expect(adornment()?.textContent).toBe("+63 (032)"));
+    await user.type(landline, "8123456");
+    expect(landline.value).toBe("8123456");
+    expect(landline.value).not.toContain("+63");
+  });
+
+  it("falls back to the province area code for a city without a curated override", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /silver vip/i);
+    const landline = screen.getByLabelText("Landline") as HTMLInputElement;
+    const adornment = () => landline.parentElement?.querySelector('[aria-hidden="true"]');
+    const addressCard = screen.getByRole("heading", { name: "Address" }).closest(".customer-application__block") as HTMLElement;
+    const provinceCombo = () => within(addressCard).getByRole("combobox", { name: /^province/i }) as HTMLInputElement;
+    const cityCombo = () => within(addressCard).getByRole("combobox", { name: /city/i }) as HTMLInputElement;
+    // Santa Cruz (Laguna) has no city overlay, so the province code 049 applies.
+    await pickFilteredOption(user, provinceCombo(), "Laguna", /^laguna$/i);
+    await pickFilteredOption(user, cityCombo(), "Santa Cruz", /^santa cruz$/i);
+    await waitFor(() => expect((provinceCombo() as HTMLInputElement).value).toBe("Laguna"));
+    await waitFor(() => expect((cityCombo() as HTMLInputElement).value).toBe("Santa Cruz"));
+    await waitFor(() => expect(adornment()?.textContent).toBe("+63 (049)"));
+  });
+
+  it("completes the office address province-first with the same ZIP rule", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /silver vip/i);
+    const employmentCard = screen.getByRole("heading", { name: "Employment" }).closest(".customer-application__block") as HTMLElement;
+    const officeProvince = () => within(employmentCard).getByRole("combobox", { name: "Province" }) as HTMLInputElement;
+    const officeMunicipality = () => within(employmentCard).getByRole("combobox", { name: "Municipality" }) as HTMLInputElement;
+    const officeZip = () => within(employmentCard).getByLabelText("ZIP Code") as HTMLInputElement;
+    expect(officeProvince().value).toBe("");
+    // The municipality waits for the province that supplies its options.
+    expect(officeMunicipality()).toBeDisabled();
+    expect(officeMunicipality()).toHaveAttribute("placeholder", "Select a province first");
+    await pickFilteredOption(user, officeProvince(), "Cebu", /^cebu$/i);
+    await waitFor(() => expect(officeMunicipality()).toBeEnabled());
+    // Mapped municipality: the single ZIP locks with a hint.
+    await pickFilteredOption(user, officeMunicipality(), "Mandaue City", /^mandaue city$/i);
+    await waitFor(() => expect(officeZip().value).toBe("6014"));
+    expect(officeZip()).toBeDisabled();
+    expect(within(employmentCard).getByText("Principal ZIP for the selected municipality.")).toBeInTheDocument();
+    // A multi-ZIP municipality resolves its principal ZIP and stays locked.
+    // Changing provinces resets the municipality first (component rule), so
+    // Metro Manila is picked before choosing from its now-scoped list.
+    await pickFilteredOption(user, officeProvince(), "Metro Manila", /^metro manila$/i);
+    await waitFor(() => expect(officeMunicipality().value).toBe(""));
+    await pickFilteredOption(user, officeMunicipality(), "Quezon City", /^quezon city$/i);
+    await waitFor(() => expect(officeMunicipality().value).toBe("Quezon City"));
+    await waitFor(() => expect(officeZip().value).toBe("1100"));
+    expect(officeZip()).toBeDisabled();
+    // The field stays derived and locked; the hint states the source.
+    expect(within(employmentCard).getByText("Principal ZIP for the selected municipality.")).toBeInTheDocument();
+    fireEvent.change(officeZip(), { target: { value: "ab1100" } });
+    expect(officeZip().value).toBe("1100");
+    // The street line stays editable text and the subdivision is typed inline in it.
+    const officeStreet = within(employmentCard).getByLabelText("No./Street/Subdivision") as HTMLInputElement;
+    await user.type(officeStreet, "123 Mabini St, acacia subdivision");
+    expect(officeStreet.value).toBe("123 Mabini St, Acacia Subdivision");
+    expect(within(employmentCard).getByRole("textbox", { name: /subdivision/i })).toBe(officeStreet);
+  });
+
+  it("formats the TIN when filled and keeps the landline digits", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /silver vip/i);
+    await user.type(screen.getByLabelText("TIN number"), "123456789");
+    expect((screen.getByLabelText("TIN number") as HTMLInputElement).value).toBe("123-456-789");
+    await user.type(screen.getByLabelText("Landline"), "028123456");
+    expect((screen.getByLabelText("Landline") as HTMLInputElement).value).toBe("028123456");
+  });
+
+  it("requires the secondary holder's first and last name once the profile is started", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /gold vip/i);
+    await fillValidPrimary(user);
+    await user.click(screen.getByRole("switch", { name: /secondary card holder/i }));
+    await user.type(await screen.findByLabelText("First name (Secondary holder)"), "Ana");
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    expect(await screen.findByText("Enter the supplementary holder's first and last name.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Personal details" })).toBeInTheDocument();
+  });
+
+  it("blocks submit-path progress when landline and TIN are invalid", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /silver vip/i);
+    await fillValidPrimary(user);
+    await user.type(screen.getByLabelText("Landline"), "123");
+    await user.type(screen.getByLabelText("TIN number"), "12345");
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    // Continue now returns to the step that owns the first failing field and
+    // highlights it, instead of silently stalling on a later step.
+    expect(await screen.findByText("Landline must be 7 digits for this area code.")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Personal details" })).toBeInTheDocument();
+    expect(screen.queryByText("Sales attribution")).toBeNull();
+  });
+
+  it("returns from Reservation to the owning step with the specific Customer ID message", { timeout: 30_000 }, async () => {
+    const user = userEvent.setup();
+    const manualId = `${currentManilaYear()}-0042`;
+    show(
+      "dev-sm-a",
+      <>
+        <CustomerDraftProbe customerNumber={manualId} />
+        <CustomerFormPage />
+      </>,
+    );
+
+    await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await screen.findByRole("radiogroup", { name: "Payment scheme" });
+    await choosePlanAndContinue(user);
+    await screen.findByRole("heading", { name: "Personal details" });
+    await fillValidPrimary(user);
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await screen.findByText("Sales attribution");
+
+    // The manual ID is unique until the draft is saved from the Reservation step.
+    await user.click(screen.getByRole("radio", { name: "Manual" }));
+    await user.type(screen.getByLabelText("Customer ID"), manualId);
+    await user.click(screen.getByRole("checkbox", { name: /processing of personal data/i }));
+    await user.click(screen.getByRole("checkbox", { name: /specimen signatures/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await screen.findByRole("heading", { name: "Application form" });
+
+    await user.click(screen.getByRole("button", { name: /save as draft/i }));
+    await screen.findByText("Draft saved.");
+    await waitFor(() => expect(screen.getByTestId("draft-probe")).toHaveTextContent("saved"));
+
+    // Continue on Reservation now blocks on a field that step does not render.
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+
+    // The toast names the field, not just the generic "complete the fields" copy.
+    const notifications = await screen.findByLabelText(/notifications/i);
+    expect(within(notifications).getByText("This Customer ID is already in use.")).toBeInTheDocument();
+    expect(within(notifications).queryByText("Complete the highlighted fields to continue.")).toBeNull();
+
+    // The wizard returns to the Sales and consent step that owns the field and
+    // highlights it there.
+    expect(await screen.findByText("Sales attribution")).toBeInTheDocument();
+    expect(screen.getAllByText("This Customer ID is already in use.").length).toBeGreaterThan(0);
+    expect(screen.queryByRole("heading", { name: "Review the application" })).toBeNull();
+  });
+
+  // Full submit path with combobox address picks; needs headroom over the 15s project default under load.
+  it("treats toggle-off as no secondary profile on submit", { timeout: 30_000 }, async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /gold vip/i);
+    await user.click(screen.getByRole("switch", { name: /secondary card holder/i }));
+    await user.type(await screen.findByLabelText("First name (Secondary holder)"), "Ana");
+    await user.type(screen.getByLabelText("Last name (Secondary holder)"), "Santos");
+    await user.click(screen.getByRole("switch", { name: /secondary card holder/i }));
+    expect(secondaryToggle()).toHaveAttribute("aria-checked", "false");
+    expect(screen.queryByLabelText("First name (Secondary holder)")).toBeNull();
+    await fillValidPrimary(user);
+    await attachProofAndReachReview(user);
+    await acceptAndSubmit(user);
+    expect(await screen.findByText(/waiting for Finance verification|submitted|drafted/i)).toBeInTheDocument();
+    expect(screen.queryByText("Enter the supplementary holder's first and last name.")).toBeNull();
+  });
+
+  it("clears the secondary profile on plan change", async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /gold vip/i);
+    await user.click(screen.getByRole("switch", { name: /secondary card holder/i }));
+    await user.type(await screen.findByLabelText("First name (Secondary holder)"), "Ana");
+    const progress = screen.getByRole("list", { name: "Progress" });
+    await user.click(within(progress).getByText(/vip card/i));
+    await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await choosePlanAndContinue(user);
+    await screen.findByRole("heading", { name: "Personal details" });
+    expect(secondaryToggle()).toBeNull();
+    const progressAgain = screen.getByRole("list", { name: "Progress" });
+    await user.click(within(progressAgain).getByText(/vip card/i));
+    await user.click(await screen.findByRole("radio", { name: /gold vip/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await choosePlanAndContinue(user);
+    await screen.findByRole("heading", { name: "Personal details" });
+    const toggle = secondaryToggle();
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+    await user.click(toggle!);
+    expect((await screen.findByLabelText("First name (Secondary holder)") as HTMLInputElement).value).toBe("");
+  });
+
+  // Full submit path with combobox address picks; needs headroom over the 15s project default under load.
+  it("submits Gold with a full secondary profile", { timeout: 30_000 }, async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /gold vip/i);
+    await fillValidPrimary(user);
+    await user.click(screen.getByRole("switch", { name: /secondary card holder/i }));
+    await user.type(await screen.findByLabelText("First name (Secondary holder)"), "Ana");
+    await user.type(screen.getByLabelText("Last name (Secondary holder)"), "Santos");
+    await user.type(screen.getByLabelText("Citizenship (Secondary holder)"), "Filipino");
+    await user.type(screen.getByLabelText("Mobile number (Secondary holder)"), "09171110002");
+    await user.type(screen.getByLabelText("Landline (Secondary holder)"), "028123456");
+    await user.type(screen.getByLabelText("TIN number (Secondary holder)"), "123456789");
+    await attachProofAndReachReview(user);
+    expect(screen.queryByText("Fix these before continuing")).toBeNull();
+    const holderRow = screen.getByText("Supplementary holder", { selector: "dt" });
+    expect(holderRow.parentElement).toHaveTextContent("Ana Santos");
+    await acceptAndSubmit(user);
+    expect(await screen.findByText(/waiting for Finance verification|submitted|drafted/i)).toBeInTheDocument();
+  });
+
+  // Full submit path with combobox address picks; needs headroom over the 15s project default under load.
+  it("keeps Review and names the missing acceptance when Submit runs without the acceptance box", { timeout: 30_000 }, async () => {
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /gold vip/i);
+    await fillValidPrimary(user);
+    await attachProofAndReachReview(user);
+    // Submit from Review with the acceptance box left unchecked.
+    expect(screen.getByRole("checkbox", { name: /customer reviewed and accepted/i })).not.toBeChecked();
+    await user.click(screen.getByRole("button", { name: /submit application/i }));
+
+    // The acceptance checkbox lives on Review, so Submit stays there and names the
+    // missing confirmation instead of navigating to a step without that control.
+    expect(await screen.findByRole("heading", { name: "Review the application" })).toBeInTheDocument();
+    const notifications = await screen.findByLabelText(/notifications/i);
+    expect(within(notifications).getByText("Confirm that the customer accepted the payment schedule.")).toBeInTheDocument();
+  });
+});
+
+describe("customer application wizard refresh persistence", () => {
+  it("restores the Payment plan step and the chosen card after a refresh", async () => {
+    const user = userEvent.setup();
+    const before = show("dev-sm-a", <CustomerFormPage />);
+    await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    expect(await screen.findByRole("heading", { name: "Payment plan" })).toBeInTheDocument();
+    expect(await screen.findByRole("complementary", { name: "Selected VIP card" })).toHaveTextContent("Silver VIP (S1)");
+
+    // A refresh is a fresh mount in the same browser session: sessionStorage survives.
+    before.unmount();
+    show("dev-sm-a", <CustomerFormPage />);
+
+    expect(await screen.findByRole("heading", { name: "Payment plan" })).toBeInTheDocument();
+    expect(screen.queryByRole("radiogroup", { name: "VIP card" })).toBeNull();
+    expect(await screen.findByRole("complementary", { name: "Selected VIP card" })).toHaveTextContent("Silver VIP (S1)");
+    // The restored draft still carries the chosen card on the first step.
+    await user.click(within(screen.getByRole("list", { name: "Progress" })).getByText(/vip card/i));
+    expect(await screen.findByRole("radio", { name: /silver vip/i })).toHaveAttribute("aria-checked", "true");
+  });
+});
+
+describe("customer application realtime field validation", () => {
+  /**
+   * Renders the real form sections with a local draft, so blur/live validation
+   * behaves exactly as in the wizard while staying fast to exercise.
+   */
+  function ValidationHarness({
+    errors = {},
+    secondary = false,
+  }: {
+    errors?: Record<string, string | undefined>;
+    secondary?: boolean;
+  }) {
+    const [draft, setDraft] = useState(() => toDraft());
+    const set: SetDraft = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
+    if (secondary) return <SecondaryHolderSection draft={draft} set={set} errors={errors} />;
+    return (
+      <>
+        <IdentitySection draft={draft} set={set} errors={errors} />
+        <ContactSection draft={draft} set={set} errors={errors} />
+        <GovernmentIdSection draft={draft} set={set} errors={errors} />
+      </>
+    );
+  }
+
+  /**
+   * Renders the address and contact sections over one shared draft so a city
+   * change can retarget the landline area-code rule without the full wizard.
+   */
+  function AddressContactHarness() {
+    const [draft, setDraft] = useState(() => toDraft());
+    const set: SetDraft = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
+    return (
+      <>
+        <AddressSection draft={draft} set={set} errors={{}} />
+        <ContactSection draft={draft} set={set} errors={{}} />
+      </>
+    );
+  }
+
+  it("shows each format error on blur and clears it as soon as the value is valid", async () => {
+    const user = userEvent.setup();
+    render(<ValidationHarness />);
+
+    // Mobile: invalid on blur, cleared live once 11 digits start with 09.
+    const mobile = screen.getByLabelText(/^mobile number/i) as HTMLInputElement;
+    await user.type(mobile, "0917");
+    expect(screen.queryByText("Mobile number required.")).toBeNull();
+    fireEvent.blur(mobile);
+    expect(await screen.findByText("Mobile number required.")).toBeInTheDocument();
+    await user.type(mobile, "1110009");
+    expect(screen.queryByText("Mobile number required.")).toBeNull();
+
+    // Landline: optional, and with no address area code the domestic 7–10 digit rule applies.
+    const landline = screen.getByLabelText("Landline") as HTMLInputElement;
+    await user.type(landline, "123");
+    fireEvent.blur(landline);
+    expect(await screen.findByText("Landline must be 7 to 10 digits.")).toBeInTheDocument();
+    await user.type(landline, "4567");
+    expect(screen.queryByText("Landline must be 7 to 10 digits.")).toBeNull();
+
+    // TIN: 9 or 12 digits.
+    const tin = screen.getByLabelText("TIN number") as HTMLInputElement;
+    await user.type(tin, "12345");
+    fireEvent.blur(tin);
+    expect(await screen.findByText("TIN must be 9 or 12 digits.")).toBeInTheDocument();
+    await user.type(tin, "6789");
+    expect(screen.queryByText("TIN must be 9 or 12 digits.")).toBeNull();
+
+    // Email: syntax check only when the field is filled.
+    const email = screen.getByLabelText("Email") as HTMLInputElement;
+    await user.type(email, "not-an-email");
+    fireEvent.blur(email);
+    expect(await screen.findByText("Enter a valid email address.")).toBeInTheDocument();
+    await user.clear(email);
+    await user.type(email, "maria@example.com");
+    expect(screen.queryByText("Enter a valid email address.")).toBeNull();
+
+    // Citizenship: maxLength blocks typing past 80, so set the over-length
+    // value programmatically to exercise the length rule itself.
+    const citizenship = screen.getByLabelText("Citizenship") as HTMLInputElement;
+    fireEvent.change(citizenship, { target: { value: "A".repeat(81) } });
+    fireEvent.blur(citizenship);
+    expect(await screen.findByText("Citizenship must be 80 characters or less.")).toBeInTheDocument();
+    fireEvent.change(citizenship, { target: { value: "Filipino" } });
+    expect(screen.queryByText("Citizenship must be 80 characters or less.")).toBeNull();
+  });
+
+  it("accepts a full 12-digit TIN in the primary and secondary holder fields", async () => {
+    const user = userEvent.setup();
+    const primary = render(<ValidationHarness />);
+    const tin = screen.getByLabelText("TIN number") as HTMLInputElement;
+    // Regression guard: the old 14-character cap truncated the branch code.
+    expect(tin).toHaveAttribute("maxlength", "15");
+    await user.type(tin, "091235467860");
+    expect(tin.value).toBe("091-235-467-860");
+    expect(tin.value).toHaveLength(15);
+    fireEvent.blur(tin);
+    expect(screen.queryByText("TIN must be 9 or 12 digits.")).toBeNull();
+    primary.unmount();
+
+    render(<ValidationHarness secondary />);
+    const secondaryTin = screen.getByLabelText("TIN number (Secondary holder)") as HTMLInputElement;
+    expect(secondaryTin).toHaveAttribute("maxlength", "15");
+    await user.type(secondaryTin, "091235467860");
+    expect(secondaryTin.value).toBe("091-235-467-860");
+    expect(secondaryTin.value).toHaveLength(15);
+    fireEvent.blur(secondaryTin);
+    expect(screen.queryByText("TIN must be 9 or 12 digits.")).toBeNull();
+  });
+
+  it("switches the landline digit rule when the address area code changes", async () => {
+    const user = userEvent.setup();
+    render(<AddressContactHarness />);
+    const addressCard = screen.getByRole("heading", { name: "Address" }).closest(".customer-application__block") as HTMLElement;
+    const landline = screen.getByLabelText("Landline") as HTMLInputElement;
+    const adornment = () => landline.parentElement?.querySelector('[aria-hidden="true"]');
+
+    // Metro Manila (02) wants 8 local digits.
+    await fillResidentialAddress(user, addressCard, "Metro Manila", "Quezon City", "Bagong Pag-asa");
+    await waitFor(() => expect(adornment()?.textContent).toBe("+63 (02)"));
+    await user.type(landline, "8123456");
+    fireEvent.blur(landline);
+    expect(await screen.findByText("Landline must be 8 digits for Metro Manila (02).")).toBeInTheDocument();
+
+    // The same 7-digit number is valid once the address resolves to Cebu (032),
+    // so the Metro Manila message clears without touching the number.
+    await fillResidentialAddress(user, addressCard, "Cebu", "Cebu City", "Capitol Site (Pob.)");
+    await waitFor(() => expect(adornment()?.textContent).toBe("+63 (032)"));
+    expect(screen.queryByText("Landline must be 8 digits for Metro Manila (02).")).toBeNull();
+    expect(screen.queryByText("Landline must be 7 digits for this area code.")).toBeNull();
+
+    // An eighth digit is now over the provincial limit.
+    await user.type(landline, "9");
+    fireEvent.blur(landline);
+    expect(await screen.findByText("Landline must be 7 digits for this area code.")).toBeInTheDocument();
+  });
+
+  it("shows no error when a valid value loses focus", async () => {
+    const user = userEvent.setup();
+    render(<ValidationHarness />);
+    const email = screen.getByLabelText("Email") as HTMLInputElement;
+    await user.type(email, "maria@example.com");
+    fireEvent.blur(email);
+    const mobile = screen.getByLabelText(/^mobile number/i) as HTMLInputElement;
+    await user.type(mobile, "09171110009");
+    fireEvent.blur(mobile);
+    const landline = screen.getByLabelText("Landline") as HTMLInputElement;
+    await user.type(landline, "0281234567");
+    fireEvent.blur(landline);
+    const tin = screen.getByLabelText("TIN number") as HTMLInputElement;
+    await user.type(tin, "123456789");
+    fireEvent.blur(tin);
+    const citizenship = screen.getByLabelText("Citizenship") as HTMLInputElement;
+    await user.type(citizenship, "Filipino");
+    fireEvent.blur(citizenship);
+    expect(screen.queryByText("Enter a valid email address.")).toBeNull();
+    expect(screen.queryByText("Mobile number required.")).toBeNull();
+    expect(screen.queryByText("Landline must be 7 to 10 digits.")).toBeNull();
+    expect(screen.queryByText("TIN must be 9 or 12 digits.")).toBeNull();
+    expect(screen.queryByText("Citizenship must be 80 characters or less.")).toBeNull();
+  });
+
+  it("applies the same realtime rules to the secondary holder mirror", async () => {
+    const user = userEvent.setup();
+    render(<ValidationHarness secondary />);
+
+    const mobile = screen.getByLabelText("Mobile number (Secondary holder)") as HTMLInputElement;
+    await user.type(mobile, "0917");
+    fireEvent.blur(mobile);
+    expect(await screen.findByText("Mobile number required.")).toBeInTheDocument();
+    await user.type(mobile, "1110009");
+    expect(screen.queryByText("Mobile number required.")).toBeNull();
+
+    const landline = screen.getByLabelText("Landline (Secondary holder)") as HTMLInputElement;
+    await user.type(landline, "123");
+    fireEvent.blur(landline);
+    expect(await screen.findByText("Landline must be 7 to 10 digits.")).toBeInTheDocument();
+    await user.type(landline, "4567");
+    expect(screen.queryByText("Landline must be 7 to 10 digits.")).toBeNull();
+
+    const tin = screen.getByLabelText("TIN number (Secondary holder)") as HTMLInputElement;
+    await user.type(tin, "12345");
+    fireEvent.blur(tin);
+    expect(await screen.findByText("TIN must be 9 or 12 digits.")).toBeInTheDocument();
+    await user.type(tin, "6789");
+    expect(screen.queryByText("TIN must be 9 or 12 digits.")).toBeNull();
+
+    const email = screen.getByLabelText("Email (Secondary holder)") as HTMLInputElement;
+    await user.type(email, "not-an-email");
+    fireEvent.blur(email);
+    expect(await screen.findByText("Enter a valid email address.")).toBeInTheDocument();
+    await user.clear(email);
+    await user.type(email, "ana@example.com");
+    expect(screen.queryByText("Enter a valid email address.")).toBeNull();
+
+    const citizenship = screen.getByLabelText("Citizenship (Secondary holder)") as HTMLInputElement;
+    fireEvent.change(citizenship, { target: { value: "A".repeat(81) } });
+    fireEvent.blur(citizenship);
+    expect(await screen.findByText("Citizenship must be 80 characters or less.")).toBeInTheDocument();
+    fireEvent.change(citizenship, { target: { value: "Filipino" } });
+    expect(screen.queryByText("Citizenship must be 80 characters or less.")).toBeNull();
+
+    // Re-blurring the corrected values stays quiet, exactly like the primary form.
+    fireEvent.blur(mobile);
+    fireEvent.blur(landline);
+    fireEvent.blur(tin);
+    fireEvent.blur(email);
+    fireEvent.blur(citizenship);
+    expect(screen.queryByText("Mobile number required.")).toBeNull();
+    expect(screen.queryByText("Landline must be 7 to 10 digits.")).toBeNull();
+    expect(screen.queryByText("TIN must be 9 or 12 digits.")).toBeNull();
+    expect(screen.queryByText("Enter a valid email address.")).toBeNull();
+    expect(screen.queryByText("Citizenship must be 80 characters or less.")).toBeNull();
+  });
+
+  it("keeps submit errors ahead of local blur errors", async () => {
+    const user = userEvent.setup();
+    render(
+      <ValidationHarness
+        errors={{
+          mobileNumber: "Mobile number is already registered.",
+          landline: "Landline was rejected by the server.",
+          tinNumber: "TIN was rejected by the server.",
+          citizenship: "Citizenship was rejected by the server.",
+          email: "Email was rejected by the server.",
+        }}
+      />,
+    );
+
+    const mobile = screen.getByLabelText(/^mobile number/i) as HTMLInputElement;
+    await user.type(mobile, "0917");
+    fireEvent.blur(mobile);
+    expect(screen.getByText("Mobile number is already registered.")).toBeInTheDocument();
+    expect(screen.queryByText("Mobile number required.")).toBeNull();
+
+    const landline = screen.getByLabelText("Landline") as HTMLInputElement;
+    await user.type(landline, "123");
+    fireEvent.blur(landline);
+    expect(screen.getByText("Landline was rejected by the server.")).toBeInTheDocument();
+    expect(screen.queryByText("Landline must be 7 to 10 digits.")).toBeNull();
+
+    const tin = screen.getByLabelText("TIN number") as HTMLInputElement;
+    await user.type(tin, "12345");
+    fireEvent.blur(tin);
+    expect(screen.getByText("TIN was rejected by the server.")).toBeInTheDocument();
+    expect(screen.queryByText("TIN must be 9 or 12 digits.")).toBeNull();
+
+    const email = screen.getByLabelText("Email") as HTMLInputElement;
+    await user.type(email, "not-an-email");
+    fireEvent.blur(email);
+    expect(screen.getByText("Email was rejected by the server.")).toBeInTheDocument();
+    expect(screen.queryByText("Enter a valid email address.")).toBeNull();
+
+    const citizenship = screen.getByLabelText("Citizenship") as HTMLInputElement;
+    fireEvent.change(citizenship, { target: { value: "A".repeat(81) } });
+    fireEvent.blur(citizenship);
+    expect(screen.getByText("Citizenship was rejected by the server.")).toBeInTheDocument();
+    expect(screen.queryByText("Citizenship must be 80 characters or less.")).toBeNull();
+  });
+
+  it("keeps the secondary submit error ahead of local secondary blur errors", async () => {
+    const user = userEvent.setup();
+    render(<ValidationHarness secondary errors={{ supplementaryHolder: "The supplementary holder's birth date must be in the past." }} />);
+
+    const firstName = screen.getByLabelText("First name (Secondary holder)") as HTMLInputElement;
+    // maxLength blocks typing past 80, so set the over-length value directly,
+    // then blur: the local name error is derived but the submit error wins.
+    fireEvent.change(firstName, { target: { value: "A".repeat(81) } });
+    fireEvent.blur(firstName);
+    expect(screen.getByText("The supplementary holder's birth date must be in the past.")).toBeInTheDocument();
+    expect(screen.queryByText("First name must be 80 characters or fewer.")).toBeNull();
+
+    // A local format error on another secondary field still appears beside it.
+    const mobile = screen.getByLabelText("Mobile number (Secondary holder)") as HTMLInputElement;
+    await user.type(mobile, "0917");
+    fireEvent.blur(mobile);
+    expect(screen.getByText("Mobile number required.")).toBeInTheDocument();
+  });
+});
+
+describe("secondary holder submit payload", () => {
+  it("sends no supplementary holder when the toggle is off, even with stale names", () => {
+    const draft = { ...toDraft(), secEnabled: false, secFirstName: "Ana", secLastName: "Santos" };
+    expect(toInput(draft).supplementaryHolder).toBeNull();
+  });
+
+  it("keeps the full secondary profile when the toggle is on with names", () => {
+    const draft = { ...toDraft(), vipPlan: "G1", secEnabled: true, secFirstName: "Ana", secLastName: "Santos" };
+    const holder = toInput(draft).supplementaryHolder;
+    expect(holder?.firstName).toBe("Ana");
+    expect(holder?.lastName).toBe("Santos");
+  });
+
+  it("reports the secondary name rule exactly as Review renders it", () => {
+    const started = { ...toDraft(), vipPlan: "G1", secEnabled: true, secFirstName: "Ana", secLastName: "" };
+    const errors = validateCustomerForSubmit(toInput(started), [], undefined, true);
+    expect(errors.supplementaryHolder).toBe("Enter the supplementary holder's first and last name.");
+  });
+
+  it("reports the exact landline and TIN messages rendered at Review", () => {
+    const errors = validateCustomerForSubmit(
+      { displayName: "Maria Reyes", firstName: "Maria", lastName: "Reyes", landline: "123", tinNumber: "12345" },
+      [],
+      undefined,
+      false,
+    );
+    expect(errors.landline).toBe("Landline must be 7 to 10 digits.");
+    expect(errors.tinNumber).toBe("TIN must be 9 or 12 digits.");
   });
 });
 
@@ -469,5 +1481,77 @@ describe("public accreditation verification", () => {
     await user.type(screen.getByLabelText(/accreditation number/i), "AAI26100001");
     await user.click(screen.getByRole("button", { name: "Verify" }));
     await waitFor(() => expect(screen.getByText(/no active accreditation was found/i)).toBeInTheDocument());
+  });
+});
+
+describe("customer edit reuses the application wizard", () => {
+  it("renders the wizard for an existing draft instead of the old single-page form", async () => {
+    show("dev-sm-a", <CustomerFormPage customerId="cust-a2" />);
+    expect(await screen.findByRole("heading", { name: "Choose a VIP card" })).toBeInTheDocument();
+    expect(await screen.findByRole("radiogroup", { name: "VIP card" })).toBeInTheDocument();
+    // The old single-page CustomerForm opened with this SectionBlock heading.
+    expect(screen.queryByRole("heading", { name: "VIP card and payment plan" })).toBeNull();
+  });
+
+  it("pre-fills the saved VIP card on edit", async () => {
+    show("dev-admin", <CustomerFormPage customerId="cust-a1" />);
+    const silver = await screen.findByRole("radio", { name: /silver vip/i });
+    expect(silver).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: /bronze vip/i })).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("updates the existing draft on save instead of creating a duplicate", { timeout: 30_000 }, async () => {
+    const user = userEvent.setup();
+    show(
+      "dev-sm-a",
+      <>
+        <CustomerRecordProbe id="cust-a2" />
+        <CustomerFormPage customerId="cust-a2" />
+      </>,
+    );
+    await screen.findByRole("heading", { name: "Choose a VIP card" });
+    const probe = () => screen.getByTestId("customer-record-probe");
+    await waitFor(() => expect(probe().getAttribute("data-count")).not.toBe("0"));
+    const initialCount = probe().getAttribute("data-count");
+    expect(initialCount).not.toBeNull();
+    expect(probe()).toHaveAttribute("data-first-name", "");
+
+    await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    const schemes = await screen.findByRole("radiogroup", { name: "Payment scheme" });
+    await user.click(
+      within(schemes).getAllByRole("radio").find((item) => item.getAttribute("aria-disabled") !== "true" && !item.hasAttribute("data-disabled"))!,
+    );
+    await user.click(screen.getByRole("radio", { name: /standard \(s\)/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await screen.findByRole("heading", { name: "Personal details" });
+
+    await user.type(screen.getByLabelText(/first name/i), "Maria");
+    await user.type(screen.getByLabelText(/last name/i), "Santos");
+    await user.click(screen.getByRole("button", { name: /save as draft/i }));
+
+    expect(await screen.findByText("Draft saved.")).toBeInTheDocument();
+    // The same seed draft is updated: the list size stays the same and cust-a2 carries the new name.
+    await waitFor(() => expect(probe()).toHaveAttribute("data-first-name", "Maria"));
+    expect(probe()).toHaveAttribute("data-last-name", "Santos");
+    expect(probe()).toHaveAttribute("data-count", initialCount ?? "");
+  });
+
+  it("uses the audited correction path for a submitted customer", { timeout: 30_000 }, async () => {
+    const user = userEvent.setup();
+    show("dev-admin", <CustomerFormPage customerId="cust-a1" />);
+    expect(await screen.findByRole("radio", { name: /silver vip/i })).toHaveAttribute("aria-checked", "true");
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await screen.findByRole("radiogroup", { name: "Payment scheme" });
+    // A submitted customer is never saved as a draft.
+    expect(screen.queryByRole("button", { name: /save as draft/i })).toBeNull();
+
+    for (let step = 0; step < 4; step += 1) {
+      await user.click(screen.getByRole("button", { name: /continue/i }));
+    }
+    expect(await screen.findByRole("heading", { name: "Review the application" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save correction" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /submit application/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /save as draft/i })).toBeNull();
   });
 });

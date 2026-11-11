@@ -341,3 +341,15 @@ These rulings are authoritative and take precedence over earlier text in this do
 
 1. **Move A and Move B payment codes are unresolved.** Their commercial terms are approved (doc 05 amendment), but no Card ID payment-code mapping is authorized for them. C01 applies only to Spot Cash and TXX only to installments, where XX is the actual approved number of months; neither is assigned automatically to a Move arrangement. Move contracts may be prepared, approved, finalized and paid, but membership activation and Card ID issuance stay blocked for them until the owner authorizes the mapping. Existing finalized contracts and issued Card IDs are unchanged. Move B1 and Move B2 are removed (see doc 05 amendment).
 2. **Card ID date.** The Card ID uses the official Membership Activation Date, as stated in section 6; the transaction date is not used.
+3. **Move A / Move B Card ID payment-code mapping approved.** Effective date: to be confirmed by the owner (proposed: date of approval). Approved mapping (companion to doc 05 amendment item 12; T = installment category plus monthly count; no promotional names appear in IDs):
+
+    | Scheme | Tier | Card ID payment code (P + MM) |
+    |---|---|---|
+    | Spot Cash | B1, S1, G1 | C01 |
+    | 4-Month Installment | B1, S1, G1 | T04 |
+    | Move A | B1, S1, G1 | T04 |
+    | Move B | B1 | T04 |
+    | Move B | S1 | T08 |
+    | Move B | G1 | T12 |
+
+    T-category semantics: C01 applies only to Spot Cash; TXX applies to installment-category schemes, where XX is the actual approved number of monthly payments for that scheme and tier. Standard Move contracts proceed to activation and issuance once all prerequisites are met (finalized contract, full settlement, Finance verification, successful activation). Finalized contracts keep their snapshot protection — this mapping does not rewrite finalized terms or previously issued IDs. The unresolved-code block in item 1 now applies only to schemes without an approved mapping. Existing IDs are unchanged. This item supersedes item 1's block for Move A and Move B; item 1 is retained as history.

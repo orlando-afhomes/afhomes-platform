@@ -12,7 +12,7 @@ export {
   type ManilaDateParts,
 } from "@/modules/accreditation/dates";
 
-import { formatManilaDateParts, parseManilaDateOnly } from "@/modules/accreditation/dates";
+import { formatManilaDateParts, manilaToday, parseManilaDateOnly } from "@/modules/accreditation/dates";
 
 /** Asia/Manila business date of a date-only value or an ISO timestamp (a UTC instant is shifted, never sliced). */
 export function manilaDateOf(value: string): string {
@@ -48,4 +48,15 @@ export function addMonthsToDate(dateOnly: string, months: number): string | null
   const month = (total % 12) + 1;
   const dim = new Date(Date.UTC(year, month, 0)).getUTCDate();
   return formatManilaDateParts({ year, month, day: Math.min(parts.day, dim) });
+}
+
+/** Whole-year age for a date-only birth date; null when invalid or in the future. Defaults to today's Asia/Manila business date. */
+export function computeAge(dateOfBirth: string, todayYMD?: string): number | null {
+  const birth = parseManilaDateOnly(dateOfBirth);
+  const today = parseManilaDateOnly(todayYMD ?? manilaToday());
+  if (!birth || !today) return null;
+  let age = today.year - birth.year;
+  if (today.month < birth.month || (today.month === birth.month && today.day < birth.day)) age -= 1;
+  if (age < 0) return null;
+  return age;
 }

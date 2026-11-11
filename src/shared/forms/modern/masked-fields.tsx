@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { formatPartialPhilippineMobile } from "@/shared/forms/formatting/phone";
 import { MAX_TIN_LENGTH, formatTin } from "@/shared/utils/input-sanitizers";
 import type { BaseFieldProps } from "@/shared/forms/types";
@@ -10,6 +11,8 @@ type MaskedProps = Omit<BaseFieldProps, "inputMode"> & {
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
+  /** Display-only adornment at the input start; never enters the value. */
+  prefix?: ReactNode;
 };
 
 /**
@@ -55,27 +58,49 @@ function MaskedInput({
   className,
   inputMode,
   format,
+  prefix,
 }: MaskedProps & { inputMode: "numeric" | "tel"; format?: (value: string) => string }) {
   const ids = useFieldIds(explicitId);
+  // String prefixes get padding sized to their length; richer nodes use a fixed inset.
+  const prefixStyle =
+    typeof prefix === "string" && prefix.length > 0
+      ? { paddingLeft: `calc(0.75rem + ${prefix.length}ch + 0.5rem)` }
+      : undefined;
+  const input = (
+    <Input
+      id={ids.id}
+      value={value}
+      maxLength={maxLength}
+      placeholder={placeholder}
+      disabled={disabled}
+      autoComplete={autoComplete}
+      inputMode={inputMode}
+      aria-required={required ? "true" : undefined}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={describedBy(ids, error, hint)}
+      className={prefix && prefixStyle === undefined ? "tw:h-11 tw:pl-24" : "tw:h-11"}
+      style={prefixStyle}
+      onChange={(event) =>
+        format ? applyMask(event.currentTarget, event.target.value, format, onChange) : onChange(event.target.value)
+      }
+      onBlur={onBlur}
+    />
+  );
   return (
     <FieldShell ids={ids} label={label} required={required} error={error} hint={hint} className={className}>
-      <Input
-        id={ids.id}
-        value={value}
-        maxLength={maxLength}
-        placeholder={placeholder}
-        disabled={disabled}
-        autoComplete={autoComplete}
-        inputMode={inputMode}
-        aria-required={required ? "true" : undefined}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(ids, error, hint)}
-        className="tw:h-10 tw:sm:h-8"
-        onChange={(event) =>
-          format ? applyMask(event.currentTarget, event.target.value, format, onChange) : onChange(event.target.value)
-        }
-        onBlur={onBlur}
-      />
+      {prefix ? (
+        <div className="tw:relative">
+          <span
+            aria-hidden="true"
+            className="tw:pointer-events-none tw:absolute tw:left-3 tw:top-1/2 tw:-translate-y-1/2 tw:text-sm tw:text-muted-foreground"
+          >
+            {prefix}
+          </span>
+          {input}
+        </div>
+      ) : (
+        input
+      )}
     </FieldShell>
   );
 }
@@ -85,13 +110,26 @@ export function PhilippineMobileField({ maxLength = 14, ...rest }: MaskedProps) 
   return <MaskedInput {...rest} maxLength={maxLength} inputMode="numeric" format={formatPartialPhilippineMobile} />;
 }
 
-/** Optional Philippine landline input (digits and presentation separators). */
-export function PhilippineLandlineField({ maxLength = 15, ...rest }: MaskedProps) {
-  return <MaskedInput {...rest} maxLength={maxLength} inputMode="tel" />;
+/** Optional Philippine landline input (digits and presentation separators), always prefixed with +63. */
+export function PhilippineLandlineField({
+  maxLength = 15,
+  countryCode = "+63",
+  areaCode,
+  ...rest
+}: MaskedProps & { countryCode?: string; areaCode?: string }) {
+  return (
+    <MaskedInput
+      {...rest}
+      maxLength={maxLength}
+      inputMode="tel"
+      prefix={areaCode ? `${countryCode} (${areaCode})` : countryCode}
+    />
+  );
 }
 
 /** Display width for a fully grouped 12-digit TIN. */
-export const TIN_DISPLAY_LENGTH = MAX_TIN_LENGTH + 2;
+// A 12-digit TIN groups as 123-456-789-012: 12 digits plus 3 hyphens.
+export const TIN_DISPLAY_LENGTH = MAX_TIN_LENGTH + 3;
 
 /** TIN input with live 123-456-789 / 123-456-789-000 grouping; digits only in the canonical value. */
 export function TinField({ maxLength = TIN_DISPLAY_LENGTH, ...rest }: MaskedProps) {

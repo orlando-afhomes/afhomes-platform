@@ -43,7 +43,6 @@ export type UpdateSalesNetworkMemberInput = {
   province?: string;
   city?: string;
   barangay?: string;
-  subdivision?: string | null;
   postalCode?: string;
   telephone?: string | null;
   facebook?: string | null;

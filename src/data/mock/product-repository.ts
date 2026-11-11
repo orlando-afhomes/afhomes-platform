@@ -12,12 +12,19 @@ function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
+/** Resolves the Card ID payment code for a tier: per-tier entry, else the single code. */
+// TODO: replace with paymentCodeFor from "@/modules/vip/rules" once the sibling worker lands it.
+function paymentCodeFor(scheme: Pick<PaymentScheme, "paymentCode" | "paymentCodeByTier">, tier: VipTierCode): string | null {
+  return scheme.paymentCodeByTier?.[tier] ?? scheme.paymentCode;
+}
+
 /** Scheme terms are complete only when every documented field for its category is present. */
 function termsComplete(scheme: PaymentScheme): boolean {
   if (scheme.ownerHold) return false;
-  // A Move scheme's Card ID code is an open owner decision (06 section 6.3): it is enforced at membership
-  // activation, not at configuration, so approved Move terms stay available.
-  if ((scheme.category !== "move" && !scheme.paymentCode) || scheme.applicableTiers.length === 0) return false;
+  if (scheme.applicableTiers.length === 0) return false;
+  // Card ID payment code (06 section 6.3) must resolve for every applicable tier via the
+  // single code or a per-tier entry; schemes without full tier coverage stay pending.
+  if (!scheme.applicableTiers.every((tier) => paymentCodeFor(scheme, tier))) return false;
   if (scheme.category === "cash") return true;
   return scheme.applicableTiers.every((tier) => (installmentCountFor(scheme, tier) ?? 0) > 0 && (scheme.installmentCentavosByTier[tier] ?? 0) > 0);
 }
@@ -84,6 +91,7 @@ export class MockProductRepository extends BusinessRepository implements Product
         historicalLabel: null,
         category: input.installmentCount ? "installment" : "cash",
         paymentCode: input.paymentCode ?? null,
+        paymentCodeByTier: input.paymentCodeByTier ?? {},
         applicableTiers: input.applicableTiers ?? [],
         reservationCentavos: input.reservationCentavos ?? null,
         installmentCount: input.installmentCount ?? null,

@@ -263,7 +263,6 @@ export function useCreateStaff() {
       province?: string | null;
       city?: string | null;
       barangay?: string | null;
-      subdivision?: string | null;
       postalCode?: string | null;
       telephone?: string | null;
       facebook?: string | null;
@@ -301,7 +300,6 @@ export function useUpdateStaff() {
       province?: string | null;
       city?: string | null;
       barangay?: string | null;
-      subdivision?: string | null;
       postalCode?: string | null;
       telephone?: string | null;
       facebook?: string | null;

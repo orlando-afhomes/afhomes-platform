@@ -63,12 +63,25 @@ async function fillPersonalStep(user: ReturnType<typeof userEvent.setup>, dialog
   fireEvent.change(field("confirm-password"), { target: { value: "password1234" } });
 }
 
-async function fillAddressStep() {
-  fireEvent.change(await screen.findByLabelText(/Street Address/), { target: { value: "123 Maharlika Street" } });
-  fireEvent.change(screen.getByLabelText(/Province/), { target: { value: "Metro Manila" } });
-  fireEvent.change(screen.getByLabelText(/^City/), { target: { value: "Makati City" } });
-  fireEvent.change(screen.getByLabelText(/Barangay/), { target: { value: "San Antonio" } });
-  fireEvent.change(screen.getByLabelText(/ZIP Code/), { target: { value: "1203" } });
+async function pickAddressOption(user: ReturnType<typeof userEvent.setup>, dialog: HTMLElement, label: string, filter: string, option: RegExp) {
+  const combo = within(dialog).getByRole("combobox", { name: label }) as HTMLInputElement;
+  await user.click(combo);
+  if (combo.value) await user.clear(combo);
+  await user.type(combo, filter);
+  await user.click(await screen.findByRole("option", { name: option }));
+}
+
+async function fillAddressStep(user: ReturnType<typeof userEvent.setup>, dialog: HTMLElement) {
+  const street = (await within(dialog).findByRole("textbox", { name: "No./Street/Subdivision" })) as HTMLInputElement;
+  fireEvent.change(street, { target: { value: "123 Maharlika Street, acacia subdivision" } });
+  // The subdivision is typed inline in the street line, never a separate field.
+  expect(street.value).toBe("123 Maharlika Street, Acacia Subdivision");
+  await pickAddressOption(user, dialog, "Province", "Metro Manila", /^metro manila$/i);
+  await waitFor(() => expect(within(dialog).getByRole("combobox", { name: "City/Municipality" })).toBeEnabled());
+  await pickAddressOption(user, dialog, "City/Municipality", "Makati", /^makati city$/i);
+  await pickAddressOption(user, dialog, "Barangay", "San Antonio", /^san antonio$/i);
+  // ZIP is derived from the selected city and stays locked.
+  expect(within(dialog).getByLabelText("ZIP Code")).toBeDisabled();
 }
 
 describe("accredited seller wizard", () => {
@@ -90,7 +103,7 @@ describe("accredited seller wizard", () => {
     await fillPersonalStep(user, dialog);
     await user.click(within(dialog).getByRole("button", { name: /next/i }));
 
-    await fillAddressStep();
+    await fillAddressStep(user, dialog);
     await user.click(within(dialog).getByRole("button", { name: /next/i }));
 
     // Assignment step: choose a sponsor. Previously threw ReferenceError: teamDisplayName is not defined.

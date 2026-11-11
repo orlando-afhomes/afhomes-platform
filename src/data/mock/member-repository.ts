@@ -245,13 +245,6 @@ export class MockMemberRepository implements MemberRepository {
       setAddressText("province", input.province);
       setAddressText("city", input.city);
       setAddressText("barangay", input.barangay);
-      if (input.subdivision !== undefined) {
-        const trimmedSubdivision = input.subdivision?.trim() ? input.subdivision.trim() : null;
-        if ((profile.address.subdivision ?? null) !== trimmedSubdivision) {
-          profile.address.subdivision = trimmedSubdivision;
-          changed = true;
-        }
-      }
       setAddressText("postalCode", input.postalCode !== undefined ? input.postalCode.trim() : undefined);
       setNullableText("telephone", input.telephone);
       setNullableText("facebook", input.facebook);
@@ -682,7 +675,6 @@ export class MockMemberRepository implements MemberRepository {
           province: input.province.trim(),
           city: input.city.trim(),
           barangay: input.barangay.trim(),
-          subdivision: input.subdivision?.trim() ? input.subdivision.trim() : null,
           postalCode: input.postalCode.trim(),
         },
         governmentIdType: input.governmentIdType.trim(),

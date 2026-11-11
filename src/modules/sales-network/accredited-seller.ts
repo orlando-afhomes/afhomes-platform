@@ -22,7 +22,6 @@ import {
   validatePostalCode,
   validateProvince,
   validateStreet,
-  validateSubdivision,
   validateTeamName,
 } from "@/shared/forms/validation/address";
 import { validateGovIdNumber, validateTinNumber } from "@/shared/forms/validation/identification";
@@ -64,10 +63,12 @@ export const CIVIL_STATUS_OPTIONS = ["Single", "Married", "Widowed", "Separated"
 
 export const GOV_ID_OPTIONS = [
   "Philippine National ID",
+  "Digital National ID",
   "Passport",
   "Driver's License",
   "SSS ID",
   "GSIS ID",
+  "UMID",
   "PRC ID",
   "Voter's ID",
   "Postal ID",
@@ -115,8 +116,6 @@ export type CreateAccreditedSellerInput = {
   province: string;
   city: string;
   barangay: string;
-  /** Optional subdivision/village; blank when not applicable. */
-  subdivision?: string | null;
   postalCode: string;
   designation: Designation;
   /** Required Team Name when creating an SVD root; inherited otherwise. */
@@ -193,7 +192,6 @@ export function validateAccreditedSellerFields(input: CreateAccreditedSellerInpu
     validateProvince(input.province) ??
     validateCity(input.city) ??
     validateBarangay(input.barangay) ??
-    validateSubdivision(input.subdivision ?? "") ??
     validatePostalCode(input.postalCode) ??
     validateSponsor(input) ??
     validateDateString(input.cardApplicationDate, "Application date") ??

@@ -33,10 +33,8 @@ export function fromPriceFor(product: PriceProduct, schemes: ReadonlyArray<FromP
 }
 
 /**
- * Price status for a tier under a scheme. Mirrors the `ownPrice` logic in
- * `MockContractRepository.prepare()`: a scheme with its own contract-stated
- * price for the tier reports "contract_stated", otherwise the catalog status
- * applies (a catalog conflict still blocks finalization).
+ * A scheme with its own contract-stated price for the tier reports
+ * "contract_stated". Otherwise, use the catalog status.
  */
 export function applicablePriceStatus(
   product: StatusProduct,

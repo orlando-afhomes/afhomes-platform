@@ -9,6 +9,7 @@ import type { MockRepositories } from "@/data/mock/repositories";
 import { useMockRepositories } from "@/data/queries";
 import { queryKeys } from "@/data/query-keys";
 import type { ContractCancellationGround } from "@/modules/contracts/types";
+import { registerCustomer, type CustomerRegistrationInput } from "@/modules/customers/application/register-customer";
 import type { CustomerImportRecord } from "@/modules/customers/import";
 import type { CustomerDraftInput } from "@/modules/customers/types";
 import type { VipTierCode } from "@/modules/vip/types";
@@ -46,6 +47,16 @@ function useBusinessMutation<V, R>(run: (repositories: MockRepositories, variabl
 }
 
 // Customers
+export function useRegisterCustomer() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CustomerRegistrationInput) => registerCustomer(repositories, input),
+    // A failed registration can still leave a saved draft or a prepared contract.
+    onSettled: () => invalidateBusiness(queryClient),
+  });
+}
+
 export function useUpdateCustomerDraft() {
   return useBusinessMutation((r, v: { id: string; input: CustomerDraftInput }) => r.customers.updateDraft(v.id, v.input));
 }

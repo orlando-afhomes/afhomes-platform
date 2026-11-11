@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PaymentScheme, VipProduct } from "@/modules/vip/types";
 import { buildSchedule } from "./rules";
+import { paymentSchemeTierTerms } from "@/modules/vip/rules";
 
 const product = (code: "B1" | "S1" | "G1", priceCentavos: number) => ({ code, name: code, priceCentavos }) as VipProduct;
 
@@ -70,6 +71,8 @@ describe("buildSchedule", () => {
   ] as const)("builds Move B for %s: 40%% down including the reservation, then equal monthly payments", (code, price, downLine, count, each) => {
     const moveB: PaymentScheme = { ...t04, category: "move", installmentCount: null, downPaymentBasisPoints: 4_000, installmentCountByTier: { B1: 4, S1: 8, G1: 12 }, installmentCentavosByTier: { B1: 1_080_000, S1: 1_800_000, G1: 1_950_000 } };
     const built = buildSchedule(product(code, price), moveB, "2026-11-10");
+    const terms = paymentSchemeTierTerms(product(code, price), moveB);
+    expect(terms).toEqual({ priceCentavos: built.priceCentavos, reservationCentavos: built.schedule[0].amountCentavos, installmentCount: count, installmentCentavos: each });
     expect(built.errors).toEqual([]);
     expect(built.schedule[1]).toMatchObject({ label: "Down payment", purpose: "down_payment", amountCentavos: downLine, dueDate: null });
     expect(built.schedule.filter((line) => line.purpose === "installment")).toHaveLength(count);

@@ -1,4 +1,4 @@
-import { downPaymentCentavos, installmentCountFor, schemePriceCentavos } from "@/modules/vip/rules";
+import { downPaymentCentavos, paymentSchemeTierTerms } from "@/modules/vip/rules";
 import type { PaymentScheme, VipProduct } from "@/modules/vip/types";
 import { addDaysToDate, addMonthsToDate } from "@/shared/lib/dates";
 import type { BenefitsSnapshot, Contract, ScheduleItem } from "./types";
@@ -38,14 +38,13 @@ export const SPOT_CASH_BALANCE_DAYS = 7;
  * produce no schedule (D7).
  */
 export function buildSchedule(product: VipProduct, scheme: PaymentScheme, reservationDate: string | null = null): BuiltSchedule {
-  const price = schemePriceCentavos(product, scheme);
+  const { priceCentavos: price, reservationCentavos: reservation, installmentCount: count, installmentCentavos: each } = paymentSchemeTierTerms(product, scheme);
   if (scheme.commercialStatus !== "configured") {
     return { schedule: [], priceCentavos: price, requiredInitialCentavos: null, errors: [`${scheme.label} has no approved commercial terms yet.`] };
   }
   if (!scheme.applicableTiers.includes(product.code)) {
     return { schedule: [], priceCentavos: price, requiredInitialCentavos: null, errors: [`${scheme.label} is not available for ${product.name}.`] };
   }
-  const reservation = scheme.reservationCentavos ?? 0;
   const schedule: ScheduleItem[] = [];
   let seq = 1;
   if (reservation > 0) schedule.push({ seq: seq++, label: "Reservation fee", purpose: "reservation", amountCentavos: reservation, dueDate: reservationDate });
@@ -55,8 +54,6 @@ export function buildSchedule(product: VipProduct, scheme: PaymentScheme, reserv
     // A cash sale is confirmed once fully paid.
     return { schedule, priceCentavos: price, requiredInitialCentavos: price, errors: reservation < price ? [] : [`The reservation fee must be less than the ${product.name} price.`] };
   }
-  const count = installmentCountFor(scheme, product.code) ?? 0;
-  const each = scheme.installmentCentavosByTier[product.code];
   if (!count || !each) return { schedule: [], priceCentavos: price, requiredInitialCentavos: null, errors: [`${scheme.label} has no installment amount for ${product.name}.`] };
   const down = downPaymentCentavos(price, scheme);
   if (down != null && down > reservation) {

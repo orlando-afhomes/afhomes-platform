@@ -14,7 +14,7 @@ type Actor = DevIdentity | "system";
 function auditEffect(
   store: MockStore,
   actor: Actor,
-  module: "sales" | "finance" | "commissions",
+  module: "sales" | "finance" | "commissions" | "membership",
   action: string,
   entityType: "sale" | "membership" | "commission",
   entityId: string,
@@ -54,6 +54,49 @@ export function holdUnpaidCommissions(store: MockStore, saleId: string, reason: 
 
 export function paymentsOfContract(store: MockStore, contractId: string): Payment[] {
   return store.payments.filter((payment) => payment.contractId === contractId);
+}
+
+export function cancelRelatedContractRecords(
+  store: MockStore,
+  contractId: string,
+  actor: DevIdentity,
+  forfeitureDate?: string,
+): void {
+  const sale = store.sales.find((item) => item.contractId === contractId);
+  if (sale && sale.status !== "cancelled") {
+    const previousValue = sale.status;
+    if (forfeitureDate && previousValue === "confirmed") {
+      // A previously reported sale is reversed in the cancellation month (13 §5.1).
+      sale.adjustments.push({
+        id: nextId(store, "adjustment", "adj"),
+        date: forfeitureDate,
+        amountCentavos: -sale.valueCentavos,
+        kind: "reversal",
+        reason: "Contract cancelled with forfeiture",
+        actorId: actor.id,
+      });
+    }
+    sale.status = "cancelled";
+    if (forfeitureDate) sale.confirmedDate = null;
+    auditEffect(store, actor, "sales", BUSINESS_AUDIT_ACTIONS.SALE_CANCELLED, "sale", sale.id, {
+      previousValue,
+      newValue: "cancelled",
+      relatedRecordIds: [contractId],
+    });
+    if (forfeitureDate) holdUnpaidCommissions(store, sale.id, "The contract was cancelled with forfeiture.");
+  }
+
+  const membership = store.memberships.find((item) => item.contractId === contractId);
+  if (membership && membership.status !== "cancelled") {
+    const previousValue = membership.status;
+    membership.status = "cancelled";
+    membership.history.push({ at: nowIso(), actorId: actor.id, event: BUSINESS_AUDIT_ACTIONS.MEMBERSHIP_CANCELLED, note: null });
+    auditEffect(store, actor, "membership", BUSINESS_AUDIT_ACTIONS.MEMBERSHIP_CANCELLED, "membership", membership.id, {
+      previousValue,
+      newValue: "cancelled",
+      relatedRecordIds: [contractId],
+    });
+  }
 }
 
 /**

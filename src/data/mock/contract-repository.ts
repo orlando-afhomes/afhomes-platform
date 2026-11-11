@@ -6,9 +6,10 @@ import { CANCELLATION_GROUNDS, CANCELLATION_GROUND_LABELS, type Contract, type C
 import { totalVerifiedCentavos } from "@/modules/finance/rules";
 import type { DevIdentity } from "@/modules/identity/types";
 import { extractRaSequence } from "@/modules/membership/rules";
+import { applicablePriceStatus } from "@/modules/vip/pricing";
 import type { PaymentScheme, VipTierCode } from "@/modules/vip/types";
 import { BusinessRepository, DATE_ONLY, canSeeContract, customerName, genealogyFor, nowIso, today } from "./business-base";
-import { holdUnpaidCommissions, paymentsOfContract, reconcileContract } from "./business-effects";
+import { cancelRelatedContractRecords, paymentsOfContract, reconcileContract } from "./business-effects";
 import { nextId } from "./ids";
 import type { MockStore } from "./seed";
 import { BROAD_ROLES, activeIdentityRoles } from "./scope";
@@ -95,15 +96,13 @@ export class MockContractRepository extends BusinessRepository implements Contra
       if (!DATE_ONLY.test(reservationDate)) throw new Error("The reservation date must be a valid date.");
       const built = buildSchedule(product, scheme, reservationDate);
       if (built.errors.length > 0) throw new Error(built.errors[0]);
-      // A scheme with its own contract-stated price (Spot Cash) is not affected by a catalog price conflict.
-      const ownPrice = scheme.priceCentavosByTier[product.code] != null;
       const contract: Contract = {
         id: nextId(this.store, "contract", "ctr"),
         customerId: customer.id,
         productCode: product.code,
         productConfigVersion: product.configVersion,
         priceCentavos: built.priceCentavos,
-        priceStatus: ownPrice ? "contract_stated" : product.priceStatus,
+        priceStatus: applicablePriceStatus(product, scheme),
         schemeId: scheme.id,
         schemeLabel: scheme.label,
         schemeStatus: scheme.commercialStatus,
@@ -276,19 +275,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
       contract.cancelReason = reason.trim();
       this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLED, reason.trim());
       this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLED, entityType: "contract", entityId: contract.id, previousValue: previous, newValue: "cancelled", reason: reason.trim() });
-      const sale = this.store.sales.find((item) => item.contractId === contract.id);
-      if (sale && sale.status !== "cancelled") {
-        const saleWas = sale.status;
-        sale.status = "cancelled";
-        this.audit(identity, { module: "sales", action: BUSINESS_AUDIT_ACTIONS.SALE_CANCELLED, entityType: "sale", entityId: sale.id, previousValue: saleWas, newValue: "cancelled", relatedRecordIds: [contract.id] });
-      }
-      const membership = this.store.memberships.find((item) => item.contractId === contract.id);
-      if (membership && membership.status !== "cancelled") {
-        const membershipWas = membership.status;
-        membership.status = "cancelled";
-        membership.history.push({ at: nowIso(), actorId: identity.id, event: BUSINESS_AUDIT_ACTIONS.MEMBERSHIP_CANCELLED, note: null });
-        this.audit(identity, { module: "membership", action: BUSINESS_AUDIT_ACTIONS.MEMBERSHIP_CANCELLED, entityType: "membership", entityId: membership.id, previousValue: membershipWas, newValue: "cancelled", relatedRecordIds: [contract.id] });
-      }
+      cancelRelatedContractRecords(this.store, contract.id, identity);
       return viewContract(this.store, contract);
     });
   }
@@ -329,35 +316,16 @@ export class MockContractRepository extends BusinessRepository implements Contra
       this.assertCancellable(contract);
       const date = today();
       // Verified payments stay Verified and on record; the retained amount is recorded as forfeited (Reservation Agreement, CANCELLATION).
-      const forfeited = totalVerifiedCentavos(paymentsOfContract(this.store, contract.id));
+      const payments = paymentsOfContract(this.store, contract.id);
+      const forfeited = totalVerifiedCentavos(payments);
       const previous = contract.status;
       contract.status = "cancelled";
       contract.cancelReason = `${CANCELLATION_GROUND_LABELS[request.ground]}: ${request.reason}`;
       contract.cancellation = { ...request, status: "confirmed", decidedBy: identity.id, decidedAt: nowIso(), forfeitedCentavos: forfeited };
       this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLED, reason.trim());
       this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLED, entityType: "contract", entityId: contract.id, previousValue: previous, newValue: "cancelled", reason: reason.trim() });
-      this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.PAYMENTS_FORFEITED, entityType: "contract", entityId: contract.id, newValue: String(forfeited), relatedRecordIds: paymentsOfContract(this.store, contract.id).map((item) => item.id) });
-
-      const sale = this.store.sales.find((item) => item.contractId === contract.id);
-      if (sale && sale.status !== "cancelled") {
-        const saleWas = sale.status;
-        if (saleWas === "confirmed") {
-          // A previously reported Confirmed sale is reversed in the cancellation month (13 section 5.1).
-          sale.adjustments.push({ id: nextId(this.store, "adjustment", "adj"), date, amountCentavos: -sale.valueCentavos, kind: "reversal", reason: "Contract cancelled with forfeiture", actorId: identity.id });
-        }
-        sale.status = "cancelled";
-        sale.confirmedDate = null;
-        this.audit(identity, { module: "sales", action: BUSINESS_AUDIT_ACTIONS.SALE_CANCELLED, entityType: "sale", entityId: sale.id, previousValue: saleWas, newValue: "cancelled", relatedRecordIds: [contract.id] });
-        holdUnpaidCommissions(this.store, sale.id, "The contract was cancelled with forfeiture.");
-      }
-
-      const membership = this.store.memberships.find((item) => item.contractId === contract.id);
-      if (membership && membership.status !== "cancelled") {
-        const membershipWas = membership.status;
-        membership.status = "cancelled";
-        membership.history.push({ at: nowIso(), actorId: identity.id, event: BUSINESS_AUDIT_ACTIONS.MEMBERSHIP_CANCELLED, note: null });
-        this.audit(identity, { module: "membership", action: BUSINESS_AUDIT_ACTIONS.MEMBERSHIP_CANCELLED, entityType: "membership", entityId: membership.id, previousValue: membershipWas, newValue: "cancelled", relatedRecordIds: [contract.id] });
-      }
+      this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.PAYMENTS_FORFEITED, entityType: "contract", entityId: contract.id, newValue: String(forfeited), relatedRecordIds: payments.map((item) => item.id) });
+      cancelRelatedContractRecords(this.store, contract.id, identity, date);
       return viewContract(this.store, contract);
     });
   }

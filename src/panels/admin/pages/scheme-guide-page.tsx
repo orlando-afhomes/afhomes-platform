@@ -2,7 +2,7 @@
 
 import { Printer } from "lucide-react";
 import { usePaymentSchemes, useVipProducts } from "@/data/business-queries";
-import { downPaymentCentavos, installmentCountFor, schemeHowItWorks, schemePriceCentavos } from "@/modules/vip/rules";
+import { downPaymentCentavos, paymentSchemeTierTerms, schemeHowItWorks } from "@/modules/vip/rules";
 import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Button } from "@/shared/ui/button";
@@ -19,15 +19,13 @@ const TIERS: Array<{ code: VipTierCode; label: string }> = [
 
 /** One line per tier: package price and how it is split (05 section 8). */
 function TierTerms({ scheme, product }: { scheme: PaymentScheme; product: VipProduct }) {
-  const price = schemePriceCentavos(product, scheme);
-  const count = installmentCountFor(scheme, product.code);
-  const each = scheme.installmentCentavosByTier[product.code];
+  const { priceCentavos: price, reservationCentavos: reservation, installmentCount: count, installmentCentavos: each } = paymentSchemeTierTerms(product, scheme);
   const down = downPaymentCentavos(price, scheme);
   return (
     <dd>
       Total <Money value={price} />
       {down != null ? <> · down payment <Money value={down} /></> : null}
-      {scheme.category === "cash" && scheme.reservationCentavos ? <> · balance <Money value={price - scheme.reservationCentavos} /></> : null}
+      {scheme.category === "cash" && reservation ? <> · balance <Money value={price - reservation} /></> : null}
       {scheme.category !== "cash" && count && each ? <> · <Money value={each} /> × {count}</> : null}
     </dd>
   );

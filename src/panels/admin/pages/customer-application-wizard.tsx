@@ -7,7 +7,7 @@ import { ArrowLeft, ArrowRight, ArrowLeftRight, Banknote, CalendarClock, CreditC
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import { useCreateCustomerDraft, useCustomers, useMembers } from "@/data/queries";
 import type { Customer } from "@/modules/customers/types";
-import { useCorrectCustomer, useOperation, usePaymentSchemes, usePrepareContract, useSubmitCustomer, useSubmitPayment, useUpdateCustomerDraft, useVipProducts } from "@/data/business-queries";
+import { useCorrectCustomer, useOperation, usePaymentSchemes, useRegisterCustomer, useUpdateCustomerDraft, useVipProducts } from "@/data/business-queries";
 import { validateCustomerForSubmit } from "@/modules/customers/rules";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/modules/finance/types";
 import { applicablePriceStatus, displayPriceFor } from "@/modules/vip/pricing";
@@ -147,9 +147,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const create = useCreateCustomerDraft();
   const updateDraft = useUpdateCustomerDraft();
   const correct = useCorrectCustomer();
-  const submitCustomer = useSubmitCustomer();
-  const prepare = usePrepareContract();
-  const submitPayment = useSubmitPayment();
+  const register = useRegisterCustomer();
 
   const [step, setStep] = useState(STEP_CARD);
   const [draft, setDraft] = useState<CustomerDraft>(() => toDraft(existing));
@@ -382,49 +380,50 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
       return;
     }
 
-    const input = toInput(draft);
     setBusy(true);
-    let customerId: string | null = null;
     try {
-      customerId = existing
-        ? (await updateDraft.mutateAsync({ id: existing.id, input })).id
-        : (await create.mutateAsync(input)).id;
-      try {
-        await submitCustomer.mutateAsync({ id: customerId, input });
-      } catch (failure) {
-        if (failure instanceof CustomerValidationError) {
-          router.replace(`/admin/customers/${customerId}/edit`);
+      const result = await register.mutateAsync({
+        customer: toInput(draft),
+        draftId: existing?.id,
+        contract: canPrepare && scheme ? {
+          schemeId: scheme.id,
+          customerAccepted: accepted,
+          reservation: canPay && reservationCentavos
+            ? { amountCentavos: reservationCentavos, method, paidDate, referenceNo: reference || null, evidenceFileName: proofName || null }
+            : undefined,
+        } : undefined,
+      });
+
+      switch (result.status) {
+        case "draft-kept":
+          router.replace(`/admin/customers/${result.customerId}/edit`);
           toast.error("The application has incomplete fields. Your draft was kept.");
           return;
-        }
-        throw failure;
+        case "customer-submitted":
+          toast.success("Customer submitted.");
+          break;
+        case "contract-prepared":
+          toast.success("Application submitted and contract drafted.");
+          break;
+        case "reservation-submitted":
+          toast.success("Application submitted. The reservation fee is waiting for Finance verification.");
+          break;
+        case "contract-failed":
+        case "reservation-failed":
+          toast.error(`The customer was submitted, but the next step failed: ${result.error instanceof Error ? result.error.message : "Request failed."} Continue from the customer page.`);
+          break;
       }
+      try {
+        sessionStorage.removeItem(WIZARD_STORAGE_KEY);
+      } catch {
+        // Storage may be unavailable.
+      }
+      router.push(`/admin/customers/${result.customerId}`);
     } catch (failure) {
       toast.error(failure instanceof Error ? failure.message : "Request failed.");
-      setBusy(false);
-      return;
-    }
-
-    try {
-      if (canPrepare && scheme) {
-        // Due dates derive from the reservation date on the receipt; without a reservation payment, from today.
-        const contract = await prepare.mutateAsync({ customerId, schemeId: scheme.id, customerAccepted: accepted, reservationDate: reservationCentavos && canPay ? paidDate : manilaToday() });
-        if (reservationCentavos && canPay) {
-          await submitPayment.mutateAsync({ contractId: contract.id, purpose: "reservation", amountCentavos: reservationCentavos, method, paidDate, referenceNo: reference || null, evidenceFileName: proofName || null });
-          toast.success("Application submitted. The reservation fee is waiting for Finance verification.");
-        } else toast.success("Application submitted and contract drafted.");
-      } else toast.success("Customer submitted.");
-    } catch (failure) {
-      toast.error(`The customer was submitted, but the next step failed: ${failure instanceof Error ? failure.message : "Request failed."} Continue from the customer page.`);
     } finally {
       setBusy(false);
     }
-    try {
-      sessionStorage.removeItem(WIZARD_STORAGE_KEY);
-    } catch {
-      // Ignore: nothing to clear.
-    }
-    router.push(`/admin/customers/${customerId}`);
   };
 
   const schemeOptions: PaymentOption<string>[] = (schemes.data ?? [])

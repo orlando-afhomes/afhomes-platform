@@ -6,6 +6,7 @@ import type { Payment } from "@/modules/finance/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import type { CustomerDraftInput } from "@/modules/customers/types";
 import { currentManilaYear } from "@/modules/customers/customer-number";
+import { registerCustomer } from "@/modules/customers/application/register-customer";
 import { buildCardId, extractRaSequence } from "@/modules/membership/rules";
 import { computePointsLedger } from "@/modules/stay-points/engine";
 import { confirmedValueInPeriod, totalsFor } from "@/modules/sales/rules";
@@ -38,6 +39,64 @@ function validCustomerInput(overrides: Partial<CustomerDraftInput> = {}): Custom
     ...overrides,
   };
 }
+
+describe("Customer Registration workflow", () => {
+  const contract = { schemeId: "scheme-installment-4m", customerAccepted: true };
+
+  it("uses the receipt date for the schedule and leaves payment pending Finance verification", async () => {
+    const store = createMockStore();
+    const repositories = as(store, "dev-super-admin");
+    const paidDate = "2026-01-30";
+    const result = await registerCustomer(repositories, {
+      customer: validCustomerInput(),
+      contract: { ...contract, reservation: { amountCentavos: pesos(10_000), method: "Cash", paidDate } },
+    });
+
+    expect(result.status).toBe("reservation-submitted");
+    const prepared = store.contracts.find((record) => record.customerId === result.customerId);
+    expect(prepared?.schedule.slice(0, 2).map((line) => line.dueDate)).toEqual([paidDate, "2026-02-28"]);
+    expect(store.payments.find((record) => record.contractId === prepared?.id)).toMatchObject({
+      purpose: "reservation", paidDate, status: "submitted", verifiedBy: null,
+    });
+  });
+
+  it("keeps the saved draft when submission validation fails", async () => {
+    const store = createMockStore();
+    const repositories = as(store, "dev-admin");
+    const result = await registerCustomer(repositories, { customer: { displayName: "Partial Person" }, contract });
+
+    expect(result.status).toBe("draft-kept");
+    expect(await repositories.customers.getById(result.customerId)).toMatchObject({ status: "draft" });
+    expect(store.contracts.some((record) => record.customerId === result.customerId)).toBe(false);
+  });
+
+  it("preserves the submitted customer when contract preparation fails", async () => {
+    const store = createMockStore();
+    const repositories = as(store, "dev-admin");
+    const result = await registerCustomer(repositories, {
+      customer: validCustomerInput(),
+      contract: { ...contract, schemeId: "missing-scheme" },
+    });
+
+    expect(result).toMatchObject({ status: "contract-failed", error: expect.any(Error) });
+    expect(await repositories.customers.getById(result.customerId)).toMatchObject({ status: "submitted" });
+    expect(store.contracts.some((record) => record.customerId === result.customerId)).toBe(false);
+  });
+
+  it("preserves the prepared contract when reservation submission fails", async () => {
+    const store = createMockStore();
+    const repositories = as(store, "dev-super-admin");
+    const result = await registerCustomer(repositories, {
+      customer: validCustomerInput(),
+      contract: { ...contract, reservation: { amountCentavos: 0, method: "Cash", paidDate: manilaToday() } },
+    });
+
+    expect(result).toMatchObject({ status: "reservation-failed", error: expect.any(Error) });
+    const prepared = store.contracts.find((record) => record.customerId === result.customerId);
+    expect(prepared).toMatchObject({ status: "draft" });
+    expect(store.payments.some((record) => record.contractId === prepared?.id)).toBe(false);
+  });
+});
 
 /** Verifies ctr-1 installment MA2: Silver 240,000 moves from 67,500 (28%) to 125,000 (52%) verified, past the 40% payout release (OD-4). */
 async function collectMa2(store: ReturnType<typeof createMockStore>) {
@@ -805,8 +864,13 @@ describe("owner-decided restrictions (C2)", () => {
     expect(store.memberships.find((m) => m.contractId === "ctr-1")!.status).toBe("cancelled");
     expect(store.payments.filter((p) => p.contractId === "ctr-1").map((p) => p.status)).toEqual(["verified", "verified"]);
     const actions = store.auditEvents.filter((e) => e.relatedRecordIds?.includes("ctr-1") || e.entityId === "ctr-1").map((e) => e.action);
-    expect(actions).toEqual(expect.arrayContaining(["CONTRACT_CANCELLATION_REQUESTED", "CONTRACT_CANCELLED", "PAYMENTS_FORFEITED", "SALE_CANCELLED", "MEMBERSHIP_CANCELLED"]));
+    const cancellationActions = ["CONTRACT_CANCELLATION_REQUESTED", "CONTRACT_CANCELLED", "PAYMENTS_FORFEITED", "SALE_CANCELLED", "MEMBERSHIP_CANCELLED"];
+    expect(actions.filter((action) => cancellationActions.includes(action))).toEqual(cancellationActions);
     await expect(finance.contracts.decideCancellation("ctr-1", "confirm", "Twice")).rejects.toThrow(/No cancellation is awaiting/);
+    expect(sale.adjustments.filter((entry) => entry.kind === "reversal")).toHaveLength(1);
+    for (const action of ["CONTRACT_CANCELLED", "PAYMENTS_FORFEITED", "SALE_CANCELLED", "MEMBERSHIP_CANCELLED"]) {
+      expect(store.auditEvents.filter((event) => event.action === action && (event.entityId === "ctr-1" || event.relatedRecordIds?.includes("ctr-1")))).toHaveLength(1);
+    }
   });
 
   it("lets Finance decline a request, and still blocks a non-Super-Admin requester from deciding it", async () => {

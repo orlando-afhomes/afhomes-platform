@@ -11,6 +11,15 @@ export function installmentCountFor(scheme: Pick<PaymentScheme, "installmentCoun
   return scheme.installmentCountByTier?.[tier] ?? scheme.installmentCount;
 }
 
+export function paymentSchemeTierTerms(product: Pick<VipProduct, "code" | "priceCentavos">, scheme: PaymentScheme) {
+  return {
+    priceCentavos: schemePriceCentavos(product, scheme),
+    reservationCentavos: scheme.reservationCentavos ?? 0,
+    installmentCount: installmentCountFor(scheme, product.code),
+    installmentCentavos: scheme.installmentCentavosByTier[product.code],
+  };
+}
+
 /** Card ID payment segment for a tier: the single scheme code when set, otherwise the per-tier code. Never throws. */
 export function paymentCodeFor(
   scheme: Pick<PaymentScheme, "category" | "paymentCode" | "priceCentavosByTier"> & {

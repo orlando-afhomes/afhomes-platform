@@ -1,5 +1,4 @@
-import { displayPriceFor } from "@/modules/vip/pricing";
-import { downPaymentCentavos, installmentCountFor } from "@/modules/vip/rules";
+import { downPaymentCentavos, paymentSchemeTierTerms } from "@/modules/vip/rules";
 import { formatPeso } from "@/shared/lib/money";
 import type { PaymentScheme, VipProduct } from "@/modules/vip/types";
 
@@ -24,7 +23,7 @@ export function schemeCardContent(
    * scheme's own contract-stated price overrides the catalog price).
    * Always computed, even when the scheme is unavailable.
    */
-  const price = displayPriceFor(product, scheme);
+  const { priceCentavos: price, reservationCentavos: reservation, installmentCount: count, installmentCentavos: each } = paymentSchemeTierTerms(product, scheme);
   const total = formatPeso(price);
   /**
    * Unavailable scheme: show the total for reference but no pill or terms
@@ -39,7 +38,6 @@ export function schemeCardContent(
    * 7 days; amendment due-dates item: full balance due within 7 days).
    */
   if (scheme.category === "cash") {
-    const reservation = scheme.reservationCentavos;
     if (reservation) {
       return {
         total,
@@ -57,11 +55,8 @@ export function schemeCardContent(
    * installments; amendment items 5–9: equal monthly payments at 0%
    * interest, due monthly from the reservation date).
    */
-  const count = installmentCountFor(scheme, product.code);
-  const each = scheme.installmentCentavosByTier[product.code];
   const pill = count ? `${count} monthly payments` : null;
   const terms: string[] = [];
-  const reservation = scheme.reservationCentavos;
   if (reservation) {
     terms.push(`${formatPeso(reservation)} reservation fee`);
   }

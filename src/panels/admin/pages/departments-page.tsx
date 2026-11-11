@@ -10,7 +10,6 @@ import { AdminPage } from "@/shared/components/admin";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { Button } from "@/shared/ui/button";
-import { Skeleton } from "@/shared/ui/skeleton";
 import type { Department } from "@/modules/organization/types";
 
 const STATUS_FILTER_ITEMS = [
@@ -24,7 +23,7 @@ const STATUS_FILTER_ITEMS = [
 const HIDE_ON_MOBILE: DataTableColumnMeta = { className: "tw:hidden tw:sm:table-cell" };
 
 const DepartmentDialogs = dynamic(() => import("./department-dialogs").then((mod) => mod.DepartmentDialogs), {
-  loading: () => <Skeleton className="tw:h-8 tw:w-full" />,
+  loading: () => null,
 });
 
 export function DepartmentsPage() {
@@ -126,7 +125,7 @@ export function DepartmentsPage() {
         searchLabel="Search departments"
         filters={[{ label: "Department status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_FILTER_ITEMS }]}
       >
-        <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
+        <Button variant="outline" className="tw:h-11 tw:md:flex-none" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
           {sortAsc ? <ArrowDownAZ aria-hidden="true" /> : <ArrowUpAZ aria-hidden="true" />}
           {sortLabel}
         </Button>
@@ -138,7 +137,6 @@ export function DepartmentsPage() {
         getRowId={(dept) => dept.id}
         emptyText="No departments found."
         loading={departmentsQuery.isLoading || rolesQuery.isLoading || staffQuery.isLoading}
-        pageSize={10}
         onRowOpen={(dept) => setViewDept(dept)}
       />
       <DepartmentDialogs

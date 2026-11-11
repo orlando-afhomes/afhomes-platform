@@ -462,7 +462,6 @@ export function AccreditedSellerDialog({
                     options={employeeOptions}
                     onChange={handleSelectEmployee}
                     placeholder="Search employees"
-                    showSearch
                     loading={staffQuery.isLoading || accountsQuery.isLoading}
                     hint="Links account. Preserves employee record."
                     error={visible("existingAccount")}
@@ -577,7 +576,6 @@ export function AccreditedSellerDialog({
                     options={(eligibleQuery.data ?? []).map((member) => ({ value: member.id, label: `${member.displayName} (${member.designation})` }))}
                     onChange={setParentId}
                     placeholder={effectiveDesignation === "SVD" ? "Root — no sponsor" : (eligibleQuery.data ?? []).length === 0 ? "No eligible sponsor available" : "Select eligible sponsor"}
-                    showSearch
                     loading={eligibleQuery.isLoading}
                     disabled={effectiveDesignation === "SVD"}
                     error={visible("sponsor")}
@@ -593,7 +591,7 @@ export function AccreditedSellerDialog({
               <FormSection title="Program Details">
                 <FormGrid>
                   <StandardDateField id="card-application" label="Application Date" required value={cardApplicationDate} onChange={setCardApplicationDate} error={visible("cardApplicationDate")} />
-                  <SelectField id="program-category" label="Program Category" required value={programCategory} options={PROGRAM_CATEGORY_OPTIONS} onChange={setProgramCategory} placeholder="Select program category" showSearch error={visible("programCategory")} />
+                  <SelectField id="program-category" label="Program Category" required value={programCategory} options={PROGRAM_CATEGORY_OPTIONS} onChange={setProgramCategory} placeholder="Select program category" error={visible("programCategory")} />
                   <SelectField id="vip-level" label="Card Level" required value={vipCardLevel} options={VIP_LEVEL_OPTIONS} onChange={setVipCardLevel} error={visible("vipCardLevel")} />
                 </FormGrid>
               </FormSection>
@@ -710,7 +708,7 @@ export function AccreditedSellerDialog({
                 Next
               </Button>
             ) : (
-              <Button type="button" className="tw:min-h-11 tw:sm:min-h-8" disabled={!canComplete || submitting || createSeller.isPending} onClick={handleFinish}>
+              <Button type="button" className="tw:min-h-11 tw:sm:min-h-8" loading={submitting || createSeller.isPending} disabled={!canComplete} onClick={handleFinish}>
                 {accreditationStatus === "pending" ? "Create Seller" : "Create & Accredit Seller"}
               </Button>
             )}

@@ -108,11 +108,10 @@ function FitValue({ children }: { children: ReactNode }) {
 
 /**
  * Compact stat card for operational pages (reference:
- * docs/ui-redesign/card-for-all-pages.png): icon chip, tone divider, and a
+ * docs/ui-redesign/card-for-all-pages.png): icon chip and a
  * large value under a small label, over a faint tone-tinted wave. Smaller and
  * plainer than dashboard KPI cards: no comparison pills, no trends.
- * The card sizes by its own width (container queries): a narrow card stacks the
- * chip above the text, and a long value shrinks instead of clipping.
+ * Every stat card on a non-dashboard page uses this row layout (chip, text). A long value shrinks instead of clipping.
  */
 export function AdminStatCard({
   label,
@@ -133,13 +132,12 @@ export function AdminStatCard({
   error?: unknown;
 }) {
   return (
-    <div className="tw:@container tw:relative tw:h-full tw:min-w-0 tw:overflow-hidden tw:rounded-2xl tw:border tw:border-border tw:bg-card tw:p-4 tw:text-card-foreground tw:shadow-(--shadow-soft) tw:sm:p-5">
+    <div className="tw:relative tw:h-full tw:min-w-0 tw:overflow-hidden tw:rounded-2xl tw:border tw:border-border tw:bg-card tw:p-4 tw:text-card-foreground tw:shadow-(--shadow-soft) tw:sm:p-5">
       <StatWave tone={tone} />
-      <div className="tw:relative tw:flex tw:flex-col tw:gap-3 tw:@[14rem]:flex-row tw:@[14rem]:items-center tw:@[14rem]:gap-4">
-        <span aria-hidden="true" className={cn("tw:flex tw:size-10 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-xl tw:@[14rem]:size-11", STAT_TONE_CLASSES[tone])}>
+      <div className="tw:relative tw:flex tw:items-center tw:gap-3 tw:sm:gap-4">
+        <span aria-hidden="true" className={cn("tw:flex tw:size-11 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-xl", STAT_TONE_CLASSES[tone])}>
           <Icon className="tw:size-5" strokeWidth={1.75} />
         </span>
-        <span aria-hidden="true" className="tw:hidden tw:w-0.5 tw:shrink-0 tw:self-stretch tw:rounded-full tw:@[14rem]:block" style={{ backgroundColor: STAT_TONE_BAR[tone] }} />
         <dl className="tw:m-0 tw:min-w-0 tw:flex-1">
           <dt className="tw:line-clamp-2 tw:text-sm tw:font-medium tw:text-muted-foreground">{label}</dt>
           {loading ? (
@@ -153,6 +151,10 @@ export function AdminStatCard({
           )}
           {description && !loading && !error ? (
             <dd className="tw:m-0 tw:mt-1.5 tw:truncate tw:text-xs tw:text-muted-foreground">{description}</dd>
+          ) : description && loading ? (
+            <dd className="tw:m-0 tw:mt-1.5">
+              <Skeleton className="tw:h-3 tw:w-16" />
+            </dd>
           ) : null}
         </dl>
       </div>

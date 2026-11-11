@@ -157,7 +157,6 @@ describe("SelectField showSearch", () => {
     render(
       <SelectField
         label="Recommender"
-        showSearch
         value={undefined}
         options={[{ value: "a", label: "Ana Mendoza" }, { value: "b", label: "Mark Villanueva" }]}
         onChange={onChange}

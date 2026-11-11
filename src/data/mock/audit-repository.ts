@@ -8,13 +8,19 @@ import {
   AUDIT_MODULES,
   AuditQueryError,
   BUSINESS_AUDIT_ACTIONS,
+  SYSTEM_ACTOR_ID,
   type AuditEvent,
   type AuditEventView,
   type AuditPage,
   type AuditQuery,
 } from "@/modules/audit/types";
 import type { DevIdentity } from "@/modules/identity/types";
+import { customerRecordName } from "@/modules/customers/rules";
+import { formatPeso } from "@/shared/lib/money";
+import { humanize } from "@/shared/lib/humanize";
+import { recordLabel } from "@/shared/lib/record-label";
 import { hasActiveSystemRole } from "./authorization";
+import { DEV_IDENTITIES } from "./dev-identities";
 import type { MockStore } from "./seed";
 
 export const AUDIT_READ_RESTRICTION = "Audit history is restricted to Administrators.";
@@ -64,17 +70,77 @@ function projectValue(action: string, value: string | null | undefined): string 
   return VALUE_ACTIONS.has(action) ? (value ?? null) : null;
 }
 
+function actorNameOf(store: MockStore, actorId: string): string {
+  if (actorId === SYSTEM_ACTOR_ID) return "System";
+  const dev = DEV_IDENTITIES.find((identity) => identity.id === actorId);
+  if (dev) return dev.displayName;
+  const named =
+    store.staff.find((item) => item.id === actorId) ??
+    store.members.find((item) => item.id === actorId) ??
+    store.accounts.find((item) => item.id === actorId);
+  return named?.displayName || "Unknown user";
+}
+
+function entityLabelOf(store: MockStore, type: AuditEvent["entityType"], id: string): string {
+  const customerName = (customerId: string | undefined) => {
+    const customer = store.customers.find((item) => item.id === customerId);
+    return customer ? customerRecordName(customer) : null;
+  };
+  switch (type) {
+    case "customer":
+      return customerName(id) ?? humanize(type);
+    case "contract": {
+      const contract = store.contracts.find((item) => item.id === id);
+      return contract ? recordLabel("Contract", customerName(contract.customerId), contract.productCode) : humanize(type);
+    }
+    case "sale": {
+      const sale = store.sales.find((item) => item.id === id);
+      return sale ? recordLabel("Sale", customerName(sale.customerId)) : humanize(type);
+    }
+    case "payment": {
+      const payment = store.payments.find((item) => item.id === id);
+      return payment ? recordLabel("Payment", customerName(payment.customerId), formatPeso(payment.amountCentavos)) : humanize(type);
+    }
+    case "commission": {
+      const commission = store.commissions.find((item) => item.id === id);
+      return commission ? recordLabel("Commission", commission.recipientName) : humanize(type);
+    }
+    case "membership": {
+      const membership = store.memberships.find((item) => item.id === id);
+      return membership ? recordLabel("Membership", customerName(membership.customerId)) : humanize(type);
+    }
+    case "member":
+      return store.members.find((item) => item.id === id)?.displayName || humanize(type);
+    case "accreditation": {
+      const record = store.accreditations.find((item) => item.id === id);
+      return store.members.find((item) => item.id === record?.memberId)?.displayName || humanize(type);
+    }
+    case "staff":
+      return store.staff.find((item) => item.id === id)?.displayName || humanize(type);
+    case "account":
+      return store.accounts.find((item) => item.id === id)?.displayName || humanize(type);
+    case "department":
+      return store.departments.find((item) => item.id === id)?.name || humanize(type);
+    case "department-role":
+      return store.roles.find((item) => item.id === id)?.name || humanize(type);
+    default:
+      return humanize(type);
+  }
+}
+
 /** Builds the view field by field from the allowlist; nothing else is copied. */
-export function projectAuditEvent(event: AuditEvent): AuditEventView {
+export function projectAuditEvent(event: AuditEvent, store: MockStore): AuditEventView {
   return {
     id: event.id,
     timestamp: event.timestamp,
     actorId: event.actorId,
+    actorName: actorNameOf(store, event.actorId),
     actorRoles: [...event.actorRoles],
     module: event.module,
     action: event.action,
     entityType: event.entityType,
     entityId: event.entityId,
+    entityLabel: entityLabelOf(store, event.entityType, event.entityId),
     outcome: event.outcome,
     displayReference: REFERENCE_ACTIONS.has(event.action) ? (event.displayReference ?? null) : null,
     previousValue: projectValue(event.action, event.previousValue),
@@ -187,7 +253,7 @@ export class MockAuditRepository implements AuditRepository {
     matches.sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp) || sequenceOf(b) - sequenceOf(a));
     const start = (q.page - 1) * q.pageSize;
     return {
-      items: matches.slice(start, start + q.pageSize).map(projectAuditEvent),
+      items: matches.slice(start, start + q.pageSize).map((event) => projectAuditEvent(event, this.store)),
       page: q.page,
       pageSize: q.pageSize,
       total: matches.length,

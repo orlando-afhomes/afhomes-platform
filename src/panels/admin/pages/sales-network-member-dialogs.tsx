@@ -323,7 +323,6 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
             options={PROGRAM_CATEGORY_OPTIONS}
             onChange={setProgramCategory}
             placeholder="Select program category"
-            showSearch
             error={visible("programCategory")}
             className="tw:sm:col-span-2"
           />
@@ -349,7 +348,7 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
         <Button type="button" variant="outline" onClick={onDone} className={BUTTON_CLASS}>
           Cancel
         </Button>
-        <Button type="submit" disabled={submitting} className={BUTTON_CLASS}>
+        <Button type="submit" loading={submitting} className={BUTTON_CLASS}>
           Save
         </Button>
       </DialogFooter>
@@ -498,7 +497,6 @@ function TransferMemberForm({ member, onDone }: { member: OrgMember; onDone: () 
                 .map((parent) => ({ value: parent.id, label: `${parent.displayName} (${designationLabel(parent.designation)})` }))}
               onChange={setNewParentId}
               placeholder="Select sponsor"
-              showSearch
               loading={eligibleQuery.isLoading}
               error={visible("parent")}
             />
@@ -510,7 +508,7 @@ function TransferMemberForm({ member, onDone }: { member: OrgMember; onDone: () 
         <Button type="button" variant="outline" onClick={onDone} className={BUTTON_CLASS}>
           Cancel
         </Button>
-        <Button type="submit" disabled={submitting} className={BUTTON_CLASS}>
+        <Button type="submit" loading={submitting} className={BUTTON_CLASS}>
           Transfer
         </Button>
       </DialogFooter>

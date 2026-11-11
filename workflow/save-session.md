@@ -111,67 +111,64 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-11
+- Saved at: 2026-11-12
 - Repository: afhomes-platform (remote `https://github.com/orlando-afhomes/afhomes-platform.git`)
 - Branch: develop
-- HEAD: bc1f0e9 "feat: add fixed-prefix phone entry and temporary Government ID image preview" (owner-committed; parent dcc53bc). Verified this run: nothing staged.
-- Session objective: (1) `/delete-archived` of four old sessions; (2) responsive `AdminStatCard` with auto-shrinking values and 2-word labels/descriptions; (3) pointer cursor on every clickable control. Both UI tasks were planned, owner-approved, implemented, and browser-verified.
+- HEAD: 0c6d2c6 "feat: add customer attribution validation, exit protection, and UI polish" (owner-committed). Verified this run: nothing staged; 103 changed paths (93 modified, 10 untracked).
+- Session objective: UI standardization pass across all admin pages: skeleton loaders and button spinners; table and filter layout with one reusable pagination (10 rows per page); stat-card design; one searchable dropdown; title-case labels; no raw ids on screen. Each item was owner-requested; the larger ones were planned and approved first.
 - Development phase: frontend prototype with mock data, QA stage. Only the owner declares frontend completion.
-- Context note: no compaction notice. Several uncommitted files in the tree come from a parallel workstream not visible to this session (see section 5).
+- Context note: no compaction notice. Subagents did much of the per-page work; their reports were relayed, not independently re-read.
 
 ## 2. Current Project State
-- Committed through bc1f0e9: customer wizard (single New/Edit layout), genealogy-driven attribution, `registerCustomer` orchestration, centralized contract cancellation, scheme-aware VIP pricing, fixed-prefix phone entry and temporary Government ID preview. Details live in git history and the decisions in section 3.
-- This session (uncommitted): `src/shared/components/admin/admin-stat.tsx` now sizes by container queries (`tw:@container`; the icon chip stacks below 14rem) and has an internal `FitValue` that shrinks the value from 30px to a 12px floor (exported pure `fitValueSize`, 2% safety margin, `title` shown only at the floor). The label is clamped to 2 lines and the description is truncated. Labels and descriptions across 15 admin pages were shortened to at most 2 words.
-- This session (uncommitted): `src/app/globals.css` has a base-layer rule giving `button, summary, [role=button|tab|menuitem*|option]` and button-type inputs `cursor: pointer`, and `not-allowed` for disabled ones. `cursor-default` became `cursor-pointer` on dropdown-menu items, select items, and combobox items (select scroll arrows keep the arrow).
-- Navigation (not from this session): the `customer-import` item has `hideFromNav: true` (entered from the Customers page); related nav tests were adjusted.
+- Loading states: `Skeleton` (shimmer, 150 ms fade-in delay), `Spinner`, `Button loading` prop, composed skeletons in `src/shared/components/modern/skeletons.tsx`; `QueryState`/`DataTable` use them; admin layout and `/verify` have skeleton fallbacks. Opt-in mock latency: `NEXT_PUBLIC_MOCK_DELAY_MS` (read in `useMockRepositories`, `src/data/queries.ts`; off by default).
+- Tables: `DataTable` always shows 10 rows per page (`TABLE_PAGE_SIZE`), footer `Pagination` (`modern/pagination.tsx`: range/total, first/prev/numbers/next/last, no page-size select), optional `serverPagination` (used by Audit Logs). Old paginate prop and hand-written paging removed.
+- Layout: filter card and table card are direct siblings on pages (no titled card wrapping a table; `AdminSectionHeading` in `shared/components/admin` exists but the owner-marked headings were removed); `FilterBar` is one container, one row at md+, all controls 44 px, plus `header` slot; the filter sits directly above its table (stats moved above on Audit Logs and Payment History); Sales has one filter card (search, status, period dates).
+- Owner-removed content: headings Verification queue, Collections monitor, Confirmed sales, Approved commissions, All payments, Activation queue, Ledger (stay points), Product catalog, Payment scheme register (New scheme button moved to the page header), Commission records, the lone "All sales" tab, the "Showing N contracts" line, the stat-card vertical divider.
+- Stat cards (`AdminStatCard`): always row layout (chip + text, no divider), value shrinks to fit. Dashboard KPI cards unchanged.
+- Dropdowns: one `SearchSelect` (`modern/search-select.tsx`, type-to-filter combobox, 44 px) used by `SelectField` (showSearch removed), `FilterBar`, the dashboard date filter, and the Account, Department, Role dialogs and Genealogy team filter. `shared/ui/select.tsx` has no callers (left in place). Action menus (`DropdownMenu`) unchanged by owner decision.
+- Display text: `humanize` (`shared/lib/humanize.ts`) title-cases enum/status/action values; `StatusBadge` and `StatusPill` use it. Payment method labels were left alone (GCash).
+- Raw ids hidden: `recordLabel` (`shared/lib/record-label.ts`) builds labels like "Contract · Name · B1". Audit events now carry `entityLabel` and `actorName` (types in `modules/audit/types.ts`, built in `data/mock/audit-repository.ts`); Audit Logs hides ids and its actor filter matches names. Contracts table lost its id column; contract and customer detail titles, import job labels, member relationship history (branch columns removed), dashboard activity references, and duplicate-payment and status-transition error messages were updated.
 
 ## 3. Important Decisions
-- Owner ruled the 2-word limit covers both labels and descriptions of stat cards (the wording was proposed by Claude; no business meaning changed).
-- Owner ruled menu items and select/combobox options also show the pointer cursor.
-- Earlier owner rulings still apply: Gold pricing finalized (Spot/Move A 312,000; Installment/Move B 390,000); Move A/B standard schemes; government IDs uppercase-only; Customer ID `YYYY-NNNN` assigned at submit; the wizard draft in `sessionStorage` (`afhomes.customer-wizard.v1`) is the only persisted browser state.
-- Restrictions: agents perform no Git writes; AGENTS.md/CLAUDE.md edits need owner authorization.
+- Owner: section titles became plain headings, later removed where marked; period dates join the single filter card; all tables 10 rows (no page-size choice); 4-card stat rows stay 4 across with shrinking values; action menus stay as menus; raw ids use "descriptive label" replacements.
+- Restrictions: agents perform no Git writes; AGENTS.md/CLAUDE.md edits need owner authorization. `docs/ui` was deleted once by mistake and restored from `C:\Users\user\OneDrive\Desktop\Pictures\Screenshots` (originals still there).
+- Earlier owner rulings still apply (Gold pricing, Move A/B schemes, uppercase government IDs, Customer ID `YYYY-NNNN`, wizard draft in sessionStorage only).
 
 ## 4. Completed Work
-- Deleted sessions c474e373, 28cff7c7, 8870f768, aadde5fa (permanent, no backups).
-- Stat card responsive/fit work: `admin-stat.tsx`, `admin-kit.test.tsx` (new `fitValueSize` test), `reports-pages.test.tsx` and `business-pages.test.tsx` (label text updates), and label/description edits in the collections-report, commission-payouts, commission-report, customer-growth-report, finance-collections, finance-payments, membership, membership-activation, membership-report, sales, sales-performance-report, stay-points, and stay-points-report pages plus `contract-sections.tsx` and `sales-network-panel.tsx`.
-- Cursor work: `globals.css`, `dropdown-menu.tsx`, `select.tsx`, `combobox.tsx`.
-- Verified: `admin-kit` 8/8, `reports-pages` 7/7, `business-pages` 83/83, `src/shared/ui` 14/14; `tsc` 0 errors; ESLint clean on touched folders; `npm run build` succeeded (after the cursor change). Browser: long amounts shrink without clipping at 360/768/1280 px on Customers and Sales; computed cursor was correct on 90 controls across 8 pages, and the row "..." menu items and status select options show the pointer.
+- All items in section 2, implemented across about 100 files. New files: `admin-section-heading.tsx`, `pagination.tsx` (+test), `search-select.tsx`, `skeletons.tsx`, `spinner.tsx`, `humanize.ts` (+test), `record-label.ts` (+test).
+- Verification actually run this session: `tsc --noEmit` 0 errors (last run at save time); ESLint 0 errors with one old warning (`modules/sales-network/genealogy.ts` unused `byId`); `npm run build` succeeded before the final raw-id edits.
 
 ## 5. Git Working Tree
 - Staged: none.
-- Unstaged tracked (40 files, 796 insertions, 197 deletions). From this session: `globals.css`, `admin-stat.tsx`, `admin-kit.test.tsx`, `dropdown-menu.tsx`, `select.tsx`, `combobox.tsx`, `reports-pages.test.tsx`, `business-pages.test.tsx`, the 13 report/finance/sales/membership/stay-points pages, `contract-sections.tsx`, `sales-network-panel.tsx`.
-- Pre-existing or unknown (not made by this session; do not revert): `package.json`, `package-lock.json`, `business-flow.test.ts`, `customer-repository.ts`, `seed-data.ts`, `register-customer.ts`, `modules/customers/rules.ts`, `modules/customers/types.ts`, `customer-form-attribution.test.tsx`, `customer-form-sections.tsx`, `customer-application-wizard.tsx`, `customer-detail-page.tsx`, `customers-page.tsx`, and the nav edits (`navigation.ts`, `navigation.test.ts`, `admin-nav-list.test.tsx`, `admin-nav-match.test.ts`).
-- Untracked: `src/modules/customers/attribution.ts`, `src/panels/admin/components/use-new-customer-exit.ts` (pre-existing or unknown).
+- Unstaged tracked: about 93 files across `src/shared`, `src/panels/admin`, `src/data/mock`, `src/modules/{audit,finance}`, `src/app`; mostly this session; earlier-session leftovers may be mixed in (unknown).
+- Untracked: `src/shared/components/admin/admin-section-heading.tsx`, `src/shared/components/modern/{pagination,pagination.test,search-select,skeletons}.ts(x)`, `src/shared/lib/{humanize,humanize.test,record-label,record-label.test}.ts`, `src/shared/ui/spinner.tsx`; `docs/ui/` (owner screenshots, also untracked).
 - Deleted or renamed: none.
-- Note: the `package.json` and lockfile changes are unexplained by this session; the owner should confirm no dependency was added unintentionally.
 
 ## 6. Pending Tasks
-- Owner review and commit of the uncommitted work (suggested split: stat card, cursor, nav hiding, and the parallel customer/attribution set).
-- Verify the parallel workstream (customer attribution, `use-new-customer-exit`, rules/types changes) before commit; the full customer suites have not been re-run for it.
-- Open owner decisions carried over: Move B down-payment due date, required initial payment per scheme, overpayment/refund timing, Welcome Gift lapse, template authority, commission default rates.
-- Doc follow-ups: doc 04 §7.8 (Referrer and VIP Recommender must be the same OST vs two same-team OSTs implemented) and the Customer ID format still listed as pending D2.
-- Optional: restricted-role browser QA, screen-reader audit, and a check of the disabled-control cursor (no disabled control was on the pages swept).
-- No blockers.
+- Fix tests that assert old text (cannot run here): `src/panels/admin/dashboard-metrics.test.ts` (~lines 238-244 expect references like "COM-1", "PAY-4"; fixtures need `customerName`/`displayName`), `src/panels/admin/business-pages.test.tsx:276` (`findAllByText("CTR-4")`), page tests using "Actor id", old Audit Logs/section headings, or lowercase status text.
+- Re-run ESLint and `npm run build` after the final raw-id edits (not done after them).
+- Browser QA of everything above (none done): 4-card stat rows at 1280-1366 px, Audit Logs filter row width, dropdowns in dialogs, pagination on mobile, loaders with `NEXT_PUBLIC_MOCK_DELAY_MS=800`.
+- Possible leftovers the owner may want removed: "N matching customer(s)" next to Export, "N visible member(s)" in the team list, and the other "Commission records" text on the commission-assignment page.
+- Owner decisions carried over: Move B down-payment due date, required initial payment per scheme, overpayment/refund timing, Welcome Gift lapse, template authority, commission default rates; doc 04 §7.8 and Customer ID format (D2).
+- Blocker for tests: Vitest crashes on load (jsdom's bundled undici under Node v22.14.0); a newer Node 22.x is the likely fix (unconfirmed).
 
 ## 7. Verification State
-- Tests: targeted suites listed in section 4 passed; the full suite was not run. Heavy jsdom suites (`business-pages`, `staff-page`) can time out at 15s in parallel and pass alone.
-- Lint: clean on touched folders; full `npm run lint` not run this session.
-- Typecheck: 0 errors on the last run (an earlier run once showed a transient error in `customer-form-attribution.test.tsx`, attributed to parallel edits).
-- Build: succeeded after the cursor change.
-- Browser QA: done for the stat card and cursors as above; not done for restricted roles, dialogs, screen reader, or a production-build pass.
+- Tests: none run this session (environment crash above). Added and updated tests are unverified.
+- Lint: 0 errors (earlier run). Typecheck: clean at save time. Build: succeeded earlier this session.
+- Browser QA: not performed.
 
 ## 8. Next Session Instructions
-- Recommended first action: `/load`, `git status --short`, then owner commits in logical groups; run the full `npx vitest run` once (alone, not alongside a build) before committing the parallel customer workstream.
-- Relevant files: `src/shared/components/admin/admin-stat.tsx`, `src/app/globals.css`, `src/shared/ui/{dropdown-menu,select,combobox}.tsx`, `src/modules/customers/attribution.ts`, `src/panels/admin/components/use-new-customer-exit.ts`, `package.json`.
-- Required approvals: any commit or push (owner only), AGENTS.md/CLAUDE.md edits, new dependencies, doc-04 amendments.
-- Warnings: do not run build and tests together; do not delete `.next`; a full reload resets mock data; LF to CRLF warnings are expected on Windows; the dev server was already running on port 3000.
+- Recommended first action: `/load`, `git status --short`, fix Node (or run tests elsewhere), run the full `npx vitest run` once alone, then update the stale assertions in section 6.
+- Relevant files: `src/shared/components/modern/{data-table,pagination,filter-bar,search-select,skeletons}.tsx`, `src/shared/lib/{humanize,record-label}.ts`, `src/data/mock/audit-repository.ts`, `src/panels/admin/dashboard-metrics.ts`, `src/panels/admin/pages/audit-logs-page.tsx`.
+- Required approvals: any commit or push (owner only), AGENTS.md/CLAUDE.md edits, new dependencies, deleting `select.tsx`.
+- Warnings: do not run build and tests together; do not delete `.next`; never delete untracked owner files (`docs/ui`); LF to CRLF warnings are expected.
 
 ## 9. Execution Recommendation
 - Phase: QA
-- Recommended next mode: default (ask before edits)
+- Recommended next mode: Build (after the owner reviews the browser result)
 - Recommended model: Sonnet 5.5
 - Effort: medium
 - Ultracode: OFF
-- Token optimization: one full test run and one lint, no further browser passes unless new UI changes.
-- Reason: the two UI tasks are verified, so the remaining work is owner review and commit of a mixed working tree.
+- Token optimization: one test run once Node is fixed; browser pass per page group, not per component.
+- Reason: broad UI work is implemented but unverified at runtime; the remaining work is test repair and browser QA.
 <!-- SESSION_SNAPSHOT_END -->

@@ -124,3 +124,22 @@ describe("buttonVariants", () => {
     expect(classes).not.toContain("tw:bg-transparent");
   });
 });
+
+describe("loading states", () => {
+  it("Button loading shows a spinner, keeps the label, blocks clicks, and is busy", async () => {
+    const user = userEvent.setup();
+    let clicked = 0;
+    const { container } = render(<Button loading onClick={() => (clicked += 1)}>Save</Button>);
+    const button = screen.getByRole("button", { name: "Save" });
+    expect(container.querySelector('[data-slot="spinner"]')).not.toBeNull();
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    await user.click(button);
+    expect(clicked).toBe(0);
+  });
+
+  it("Button without loading has no spinner and no aria-busy", () => {
+    const { container } = render(<Button>Save</Button>);
+    expect(container.querySelector('[data-slot="spinner"]')).toBeNull();
+    expect(screen.getByRole("button", { name: "Save" }).getAttribute("aria-busy")).toBeNull();
+  });
+});

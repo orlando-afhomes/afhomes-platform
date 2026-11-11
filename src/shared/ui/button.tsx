@@ -1,6 +1,7 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/shared/lib/utils"
+import { Spinner } from "@/shared/ui/spinner"
 
 // Solid brand fill with a soft top-light gradient and a crisp inner highlight.
 // The fill stays `bg-primary`; the gradient is an overlay, so the token still drives the color.
@@ -65,14 +66,26 @@ function Button({
   className,
   variant = "default",
   size = "default",
+  loading = false,
+  disabled,
+  children,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants> & {
+  /** Shows a spinner, blocks clicks, and keeps the label so the width does not jump. */
+  loading?: boolean
+}) {
   return (
     <ButtonPrimitive
       data-slot="button"
       className={buttonVariants({ variant, size, className })}
+      disabled={disabled || loading}
+      focusableWhenDisabled={loading || undefined}
+      aria-busy={loading || undefined}
       {...props}
-    />
+    >
+      {loading ? <Spinner aria-hidden="true" /> : null}
+      {children}
+    </ButtonPrimitive>
   )
 }
 

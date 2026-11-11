@@ -84,6 +84,10 @@ export type AuditEventView = {
   action: string;
   entityType: AuditEvent["entityType"];
   entityId: string;
+  /** Human label of the record (never an internal id). */
+  entityLabel: string;
+  /** Human name of the actor (never an internal id). */
+  actorName: string;
   outcome: "success";
   displayReference: string | null;
   previousValue: string | null;

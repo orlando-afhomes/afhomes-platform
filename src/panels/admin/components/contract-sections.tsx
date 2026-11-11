@@ -18,8 +18,10 @@ import { DetailList, DetailRow, InfoNote } from "@/shared/components/modern/deta
 import { Money } from "@/shared/components/modern/money";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { AdminPage, AdminSection, AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
+import { DetailSkeleton } from "@/shared/components/modern/skeletons";
+import { AdminPage, AdminSection, AdminSectionHeading, AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
+import { humanize } from "@/shared/lib/humanize";
+import { recordLabel } from "@/shared/lib/record-label";
 
 /** Contract with its payments, membership, schedule, ledger and milestones, derived once for every detail page. */
 export function useContractRecord(contractId: string) {
@@ -59,7 +61,7 @@ export function ContractPageFrame({
   if (record.isLoading) {
     return (
       <AdminPage anyOf={anyOf} title="Contract" crumbs={parentCrumbs}>
-        <Skeleton className="tw:h-48 tw:w-full" />
+        <DetailSkeleton />
       </AdminPage>
     );
   }
@@ -73,7 +75,7 @@ export function ContractPageFrame({
   }
   const full: ContractRecord = { ...record, contract };
   return (
-    <AdminPage anyOf={anyOf} title={`Contract ${contract.id.toUpperCase()}`} description={`${contract.customerName} · ${contract.productCode} · ${contract.schemeLabel}`} crumbs={[...parentCrumbs, { label: contract.id.toUpperCase() }]} actions={actions?.(full)}>
+    <AdminPage anyOf={anyOf} title={recordLabel("Contract", contract.customerName, contract.productCode)} description={`${contract.customerName} · ${contract.productCode} · ${contract.schemeLabel}`} crumbs={[...parentCrumbs, { label: recordLabel("Contract", contract.customerName, contract.productCode) }]} actions={actions?.(full)}>
       {children(full)}
     </AdminPage>
   );
@@ -148,7 +150,7 @@ export function ContractTermsSection({ record }: { record: ContractRecord }) {
     { icon: Check, term: "Customer accepted", value: contract.customerAccepted ? "Yes" : "No" },
     { icon: CalendarCheck, term: "Finalized", value: formatDate(contract.finalizedAt) },
     { icon: Receipt, term: "Sale", value: contract.sale ? <BizBadge status={contract.sale.status} /> : "Not recorded yet" },
-    { icon: Award, term: "Membership", value: membership ? <span>{membership.status}{membership.cardId ? ` · Card ${membership.cardId}` : ""}{membership.financialHold ? " · Financial Hold" : ""}</span> : "Not created yet" },
+    { icon: Award, term: "Membership", value: membership ? <span>{humanize(membership.status)}{membership.cardId ? ` · Card ${membership.cardId}` : ""}{membership.financialHold ? " · Financial Hold" : ""}</span> : "Not created yet" },
   ];
   return (
     <ContractCard icon={FileText} title="Contract terms" description="Fixed snapshot. Later catalog changes never alter this contract.">
@@ -231,11 +233,10 @@ export function ContractScheduleSection({ record }: { record: ContractRecord }) 
           </div>
         </SheetContent>
       </Sheet>
-      <ContractCard icon={CalendarDays} title="Payment schedule" description="Verified money is applied to the schedule in order. No penalty or interest is ever added.">
-        <div className="contract-detail__table tw:[&_[data-slot=table-header]]:bg-[var(--color-bg-surface)] tw:motion-reduce:[&_[data-slot=table-row]]:transition-none">
-          <DataTable data={schedule} columns={columns} getRowId={(row) => String(row.seq)} emptyText="No schedule." caption="Payment schedule" pageSize={10} onRowOpen={setLine} getRowLabel={(row) => `Open ${row.label}`} rowActions={(row) => <RowActionsMenu itemName={row.label} onView={() => setLine(row)} />} />
-        </div>
-      </ContractCard>
+      <section className="tw:flex tw:flex-col tw:gap-4">
+        <AdminSectionHeading title="Payment schedule" description="Verified money is applied to the schedule in order. No penalty or interest is ever added." icon={CalendarDays} />
+        <DataTable data={schedule} columns={columns} getRowId={(row) => String(row.seq)} emptyText="No schedule." caption="Payment schedule" onRowOpen={setLine} getRowLabel={(row) => `Open ${row.label}`} rowActions={(row) => <RowActionsMenu itemName={row.label} onView={() => setLine(row)} />} />
+      </section>
     </>
   );
 }
@@ -267,9 +268,10 @@ export function ContractLedgerSection({ record }: { record: ContractRecord }) {
     [],
   );
   return (
-    <AdminSection title="Payment ledger" description="Verified payments, reversals and refunds in date order. Original payments are never changed.">
-      <DataTable data={record.ledger} columns={columns} getRowId={(row) => `${row.paymentId}-${row.kind}-${row.date}-${row.netCentavos}`} emptyText="No verified payments yet." caption="Payment ledger" pageSize={10} />
-    </AdminSection>
+    <section className="tw:flex tw:flex-col tw:gap-4">
+      <AdminSectionHeading title="Payment ledger" description="Verified payments, reversals and refunds in date order. Original payments are never changed." />
+      <DataTable data={record.ledger} columns={columns} getRowId={(row) => `${row.paymentId}-${row.kind}-${row.date}-${row.netCentavos}`} emptyText="No verified payments yet." caption="Payment ledger" />
+    </section>
   );
 }
 
@@ -278,7 +280,7 @@ export function ContractPaymentsSection({ record, actions }: { record: ContractR
   const columns = useMemo<ColumnDef<PaymentView, unknown>[]>(
     () => [
       { id: "date", header: "Receipt date", cell: ({ row }) => formatDate(row.original.paidDate) },
-      { id: "purpose", header: "Purpose", cell: ({ row }) => row.original.purpose.replace(/_/g, " ") },
+      { id: "purpose", header: "Purpose", cell: ({ row }) => humanize(row.original.purpose) },
       { id: "amount", header: "Amount", cell: ({ row }) => <Money value={row.original.amountCentavos} /> },
       { id: "net", header: "Counted", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => <Money value={netVerifiedCentavos(row.original)} /> },
       { id: "status", header: "Status", cell: ({ row }) => <div className="tw:flex tw:flex-col tw:gap-1"><BizBadge status={row.original.status} />{row.original.adjustments.length > 0 ? <span className="tw:text-xs tw:text-muted-foreground">{row.original.adjustments.length} adjustment(s)</span> : null}</div> },
@@ -286,11 +288,10 @@ export function ContractPaymentsSection({ record, actions }: { record: ContractR
     [],
   );
   return (
-    <ContractCard icon={CreditCard} title="Payments">
-      <div className="contract-detail__table tw:[&_[data-slot=table-header]]:bg-[var(--color-bg-surface)] tw:motion-reduce:[&_[data-slot=table-row]]:transition-none">
-        <DataTable data={record.payments} columns={columns} getRowId={(row) => row.id} emptyText="No payments submitted yet." caption="Payments" rowActions={actions?.rowActions} onRowOpen={actions?.open} getRowLabel={(row) => `Open payment of ${formatDate(row.paidDate)}`} />
-      </div>
-    </ContractCard>
+    <section className="tw:flex tw:flex-col tw:gap-4">
+      <AdminSectionHeading title="Payments" icon={CreditCard} />
+      <DataTable data={record.payments} columns={columns} getRowId={(row) => row.id} emptyText="No payments submitted yet." caption="Payments" rowActions={actions?.rowActions} onRowOpen={actions?.open} getRowLabel={(row) => `Open payment of ${formatDate(row.paidDate)}`} />
+    </section>
   );
 }
 
@@ -304,7 +305,7 @@ export function ContractHistorySection({ contract }: { contract: ContractView })
           {contract.history.map((event, index) => (
             <li key={`${event.at}-${index}`} className="tw:flex tw:items-start tw:gap-2.5 tw:rounded-lg tw:bg-[var(--color-bg-subtle)] tw:px-3 tw:py-2.5 tw:text-sm">
               <FileText aria-hidden="true" className="tw:mt-0.5 tw:size-4 tw:shrink-0 tw:text-muted-foreground" strokeWidth={1.75} />
-              <span>{formatDate(event.at)} · {event.event.replace(/_/g, " ").toLowerCase()}{event.note ? ` — ${event.note}` : ""}</span>
+              <span>{formatDate(event.at)} · {humanize(event.event)}{event.note ? ` — ${event.note}` : ""}</span>
             </li>
           ))}
         </ol>

@@ -1,13 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Landmark, Pencil, Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { useOperation, usePaymentSchemes } from "@/data/business-queries";
 import type { PaymentScheme, VipTierCode } from "@/modules/vip/types";
 import { schemeHowItWorks as termsSummary } from "@/modules/vip/rules";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { Button } from "@/shared/ui/button";
-import { AdminPage, AdminSection } from "@/shared/components/admin";
+import { AdminPage } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { Money } from "@/shared/components/modern/money";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
@@ -15,6 +15,7 @@ import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { formatPeso } from "@/shared/lib/money";
 import { SchemeDialog } from "../components/vip-product-dialogs";
+import { humanize } from "@/shared/lib/humanize";
 
 export function PaymentSchemesPage() {
   const schemes = usePaymentSchemes();
@@ -44,23 +45,17 @@ export function PaymentSchemesPage() {
       title="Payment Schemes"
       description="Register of official payment schemes."
       crumbs={[{ label: "VIP Products", href: "/admin/vip-products" }, { label: "Payment Schemes" }]}
+      actions={
+        canManage ? (
+          <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => { setEditingScheme(null); setSchemeOpen(true); }}>
+            <Plus aria-hidden="true" /> New scheme
+          </Button>
+        ) : null
+      }
     >
-      <AdminSection
-        title="Payment scheme register"
-        icon={Landmark}
-        description="Move A and Move B need Super Admin written approval on each contract. They have no Card ID payment code until the owner authorizes a mapping, so their memberships cannot be activated yet."
-        actions={
-          canManage ? (
-            <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => { setEditingScheme(null); setSchemeOpen(true); }}>
-              <Plus aria-hidden="true" /> New scheme
-            </Button>
-          ) : null
-        }
-      >
         <QueryState isLoading={schemes.isLoading} error={schemes.error}>
           <DataTable data={schemes.data ?? []} columns={schemeColumns} getRowId={(row) => row.id} emptyText="No schemes." caption="Payment schemes" onRowOpen={(row) => setSchemeId(row.id)} getRowLabel={(row) => `Open ${row.label}`} rowActions={(row) => <RowActionsMenu itemName={row.label} onView={() => setSchemeId(row.id)} onEdit={canManage ? () => openSchemeEditor(row) : undefined} />} />
         </QueryState>
-      </AdminSection>
       <RecordDetailsSheet
         open={schemeDetail !== null}
         onClose={() => setSchemeId(null)}
@@ -73,7 +68,7 @@ export function PaymentSchemesPage() {
                 {
                   title: "Terms",
                   rows: [
-                    { label: "Category", value: schemeDetail.category },
+                    { label: "Category", value: humanize(schemeDetail.category) },
                     { label: "Card code", value: schemeDetail ? cardCodeValue(schemeDetail) : "—" },
                     { label: "Applies to", value: schemeDetail.applicableTiers.join(", ") },
                     { label: "Summary", value: schemeDetail.commercialStatus === "configured" ? termsSummary(schemeDetail) : "Not configured" },

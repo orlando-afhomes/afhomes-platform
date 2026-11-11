@@ -275,14 +275,14 @@ describe("business pages render for the intended roles", () => {
     expect(await screen.findByRole("table", { name: "Contracts" })).toBeInTheDocument();
     expect((await screen.findAllByText("CTR-4")).length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: /new contract/i })).toHaveAttribute("href", "/admin/customers/new");
-    expect(await screen.findByText("Showing 4 contracts")).toBeInTheDocument();
+    expect(document.querySelectorAll("tbody tr[data-row-key]")).toHaveLength(4);
   });
 
   it("hides the New contract action from identities without contracts.prepare", async () => {
     show("dev-ost-a1", <ContractsPage />);
     expect(await screen.findByRole("table", { name: "Contracts" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /new contract/i })).toBeNull();
-    expect(await screen.findByText("Showing 1 contract")).toBeInTheDocument();
+    expect(document.querySelectorAll("tbody tr[data-row-key]")).toHaveLength(1);
   });
 
   it("gives Finance a verification queue with the pending reservation", async () => {

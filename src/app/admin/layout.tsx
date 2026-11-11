@@ -1,12 +1,14 @@
 import { Suspense } from "react";
 import { AdminLayout } from "@/panels/admin/layouts/admin-layout";
+import { AdminShellSkeleton } from "@/shared/components/modern/skeletons";
 
 // Admin is an authenticated, per-request shell (identity + query cache).
 // Suspense lets the client navigation hooks (usePathname, useParams) stream per request
-// under cacheComponents instead of failing the static prerender.
+// under cacheComponents instead of failing the static prerender. The fallback is
+// the shell skeleton, so a hard load never shows a blank screen.
 export default function AdminSectionLayout({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense>
+    <Suspense fallback={<AdminShellSkeleton />}>
       <AdminLayout>{children}</AdminLayout>
     </Suspense>
   );

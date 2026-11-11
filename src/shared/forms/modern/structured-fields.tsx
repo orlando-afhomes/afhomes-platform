@@ -114,7 +114,6 @@ export function OfficeAddressFields({ value, onChange, errors = {}, disabled, fi
         options={provinceOptions}
         onChange={(next) => onChange({ ...value, province: next, municipality: "", postalCode: "" })}
         placeholder="Select province"
-        showSearch
         disabled={disabled}
         error={errors.province}
         className={fieldClassName}
@@ -129,7 +128,6 @@ export function OfficeAddressFields({ value, onChange, errors = {}, disabled, fi
           onChange({ ...value, municipality: next, postalCode: postal ?? "" });
         }}
         placeholder={value.province ? "Select municipality" : "Select a province first"}
-        showSearch
         disabled={disabled || !value.province}
         error={errors.municipality}
         className={fieldClassName}
@@ -205,7 +203,6 @@ export function PhilippineAddressFields({ value, onChange, errors = {}, required
         options={provinceOptions}
         onChange={(next) => onChange({ ...value, province: next, city: "", barangay: "", postalCode: "" })}
         placeholder="Select province"
-        showSearch
         disabled={disabled}
         error={errors.province}
         className={fieldClassName}
@@ -221,7 +218,6 @@ export function PhilippineAddressFields({ value, onChange, errors = {}, required
           onChange({ ...value, city: next, barangay: "", postalCode: postal ?? "" });
         }}
         placeholder={value.province ? "Select city" : "Select a province first"}
-        showSearch
         disabled={disabled || !value.province}
         error={errors.city}
         className={fieldClassName}
@@ -234,7 +230,6 @@ export function PhilippineAddressFields({ value, onChange, errors = {}, required
         options={barangayOptions}
         onChange={(next) => patch("barangay", next)}
         placeholder={value.city ? "Select barangay" : "Select a city first"}
-        showSearch
         disabled={disabled || !value.city}
         error={errors.barangay}
         className={fieldClassName}

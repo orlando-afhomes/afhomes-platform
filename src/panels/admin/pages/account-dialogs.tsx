@@ -13,7 +13,7 @@ import { isValidEmail } from "@/shared/utils/input-sanitizers";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { SearchSelect } from "@/shared/components/modern/search-select";
 
 export type AccountDialogMode = "view" | "edit" | "role" | "status" | null;
 
@@ -211,7 +211,7 @@ function AccountForm({
             Close
           </Button>
         ) : (
-          <Button type="submit" disabled={submitting} className={BUTTON_CLASS}>
+          <Button type="submit" loading={submitting} className={BUTTON_CLASS}>
             Save
           </Button>
         )}
@@ -280,18 +280,9 @@ function RoleEditor({
       </div>
       {policy?.canManageRoles && assignable.length > 0 ? (
         <div className="tw:flex tw:gap-2">
-          <Select items={roleItems} value={role || null} onValueChange={(next) => setRole(next ?? "")}>
-            <SelectTrigger aria-label="Role to assign" className="tw:h-11 tw:flex-1 tw:sm:h-8">
-              <SelectValue placeholder="Select role" />
-            </SelectTrigger>
-            <SelectContent>
-              {roleItems.map((item) => (
-                <SelectItem key={item.value} value={item.value} className="tw:min-h-11 tw:sm:min-h-8">
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="tw:flex-1">
+            <SearchSelect items={roleItems} value={role || null} onChange={(next) => setRole(next ?? "")} placeholder="Select role" aria-label="Role to assign" />
+          </div>
           <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={() => void handleAssign()} disabled={!role}>
             Assign
           </Button>
@@ -340,18 +331,9 @@ function StatusEditor({
         Current status: <StatusBadge status={account.status} />
       </p>
       {allowed.length > 0 ? (
-        <Select items={statusItems} value={status} onValueChange={(next) => setStatus(next as AccountStatus | null)}>
-          <SelectTrigger aria-label="Account status" className="tw:h-11 tw:w-full tw:sm:h-8">
-            <SelectValue placeholder="Select new status" />
-          </SelectTrigger>
-          <SelectContent>
-            {statusItems.map((item) => (
-              <SelectItem key={item.value} value={item.value} className="tw:min-h-11 tw:sm:min-h-8">
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="tw:w-full">
+          <SearchSelect items={statusItems} value={status} onChange={(next) => setStatus(next as AccountStatus | null)} placeholder="Select new status" aria-label="Account status" />
+        </div>
       ) : (
         <InfoNote>{policy?.restriction ?? "No status change is available for this account."}</InfoNote>
       )}
@@ -359,7 +341,7 @@ function StatusEditor({
         <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={onClose}>
           Cancel
         </Button>
-        <Button type="button" className={BUTTON_CLASS} onClick={() => void handleSave()} disabled={!status || saving}>
+        <Button type="button" className={BUTTON_CLASS} onClick={() => void handleSave()} loading={saving} disabled={!status}>
           Save
         </Button>
       </DialogFooter>

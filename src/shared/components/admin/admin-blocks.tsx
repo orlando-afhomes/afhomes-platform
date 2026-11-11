@@ -12,16 +12,18 @@ export function AdminFilterBar({
   onSearch,
   searchLabel,
   filters = [],
+  header,
   children,
 }: {
   search?: string;
   onSearch?: (value: string) => void;
   searchLabel?: string;
   filters?: FilterBarFilter[];
+  header?: ReactNode;
   children?: ReactNode;
 }) {
   return (
-    <FilterBar search={search} onSearch={onSearch} searchLabel={searchLabel} filters={filters}>
+    <FilterBar search={search} onSearch={onSearch} searchLabel={searchLabel} filters={filters} header={header}>
       {children}
     </FilterBar>
   );

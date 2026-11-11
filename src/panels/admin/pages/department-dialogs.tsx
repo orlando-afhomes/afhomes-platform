@@ -13,7 +13,7 @@ import { Button } from "@/shared/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { SearchSelect } from "@/shared/components/modern/search-select";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 
@@ -201,29 +201,21 @@ function DepartmentForm({ editDept, onDone }: { editDept: Department | null; onD
             <AlertDescription>Only a Super Administrator can change this department&apos;s status.</AlertDescription>
           </Alert>
         ) : null}
-        <Select
-          items={STATUS_ITEMS}
-          value={status}
-          onValueChange={(next) => setStatus(next === "deactivated" ? "deactivated" : "active")}
-          disabled={statusLocked}
-        >
-          <SelectTrigger aria-label="Department status" className="tw:h-10 tw:w-full tw:sm:h-8">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_ITEMS.map((item) => (
-              <SelectItem key={item.value} value={item.value} className="tw:min-h-11 tw:sm:min-h-8">
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="tw:w-full">
+          <SearchSelect
+            items={STATUS_ITEMS}
+            value={status}
+            onChange={(next) => setStatus(next === "deactivated" ? "deactivated" : "active")}
+            disabled={statusLocked}
+            aria-label="Department status"
+          />
+        </div>
       </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone} className="tw:min-h-11 tw:sm:min-h-8">
           Cancel
         </Button>
-        <Button type="submit" disabled={submitting} className="tw:min-h-11 tw:sm:min-h-8">
+        <Button type="submit" loading={submitting} className="tw:min-h-11 tw:sm:min-h-8">
           {editDept ? "Save" : "Create"}
         </Button>
       </DialogFooter>

@@ -1,3 +1,4 @@
+import { humanize } from "@/shared/lib/humanize";
 import {
   DELEGABLE_MODULES,
   departmentRoleConfersAccess,
@@ -121,10 +122,10 @@ export function assertCanDelegate(store: AuthorizationStore, identity: DevIdenti
   const granted = resolveEffectiveModules(store, identity);
   for (const moduleId of moduleIds) {
     if (!isDelegableModule(moduleId)) {
-      throw new Error(`Module "${moduleId}" cannot be delegated through a department role.`);
+      throw new Error(`Module "${humanize(moduleId)}" cannot be delegated through a department role.`);
     }
     if (!granted.has(moduleId)) {
-      throw new Error(`Module "${moduleId}" is outside the acting account's authorized scope.`);
+      throw new Error(`Module "${humanize(moduleId)}" is outside the acting account's authorized scope.`);
     }
   }
 }
@@ -193,7 +194,7 @@ export function assertCanAssignSystemRole(store: AuthorizationStore, identity: D
   if (isSuperAdmin) return;
   const granted = resolveEffectiveModules(store, identity);
   if (getRoleModuleGrants(role).some((moduleId) => !granted.has(moduleId))) {
-    throw new Error(`Role "${role}" grants authority outside the acting account's scope.`);
+    throw new Error(`Role "${humanize(role)}" grants authority outside the acting account's scope.`);
   }
 }
 

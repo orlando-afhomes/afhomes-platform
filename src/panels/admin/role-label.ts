@@ -1,3 +1,4 @@
+import { humanize } from "@/shared/lib/humanize";
 /** Clean display name for a single system role id (never the raw id). */
 export function getSystemRoleLabel(role: string): string {
   switch (role) {
@@ -18,7 +19,7 @@ export function getSystemRoleLabel(role: string): string {
     case "ost":
       return "OST";
     default:
-      return role;
+      return humanize(role);
   }
 }
 

@@ -18,12 +18,13 @@ import { QueryState } from "@/shared/components/modern/query-state";
 import { AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { DataTable } from "@/shared/components/modern/data-table";
+import { humanize } from "@/shared/lib/humanize";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
   { value: "draft", label: "Draft" },
   { value: "submitted", label: "Submitted" },
-  { value: "active_member", label: "Active member" },
+  { value: "active_member", label: "Active Member" },
   { value: "inactive", label: "Inactive" },
 ];
 
@@ -60,13 +61,13 @@ export function CustomersPage() {
           </Link>
         ),
       },
-      { id: "plan", header: "VIP plan", cell: ({ row }) => row.original.vipPlan ?? "—" },
+      { id: "plan", header: "VIP plan", cell: ({ row }) => (row.original.vipPlan ? humanize(row.original.vipPlan) : "—") },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
       {
         id: "owner",
         header: "Seller",
         meta: { className: "tw:hidden tw:sm:table-cell" },
-        cell: ({ row }) => (row.original.ownerMemberId ? (memberName.get(row.original.ownerMemberId) ?? row.original.ownerMemberId) : "Company"),
+        cell: ({ row }) => (row.original.ownerMemberId ? (memberName.get(row.original.ownerMemberId) ?? "Unknown seller") : "Company"),
       },
     ],
     [memberName],

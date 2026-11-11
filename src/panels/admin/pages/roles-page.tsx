@@ -13,7 +13,7 @@ import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { Skeleton } from "@/shared/ui/skeleton";
+import { humanize } from "@/shared/lib/humanize";
 
 const STATUS_FILTER_ITEMS = [
   { value: "all", label: "All statuses" },
@@ -27,7 +27,7 @@ const HIDE_BELOW_SM: DataTableColumnMeta = { className: "tw:hidden tw:sm:table-c
 const HIDE_BELOW_LG: DataTableColumnMeta = { className: "tw:hidden tw:lg:table-cell" };
 
 const RoleDialogs = dynamic(() => import("./role-dialogs").then((mod) => mod.RoleDialogs), {
-  loading: () => <Skeleton className="tw:h-8 tw:w-full" />,
+  loading: () => null,
 });
 
 export function RolesPage() {
@@ -179,7 +179,7 @@ export function RolesPage() {
           { label: "Role status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_FILTER_ITEMS },
         ]}
       >
-        <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
+        <Button variant="outline" className="tw:h-11 tw:md:flex-none" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
           {sortAsc ? <ArrowDownAZ aria-hidden="true" /> : <ArrowUpAZ aria-hidden="true" />}
           {sortLabel}
         </Button>
@@ -191,7 +191,6 @@ export function RolesPage() {
         getRowId={(role) => role.id}
         emptyText="No roles found."
         loading={rolesQuery.isLoading || departmentsQuery.isLoading || staffQuery.isLoading}
-        pageSize={10}
         onRowOpen={(role) => setViewRole(role)}
       />
       <RoleDialogs
@@ -209,5 +208,5 @@ export function RolesPage() {
 }
 
 function moduleLabel(moduleId: string): string {
-  return MODULE_CATALOG.find((entry) => entry.id === moduleId)?.label ?? moduleId;
+  return MODULE_CATALOG.find((entry) => entry.id === moduleId)?.label ?? humanize(moduleId);
 }

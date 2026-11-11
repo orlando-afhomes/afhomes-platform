@@ -186,20 +186,21 @@ describe("centralized presentation", () => {
         <RoleBadge roleId="role-hr-staff" label="HR Staff" />
       </>,
     );
-    expect(screen.getByText("On hold")).toBeInTheDocument();
+    expect(screen.getByText("On Hold")).toBeInTheDocument();
     expect(screen.getByText("SVD")).toBeInTheDocument();
     expect(screen.getByText("HR Staff")).toBeInTheDocument();
     expect(formatDate("2026-11-09")).toContain("2026");
     expect(formatDate(null)).toBe("—");
   });
 
-  it("supports non-paginated DataTable for short history tables", () => {
+  it("shows only the count (no page controls) for a short DataTable", () => {
     type Row = { id: string; name: string };
     const columns: ColumnDef<Row, unknown>[] = [{ id: "name", header: "Name", cell: ({ row }) => row.original.name }];
-    const data = Array.from({ length: 25 }, (_, index) => ({ id: `r${index}`, name: `N${index}` }));
-    render(<DataTable data={data} columns={columns} getRowId={(row) => row.id} emptyText="-" paginate={false} caption="History" />);
+    const data = Array.from({ length: 3 }, (_, index) => ({ id: `r${index}`, name: `N${index}` }));
+    render(<DataTable data={data} columns={columns} getRowId={(row) => row.id} emptyText="-" caption="History" />);
     expect(screen.queryByRole("navigation", { name: "Pagination" })).toBeNull();
-    expect(document.querySelectorAll("tbody tr")).toHaveLength(25);
+    expect(screen.getByText(/of/)).toBeInTheDocument();
+    expect(document.querySelectorAll("tbody tr")).toHaveLength(3);
   });
 
   it("exposes semantic button aliases with identical styling", () => {

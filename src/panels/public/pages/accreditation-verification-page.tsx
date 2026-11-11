@@ -5,6 +5,7 @@ import { useMockRepositories } from "@/data/queries";
 import type { PublicAccreditationResult } from "@/data/contracts/accreditation-repository";
 import { TextField } from "@/shared/forms/modern";
 import { InfoNote } from "@/shared/components/modern/detail-list";
+import { TextLinesSkeleton } from "@/shared/components/modern/skeletons";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 
@@ -40,11 +41,12 @@ export function AccreditationVerificationPage() {
       <p className="tw:text-sm tw:text-muted-foreground">Enter the full accreditation number exactly as issued. Searching by name is not available.</p>
       <Card><form onSubmit={(event) => void submit(event)} className="tw:flex tw:flex-col tw:gap-3">
         <TextField label="Accreditation number" required value={value} onChange={(next) => setValue(next.toUpperCase())} maxLength={16} autoComplete="off" />
-        <Button type="submit" disabled={busy || value.trim() === ""} className="tw:min-h-11 tw:sm:min-h-8">
-          {busy ? "Checking…" : "Verify"}
+        <Button type="submit" loading={busy} disabled={value.trim() === ""} className="tw:min-h-11 tw:sm:min-h-8">
+          Verify
         </Button>
         </form></Card>
       <div role="status" aria-live="polite">
+        {busy ? <Card><span className="tw:sr-only">Checking…</span><TextLinesSkeleton lines={3} /></Card> : null}
         {failed ? <InfoNote>{GENERIC_FAILURE}</InfoNote> : null}
         {result ? (
           <Card><section aria-label="Verification result">

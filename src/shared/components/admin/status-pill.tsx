@@ -4,7 +4,7 @@ import { BadgeCheck, CircleCheck, CircleX, Clock, Hourglass, Minus, Pencil, Shie
 import { Badge } from "@/shared/ui/badge";
 import { cn } from "@/shared/lib/utils";
 import { toneClass, type BadgeTone } from "../modern/status-badge";
-import { formatStatusLabel } from "@/shared/utils/input-sanitizers";
+import { humanize } from "@/shared/lib/humanize";
 
 /** Icon + label pill. Text always carries the meaning; color only reinforces it. */
 export function StatusPill({
@@ -67,7 +67,7 @@ export function StatusPillForStatus({ status, label }: { status: string; label?:
   const mapped = STATUS_MAP[status];
   return (
     <StatusPill tone={mapped?.tone ?? "neutral"} icon={mapped?.icon}>
-      {label ?? formatStatusLabel(status.replace(/_/g, " "))}
+      {label ?? humanize(status)}
     </StatusPill>
   );
 }

@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { SearchInput } from "./search-input";
 import { Card } from "@/shared/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { SearchSelect } from "./search-select";
 
 export type FilterBarOption = { value: string; label: string };
 export type FilterBarFilter = {
@@ -13,41 +13,41 @@ export type FilterBarFilter = {
   options: FilterBarOption[];
 };
 
-/** Search box plus any number of select filters. */
+/**
+ * One card holding every filter of a table: search, selects, and any extra
+ * controls passed as children. At md and wider everything sits in a single row
+ * of equal-height (44px) controls; narrower screens stack them. Extra children
+ * should be 44px tall and carry `tw:md:flex-1` (or `tw:md:flex-none`).
+ */
 export function FilterBar({
   search,
   onSearch,
   searchLabel,
   filters = [],
+  header,
   children,
 }: {
   search?: string;
   onSearch?: (value: string) => void;
   searchLabel?: string;
   filters?: FilterBarFilter[];
+  /** Full-width first row inside the card, e.g. view chips. */
+  header?: ReactNode;
   children?: ReactNode;
 }) {
   return (
-    <Card className="tw:flex-col tw:sm:flex-row tw:sm:flex-wrap tw:sm:items-center">
-      {onSearch ? <SearchInput value={search ?? ""} onChange={onSearch} label={searchLabel ?? "Search"} /> : null}
+    <Card className="tw:flex-col tw:md:flex-row tw:md:flex-nowrap tw:md:items-end tw:rounded-2xl">
+      {header ? <div className="tw:w-full">{header}</div> : null}
+      {onSearch ? <SearchInput value={search ?? ""} onChange={onSearch} label={searchLabel ?? "Search"} className="tw:md:max-w-none tw:md:min-w-0 tw:md:flex-[2]" /> : null}
       {filters.map((filter) => (
-        <Select
-          key={filter.label}
-          items={filter.options}
-          value={filter.value}
-          onValueChange={(next) => filter.onChange(next ?? filter.options[0].value)}
-        >
-          <SelectTrigger aria-label={filter.label} className="tw:h-11 tw:min-w-40 tw:sm:h-8">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {filter.options.map((option) => (
-              <SelectItem key={option.value} value={option.value} className="tw:min-h-11 tw:sm:min-h-8">
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div key={filter.label} className="tw:w-full tw:md:min-w-0 tw:md:flex-1">
+          <SearchSelect
+            aria-label={filter.label}
+            items={filter.options}
+            value={filter.value}
+            onChange={(next) => filter.onChange(next ?? filter.options[0].value)}
+          />
+        </div>
       ))}
       {children}
     </Card>

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Badge } from "@/shared/ui/badge";
 import { cn } from "@/shared/lib/utils";
-import { formatStatusLabel } from "@/shared/utils/input-sanitizers";
+import { humanize } from "@/shared/lib/humanize";
 
 export type BadgeTone = "success" | "warning" | "danger" | "info" | "neutral";
 
@@ -48,7 +48,7 @@ export function StatusBadge({ status, tone, className }: { status: string; tone?
   const resolved = tone ?? STATUS_TONES[status.trim().toLowerCase()] ?? "neutral";
   return (
     <Badge variant="secondary" className={cn(toneClass(resolved), className)}>
-      {formatStatusLabel(status)}
+      {humanize(status)}
     </Badge>
   );
 }

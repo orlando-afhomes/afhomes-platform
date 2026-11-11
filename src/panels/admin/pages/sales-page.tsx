@@ -19,7 +19,7 @@ import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { TabBar } from "@/shared/components/modern/tab-bar";
 import { formatDate } from "@/shared/lib/format-date";
-import { AdminPage, AdminStatCard, AdminStatGrid, AdminSection } from "@/shared/components/admin";
+import { AdminPage, AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
@@ -73,32 +73,29 @@ export function SalesPage() {
 
   return (
     <AdminPage anyOf={["sales"]} title="Sales" description="Confirmed sales count once at the full contract value, on the date Finance confirms them." crumbs={[{ label: "Sales", href: "/admin/sales" }, { label: "Sales" }]}>
-      <TabBar label="Sales view" tabs={tabs} value={scope} onChange={(value) => setScope(value as "mine" | "team" | "all")} />
+      {tabs.length > 1 ? <TabBar label="Sales view" tabs={tabs} value={scope} onChange={(value) => setScope(value as "mine" | "team" | "all")} /> : null}
       <AdminStatGrid>
         <AdminStatCard label="Confirmed" value={<Money value={totals.confirmed} />} icon={BadgeCheck} tone="brand" description={`${totals.confirmedCount} sale(s)`} />
         <AdminStatCard label="Pending" value={<Money value={totals.pending} />} icon={Clock} tone="warning" description={`${totals.pendingCount} sale(s)`} />
         <AdminStatCard label="Overall recorded" value={<Money value={totals.overall} />} icon={Receipt} tone="info" description="Combined" />
         <AdminStatCard label="Period confirmed" value={<Money value={inPeriod} />} icon={CalendarCheck} tone="violet" description="Net reversals" />
       </AdminStatGrid>
-      <div className="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-2 tw:sm:max-w-md">
-        <StandardDateField label="Period from" value={from} onChange={setFrom} />
-        <StandardDateField label="Period to" value={to} onChange={setTo} />
-      </div>
-      <AdminSection title="Sales" icon={Receipt}>
-        <FilterBar search={search} onSearch={setSearch} searchLabel="Search sales" filters={[{ label: "Sale status filter", value: status, onChange: setStatus, options: STATUS_OPTIONS }]} />
-        <QueryState isLoading={sales.isLoading} error={sales.error}>
-          <DataTable
-            data={rows}
-            columns={columns}
-            getRowId={(row) => row.id}
-            emptyText="No sales match."
-            caption="Sales"
-            onRowOpen={(row) => router.push(contractHref(row.contractId))}
-            getRowLabel={(row) => `Open the sale for ${row.customerName}`}
-            rowActions={(row) => <RowActionsMenu itemName={`sale for ${row.customerName}`} onView={() => router.push(contractHref(row.contractId))} />}
-          />
-        </QueryState>
-      </AdminSection>
+      <FilterBar search={search} onSearch={setSearch} searchLabel="Search sales" filters={[{ label: "Sale status filter", value: status, onChange: setStatus, options: STATUS_OPTIONS }]}>
+        <StandardDateField label="Period from" value={from} onChange={setFrom} className="tw:md:min-w-0 tw:md:flex-1" />
+        <StandardDateField label="Period to" value={to} onChange={setTo} className="tw:md:min-w-0 tw:md:flex-1" />
+      </FilterBar>
+      <QueryState isLoading={sales.isLoading} error={sales.error}>
+        <DataTable
+          data={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          emptyText="No sales match."
+          caption="Sales"
+          onRowOpen={(row) => router.push(contractHref(row.contractId))}
+          getRowLabel={(row) => `Open the sale for ${row.customerName}`}
+          rowActions={(row) => <RowActionsMenu itemName={`sale for ${row.customerName}`} onView={() => router.push(contractHref(row.contractId))} />}
+        />
+      </QueryState>
     </AdminPage>
   );
 }

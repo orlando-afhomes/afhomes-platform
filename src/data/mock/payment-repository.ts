@@ -76,7 +76,7 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
       if (contract.status === "cancelled" || contract.status === "returned") throw new Error("Payments cannot be submitted for this contract.");
       this.validateFields(contract, input);
       const duplicate = findDuplicatePayment(this.store.payments, { ...input, referenceNo: input.referenceNo ?? null });
-      if (duplicate) throw new Error(`A matching payment (${duplicate.id}) was already submitted. Duplicates are not accepted.`);
+      if (duplicate) throw new Error("A matching payment was already submitted for this contract. Duplicates are not accepted.");
       const sale = this.store.sales.find((item) => item.contractId === contract.id);
       const payment: Payment = {
         id: nextId(this.store, "payment", "pay"),
@@ -160,7 +160,7 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
       if (contract.status === "cancelled") throw new Error("This contract is cancelled. Its payment can be rejected or returned, not verified.");
       const others = paymentsOfContract(this.store, contract.id).filter((item) => item.id !== payment.id && item.status === "verified");
       const duplicate = findDuplicatePayment(others, payment);
-      if (duplicate) throw new Error(`A matching verified payment (${duplicate.id}) already exists. A duplicate is never verified twice.`);
+      if (duplicate) throw new Error("A matching verified payment already exists for this contract. A duplicate is never verified twice.");
       if (exceedsContractPrice(contract, others, payment.amountCentavos)) throw new Error("Verifying this payment would exceed the contract price.");
       const previous = payment.status;
       payment.status = "verified";

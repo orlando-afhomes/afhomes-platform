@@ -40,10 +40,10 @@ export function useReportRange() {
   const filters = (
     <FilterBar filters={[{ label: "Date range", value: preset, onChange: setPreset, options: PRESETS }]}>
       {preset === "custom" ? (
-        <div className="tw:grid tw:grid-cols-2 tw:gap-2">
-          <StandardDateField label="Start date" value={customFrom} onChange={setCustomFrom} />
-          <StandardDateField label="End date" value={customTo} onChange={setCustomTo} />
-        </div>
+        <>
+          <StandardDateField label="Start date" value={customFrom} onChange={setCustomFrom} className="tw:md:min-w-0 tw:md:flex-1" />
+          <StandardDateField label="End date" value={customTo} onChange={setCustomTo} className="tw:md:min-w-0 tw:md:flex-1" />
+        </>
       ) : null}
     </FilterBar>
   );

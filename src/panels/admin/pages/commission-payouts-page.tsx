@@ -9,7 +9,7 @@ import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
-import { AdminPage, AdminStatGrid, AdminStatCard, AdminSection } from "@/shared/components/admin";
+import { AdminPage, AdminStatGrid, AdminStatCard } from "@/shared/components/admin";
 import { BadgeCheck, Banknote, Clock } from "lucide-react";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { COMMISSION_COLUMNS, CommissionDetailsSheet, PayoutDialog, RELEASE_PERCENT, releaseOpen, type CommissionMenuItem } from "../components/commission-shared";
@@ -46,20 +46,18 @@ export function CommissionPayoutsPage() {
             <AdminStatCard label="Awaiting confirmation" value={awaiting.length} icon={Clock} tone="info" />
           </AdminStatGrid>
           <InfoNote title="Payout release">A payout can be recorded {PAYOUT_RELEASE_WAIT_DAYS} days after {RELEASE_PERCENT}% of the contract value is Finance-verified.</InfoNote>
-          <AdminSection title="Approved commissions">
-            <QueryState isLoading={commissions.isLoading} error={commissions.error}>
-              <DataTable
-                data={approved}
-                columns={COMMISSION_COLUMNS}
-                getRowId={(row) => row.id}
-                emptyText="No approved commissions are waiting for payout."
-                caption="Commission payouts"
-                onRowOpen={(row) => setDetailId(row.id)}
-                getRowLabel={(row) => `Open commission for ${row.recipientName}`}
-                rowActions={(row) => <RowActionsMenu itemName={`commission for ${row.recipientName}`} onView={() => setDetailId(row.id)} extraItems={itemsFor(row)} />}
-              />
-            </QueryState>
-          </AdminSection>
+          <QueryState isLoading={commissions.isLoading} error={commissions.error}>
+            <DataTable
+              data={approved}
+              columns={COMMISSION_COLUMNS}
+              getRowId={(row) => row.id}
+              emptyText="No approved commissions are waiting for payout."
+              caption="Commission payouts"
+              onRowOpen={(row) => setDetailId(row.id)}
+              getRowLabel={(row) => `Open commission for ${row.recipientName}`}
+              rowActions={(row) => <RowActionsMenu itemName={`commission for ${row.recipientName}`} onView={() => setDetailId(row.id)} extraItems={itemsFor(row)} />}
+            />
+          </QueryState>
           <CommissionDetailsSheet detail={detail} onClose={() => setDetailId(null)} items={detail ? itemsFor(detail) : []} />
           {payoutFor ? <PayoutDialog commission={payoutFor} onClose={() => setPayoutFor(null)} /> : null}
         </>

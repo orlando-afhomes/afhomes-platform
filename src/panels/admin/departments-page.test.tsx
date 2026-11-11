@@ -253,10 +253,10 @@ describe("departments page", () => {
       await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     }
     expect(rowKeys()).toHaveLength(10);
-    expect(screen.getByText(/Page 1 of 2/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /next/i }));
-    expect(await screen.findByText(/Page 2 of 2/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /next/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Page 1" })).toHaveAttribute("aria-current", "page");
+    await user.click(screen.getByRole("button", { name: "Next page" }));
+    expect(await screen.findByRole("button", { name: "Page 2" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("button", { name: "Next page" })).toBeDisabled();
   }, 60_000);
 
   // S3-B.1 C: only Super Admin may change the protected department's status.

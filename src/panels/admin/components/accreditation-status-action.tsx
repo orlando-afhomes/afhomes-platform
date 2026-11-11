@@ -11,6 +11,7 @@ import { useIssuePendingAccreditation, useUpdateAccreditationStatus } from "@/da
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { ToneBadge } from "@/shared/components/modern/status-badge";
 import { Button } from "@/shared/ui/button";
+import { Spinner } from "@/shared/ui/spinner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
 import { Label } from "@/shared/ui/label";
@@ -69,8 +70,8 @@ export function AccreditationStatusAction({
     if (!canEdit) return <ToneBadge>No record</ToneBadge>;
     return (
       <>
-        <Button type="button" size="sm" variant="outline" disabled={busy} className="tw:min-h-11 tw:min-w-33 tw:sm:min-h-7" onClick={() => setCreateOpen(true)}>
-          {issuePending.isPending ? "Creating…" : "Set Accreditation"}
+        <Button type="button" size="sm" variant="outline" loading={issuePending.isPending} disabled={busy} className="tw:min-h-11 tw:min-w-33 tw:sm:min-h-7" onClick={() => setCreateOpen(true)}>
+          Set Accreditation
         </Button>
         <ConfirmDialog
           open={createOpen}
@@ -164,7 +165,7 @@ export function AccreditationStatusAction({
             />
           }
         >
-          {busy ? "Working…" : ACCREDITATION_ACTION_LABELS[current]} <ChevronDown aria-hidden="true" />
+          {ACCREDITATION_ACTION_LABELS[current]} {busy ? <Spinner /> : <ChevronDown aria-hidden="true" />}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="tw:min-w-44">
           <DropdownMenuItem disabled={current === "pending"} onClick={() => requestUpdate("pending")} title={current === "pending" ? "Current status" : "Revert to Pending (reason required)"} className={itemClass}>
@@ -278,8 +279,8 @@ function ChangeDialog({
             <Button type="button" variant="outline" disabled={pending} className="tw:min-h-11 tw:sm:min-h-8" onClick={onClose}>
               {copy?.cancelText ?? "Cancel"}
             </Button>
-            <Button type="submit" disabled={pending} className="tw:min-h-11 tw:sm:min-h-8">
-              {pending ? "Working…" : (copy?.okText ?? "Confirm")}
+            <Button type="submit" loading={pending} className="tw:min-h-11 tw:sm:min-h-8">
+              {copy?.okText ?? "Confirm"}
             </Button>
           </DialogFooter>
         </form>

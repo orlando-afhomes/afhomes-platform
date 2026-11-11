@@ -59,6 +59,30 @@
   }
 }
 
+/* Skeleton placeholder: design-system tone, shimmer sweep, and a 150 ms
+ * fade-in delay so fast loads never flash a skeleton. */
+@keyframes ui-skeleton-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes ui-skeleton-in {
+  to {
+    opacity: 1;
+  }
+}
+
+.ui-skeleton {
+  background-color: var(--color-skeleton);
+  background-image: linear-gradient(90deg, transparent 0%, rgb(255 255 255 / 0.55) 50%, transparent 100%);
+  background-size: 200% 100%;
+  opacity: 0;
+  animation:
+    ui-skeleton-in 200ms ease-out 150ms forwards,
+    ui-skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
 /* Reduced motion: collapse every transition and animation (popups, collapses,
  * hovers) to an instant state change. */
 @media (prefers-reduced-motion: reduce) {

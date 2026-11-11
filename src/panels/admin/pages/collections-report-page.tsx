@@ -19,10 +19,10 @@ export function CollectionsReportPage() {
       {finance ? (
         <AdminSection title="Finance and collections" description="Verified Collections use the Finance verification date. Reservation payments are part of the price and are never counted twice.">
           <AdminStatGrid>
-            <AdminStatCard label="Verified collections" value={<Money value={collected} />} icon={BadgeCheck} tone="success" />
-            <AdminStatCard label="Reversals" value={<Money value={adjusted} />} icon={RotateCcw} tone="danger" />
-            <AdminStatCard label="Net collections" value={<Money value={collected - adjusted} />} icon={Wallet} tone="brand" />
-            <AdminStatCard label="Awaiting verification" value={paymentList.filter((item) => item.status === "submitted" || item.status === "under_review").length} icon={Clock} tone="warning" />
+            <AdminStatCard loading={payments.isLoading} error={payments.error} label="Verified collections" value={<Money value={collected} />} icon={BadgeCheck} tone="success" />
+            <AdminStatCard loading={payments.isLoading} error={payments.error} label="Reversals" value={<Money value={adjusted} />} icon={RotateCcw} tone="danger" />
+            <AdminStatCard loading={payments.isLoading} error={payments.error} label="Net collections" value={<Money value={collected - adjusted} />} icon={Wallet} tone="brand" />
+            <AdminStatCard loading={payments.isLoading} error={payments.error} label="Awaiting verification" value={paymentList.filter((item) => item.status === "submitted" || item.status === "under_review").length} icon={Clock} tone="warning" />
           </AdminStatGrid>
         </AdminSection>
       ) : (

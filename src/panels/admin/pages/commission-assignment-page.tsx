@@ -16,7 +16,7 @@ import { Money } from "@/shared/components/modern/money";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { AdminPage, AdminSection } from "@/shared/components/admin";
+import { AdminPage } from "@/shared/components/admin";
 import { formatDate } from "@/shared/lib/format-date";
 
 const peso = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" });
@@ -61,26 +61,24 @@ export function CommissionAssignmentPage() {
           <InfoNote title="No default rates">
             Enter each recipient&apos;s percentage. The system never proposes a rate. Payout opens {PAYOUT_RELEASE_WAIT_DAYS} days after {PAYOUT_RELEASE_THRESHOLD_BP / 100}% of the contract value is Finance-verified.
           </InfoNote>
-          <AdminSection title="Confirmed sales" description="Recipients come from the genealogy recorded at the time of sale.">
-            <QueryState isLoading={eligible.isLoading} error={eligible.error}>
-              <DataTable
-                data={eligible.data ?? []}
-                columns={columns}
-                getRowId={(row) => row.saleId}
-                emptyText="No confirmed sales yet."
-                caption="Confirmed sales awaiting commission assignment"
-                onRowOpen={(row) => setViewingId(row.saleId)}
-                getRowLabel={(row) => `Open the sale for ${row.customerName}`}
-                rowActions={(row) => (
-                  <RowActionsMenu
-                    itemName={`sale for ${row.customerName}`}
-                    onView={() => setViewingId(row.saleId)}
-                    extraItems={fullyAssigned(row) ? [] : [{ key: "assign", label: "Assign percentages", onClick: () => setSelected(row) }]}
-                  />
-                )}
-              />
-            </QueryState>
-          </AdminSection>
+          <QueryState isLoading={eligible.isLoading} error={eligible.error}>
+            <DataTable
+              data={eligible.data ?? []}
+              columns={columns}
+              getRowId={(row) => row.saleId}
+              emptyText="No confirmed sales yet."
+              caption="Confirmed sales awaiting commission assignment"
+              onRowOpen={(row) => setViewingId(row.saleId)}
+              getRowLabel={(row) => `Open the sale for ${row.customerName}`}
+              rowActions={(row) => (
+                <RowActionsMenu
+                  itemName={`sale for ${row.customerName}`}
+                  onView={() => setViewingId(row.saleId)}
+                  extraItems={fullyAssigned(row) ? [] : [{ key: "assign", label: "Assign percentages", onClick: () => setSelected(row) }]}
+                />
+              )}
+            />
+          </QueryState>
         </>
       ) : (
         <InfoNote title="Not available">Only authorized Finance personnel assign commission percentages.</InfoNote>

@@ -188,7 +188,7 @@ describe("audit safe projection", () => {
     expect(view).toMatchObject({ displayReference: null, previousValue: null, newValue: null, reason: null, reasonRecorded: true });
     expect(JSON.stringify(view)).not.toMatch(/secret|AA-9999|free text|passwordHash|should-never/);
     expect(Object.keys(view).sort()).toEqual(
-      ["action", "actorId", "actorRoles", "displayReference", "entityId", "entityType", "id", "module", "newValue", "outcome", "previousValue", "reason", "reasonRecorded", "relatedRecordIds", "timestamp"],
+      ["action", "actorId", "actorName", "actorRoles", "displayReference", "entityId", "entityLabel", "entityType", "id", "module", "newValue", "outcome", "previousValue", "reason", "reasonRecorded", "relatedRecordIds", "timestamp"],
     );
   });
 

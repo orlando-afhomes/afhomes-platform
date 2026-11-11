@@ -14,7 +14,7 @@ import { Money } from "@/shared/components/modern/money";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { AdminPage, AdminStatGrid, AdminStatCard, AdminSection } from "@/shared/components/admin";
+import { AdminPage, AdminStatGrid, AdminStatCard, AdminSectionHeading } from "@/shared/components/admin";
 import { Clock, Coins, Gauge, Gift, Hourglass, Wallet } from "lucide-react";
 import { formatDate } from "@/shared/lib/format-date";
 
@@ -72,7 +72,7 @@ export function StayPointsPage() {
           <InfoNote>No active memberships are visible to this account.</InfoNote>
         ) : (
           <>
-            <SelectField label="Membership" value={current.membershipId} options={list.map((item) => ({ value: item.membershipId, label: `${item.customerName} · ${item.productCode}${item.cardId ? ` · ${item.cardId}` : ""}` }))} onChange={setPicked} showSearch={list.length > 6} />
+            <SelectField label="Membership" value={current.membershipId} options={list.map((item) => ({ value: item.membershipId, label: `${item.customerName} · ${item.productCode}${item.cardId ? ` · ${item.cardId}` : ""}` }))} onChange={setPicked} />
             {current.financialHold ? <InfoNote title="Financial Hold">New VIP benefit usage is restricted while this membership has a Financial Hold. Finance reconciliation restores eligibility. Points already earned stay on the ledger.</InfoNote> : null}
             <AdminStatGrid columns={3}>
               <AdminStatCard label="Spendable weekday" value={balances?.spendableWeekday.toLocaleString("en-PH")} icon={Wallet} tone="success" />
@@ -82,12 +82,9 @@ export function StayPointsPage() {
               <AdminStatCard label="Remaining capacity" value={balances?.remainingCapacity.toLocaleString("en-PH")} icon={Gauge} tone="info" description="Current cycle" />
               <AdminStatCard label="Redeemed" value={balances?.redeemed.toLocaleString("en-PH")} icon={Gift} tone="neutral" description="Redemption disabled" />
             </AdminStatGrid>
-            <AdminSection title="Cycles" description="Caps apply per bucket and in total. Redeeming never gives cap back, and refund-driven cap restoration is not defined yet.">
+            <AdminSectionHeading title="Cycles" description="Caps apply per bucket and in total. Redeeming never gives cap back, and refund-driven cap restoration is not defined yet." />
               <DataTable data={current.ledger.cycles} columns={cycleColumns} getRowId={(row) => String(row.cycle)} emptyText="No spend has been recorded in a cycle yet." caption="Cycles" onRowOpen={(row) => setCycleNo(row.cycle)} getRowLabel={(row) => `Open cycle ${row.cycle}`} rowActions={(row) => <RowActionsMenu itemName={`cycle ${row.cycle}`} onView={() => setCycleNo(row.cycle)} />} />
-            </AdminSection>
-            <AdminSection title="Ledger" description="Entries come from Finance-verified direct resort spending. Fractional amounts are blocked until a rounding policy is approved.">
               <DataTable data={current.ledger.entries} columns={entryColumns} getRowId={(row) => row.spendId} emptyText="No points entries." caption="Points ledger" onRowOpen={(row) => setEntryId(row.spendId)} getRowLabel={(row) => `Open points entry of ${formatDate(row.date)}`} rowActions={(row) => <RowActionsMenu itemName={`points entry of ${formatDate(row.date)}`} onView={() => setEntryId(row.spendId)} extraItems={reconcileItems(row)} />} />
-            </AdminSection>
           </>
         )}
       </QueryState>

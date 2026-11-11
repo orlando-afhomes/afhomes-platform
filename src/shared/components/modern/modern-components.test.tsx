@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Toaster } from "@/shared/ui/sonner";
 import { Breadcrumbs } from "./breadcrumbs";
 import { DataTable, type ColumnDef } from "./data-table";
+import { QueryState } from "./query-state";
 import { PageHeader } from "./page-header";
 import { RowActionsMenu } from "./row-actions-menu";
 import { StatusBadge } from "./status-badge";
@@ -124,20 +125,22 @@ describe("DataTable", () => {
     expect(screen.getByText("Nothing here.")).toBeInTheDocument();
     rerender(<DataTable data={[]} columns={columns} getRowId={(row) => row.id} emptyText="Nothing here." loading />);
     expect(screen.queryByText("Nothing here.")).toBeNull();
-    expect(document.querySelectorAll("tbody tr")).toHaveLength(4);
+    expect(document.querySelectorAll("tbody tr")).toHaveLength(5);
   });
 
   it("paginates and keeps the controls in range", async () => {
     const user = userEvent.setup();
     const data = rows(25);
-    render(<DataTable data={data} columns={columns} getRowId={(row) => row.id} emptyText="-" pageSize={10} />);
-    expect(screen.getByText("Page 1 of 3")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /previous/i })).toBeDisabled();
-    await user.click(screen.getByRole("button", { name: /next/i }));
-    await user.click(screen.getByRole("button", { name: /next/i }));
-    expect(screen.getByText("Page 3 of 3")).toBeInTheDocument();
+    render(<DataTable data={data} columns={columns} getRowId={(row) => row.id} emptyText="-" />);
+    expect(document.querySelectorAll("tbody tr")).toHaveLength(10);
+    expect(screen.getByText("Showing")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Page 1" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("button", { name: "Previous page" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Next page" }));
+    await user.click(screen.getByRole("button", { name: "Next page" }));
+    expect(screen.getByRole("button", { name: "Page 3" })).toHaveAttribute("aria-current", "page");
     expect(document.querySelectorAll("tbody tr")).toHaveLength(5);
-    expect(screen.getByRole("button", { name: /next/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Next page" })).toBeDisabled();
   });
 
   it("applies column meta classes to the header and every cell of that column", () => {
@@ -213,5 +216,23 @@ describe("StatusBadge, PageHeader, and Breadcrumbs", () => {
     expect(within(nav).getByRole("link", { name: "Dashboard" })).toHaveAttribute("href", "/admin");
     expect(within(nav).getByText("Departments")).toHaveAttribute("aria-current", "page");
     expect(within(nav).queryByRole("link", { name: "Organization" })).toBeNull();
+  });
+});
+
+describe("QueryState loading", () => {
+  it("shows the custom skeleton with one status message, then the content", () => {
+    const { rerender } = render(
+      <QueryState isLoading error={null} skeleton={<div data-testid="custom-skeleton" />}>
+        <p>Loaded</p>
+      </QueryState>,
+    );
+    expect(screen.getByTestId("custom-skeleton")).toBeTruthy();
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    rerender(
+      <QueryState isLoading={false} error={null}>
+        <p>Loaded</p>
+      </QueryState>,
+    );
+    expect(screen.getByText("Loaded")).toBeTruthy();
   });
 });

@@ -8,8 +8,7 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/shared/ui/button";
+import { Pagination } from "./pagination";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 import { isRowControlClick } from "./clickable-row";
@@ -20,6 +19,9 @@ export type DataTableColumnMeta = {
   /** Extra classes for the header and cells, e.g. hide a column on narrow screens. */
   className?: string;
 };
+
+/** Every table shows this many rows per page. */
+export const TABLE_PAGE_SIZE = 10;
 
 const columnClass = (meta: unknown) => (meta as DataTableColumnMeta | undefined)?.className;
 
@@ -40,8 +42,7 @@ export function DataTable<T>({
   getRowId,
   emptyText,
   loading = false,
-  pageSize = 10,
-  paginate = true,
+  serverPagination,
   onRowOpen,
   caption,
   rowActions,
@@ -52,9 +53,13 @@ export function DataTable<T>({
   getRowId: (row: T) => string;
   emptyText: string;
   loading?: boolean;
-  pageSize?: number;
-  /** Set false for short read-only history tables that should show all rows. */
-  paginate?: boolean;
+  /** For server-paged data (1-based `page`): `data` is already the current page and `total` the full count. */
+  serverPagination?: {
+    page: number;
+    pageSize: number;
+    total: number;
+    onPageChange: (page: number) => void;
+  };
   /** Opens the record when anywhere on the row is clicked, or Enter/Space is pressed on a focused row. */
   onRowOpen?: (row: T) => void;
   /** Accessible table name. */
@@ -64,29 +69,34 @@ export function DataTable<T>({
   /** Names a row for assistive tech, e.g. "Open Maria Santos". */
   getRowLabel?: (row: T) => string;
 }) {
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize });
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: TABLE_PAGE_SIZE });
   // TanStack Table returns functions that React Compiler cannot memoize safely.
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
     getRowId,
-    state: paginate ? { pagination } : undefined,
-    onPaginationChange: paginate ? setPagination : undefined,
+    state: serverPagination ? undefined : { pagination },
+    onPaginationChange: serverPagination ? undefined : setPagination,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: paginate ? getPaginationRowModel() : undefined,
+    getPaginationRowModel: serverPagination ? undefined : getPaginationRowModel(),
   });
   const rows = table.getRowModel().rows;
   const columnCount = columns.length + (rowActions ? 1 : 0);
-  const pageCount = table.getPageCount();
+  const footer = serverPagination ?? {
+    page: pagination.pageIndex + 1,
+    pageSize: pagination.pageSize,
+    total: data.length,
+    onPageChange: (page: number) => table.setPageIndex(page - 1),
+  };
 
   return (
-    <div className="tw:flex tw:flex-col tw:gap-3">
+    <div className="tw:flex tw:flex-col">
       <div className="tw:overflow-hidden tw:rounded-2xl tw:border tw:border-border tw:bg-card tw:shadow-(--shadow-soft)">
-        <Table aria-label={caption}>
+        <Table aria-label={caption} aria-busy={loading || undefined}>
           <TableHeader>
             {table.getHeaderGroups().map((group) => (
-              <TableRow key={group.id} className="tw:bg-[var(--color-bg-surface)] tw:hover:bg-[var(--color-bg-surface)]">
+              <TableRow key={group.id} className="tw:bg-(--color-bg-surface) tw:hover:bg-(--color-bg-surface)">
                 {group.headers.map((header) => (
                   <TableHead
                     key={header.id}
@@ -105,11 +115,18 @@ export function DataTable<T>({
           </TableHeader>
           <TableBody>
             {loading ? (
-              Array.from({ length: 4 }, (_, index) => (
+              Array.from({ length: 5 }, (_, index) => (
                 <TableRow key={`loading-${index}`}>
-                  <TableCell colSpan={columnCount} className="tw:px-3 tw:py-3">
-                    <Skeleton className="tw:h-5 tw:w-full" />
-                  </TableCell>
+                  {columns.map((column, columnIndex) => (
+                    <TableCell key={`${index}-${columnIndex}`} className={cn("tw:px-3 tw:py-3.5", columnClass(column.meta))}>
+                      <Skeleton className={cn("tw:h-4", columnIndex === 0 ? "tw:w-3/5" : index % 2 ? "tw:w-2/3" : "tw:w-1/2")} />
+                    </TableCell>
+                  ))}
+                  {rowActions ? (
+                    <TableCell className="tw:px-3 tw:py-3.5">
+                      <Skeleton className="tw:ml-auto tw:size-8" />
+                    </TableCell>
+                  ) : null}
                 </TableRow>
               ))
             ) : rows.length === 0 ? (
@@ -159,32 +176,8 @@ export function DataTable<T>({
             )}
           </TableBody>
         </Table>
+        {!loading && footer.total > 0 ? <Pagination {...footer} /> : null}
       </div>
-      {!loading && paginate && pageCount > 1 ? (
-        <nav aria-label="Pagination" className="tw:flex tw:items-center tw:justify-center tw:gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            className="tw:min-h-11 tw:sm:min-h-7"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <ChevronLeft aria-hidden="true" /> Previous
-          </Button>
-          <span className="tw:text-sm tw:text-muted-foreground" aria-live="polite">
-            Page {pagination.pageIndex + 1} of {pageCount}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            className="tw:min-h-11 tw:sm:min-h-7"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next <ChevronRight aria-hidden="true" />
-          </Button>
-        </nav>
-      ) : null}
     </div>
   );
 }

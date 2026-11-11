@@ -148,8 +148,8 @@ export function OstRegistrationPage() {
                 </div>
               ) : null}
               <Actions>
-                <Button type="submit" disabled={verifying} className={BUTTON_CLASS}>
-                  {verifying ? "Verifying…" : "Verify referral code"}
+                <Button type="submit" loading={verifying} className={BUTTON_CLASS}>
+                  Verify referral code
                 </Button>
                 {sponsor && !confirmed ? (
                   <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={handleConfirmSponsor}>

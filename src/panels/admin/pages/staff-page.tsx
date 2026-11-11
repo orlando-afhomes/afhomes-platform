@@ -31,8 +31,6 @@ import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { Card } from "@/shared/ui/card";
 import type { AccountDialogMode } from "./account-dialogs";
 import type { ProfileAccountActions } from "./staff-dialogs";
 import {
@@ -47,11 +45,11 @@ import {
 import { LINKED_ACCOUNT_ACTION_LABELS, confirmLinkedAccountStatus, linkedAccountActions } from "./staff-account-actions";
 
 const StaffDialogs = dynamic(() => import("./staff-dialogs").then((mod) => mod.StaffDialogs), {
-  loading: () => <Skeleton className="tw:h-8 tw:w-full" />,
+  loading: () => null,
 });
 
 const AccountDialogs = dynamic(() => import("./account-dialogs").then((mod) => mod.AccountDialogs), {
-  loading: () => <Skeleton className="tw:h-8 tw:w-full" />,
+  loading: () => null,
 });
 
 // Narrow screens keep name, account status, and actions; the rest stay in the
@@ -422,25 +420,26 @@ export function StaffPage() {
         </Button>
       }
     >
-      <Card>
-        {canManageAccounts ? (
-          <div className="tw:flex tw:flex-wrap tw:gap-2" role="group" aria-label="Directory view">
-            {chips.map((item) => (
-              <Button
-                key={item.value}
-                type="button"
-                size="sm"
-                variant={chip === item.value ? "default" : "outline"}
-                aria-pressed={chip === item.value}
-                className="tw:min-h-11 tw:rounded-full tw:sm:min-h-7"
-                onClick={() => selectChip(item.value)}
-              >
-                {item.label}
-              </Button>
-            ))}
-          </div>
-        ) : null}
         <FilterBar
+          header={
+            canManageAccounts ? (
+              <div className="tw:flex tw:flex-wrap tw:gap-2" role="group" aria-label="Directory view">
+                {chips.map((item) => (
+                  <Button
+                    key={item.value}
+                    type="button"
+                    size="sm"
+                    variant={chip === item.value ? "default" : "outline"}
+                    aria-pressed={chip === item.value}
+                    className="tw:min-h-11 tw:rounded-full tw:sm:min-h-7"
+                    onClick={() => selectChip(item.value)}
+                  >
+                    {item.label}
+                  </Button>
+                ))}
+              </div>
+            ) : undefined
+          }
           search={search}
           onSearch={setSearch}
           searchLabel={canManageAccounts ? "Search staff and accounts" : "Search staff"}
@@ -458,12 +457,11 @@ export function StaffPage() {
             { label: "Staff status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_FILTER_ITEMS },
           ]}
         >
-          <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
+          <Button variant="outline" className="tw:h-11 tw:md:flex-none" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
             {sortAsc ? <ArrowDownAZ aria-hidden="true" /> : <ArrowUpAZ aria-hidden="true" />}
             {sortLabel}
           </Button>
         </FilterBar>
-      </Card>
       <DataTable<AccessRow>
         caption="Staff and access"
         data={filtered}
@@ -471,7 +469,6 @@ export function StaffPage() {
         getRowId={(row) => row.id}
         emptyText={chip === "pending" && canManageAccounts ? "No pending accounts." : "No staff or accounts found."}
         loading={loading}
-        pageSize={10}
         onRowOpen={(row) => (row.kind === "employee" ? setProfileStaffId(row.staff.id) : openAccount("view", row.account.id))}
       />
       <StaffDialogs

@@ -35,7 +35,7 @@ export function SearchInput({
         placeholder={placeholder ?? label}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className={cn("tw:h-11 tw:pl-8 tw:sm:h-8", inputClassName)}
+        className={cn("tw:h-11 tw:pl-8", inputClassName)}
       />
     </div>
   );

@@ -19,8 +19,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Badge } from "@/shared/ui/badge";
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { Skeleton } from "@/shared/ui/skeleton";
+import { SearchSelect } from "@/shared/components/modern/search-select";
+import { TextLinesSkeleton } from "@/shared/components/modern/skeletons";
 import { Card } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/utils";
 import { SalesNetworkTreeNodeTitle } from "../components/sales-network-tree-node";
@@ -144,18 +144,9 @@ export function SalesNetworkGenealogyPage() {
           ) : null}
         </div>
         {isAdmin ? (
-          <Select items={teamItems} value={teamRoot} onValueChange={(next) => setTeamRoot(next ?? "all")}>
-            <SelectTrigger aria-label="Team filter" className="tw:h-11 tw:w-full tw:sm:h-8 tw:lg:w-72">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {teamItems.map((item) => (
-                <SelectItem key={item.value} value={item.value} className="tw:min-h-11 tw:sm:min-h-8">
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="tw:w-full tw:lg:w-72">
+            <SearchSelect items={teamItems} value={teamRoot} onChange={(next) => setTeamRoot(next ?? "all")} aria-label="Team filter" />
+          </div>
         ) : null}
         <div className="tw:flex tw:gap-2">
           <Button type="button" variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setExpandedKeys(collectKeys(tree))}>
@@ -170,7 +161,7 @@ export function SalesNetworkGenealogyPage() {
         <Card className="tw:min-w-0 tw:p-3">
           <section aria-label="Genealogy tree" className="tw:min-w-0">
           {membersQuery.isLoading ? (
-            <Skeleton className="tw:h-64 tw:w-full" />
+            <TextLinesSkeleton lines={6} className="tw:p-3" />
           ) : tree.length === 0 ? (
             <p className="tw:p-6 tw:text-center tw:text-muted-foreground">No authorized genealogy members.</p>
           ) : (

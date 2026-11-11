@@ -14,10 +14,10 @@ export function StayPointsReportPage() {
     <ReportShell range={range} title="Stay Points Report" description="Role-scoped figures built from the source records." crumbs={[{ label: "Reports" }, { label: "Stay Points Report" }]}>
       <AdminSection title="Stay points" description="Points use the verified earning date. Redemption reporting is not available while Redemption is disabled.">
         <AdminStatGrid>
-          <AdminStatCard label="Points earned" value={earned.toLocaleString("en-PH")} icon={TrendingUp} tone="success" />
-          <AdminStatCard label="Spendable (all)" value={pointsList.reduce((sum, item) => sum + item.ledger.balances.spendableWeekday + item.ledger.balances.spendableWeekend, 0).toLocaleString("en-PH")} icon={Wallet} tone="success" />
-          <AdminStatCard label="Pending (all)" value={pointsList.reduce((sum, item) => sum + item.ledger.balances.pending, 0).toLocaleString("en-PH")} icon={Clock} tone="warning" />
-          <AdminStatCard label="Held (all)" value={pointsList.reduce((sum, item) => sum + item.ledger.balances.held, 0).toLocaleString("en-PH")} icon={Hourglass} tone="warning" />
+          <AdminStatCard loading={points.isLoading} error={points.error} label="Points earned" value={earned.toLocaleString("en-PH")} icon={TrendingUp} tone="success" />
+          <AdminStatCard loading={points.isLoading} error={points.error} label="Spendable (all)" value={pointsList.reduce((sum, item) => sum + item.ledger.balances.spendableWeekday + item.ledger.balances.spendableWeekend, 0).toLocaleString("en-PH")} icon={Wallet} tone="success" />
+          <AdminStatCard loading={points.isLoading} error={points.error} label="Pending (all)" value={pointsList.reduce((sum, item) => sum + item.ledger.balances.pending, 0).toLocaleString("en-PH")} icon={Clock} tone="warning" />
+          <AdminStatCard loading={points.isLoading} error={points.error} label="Held (all)" value={pointsList.reduce((sum, item) => sum + item.ledger.balances.held, 0).toLocaleString("en-PH")} icon={Hourglass} tone="warning" />
         </AdminStatGrid>
       </AdminSection>
     </ReportShell>

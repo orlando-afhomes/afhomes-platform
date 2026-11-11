@@ -21,14 +21,13 @@ import { AdminPage } from "@/shared/components/admin";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { Button } from "@/shared/ui/button";
-import { Skeleton } from "@/shared/ui/skeleton";
 import { SalesNetworkRowActions } from "../components/sales-network-row-actions";
 import { AccreditationStatusAction } from "../components/accreditation-status-action";
 import { DesignationBadge } from "@/shared/components/business/designation-badge";
 import { AccreditedSellerDialog } from "./sales-network-accredited-seller-dialog";
 
 const SalesNetworkMemberDialogs = dynamic(() => import("./sales-network-member-dialogs").then((mod) => mod.SalesNetworkMemberDialogs), {
-  loading: () => <Skeleton className="tw:h-8 tw:w-full" />,
+  loading: () => null,
 });
 
 // Narrow screens keep member, status, and actions; the accreditation control
@@ -129,7 +128,7 @@ export function SalesNetworkMembersPage() {
         danger: !reactivate,
         action: () => changeStatus({ id: record.id, status: reactivate ? "active" : "inactive" }),
         successTitle: reactivate ? "Member reactivated." : "Member deactivated.",
-        successDescription: `${record.displayName} is now ${reactivate ? "active" : "inactive"}.`,
+        successDescription: `${record.displayName} is now ${reactivate ? "Active" : "Inactive"}.`,
         errorTitle: "Status update failed.",
       });
     };
@@ -241,7 +240,7 @@ export function SalesNetworkMembersPage() {
           { label: "Accreditation status filter", value: accreditationFilter, onChange: setAccreditationFilter, options: ACCREDITATION_ITEMS },
         ]}
       >
-        <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
+        <Button variant="outline" className="tw:h-11 tw:md:flex-none" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
           {sortAsc ? <ArrowDownAZ aria-hidden="true" /> : <ArrowUpAZ aria-hidden="true" />}
           {sortLabel}
         </Button>
@@ -253,7 +252,6 @@ export function SalesNetworkMembersPage() {
         getRowId={(member) => member.id}
         emptyText="No members found."
         loading={membersQuery.isLoading}
-        pageSize={10}
         onRowOpen={(record) => router.push(`/admin/sales-network/members/${record.aaNumber ?? record.id}`)}
       />
       <SalesNetworkMemberDialogs

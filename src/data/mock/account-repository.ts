@@ -1,3 +1,4 @@
+import { humanize } from "@/shared/lib/humanize";
 import { ACCOUNT_DELETE_DISABLED, ACCOUNT_STATUS_TRANSITIONS, type Account, type AccountActionPolicy, type AccountPolicies, type AccountStatus } from "@/modules/accounts/types";
 import { AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
@@ -294,7 +295,7 @@ export class MockAccountRepository {
     // Owner decision 2026-11-10: Super Admin has full control; the self-modification ban does not apply to Super Admin.
     if (this.isSelf(identity, id) && !isSuperAdmin(this.store, identity)) throw new Error(SELF_MODIFICATION_ERROR);
     if (!ACCOUNT_STATUS_TRANSITIONS[account.status].includes(status)) {
-      throw new Error(`Invalid status transition from ${account.status} to ${status}.`);
+      throw new Error(`Invalid status transition from ${humanize(account.status)} to ${humanize(status)}.`);
     }
     // Activation and reactivation are Admin/Super Admin only (doc 01 §6.2, §7).
     if (status === "active" && !canActivateAccounts(this.store, identity)) {

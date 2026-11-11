@@ -47,13 +47,13 @@ describe("process pages are separated", () => {
     expect(await screen.findByRole("table", { name: "Contracts" })).toBeInTheDocument();
     expect(screen.queryByRole("table", { name: "Sales" })).toBeNull();
     expect(screen.getByRole("link", { name: /new contract/i })).toHaveAttribute("href", "/admin/customers/new");
-    expect(await screen.findByText("Showing 4 contracts")).toBeInTheDocument();
+    expect(document.querySelectorAll("tbody tr[data-row-key]")).toHaveLength(4);
   });
 
   it("Contract Review defaults to the Submitted filter", async () => {
     show("dev-admin", <ContractReviewPage />);
     expect(await screen.findByRole("table", { name: "Contracts" })).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Contract status filter" })).toHaveTextContent("Submitted");
+    expect(screen.getByRole("combobox", { name: "Contract status filter" })).toHaveValue("Submitted");
   });
 
   it("Memberships lists all with no tab bar; Activation Queue holds the queue", async () => {

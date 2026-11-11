@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo } from "react";
+import { useMemo } from "react";
 import { Download } from "lucide-react";
 import { MAX_EXPORT_ROWS, type CustomerImportJob } from "@/modules/customers/import";
 import { type ColumnDef } from "@/shared/components/modern/data-table";
@@ -10,13 +10,20 @@ import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { SelectField } from "@/shared/forms/modern";
 import { Button } from "@/shared/ui/button";
 import { DataTable } from "@/shared/components/modern/data-table";
+import { AdminSectionHeading } from "@/shared/components/admin";
 import { TemplateStep } from "./customer-import-steps";
+import { recordLabel } from "@/shared/lib/record-label";
+
+function importJobLabel(job: CustomerImportJob): string {
+  const imported = new Date(job.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "Asia/Manila" });
+  return recordLabel("Import", job.fileName, imported);
+}
 
 export const EXPORT_STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
   { value: "draft", label: "Draft" },
   { value: "submitted", label: "Submitted" },
-  { value: "active_member", label: "Active member" },
+  { value: "active_member", label: "Active Member" },
   { value: "inactive", label: "Inactive" },
 ];
 
@@ -72,8 +79,8 @@ export function ExportCustomersCard({
         <SelectField label="Format" value={format} options={EXPORT_FORMAT_OPTIONS} onChange={setFormat} />
       </div>
       <div className="tw:mt-4 tw:flex tw:flex-wrap tw:items-center tw:gap-3">
-        <Button className="tw:min-h-11 tw:sm:min-h-8" disabled={loading || matchingCount === 0 || exporting} onClick={onExport}>
-          <Download aria-hidden="true" /> {exporting ? "Exporting…" : "Export"}
+        <Button className="tw:min-h-11 tw:sm:min-h-8" loading={exporting} disabled={loading || matchingCount === 0} onClick={onExport}>
+          {exporting ? null : <Download aria-hidden="true" />} Export
         </Button>
         <span className="tw:text-sm tw:text-muted-foreground" role="status">{matchingCount} matching customer(s)</span>
       </div>
@@ -99,10 +106,9 @@ export function HistoryCard({
   jobId: string | null;
   setJobId: (jobId: string | null) => void;
 }) {
-  const titleId = useId();
   const columns = useMemo<ColumnDef<CustomerImportJob, unknown>[]>(
     () => [
-      { id: "id", header: "Job", cell: ({ row }) => <span className="tw:font-semibold">{row.original.id}</span> },
+      { id: "id", header: "Job", cell: ({ row }) => <span className="tw:font-semibold">{importJobLabel(row.original)}</span> },
       { id: "file", header: "File", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.fileName },
       { id: "when", header: "Imported", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => new Date(row.original.createdAt).toLocaleString("en-PH", { timeZone: "Asia/Manila" }) },
       { id: "created", header: "Drafts created", cell: ({ row }) => `${row.original.createdCount} of ${row.original.totalRows}` },
@@ -112,14 +118,8 @@ export function HistoryCard({
   );
   const job = jobId ? jobs.find((item) => item.id === jobId) ?? null : null;
   return (
-    <section
-      aria-labelledby={titleId}
-      className="customer-history-card tw:flex tw:flex-col tw:gap-4 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-5 tw:shadow-(--shadow-soft)"
-    >
-      <div>
-        <h2 id={titleId} className="tw:text-base tw:font-semibold">Job history</h2>
-        <p className="tw:mt-1 tw:text-sm tw:text-muted-foreground">Recent customer imports, newest first.</p>
-      </div>
+    <section aria-label="Job history" className="customer-history-card tw:flex tw:flex-col tw:gap-4">
+      <AdminSectionHeading title="Job history" description="Recent customer imports, newest first." />
       <QueryState isLoading={isLoading} error={error}>
         <DataTable
           data={jobs}
@@ -128,13 +128,13 @@ export function HistoryCard({
           emptyText="No imports yet."
           caption="Customer import jobs"
           onRowOpen={(row) => setJobId(row.id)}
-          getRowLabel={(row) => `Open import job ${row.id}`}
-          rowActions={(row) => <RowActionsMenu itemName={`import job ${row.id}`} onView={() => setJobId(row.id)} />}
+          getRowLabel={(row) => `Open ${importJobLabel(row)}`}
+          rowActions={(row) => <RowActionsMenu itemName={importJobLabel(row)} onView={() => setJobId(row.id)} />}
         />
         <RecordDetailsSheet
           open={job !== null}
           onClose={() => setJobId(null)}
-          title={job ? `Import ${job.id}` : "Import job"}
+          title={job ? importJobLabel(job) : "Import job"}
           subtitle={job?.fileName}
           sections={
             job

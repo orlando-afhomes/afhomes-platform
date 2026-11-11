@@ -11,7 +11,7 @@ import { ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { Money } from "@/shared/components/modern/money";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { AdminPage, AdminStatGrid, AdminStatCard, AdminSection } from "@/shared/components/admin";
+import { AdminPage, AdminStatGrid, AdminStatCard } from "@/shared/components/admin";
 import { BadgeCheck, Clock, CircleCheck, ReceiptText } from "lucide-react";
 import { AdjustDialog, COMMISSION_COLUMNS, CommissionDetailsSheet, HoldDialog, type CommissionMenuItem } from "../components/commission-shared";
 
@@ -62,20 +62,18 @@ export function CommissionsPage() {
         <AdminStatCard label="Paid" value={<Money value={totals.paid} />} icon={CircleCheck} tone="success" />
         <AdminStatCard label="Records" value={all.length} icon={ReceiptText} tone="neutral" />
       </AdminStatGrid>
-      <AdminSection title="Commission records">
-        <QueryState isLoading={commissions.isLoading} error={commissions.error}>
-          <DataTable
-            data={all}
-            columns={COMMISSION_COLUMNS}
-            getRowId={(row) => row.id}
-            emptyText="No commissions yet."
-            caption="Commissions"
-            onRowOpen={(row) => setDetailId(row.id)}
-            getRowLabel={(row) => `Open commission for ${row.recipientName}`}
-            rowActions={(row) => <RowActionsMenu itemName={`commission for ${row.recipientName}`} onView={() => setDetailId(row.id)} extraItems={itemsFor(row)} />}
-          />
-        </QueryState>
-      </AdminSection>
+      <QueryState isLoading={commissions.isLoading} error={commissions.error}>
+        <DataTable
+          data={all}
+          columns={COMMISSION_COLUMNS}
+          getRowId={(row) => row.id}
+          emptyText="No commissions yet."
+          caption="Commissions"
+          onRowOpen={(row) => setDetailId(row.id)}
+          getRowLabel={(row) => `Open commission for ${row.recipientName}`}
+          rowActions={(row) => <RowActionsMenu itemName={`commission for ${row.recipientName}`} onView={() => setDetailId(row.id)} extraItems={itemsFor(row)} />}
+        />
+      </QueryState>
       <CommissionDetailsSheet detail={detail} onClose={() => setDetailId(null)} items={detail ? itemsFor(detail) : []} />
       {state?.kind === "adjust" ? <AdjustDialog commission={state.commission} onClose={() => setState(null)} /> : null}
       <ReasonDialog open={state?.kind === "cancel"} title="Cancel commission" description="A cancelled commission can no longer be paid. This is recorded in the audit history." confirmText="Cancel commission" danger successText="Commission cancelled." onClose={() => setState(null)} onSubmit={(reason) => (state?.kind === "cancel" ? action.mutateAsync({ id: state.commission.id, action: "cancel", reason }) : Promise.resolve())} />

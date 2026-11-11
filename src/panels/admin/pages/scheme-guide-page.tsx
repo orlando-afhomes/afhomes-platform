@@ -10,6 +10,7 @@ import { AdminPage, AdminSection } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
+import { CardGridSkeleton } from "@/shared/components/modern/skeletons";
 
 const TIERS: Array<{ code: VipTierCode; label: string }> = [
   { code: "B1", label: "Bronze (B1)" },
@@ -52,7 +53,7 @@ export function SchemeGuidePage() {
       }
     >
       <InfoNote title="Confidential">For authorized staff only. Amounts shown are the approved contract terms; a scheme without approved terms cannot be offered.</InfoNote>
-      <QueryState isLoading={schemes.isLoading || products.isLoading} error={schemes.error ?? products.error}>
+      <QueryState isLoading={schemes.isLoading || products.isLoading} error={schemes.error ?? products.error} skeleton={<CardGridSkeleton cards={2} className="tw:lg:grid-cols-2" />}>
         <div className="tw:flex tw:flex-col tw:gap-4">
           {(schemes.data ?? []).map((scheme) => (
             <AdminSection key={scheme.id} title={scheme.label} actions={<BizBadge status={scheme.availability} />}>

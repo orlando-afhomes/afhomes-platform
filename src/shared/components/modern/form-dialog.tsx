@@ -53,8 +53,8 @@ export function FormDialog({
             <Button type="button" variant="outline" disabled={pending} onClick={onClose} className="tw:min-h-11 tw:sm:min-h-8">
               Cancel
             </Button>
-            <Button type="submit" disabled={pending} className="tw:min-h-11 tw:sm:min-h-8">
-              {pending ? "Working…" : submitText}
+            <Button type="submit" loading={pending} className="tw:min-h-11 tw:sm:min-h-8">
+              {submitText}
             </Button>
           </DialogFooter>
         </form>
@@ -118,8 +118,8 @@ export function ReasonDialog({
           <Button variant="outline" disabled={pending} onClick={onClose} className="tw:min-h-11 tw:sm:min-h-8">
             Cancel
           </Button>
-          <Button variant={danger ? "destructive" : "default"} disabled={pending} onClick={() => void submit()} className="tw:min-h-11 tw:sm:min-h-8">
-            {pending ? "Working…" : confirmText}
+          <Button variant={danger ? "destructive" : "default"} loading={pending} onClick={() => void submit()} className="tw:min-h-11 tw:sm:min-h-8">
+            {confirmText}
           </Button>
         </DialogFooter>
       </DialogContent>

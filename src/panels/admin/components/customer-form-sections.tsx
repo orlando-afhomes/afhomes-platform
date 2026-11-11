@@ -750,7 +750,6 @@ export function AttributionSection({ draft, set, errors, members, existing, pend
       <FormGrid>
         <SelectField
           label="OST (Recommender)"
-          showSearch
           disabled={pendingOstIds === null}
           error={attributionErrors.recommenderMemberId}
           value={recommenderId || undefined}
@@ -769,7 +768,6 @@ export function AttributionSection({ draft, set, errors, members, existing, pend
         />
         <SelectField
           label="OST (Referrer)"
-          showSearch
           disabled={pendingOstIds === null}
           error={attributionErrors.referrerMemberId}
           value={referrerId || undefined}

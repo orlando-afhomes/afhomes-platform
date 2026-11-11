@@ -49,11 +49,11 @@ export function ConfirmDialog({
           <AlertDialogCancel disabled={pending} className="tw:min-h-11 tw:sm:min-h-8">Cancel</AlertDialogCancel>
           <AlertDialogAction
             variant={danger ? "destructive" : "default"}
-            disabled={pending}
+            loading={pending}
             onClick={onConfirm}
             className="tw:min-h-11 tw:sm:min-h-8"
           >
-            {pending ? "Working…" : confirmText}
+            {confirmText}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

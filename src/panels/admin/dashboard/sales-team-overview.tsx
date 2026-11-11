@@ -9,7 +9,7 @@ import { DesignationBadge } from "@/shared/components/business/designation-badge
 import { DetailList, DetailRow } from "@/shared/components/modern/detail-list";
 import { Money } from "@/shared/components/modern/money";
 import { DashboardCard, DashboardEmptyState, DashboardError } from "@/shared/components/dashboard/dashboard-layout";
-import { Skeleton } from "@/shared/ui/skeleton";
+import { CardGridSkeleton } from "@/shared/components/modern/skeletons";
 import type { TeamContribution } from "../dashboard-metrics";
 
 const LINK_CLASS =
@@ -70,10 +70,7 @@ export function SalesTeamOverview({
       actions={actions}
     >
       {loading ? (
-        <div className="tw:grid tw:gap-4 tw:md:grid-cols-2">
-          <Skeleton className="tw:h-32 tw:w-full" />
-          <Skeleton className="tw:h-32 tw:w-full" />
-        </div>
+        <CardGridSkeleton cards={2} className="tw:lg:grid-cols-2" />
       ) : error ? (
         <DashboardError error={error} fallback="Could not load your sales network." />
       ) : (

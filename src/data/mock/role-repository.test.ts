@@ -210,7 +210,7 @@ describe("department role repository S3-A protections", () => {
   it("no longer offers accounts as a delegable module", async () => {
     const store = createMockStore();
     await expect(adminRepos(store).roles.create({ name: "Accounts Lead", departmentId: "dept-hr", moduleIds: ["accounts"] })).rejects.toThrow(
-      'Module "accounts" cannot be delegated through a department role.',
+      'Module "Accounts" cannot be delegated through a department role.',
     );
   });
 

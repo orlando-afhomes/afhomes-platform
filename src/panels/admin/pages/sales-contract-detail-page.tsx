@@ -13,6 +13,7 @@ import { ContractDetailTabs, type ContractDetailTab } from "../components/contra
 import { ContractStatusCard, ContractSummaryCard } from "../components/contract-status-cards";
 import { ContractHistorySection, ContractLedgerSection, ContractMilestonesSection, ContractPageFrame, ContractPaymentsSection, ContractScheduleSection, ContractTermsSection, ContractTiles } from "../components/contract-sections";
 import { PaymentSubmitDialog } from "../components/payment-actions";
+import { humanize } from "@/shared/lib/humanize";
 
 const CRUMBS = [{ label: "Sales" }, { label: "Contracts", href: "/admin/sales/contracts" }];
 const BUTTON = "tw:min-h-11 tw:sm:min-h-8";
@@ -66,7 +67,7 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
                   membership={
                     record.membership ? (
                       <span>
-                        {record.membership.status}
+                        {humanize(record.membership.status)}
                         {record.membership.cardId ? ` · Card ${record.membership.cardId}` : ""}
                         {record.membership.financialHold ? " · Financial Hold" : ""}
                       </span>

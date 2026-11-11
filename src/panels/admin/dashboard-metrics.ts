@@ -1,4 +1,5 @@
 import type { CommissionView } from "@/data/contracts/commission-repository";
+import { humanize } from "@/shared/lib/humanize";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import type { MembershipView } from "@/data/contracts/membership-repository";
 import type { PaymentView } from "@/data/contracts/payment-repository";
@@ -307,8 +308,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
 function activityLabel(action: string) {
   const known = ACTIVITY_LABELS[action];
   if (known) return known;
-  const text = action.replace(/_/g, " ").toLowerCase();
-  return text.charAt(0).toUpperCase() + text.slice(1);
+  return humanize(action);
 }
 
 function activityTime(value: string) {
@@ -317,12 +317,12 @@ function activityTime(value: string) {
 }
 
 export type ActivitySources = {
-  customers?: readonly Pick<Customer, "id" | "submittedAt">[];
-  contracts?: readonly (Pick<ContractView, "id" | "history"> & { productCode?: string })[];
-  sales?: readonly (Pick<SaleView, "id" | "adjustments"> & { productCode?: string })[];
-  payments?: readonly Pick<PaymentView, "id" | "history">[];
-  memberships?: readonly Pick<MembershipView, "id" | "history">[];
-  commissions?: readonly Pick<CommissionView, "id" | "history">[];
+  customers?: readonly Pick<Customer, "displayName" | "submittedAt">[];
+  contracts?: readonly (Pick<ContractView, "customerName" | "history"> & { productCode?: string })[];
+  sales?: readonly (Pick<SaleView, "customerName" | "adjustments"> & { productCode?: string })[];
+  payments?: readonly Pick<PaymentView, "customerName" | "history">[];
+  memberships?: readonly Pick<MembershipView, "customerName" | "history">[];
+  commissions?: readonly Pick<CommissionView, "customerName" | "history">[];
 };
 
 /**
@@ -345,24 +345,24 @@ export function buildActivityFeed(
   };
 
   for (const customer of sources.customers ?? []) {
-    if (customer.submittedAt) push("customer", customer.id.toUpperCase(), "CUSTOMER_SUBMITTED", customer.submittedAt);
+    if (customer.submittedAt) push("customer", customer.displayName, "CUSTOMER_SUBMITTED", customer.submittedAt);
   }
   for (const contract of sources.contracts ?? []) {
-    for (const event of contract.history) push("contract", contract.id.toUpperCase(), event.event, event.at, contract.productCode);
+    for (const event of contract.history) push("contract", contract.customerName, event.event, event.at, contract.productCode);
   }
   for (const sale of sources.sales ?? []) {
     for (const adjustment of sale.adjustments) {
-      push("sale", sale.id.toUpperCase(), `SALE_${adjustment.kind.toUpperCase()}`, adjustment.date, sale.productCode);
+      push("sale", sale.customerName, `SALE_${adjustment.kind.toUpperCase()}`, adjustment.date, sale.productCode);
     }
   }
   for (const payment of sources.payments ?? []) {
-    for (const event of payment.history) push("payment", payment.id.toUpperCase(), event.event, event.at);
+    for (const event of payment.history) push("payment", payment.customerName, event.event, event.at);
   }
   for (const membership of sources.memberships ?? []) {
-    for (const event of membership.history) push("membership", membership.id.toUpperCase(), event.event, event.at);
+    for (const event of membership.history) push("membership", membership.customerName, event.event, event.at);
   }
   for (const commission of sources.commissions ?? []) {
-    for (const event of commission.history) push("commission", commission.id.toUpperCase(), event.event, event.at);
+    for (const event of commission.history) push("commission", commission.customerName, event.event, event.at);
   }
 
   return items.sort((a, b) => activityTime(b.timestamp) - activityTime(a.timestamp)).slice(0, Math.max(0, limit));

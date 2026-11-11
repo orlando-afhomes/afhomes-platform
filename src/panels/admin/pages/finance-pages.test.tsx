@@ -29,23 +29,27 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 
 afterEach(cleanup);
 
-const SECTION_HEADINGS = ["Verification queue", "Collections monitor", "All payments", "Financial holds", "Cancellation requests"];
+// Each page has one section, named by its table caption or (holds, cancellations) its heading.
+const SECTIONS = ["Verification queue", "Collections", "All payments", "Financial holds", "Cancellation requests"];
 
-const pages: [string, ReactElement, string][] = [
-  ["Payment Verification", <FinancePage key="a" />, "Verification queue"],
-  ["Collections", <FinanceCollectionsPage key="b" />, "Collections monitor"],
-  ["Payment History", <FinancePaymentsPage key="c" />, "All payments"],
-  ["Financial Holds", <FinanceHoldsPage key="d" />, "Financial holds"],
-  ["Cancellation Requests", <FinanceCancellationsPage key="e" />, "Cancellation requests"],
+const pages: [string, ReactElement, string, "table" | "heading"][] = [
+  ["Payment Verification", <FinancePage key="a" />, "Verification queue", "table"],
+  ["Collections", <FinanceCollectionsPage key="b" />, "Collections", "table"],
+  ["Payment History", <FinancePaymentsPage key="c" />, "All payments", "table"],
+  ["Financial Holds", <FinanceHoldsPage key="d" />, "Financial holds", "heading"],
+  ["Cancellation Requests", <FinanceCancellationsPage key="e" />, "Cancellation requests", "heading"],
 ];
 
 describe("Finance pages are separate processes", () => {
-  it.each(pages)("%s shows only its own section", async (title, page, own) => {
+  it.each(pages)("%s shows only its own section", async (title, page, own, role) => {
     render(<Wrapper>{page}</Wrapper>);
     expect(await screen.findByRole("heading", { name: title, level: 1 })).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: own })).toBeInTheDocument();
-    for (const heading of SECTION_HEADINGS) {
-      if (heading !== own) expect(screen.queryByRole("heading", { name: heading })).toBeNull();
+    expect(await screen.findByRole(role, { name: own })).toBeInTheDocument();
+    for (const section of SECTIONS) {
+      if (section !== own) {
+        expect(screen.queryByRole("heading", { name: section })).toBeNull();
+        expect(screen.queryByRole("table", { name: section })).toBeNull();
+      }
     }
     expect(screen.queryByRole("tablist")).toBeNull();
   });

@@ -19,6 +19,7 @@ import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { formatDate } from "@/shared/lib/format-date";
+import { humanize } from "@/shared/lib/humanize";
 
 const PURPOSE_LABELS: Record<PaymentPurpose, string> = { reservation: "Reservation", down_payment: "Down payment", installment: "Installment", full: "Full payment" };
 
@@ -135,7 +136,7 @@ function AdjustDialog({ payment, onClose }: { payment: PaymentView | null; onClo
 /** A single payment-row action; the same list feeds the row menu and the details sheet footer. */
 type PaymentItem = { key: string; label: string; danger?: boolean; onClick: () => void };
 
-const PURPOSE_TEXT = (value: string) => value.replace(/_/g, " ");
+const PURPOSE_TEXT = (value: string) => humanize(value);
 
 /**
  * Finance row actions for payments (start review, verify, return, reject, reverse
@@ -159,7 +160,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
     const items: PaymentItem[] = [];
     if (canVerify && open) {
       if (payment.status === "submitted") {
-        items.push({ key: "review", label: "Start review", onClick: () => void action.mutateAsync({ id: payment.id, action: "startReview" }).catch((error: Error) => toast.error(error.message)) });
+        items.push({ key: "review", label: "Start review", onClick: () => void toast.promise(action.mutateAsync({ id: payment.id, action: "startReview" }), { loading: "Starting review…", success: "Review started.", error: (error: Error) => error.message }) });
       }
       items.push(
         { key: "verify", label: "Verify", onClick: () => confirmRun({ title: "Verify this payment?", description: `${formatPeso(payment.amountCentavos)} for ${payment.customerName} will be counted as paid. A reservation alone never confirms a sale.`, confirmText: "Verify", action: () => action.mutateAsync({ id: payment.id, action: "verify" }), successTitle: "Payment verified.", errorTitle: "Could not verify" }) },
@@ -230,7 +231,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
               ]
             : []
         }
-        history={detail ? detail.history.map((item, index) => ({ key: `${item.at}-${index}`, when: formatDate(item.at), text: `${item.event.replace(/_/g, " ").toLowerCase()}${item.note ? `: ${item.note}` : ""}` })) : []}
+        history={detail ? detail.history.map((item, index) => ({ key: `${item.at}-${index}`, when: formatDate(item.at), text: `${humanize(item.event)}${item.note ? `: ${item.note}` : ""}` })) : []}
         footer={detailFooter && detailFooter.length > 0 ? detailFooter : undefined}
       />
     </>

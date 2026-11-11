@@ -1,5 +1,6 @@
 "use client";
 
+import { humanize } from "@/shared/lib/humanize";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getSystemRoleLabel } from "@/panels/admin/role-label";
@@ -584,7 +585,7 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
         <Button type="button" variant="outline" onClick={onDone} className={BUTTON_CLASS}>
           Cancel
         </Button>
-        <Button type="submit" disabled={submitting} className={BUTTON_CLASS}>
+        <Button type="submit" loading={submitting} className={BUTTON_CLASS}>
           {editStaff ? "Save" : "Add"}
         </Button>
       </DialogFooter>
@@ -840,6 +841,6 @@ function LinkedAccountActions({
 function moduleLabels(moduleIds: string[]): string[] {
   return moduleIds.map((moduleId) => {
     const entry = MODULE_CATALOG.find((item) => item.id === moduleId);
-    return entry ? entry.label : moduleId;
+    return entry ? entry.label : humanize(moduleId);
   });
 }

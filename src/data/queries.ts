@@ -19,7 +19,9 @@ import type { AuditQuery } from "@/modules/audit/types";
 export function useMockRepositories() {
   const store = useMockStore();
   const { identity } = useDevIdentity();
-  return useMemo(() => createMockRepositories(store, () => identity), [store, identity]);
+  // Opt-in latency to see loaders in the browser: NEXT_PUBLIC_MOCK_DELAY_MS=800. Unset = instant.
+  const delayMs = Number(process.env.NEXT_PUBLIC_MOCK_DELAY_MS) || 0;
+  return useMemo(() => createMockRepositories(store, () => identity, delayMs > 0 ? { delayMs } : undefined), [store, identity, delayMs]);
 }
 
 export function useMembers() {

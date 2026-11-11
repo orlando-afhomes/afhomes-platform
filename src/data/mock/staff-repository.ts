@@ -1,3 +1,4 @@
+import { humanize } from "@/shared/lib/humanize";
 import { normalizeTin } from "@/shared/utils/input-sanitizers";
 import { STAFF_DELETE_DISABLED, type StaffActionPolicy, type StaffMember, type StaffStatus } from "@/modules/organization/types";
 import { ACCOUNT_STATUS_TRANSITIONS, type Account, type AccountStatus, type LinkedAccountSummary } from "@/modules/accounts/types";
@@ -180,7 +181,7 @@ export class MockStaffRepository {
     // Owner decision 2026-11-10: Super Admin has full control; the self-modification ban does not apply to Super Admin.
     if (identity.staffId === staff.id && !isSuperAdmin(this.store, identity)) throw new Error(SELF_MODIFICATION_ERROR);
     if (!ACCOUNT_STATUS_TRANSITIONS[account.status].includes(status)) {
-      throw new Error(`Invalid status transition from ${account.status} to ${status}.`);
+      throw new Error(`Invalid status transition from ${humanize(account.status)} to ${humanize(status)}.`);
     }
     const previousStatus = account.status;
     account.status = status;

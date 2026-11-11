@@ -1,6 +1,7 @@
 import type { Contract } from "@/modules/contracts/types";
 import { diffCalendarDays, manilaDateOf, parseManilaDateOnly } from "@/shared/lib/dates";
 import type { Payment, PaymentPurpose, ScheduleLineState } from "./types";
+import { humanize } from "@/shared/lib/humanize";
 
 const PURPOSE_RANK: Record<PaymentPurpose, number> = { reservation: 0, down_payment: 1, installment: 2, full: 3 };
 
@@ -122,7 +123,7 @@ export function buildCollectionLedger(contract: Pick<Contract, "priceCentavos">,
   const events: Omit<LedgerEntry, "netCentavos" | "balanceCentavos">[] = [];
   for (const payment of payments) {
     if (payment.status !== "verified") continue;
-    const label = payment.purpose.replace(/_/g, " ");
+    const label = humanize(payment.purpose);
     events.push({ date: payment.verifiedDate ?? payment.paidDate, kind: "payment", paymentId: payment.id, label, amountCentavos: payment.amountCentavos });
     for (const adjustment of payment.adjustments) events.push({ date: adjustment.date, kind: adjustment.kind, paymentId: payment.id, label, amountCentavos: -adjustment.amountCentavos });
   }

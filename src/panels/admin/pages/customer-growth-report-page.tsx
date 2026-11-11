@@ -14,8 +14,8 @@ export function CustomerGrowthReportPage() {
     <ReportShell range={range} title="Customer Growth" description="Role-scoped figures built from the source records." crumbs={[{ label: "Reports" }, { label: "Customer Growth" }]}>
       <AdminSection title="Customer growth">
         <AdminStatGrid>
-          <AdminStatCard label="New customers" value={newCustomers} icon={UserPlus} tone="success" description="Creation date" />
-          <AdminStatCard label="Visible customers" value={customerList.length} icon={Users} tone="info" />
+          <AdminStatCard loading={customers.isLoading} error={customers.error} label="New customers" value={newCustomers} icon={UserPlus} tone="success" description="Creation date" />
+          <AdminStatCard loading={customers.isLoading} error={customers.error} label="Visible customers" value={customerList.length} icon={Users} tone="info" />
         </AdminStatGrid>
       </AdminSection>
     </ReportShell>

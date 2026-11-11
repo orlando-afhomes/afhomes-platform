@@ -33,7 +33,7 @@ describe("staff repository S3-A protections", () => {
     const before = staffSnapshot(store, "staff-3");
     // role-admin confers "roles", which HR does not hold.
     await expect(repo.update("staff-3", { displayName: "Changed", departmentId: "dept-admin", departmentRoleId: "role-admin" })).rejects.toThrow(
-      'Module "roles" is outside the acting account\'s authorized scope.',
+      'Module "Roles" is outside the acting account\'s authorized scope.',
     );
     expect(staffSnapshot(store, "staff-3")).toEqual(before);
     await expect(

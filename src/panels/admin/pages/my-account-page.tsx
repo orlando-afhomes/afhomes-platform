@@ -31,7 +31,7 @@ import {
 } from "@/shared/utils/input-sanitizers";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
-import { Skeleton } from "@/shared/ui/skeleton";
+import { FormSkeleton } from "@/shared/components/modern/skeletons";
 
 function initials(name: string) {
   return name
@@ -66,7 +66,7 @@ export function MyAccountPage() {
 
 function MyAccountForm() {
   const profileQuery = useMyProfile();
-  if (profileQuery.isLoading) return <Skeleton className="tw:mt-3 tw:h-48 tw:w-full" />;
+  if (profileQuery.isLoading) return <div role="status" aria-busy="true" className="tw:mt-3"><span className="tw:sr-only">Loading…</span><FormSkeleton fields={4} /></div>;
   const profile = profileQuery.data ?? null;
   if (!profile) {
     return (
@@ -278,7 +278,7 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
       </CardSection>
 
       <div className="tw:flex tw:justify-end">
-        <Button type="submit" disabled={submitting || (!canEditProfile && !newPassword)} className="tw:min-h-11 tw:w-full tw:sm:min-h-8 tw:sm:w-auto">
+        <Button type="submit" loading={submitting} disabled={!canEditProfile && !newPassword} className="tw:min-h-11 tw:w-full tw:sm:min-h-8 tw:sm:w-auto">
           Save changes
         </Button>
       </div>

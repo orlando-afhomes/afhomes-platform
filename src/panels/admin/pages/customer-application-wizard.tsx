@@ -20,6 +20,7 @@ import { cn } from "@/shared/lib/utils";
 import type { RadioCardOption } from "@/shared/components/modern/radio-card-group";
 import { StepIndicator } from "@/shared/components/modern/step-indicator";
 import { InfoNote } from "@/shared/components/modern/detail-list";
+import { CardGridSkeleton } from "@/shared/components/modern/skeletons";
 import { CheckboxField, FieldShell, RadioCardField, StandardDateField, TextField, describedBy, useFieldIds } from "@/shared/forms/modern";
 import { REFERENCE_LIMITS, cleanReferenceNumber, referencePolicyFor, validateReferenceNumber, type ReferencePolicy } from "@/shared/forms/validation/reference-number";
 import { Button, buttonVariants } from "@/shared/ui/button";
@@ -180,6 +181,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   }, [isSubmitted, accreditations.isSuccess, accreditations.isFetching, accreditations.data]);
   const [errors, setErrors] = useState<CustomerErrors>({});
   const [saving, setBusy] = useState(false);
+  const [action, setAction] = useState<"draft" | "submit">("submit");
   const [submissionSuccess, setSubmissionSuccess] = useState<string | null>(null);
   const busy = saving || submissionSuccess !== null;
 
@@ -409,6 +411,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
     }
     const input = toInput(draft, { saveAsDraft: true });
     setBusy(true);
+    setAction("draft");
     try {
       const saved = existing
         ? await updateDraft.mutateAsync({ id: existing.id, input })
@@ -459,6 +462,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
     }
 
     setBusy(true);
+    setAction("submit");
     try {
       const result = await register.mutateAsync({
         customer: toInput(draft),
@@ -565,7 +569,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             </div>
           </div>
           {products.isLoading ? (
-            <p className="tw:text-sm tw:text-muted-foreground">Loading VIP cards</p>
+            <div role="status" aria-busy="true"><span className="tw:sr-only">Loading VIP cards…</span><CardGridSkeleton cards={3} /></div>
           ) : (
             <VipCardChoiceGrid products={activeProducts} schemes={schemes.data ?? []} value={(draft.vipPlan || "") as VipTierCode | ""} onChange={choosePlan} invalid={Boolean(errors.vipPlan)} />
           )}
@@ -770,7 +774,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             {step === STEP_CARD ? "Cancel" : (<><ArrowLeft aria-hidden="true" className="tw:size-4" /> Back</>)}
           </Button>
           {!isSubmitted ? (
-            <Button type="button" variant="outline" disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => void saveDraft()}>
+            <Button type="button" variant="outline" loading={saving && action === "draft"} disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => void saveDraft()}>
               Save as draft
             </Button>
           ) : null}
@@ -780,7 +784,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             Continue <ArrowRight aria-hidden="true" className="tw:size-4" />
           </Button>
         ) : (
-          <Button type="button" disabled={busy} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => void submitApplication()}>
+          <Button type="button" loading={saving && action === "submit"} disabled={busy} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => void submitApplication()}>
             {isSubmitted ? "Save correction" : "Submit application"}
           </Button>
         )}
@@ -805,8 +809,8 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
                 resetNewApplication();
                 leave?.();
               }}>Discard all Changes</AlertDialogAction>
-              <AlertDialogAction type="button" disabled={busy} onClick={() => void saveDraft(exit.destination ?? undefined)}>
-                {saving ? "Saving…" : "Save Draft"}
+              <AlertDialogAction type="button" loading={saving} disabled={busy} onClick={() => void saveDraft(exit.destination ?? undefined)}>
+                Save Draft
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

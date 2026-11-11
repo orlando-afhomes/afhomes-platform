@@ -10,6 +10,7 @@ export {
   ADMIN_TONE_COLORS,
 } from "./admin-primitives";
 export { AdminStatGrid, AdminStatCard, type AdminStatTone } from "./admin-stat";
+export { AdminSectionHeading } from "./admin-section-heading";
 export { AdminTabs, type AdminTabItem } from "./admin-tabs";
 export { AdminFilterBar, type AdminFilter, type AdminFilterOption } from "./admin-blocks";
 export { StepBlock, InfoSplitCard, InfoMiniCard } from "./admin-blocks";

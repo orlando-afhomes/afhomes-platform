@@ -1,6 +1,8 @@
 "use client";
 
 import { customerRecordName } from "@/modules/customers/rules";
+import { humanize } from "@/shared/lib/humanize";
+import { recordLabel } from "@/shared/lib/record-label";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
@@ -10,7 +12,7 @@ import { useCustomers, useMembers } from "@/data/queries";
 import { useAuditEvents } from "@/data/queries";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { buttonVariants, Button } from "@/shared/ui/button";
-import { Skeleton } from "@/shared/ui/skeleton";
+import { DetailSkeleton } from "@/shared/components/modern/skeletons";
 import { AdminPage } from "@/shared/components/admin";
 import { PrepareContractDialog } from "../components/prepare-contract-dialog";
 import { useContractHref } from "../components/use-contract-href";
@@ -54,13 +56,13 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
       items.push({ id: `${customer.id}-submitted`, label: "Customer record submitted", timestamp: customer.submittedAt });
     }
     for (const event of contract?.history ?? []) {
-      items.push({ id: `${contract?.id}-${event.at}-${event.event}`, label: event.event.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase()), timestamp: event.at });
+      items.push({ id: `${contract?.id}-${event.at}-${event.event}`, label: humanize(event.event), timestamp: event.at });
     }
     if (sale?.confirmedDate) {
-      items.push({ id: `${sale.id}-confirmed`, label: `Sale confirmed (${sale.id})`, timestamp: sale.confirmedDate });
+      items.push({ id: `${sale.id}-confirmed`, label: recordLabel("Sale confirmed", customer?.displayName, contract?.productCode), timestamp: sale.confirmedDate });
     }
     for (const event of membership?.history ?? []) {
-      items.push({ id: `${membership?.id}-${event.at}-${event.event}`, label: event.event.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase()), timestamp: event.at });
+      items.push({ id: `${membership?.id}-${event.at}-${event.event}`, label: humanize(event.event), timestamp: event.at });
     }
     return items
       .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
@@ -70,7 +72,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
   if (customers.isLoading) {
     return (
       <AdminPage anyOf={["customers"]} title="Customer" crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: "Detail" }]}>
-        <Skeleton className="tw:h-48 tw:w-full" />
+        <DetailSkeleton />
       </AdminPage>
     );
   }
@@ -95,10 +97,10 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
       };
   const ownerName = owner?.displayName ?? "Company";
   const recommenderName = recommender?.displayName ?? "—";
-  const schemeLabel = contract?.schemeLabel ?? customer.paymentSchemeId ?? null;
+  const schemeLabel = contract?.schemeLabel ?? (customer.paymentSchemeId ? humanize(customer.paymentSchemeId) : null);
   const auditEvents = (audit.data?.items ?? []).map((event) => ({
     id: event.id,
-    label: event.action.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase()),
+    label: humanize(event.action),
     timestamp: event.timestamp,
   }));
 
@@ -139,10 +141,10 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
           <div className="tw:min-w-0 tw:lg:col-span-3 tw:flex tw:flex-col tw:gap-6">
             <CustomerInfoCard customer={viewCustomer} ownerName={ownerName} recommenderName={recommenderName} />
             <LinkedRecordsCard
-              contractLabel={contract ? `${contract.productCode} · ${contract.schemeLabel} · ${contract.status.replace(/_/g, " ")}` : customer.status === "submitted" ? "No contract yet" : "—"}
+              contractLabel={contract ? `${contract.productCode} · ${contract.schemeLabel} · ${humanize(contract.status)}` : customer.status === "submitted" ? "No contract yet" : "—"}
               contractHref={contract ? contractHref(contract.id) : null}
-              saleLabel={sale ? `${sale.status} · ${sale.id}` : "No sale yet"}
-              membershipLabel={membership ? membership.status : "No membership yet"}
+              saleLabel={sale ? recordLabel(humanize(sale.status), customer.displayName, contract?.productCode) : "No sale yet"}
+              membershipLabel={membership ? humanize(membership.status) : "No membership yet"}
               saleValueCentavos={sale?.valueCentavos ?? null}
               showSaleValue={ownRecord && sale != null}
             />
@@ -161,10 +163,10 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
         contract ? (
           <ContractTabPanel
             facts={[
-              { label: "Contract", value: contract.id.toUpperCase() },
+              { label: "Contract", value: recordLabel("Contract", customer.displayName, contract.productCode) },
               { label: "VIP plan", value: contract.productCode },
               { label: "Scheme", value: contract.schemeLabel },
-              { label: "Status", value: contract.status.replace(/_/g, " ") },
+              { label: "Status", value: humanize(contract.status) },
               { label: "Classification", value: customer.contractClassification === "N" ? "Non-Standard (N)" : customer.contractClassification === "S" ? "Standard (S)" : "—" },
             ]}
             contractHref={contractHref(contract.id)}
@@ -176,7 +178,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
       {tab === "sales" ? (
         <SalesTabPanel
           facts={[
-            { label: "Sale", value: sale ? `${sale.status} · ${sale.id}` : "No sale yet" },
+            { label: "Sale", value: sale ? recordLabel(humanize(sale.status), customer.displayName, contract?.productCode) : "No sale yet" },
             { label: "Recorded", value: sale?.recordedDate ?? "—" },
             { label: "Confirmed", value: sale?.confirmedDate ?? "—" },
           ]}

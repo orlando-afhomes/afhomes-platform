@@ -23,14 +23,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { buttonVariants } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { Card } from "@/shared/ui/card";
-import { AdminPage, AdminSection } from "@/shared/components/admin";
-import { Skeleton } from "@/shared/ui/skeleton";
+import { AdminPage, AdminSection, AdminSectionHeading } from "@/shared/components/admin";
+import { DetailSkeleton } from "@/shared/components/modern/skeletons";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { AccreditationEligibilityTag } from "../components/accreditation-status";
 import { DesignationBadge, toneFromColor } from "@/shared/components/business/designation-badge";
 import { GenealogyTree } from "./sales-network-genealogy-page";
+import { humanize } from "@/shared/lib/humanize";
+import { DEV_IDENTITIES } from "@/data/mock/dev-identities";
 
 const TWO_COLUMNS = "tw:sm:grid tw:sm:grid-cols-2 tw:sm:gap-x-8";
 
@@ -75,17 +77,19 @@ export function SalesNetworkMemberDetailPage() {
   const [historyKey, setHistoryKey] = useState<string | null>(null);
   const historyDetail = historyKey ? (member?.parentHistory ?? []).find((item) => `${item.changedAt}-${item.operation}-${item.actorId}` === historyKey) ?? null : null;
   const expandedKeys = useMemo(() => collectKeys(downlineTree).filter((key) => !collapsed.includes(key)), [downlineTree, collapsed]);
+  const memberNameById = useMemo(() => new Map(members.map((item) => [item.id, item.displayName])), [members]);
+  const parentLabel = (id: string | null | undefined) => (id ? (memberNameById.get(id) ?? "Unknown member") : "—");
+  const actorLabel = (id: string) => DEV_IDENTITIES.find((identity) => identity.id === id)?.displayName ?? memberNameById.get(id) ?? "System";
   const historyColumns = useMemo<ColumnDef<NonNullable<OrgMember["parentHistory"]>[number], unknown>[]>(
     () => [
-      { id: "operation", header: "Operation", cell: ({ row }) => row.original.operation },
-      { id: "previousParent", header: "Previous parent", cell: ({ row }) => row.original.previousParentId ?? "—" },
-      { id: "newParent", header: "New parent", cell: ({ row }) => row.original.newParentId ?? "—" },
-      { id: "previousBranch", header: "Previous branch", cell: ({ row }) => row.original.previousBranchId },
-      { id: "newBranch", header: "New branch", cell: ({ row }) => row.original.newBranchId },
-      { id: "actor", header: "Actor", cell: ({ row }) => row.original.actorId },
+      { id: "operation", header: "Operation", cell: ({ row }) => humanize(row.original.operation) },
+      { id: "previousParent", header: "Previous parent", cell: ({ row }) => parentLabel(row.original.previousParentId) },
+      { id: "newParent", header: "New parent", cell: ({ row }) => parentLabel(row.original.newParentId) },
+      { id: "actor", header: "Actor", cell: ({ row }) => actorLabel(row.original.actorId) },
       { id: "timestamp", header: "Timestamp", cell: ({ row }) => row.original.changedAt },
     ],
-    [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [memberNameById],
   );
 
   if (!granted.has("sales-network")) {
@@ -99,7 +103,7 @@ export function SalesNetworkMemberDetailPage() {
   if (memberQuery.isLoading) {
     return (
       <PageContainer>
-        <Skeleton className="tw:h-64 tw:w-full" />
+        <DetailSkeleton />
       </PageContainer>
     );
   }
@@ -216,7 +220,8 @@ export function SalesNetworkMemberDetailPage() {
             </DetailList>
           </AdminSection>
         ) : null}
-        <AdminSection title="Team downline" className="tw:md:col-span-2">
+        <section aria-label="Team downline" className="tw:flex tw:flex-col tw:gap-3 tw:md:col-span-2">
+          <AdminSectionHeading title="Team downline" />
           {directDownline.length === 0 ? (
             <p className="tw:p-4 tw:text-center tw:text-muted-foreground">No direct downline members.</p>
           ) : (
@@ -232,24 +237,24 @@ export function SalesNetworkMemberDetailPage() {
               />
             </div>
           )}
-        </AdminSection>
+        </section>
         {member.parentHistory && member.parentHistory.length > 0 ? (
-          <AdminSection title="Relationship history" className="tw:md:col-span-2">
+          <section aria-label="Relationship history" className="tw:flex tw:flex-col tw:gap-3 tw:md:col-span-2">
+            <AdminSectionHeading title="Relationship history" />
             <DataTable
               data={member.parentHistory}
               columns={historyColumns}
               getRowId={(row) => `${row.changedAt}-${row.operation}-${row.actorId}`}
               emptyText="No relationship history."
-              paginate={false}
               caption="Relationship history"
               onRowOpen={(row) => setHistoryKey(`${row.changedAt}-${row.operation}-${row.actorId}`)}
-              getRowLabel={(row) => `Open ${row.operation} change`}
-              rowActions={(row) => <RowActionsMenu itemName={`${row.operation} change`} onView={() => setHistoryKey(`${row.changedAt}-${row.operation}-${row.actorId}`)} />}
+              getRowLabel={(row) => `Open ${humanize(row.operation)} change`}
+              rowActions={(row) => <RowActionsMenu itemName={`${humanize(row.operation)} change`} onView={() => setHistoryKey(`${row.changedAt}-${row.operation}-${row.actorId}`)} />}
             />
             <RecordDetailsSheet
               open={historyDetail !== null}
               onClose={() => setHistoryKey(null)}
-              title={historyDetail ? historyDetail.operation : "Relationship change"}
+              title={historyDetail ? humanize(historyDetail.operation) : "Relationship change"}
               subtitle={historyDetail?.changedAt}
               sections={
                 historyDetail
@@ -257,18 +262,16 @@ export function SalesNetworkMemberDetailPage() {
                       {
                         title: "Change",
                         rows: [
-                          { label: "Previous parent", value: historyDetail.previousParentId },
-                          { label: "New parent", value: historyDetail.newParentId },
-                          { label: "Previous branch", value: historyDetail.previousBranchId },
-                          { label: "New branch", value: historyDetail.newBranchId },
-                          { label: "Actor", value: historyDetail.actorId },
+                          { label: "Previous parent", value: parentLabel(historyDetail.previousParentId) },
+                          { label: "New parent", value: parentLabel(historyDetail.newParentId) },
+                          { label: "Actor", value: actorLabel(historyDetail.actorId) },
                         ],
                       },
                     ]
                   : []
               }
             />
-          </AdminSection>
+          </section>
         ) : null}
       </div>
     </AdminPage>

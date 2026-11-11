@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useMemberships, useOperation } from "@/data/business-queries";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { AdminPage, AdminStatGrid, AdminStatCard, AdminSection } from "@/shared/components/admin";
+import { AdminPage, AdminStatGrid, AdminStatCard } from "@/shared/components/admin";
 import { BadgeCheck, Clock } from "lucide-react";
 import { MembershipTable } from "../components/membership-table";
 
@@ -23,9 +23,7 @@ export function MembershipActivationPage() {
             <AdminStatCard label="Ready" value={pending.filter((item) => item.eligible).length} icon={BadgeCheck} tone="success" />
           </AdminStatGrid>
           <QueryState isLoading={memberships.isLoading} error={memberships.error}>
-            <AdminSection title="Activation queue" description="Eligible means a finalized contract, Finance-verified full payment, and a valid RA number.">
-              <MembershipTable data={pending} caption="Activation queue" emptyText="No memberships are waiting for activation." />
-            </AdminSection>
+            <MembershipTable data={pending} caption="Activation queue" emptyText="No memberships are waiting for activation." />
           </QueryState>
         </>
       ) : (

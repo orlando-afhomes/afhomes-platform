@@ -30,6 +30,7 @@ import { ExportCustomersCard, HistoryCard } from "../components/customer-export-
 import { CustomerImportHowItWorks } from "../components/customer-import-how-it-works";
 import { TemplateStep, UploadDropzone } from "../components/customer-import-steps";
 import { CustomerImportTabs } from "../components/customer-import-tabs";
+import { humanize } from "@/shared/lib/humanize";
 
 const SHEET_NAME = "Customers";
 const EXAMPLE_ROW = ["", "Maria", "Reyes", "Santos", "", "1990-05-14", "Female", "Married", "09171234567", "maria.santos@example.com", "123 Rizal Street", "Laguna", "Calauan", "Poblacion", "4012", "G1", "4-Month Installment", "Standard", "Walk-In"];
@@ -201,7 +202,7 @@ function ImportPanel({ onImported }: { onImported: () => void }) {
               sections={
                 viewRow
                   ? [
-                      { title: "Parsed values", rows: [{ label: "VIP card", value: viewRow.input.vipPlan }, { label: "Payment scheme", value: viewRow.input.paymentSchemeId }, { label: "Classification", value: viewRow.input.contractClassification }] },
+                      { title: "Parsed values", rows: [{ label: "VIP card", value: humanize(viewRow.input.vipPlan) }, { label: "Payment scheme", value: humanize(viewRow.input.paymentSchemeId) }, { label: "Classification", value: humanize(viewRow.input.contractClassification) }] },
                       { title: "Problems", rows: [...viewRow.errors.map((message, index) => ({ label: index === 0 ? "Errors" : "", value: <span className="tw:text-destructive">{message}</span> })), ...viewRow.warnings.map((message, index) => ({ label: index === 0 ? "Warnings" : "", value: message }))] },
                     ]
                   : []
@@ -215,8 +216,8 @@ function ImportPanel({ onImported }: { onImported: () => void }) {
           <div className="tw:flex tw:flex-col tw:gap-3">
             <CheckboxField label="I confirm these rows come from official company records." checked={declaration} onChange={setDeclaration} />
             <div>
-              <Button className="tw:min-h-11 tw:sm:min-h-8" disabled={!declaration || counts.ready === 0 || importCustomers.isPending} onClick={() => void confirm()}>
-                <Upload aria-hidden="true" /> {importCustomers.isPending ? "Importing…" : `Confirm import (${counts.ready} row${counts.ready === 1 ? "" : "s"})`}
+              <Button className="tw:min-h-11 tw:sm:min-h-8" loading={importCustomers.isPending} disabled={!declaration || counts.ready === 0} onClick={() => void confirm()}>
+                {importCustomers.isPending ? null : <Upload aria-hidden="true" />} {`Confirm import (${counts.ready} row${counts.ready === 1 ? "" : "s"})`}
               </Button>
             </div>
           </div>

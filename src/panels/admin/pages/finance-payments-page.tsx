@@ -6,7 +6,8 @@ import { usePayments } from "@/data/business-queries";
 import { periodCollections } from "@/modules/finance/rules";
 import { addMonthsToDate, manilaToday } from "@/shared/lib/dates";
 import { DataTable } from "@/shared/components/modern/data-table";
-import { AdminStatCard, AdminStatGrid, AdminPage, AdminSection } from "@/shared/components/admin";
+import { AdminStatCard, AdminStatGrid, AdminPage } from "@/shared/components/admin";
+import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { StandardDateField } from "@/shared/forms/modern";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
@@ -33,14 +34,12 @@ export function FinancePaymentsPage() {
         <AdminStatCard label="Reversals" value={<Money value={adjustedInPeriod} />} icon={Undo2} tone="danger" />
         <AdminStatCard label="Net collections" value={<Money value={verifiedInPeriod - adjustedInPeriod} />} icon={Scale} tone="brand" description="Verification date" />
       </AdminStatGrid>
-      <div className="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:max-w-md tw:sm:grid-cols-2">
-        <StandardDateField label="Period from" value={from} onChange={setFrom} />
-        <StandardDateField label="Period to" value={to} onChange={setTo} />
-      </div>
+      <FilterBar filters={[]}>
+        <StandardDateField label="Period from" value={from} onChange={setFrom} className="tw:md:w-56" />
+        <StandardDateField label="Period to" value={to} onChange={setTo} className="tw:md:w-56" />
+      </FilterBar>
       <QueryState isLoading={payments.isLoading} error={payments.error}>
-        <AdminSection title="All payments" description="Verified payments can be reversed or refunded here. The original payment is never deleted.">
-          <DataTable data={history} columns={columns} getRowId={(row) => row.id} emptyText="No payments yet." caption="All payments" rowActions={paymentActions.rowActions} onRowOpen={paymentActions.open} getRowLabel={(row) => `Open payment from ${row.customerName}`} />
-        </AdminSection>
+        <DataTable data={history} columns={columns} getRowId={(row) => row.id} emptyText="No payments yet." caption="All payments" rowActions={paymentActions.rowActions} onRowOpen={paymentActions.open} getRowLabel={(row) => `Open payment from ${row.customerName}`} />
       </QueryState>
     </AdminPage>
   );

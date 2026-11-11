@@ -8,13 +8,14 @@ import { useMembers, useCustomers, useMockRepositories } from "@/data/queries";
 import { PageHeader } from "@/shared/components/modern/page-header";
 import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
 import { DetailList, DetailRow } from "@/shared/components/modern/detail-list";
-import { Skeleton } from "@/shared/ui/skeleton";
+import { CardGridSkeleton } from "@/shared/components/modern/skeletons";
 import { AdminSection } from "@/shared/components/admin";
 import { AdminStatCard, AdminStatGrid } from "@/shared/components/admin/admin-stat";
 import { countVisibleCustomers, countVisibleMembers, countUplines } from "../dashboard-metrics";
 import { getSystemRoleLabel } from "../role-label";
 import { aaDisplay, teamDisplayName } from "@/modules/sales-network/display";
 import { DesignationBadge } from "@/shared/components/business/designation-badge";
+import { humanize } from "@/shared/lib/humanize";
 
 function roleTitle(roles: string[]) {
   const label = getSystemRoleLabel(roles.find((role) => ["svd", "ssm", "sm", "ost"].includes(role)) ?? "");
@@ -58,10 +59,7 @@ export function SalesNetworkPanel() {
       </AdminStatGrid>
 
       {loading ? (
-        <div className="tw:flex tw:flex-col tw:gap-3">
-          <Skeleton className="tw:h-32 tw:w-full" />
-          <Skeleton className="tw:h-32 tw:w-full" />
-        </div>
+        <CardGridSkeleton cards={2} className="tw:lg:grid-cols-2" />
       ) : (
         <div className="tw:grid tw:gap-4 tw:md:grid-cols-2">
           <Card title="Account context">
@@ -73,7 +71,7 @@ export function SalesNetworkPanel() {
                 </DetailRow>
                 <DetailRow term="Team">{teamDisplayName(currentMember, members)}</DetailRow>
                 <DetailRow term="AA Number">{aaDisplay(currentMember)}</DetailRow>
-                <DetailRow term="Status">{currentMember.status}</DetailRow>
+                <DetailRow term="Status">{humanize(currentMember.status)}</DetailRow>
               </DetailList>
             ) : (
               <p className="tw:text-muted-foreground">No account context available.</p>

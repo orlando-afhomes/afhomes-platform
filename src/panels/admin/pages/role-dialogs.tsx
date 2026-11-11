@@ -1,5 +1,6 @@
 "use client";
 
+import { humanize } from "@/shared/lib/humanize";
 import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { DELEGABLE_MODULES, MODULE_CATALOG, type AdminModuleId } from "@/modules/identity/permissions";
@@ -20,7 +21,7 @@ import { Checkbox } from "@/shared/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { SearchSelect } from "@/shared/components/modern/search-select";
 
 const STATUS_ITEMS = [
   { value: "active", label: "Active" },
@@ -252,31 +253,19 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
         <Label>
           Department <span aria-hidden="true">*</span>
         </Label>
-        <Select
+        <SearchSelect
           items={departmentItems}
           value={departmentId || null}
-          onValueChange={(next) => {
+          onChange={(next) => {
             setDepartmentId(next ?? "");
             if (errors.department) setErrors((current) => ({ ...current, department: undefined }));
           }}
-        >
-          <SelectTrigger
-            aria-label="Role department"
-            aria-required="true"
-            aria-invalid={errors.department ? true : undefined}
-            aria-describedby={errors.department ? departmentErrorId : undefined}
-            className="tw:h-10 tw:w-full tw:sm:h-8"
-          >
-            <SelectValue placeholder="Select department" />
-          </SelectTrigger>
-          <SelectContent>
-            {departmentItems.map((item) => (
-              <SelectItem key={item.value} value={item.value} className="tw:min-h-11 tw:sm:min-h-8">
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          placeholder="Select department"
+          aria-label="Role department"
+          aria-required="true"
+          aria-invalid={errors.department ? true : undefined}
+          aria-describedby={errors.department ? departmentErrorId : undefined}
+        />
         {errors.department ? (
           <p id={departmentErrorId} role="alert" className="tw:text-sm tw:text-destructive">
             {errors.department}
@@ -314,28 +303,18 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
         <Label>
           Status <span aria-hidden="true">*</span>
         </Label>
-        <Select
+        <SearchSelect
           items={STATUS_ITEMS}
           value={status}
-          onValueChange={(next) => setStatus(next === "deactivated" ? "deactivated" : "active")}
-        >
-          <SelectTrigger aria-label="Role status" className="tw:h-10 tw:w-full tw:sm:h-8">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_ITEMS.map((item) => (
-              <SelectItem key={item.value} value={item.value} className="tw:min-h-11 tw:sm:min-h-8">
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onChange={(next) => setStatus(next === "deactivated" ? "deactivated" : "active")}
+          aria-label="Role status"
+        />
       </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone} className="tw:min-h-11 tw:sm:min-h-8">
           Cancel
         </Button>
-        <Button type="submit" disabled={submitting} className="tw:min-h-11 tw:sm:min-h-8">
+        <Button type="submit" loading={submitting} className="tw:min-h-11 tw:sm:min-h-8">
           {editRole ? "Save" : "Create"}
         </Button>
       </DialogFooter>
@@ -355,5 +334,5 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
 }
 
 function moduleLabel(moduleId: string): string {
-  return MODULE_CATALOG.find((entry) => entry.id === moduleId)?.label ?? moduleId;
+  return MODULE_CATALOG.find((entry) => entry.id === moduleId)?.label ?? humanize(moduleId);
 }

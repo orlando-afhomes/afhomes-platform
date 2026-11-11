@@ -12,6 +12,7 @@ import { genealogyTeamOstIds, resolveAttributionChain, type AttributionPerson } 
 import type { AddressValue, OfficeAddressValue } from "@/shared/forms/types";
 import { computeAge } from "@/shared/lib/dates";
 import { dialingPrefixFor } from "@/shared/data/philippine-locations";
+import { CustomerIdImagePreview, type CustomerIdImagePreviewState } from "./customer-id-image-preview";
 import { CheckboxField, EmailField, GovernmentIdFields, MiddleNameField, PersonNameField, PhilippineAddressFields, PhilippineLandlineField, PhilippineMobileField, RadioCardField, SelectField, StandardDateField, SuffixField, TextField, TIN_DISPLAY_LENGTH, TinField } from "@/shared/forms/modern";
 import { OfficeAddressFields } from "@/shared/forms/modern/structured-fields";
 import { Switch } from "@/shared/ui/switch";
@@ -339,7 +340,7 @@ export function IdentitySection({ draft, set, errors }: SectionProps) {
   );
 }
 
-export function ContactSection({ draft, set, errors }: SectionProps) {
+export function ContactSection({ draft, set, errors, newApplication }: SectionProps & { newApplication?: boolean }) {
   const dial = dialingPrefixFor(draft.address.province, draft.address.city);
   const { markTouched, localError } = useTouchedFields();
   return (
@@ -347,6 +348,7 @@ export function ContactSection({ draft, set, errors }: SectionProps) {
       <FormGrid>
         <PhilippineMobileField
           label="Mobile number"
+          fixedPrefix={newApplication}
           required
           value={draft.mobileNumber}
           onChange={(value) => set("mobileNumber", value)}
@@ -362,6 +364,7 @@ export function ContactSection({ draft, set, errors }: SectionProps) {
         />
         <PhilippineLandlineField
           label="Landline"
+          localDigitsOnly={newApplication}
           value={draft.landline}
           onChange={(value) => set("landline", value)}
           onBlur={() => markTouched("landline")}
@@ -369,7 +372,7 @@ export function ContactSection({ draft, set, errors }: SectionProps) {
           error={errors.landline ?? localError("landline", draft.landline, { areaCode: dial.areaCode })}
           countryCode={dial.countryCode}
           areaCode={dial.areaCode ?? undefined}
-          hint={dial.areaCode ? "Area code filled from the address." : undefined}
+          hint={dial.areaCode ? (newApplication ? `Area code ${dial.areaCode} from the address.` : "Area code filled from the address.") : undefined}
         />
       </FormGrid>
     </SectionBlock>
@@ -392,7 +395,7 @@ export function AddressSection({ draft, set, errors }: SectionProps) {
   );
 }
 
-export function GovernmentIdSection({ draft, set, errors }: SectionProps) {
+export function GovernmentIdSection({ draft, set, errors, idPreview }: SectionProps & { idPreview?: CustomerIdImagePreviewState }) {
   const { markTouched, localError } = useTouchedFields();
   return (
     <SectionBlock title="Government ID" description="The ID presented with the application." icon={<IdCard className="tw:size-4" />}>
@@ -420,6 +423,7 @@ export function GovernmentIdSection({ draft, set, errors }: SectionProps) {
           onBlur={() => markTouched("tinNumber")}
           error={errors.tinNumber ?? localError("tinNumber", draft.tinNumber)}
         />
+        {idPreview ? <CustomerIdImagePreview preview={idPreview} /> : null}
       </FormGrid>
     </SectionBlock>
   );
@@ -491,7 +495,10 @@ export function SecondaryHolderToggle({ visible, enabled, onChange }: { visible:
   );
 }
 
-export function SecondaryHolderSection({ draft, set, errors }: SectionProps) {
+export function SecondaryHolderSection({ draft, set, errors, newApplication, idPreview }: SectionProps & {
+  newApplication?: boolean;
+  idPreview?: CustomerIdImagePreviewState;
+}) {
   const secAge = computeAge(draft.secDateOfBirth);
   const secDial = dialingPrefixFor(draft.secAddress.province, draft.secAddress.city);
   const { markTouched, localSecondaryError } = useTouchedFields();
@@ -553,6 +560,7 @@ export function SecondaryHolderSection({ draft, set, errors }: SectionProps) {
         <FormGrid>
           <PhilippineMobileField
             label="Mobile number (Secondary holder)"
+            fixedPrefix={newApplication}
             value={draft.secMobileNumber}
             onChange={(value) => set("secMobileNumber", value)}
             onBlur={() => markTouched("mobileNumber")}
@@ -567,6 +575,7 @@ export function SecondaryHolderSection({ draft, set, errors }: SectionProps) {
           />
           <PhilippineLandlineField
             label="Landline (Secondary holder)"
+            localDigitsOnly={newApplication}
             value={draft.secLandline}
             onChange={(value) => set("secLandline", value)}
             onBlur={() => markTouched("landline")}
@@ -574,7 +583,7 @@ export function SecondaryHolderSection({ draft, set, errors }: SectionProps) {
             error={localSecondaryError("landline", draft.secLandline, { areaCode: secDial.areaCode })}
             countryCode={secDial.countryCode}
             areaCode={secDial.areaCode ?? undefined}
-            hint={secDial.areaCode ? "Area code filled from the address." : undefined}
+            hint={secDial.areaCode ? (newApplication ? `Area code ${secDial.areaCode} from the address.` : "Area code filled from the address.") : undefined}
           />
         </FormGrid>
       </SectionBlock>
@@ -604,6 +613,7 @@ export function SecondaryHolderSection({ draft, set, errors }: SectionProps) {
             onBlur={() => markTouched("tinNumber")}
             error={localSecondaryError("tinNumber", draft.secTinNumber)}
           />
+          {idPreview ? <CustomerIdImagePreview preview={idPreview} secondary /> : null}
         </FormGrid>
       </SectionBlock>
       <SectionBlock title="Employment (Secondary holder)" description="Work and business details plus the office address of the secondary card holder. All fields are optional." icon={<Briefcase className="tw:size-4" />}>

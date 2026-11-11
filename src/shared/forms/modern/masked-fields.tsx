@@ -1,8 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ClipboardEventHandler, ReactNode } from "react";
 import { formatPartialPhilippineMobile } from "@/shared/forms/formatting/phone";
-import { MAX_TIN_LENGTH, formatTin } from "@/shared/utils/input-sanitizers";
+import { validateLandline } from "@/shared/forms/validation/contact";
+import { MAX_MOBILE_DIGITS, MAX_TIN_LENGTH, formatTin, landlineDigitRange } from "@/shared/utils/input-sanitizers";
 import type { BaseFieldProps } from "@/shared/forms/types";
 import { Input } from "@/shared/ui/input";
 import { FieldShell, describedBy, useFieldIds } from "./field-shell";
@@ -19,8 +20,9 @@ type MaskedProps = Omit<BaseFieldProps, "inputMode"> & {
  * Reformats on every edit and puts the caret back after the same number of
  * digits, so typing, deletion, and selection replacement never jump the caret.
  */
-function applyMask(input: HTMLInputElement, raw: string, format: (value: string) => string, onChange: (value: string) => void) {
+function applyMask(input: HTMLInputElement, raw: string, format: (value: string) => string | null, onChange: (value: string) => void) {
   const formatted = format(raw);
+  if (formatted === null) return;
   const cursor = input.selectionStart ?? raw.length;
   const digitsBeforeCursor = raw.slice(0, cursor).replace(/\D/g, "").length;
   onChange(formatted);
@@ -59,7 +61,14 @@ function MaskedInput({
   inputMode,
   format,
   prefix,
-}: MaskedProps & { inputMode: "numeric" | "tel"; format?: (value: string) => string }) {
+  stablePrefix,
+  onPaste,
+}: MaskedProps & {
+  inputMode: "numeric" | "tel";
+  format?: (value: string) => string | null;
+  stablePrefix?: boolean;
+  onPaste?: ClipboardEventHandler<HTMLInputElement>;
+}) {
   const ids = useFieldIds(explicitId);
   // String prefixes get padding sized to their length; richer nodes use a fixed inset.
   const prefixStyle =
@@ -84,18 +93,21 @@ function MaskedInput({
         format ? applyMask(event.currentTarget, event.target.value, format, onChange) : onChange(event.target.value)
       }
       onBlur={onBlur}
+      onPaste={onPaste}
     />
   );
   return (
     <FieldShell ids={ids} label={label} required={required} error={error} hint={hint} className={className}>
-      {prefix ? (
+      {prefix || stablePrefix ? (
         <div className="tw:relative">
-          <span
-            aria-hidden="true"
-            className="tw:pointer-events-none tw:absolute tw:left-3 tw:top-1/2 tw:-translate-y-1/2 tw:text-sm tw:text-muted-foreground"
-          >
-            {prefix}
-          </span>
+          {prefix ? (
+            <span
+              aria-hidden="true"
+              className="tw:pointer-events-none tw:absolute tw:left-3 tw:top-1/2 tw:-translate-y-1/2 tw:text-sm tw:text-muted-foreground"
+            >
+              {prefix}
+            </span>
+          ) : null}
           {input}
         </div>
       ) : (
@@ -105,24 +117,79 @@ function MaskedInput({
   );
 }
 
-/** Philippine mobile input with live XXXX-XXX-XXXX masking and caret preservation. */
-export function PhilippineMobileField({ maxLength = 14, ...rest }: MaskedProps) {
-  return <MaskedInput {...rest} maxLength={maxLength} inputMode="numeric" format={formatPartialPhilippineMobile} />;
+const MOBILE_PREFIX = "09";
+const MOBILE_SUFFIX_LENGTH = MAX_MOBILE_DIGITS - MOBILE_PREFIX.length;
+
+function completeMobileSuffix(digits: string): string | undefined {
+  return /^(?:09|639)(\d{9})$/.exec(digits)?.[1];
 }
 
-/** Optional Philippine landline input (digits and presentation separators), always prefixed with +63. */
+/** Philippine mobile input with an optional fixed national prefix. */
+export function PhilippineMobileField({ maxLength = 14, fixedPrefix, value, onChange, ...rest }: MaskedProps & { fixedPrefix?: boolean }) {
+  if (!fixedPrefix) {
+    return <MaskedInput {...rest} value={value} onChange={onChange} maxLength={maxLength} inputMode="numeric" format={formatPartialPhilippineMobile} />;
+  }
+
+  const storedDigits = value.replace(/\D/g, "");
+  const suffix = completeMobileSuffix(storedDigits) ?? storedDigits.replace(/^09/, "");
+  const storeSuffix = (digits: string) => onChange(digits ? MOBILE_PREFIX + digits : "");
+  return (
+    <MaskedInput
+      {...rest}
+      value={suffix}
+      onChange={storeSuffix}
+      inputMode="numeric"
+      autoComplete="tel"
+      prefix={MOBILE_PREFIX}
+      hint="Enter the nine digits after 09."
+      format={(raw) => {
+        const digits = raw.replace(/\D/g, "");
+        return completeMobileSuffix(digits) ?? (digits.length <= MOBILE_SUFFIX_LENGTH ? digits : null);
+      }}
+      onPaste={(event) => {
+        const pasted = completeMobileSuffix(event.clipboardData.getData("text").replace(/\D/g, ""));
+        if (pasted === undefined) return;
+        event.preventDefault();
+        storeSuffix(pasted);
+      }}
+    />
+  );
+}
+
+/** Optional Philippine landline input with an address-derived area code. */
 export function PhilippineLandlineField({
   maxLength = 15,
   countryCode = "+63",
   areaCode,
+  localDigitsOnly,
+  value,
+  error,
   ...rest
-}: MaskedProps & { countryCode?: string; areaCode?: string }) {
+}: MaskedProps & { countryCode?: string; areaCode?: string; localDigitsOnly?: boolean }) {
+  const { max } = landlineDigitRange(areaCode);
+  const currentDigitCount = value.replace(/\D/g, "").length;
+  const limitError = localDigitsOnly && currentDigitCount > max ? validateLandline(value, areaCode) : null;
   return (
     <MaskedInput
       {...rest}
-      maxLength={maxLength}
+      value={value}
+      error={error ?? limitError ?? undefined}
+      maxLength={localDigitsOnly ? undefined : maxLength}
       inputMode="tel"
-      prefix={areaCode ? `${countryCode} (${areaCode})` : countryCode}
+      stablePrefix={localDigitsOnly}
+      prefix={[localDigitsOnly ? "" : countryCode, areaCode ? `(${areaCode})` : ""].filter(Boolean).join(" ")}
+      format={localDigitsOnly ? (raw) => {
+        const digits = raw.replace(/\D/g, "");
+        // Address changes can lower the limit. Allow the user to shorten an existing number.
+        return digits.length <= max || digits.length < currentDigitCount ? digits : null;
+      } : undefined}
+      onPaste={localDigitsOnly ? (event) => {
+        const input = event.currentTarget;
+        const start = input.selectionStart ?? input.value.length;
+        const end = input.selectionEnd ?? start;
+        const candidate = input.value.slice(0, start) + event.clipboardData.getData("text") + input.value.slice(end);
+        if (candidate.replace(/\D/g, "").length > max) event.preventDefault();
+      } : undefined}
     />
   );
 }

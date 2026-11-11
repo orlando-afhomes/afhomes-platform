@@ -40,6 +40,7 @@ import {
   type SetDraft,
 } from "../components/customer-form-sections";
 import { PlanSummary } from "../components/customer-plan-summary";
+import { useCustomerIdImagePreview } from "../components/customer-id-image-preview";
 import { ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { PaymentOptionGrid, type PaymentOption } from "../components/payment-option-card";
 import { schemeCardContent } from "../components/scheme-card-content";
@@ -148,6 +149,8 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const updateDraft = useUpdateCustomerDraft();
   const correct = useCorrectCustomer();
   const register = useRegisterCustomer();
+  const primaryIdPreview = useCustomerIdImagePreview();
+  const secondaryIdPreview = useCustomerIdImagePreview();
 
   const [step, setStep] = useState(STEP_CARD);
   const [draft, setDraft] = useState<CustomerDraft>(() => toDraft(existing));
@@ -258,6 +261,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
   const choosePlan = (code: VipTierCode) => {
     const next = activeProducts.find((item) => item.code === code);
+    if (code !== "G1") secondaryIdPreview.onClear();
     const keepScheme = (schemes.data ?? []).some((item) => item.id === draft.paymentSchemeId && item.applicableTiers.includes(code));
     setDraft((current) => ({
       ...current,
@@ -341,6 +345,8 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
       const saved = existing
         ? await updateDraft.mutateAsync({ id: existing.id, input })
         : await create.mutateAsync(input);
+      primaryIdPreview.onClear();
+      secondaryIdPreview.onClear();
       toast.success("Draft saved.");
       router.push(`/admin/customers/${saved.id}`);
     } catch (failure) {
@@ -394,6 +400,8 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
         } : undefined,
       });
 
+      primaryIdPreview.onClear();
+      secondaryIdPreview.onClear();
       switch (result.status) {
         case "draft-kept":
           router.replace(`/admin/customers/${result.customerId}/edit`);
@@ -513,11 +521,16 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
         <div className="tw:flex tw:flex-col tw:gap-4">
           <IdentitySection draft={draft} set={set} errors={errors} />
           <AddressSection draft={draft} set={set} errors={errors} />
-          <ContactSection draft={draft} set={set} errors={errors} />
-          <GovernmentIdSection draft={draft} set={set} errors={errors} />
+          <ContactSection draft={draft} set={set} errors={errors} newApplication={!existing} />
+          <GovernmentIdSection draft={draft} set={set} errors={errors} idPreview={existing ? undefined : primaryIdPreview} />
           <EmploymentSection draft={draft} set={set} errors={errors} />
-          <SecondaryHolderToggle visible={draft.vipPlan === "G1"} enabled={draft.secEnabled} onChange={(v) => set("secEnabled", v)} />
-          {draft.vipPlan === "G1" && draft.secEnabled ? <SecondaryHolderSection draft={draft} set={set} errors={errors} /> : null}
+          <SecondaryHolderToggle visible={draft.vipPlan === "G1"} enabled={draft.secEnabled} onChange={(enabled) => {
+            if (!enabled) secondaryIdPreview.onClear();
+            set("secEnabled", enabled);
+          }} />
+          {draft.vipPlan === "G1" && draft.secEnabled ? (
+            <SecondaryHolderSection draft={draft} set={set} errors={errors} newApplication={!existing} idPreview={existing ? undefined : secondaryIdPreview} />
+          ) : null}
         </div>
       ) : null}
 

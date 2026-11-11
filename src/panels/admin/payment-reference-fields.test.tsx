@@ -86,7 +86,7 @@ async function reachReservationStep(user: ReturnType<typeof userEvent.setup>) {
   fireEvent.change(screen.getByLabelText(/date of birth/i), { target: { value: "1990-05-01" } });
   await user.click(within(screen.getByRole("radiogroup", { name: "Gender" })).getByRole("radio", { name: "Male" }));
   await user.click(within(screen.getByRole("radiogroup", { name: "Civil status" })).getByRole("radio", { name: "Single" }));
-  await user.type(screen.getByLabelText(/mobile number/i), "09171110009");
+  await user.type(screen.getByLabelText(/mobile number/i), "171110009");
   await fillResidentialAddress(user, addressCard, "Cebu", "Lapu-Lapu City", "Pajo");
   await user.click(screen.getByRole("button", { name: /continue/i }));
 

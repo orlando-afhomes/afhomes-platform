@@ -33,6 +33,7 @@ import { PrepareContractDialog } from "./components/prepare-contract-dialog";
 import { useCustomers } from "@/data/queries";
 import { currentManilaYear } from "@/modules/customers/customer-number";
 import type { Customer } from "@/modules/customers/types";
+import { MockCustomerRepository } from "@/data/mock/customer-repository";
 
 vi.mock("next/navigation", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/navigation")>()),
@@ -57,6 +58,8 @@ function Wrapper({ identityId, children }: { identityId: string; children: React
 afterEach(() => {
   cleanup();
   toast.dismiss();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 /** Test probe: watches the shared customer list so a saved draft is visible before the next click. */
@@ -387,7 +390,7 @@ describe("customer application wizard scheme pricing", () => {
     fireEvent.change(screen.getByLabelText(/date of birth/i), { target: { value: "1990-05-01" } });
     await user.click(within(screen.getByRole("radiogroup", { name: "Gender" })).getByRole("radio", { name: "Male" }));
     await user.click(within(screen.getByRole("radiogroup", { name: "Civil status" })).getByRole("radio", { name: "Single" }));
-    await user.type(screen.getByLabelText(/mobile number/i), "09171110009");
+    await user.type(screen.getByLabelText(/mobile number/i), "171110009");
     await fillResidentialAddress(user, addressCard, "Cebu", "Lapu-Lapu City", "Pajo");
     await user.click(screen.getByRole("button", { name: /continue/i }));
   }
@@ -613,6 +616,78 @@ describe("customer application new fields and secondary holder", () => {
     await screen.findByRole("heading", { name: "Personal details" });
   }
 
+  function stubImagePreviews() {
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal("URL", Object.assign(class extends URL {}, {
+      createObjectURL: (file: File) => `blob:${file.name}`,
+      revokeObjectURL,
+    }));
+    return revokeObjectURL;
+  }
+
+  function selectIdImage(name: string, secondary = false, type = "image/png") {
+    const label = secondary ? "Select secondary holder Government ID image file" : "Select Government ID image file";
+    fireEvent.change(screen.getByLabelText(label), { target: { files: [new File(["fixture"], name, { type })] } });
+  }
+
+  it("keeps ID previews independent across steps and clears them on removal, toggle-off, and exit", async () => {
+    const revoke = stubImagePreviews();
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /gold vip/i);
+    await user.click(secondaryToggle()!);
+    selectIdImage("primary.png");
+    selectIdImage("secondary.png", true);
+    selectIdImage("invalid.pdf", false, "application/pdf");
+    expect(screen.getByRole("alert")).toHaveTextContent(/jpeg, png, or webp/i);
+    expect(screen.getByRole("img", { name: "Government ID image preview" })).toHaveAttribute("src", "blob:primary.png");
+    expect(screen.getByRole("img", { name: "Secondary holder Government ID image preview" })).toHaveAttribute("src", "blob:secondary.png");
+    await user.click(screen.getByRole("button", { name: "Back" }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    expect(screen.getByText("primary.png")).toBeVisible();
+    expect(screen.getByText("secondary.png")).toBeVisible();
+    expect(sessionStorage.getItem("afhomes.customer-wizard.v1")).not.toMatch(/primary\.png|secondary\.png|blob:/);
+    selectIdImage("replacement.webp", false, "image/webp");
+    expect(revoke).toHaveBeenCalledWith("blob:primary.png");
+    expect(screen.getByRole("img", { name: "Government ID image preview" })).toHaveAttribute("src", "blob:replacement.webp");
+    await user.click(screen.getByRole("button", { name: "Remove Government ID image" }));
+    expect(revoke).toHaveBeenCalledWith("blob:replacement.webp");
+    await user.click(secondaryToggle()!);
+    expect(revoke).toHaveBeenCalledWith("blob:secondary.png");
+    await user.click(secondaryToggle()!);
+    expect(screen.queryByText("secondary.png")).toBeNull();
+    selectIdImage("exit.png");
+    cleanup();
+    expect(revoke).toHaveBeenCalledWith("blob:exit.png");
+    show("dev-sm-a", <CustomerFormPage />);
+    expect(await screen.findByRole("heading", { name: "Personal details" })).toBeVisible();
+    expect(screen.queryByText("exit.png")).toBeNull();
+  });
+
+  it("clears the temporary ID preview after saving a draft", async () => {
+    const revoke = stubImagePreviews();
+    const createDraft = vi.spyOn(MockCustomerRepository.prototype, "createDraft");
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /silver vip/i);
+    await user.type(screen.getByLabelText(/^first name/i), "Maria");
+    selectIdImage("draft-id.png");
+    await user.click(screen.getByRole("button", { name: /save as draft/i }));
+    expect(await screen.findByText("Draft saved.")).toBeVisible();
+    expect(screen.queryByText("draft-id.png")).toBeNull();
+    expect(revoke).toHaveBeenCalledWith("blob:draft-id.png");
+    expect(createDraft.mock.calls[0]?.[0]).toMatchObject({ firstName: "Maria", mobileNumber: null });
+    expect(JSON.stringify(createDraft.mock.calls)).not.toMatch(/draft-id\.png|blob:/);
+  });
+
+  it("discards the ID preview before the browser can cache the departing page", async () => {
+    const revoke = stubImagePreviews();
+    const user = userEvent.setup();
+    await reachCustomerStep(user, /silver vip/i);
+    selectIdImage("cached-page.png");
+    fireEvent(window, new Event("pagehide"));
+    expect(revoke).toHaveBeenCalledWith("blob:cached-page.png");
+    expect(screen.queryByText("cached-page.png")).toBeNull();
+  });
+
   async function fillValidPrimary(user: ReturnType<typeof userEvent.setup>) {
     // Required-field captions carry an aria-hidden asterisk, so match loosely.
     // Province also exists in the office address block, so scope it to the Address card.
@@ -622,7 +697,7 @@ describe("customer application new fields and secondary holder", () => {
     fireEvent.change(screen.getByLabelText(/date of birth/i), { target: { value: "1990-05-01" } });
     await user.click(within(screen.getByRole("radiogroup", { name: "Gender" })).getByRole("radio", { name: "Male" }));
     await user.click(within(screen.getByRole("radiogroup", { name: "Civil status" })).getByRole("radio", { name: "Single" }));
-    await user.type(screen.getByLabelText(/mobile number/i), "09171110009");
+    await user.type(screen.getByLabelText(/mobile number/i), "171110009");
     await fillResidentialAddress(user, addressCard, "Cebu", "Lapu-Lapu City", "Pajo");
   }
 
@@ -739,9 +814,8 @@ describe("customer application new fields and secondary holder", () => {
     expect(secAge.value).toBe("");
     fireEvent.change(secDob, { target: { value: "2000-01-01" } });
     await waitFor(() => expect(secAge.value).toBe(String(computeAge("2000-01-01", manilaToday()))));
-    // The secondary landline carries the same +63 prefix contract.
     const secLandline = screen.getByLabelText("Landline (Secondary holder)") as HTMLInputElement;
-    expect(secLandline.parentElement?.querySelector('[aria-hidden="true"]')?.textContent).toContain("+63");
+    expect(secLandline.parentElement?.querySelector('[aria-hidden="true"]')).toBeNull();
     fireEvent.change(secDob, { target: { value: "" } });
     await waitFor(() => expect(secAge.value).toBe(""));
   });
@@ -878,12 +952,11 @@ describe("customer application new fields and secondary holder", () => {
     await reachCustomerStep(user, /silver vip/i);
     const landline = screen.getByLabelText("Landline") as HTMLInputElement;
     const adornment = () => landline.parentElement?.querySelector('[aria-hidden="true"]');
-    // With no city resolved, only the +63 country code shows.
-    expect(adornment()?.textContent).toBe("+63");
+    expect(adornment()).toBeNull();
     const addressCard = screen.getByRole("heading", { name: "Address" }).closest(".customer-application__block") as HTMLElement;
     await fillResidentialAddress(user, addressCard, "Cebu", "Lapu-Lapu City", "Pajo");
     // Lapu-Lapu City maps to area code 032 in the curated dataset.
-    await waitFor(() => expect(adornment()?.textContent).toBe("+63 (032)"));
+    await waitFor(() => expect(adornment()?.textContent).toBe("(032)"));
     await user.type(landline, "8123456");
     expect(landline.value).toBe("8123456");
     expect(landline.value).not.toContain("+63");
@@ -902,7 +975,7 @@ describe("customer application new fields and secondary holder", () => {
     await pickFilteredOption(user, cityCombo(), "Santa Cruz", /^santa cruz$/i);
     await waitFor(() => expect((provinceCombo() as HTMLInputElement).value).toBe("Laguna"));
     await waitFor(() => expect((cityCombo() as HTMLInputElement).value).toBe("Santa Cruz"));
-    await waitFor(() => expect(adornment()?.textContent).toBe("+63 (049)"));
+    await waitFor(() => expect(adornment()?.textContent).toBe("(049)"));
   });
 
   it("completes the office address province-first with the same ZIP rule", async () => {
@@ -1042,13 +1115,16 @@ describe("customer application new fields and secondary holder", () => {
   });
 
   it("clears the secondary profile on plan change", async () => {
+    const revoke = stubImagePreviews();
     const user = userEvent.setup();
     await reachCustomerStep(user, /gold vip/i);
     await user.click(screen.getByRole("switch", { name: /secondary card holder/i }));
     await user.type(await screen.findByLabelText("First name (Secondary holder)"), "Ana");
+    selectIdImage("gold-only.png", true);
     const progress = screen.getByRole("list", { name: "Progress" });
     await user.click(within(progress).getByText(/vip card/i));
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
+    expect(revoke).toHaveBeenCalledWith("blob:gold-only.png");
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await choosePlanAndContinue(user);
     await screen.findByRole("heading", { name: "Personal details" });
@@ -1067,6 +1143,8 @@ describe("customer application new fields and secondary holder", () => {
 
   // Full submit path with combobox address picks; needs headroom over the 15s project default under load.
   it("submits Gold with a full secondary profile", { timeout: 30_000 }, async () => {
+    const revoke = stubImagePreviews();
+    const submit = vi.spyOn(MockCustomerRepository.prototype, "submit");
     const user = userEvent.setup();
     await reachCustomerStep(user, /gold vip/i);
     await fillValidPrimary(user);
@@ -1074,15 +1152,22 @@ describe("customer application new fields and secondary holder", () => {
     await user.type(await screen.findByLabelText("First name (Secondary holder)"), "Ana");
     await user.type(screen.getByLabelText("Last name (Secondary holder)"), "Santos");
     await user.type(screen.getByLabelText("Citizenship (Secondary holder)"), "Filipino");
-    await user.type(screen.getByLabelText("Mobile number (Secondary holder)"), "09171110002");
+    await user.type(screen.getByLabelText("Mobile number (Secondary holder)"), "171110002");
     await user.type(screen.getByLabelText("Landline (Secondary holder)"), "028123456");
     await user.type(screen.getByLabelText("TIN number (Secondary holder)"), "123456789");
+    selectIdImage("submitted-id.png");
     await attachProofAndReachReview(user);
     expect(screen.queryByText("Fix these before continuing")).toBeNull();
     const holderRow = screen.getByText("Supplementary holder", { selector: "dt" });
     expect(holderRow.parentElement).toHaveTextContent("Ana Santos");
     await acceptAndSubmit(user);
     expect(await screen.findByText(/waiting for Finance verification|submitted|drafted/i)).toBeInTheDocument();
+    expect(revoke).toHaveBeenCalledWith("blob:submitted-id.png");
+    expect(submit.mock.calls[0]?.[1]).toMatchObject({
+      mobileNumber: "09171110009",
+      supplementaryHolder: { mobileNumber: "09171110002" },
+    });
+    expect(JSON.stringify(submit.mock.calls)).not.toMatch(/submitted-id\.png|blob:/);
   });
 
   // Full submit path with combobox address picks; needs headroom over the 15s project default under load.
@@ -1159,7 +1244,7 @@ describe("customer application realtime field validation", () => {
     return (
       <>
         <AddressSection draft={draft} set={set} errors={{}} />
-        <ContactSection draft={draft} set={set} errors={{}} />
+        <ContactSection draft={draft} set={set} errors={{}} newApplication />
       </>
     );
   }
@@ -1244,22 +1329,21 @@ describe("customer application realtime field validation", () => {
 
     // Metro Manila (02) wants 8 local digits.
     await fillResidentialAddress(user, addressCard, "Metro Manila", "Quezon City", "Bagong Pag-asa");
-    await waitFor(() => expect(adornment()?.textContent).toBe("+63 (02)"));
-    await user.type(landline, "8123456");
+    await waitFor(() => expect(adornment()?.textContent).toBe("(02)"));
+    await user.type(landline, "81234567");
     fireEvent.blur(landline);
-    expect(await screen.findByText("Landline must be 8 digits for Metro Manila (02).")).toBeInTheDocument();
-
-    // The same 7-digit number is valid once the address resolves to Cebu (032),
-    // so the Metro Manila message clears without touching the number.
-    await fillResidentialAddress(user, addressCard, "Cebu", "Cebu City", "Capitol Site (Pob.)");
-    await waitFor(() => expect(adornment()?.textContent).toBe("+63 (032)"));
     expect(screen.queryByText("Landline must be 8 digits for Metro Manila (02).")).toBeNull();
-    expect(screen.queryByText("Landline must be 7 digits for this area code.")).toBeNull();
 
-    // An eighth digit is now over the provincial limit.
+    // Changing the area code preserves the entered number for correction.
+    await fillResidentialAddress(user, addressCard, "Cebu", "Cebu City", "Capitol Site (Pob.)");
+    await waitFor(() => expect(adornment()?.textContent).toBe("(032)"));
+    expect(landline).toHaveValue("81234567");
+    expect(screen.getByText("Landline must be 7 digits for this area code.")).toBeVisible();
     await user.type(landline, "9");
-    fireEvent.blur(landline);
-    expect(await screen.findByText("Landline must be 7 digits for this area code.")).toBeInTheDocument();
+    expect(landline).toHaveValue("81234567");
+    await user.keyboard("{Backspace}");
+    expect(landline).toHaveValue("8123456");
+    expect(screen.queryByText("Landline must be 7 digits for this area code.")).toBeNull();
   });
 
   it("shows no error when a valid value loses focus", async () => {

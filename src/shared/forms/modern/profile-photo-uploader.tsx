@@ -20,6 +20,10 @@ export type ProfilePhotoUploaderProps = {
   uploadLabel?: string;
   /** Defaults to "Upload profile photo" so every admin form shares one name. */
   ariaLabel?: string;
+  /** Present a full, uncropped image for documents such as an ID. */
+  document?: boolean;
+  previewAlt?: string;
+  removeLabel?: string;
   className?: string;
 };
 
@@ -39,6 +43,9 @@ export function ProfilePhotoUploader({
   label,
   uploadLabel = "Upload Photo",
   ariaLabel = "Upload profile photo",
+  document = false,
+  previewAlt = "Selected profile photo preview",
+  removeLabel,
   className,
 }: ProfilePhotoUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -70,14 +77,14 @@ export function ProfilePhotoUploader({
       >
         {value ? (
           // eslint-disable-next-line @next/next/no-img-element -- data/object URL preview
-          <img src={value} alt="Selected profile photo preview" className="tw:size-14 tw:rounded-full tw:object-cover" />
+          <img src={value} alt={previewAlt} className={document ? "tw:h-20 tw:w-28 tw:rounded-md tw:bg-muted tw:object-contain" : "tw:size-14 tw:rounded-full tw:object-cover"} />
         ) : (
           <span aria-hidden="true" className="tw:flex tw:size-14 tw:items-center tw:justify-center tw:rounded-full tw:bg-muted tw:text-muted-foreground">
             <Camera />
           </span>
         )}
         <div className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:gap-0.5">
-          <span className="tw:truncate tw:text-sm tw:font-medium">{value ? (fileName ?? "Photo selected") : "No photo selected"}</span>
+          <span className="tw:truncate tw:text-sm tw:font-medium">{value ? (fileName ?? "Photo selected") : document ? "No image selected" : "No photo selected"}</span>
           <span className="tw:text-xs tw:text-muted-foreground">{hint}</span>
         </div>
         <div className="tw:flex tw:flex-wrap tw:gap-2">
@@ -85,13 +92,14 @@ export function ProfilePhotoUploader({
             type="button"
             variant="outline"
             aria-label={ariaLabel}
+            aria-describedby={error ? errorId : undefined}
             className="tw:min-h-11 tw:sm:min-h-8"
             onClick={() => fileInputRef.current?.click()}
           >
-            <Upload aria-hidden="true" /> {value ? "Change Photo" : uploadLabel}
+            <Upload aria-hidden="true" /> {value ? (document ? "Change image" : "Change Photo") : uploadLabel}
           </Button>
           {value ? (
-            <Button type="button" variant="destructive" className="tw:min-h-11 tw:sm:min-h-8" onClick={onClear}>
+            <Button type="button" variant="destructive" aria-label={removeLabel} className="tw:min-h-11 tw:sm:min-h-8" onClick={onClear}>
               <Trash2 aria-hidden="true" /> Remove
             </Button>
           ) : null}

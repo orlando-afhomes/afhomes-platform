@@ -153,6 +153,8 @@ Points plus cash for a stay is allowed (owner follow-up ruling, 2026-11-12). Whe
 
 ---
 
+**Owner follow-up (2026-11-12).** Before the first gift is available, staff may hold a room provisionally under the venue's normal booking rules. This hold reserves no points. At check-in, confirm points use only when the gift qualifies and covers the requested points nights. Record the first actual use and its Points Activation Date together. Cancellation or unsuccessful check-in does not set that date or forfeit points from a provisional request. Redemption remains disabled until separately authorized.
+
 ## 12. Card Transfer (R12 item 7; Grant §V)
 
 1. A transfer needs a formal written request from the Primary Cardholder and written management approval. Sellers cannot approve it.

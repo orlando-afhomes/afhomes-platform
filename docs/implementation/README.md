@@ -55,6 +55,18 @@ flowchart TD
     FP10 --> FP11
 ```
 
+## November 12 rule alignment
+
+Start by verifying the contracts list, duplicate Customer ID recovery, dashboard activity, and pagination. Then align customer registration and seller attribution, VIP number issuance and commission month close, and the Annual Welcome Gift. Verify each approved slice before the next. Use synthetic data and preserve issued numbers and paid amounts. IGP planning may cover approved sale and receipt handling and the document checklist while the grant terms and numbering questions remain open. Redemption stays disabled. See the [decision register](decisions-and-gaps.md) for the pending company, Finance, and legal inputs.
+
+### IGP prototype build sequence
+
+1. **Seller and sale intake.** Add separate JA&D accreditation for the closing seller and any referrer. Record buyer, project, unit or lot, property owner, contract price, cash or terms, term, and clause classification. Scope records to the AFhomes channel (`A`). Reject prices above ₱9,000,000 and ineligible seller references before allocating a number. Expired accreditation remains eligible with the documented reminder. See [IGP rules §5–6](../business-rules/14-igp-sales.md#5-igp-series-number-jad-rev-7-3-to-8-ops-42-oct-r38).
+2. **Numbering and receipts.** Allocate the 16-character Series Number once when recording the reservation payment or the documented Contract to Sell alternative. Use a separate monthly sequence starting at `0001`, and keep all issued numbers in history. On the documented reissue path, mark the old record Replaced, link both numbers, move the existing receipts once, and recalculate commission under the correction rules. Keep imported `SUPERSEDED` values pending review. Reuse the approval and system-wide receipt reference checks. Freeze the sale threshold and the parties' approved IGP rates when the number is issued.
+3. **Sales and month-end commission.** Count only approved collections. Track the Closed Deal at its frozen threshold (initially 10%), 40% Stage 1 and full-payment dates separately. Release 40% of the commission in the Stage 1 month and the balance at full payment. Use the first open month for receipts admitted after close. Retain cancellation, refund and clawback history. Record refund amounts supplied by the Property Owner or JA&D. Use the same payout confirmation and audit controls as VIP.
+4. **Document checklist.** Track paperwork status, date and signer under the Series Number. Include the Goodwill and Formal VIP Grant documents. Membership creation and benefits wait for signed terms.
+5. **Acceptance checks.** With synthetic records, verify ₱9,000,000 succeeds and ₱9,000,000.01 is rejected without consuming a number. Verify month rollover, repeat issue and reissue requests, receipt transfer without duplication, the two commission releases, and grant checklist updates without issuing a membership. Verify office and seller visibility, including own-record limits for OST.
+
 ## How to read a feature card
 
 Each card is one feature, with ID `F<phase>.<n>` (for example `F6.3`).

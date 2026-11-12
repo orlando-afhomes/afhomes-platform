@@ -32,7 +32,7 @@ import { StayPointsPage } from "./pages/stay-points-page";
 import { PaymentSchemesPage } from "./pages/payment-schemes-page";
 import { VipProductsPage } from "./pages/vip-products-page";
 import { PrepareContractDialog } from "./components/prepare-contract-dialog";
-import { useCustomers } from "@/data/queries";
+import { useCreateCustomerDraft, useCustomers } from "@/data/queries";
 import { currentManilaYear } from "@/modules/customers/customer-number";
 import type { Customer } from "@/modules/customers/types";
 import { MockCustomerRepository } from "@/data/mock/customer-repository";
@@ -75,9 +75,13 @@ afterEach(() => {
 
 /** Test probe: watches the shared customer list so a saved draft is visible before the next click. */
 function CustomerDraftProbe({ customerNumber }: { customerNumber: string }) {
+  const create = useCreateCustomerDraft();
   const customers = useCustomers();
   const saved = customers.data?.some((customer) => customer.customerNumber === customerNumber);
-  return <output data-testid="draft-probe">{saved ? "saved" : "pending"}</output>;
+  return <>
+    <button type="button" onClick={() => create.mutate({ displayName: "Concurrent application", customerNumber })}>Save another application</button>
+    <output data-testid="draft-probe">{saved ? "saved" : "pending"}</output>
+  </>;
 }
 
 /** Test probe: exposes the list size and one record's name so an edit can be checked for duplicates. */
@@ -273,9 +277,10 @@ describe("business pages render for the intended roles", () => {
   it("lists contracts for review with a New contract action and a count footer", async () => {
     show("dev-admin", <ContractsPage />);
     expect(await screen.findByRole("table", { name: "Contracts" })).toBeInTheDocument();
-    expect((await screen.findAllByText("CTR-4")).length).toBeGreaterThan(0);
+    expect(await screen.findByRole("link", { name: "Rafael Domingo" })).toHaveAttribute("href", expect.stringMatching(/\/ctr-4$/));
     expect(screen.getByRole("link", { name: /new contract/i })).toHaveAttribute("href", "/admin/customers/new");
     expect(document.querySelectorAll("tbody tr[data-row-key]")).toHaveLength(4);
+    expect(screen.getByText("1–4", { selector: "span" }).parentElement).toHaveTextContent("Showing 1–4 of 4");
   });
 
   it("hides the New contract action from identities without contracts.prepare", async () => {
@@ -1084,7 +1089,7 @@ describe("customer application new fields and secondary holder", () => {
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await screen.findByText("Sales attribution");
 
-    // The manual ID is unique until the draft is saved from the Reservation step.
+    // Another staff session claims the manual ID after the wizard has passed Sales.
     await user.click(screen.getByRole("radio", { name: "Manual" }));
     await user.type(screen.getByLabelText("Customer ID"), manualId);
     await user.click(screen.getByRole("checkbox", { name: /processing of personal data/i }));
@@ -1092,8 +1097,7 @@ describe("customer application new fields and secondary holder", () => {
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await screen.findByRole("heading", { name: "Application form" });
 
-    await user.click(screen.getByRole("button", { name: /save as draft/i }));
-    await screen.findByText("Draft saved.");
+    await user.click(screen.getByRole("button", { name: "Save another application" }));
     await waitFor(() => expect(screen.getByTestId("draft-probe")).toHaveTextContent("saved"));
 
     // Continue on Reservation now blocks on a field that step does not render.
@@ -1101,13 +1105,16 @@ describe("customer application new fields and secondary holder", () => {
 
     // The toast names the field, not just the generic "complete the fields" copy.
     const notifications = await screen.findByLabelText(/notifications/i);
-    expect(within(notifications).getByText("This Customer ID is already in use.")).toBeInTheDocument();
+    expect(await within(notifications).findByText("This Customer ID is already in use.")).toBeInTheDocument();
     expect(within(notifications).queryByText("Complete the highlighted fields to continue.")).toBeNull();
 
     // The wizard returns to the Sales and consent step that owns the field and
     // highlights it there.
     expect(await screen.findByText("Sales attribution")).toBeInTheDocument();
-    expect(screen.getAllByText("This Customer ID is already in use.").length).toBeGreaterThan(0);
+    const customerId = screen.getByLabelText("Customer ID");
+    expect(customerId).toHaveValue(manualId);
+    expect(customerId).toHaveAttribute("aria-invalid", "true");
+    expect(customerId).toHaveAccessibleDescription(/This Customer ID is already in use/);
     expect(screen.queryByRole("heading", { name: "Review the application" })).toBeNull();
   });
 

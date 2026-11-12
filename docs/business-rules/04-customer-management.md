@@ -180,6 +180,8 @@ A referrer is optional. When the closing seller acquired the customer without a 
 
 Acknowledged At is the recorded acknowledgment information. Do not assume a particular timestamp source, actor, or automatic acknowledgment event without supporting business rules.
 
+**Owner follow-up (2026-11-12).** A blank draft may omit the closing seller. Approval requires the actual eligible closing seller, even for a walk-in. If the closing seller is also the referrer, the Clerk records a short reference to an existing dated referral and the approving Administrator or Super Administrator verifies it. The original evidence stays in its existing location. Finding and closing one's own lead without a separate referral earns closing commission only. Keep prior submitted attributions as recorded and refer unclear legacy assignments for review before calculating new commission.
+
 ### 7.9 Section I — Acquisition Channel
 
 Acquisition Channel dropdown options (exact approved labels):

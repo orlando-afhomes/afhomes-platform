@@ -131,13 +131,20 @@ Recorded in the "Owner rulings amendment (2026-11-12, follow-ups)" section of ea
 29. IGP buyer VIP grant benefits are not defined in any company paper; listed as outstanding (doc 14).
 30. This summary and the still-open list below.
 
+### Alignment follow-ups (2026-11-12)
+
+- Require the actual closing seller at approval. A blank draft may omit it.
+- When one person is both closing seller and referrer, a Clerk records a short reference to an existing dated referral. The approving Administrator or Super Administrator verifies it before referral commission can attach.
+- Pause VIP Number issuance when an applicable approved rate is missing. Explicit approved zero is a rate.
+- Allow a provisional first-stay room hold under venue rules. Confirm points at successful check-in; cancelled or failed check-in does not set the Points Activation Date. Redemption stays disabled in the current build.
+- Plan the approved AFhomes-channel IGP sales flow and track grant paperwork. Grant terms gate IGP VIP memberships and benefits.
+
 ### Still open
 
-- The IGP VIP grant terms.
-- An IGP band code for a TCP over ₱9M.
-- The signing of the IST Commission and Clawback Addendum.
-- The redemption points-per-night table, filled in by an Admin.
-- Legal advice on the records retention period.
+- **AFHomes and JA&D:** Supply the signed Goodwill and Formal VIP Grant terms, a band code above ₱9M, and a written definition of `SUPERSEDED`. Until then, track grant paperwork only, block sales above ₱9M, and refer that status for review.
+- **Legal and Finance:** Review the IST Commission and Clawback Addendum and record who has signed it. Until a signed agreement authorizes deductions, record the debt and collect directly under the existing policy.
+- **Administrator:** Prepare the first dated points-per-night table by venue, room type, and night class, together with the holiday calendar and venue cancellation cut-offs. Apply the version in effect on the Card Claim Date.
+- **Data Protection Officer and Legal:** Supply a written retention schedule by record type, with a start date for each period, legal holds, and secure disposal. The prototype has no automatic deletion. Update the interim rule after the approved schedule is available.
 
 ## Decisions (G01 to G12)
 

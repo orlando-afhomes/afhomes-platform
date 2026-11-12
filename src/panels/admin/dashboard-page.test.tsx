@@ -96,7 +96,8 @@ describe("Admin dashboard with loaded records", () => {
     expect(await screen.findByRole("link", { name: "Payment Verification: 1 pending" })).toHaveAttribute("href", "/admin/finance");
     expect(screen.getByRole("link", { name: "Membership Activation: 1 pending" })).toHaveAttribute("href", "/admin/membership/activation");
     expect(screen.queryByText(/Account Approvals/)).toBeNull();
-    expect((await screen.findAllByText("Customer submitted")).length).toBeGreaterThan(0);
+    expect(await screen.findByText("Payment submitted")).toBeInTheDocument();
+    expect(screen.getByText("Contract submitted")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View All" })).toHaveAttribute("href", "/admin/audit-logs");
   });
 

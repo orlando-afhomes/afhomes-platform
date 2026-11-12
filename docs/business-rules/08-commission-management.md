@@ -171,6 +171,8 @@ Contract finalization (doc 05) is not a precondition for attachment, release or 
 
 Each seller record holds a DSC rate and a DRI rate for each product (VIP, IGP). Both default to the standard for the person's position (AUG R17, OCT R30). The standard comes from each person's service contract and record. This document fixes no rate figure; do not hardcode one.
 
+**Owner follow-up (2026-11-12).** If the closing seller's approved DSC rate or a recorded referrer's approved DRI rate is missing, keep the application and pause VIP Number issuance until an Administrator or Super Administrator records the approved rate. An explicitly approved zero is valid. Where one seller fills both roles, a separate dated referral reference verified during customer approval is required for DRI. Keep historical paid amounts intact.
+
 ### 9.2 Changing a Person's Rate
 
 - An Administrator or the Super Administrator may set a rate that differs from the standard for a named person. The change applies to sales whose VIP Number is issued after it, never to existing sales.

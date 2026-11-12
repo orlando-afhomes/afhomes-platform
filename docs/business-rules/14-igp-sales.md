@@ -170,6 +170,8 @@ For a Cash sale, Step 2 is skipped. Under the alternative entry, Step 1 does not
 
 ---
 
+**Owner follow-up (2026-11-12).** Include grant paperwork in the AFhomes-channel prototype as a status, date and signer checklist. Grant benefits and IGP-linked VIP membership creation require signed terms. Keep the price-band block above ₱9 million. Use Replaced for the documented reissue flow and route imported `SUPERSEDED` statuses for review until JA&D supplies the definition.
+
 ## 11. Roles
 
 Align with doc 01 and the overriding authority rule (owner, 2026-11-12):

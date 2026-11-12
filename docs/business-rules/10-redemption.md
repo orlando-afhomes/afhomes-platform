@@ -1,565 +1,354 @@
 # AFHomes Platform — Redemption Management Business Rules
 
-> Single source of truth for the **Redemption Management** module.
+> **STATUS: DISABLED.** Redemption is planned but stays disabled in the application until the owner authorizes its build (AGENTS.md section 5; owner rulings R11 and R12, 2026-11-12). This document defines how Redemption must behave once authorized. It does not authorize enabling routes, APIs, navigation, feature flags, or customer submissions.
+>
+> Single source of truth for the **Redemption Management** module (use of Stay Points).
+>
+> **Owner ruling R12 (2026-11-12):** rewritten to the signed VIP Grant (Grant §I "And Annual Welcome Gift", §I-A, §V) and the owner's R12 answers. See the amendment at the end.
 > VIP Membership and Stay Points: `docs/business-rules/09-vip-membership-and-stay-points.md`.
 > Finance and Payments: `docs/business-rules/07-finance-and-payments.md`.
 > VIP Products and Contracts: `docs/business-rules/05-vip-products-and-contracts.md`.
 > VIP Card Issuance: `docs/business-rules/06-vip-card-issuance.md`.
 > Customer Management: `docs/business-rules/04-customer-management.md`.
-> Organization Management: `docs/business-rules/01-roles-and-permissions.md`.
+> Roles and Permissions: `docs/business-rules/01-roles-and-permissions.md`.
 
 ---
 
 ## 1. Purpose and Scope
 
-This document defines the authoritative Redemption Management business rules for AFHomes Platform.
+This document defines how released Stay Points are used: eligible venues, the points-per-night redemption basis, weekday/weekend and holiday classification, the holiday calendar, bookings, points reservation and consumption, cancellation and no-shows, the link to the Points Activation Date, card transfers, roles, reporting and audit.
 
-It governs redemption request lifecycle, Admin-configurable redemption pricing, Admin-configured cancellation policies, Weekday/Weekend points usage based on actual stay/service date, manual Reservations/Operations approval, points reservation and final consumption, combined Points + Cash processing, Finance verification before mixed-payment booking confirmation, membership and points eligibility, Gold supplementary holder sharing, historical contract protection, historical redemption records, RBAC and privacy, reporting, audit history, and the disabled-module/feature-flag requirements.
+Releasing points (tranches, Qualifying Spend, waivers, expiry) belongs to `09-vip-membership-and-stay-points.md`.
 
-**Redemption and Services modules are preserved but hidden and disabled in the planned MongoDB system.** This document specifies how Redemption must behave when authorized for implementation and activation. It does not authorize re-enabling them.
-
-Business rules are the current approved policy and may change through future authorized decisions. Existing signed customer contracts must retain their governing terms unless lawfully amended. Historical transactions must remain traceable. Previously approved bookings must not be silently rewritten. Historical Stay Points transactions must not be erased.
+Signed customer contracts keep their governing terms. Historical bookings and points movements stay traceable and are never silently rewritten.
 
 ---
 
 ## 2. Related Business-Rule Documents
 
-- `01-roles-and-permissions.md` — modular roles and permissions.
+- `01-roles-and-permissions.md` — roles, action permissions, the overriding authority rule.
 - `04-customer-management.md` — customer identity.
-- `05-vip-products-and-contracts.md` — VIP tiers, contracts, payment schemes.
-- `06-vip-card-issuance.md` — activation and Card ID.
-- `07-finance-and-payments.md` — Finance verification, reversals, refunds.
-- `09-vip-membership-and-stay-points.md` — membership, points earning, balances, holds.
-- `13-sales-performance-reporting.md` — reporting conventions.
+- `05-vip-products-and-contracts.md` — VIP tiers and contracts.
+- `06-vip-card-issuance.md` — VIP Number, Card Claim Date, validity.
+- `07-finance-and-payments.md` — Finance verification, receipt references, reversals.
+- `09-vip-membership-and-stay-points.md` — Points Activation Date, tranches, balances, Financial Hold.
+- `12-audit-logs-and-governance.md` — audit history.
 
 ---
 
 ## 3. Terminology
 
-- **Redemption Request** — customer request to use Stay Points for an eligible service.
-- **Reservation/Operations Approval** — manual approval by authorized staff.
-- **Reserved Points** — points set aside upon approval; not yet finally consumed.
-- **Consumed Points** — points finally deducted after authorized service completion.
-- **Weekday/Weekend Points** — separate buckets based on actual stay/service date.
-- **Points + Cash** — combined payment arrangement.
-- **Pending Payment** — booking state awaiting Finance verification of monetary portion.
-- **Financial Hold** — membership benefit restriction due to unresolved contractual financial eligibility.
-- **Points Hold** — restriction on held points due to invalidated qualifying spending or reconciliation.
+- **AFhomes Direct Operations** — establishments operated directly by AFhomes (Grant §I-A). Franchised, licensed and third-party concessionaire establishments are excluded.
+- **Overnight venue** — an AFhomes Direct Operation offering overnight stays.
+- **Redemption basis (Terms of Use table)** — the Admin-maintained, versioned table stating the points required per night, with effective dates.
+- **Weekday/non-holiday night** and **weekend/holiday night** — the night classification that selects the points bucket.
+- **Holiday calendar** — the yearly list of holidays kept by Admin or Super Admin.
+- **Cut-off** — the venue's configured deadline for cancelling without loss of points.
+- **Reserved points** — points set aside for a confirmed booking, not yet consumed.
+- **Consumed points** — points finally deducted after the completed stay.
+- **No-show** — a confirmed booking where the guest did not arrive, as recorded by authorized staff.
+- **Points Activation Date (PAD)** — defined in doc 09 §8.
 
 ---
 
-## 4. Current Policy and Future Revision Principles
+## 4. Approved Business Decisions (owner ruling R12, 2026-11-12)
 
-Redemption Management is governed by business policies that may evolve. Every important rule must be distinguishable as Currently Approved, Admin-Configurable, Contract-Governed, Recommended, or Unresolved.
+1. Points pay only for accommodation at AFhomes Direct Operations that offer overnight stays: the AFhomes Smart Wellness Hotel when open, and the AFhomes Hotspring & Ecofarm Resort when open (first-portion opening targeted April 2028). Third-party concessionaires are excluded. No redemption before full payment is acknowledged.
+2. Weekday points are used for weekday and non-holiday stays; weekend points for weekend and holiday stays. They never convert.
+3. The points-per-night redemption basis is an Admin-maintained, versioned table with effective dates. Each card uses the version in effect on its Card Claim Date (Grant §I). Later changes apply only to cards issued after them.
+4. Admin or Super Admin keeps a yearly holiday calendar.
+5. Cancellation before the venue's cut-off returns the points to the same bucket. A no-show forfeits them. Cut-off times are part of each venue's configuration.
+6. Office or front-desk staff make bookings for now. A customer self-service portal is deferred.
+7. A card transfer needs a written request and written management approval. Unused points do not pass to the new holder (Grant §V).
+8. The first redemption sets the Points Activation Date if it comes before the second anniversary of the Card Claim Date (doc 09).
+9. The build stays disabled until the owner authorizes it.
 
-Admin-configurable: redemption pricing method, service-specific points cost, authorized monetary conversion settings, eligible redemption service configuration, approved cancellation and no-show policy settings.
-
-Currently approved structural rules: Reservations/Operations manually approves redemption requests; Finance verifies monetary payments; points are reserved upon approval; final points deduction occurs after actual service completion. These may be revised later but are not automatically editable through an ordinary Admin settings page merely because they are subject to future change.
-
-Future policy changes require preserving policy identity, version/revision, authorized change, effective date, applicable service or membership scope, previous and new policy values, audit history, and relevant historical transaction references. Do not prescribe a specific versioning database schema without checking existing architecture.
-
-No retroactive silent changes: changing an Admin-configured points price or cancellation policy must not silently recalculate completed redemptions or override agreed terms of already approved bookings. The applicable pricing or policy terms used for a booking must remain reconstructable. Where the exact rule for choosing a policy version during request/approval/booking/service lifecycle is not established, identify it as an implementation dependency. Do not invent retroactive repricing behavior.
-
----
-
-## 5. Seven Approved Redemption Rules
-
-### Rule 1 — Flexible Redemption Pricing
-
-Authorized Admin personnel may configure two redemption pricing methods:
-
-- **Method A — Fixed Monetary Conversion:** Admin configures a monetary redemption conversion rate for an eligible resort service or approved service category. The configured conversion determines the monetary service value covered by redeemed points.
-- **Method B — Service-Specific Points Pricing:** Admin assigns a specific points requirement to an eligible resort service. This points price does not necessarily equal the service's regular cash price.
-
-Critical distinction: the established Stay Points earning policy states ₱1 verified eligible resort spending = 1 earned Stay Point. That rule determines how points are earned. It does not automatically determine redemption value. Do not assume 1 Stay Point = ₱1 redemption value. The redemption conversion must follow the applicable Admin-approved pricing configuration.
-
-Pricing restrictions: preserve existing signed contracts; use only eligible services; apply the correct effective pricing policy; preserve the pricing basis associated with an approved transaction; do not invent automatic cash-out functionality; do not invent universal monetary conversion rates; do not automatically change historical redemption values.
-
-### Rule 2 — Actual Stay/Service Date Determines Point Bucket
-
-Redemption must use the applicable Weekday or Weekend points bucket based on the actual scheduled stay or service date. The booking submission date does not determine the bucket.
-
-Example: booking submitted Monday, scheduled accommodation Saturday → Weekend Points required.
-
-Holidays: holiday classification must follow the customer's applicable signed contract and authorized service policy. Do not assume all national/local/special non-working days have identical contractual treatment.
-
-Existing points allocation: Stay Points earning allocates 70% Weekday, 30% Weekend. This earning allocation does not mean customers can freely transfer points between buckets during redemption.
-
-Required safeguards: preserve separate balances; select the correct service-date bucket; check sufficient available points; do not use Pending points; do not use Held points; do not use already Reserved points; do not automatically exchange Weekday and Weekend balances.
-
-Multi-day services: a booking may cover more than one day. If the requested stay spans both Weekday and Weekend dates, the implementation must correctly apply the governing contract and service rules. Do not invent whether a multi-day booking must split the points cost per night or apply a single booking-wide classification. Record that policy as unresolved unless existing documents establish it.
-
-### Rule 3 — Manual Reservations/Operations Approval
-
-Authorized Reservations or Operations personnel manually review and approve Stay Points redemption requests. Redemption approval is not automatic.
-
-Before approval, authorized staff must verify: customer identity; applicable VIP Membership; membership eligibility; contractual benefit eligibility; requested service eligibility; correct Weekday or Weekend points bucket; sufficient spendable points; absence of disqualifying financial or points holds; requested stay or service date; actual availability; applicable service restrictions; correct redemption pricing.
-
-Authority separation: Reservations/Operations controls the redemption approval. Finance controls monetary payment verification. Admin controls authorized commercial configurations. Customer and Sales Network permissions do not automatically provide redemption approval authority.
-
-Rejection: authorized staff may reject or return an ineligible request according to the approved workflow. Preserve reasons and audit history. Do not invent unrestricted manual approval overrides that bypass membership or contractual restrictions.
-
-### Rule 4 — Reserve Points on Approval, Deduct After Service Completion
-
-Stay Points are not finally consumed when the customer submits a redemption request.
-
-Approved lifecycle:
-
-1. Customer submits redemption request.
-2. Reservations/Operations reviews eligibility.
-3. Reservations/Operations approves redemption.
-4. Required Stay Points become Reserved.
-5. Reserved points are unavailable for another redemption.
-6. Customer completes the approved resort stay or service.
-7. Actual service completion is verified through the authorized workflow.
-8. Reserved points are finally consumed.
-9. The points ledger records the completed redemption.
-
-Reserved Points are not the same as Redeemed/Consumed Points. At approval, available balance decreases by the reserved amount and reserved balance increases; total points are not treated as finally consumed. After verified service completion, the reservation is finalized, consumed points are recorded in redemption history, and the corresponding reserved balance is cleared.
-
-Duplicate protection: the same redemption must not reserve points multiple times, deduct points multiple times, confirm service completion multiple times, or produce duplicate ledger entries.
-
-Pending requests: a request awaiting Reservations approval must not automatically consume points. If tentative availability or points checks are needed before approval, distinguish them from an actual approved reservation. Do not invent automatic points reservation before the required approval event.
-
-### Rule 5 — Admin-Configured Cancellation Policies
-
-Authorized Admin configures the applicable cancellation and no-show rules for eligible resort services. Configurable policy areas: cancellation eligibility; required cancellation notice; reserved-points release conditions; partial point retention where authorized; full point forfeiture where authorized; no-show treatment; service-specific restrictions; applicable exception procedures.
-
-The existence of these possible settings does not establish their numerical values. Do not invent cancellation cutoff times or percentages.
-
-Required behavior when a reservation is cancelled: identify the applicable approved policy; determine the allowed treatment; apply the authorized release, retention, or forfeiture; update Reserved and Available points correctly; preserve the original booking; record the cancellation outcome; preserve the policy version used; maintain audit history.
-
-Authorized exceptions: Reservations/Operations staff may handle exceptions within their granted authority and approved company policy. Do not presume they can override signed contractual restrictions.
-
-No-show handling: no-shows must follow the applicable configured policy. Do not automatically forfeit all points unless the authorized policy requires it.
-
-Policy changes: Admin changes should apply according to the authorized effective-date and applicability rules. Do not silently replace a cancellation policy already governing an approved reservation.
-
-### Rule 6 — Combined Stay Points + Cash
-
-Eligible resort services may be paid using Stay Points + Monetary Payment. The monetary portion may use an approved company payment method.
-
-Example (illustrative, not a fixed conversion): eligible resort service price ₱5,000; applicable points contribution under configured redemption policy ₱3,000 equivalent; remaining monetary payment ₱2,000.
-
-Required business separation: points portion managed through Redemption and Stay Points workflow; monetary portion managed through Finance verification.
-
-Finance authority: only authorized Finance personnel may verify monetary receipt. Reservations personnel cannot treat a cash payment as verified merely because a customer uploaded a receipt.
-
-Required records: service price; applicable redemption pricing method; points requested; points reserved; applicable points valuation; monetary portion due; Finance-verified monetary payment; remaining monetary balance; booking confirmation; actual service completion; final points consumption.
-
-Do not assume that an unverified monetary payment represents received funds. Prevent the same monetary payment from being counted more than once. Prevent the same points from being allocated to several bookings. Do not count redeemed points as new cash receipts. Refunds and reversals of monetary payments must remain distinguishable from points adjustments.
-
-### Rule 7 — Finance Verification Before Mixed-Payment Booking Confirmation
-
-A Points + Cash booking cannot become Confirmed until Finance verifies the required monetary portion.
-
-Approved workflow:
-
-1. Customer submits a Points + Cash booking request.
-2. Reservations reviews the service, customer eligibility, points, and availability.
-3. Reservations approves the redemption component.
-4. The required Stay Points are Reserved.
-5. Booking remains Pending Payment.
-6. Customer submits the required monetary payment.
-7. Finance verifies actual receipt.
-8. Reservations confirms the booking, subject to service availability.
-9. The customer receives the approved service or accommodation.
-10. Once the service is completed and verified, reserved points are finally consumed.
-
-Important distinctions: redemption approval is not booking confirmation; points reservation is not points consumption; payment submission is not Finance verification; Finance verification is not automatically service completion; booking confirmation does not automatically consume reserved points.
-
-Availability: confirmation remains subject to actual service availability. Do not claim that points approval guarantees permanent inventory availability. If a requested service becomes unavailable before Finance verification, the system must support a controlled resolution without silently confirming an unavailable booking. Exact inventory-hold durations or payment deadlines must follow an approved policy. Do not invent deadlines or automatic cancellation timers.
+**Superseded.** The earlier "Seven Approved Redemption Rules" (undated) are replaced as follows: Rule 1 (Admin-configured monetary conversion or service-specific points pricing for any resort service) and Rule 5 (Admin-configured partial retention and no-show policies) are superseded by decisions 1, 3 and 5. Rule 2 (stay date selects the bucket), Rule 3 (staff review), Rule 4 (reserve, then consume after the stay) and Rule 7 (Finance verifies any money portion) are retained as refined below. Rule 6 (Points + Cash) is retained only for accommodation, with the split method outstanding (section 9.3).
 
 ---
 
-## 5. Membership and Points Eligibility
+## 5. Eligible Venues and Use (Grant §I, §I-A)
 
-The Redemption module must consume the authoritative VIP Membership rules from `09-vip-membership-and-stay-points.md`.
-
-### 5.1 Membership Eligibility
-
-Consider: Active membership status; applicable membership validity; authorized membership benefits; contract restrictions; Financial Hold; other applicable restrictions. Do not permit point usage that bypasses an active membership restriction.
-
-### 5.2 Financial Hold
-
-If an Active membership enters Financial Hold due to a verified membership-purchase payment reversal and resulting outstanding contractual balance, new benefit usage is restricted. The original membership and VIP Card ID remain preserved.
-
-### 5.3 Points Hold
-
-Points Hold is separate from Membership Financial Hold. Points may be held because a qualifying resort transaction was refunded or reversed. Held points cannot be used for new redemption while the relevant restriction remains. Finance manually reconciles affected points under the existing approved rules. Resolving one hold does not automatically resolve an unrelated hold.
-
-### 5.4 Pending Points
-
-Points earned before satisfying the annual minimum qualifying spend remain Pending. Pending points are not spendable.
-
-### 5.5 Annual Earning Capacity
-
-Unused annual earning allowance is not a spendable points balance. Do not permit redemption of merely potential annual points.
+1. Points settle accommodation charges only, at overnight venues of the AFhomes Direct Operations that are open at the time of the stay.
+2. Points are not used for dining, wellness, entrance or other services, and never at concessionaires, even if they use the AFhomes brand.
+3. The venue list is configured by Admin or Super Admin with each venue's opening status, so a venue becomes bookable only once open. Additional directly operated venues designated by the company are added the same way (Grant §I-A).
+4. Points have no cash value, are never cashed out, and are not sold, bartered or used as collateral (Grant §V).
+5. Use is subject to availability and each venue's reservation and check-in protocols (Grant §I).
 
 ---
 
-## 6. Weekday and Weekend Balance Management
+## 6. Eligibility
 
-The existing approved points policy separates Weekday and Weekend balances. Earning limits: Bronze 7,000 Weekday / 3,000 Weekend; Silver 14,000 / 6,000; Gold 17,500 / 7,500. These are earning limits, not necessarily the member's current spendable balances. The Redemption module must use the actual current eligible wallet balance for the relevant bucket.
+A booking with points requires all of:
 
-Track separately: Earned points; Pending points; Available points; Reserved points; Held points; Consumed points; Forfeited or expired points. Redeeming points does not restore annual earning capacity. Do not permit unrestricted cross-bucket borrowing.
+1. full payment acknowledged (Finance-verified Full Settlement, doc 06 §4.3);
+2. an Active membership within its Validity Period (doc 06 §4.3);
+3. no Membership Financial Hold (doc 09 §17.2);
+4. enough available released points in the bucket each night needs (doc 09 §15);
+5. an open overnight venue with availability;
+6. the card has been claimed (Card Claim Date recorded, doc 06 §4.3).
 
----
-
-## 7. Redemption Request Lifecycle
-
-Conceptual request states (illustrative business states; inspect repository before defining exact enum names; do not claim these are already implemented): Draft; Submitted; Under Review; Approved; Pending Payment; Confirmed; In Service; Completed; Cancelled; Rejected; No-Show; Exception Review.
-
-Required transitions: submission; eligibility review; approval or rejection; points reservation; pending monetary verification where applicable; booking confirmation; service completion; final points consumption; cancellation and reversal; exceptions and reconciliation.
-
-Preserve a clear separation between Redemption Request Status, Booking/Reservation Status, Points Reservation Status, and Monetary Payment Status. These must not be incorrectly collapsed into one field or state concept.
+Unreleased, Non-Activated or forfeited tranches are never usable. Points cannot be redeemed before the card is claimed, even by a fully paid cardholder (owner follow-up ruling, 2026-11-12; doc 09 §21).
 
 ---
 
-## 8. Service Availability
+## 7. Weekday/Weekend Buckets and Holidays
 
-Approval and booking confirmation must follow actual service availability. Conceptually account for requested service, requested dates, capacity or inventory availability, existing confirmed reservations, applicable service restrictions, and contractual booking priority conditions. Do not invent booking availability or guarantee rooms that have not been confirmed.
-
-If availability changes while a booking is Pending Payment, the system must allow authorized staff to resolve the booking consistently. Potential outcomes may require rescheduling, cancellation, or points release under the applicable policy. Do not automatically select a commercial resolution without authorization. Exact inventory-hold durations or payment deadlines must follow an approved policy. Do not invent deadlines or automatic cancellation timers.
-
----
-
-## 9. Partial Points and Monetary Settlement
-
-For combined Points + Cash bookings, points and monetary obligations remain linked without being confused. Points: reserved upon approval; protected from double use; consumed after completed service. Monetary portion: recorded according to Finance policies; verified only by Finance; required before booking confirmation. Completion: service completion must reconcile the actual points consumed and relevant monetary payment records. Do not independently rewrite Finance settlements within the Redemption workflow.
-
-If a customer lacks sufficient eligible points, the system may support the normal authorized monetary booking process where applicable. Do not imply that an ineligible points request automatically changes into a confirmed cash booking.
+1. Each night of a stay is classified by its own date: weekday/non-holiday nights use weekday points; weekend nights and holiday nights use weekend points. The booking date does not matter.
+2. A stay crossing both kinds of night draws each night from its own bucket.
+3. Buckets never convert. A shortfall in one bucket cannot be covered from the other.
+4. Which nights of the week are weekend nights is set in the Terms of Use configuration by Admin or Super Admin; no default is assumed here.
+5. Admin or Super Admin keeps the yearly holiday calendar. A date listed as a holiday is a holiday night. Calendar changes are versioned and do not reprice confirmed bookings.
 
 ---
 
-## 10. Cancellations, Reversals, and Refunds
+## 8. Redemption Basis (Terms of Use table)
 
-### 10.1 Cancellation Before Booking Confirmation
-
-Document the controlled handling of a redemption that has been approved and has reserved points but remains Pending Payment. The applicable cancellation and points-release behavior must follow Admin-configured policies and governing contracts. Do not automatically retain or forfeit points merely because payment is incomplete. Document how unresolved pending monetary payment and reserved points must be reconciled.
-
-### 10.2 Cancellation After Booking Confirmation
-
-If a Confirmed booking is cancelled: (1) determine the applicable cancellation policy; (2) check the authorized cancellation reason and date; (3) determine points restoration or forfeiture; (4) reconcile any monetary payment obligations; (5) preserve booking and payment history; (6) update relevant balances; (7) record the cancellation decision.
-
-Finance interaction: if monetary funds require refund or reversal, Finance controls those financial operations under its approved authority. Reservations approval does not authorize staff to independently reverse verified cash payments.
-
-Points interaction: the points treatment follows the applicable redemption cancellation policy. Do not assume a cash refund necessarily requires identical proportional points restoration. Any mixed-payment refund allocation policy must be separately approved or verified from the governing contract.
-
-### 10.3 Cancellation After Partial Service
-
-A booking may be partially fulfilled. Do not invent universal partial-redemption or partial-refund formulas. Document the need to reconcile actual completed services, reserved points, monetary payments, and contractual cancellation conditions. Use existing official service-pricing policies where available. Flag missing partial-completion rules for future approval.
-
-### 10.4 No-Shows
-
-No-shows must be recorded and handled according to the applicable approved policy. Required business information may include original booking, scheduled service date, no-show determination, applicable cancellation policy, points reserved, points released or forfeited, financial treatment, authorized staff action, audit history. Do not automatically label an unverified absence as a final no-show without an authorized workflow.
+1. Admin or Super Admin maintains the points-per-night table: venue, room type or category where applicable, night classification (weekday/non-holiday or weekend/holiday), points per night, version, and effective date.
+2. Each card uses the version in effect on its Card Claim Date for its whole validity. A later version applies only to cards whose Card Claim Date is on or after its effective date (Grant §I: "applies only to VIP Privilege Cards issued after such adjustment").
+3. Versions are never edited in place or deleted; a change is a new version.
+4. The points value of each booking (version used, nights, points per night) is stored on the booking.
+5. No points values are set in this document; they are configured by Admin or Super Admin.
 
 ---
 
-## 11. Points Reservation and Ledger Integrity
+## 9. Booking Workflow
 
-### 11.1 Points Reservation
+### 9.1 Steps
 
-The Redemption module must not directly treat available points as consumed until the required service-completion event. A reservation must be associated with: customer, membership, redemption request, service, scheduled date, applicable point bucket, reserved amount, applicable pricing configuration, approval identity, reservation timestamp, related booking and payment state. These are conceptual requirements, not a database schema.
+1. Authorized office or front-desk staff record the booking request for the cardholder: VIP Number, venue, dates, room type, guests.
+2. Staff check eligibility (section 6), night classification (section 7), the card's redemption basis version (section 8) and availability.
+3. If this is the first redemption and the PAD is not yet set, the PAD rules apply (section 11).
+4. On confirmation the required points are Reserved in each bucket. Reserved points cannot be used for another booking.
+5. After the completed stay, staff record completion and the Reserved points become Consumed.
 
-Available balance protection: a point reservation must prevent the same points from being used by another booking.
+A booking request does not consume points. Confirmation is not consumption. Completion is recorded once; repeated actions never move points twice.
 
-Multiple requests: a customer may have several authorized redemption requests. The system must verify available unreserved points when each new reservation is approved. Prevent over-reservation.
+### 9.2 Who books
 
-Idempotency: repeated approval, confirmation, cancellation, or completion calls must not cause duplicate point movements.
+Bookings are an action permission (R4 item 6). Front-desk or office staff holding the Bookings operation permission make bookings. There is no separate approval step. Every booking is audited, and an Administrator (or the Super Administrator) can cancel or correct any booking (owner follow-up ruling, 2026-11-12). Sellers never book, approve or view unrelated members' points.
 
-### 11.2 Final Points Consumption
+### 9.3 Points plus money
 
-Reserved points are finally consumed after actual authorized service completion. Preserve: source reservation, original points reservation, actual completed service, final points amount, correct Weekday/Weekend bucket, completion timestamp, authorized completion record, audit history. Do not generate duplicate completed redemption records. Do not silently consume points merely because the booking date has passed. Actual completion or another separately authorized contractual outcome must be established.
-
-### 11.3 Points Restoration and Forfeiture
-
-Reserved points may be released or retained according to applicable policies. Distinguish Release (reserved points return to eligible available balance), Forfeiture (points removed or restricted according to a valid contractual or cancellation provision), Adjustment (authorized reconciliation changes the applicable points treatment), and Hold (points remain temporarily unusable while an issue is under review). These must not be treated as identical operations. Preserve original earning, reservation, and redemption records.
-
----
-
-## 12. Admin-Configurable Redemption Policies
-
-### 12.1 Redemption Pricing Configuration
-
-Authorized Admin must be able to manage the approved pricing model for eligible services. Conceptual configuration requirements: eligible service reference; redemption pricing method; approved conversion rate when using monetary conversion; service-specific points cost when using fixed points pricing; effective date; availability or eligibility restrictions; applicable contract limitations; configuration status; audit history. Do not invent a database structure or implement settings forms.
-
-Future flexibility: additional redemption pricing methods may be proposed later. Do not permanently restrict the architecture to exactly two methods if the approved business model later changes. However, only the currently authorized methods should be represented as approved today.
-
-### 12.2 Cancellation Policy Configuration
-
-Authorized Admin can configure service-specific cancellation policies. Conceptual configuration may include: applicable service; cancellation eligibility; notice requirements; points-release behavior; authorized points-retention behavior; no-show behavior; exception permissions; policy effective date; status; audit information. Do not invent default numerical values. Do not grant unauthorized staff access to edit company-wide cancellation policy settings.
-
-### 12.3 Configuration Changes and Historical Transactions
-
-Future configuration changes must be controlled: authorized policy changes; clear identification of the active policy; effective dates; historical policy traceability; preservation of existing signed contract rights; protection against silent repricing of approved bookings; audit records of policy changes.
-
-Example: an accommodation previously required 3,000 points; Admin later changes the future service price to 3,500 points. New eligible redemption requests may use the new authorized price according to its effective-date rule. Previously approved bookings must not silently become liable for another 500 points. Any authorized change to an existing booking must follow the applicable contractual and modification workflow.
+Points plus cash for a stay is allowed (owner follow-up ruling, 2026-11-12). Where a stay is paid partly in money, the money part follows doc 07: it counts only after Finance (or the Administrator or the Super Administrator) approves the receipt, with a unique reference number. The booking stays Pending Payment until then. A stay is split by whole nights: each night is paid fully in points or fully in money (owner follow-up ruling, 2026-11-12).
 
 ---
 
-## 13. Gold Supplementary Holders
+## 10. Cancellation and No-Show (owner ruling R12 item 5)
 
-The updated Gold VIP membership permits one eligible supplementary holder under the applicable contract. Primary and supplementary holders share the same membership's points. They do not receive independent duplicate points balances.
-
-Redemption requirements: verify authorized holder identity; verify membership eligibility; use the shared underlying membership balance; check available unreserved points; preserve correct transaction attribution; prevent duplicate point usage; respect the signed contract's supplementary-holder restrictions. The Gold membership's annual earning cap remains shared. Do not create another annual allowance for the supplementary holder.
-
----
-
-## 14. Historical Memberships
-
-### 14.1 Preserve Historical Contracts
-
-Existing contracts may contain Card Claim Date rules, separate Points Activation Date rules, historical welcome-gift provisions, different benefit activation timing, contract-specific expiration conditions, different redemption eligibility rules. The newly approved Redemption policy must not automatically override those signed terms.
-
-The applicable signed contract governs the member's rights unless validly amended. Do not bulk-convert historical redemption transactions or balances into the new model. Do not invent historical redemption dates. Do not fabricate points-consumption events. Do not modify historical VIP Card IDs.
-
-### 14.2 Historical Points Balances
-
-If a historical membership already has a verified points balance, preserve that balance and its applicable restrictions. Do not infer that it was earned through the newer ₱1-to-1-point model. The Redemption module must distinguish actual available legacy points from new transaction-based points. Avoid double crediting, duplicate redemption, and unauthorized use.
+1. Each venue's configuration holds its cancellation cut-off, set by Admin or Super Admin.
+2. Cancellation before the cut-off returns the Reserved points to the same bucket they came from.
+3. A no-show forfeits the Reserved points. Staff record the no-show; it is never assumed from the date passing.
+4. Cancellation after the cut-off forfeits the Reserved points, like a no-show (owner follow-up ruling, 2026-11-12). Staff record the late cancellation with its date and time.
+5. Points returned on cancellation keep their original tranche and remain subject to forfeiture at card expiry (doc 09 §19).
+6. Every cancellation, return and forfeit is a ledger entry with actor, date and reason.
 
 ---
 
-## 15. Roles and Permissions
+## 11. Points Activation Date Link (R12 item 8; Grant §I-B(c))
 
-Reconcile the Redemption workflow with `docs/business-rules/01-roles-and-permissions.md`.
-
-### Customer
-
-May submit eligible redemption requests through the authorized customer-facing workflow when available. May view their permitted redemption records and balances. Cannot approve their own redemption.
-
-### Reservations/Operations
-
-May review and manually approve or reject requests according to assigned authorization. May confirm bookings after required Finance verification. May record service completion and handle authorized cancellation exceptions.
-
-### Finance
-
-Controls verification of monetary payments, monetary refunds, reversals, and applicable financial reconciliations. Finance payment authority must not be confused with normal Reservations approval authority.
-
-### Admin
-
-Controls the explicitly approved redemption pricing and cancellation policy configurations. Admin authority remains subject to existing role and module permissions.
-
-### IST and OST
-
-Access remains subject to established Sales Network and Customer Management privacy rules. Do not automatically grant Sales Network users permission to redeem customer points, approve bookings, or access unrelated member balances.
-
-### Security
-
-A sidebar item or visible page does not establish authorization. Business rules must be enforced through actual server-side and record-level controls in a future authorized implementation.
+1. If the PAD is not yet set, the first redemption before the second anniversary of the Card Claim Date sets the PAD on that date. The first redemption is the first stay where points are actually used at check-in; a booking cancelled in time does not count (owner follow-up ruling, 2026-11-12).
+2. Tranche 1 is due on the PAD and is released only if the Year 1 condition is met (doc 09 §12). The booking proceeds only if points are then available.
+3. If the Year 1 condition is not met at that moment, tranche 1 is not released and is not carried over (owner follow-up ruling, 2026-11-12; doc 09). The booking proceeds only if other released points are available.
 
 ---
 
-## 16. Current Feature Status
+## 12. Card Transfer (R12 item 7; Grant §V)
 
-### 16.1 Redemption Module Preservation and Disablement
-
-The planned standalone AFHomes MongoDB system has an explicit architectural decision: Redemption and Services modules must be preserved, but hidden and disabled for now. Do not delete their code or planned functionality. Do not reactivate them through this documentation task.
-
-### 16.2 Required Design Distinction
-
-Document the future intended Redemption business rules separately from current feature availability. The business-rule document can specify how Redemption must behave when authorized for implementation and activation. It does not authorize making Redemption visible in the sidebar, enabling customer redemption submissions, activating Redemption routes, enabling disabled Redemption APIs, turning on redemption feature flags, enabling automatic points consumption, reactivating Services, or modifying the deployment.
-
-### 16.3 Future Reactivation
-
-Reactivation must require a separate explicit authorization and controlled verification of eligibility, balances, pricing, permissions, financial integration, and existing records. Do not assume the current checkout is already the MongoDB implementation. Inspect the actual repository and describe its verified state separately.
+1. A transfer needs a formal written request from the Primary Cardholder and written management approval. Sellers cannot approve it.
+2. The transfer takes effect only after the company's required documents and conditions are met; any transfer fee is set by management. Unapproved transfers are void.
+3. The old holder's unused points are forfeited and cannot be used by anyone; they are closed as "not transferred" (doc 09 §18). The new holder gets only future tranches, under the original Grant terms (owner follow-up ruling, 2026-11-12).
+4. Confirmed future points bookings of the former holder are cancelled when the transfer takes effect, because the former holder's points are forfeited. Staff inform the former holder before the transfer is finalized (owner follow-up ruling, 2026-11-12).
+5. On the cardholder's death, the heirs request a written transfer, which management approves; the same transfer rules apply (owner follow-up ruling, 2026-11-12; Grant §V; doc 09 §18).
 
 ---
 
-## 17. Reporting
+## 13. Points Ledger Integrity
 
-Document business-level reporting for: submitted redemption requests; requests under review; approved requests; reserved points; pending-payment bookings; confirmed bookings; completed services; final consumed points; cancelled requests; released points; forfeited points; no-shows; Points + Cash transactions; monetary payments verified by Finance; cancellation exceptions; redemption activity by service; redemption activity by VIP tier; Weekday and Weekend consumption; points reconciliation exceptions.
-
-Reporting integrity: do not report Reserved points as finally consumed; do not report unverified cash claims as verified revenue; do not count the same redeemed points multiple times; do not classify a Pending Payment booking as Confirmed; do not assume a Confirmed booking represents a completed service.
+Every movement (reserve, consume, cancellation return, no-show forfeit, transfer closure) is a ledger entry referencing membership, VIP Number, booking, bucket, tranche, amount, redemption basis version, actor and date (doc 09 §15.2). Prevent over-reservation and double use. Repeated approval, cancellation or completion calls never create duplicate movements. Original records are never overwritten.
 
 ---
 
-## 18. Audit History
+## 14. Gold Supplementary Cardholder
 
-Document audit requirements for: redemption request creation; submission; eligibility review; approval or rejection; points reservation; monetary payment submission reference; Finance verification reference; booking confirmation; service completion; final points deduction; cancellation; no-show determination; points release; points forfeiture; exception approval; pricing configuration changes; cancellation policy changes; monetary refund/reversal reconciliation; historical corrections.
-
-Audit records should identify: acting user or system; relevant customer and membership; redemption request; service; scheduled date; relevant points bucket; original and resulting amounts; applicable policy version; previous and resulting status; timestamp; reason; supporting reference.
-
-Do not delete audit history when a redemption is cancelled, adjusted, or reversed.
+The Gold Supplementary Cardholder books from the same shared pool as the Primary Cardholder (Gold Grant §I). There is one balance per bucket; the booking records which holder stays.
 
 ---
 
-## 19. Cross-Module Dependencies
+## 15. Historical Memberships
+
+Each membership follows the Grant template it was signed on. Imported balances and bookings are preserved as recorded (doc 09 §20). Do not fabricate historical redemptions or recompute past bookings under a new basis version.
+
+---
+
+## 16. Roles and Permissions
+
+Align with `01-roles-and-permissions.md` and the overriding authority rule (owner, 2026-11-12):
+
+- **Super Administrator and Administrator:** everything, including the Terms of Use table, holiday calendar, venue configuration and cut-offs, exceptions and corrections. Self-approval is allowed and audited.
+- **Office or front-desk staff:** bookings, completion and no-show recording, within their action permissions.
+- **Finance:** verifies any money part and its refunds.
+- **Clerk:** enters only.
+- **Sellers:** view only within their record scope; never book or approve.
+- **Customers:** self-service portal deferred.
+
+A visible page is never authorization; enforcement must be server-side once built.
+
+---
+
+## 17. Current Feature Status
+
+Redemption and Services code is preserved but hidden and disabled. Do not make Redemption visible, enable routes, APIs, feature flags or customer submissions, or reactivate Services through documentation work. Reactivation needs separate explicit owner authorization and verification of eligibility, balances, basis versions, permissions, Finance integration and existing records.
+
+---
+
+## 18. Reporting
+
+Report: bookings requested, confirmed, completed, cancelled and no-show; points reserved, consumed, returned and forfeited per bucket; nights by venue and night classification; bookings by tier; PADs set by redemption; points plus money bookings and their Finance status; transfers.
+
+Integrity: Reserved is not Consumed; a Pending Payment booking is not Confirmed; the same points are never counted twice; Gold primary and supplementary holders share one balance.
+
+---
+
+## 19. Audit History
+
+Audit: booking creation, confirmation, completion, cancellation, no-show; each points movement; PAD set by redemption; Terms of Use table versions; holiday calendar changes; venue and cut-off changes; transfer requests and approvals; Finance verification references; corrections. Each record keeps actor, timestamp, membership, booking, bucket, amounts, basis version, previous and resulting status, reason and reference. Audit history is never deleted.
+
+---
+
+## 20. Cross-Module Dependencies
 
 | Module | Redemption integration |
 |---|---|
-| Customer Management | Customer identity and authorized transactions |
-| VIP Membership and Stay Points | Membership eligibility, points balances, holds, buckets |
-| VIP Products and Contracts | Contractual entitlements and restrictions |
-| Finance and Payments | Monetary verification, refunds, reversals |
-| Roles and Permissions | Access control |
-| Sales Network | Customer/sales visibility |
+| VIP Membership and Stay Points | PAD, released balances, buckets, Financial Hold, forfeiture |
+| VIP Card Issuance | VIP Number, Card Claim Date, validity |
+| Finance and Payments | Money part verification, refunds, reversals |
+| VIP Products and Contracts | Contract template and entitlements |
+| Customer Management | Customer identity |
+| Roles and Permissions | Action permissions |
 | Reports and Analytics | Redemption reporting |
 | Audit Logs | Traceability |
-| Redemption (this module) | Request lifecycle, reservation, consumption |
 
 ---
 
-## 20. Required Business Scenarios
+## 21. Required Business Scenarios
 
-(See Part XV of the task prompt for scenarios A–T; summarized here with expected outcomes.)
+- **A (Weekend night booked on a weekday):** booking made Monday for a Saturday night → weekend points.
+- **B (Mixed stay):** Thursday and Friday nights where Friday is a configured weekend night → one night from each bucket.
+- **C (Holiday):** a Tuesday listed in the holiday calendar → weekend/holiday points.
+- **D (Shortfall in one bucket):** enough weekday but not weekend points for a Saturday → cannot borrow; booking not confirmed with points for that night.
+- **E (Basis version):** card claimed 2028-05-01; Admin publishes a new table effective 2029-01-01 → the card keeps the earlier version.
+- **F (Concessionaire):** a concessionaire restaurant under the AFhomes brand → points not accepted.
+- **G (Not yet paid):** cardholder with a balance → no redemption.
+- **H (Cancellation before cut-off):** points returned to the same bucket.
+- **I (No-show):** staff record the no-show → reserved points forfeited.
+- **J (First redemption):** first booking before the second anniversary of the Card Claim Date → PAD set; tranche 1 release check runs.
+- **K (Transfer):** approved transfer with unused points → points not passed to the new holder.
+- **L (Duplicate completion):** completion recorded twice → points consumed once.
+- **M (Financial Hold):** membership on Financial Hold → no new booking with points.
+- **N (Module disabled):** no redemption workflow is reachable in the application until authorized.
 
-- **Scenario A (Weekend booking made on weekday):** Weekend points required; booking date does not determine bucket.
-- **Scenario B (Service-specific points pricing):** use applicable approved points cost; do not assume 1 point = ₱1.
-- **Scenario C (Monetary conversion pricing):** calculate required points using authorized conversion; preserve applied rate in transaction history.
-- **Scenario D (Manual approval):** request awaits authorized Reservations/Operations review; no automatic approval.
-- **Scenario E (Points reserved on approval):** 2,000 of 5,000 reserved; 3,000 remain available; no final consumption yet.
-- **Scenario F (Completed service):** reserved points finalized as consumed; original reservation history preserved; no duplicate deduction.
-- **Scenario G (Mixed Points + Cash):** points reservation follows approval; booking remains Pending Payment; Finance verifies monetary portion; Reservations may confirm after verification, subject to availability.
-- **Scenario H (Unverified cash payment):** booking remains Pending Payment; no false Finance confirmation.
-- **Scenario I (Eligible cancellation):** applicable reserved points released according to policy; original records preserved.
-- **Scenario J (Late cancellation):** apply configured and contractually permitted treatment; do not invent universal penalties.
-- **Scenario K (No-show):** authorized staff establishes no-show status; apply governing policy; record points and financial treatment.
-- **Scenario L (Insufficient points):** do not over-reserve; do not use Pending or Held points; do not automatically approve unauthorized redemption.
-- **Scenario M (Membership Financial Hold):** new redemption benefit usage restricted; historical transactions remain.
-- **Scenario N (Points Hold):** held points unavailable; Finance reconciliation follows approved Stay Points rules.
-- **Scenario O (Gold shared membership):** correct single shared wallet; no duplicate point allocations or independent earning entitlement.
-- **Scenario P (Pricing policy change):** earlier booking remains traceable under its governing pricing policy; no silent retroactive repricing.
-- **Scenario Q (Duplicate completion):** points not deducted twice; existing completion remains traceable.
-- **Scenario R (Multi-day booking):** follow applicable contract and approved classification policy; do not invent split calculation if policy not established.
-- **Scenario S (Historical membership):** preserve actual applicable entitlement terms; no invented historical transactions or retroactive conversion.
-- **Scenario T (Redemption module disabled):** no new active redemption workflow accessible; existing historical information preserved; documentation does not authorize feature reactivation.
-
-Do not claim these scenarios have passed executable tests. They are documentation acceptance examples.
+These are documentation acceptance examples, not executed tests.
 
 ---
 
-## 21. Business Invariants
+## 22. Business Invariants
 
-1. Redemption business policies may be revised through future authorized decisions.
-2. Admin may configure approved redemption pricing methods.
-3. No universal monetary redemption value is implied by the earning conversion.
-4. Eligible redemption services must respect applicable contracts.
-5. Actual scheduled stay/service date determines Weekday/Weekend points usage.
-6. Holiday classification follows governing contract terms.
-7. Reservations/Operations manually approves redemption requests.
-8. No automatic redemption approval.
-9. Points become Reserved upon approval.
-10. Reserved points are unavailable for competing redemptions.
-11. Points are finally consumed only after authorized actual service completion or a separately approved contractual outcome.
-12. Cancellation handling follows approved Admin-configured policies.
-13. Staff may handle only authorized exceptions.
-14. Points + Cash is an approved payment arrangement for eligible services.
-15. Finance exclusively verifies the monetary portion.
-16. Mixed-payment bookings remain Pending Payment until required Finance verification.
-17. Reservations confirms the booking afterward, subject to availability.
-18. Pending points are not spendable.
-19. Held points are not spendable.
-20. Annual earning capacity is not a wallet balance.
-21. Weekday and Weekend balances remain separate.
-22. No unauthorized automatic bucket conversion.
-23. No duplicate points reservation or consumption.
-24. Membership Financial Hold restricts new benefit usage.
-25. Existing signed contract rights must remain protected.
-26. Historical redemption records remain auditable.
-27. Admin policy changes do not silently rewrite earlier approved transactions.
-28. No automatic monetary cash-out is authorized.
-29. Refunds and cancellations must preserve both financial and points history.
-30. The Redemption module must remain disabled in the planned MongoDB system until separately authorized.
-
-Do not interpret these as permanent rules immune to future policy change. They represent the current approved operational baseline.
+1. Points pay only for accommodation at open AFhomes Direct Operations overnight venues.
+2. No redemption before full payment is acknowledged.
+3. Each night's date selects the bucket; buckets never convert.
+4. Holidays follow the Admin-kept yearly calendar.
+5. Each card uses the redemption basis version in effect on its Card Claim Date.
+6. Basis changes apply only to cards issued after them.
+7. Cancellation before cut-off returns points to the same bucket; a cancellation after cut-off or a no-show forfeits them.
+8. Points are reserved on confirmation and consumed only after the completed stay.
+9. No duplicate reservation or consumption.
+10. The first redemption sets the PAD if before the second anniversary of the Card Claim Date.
+11. Unused points do not pass on a transfer.
+12. No cash value and no cash-out.
+13. Any money part is verified under doc 07.
+14. Redemption stays disabled until the owner authorizes the build.
 
 ---
 
-## 22. Outstanding Dependencies
+## 23. Outstanding Dependencies and Owner Decisions
 
-- Exact Admin-configured redemption conversion rates.
-- Exact service-specific points prices.
-- Exact eligible resort-service catalog.
-- Specific cancellation windows and penalties.
-- No-show forfeiture rules.
-- Mixed weekday/weekend multi-day booking calculations.
-- Policy-version applicability when a booking spans a configuration change.
-- Inventory-hold duration.
-- Payment deadlines.
-- Treatment when service availability changes during Pending Payment.
-- Partial stay or partial service completion.
-- Partial points restoration.
-- Monetary refund allocation for combined Points + Cash.
-- Exceptional cancellation approvals.
-- Holiday calendars and contract-specific treatment.
-- Treatment of refunds after completed services.
-- Historical contract-specific redemption provisions.
+Outstanding owner decisions:
+- Resolved 2026-11-12: points plus money is split by whole nights; a former holder's future points bookings are cancelled at transfer; a failed Year 1 condition means tranche 1 is not released.
 
-Categorize unresolved items without turning them into unsupported requirements. Do not ask the project owner minor questions during this documentation-only task. The seven approved decisions are sufficient to document the core workflow.
+Configured by Admin or Super Admin (no values set here): points per night per venue and room type; which nights are weekend nights; holiday calendar; venue list and opening status; cut-off per venue; transfer fee (management).
+
+Other dependencies: customer self-service portal (deferred); booking inventory and availability source.
 
 ---
 
-## 23. Implementation Acceptance Checklist
+## 24. Implementation Acceptance Checklist
 
-### Policy Configuration
-- [ ] Current approved policies are distinguishable from permanent contractual entitlements.
-- [ ] Future authorized policy revisions are supported conceptually.
-- [ ] Admin-configured monetary conversion is documented.
-- [ ] Admin-configured service points pricing is documented.
-- [ ] Cancellation policy configuration is documented.
-- [ ] Effective dates and historical policy preservation are covered.
+### Configuration
+- [ ] Venue list with opening status; overnight venues only.
+- [ ] Versioned points-per-night table with effective dates.
+- [ ] Yearly holiday calendar.
+- [ ] Cut-off per venue.
 
 ### Eligibility
-- [ ] Active membership requirement.
-- [ ] Contractual eligibility.
-- [ ] Financial Hold restrictions.
-- [ ] Points Hold restrictions.
-- [ ] Pending points excluded.
-- [ ] Sufficient available points.
-- [ ] Gold supplementary-holder sharing.
+- [ ] Full payment acknowledged.
+- [ ] Active membership within validity.
+- [ ] No Financial Hold.
+- [ ] Sufficient released points per bucket.
+- [ ] No redemption before the card is claimed.
 
-### Redemption Approval
-- [ ] Manual Reservations/Operations review.
-- [ ] Availability verification.
-- [ ] Correct Weekday/Weekend bucket.
-- [ ] Holiday treatment.
-- [ ] Approval and rejection.
-- [ ] Audit history.
+### Booking
+- [ ] Per-night bucket selection; no conversion.
+- [ ] Card's basis version applied and stored.
+- [ ] Reserve on confirmation; consume after completion.
+- [ ] First redemption sets the PAD.
+- [ ] Money part verified under doc 07.
 
-### Points Handling
-- [ ] Reserve upon approval.
-- [ ] Prevent double spending.
-- [ ] Reserved versus consumed distinction.
-- [ ] Final consumption after service completion.
-- [ ] Correct bucket deduction.
-- [ ] Cancellation restoration/forfeiture.
-- [ ] No duplicate ledger movements.
+### Cancellation and Transfer
+- [ ] Return to same bucket before cut-off.
+- [ ] No-show forfeit recorded by staff.
+- [ ] Cancellation after the cut-off forfeits the points.
+- [ ] Unused points not passed on transfer.
 
-### Mixed Payments
-- [ ] Points + Cash allowed.
-- [ ] Applicable Admin pricing used.
-- [ ] Monetary amount tracked separately.
-- [ ] Finance verification required.
-- [ ] Booking remains Pending Payment before verification.
-- [ ] Reservations confirmation after verification and availability check.
-- [ ] Service completion and points consumption separated.
-
-### Cancellation and Reconciliation
-- [ ] Service-specific cancellation policies.
-- [ ] No-show treatment.
-- [ ] Authorized staff exceptions.
-- [ ] Cash refund and points restoration distinguished.
-- [ ] Historical records preserved.
-
-### System Architecture
-- [ ] RBAC consistency.
-- [ ] Finance integration.
-- [ ] VIP Membership integration.
-- [ ] Stay Points integration.
-- [ ] Historical contract protection.
-- [ ] Reporting and audit requirements.
-- [ ] Redemption remains disabled in planned MongoDB system.
-- [ ] No unauthorized implementation assumptions.
+### System
+- [ ] Action permissions per doc 01; Admin and Super Admin self-approval audited.
+- [ ] Ledger and audit complete.
+- [ ] Redemption remains disabled until authorized.
 
 ---
 
 ## Completion Report
 
-- **File created/updated:** `docs/business-rules/10-redemption.md`
-- **Approved rules coverage:** Admin-configured redemption pricing; actual stay/service date determines points bucket; Reservations/Operations manual approval; points reservation and final consumption; Admin-configured cancellation policies; combined Points + Cash; Finance verification before mixed-payment booking confirmation.
-- **Policy flexibility:** Rules described as current approved policy; future authorized revisions supported conceptually; configurable commercial settings identified; historical policy versions traceable; existing signed contractual rights protected; no unauthorized Admin powers introduced.
-- **Cross-module review:** Consistent with 01, 04, 05, 06, 07, 08, 09, 13. No material contradictions identified.
-- **Unresolved dependencies:** Listed in Section 22.
-- **Acceptance results:** All checklist items covered. Documentation completeness does not prove implementation readiness.
-- **Change scope:** Documentation only. No application code, database, migrations, other documentation files, Git commit/push/merge, or deployment. Only `docs/business-rules/10-redemption.md` created. Redemption and Services remain disabled. No unauthorized implementation assumptions.
+- **File updated:** `docs/business-rules/10-redemption.md` (rewrite 2026-11-12, owner ruling R12).
+- **Sources:** signed Grant §I, §I-A, §I-B(c), §V (Silver text lines 51 to 81 and the Bronze and Gold equivalents); owner rulings R10, R11, R12 and the overriding authority rule.
+- **Outstanding:** section 23.
+- **Change scope:** documentation only. Redemption and Services remain disabled. No application code, database, or Git operation.
+
+---
+
+## Owner rulings amendment (2026-11-12, rounds R10 / R12)
+
+These rulings take precedence over earlier text in this document where they differ.
+
+1. **Scope of use.** Points pay only for accommodation at AFhomes Direct Operations offering overnight stays (the Smart Wellness Hotel when open; the Hotspring & Ecofarm Resort when open, targeted April 2028). Third-party concessionaires are excluded. No redemption before full payment is acknowledged.
+2. **Buckets.** Weekday points for weekday and non-holiday stays; weekend points for weekend and holiday stays. They never convert.
+3. **Redemption basis.** The points-per-night Terms of Use table is Admin-maintained, versioned and dated. Each card uses the version in effect on its Card Claim Date; later changes apply only to cards issued after them. This supersedes the earlier monetary-conversion and service-specific pricing methods.
+4. **Holiday calendar.** Admin or Super Admin keeps a yearly holiday calendar.
+5. **Cancellation.** Cancellation before the venue's cut-off returns the points to the same bucket. A no-show forfeits them. Cut-off times are part of each venue's configuration. This supersedes the earlier Admin-configured partial-retention policies.
+6. **Bookings.** Office or front-desk staff make bookings for now. A customer self-service portal is deferred.
+7. **Transfer.** A card transfer needs a written request and written management approval. Unused points do not pass to the new holder.
+8. **Points Activation Date.** The first redemption sets the PAD if it comes before the second anniversary of the Card Claim Date (R10).
+9. **Disabled.** The build stays disabled until the owner authorizes it.
+10. **Earning model (R10).** Points come only from released Annual Welcome Gift tranches (doc 09). The earlier references to ₱1-per-point earning, a per-transaction 70/30 split, Pending points and Points Hold are withdrawn.
+
+## Owner rulings amendment (2026-11-12, follow-ups)
+
+These rulings take precedence over earlier text in this document where they differ.
+
+11. **No redemption before card claim.** Points cannot be redeemed before the card is claimed (section 6; doc 09 §21).
+12. **Late cancellation.** Cancelling a points booking after the venue's cut-off forfeits the points, like a no-show (section 10).
+13. **Points plus cash.** Points plus cash for a stay is allowed (section 9.3). The split is by whole nights (owner follow-up ruling, 2026-11-12).
+18. **Bookings.** Room bookings with points are made by front-desk or office staff with a Bookings operation permission. There is no separate approval step. Every booking is audited, and Admins can cancel or correct any booking (section 9.2).
+19. **First redemption.** The redemption that can set the Points Activation Date is the first stay where points are actually used at check-in. A booking cancelled in time does not count (section 11).
+20. **Card transfer.** After an approved card transfer, the old holder's unused points are forfeited and cannot be used; the new holder gets only future tranches (section 12).
+21. **Death of the cardholder.** The heirs request a written transfer, which management approves; the same transfer rules apply (section 12).

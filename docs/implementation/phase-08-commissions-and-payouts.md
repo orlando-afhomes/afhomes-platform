@@ -4,7 +4,7 @@
 - Objective: commission assignment, the release rules, payout recording and confirmation, and recovery.
 - Business rules: `docs/business-rules/08-commission-management.md` sections 7 to 15 and amendment. Workbook references: OPS sections 5 and 6, AUG R22, OCT R27, R30 to R34, O2 to O10.
 - Depends on: FP6, FP7.
-- Open decisions: G08 (Conflicting), G09. `AGENTS.md` section 5: no universal percentages may be invented. Finance controls percentages, approvals and payouts.
+- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G08 (Conflicting), G09. `AGENTS.md` section 5: no universal percentages may be invented. Finance controls percentages, approvals and payouts.
 - Changed since the atlas baseline: `src/modules/commissions/rules.ts` and `src/data/mock/commission-repository.ts` changed in `fc060bb`. Missing crossing date and payout dates before release are now rejected.
 
 Routes (from the atlas):
@@ -33,7 +33,7 @@ Routes (from the atlas):
 |---|---|
 | Journey | J09 |
 | Current | The platform requires Approved commission, Confirmed Sale, no existing payout, 40% net verified collections, a known qualifying verification date and a completed seven-day wait. |
-| Target | Approve policy by product and effective date. Compare the workbook stages (VIP 100% at the 40% stage; IGP 40% at that stage with the remainder at full payment, through the monthly cycle) with the platform release policy. |
+| Target | Per R8: each person has set DSC and DRI rates frozen on the sale, only the closing seller and the referrer earn per-sale commission, and VIP commission is paid 100% at the month-end of the month 40% is collected, with no 7-day wait. The code must be changed to match; this needs owner authorization. |
 | Layer | Owner decision |
 | Blocked by | G08 (Conflicting) |
 | Acceptance | After the decision: rules live in `src/modules/commissions/` with tests, and effective dates drive which policy applies. |

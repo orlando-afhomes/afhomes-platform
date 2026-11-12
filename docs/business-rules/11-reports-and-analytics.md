@@ -20,6 +20,8 @@ Reports & Analytics provides authorized business users with consolidated operati
 
 Reports & Analytics must not implement application functionality, dashboards, APIs, or database views. This is documentation only.
 
+Scope notes (owner ruling R11, 2026-11-12): IGP sales are in scope and built together with VIP (rules in `docs/business-rules/14-igp-sales.md`). Redemption is planned in doc 10 and stays disabled until the owner authorizes its build. There is no public VIP card or customer lookup (section 21). The CMS (website page editor) is deferred.
+
 ---
 
 ## 2. Related Business-Rule Documents
@@ -28,7 +30,8 @@ Reports & Analytics must not implement application functionality, dashboards, AP
 - `02-sales-network-and-genealogy.md` — hierarchy and attribution.
 - `04-customer-management.md` — customer identity and search.
 - `05-vip-products-and-contracts.md` — VIP tiers and contracts.
-- `06-vip-card-issuance.md` — activation and Card ID.
+- `06-vip-card-issuance.md` — VIP Number, activation and Card Claim Date.
+- `14-igp-sales.md` — IGP sales, Series Number, IGP thresholds and commission release.
 - `07-finance-and-payments.md` — Finance verification, balances, holds.
 - `08-commission-management.md` — commissions.
 - `09-vip-membership-and-stay-points.md` — membership and points.
@@ -39,13 +42,14 @@ Reports & Analytics must not implement application functionality, dashboards, AP
 
 ## 3. Terminology and Definitions
 
-- **Confirmed Sales Value** — full qualifying finalized contract value counted once when a sale becomes Confirmed.
-- **Verified Collections** — Finance-verified payment amounts.
-- **Approved Commission** — Finance-approved commission not yet paid.
+- **Confirmed Sales Value** — full contract value counted once when a sale becomes Confirmed (Closed Deal: approved receipts reach 25% of the contract price, doc 13 §4).
+- **Verified Collections** — amounts of approved receipts (approved by Finance, the Administrator or the Super Administrator, doc 07 §5.2).
+- **Approved Commission** — released commission included in a month-end payout list approved by Finance, the Administrator or the Super Administrator, not yet paid (doc 08 §11).
 - **Paid Commission** — commission with confirmed actual disbursement.
-- **Available Points** — unlocked, spendable points.
-- **Reserved Points** — points committed to approved redemption requests.
-- **Annual Earning Capacity** — maximum points earnable per cycle, not a wallet balance.
+- **Released Points** — points of an Annual Welcome Gift tranche that has been released (doc 09 §12).
+- **Available Points** — released points not reserved or redeemed (doc 09 §15.1).
+- **Reserved Points** — points set aside for a confirmed booking, not yet consumed (doc 10).
+- **Unreleased Tranche** — a scheduled tranche whose due date has not come or whose condition is not yet met; it is not a points balance.
 - **Historical Genealogy Attribution** — sale-time selling team, preserved after transfers.
 - **Policy Definition Version** — identifiable reporting definition for traceability.
 
@@ -63,9 +67,9 @@ Document conceptual requirements for identifying and preserving changes to impor
 
 ## 5. Reporting Module Responsibilities
 
-Reports & Analytics provides authorized business users with consolidated operational and historical information. It supports Sales performance, Sales Network performance, genealogy-based team reporting, Customer Management, Finance and collections, Commission Management, VIP contracts and memberships, Stay Points earning and balances, Redemption activity (when authorized and active), Audit and operational activity, Historical comparisons, and Management dashboards.
+Reports & Analytics provides authorized business users with consolidated operational and historical information. It supports Sales performance, Sales Network performance, genealogy-based team reporting, Customer Management, Finance and collections, Commission Management, VIP contracts and memberships, Stay Points tranche releases and balances, Redemption activity (when authorized and active), Audit and operational activity, Historical comparisons, and Management dashboards.
 
-Reports & Analytics is a consumer of authoritative business data and must not create independent financial truths. Finance owns verified payment information. Sales owns the applicable confirmed-sale lifecycle. Genealogy owns reporting relationships. Commission Management owns Finance-approved commission records. VIP Membership owns membership status. Stay Points owns points balances and earning events. Redemption owns completed points consumption events. Reporting must use those authoritative records. Do not create competing calculations that disagree with the originating modules.
+Reports & Analytics is a consumer of authoritative business data and must not create independent financial truths. Finance owns verified payment information. Sales owns the applicable confirmed-sale lifecycle. Genealogy owns reporting relationships. Commission Management owns commission rates, releases, payouts, clawbacks and allowances. VIP Membership owns membership status. Stay Points owns tranche releases and points balances. Redemption owns completed points consumption events. Reporting must use those authoritative records. Do not create competing calculations that disagree with the originating modules.
 
 ---
 
@@ -77,7 +81,7 @@ Reports & Analytics is a consumer of authoritative business data and must not cr
 | Sales and genealogy | Sales Network |
 | Accreditation | IST/OST Accreditation |
 | VIP products/contracts | VIP Products and Contracts |
-| VIP Card ID/activation | VIP Card Issuance |
+| VIP Number/activation/Card Claim Date | VIP Card Issuance |
 | Payments/balances | Finance and Payments |
 | Commissions | Commission Management |
 | Membership/points | VIP Membership and Stay Points |
@@ -124,12 +128,15 @@ A reporting range must apply to the correct event:
 
 | Report | Relevant business date |
 |---|---|
-| Confirmed Sales | Finance confirmation/recognition event |
-| Verified Collections | Finance-verified financial event |
-| Commission Approvals | Finance commission approval event |
+| Confirmed Sales | Closed Deal date: approved receipts first reach 25% of the contract price (doc 13 §4.3) |
+| Stage 1 / Full Payment | Dates approved receipts first reach 40% / 100% (doc 13 §4.4) |
+| Verified Collections | Receipt approval; a late receipt for a closed month counts in the first open month (doc 07 §9.1) |
+| Commission Releases | Month in which a release stage (VIP 40%; IGP 40% and full payment) is first reached (doc 08 §8.2) |
+| Commission Approvals | Month-end payout list approval event |
 | Commission Payouts | Confirmed actual disbursement event |
 | Membership Activations | Official membership activation event |
-| Stay Points Earnings | Authorized verified earning event |
+| Membership Validity | Card Claim Date, actual or deemed (doc 06 §4.3) |
+| Stay Points Releases | Tranche release date (doc 09 §12) |
 | Completed Redemptions | Actual authorized consumption/completion event |
 
 This table expresses conceptual event ownership. Reconcile exact date attribution with existing documents. Do not silently substitute customer submission dates for authoritative confirmation dates.
@@ -137,6 +144,10 @@ This table expresses conceptual event ownership. Reconcile exact date attributio
 ### Historical consistency
 
 Filtering a historical period must not reassign old sales to a salesperson's current team.
+
+### Closed months
+
+The Administrator or the Super Administrator closes a month, and a closed month's figures never change (owner ruling R7 item 2; doc 13 §4.5). Later events that affect it are reported as dated adjustments in the open month in which they happen.
 
 ---
 
@@ -146,13 +157,13 @@ Use `docs/business-rules/13-sales-performance-reporting.md`. Do not redefine its
 
 ### Confirmed Sale
 
-A sale becomes Confirmed when: (1) the customer contract has been finalized by authorized Admin; and (2) Finance verifies the qualifying payment required by the selected contractual payment scheme. A Confirmed Sale does not necessarily mean Fully Paid.
+A sale becomes Confirmed (Closed Deal) when approved receipts reach 25% of the contract price (owner ruling R7, 2026-11-12; doc 13 §4). A Confirmed Sale does not necessarily mean Fully Paid. Whether a finalized contract is also required is an open question recorded in doc 13 §10.
 
 ### Reporting amount
 
-The existing approved rule recognizes the full qualifying finalized contract value once when the sale becomes Confirmed. Subsequent installment collections must not count the same sale again as a new full-value sale.
+The approved rule recognizes the full contract value once when the sale becomes Confirmed. Subsequent installment collections must not count the same sale again as a new full-value sale.
 
-Example: a finalized VIP contract valued at ₱240,000; Finance verifies the qualifying initial payment; the sale becomes Confirmed; Sales reporting recognizes the applicable ₱240,000 contract value once. Future installment payments contribute to Finance collections and settlement reporting, not repeated full-value sales recognition.
+Example: a VIP contract valued at ₱240,000; approved receipts reach ₱60,000 (25%); the sale becomes Confirmed; Sales reporting recognizes the applicable ₱240,000 contract value once. Future installment payments contribute to Finance collections and settlement reporting, not repeated full-value sales recognition.
 
 Important: do not conflate the Sales Performance Reporting measure with statutory accounting revenue recognition. Do not invent an accounting policy saying that the full contract amount is immediately recognized as accounting revenue. Use the approved business term Confirmed Sales Value where appropriate.
 
@@ -184,6 +195,8 @@ Clearly distinguish Personal Performance (sales personally attributed to the mem
 
 Historical transfers: if an OST transfers from one SM to another, historical sales remain attributed to the appropriate team at the time of each sale. New sales follow the new valid genealogy relationship. Do not calculate historical team performance solely from current parent relationships. Preserve sale-time attribution.
 
+Pay attribution is separate (owner ruling R9 item 2, 2026-11-12; doc 02 §6.3): team credit for leader allowances (BA, PA, PB) and team KPIs follows the current upline chain (AUG R23), and team KPIs include VIP and IGP sales (doc 14 §9). Sale-level team reports keep the sale-time attribution above.
+
 ---
 
 ## 13. Sales Network Analytics
@@ -207,14 +220,14 @@ The project previously requested straightforward analytics for most active selle
 
 ## 15. Finance Reporting
 
-Use `docs/business-rules/07-finance-and-payments.md`. The Finance module is authoritative for payment verification. Reports & Analytics must provide accurate views of Finance-verified activity.
+Use `docs/business-rules/07-finance-and-payments.md`. The Finance and Payments module is authoritative for receipt approval. Reports & Analytics must provide accurate views of approved activity.
 
-Reporting categories: Verified Collections; Pending Payment Submissions; Rejected or Returned Payment Submissions; Outstanding Contractual Balances; Due Installments; Overdue Installments; Fully Settled Contracts; Payment Reversals; Refunds; Net Verified Collections; Finance Reconciliation Cases; Membership Financial Holds.
+Reporting categories: Verified (approved) Collections; Pending Receipts; Rejected or Returned Receipts, including resent versions; Outstanding Contractual Balances; Due Installments; Overdue Installments; Fully Settled Contracts; Payment Reversals; Refunds; Net Verified Collections; Late Receipts admitted into an open month; Sales with no approved receipt for 90 days; Defaulted sales; Finance Reconciliation Cases; Membership Financial Holds.
 
 ### Financial Reporting Integrity
 
-- A submitted receipt is not an officially verified collection.
-- Only authorized Finance verification establishes recognized payment receipt under the approved operational workflow.
+- An entered receipt is not an approved collection.
+- Only an approved receipt counts. Finance, the Administrator or the Super Administrator approves receipts (owner ruling R6, 2026-11-12; doc 07 §5.2).
 - Balances must follow actual finalized contractual terms, verified receipts, and valid reconciliation events.
 - A payment reversal must not be displayed as though the original payment never existed. Preserve original transaction history and the relevant correction event.
 - Refunds must be distinguishable from ordinary payments and reversals.
@@ -228,33 +241,31 @@ Reporting categories: Verified Collections; Pending Payment Submissions; Rejecte
 
 ## 16. Commission Analytics
 
-Use `docs/business-rules/08-commission-management.md`. Commission Management is currently a manually controlled Finance workflow. A Confirmed Sale does not automatically create an approved commission.
+Use `docs/business-rules/08-commission-management.md` (owner rulings R8 and R9, 2026-11-12) and, for IGP, `docs/business-rules/14-igp-sales.md` §8. Reports consume the commission records of Commission Management; they never recompute rates or amounts independently.
 
-### Approved commission basis
+### Commission basis
 
-Finance manually assigns a commission percentage calculated from the total finalized contract value.
+DSC = contract TCP × the closing seller's frozen DSC rate. DRI = contract TCP × the referrer's frozen DRI rate. Each person's rates are kept per product on their seller record, default to the standard for their position, and are frozen on the sale when its VIP Number (IGP: Series Number) is issued (doc 08 §8.1, §9, §10). Reports use the frozen rate and amount, never a person's current rate.
 
 ### Recipients
 
-Finance may independently assign commissions to Direct IST seller, Direct OST seller, Eligible historical SM upline, Eligible historical SSM upline, Eligible historical SVD upline. No automatic genealogy-based commission distribution.
+Per-sale commission goes only to the closing seller (DSC) and the referrer recorded on the sale (DRI), IST or OST. Leaders (SM, SSM, SVD) earn through the monthly allowances BA, PA and PB, not through per-sale commission (doc 08 Decision 4 and §15).
 
-### Approval timing
+### Release and payout timing
 
-Finance may manually approve commissions after the underlying sale becomes Confirmed. Full contractual settlement is not universally required.
+VIP: 100% of the commission is released in the month approved collection reaches 40% of the contract TCP. IGP: 40% is released at Stage 1 (40%) and the rest at full payment. Each release is paid in that month's month-end payout, approved by Finance, the Administrator or the Super Administrator; there is no waiting period (doc 08 §8.2 and §11). The Closed Deal (VIP 25%, IGP 10%) drives sales counting and allowances, not the DSC and DRI release.
 
 ### Commission Reporting Categories
 
-Document reporting for: Under Review commissions; Approved commissions; Approved but Unpaid commissions; Commissions On Hold; Paid commissions; Cancelled commissions; Adjusted commissions; Manual recoveries; Approved commission obligations; Commission totals by recipient; Commission totals by authorized genealogy branch; Commission approval dates; Confirmed payout dates.
+Document reporting for: Attached commissions; Released commissions by release month; Approved but unpaid commissions; Commissions On Hold; Payout initiated; Paid commissions; Cancelled releases; Adjusted commissions; Clawbacks owed, recovered and written off; BA, PA and PB by month and position; totals by recipient, by IST/OST, by sale, by team and by period; persons with non-standard rates; approval dates; confirmed payout dates; parallel-run differences against the company workbooks (doc 08 §16, §18).
 
-Critical distinction: Approved commission is not equivalent to Paid commission. A commission becomes Paid only after Finance confirms actual disbursement.
+Critical distinction: Approved commission is not equivalent to Paid commission. A commission becomes Paid only after Finance, the Administrator or the Super Administrator confirms actual disbursement.
 
-Automatic Hold: when an underlying sale loses Confirmed status, affected unpaid commissions automatically enter Hold.
+Automatic Hold: when a sale event in doc 08 §14.1 occurs (cancellation, rescission after 90 days, downgrade, default over 90 days, returned cheque), affected released but unpaid commissions are placed On Hold (doc 08 §13).
 
-Paid commissions: previously paid commissions remain historically recorded even if the original sale is later reversed. Any recovery is manually determined by Finance.
+Paid commissions and clawbacks: paid commissions remain historically recorded. A sale event raises a clawback owed by the person paid (DSC from the seller, DRI from the referrer). Until the IST Commission and Clawback Addendum is signed, the office collects it directly; after signing, recovery follows doc 08 §14.4. Reports show clawbacks as separate owed, recovered and written-off records, never as edits to paid history, and never invent a clawback that Commission Management did not record.
 
-No automatic deductions: reports must not fabricate clawbacks or negative balances.
-
-No duplicate aggregation: a sale can generate several separately approved commissions. Those commission records must not create additional underlying sales.
+No duplicate aggregation: a sale can carry a DSC and a DRI, released in stages. Those commission records must not create additional underlying sales.
 
 ---
 
@@ -274,7 +285,7 @@ Use `docs/business-rules/09-vip-membership-and-stay-points.md`. Document reporti
 
 Important distinction: customer records and membership records are separate concepts. A customer may exist without an Active VIP Membership. Do not report all existing customers as Active members.
 
-Activation reporting: use the actual official Membership Activation Date. Do not substitute reservation or contract dates.
+Activation reporting: use the actual official Membership Activation Date. Do not substitute reservation or contract dates. Validity and upcoming-expiration reporting start from the Card Claim Date, actual or deemed (doc 06 §4.3), never from the activation date.
 
 Historical entitlements: preserve actual contract-specific validity and benefit terms.
 
@@ -282,17 +293,17 @@ Historical entitlements: preserve actual contract-specific validity and benefit 
 
 ## 18. Stay Points Reporting
 
-Use `docs/business-rules/09-vip-membership-and-stay-points.md`. The current approved earning policy is ₱1 verified eligible direct resort spending = 1 Stay Point. The full annual points allowance is not automatically released when the minimum spend is reached. Points are earned through individual eligible verified resort transactions.
+Use `docs/business-rules/09-vip-membership-and-stay-points.md` (owner ruling R10, 2026-11-12). Points follow the signed Grant's Annual Welcome Gift: fixed annual tranches per tier, each released in full only when the cardholder's Qualifying Spend reaches the tier minimum in the tranche's measurement period, or by a Compassionate Waiver. The release schedule and measurement periods are anchored to the Points Activation Date (doc 09 §8, §9). The former Spend-to-Earn earning rule is removed.
 
-Current tier limits: Bronze minimum ₱1,000 / cap 10,000; Silver minimum ₱2,000 / cap 20,000; Gold minimum ₱3,000 / cap 25,000. Allocation: 70% Weekday, 30% Weekend.
+Current tier terms (doc 09 §6): Bronze 5 tranches of 10,000 (7,000 weekday / 3,000 weekend), minimum ₱1,000; Silver 10 tranches of 20,000 (14,000 / 6,000), minimum ₱2,000; Gold 20 tranches of 25,000 (17,500 / 7,500), minimum ₱3,000.
 
-Document reporting for: Verified Eligible Resort Spending; Minimum Spending Progress; Pending Points; Earned Points; Unlocked Points; Available Points; Reserved Points; Held Points; Redeemed Points; Forfeited Points; Expired Points; Remaining Annual Earning Capacity; Annual Earning Cap Usage; Points Reconciliation Cases.
+Document reporting for: Qualifying Spend per measurement period and progress to the minimum; Points Activation Date (set by redemption or deemed); tranches due, released, released by waiver and Non-Activated; Released, Reserved, Redeemed, Available and Forfeited points per bucket; points not transferred on a card transfer; waivers requested, granted and refused; refunds of qualifying bills; memberships nearing expiry with unused points; imported historical balances (doc 09 §23).
 
 ### Points Reporting Integrity
 
-Do not confuse Annual Earning Capacity (maximum points that can be earned during a cycle) with Actual Earned Points (points already supported by eligible verified transactions), Pending Points (earned but not yet unlocked), Available Points (unlocked points currently eligible for use), Reserved Points (points committed to approved redemption requests), Held Points (points temporarily restricted from use), or Redeemed Points (points consumed through authorized completed services).
+Do not confuse unreleased or Non-Activated tranches (not a balance) with Released Points, Available Points (released less reserved and redeemed), Reserved Points (set aside for a confirmed booking) or Redeemed Points (consumed by a completed stay). There are no Pending points and no Points Hold; a refund lowers Qualifying Spend and never takes back a released tranche (doc 09 §13).
 
-Example: A Bronze member earns 6,000 points, then redeems 2,000 through an authorized completed redemption. The annual earned total remains 6,000. The remaining annual earning capacity is still 4,000. It must not increase to 6,000 merely because points were spent.
+Example: a Bronze tranche of 10,000 points is released (7,000 weekday, 3,000 weekend), and the cardholder then redeems 2,000 weekday points through a completed stay. Released remains 10,000, Redeemed is 2,000, and Available is 8,000 (5,000 weekday, 3,000 weekend). A later tranche whose minimum was not met is reported as Non-Activated and never added to the balance unless a waiver is granted.
 
 Gold supplementary holder: Gold primary and supplementary holders share one membership points pool. Do not double-count balances as two separate memberships.
 
@@ -302,17 +313,17 @@ Historical points: preserve valid imported balances without inventing historical
 
 ## 19. Redemption Reporting
 
-Use `docs/business-rules/10-redemption.md`. Document future reporting for: Submitted Redemption Requests; Requests Under Review; Approved Redemptions; Reserved Points; Pending Payment Bookings; Confirmed Bookings; Completed Services; Final Points Consumption; Cancelled Bookings; Released Reserved Points; Forfeited Points; No-Shows; Points + Cash Transactions; Finance-Verified Monetary Portions; Policy Exceptions; Redemption Reconciliation Cases.
+Use `docs/business-rules/10-redemption.md` (owner ruling R12, 2026-11-12). Document future reporting for: bookings requested, confirmed, completed, cancelled and no-show; points reserved, consumed, returned and forfeited per bucket; nights by venue and night classification; bookings by tier; Points Activation Dates set by redemption; points plus money bookings and the approval status of their receipts; card transfers (doc 10 §18).
 
-Important distinction: Approved redemption is not the same as completed redemption. Reserved points are not yet finally consumed. A booking can remain Pending Payment after the points component has been approved. A Confirmed booking does not necessarily mean the service has been completed.
+Important distinction: a confirmed booking is not a completed stay. Reserved points are not yet consumed. A booking can remain Pending Payment until its money part is approved (doc 07). The same points are never counted twice.
 
-Redemption pricing may use Admin-configured monetary conversion or Admin-configured service-specific points prices. Do not assume the points earning conversion is the same as redemption monetary value.
+Redemption basis: points pay only for overnight accommodation at open AFhomes Direct Operations, using the Admin-maintained, versioned points-per-night Terms of Use table; each card uses the version in effect on its Card Claim Date (doc 10 §5, §8). Weekday and weekend points never convert.
 
 ---
 
 ## 20. Disabled Module Status
 
-The planned standalone MongoDB system preserves Redemption and Services functionality but keeps these modules hidden and disabled for now. Documentation must not authorize their reactivation. Historical authorized redemption information may remain relevant for reporting and audit purposes. However, defining Redemption reports must not automatically expose a disabled Redemption module, enable new redemption requests, enable blocked routes, re-enable Services, start points consumption processing, or turn on redemption feature flags. Actual reporting availability must respect the implementation's feature flags and authorization rules.
+The planned standalone MongoDB system preserves Redemption and Services functionality but keeps these modules hidden and disabled for now. Redemption rules are being planned in doc 10 (owner ruling R11 item 3, 2026-11-12); the module stays disabled until the owner authorizes its build. Documentation must not authorize their reactivation. Historical authorized redemption information may remain relevant for reporting and audit purposes. However, defining Redemption reports must not automatically expose a disabled Redemption module, enable new redemption requests, enable blocked routes, re-enable Services, start points consumption processing, or turn on redemption feature flags. Actual reporting availability must respect the implementation's feature flags and authorization rules.
 
 ---
 
@@ -322,7 +333,7 @@ Use `docs/business-rules/04-customer-management.md`. Document authorized interna
 
 Customer identity: do not treat each VIP purchase as a separate customer identity. Do not merge unrelated people merely because they appear in multiple sales.
 
-Privacy: Public Customer Lookup must remain separate from internal Customer Management Analytics. Existing public verification rules limit disclosure to eligible Active membership records and approved fields. Do not expose government IDs, private addresses, confidential contact information, payment proofs, internal financial details, or audit records.
+Privacy: there is no public VIP card or customer check (owner ruling R11 item 1, 2026-11-12). The former Public Customer Lookup (U08) is removed from scope; only authorized staff check cards, inside the staff application. Customer Management Analytics are internal only. Do not expose government IDs, private addresses, confidential contact information, payment proofs, internal financial details, or audit records. Public seller verification (doc 03) is a separate feature and is not affected.
 
 Acquisition channels: use source-documented acquisition channel options where supported. Do not invent extra labels or silently merge distinct source categories.
 
@@ -353,7 +364,7 @@ Important boundary: an authorized sales manager may view team sales performance 
 
 The document must establish a consistent approach to defining metrics. For each important KPI, describe: business purpose; source module; relevant records; applicable eligibility rules; event date; aggregation method; role visibility; historical treatment; adjustment behavior; known unresolved assumptions.
 
-Example — Confirmed Sales Value: Source Sales and Finance as governed by document 13; Recognition applicable Confirmed Sale event after finalized contract and verified qualifying payment; Aggregation full qualifying finalized contract value counted once, subject to approved adjustments; Visibility according to the user's permitted Sales Network scope.
+Example — Confirmed Sales Value: Source Sales and Finance as governed by document 13; Recognition the Closed Deal date, when approved receipts reach 25% of the contract price; Aggregation full contract value counted once, subject to approved adjustments; Visibility according to the user's permitted Sales Network scope.
 
 Do not invent business targets such as every SM must achieve ₱1 million monthly, OST must produce five sales per month, SVD commission should be 2%, or minimum customer conversion should be 20%. These values have not been approved.
 
@@ -361,9 +372,9 @@ Do not invent business targets such as every SM must achieve ₱1 million monthl
 
 ## 25. Reporting Grain and Duplicate Prevention
 
-Document the importance of preserving the correct reporting grain. Examples: Customer canonical customer identity; Sale unique sale identity; Payment authorized payment or settlement event; Commission approved recipient-specific commission record; Membership canonical VIP membership; Points Earning unique authorized earning event; Redemption authorized redemption transaction; Seller Performance sale attribution under applicable genealogy.
+Document the importance of preserving the correct reporting grain. Examples: Customer canonical customer identity; Sale unique sale identity; Payment authorized payment or settlement event; Commission per-sale DSC or DRI record and its stage releases; Membership canonical VIP membership; Points Release unique tranche release; Redemption authorized booking; Seller Performance sale attribution under applicable genealogy.
 
-Duplicate prevention: do not multiply sales values merely because a customer has multiple payments, a sale has multiple commission recipients, a salesperson appears in multiple upline reports, a membership has a supplementary holder, or a points transaction has Weekday and Weekend allocations. A report must preserve the intended unique business event count.
+Duplicate prevention: do not multiply sales values merely because a customer has multiple payments, a sale has multiple commission recipients, a salesperson appears in multiple upline reports, a membership has a supplementary holder, or a tranche release has weekday and weekend parts. A report must preserve the intended unique business event count.
 
 ---
 
@@ -372,6 +383,10 @@ Duplicate prevention: do not multiply sales values merely because a customer has
 Preserve historical business events. Examples: old contracts preserve old agreed prices; past sales remain assigned to the original applicable selling teams; original payment verification dates remain traceable; historical commission approvals remain recorded; completed commission payouts remain recorded; original VIP Membership activation dates remain unchanged; historical point balances remain traceable; redemption history remains preserved.
 
 Policy changes: when reporting policies change, do not silently rewrite underlying historical financial facts.
+
+History import (owner ruling R11 item 5, 2026-11-12; Rollout Guide v1.4 §6 and §8): every seller and every unfinished sale is imported with its full receipt history, each sale and receipt on its own date. Finished sales are not imported; they stay in the Excel archives, so platform reports for periods before go-live include only the imported records. A side-by-side parallel run follows: the workbook process keeps paying, the platform's results are compared each month, and the switch happens when a month closes with no unexplained differences.
+
+Imported receipts are marked **Approved (imported)** and count in reports as approved receipts once an Administrator has signed off their import batch (owner follow-up ruling, 2026-11-12; doc 07 §20). Reports keep the import marking visible so imported and live-approved receipts can be told apart.
 
 Restatements and corrections: if an authorized correction affects a historical report, preserve enough information to explain original value, corrected value, effective business event, adjustment date, reason, authorized actor. Do not invent unsupported historical transactions.
 
@@ -387,7 +402,7 @@ Organizational totals: when producing authorized management totals, avoid double
 
 ## 28. Audit and Security Reporting
 
-Audit Logs are an existing core module. Document authorized reporting for significant business events such as account status changes, Sales Network transfers, accreditation changes, contract approvals, payment verification, payment reversal or refund, commission approval, commission payout, membership activation, Financial Hold, Points Hold, points reconciliation, redemption approval and completion, Admin reporting configuration changes.
+Audit Logs are an existing core module. Document authorized reporting for significant business events such as account status changes, Sales Network transfers, accreditation changes, contract approvals, payment verification, payment reversal or refund, commission release, approval and payout, clawbacks, membership activation, Card Claim Date, Financial Hold, tranche release and waivers, booking confirmation and completion, Admin reporting configuration changes.
 
 Audit requirements: preserve meaningful information about acting identity, authorized action, timestamp, affected entity, previous and resulting state, supporting reason or reference, relevant business-event correlation. Privacy: audit reporting must not expose unnecessary private data to unauthorized users. Do not create a public audit-reporting capability.
 
@@ -405,10 +420,10 @@ Audit requirements: preserve meaningful information about acting identity, autho
 | VIP Products and Contracts | Finalized contractual snapshots |
 | VIP Card Issuance | Official card and activation references |
 | Finance and Payments | Verified collections and balances |
-| Commission Management | Approved commissions and payouts |
+| Commission Management | Rates, releases, payouts, clawbacks and allowances |
 | VIP Membership | Actual membership states |
-| Stay Points | Earning, unlocking, reservations, holds, and consumption |
-| Redemption | Approved, reserved, completed, and cancelled redemption activity |
+| Stay Points | Tranche releases, balances, reservations and consumption |
+| Redemption | Confirmed, completed, cancelled and no-show bookings |
 | Sales Performance Reporting | Confirmed sale recognition and adjustments |
 | Audit Logs | Traceable business-state changes |
 
@@ -423,16 +438,16 @@ Explain that Reports & Analytics must not independently override the authoritati
 - **Scenario A (Confirmed installment sale):** Confirmed Sales Value reflects qualifying ₱240,000 contract once; Finance collections reflect actual verified payments; outstanding balance separate; membership not automatically Active.
 - **Scenario B (Additional installment):** verified collections update; outstanding balance changes; Confirmed Sales Value not counted again.
 - **Scenario C (Sale reversal):** reporting follows document 13's approved negative adjustment treatment; historical confirmation traceable; affected unpaid commissions enter Hold.
-- **Scenario D (Commission approval):** approved commission reporting updates; Paid commission reporting does not update until actual disbursement.
+- **Scenario D (Commission release and approval):** a VIP sale reaches 40% approved collection; its DSC and DRI are reported as released in that month at the frozen rates; the month-end payout list is approved; Paid commission reporting does not update until actual disbursement.
 - **Scenario E (Commission payout):** Paid commission report updates; original sale count unchanged.
 - **Scenario F (Seller transfer):** historical sales remain attributed to original applicable genealogy; new sales follow new team; no duplicate network-wide sales.
 - **Scenario G (No-sales seller):** reporting applies established eligibility and no-sales definitions; do not count unrelated or ineligible members.
 - **Scenario H (Membership activation):** Fully Paid reporting may include the transaction; Active Membership reporting excludes it until activation.
-- **Scenario I (Stay Points earning):** Bronze ₱1,000 eligible verified spend earns 1,000 points; no automatic 10,000-point grant; correct Weekday/Weekend allocation; reporting distinguishes earned points from remaining annual capacity.
-- **Scenario J (Points redemption):** 5,000 available, reserve 2,000 → available decreases, reserved increases, consumed does not increase until authorized completion.
+- **Scenario I (Tranche release):** a Bronze cardholder's approved Qualifying Spend reaches ₱1,000 in the measurement period; on the due date the full 10,000-point tranche is released (7,000 weekday, 3,000 weekend); a period below the minimum is reported as Non-Activated; unreleased tranches are not reported as a balance.
+- **Scenario J (Points redemption):** 5,000 available; a booking reserves 2,000; available decreases and reserved increases; consumed does not increase until the stay is completed.
 - **Scenario K (Gold supplementary member):** one shared membership balance; no duplicate total points in reporting.
-- **Scenario L (Payment reversal and Financial Hold):** membership Financial Hold reflected; financial collection reporting updates; historical activation and Card ID remain unchanged.
-- **Scenario M (Refunded resort spending):** source points ledger reflects authorized hold and Finance reconciliation; reporting distinguishes Held from Available points; no invented negative balances.
+- **Scenario L (Payment reversal and Financial Hold):** membership Financial Hold reflected; financial collection reporting updates; historical activation, VIP Number and Card Claim Date remain unchanged.
+- **Scenario M (Refunded resort spending):** a refund lowers the period's Qualifying Spend; an unreleased tranche waits until spend qualifies again; a released tranche stays released; no Points Hold and no negative balances.
 - **Scenario N (Reporting date filter):** Admin selects Past 28 Days; each report uses applicable authoritative event date; date boundaries follow established project conventions; totals consistent with underlying module reports.
 - **Scenario O (Privacy):** OST user attempts to view unrelated seller or customer financial data → unauthorized records unavailable; reporting access does not bypass record-level permissions.
 - **Scenario P (Disabled Redemption):** Redemption disabled in planned MongoDB system → no new Redemption workflow activated; existing relevant historical records preserved; documentation does not enable hidden functionality.
@@ -457,19 +472,19 @@ The document must preserve these current approved principles:
 9. Sales reversal adjustments must follow document 13.
 10. Historical genealogy attribution must be preserved.
 11. Team totals must not double-count underlying sales.
-12. Commission approval is manual.
+12. Commission amounts come from per-person rates frozen on the sale; payout approval is an explicit, audited action (doc 08).
 13. Approved commissions are not automatically Paid.
 14. Commission payouts require actual confirmed disbursement.
-15. Commission Holds and recoveries follow existing Finance-controlled rules.
-16. Annual Stay Points earning capacity is not an actual points balance.
-17. Pending points are not Spendable points.
+15. Commission Holds, clawbacks and recoveries follow doc 08 §13 and §14.
+16. Unreleased and Non-Activated tranches are not a points balance.
+17. Only released points are usable; there are no Pending points.
 18. Reserved points are not yet Consumed points.
 19. Gold supplementary holders share one membership points pool.
-20. Refund-related Points Holds must be represented accurately.
+20. A refund lowers Qualifying Spend and never takes back a released tranche (doc 09 §13).
 21. Historical contracts retain their original agreed terms.
 22. Admin product changes do not retroactively alter finalized contracts.
 23. Reporting permissions must respect record-level security.
-24. Public Customer Lookup is not unrestricted internal analytics.
+24. There is no public card or customer lookup; reports are not exposed publicly (R11).
 25. Different financial and operational events may use different reporting dates.
 26. Reporting definition changes must not silently corrupt historical data.
 27. Audit history must remain traceable.
@@ -491,7 +506,7 @@ Status: **APPROVED** for dashboard KPI cards. This resolves dashboard period com
 
 1. Percentage trend indicators appear only on period-based KPIs: Confirmed Sales Value, Verified Collections, and Confirmed Sales Count.
 2. Comparisons are calculated dynamically from the authoritative business records. The selected reporting period is compared with the immediately preceding period of equal duration, using Asia/Manila business dates.
-3. Each comparison follows the existing Sales and Finance rules for its KPI (Finance confirmation dates and dated adjustments for sales, verification dates for collections, reversals and historical adjustments) and never double-counts a transaction.
+3. Each comparison follows the existing Sales and Finance rules for its KPI (Closed Deal dates and dated adjustments for sales under R7, 2026-11-12; approval dates for collections; reversals and historical adjustments) and never double-counts a transaction.
 4. Snapshot KPIs, including Total Customers, Active Members, and Contracts Requiring Review, display a neutral "Current" label without a percentage trend.
 5. An increase is shown in green and a decrease in red only where that interpretation fits the KPI. Neutral or unavailable comparisons must not imply improvement or decline.
 6. When the previous period has no valid (positive) baseline, no percentage is calculated: the indicator reads "New" when the current period has activity, otherwise "No comparison available".
@@ -562,15 +577,15 @@ Status: **APPROVED** for dashboard KPI cards. This resolves dashboard period com
 - [ ] Financial Holds.
 
 ### Commissions
-- [ ] Manual Finance approval.
-- [ ] Finalized contract calculation basis.
-- [ ] Independent recipient records.
+- [ ] Frozen per-person DSC and DRI rates; contract TCP basis.
+- [ ] Seller and referrer only; leader allowances reported separately.
+- [ ] Release month per stage (VIP 40%; IGP 40% and full payment).
 - [ ] Approved unpaid commissions.
 - [ ] On-Hold commissions.
 - [ ] Paid commissions.
 - [ ] Actual disbursement requirement.
-- [ ] Manual recoveries.
-- [ ] No automatic commissions.
+- [ ] Clawbacks owed, recovered and written off.
+- [ ] Parallel-run differences.
 
 ### VIP Membership
 - [ ] Active memberships.
@@ -581,25 +596,22 @@ Status: **APPROVED** for dashboard KPI cards. This resolves dashboard period com
 - [ ] Contract-specific historical values.
 
 ### Stay Points
-- [ ] Transaction-based earning.
-- [ ] Annual minimum qualifying spend.
-- [ ] Annual earning caps.
+- [ ] Annual Welcome Gift tranches per tier.
+- [ ] Qualifying Spend per measurement period and minimum.
+- [ ] Points Activation Date.
+- [ ] Released, Non-Activated and waiver tranches.
 - [ ] Weekday and Weekend points.
-- [ ] Pending points.
-- [ ] Unlocked points.
 - [ ] Available points.
-- [ ] Held points.
 - [ ] Reserved points.
-- [ ] Redeemed points.
+- [ ] Redeemed and forfeited points.
 - [ ] Historical points preservation.
 
 ### Redemption
-- [ ] Requests.
-- [ ] Approvals.
+- [ ] Booking requests.
 - [ ] Points reservations.
 - [ ] Pending Payment.
 - [ ] Confirmed bookings.
-- [ ] Completed services.
+- [ ] Completed stays.
 - [ ] Final points consumption.
 - [ ] Cancellations and no-shows.
 - [ ] Disabled module requirements preserved.
@@ -622,3 +634,34 @@ Status: **APPROVED** for dashboard KPI cards. This resolves dashboard period com
 - **Outstanding dependencies:** Listed in Section 32.
 - **Acceptance results:** All checklist items covered. Documentation completeness does not prove implementation readiness.
 - **Change scope:** Documentation only. No application code, database, migrations, existing documentation files, Git commit/push/merge, or deployment. Only `docs/business-rules/11-reports-and-analytics.md` created. Redemption and Services remain disabled. No unauthorized implementation assumptions.
+
+## Owner rulings amendment (2026-11-12, rounds R6, R7, R11)
+
+These rulings are authoritative and take precedence over earlier text in this document where they differ. Ground rule: the company workbook wins by default; dated owner rulings outrank everything.
+
+1. **Approved receipts (R6).** Collections count only from receipts approved by Finance, the Administrator or the Super Administrator (doc 07 §5.2). Reporting shows entered, returned, resent, approved and reversed receipts as distinct states. Sections 3 and 15.
+2. **Confirmed Sales (R7 item 1).** A sale counts (Closed Deal) when approved receipts reach 25% of the contract price; its reporting date is the date 25% is reached. The 40% (Stage 1) and 100% (Full Payment) dates are tracked separately. Doc 13 §4 governs. Sections 3, 8, 9, 24 and 32.1.
+3. **Month close (R7 item 2).** The Administrator or the Super Administrator closes a month; closed figures never change; a late receipt counts in the first open month. Section 8.
+4. **Defaults (R7 item 3).** Reports list sales with no approved receipt for 90 days and Defaulted sales; the Administrator or the Super Administrator marks Defaulted; a payment returns the sale to Active. Doc 13 §4.6; clawbacks in doc 08. Section 15.
+5. **No public lookup (R11 item 1).** There is no public VIP card check; Public Customer Lookup (U08) is removed from scope and only staff check cards. Sections 21 and 31.
+6. **IGP in scope (R11 item 2).** IGP is built together with VIP; its rules are in `docs/business-rules/14-igp-sales.md`. Section 1.
+7. **Redemption (R11 item 3).** Planned in doc 10; it stays disabled until the owner authorizes the build. Sections 1 and 20.
+8. **History import (R11 item 5).** Every seller and every unfinished sale is imported with its full receipt history; a side-by-side parallel run follows; the switch happens when a month closes with no unexplained differences (Rollout Guide v1.4 §6 and §8). Finished sales stay in the Excel archives (U12). Section 26.
+9. **CMS deferred (R11 item 6, U09).** Section 1.
+10. **Open, not decided here:** whether contract finalization is still required before the 25% count (doc 05 §13 versus the workbook; see doc 13 §10).
+
+## Consistency update (2026-11-12)
+
+Wording aligned with the rewritten docs 06, 08, 09, 10 and 14. No new rule is introduced here.
+
+1. **Commissions (doc 08, R8 and R9).** Sections 3, 5, 8, 16, 25, 28, 29, 30 (Scenario D), 31 and 33: the former Finance-typed percentage, upline recipients and manual recovery wording is replaced by per-person DSC and DRI rates frozen on the sale, seller and referrer as the only per-sale recipients, staged release paid at month-end, approval by Finance, the Administrator or the Super Administrator, and clawbacks under doc 08 §14.
+2. **Team attribution (doc 02 §6.3, R9 item 2).** Section 12: team KPIs and allowance pay follow the current upline chain and include IGP; sale-level reports keep sale-time attribution.
+3. **Stay Points (doc 09, R10).** Sections 3, 8, 18, 25, 30 (Scenarios I, J, M), 31 and 33: Spend-to-Earn, Pending points, Points Hold and earning caps are replaced by Annual Welcome Gift tranches released on Qualifying Spend.
+4. **Validity (doc 06 §4.3, R2).** Sections 8 and 17.2: validity and expiry reporting start from the Card Claim Date.
+5. **Redemption (doc 10, R12).** Sections 19, 29 and 33: monetary conversion and service pricing are replaced by the versioned points-per-night Terms of Use table for overnight stays.
+
+## Owner rulings amendment (2026-11-12, follow-ups)
+
+These rulings take precedence over earlier text in this document where they differ.
+
+1. **Imported receipts.** History receipts come in marked "Approved (imported)". An Administrator signs off each import batch once (section 26; doc 07 §20).

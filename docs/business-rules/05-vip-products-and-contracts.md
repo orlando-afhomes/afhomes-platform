@@ -136,7 +136,7 @@ Effective-date rule: prospective only. Finalized or signed contracts keep their 
 
 ### 6.2 Silver Contract
 
-The referenced Silver contract contains an unfinished amount placeholder in Section IV.
+Resolved by owner ruling 2026-11-12 (amendment item 13). An earlier Silver contract version had an unfinished amount placeholder in Section IV. The updated Silver standard-pricing contract (`AFhomes_Silver_VIP_Grant_Contract_Standard_Pricing_Updated`) states Php 240,000: a Php 10,000 non-refundable reservation fee (part of the price) plus 4 monthly installments of Php 57,500 at zero interest, per Annex A. The updated contract governs. Contracts signed on the earlier template keep their executed text.
 
 Do not silently rewrite these provisions. Do not publish an inconsistent document as a finalized legal agreement. Document the exact discrepancy, source revision, affected tier, and required management-approved correction. Historical signed contracts must retain their actual executed terms.
 
@@ -169,12 +169,13 @@ The supplied membership workbook includes:
 | Spot cash | Spot Cash |
 | Move a | Move A |
 | Installment 4_month | 4-Month Installment |
-| Move b1 40 12 | Move B1 |
-| Move b2 25 12 | Move B2 |
+| Move b1 40 12 / Move b2 25 12 | Move B (one scheme; see below) |
+
+Owner ruling item 7 (2026-11-09) merged the historical workbook options Move B1 and Move B2 into one scheme, Move B. B1 and B2 are historical source labels only and are not selectable schemes. The approved register is Spot Cash, Move A, 4-Month Installment and Move B, plus Admin-configured schemes.
 
 These values must not be omitted merely because a previous interface included only Spot Cash and Installment. Extract the complete list of approved company payment schemes from available business-rule documents. Do not assume the five values above are necessarily the only options across all source documents.
 
-Produce a canonical option register containing: official display label, stable machine identifier, documented historical label, applicable VIP tier, payment category, required initial payment, down payment, installment duration, installment schedule, commercial status, relevant source document. Only populate commercial terms and applicability when supported by actual approved documents or configurations. Do not infer the financial meaning of Move A, Move B1, or Move B2 from their labels alone. Do not invent percentages, deposit requirements, or amortization formulas.
+Produce a canonical option register containing: official display label, stable machine identifier, documented historical label, applicable VIP tier, payment category, required initial payment, down payment, installment duration, installment schedule, commercial status, relevant source document. Only populate commercial terms and applicability when supported by actual approved documents or configurations. The terms of Move A and Move B are defined only by owner ruling items 6 and 7 (2026-11-09); never infer a scheme's financial meaning from its label alone. Do not invent percentages, deposit requirements, or amortization formulas.
 
 ### 8.1 Admin-Configurable Payment Schemes
 
@@ -186,7 +187,7 @@ Authorized Admin may create payment schemes, manage availability, associate sche
 
 These must be distinct fields.
 
-**Payment Scheme** defines the customer's contractual payment arrangement (e.g., Spot Cash, Move A, 4-Month Installment, Move B1, Move B2).
+**Payment Scheme** defines the customer's contractual payment arrangement (e.g., Spot Cash, Move A, 4-Month Installment, Move B).
 
 **Payment Type / Method** represents how a payment is made. Historical membership workbook includes: Cash, Bank Transfer, GCash, Maya, Card, Cheque. Payment Type does not automatically define the customer's contractual installment schedule. Preserve the payment-type list from official company documentation. Finance remains responsible for verifying actual payment transactions. A selected payment method must never be treated as proof that a payment was received.
 
@@ -204,13 +205,30 @@ AFHomes Platform Customer Creation must expose Standard — S and Non-Standard �
 
 Older ID Generator rules reserve N but state that Non-Standard issuance was disabled pending a separately reviewed operational workflow. The business owner now requires Standard/Non-Standard to appear as selectable classifications. Reconcile: UI specification must include both; draft selection of either is allowed; classification must be recorded accurately; selecting Non-Standard does not automatically authorize contract finalization; Non-Standard issuance remains subject to approved commercial rules; if those rules have not been approved, document the finalization and issuance hold. Do not silently enable unsupported commercial exceptions.
 
+The hold described above is replaced by the policy in §10.2 (owner ruling 2026-11-12).
+
+### 10.2 Non-Standard Contract Policy (owner ruling 2026-11-12, amendment item 15)
+
+Basis: NUM v6.2 ("Non-Standard (N) transactions require documented justification or approval") and the workbook practice that a deviation from the standard is a logged decision returned for re-approval (AUG R17).
+
+1. **Scope.** A Non-Standard contract may differ from the Standard offering only in its package price (TCP) and its payment schedule (1 to 36 months, per the workbook sale register). Tier benefits, membership validity and all signed contract clauses stay Standard.
+2. **Justification.** The preparer records a written justification. The approval screen shows the difference from the tier's standard price and schedule.
+3. **Approval, two steps, before finalization.**
+   1. The Administrator or the Super Administrator approves the terms and records the justification and the signed-approval reference.
+   2. Finance confirms the price and the schedule.
+   Only the Super Administrator may do both steps alone; an Administrator approves the terms and Finance confirms (owner follow-up ruling 7, 2026-11-12). The Administrator or the Super Administrator may approve a contract they prepared; the audit history then shows that the same person prepared and approved it (owner authority rule, 2026-11-12, item 17). Only then may an authorized Admin finalize. Each step is audited separately. A rejection at either step returns the contract to Returned with a reason. Any later change to the price or schedule returns the contract to approval.
+4. **No price floor.** Each case is judged by the approvers; the platform enforces no minimum price.
+5. **Commission and sale measures** use the approved Non-Standard TCP and the actual verified collections, with the same rates, stages and measures as Standard sales.
+6. **Card ID.** The classification code is N; numbering otherwise follows the standard rules.
+7. Finance verification of payments, membership activation and every other Standard control apply unchanged.
+
 ---
 
 ## 11. VIP Contract Creation and Approval
 
 Approved workflow:
 
-1. Authorized Staff or IST prepares the VIP contract.
+1. The office (Clerk or other authorized staff) prepares the VIP contract. Sellers do not prepare contracts (owner follow-up ruling 6, 2026-11-12).
 2. Required customer and purchase information is completed.
 3. Applicable product and payment terms are selected.
 4. The contract is submitted for approval.
@@ -218,7 +236,7 @@ Approved workflow:
 6. Authorized Admin approves finalization or returns it for correction.
 7. An approved contract becomes Finalized.
 
-**Authority:** Authorized Staff and IST may prepare contracts, submit contracts, correct returned contracts, and resubmit contracts. Only authorized Admin may approve final contract finalization. IST Sales Network designation alone does not grant contract approval authority.
+**Authority:** The Clerk (or other authorized office staff) prepares, submits, corrects and resubmits contracts. The Administrator (or the Super Administrator) approves finalization. Sellers (IST or OST) do not prepare contracts; Sales Network designation grants no contract preparation or approval authority (owner follow-up ruling 6, 2026-11-12).
 
 **Required contract validations:** A contract cannot be finalized without valid customer reference, valid eligible VIP product, applicable product configuration, valid contract classification, approved payment scheme and terms, required contract information, appropriate customer acceptance, and authorized Admin approval. Do not invent additional signed-document requirements if the official contract workflow does not specify them.
 
@@ -243,9 +261,9 @@ Draft contracts may be incomplete. Submitted contracts require appropriate infor
 
 ## 13. Sales Confirmation vs Contract Finalization
 
-A Finalized contract does not automatically mean Finance verified payment, customer fully paid, VIP membership activated, VIP benefits usable, or official activated VIP Card ID generated.
+A Finalized contract does not automatically mean a receipt was approved, the customer fully paid, VIP membership activated, or VIP benefits usable. The VIP Number is issued earlier, when the signed Reservation Agreement is recorded (doc 06).
 
-Confirmed Sales requires BOTH: (1) a finalized VIP contract, and (2) Finance verification of the payment required by the selected payment scheme. For installment contracts, Confirmed Sales may occur before full settlement if the required initial contractual payment has been verified.
+A sale is Confirmed (Closed Deal) when approved receipts reach 25% of the contract price, once an Administrator has approved the sale record (doc 13 §4; workbook OPS §4.2, §4.3). Formal contract finalization is tracked separately and is not required for the count (owner follow-up ruling 3, 2026-11-12). Receipts are approved by Finance, an Administrator or the Super Administrator (doc 07).
 
 Sales Network reporting measures the full confirmed contract value under its approved rules. Finance separately manages actual collections and outstanding balances. Do not collapse Confirmed Sales into Active VIP Membership.
 
@@ -261,21 +279,20 @@ Restrictions: do not claim points are guaranteed immediately on activation, are 
 
 ---
 
-## 15. Customer, RA No., Contract, Card, and Membership Relationships
+## 15. Customer, VIP Number, Contract, Card Claim, and Membership Relationships
 
 These are distinct business concepts:
 
 - **Customer** — permanent customer identity.
-- **RA No.** — applicable official RA reference and its numeric sequence.
+- **VIP Number** — the single 17-character number of the Reservation Agreement, the Grant and the card, issued when the signed Reservation Agreement is recorded (doc 06, owner ruling R2, 2026-11-12). It replaces the former separate RA No. and Card ID.
 - **VIP Product** — configurable catalog offering.
 - **VIP Application / Purchase** — customer's intended or actual VIP transaction.
 - **VIP Contract** — finalized legal and commercial terms.
-- **Pending VIP Card Record** — membership/card record before official activation; not an issued final VIP Card ID.
-- **Official VIP Card ID** — final 17-character identifier created using actual activation date and RA-derived sequence.
+- **Card Claim Date** — the date the card is claimed (or deemed claimed one year after full settlement); membership validity starts here (doc 06 §4.3).
 - **VIP Membership** — membership status, validity, and benefits.
 - **Finance Payments** — separately verified financial events.
 
-Do not merge all of these into a single status or identifier. A customer may have multiple VIP-related transactions without requiring a new customer identity for each purchase. Preserve the proper RA-to-purchase-to-contract-to-membership relationship.
+Do not merge all of these into a single status or identifier. A customer may have multiple VIP-related transactions without requiring a new customer identity for each purchase. Preserve the proper VIP Number-to-purchase-to-contract-to-membership relationship.
 
 ---
 
@@ -291,7 +308,7 @@ Confirmed Sales may occur before membership activation per approved Sales Networ
 
 ## 17. Sales Network Integration
 
-Approved AFHomes Sales Network: IST SVD → SSM → SM; OST members may report directly to SVD, SSM, or SM. Only Authorized Staff and IST may register new customers. OST may be selected as actual Referrer / VIP Recommender. For direct IST sales, an OST recommender is optional.
+Approved AFHomes Sales Network: IST SVD → SSM → SM; OST members may report directly to SVD, SSM, or SM. A seller (IST or OST) may start a customer draft; the Clerk completes it and the Administrator approves it (doc 04 §5, owner ruling R5, 2026-11-12). Each sale records the closing seller and an optional referrer, either IST or OST, who may be a different person (doc 04 §7.8).
 
 VIP Contract workflows must preserve original salesperson, actual recommender, original selling team, applicable genealogy attribution, and historical team relationship. Sales Network transfers must not retroactively reassign historical sales ownership. Commission calculation remains in its own business-rule document.
 
@@ -311,15 +328,15 @@ Audit requirements: record authorized actor, time of change, previous value, new
 |---|---|---|
 | VIP products | Current approved tiers vs historical catalog | B1/S1/G1 active; B2/S2/P1/R1/G2/P2/R2 not auto-activated |
 | Dynamic tiers | New business decision vs two-character tier codes | Admin can create tiers; validate compatibility with VT segment |
-| Payment schemes | Official workbook options vs Admin-configurable offers | Recognize all five; complete canonical register from approved docs |
-| Contract classification | S/N selection vs legacy Non-Standard restriction | Both selectable; Non-Standard finalization subject to approved commercial rules |
-| Contract prices | Gold and Silver source inconsistencies | Gold resolved by owner ruling item 11 (2026-11-10); Silver still reported, not silently corrected; management-approved correction required |
-| VIP Card ID | Revised activation-based format vs legacy transaction-date format | Use actual activation date for YYMMDD |
-| VIP sequence | RA No. NNNN → VIP NNNNN vs independent legacy counter | RA-derived, no independent counter |
+| Payment schemes | Official workbook options vs Admin-configurable offers | Spot Cash, Move A, 4-Month Installment, Move B (B1/B2 merged, item 7); plus Admin-configured schemes |
+| Contract classification | S/N selection vs legacy Non-Standard restriction | Both selectable; Non-Standard finalization follows the §10.2 policy (2026-11-12) |
+| Contract prices | Gold and Silver source inconsistencies | Gold resolved by owner ruling item 11 (2026-11-10); Silver resolved by item 13 (2026-11-12, updated contract, Php 240,000) |
+| VIP number | NUM unified number vs separate RA No. and activation-based Card ID | NUM v6.2 adopted (R2, 2026-11-12): one number, YYMMDD = Reservation Agreement recording date |
+| VIP sequence | Monthly sequence vs RA-derived sequence | Monthly company-wide sequence, reset each month (NUM) |
 | RA scope | RA uniqueness and possible collision scenarios | Flag collisions; do not fabricate |
-| Card issuance | Final activated ID vs earlier contract-stage issuance proposal | Final ID only upon successful activation |
+| Card issuance | Final activated ID vs earlier contract-stage issuance proposal | Superseded by R2 (2026-11-12): the VIP Number is issued when the signed Reservation Agreement is recorded; activation and card claim never create a number (doc 06) |
 | VIP activation | Full Finance-verified payment prerequisite | Required |
-| Validity start | New activation-date policy vs old Card Claim Date rule | Use activation date; document conflict |
+| Validity start | Activation date vs signed Grant Card Claim Date | Card Claim Date, or first anniversary of full settlement if unclaimed (R2, 2026-11-12) |
 | Customer form | VIP dropdowns and blank Draft behavior | Three dropdowns; blank Draft preserved |
 | Sales recognition | Confirmed Sales vs Active VIP Membership | Remain separate |
 
@@ -335,30 +352,31 @@ Given / When / Then for core scenarios (see Section 28 of the master prompt for 
 4. Admin manages payment schemes per VIP tier.
 5. Customer selects VIP Plan, Standard/Non-Standard, and documented payment scheme.
 6. Completely blank Customer Draft is saveable.
-7. Authorized Staff/IST prepares contract; Authorized Admin approves finalization.
+7. The Clerk (office) prepares the contract; the Administrator approves finalization; sellers cannot prepare contracts.
 8. Unauthorized users cannot finalize contracts.
 9. Returned contracts can be corrected and resubmitted.
 10. Contract finalization preserves approved commercial terms.
-11. Contract finalization alone does not issue a final activated VIP Card ID.
+11. The VIP Number is issued when the signed Reservation Agreement is recorded, not at finalization or activation.
 12. Partial payment does not activate membership.
 13. Full payment without Finance verification does not activate membership.
 14. Finance-verified full settlement satisfies financial activation prerequisite.
-15. Actual successful activation date becomes date source for YYMMDD.
-16. RA sequence 0001 maps to VIP sequence 00001; 0123→00123; 9999→09999.
+15. The Reservation Agreement recording date is the date source for YYMMDD.
+16. The monthly sequence restarts at 00001 each month.
 17. No independently incremented VIP sequence is used.
-18. VIP Card ID cannot be officially generated without valid associated RA sequence.
-19. Complete official VIP Card ID remains exactly 17 characters and unique.
-20. RA sequence collision/ambiguous mapping cannot silently produce duplicate Card ID.
+18. The Reservation Agreement, Grant and card carry the same VIP Number.
+19. The VIP Number remains exactly 17 characters and unique.
+20. A cancelled or upgraded number is never issued again.
 21. Spot Cash uses C01 where applicable; installment codes use actual approved term values.
-22. Generated VIP ID remains associated with correct customer, RA No., contract, membership.
-23. Repeated activation processing does not generate multiple VIP IDs.
+22. The VIP Number remains associated with the correct customer, contract and membership.
+23. Repeated Reservation Agreement recording, activation or card claim does not generate multiple VIP Numbers.
 24. Previously issued historical IDs are never silently renumbered.
-25. New activation-date numbering does not retroactively rewrite legacy IDs.
+25. VIP Number issuance (dated by Reservation Agreement recording) does not retroactively rewrite legacy IDs.
 26. Confirmed Sales and Active VIP Membership remain separate.
 27. Gold supplementary holder uses shared membership pool.
-28. Conflicting older Card Claim Date clauses explicitly documented.
-29. Gold/Silver contract source discrepancies reported rather than silently corrected.
-30. Unsupported Non-Standard finalization cannot bypass applicable authorization.
+28. Validity starts on the Card Claim Date under the signed Grant (doc 06 §4.3).
+29. Gold and Silver prices follow owner rulings items 11 and 13; contracts signed on earlier templates keep their executed text.
+30. A Non-Standard contract cannot be finalized without both §10.2 approvals (the Administrator or the Super Administrator, then Finance; only the Super Administrator may do both).
+31. A sale counts as Confirmed at 25% approved collection once the sale record is approved, without waiting for contract finalization.
 
 ---
 
@@ -366,8 +384,8 @@ Given / When / Then for core scenarios (see Section 28 of the master prompt for 
 
 - **Files created/updated:** `docs/business-rules/05-vip-products-and-contracts.md`
 - **Approved rules covered:** VIP product management, payment schemes, contract classification, contract approval, RA-derived numbering (cross-ref), membership activation (cross-ref), card ID issuance (cross-ref), VIP validity.
-- **Official dropdown source mapping:** VIP tiers B1/S1/G1 (plus historical/reserved); payment schemes Spot Cash, Move A, 4-Month Installment, Move B1, Move B2 (plus Admin-configurable); payment types Cash, Bank Transfer, GCash, Maya, Card, Cheque; contract classifications Standard (S), Non-Standard (N).
-- **Outstanding approval dependencies:** Gold/Silver contract price corrections, Non-Standard commercial rules, complete payment scheme canonical register from approved docs, tier-code format expansion if needed.
+- **Official dropdown source mapping:** VIP tiers B1/S1/G1 (plus historical/reserved); payment schemes Spot Cash, Move A, 4-Month Installment, Move B (plus Admin-configurable); payment types Cash, Bank Transfer, GCash, Maya, Card, Cheque; contract classifications Standard (S), Non-Standard (N).
+- **Outstanding approval dependencies:** tier-code format expansion if needed. Gold and Silver prices and the Non-Standard policy were resolved by owner rulings items 11, 13 and 15.
 - **Validation:** All required sections included; no invented commercial terms; documentation only. No code, database, Git, or deployment changes.
 ## Owner rulings amendment (2026-11-09)
 
@@ -381,11 +399,11 @@ These rulings are authoritative and take precedence over earlier text in this do
 5. **Spot Cash released (OD-11, 2026-11-09).** Spot Cash is available at the Full Payment contract prices: Bronze Php 54,000, Silver Php 192,000, Gold Php 312,000. It takes the Php 10,000 reservation fee (part of the price), with the balance due within 7 days of the reservation. A scheme may carry its own package price per tier; a contract snapshots that price. Gold Spot Cash is not held by the Gold installment price conflict.
 6. **Move A approved (2026-11-09).** The Spot Cash package price is paid as the Php 10,000 reservation fee plus 4 equal monthly payments: Bronze Php 11,000 (slide 15 of the Group VIP IST Presentation, over slide 13), Silver Php 45,500, Gold Php 75,500.
 7. **Move B approved (2026-11-09) as one scheme.** The installment package price is paid as a 40% down payment that includes the reservation fee, then equal monthly payments: Bronze 4 x Php 10,800, Silver 8 x Php 18,000, Gold 12 x Php 19,500. Move B1 and Move B2 are removed from the register because no official source supports that split. The Gold installment price conflict still holds Gold Move B at finalization. No source dates the down payment; it stays undated until staff enter a date.
-8. **Special arrangement approval.** Each Move A or Move B contract needs written approval before finalization. Only a Super Administrator records it, with the reference of the signed approval, and a Super Administrator may approve a contract they prepared. The approval is audited and kept on the contract separately from the payment code.
+8. **Special arrangement approval (superseded by item 12).** Each Move A or Move B contract needs written approval before finalization. Only a Super Administrator records it, with the reference of the signed approval, and a Super Administrator may approve a contract they prepared. The approval is audited and kept on the contract separately from the payment code.
 9. **Due dates** derive from the reservation date: the reservation fee is due that day, monthly installment N is due N months later (clamped to the month end), and a Spot Cash balance is due 7 days later. Staff may override the dates while a contract is Draft or Returned.
 10. **No interest** is ever charged; a scheme has no interest field. Scheme configuration changes are validated (exact positive centavo amounts that add up to the package price per tier), versioned with an effective date and audited, and need no second approver.
 11. **Gold pricing finalized (2026-11-10).** Effective date 2026-11-10. Final Gold prices: Spot Cash ₱312,000 / Move A ₱312,000 / 4-Month Installment ₱390,000 / Move B ₱390,000. The ₱780,000 figure is rejected and is no longer active or unresolved. This ruling supersedes the pending-price-resolution requirement (the previous §6.1.1 proposal and any hold-pending-resolution language for Gold).
-12. **Move A and Move B are standard approved schemes.** Effective date: to be confirmed by the owner (proposed: date of approval). Move A and Move B are standard approved schemes — no per-selection Super Admin written approval is required; the normal Standard preparation/acceptance/review/finalization path is mandatory. Non-Standard exceptions keep their restrictions. Historical arrangement approvals and audits are preserved. Approved Card ID payment-code mapping (T = installment category plus monthly count; no promotional names appear in IDs; the contract keeps the exact scheme, price, schedule, and version):
+12. **Move A and Move B are standard approved schemes.** Effective date: 2026-11-09 (confirmed by the owner on 2026-11-12, amendment item 14). Move A and Move B are standard approved schemes — no per-selection Super Admin written approval is required; the normal Standard preparation/acceptance/review/finalization path is mandatory. Non-Standard exceptions keep their restrictions. Historical arrangement approvals and audits are preserved. Approved Card ID payment-code mapping (T = installment category plus monthly count; no promotional names appear in IDs; the contract keeps the exact scheme, price, schedule, and version):
 
     | Scheme | Tier | Card ID payment code |
     |---|---|---|
@@ -397,3 +415,25 @@ These rulings are authoritative and take precedence over earlier text in this do
     | Move B | G1 | T12 |
 
     Card issuance only on activation after finalization, full settlement, and Finance verification. This item supersedes item 7 (Gold hold language for Move B) and item 8 (per-contract written approval); it preserves items 5, 6, 9, 10, 11.
+
+## Owner rulings amendment (2026-11-12)
+
+These rulings come from the 2026-11-12 decision round R1 and take precedence over earlier text in this document where they differ.
+
+13. **Silver price finalized.** The updated Silver standard-pricing contract governs: Php 240,000 for 4-Month Installment (Php 10,000 reservation fee plus 4 x Php 57,500, zero interest). Spot Cash, Move A and Move B Silver keep items 5 to 7. The §6.2 placeholder note is history. Contracts signed on the earlier template keep their executed text.
+14. **Move A and Move B effective date** is 2026-11-09, the approval date (item 12).
+15. **Non-Standard policy approved.** See §10.2: only price and schedule may differ, the Super Administrator approves and then Finance confirms, there is no price floor, and commission uses the actual TCP. This replaces the §10.1 finalization hold.
+16. **Company source authority.** When a company workbook source conflicts with this platform document, the workbook (the live manual process) wins by default. Exceptions where the stricter rule wins: signed contracts, privacy, legal and Finance control rules. Dated owner rulings outrank both. The Ruling Addenda of 2026-08-20 (AUG) and 24 Sep Issue 3 (OCT) count as approved company practice. The IST Commission and Clawback Addendum stays a DRAFT and is not applied until signed. The current company set is listed in `MASTER_FILE_REGISTER-issue29-2026-11-07`.
+## Owner rulings amendment (2026-11-12, rounds R4–R5 and authority rule)
+
+This ruling takes precedence over earlier text in this document where it differs.
+
+17. **Non-Standard approval authority.** In §10.2 step 3, the Administrator or the Super Administrator approves the terms, then Finance confirms the price and schedule. The Super Administrator may do both steps alone. Under the owner authority rule (doc 01 §3.7), the Administrator or the Super Administrator may approve a contract they prepared, and the audit history shows that the same person prepared and approved it. This amends item 15, under which only the Super Administrator approved.
+
+## Owner rulings amendment (2026-11-12, follow-ups)
+
+These rulings take precedence over earlier text in this document where they differ.
+
+18. **Counting without finalization.** A sale counts at 25% once the Administrator has approved the sale record. Formal contract finalization is tracked separately and is not required for the count (workbook OPS §4.2; doc 13 §4). Section 13 no longer makes a finalized contract a precondition for Confirmed Sales.
+19. **Contract preparation.** Sellers do not prepare contracts. The office (Clerk) prepares and the Administrator approves (sections 11 and 20). This replaces "Authorized Staff or IST prepares the VIP contract".
+20. **Non-Standard approval (confirms §10.2).** The Administrator approves and Finance confirms. Only the Super Administrator may do both steps alone.

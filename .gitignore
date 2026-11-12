@@ -13,6 +13,7 @@
 # testing
 /coverage
 /docs/ui-redesign
+/docs/ui-design-referrence
 /workflow/*
 
 # next.js

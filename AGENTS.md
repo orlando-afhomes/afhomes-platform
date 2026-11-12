@@ -127,13 +127,13 @@ Summary only; canonical documents govern. Never assume module visibility grants 
 - **Roles (01):** centralized RBAC; multiple active roles where authorized; module permissions plus record-level scopes; protected Super Administrator; account-status restrictions; auditable role/access changes.
 - **Network (02):** canonical SVD/SSM/SM/OST hierarchy; validate sponsor/parent links; prevent cycles; role-dependent upline/downline visibility; preserve historical sale attribution.
 - **Accreditation (03):** AAI = IST, AAO = OST; follow approved creation, sponsorship, approval, renewal, suspension, expiry rules. Public verification: exact identifier search, restricted fields; IST shows no "Valid Until"; OST shows applicable "Valid Until".
-- **Customers (04):** customer identity and RA identifiers are distinct unless canon reconciles them; keep draft versus submitted distinct; validate imports and prevent duplicates; public lookup never exposes unrestricted records and only covers eligible Active VIP Memberships.
+- **Customers (04):** the customer identity and the VIP Number are distinct; keep draft versus submitted distinct; a seller starts a draft, the Clerk completes it and the Administrator approves; validate imports and prevent duplicates; there is no public customer or card lookup (owner, 2026-11-12).
 - **Products/contracts (05):** tiers Bronze B1, Silver S1, Gold G1; configuration changes never rewrite finalized contracts; do not activate unapproved tier codes or schemes; never fabricate prices or terms.
-- **Card issuance (06):** follow official Card ID and RA allocation rules; documented format `YYMMDDNNNNNVTPMMS`; prevent duplicates; preserve issued numbers; no competing serial allocator.
-- **Finance (07):** distinct states: payment submitted, Finance-verified, contract finalized, sale confirmed, fully paid, membership officially activated. Only authorized Finance actors verify receipts. Finance verification never auto-activates membership. Reversals preserve traceable history.
-- **Commissions (08):** follow recipient eligibility and historical genealogy; Finance controls percentages, approvals, payouts; approved is not Paid, only confirmed disbursement is Paid; invent no universal percentages; prevent duplicate payouts.
-- **Membership/Stay Points (09):** approved activation lifecycle; ledger-controlled points; Spend-to-Earn from qualifying Finance-verified resort spending with approved caps; 70% weekday / 30% weekend principle; preserve contractual benefits; prevent duplicate or invalid credits.
-- **Redemption (10) and Services:** **currently disabled.** Preserve documented future architecture. Do not activate routes, APIs, backend operations, or navigation without separate authorization. Hiding navigation alone is insufficient once backend routes exist.
+- **Card issuance (06):** one VIP Number `YYMMDDNNNNNVTPMMS` for the Reservation Agreement, the Grant and the Card, issued when the signed Reservation Agreement is recorded, with a monthly sequence; validity starts on the Card Claim Date; prevent duplicates; never reuse or renumber issued numbers; no competing serial allocator. IGP uses a separate Series Number (doc 14).
+- **Finance (07):** distinct states: payment submitted, Finance-verified, contract finalized, sale confirmed, fully paid, membership officially activated. Receipts are entered by a Clerk and approved by Finance, the Administrator or the Super Administrator; a sale counts at 25% approved collection. Receipt approval never auto-activates membership. Reversals preserve traceable history.
+- **Commissions (08):** per-sale commission goes only to the closing seller (DSC) and the referrer (DRI), at each person's set rate frozen on the sale; VIP releases at 40% collected and is paid at month-end; leaders earn monthly BA, PA and PB; approved is not Paid, only confirmed disbursement is Paid; clawback recovery follows doc 08; prevent duplicate payouts.
+- **Membership/Stay Points (09):** approved activation lifecycle; ledger-controlled points under the signed Grant's Annual Welcome Gift (fixed yearly tranches with weekday and weekend parts, released only when the yearly qualifying spend is met); preserve contractual benefits; prevent duplicate or invalid credits.
+- **Redemption (10) and Services:** **currently disabled.** Redemption rules were decided on 2026-11-12 (doc 10); building them needs separate authorization. Preserve documented future architecture. Do not activate routes, APIs, backend operations, or navigation without separate authorization. Hiding navigation alone is insufficient once backend routes exist.
 - **Reporting (11, 13):** authoritative source records, correct business event dates, historical attribution, no double-counting, role-based access, approved date filters.
 - **Audit (12):** centralized, logically append-only history for sensitive actions; never log credentials or unnecessary sensitive data; preserve corrections; invent no retention durations.
 
@@ -141,11 +141,15 @@ Summary only; canonical documents govern. Never assume module visibility grants 
 
 Do not silently resolve these during development; verify canonical documents before treating a historical blocker as open or closed:
 
-- Gold installment price (₱390,000 vs ₱780,000); unfinished Silver contractual amount; Non-Standard contract authorization. (Spot Cash, Move A and Move B terms were approved by the owner on 2026-11-09; see the doc 05 amendment.)
-- RA numbering scope and uniqueness; Card Claim Date versus Activation Date validity start.
-- Accreditation expiry/access cutoff interpretation.
-- Module-level versus operation-level permission policy (doc 01 versus operation grants in code; `docs/development/role-module-permission-matrix-proposal.md` is only partially approved).
-- Better Auth/MongoDB compatibility; Atlas transaction capability for target tier; formal audit retention; production domain, sizing, and providers.
+- Decided by the owner on 2026-11-12 (decision rounds R1 to R13; see `docs/implementation/decisions-and-gaps.md` and the dated amendments in docs 01 to 14):
+  - Gold price (₱390,000 installment, decided 2026-11-10), Silver ₱240,000, and Non-Standard authorization (doc 05).
+  - One VIP Number for the RA, Grant and Card under NUM v6.2, and validity from the Card Claim Date (doc 06).
+  - Expired accreditation does not block selling, and renewal issues a new AA number (doc 03).
+  - Module versus operation permissions, and the Administrator and Super Administrator authority rule (doc 01).
+  - Receipts, sale counting at 25%, commissions, allowances and clawback (docs 07, 08, 13).
+  - Points under the signed Grant Welcome Gift rule (doc 09), Redemption rules (doc 10, still disabled until build authorization), and IGP in scope (doc 14).
+  - No public card lookup, and audit and records kept indefinitely until legal advice (docs 11, 12).
+- Still open: the signing of the IST Commission and Clawback Addendum (it gates automatic recovery); the points-per-night redemption table (filled in by an Admin); Better Auth/MongoDB compatibility; Atlas transaction capability for the target tier; a legally advised retention period; production domain, sizing, and providers.
 
 Unresolved commercial or infrastructure decisions do not automatically block independent frontend work.
 

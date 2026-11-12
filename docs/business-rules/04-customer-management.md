@@ -33,7 +33,8 @@ It integrates with other modules without taking responsibility for their separat
 - **Customer ID / RA Number** — official unique customer identifier.
 - **Draft** — a saved, possibly incomplete customer registration.
 - **Submit** — action to validate and finalize a customer registration.
-- **Referrer / VIP Recommender** — the same OST member associated with a customer registration.
+- **Closing Seller** — the IST or OST seller who closed the sale; linked to the VIP Number (owner ruling R5, 2026-11-12).
+- **Referrer / VIP Recommender** — the optional seller (IST or OST) who referred the customer. Recorded separately from the closing seller and may be a different person.
 - **Acquisition Channel** — how the customer was acquired.
 - **VIP Membership** — separate lifecycle from customer identity.
 
@@ -52,23 +53,25 @@ Customer Management references existing records in these modules and must not du
 
 ---
 
-## 5. Customer Registration Authority
+## 5. Customer Registration Authority (owner ruling R5 and authority rule, 2026-11-12)
 
-Only these user classifications may register new customers:
+A new customer is registered in three steps:
 
-| User Type | Customer Registration |
-|---|---|
-| Super Admin | Allowed |
-| Admin | Allowed |
-| Authorized Staff | Allowed |
-| IST — SVD | Allowed |
-| IST — SSM | Allowed |
-| IST — SM | Allowed |
-| OST | Not Allowed |
+1. **Start a draft.** A seller (IST or OST) may start a customer draft for their own customer. Office users may also start drafts.
+2. **Check and complete.** The office Clerk checks and completes the draft and submits it (sections 9 and 10).
+3. **Approve.** The Administrator or the Super Administrator approves the submitted registration. Either may approve a registration they entered themselves; the audit history then shows that the same person entered and approved it (doc 01 §3.7).
 
-Registration by Authorized Staff and IST must still respect applicable authentication and access permissions.
+| User Type | Start a draft | Complete and submit | Approve |
+|---|---|---|---|
+| Super Administrator | Yes | Yes | Yes |
+| Administrator | Yes | Yes | Yes |
+| Clerk (office staff with the customer entry permission) | Yes | Yes | No |
+| IST — SVD, SSM, SM | Yes, own customers | No | No |
+| OST | Yes, own customers | No | No |
 
-**OST personnel must not have direct Customer Creation access.** OST can be selected as Referrer / VIP Recommender, access permitted records of their own customers, and view their own authorized sales information. OST cannot create customer master records, obtain Customer Creation access solely because they are listed as a recommender, view unrelated customers, or view other OST members' customer records.
+A seller's draft is visible to the office for completion. Apart from starting a draft, a seller may only upload a payment slip photo for their own customer as proof (doc 07); otherwise sellers view only (doc 01 §3.7). Sellers do not prepare contracts: the office Clerk prepares the VIP contract and the Administrator approves it (doc 05 §11). A seller does not gain access to unrelated customers, or to other sellers' customer records, by starting a draft or by being listed as closing seller or referrer.
+
+All registration actions still respect applicable authentication and access permissions.
 
 ---
 
@@ -150,25 +153,30 @@ Fields: Occupation / Business, Office / Business Address, Business / Industry, E
 
 ### 7.7 Section G — Customer ID (RA Number)
 
-The official identifier is referred to as RA Number / Customer ID. Support two methods: Automatic (system generates next unique Customer ID using the official AFHomes Customer ID format and allocator) and Manual (Authorized Staff, IST SVD/SSM/SM, Super Admin/Admin according to permissions may manually enter).
+The official identifier is referred to as RA Number / Customer ID. Support two methods: Automatic (system generates next unique Customer ID using the official AFHomes Customer ID format and allocator) and Manual (the Clerk, the Administrator or the Super Administrator, according to permissions, may manually enter; sellers do not, because sellers view only, doc 01 §3.7).
 
 Validation: every officially established Customer ID must be unique; duplicates prohibited; manual IDs must satisfy official company identifier format. A Customer ID belongs to its customer and does not change when a customer buys another VIP product, when a salesperson transfers teams, or when VIP membership expires.
 
-Inspect any documented official Customer ID generator before specifying its literal format. Do not invent an RA Number pattern. Do not reuse the IST/OST `AAI`/`AAO` accreditation number format for customers. Do not confuse Customer ID with VIP Card ID, VIP Control Number, VIP Contract Number, IST/OST Accreditation Number, or Sales Transaction Number.
+Inspect any documented official Customer ID generator before specifying its literal format. The Reservation Agreement has no separate RA Number pattern: it carries the VIP Number issued when the signed agreement is recorded (doc 06, owner ruling R2, 2026-11-12). Do not reuse the IST/OST `AAI`/`AAO` accreditation number format for customers. Do not confuse Customer ID with VIP Card ID, VIP Control Number, VIP Contract Number, IST/OST Accreditation Number, or Sales Transaction Number.
 
 Blank drafts must be possible without requiring a finalized Customer ID. Separate technical draft identification from official customer identity. Avoid unnecessary consumption of official Customer ID sequences by blank or abandoned drafts unless required by the established official allocator policy.
 
 ### 7.8 Section H — Sales and Recommender Details
 
-Fields: SVD, SSM, SM, Referrer, VIP Recommender, Recommender Contact, Recommender Email, Acknowledged At.
+Fields: Closing Seller, SVD, SSM, SM, Referrer / VIP Recommender, Recommender Contact, Recommender Email, Acknowledged At.
 
 Sales Network follows SVD → SSM → SM → OST, with OST able to attach directly to eligible SVD/SSM/SM. Do not create imaginary intermediate managers. Use existing Sales Network member records; reflect applicable actual genealogy; do not allow independently selected contradictory upline relationships; use valid existing IST designations.
 
-**Approved rule: Referrer and VIP Recommender must be the SAME OST member.** Do not model them as independent Sales Network roles. Do not permit one OST as Referrer and a different OST as VIP Recommender for the same registration.
+**Approved rule (owner ruling R5, 2026-11-12): closing seller plus an optional referrer.**
 
-Recommended form behavior: use one searchable dropdown "Referrer / VIP Recommender" sourced from the existing OST directory. After selecting an OST, Referrer and VIP Recommender both reference that OST, Recommender Contact and Recommender Email are populated from that OST's registered contact information, and identity remains consistent. Do not create duplicate OST accounts merely to represent different labels.
+- The **closing seller** (IST or OST) is the seller credited with the sale and is linked to the VIP Number.
+- An optional **referrer** (IST or OST) is recorded separately. The referrer may be a different person from the closing seller.
+- Each is paid on their own basis (doc 08).
+- This replaces the former rule that the Referrer and the VIP Recommender had to be the same OST member and that only an OST could be recorded.
 
-An OST recommender is optional for direct IST sales. When an IST–SM personally acquires a customer without OST involvement, the customer may be registered without an OST recommender. Do not invent an OST recommender to complete the form. When a real OST referral exists, select the actual OST and associate it.
+"Referrer" and "VIP Recommender" are two labels for the same field and the same person. Recommended form behavior: one searchable dropdown for the closing seller and one optional searchable dropdown "Referrer / VIP Recommender", both sourced from the existing seller directory. Recommender Contact and Recommender Email are populated from the selected referrer's registered contact information. Do not create duplicate seller accounts merely to represent different labels.
+
+A referrer is optional. When the closing seller acquired the customer without a referral, the customer is registered without a referrer. Do not invent a referrer to complete the form. When a real referral exists, select the actual referrer and associate it.
 
 Acknowledged At is the recorded acknowledgment information. Do not assume a particular timestamp source, actor, or automatic acknowledgment event without supporting business rules.
 
@@ -187,7 +195,7 @@ Acquisition Channel dropdown options (exact approved labels):
 
 GDP appeared twice in the original list; include it only once. Do not create duplicates or silently rename or invent additional channels.
 
-Acquisition Channel and OST Referrer / VIP Recommender are not the same field. The channel describes how the customer was acquired; the recommender identifies the associated OST person, where applicable. Do not create a new Sales Network role from acquisition-channel labels.
+Acquisition Channel and Referrer / VIP Recommender are not the same field. The channel describes how the customer was acquired; the referrer identifies the seller who referred the customer, where applicable. Do not create a new Sales Network role from acquisition-channel labels.
 
 ### 7.10 Section J — Customer Certification
 
@@ -223,7 +231,7 @@ Examples: a newly registered customer with no activated VIP membership retains t
 
 Do not require any field (including Customer name, VIP Plan, Payment Scheme, Mobile, Email, Address, Government ID, ID image, Customer ID, Acquisition Channel, Recommender, Certification checkboxes) in order to save a blank draft.
 
-Authorized Staff and IST may create a new draft, save an empty draft, save a partially completed draft, reopen a previously saved draft, edit draft information, save changes repeatedly, complete missing information later, and submit once applicable validation requirements are met.
+The users allowed to start a draft in section 5 (office users and sellers, IST or OST) may create a new draft, save an empty draft, save a partially completed draft, reopen a previously saved draft, edit draft information, and save changes repeatedly. The Clerk, the Administrator or the Super Administrator completes missing information and submits once applicable validation requirements are met; sellers do not submit.
 
 Drafts have a clearly identifiable Draft state. A Draft is not automatically a completed customer registration, verified customer identity, finalized VIP application, finalized contract, confirmed sale, Finance-approved payment, or active VIP membership.
 
@@ -240,7 +248,7 @@ Submit is distinct from Save as Draft. When Submit is used:
 1. Validate applicable mandatory information.
 2. Validate provided field formats.
 3. Validate the Customer ID when manually entered.
-4. Validate relevant Sales Network and OST references.
+4. Validate relevant Sales Network references (closing seller and referrer).
 5. Check for duplicate Customer IDs.
 6. Apply the established customer duplicate-prevention process.
 7. Evaluate applicable certification and ID requirements.
@@ -251,7 +259,7 @@ Submit is distinct from Save as Draft. When Submit is used:
 
 If Submit fails validation: preserve the user's entered data, do not discard the draft, explain which applicable requirements remain incomplete or invalid, and do not fabricate information to make the submission pass.
 
-After successful submission: preserve the customer data, record the submitting user and appropriate timestamp, maintain customer identity and registration status, and make the resulting record available according to Customer Management access rules. Do not automatically activate a VIP membership merely because customer registration was submitted.
+After successful submission: preserve the customer data, record the submitting user and appropriate timestamp, maintain customer identity and registration status, and make the resulting record available according to Customer Management access rules. The submitted registration then waits for approval. When reviewing a seller-started customer, the Administrator (or the Super Administrator) may approve it, send it back to the Clerk with a reason, or reject it with a reason. Nothing is deleted (owner follow-up ruling, 2026-11-12). The submitted registration waits for approval by the Administrator or the Super Administrator (section 5); the approver and timestamp are recorded. Do not automatically activate a VIP membership merely because customer registration was submitted or approved.
 
 ---
 
@@ -262,7 +270,7 @@ Use role-based and Sales Network-scoped visibility. Do not implement unrestricte
 - **Authorized Staff:** access follows assigned Customer Management module permissions and other applicable administrative restrictions.
 - **IST — Personal customers:** SVD, SSM, and SM may view permitted customer information associated with their own direct sales. Allowed: full customer name, mobile/phone, email, own sales details.
 - **IST — Downline customers:** IST managers may view authorized downline sales information. Allowed: full customer name, VIP tier, sale amount, sale date, sale status. Restricted in ordinary downline Sales Network views: customer phone numbers, customer email addresses, complete customer profiles, detailed payment records. An IST manager must not obtain unrestricted customer contact information merely because the customer belongs to a downline salesperson.
-- **OST — Personal customers:** OST may view permitted customer records associated with their own sales. Allowed: full customer name, mobile/phone, email, own sales information. OST cannot view customers belonging exclusively to other OST members. OST still cannot create customer records.
+- **OST — Personal customers:** OST may view permitted customer records associated with their own sales. Allowed: full customer name, mobile/phone, email, own sales information. OST cannot view customers belonging exclusively to other OST members. OST may start a customer draft (section 5) but cannot submit or approve a registration.
 
 Full, unmasked customer names are approved for authorized internal sales views. Do not mask surnames in those views. This does not remove applicable access restrictions on other customer information.
 
@@ -281,7 +289,7 @@ Sales Network team transfers must not rewrite customer identity.
 
 ## 13. Customer Search vs. Public VIP Lookup
 
-Internal Customer Search and public VIP member lookup are separate functions. Internal search may show complete records only to appropriately authorized users within permitted scope. Public VIP Lookup must follow separately approved public search requirements and privacy rules. Do not assume unrestricted internal customer search visibility applies to the public website. Do not expose customer contact information, government ID images, sensitive personal information, or complete customer profiles through public lookup without an independently approved business rule.
+There is no public VIP lookup (owner ruling R11, 2026-11-12): only authorized staff check customers and cards. Internal search may show complete records only to appropriately authorized users within permitted scope. Do not assume unrestricted internal customer search visibility applies to the public website. Do not expose customer contact information, government ID images, sensitive personal information, or complete customer profiles through public lookup without an independently approved business rule.
 
 ---
 
@@ -320,16 +328,16 @@ Preserve, where appropriate: acting user, operation, date and time, previous and
 
 ## 17. Business Validation Rules
 
-- Only Authorized Staff and IST (SVD/SSM/SM) may create customer records; OST may not.
+- Sellers (IST or OST) may start a customer draft; the Clerk completes and submits it; the Administrator or the Super Administrator approves it.
 - VIP Plan uses G1/S1/B1.
 - Payment Scheme references official definitions (do not invent).
 - ID Number is optional.
 - Province/City/Barangay use dependent reference selections.
 - Postal Code derived from location data.
 - Acquisition Channel contains the eight unique approved options.
-- Referrer and VIP Recommender are the same OST.
-- OST recommender is optional for direct IST sales.
-- Recommender contact/email linked to selected OST.
+- The closing seller (IST or OST) is linked to the VIP Number; an optional referrer (IST or OST) is recorded separately and may be a different person.
+- The referrer is optional.
+- Recommender contact/email linked to the selected referrer.
 - Certification fields not automatically checked.
 - Customer identity independent of VIP membership.
 - Duplicate Customer IDs rejected.
@@ -341,27 +349,27 @@ Preserve, where appropriate: acting user, operation, date and time, previous and
 
 Given / When / Then style for core workflows:
 
-1. **Authorized Staff registers customers.** Given an authorized Staff user, when they open Customer Creation and submit valid applicable information, then a customer record is created without automatic VIP activation.
-2. **IST–SVD registers customers.** Given an IST–SVD, when they submit a valid registration, then customer creation succeeds.
-3. **IST–SSM registers customers.** Given an IST–SSM, when they submit a valid registration, then customer creation succeeds.
-4. **IST–SM registers customers.** Given an IST–SM, when they submit a valid registration, then customer creation succeeds.
-5. **OST cannot register customers.** Given an OST user, when they attempt Customer Creation, then access is denied.
+1. **Clerk completes and submits customers.** Given a Clerk, when they complete a draft and submit valid applicable information, then the registration is submitted for approval without automatic VIP activation.
+2. **Administrator approves customers.** Given a submitted registration, when the Administrator or the Super Administrator approves it, then the customer record becomes official and the audit history records the approver, including when the approver also entered it.
+3. **IST seller starts a draft.** Given an IST seller (SVD, SSM or SM), when they start and save a customer draft for their own customer, then the draft is saved and visible to the office for completion.
+4. **OST seller starts a draft.** Given an OST seller, when they start and save a customer draft for their own customer, then the draft is saved and visible to the office for completion.
+5. **Sellers cannot submit or approve.** Given an IST or OST seller, when they attempt to submit or approve a registration, then the action is denied.
 6. **Completely blank draft can be saved.** Given an authorized user with an empty form, when they select Save as Draft, then the draft saves successfully with no invented data.
 7. **Partially completed draft can be saved.** Given a partially completed form, when Save as Draft is used, then entered values are preserved and other fields remain incomplete.
 8. **Draft can be reopened and edited.** Given a saved draft, when reopened, then it can be edited and resaved.
 9. **Submission performs applicable required-field validation.** Given a submission attempt with missing applicable required information, when Submit is used, then validation errors are returned and the draft is preserved.
 10. **Optional fields do not automatically block submission.** Given valid applicable required information with optional fields blank, when Submit is used, then submission can succeed.
 11. **Customer ID can be generated automatically.** Given a registration without manual ID, when submitted, then the system generates a unique Customer ID per official allocator.
-12. **Authorized Staff can manually enter a valid Customer ID.** Given Authorized Staff with a valid manual ID, when submitted, then the ID is accepted.
-13. **IST can manually enter a valid Customer ID.** Given an IST with a valid manual ID, when submitted, then the ID is accepted.
+12. **Office users can manually enter a valid Customer ID.** Given a Clerk, the Administrator or the Super Administrator with a valid manual ID, when submitted, then the ID is accepted.
+13. **Sellers cannot enter a Customer ID.** Given an IST or OST seller, when they edit a draft, then manual Customer ID entry is not available.
 14. **Duplicate Customer IDs are rejected.** Given a manual ID already assigned, when submitted, then submission is rejected and entered data preserved.
 15. **VIP Plan uses official G1/S1/B1 values.** Given the form, when selecting VIP Plan, then only G1/S1/B1 are available.
 16. **Province, City, Barangay use dependent reference selections.** Given location selection, when Province is selected, then only matching cities are shown and then matching barangays.
 17. **Postal Code populated from valid location data.** Given an unambiguous location, when selected, then Postal Code auto-populates.
 18. **Acquisition Channel contains eight unique approved options.** Given the dropdown, when opened, then exactly CMP, DRP, GDP, Corporate, Walk-In, Public Servant, Referral, FB Ads are present.
-19. **Referrer and VIP Recommender cannot reference different OST members.** Given two different OST selections attempted, when submitted, then validation fails.
-20. **OST recommender optional for direct IST sales.** Given an IST personally acquiring a customer with no OST, when submitted without recommender, then submission can succeed.
-21. **Recommender contact and email populated from selected OST.** Given an OST selection, when selected, then Recommender Contact and Email reflect that OST's registered info.
+19. **Closing seller and referrer may differ.** Given a closing seller and a different referrer (each IST or OST), when submitted, then both are recorded separately and the closing seller is the one linked to the VIP Number.
+20. **Referrer is optional.** Given a closing seller who acquired the customer without a referral, when submitted without a referrer, then submission can succeed.
+21. **Recommender contact and email populated from the selected referrer.** Given a referrer selection, when selected, then Recommender Contact and Email reflect that seller's registered info.
 22. **Certification fields not automatically checked.** Given a new form, when loaded or drafted, then both certification checkboxes are unchecked.
 23. **Government ID number remains optional.** Given a registration without ID Number, when submitted, then submission is not blocked solely by missing ID Number.
 24. **Customer identity separate from VIP membership.** Given a customer with no active VIP membership, when viewed, then customer record remains retained.
@@ -439,3 +447,20 @@ See Section 14.
 - **Outstanding dependencies:** Exact Customer ID format, Payment Scheme enumeration, mandatory field matrix, ID verification standards, mandatory certification conditions, deletion/retention periods, duplicate matching formulas, commission policies, VIP activation, contract cancellation/refund.
 - **Validation results:** All approved sections included; no actual contradictions found; no invented business policies.
 - **File change summary:** Created `docs/business-rules/04-customer-management.md` only. No application implementation, database modification, push, merge, or deployment performed.
+## Owner rulings amendment (2026-11-12, rounds R4–R5 and authority rule)
+
+These rulings take precedence over earlier text in this document where they differ.
+
+1. **Closing seller plus optional referrer (R5).** The closing seller (IST or OST) is linked to the VIP Number. An optional referrer (IST or OST) is recorded separately and may be a different person. Both are paid on their own basis (doc 08). This replaces the former rule that the Referrer and the VIP Recommender must be the same OST member (section 7.8).
+2. **Customer intake (R5).** A seller (IST or OST) may start a customer draft. The office Clerk checks and completes it, and the Administrator or the Super Administrator approves it (section 5). This replaces the former rule that OST could not create customers and that IST could register customers directly.
+3. **Authority rule.** The Administrator can do everything in the system and the Super Administrator has no blocks. Both may approve a registration they entered themselves, and the audit history shows that the same person entered and approved. Clerks enter only; sellers view only, except for starting a customer draft (doc 01 §3.7).
+4. **Seller visibility (R4).** SVD, SSM and SM see their own and their team's customers, sales and pay, within the field limits of section 11; OST sees only their own.
+5. **Forgotten passwords (R5).** Account recovery is covered in doc 01 §6.2.1: an Administrator issues a temporary password until real authentication exists.
+
+## Owner rulings amendment (2026-11-12, follow-ups)
+
+These rulings take precedence over earlier text in this document where they differ.
+
+6. **Contracts.** Sellers do not prepare contracts. The office (Clerk) prepares the contract and the Administrator approves it (section 5; doc 05 §11).
+7. **Seller payment slip.** A seller may upload a payment slip photo for their own customer. It is proof only and counts only after a Clerk enters the receipt and Finance, an Administrator or the Super Administrator approves it (section 5; doc 07).
+23. **Review of a seller-started customer.** The Administrator can approve it, send it back to the Clerk with a reason, or reject it with a reason. Nothing is deleted (sections 5 and 10).

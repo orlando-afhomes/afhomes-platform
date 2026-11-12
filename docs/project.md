@@ -80,7 +80,7 @@ AFHomes operates interconnected workflows involving company organization, person
 AFHomes has a single Next.js application with logical presentation panels.
 
 - **Admin and Operations Panel:** supports authorized operational roles (Super Admin, Admin, HR, Finance, Staff, SVD, SSM, SM, OST, etc.) with shared panel architecture exposing different navigation, dashboards, and data access according to role. Do not create an independent application deployment per role.
-- **Public Panel:** supports approved public-facing capabilities: company branding and navigation, public website, public accreditation verification, Public Customer Lookup, login entry, approved public content/CMS capabilities. Part of the same Next.js application. Do not permanently restrict the target architecture to a minimal three-page MVP; do not automatically implement the full CMS during Phase 1 without authorization.
+- **Public Panel:** supports approved public-facing capabilities: company branding and navigation, public website, public accreditation verification, login entry, approved public content/CMS capabilities. Part of the same Next.js application. Do not permanently restrict the target architecture to a minimal three-page MVP; do not automatically implement the full CMS during Phase 1 without authorization.
 - **Future Customer Panel:** planned future web panel (customer profile, membership info, VIP Card details, benefits, transactions, Stay Points, authorized self-service). Not automatically included in initial implementation.
 - **Future Mobile Application:** React Native + Expo may consume versioned backend APIs. Do not create the mobile app during this task.
 
@@ -214,10 +214,10 @@ The master document identifies distinct categories: MongoDB internal identity, C
 
 ### 22. Public Verification and Privacy
 
-Two distinct public discovery functions.
+One public discovery function. Public Customer Lookup is removed from scope (owner ruling R11, 2026-11-12; doc 11 §21).
 
 - **Public accreditation verification:** uses approved AAI/AAO identity rules. Current established requirements: exact official accreditation number; no unrestricted public name discovery; only qualifying active/eligible results; approved public disclosure; safe generic failures; rate limiting when integrated. Approved display distinction: IST/AAI does not display the same "Valid Until" field as OST; OST/AAO displays the applicable validity date where required. Verify against document 03 before retaining details.
-- **Public Customer Lookup:** not the same feature. Follow document 04. Only approved active and eligible membership records may be publicly verifiable. Respect approved identity masking, exact lookup identifiers, and restricted disclosure.
+- **Customer and card checks:** there is no public lookup; only authorized staff check customers and cards inside the staff application (doc 11 §21).
 
 Do not expose: government ID images; private customer contacts outside authorized disclosure; residential addresses; unrelated financial information; private account details. Do not duplicate the complete public result field schemas here.
 
@@ -525,3 +525,9 @@ The master project document is not the correct place for complete database schem
 - **Documentation validation result:** Structure is internally consistent with the approved scope; no application code, frameworks, dependencies, databases, or unrelated files were modified. Document distinguishes approved decisions, deferred features, and unresolved dependencies.
 
 STOP — awaiting explicit project-owner authorization before beginning application implementation, database setup, Git changes, cloud configuration, or deployment.
+
+## Consistency update (2026-11-12)
+
+Aligned with the business-rule documents as rewritten on 2026-11-12. No architecture decision changed.
+
+1. Sections 5 and 22: Public Customer Lookup removed from scope (owner ruling R11; doc 11 §21).

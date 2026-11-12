@@ -4,7 +4,7 @@
 - Objective: corrections to verified money, cancellation with an independent decision, and holds, with every linked effect reconciled.
 - Business rules: `docs/business-rules/07-finance-and-payments.md` sections 14, 19 and 20; `08-commission-management.md`. Workbook references: OPS section 4.4, OCT R32 to R34 and O6 to O9.
 - Depends on: FP6.
-- Open decisions: G07, G08, G09.
+- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G07, G08, G09.
 
 Routes (from the atlas):
 
@@ -72,7 +72,7 @@ Routes (from the atlas):
 | Current | Not implemented. The workbook documents returned checks, default, cure, late admission, closed periods, replacement and rescission (OCT R32 to R34, O6 to O9). Default flagging is a prompt for authorized confirmation. |
 | Target | Keep these paths distinct. Recovery of paid commission and legally permitted offsets need the applicable signed basis. |
 | Layer | Owner decision |
-| Blocked by | G07, G09 |
+| Blocked by | G07 (decided R7), G09 |
 | Acceptance | To be defined after the decision. |
 | Status | Missing |
 

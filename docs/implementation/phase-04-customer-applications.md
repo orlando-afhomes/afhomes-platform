@@ -4,7 +4,7 @@
 - Objective: draft and submit customer applications, correct submitted records, import and export, and attribute the sale to the right seller.
 - Business rules: `docs/business-rules/04-customer-management.md` sections 5, 7, 9, 10, 13 and 14. Workbook references: NUM section 9, OPS section 4.2.
 - Depends on: FP1, FP3.
-- Open decisions: G03, G06. Doc 04 section 7.8 and Customer ID decision D2 are stale (see [decisions-and-gaps.md](decisions-and-gaps.md)).
+- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G03, G06. Doc 04 section 7.8 and Customer ID decision D2 are stale (see [decisions-and-gaps.md](decisions-and-gaps.md)).
 
 Routes (from the atlas):
 
@@ -60,9 +60,9 @@ Routes (from the atlas):
 | Current | Two UI selectors. The documented same-OST rule in doc 04 section 7.8 differs. |
 | Target | Closing seller and optional referrer stay separate (NUM section 9). Attribution is verified. |
 | Layer | Owner decision |
-| Blocked by | G03 |
+| Blocked by | G03 (decided R5) |
 | Acceptance | After the decision: attribution matches the rule and past attribution is preserved. |
-| Status | Blocked |
+| Status | Decided, awaiting build authorization |
 
 ## F4.5 OST referral lead and SM handoff
 
@@ -70,9 +70,9 @@ Routes (from the atlas):
 |---|---|
 | Journey | J05 |
 | Current | The OST operation list has no customer create or prepare grant. SM designation does not authorize contract finalization (U04). |
-| Target | Candidate: a draft-only referral record that stops at the SM's scoped review and hands off to the authorized finalizer. A true customer draft or SM finalization needs explicit policy changes. |
+| Target | Per R5: a seller starts the customer draft, the Clerk completes it and the Administrator approves. The closing seller is credited, plus an optional referrer. OST sees only its own records (R4). |
 | Layer | Owner decision |
-| Blocked by | G03, U04 |
+| Blocked by | G03 (decided R5), U04 (decided R5) |
 | Acceptance | To be defined after the decision. No automatic grants to OST. |
 | Status | Missing |
 

@@ -1,8 +1,8 @@
 # Feature-by-Feature Implementation Plan
 
-Atlas version: `2026-11-12.1`
-Atlas baseline: `develop @ a0bdcef · reviewed working copy · 12 Nov 2026`
-Docs written against: `develop @ fc060bb`
+Atlas version: `2026-11-12.2`
+Atlas baseline: `develop @ 0512a31 · reviewed working copy · 12 Nov 2026`
+Docs written against: `develop @ fc060bb`, with the owner rulings R1 to R13 of 2026-11-12 (uncommitted at the time of the atlas update)
 
 This folder turns the AFHomes Workflow Atlas into an implementation roadmap. It lists what exists, what is missing and what is blocked, one feature at a time, grouped into feature phases.
 
@@ -13,7 +13,7 @@ It does not authorize any work. Per `AGENTS.md` section 7, every feature still n
 - The Workflow Atlas is an offline viewer built by Codex: `C:/Users/SSD-ORLANDO/.codex/visualizations/2026/11/12/01a1cd9b-0453-7c43-bed7-0f196ed66259/afhomes-viewer/dist/index.html`. It is the project's workflow memory. The command `/update-workflow-atlas` keeps it current (see `workflow/update-workflow-atlas.md`).
 - The atlas is evidence, not authority. Canonical business rules in `docs/business-rules/` win. Where the atlas and a rule differ, the feature card cites both and points to the decision item. It never resolves the difference.
 - Atlas coverage: 10 modules, 16 roles, 53 routes, 12 journeys (J01 to J12), 12 decisions (G01 to G12), 13 scenario gaps (U01 to U13). Each journey has four views: AS-IS Manual, AS-IS System, TO-BE Proposed and Changes.
-- The atlas was built at `a0bdcef`. Commit `fc060bb` changed commission release and payout rules, stay-point rules and instant navigation. Cards that these changes affect say so.
+- The atlas was refreshed to `0512a31` on 2026-11-12 (version `2026-11-12.2`): G01 to G12 and U01 to U13 now carry the R1 to R13 rulings, and the text of 11 journeys (all but J03), three diagram lines and five flow-node texts were updated. The earlier build was at `a0bdcef`. Commit `fc060bb` changed commission release and payout rules, stay-point rules and instant navigation. Cards that these changes affect say so.
 
 ## Not the same as the technical phases
 

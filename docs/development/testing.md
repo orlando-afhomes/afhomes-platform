@@ -314,9 +314,9 @@ An authorized incomplete draft should not be rejected solely because final submi
 
 Do not create duplicate canonical customer identities for repeated purchases.
 
-### 24.3 Public Customer Lookup
+### 24.3 No public customer lookup
 
-Verify only eligible Active memberships are publicly verifiable. Verify inactive/ineligible records are not exposed as active. Check exact search and disclosure restrictions in the authoritative document rather than inventing a lookup policy.
+Public Customer Lookup is removed from scope (owner ruling R11; doc 11 §21). Verify that no public route or API returns customer or card records; only authorized staff check cards inside the staff application.
 
 ---
 
@@ -336,7 +336,7 @@ If current source documents contain unresolved Gold/Silver price discrepancies o
 
 ## 26. Official VIP Identifiers Testing
 
-Use document 06. Current approved format: `YYMMDDNNNNNVTPMMS`. Cover exact format validation, component positions, actual activation-date source, tier code, payment scheme component, contract classification, RA-derived sequence, unique allocation, collision prevention, repeated activation, historical preservation.
+Use document 06. Current approved format: `YYMMDDNNNNNVTPMMS`. Cover exact format validation, component positions, Reservation Agreement recording date as the YYMMDD source, tier code, payment scheme component, contract classification, monthly company-wide sequence, unique allocation, collision prevention, no new number on activation or card claim, historical preservation.
 
 ### 26.1 Format
 
@@ -867,3 +867,10 @@ Only genuine blockers. Do not invent decisions. Examples: unresolved Gold/Silver
 - **Execution safety:** Application code modified: No. Test suite created: No. Test configuration created: No. Dependencies installed: No. Tests executed: No. Local MongoDB modified: No. MongoDB Atlas modified: No. Database migration executed: No. Data import executed: No. Other documentation modified: No. Git commit: No. Git push: No. Git merge: No. Deployment: No. Redemption enabled: No. Services enabled: No. Production data migrated: No.
 
 STOP — awaiting explicit project-owner authorization before creating tests, changing application code, starting databases, modifying Git or deploying.
+
+## Consistency update (2026-11-12)
+
+Aligned with the business-rule documents as rewritten on 2026-11-12. No architecture decision changed.
+
+1. Section 24.3: Public Customer Lookup tests replaced by a check that no public lookup exists (doc 11 §21).
+2. Section 26: VIP Number tests use the Reservation Agreement recording date and the monthly sequence, not the activation date and an RA-derived sequence (doc 06).

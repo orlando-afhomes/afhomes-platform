@@ -1,10 +1,13 @@
 # AFHomes Platform — VIP Card Issuance Business Rules
 
-> Single source of truth for **Official VIP Card ID generation, RA No. relationship, activation-date-based numbering, issuance eligibility, card lifecycle, membership activation and validity, historical identifier preservation, and audit requirements**.
+> Single source of truth for **the unified VIP Number (one number for the Reservation Agreement, the Grant and the Card), issuance, card lifecycle, membership activation and validity, upgrades, historical identifier preservation, and audit requirements**.
+>
+> **Owner ruling R2 (2026-11-12):** this document follows the company numbering guideline `AFhomes_VIP_numbering_guidelines-v6.2` (NUM, effective 4 October 2026) and the signed VIP Grant validity clause. Sections 1 to 9 and 16 to 20 were rewritten on 2026-11-12. The earlier rule (a separate RA No. plus an activation-dated Card ID) is withdrawn; see amendment items 4 to 8.
 > VIP Products and Contracts: `docs/business-rules/05-vip-products-and-contracts.md`.
 > Customer Management: `docs/business-rules/04-customer-management.md`.
 > Sales Network: `docs/business-rules/02-sales-network-and-genealogy.md`.
 > Sales Performance: `docs/business-rules/13-sales-performance-reporting.md`.
+> IGP Sales: `docs/business-rules/14-igp-sales.md`.
 
 ---
 
@@ -12,7 +15,7 @@
 
 This document defines the approved VIP Card Issuance and Membership Activation business rules for AFHomes Platform.
 
-It governs official VIP Card ID generation, RA Number and VIP sequence relationship, activation-date-based numbering, issuance eligibility, card lifecycle, membership activation, membership validity, membership expiration, historical identifier preservation, and card issuance and activation audit requirements.
+It governs the VIP Number, its issuance and statuses, card claim and lifecycle, membership activation, membership validity, membership expiration, upgrades, historical identifier preservation, and the related audit requirements.
 
 It does not define Finance verification internals, Stay Points calculation, commission calculations, or refund/cancellation penalty rules.
 
@@ -20,23 +23,24 @@ It does not define Finance verification internals, Stay Points calculation, comm
 
 ## 2. Module Boundaries
 
-- **VIP Card Issuance** owns final official VIP Card ID assignment upon successful membership activation, permanent identifier preservation, and issuance audit.
-- **VIP Membership** owns membership status, validity, and benefits evaluation.
-- **Finance** owns full-payment verification prerequisite.
-- **Customer/RA** owns RA No. and its sequence.
+- **VIP Numbering** owns the single monthly VIP Number allocator, number statuses (ACTIVE, UPGRADED, CANCELLED), the "Replaces" chain, and issuance audit.
+- **VIP Membership** owns activation, the Card Claim Date, validity and benefits evaluation.
+- **Finance** owns the full-settlement verification prerequisite.
+- **Customer** owns the customer record and its internal customer id (doc 05 item 4). The VIP Number identifies the transaction, not the person.
 - **VIP Products/Contracts** owns finalized contract terms and product configuration.
 
 ---
 
-## 3. VIP Card Record vs Official VIP Card ID
+## 3. One Number, Three Documents (NUM §§1, 2, 6)
 
-The customer may have a prepared VIP card record or pending card issuance eligibility after Admin contract finalization. However, the **FINAL OFFICIAL VIP CARD ID must not be generated before actual official Membership Activation**.
+A single 17-character **VIP Number** is the document control number of the VIP Reservation Agreement, the number of the VIP Grant, and the number printed on the physical VIP Card. There is no separate RA No. and no separately generated Card ID.
 
-Reason: the official VIP Card ID contains YYMMDD = Actual Membership Activation Date. The correct date is not known before activation.
+- **Issuance trigger.** The number is issued when the signed Reservation Agreement is recorded (NUM §6; owner ruling R2). It is not issued for a Draft, a submitted application or a prepared contract. Before issuance, the tier, the payment scheme (for P and MM), the classification (S/N) and the closing salesperson must be recorded.
+- **Issuance is a separate event from activation.** A number exists from reservation onward. Membership activation (section 4) does not create or change the number.
+- **One transaction, one number.** Each VIP transaction gets exactly one number. An upgrade is a new transaction with a new number (section 9.3).
+- **IGP is separate.** IGP sales never use the VIP Number. They use a separate 16-character IGP Series Number with its own monthly sequence, and carry the seller's JA&D accreditation number (doc 14; owner ruling R13, 2026-11-12). VIP sales use only the AFhomes AA number (section 7).
 
-Separate: (1) Customer record, (2) RA No., (3) VIP contract, (4) Prepared/pending VIP card record, (5) Official VIP membership activation, (6) Final official VIP Card ID.
-
-A prepared card record is not the same as an officially activated VIP Card ID. Do not place a guessed future activation date in an official Card ID. Do not generate an official Card ID using contract approval, reservation, first payment, or card preparation date. The earlier proposal allowing a final Card ID immediately after Admin contract approval is superseded by this revised date-based numbering rule.
+Separate concepts: (1) customer record, (2) VIP Number and its status, (3) VIP contract, (4) membership activation, (5) Card Claim Date and the physical card.
 
 ---
 
@@ -48,7 +52,7 @@ Membership activation requires:
 
 1. Finalized contract approved by authorized Admin.
 2. Full payment of the entire agreed VIP contract price.
-3. Verification of full payment by Finance.
+3. Approval of the settling receipts by Finance, an Administrator or the Super Administrator (doc 07 §5.2).
 4. Successful official membership activation.
 
 Partial payments and installments do not activate VIP membership.
@@ -57,67 +61,57 @@ Partial payments and installments do not activate VIP membership.
 
 Use the actual official Membership Activation Date, recorded in Philippine local time (Asia/Manila). Do not assume the activation date is always identical to the original payment date. Do not automatically backdate the official activation date to the date of the final installment if verification or actual activation occurred later.
 
-### 4.3 Membership Validity
+### 4.3 Membership Validity (signed Grant §I-B(a); owner ruling R2)
 
-Membership validity begins on the actual Membership Activation Date. It does not begin merely because a reservation was created, an RA No. was assigned, a contract was prepared/finalized, a customer paid an installment, full payment was claimed but not verified, or a pending card record was prepared.
+The Validity Period starts on the **Card Claim Date**, the date the cardholder actually claims the card.
 
-Example: Gold VIP validity entitlement 22 years. Actual membership activation March 20, 2027. Scheduled expiration anniversary March 20, 2049, subject to applicable approved expiration boundary convention. The VIP Card ID must encode 270320 as its first six characters.
+- The card may be claimed at any time within one year after full settlement of the total purchase price, as evidenced by the company's official acknowledgment of receipt (Finance verification).
+- If the card is not claimed within that year, the Card Claim Date is deemed to occur on the first anniversary of full settlement, and validity starts on that date.
+- Full settlement means the date of the payment that completes the total price, once Finance has verified it.
+- Validity does not start at reservation, number issuance, contract finalization, an installment, unverified full payment or activation.
 
-### 4.4 Important Legacy Contract Conflict
+Validity length follows the signed contract (Bronze 7, Silver 12, Gold 22 years).
 
-The October 2026 standard contracts describe a different validity-start rule based on Card Claim Date. This differs from the approved AFHomes Platform Membership Activation Date rule. Document both and require appropriate revised, management-approved contract language before using the new rule in legally operative agreements. Preserve historical signed contracts and their original validity provisions.
+Example: Gold, full settlement verified for a payment dated 2027-03-20, card claimed 2027-05-02. Validity runs from 2027-05-02 for 22 years. If the card is never claimed, the deemed Card Claim Date is 2028-03-20.
+
+### 4.4 Contract Version
+
+Each contract keeps the validity clause of the template it was signed on. The Card Claim Date rule above is the clause of the current signed Grant templates. A future template with a different rule applies only to contracts signed on it.
 
 ---
 
 ## 5. VIP Membership Status
 
-Customer identity and VIP membership status are separate. Document the distinction between No membership yet, Pending / Not Activated, Active, Expired, and Cancelled (where applicable).
+Customer identity and VIP membership status are separate. Document the distinction between No membership yet, Pending / Not Activated, Active (activated, card not yet claimed or claimed), Expired, Upgraded, and Cancelled.
 
-A customer whose membership expires remains a customer. Preserve Customer ID, RA No., contract, official VIP Card ID, membership history, Finance history, historical benefits, and audit trail. Do not automatically delete or replace expired membership records. Do not invent automatic membership renewal or extension rules.
+Number status (NUM §6) is kept beside the number, never inside it: ACTIVE, UPGRADED or CANCELLED.
+
+A customer whose membership expires remains a customer. Preserve the customer record, the VIP Number and its status, the contract, membership history, Finance history, historical benefits, and audit trail. Do not automatically delete or replace expired membership records. Do not invent automatic membership renewal or extension rules.
 
 ---
 
-## 6. Official VIP Card ID Format — Revised
+## 6. VIP Number Format (NUM §3)
 
-Retain the structured 17-character official VIP Card ID:
+**YYMMDD NNNNN VT P MM S**, 17 characters, no dash. Example: `26020300001B1C01S`.
 
-**YYMMDDNNNNNVTPMMS**
-
-Revised segment definitions:
-
-| Segment | Length | APPROVED SOURCE |
+| Segment | Length | Source |
 |---|---:|---|
-| YYMMDD | 6 | Actual official VIP Membership Activation Date |
-| NNNNN | 5 | Existing RA No. NNNN sequence converted to five digits |
-| VT | 2 | Approved VIP tier code |
-| P | 1 | Payment category |
-| MM | 2 | Approved payment-term code |
-| S/N | 1 | Contract classification |
+| YYMMDD | 6 | Date the signed Reservation Agreement is recorded (Asia/Manila) |
+| NNNNN | 5 | Monthly running sequence, 00001 to 99999, resets on the 1st of each month |
+| VT | 2 | Tier code (B1, S1, G1 active; B2, S2, P1, R1 and others reserved) |
+| P | 1 | C = Cash, T = Terms/Installment (snapshot at issuance) |
+| MM | 2 | Months, 01 to 36; Cash uses 01 (snapshot at issuance) |
+| S | 1 | S = Standard, N = Non-Standard |
 
-### 6.1 YYMMDD
+### 6.1 Monthly Sequence
 
-YYMMDD is no longer reservation date, transaction date, contract signing date, contract approval date, first payment date, or card preparation date. It is the actual official Membership Activation Date after finalized contract and Finance-verified full payment.
+- One company-wide allocator issues NNNNN in order of issuance within the month. Numbers are never composed by hand.
+- Because the date prefix and the monthly sequence are allocated together, a full VIP Number is unique.
+- Confidentiality: the reset each month means a number never reveals more than one month's volume (NUM §6).
 
-Format: YY = last two digits of activation year; MM = activation month; DD = activation day. Use Philippine local date, Asia/Manila. Never use an estimated or planned activation date.
+### 6.2 Snapshot Rule
 
-### 6.2 NNNNN MUST FOLLOW THE RA NO. SEQUENCE
-
-The five-digit VIP sequence is no longer an independently generated counter. It must come from the corresponding customer's official RA No. sequence. The source RA No. sequence uses four digits (NNNN). The VIP Card ID uses five digits (NNNNN). Convert by left-padding the same numeric sequence with one leading zero.
-
-Examples:
-
-| Official RA No. sequence | VIP Card sequence |
-|---|---|
-| 0001 | 00001 |
-| 0002 | 00002 |
-| 0010 | 00010 |
-| 0123 | 00123 |
-| 1000 | 01000 |
-| 9999 | 09999 |
-
-If the official RA No. is 2027-0001, the RA sequence component is 0001, and the VIP Card ID sequence component becomes 00001. Do not use the full formatted RA No. inside the VIP Card ID. Use only its official four-digit sequence component. Do not assign another unrelated VIP sequence.
-
-**The RA No. sequence is the source of the VIP Card ID sequence.** Do not create a separate VIP sequence counter, an unrelated VIP yearly counter, a second VIP sequential allocator, a manually assigned VIP sequence, or an independently incremented VIP Card ID number. The system must reuse the existing official RA sequence and convert it to the required five-character representation.
+The tier, payment and classification segments are a snapshot at issuance and are never edited during the number's life. Later schedule changes are reconciled by Finance; they do not reissue the number (NUM §2). Any change to an issued number requires management approval, recorded by the Super Administrator with a reason, and is audited.
 
 ### 6.3 Payment Codes (P + MM)
 
@@ -125,7 +119,7 @@ Spot Cash: C01 (C = Cash; 01 = fixed cash duration code; the 01 is not a one-mon
 
 Installments: T + two-digit installment duration (e.g., T04 four-month, T12 twelve-month).
 
-Move A, Move B1, Move B2, and other company payment offers may have distinct names and terms. Validate how each approved payment scheme maps to the official card identifier's payment category and term segments. Do not guess the duration from a marketing label. Do not assign arbitrary installment codes. The finalized contract must preserve the selected verified payment terms used for official issuance.
+Move A, Move B (B1 and B2 merged by doc 05 item 7), and other company payment offers may have distinct names and terms. The approved Move mappings are in amendment item 3 below. Validate how each approved payment scheme maps to the official card identifier's payment category and term segments. Do not guess the duration from a marketing label. Do not assign arbitrary installment codes. The finalized contract must preserve the selected verified payment terms used for official issuance.
 
 ### 6.4 Contract Classification (S/N)
 
@@ -133,70 +127,55 @@ S = Standard, N = Non-Standard. See `05-vip-products-and-contracts.md`.
 
 ---
 
-## 7. RA No. and VIP Card ID Relationship
+## 7. Salesperson Link (NUM §9)
 
-The RA No. is an existing official customer/reservation agreement reference according to applicable RA numbering business rules. It must retain its own official format and lifecycle. The VIP Card ID is a distinct official identifier that reuses the RA No.'s four-digit sequence as its numerical component, with additional segments for actual membership activation date, VIP tier, payment category, payment duration, and contract classification.
+Only the closing salesperson's AFhomes accreditation number is linked to a VIP Number, written as `VIPNUMBER - AANUMBER` (for example `26020100045S1T12N - AAI26020001`). This applies to IST and OST alike. A referrer is recorded separately on the sale and is not part of this link (doc 04; round R5). A JA&D accreditation number is never linked to a VIP Number.
 
-Relationship rules:
+### 7.1 Cancelled Transactions
 
-1. Preserve the original RA No.
-2. Do not replace the RA No. with the VIP Card ID.
-3. Preserve the relationship between RA No., contract, customer, sale, and membership.
-4. Do not create a second RA No. for the same transaction merely to allocate a VIP Card ID.
-5. Do not alter the RA No. sequence when creating the VIP Card ID.
-6. Do not fabricate an RA sequence when no official RA No. exists.
-7. Do not independently increment the five-digit VIP sequence.
-
-### 7.1 Missing RA No.
-
-If there is no valid official RA No. or its sequence cannot be reliably extracted, do not fabricate a VIP number. Document the applicable prerequisite or required resolution before official issuance.
-
-### 7.2 Uniqueness and Collision Protection
-
-Inspect the existing RA generator to determine its actual uniqueness scope. Do not assume the four-digit RA sequence is globally unique across all years or all transactions. The complete official VIP Card ID must remain unique. If two distinct memberships would produce the same complete 17-character ID, the system must not silently issue duplicate identifiers, change the RA sequence, or add an unauthorized suffix. Flag the collision for an authorized resolution under the approved numbering policy. If the current RA numbering scope cannot guarantee unique official VIP IDs, report this as a material numbering-design dependency requiring approval before implementation. Do not invent an alternative sequence policy.
+A cancelled transaction keeps its number with status CANCELLED. The number is never deleted and never issued again.
 
 ---
 
-## 8. Official VIP Card ID Issuance Process — Revised
+## 8. Process
 
 1. Authorized Staff or IST registers or selects the customer.
-2. Customer is associated with an official RA No. through the approved RA workflow.
-3. Customer selects an eligible VIP product.
-4. Customer selects Contract Classification.
-5. Customer selects an approved Payment Scheme.
-6. Authorized Staff or IST prepares the VIP contract.
-7. Authorized Admin approves the contract.
-8. The finalized contract preserves its terms.
-9. Customer completes payments under the selected scheme.
-10. Finance verifies the entire contract price as fully paid.
-11. The membership becomes eligible for official activation.
-12. The official membership activation event is completed.
-13. The system records the actual Activation Date in Asia/Manila.
-14. The official VIP Card ID is composed using Activation Date → YYMMDD; Existing RA No. sequence → NNNNN; VIP Tier → VT; Payment Category → P; Payment Term → MM; Contract Classification → S/N.
-15. The official VIP Card ID is permanently linked to the activated membership, customer, RA No., and finalized contract.
-16. VIP membership benefits become available according to the finalized contract and applicable benefits rules.
+2. The tier, classification, payment scheme and closing salesperson are recorded.
+3. The signed Reservation Agreement is recorded. The VIP Number is issued once, at this moment, with status ACTIVE.
+4. The contract (Grant) is prepared and finalized under the same number (doc 05).
+5. The customer pays under the selected scheme. Finance verifies each payment.
+6. Finance verifies full settlement. The membership is activated (section 4.1).
+7. The card bearing the same number is claimed. The Card Claim Date is recorded and validity starts (section 4.3). If the card is not claimed within one year, the deemed Card Claim Date applies.
 
 ### 8.1 Integrity Requirement
 
-The successful official activation event and final VIP Card ID assignment must be treated as a consistent, nonduplicating operation in the future implementation design. Repeated requests must not create multiple official IDs for the same membership. Do not invent a separate VIP serial allocator.
+Issuance must not run twice for the same transaction. A repeated request returns the existing number. Activation and card claim never create another number.
 
 ### 8.2 Important Distinction
 
-A finalized contract may exist without an officially activated VIP Card ID. A partially paid sale may exist without an officially activated VIP Card ID. A Confirmed Sale may exist without an Active Membership. The official activation date and official VIP Card ID must correspond.
+A number may exist without a finalized contract, without full payment, and without activation. A Confirmed Sale may exist without an Active Membership.
 
 ---
 
-## 9. Issued Number Preservation and Legacy Data
+## 9. Issued Number Preservation, Upgrades and Legacy Data
 
-Once officially issued: do not silently regenerate the VIP Card ID; do not recycle its identifier after cancellation; do not modify the original activation-date segment; do not change the RA-derived sequence segment; do not change the originally encoded tier/payment/classification segments; do not generate another ID because current product configurations changed.
+Once issued, a number is never regenerated, never reused (also after cancellation or upgrade), and its segments are never changed without the management approval in section 6.2.
 
 ### 9.1 Historical Records
 
-Existing historical issued VIP Card IDs must remain preserved exactly as originally issued. The revised AFHomes Platform numbering policy applies to new eligible issuance under the approved new workflow. Do not automatically rewrite legacy IDs that used transaction dates or independent sequences. Do not alter historical signed agreements. Do not fabricate activation dates for older memberships whose source evidence is incomplete.
+Numbers already issued by the company workbook under NUM keep their exact value and status. A later history import keeps them unchanged. Numbers issued under older rules keep their original form and provenance; they are never reformatted.
 
 ### 9.2 Legacy Reconciliation
 
-Document how new and historical identifiers can coexist without mass renumbering. Preserve their provenance, original issuance rules, and canonical business-record relationships. A historical identifier must not be silently reformatted to match the new policy.
+Old and new numbers coexist without renumbering. Each record keeps the rule it was issued under.
+
+### 9.3 Upgrades (NUM §5; adopted 2026-11-12, flow to be built later)
+
+- An upgrade (for example S1 to S2) is a new transaction. It gets a new number with the next monthly sequence, the new tier code and the upgrade's own payment snapshot.
+- The old number becomes UPGRADED. The new record carries "Replaces: old number".
+- The old card is recalled and voided, and a new card with the new number is issued.
+- The upgrade has its own payment collection, commission and documents, credited to the salesperson who closed the upgrade.
+- The upgrade flow is not yet built. It is a later feature card.
 
 ---
 
@@ -206,7 +185,7 @@ See `05-vip-products-and-contracts.md` Section 14. VIP Product module owns contr
 
 ---
 
-## 11. Customer, RA No., Contract, Card, and Membership Relationships
+## 11. Customer, VIP Number, Contract, Card Claim, and Membership Relationships
 
 See `05-vip-products-and-contracts.md` Section 15.
 
@@ -238,27 +217,23 @@ See `05-vip-products-and-contracts.md` Section 7 and `04-customer-management.md`
 
 ## 16. Audit Requirements
 
-Record for card issuance and activation: authorized actor, time of change, previous value, new value, relevant configuration version, effective date where applicable, reason or supporting approval where required. Historical finalized contract terms remain traceable. Card issuance/activation audit must capture activation date, RA sequence source, and final VIP Card ID.
+Record for card issuance and activation: authorized actor, time of change, previous value, new value, relevant configuration version, effective date where applicable, reason or supporting approval where required. Historical finalized contract terms remain traceable. The audit must capture number issuance (date, sequence, segments), every status change (ACTIVE, UPGRADED, CANCELLED), any approved number correction, activation, and the Card Claim Date (actual or deemed).
 
 ---
 
 ## 17. Examples
 
-### Example Official VIP Card ID
+### Example VIP Number
 
-RA No.: `2027-0001`; Official Activation Date: `2027-03-20`; VIP Tier: `G1`; Payment Scheme: `C01`; Classification: `S`.
+Reservation Agreement signed and recorded on 2027-03-20, the first VIP transaction of March 2027, Gold, Spot Cash, Standard: **27032000001G1C01S** (17 characters).
 
-Expected VIP Card ID: **27032000001G1C01S** (17 characters).
+Breakdown: YYMMDD 270320; NNNNN 00001; VT G1; P+MM C01; S.
 
-Breakdown: YYMMDD 270320; NNNNN 00001; VT G1; P+MM C01; S/N S.
-
-### RA Sequence Conversion Examples
-
-0001 → 00001; 0010 → 00010; 0123 → 00123; 1000 → 01000; 9999 → 09999.
+The next transaction in March 2027 gets 00002. The first transaction in April 2027 starts again at 00001.
 
 ### Validity Example
 
-Gold VIP 22 years; activation March 20, 2027; expiration anniversary March 20, 2049.
+Gold, 22 years. Full settlement verified (final payment dated 2027-06-10), card claimed 2027-07-01: validity runs from 2027-07-01. If the card is never claimed: deemed Card Claim Date 2028-06-10.
 
 ---
 
@@ -281,48 +256,49 @@ Given / When / Then for core scenarios. Key:
 13. Unauthorized users cannot finalize contracts.
 14. Returned contracts can be corrected and resubmitted.
 15. Contract finalization preserves approved commercial terms.
-16. Contract finalization alone does not issue a final activated VIP Card ID.
+16. A Draft or a submitted application has no VIP Number; recording the signed Reservation Agreement issues exactly one.
 17. Partial payment does not activate membership.
 18. Full payment without Finance verification does not activate membership.
 19. Finance-verified full settlement satisfies the financial activation prerequisite.
-20. Actual successful activation date becomes the date source for YYMMDD.
-21. The VIP ID's date segment cannot use reservation or contract signing date under revised policy.
-22. RA sequence 0001 maps to VIP sequence 00001.
-23. RA sequence 0123 maps to VIP sequence 00123.
-24. RA sequence 9999 maps to VIP sequence 09999.
-25. No independently incremented VIP sequence is used.
-26. VIP Card ID cannot be officially generated without a valid associated RA sequence.
-27. Complete official VIP Card ID remains exactly 17 characters.
-28. Complete official VIP Card ID is unique.
-29. An RA sequence collision or ambiguous mapping cannot silently produce a duplicate Card ID.
-30. Spot Cash uses C01 where applicable.
-31. Installment codes use actual approved term values.
-32. Generated VIP ID remains associated with the correct customer, RA No., contract, and membership.
-33. Repeated activation processing does not generate multiple VIP IDs.
-34. Previously issued historical IDs are never silently renumbered.
-35. New activation-date numbering does not retroactively rewrite legacy IDs.
+20. The date segment is the Reservation Agreement recording date (Asia/Manila).
+21. The monthly sequence restarts at 00001 on the 1st of each month and never repeats within a month.
+22. The Reservation Agreement, the Grant and the card show the same number.
+23. Activation and card claim never create or change a number.
+24. The number is exactly 17 characters and unique.
+25. A cancelled number keeps status CANCELLED and is never issued again.
+26. Changing an issued number's segments requires recorded management approval.
+27. Spot Cash uses C01; installment codes use the actual approved months.
+28. Payment schedule changes after issuance do not change the number.
+29. Validity starts on the Card Claim Date, or on the first anniversary of full settlement if the card is not claimed within a year.
+30. Numbers already issued by the workbook are imported unchanged.
+31. An upgrade issues a new number, marks the old one UPGRADED and links them with "Replaces" (when the upgrade flow is built).
+32. Only the closing salesperson's accreditation number is linked to the VIP Number.
+33. Repeated issuance requests do not create a second number.
+34. Previously issued historical numbers are never renumbered.
+35. Each contract keeps the validity clause of the template it was signed on.
 36. Confirmed Sales and Active VIP Membership remain separate.
 37. Gold supplementary holder uses the shared membership pool.
-38. Conflicting older Card Claim Date clauses are explicitly documented.
-39. Gold/Silver contract source discrepancies are reported rather than silently corrected.
-40. Unsupported Non-Standard finalization cannot bypass applicable authorization.
+38. The deemed Card Claim Date is computed from the full-settlement date, not from activation.
+39. Gold and Silver prices follow doc 05 items 11 and 13; contracts signed on earlier templates keep their executed text.
+40. A Non-Standard contract cannot be finalized without both doc 05 §10.2 approvals (Super Administrator, then Finance).
 
 ---
 
 ## 19. Reconciliation Report (Summary)
 
-See `05-vip-products-and-contracts.md` Section 19. Additional card-specific conflicts: activation-date-based numbering vs legacy transaction-date numbering; RA-derived sequence vs independent legacy counter; final ID upon activation vs earlier contract-stage issuance proposal; current vs historical validity-date policies. All resolved per approved AFHomes Platform decisions; historical records preserved.
+See `05-vip-products-and-contracts.md` Section 19. Card-specific conflicts resolved by owner ruling R2 (2026-11-12): the platform follows NUM v6.2 (one number for the RA, Grant and Card, issued at Reservation Agreement signing, monthly sequence) and the signed Grant validity clause (Card Claim Date). The earlier activation-date Card ID and the separate RA No. are withdrawn.
 
 ---
 
 ## 20. Outstanding Approval Dependencies
 
-- Gold/Silver contract price corrections.
-- Non-Standard commercial rules.
+- Gold/Silver contract price corrections: resolved (doc 05 items 11 and 13).
+- Non-Standard commercial rules: resolved (doc 05 §10.2, item 15).
 - Complete payment scheme canonical register from approved docs.
 - Tier-code format expansion if needed.
-- RA numbering scope uniqueness verification.
-- Legacy ID reconciliation policy.
+- RA numbering scope uniqueness: resolved (one company-wide monthly allocator, section 6.1).
+- Legacy ID reconciliation: resolved (section 9.1, workbook numbers imported unchanged).
+- Upgrade flow: rule adopted (section 9.3); building it is a later feature card.
 
 ---
 
@@ -330,7 +306,7 @@ See `05-vip-products-and-contracts.md` Section 19. Additional card-specific conf
 
 - **Files created/updated:** `docs/business-rules/06-vip-card-issuance.md`
 - **Approved rules covered:** VIP Card ID generation, RA No. relationship, activation-date-based numbering, issuance eligibility, card lifecycle, membership activation and validity, historical identifier preservation, audit requirements.
-- **VIP Card ID generator verification:** YYMMDD = Actual official Membership Activation Date; NNNNN = RA No. four-digit sequence padded to five digits; VT = Approved VIP Tier; P+MM = Approved Payment Category and Term; S/N = Contract Classification. Example: RA No. 2027-0001, Activation Date 2027-03-20, Tier G1, Payment C01, Classification S → **27032000001G1C01S**.
+- **VIP Number (2026-11-12):** YYMMDD = Reservation Agreement recording date; NNNNN = monthly sequence; VT = tier; P+MM = payment snapshot; S/N = classification. Example: first transaction of March 2027, recorded 2027-03-20, G1, Spot Cash, Standard → **27032000001G1C01S**.
 - **Outstanding approval dependencies:** Listed above.
 - **Validation:** All required sections included; no invented rules; documentation only. No code, database, Git, or deployment changes.
 
@@ -339,9 +315,9 @@ See `05-vip-products-and-contracts.md` Section 19. Additional card-specific conf
 
 These rulings are authoritative and take precedence over earlier text in this document where they differ.
 
-1. **Move A and Move B payment codes are unresolved.** Their commercial terms are approved (doc 05 amendment), but no Card ID payment-code mapping is authorized for them. C01 applies only to Spot Cash and TXX only to installments, where XX is the actual approved number of months; neither is assigned automatically to a Move arrangement. Move contracts may be prepared, approved, finalized and paid, but membership activation and Card ID issuance stay blocked for them until the owner authorizes the mapping. Existing finalized contracts and issued Card IDs are unchanged. Move B1 and Move B2 are removed (see doc 05 amendment).
+1. **Move A and Move B payment codes are unresolved (superseded by item 3).** Their commercial terms are approved (doc 05 amendment), but no Card ID payment-code mapping is authorized for them. C01 applies only to Spot Cash and TXX only to installments, where XX is the actual approved number of months; neither is assigned automatically to a Move arrangement. Move contracts may be prepared, approved, finalized and paid, but membership activation and Card ID issuance stay blocked for them until the owner authorizes the mapping. Existing finalized contracts and issued Card IDs are unchanged. Move B1 and Move B2 are removed (see doc 05 amendment).
 2. **Card ID date.** The Card ID uses the official Membership Activation Date, as stated in section 6; the transaction date is not used.
-3. **Move A / Move B Card ID payment-code mapping approved.** Effective date: to be confirmed by the owner (proposed: date of approval). Approved mapping (companion to doc 05 amendment item 12; T = installment category plus monthly count; no promotional names appear in IDs):
+3. **Move A / Move B Card ID payment-code mapping approved.** Effective date: 2026-11-09 (confirmed by the owner on 2026-11-12, doc 05 item 14). Approved mapping (companion to doc 05 amendment item 12; T = installment category plus monthly count; no promotional names appear in IDs):
 
     | Scheme | Tier | Card ID payment code (P + MM) |
     |---|---|---|
@@ -353,3 +329,12 @@ These rulings are authoritative and take precedence over earlier text in this do
     | Move B | G1 | T12 |
 
     T-category semantics: C01 applies only to Spot Cash; TXX applies to installment-category schemes, where XX is the actual approved number of monthly payments for that scheme and tier. Standard Move contracts proceed to activation and issuance once all prerequisites are met (finalized contract, full settlement, Finance verification, successful activation). Finalized contracts keep their snapshot protection — this mapping does not rewrite finalized terms or previously issued IDs. The unresolved-code block in item 1 now applies only to schemes without an approved mapping. Existing IDs are unchanged. This item supersedes item 1's block for Move A and Move B; item 1 is retained as history.
+## Owner rulings amendment (2026-11-12, round R2)
+
+These rulings take precedence over earlier text in this document where they differ.
+
+4. **Unified VIP Number adopted.** The platform follows NUM v6.2: one 17-character number for the Reservation Agreement, the Grant and the Card. The separate RA No. (`YYYY-NNNN`) and the activation-dated Card ID are withdrawn. The date segment is the Reservation Agreement recording date, and the sequence is monthly. The payment-code mapping in item 3 still applies to the P and MM segments.
+5. **Issuance trigger.** The number is issued when the signed Reservation Agreement is recorded (NUM §6). NUM §2 ("first valid payment or formal grant execution") is read together with §6; the platform uses the Reservation Agreement event.
+6. **Validity start.** Validity starts on the Card Claim Date under the signed Grant §I-B(a). If the card is not claimed within one year after full settlement, the claim is deemed to occur on the first anniversary of full settlement. Activation still requires full settlement verified by Finance.
+7. **Upgrades.** The NUM §5 upgrade rule is adopted (new number, old number UPGRADED, "Replaces" link, old card voided). Building the flow is a later feature card.
+8. **Numbers are never reused.** A CANCELLED or UPGRADED number is kept and never issued again.

@@ -300,7 +300,7 @@ Backend responsibilities: accreditation creation, official AA number assignment,
 
 ### 17.4 Customer Management Services
 
-Use document 04. Backend responsibilities: canonical customer identity, customer creation, customer draft, application submission, profile changes, customer search, customer import/export, identity reconciliation, historical customer record handling, public customer lookup.
+Use document 04. Backend responsibilities: canonical customer identity, customer creation, customer draft, application submission, profile changes, customer search, customer import/export, identity reconciliation, historical customer record handling. There is no public customer lookup (owner ruling R11; doc 11 §21).
 
 - **Customer lifecycle:** customer creation is not the same as submitted VIP application, finalized contract, Confirmed Sale, Fully Paid settlement, Active VIP Membership. Preserve these distinctions.
 - **Customer drafts:** allow authorized incomplete drafts per approved workflow. Do not apply final-submission requirements to every draft-saving operation.
@@ -333,31 +333,31 @@ Use document 07. Finance is one of the most sensitive backend domains. Document 
 
 ### 17.8 Commission Management Services
 
-Use document 08. Backend responsibilities: eligible recipient discovery, historical genealogy reference, manual Finance percentage assignment, commission calculation, manual Finance approval, commission Holds, adjustments, payout recording, confirmed disbursement, recovery history, commission reporting.
+Use document 08. Backend responsibilities: per-person DSC/DRI rates on the seller record (changed by Admin or Super Admin for future sales only), freezing the closing seller's and referrer's rates on the sale at VIP Number issuance, commission calculation on the contract TCP, staged release, approval by Finance, Admin or Super Admin, commission Holds, clawbacks, adjustments, payout recording, confirmed disbursement, recovery history, BA/PA/PB allowances for IST leaders, commission reporting.
 
-- **Calculation basis:** use applicable finalized contract value under approved commission rules. Do not independently substitute collection totals or profit calculations without an approved policy.
-- **Manual approval:** a Confirmed Sale does not automatically create a Finance-approved commission.
+- **Calculation basis:** use the contract TCP (including an approved Non-Standard TCP) times the frozen rate (doc 08 §10). Do not independently substitute collection totals or profit calculations without an approved policy.
+- **Release and approval:** commission is released when approved collection reaches the stage mark (VIP 40%), and is approved and paid at month-end by Finance, Admin or Super Admin; a Confirmed Sale alone releases nothing.
 - **Paid status:** Approved is not Paid. Paid requires actual authorized disbursement-confirmation event.
-- **Reversals:** document automatic Hold behavior for affected unpaid commissions where required. Recovery of already paid commissions remains subject to approved Finance process. Do not invent automatic deduction mechanism.
+- **Reversals:** unpaid releases are held and paid releases become clawbacks on the sale events of doc 08 §14. No automatic deduction before the IST Clawback Addendum is signed; an OST clawback is collected directly unless a signed OST agreement allows a deduction.
 
 ### 17.9 VIP Membership and Card Issuance
 
-Use documents 06 and 09. Backend responsibilities: membership eligibility, official activation, official VIP Card ID allocation, membership lifecycle, expiration, Financial Holds, historical contract entitlement preservation, membership audit events.
+Use documents 06 and 09. Backend responsibilities: membership eligibility, official activation, VIP Number allocation at Reservation Agreement recording, membership lifecycle, expiration, Financial Holds, historical contract entitlement preservation, membership audit events.
 
 - **Critical distinctions:** do not conflate customer creation, contract finalization, Confirmed Sale, Fully Paid settlement, official activation.
 - **Activation eligibility:** respect applicable full-settlement and authorized official activation requirements. Do not automatically activate a membership after an arbitrary installment verification.
-- **Official VIP Card ID:** approved current format `YYMMDDNNNNNVTPMMS`. Use authoritative component definitions from document 06. Approved sequence relationship is RA-derived. Do not introduce an independent duplicate VIP serial allocator.
-- **Idempotent activation:** repeated activation attempts must not assign a second VIP Card ID, create duplicate memberships, reissue the same activation event as another completed activation, or corrupt historical validity dates. Document appropriate transaction and unique-index requirements.
+- **VIP Number:** approved format `YYMMDDNNNNNVTPMMS`, issued once when the signed Reservation Agreement is recorded; YYMMDD is the recording date and NNNNN the monthly company-wide sequence (document 06). Do not introduce an independent duplicate VIP serial allocator.
+- **Idempotent activation:** activation never creates a number; repeated activation attempts must not assign a second VIP Number, create duplicate memberships, reissue the same activation event as another completed activation, or corrupt historical validity dates. Document appropriate transaction and unique-index requirements.
 
 ### 17.10 Stay Points Services
 
-Use document 09. Document architecture for eligible earning transactions, Pending points, qualifying spending, points unlocking, annual earning caps, Weekday/Weekend allocation, available balance, held balance, reserved balance, consumed balance, forfeiture, expiration, refund reconciliation, historical balance correction.
+Use document 09. Document architecture for the Points Activation Date, Annual Welcome Gift tranches, measurement periods, resort bill intake and approval, Qualifying Spend, tranche release and non-activation, Compassionate Waiver, weekday/weekend buckets, released, reserved, redeemed and forfeited balances, expiration, refund reconciliation, historical balance correction.
 
-- **Current earning principle:** under approved current policy, ₱1 of eligible, verified resort spending = 1 earned Stay Point. Do not interpret this as automatically awarding the entire annual entitlement.
+- **Current points principle:** the signed Grant's Annual Welcome Gift (doc 09). Each tranche is a fixed amount per tier, released on its due date only when the measurement period's approved Qualifying Spend reaches the tier minimum. Points are not earned per peso.
 - **Ledger authority:** backend owns authoritative points transactions. Frontend components may display balances but must not independently grant or consume points.
-- **Weekday and Weekend:** preserve separate balances and authorized calculation rules.
+- **Weekday and Weekend:** preserve separate balances; each tranche's split is fixed by tier.
 - **Gold supplementary holders:** Gold primary and approved supplementary holders share the applicable membership entitlement pool. Do not create unrelated duplicate points balances for the same membership.
-- **Refund handling:** a refund of spending that generated points may require Holds and Finance reconciliation. Do not invent automatic negative balances.
+- **Refund handling:** a refund lowers the period's Qualifying Spend; an unreleased tranche waits, a released tranche is never taken back. Do not invent automatic negative balances.
 
 ### 17.11 Reports and Analytics Services
 
@@ -641,8 +641,8 @@ Align with `docs/development/implementation.md`. The backend documentation must 
 24. Contract finalization is not payment verification.
 25. Confirmed Sale is not necessarily Fully Paid.
 26. Fully Paid is not automatically proof of completed official activation.
-27. Finance alone verifies monetary payments.
-28. Commissions require the approved manual Finance process.
+27. Finance, Admin or Super Admin approves receipts; a Clerk enters only.
+28. Commissions use per-person rates frozen on the sale and are approved and paid by Finance, Admin or Super Admin.
 29. Approved commission is not Paid commission.
 30. Payouts require confirmed disbursement.
 31. Stay Points are ledger-controlled.
@@ -830,3 +830,12 @@ Markdown validation, link validation, Mermaid validation, cross-document review,
 - Production data migrated: No.
 
 STOP — awaiting explicit project-owner authorization before any backend coding, database setup, Git operation or deployment.
+
+## Consistency update (2026-11-12)
+
+Aligned with the business-rule documents as rewritten on 2026-11-12. No architecture decision changed.
+
+1. Section 17.8: Finance manual percentage assignment replaced by per-person frozen DSC/DRI rates, staged release and clawback rules (doc 08).
+2. Section 17.9: the activation-tied VIP Card ID with an RA-derived sequence replaced by the VIP Number issued at Reservation Agreement recording (doc 06).
+3. Section 17.10: Spend-to-Earn (one point per peso) replaced by the Annual Welcome Gift (doc 09).
+4. Invariants 27 and 28: Finance-only verification replaced by Finance, Admin or Super Admin approval (doc 07 §5.2).

@@ -4,6 +4,7 @@
 > Accreditation rules: `docs/business-rules/03-ist-ost-accreditation.md`.
 > Sales performance reporting: `docs/business-rules/13-sales-performance-reporting.md`.
 > Organization Management rules: `docs/business-rules/01-roles-and-permissions.md`.
+> IGP sales: `docs/business-rules/14-igp-sales.md`.
 
 ---
 
@@ -15,7 +16,7 @@ It governs:
 
 - IST and OST classifications
 - Sales Network hierarchy and genealogy
-- Account creation and immediate activation
+- Account creation and activation on approval
 - Account status and accreditation-based eligibility
 - Team transfers
 - IST/OST conversions
@@ -106,9 +107,9 @@ Preserve the existing account and genealogy history.
 
 ## 4. Sales Network Account Creation
 
-Sales Network accounts are created through authorized CRUD functionality.
+Sales Network accounts are created through the two-step seller entry in doc 03 §9.1 (owner authority rule, 2026-11-12).
 
-Authorized creators include Super Admin, Admin, and Sales Network personnel with properly delegated module permissions. Creation authority must respect the existing Roles & Permissions framework.
+A Clerk, the Administrator or the Super Administrator enters the seller, and the Administrator or the Super Administrator approves the record. Sellers view only and cannot create seller records (doc 01 §3.7). A person may also apply to become an OST seller through the public application form, which the office reviews (doc 03 §9.2).
 
 ### 4.1 Parent Selection
 
@@ -125,9 +126,9 @@ Do not infer the parent from the account creator. Do not create intermediate par
 
 ### 4.2 Account Activation
 
-New Sales Network accounts become **Active immediately after successful authorized creation**.
+A new Sales Network account becomes **Active when its seller record is approved** under the two-step entry (doc 03 §9.1; owner rulings R3 and R5, 2026-11-12). An entered but unapproved seller has no login and no final AA number.
 
-This is an explicit Sales Network-specific exception to the Organization Management employee approval workflow. Do not introduce OST self-registration, referral-code registration, OST registration approval queues, automatic creator-based genealogy assignment, or mandatory Admin approval after authorized Sales Network creation.
+Public OST applications follow the office review in doc 03 §9.2 (approve, return to fix, or reject). Do not introduce referral-code registration or automatic creator-based genealogy assignment.
 
 Keep the separate Organization Management manual employee approval rule unchanged.
 
@@ -139,26 +140,34 @@ Account status and accreditation validity are independent conditions.
 
 Account statuses include Pending (where applicable to other account workflows), Active, Suspended, and Deactivated.
 
-A Sales Network member may log in and sell only when:
-
-1. The account is Active.
-2. The member's accreditation is valid.
-
-If accreditation expires, login and personal sales activity are blocked. If an account is Suspended or Deactivated, login and personal sales activity remain blocked even when accreditation is valid.
+What each status allows is defined in doc 03 section 9 (owner ruling R3, 2026-11-12).
+- An **expired** accreditation does not block login, selling, referring or sponsoring; a reminder is shown and recorded.
+- A **suspended or deactivated** account, or a resigned or terminated seller, cannot log in, take new sales or sponsor (OCT R28).
 
 ### 5.1 Independent Downline Operation
 
 If an IST manager is expired, suspended, or deactivated, their otherwise Active and accredited downline members may continue selling independently. Do not disable an entire team because one ancestor becomes ineligible. Existing genealogy remains preserved. No automatic reassignment occurs merely because an upline becomes expired, suspended, or deactivated.
 
+### 5.1.1 Vacant Seat (AUG R1, R3, R23; owner ruling R3, 2026-11-12)
+
+When a leader seat (SM, SSM or SVD) becomes vacant because the holder left and has not been replaced:
+1. The vacancy is recorded with its effective date (the day after the holder's end date). The team stays where it is in the genealogy; nobody is moved.
+2. The vacant seat earns nothing for the vacancy period: no allowances. (AFhomes leaders earn no override; doc 08 §6.)
+3. The vacant seat's downline sales and collections count toward the next active level above, for pay and reports, until the seat is filled. If the vacant seat is at the top of the tree, that stream earns nothing for the vacancy period.
+4. Accounts the departed holder managed (assumed accounts) pass upward to the first active level above.
+5. When a new holder fills the seat, the roll-up ends from the fill date.
+
+There is no Acting or temporary leader role (owner ruling R3: not now).
+
 ### 5.2 Receiving Manager Eligibility
 
-A manager receiving new or transferred members must have an Active account, valid IST accreditation, and an eligible SVD, SSM, or SM designation. An inactive or expired direct receiving manager is ineligible. However, an eligible direct manager may receive members even if one of their own ancestors is inactive or has expired accreditation.
+A manager receiving new or transferred members must have an Active account and an eligible SVD, SSM, or SM designation, and must not be suspended, resigned or terminated. An expired accreditation does not make them ineligible; a reminder is shown (owner ruling R3). An eligible direct manager may receive members even if one of their own ancestors is inactive or expired.
 
 ---
 
 ## 6. Team Transfers
 
-Sales Network members may transfer teams at any time. There is no one-year waiting requirement. Supporting letters, discussions, and organizational decisions are handled outside the system. The application does not need a transfer-request or additional approval workflow. Authorized personnel execute the transfer directly.
+Sales Network members may transfer teams at any time. There is no one-year waiting requirement. Supporting letters, discussions, and organizational decisions are handled outside the system. A transfer changes an approved seller's upline, so the Administrator (the company's Supervisor) or the Super Administrator (the company's Director) executes it, and it is audited (owner ruling R3 and the owner authority rule, 2026-11-12; doc 03 §9.1). No separate request workflow is needed.
 
 ### 6.1 Transfer Requirements
 
@@ -175,15 +184,18 @@ Transfers take effect **immediately upon successful save**. Backdated transfer e
 
 When a manager changes teams, move the manager's entire downline branch together. Preserve descendant direct-parent relationships. Update inherited upline relationships as appropriate. Do not automatically flatten the genealogy.
 
-### 6.3 Historical Ownership
+### 6.3 Historical Ownership and Pay Attribution (owner ruling R9, 2026-11-12)
 
-Sales recorded before a team transfer remain associated with their original Sales Network team. Sales recorded after the transfer belong to the new team. Historical ownership does not change merely because Finance confirms a previously recorded sale after the transfer.
+Two attributions are kept separate:
+
+1. **Sale attribution (history).** A sale stays with its original seller and the team at the time of the sale, for sale-level reports. Sales recorded before a team transfer remain associated with their original Sales Network team. Sales recorded after the transfer belong to the new team. Historical ownership does not change merely because Finance confirms a previously recorded sale after the transfer.
+2. **Team allowance pay and team KPIs.** Team credit for leader allowances (BA, PA, PB) and for team KPIs follows the current upline chain (AUG R23). After a transfer, the seller's collections count toward their current leaders, not their former ones. Team KPIs include both VIP and IGP sales (doc 14 §9). Allowance rules are in doc 08.
 
 ---
 
 ## 7. IST / OST Conversion
 
-IST and OST conversion is bidirectional (OST → IST, IST → OST). Conversion may occur anytime. No separate request or approval workflow is required. Authorized personnel execute conversions based on decisions handled outside the system.
+IST and OST conversion is bidirectional (OST → IST, IST → OST). Conversion may occur anytime. No separate request or approval workflow is required. A conversion changes an approved seller record, so the Administrator or the Super Administrator executes it (doc 03 §9.1), based on decisions handled outside the system.
 
 ### 7.1 Identity Preservation
 
@@ -224,7 +236,7 @@ Conversion and all required downline reassignments must be atomic. Either every 
 
 ## 8. IST Promotion and Demotion
 
-IST members may change designations among SVD, SSM, and SM. These are designation changes, not new accounts. Preserve member identity, existing account, AA number, accreditation history, historical sales, historical commissions, and historical genealogy. Automatically update Sales Network-specific permissions and visibility according to the new designation. Other module permissions remain governed by Organization Management.
+IST members may change designations among SVD, SSM, and SM. These are designation changes, not new accounts, and are made by the Administrator or the Super Administrator (doc 03 §9.1). Preserve member identity, existing account, AA number, accreditation history, historical sales, historical commissions, and historical genealogy. Automatically update Sales Network-specific permissions and visibility according to the new designation. Other module permissions remain governed by Organization Management.
 
 ### 8.1 Genealogy Validation
 
@@ -259,6 +271,10 @@ Can view own sales, own customer records as authorized, and their complete actua
 ### 9.5 Automatic Designation Changes
 
 When IST designation changes, recalculate Sales Network access and genealogy visibility automatically, remove designation-specific access no longer applicable, and add new designation-specific access as appropriate. Preserve other module permissions under approved Organization Management role assignments.
+
+### 9.6 Sellers View Only (owner ruling R4, 2026-11-12)
+
+Sellers can look but never change. SVD, SSM and SM see their own and their team's customers, sales and pay; OST sees only their own. The customer-information limits in section 10 still apply to team views. The only change a seller may make is to start a customer draft (doc 04 §5). Every change to seller records, genealogy, sales and pay is made by office roles (doc 01 §3.7).
 
 ---
 
@@ -298,7 +314,7 @@ These rules apply to authenticated, authorized Sales Network views. Do not confu
 
 ## 11. Reconciliation with Organization Management
 
-Organization Management governs employee account approval workflow, modular access control, roles and permissions, administrative account management, protected account rules, and reactivation authorization. Sales Network governs IST/OST accounts created through authorized CRUD, immediate activation after successful creation, designation-based Sales Network visibility, genealogy assignments, accreditation-based login eligibility, and personal and downline sales access.
+Organization Management governs employee account approval workflow, modular access control, roles and permissions, administrative account management, protected account rules, and reactivation authorization. Sales Network governs IST/OST accounts created through the two-step seller entry, activation on approval, designation-based Sales Network visibility, genealogy assignments, accreditation-based login eligibility, and personal and downline sales access.
 
 These policies coexist. Do not replace modular access controls with an entirely separate unrestricted role system. Enforce both whether the authenticated person has permission to access the module, and whether that person is entitled to access the specific genealogy, member, customer, or sale. A full module CRUD permission is not automatic ownership of unrelated customer or Sales Network data where business-scoped visibility restrictions apply.
 
@@ -331,14 +347,16 @@ OST "X" with AA `AAO26100005` converts to SM. Remove OST genealogy, select eligi
 - IST means Internal Sales Team; OST means Outsourcing Sales Team.
 - SVD/SSM/SM are IST designations; every IST has a required designation.
 - OST may be directly attached to SVD, SSM, or SM.
-- No invented referral-code registration or OST self-registration workflow.
-- Sales Network account creation activates immediately.
+- No referral-code registration. A public OST application is reviewed by the office before any seller record exists (doc 03 §9.2).
+- A Sales Network account activates when its seller record is approved (doc 03 §9.1).
+- Changes to approved sellers (transfers, conversions, designation changes) are made by the Administrator or the Super Administrator.
+- Sellers view only; SVD, SSM and SM see their own and their team's customers, sales and pay; OST sees only their own.
 - Transfers and conversions can happen anytime; no one-year waiting.
 - Transfer effective dates are not backdated.
 - Required reassignment operations are atomic.
 - Promotions and demotions preserve identity and history.
 - IST designation changes automatically update Sales Network access.
-- Sales ownership follows the original team at sale recording.
+- Sales ownership follows the original team at sale recording; team allowance pay and team KPIs follow the current upline chain (section 6.3).
 - Team Sales combines own and authorized downline sales without double counting.
 - Customer contact visibility differs between own customers and downline customers.
 
@@ -358,3 +376,31 @@ OST "X" with AA `AAO26100005` converts to SM. Remove OST genealogy, select eligi
 - **Confirmation:** All approved Sales Network and genealogy rules represented.
 - **Unresolved ambiguity:** None for approved rules; commission/Finance policies deferred.
 - **Changes made:** Documentation only. No code, database, Git, or deployment changes.
+## Owner rulings amendment (2026-11-12, round R3)
+
+These rulings take precedence over earlier text in this document where they differ.
+
+1. **Status effects** follow doc 03 section 9. An expired accreditation blocks nothing. A suspension, resignation or termination blocks new sales and sponsoring.
+2. **Vacant seat** (section 5.1.1). The team stays in place, the seat earns nothing, and its downline counts toward the next active level until the seat is filled. No Acting leader role.
+3. **Transfers and other changes to an approved seller** are made by the Administrator or the Super Administrator (corrected by the owner authority rule, 2026-11-12; the earlier wording "by the Super Administrator only" is superseded, see the amendment below).
+4. **Open for round R8:** the workbook credits receipts to the current upline chain (AUG R23), while section 6.3 keeps sales with the team at the time of the sale. The pay and report attribution rule is decided with commissions.
+
+## Owner rulings amendment (2026-11-12, rounds R4–R5 and authority rule)
+
+These rulings take precedence over earlier text in this document, including the R3 amendment above, where they differ.
+
+1. **Authority rule.** The Administrator can do everything in the system and the Super Administrator has no blocks. Both may approve their own entries, and the audit history shows that the same person entered and approved. Clerks enter only; sellers view only (doc 01 §3.7).
+2. **Correction to R3 item 3.** Transfers and other changes to an approved seller (including conversions and designation changes) are made by the Administrator or the Super Administrator, not by the Super Administrator only (sections 6, 7 and 8).
+3. **Seller creation (R3 and R5).** New sellers follow the two-step entry in doc 03 §9.1 and become Active on approval. This replaces the former rule that a Sales Network account is Active immediately after creation. The public OST application is kept and reviewed by the office (doc 03 §9.2); this replaces the former ban on OST self-registration and registration review queues. Referral-code registration stays excluded (section 4).
+4. **Sellers view only (R4).** SVD, SSM and SM see their own and their team's customers, sales and pay; OST sees only their own (section 9.6).
+5. **R3 item 4 settled (R9 item 2).** Sale attribution keeps the original seller and team at the time of the sale for sale-level reports. Team allowance pay and team KPIs follow the current upline chain (AUG R23). The two are kept separate (section 6.3).
+
+## Consistency update (2026-11-12)
+
+1. **IGP cross-reference (owner ruling R13).** Added a header link to `docs/business-rules/14-igp-sales.md` and, in section 6.3 item 2, that team KPIs include VIP and IGP sales (doc 14 §9). No rule changed.
+
+## Owner rulings amendment (2026-11-12, follow-ups)
+
+These rulings take precedence over earlier text in this document where they differ.
+
+1. **No override for AFhomes leaders.** Per-sale pay goes only to the closing seller (DSC) and the referrer (DRI); leaders earn BA, PA and PB. "Override" is a JA&D pay item only (doc 08 §6). Section 5.1.1 item 2 no longer lists an override as something a vacant seat forgoes.

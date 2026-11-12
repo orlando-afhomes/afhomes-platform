@@ -352,11 +352,11 @@ Authorized users may submit payment information according to their module permis
 
 ### 19.2 Payment verification
 
-Only authorized Finance personnel verify actual payment receipt.
+Finance, an Administrator or the Super Administrator approves (verifies) a receipt; a Clerk enters only, and only an approved receipt counts (doc 07 §5.2). A seller's payment slip photo is proof only.
 
 ### 19.3 Refunds and reversals
 
-Authorized Finance personnel control refunds and reversals according to the approved workflow. Do not invent a mandatory separate Admin approval where the business rules do not require it.
+Finance, an Administrator or the Super Administrator controls refunds and reversals according to the approved workflow (doc 07 §5.3). Do not invent a mandatory separate Admin approval where the business rules do not require it.
 
 ### 19.4 Prevent forged state transitions
 
@@ -370,23 +370,23 @@ Document transaction integrity, idempotency, duplicate prevention, state validat
 
 ## 20. Commission Security
 
-Use `docs/business-rules/08-commission-management.md`. The backend must protect commission recipient selection, manual percentage assignment, approved commission amount, Finance approval, commission Holds, payout authorization, actual disbursement confirmation, recovery history.
+Use `docs/business-rules/08-commission-management.md` (owner rulings R8 and R9, 2026-11-12) and, for IGP, `docs/business-rules/14-igp-sales.md` §8. The backend must protect per-person DSC and DRI rates on seller records, the rates and threshold frozen on each sale, the closing seller and referrer recorded on the sale, computed and released amounts, payout approval, commission Holds, payout recording and disbursement confirmation, clawbacks, recoveries and write-offs, and allowance figures.
 
-### 20.1 Manual Finance authority
+### 20.1 Rates and amounts
 
-A Confirmed Sale does not automatically create a Finance-approved commission.
+Each person's DSC and DRI rates are kept per product on their seller record and are frozen on the sale when its VIP Number (IGP: Series Number) is issued. The server computes DSC and DRI from the contract TCP and the frozen rates; it never accepts a client-supplied amount or percentage per sale. Only an Administrator or the Super Administrator may change a person's rate, for future sales only, and every change is logged (doc 08 §9).
 
-### 20.2 Payout security
+### 20.2 Approval and payout security
 
-Approved is not Paid. Paid requires the authorized confirmed-disbursement event.
+Finance, an Administrator or the Super Administrator approves the month-end payout list and confirms disbursement; each is a separate action permission, and a self-approval is recorded in the audit history (doc 08 §11, §17). Approved is not Paid. Paid requires the authorized confirmed-disbursement event.
 
 ### 20.3 Prevent unauthorized changes
 
-An IST or OST account must not be able to alter its own approved commission percentage or payout status unless a specific approved business rule grants a particular action.
+Sellers (IST and OST) view only. A seller account must never be able to alter any rate, release, payout status, clawback or allowance, including its own, and must not see commission records outside its record scope (SVD, SSM and SM: own and team; OST: own only).
 
-### 20.4 Historical eligibility
+### 20.4 Attribution
 
-Commission authorization must preserve historical sale attribution. Current genealogy changes must not silently rewrite older commission eligibility.
+Per-sale commission follows the seller and referrer frozen on the sale; later transfers or genealogy changes must not move it. Allowance team credit follows the current upline chain (doc 08 §7). The backend must keep both attributions separate and never rewrite one through the other.
 
 ---
 
@@ -418,7 +418,7 @@ The architecture should acknowledge applicable Philippine privacy requirements, 
 
 ## 22. Public Customer Lookup Security
 
-Read document 04 and reconcile the current approved public lookup rules. The existing security document specifies exact official identifier, Active results only, no name-based discovery, generic not-found behavior. Verify the actual approved lookup identifier and disclosure rules. Do not conflate customer lookup with accreditation search.
+Removed from scope (owner ruling R11, 2026-11-12; doc 11 §21). There is no public customer or card lookup; no public route or API may return customer or card records. Only authorized staff check cards inside the staff application.
 
 ### 22.1 Public eligibility
 
@@ -502,7 +502,7 @@ Protect server-side operations that fetch remote resources. Relevant examples: r
 
 ## 27. Rate Limiting and Abuse Prevention
 
-Document rate limiting for login, password recovery, public accreditation search, Public Customer Lookup, sensitive API operations, file uploads, potential high-cost search/report endpoints.
+Document rate limiting for login, password recovery, public accreditation search, sensitive API operations, file uploads, potential high-cost search/report endpoints.
 
 ### 27.1 Design considerations
 
@@ -873,7 +873,7 @@ Keep these items concise. Do not make every minor engineering detail a project-o
 
 ## 43. Required Final security.md Structure
 
-Produce a complete, professional Markdown document. Recommended major sections: Purpose and Scope; Source-of-Truth References; Approved Security Architecture; Current Versus Target Implementation; Security Principles; Threat Model; Trust Boundaries; User Identity; Account Lifecycle; Staff Approval; Sales Network Approval; Authentication; Credential Security; Session Security; Multiple Roles; Dynamic Role Management; Module Permissions; Record-Level Authorization; Genealogy Visibility; IST/OST Accreditation Restrictions; Administrative Security; Finance Separation of Duties; Commission Security; VIP Membership and Points Protection; Customer Privacy; Public Customer Lookup; Public Accreditation Verification; API Security; Input Validation; XSS/CSRF/CORS/SSRF; Rate Limiting and Abuse Prevention; Financial Fraud and Replay Protection; File Upload and Download Security; Secrets Management; Database Security; Audit Integrity; Application Logging; Production Infrastructure Security; Feature Flag Security; Background Job Security; Backup and Restore Security; Incident Response; Security Testing; Implementation Phases; Security Invariants; Critical Dependencies; References and Acceptance Criteria. You may reorganize or consolidate headings to improve readability. Do not add filler simply to reach a particular heading count. However, all major security subjects must be thoroughly covered.
+Produce a complete, professional Markdown document. Recommended major sections: Purpose and Scope; Source-of-Truth References; Approved Security Architecture; Current Versus Target Implementation; Security Principles; Threat Model; Trust Boundaries; User Identity; Account Lifecycle; Staff Approval; Sales Network Approval; Authentication; Credential Security; Session Security; Multiple Roles; Dynamic Role Management; Module Permissions; Record-Level Authorization; Genealogy Visibility; IST/OST Accreditation Restrictions; Administrative Security; Finance Separation of Duties; Commission Security; VIP Membership and Points Protection; Customer Privacy; Public Customer Lookup (removed, R11); Public Accreditation Verification; API Security; Input Validation; XSS/CSRF/CORS/SSRF; Rate Limiting and Abuse Prevention; Financial Fraud and Replay Protection; File Upload and Download Security; Secrets Management; Database Security; Audit Integrity; Application Logging; Production Infrastructure Security; Feature Flag Security; Background Job Security; Backup and Restore Security; Incident Response; Security Testing; Implementation Phases; Security Invariants; Critical Dependencies; References and Acceptance Criteria. You may reorganize or consolidate headings to improve readability. Do not add filler simply to reach a particular heading count. However, all major security subjects must be thoroughly covered.
 
 ---
 
@@ -908,7 +908,7 @@ The final `security.md` must use clear English, be specific to AFHomes, be under
 
 ### Business Security
 - [ ] Customer privacy.
-- [ ] Public Customer Lookup.
+- [ ] No public customer lookup (removed, R11).
 - [ ] Public accreditation verification.
 - [ ] Contract protection.
 - [ ] Payment verification.
@@ -1021,3 +1021,8 @@ Markdown formatting, link validation, diagram validation, cross-document consist
 - Production data migrated: No.
 
 STOP — awaiting explicit project-owner authorization before security implementation, database operations, Git changes or deployment.
+
+## Consistency update (2026-11-12)
+
+1. **Commission security (section 20).** Aligned with the rewritten `docs/business-rules/08-commission-management.md` (owner rulings R8 and R9). The former model, in which Finance manually assigned a percentage per recipient and could pay uplines, is replaced by per-person DSC and DRI rates frozen on the sale, server-side computation, rate changes by the Administrator or the Super Administrator only, payout approval and disbursement confirmation by Finance, the Administrator or the Super Administrator, and view-only sellers.
+2. **Payment and lookup security (sections 19.2, 19.3, 22, 27 and the checklist).** Receipt approval, refunds and reversals belong to Finance, an Administrator or the Super Administrator (doc 07 §5.2, §5.3), replacing Finance-only verification. Public Customer Lookup is removed from scope (owner ruling R11; doc 11 §21).

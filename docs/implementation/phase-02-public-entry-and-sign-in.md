@@ -4,7 +4,7 @@
 - Objective: the public entry points, sign-in for Admin, Staff and Sales, sign-out, and the real-authentication work behind them.
 - Business rules: `docs/business-rules/01-roles-and-permissions.md` sections 3 to 9. Security: `docs/development/security.md` sections 10 and 11.
 - Depends on: FP1 (roles and scopes).
-- Open decisions: G01 (public link placement), G11 (CMS).
+- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G01 (public link placement), G11 (CMS).
 
 Routes (from the atlas):
 
@@ -23,11 +23,11 @@ Reminder: the mock login is temporary. It must be removed when real authenticati
 |---|---|
 | Journey | J01, TO-BE "Approved homepage entry choices" |
 | Current | The homepage provides Home and Login only. Sales sign-in and AA verification work by direct address (U02). |
-| Target | Expose approved role portals and public services. Label direct entries clearly until links are approved. |
+| Target | Per R5: Home gets links to seller login and the seller check. There is no public card or customer check (R11). |
 | Layer | Owner decision, then Frontend (mock) |
-| Blocked by | G01, U02 |
+| Blocked by | G01 (decided R5), U02 (decided R5) |
 | Acceptance | Every public link leads to the intended page. Lookup, registration and account access stay distinct. |
-| Status | Blocked |
+| Status | Decided, awaiting build authorization |
 
 ## F2.2 Admin/Staff and Sales sign-in
 
@@ -59,9 +59,9 @@ Reminder: the mock login is temporary. It must be removed when real authenticati
 |---|---|
 | Journey | J01 |
 | Current | Forgot password is a form state in each login route. A valid email shows "Email recovery not available yet." and no reset link is sent (U03). |
-| Target | A real recovery endpoint with an approved retry path. |
+| Target | Per R5: an Administrator resets forgotten passwords. Self-service email recovery is not part of the ruling. |
 | Layer | Backend (real authentication) |
-| Blocked by | G01, U03 |
+| Blocked by | G01 (decided R5), U03 (decided R5) |
 | Acceptance | Reset links expire and are single-use. The response does not reveal whether an email exists. |
 | Status | Missing |
 
@@ -83,11 +83,11 @@ Reminder: the mock login is temporary. It must be removed when real authenticati
 |---|---|
 | Journey | J01 |
 | Current | No AFHomes CMS page exists (U09). |
-| Target | Pending. Content roles and publishing rules are not decided. |
+| Target | None. R11 defers the CMS. |
 | Layer | Owner decision |
-| Blocked by | G11, U09 |
+| Blocked by | G11 (decided R11), U09 (decided R11) |
 | Acceptance | To be defined after the decision. |
-| Status | Missing |
+| Status | Deferred (CMS deferred by R11) |
 
 ## Out of scope
 

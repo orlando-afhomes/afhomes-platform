@@ -229,11 +229,10 @@ Document when to use embedded vs referenced documents based on ownership, update
 
 ## 19. Official Identifiers
 
-Separate internal DB identity (`_id`) from public/business identity (Customer ID, RA reference, VIP Card ID, accreditation number, sale reference, payment reference, commission reference). Internal `_id` does not replace company official numbers.
+Separate internal DB identity (`_id`) from public/business identity (Customer ID, VIP Number, accreditation number, sale reference, payment reference, commission reference). Internal `_id` does not replace company official numbers.
 
 - **Customer ID:** follow Customer Management rules; preserve approved format; do not invent generator.
-- **RA references:** follow authoritative RA numbering and business ownership; scope/uniqueness require verification; do not assume global uniqueness if source rules establish different scope.
-- **VIP Card ID:** approved format `YYMMDDNNNNNVTPMMS`; preserve RA-derived sequence and actual activation date rules; no independent VIP serial allocator.
+- **VIP Number:** approved format `YYMMDDNNNNNVTPMMS`; one number for the Reservation Agreement, Grant and card, issued when the signed Reservation Agreement is recorded (YYMMDD = recording date, monthly company-wide sequence; doc 06); unique; never reused; no independent VIP serial allocator. There is no separate RA number.
 - **Accreditation identifiers:** preserve AAI/AAO numbering conventions; verify exact shared-sequence and uniqueness rules from doc 03; do not allocate same official AA number twice.
 - **Concurrency:** safe identifier allocation during simultaneous requests via unique indexes, atomic allocation, transaction boundaries where necessary, idempotent retries, collision detection, controlled errors, preservation of issued historical numbers. Do not "fix" duplicate business identifiers by silently renumbering legitimate historical transactions.
 
@@ -555,3 +554,9 @@ Other dev docs already mention MongoDB Atlas; the local-first addition is new in
 - **Execution safety:** Application code modified: No. MongoDB locally installed: No. MongoDB containers started: No. Local database created: No. Atlas cluster configured: No. Existing databases modified: No. Migrations executed: No. Imports executed: No. Production data copied: No. Other documents modified: No. Git commit: No. Git push: No. Git merge: No. Deployment: No. Redemption enabled: No. Services enabled: No.
 
 STOP — awaiting explicit project-owner authorization before setting up local MongoDB or beginning database implementation.
+
+## Consistency update (2026-11-12)
+
+Aligned with the business-rule documents as rewritten on 2026-11-12. No architecture decision changed.
+
+1. Section 19: the separate RA reference and the activation-dated VIP Card ID are replaced by the single VIP Number issued at Reservation Agreement recording (doc 06).

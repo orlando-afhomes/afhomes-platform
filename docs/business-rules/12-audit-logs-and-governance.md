@@ -1,7 +1,7 @@
 # AFHomes Platform — Audit Logs & Governance Business Rules
 
 > Single source of truth for the **Audit Logs & Governance** module.
-> Cross-references all business-rule documents 01–11 and 13.
+> Cross-references all business-rule documents 01–11, 13 and 14.
 
 ---
 
@@ -29,6 +29,7 @@ This is documentation only. No application functionality implemented.
 - `10-redemption.md`
 - `11-reports-and-analytics.md`
 - `13-sales-performance-reporting.md`
+- `14-igp-sales.md` (IGP sales, in scope per owner ruling R11, 2026-11-12)
 
 ---
 
@@ -75,7 +76,7 @@ Example: Finance verifies a ₱10,000 payment. Later, Finance reverses the payme
 
 No ordinary application role should receive permission to arbitrarily rewrite audit history. Admin status alone must not grant silent audit modification authority.
 
-Exceptional retention or privacy actions: append-only behavior for ordinary operations must not be interpreted as permission to retain personal information indefinitely when applicable law requires a different treatment. Any necessary retention expiry, archival action, legal erasure, or exceptional records-management operation must follow a separately authorized process consistent with applicable legal and contractual obligations. Do not invent blanket permanent-retention requirements. Do not allow unauthorized deletion under the label of privacy maintenance. Preserve appropriate accountability for any exceptional records-management operation to the extent legally permitted. The exact retention and exceptional deletion process must be identified as a policy dependency until authorized.
+Exceptional retention or privacy actions: records are kept, and nothing is deleted, until legal advice sets a retention period (owner ruling R11 item 4, 2026-11-12; section 21.2). This is a hold pending legal advice, not a final retention period. Any later retention expiry, archival action, legal erasure, or exceptional records-management operation must follow a separately authorized process consistent with applicable legal and contractual obligations. Do not allow unauthorized deletion under the label of privacy maintenance. Preserve appropriate accountability for any exceptional records-management operation to the extent legally permitted. The exact retention and exceptional deletion process must be identified as a policy dependency until authorized.
 
 ---
 
@@ -93,7 +94,7 @@ Technical implementation boundary: treat these as conceptual requirements. Do no
 
 Audit events must distinguish who or what performed an action. Possible actor categories include Authorized Staff, Admin, Super Admin, Finance, IST, OST, Customer, Authorized Operations personnel, Authorized system process.
 
-Automated events: some operations may be automatically triggered by the system, such as installment becoming Overdue, commission entering automatic Hold, VIP Membership entering Financial Hold, points entering Hold after invalidated spending, approved annual earning-cap enforcement, applicable scheduled policy transitions. Automated events must identify the system as the executing actor where appropriate. Preserve the triggering business event and relevant rule. Do not falsely attribute an automatic action to an unrelated human user.
+Automated events: some operations may be automatically triggered by the system, such as installment becoming Overdue, commission release by stage, commission entering automatic Hold, a clawback raised by a sale event, VIP Membership entering Financial Hold, a tranche released or Non-Activated on its due date, the Points Activation Date deemed on the second anniversary of the Card Claim Date, forfeiture at card expiry, applicable scheduled policy transitions. Automated events must identify the system as the executing actor where appropriate. Preserve the triggering business event and relevant rule. Do not falsely attribute an automatic action to an unrelated human user.
 
 ---
 
@@ -155,9 +156,9 @@ Commercial snapshots: existing finalized contracts preserve their agreed terms. 
 
 ## 14. Finance Audit
 
-Use `docs/business-rules/07-finance-and-payments.md`. Document required audit events for payment submission, payment evidence attachment, payment correction, payment verification, payment rejection, payment return for correction, outstanding balance adjustment, installment overdue classification, payment reversal, refund approval and execution, Finance reconciliation, Fully Paid determination, Financial Hold, Financial Hold resolution.
+Use `docs/business-rules/07-finance-and-payments.md`. Document required audit events for receipt entry (with its OR or bank reference number), blocked duplicate reference numbers, payment evidence attachment, receipt approval, receipt rejection, return for correction, Fix and resend (each version kept), late-receipt admission into the first open month, outstanding balance adjustment, installment overdue classification, Closed Deal, Stage 1 and Full Payment date stamping, receipt reversal with its reason, refund approval and execution, Finance reconciliation, Fully Paid determination, month close, 90-day no-payment listing, Defaulted marking and return to Active, Financial Hold, Financial Hold resolution.
 
-Approved authority: Authorized Staff, IST, and OST may submit payment information subject to permissions. Only authorized Finance personnel verify customer payments. Finance may approve and execute payment reversals/refunds under the approved policy without requiring a separate Admin approval. The audit document must preserve this established authority. Do not introduce new approval requirements.
+Approved authority (owner ruling R6 and the overriding authority rule, 2026-11-12): a Clerk enters receipts; sellers view only. Finance, the Administrator or the Super Administrator approves receipts and may reverse an approved receipt with a reason. Self-approval is allowed; the audit record must show when the same person entered and approved a receipt. The Administrator or the Super Administrator closes months and marks sales Defaulted. The audit document must preserve this authority. Do not introduce new approval requirements.
 
 Financial traceability: the original financial transaction remains traceable after reversal or correction. Do not allow audit records to conceal financial discrepancies.
 
@@ -167,53 +168,64 @@ Finance timestamps: distinguish submitted date, verification date, reversal date
 
 ## 15. Commission Audit
 
-Use `docs/business-rules/08-commission-management.md`. Commissions are manually controlled by Finance. Document audit requirements for commission review, recipient selection, manual percentage assignment, manual commission approval, calculated commission amount, automatic unpaid commission Hold, manual Hold resolution, commission adjustment, commission cancellation, manual payout processing, actual disbursement confirmation, Paid commission classification, recovery decision, actual recovery event where authorized.
+Use `docs/business-rules/08-commission-management.md` (owner rulings R8 and R9, 2026-11-12) and, for IGP, `docs/business-rules/14-igp-sales.md` §8. The system computes DSC and DRI from per-person rates frozen on the sale; approving and paying are explicit actions by Finance, the Administrator or the Super Administrator. Document audit requirements for:
 
-Historical calculations: preserve the original finalized contract value used as the commission basis.
+- per-person DSC and DRI rate changes by the Administrator or the Super Administrator (old value, new value, actor, date, reason; future sales only);
+- freezing of the seller's DSC rate, the referrer's DRI rate and the Closed Deal threshold when the VIP Number (IGP: Series Number) is issued;
+- referrer or rate corrections under doc 08 §9.3;
+- release of each stage and the month it falls in;
+- month-end payout list approval, with a self-approval visibly flagged;
+- payout initiation, voiding or confirmation of a stuck initiated payout, and actual disbursement confirmation (Paid);
+- automatic Hold on a sale event, and restoration or cancellation of a held release;
+- clawback raised, direct collection, recovery offset (only after the Clawback Addendum is signed), write-off with reason, and refund reporting after a Defaulted sale is reinstated;
+- BA, PA and PB computation, BA withholding with reason, and changes to allowance figures;
+- parallel-run comparisons and the switch decision (doc 08 §16).
 
-Genealogy: preserve the actual eligible historical upline relationship.
+Historical calculations: preserve the frozen rate, the contract TCP and the computed amount. A later rate change never recalculates an existing sale.
 
-No automatic approvals: a Confirmed Sale does not automatically create an approved commission.
+Attribution: per-sale commission follows the seller and referrer frozen on the sale; allowance team credit follows the current upline chain (doc 08 §7). Record both so history can be reconstructed.
 
-No automatic clawbacks: already paid commission history remains traceable. Recovery decisions remain Finance-controlled. Do not invent automatic deductions.
+Automated actor: releases, automatic Holds and clawbacks raised by a sale event are system events linked to the triggering sale event.
+
+No silent rewriting: paid commission history remains traceable; clawbacks, recoveries and write-offs are new events. No deduction from commission or allowances before the Clawback Addendum is signed (doc 08 §14.3).
 
 ---
 
 ## 16. VIP Membership and Card Issuance Audit
 
-Use documents 06 and 09. Document audit events for membership eligibility determination, official activation, official VIP Card ID assignment, membership status changes, Financial Hold, Financial Hold resolution, membership expiration, contract-specific membership adjustments, historical membership imports, authorized corrections.
+Use documents 06 and 09. Document audit events for VIP Number issuance (date, monthly sequence, segments), number status changes (ACTIVE, UPGRADED, CANCELLED), any approved number correction, membership eligibility determination, official activation, Card Claim Date recording (actual or deemed), membership status changes, Financial Hold, Financial Hold resolution, membership expiration, contract-specific membership adjustments, historical membership imports, authorized corrections.
 
-Critical distinction: membership activation requires an official activation event after Finance-verified full payment. Fully Paid does not automatically equal Active Membership.
+Critical distinction: membership activation requires an official activation event after full payment through approved receipts (doc 07 §5.2 and §16). Fully Paid does not automatically equal Active Membership. Number issuance, activation and card claim are separate events; activation and card claim never create or change the number.
 
-Card ID: preserve the approved official VIP Card ID policy `YYMMDDNNNNNVTPMMS`. Under the current new-policy rules, YYMMDD represents the actual official membership activation date; NNNNN derives from the existing applicable RA sequence; VIP tier, payment classification, and contractual classification follow approved rules. Do not create an independent VIP serial generator. Do not regenerate issued VIP Card IDs during ordinary corrections. Audit history must preserve original identifiers.
+VIP Number (doc 06 §3 and §6; owner ruling R2, 2026-11-12): one 17-character number `YYMMDD NNNNN VT P MM S` serves as the Reservation Agreement number, the Grant number and the card number; there is no separate RA No. or Card ID. It is issued once, when the signed Reservation Agreement is recorded: YYMMDD is that recording date (Asia/Manila), NNNNN is the company-wide monthly sequence, and the tier, payment and classification segments are a snapshot at issuance. Do not create a competing allocator. A number is never regenerated or reused, including after cancellation or upgrade; any change needs management approval, recorded by the Super Administrator with a reason. Audit history must preserve original identifiers. IGP Series Numbers are separate (doc 14 §5).
 
 ---
 
 ## 17. Stay Points Audit
 
-Use `docs/business-rules/09-vip-membership-and-stay-points.md`. The current approved earning system is transaction-based: ₱1 verified eligible resort spending = 1 Stay Point. The full annual points allowance is not granted automatically when the minimum spend is reached.
+Use `docs/business-rules/09-vip-membership-and-stay-points.md` (owner ruling R10, 2026-11-12). Points follow the signed Grant's Annual Welcome Gift: fixed annual tranches per tier, each released only when Qualifying Spend reaches the tier minimum in its measurement period, or by a Compassionate Waiver. Spend-to-Earn is removed.
 
-Required audit events: eligible resort transaction verification reference; points earning; Weekday allocation; Weekend allocation; Pending points accumulation; minimum qualifying-spend completion; points unlocking; annual earning-cap enforcement; annual cycle transition; points Hold; refund-related recalculation; Finance reconciliation; points adjustment; points expiration or forfeiture; historical balance reconciliation.
+Required audit events (doc 09 §24): Card Claim Date recording; Points Activation Date setting and its cause (first redemption or deemed); resort bill entry with its system-wide unique OR number, blocked duplicate OR numbers, bill approval, correction and refund; tranche release, Non-Activation and waiver release; waiver request, grant or refusal with written reason; reservation, redemption, cancellation return and no-show forfeit (doc 10); transfer closure; expiry forfeit; Financial Hold and restoration; historical import.
 
-Bucket allocation: currently approved 70% Weekday, 30% Weekend.
+Each record keeps the actor, timestamp, membership and VIP Number, tranche and bucket (weekday/non-holiday or weekend/holiday), previous and resulting values, reason, and supporting reference.
 
-Annual limits: the existing standard Bronze, Silver, and Gold tiers have different annual caps. Audit records should reference the applicable membership entitlement and cycle rather than assuming current catalog values apply to all historical transactions.
+Entitlements: audit records reference the Grant template the membership was signed on (tranche count, size and split, minimum spend) rather than assuming current catalog values apply to all historical memberships.
 
-No negative automatic balances: refunds of qualifying spending may create Points Holds and require manual Finance reconciliation. Do not invent automated negative-point clawbacks.
+No negative balances: a refund lowers Qualifying Spend; a released tranche is never taken back; there is no Points Hold (doc 09 §13).
 
 ---
 
 ## 18. Redemption Audit
 
-Use `docs/business-rules/10-redemption.md`. Document future audit requirements for redemption request, eligibility review, Reservations approval, request rejection, points reservation, Pending Payment status, Finance monetary verification, booking confirmation, service completion, final points consumption, cancellation, no-show determination, points restoration, authorized forfeiture, exception resolution, Admin redemption pricing changes, cancellation policy revisions.
+Use `docs/business-rules/10-redemption.md` (owner ruling R12, 2026-11-12). Document future audit requirements for booking creation, eligibility check, booking confirmation and points reservation, Pending Payment status, receipt approval for any money part, stay completion and points consumption, cancellation and return of points to the same bucket, no-show recording and forfeit, Points Activation Date set by a first redemption, Terms of Use (points-per-night) table versions, holiday calendar changes, venue and cut-off changes, card transfer requests and written management approvals, and corrections (doc 10 §19).
 
-Approval authority: authorized Reservations/Operations personnel manually approve redemption.
+Booking authority: front-desk or office staff holding the Bookings operation permission make bookings and record completion and no-shows. There is no separate approval step; every booking is audited, and an Administrator or the Super Administrator can cancel or correct any booking, with the correction audited (doc 10 §9.2; owner follow-up ruling, 2026-11-12).
 
-Finance separation: only Finance verifies monetary payment components.
+Finance separation: monetary payment components are approved only as receipts under doc 07 §5.2 (Finance, the Administrator or the Super Administrator; owner ruling R6, 2026-11-12).
 
 Points lifecycle: reserved points are not finally consumed until the authorized completion event or another separately approved contractual outcome.
 
-Module status: Redemption and Services remain preserved but hidden/disabled in the planned MongoDB system. Audit documentation must not re-enable these modules. Historical records must remain traceable where authorized.
+Module status: Redemption and Services remain preserved but hidden/disabled in the planned MongoDB system. Redemption rules are being planned in doc 10 (owner ruling R11 item 3, 2026-11-12); the module stays disabled until the owner authorizes its build. Audit documentation must not re-enable these modules. Historical records must remain traceable where authorized.
 
 ---
 
@@ -249,11 +261,11 @@ A later policy revision must not silently change historical contractual facts.
 
 Example — VIP Price Change: Bronze standard price changes for future contracts. Existing finalized contracts must retain their agreed price. The audit system should make it possible to determine original authorized configuration, date of policy change, new configuration, applicable effective date, which finalized contracts used earlier terms.
 
-Example — Redemption Pricing Change: a service originally requires 3,000 points; Admin later changes its pricing to 3,500 points. Previously approved bookings must remain traceable under the applicable earlier policy unless lawfully and operationally modified.
+Example — Redemption Basis Change: Admin publishes a new Terms of Use version that raises the points per night for a room type (illustrative figures: 3,000 to 3,500). Cards keep the version in effect on their Card Claim Date, confirmed bookings are not repriced, and both versions remain traceable (doc 10 §8).
 
-Example — Commission Policy Change: Finance's manual commission policy changes in the future. Previously approved commission decisions and actual payouts must not be silently recalculated.
+Example — Commission Rate Change: an Administrator or the Super Administrator changes a person's DSC or DRI rate, or the position standard changes. The change applies only to sales whose number is issued afterwards; frozen rates, released amounts and actual payouts are never silently recalculated (doc 08 §9.2).
 
-Example — Stay Points Policy Revision: a future approved earning rate differs from the current ₱1-to-1-point rule. Historical points must remain attributed to the policy and transactions under which they were legitimately earned. Do not retroactively rewrite balances without separately authorized reconciliation.
+Example — Stay Points Policy Revision: a future Grant template sets different tranche terms. Existing memberships keep the terms of the template they were signed on; historical tranche releases are never re-run or rewritten without separately authorized reconciliation (doc 09 §19.1).
 
 ### 20.4 Administrative Configuration Governance
 
@@ -275,7 +287,11 @@ Sensitive values: avoid unnecessary storage of complete government ID numbers, p
 
 Document the need for an authorized retention policy. Potential considerations: operational audit needs, financial record requirements, contractual recordkeeping, legal retention obligations, security investigations, archived record accessibility, privacy-related retention limits.
 
-Important: do not invent retention durations such as 5, 7, 10, or 20 years without an authoritative company or legal policy. Do not implement automatic deletion. Identify retention and archival rules as an unresolved formal policy dependency.
+**Owner ruling R11 item 4 (2026-11-12): records are kept forever, and nothing is deleted until legal advice sets a retention period.** This covers audit events and the business records they describe. No automatic deletion, purge or expiry exists.
+
+Important: do not invent retention durations such as 5, 7, 10, or 20 years. The final retention period, archival rules and any lawful deletion procedure remain an open dependency until legal advice is received and the owner approves it.
+
+History import (owner ruling R11 item 5): every seller and every unfinished sale is imported with its full receipt history; finished sales stay in the company's Excel archives and are not imported (doc 11 §26). Imported records keep their original dates and are identifiable as imported. Imported receipts are marked "Approved (imported)"; an Administrator signs off each import batch once, and the sign-off is an audit event recording the batch, the number of records, the actor and the timestamp (owner follow-up ruling, 2026-11-12; doc 07 §20).
 
 Append-only compatibility: normal operational audit history remains append-only. Exceptional lawful records-management procedures must be separately authorized, controlled, and auditable where legally permitted.
 
@@ -310,10 +326,11 @@ Important distinction: audit logging must not falsely confirm a business operati
 | VIP Products | Product and commercial configuration | Preserve policy changes |
 | VIP Contracts | Contract approval and finalization | Preserve contract lifecycle |
 | Finance | Payment verification, refunds and reversals | Preserve financial decisions |
-| Commission Management | Manual commission approvals and payouts | Preserve commission and disbursement history |
-| VIP Membership | Official activation and membership states | Preserve membership history |
-| Stay Points | Earning, unlocking, holding and balances | Preserve points ledger events |
-| Redemption | Booking redemption and points consumption | Preserve request and redemption history |
+| Commission Management | Rates, releases, payout approvals, payouts, clawbacks and allowances | Preserve commission and disbursement history |
+| VIP Card Issuance | VIP Number issuance and status | Preserve issued numbers and status changes |
+| VIP Membership | Official activation, Card Claim Date and membership states | Preserve membership history |
+| Stay Points | Qualifying Spend, tranche releases, waivers and balances | Preserve points ledger events |
+| Redemption | Bookings and points consumption | Preserve booking and redemption history |
 | Reports & Analytics | Authorized reporting | Preserve relevant report/configuration change history |
 | Audit Logs | Central historical evidence | Protect event integrity and authorized access |
 
@@ -325,15 +342,15 @@ The audit system must not replace originating module authority.
 
 (See Part XX of the task prompt for scenarios A–N; summarized here with expected outcomes.)
 
-- **Scenario A (Payment verification):** Staff submits payment details; Finance verifies receipt. Expected: submission event recorded, Finance verification event recorded, correct actors identified, no false verification before Finance action.
-- **Scenario B (Payment reversal):** a verified payment is reversed. Expected: original verification remains traceable, reversal event recorded, Finance authority preserved, relevant reconciliation identifiable.
-- **Scenario C (Commission approval and payout):** Finance approves a commission and later confirms payout. Expected: separate approval and payout events, correct amounts and timestamps, Paid status only after actual disbursement confirmation.
+- **Scenario A (Receipt approval):** a Clerk enters a receipt with its reference number; Finance, the Administrator or the Super Administrator approves it. Expected: entry event and approval event recorded, correct actors identified, a self-approval visibly flagged, no approval before the approver acts.
+- **Scenario B (Receipt reversal):** an approved receipt is reversed for a keying error or a bounced cheque. Expected: original approval remains traceable, reversal event recorded with actor and reason, nothing deleted, relevant reconciliation identifiable.
+- **Scenario C (Commission release, approval and payout):** a sale reaches its release stage; Finance, the Administrator or the Super Administrator approves the month-end payout list and later confirms disbursement. Expected: separate release, approval and payout events, frozen rate and amount recorded, Paid status only after actual disbursement confirmation.
 - **Scenario D (OST team transfer):** an OST transfers from one SM to another. Expected: original and new parent relationships remain traceable, historical sales attribution preserved, authorized actor recorded.
-- **Scenario E (VIP Card activation):** Finance confirms full payment; official membership activation occurs afterward. Expected: separate events, original activation date preserved, official Card ID allocation traceable, no duplicate Card ID on repeated processing.
-- **Scenario F (Stay Points earning):** a Bronze customer completes ₱1,000 eligible verified resort spending. Expected: points earning references the eligible transaction, 1,000 total points earned under current policy, 70/30 allocation preserved, no automatic 10,000-point grant.
-- **Scenario G (Points refund reconciliation):** an earning transaction is refunded. Expected: original earning remains traceable, points Hold event recorded, Finance reconciliation recorded, no invented negative-point adjustment.
-- **Scenario H (Redemption completion):** Reservations approves redemption and reserves points; service completed later. Expected: approval event, reservation event, completion event, final consumption event, no duplicate deduction.
-- **Scenario I (Admin changes redemption price):** authorized Admin changes the configured service price. Expected: previous and new values traceable, effective policy identifiable, existing approved booking terms preserved.
+- **Scenario E (VIP Number, activation and card claim):** the VIP Number is issued when the signed Reservation Agreement is recorded; approved receipts later reach full payment; official activation follows; the card is claimed. Expected: separate issuance, activation and Card Claim Date events, the number unchanged by activation and claim, no duplicate number on repeated processing.
+- **Scenario F (Tranche release):** a Bronze cardholder's approved Qualifying Spend reaches ₱1,000 in the measurement period. Expected: each bill entry references its unique OR number; on the due date a tranche release event records 10,000 points (7,000 weekday, 3,000 weekend); no release when the minimum is not met unless a waiver is granted.
+- **Scenario G (Qualifying bill refund):** a qualifying bill is refunded. Expected: the original bill remains traceable, a dated refund entry is recorded, Qualifying Spend is lowered, a released tranche is not taken back, no negative-point adjustment.
+- **Scenario H (Redemption completion):** staff confirm a booking and reserve points; the stay is completed later. Expected: confirmation event, reservation event, completion event, final consumption event, no duplicate deduction.
+- **Scenario I (Redemption basis change):** Admin publishes a new Terms of Use version. Expected: previous and new versions traceable, effective date identifiable, cards keep the version in effect on their Card Claim Date, confirmed bookings not repriced.
 - **Scenario J (Unauthorized access attempt):** a user attempts to access restricted financial records. Expected: access denied, relevant security event may be recorded, confidential data not exposed.
 - **Scenario K (Historical record correction):** an authorized Finance correction changes a transaction's financial effect. Expected: original transaction preserved, new correction event recorded, historical reporting reconstruction remains possible.
 - **Scenario L (Business policy revision):** management authorizes a new policy. Expected: previous policy preserved, authorized change traceable, effective date identifiable, historical contracts protected.
@@ -355,9 +372,9 @@ The completed document must preserve:
 5. Original financial records remain traceable.
 6. Canonical customer identities remain preserved.
 7. Historical Sales Network attribution remains preserved.
-8. Finance remains responsible for payment verification.
-9. Finance remains responsible for approved commission financial decisions.
-10. Reservations/Operations retains authorized redemption approval.
+8. Receipt approval belongs to Finance, the Administrator and the Super Administrator; self-approval is audited (R6).
+9. Finance, the Administrator or the Super Administrator approve and pay commission; self-approval is audited (doc 08).
+10. Bookings with points are made by staff holding the booking action permission (doc 10 §9.2).
 11. Business modules retain their own operational authority.
 12. Audit access does not grant permission to modify business records.
 13. Account permissions remain subject to existing RBAC.
@@ -366,13 +383,13 @@ The completed document must preserve:
 16. Automated actions must be attributed accurately.
 17. Historical policy versions remain traceable.
 18. Product configuration changes do not silently rewrite finalized contracts.
-19. Previously issued VIP Card IDs remain traceable.
-20. Historical points earnings and redemptions remain auditable.
+19. Previously issued VIP Numbers remain traceable.
+20. Historical tranche releases and redemptions remain auditable.
 21. Duplicate processing must not create duplicate financial outcomes.
 22. Business rules may change through authorized future decisions.
 23. Not every policy is automatically Admin-configurable.
 24. Legal retention and privacy requirements must be respected.
-25. No arbitrary permanent-retention period is invented.
+25. Records are kept and nothing is deleted until legal advice sets a retention period (R11); no retention duration is invented.
 26. No unrestricted audit deletion capability is introduced.
 27. Existing signed customer rights remain protected.
 28. No unsupported technical architecture is represented as implemented.
@@ -472,3 +489,33 @@ Only include unresolved dependencies that materially affect future implementatio
 - **Outstanding dependencies:** Listed in Section 26.
 - **Acceptance results:** All checklist items covered. Documentation completeness does not prove implementation readiness.
 - **Change scope:** Documentation only. No application code, database, migrations, other documentation files, Git commit/push/merge, or deployment. Only `docs/business-rules/12-audit-logs-and-governance.md` created. Redemption and Services remain disabled. No unauthorized implementation assumptions. No unsupported technical architecture represented as implemented. No invented retention periods.
+
+## Owner rulings amendment (2026-11-12, rounds R6, R7, R11)
+
+These rulings are authoritative and take precedence over earlier text in this document where they differ. Ground rule: the company workbook wins by default; dated owner rulings outrank everything.
+
+1. **Receipt authority (R6; overriding authority rule).** A Clerk enters receipts with a required, system-wide unique OR or bank reference number. Finance, the Administrator or the Super Administrator approves; self-approval is allowed and the audit record shows that the same person entered and approved. This replaces "only Finance verifies". Sections 14 and 25.
+2. **Receipt history (R6).** Fix and resend keeps every earlier version; a reversal is a dated event with actor and reason, never a deletion; a late receipt's admission into the first open month is recorded. Section 14.
+3. **Month close and defaults (R7).** Month close, the 90-day no-payment listing, Defaulted marking and return to Active are audited events performed by the Administrator or the Super Administrator (marking and closing) or the system (listing). Section 14; doc 13 §4.5 and §4.6.
+4. **Retention (R11 item 4).** Records are kept forever, and nothing is deleted until legal advice sets a retention period. No duration is invented. Sections 6, 21.2 and 25.
+5. **History import (R11 item 5).** Every seller and every unfinished sale is imported with its full receipt history; finished sales stay in the Excel archives; a side-by-side parallel run follows and the switch happens when a month closes with no unexplained differences (Rollout Guide v1.4 §6 and §8). Section 21.2; doc 11 §26.
+6. **No public lookup (R11 item 1).** There is no public VIP card or customer check; only staff check cards (doc 11 §21).
+7. **IGP in scope (R11 item 2).** IGP audit events follow this document; IGP rules are in `docs/business-rules/14-igp-sales.md`. Section 2.
+8. **Redemption (R11 item 3).** Planned in doc 10; stays disabled until the owner authorizes the build. Section 18.
+9. **CMS deferred (R11 item 6).** No CMS audit events are required until the CMS is authorized.
+
+## Consistency update (2026-11-12)
+
+Wording aligned with the rewritten docs 06, 08, 09, 10 and 14. No new rule is introduced here.
+
+1. **Commission audit (doc 08, R8 and R9).** Sections 8, 15, 20.3, 23.1, 24 (Scenario C) and 25: the former Finance-only manual percentage, upline and Finance-controlled recovery wording is replaced by per-person rates frozen on the sale, stage releases, payout approval by Finance, the Administrator or the Super Administrator, and clawbacks under doc 08 §14.
+2. **VIP Number (doc 06, R2).** Sections 16, 23.1, 24 (Scenario E) and 25: the former Card ID with an activation-date prefix and an RA-derived sequence is replaced by the single VIP Number issued when the signed Reservation Agreement is recorded, with a monthly sequence; Card Claim Date recording is audited.
+3. **Stay Points audit (doc 09, R10).** Sections 8, 17, 20.3, 23.1, 24 (Scenarios F and G) and 25: Spend-to-Earn, the 70/30 per-transaction split, earning caps and Points Holds are replaced by Annual Welcome Gift tranche events.
+4. **Redemption audit (doc 10, R12).** Sections 18, 20.3, 24 (Scenarios H and I) and 25: Reservations approval and service pricing are replaced by staff bookings under an action permission and the versioned Terms of Use table.
+
+## Owner rulings amendment (2026-11-12, follow-ups)
+
+These rulings take precedence over earlier text in this document where they differ.
+
+1. **Imported receipts.** History receipts come in marked "Approved (imported)". An Administrator signs off each import batch once; the batch sign-off is audited (history import paragraph above the append-only compatibility note; doc 07 §20).
+18. **Bookings.** Room bookings with points are made by front-desk or office staff with a Bookings operation permission, with no separate approval step. Every booking is audited, and Admins can cancel or correct any booking (section 18). The former outstanding item is resolved.

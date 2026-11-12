@@ -3,6 +3,7 @@
 > Single source of truth for **IST/OST accreditation lifecycle, renewal, date corrections, and AA number generation**.
 > Sales Network structure: `docs/business-rules/02-sales-network-and-genealogy.md`.
 > Sales performance reporting: `docs/business-rules/13-sales-performance-reporting.md`.
+> JA&D accreditation (IGP sales only): `docs/business-rules/14-igp-sales.md`.
 
 ---
 
@@ -46,35 +47,31 @@ Use `Asia/Manila` consistently when evaluating date boundaries.
 
 ---
 
-## 5. Renewal Eligibility
+## 5. Renewal (NUM v6.2 §8, OCT R39 and R40; owner ruling R3, 2026-11-12)
 
-Renewal is permitted:
+### 5.1 When a Renewal Is Recorded
 
-- Within 30 calendar days before expiration, inclusive.
-- On the expiration date.
-- After expiration.
+A renewal is recorded in the month it actually takes place: the expiry month (the month of the valid-until date) or later, never earlier. Papers submitted early are held and recorded in the expiry month. A late renewal is accepted. Prevent duplicate renewals.
 
-Renewal earlier than the permitted 30-day window is not allowed. Prevent accidental duplicate renewals or repeated submissions from extending validity more than intended.
+### 5.2 New Number and New Validity
 
-### 5.1 Early Renewal
+- A renewal issues a **new AA number**. It takes the YY and MM of the renewal month and the next NNNN of that month, counted together with that month's new accreditations. The team letter (I or O) is unchanged.
+- The renewed accreditation is valid for one year from the actual renewal date.
+- Example: AAI26020001, accredited 10 Feb 2026 and valid until 10 Feb 2027, renews on 18 Feb 2027. It receives the next February 2027 number (say AAI27020015), valid until 18 Feb 2028.
 
-For renewal on or before expiration:
+### 5.2.1 The New Number Replaces the Old One
 
-**New expiration = Existing expiration + 1 calendar year**
+- Everything recorded under the old number carries over to the new number: sales, commission, team and upline links, referrer links, clawbacks, allowance history and reviews.
+- The old number is kept in the AA Number History. It is never deleted and never issued again. If it is quoted, it resolves to the person's current number.
+- VIP Numbers already issued do not change. Sales made after the renewal carry the new AA number.
 
-Example: Current expiration October 14, 2027; renewal performed September 20, 2027; new expiration October 14, 2028.
+### 5.2.2 Leavers
 
-### 5.2 Late Renewal
-
-For renewal after expiration:
-
-**New expiration = Actual renewal date + 1 calendar year**
-
-Example: Previous expiration October 14, 2027; renewal performed January 20, 2028; new expiration January 20, 2029.
+A person who resigned or was terminated is not renewed. If they return, they are accredited again under a new number.
 
 ### 5.3 Renewal Authorization
 
-Authorized personnel with Accreditation Management module access may renew directly. No additional Admin/Super Admin approval is required.
+The Administrator (the company's Supervisor) or the Super Administrator (the company's Director) renews an approved seller, as for every other change to an approved seller record (section 9.1; owner authority rule, 2026-11-12). Each renewal is audited.
 
 ### 5.4 Suspended and Deactivated Accounts
 
@@ -88,9 +85,14 @@ After renewal:
 
 Account reactivation follows the approved Organization Management rules.
 
-### 5.5 Expiration Reminders
+### 5.5 Expiration Reminders (OCT R40)
 
-Provide dashboard-based expiration indicators beginning 30 days before expiration. IST and OST members see their own accreditation status. Authorized Accreditation Management users can see members approaching expiration. No email or SMS reminder is required for this business-rule version.
+Reminder labels:
+- **RENEWAL DUE** from one month before the valid-until date.
+- **EXPIRED – GRACE** for one month after it.
+- **CLOSED – NOT RENEWED** after the grace month.
+
+CLOSED is a status and report label only. It blocks nothing; management decides any further action manually. IST and OST members see their own status on their dashboard. Authorized users see a list of people due or overdue for renewal. No email or SMS reminder is required.
 
 ### 5.6 Genealogy During Expiration
 
@@ -100,7 +102,7 @@ Expired accreditation does not remove the member from the genealogy. The member 
 
 ## 6. Accreditation Date Corrections
 
-Authorized Accreditation Management personnel may correct an incorrectly encoded original accreditation date.
+The Administrator or the Super Administrator may correct an incorrectly encoded original accreditation date of an approved seller, as for every other change to an approved seller record (section 9.1).
 
 Require: correction reason, previous date, new date, authorized actor, correction timestamp, audit history.
 
@@ -125,38 +127,36 @@ Do not silently modify another member's AA number.
 
 ---
 
-## 7. Official AA Number Generation
+## 7. Official AA Number Generation (NUM v6.2 §8; workbook default applied 2026-11-12)
 
-IST and OST share **one continuous sequential generator**. Do not maintain separate IST and OST sequence counters. Do not reset the sequence monthly or yearly.
+IST and OST share **one monthly sequence** in one central register. There are no separate IST and OST counters, and numbers are never composed by hand.
 
 ### 7.1 Official Format
 
-`AAI` or `AAO` + `YYMM` + sequential number
+`A` + team owner + `I`/`O` + `YYMM` + `NNNN`, 11 characters, no dash.
 
-Examples: `AAI26100001`, `AAO26100002`, `AAI26100003`
+Examples: `AAI26070001`, `AAO26070002`.
 
-Where `AAI` = Internal Sales Team, `AAO` = Outsourcing Sales Team, `YYMM` = Year and month of the original accreditation date, sequential portion = shared sequence with minimum width of four digits.
+Segments:
+- `A` = AFhomes, the accrediting company.
+- Team owner: `A` = AFhomes' own team. Other letters are reserved for future partner-company teams.
+- `I` = IST, `O` = OST.
+- `YYMM` = the month of accreditation, or of the renewal for a renewed number.
+- `NNNN` = the number of people accredited or renewed in that month, in order of accreditation date.
+
+Numbers issued in the former 10-character `AIYYMMNNNN` form stay valid and are read as AA-form numbers.
 
 ### 7.2 Sequence Rules
 
-The sequential portion:
-
-- Starts with a minimum of four digits.
-- Uses leading zeros as required.
-- Can grow beyond four digits.
-- Has no artificial maximum width.
-- Is allocated from the common IST/OST sequence.
-- Does not reset when the month or year changes.
-
-Examples: sequence 1 → `0001`; 9,999 → `9999`; 10,000 → `10000`.
-
-The `YYMM` is based on the original accreditation date, not the number-allocation date.
+- NNNN restarts at 0001 each month and is assigned in order of accreditation (or renewal) date within the month.
+- New accreditations and renewals in the same month share the count.
+- `YYMM` is the accreditation or renewal month, not the date the record was typed in.
 
 ### 7.3 Historical or Backdated Accreditation
 
 Authorized personnel may enter an actual accreditation date from a previous year or month.
 
-Example: Original accreditation January 2025; next available shared sequence `0100`; generated number `AAI25010100`.
+Example: accreditation dated January 2025, and 99 people were already accredited in January 2025, so the number is `AAI25010100`.
 
 Do not change the `YYMM` merely because the member was encoded later.
 
@@ -170,13 +170,17 @@ Example: `AAI26100001` → `AAO26100001`. Preserve the remaining characters when
 
 Every previously issued AA identifier is permanently associated with its original member. Old AA numbers cannot be reassigned to another member. If the same member previously owned the target identifier, it may be restored. If the target identifier belongs to another member, allocate a new unique identifier from the same shared sequence.
 
-Example of conflict resolution: proposed target identifier already belongs to another member; allocate the next globally available shared sequence; construct the appropriate `AAI` or `AAO` identifier using the member's original accreditation `YYMM`.
+Example of conflict resolution: the proposed target identifier already belongs to another member, so allocate the next available NNNN of the same month and build the `AAI` or `AAO` identifier with that month's `YYMM`.
 
 Preserve all number changes, corrections, and conversions in audit history.
 
 ### 7.6 Concurrency and Integrity
 
 The future implementation must guarantee unique allocation under simultaneous requests. Document invariants such as: no duplicate active AA identifiers; no reuse of another member's historical identifier; no independent IST/OST sequences; atomic allocation and identity updates; idempotent handling of repeated requests. Do not implement these mechanisms yet.
+
+### 7.7 JA&D Accreditation Is Separate (owner ruling R13, 2026-11-12)
+
+A seller's JA&D accreditation number (`JAI`/`JAO` + YYMM + NNNN) is not an AA number and is not issued from the AA sequence. It is stored separately on the seller record, with its own approval date and its own one-year validity, renews under its own rules, and is used only on IGP sales. VIP sales use only the AA number. Rules: `docs/business-rules/14-igp-sales.md` §6.
 
 ---
 
@@ -188,21 +192,57 @@ The Accreditation Management workflow may support renewal only, renewal with tea
 
 ---
 
-## 9. Account Status and Login Eligibility
+## 9. What Each Status Allows (OCT R28, R37; owner ruling R3, 2026-11-12)
 
-A Sales Network member may log in and sell only when the account is Active and accreditation is valid. If accreditation expires, login and personal sales activity are blocked. If an account is Suspended or Deactivated, login and personal sales activity remain blocked even when accreditation is valid.
+| Action | Valid | Expired (incl. grace and CLOSED label) | Rights-suspended, resigned or terminated |
+|---|---|---|---|
+| Log in | Yes | Yes, with a renewal reminder | No |
+| Be the salesperson or referrer on a new sale | Yes | Yes; the reminder is recorded on the sale | No, for sales dated on or after the suspension date or after the end date |
+| Sponsor or be the upline of a new seller | Yes | Yes, with a reminder | No |
+| Public seller check | Shown as valid | Shown as **Expired** | Not shown as valid |
+
+- An expired accreditation never blocks a sale (OCT R37).
+- A suspension blocks only sales dated on or after its effective date. A sale made before it but recorded later is accepted (OCT R28).
+- A resignation or termination takes effect after its end date.
+- Existing sales of a suspended or departed person are untouched. Their commission is affected only by what happens to the sale itself (OCT R27, R33), never by their status.
+- On the public seller check, IST records never show a valid-until date; OST records show it.
+
+### 9.1 New Sellers and Changes (OPS §4.1; owner authority rule, 2026-11-12)
+
+1. **New seller: two steps.** A Clerk, the Administrator or the Super Administrator enters the seller. The Administrator (the company's Supervisor) or the Super Administrator approves the record. A Clerk never approves. The Administrator or the Super Administrator may approve a record they entered themselves; the audit history then shows that the same person entered and approved it. The seller is official, and the AA number is final, only after approval. An upline must be approved before the people under it.
+2. **Changes after approval.** Once approved, the seller record is locked. Any change (status, suspension, end date, upline or team move, pay rates, renewal) is made only by the Administrator or the Super Administrator, one field at a time, and each change is audited.
+3. **Sellers view only.** A seller views their own accreditation status and cannot change any seller record (doc 01 §3.7).
+
+### 9.2 Public OST Application (owner ruling R5, 2026-11-12)
+
+The public OST application form is kept. A person who wants to become an OST seller may submit an application through the public website.
+
+1. A submitted application is not a seller record. It issues no AA number and grants no login.
+2. The office reviews each application. A Clerk may check it and complete the entry. The Administrator or the Super Administrator then decides one of:
+   - **Approve:** the application becomes an approved seller record under the two-step rule in section 9.1, with an eligible upline (doc 02 §4.1), and the AA number is issued.
+   - **Return to fix:** the applicant receives a private link (by email or text message) to correct the same application and resubmit it. The office sees the full history of each version (owner follow-up ruling, 2026-11-12).
+   - **Reject:** the application is closed with a reason.
+3. Every decision is audited.
+
+### 9.3 Public Website Links (owner ruling R5, 2026-11-12)
+
+The public homepage links to **Seller login** and **Check a seller** (the public seller check in section 9).
 
 ---
 
 ## 10. Examples
 
-### Renewal Example (Early)
+### Renewal Example (in the expiry month)
 
-Current expiration October 14, 2027; renewal performed September 20, 2027; new expiration October 14, 2028.
+AAI26020001, valid until 10 Feb 2027, renews on 18 Feb 2027 → new number AAI2702NNNN (next February 2027 sequence), valid until 18 Feb 2028.
 
 ### Renewal Example (Late)
 
-Previous expiration October 14, 2027; renewal performed January 20, 2028; new expiration January 20, 2029.
+Valid until 14 Oct 2027, renews on 20 Jan 2028 → new number AAI2801NNNN, valid until 20 Jan 2029.
+
+### Renewal Papers Submitted Early
+
+Valid until 14 Oct 2027, papers handed in on 20 Sep 2027 → held and recorded in October 2027, not in September.
 
 ### Expiration Cutoff Example
 
@@ -210,11 +250,11 @@ Expiration October 14, 2027 → valid through 11:59:59 PM PHT on October 14, 202
 
 ### AA Number Example
 
-Original accreditation date October 2026, shared sequence 1 → `AAI26100001`.
+First person accredited in October 2026 → `AAI26100001`.
 
 ### Backdated Example
 
-Original accreditation January 2025, next shared sequence 100 → `AAI25010100`.
+Accreditation dated January 2025, the hundredth person of that month → `AAI25010100`.
 
 ---
 
@@ -223,16 +263,19 @@ Original accreditation January 2025, next shared sequence 100 → `AAI25010100`.
 - IST and OST accreditation is annual.
 - Original accreditation date is manually entered and not auto-derived.
 - Expiration cutoff uses Philippine time.
-- Renewal allowed within 30 days before expiration, on expiration date, or after.
-- Early renewal extends from existing expiration; late renewal extends from actual renewal date.
+- Renewal is recorded only in the expiry month or later; early papers are held.
+- Renewal issues a new AA number for the renewal month, valid one year from the renewal date, and all history moves to it.
 - Renewal does not change account administrative status.
-- Expired accreditation blocks login but preserves genealogy.
+- Expired accreditation does not block login, selling, referring or sponsoring; a reminder is shown and recorded.
+- Suspended, resigned or terminated sellers cannot take new sales or sponsor; their existing sales are untouched.
+- The public seller check shows an expired seller as Expired.
+- A new seller needs entry plus approval by the Administrator or the Super Administrator, who may approve their own entry (audited); later changes are made by the Administrator or the Super Administrator.
+- Public OST applications are reviewed by the office: approve, return to fix, or reject.
+- The public homepage links to Seller login and Check a seller.
 - Eligible downline continues operating independently.
 - Date corrections update YYMM when necessary and preserve history.
-- AAI/AAO use one continuous shared sequence with minimum four digits and no reset.
-- YYMM comes from original accreditation date.
-- No monthly sequence reset.
-- Old AA identifiers remain reserved to original member.
+- AAI/AAO share one monthly sequence that restarts each month.
+- Old AA identifiers are never reissued and resolve to the person's current number.
 - Combined operations are all-or-nothing.
 
 ---
@@ -252,3 +295,32 @@ Original accreditation January 2025, next shared sequence 100 → `AAI25010100`.
 - **Confirmation:** All approved accreditation rules represented.
 - **Unresolved ambiguity:** None for approved rules.
 - **Changes made:** Documentation only. No code, database, Git, or deployment changes.
+## Owner rulings amendment (2026-11-12, round R3)
+
+These rulings take precedence over earlier text in this document where they differ. The company sources are NUM v6.2 §8 and the Ruling Addendum Issue 3 (OCT) R27, R28, R37, R39 and R40, which count as approved company practice (doc 05 item 16).
+
+1. **Expired does not block.** An expired seller may log in, sell, refer and sponsor, with a reminder (section 9). Only a rights suspension, resignation or termination blocks new sales and sponsoring.
+2. **Renewal gives a new number.** A renewal is recorded in the expiry month or later and is valid one year from the renewal date. It issues a new AA number that replaces the old one, and all history carries over (section 5). This replaces the former "early renewal extends from the old expiry" rule and the "30 days before" window.
+3. **Monthly AA sequence.** The AA number follows NUM §8: 11 characters, YYMM of the accreditation or renewal month, and NNNN restarting each month (section 7). This replaces the former continuous, never-reset sequence. It was applied under the workbook-default rule and flagged to the owner on 2026-11-12.
+4. **Public seller check** shows an expired seller as Expired.
+5. **Two-step entry, office changes.** A new seller is entered and then approved; the Administrator or the Super Administrator approves and may approve their own entry, with the audit history showing it. After approval, the Administrator or the Super Administrator changes the record, including renewals (sections 5.3 and 9.1). This replaces the former section 5.3, under which any module user could renew. (Corrected by the owner authority rule, 2026-11-12; the earlier wording "approved by a second" user and "only the Super Administrator" is superseded, see the amendment below.)
+
+## Owner rulings amendment (2026-11-12, rounds R4–R5 and authority rule)
+
+These rulings take precedence over earlier text in this document, including the R3 amendment above, where they differ.
+
+1. **Authority rule.** The Administrator can do everything in the system and the Super Administrator has no blocks. Both may approve their own entries, and the audit history shows that the same person entered and approved. Clerks enter only; sellers view only (doc 01 §3.7).
+2. **Correction to R3 item 5.** Changes to an approved seller, including renewals and transfers, are made by the Administrator or the Super Administrator, not by the Super Administrator only (sections 5.3 and 9.1). The two-step entry stays: a Clerk, the Administrator or the Super Administrator enters, and the Administrator or the Super Administrator approves. The former requirement that the approver be a different person from the one who entered is replaced by the self-approval rule in item 1.
+3. **Roles (R4).** Supervisor = Administrator; Director = Super Administrator; Clerk enters but cannot approve (doc 01 §3.8).
+4. **Public OST application (R5).** The public application form is kept. The office reviews each application and approves, returns it to fix, or rejects it. An approved application becomes a seller record under the two-step entry (section 9.2).
+5. **Homepage links (R5).** The public homepage links to Seller login and Check a seller (section 9.3).
+
+## Consistency update (2026-11-12)
+
+1. **IGP cross-reference (owner ruling R13).** Added a header link to `docs/business-rules/14-igp-sales.md` and section 7.7: JA&D accreditation is stored separately from the AA number, with its own dates and renewal, and is used only on IGP sales. No AA rule changed.
+
+## Owner rulings amendment (2026-11-12, follow-ups)
+
+These rulings take precedence over earlier text in this document where they differ.
+
+22. **Returned public OST application.** A returned applicant gets a private link (email or text) to correct the same application and resubmit it; the office sees the history (section 9.2).

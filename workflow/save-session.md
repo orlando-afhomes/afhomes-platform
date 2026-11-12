@@ -112,67 +112,136 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 
 ## 1. Session Metadata
 - Saved at: 2026-11-12
-- Repository: afhomes-platform (remote `https://github.com/orlando-afhomes/afhomes-platform.git`)
+- Repository: afhomes-platform (remote `https://github.com/orlando-afhomes/afhomes-platform.git`, not re-checked)
 - Branch: develop
-- HEAD: fc060bb "feat: opt routes out of instant navigation and fix commission/payout and stay-point rules" (verified this run). Whether it is pushed was not checked.
-- Session objective: (1) explore the Codex-built Workflow Atlas viewer and write a feature-by-feature implementation roadmap in `docs/implementation/`; (2) create the `/update-workflow-atlas` command, which updates the atlas (the project's workflow memory) when workflows, processes or rules change.
-- Development phase: frontend prototype with mock data, QA stage. Only the owner declares frontend completion.
-- Context note: no compaction notice. The model changed through `/model` (Opus 5.5 during planning, Sonnet 5.5 for writing). The previous snapshot's login and instant-navigation work is carried forward in sections 2 and 6.
+- HEAD: 0512a31 "docs: add workflow atlas implementation roadmap and update-workflow-atlas skill" (verified)
+- Session objective: finalize every conflicting business rule and process before any further frontend work and before the backend/DB/API phase. Run plain-language decision rounds with the owner, then write the answers into the rule documents.
+- Development phase: frontend prototype with mock data. Business rules are now finalized (documentation). No `src/` change this session.
+- Context note: very long session. Rounds R4 to R13 were collected in plan mode and then applied by subagents. The plan file `C:/Users/SSD-ORLANDO/.claude/plans/proceed-muna-tayo-sa-cozy-popcorn.md` lists every answer.
 
 ## 2. Current Project State
-- Workflow Atlas (outside the repo, not in Git): `C:/Users/SSD-ORLANDO/.codex/visualizations/2026/11/12/01a1cd9b-0453-7c43-bed7-0f196ed66259/afhomes-viewer/dist/index.html`. Version `2026-11-12.1`, baseline `develop @ a0bdcef`, so it is one commit behind. Contents (read from `data/workflows.json`, `data/catalog.mjs`, `COVERAGE.md`): 10 modules, 16 roles, 53 routes, 12 journeys J01 to J12 (four views each), 12 decisions G01 to G12, 13 gaps U01 to U13. Build chain: `node data/build-workflows.mjs`, `npm run build`, `npm test`, `npm run qa`.
-- Roadmap: `docs/implementation/` holds `README.md`, `decisions-and-gaps.md` and `phase-01` to `phase-11` files (feature phases FP1 to FP11, 65 feature cards, IDs `F<phase>.<n>`). Phase order follows subphases 4A to 4L of `docs/development/implementation.md`, which was not edited.
-- Command: `.claude/skills/update-workflow-atlas/SKILL.md` (wrapper, `disable-model-invocation`) and `workflow/update-workflow-atlas.md` (procedure: resolve atlas, detect changes since the baseline, report and wait for approval, back up, edit, rebuild and verify, sync docs, report). The default atlas path is the newest `afhomes-viewer` under `~/.codex/visualizations/`.
-- Earlier state still true: login and mock auth (`src/panels/public/login/`, `src/data/mock/mock-credentials.ts`, `src/shared/providers/mock-session.ts`, `src/panels/admin/components/admin-auth-gate.tsx`), `export const instant = false` in 49 admin files.
+- The rule documents in `docs/business-rules/01` to `14` reflect the owner decisions of 2026-11-12. `14-igp-sales.md` is new. Each changed doc ends with dated "Owner rulings amendment (2026-11-12, ...)" sections.
+- `docs/implementation/decisions-and-gaps.md`: all G01 to G12 and U01 to U13 rows are Decided, Deferred or Out of scope. It also has "Round results", "Follow-up decisions (items 1-30)" and "Still open" lists. Its "What each decision asks for" section is marked historical.
+- The development docs (`architecture`, `backend`, `database`, `frontend`, `security`, `testing`, `README`), `docs/project.md` and the permission-matrix proposal have dated consistency notes.
+- `AGENTS.md` section 5 summary bullets and the "Unresolved decisions" list were updated with owner authorization. No other part of `AGENTS.md` changed.
+- Company sources are at `C:/Users/SSD-ORLANDO/Documents/AFHomes Document/Business Rules/` (reorganized during the session into `AFHomes/`, `JAD/` and `Shared/`). Text extracts were in the session scratchpad, which is temporary. Never read `Restricted Records`.
 
-## 3. Important Decisions
-- Owner decision: the atlas acts as the project's workflow memory, and `/update-workflow-atlas` updates the atlas itself. The atlas path is passed as an argument. Owner chose that the command takes a path argument (not a repo copy).
-- Docs are planning only. No feature is authorized by the roadmap; each still needs explicit owner authorization (`AGENTS.md` section 7).
-- The atlas is evidence, not authority. Business-rule documents win on conflict. Conflicts are recorded as G items and not resolved.
-- Mock login and all `instant = false` lines must be removed when real authentication lands (memory `mock-login-removal.md`). Memory `workflow-atlas.md` records the atlas location and command.
-- AGENTS.md Git prohibition applies; the owner performs all commits.
+## 3. Important Decisions (owner, 2026-11-12)
+- **Authority.** The company workbook wins by default. Signed contracts, privacy, legal and Finance controls win where stricter. Dated owner rulings outrank all. AUG and OCT count as approved company practice. The IST Clawback Addendum is a DRAFT and is not applied.
+- **Roles.**
+  - The Administrator can do everything. The Super Administrator has full control with no blocks, and only a Super Administrator can give or remove the Super Administrator role.
+  - Self-approval is allowed and audited. A Clerk enters only; Admin acts as Supervisor; Director = Super Administrator.
+  - Sellers only view: SVD, SSM and SM see their own and their team's records; OST sees only its own.
+  - Page access means viewing; sensitive actions need operation permissions. HR activates staff accounts only. Finance sees all reports.
+- **Numbering.**
+  - One VIP Number (NUM v6.2) for the RA, Grant and Card, issued at RA signing, with a monthly sequence.
+  - Validity starts on the Card Claim Date, or the first anniversary of full settlement if the card is not claimed.
+  - Upgrades get a new number with a "Replaces" link (built later). Numbers are never reused.
+- **Sellers.**
+  - Expired sellers can still sell, with a reminder. Suspended or departed sellers cannot.
+  - Renewal issues a new monthly AA number and moves the history to it.
+  - A new seller is entered and approved in two steps.
+  - A vacant seat earns nothing; its downline rolls up. No Acting SM. JA&D IDs are stored separately for IGP.
+- **Customers.**
+  - Closing seller plus an optional, possibly different, referrer.
+  - A seller starts a customer draft, the Clerk completes it, and the Admin approves, returns or rejects it.
+  - The public OST application is kept, with a fix-and-resend link. Home gets links to seller login and the seller check.
+  - The Admin resets passwords. There is no public card lookup.
+- **Payments.**
+  - Clerk enters receipts. Finance, Admin or Super Admin approves them.
+  - Reference numbers are unique system-wide. Returned receipts can be fixed and resent. Reversals are dated, never deleted.
+  - Sellers may upload slip photos as proof only. Imported receipts count as approved, with one sign-off per batch.
+- **Sales.**
+  - A sale counts at 25% approved collection once the sale record is approved; contract finalization is not required for the count.
+  - Month close is used. Sales unpaid for 90 days are listed and an Admin marks them Defaulted.
+- **Commission.**
+  - Per-person DSC and DRI rates, frozen on the sale. Only the seller and the referrer earn per sale; there is no override.
+  - VIP is paid 100% at the month-end after 40% is collected. The 7-day wait is removed; it was not found in any company paper.
+  - Pay survives the seller leaving.
+  - BA, PA and PB are computed with a parallel run beside Excel. Team credit follows the current leader.
+  - Clawbacks are recorded. Automatic recovery waits for the signed addendum. OST clawbacks are collected directly.
+- **Non-Standard.** Price and schedule only. The Admin approves, then Finance confirms; only the Super Admin may do both. No price floor. Commission on the actual TCP.
+- **Silver** is PHP 240,000. Move A and Move B take effect 2026-11-09.
+- **Points.**
+  - The signed Grant Annual Welcome Gift applies; Spend-to-Earn is removed.
+  - The Points Activation Date is the earlier of the first actual stay using points or two years after card claim.
+  - Bills are entered by office staff with a receipt number and approved like receipts.
+  - A refund delays a tranche that has not been released. The supplementary holder's spend counts. A tranche due during a Hold waits.
+  - A failed Year 1 spend means tranche 1 is not released.
+  - The Admin may approve a waiver.
+- **Redemption (doc 10, still disabled).**
+  - Room stays only. Weekday and weekend points are kept separate.
+  - The Admin keeps the points-per-night table, versioned and fixed per card at its Card Claim Date. The Admin keeps a holiday calendar.
+  - Front-desk and office staff book with no extra approval. The card must be claimed first.
+  - Cancelling before the cut-off returns the points; a late cancel or no-show forfeits them.
+  - Points plus cash, split by whole nights.
+  - On transfer, the old holder's points are lost and their bookings cancelled. Heirs go through the transfer process.
+- **IGP (doc 14).**
+  - In scope and built together with VIP, for the AFhomes channel only.
+  - 16-character Series Number. Closed Deal at 10%. 40% of commission at 40% collected, the rest at full payment.
+  - Sellers need a JA&D ID. A TCP over PHP 9M is blocked. Refunds are decided outside the system.
+  - Re-numbering moves the payments to the new number. Basic unit fields only. Documents are tracked as a checklist.
+- **Records.** Kept forever until legal advice. History import with a parallel run. CMS deferred.
 
 ## 4. Completed Work
-- Created `docs/implementation/` (13 files) and the command files above.
-- Verified with a node script: all 53 routes, all J, G and U IDs appear in the docs; every feature ID cited in `decisions-and-gaps.md` has a card; no broken relative links.
-- Verified in code at `fc060bb`: U06 is real (`src/panels/admin/components/payment-actions.tsx` only mentions resubmission in text, while `src/data/mock/payment-repository.ts` supports it); `/verify` and `/register/ost` exist; no Redemption or Services route.
-- Not re-checked in code: other AS-IS statuses, which come from the atlas at `a0bdcef`.
+- All decision rounds were applied to the docs listed in section 5.
+- Memory files added: `plain-language-questions.md`, plus its MEMORY.md line.
+- Verification: `git diff --check` passed. A grep sweep for superseded terms (Spend-to-Earn, Finance-Assigned, manually assign, Public Customer Lookup, RA No., sole authority, Move B1) found no live statements; the remaining hits are historical or marked superseded. `src/` is unchanged.
 
 ## 5. Git Working Tree
-- Staged: none (verified).
-- Unstaged: `workflow/save-session.md` (modified before this session's work began, now replaced by this snapshot).
-- Untracked, this session: `.claude/skills/update-workflow-atlas/SKILL.md`, and the 13 files in `docs/implementation/`.
-- Ignored by Git: `workflow/update-workflow-atlas.md` was created this session but `.gitignore` line 16 (`/workflow/*`) ignores it. Only `load-session.md` and `save-session.md` are tracked. The owner decides whether to track it (for example with `git add -f`).
-- Stash: `stash@{0}` "local: sales-network cleanup + member detail redesign" is still kept as a backup.
-- Line endings: the working copy mixes CRLF and LF; compare with `git diff --ignore-cr-at-eol`.
+- Staged: none.
+- Modified, this session: `AGENTS.md`; `docs/business-rules/01` to `13`; `docs/development/{README,architecture,backend,database,frontend,security,testing,role-module-permission-matrix-proposal}.md`; `docs/project.md`; `docs/implementation/decisions-and-gaps.md`; `phase-03`, `phase-11`.
+- Modified, origin unknown (small edits found at save time, not made by the main session; possibly subagent consistency edits or the owner): `docs/implementation/README.md`; `phase-01`, `02`, `04` to `10`.
+- Not from this session: `.gitignore` modified; `docs/ui-design-referrence/login-referrence.jpg` deleted. Ask the owner.
+- Untracked: `docs/business-rules/14-igp-sales.md` (this session).
+- Ignored: `workflow/save-session.md` (this snapshot).
+- Stash: `stash@{0}` "local: sales-network cleanup + member detail redesign" is still kept.
 
 ## 6. Pending Tasks
-- `/update-workflow-atlas` has never been run. The first run should refresh the atlas from `a0bdcef` to `fc060bb` (commission release, payout and stay-point rule changes affect G08 and G10 and journeys J09 and J11). Its atlas steps (resolve, back up, rebuild, browser QA) are untested.
-- F6.4 (Returned-receipt resubmit control, U06) is the clearest unblocked frontend feature.
-- Tests that failed before this session and were not investigated: `business-pages.test.tsx` ("CTR-4" contract list, and Reservation return with the Customer ID message); `pagination.test.tsx` is stale; `dashboard-page.test.tsx` "derives every Super Admin figure".
-- Open owner decisions: G01 to G12 in `docs/implementation/decisions-and-gaps.md`, plus those in `AGENTS.md` section 5. Doc 04 section 7.8 and Customer ID decision D2 are stale.
-- Browser QA not done: forgot-password screen, full admin sidebar, member detail page, My Account.
-- No blockers.
+- Still open, outside the team's control:
+  - IGP VIP grant benefit terms (company document needed).
+  - IGP band code for a TCP over PHP 9M.
+  - Signing of the IST Clawback Addendum.
+  - The points-per-night table (an Admin fills it in).
+  - A legal records retention period.
+  - JA&D SUPERSEDED status meaning.
+- Run `/update-workflow-atlas`. The atlas baseline `a0bdcef` is badly outdated against these decisions.
+- Build the frontend alignment backlog. Areas to change:
+  - `src/modules/stay-points/engine.ts` (replace with the Welcome Gift model)
+  - `src/modules/commissions/rules.ts` (per-person rates, month-end release, no 7-day wait)
+  - `src/modules/membership/rules.ts` and `contract-repository.ts` (VIP Number at RA signing, monthly sequence, no RA reuse)
+  - `payment-repository.ts:158` (self-approval) and `payment-actions.tsx` (resend)
+  - `customer-form-sections.tsx` (closing seller plus referrer)
+  - `mock-credentials.ts` (status rules)
+  - `permissions.ts` (Clerk role, view-only sellers)
+  - accreditation numbering (monthly)
+  - IGP module
+  - 25% sale count
+  Each item needs owner authorization.
+- Earlier failing tests were not investigated: `business-pages.test.tsx`, `pagination.test.tsx`, `dashboard-page.test.tsx`. Many tests will need updating once the code is aligned.
 
 ## 7. Verification State
-- Tests: not run this session (documentation only). Earlier failures in section 6.
-- Lint: not run. Typecheck: not run. Build: not run. No `src/` change.
-- Doc checks: the node script and link check above passed.
-- Browser QA: not run this session.
-- Checks not performed: the atlas rebuild, its tests and its browser check; statuses re-verified against code beyond the items in section 4.
+- Tests, lint, typecheck and build: not run (documentation-only session).
+- Browser QA: not run.
+- Doc checks: `git diff --check` passed; grep sweep clean of live stale statements.
+- Checks not performed: link and ID check of `docs/implementation`; independent review of the subagent-written docs (08, 09, 10, 14 are large rewrites and worth an owner read).
 
 ## 8. Next Session Instructions
-- Recommended first action: `/load`, then run `/update-workflow-atlas` to refresh the atlas, or pick one feature card (F6.4 first) for owner authorization.
-- Relevant files: `docs/implementation/README.md`, `docs/implementation/decisions-and-gaps.md`, `workflow/update-workflow-atlas.md`, the atlas `data/catalog.mjs`.
-- Required approvals: any commit or push (owner only), any feature implementation, atlas edits (the command waits for the owner), AGENTS.md or CLAUDE.md edits, new dependencies, real authentication work.
-- Warnings: the atlas is not in Git, so keep its backup step; do not run build and tests together; do not delete `.next`; a full page reload resets mock data; mock credentials must never be shown on the login page.
+- Recommended first action: `/load`. Ask the owner about the `.gitignore` change and the deleted jpg. Then run `/update-workflow-atlas`, or create the frontend alignment backlog.
+- Relevant files: `docs/implementation/decisions-and-gaps.md`, `docs/business-rules/06`, `08`, `09`, `10`, `14`, and the plan file above.
+- Required approvals: every code change (one feature per task), any `AGENTS.md` edit, commits (owner only), building Redemption or IGP.
+- Warnings:
+  - Ask the owner questions in plain, non-technical language (memory).
+  - The atlas is out of Git, so back it up before editing.
+  - Do not delete `.next`.
+  - Mock data resets on refresh.
 
 ## 9. Execution Recommendation
-- Phase: Plan
+- Phase: Plan (frontend alignment backlog) / Build (atlas refresh)
 - Recommended next mode: default (ask before edits)
-- Recommended model: Sonnet 5.5
-- Effort: medium
+- Recommended model: Sonnet 5.5 for the atlas refresh and the backlog; Opus 5.5 for commission and points code changes
+- Effort: medium; high for money and points code
 - Ultracode: OFF
-- Token optimization: read journey and route slices from `workflows.json` with one-line node commands, not the whole file; one feature card per task.
-- Reason: the next steps are an atlas refresh and one small unblocked feature, both ordinary scoped work.
+- Token optimization: start a fresh session; read only the doc sections a feature needs; one feature card per task
+- Reason: the rules are settled, so the remaining work is scoped implementation, one area at a time.
 <!-- SESSION_SNAPSHOT_END -->

@@ -4,7 +4,7 @@
 - Objective: the SVD, SSM, SM and OST hierarchy, seller records, accreditation lifecycle and the public checks around them.
 - Business rules: `docs/business-rules/02-sales-network-and-genealogy.md` sections 3 and 6 to 10; `docs/business-rules/03-ist-ost-accreditation.md` sections 4 to 9. Workbook references: NUM section 8, AUG R1, R23, R25, OCT I1 to I4, R28, R37 to R40.
 - Depends on: FP1.
-- Open decisions: G01, G02 (Conflicting), G03, G04.
+- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G01, G02 (Conflicting), G03, G04.
 
 Routes (from the atlas):
 
@@ -25,7 +25,7 @@ Routes (from the atlas):
 | Current | Members, then Add IST or Add OST where permitted: Personal, Address, Assignment, Accreditation. Identity, sponsor or parent, designation and accreditation are validated before the mock create call. Failures show feedback. |
 | Target | Same, with effective-dated appointment and supporting evidence. |
 | Layer | Frontend (mock) |
-| Blocked by | G02 for accreditation dates |
+| Blocked by | G02 (decided R3) for accreditation dates |
 | Acceptance | Invalid sponsor, cycles and out-of-scope parents are rejected. OST cannot get unrestricted team-wide access. |
 | Status | Exists (per atlas) |
 
@@ -59,11 +59,11 @@ Routes (from the atlas):
 |---|---|
 | Journey | J04, J02 |
 | Current | Eligibility and date helpers follow P03. Different login, verify and sales paths need separate treatment. |
-| Target | Workbook rule: only an Expired seller can still sell, with a warning. An effective suspension or departure blocks new sales. Renewal in or after the expiry month creates a new monthly AA, keeps the old number and starts a one-year period from the actual renewal. |
+| Target | Per R3: an expired seller can still log in, sell, refer and sponsor, with a reminder. A suspended, resigned or terminated seller cannot take new sales or sponsor. A renewal is recorded in the expiry month or later, gives a new AA number from the monthly sequence and moves all history to it. |
 | Layer | Owner decision |
-| Blocked by | G02 (Conflicting) |
+| Blocked by | G02 (decided R3) |
 | Acceptance | After the decision: action-specific checks for login, verify and sale. An AA alias history is kept. |
-| Status | Blocked |
+| Status | Decided, awaiting build authorization |
 
 ## F3.5 Effective-dated vacant seat and roll-up
 
@@ -73,7 +73,7 @@ Routes (from the atlas):
 | Current | Tree and transfer UI exist. There is no vacant-seat compensation engine. |
 | Target | A vacant position earns no seat allowance. Its downline rolls up to the next active level above, and assumed accounts go to the first active level above (AUG R1, R23). |
 | Layer | Owner decision |
-| Blocked by | G04 |
+| Blocked by | G04 (decided R3) |
 | Acceptance | After the decision: vacancy dates drive roll-up, and past periods are not rewritten. |
 | Status | Missing |
 
@@ -83,11 +83,11 @@ Routes (from the atlas):
 |---|---|
 | Journey | J04 |
 | Current | Not verified. No named delegation authority, dates, approval or pay rule exists (U05). |
-| Target | A time-limited delegation approved separately from the permanent title and from vacancy reporting. Needs approver, duration, inherited permissions, incentive treatment and handback. |
+| Target | None. R3 rules out an Acting SM. A vacant seat earns nothing and its downline counts toward the next active level. |
 | Layer | Owner decision |
-| Blocked by | G04, U05 |
+| Blocked by | G04 (decided R3), U05 (decided R3, deferred) |
 | Acceptance | To be defined after the decision. |
-| Status | Blocked |
+| Status | Removed from scope (R3: no Acting SM) |
 
 ## F3.7 Public AA verification
 
@@ -97,7 +97,7 @@ Routes (from the atlas):
 | Current | `/verify` takes the full identifier and does an exact-match mock query. An active eligible match shows number and class, plus Valid Until for OST only. IST shows no Valid Until. Failures show generic feedback and allow retry. No name search and no customer data. |
 | Target | Same. Keep verification distinct from onboarding. |
 | Layer | Frontend (mock) |
-| Blocked by | none (G02 may change date semantics) |
+| Blocked by | none (G02 (decided R3) may change date semantics) |
 | Acceptance | No partial match. No unrestricted records. |
 | Status | Exists (route verified in code) |
 
@@ -109,10 +109,10 @@ Routes (from the atlas):
 | Current | `/register/ost`: verify the referral code, confirm the sponsor, enter names and optional contact, then Review. Review has no Submit and creates no record (U01). |
 | Target | After approval: sponsor eligibility, review authority, correction and rejection, record creation and status notification. |
 | Layer | Owner decision, then Frontend (mock) and Backend |
-| Blocked by | G01, G02, U01 |
+| Blocked by | G01 (decided R5), G02 (decided R3), U01 (decided R5) |
 | Acceptance | To be defined after the decision. |
 | Status | Missing |
 
 ## Out of scope
 
-Public Customer Lookup (F11.6).
+Public Customer Lookup (F11.6; removed from scope by owner ruling R11).

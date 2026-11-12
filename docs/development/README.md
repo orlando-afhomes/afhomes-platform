@@ -8,7 +8,7 @@
 
 ## 1. Project Overview
 
-AFHomes Platform is a modular business management system for AFHomes. It covers Organization Management, Departments and Staff, Roles and Permissions, Sales Network, Genealogy, IST/OST Accreditation, Customer Management, Customer Applications, Public Customer Lookup, Public Accreditation Verification, VIP Products, VIP Contracts, Payment Schemes, VIP Card Issuance, Sales Management, Finance and Payments, Commission Management, VIP Membership, Stay Points, Reports and Analytics, Audit Logs and Governance, Public Website/CMS capabilities, Redemption (preserved but disabled), and Services (preserved but disabled).
+AFHomes Platform is a modular business management system for AFHomes. It covers Organization Management, Departments and Staff, Roles and Permissions, Sales Network, Genealogy, IST/OST Accreditation, Customer Management, Customer Applications, Public Accreditation Verification, VIP Products, VIP Contracts, Payment Schemes, VIP Card Issuance, Sales Management, Finance and Payments, Commission Management, VIP Membership, Stay Points, Reports and Analytics, Audit Logs and Governance, Public Website/CMS capabilities, Redemption (preserved but disabled), and Services (preserved but disabled).
 
 ---
 
@@ -154,7 +154,7 @@ Supports authorized operational roles: Super Admin, Admin, HR/Staff, Finance, SV
 
 ### 10.2 Public Panel
 
-Supports approved public-facing capabilities: company content, public accreditation verification, Public Customer Lookup, login entry, approved CMS integration. Actual feature implementation timing follows implementation.md.
+Supports approved public-facing capabilities: company content, public accreditation verification, login entry, approved CMS integration. Actual feature implementation timing follows implementation.md.
 
 ### 10.3 Future Customer Panel
 
@@ -394,3 +394,9 @@ Do not run deployment procedures merely because an example exists in README.
 - **Execution safety:** Application code modified: No. Next.js scaffold created: No. Dependencies installed: No. Database modified: No. MongoDB started: No. Atlas configured: No. Docker configuration modified: No. Other documentation modified: No. New Markdown files created: No. Git commit: No. Git push: No. Git merge: No. Deployment: No. Redemption enabled: No. Services enabled: No. Legacy production data migrated: No.
 
 STOP — awaiting explicit project-owner authorization before starting implementation, database configuration, Git operations, or deployment.
+
+## Consistency update (2026-11-12)
+
+Aligned with the business-rule documents as rewritten on 2026-11-12. No architecture decision changed.
+
+1. Sections 1 and 10.2: Public Customer Lookup removed from scope (owner ruling R11; doc 11 §21).

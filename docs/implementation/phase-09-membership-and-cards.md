@@ -4,7 +4,7 @@
 - Objective: activation of finalized, fully settled contracts, Card ID issuance, and card servicing.
 - Business rules: `docs/business-rules/06-vip-card-issuance.md` sections 4 and 6 to 9; `07-finance-and-payments.md` amendment; `09-vip-membership-and-stay-points.md`. Workbook references: NUM sections 2 to 6, GRANT section I-B.
 - Depends on: FP5, FP6.
-- Open decisions: G05 (Conflicting), G10. `AGENTS.md` section 5: Card Claim Date versus Activation Date validity start.
+- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G05 (Conflicting), G10. `AGENTS.md` section 5: Card Claim Date versus Activation Date validity start.
 
 Routes (from the atlas):
 
@@ -32,11 +32,11 @@ Routes (from the atlas):
 |---|---|
 | Journey | J10, J06 |
 | Current | Card ID is activation-based and separate from the RA. |
-| Target | Preserve historical unified identifiers. Approve the prospective issuance trigger and namespace before any real number. |
+| Target | Per R2 (NUM v6.2): one VIP Number for the Reservation Agreement, the Grant and the Card, issued when the signed Reservation Agreement is recorded, with a monthly sequence. Validity starts on the Card Claim Date. Numbers are never reused or renumbered. |
 | Layer | Owner decision |
-| Blocked by | G05 |
+| Blocked by | G05 (decided R2) |
 | Acceptance | After the decision: no duplicates, issued numbers preserved. |
-| Status | Blocked |
+| Status | Decided, awaiting build authorization |
 
 ## F9.3 Claim date versus activation date validity
 
@@ -46,9 +46,9 @@ Routes (from the atlas):
 | Current | The prototype computes validity from activation. The company Grant starts validity at Card Claim under the applicable signed terms. |
 | Target | Follow the signed terms. Keep claim history. Escalate signed claim and activation conflicts. |
 | Layer | Owner decision |
-| Blocked by | G05 |
+| Blocked by | G05 (decided R2) |
 | Acceptance | To be defined after the decision. |
-| Status | Blocked |
+| Status | Decided, awaiting build authorization |
 
 ## F9.4 Entitlement version and card servicing
 
@@ -58,7 +58,7 @@ Routes (from the atlas):
 | Current | The membership list is read and inspect only. Full custody, replacement, holder-change and signed-version servicing have gaps (U13). NUM sections 5 and 6 include card void or recall on applicable replacements. |
 | Target | Record the applicable entitlement version and servicing evidence. Preserve Gold supplementary shared benefits where applicable. |
 | Layer | Owner decision |
-| Blocked by | G10, U13 |
+| Blocked by | G10 (decided R10), U13 (decided R10) |
 | Acceptance | To be defined after the decision. No invented contractual terms. |
 | Status | Missing |
 

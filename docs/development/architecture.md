@@ -241,13 +241,13 @@ Idempotency: duplicate requests must not create duplicate financial outcomes. Un
 
 ## 21. VIP Membership and Stay Points Integration
 
-Membership activation requires finalized contract + full Finance-verified payment + official activation event. Activation date is actual official activation (Asia/Manila). VIP Card ID format `YYMMDDNNNNNVTPMMS` with RA-derived sequence (no independent generator). Stay Points: transaction-based Spend-to-Earn (₱1 eligible verified resort spending = 1 point), annual caps, minimum qualifying spend unlocks Pending points, 70/30 Weekday/Weekend allocation, separate buckets, Gold supplementary shares pool, refund-related Points Hold with Finance reconciliation, no automatic negative balances, historical contract protection.
+Membership activation requires finalized contract + full settlement through approved receipts (Finance, Admin or Super Admin; doc 07 §5.2) + official activation event. Activation date is actual official activation (Asia/Manila); validity starts on the Card Claim Date (doc 06 §4.3). VIP Number format `YYMMDDNNNNNVTPMMS`, issued once when the signed Reservation Agreement is recorded (YYMMDD = recording date, monthly company-wide sequence; one number for the Reservation Agreement, Grant and card; activation never creates a number; doc 06). Stay Points: the signed Grant's Annual Welcome Gift (doc 09): fixed tranches per tier released on the Points Activation Date and its anniversaries only when the measurement period's Qualifying Spend reaches the tier minimum; fixed weekday/weekend split per tranche; no carry-over; Gold supplementary shares the pool; a refund lowers Qualifying Spend but never takes back a released tranche; ledger-controlled; no automatic negative balances; historical contract protection.
 
 ---
 
 ## 22. Sales Network and Commission Integration
 
-Sales Network hierarchy SVD→SSM→SM→OST; OST may attach directly. Historical genealogy preserved; transfers do not retroactively reassign sales. Commission: Finance manually assigns percentages based on finalized contract value; direct seller and eligible historical uplines; no automatic distribution; approval after Confirmed Sale; unpaid commissions auto-Hold when sale loses Confirmed status; manual resolution; no automatic clawbacks; manual payout with actual disbursement confirmation; Paid only after confirmation.
+Sales Network hierarchy SVD→SSM→SM→OST; OST may attach directly. Historical genealogy preserved; transfers do not retroactively reassign sales. Commission (doc 08): per-person DSC (closing seller) and DRI (referrer) rates per product, defaulting to the position standard and frozen on the sale at VIP Number issuance; amounts computed on the contract TCP; no per-sale pay to uplines (IST leaders earn BA, PA and PB allowances); VIP commission released when approved collection reaches 40%, paid at month-end; approval and payout by Finance, Admin or Super Admin; Paid only after confirmed disbursement; unpaid releases held and paid releases clawed back on sale events (OCT R32), with offsets only after the IST addendum is signed and OST clawbacks collected directly.
 
 ---
 
@@ -444,3 +444,10 @@ Architecture completeness: all required areas covered. Mermaid diagrams included
 - Historical production data migrated: No.
 
 STOP — awaiting explicit project-owner authorization before starting Phase 1 implementation.
+
+## Consistency update (2026-11-12)
+
+Aligned with the business-rule documents as rewritten on 2026-11-12. No architecture decision changed.
+
+1. Section 21: Spend-to-Earn replaced by the Annual Welcome Gift (doc 09); the activation-tied Card ID with an RA-derived sequence replaced by the VIP Number issued at Reservation Agreement recording (doc 06); Finance-only verification replaced by Finance, Admin or Super Admin approval (doc 07).
+2. Section 22: Finance-assigned percentages and upline pay replaced by per-person frozen DSC/DRI rates, allowances and staged release (doc 08).

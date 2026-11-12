@@ -1,6 +1,6 @@
 # AFHomes Platform — Role, Module, Operation, and Record-Scope Permission Matrix (PROPOSAL)
 
-**Status: PARTIALLY APPROVED — SCOPED BASELINE; REMAINING DECISIONS PENDING**
+**Status: PARTIALLY APPROVED — SCOPED BASELINE; OWNER DECISIONS OF 2026-11-12 APPLIED (section 1.2); REMAINING DECISIONS PENDING (section 17)**
 
 This is an internal engineering specification. It is not an approved business policy and must not be rendered in the application UI. No code changes are included.
 
@@ -22,35 +22,46 @@ R3 reconciles the matrix with the approved scoped baseline. Key corrections:
 - R3-04: HR has Departments and Staff/Employees; protected account/role operations remain separate.
 - R3-05: Finance reporting is limited to Finance-specific reporting.
 - R3-06: Admin product/contract operations are limited to documented product/contract administration.
-- R3-07: Public Customer Lookup and Public IST/OST Verification are active public boundaries, not disabled modules.
+- R3-07: ~~Public Customer Lookup and~~ Public IST/OST Verification ~~are~~ is an active public boundary, not a disabled module. *Public Customer Lookup was removed from scope by owner ruling R11 (2026-11-12; doc 11 §21).*
 - R3-08: Confirmed Deny is used only for source-backed restrictions; undocumented grants are Unresolved.
 - R3-09: Module inventory counts operational modules, public boundaries, and disabled modules separately.
 - R3-10: SVD/SSM/SM are IST designations; no new genealogy relationships are introduced.
 - R3-11: Super Admin and Admin share approved Organization Management; protected Super Admin operations remain distinct.
 - R3-12: VIP customer self-service is documented separately from sales roles.
 
-Approved module baseline: Super Admin/Admin = Dashboard, Organization, Accounts, VIP Products; HR = Dashboard, Organization; Finance = Dashboard, Finance; SVD/SSM/SM/IST/OST = Dashboard, Sales Network. All other modules remain Unresolved/denied.
+Approved module baseline (R3): Super Admin/Admin = Dashboard, Organization, Accounts, VIP Products; HR = Dashboard, Organization; Finance = Dashboard, Finance; SVD/SSM/SM/IST/OST = Dashboard, Sales Network. Extended by the owner decisions of 2026-11-12 (section 1.2). All other modules remain Unresolved/denied.
+
+## 1.2 Owner Decisions (2026-11-12, round R4, round R5 and the overriding authority rule)
+
+Recorded in `docs/business-rules/01-roles-and-permissions.md` §3.1, §3.7 and §3.8. They take precedence over earlier text in this proposal.
+
+- **Authority rule.** The Administrator can do everything in the system. The Super Administrator has full control and no blocks. Both may approve their own entries; the audit history shows the same person entered and approved. Clerks enter only. Sellers view only.
+- **Role mapping.** Director = Super Administrator. Supervisor = Administrator. Clerk = new office staff job that enters but cannot approve. Finance = Finance (verifies money, pays).
+- **Sellers view only.** SVD, SSM and SM see their own and their team's customers, sales and pay; OST sees only their own. Exception: a seller (IST or OST) may start a customer draft, which the Clerk completes and the Administrator approves (`04` §5).
+- **Modules for viewing, action permissions for changes.** Module access controls navigation and viewing. Entering, editing and important actions (approve, verify payment, payout, refund, import) each need a separate action permission. This replaces `01` §3.1's former rule that a module grant gives every function.
+- **Every operation in section 6** is also allowed to the Administrator and the Super Administrator, whatever role the line names.
 
 ## 2. Canonical Role Inventory
 
 | Role | Source | Notes |
 |---|---|---|
-| Super Administrator | `01` §3.4, §6.2, §7, §9 | Protected role; manual approval authority |
-| Administrator | `01` §3.5, §6.2, §7 | Organization Management full access |
+| Super Administrator | `01` §3.4, §3.6, §3.7, §3.8, §6.2, §7, §9 | The company's Director. Protected role; full control, no blocks; may approve own entries (audited) |
+| Administrator | `01` §3.5, §3.7, §3.8, §6.2, §7 | The company's Supervisor. Can do everything in the system; may approve own entries (audited) |
+| Clerk | `01` §3.7, §3.8 | Office staff job (2026-11-12). Enters information; never approves |
 | HR | `01` §3.5 | Departments + Staff/Employees; no Roles & Permissions |
 | Finance | `07` §4, §5.3, §21 | Payment verification, refunds, reversals, reconciliation |
 | Authorized Staff | `01` §3.1–3.2 | Explicitly assigned module access only |
-| SVD | `02` §2.1, §9.1 | IST designation; top Sales Network node |
-| SSM | `02` §2.1, §9.2 | IST designation; reports to SVD |
-| SM | `02` §2.1, §9.3 | IST designation; reports to SSM |
+| SVD | `02` §2.1, §9.1, §9.6 | IST designation; top Sales Network node; view only (own and team) |
+| SSM | `02` §2.1, §9.2, §9.6 | IST designation; reports to SVD; view only (own and team) |
+| SM | `02` §2.1, §9.3, §9.6 | IST designation; reports to SSM; view only (own and team) |
 | IST | `02` §2.1 | Internal Sales Team with SVD/SSM/SM designation |
-| OST | `02` §2.2, §9.4 | Outsourcing Sales Team |
+| OST | `02` §2.2, §9.4, §9.6 | Outsourcing Sales Team; view only (own) |
 
 ---
 
 ## 3. Active and Disabled Module Inventory
 
-Active areas: Dashboard (neutral landing), Organization Management (Departments, Staff/Employees, Roles & Permissions), Sales Network, IST/OST Accreditation, Customer Management, Customer Import/Export, VIP Products, Payment Schemes & Contracts, Sales Management, Finance & Payments, Commission Management, VIP Membership, VIP Card Issuance, Stay Points, Reports & Analytics, Sales Performance, Audit Logs & Governance, Public Customer Lookup, Public IST/OST Verification, Public Website CMS.
+Active areas: Dashboard (neutral landing), Organization Management (Departments, Staff/Employees, Roles & Permissions), Sales Network, IST/OST Accreditation, Customer Management, Customer Import/Export, VIP Products, Payment Schemes & Contracts, Sales Management, Finance & Payments, Commission Management, VIP Membership, VIP Card Issuance, Stay Points, Reports & Analytics, Sales Performance, Audit Logs & Governance, Public IST/OST Verification, Public Website CMS. Public Customer Lookup is removed from scope (owner ruling R11, 2026-11-12; doc 11 §21).
 
 Disabled: Redemption, Services (`10` §19, `09` §333; preserved but hidden).
 
@@ -75,27 +86,33 @@ Runtime behavior must fail closed for U.
 | Organization – Departments | A | A | A | D | U | D | D | D | D | D |
 | Organization – Staff/Employees | A | A | A | D | U | D | D | D | D | D |
 | Organization – Roles & Permissions | A | A | D | D | U | D | D | D | D | D |
-| Sales Network | U | U | D | D | U | A | A | A | A | A |
-| IST Accreditation | U | U | D | D | U | U | U | U | U | U |
-| OST Accreditation | U | U | D | D | U | U | U | U | U | U |
-| Customer Management | U | U | D | U | U | U | U | U | U | U |
-| Customer Import/Export | U | U | D | U | U | U | U | U | U | U |
-| VIP Products | U | U | D | U | U | D | D | D | D | D |
-| Payment Schemes & Contracts | U | U | D | U | U | D | D | D | D | D |
-| Sales Management | U | U | D | U | U | U | U | U | U | U |
-| Finance & Payments | U | U | D | A | U | D | D | D | D | D |
-| Commission Management | U | U | D | A | U | D | D | D | D | D |
-| VIP Membership | U | U | D | U | U | D | D | D | D | D |
-| VIP Card Issuance | U | U | D | U | U | D | D | D | D | D |
-| Stay Points | U | U | D | U | U | D | D | D | D | D |
-| Reports & Analytics | U | U | D | A | U | U | U | U | U | U |
-| Sales Performance | U | U | D | U | U | U | U | U | U | U |
-| Audit Logs & Governance | U | U | D | U | U | D | D | D | D | D |
-| Public Customer Lookup | X (internal) | X | X | X | X | X | X | X | X | X |
+| Sales Network | A | A | D | D | U | A | A | A | A | A |
+| IST Accreditation | A | A | D | D | U | D | D | D | D | D |
+| OST Accreditation | A | A | D | D | U | D | D | D | D | D |
+| Customer Management | A | A | D | U | U | A | A | A | A | A |
+| Customer Import/Export | A | A | D | U | U | D | D | D | D | D |
+| VIP Products | A | A | D | U | U | D | D | D | D | D |
+| Payment Schemes & Contracts | A | A | D | U | U | D | D | D | D | D |
+| Sales Management | A | A | D | U | U | A | A | A | A | A |
+| Finance & Payments | A | A | D | A | U | D | D | D | D | D |
+| Commission Management | A | A | D | A | U | A | A | A | A | A |
+| VIP Membership | A | A | D | U | U | D | D | D | D | D |
+| VIP Card Issuance | A | A | D | U | U | D | D | D | D | D |
+| Stay Points | A | A | D | U | U | D | D | D | D | D |
+| Reports & Analytics | A | A | D | A | U | U | U | U | U | U |
+| Sales Performance | A | A | D | U | U | U | U | U | U | U |
+| Audit Logs & Governance | A | A | D | U | U | D | D | D | D | D |
+| Public Customer Lookup (removed, owner ruling R11) | X | X | X | X | X | X | X | X | X | X |
 | Public IST/OST Verification | X (internal) | X | X | X | X | X | X | X | X | X |
 | Public Website CMS | U | U | D | D | U | D | D | D | D | D |
 | Redemption | X | X | X | X | X | X | X | X | X | X |
 | Services | X | X | X | X | X | X | X | X | X | X |
+
+Owner decisions of 2026-11-12 applied to this table (doc 01 §3.1, §3.7, §3.8):
+
+- Super Admin and Admin: A for every active module (overriding authority rule). Public Website CMS stays U (D8).
+- Sales roles (SVD, SSM, SM, IST, OST): module access is view only. Customer Management, Sales Management and Commission Management are A for viewing within record scope (own for OST; own and team for SVD, SSM, SM), plus starting a customer draft (doc 04 §5). Accreditation management is D; a seller sees their own accreditation status on the dashboard (doc 03 §5.5, §9.1).
+- Staff column: the Clerk is an office staff job that enters but never approves. Which modules a Clerk holds is assigned by role (doc 01 §3.2) and stays U here.
 
 Sources: `01` §2, §3, §9; `02` §9, §10; `07` §4, §5.3, §21; `08` §§5–8; `11` §8, §15; `12` §10; `10` §19; `09` §343–350.
 
@@ -103,11 +120,15 @@ Sources: `01` §2, §3, §9; `02` §9, §10; `07` §4, §5.3, §21; `08` §§5�
 
 ## 6. Operation-Level Permissions
 
+Every operation below is also allowed to the Administrator and the Super Administrator (owner authority rule, 2026-11-12), except that only a Super Administrator may create, give or remove the Super Administrator role (`01` §3.4). Sellers hold no change operation except starting a customer draft and uploading a payment slip photo (proof only) for their own customer. Clerks hold entry operations only, never approvals.
+
 ### Finance & Payments (`07`)
-- Submit payment evidence: Staff/IST/OST for permitted customers (U for IST/OST scope).
+- Upload a payment slip photo (proof only): IST/OST for their own customers (A, `07` §5.1, owner follow-up ruling 2026-11-12). It counts only after a Clerk enters the receipt and Finance, Admin or Super Admin approves it.
+- Enter a receipt: Clerk, Admin, Super Admin (A, `07` §5.1). Sellers: D.
 - Upload/replace payment proof: submitting actor (U).
 - Review submitted payments: Finance (A).
-- Verify payment: Finance only (A, `07` §5.3).
+- Verify (approve) a receipt: Finance, Administrator, Super Administrator (A, `07` §5.2).
+- Sign off a history import batch (receipts marked "Approved (imported)"): Admin or Super Admin, once per batch (A, `07` §20).
 - Reject/return for correction: Finance (A).
 - Approve/execute refunds: Finance (A, `07` §5.3).
 - Execute reversals: Finance (A).
@@ -117,8 +138,8 @@ Sources: `01` §2, §3, §9; `02` §9, §10; `07` §4, §5.3, §21; `08` §§5�
 
 ### Commission Management (`08`)
 - View personal commissions: IST/OST (A, `08` §6, §8.3).
-- View team commissions: SVD/SSM/SM (U, record-scoped).
-- Set commission percentages: Finance (A, `08` §5, Decision 2).
+- View team commissions: SVD/SSM/SM (A, record-scoped; owner ruling R4, 2026-11-12: leaders see their team's pay).
+- Set a person's DSC/DRI rates: Admin or Super Admin, future sales only, logged (A, `08` §9). Rates default to the position standard and are frozen on the sale at VIP Number issuance; Finance does not type percentages.
 - Review eligibility: Finance (A).
 - Approve commissions: Finance (A, `08` Decision 1).
 - Apply holds: system automatic; Finance manual resolution (A).
@@ -128,40 +149,46 @@ Sources: `01` §2, §3, §9; `02` §9, §10; `07` §4, §5.3, §21; `08` §§5�
 ### Sales Network (`02`)
 - View own sales: SVD/SSM/SM/IST/OST (A, §9).
 - View team/downline sales: SVD/SSM/SM (A, §9.1–9.3).
-- Create Sales Network account: Super Admin/Admin/Sales Network with delegated permission (A, §4).
-- Transfer team: authorized personnel (A, §6).
-- Convert IST/OST: authorized personnel (A, §7).
-- Promote/demote IST: authorized personnel (A, §8).
+- Enter a new seller: Clerk, Admin, Super Admin (A, §4, `03` §9.1). Sellers: D.
+- Approve a new seller: Admin or Super Admin, including their own entry (A, `03` §9.1).
+- Review public OST applications (approve, return to fix, reject): Admin or Super Admin; Clerk may check and complete (A, `03` §9.2).
+- Transfer team: Admin or Super Admin (A, §6).
+- Convert IST/OST: Admin or Super Admin (A, §7).
+- Promote/demote IST: Admin or Super Admin (A, §8).
 
 ### Organization Management (`01`)
 - Departments CRUD: Super Admin/Admin (A); HR (A, §3.5); Dept Head view only (U).
 - Staff/Employees CRUD: Super Admin/Admin (A); HR (A, §3.5).
-- Role assignment: Super Admin/Admin (A); bounded delegation (§3.3).
-- Account activation: Admin/Super Admin only (A, §6.2).
-- Suspension/deactivation: Staff/Employees access (A, §7).
+- Role assignment: Super Admin/Admin (A); bounded delegation (§3.3). Create, give or remove the Super Administrator role: Super Admin only; Admin D (§3.4).
+- Account activation: Admin/Super Admin (A, §6.2); HR for office staff accounts only, never sellers and never with the Admin or Super Admin role (A, follow-up ruling 2026-11-12).
+- Suspension/deactivation: Staff/Employees access plus the matching action permission (A, §3.1, §7).
+- Issue a temporary password (interim, until real authentication): Admin or Super Admin (A, §6.2.1).
 - Reactivation approval: Admin/Super Admin (A, §7).
 
 ### Accreditation (`03`)
-- Manage accreditation: authorized personnel with module access (U which roles).
-- Renew: authorized personnel (A, §77).
+- Enter accreditation records: Clerk, Admin, Super Admin (A, §9.1).
+- Approve and change approved seller records (renewal, date correction, status): Admin or Super Admin (A, §5.3, §6, §9.1).
 - View own accreditation: IST/OST (A).
 
 ### Customer Management (`04`)
-- Create/edit/submit customers: authorized sales/admin (U exact roles).
+- Start a customer draft: IST/OST for own customers; Clerk, Admin, Super Admin (A, §5).
+- Complete and submit a registration: Clerk, Admin, Super Admin (A, §5, §10).
+- Approve a registration: Admin or Super Admin, including their own entry (A, §5).
 - View own customers: IST/OST (A, `02` §10).
 - View downline customer names (limited): SVD/SSM/SM (A, `02` §10.2).
-- Public lookup: only eligible Active VIP Membership records (A, `04`).
 
 ### VIP Products/Contracts (`05`)
 - Manage products: Admin (A, §10).
-- Prepare contracts: Authorized Staff/IST (A, §10).
+- Prepare contracts: Clerk (office), Admin, Super Admin (A, `05` §11). Sellers (IST/OST): D (owner follow-up ruling 2026-11-12).
 - Approve finalization: Admin (A, §10).
+- Approve Non-Standard terms: Admin approves, then Finance confirms; only the Super Admin may do both steps alone (A, `05` §10.2).
 
 ### VIP Membership/Stay Points (`09`)
 - View own membership/points: customer (A).
 - Manage products/entitlements: Admin (A, §345).
 - Finance reconciliation: Finance (A, §347).
-- Points earning: system (A).
+- Tranche release (Annual Welcome Gift): system, on the tranche due date when the period's Qualifying Spend meets the tier minimum (A, `09` §12).
+- Enter resort bills: Clerk, Finance, Admin, Super Admin; approve: Finance, Admin, Super Admin (A, `09` §11).
 
 ### Audit Logs (`12`)
 - View audit: appropriately authorized personnel (U exact roles).
@@ -191,8 +218,8 @@ Historical attribution must be preserved on transfers/conversions (`02` §6.3, �
 ## 8. Administrative Role Separation
 
 - Super Admin: protected role; full Organization Management (`01` §3.4, §9); manual approval authority (`01` §6.2, §7).
-- Admin: full Organization Management (`01` §3.5); does not automatically inherit protected Super Admin privileges (§3.4).
-- Distinction: Organization administration vs domain-specific approvals (Finance verification, commission payouts) remain separate (`07`, `08`).
+- Admin: can do everything in the system (`01` §3.7, owner ruling 2026-11-12). Only a Super Admin may create, give or remove the Super Admin role; the Admin cannot (`01` §3.4, owner follow-up ruling 2026-11-12; D10).
+- Domain approvals (Finance verification, commission payouts) are held by Finance and also by the Admin and the Super Admin (authority rule); both may approve their own entries, and the audit history shows it.
 - Admin status alone does not grant silent audit modification (`12` §9).
 
 ---
@@ -201,7 +228,8 @@ Historical attribution must be preserved on transfers/conversions (`02` §6.3, �
 
 - HR: Departments + Staff/Employees; no Roles & Permissions (`01` §3.5).
 - Dept Head: Departments only (`01` §3.5).
-- Staff: explicit assigned module access only; no universal access (`01` §3.1–3.2).
+- Staff: explicit assigned module access only; no universal access (`01` §3.1–3.2). Module access is view only; changes need action permissions (`01` §3.1).
+- Clerk: enters information; never approves (`01` §3.7, §3.8).
 - Sensitive personnel info restricted (`01` §9).
 - Account approval/reactivation: Admin/Super Admin only (`01` §6.2, §7).
 
@@ -216,14 +244,15 @@ Historical attribution must be preserved on transfers/conversions (`02` §6.3, �
 - OST: own sales, own customers, actual upline chain view-only; no unrelated sellers (`02` §9.4).
 - Designation changes auto-recalculate access (`02` §9.5).
 - Genealogy visibility ≠ module access (`02` §9, §11).
+- All sellers view only; SVD/SSM/SM see own and team customers, sales and pay; OST sees only own; the only seller change is starting a customer draft (`02` §9.6, `04` §5; owner ruling R4, 2026-11-12).
 
 ---
 
 ## 11. Finance and Commission Approval Controls
 
-- Finance sole authority for payment verification (`07` §5.3).
-- Finance controls refunds/reversals without Admin approval (`07` §5.3, §252).
-- Finance manually assigns/approves/pays commissions (`08` Decisions 1–7).
+- Payment verification: Finance, and also the Admin and the Super Admin under the authority rule (`07` §5.2 as amended by round R6, 2026-11-12).
+- Refunds/reversals: Finance, and also the Admin and the Super Admin under the authority rule (`07` §5.3, §252, as amended by round R6).
+- Commission approval and payout: Finance, and also the Admin and the Super Admin under the authority rule (`08` Decision 7, rewritten for rounds R8–R9).
 - Approved ≠ Paid (`08`).
 - No automatic commission on Confirmed Sale (`08`).
 - Payout only after disbursement confirmation (`08` Decision 7).
@@ -233,7 +262,7 @@ Historical attribution must be preserved on transfers/conversions (`02` §6.3, �
 
 ## 12. Public Verification and CMS Boundaries
 
-- Customer Lookup: only eligible Active VIP Membership records, masked identity (`04`, `11`).
+- Customer Lookup: removed from scope; there is no public card or customer lookup (owner ruling R11, 2026-11-12; `11` §21).
 - IST/OST verification: exact AA number, active only; IST omits Valid Until, OST shows it (`03`, `11`).
 - No unrestricted public name discovery (`03`, `11`).
 - CMS: content management roles unresolved (`11` mentions authorized business users).
@@ -313,23 +342,23 @@ Primary sources:
 
 | ID | Role | Module/Operation | Existing Doc | Missing Requirement | Impact | Recommendation | Blocks |
 |---|---|---|---|---|---|---|---|
-| D1 | Super Admin/Admin | Accreditation Management | `03` §77 (authorized personnel) | Which roles are "authorized personnel" | Accreditation nav hidden | Keep denied until specified | B05/B06 |
-| D2 | Super Admin/Admin | Customer Management | `04` (no role matrix) | Which roles manage customers | Customer nav hidden | Keep denied | B06 |
-| D3 | HR | Staff account management | `01` §3.5, §6.2 | HR vs Admin activation authority | Accounts nav hidden for HR | Grant only Departments to HR | B06 |
-| D4 | Finance | Finance module scope | `07` §4, §21 | Finance role → module mapping | Finance nav visible (provisional) | Confirm finance role grant | B06 |
-| D5 | Finance | Reports access | `07` §22, `11` §98 | Whether Finance gets Reports nav | Reports nav hidden | Keep denied | B06 |
-| D6 | SVD/SSM/SM/IST/OST | Accreditation module | `03` (no role matrix) | Whether sales roles manage accreditation | Accreditation nav hidden | Keep denied | B06 |
-| D7 | SVD/SSM/SM | Customer downline access | `02` §10.2 | Exact scope already documented | Nav not affected (no route) | Implement in backend later | B06 |
-| D8 | Admin | CMS management | `11` (authorized business users) | Which roles publish content | CMS nav hidden | Keep denied | future |
-| D9 | All | Audit Logs visibility | `12` §9, §224 | Which roles view audit logs | Audit nav hidden | Keep denied | B06 |
-| D10 | Super Admin vs Admin | Protected privileges | `01` §3.4 | Exact Super Admin-only operations | Nav treats them same | Document protected ops | B05 |
+| D1 | Super Admin/Admin | Accreditation Management | `03` §5.3, §9.1 | **DECIDED 2026-11-12** (authority rule, R4): Admin and Super Admin have full accreditation access; Clerk enters; sellers view own status only | Accreditation nav for Admin/Super Admin | Grant (section 5) | — |
+| D2 | Super Admin/Admin | Customer Management | `04` §5 | **DECIDED 2026-11-12** (authority rule, R5): sellers start drafts; Clerk completes and submits; Admin or Super Admin approves | Customer nav for Admin/Super Admin and sellers (view + draft) | Grant (section 5) | — |
+| D3 | HR | Staff account management | `01` §3.8, §6.2 | **DECIDED 2026-11-12** (follow-ups): HR creates and activates office staff accounts; cannot give the Admin or Super Admin role; cannot manage seller accounts | Accounts nav for HR, scoped to office staff | Grant with role and account-type limits | B06 |
+| D4 | Finance | Finance module scope | `07` §4, §21; `01` §3.8 | **DECIDED 2026-11-12** (R4): Finance = Finance (verifies money, pays) | Finance nav visible | Finance grant confirmed | — |
+| D5 | Finance | Reports access | `07` §22, `01` §3.8 | **DECIDED 2026-11-12** (follow-ups): Finance views all reports (sales, collections, pay), view only | Reports nav for Finance | Grant view only | B06 |
+| D6 | SVD/SSM/SM/IST/OST | Accreditation module | `03` §9.1; `01` §3.7 | **DECIDED 2026-11-12** (R4, sellers view only): sales roles do not manage accreditation; they see their own status on the dashboard | Accreditation nav hidden for sellers | Deny (section 5) | — |
+| D7 | SVD/SSM/SM | Customer downline access | `02` §9.6, §10.2 | **DECIDED 2026-11-12** (R4): leaders see own and team customers, sales and pay, within the `02` §10.2 field limits | Customer and commission views scoped to team | Implement record scope in backend later | B06 (backend scope only) |
+| D8 | Admin | CMS management | `11` (authorized business users) | **DEFERRED 2026-11-12** (owner, R11): website content editing is deferred | CMS nav hidden | Keep denied | future |
+| D9 | All | Audit Logs visibility | `12` §9, §224 | **PARTLY DECIDED 2026-11-12:** Admin and Super Admin view (authority rule). Open: which other roles view audit logs | Audit nav for Admin/Super Admin only | Keep other roles denied | B06 |
+| D10 | Super Admin vs Admin | Protected privileges | `01` §3.4, §3.7 | **DECIDED 2026-11-12:** Admin can do everything; both may approve own entries. Only the Super Admin may create, give or remove the Super Admin role (`01` §3.4). Only the Super Admin may do both Non-Standard approval steps alone (`05` §10.2) | Nav treats them same | Model the two Super Admin-only exceptions | B05 |
 
 ---
 
 ## 18. Implementation Dependencies
 
 - B05 (Role-Specific Panel Shells) can begin using confirmed grants (dashboard, organization, accounts, finance, sales-network) if owner accepts current matrix.
-- Business modules (B06+) require D1–D10 resolution for full nav.
+- Business modules (B06+) require the open D-series items (the open part of D9; D8 deferred) to be resolved for full nav.
 - Backend RBAC enforcement deferred to Phase 3.
 
 ---
@@ -350,7 +379,7 @@ Primary sources:
 ## 20. Implementation Readiness
 
 - B05 can begin with confirmed grants (dashboard, organization, accounts, finance, sales-network).
-- D1–D10 must be resolved before full module navigation.
+- The open D-series items (the open part of D9; D8 deferred) must be resolved before full module navigation.
 - Backend security requirements remain separate.
 
 ---
@@ -372,4 +401,33 @@ Primary sources:
 ## 22. Final Verdict
 
 **PASS WITH FINDINGS — Ready for owner review with clearly documented gaps.**
-EOF
+
+## Owner rulings amendment (2026-11-12, rounds R4–R5 and authority rule)
+
+These rulings take precedence over earlier text in this proposal where they differ. Details are in section 1.2 and in `docs/business-rules/01-roles-and-permissions.md` §3.1, §3.7 and §3.8.
+
+1. **Authority rule.** The Administrator can do everything; the Super Administrator has no blocks; both may approve their own entries, and the audit history shows it. Clerks enter only; sellers view only.
+2. **Role mapping (R4).** Director = Super Administrator; Supervisor = Administrator; Clerk is a new office job (enter only); Finance = Finance.
+3. **Modules for viewing, action permissions for changes (R4).** Section 5 module grants are view grants; section 6 lists action permissions.
+4. **Sellers (R4, R5).** SVD, SSM and SM see their own and their team's customers, sales and pay; OST sees only their own. A seller may start a customer draft.
+5. **D-series status.** D1, D2, D4, D6 and D7 are decided. D9 is partly decided; D3, D5 and D10 are decided and D8 is deferred by the follow-up rulings below. D3, D5 and D8 remain open (section 17).
+
+## Owner rulings amendment (2026-11-12, follow-ups)
+
+These rulings take precedence over earlier text in this proposal where they differ.
+
+1. **Super Administrator role.** Only a Super Administrator can create, give or remove the Super Administrator role; an Administrator cannot. Otherwise the Administrator can do everything (`01` §3.4, §3.7). D10 is decided.
+2. **Seller payment slip.** Sellers may upload a payment slip photo for their own customer. It is proof only and counts only after a Clerk enters the receipt and Finance, Admin or Super Admin approves it (section 6; `07` §5.1).
+3. **Contracts.** Sellers do not prepare contracts; the Clerk prepares and the Admin approves (section 6; `05` §11).
+4. **Non-Standard.** The Admin approves and Finance confirms; only the Super Admin may do both steps alone (section 6; `05` §10.2).
+5. **Imported receipts.** Marked "Approved (imported)"; the Admin signs off each import batch once (section 6; `07` §20).
+6. **Resort bills.** Clerk-entered resort bills are approved by Finance, Admin or Super Admin (section 6; `09` §11).
+18. **Bookings.** Front-desk or office staff with the Bookings operation permission make room bookings with points; no separate approval step; every booking audited; Admins can cancel or correct any booking (`10` §9.2).
+24. **HR (D3).** HR creates and activates office staff accounts; cannot give the Admin or Super Admin role; cannot manage seller accounts (`01` §3.8, §6.2).
+25. **Finance reports (D5).** Finance views all reports (sales, collections, pay), view only (`01` §3.8).
+26. **CMS (D8).** Website content editing is deferred (CMS deferred by owner, R11).
+
+## Consistency update (2026-11-12)
+
+1. Public Customer Lookup is marked removed from scope (owner ruling R11; `11` §21) in sections 1.1, 3, 5 and 12.
+2. Commission rates are per-person DSC/DRI rates set by Admin or Super Admin and frozen on the sale (`08` §9), replacing Finance-set percentages; Stay Points earning is replaced by Annual Welcome Gift tranche release (`09`); receipt approval cites `07` §5.2 (Finance, Admin or Super Admin).

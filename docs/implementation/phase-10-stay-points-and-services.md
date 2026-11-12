@@ -4,7 +4,7 @@
 - Objective: the points ledger and cycle, held-point handling, resort spend intake, and the disabled Redemption and Services.
 - Business rules: `docs/business-rules/09-vip-membership-and-stay-points.md` sections 8 to 20; `10-redemption.md` sections 5 and 16. Workbook reference: GRANT sections I-B, III and IV.
 - Depends on: FP9.
-- Open decisions: G10, G12.
+- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G10, G12.
 - Changed since the atlas baseline: `src/modules/stay-points/engine.ts` changed in `fc060bb` (voided and held spend are excluded from verified minimum-spend totals, with historical bucket allocations preserved for reconciliation).
 
 Routes (from the atlas):
@@ -43,9 +43,9 @@ Routes (from the atlas):
 |---|---|
 | Journey | J11 |
 | Current | No intake workflow (U13). |
-| Target | The resort records qualifying spend with linked evidence, Finance verifies, and the system calculates approved points and caps. Unlock, hold or expire as the signed contract and prospective policy say. |
+| Target | Per R10: the signed Grant's Annual Welcome Gift rule applies and Spend-to-Earn is removed. Office staff enter spending with a receipt number, and a tranche is released only when the yearly qualifying spend is met. |
 | Layer | Owner decision |
-| Blocked by | G10, U13 |
+| Blocked by | G10 (decided R10), U13 (decided R10) |
 | Acceptance | After the decision: credits only from Finance-verified spend within approved caps. |
 | Status | Missing |
 
@@ -55,9 +55,9 @@ Routes (from the atlas):
 |---|---|
 | Journey | J11 |
 | Current | Cap restoration, refund treatment and past spend need separate review. |
-| Target | Resolve refunds, cap restoration, rounded amounts and historical gifts. Waivers are never auto-approved. |
+| Target | Per R10: a refund delays a tranche that has not been released yet. An Administrator or the Super Administrator can approve a waiver. |
 | Layer | Owner decision |
-| Blocked by | G10 |
+| Blocked by | G10 (decided R10) |
 | Acceptance | To be defined after the decision. |
 | Status | Missing |
 
@@ -69,7 +69,7 @@ Routes (from the atlas):
 | Current | Disabled. There is no route under `src/app/` (verified). The documented future flow: request, Operations availability approval, reserve points, Finance verifies mixed cash, perform service, consume or resolve. |
 | Target | Stays disabled. Preserve module boundaries. Reactivation needs separate authorization. Disabled-state protection must be validated before production. |
 | Layer | Owner decision |
-| Blocked by | G12, U11 |
+| Blocked by | G12 (decided R11 to R13), U11 (decided R12) |
 | Acceptance | No routes, APIs or navigation. No points consumed through redemption. |
 | Status | Disabled |
 

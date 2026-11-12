@@ -1,11 +1,12 @@
 # AFHomes Platform — Commission Management Business Rules
 
-> Single source of truth for the **Commission Management** module.
+> Single source of truth for the **Commission Management** module, covering per-sale commission (DSC and DRI), the IST leader allowances (BA, PA and PB), and clawback.
 > Finance and Payments: `docs/business-rules/07-finance-and-payments.md`.
 > Sales Network and Genealogy: `docs/business-rules/02-sales-network-and-genealogy.md`.
 > Sales Performance Reporting: `docs/business-rules/13-sales-performance-reporting.md`.
 > Organization Management: `docs/business-rules/01-roles-and-permissions.md`.
 > VIP Products and Contracts: `docs/business-rules/05-vip-products-and-contracts.md`.
+> IGP Sales: `docs/business-rules/14-igp-sales.md`.
 
 ---
 
@@ -13,352 +14,436 @@
 
 This document defines the authoritative Commission Management business rules for AFHomes Platform.
 
-Commission Management manually determines, approves, monitors, adjusts, and pays authorized commissions related to AFHomes sales. It covers commission eligibility review, Confirmed Sale references, direct seller and eligible upline identification, manual percentage assignment, commission calculation, recipient records, manual Finance approval, approved unpaid commissions, automatic holds on affected unpaid commissions, Finance-controlled cancellation and adjustment, paid commission tracking, manual payout processing, recovery tracking where authorized, commission reporting, and audit history.
+Commission Management computes, releases, approves, pays, and when a sale goes wrong takes back the commission earned on AFHomes sales. It covers:
 
-Sales performance, commission eligibility, commission approval, and actual payout are separate concepts.
+- per-person commission rates (DSC and DRI) kept on each seller record;
+- the commission attached to each sale at the rates frozen when its VIP Number is issued;
+- staged release by approved collection, and the month-end payout;
+- holds on unpaid commission and clawback of paid commission when a sale event requires it;
+- the monthly IST leader allowances BA, PA and PB;
+- the parallel run with the company workbooks before the platform takes over;
+- reporting, visibility and audit history.
 
-This document does not define commission percentage maximums, aggregate caps, payout frequency, partial payouts, minimum thresholds, tax withholding, or recovery offsets. Those are unresolved and must not be invented.
+Sales performance, commission attachment, release, payout approval and actual payout are separate concepts.
+
+The structure of this document follows the owner rulings of 2026-11-12 (rounds R8 and R9; see the amendment at the end). Under the 2026-11-12 ground rule, the company workbook (the live manual process) is the default authority, and a dated owner ruling outranks it. Company sources cited:
+
+- **OPS**: AFhomes Commission System User Manual v2.3 (2026-10-25).
+- **AUG**: Upgrade Memorandum, Ruling Addendum of 2026-08-20.
+- **OCT**: Upgrade Memorandum, Ruling Addendum of 2026-09-24, Issue 3.
+- **ROLL**: AFhomes Rollout Guide, Training and Go-Live v1.4 (2026-10-25).
+- **Clawback Addendum**: IST Contract Addendum, Commission and Clawback, DRAFT of 2026-09-24 (not signed).
+
+This document does not define tax withholding, commission dispute procedures or special promotional schemes. Those remain open (section 24) and must not be invented.
 
 ---
 
 ## 2. Related Business-Rule Documents
 
-- `01-roles-and-permissions.md` — modular roles and permissions.
-- `02-sales-network-and-genealogy.md` — genealogy and historical attribution.
-- `03-ist-ost-accreditation.md` — accreditation identity.
-- `04-customer-management.md` — customer identity.
-- `05-vip-products-and-contracts.md` — finalized contract values.
-- `06-vip-card-issuance.md` — activation and Card ID.
-- `07-finance-and-payments.md` — Finance authority, verification, reversals, refunds.
-- `13-sales-performance-reporting.md` — Confirmed Sale, reversals, reconfirmation, adjustments.
+- `01-roles-and-permissions.md` — roles, the overriding authority rule, record visibility.
+- `02-sales-network-and-genealogy.md` — genealogy, historical sale attribution, vacancy.
+- `03-ist-ost-accreditation.md` — accreditation identity, status, who may be recorded on a new sale.
+- `04-customer-management.md` — customer identity, closing seller and referrer.
+- `05-vip-products-and-contracts.md` — contract TCP, including the Non-Standard TCP.
+- `06-vip-card-issuance.md` — VIP Number issuance.
+- `07-finance-and-payments.md` — approved receipts, reversals, returned cheques.
+- `13-sales-performance-reporting.md` — Closed Deal, month close, Defaulted sales.
+- `14-igp-sales.md` — IGP sales: Series Number, IGP rates frozen at Series Number issuance, the 10% Closed Deal, the 40% / rest staged release and 20% assumed credit (doc 14 §8 and §9). This document states the general rules those refer to.
 
 ---
 
 ## 3. Terminology and Definitions
 
-- **Commission** — a manually approved financial obligation to an eligible recipient for an eligible sale.
-- **Commission Eligibility** — a sale has reached Confirmed status; eligibility does not equal entitlement.
-- **Confirmed Sale** — requires Admin-finalized contract plus Finance-verified qualifying payment.
-- **Direct Seller** — the IST or OST who made the sale.
-- **Eligible Upline** — SM, SSM, SVD in the applicable historical genealogy.
-- **Commission Approval** — explicit authorized Finance decision.
-- **Approved Unpaid Commission** — approved but not yet paid.
-- **On Hold** — approved unpaid commission temporarily restricted from payout.
-- **Paid** — actual disbursement confirmed by Finance.
-- **Financial Recovery** — manual Finance decision regarding already-paid commissions after a sale reversal.
+- **DSC (Direct Sales Commission)** — per-sale commission paid to the closing seller.
+- **DRI (Direct Referral Income)** — per-sale commission paid to the referrer recorded on the sale.
+- **Commission rate** — a person's DSC rate and DRI rate, per product (VIP, IGP), kept on the seller record.
+- **Standard rate** — the rate for the person's position under their service contract and record. A person's rate defaults to it (AUG R17, OCT R30).
+- **Contract TCP** — the total contract price of the sale's contract (doc 05), including a Non-Standard TCP.
+- **Approved collection** — the net total of approved receipts on the sale after reversals (doc 07).
+- **Closed Deal** — a sale whose approved collection reaches its frozen threshold: VIP 25%, IGP 10% (AUG R13, OCT R31; doc 13). It drives sales counting and the leader allowances, not the DSC and DRI release.
+- **Release** — the point at which a stage of a sale's commission becomes payable, in the month the stage is first reached.
+- **Month-end payout** — the payout of everything released in a month, made after that month is closed.
+- **On Hold** — released commission that is not yet paid and may not be paid because of a sale event.
+- **Paid** — disbursement confirmed by Finance, an Administrator or the Super Administrator.
+- **Clawback** — an amount owed back by the person who was paid, raised by a sale event (OCT R32).
+- **BA, PA, PB** — Basic Allowance, Performance Allowance and Performance Bonus: monthly IST leader allowances under the service contracts (OCT R29).
+- **Assumed collection credit** — the share of a month's collections on an inherited or rolled-up account that counts toward a leader's figures: VIP 40%, IGP 20% (AUG R23).
 
 ---
 
 ## 4. Approved Commission Decisions
 
-The following seven decisions are final and authoritative.
+The following decisions are authoritative. Decisions 1 to 7 were restated on 2026-11-12 (owner rounds R8 and R9). The earlier text, in which Finance typed a percentage for each recipient and could pay the seller and every upline, is superseded.
 
-### Decision 1 — Finance Controls Commissions Manually
+### Decision 1 — Rates Are Set per Person; Amounts Are Computed; Payout Is Explicit
 
-Commission Management is manually controlled by authorized Finance personnel. The system must not automatically grant or approve commissions when a customer is created, a contract is submitted, a contract is finalized, a payment is submitted, Finance verifies a qualifying payment, a sale becomes Confirmed, a customer becomes Fully Paid, or a VIP Membership becomes Active. These events may provide information for commission eligibility, but must not automatically create an approved commission obligation. Commission approval requires an explicit authorized Finance decision.
+Each person carries set DSC and DRI rates on their seller record. When a sale's VIP Number is issued, the closing seller's DSC rate and the referrer's DRI rate for that product are frozen on the sale, and the system computes the amounts automatically. No one types a percentage per sale. Approving the payout and confirming the disbursement remain explicit, audited actions.
 
-### Decision 2 — Finance Manually Assigns Percentages
+### Decision 2 — Per-Person Rates Default to the Position Standard
 
-Authorized Finance personnel manually determine commission percentages. The percentage may differ among eligible IST and OST members. There is no universally fixed percentage based solely on account designation. The system may calculate the corresponding peso amount from the percentage manually entered by Finance. This calculation is not an automatic commission award.
+A person's rates default to the standard for their position (AUG R17, OCT R30), as set by their service contract and record. An Administrator or the Super Administrator may change a person's rate for future sales only. The change is logged. A sale's frozen rate may change only before any of its commission is released (OCT R30).
 
-### Decision 3 — Commission Basis Is the Total Finalized Contract Value
+### Decision 3 — Commission Basis Is the Contract TCP
 
-The commission percentage is applied to the total finalized VIP contract value, not installments collected to date.
+**DSC = Contract TCP × frozen DSC rate. DRI = Contract TCP × frozen DRI rate.** The basis includes a Non-Standard TCP (doc 05 §10.2). Collections to date are not the basis; they decide only when the commission is released.
 
-Formula: **Commission Amount = Finalized Contract Value × (Finance-Assigned Percentage ÷ 100)**
+### Decision 4 — Recipients Are the Closing Seller and the Referrer Only
 
-Example: Finalized contract value ₱390,000; Finance-assigned commission 5%; Calculated commission ₱19,500. The example is illustrative, not a mandatory rate.
+Per-sale commission goes only to the closing seller (DSC) and the referrer recorded on the sale (DRI), whether IST or OST (OPS §6.1). Leaders (SM, SSM, SVD) earn through the monthly allowances BA, PA and PB (section 15), not through per-sale cuts. There is no distribution through the hierarchy.
 
-### Decision 4 — Direct Seller and Eligible Uplines
+### Decision 5 — Staged Release, Paid at Month-End
 
-Finance may manually assign separate commission percentages to the direct IST or OST seller, eligible upline SM members, eligible upline SSM members, and eligible upline SVD members. These recipients must correspond to the actual applicable sales genealogy. The system must not automatically distribute commissions through the hierarchy. Each recipient's commission is a separate Finance-controlled decision.
+VIP: 100% of the commission is released in the month the sale reaches 40% approved collection. IGP: 40% is released in the month the sale reaches 40% collected, and the rest in the month it is fully paid (OPS §6.1). Each release is paid in that month's month-end payout. There is no waiting period after release (the 7-day wait of 2026-11-09 was removed by the owner on 2026-11-12).
 
-### Decision 5 — Commission Approval After Confirmed Sale
+### Decision 6 — Only Sale Events Take Commission Back
 
-Finance may manually approve commissions after the underlying sale becomes Confirmed. A Confirmed Sale requires an Admin-finalized VIP contract and Finance verification of the qualifying payment required by the contractual payment scheme. Full payment is not required if the contractual payment scheme permits sale confirmation after a qualifying initial payment. A Confirmed Sale makes manual commission approval possible, but does not require Finance to award a commission.
+Commission once attached to a sale is never stopped by the person's status (OCT R27). It is taken back only by the sale events in OCT R32: unpaid amounts are held, paid amounts become clawbacks owed by the person paid. Recovery follows section 14. History is never deleted.
 
-### Decision 6 — Automatic Hold and Manual Recovery
+### Decision 7 — Finance, Administrator or Super Administrator Approves and Pays
 
-When the underlying sale loses its Confirmed status: the system automatically places affected unpaid commissions on Hold; Finance manually determines cancellation, adjustment, or restoration; already paid commissions remain historically recorded; Finance manually decides whether recovery of already paid commissions is necessary; no automatic recovery deductions or clawbacks are permitted.
-
-### Decision 7 — Finance Controls Payouts
-
-Authorized Finance personnel manually process and record commission payouts. The commission becomes Paid only after actual disbursement is confirmed. The system must preserve payout details, amount, date, supporting evidence, and audit information. No automatic commission payout or transfer of funds.
+Finance, an Administrator or the Super Administrator approves the month-end payout, records it, and confirms the disbursement (overriding authority rule, 2026-11-12, doc 01). A commission becomes Paid only after actual disbursement is confirmed. No automatic transfer of funds.
 
 ---
 
 ## 5. Module Responsibilities
 
-Commission Management manually determines, approves, monitors, adjusts, and pays authorized commissions related to AFHomes sales. It covers commission eligibility review, Confirmed Sale references, direct seller identification, eligible upline identification, manual percentage assignment, commission calculation, commission recipient records, manual Finance approval, approved unpaid commissions, automatic holds on affected unpaid commissions, Finance-controlled cancellation and adjustment, paid commission tracking, manual payout processing, recovery tracking where authorized, commission reporting, and audit history.
+Commission Management keeps the per-person rates, freezes them on each sale, computes DSC and DRI, releases them by stage, prepares the month-end payout list, records approvals, payouts and confirmations, holds unpaid commission and raises clawbacks on sale events, tracks recovery and write-off, computes the monthly IST allowances, supports the parallel run, and keeps reporting and audit history.
 
-Sales performance, commission eligibility, commission approval, and actual payout are separate concepts.
-
----
-
-## 6. IST and OST Commission Participants and Genealogy
-
-The established hierarchy is SVD → SSM → SM → OST. IST means Internal Sales Team with designations SVD (Vice Director), SSM (Senior Sales Manager), SM (Sales Manager). OST means Outsourcing Sales Team.
-
-An OST may belong directly to SVD, SSM, or SM. Do not create artificial intermediate managers. Valid genealogy examples include SVD → OST, SVD → SSM → OST, SVD → SSM → SM → OST.
-
-IST members may make direct personal sales and may be eligible for commission when manually approved by Finance. Do not assume every IST sale requires an OST seller. OST members may make their own authorized sales; Finance may manually assign commission to the direct OST member and eligible historical uplines.
-
-Commission Management consumes existing genealogy information. It does not own or redefine the organizational hierarchy. Do not change the existing genealogy structure, parent selection rules, Sales Network permissions, or account-creation processes.
+It consumes but does not own: genealogy (doc 02), accreditation status (doc 03), contract TCP (doc 05), VIP Number issuance (doc 06), approved receipts (doc 07), and the Closed Deal, month close and Defaulted status (doc 13).
 
 ---
 
-## 7. Historical Genealogy and Commission Attribution
+## 6. Commission Participants
 
-Transfers and designation changes must not retroactively rewrite historical sales relationships. A salesperson may transfer teams, change IST designation, convert between IST and OST, or move under another authorized parent. Historical sales must retain their original selling-team attribution.
+The hierarchy is SVD → SSM → SM → OST (doc 02). IST means Internal Sales Team (SVD, SSM, SM). OST means Outsourcing Sales Team.
 
-When Finance processes a commission for an existing sale, the eligible genealogy must be based on the authorized sales relationship applicable to that sale. Do not automatically use the salesperson's current manager if the historical sale belonged to another branch.
+- **Per-sale commission (DSC, DRI):** IST and OST alike. Only the closing seller and the referrer on the sale are paid (Decision 4). There is no override for AFhomes leaders; "Override" is a JA&D pay item only.
+- **Allowances (BA, PA, PB):** IST only (OCT R29). OST production still counts: it rolls up the genealogy into the Team Closed Deal TCP of the IST leaders above it.
+- A sale may have no referrer. Then no DRI is payable on it.
+- Whether a person may be recorded as seller or referrer on a NEW sale is decided by accreditation status (doc 03; OCT R28 and R37). Their existing sales are untouched.
 
-Example: OST Seller A originally belonged to SM B and completed a sale while under SM B; later transferred to SM C. Finance reviews the earlier sale. The historical sale relationship must not be silently reassigned to SM C. Preserve historical attribution and existing sale-time relationships.
-
-Inspect the actual genealogy document for existing attribution and effective-date conventions. If exact historical genealogy reconstruction is unavailable, identify the required reconciliation dependency instead of fabricating an upline. Commission approval must never modify the genealogy itself.
-
----
-
-## 8. Commission Eligibility
-
-### 8.1 Confirmed Sale Requirement
-
-A sale is eligible for Finance commission approval only after reaching Confirmed Sale status. A sale must not be treated as Confirmed merely because the customer signed an application, a reservation exists, a payment claim was submitted, a customer uploaded a receipt, a contract was submitted for approval, or a payment method was selected.
-
-The approved sales-confirmation process requires Contract Finalization and Finance verification of the qualifying contractual payment.
-
-### 8.2 Eligibility Does Not Equal Entitlement
-
-Even after the sale becomes Confirmed, Finance may approve a commission, decline to assign a commission, or assign different percentages to eligible recipients. Finance determines the actual commission decision. Do not create an automatic rule requiring every Confirmed Sale to receive a commission. Do not invent a universal deadline by which Finance must assign commissions.
-
-### 8.3 IST and OST Eligibility
-
-Both IST and OST may receive commissions. Do not implement or document OST-only commission eligibility, a blanket rule prohibiting IST commissions, an automatic exclusion of SVD/SSM/SM, fixed role-based commission percentages, or automatic percentage inheritance from the hierarchy.
-
-Eligibility to be considered for manual commission assignment remains subject to existing authorization, identity, accreditation, and applicable business restrictions. Inspect the existing documentation to distinguish account status from sales-attribution history. Do not invent new eligibility forfeiture rules when an account is transferred, converted, expired, suspended, or deactivated. Any unresolved consequences should be documented for future authoritative clarification.
+Commission Management does not change the genealogy, parent selection rules, Sales Network permissions or account-creation processes.
 
 ---
 
-## 9. Manual Commission Percentages
+## 7. Attribution: Sale-Level Versus Pay
 
-Finance must be able to manually assign a commission percentage to an eligible recipient for a specific eligible sale. Conceptually, a commission decision references sale, finalized contract, direct seller or upline recipient, applicable sales genealogy, finalized contract amount, Finance-assigned percentage, calculated commission amount, Finance decision, decision timestamp, decision-maker identity, and relevant audit information. This is a business information contract, not authorization to create or modify a database schema. Inspect existing data structures before specifying implementation fields.
+Two kinds of attribution are kept separate:
 
-### 9.1 Percentage Values
+1. **Per-sale commission** follows the people frozen on the sale: the closing seller and the referrer recorded when the VIP Number is issued. A later transfer, change of designation, IST/OST conversion, renewal with a new AA number, or departure does not move DSC or DRI to anyone else. A renewal carries the person's commission under their new AA number (OPS §4.6, OCT R39).
+2. **Team credit for allowances and team KPIs** follows the CURRENT upline chain when the month is built (AUG R23, OCT I4). An inherited post redirects receipts by itself, and a vacant post rolls credit up (AUG R1). An assumed credit on someone else's old sale does not move that sale's DSC or DRI (AUG R24 consequence; service contract definition 12).
 
-The system must support manually entered percentages. Do not hardcode rates such as OST always 5%, SM always 2%, SSM always 1%, SVD always 1%. These are not approved rules. No fixed percentage table is currently required. The precise permitted percentage range, exception authority, and any aggregate cap are not yet established as commercial policies. Do not invent a company-specific limit. Future implementation should validate numeric correctness and prevent invalid or nonsensical entries, subject to an approved percentage policy.
+Sale-level reports keep the original seller and team at the time of the sale (doc 02 §6.3). Pay attribution under item 2 never rewrites that history.
+
+---
+
+## 8. When Commission Attaches and When It Is Released
+
+### 8.1 Attachment
+
+Commission attaches to a sale when its VIP Number is issued (doc 06); for an IGP sale, when its Series Number is issued, at the person's IGP rates (doc 14 §8). At that moment the closing seller's DSC rate and the referrer's DRI rate for the product are frozen on the sale, together with the Closed Deal threshold (OCT R30, R31; OPS §4.2). Nothing is payable at attachment.
+
+A sale must not be treated as earning commission merely because a customer signed an application, a reservation exists, a payment claim was submitted, or a receipt was uploaded but not approved. Only approved receipts count (doc 07).
+
+### 8.2 Release
+
+| Product | Stage | Share of the sale's commission | Released in |
+|---|---|---:|---|
+| VIP | Approved collection reaches 40% of the contract TCP | 100% | the month the 40% is first reached |
+| IGP | Collection reaches 40% | 40% | the month the 40% is first reached |
+| IGP | Full payment | the rest | the month full payment is reached |
+
+A receipt dated in a closed month that is admitted later counts in the first open month (doc 13; R7 item 2), so its release falls in that month.
+
+### 8.3 Status of the Person
+
+Release and payment do not depend on the person's status. Resignation, termination (even for fraud), the end of a service contract, or the suspension, expiry or withdrawal of accreditation never stop commission already attached to a sale (OCT R27, I8). If a fraud leads to the sale being cancelled or rescinded, the clawback in section 14 applies.
+
+### 8.4 Contract Finalization
+
+Contract finalization (doc 05) is not a precondition for attachment, release or the Closed Deal. A sale counts once an Administrator has approved the sale record; formal finalization is tracked separately (owner follow-up ruling 3, 2026-11-12; OPS §4.2).
+
+---
+
+## 9. Per-Person Commission Rates
+
+### 9.1 Rates on the Seller Record
+
+Each seller record holds a DSC rate and a DRI rate for each product (VIP, IGP). Both default to the standard for the person's position (AUG R17, OCT R30). The standard comes from each person's service contract and record. This document fixes no rate figure; do not hardcode one.
+
+### 9.2 Changing a Person's Rate
+
+- An Administrator or the Super Administrator may set a rate that differs from the standard for a named person. The change applies to sales whose VIP Number is issued after it, never to existing sales.
+- Every change is logged with the old value, new value, actor, date and reason.
+- The system lists every person whose rate differs from the standard, so the month-end review sees the exceptions together (AUG R17).
+- Sellers, clerks and other users cannot change rates.
+
+### 9.3 Correcting a Sale's Rate or Referrer
+
+The referrer, and with it the DRI rate, may be corrected through the normal sale correction until the first receipt on the sale is approved. After that only an Administrator or the Super Administrator may correct them, and never once any commission on the sale has been released (OCT R30; OPS §4.2). Every correction is logged.
+
+### 9.4 Validation
+
+Rates must be valid numbers. A permitted range or maximum for a deviating rate has not been set by the owner (section 24); do not invent one.
 
 ---
 
 ## 10. Commission Calculation
 
-Use the finalized contractual amount as the calculation basis.
+### 10.1 Formula
 
-**Commission = Finalized Contract Value × Assigned Percentage / 100**
+- **DSC = Contract TCP × frozen DSC rate.**
+- **DRI = Contract TCP × frozen DRI rate.**
+- **Released amount = commission × the stage's share (section 8.2).**
 
-Example (illustrative, not approved standard rates):
-
-| Recipient | Percentage | Contract value | Calculated commission |
-|---|---:|---:|---:|
-| Direct OST seller | 5% | ₱390,000 | ₱19,500 |
-| SM | 2% | ₱390,000 | ₱7,800 |
-| SSM | 1% | ₱390,000 | ₱3,900 |
-| SVD | 1% | ₱390,000 | ₱3,900 |
-
-### 10.1 Independent Recipient Calculations
-
-Each recipient's amount is calculated independently using the same finalized contract value. Do not automatically deduct the direct seller's percentage when calculating an upline's percentage. Do not calculate an upline's percentage from the direct seller's commission unless a separate approved business rule explicitly requires it.
+DSC and DRI are calculated independently from the same contract TCP. One is never deducted from the other.
 
 ### 10.2 Commercial Amount Source
 
-Use the actual finalized contract snapshot. Do not use current VIP catalog prices, current promotional prices, a later Admin product update, a claimed or unpaid installment amount, or total receipts collected instead of finalized contract value. Historical contracts may have different legitimate finalized values. Preserve their original contractual basis.
+Use the contract TCP of the sale's own contract, including a Non-Standard TCP (doc 05 §10.2). Do not use current catalog prices, promotional prices, a later product update, an installment amount, or total receipts collected.
 
 ### 10.3 Monetary Precision
 
-Document the requirement for consistent monetary calculation and rounding. Inspect existing project conventions before prescribing exact decimal or rounding implementation. Do not silently alter finalized or approved commission amounts if product settings change.
+Use the approved exact-money and rounding rules (AGENTS.md section 6). Do not silently alter a frozen rate, a computed amount or a released amount when product settings or a person's standard rate change later.
 
 ---
 
-## 11. Manual Commission Workflow
+## 11. Month-End Cycle, Approval and Payout
 
-### 11.1 Commission Review and Preparation
+### 11.1 Monthly Order
 
-1. A sale reaches Confirmed status.
-2. The sale becomes available for authorized Finance commission review.
-3. Finance selects the eligible sale.
-4. Finance examines the finalized contract value.
-5. Finance reviews the direct seller and actual sale-time genealogy.
-6. Finance selects the intended commission recipients.
-7. Finance manually assigns a percentage for each selected recipient.
-8. The system calculates the corresponding peso amounts.
-9. Finance reviews the calculations.
-10. Finance explicitly approves the appropriate commission records.
-11. Approved commissions remain unpaid until Finance performs the payout workflow.
+The month-end cycle follows OPS §5:
 
-The system may identify potential eligible sales and display their genealogy. It must not automatically create an approved commission merely because the sale is eligible. The Finance action must be explicit and auditable.
+1. Status changes and renewals for the month are recorded, and every receipt dated in the month is approved or returned.
+2. Sales with no approved receipt for 90 days are listed; an Administrator or the Super Administrator decides which are marked Defaulted (doc 13; OCT I7).
+3. An Administrator or the Super Administrator closes the month. Its figures never change afterwards (doc 13).
+4. The DSC and DRI payout list for the month is produced from everything released in it, less holds and, once recovery is authorized (section 14.4), clawback offsets.
+5. Finance, an Administrator or the Super Administrator approves the payout list, makes the disbursement through the company's payment process, and confirms it.
+6. The monthly allowances are computed (section 15).
 
-### 11.2 Commission Approval
+### 11.2 Approval
 
-Only authorized Finance personnel may approve commissions. The Super Administrator counts as authorized Finance personnel (owner decision, 2026-11-10; confirms the 2026-11-09 ruling) and may approve commissions. Approval must establish commission recipient, associated sale, finalized contractual calculation basis, assigned commission percentage, approved commission amount, approving Finance user, approval date and time, approval status, and relevant audit references.
+Approval of a payout is explicit and audited. It records the payees, sales, amounts, approver, and date. Under the overriding authority rule (doc 01) an Administrator or the Super Administrator may approve an entry they made; the audit history shows that the same person entered and approved. A seller account cannot approve or pay any commission through Sales Network permissions. Viewing a commission is not approving it.
 
-Do not allow a direct seller or upline member to approve their own commission through their Sales Network account permissions. Do not equate viewing a commission with approving it. Do not allow ordinary Staff, IST, or OST payment-submission authorization to become commission approval authority.
+### 11.3 Payout Process
+
+1. The approver reviews the month's released, unpaid commissions that are not On Hold.
+2. The disbursement is made through the company's authorized payment process.
+3. The payout is recorded with its supporting evidence.
+4. Actual disbursement is confirmed.
+5. Only then does the commission become Paid.
+
+### 11.4 Required Payout Information
+
+Preserve the commission record, recipient identity, amount, any clawback offset, disbursement method, payment reference, payout date, supporting proof, the person who recorded it, the confirmation timestamp, payout status, and audit history. Do not invent bank account details or recipient financial information.
+
+### 11.5 No Automatic Disbursement
+
+No automatic GCash, Maya or bank transfers, no payroll-like scheduled transfers, no disbursement on approval, and no withdrawal by sellers. The month-end payout is prepared by the system and paid by authorized people.
+
+### 11.6 Payout Confirmation and Stuck Payouts
+
+A commission does not become Paid because a transfer was initiated. Initiated or unconfirmed payouts are kept separate from completed payouts.
+
+If a payout was initiated on a commission that is later placed On Hold, Finance, an Administrator or the Super Administrator may void the initiated payout or confirm it. Both actions keep the full payout history. A confirmed payout on a held commission is treated as paid, and the sale event then raises a clawback under section 14.
+
+### 11.7 Duplicate Payout Protection
+
+Repeated processing of the same payout instruction must not create a duplicate settlement or record.
 
 ---
 
 ## 12. Commission Status Lifecycle
 
-Use existing repository enums where verified; otherwise describe logical states without claiming they are already implemented.
+Use existing repository enums where verified; otherwise these are logical states, not claims about the implementation.
 
-Logical states:
+- **Attached** — rates and amount frozen on the sale; nothing released.
+- **Released** — a stage was reached in a month; payable in that month's payout.
+- **Approved** — included in an approved payout list; not yet paid.
+- **On Hold** — released but unpaid, and blocked by a sale event (section 13).
+- **Payout initiated** — a disbursement was started but not confirmed.
+- **Paid** — disbursement confirmed.
+- **Cancelled** — an unpaid release withdrawn by a sale event; history kept.
+- **Clawback owed / Recovered / Written off** — tracked on the clawback ledger for paid amounts (section 14).
 
-- **Under Review / Draft** — Finance is evaluating or preparing a potential commission. No approved obligation has yet been established.
-- **Approved** — Finance has manually approved the commission. The commission has not necessarily been paid.
-- **On Hold** — An unpaid commission is temporarily restricted from payout because the associated sale has lost its Confirmed status or another separately authorized hold condition applies.
-- **Paid** — Finance has confirmed that the actual commission disbursement occurred.
-- **Cancelled / Reversed / Adjusted** — Represent authorized manual Finance decisions affecting the original commission. Preserve audit and financial history.
-
-Recommended logical flow: Confirmed Sale → Finance Review → Manual Approval → Manual Payout → Paid. Exception: Approved and Unpaid → Sale Loses Confirmed Status → Automatic Hold → Finance Review → Authorized Resolution.
-
-Do not automatically grant, approve, restore, or pay commissions. Do not invent technical enum names without verifying the repository.
-
----
-
-## 13. Automatic Commission Hold
-
-When a sale loses Confirmed status, the system must automatically place affected unpaid commissions on Hold. Potential triggering conditions include underlying sale cancellation or a verified-payment reversal that causes the sale to lose Confirmed status. The trigger is the loss of applicable Confirmed Sale status, not every unrelated financial event.
-
-Required behavior:
-
-1. The underlying sale was Confirmed.
-2. Finance manually approved one or more commissions.
-3. Some approved commissions remain unpaid.
-4. The underlying sale loses Confirmed status.
-5. Affected unpaid commissions become On Hold.
-6. Finance is able to review the affected records.
-7. Finance manually resolves the affected commissions' eventual treatment.
-
-Required safeguards: do not delete the original approved commission; do not erase its approved percentage; do not erase approval history; do not automatically release payout; do not automatically cancel paid commissions; do not automatically deduct money from an IST or OST account; do not rewrite historical sale attribution; preserve the cause of the Hold.
-
-Reconfirmation: if the sale later becomes Confirmed again, the system must not silently create another commission or automatically release previously held commissions. Finance must review the appropriate resolution. Preserve existing commission identity and audit history.
+Normal flow: Attached → Released → Approved → Paid. Exceptions: Released or Approved → On Hold → restored or Cancelled; Paid → clawback owed → recovered or written off.
 
 ---
 
-## 14. Commission Cancellation, Adjustments, and Recovery
+## 13. Hold on Unpaid Commission
 
-Finance retains manual authority over the treatment of commissions affected by sales reversals. Finance may determine whether an affected commission should be kept On Hold, cancelled, adjusted, restored for payout eligibility, or subject to an appropriate recovery process if already paid. These operations must be traceable.
+When a sale event in section 14.1 occurs, any released commission on that sale that is not yet paid is automatically placed On Hold and is not paid. A release that a returned cheque un-makes is withdrawn in the same way. This produces the same result as the workbook's same-month payment and offset (OCT I6).
 
-### 14.1 Already Paid Commissions
+Safeguards: do not delete the commission; do not erase its frozen rate or amount; do not erase approval history; record the cause of the hold; do not rewrite historical attribution.
 
-If a commission was previously paid, a later sale reversal must not delete its payout history. The system must preserve original commission approval, original percentage, original approved amount, original disbursement, payout confirmation, reason for subsequent recovery consideration, Finance decision, and any actual recovery transaction when applicable.
-
-### 14.2 No Automatic Clawbacks
-
-The system must not automatically deduct from future commissions, generate an employee debt, deduct from salary or compensation, reverse a bank transfer, reclaim previously disbursed cash, or create negative payable balances. Any recovery action requires a separate authorized Finance decision and must comply with applicable contractual and legal requirements. Do not invent rules permitting payroll deductions or involuntary recovery.
-
-### 14.3 Commission Adjustments
-
-Where Finance changes an approved commission, preserve the original decision and document the adjustment. Do not overwrite financial history in a way that prevents reconstruction of the original and revised amounts. If the finalized contract itself receives an authorized price adjustment, reconcile the resulting commission treatment with the existing contract and Sales Performance Reporting rules. Do not automatically recalculate or replace an already approved commission without an authorized Finance decision.
+If the sale returns to Active (a Defaulted sale reinstated, section 14.6), held amounts are restored to the payout when the sale meets the release mark again. Restoration never creates a second commission for the same sale and stage.
 
 ---
 
-## 15. Commission Payout Management
+## 14. Clawback and Recovery
 
-Only authorized Finance personnel manually process commission payouts under the approved workflow. Approval and payout are separate actions. An approved commission is not automatically Paid.
+### 14.1 Triggers
 
-### 15.1 Payout Process
+DSC and DRI are clawed back on the five triggers of OCT R32:
 
-1. Finance reviews an approved unpaid commission.
-2. Finance verifies that the commission is eligible for payout and is not On Hold.
-3. Finance determines the amount authorized for disbursement.
-4. Finance performs or arranges the actual payout through the company's authorized payment process.
-5. Finance records the payout information and supporting evidence.
-6. Finance confirms that disbursement actually occurred.
-7. Only then does the commission become Paid.
+| Trigger | How it is recorded | What is clawed back |
+|---|---|---|
+| Cancellation | Sale status Cancelled. A refund and repurchase upward is recorded as Upgraded. | Every DSC and DRI released on the sale |
+| Rescission after 90 days from booking | Sale status Rescinded | Every DSC and DRI released on the sale |
+| Downgrade (buyer revision to a lower amount) | Sale status Downgraded; the repurchase is a new sale that earns its own commission from zero | Every DSC and DRI released on the old sale |
+| Payment default over 90 days | Sale status Defaulted, confirmed case by case by an Administrator or the Super Administrator (OCT I7; doc 13) | Every DSC and DRI released on the sale |
+| Returned cheque | Receipt marked returned, in any month (doc 07) | Only the release the returned money un-makes: a stage whose mark the sale no longer reaches, if it was paid in a closed month |
 
-### 15.2 Required Payout Information
+Any status other than Active also removes the Closed Deal (OCT R33; doc 13).
 
-Conceptually preserve commission record, recipient identity, authorized payout amount, payment or disbursement method, relevant payment reference, actual payout date, supporting proof where applicable, Finance processor, confirmation timestamp, payout status, and audit history.
+### 14.2 What Is Owed
 
-Do not invent bank account details or recipient financial information. Do not assume all customer payment methods are automatically valid commission payout methods. The applicable payout methods must follow the existing company financial process.
+A clawback is recorded as owed against the person who was paid: DSC from the closing seller, DRI from the referrer, for the exact amount released, stage by stage (OCT R32). Unpaid amounts are held under section 13 and do not become clawbacks.
 
-### 15.3 No Automatic Disbursement
+### 14.3 Before the Clawback Addendum Is Signed
 
-Do not implement or prescribe automatic GCash payouts, automatic Maya payouts, automatic bank transfers, scheduled automatic payroll-like transfers, automatic commission disbursement on approval, or automatic commission withdrawal by sellers. The approved policy is manual Finance processing.
+The IST Commission and Clawback Addendum is a DRAFT (2026-09-24) awaiting legal review. Until it is signed, no amount is deducted from anyone's commission or allowances. The office collects a clawback directly from the person, and the collection is recorded against the open clawback.
 
-### 15.4 Payout Confirmation
+### 14.4 After the Clawback Addendum Is Signed
 
-A commission must not become Paid solely because Finance initiated a transfer. It becomes Paid only when actual disbursement has been confirmed. Keep initiated or unconfirmed payments separate from completed payouts.
+For an IST who has signed the addendum, a clawback is recovered in this order (OCT R34):
 
-### 15.5 Duplicate Payout Protection
+1. from the person's future DSC and DRI, automatically, in the month-end payout;
+2. for an IST, from BA, PA and PB, set off against the whole of them with no minimum left to the person (OCT I11);
+3. by direct demand.
 
-Repeated processing of the same payout instruction must not result in duplicate recorded settlements. The document must require appropriate duplicate-detection and reconciliation safeguards.
+### 14.4.1 OST Clawback
 
-Exact partial-payout policy, payout frequencies, withholding rules, and minimum thresholds have not been approved. Identify them as unresolved if relevant; do not invent them.
+A clawback owed by an OST is recorded as owed and the office collects it directly. It is never deducted automatically from the OST's future pay unless a signed OST agreement expressly allows it (owner follow-up ruling 2, 2026-11-12; OCT R34).
+
+### 14.5 Open Balance and Write-Off
+
+A clawback stays open until it is recovered or written off. Only an Administrator or the Super Administrator may write one off, with a reason. A write-off stops the offsetting; it does not by itself waive the company's claim (OCT R34).
+
+### 14.6 Reinstatement of a Defaulted Sale
+
+When an Administrator or the Super Administrator restores a Defaulted sale to Active because the buyer has paid again (OCT R33; doc 13):
+
+- the clawback still owed on that sale is written off;
+- anything already recovered is reported for refund;
+- any release mark crossed in the meantime is released in the open month, so the commission pays once more.
+
+A clawback raised by a returned cheque is never written off by a reinstatement: that money never arrived.
+
+### 14.7 PB Already Paid
+
+When a Closed Deal is removed after its month was closed for allowances, a PB already paid is not clawed back by the system. The office handles it by hand (OPS §4.4, company decision of 2026-09-24).
+
+### 14.8 Safeguards
+
+- Paid history is never deleted: original rate, amount, disbursement and confirmation stay visible beside the clawback, recovery and write-off records.
+- No reversal of a bank transfer, no salary deduction, and no deduction from commission or allowances before the addendum is signed.
+- A clawback never rewrites the sale's historical attribution.
+
+### 14.9 Adjustments
+
+Where an authorized correction changes a commission (for example a contract TCP correction made before any release), preserve the original and the revised amounts with the reason. Do not overwrite financial history.
 
 ---
 
-## 16. Roles, Permissions, and Visibility
+## 15. Leader Allowances: BA, PA and PB
 
-Align with `docs/business-rules/01-roles-and-permissions.md`. AFHomes Platform uses modular role-based permissions and record-level visibility.
+### 15.1 Scope
 
-### 16.1 Finance
+BA, PA and PB are monthly allowances for IST leaders (SM, SSM, SVD) under their service contracts. OST do not receive them (OCT R29). The system computes them each month following OPS §6.2 and the AUG and OCT rulings cited below. During the parallel run (section 16) the company workbook pays, and the platform's figures are compared with it.
 
-Authorized Finance personnel may review eligible sales, review relevant seller and upline information, manually determine recipient percentages, calculate commission amounts, approve commissions, review commission holds, perform authorized adjustments, process payouts, confirm actual disbursement, maintain commission financial records, and view authorized commission reports. These financial operations require the appropriate Finance authorization.
+### 15.2 What Counts
 
-### 16.2 IST
+- A sale counts toward allowances only once it is a Closed Deal: VIP at 25% collected, IGP at 10%, each at the threshold frozen on the sale (OPS §6.2; OCT R31).
+- A sale counts in a leader's own figures for both its seller and its referrer, and in Team Closed Deal TCP once for every leader above either of them (OCT I1).
+- A sale dated before a person's appointment to their present post is not their production (OCT I2).
+- Team credit follows the current upline chain when the month is built (AUG R23, OCT I4).
+- A vacant post earns no BA, PA or PB. Its downline TCP and collections roll up to the next active level. Where the vacant post is the top of the tree, the stream earns nothing for the vacancy period (AUG R1).
+- **Assumed collection credit** (AUG R23): on an inherited or rolled-up account, VIP 40% and IGP 20% of the month's collections count toward the collector's figures. A leader receives a collection in full when the sale is inside their window, and otherwise the assumed credit instead, never both (OCT I3). An assumed account is not re-tested against the Closed Deal threshold.
 
-An authorized IST member may view commission information permitted by the role and existing visibility rules. IST members may earn commissions from their own direct sales and receive manually approved upline commissions where applicable. Do not assume an IST member can approve commissions or inspect every unrelated seller's private payout data.
+### 15.3 The Monthly Tests
 
-### 16.3 OST
+- The month is split into a Qualifying-Period stretch and an Extended-Period stretch (AUG R11). Each is judged on its own days, with **factor = days in the stretch ÷ days in the month**.
+- **KPI = Team Closed Deal TCP + assumed credit. COLLECTION = collections + assumed credit** (OPS §6.2; AUG R23).
+- A target is met when KPI reaches the target × factor AND COLLECTION reaches 40% of the target × factor.
+- **BA:** the Qualifying-Period part is paid by days with no production test (AUG R10a); the Extended-Period part needs the BA target.
+- **PA:** each stretch needs the PA target.
+- **PB:** rate × Equivalent TCP, where **Equivalent TCP = MIN(KPI, COLLECTION ÷ 40%)**, for each stretch that meets the PB target. There is no minimum collection rate (AUG R21), and one PB base applies to every position (OCT R35).
 
-An OST member may view their own authorized commission information. OST members must not gain unrestricted access to other OST sellers' commissions or private financial records.
+### 15.4 Position Targets (OPS §6.2 Table A, as shipped)
 
-### 16.4 Admin and Super Admin
+Monthly team TCP plus credit; amounts in pesos a month.
 
-Preserve existing role and module authorization policies. Do not introduce an additional Admin approval requirement for individual commission awards or payouts. Manual commission decisions are controlled by authorized Finance personnel. Administrative visibility or management permissions must be reconciled with the existing role model, not treated as an automatic replacement for Finance authorization.
+| Position | BA target | PA target | PB target | BA / PA | PB rate |
+|---|---:|---:|---:|---:|---:|
+| SM | 200,000 | 1,000,000 | 2,000,000 | 15,000 | 1% |
+| SSM | 600,000 | 2,000,000 | 4,000,000 | 25,000 | 3% |
+| SVD | 1,800,000 | 5,000,000 | 10,000,000 | 50,000 | 2% |
 
-### 16.5 Important Distinction
+These are the shipped figures only. The live figures are configurable by an Administrator or the Super Administrator, and a person's own BA or PA amount or PB rate on their record overrides them (OPS §6.2). Every change is logged and never alters a closed month.
 
-Commission visibility is separate from commission financial authority. A user may be allowed to view an approved commission without being authorized to change it.
+### 15.5 Limits
+
+- Nothing is paid after a person's engagement end date, or from the day a suspension takes effect (OCT I9).
+- An Administrator or the Super Administrator may withhold a person's BA for a month, with a recorded reason. The withholding removes that month's whole BA; PA and PB are not withheld (AUG R10a, OCT I10).
+- Clawback set-off against BA, PA and PB applies only after the Clawback Addendum is signed (section 14.4).
+- Once a month is closed for allowances, it never changes; a mistake found later is corrected in the next month (OPS §5).
 
 ---
 
-## 17. IST and OST Commission Monitoring
+## 16. Parallel Run and Switch
 
-Document business-level visibility requirements without creating UI designs or application code.
+The platform does not take over pay at once. Following ROLL §8 and the owner's R9 and R11 answers:
 
-### 17.1 Direct Seller
+1. Every seller and every unfinished sale with its full receipt history is imported (doc 11; R11 item 5).
+2. During the parallel run, the company workbooks (Excel) pay DSC, DRI, BA, PA and PB. Each month-end, the platform's payout and allowance figures are compared with them, and every difference is listed and explained.
+3. The Super Administrator decides the switch only after a month closes with no unexplained difference. From the next month the platform's figures are paid, and the Excel process is no longer used.
 
-An IST or OST seller should be able to view their own permitted commission records, including relevant statuses.
+Platform figures produced before the switch are calculations for comparison only and must not be recorded as paid.
 
-### 17.2 IST Upline
+---
 
-An authorized IST manager may view relevant commission information for their applicable sales structure, subject to role permissions and privacy boundaries. Do not infer unrestricted access to downline banking details or payout evidence.
+## 17. Roles, Permissions and Visibility
 
-### 17.3 OST Portal
+Align with `docs/business-rules/01-roles-and-permissions.md`.
 
-OST visibility must remain limited to their own authorized sales and related commission information. Do not expand OST access to unrelated Sales Network branches.
+### 17.1 Finance, Administrator and Super Administrator
 
-### 17.4 Required Distinction
+Finance, an Administrator or the Super Administrator may approve payouts, record and confirm disbursements, void or confirm a stuck initiated payout, and view commission and allowance records. An Administrator or the Super Administrator may also change a person's rates, correct a sale's referrer or rate within section 9.3, close a month, mark or restore a Defaulted sale, withhold BA, change the allowance figures, and write off a clawback. Each of these is a separate action permission (doc 01); opening a page grants viewing only.
 
-Separate personal sales, team sales, personally approved commissions, authorized downline commission summaries if permitted, approved unpaid commissions, On-Hold commissions, and Paid commissions. A manager viewing team sales does not automatically become entitled to a commission on every team sale. A manager viewing a team's sales performance also does not automatically gain permission to modify a downline member's commission. Preserve the current genealogy, Members, and Sales Network workflows.
+### 17.2 Clerk
+
+A clerk enters information (for example sales and receipts) but approves nothing and changes no rate.
+
+### 17.3 Sellers
+
+Sellers view only and never change commission or allowance records. SVD, SSM and SM see their own and their team's sales and pay; an OST sees only their own. A leader viewing team sales gains no commission on those sales and no right to change a downline member's record.
+
+### 17.4 Visibility Is Not Authority
+
+A user may be allowed to view a commission without being allowed to change it. Do not expose downline banking details or payout evidence beyond what the role permits.
+
+### 17.5 What a Seller Sees
+
+Separate own DSC and DRI, own allowances (IST only), team summaries where permitted, released unpaid amounts, held amounts, paid amounts, and clawbacks owed.
 
 ---
 
 ## 18. Commission Reporting
 
-The Finance module should support accurate manual commission management reporting. Required conceptual information includes commissions under review, approved commissions, approved unpaid commissions, On-Hold commissions, Paid commissions, cancelled commissions, adjustments, manual recoveries, outstanding approved commission obligations, commission totals by recipient, by IST/OST category, by source sale, by applicable genealogy branch, and by relevant reporting period.
+Reports cover attached, released, approved, held, initiated and paid commission; clawbacks owed, recovered and written off; allowances by month and position; and totals by person, by IST/OST, by sale, by team and by period.
 
 ### 18.1 Reporting Integrity
 
-A commission must not appear as Paid merely because it is Approved. A sale must not be counted multiple times as sales revenue merely because multiple commission recipients exist. Where several recipients receive commissions on one sale, commission liability may include their separate approved amounts, but the original sale remains one sale.
+A commission must not appear as Paid merely because it is Approved. A sale with both DSC and DRI is still one sale. Allowance team credit does not double-count a sale in sales revenue.
 
 ### 18.2 Reporting Dates
 
-Distinguish sale confirmation date, commission approval date, hold date, payout confirmation date, reversal or adjustment date, and recovery date if any. Do not collapse these into a single transaction timestamp.
+Distinguish the VIP Number issue date (attachment), the Closed Deal date, the stage dates (40%, full payment), the release month, the approval date, the payout confirmation date, hold and clawback dates, and recovery or write-off dates.
 
 ### 18.3 Reporting Adjustments
 
-Follow `docs/business-rules/13-sales-performance-reporting.md`. Maintain historical reporting integrity when underlying sales are reversed or reconfirmed. Avoid retroactively replacing previously approved commission history.
+Follow `docs/business-rules/13-sales-performance-reporting.md`. Closed months never change; corrections go into the next open month.
 
 ---
 
@@ -366,248 +451,186 @@ Follow `docs/business-rules/13-sales-performance-reporting.md`. Maintain histori
 
 | Module | Commission Management relationship |
 |---|---|
-| Roles and Permissions | Authorization for viewing, approval, adjustment, and payouts |
-| Sales Network | Eligible seller and upline identities |
-| Genealogy | Historical parent relationships and eligible upline context |
-| IST/OST Accreditation | Actual account identity, current designation, and applicable authorization |
-| Customer Management | Restricted customer and transaction references |
-| VIP Products and Contracts | Finalized contractual calculation basis |
-| Finance and Payments | Verified qualifying payments and manual commission operations |
-| Sales | Confirmed Sale eligibility |
-| Sales Performance Reporting | Confirmation, reversals, reconfirmation, and historical attribution |
-| VIP Membership | Separate membership lifecycle, not automatic commission authorization |
-| Reports and Analytics | Commission status, obligations, payouts, and adjustments |
-| Audit Logs | Traceability of financial decisions |
+| Roles and Permissions | Action permissions for payout, rates, month close, write-off |
+| Sales Network and Genealogy | Current upline chain for allowances; vacancy roll-up |
+| IST/OST Accreditation | Who may be recorded on a new sale; AA number renewal |
+| Customer Management | Closing seller and referrer on the sale |
+| VIP Products and Contracts | Contract TCP, including Non-Standard |
+| VIP Card Issuance | VIP Number issuance freezes rates |
+| Finance and Payments | Approved receipts, reversals, returned cheques |
+| Sales Performance Reporting | Closed Deal, month close, Defaulted status |
+| Reports and Analytics | Commission, allowance and clawback reporting |
+| Audit Logs | Traceability of every rate, release, payout and clawback event |
 
-Commission Management must not modify customer master identities, change finalized contract terms, reassign sales genealogy, verify customer payments independently, change Confirmed Sale status independently, activate VIP memberships, generate VIP Card IDs, automatically create Stay Points, automatically distribute upline commissions, or automatically execute financial payouts. The commission module consumes authoritative information from the relevant existing modules.
+Commission Management must not modify customer identities, change contract terms, reassign genealogy, approve customer receipts, change a sale's status on its own, activate memberships or issue VIP Numbers.
 
 ---
 
 ## 20. Historical Record Preservation
 
-Approved commissions and recorded payouts must remain traceable. Do not overwrite or recreate records when a seller transfers teams, an IST changes designation, an IST converts to OST, an OST converts to IST, a product's current catalog price changes, a payment schedule changes for a different contract, a sale is reversed, a sale is later reconfirmed, a commission is adjusted, or a paid commission becomes subject to Finance recovery review.
+Frozen rates, released amounts, approvals, payouts, clawbacks and allowance months remain traceable. Do not overwrite or recreate them when a seller transfers, changes designation, converts between IST and OST, renews with a new AA number, or departs; when a standard rate or allowance figure changes; or when a sale is cancelled, defaulted or reinstated.
 
-The commission recipient must remain linked to the original authorized person/account identity. Do not create a new person merely because a member's IST/OST designation changes. Historical sales remain attributed to the original applicable selling team. Any commission assignment must respect that historical attribution.
-
-If the repository already contains historical commission data, inspect the existing model before documenting reconciliation requirements. Do not assume historical commissions were calculated using the newly approved manual process. Preserve original verified facts and amounts. Do not fabricate old approvals, missing percentages, or payout confirmations.
+Imported history (section 16) keeps the verified facts as recorded. Do not fabricate old rates, approvals or payout confirmations.
 
 ---
 
 ## 21. Audit and Security
 
-All commission-related financial decisions must have an audit trail. Required business events include commission review initiation, recipient selection, percentage assignment, manual Finance approval, commission amount adjustment, automatic Hold application, Finance Hold resolution, commission cancellation, payout initiation or recording, disbursement confirmation, commission becoming Paid, recovery review, manual recovery decision, actual recovery recording, and correction of a financial record.
+Audit events include: rate set or changed, sale referrer or rate corrected, rates frozen at VIP Number issuance, release, hold and restoration, payout list approval, payout initiation, void, recording and confirmation, clawback raised, recovered, offset and written off, Defaulted marking and reinstatement, month close, BA withholding, allowance figure change, and every financial correction.
 
-Audit details should preserve acting Finance user or system identity, timestamp, referenced sale, referenced finalized contract, recipient, applicable historical genealogy, original percentage and amount, revised percentage and amount where applicable, previous and new state, action reason, supporting evidence or reference, and related reversal or adjustment event.
+Audit details keep the actor, timestamp, sale, contract, recipient, previous and new values, reason, and supporting reference. Where an Administrator or the Super Administrator approves their own entry, the audit shows both roles held by the same person.
 
-Do not allow ordinary record editing to erase the historical decision trail. Commission payout evidence and recipient financial data must remain protected. Do not expose bank account information or financial evidence through public Customer Lookup, public IST/OST verification, or unrelated Sales Network views. Do not invent database encryption, authentication, or storage implementations without inspecting the existing architecture. Document the business security requirements, not an unapproved technical stack.
+Ordinary record editing must never erase the decision trail. Payout evidence and recipient financial data stay protected and are never exposed through public pages or unrelated Sales Network views.
 
 ---
 
 ## 22. Required Business Scenarios
 
-### Scenario A — Confirmed Sale Without Commission
+These are business acceptance scenarios, not claims of executed tests.
 
-A VIP contract is finalized and Finance verifies the qualifying payment. The sale becomes Confirmed. Finance has not approved any commission. Expected: No commission is automatically awarded.
-
-### Scenario B — Finance Approves Direct Seller Commission
-
-An OST seller has an eligible Confirmed Sale with a finalized contract value of ₱390,000. Finance manually assigns 5%. Calculated commission: ₱19,500. Expected: The amount becomes an approved unpaid commission only after Finance explicitly approves it.
-
-### Scenario C — Finance Assigns Separate Upline Commissions
-
-Using the same eligible sale, Finance selects the eligible historical uplines and enters independent percentages. Expected: Each selected recipient receives a separate calculated commission record, subject to manual approval. No automatic genealogy-based distribution occurs.
-
-### Scenario D — IST Makes a Direct Sale
-
-An IST member directly makes a qualifying sale without an OST recommender. Finance reviews the Confirmed Sale. Expected: Finance may manually approve a direct IST commission according to the authorized workflow.
-
-### Scenario E — Seller Transfers Teams
-
-An OST seller makes a sale under one manager and later transfers to another. Finance reviews the historical sale. Expected: The applicable historical genealogy is preserved. Current team membership does not silently replace historical attribution.
-
-### Scenario F — Approved Commission Remains Unpaid
-
-Finance approves a commission but has not processed any disbursement. Expected: The commission remains approved and unpaid. It must not display as Paid.
-
-### Scenario G — Sale Loses Confirmed Status
-
-A Confirmed Sale with an approved unpaid commission is reversed and loses Confirmed status. Expected: The affected unpaid commission automatically enters Hold. Finance must manually resolve its eventual treatment.
-
-### Scenario H — Paid Commission Affected by Reversal
-
-A commission was already paid. The original sale later loses Confirmed status. Expected: Preserve the Paid history and flag the issue for Finance's manual recovery decision. No automatic deductions or fund recovery.
-
-### Scenario I — Sale Reconfirmed
-
-A reversed sale later becomes Confirmed again after valid Finance verification. Expected: Do not automatically generate another commission or release old held commissions. Finance reviews the appropriate resolution.
-
-### Scenario J — Actual Payout
-
-Finance approves a commission, processes an authorized payment, and confirms actual disbursement. Expected: The commission becomes Paid only after confirmation. Preserve payout evidence and audit details.
-
-### Scenario K — Duplicate Payout Attempt
-
-An already completed payout operation is accidentally submitted again. Expected: The system must prevent duplicate financial settlement or recording.
-
-### Scenario L — Contract Value Changes
-
-An authorized contract adjustment occurs after a commission has been manually approved. Expected: The system does not silently rewrite the original approved commission. Finance reviews the applicable adjustment while preserving original financial history.
-
-For every scenario, describe authorization, state changes, expected records, and audit requirements. These are business acceptance scenarios, not claims of executed application tests.
+- **A. Rates frozen at issue.** An OST closes a VIP sale referred by an IST. When the VIP Number is issued, the OST's DSC rate and the IST's DRI rate are frozen. Nothing is payable yet.
+- **B. VIP release.** Approved collection reaches 40% of the TCP in March. 100% of DSC and DRI is released in March and paid in the March month-end payout, with no waiting period.
+- **C. IGP release.** An IGP sale reaches 40% collected in May and full payment in a later month. 40% is released in May; the rest in the month of full payment.
+- **D. Rate change.** An Administrator raises a person's DSC rate. Sales issued before the change keep their frozen rate.
+- **E. No upline cut.** A sale by an OST under an SM pays only DSC and DRI. The SM's credit appears only in the monthly allowance figures.
+- **F. Person resigns.** A seller resigns after the sale is issued. The release is still paid when the stage is reached (OCT R27).
+- **G. Cancellation before payout.** A sale is cancelled after release but before the month-end payout. The released amount is held and not paid.
+- **H. Cancellation after payout.** A paid sale is cancelled. A clawback is owed by the seller (DSC) and the referrer (DRI). Before the addendum is signed, the office collects directly.
+- **I. Returned cheque.** A cheque returns and the sale falls below 40%. Only the release that cheque un-made is clawed back, if it was paid in a closed month.
+- **J. Defaulted then reinstated.** A Defaulted sale's buyer pays again and the sale is restored. The clawback still owed is written off, recovered amounts are reported for refund, and the release is paid once more. A returned-cheque clawback stays.
+- **K. Stuck payout.** A payout was initiated on a commission that is then held. Finance voids it, or confirms it and the clawback follows. History is kept.
+- **L. Vacancy.** An SSM post is vacant. Its downline figures roll up to the SVD for allowances; the vacant post earns nothing.
+- **M. Duplicate payout attempt.** A completed payout is submitted again. No duplicate settlement is recorded.
 
 ---
 
 ## 23. Non-Negotiable Invariants
 
-The final document must explicitly preserve the following:
-
-1. IST and OST may receive commissions.
-2. Finance manually controls commission decisions.
-3. No automatic commission award on sale confirmation.
-4. Commission amounts are based on manually assigned percentages.
-5. The calculation basis is the total finalized contractual amount.
-6. Percentage assignment is independent per recipient.
-7. Direct sellers and eligible uplines may receive separate commissions.
-8. No automatic genealogy-based commission distribution.
-9. Historical genealogy determines applicable historical sales relationships.
-10. Transfers do not retroactively change original sales attribution.
-11. Commission approval requires Confirmed Sale eligibility.
-12. Confirmed Sale does not require full settlement when an approved payment scheme qualifies earlier.
-13. Confirmed Sale does not automatically create commission entitlement.
-14. Finance explicitly approves commissions.
-15. Commission approval is separate from payout.
-16. Paid status requires confirmation of actual disbursement.
-17. No automatic commission payout.
-18. An affected unpaid commission automatically enters Hold when its sale loses Confirmed status.
-19. Finance manually resolves held commissions.
-20. Paid commission history is preserved even after sale reversal.
-21. Recovery of paid commissions requires a manual Finance decision.
-22. No automatic clawbacks, deductions, or negative payable creation.
-23. Contract catalog changes do not retroactively rewrite approved commission amounts.
-24. Original commission and payout financial history must remain auditable.
-25. Commission records must not duplicate sale recognition.
-26. Role permission and record visibility are separate.
-27. IST/OST accounts cannot approve or pay their own commissions through ordinary Sales Network permissions.
-28. Finance payout authority must be protected.
-29. The module must not interfere with Customer, Sales, Finance, Membership, or VIP Card identities.
-30. Future automatic commission functionality must not be introduced without separate business approval.
+1. Per-sale commission goes only to the closing seller (DSC) and the referrer (DRI), IST or OST.
+2. Rates come from each person's record, default to the position standard, and are frozen on the sale at VIP Number issuance.
+3. A rate change applies only to future sales; a sale's rate never changes after release.
+4. The basis is the contract TCP, including a Non-Standard TCP.
+5. VIP releases 100% at 40% approved collection; IGP 40% at 40% and the rest at full payment; each is paid at the month-end, with no waiting period.
+6. The person's status never stops commission already attached to a sale.
+7. Only the five sale events of OCT R32 take commission back.
+8. Unpaid commission on such a sale is held; paid commission becomes a clawback owed by the person paid.
+9. No deduction from commission or allowances before the Clawback Addendum is signed.
+10. Approved is not Paid; Paid requires confirmed disbursement.
+11. No automatic transfer of funds.
+12. Leaders earn through BA, PA and PB only; there is no per-sale hierarchy distribution.
+13. Allowance team credit follows the current upline chain; sale-level history keeps the original attribution.
+14. Closed months never change.
+15. Paid history, clawbacks and write-offs are never deleted.
+16. Sellers view only; visibility is never authority.
+17. The platform pays only after the parallel run and the switch decision.
 
 ---
 
 ## 24. Outstanding Dependencies
 
-- Commission percentage maximums.
-- Aggregate percentage caps across recipients.
-- Commission approval deadlines.
-- Scheduled payout frequency.
-- Partial commission payouts.
-- Minimum payout thresholds.
-- Tax withholding and statutory deductions.
-- Recovery offsets against future commissions.
-- Exact commission dispute procedures.
-- Special promotional commission schemes.
-- Accreditation status consequences for commissions already approved.
-- Manual percentage changes after payout.
-- Eligibility of exceptional or Non-Standard contract arrangements.
+Decided on 2026-11-12 and removed from this list: payout frequency (monthly), the release threshold (section 8.2), the release wait (removed), status consequences for attached commission (OCT R27), rate changes after payout (never after release), recovery offsets (section 14.4, after signing), and Non-Standard contracts (commission on the approved actual TCP, doc 05 §10.2). Settled by the owner follow-up rulings of 2026-11-12 (see the amendment at the end): recovery from OST (section 14.4.1), contract finalization as a precondition (section 8.4, not a precondition), and "Override, where applicable" (no AFhomes override).
 
-Record only unresolved issues that materially affect correct implementation. Do not turn them into blocking questions when the seven approved decisions already establish the core workflow.
+Still open:
+
+- **Clawback Addendum signature and retroactivity.** It is a DRAFT. Its cover note asks counsel whether the new clawback applies to events after signing on commission released before signing.
+- **Permitted range for a deviating rate.** No maximum or aggregate cap has been set.
+- **Engagement reviews** (QP review AUG R18, below-target review R19, R20, OCT I12), which set engagement end dates used by section 15.5, are not yet written into the platform rules.
+- Tax withholding and statutory deductions.
+- Commission dispute procedures.
+- Special promotional commission schemes.
+
+Record only issues that materially affect correct implementation.
 
 ---
 
 ## 25. Implementation Acceptance Criteria
 
-### Commission Authority
-- [ ] Finance exclusively controls manual commission approvals.
-- [ ] Both IST and OST can be eligible.
-- [ ] No automatic commission award.
-- [ ] No automatic percentage assignment.
-- [ ] No universal fixed role-based rate.
-- [ ] Finance may choose not to award commission.
+### Rates
+- [ ] DSC and DRI rates per product on each seller record, defaulting to the position standard.
+- [ ] Rate changes by Administrator or Super Administrator only, future sales only, logged.
+- [ ] List of people with non-standard rates.
+- [ ] Rates and Closed Deal threshold frozen at VIP Number issuance.
+- [ ] Referrer and rate corrections follow section 9.3.
 
-### Calculation
-- [ ] Finance manually enters percentage.
-- [ ] Amount uses finalized contract value.
-- [ ] Collected installments are not the commission calculation basis.
-- [ ] Each recipient has an independently calculated amount.
-- [ ] Contract price snapshots are preserved.
-- [ ] Historical contracts use their actual finalized value.
-
-### Genealogy
-- [ ] Direct seller eligibility.
-- [ ] SM upline eligibility.
-- [ ] SSM upline eligibility.
-- [ ] SVD upline eligibility.
-- [ ] IST direct-sale eligibility.
-- [ ] Direct OST-to-SVD/SSM/SM relationships supported.
-- [ ] No fabricated intermediate managers.
-- [ ] Historical genealogy preserved.
-- [ ] No automatic commission distribution.
-
-### Approval
-- [ ] Confirmed Sale prerequisite.
-- [ ] Contract finalization prerequisite.
-- [ ] Finance-verified qualifying payment prerequisite.
-- [ ] Full payment not universally required.
-- [ ] Explicit Finance approval.
-- [ ] Approval audit history.
-- [ ] No automatic payout on approval.
-
-### Holds and Recovery
-- [ ] Automatic Hold when sale loses Confirmed status.
-- [ ] Hold affects unpaid commissions.
-- [ ] Finance-controlled Hold resolution.
-- [ ] Paid history preserved.
-- [ ] Manual cancellation and adjustments.
-- [ ] Manual recovery decision.
-- [ ] No automatic clawbacks.
-- [ ] Reconfirmation does not automatically create duplicate commissions.
+### Calculation and Release
+- [ ] Amount uses the contract TCP, including Non-Standard.
+- [ ] DSC to the closing seller, DRI to the referrer, nothing to uplines.
+- [ ] VIP 100% at 40% approved collection; IGP 40% / rest at full payment.
+- [ ] Release month is the month the stage is first reached; late-admitted receipts count in the first open month.
+- [ ] No waiting period after release.
+- [ ] Person's status never blocks release or payment.
 
 ### Payout
-- [ ] Manual Finance payout processing.
-- [ ] Amount and recipient recorded.
-- [ ] Disbursement details recorded.
-- [ ] Supporting evidence tracked.
-- [ ] Paid only after actual disbursement confirmation.
+- [ ] Month-end payout list after month close.
+- [ ] Approval by Finance, Administrator or Super Administrator, audited.
+- [ ] Paid only after confirmed disbursement.
+- [ ] Stuck initiated payout can be voided or confirmed, with history.
 - [ ] Duplicate payout protection.
-- [ ] Full audit history.
 
-### Reporting and Security
-- [ ] Correct unpaid commission reporting.
-- [ ] Correct Paid reporting.
-- [ ] On-Hold monitoring.
-- [ ] Separate personal and authorized team visibility.
-- [ ] No unrestricted OST access.
-- [ ] Finance-only financial operation authority.
-- [ ] No duplicate sales recognition.
-- [ ] Protected payout information.
-- [ ] Complete audit requirements.
+### Holds and Clawback
+- [ ] Unpaid release held on the five OCT R32 events.
+- [ ] Paid release becomes a clawback against the person paid.
+- [ ] No offset before the addendum is signed; direct collection recorded.
+- [ ] OST clawback recorded as owed and collected directly; no automatic deduction without a signed OST agreement.
+- [ ] Recovery order per OCT R34 after signing.
+- [ ] Write-off by Administrator or Super Administrator only.
+- [ ] Defaulted reinstatement per OCT R33; returned-cheque clawback never written off.
 
-### Cross-Module Consistency
-- [ ] Roles and Permissions.
-- [ ] Sales Network and Genealogy.
-- [ ] IST/OST Accreditation.
-- [ ] Customer Management.
-- [ ] VIP Products and Contracts.
-- [ ] Finance and Payments.
-- [ ] Sales Performance Reporting.
-- [ ] Historical identity preservation.
-- [ ] Existing application behavior distinguished from planned requirements.
+### Allowances
+- [ ] IST only; OST production rolls up.
+- [ ] Closed Deal thresholds, stretches, KPI and COLLECTION tests, Equivalent TCP.
+- [ ] Current upline chain, vacancy roll-up, assumed credit.
+- [ ] Table A figures configurable; personal overrides honored.
+- [ ] Suspension, end date and BA withholding limits.
+
+### Parallel Run, Reporting and Security
+- [ ] Monthly comparison with the workbooks; differences listed.
+- [ ] Switch only after a month with no unexplained difference.
+- [ ] Correct released, held, paid and clawback reporting.
+- [ ] Sellers view only; OST sees only their own.
+- [ ] Complete audit history; protected payout information.
 
 ---
 
 ## Completion Report
 
 - **File created/updated:** `docs/business-rules/08-commission-management.md`
-- **Approved rules coverage:** Finance manual control; manual commission percentages; finalized contract calculation basis; direct seller and eligible upline recipients; Finance approval after Confirmed Sale; automatic unpaid commission Hold with manual resolution; manual Finance payout and actual disbursement confirmation.
-- **Cross-module review:** Consistent with 01, 02, 03, 04, 05, 06, 07, 13. No material contradictions identified.
-- **Outstanding dependencies:** Listed in Section 24.
-- **Acceptance results:** All checklist items covered in the document. Documentation completeness does not prove implementation readiness.
-- **Change scope:** Documentation only. No application code, database, migrations, other documentation files, Git commit/push/merge, or deployment. Only `docs/business-rules/08-commission-management.md` created.
+- **Rules coverage (restructured 2026-11-12):** per-person DSC and DRI rates frozen at VIP Number issuance; contract TCP basis; seller and referrer as the only per-sale recipients; staged release paid at month-end; status-independent commission; clawback and recovery; IST leader allowances; parallel run.
+- **Cross-module review:** open conflicts are tracked in `docs/implementation/decisions-and-gaps.md` (G08, G09) and section 24.
+- **Change scope:** Documentation only.
+
 ## Owner rulings amendment (2026-11-09)
+
+These rulings were authoritative when made. Items marked superseded were replaced by the owner rulings of 2026-11-12 below.
+
+1. **Payout threshold (stage 1):** a payout may be recorded only once net Finance-verified collections reach 40% of the finalized contract value. *Kept and restated (2026-11-12): for VIP, 100% of the commission is released in the month approved collection reaches 40% of the contract TCP and is paid at that month-end (sections 8.2 and 11).*
+2. ~~**Release wait:** the payout opens 7 days after the Finance verification of the payment that brought verified money to 40%. Before that date the commission stays Approved and cannot be paid.~~ **Superseded 2026-11-12:** the owner removed the 7-day wait. The rule was not found in any company paper.
+3. ~~**Commission Assignment:** Finance and Super Administrator manually enter each seller's percentage on a dedicated page for sellers of a Confirmed Sale. No default or proposed rate exists; maximums, aggregate caps and the referrer rule remain open (OD-9).~~ **Superseded 2026-11-12:** per-person set rates frozen on the sale (sections 9 and 10); the referrer earns DRI at their own rate.
+4. ~~**Super Administrator** keeps commission operations and counts as authorized Finance personnel.~~ **Superseded 2026-11-12:** Finance, an Administrator or the Super Administrator approves and pays (overriding authority rule).
+
+## Owner rulings amendment (2026-11-12, rounds R8–R9)
+
+These rulings are authoritative and take precedence over earlier text in this document and over the company workbook where they differ. Ground rule: the company workbook wins by default; a dated owner ruling outranks it.
+
+1. **Per-person rates (R8 item 1).** Each person has DSC and DRI rates per product on their seller record, defaulting to the standard for their position (AUG R17, OCT R30). The DSC rate comes from the closing seller and the DRI rate from the referrer; both are frozen on the sale when its VIP Number is issued, and the system computes the amounts. An Administrator or the Super Administrator may change a person's rate for future sales only, and the change is logged. This replaces the former Decisions 2 and 3, the former sections 9 and 10 (Finance-typed percentages), and 2026-11-09 item 3.
+2. **Recipients (R8 item 2).** Per-sale commission goes only to the closing seller (DSC) and the referrer (DRI), IST or OST. Leaders earn through BA, PA and PB. This replaces former Decision 4.
+3. **Basis (R8 item 3).** The contract TCP, including the Non-Standard TCP.
+4. **Release (R8 item 4).** VIP: 100% released in the month the sale reaches 40% approved collection, paid at that month-end (OPS §6.1, §5). IGP: 40% at 40% collected, the rest at full payment, each paid at the month-end. The 7-day wait (2026-11-09 item 2) is removed. The 7-day rule was not found in any company paper (search of all current-set texts, 2026-11-12).
+5. **Status (R8 item 5).** Commission already attached to a sale is paid even if the person resigns, is terminated (even for fraud) or is suspended (OCT R27). Only sale events take it back.
+6. **Stuck payout (R8 item 6).** Finance, an Administrator or the Super Administrator may void or confirm an initiated payout on a held commission, with history kept (section 11.6).
+7. **Approvals and payouts.** Finance, an Administrator or the Super Administrator (overriding authority rule, 2026-11-12). This replaces the former Decision 7's Finance-only wording, the former section 16.4 ("no additional Admin approval"), and 2026-11-09 item 4.
+8. **Allowances (R9 items 1 and 2).** The system computes BA, PA and PB monthly for IST following OPS §6.2, AUG and OCT (section 15). Team credit follows the current upline chain (AUG R23); sale-level reports keep the original attribution (doc 02 §6.3). Excel pays during the parallel run until a month closes with no unexplained differences (section 16).
+9. **Clawback (R9 item 3).** The five triggers of OCT R32; the amount is owed by the person paid. Until the IST Commission and Clawback Addendum is signed, the office collects directly; after signing, recovery follows OCT R34. Write-off by an Administrator or the Super Administrator. This replaces the former "no automatic clawback" rule (the former Decision 6 and former section 14.2) only for persons who have signed the addendum. History is never deleted.
+10. **Reinstatement (R9 item 4).** A Defaulted sale restored to Active: the clawback still owed is written off, anything recovered is reported for refund, and a release crossed in the meantime is paid again. A returned-cheque clawback is never written off (OCT R33).
+
+## Consistency update (2026-11-12)
+
+1. **IGP cross-reference (owner ruling R13).** Section 2 and the header now point to `docs/business-rules/14-igp-sales.md`, replacing "doc 14 is to be written in round R13". Section 8.1 notes that IGP commission attaches at Series Number issuance at the person's IGP rates (doc 14 §8). No rate, release or clawback rule changed.
+
+## Owner rulings amendment (2026-11-12, follow-ups)
 
 These rulings are authoritative and take precedence over earlier text in this document where they differ.
 
-1. **Payout threshold (stage 1):** a payout may be recorded only once net Finance-verified collections reach 40% of the finalized contract value.
-2. **Release wait:** the payout opens 7 days after the Finance verification of the payment that brought verified money to 40%. Before that date the commission stays Approved and cannot be paid.
-3. **Commission Assignment:** Finance and Super Administrator manually enter each seller's percentage on a dedicated page for sellers of a Confirmed Sale. No default or proposed rate exists; maximums, aggregate caps and the referrer rule remain open (OD-9).
-4. **Super Administrator** keeps commission operations and counts as authorized Finance personnel.
+1. **No override for AFhomes leaders.** Per-sale pay goes only to the closing seller (DSC) and the referrer (DRI); leaders earn BA, PA and PB. "Override" is a JA&D pay item only. The section 24 item "Override, where applicable" is closed (section 6).
+2. **OST clawback.** The amount is recorded as owed and the office collects it directly. Nothing is deducted automatically from an OST seller's future pay unless a signed OST agreement allows it. The section 24 item "Recovery from OST" is closed (section 14.4.1).
+3. **Contract finalization.** A sale counts once the Administrator has approved the sale record; formal contract finalization is tracked separately and is not required (workbook OPS §4.2). It is not a precondition for attachment, release or the Closed Deal. The section 24 item is closed (section 8.4).

@@ -4,7 +4,7 @@
 - Objective: payment claims, Finance verification, correction, and the ledger and milestones that follow.
 - Business rules: `docs/business-rules/07-finance-and-payments.md` sections 5 and 8 to 14; `13-sales-performance-reporting.md` sections 3 to 6. Workbook references: OPS section 4.3, OCT O2, O6 to O9.
 - Depends on: FP5.
-- Open decisions: G06, G07.
+- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G06, G07.
 
 Routes (from the atlas):
 
@@ -46,9 +46,9 @@ Routes (from the atlas):
 |---|---|
 | Journey | J07 |
 | Current | Duplicate checks exist. Workbook matching uses the sale number, or the buyer as a fallback, and Supervisor approval (OPS section 4.3). |
-| Target | Suggest a match and flag duplicates. Confirm what Supervisor and Finance each attest, the duplicate scope and which receipts count. |
+| Target | Per R6: a Clerk enters each receipt with an OR or reference number, and Finance, the Administrator or the Super Administrator approves it. Reference numbers are unique across the system. Suggest a match and flag duplicates. |
 | Layer | Owner decision |
-| Blocked by | G06 |
+| Blocked by | G06 (decided R6) |
 | Acceptance | After the decision: a suggestion never auto-verifies. |
 | Status | Partial |
 
@@ -58,9 +58,9 @@ Routes (from the atlas):
 |---|---|
 | Journey | J07 |
 | Current | The repository (`src/data/mock/payment-repository.ts`) supports resubmitting a Returned payment. The UI has no submitter control: `src/panels/admin/components/payment-actions.tsx` only says the submitter can correct and resubmit. The journey stops at Returned. |
-| Target | Add a correction and resubmit control for the authorized submitter. The original submission stays in history. |
+| Target | Per R6: a returned receipt can be fixed and resent by the authorized submitter. The original submission stays in history. |
 | Layer | Frontend (mock) |
-| Blocked by | none for the control itself. G06 covers what counts as a valid correction. |
+| Blocked by | none for the control itself. G06 (decided R6) covers what counts as a valid correction. |
 | Acceptance | Only the submitter of a Returned receipt sees the control. Resubmission keeps the original in history. One test for the happy path and one for an unauthorized actor. |
 | Status | Missing UI. The clearest feature that can be built now. |
 
@@ -72,7 +72,7 @@ Routes (from the atlas):
 | Current | Not described in the atlas as existing. |
 | Target | A queue for unmatched, duplicate or disputed receipts, with retained human verification. |
 | Layer | Frontend (mock) |
-| Blocked by | G06 |
+| Blocked by | G06 (decided R6) |
 | Acceptance | To be defined after the decision. |
 | Status | Missing |
 
@@ -84,7 +84,7 @@ Routes (from the atlas):
 | Current | A verified receipt enters the ledger and is allocated in reservation, down-payment, installment order. A finalized contract plus the required verified payment moves the sale from Pending to Confirmed. A full verified balance is a separate milestone. The mock uses an interim required initial amount derived from the payment schedule. `src/modules/finance/milestones.ts` changed in `fc060bb`. |
 | Target | Update only after authorized verification, and retain audit, status and related records. Governing required amounts per scheme remain a decision. |
 | Layer | Frontend (mock), Owner decision for amounts |
-| Blocked by | G06, G07 |
+| Blocked by | G06 (decided R6), G07 (decided R7) |
 | Acceptance | Milestone tests pass. No floating-point money. Date-only fields use Asia/Manila semantics. |
 | Status | Partial |
 

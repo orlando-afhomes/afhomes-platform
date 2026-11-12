@@ -118,9 +118,9 @@ UI patterns: sidebar, top nav, breadcrumbs, tables, search, filters, pagination,
 
 ## 10. Public Panel
 
-Location: `src/panels/public/`. Separate presentation experience within the same app. Supports company branding, public website, content sections, accreditation verification, Customer Lookup, login entry, public CMS integration, approved public contact/payment inquiry info.
+Location: `src/panels/public/`. Separate presentation experience within the same app. Supports company branding, public website, content sections, accreditation verification, login entry, public CMS integration, approved public contact/payment inquiry info.
 
-Public verification follows approved rules: official AA number, no unauthorized discovery, IST omits "Valid Until", OST may show validity, private details restricted. Public Customer Lookup follows document 04 (only eligible Active membership records, approved masking/disclosure).
+Public verification follows approved rules: official AA number, no unauthorized discovery, IST omits "Valid Until", OST may show validity, private details restricted. There is no public customer or card lookup (owner ruling R11; doc 11 §21).
 
 Responsive sections, public nav, content presentation, search, accessibility, SEO, media, CMS-driven content where approved. Public styling isolated from Admin.
 
@@ -627,3 +627,9 @@ STOP — awaiting explicit authorization before beginning Phase 1 implementation
 6. Accessibility and responsiveness are mandatory. Future AI coding agents must follow `AGENTS.md`.
 
 *Supersession note:* the earlier "Ant Design First" standard (Stage 5), which removed Tailwind, shadcn/ui, and Base UI, is superseded by the November 8, 2026 owner decision above.
+
+## Consistency update (2026-11-12)
+
+Aligned with the business-rule documents as rewritten on 2026-11-12. No architecture decision changed.
+
+1. Section 10: Public Customer Lookup removed from the Public Panel (owner ruling R11; doc 11 §21).

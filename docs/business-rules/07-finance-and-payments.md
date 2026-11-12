@@ -14,7 +14,7 @@
 
 This document defines the authoritative Finance and Payments business rules for AFHomes Platform.
 
-Finance is the sole authority for confirming receipt of customer payments. It manages payment submission, verification, balances, collections, overdue tracking, reversals, refunds, reconciliation, fully paid determination, sales confirmation eligibility, and VIP membership activation eligibility.
+A customer payment counts only when its receipt is approved by Finance, the Administrator or the Super Administrator (owner ruling R6, 2026-11-12; see section 5.2). The module manages receipt entry, approval, balances, collections, overdue tracking, reversals, refunds, reconciliation, fully paid determination, sales confirmation eligibility, and VIP membership activation eligibility.
 
 A submitted payment claim is not proof that funds were received. An uploaded receipt does not mean money was received. A selected payment method does not establish payment verification.
 
@@ -35,15 +35,18 @@ This document does not define commission calculations, Stay Points rules, refund
 
 ## 3. Terms and Definitions
 
-- **Payment Submission** — recording of payment details/evidence by an authorized user.
-- **Payment Verification** — Finance's authoritative confirmation of receipt.
-- **Payment Scheme** — contractual payment arrangement (Spot Cash, Move A, 4-Month Installment, Move B1, Move B2, plus Admin-configured).
+- **Payment Submission (receipt entry)** — a Clerk's entry of a receipt with its required OR number or bank reference number (section 5.1).
+- **Payment Verification (receipt approval)** — approval of an entered receipt by Finance, the Administrator or the Super Administrator (section 5.2). In this document, "verified", "Finance-verified" and "Finance verification" mean an approved receipt under section 5.2; they do not limit approval to the Finance role.
+- **OR / Reference Number** — the official receipt number or bank reference number of a receipt. It is required and unique across the whole system.
+- **Closed Deal (Confirmed Sale) date, Stage 1 date, Full Payment date** — the dates on which approved receipts first reach 25%, 40% and 100% of the contract price (doc 13 §4).
+- **Closed Month** — a month closed by the Administrator or the Super Administrator; its figures never change (doc 13 §4.5).
+- **Payment Scheme** — contractual payment arrangement (Spot Cash, Move A, 4-Month Installment, Move B, plus Admin-configured). Move B1 and Move B2 were merged into Move B by doc 05 item 7.
 - **Payment Type / Method** — how a payment is made (Cash, Bank Transfer, GCash, Maya, Card, Cheque).
 - **Reservation / Down Payment / Installment / Full** — payment purposes.
 - **Outstanding Balance** — remaining unpaid contractual amount based on verified payments.
 - **Fully Paid** — Finance-verified complete settlement of the agreed contract price.
 - **Financial Hold** — restriction on new VIP benefit usage when an Active membership loses fully settled position due to authorized reversal/refund.
-- **Confirmed Sale** — separate from Fully Paid; requires finalized contract + Finance-verified qualifying payment.
+- **Confirmed Sale** — separate from Fully Paid; a sale counts (Closed Deal) when approved receipts reach 25% of the contract price (owner ruling R7, 2026-11-12; doc 13 §4). Whether a finalized contract is also required is an open question (section 15).
 
 ---
 
@@ -72,35 +75,37 @@ Finance must support:
 19. Financial Hold conditions.
 20. Finance reporting and audit history.
 
-Finance is the sole authority for confirming receipt of customer payments. Financial transaction recording is distinct from official verification.
+Receipt approval rests with Finance, the Administrator and the Super Administrator (section 5.2). Entering a receipt is distinct from approving it.
 
 ---
 
 ## 5. Roles, Authorization, and Data Visibility
 
-### 5.1 Payment Submission Authority
+### 5.1 Receipt Entry Authority (owner ruling R6, 2026-11-12)
 
-Authorized users in these categories may submit payment details and supporting evidence, subject to module permissions and record-level authorization:
+A Clerk enters each receipt: date, sale (VIP Number), amount, payment method and a required OR number or bank reference number (workbook OPS §4.3). The Administrator and the Super Administrator may also enter receipts, because they can do everything in the system (overriding authority rule, 2026-11-12). Other office roles enter receipts only where doc 01 grants that action permission.
 
-- Staff
-- IST (SVD, SSM, SM)
-- OST
+Sellers (IST and OST) view their permitted records only and do not enter receipts (owner ruling R4 item 5). Having an IST or OST account does not grant access to every customer's financial records.
 
-Having an IST/OST account does not automatically grant unrestricted access to every customer's financial records.
+**Seller payment slip (owner follow-up ruling 5, 2026-11-12).** A seller may upload a payment slip photo for their own customer. It is proof only: it is not a receipt and counts toward nothing until a Clerk enters the receipt from it (section 9.1) and Finance, the Administrator or the Super Administrator approves that receipt (section 5.2).
 
-### 5.2 Payment Verification Authority
+### 5.2 Receipt Approval Authority (owner ruling R6, 2026-11-12)
 
-**Only authorized Finance personnel may verify and confirm payment receipt.** Ordinarily, submitting users must never self-verify. The Super Administrator counts as authorized Finance personnel (owner decision, 2026-11-10; confirms the 2026-11-09 ruling) and may perform all Finance verification work. Exception (owner decision, 2026-11-10): the Super Administrator bypasses the no-self-verification separation-of-duties blocker and may verify a payment submission they made themselves.
+Finance, the Administrator or the Super Administrator approves a receipt. **Only an approved receipt counts** toward collections, balances, the Closed Deal, Stage 1 and Full Payment thresholds, and every dependent module. A Clerk enters only and cannot approve.
 
-### 5.3 Finance Authority
+Self-approval is allowed: Finance, the Administrator or the Super Administrator may approve a receipt they entered themselves. The audit history records that the same person entered and approved it (doc 12 §14).
 
-Authorized Finance personnel may approve and execute payment reversals and refunds without separate Admin or Super Admin approval. This authority applies to the Finance payment transaction workflow and does not automatically authorize amending finalized contracts, cancelling contracts outside existing rules, or bypassing other governed processes.
+This replaces the earlier "Finance is the sole authority" rule, the general no-self-verification block, and the 2026-11-10 Super Administrator exceptions to that block. The prototype's self-verification block is a frontend backlog item; this document does not change code.
+
+### 5.3 Reversal and Refund Authority
+
+Finance, the Administrator or the Super Administrator may reverse an approved receipt, with a reason, as a dated reversal (section 14). Authorized Finance personnel may also approve and execute refunds without separate Admin or Super Admin approval; the Administrator and the Super Administrator hold the same authority under the overriding authority rule. This authority applies to the payment transaction workflow and does not automatically authorize amending finalized contracts, cancelling contracts outside existing rules, or bypassing other governed processes.
 
 ### 5.4 Record-Level Visibility
 
 A module permission is not equivalent to unrestricted access to all financial transactions. Distinguish submitting payment evidence, viewing permitted payment history, accessing Finance verification queues, verifying/rejecting payments, approving/executing refunds or reversals, viewing complete Finance reports, and performing reconciliation.
 
-Staff/IST/OST submission authorization does not grant Finance verification privileges. IST may access relevant own-customer and authorized team information. OST may access only financial submission information relevant to their permitted customers and own sales. Do not expose unrelated customer financial data or payment evidence to another sales branch. Finance access must be appropriately authorized and auditable. Public Customer Lookup must never expose payment proofs, bank transaction information, receipts, or internal Finance audit details.
+Receipt entry authority does not grant approval authority. IST may view relevant own-customer and authorized team information. OST may view only financial information relevant to their own sales. Do not expose unrelated customer financial data or payment evidence to another sales branch. Finance access must be appropriately authorized and auditable. There is no public card or customer lookup (owner ruling R11, 2026-11-12; doc 11 §21); payment proofs, bank transaction information, receipts and internal Finance audit details are never exposed publicly.
 
 ---
 
@@ -115,10 +120,9 @@ Known source-documented options:
 | Spot cash | Spot Cash |
 | Move a | Move A |
 | Installment 4_month | 4-Month Installment |
-| Move b1 40 12 | Move B1 |
-| Move b2 25 12 | Move B2 |
+| Move b1 40 12 / Move b2 25 12 | Move B (one scheme, doc 05 item 7) |
 
-Other officially documented approved schemes must also be preserved. Do not assume these five are necessarily exhaustive. Admin can configure applicable payment schemes, terms, and availability (per 05). Finance consumes the applicable finalized contractual terms and must not silently rewrite an approved payment scheme, final contract price, installment schedule, or negotiated agreement. Do not invent exact Move A, Move B1, or Move B2 calculations when authoritative terms are unavailable.
+Other officially documented approved schemes must also be preserved. Do not assume these five are necessarily exhaustive. Admin can configure applicable payment schemes, terms, and availability (per 05). Finance consumes the applicable finalized contractual terms and must not silently rewrite an approved payment scheme, final contract price, installment schedule, or negotiated agreement. Move A and Move B terms are those in doc 05 items 6 and 7; do not invent calculations for any scheme whose authoritative terms are unavailable.
 
 ### 6.2 Payment Type / Method (how a payment is made)
 
@@ -160,42 +164,50 @@ Conceptual data contract for identifying and reconciling a payment:
 - Payment amount.
 - Currency.
 - Payment method.
-- Submitted payment date and time.
-- Payment evidence or receipt reference.
-- Submitting user identity.
-- Submission timestamp.
-- Verification status.
-- Finance verifier identity.
-- Verification timestamp.
-- Rejection or correction reason, where applicable.
+- Receipt date (the business date of the payment).
+- OR number or bank reference number (required; unique across the whole system, section 9.2).
+- Payment evidence, where attached.
+- Entering user identity.
+- Entry timestamp.
+- Approval status.
+- Approver identity (Finance, Administrator or Super Administrator) and whether the approver also entered the receipt.
+- Approval timestamp.
+- Counted month (the receipt's own month, or the first open month for a late receipt admitted after its month closed, section 9.1).
+- Rejection or return reason, where applicable, and the link to any earlier version of a resent receipt.
+- Reversal reference and reason, where applicable.
 - Audit references.
 
-Inspect existing repository models before prescribing precise database fields or mandatory form controls. Do not invent receipt numbers, bank transaction references, approval IDs, or other evidence. Uploaded receipts must be stored and accessed under appropriate privacy and authorization controls. Document how authorized personnel may inspect payment evidence without exposing it through public Customer Lookup or unrelated Sales Network views.
+Inspect existing repository models before prescribing precise database fields or mandatory form controls. Do not invent receipt numbers, bank transaction references, approval IDs, or other evidence. Uploaded receipts must be stored and accessed under appropriate privacy and authorization controls. Authorized staff may inspect payment evidence; it is never exposed publicly or through unrelated Sales Network views.
 
 ---
 
 ## 9. Payment Submission and Verification Workflow
 
-### 9.1 Submission Workflow
+### 9.1 Receipt Workflow (owner ruling R6, 2026-11-12; workbook OPS §4.3)
 
-1. An authorized user selects an eligible customer transaction or contractual payment obligation.
-2. The user records the payment details.
-3. The user attaches supporting evidence where required.
-4. The submission enters the Finance verification workflow.
-5. Finance reviews the submission.
-6. Finance either verifies the payment, rejects the submission, or returns/flags it for correction.
-7. Only a verified payment may be counted toward officially received funds.
-8. Any resulting balance, sales, or membership eligibility change follows approved cross-module rules.
+1. A Clerk selects the sale by its sale number (VIP Number) and enters the receipt with its required OR number or bank reference number (section 5.1).
+2. The system blocks the entry if the reference number already exists anywhere in the system (section 9.2).
+3. The Clerk attaches supporting evidence where required. A payment slip photo uploaded by the seller (section 5.1) may serve as that evidence; on its own it counts for nothing.
+4. The receipt enters the approval queue.
+5. Finance, the Administrator or the Super Administrator approves it, rejects it, or returns it for correction (section 5.2).
+6. A returned receipt shows a **Fix and resend** control to the person who entered it. Resending creates a new version for approval; the old version stays in history and is never overwritten (U06).
+7. Only an approved receipt counts. Approval adds the receipt to the sale's collected total and stamps, when first reached, the Closed Deal date (25%), the Stage 1 date (40%) and the Full Payment date (100%) (OPS §4.3; doc 13 §4).
+8. A receipt dated in a closed month is not added to that month. It is admitted into the first open month and counts there (owner ruling R6 item 5 and R7 item 2; OPS §4.3). The closed month's figures do not change.
+9. Any resulting balance, sales, or membership eligibility change follows approved cross-module rules.
 
-### 9.2 Verification Rules
+### 9.2 Approval Rules
 
-Finance verification is the authoritative event establishing confirmed receipt of the applicable payment. Verification must never rely solely on a user-entered assertion. Payment evidence, submitted amount, applicable contract, and reconciliation information must be consistent. The same payment must not be financially recognized more than once. A rejected payment must not increase recognized customer payments. Any corrected payment must preserve the original submission and audit history. Duplicate submissions must not produce duplicate verified payments.
+Receipt approval is the authoritative event establishing confirmed receipt of the applicable payment. Approval must never rely solely on a user-entered assertion. Payment evidence, entered amount, applicable contract, and reconciliation information must be consistent.
+
+**Unique reference number.** The OR number or bank reference number is unique across the whole system. A duplicate is blocked at entry and at approval. A resent version of a returned receipt is the same receipt and keeps its reference number. Because receipts are never deleted, a reversed receipt's reference number also stays taken (OPS §8, "Prior Receipt Keys": the same OR can never be approved twice).
+
+The same payment must not be financially recognized more than once. A rejected receipt must not increase recognized customer payments. A resent receipt preserves the original version and audit history. Duplicate entries must not produce duplicate approved payments.
 
 Do not invent a particular bank API, payment gateway, automatic bank-matching mechanism, or external processor. If electronic verification integration does not exist, document the business requirement without claiming it is implemented.
 
 ### 9.3 Payment Statuses and State Transitions
 
-Use existing repository status names where already defined; otherwise specify logical statuses without pretending implementation enums are approved. Logical states: Submitted (unverified), Under Review, Verified, Rejected, Returned for Correction, Reversed, Refunded. Transitions must preserve audit history and original submission.
+Use existing repository status names where already defined; otherwise specify logical statuses without pretending implementation enums are approved. Logical states: Submitted (entered, not approved), Under Review, Verified (approved), Rejected, Returned for Correction, Resent (new version of a returned receipt), Reversed, Refunded. Transitions must preserve audit history and the original entry.
 
 ---
 
@@ -220,6 +232,8 @@ Document partial settlement, reconciliation discrepancies, excess or unidentifie
 ## 12. Collection Monitoring
 
 Authorized Finance personnel monitor: pending payment submissions; payments requiring verification; returned or rejected submissions; upcoming installment obligations; due installments; overdue installments; partially settled obligations; remaining balances; fully settled contracts; Financial Hold cases; reconciliation exceptions.
+
+**No-payment list and Defaulted sales (owner ruling R7 item 3, 2026-11-12; OPS §4.4).** The system lists sales with no approved receipt for 90 days. The Administrator or the Super Administrator decides which listed sales to mark Defaulted. A Defaulted sale returns to Active if the buyer pays again (an approved receipt). Reporting effects are in doc 13 §4.6; clawback effects are in doc 08.
 
 Distinguish a payment verification queue from a contractual collection queue. Avoid counting a completed fully paid transaction as collectible merely because a historical payment record exists. Document filtering/grouping requirements without inventing exact UI. Potential business dimensions: customer, VIP tier, contractual payment scheme, due date, payment status, verified amount, remaining balance, assigned authorized sales relationship. Respect record-level privacy rules.
 
@@ -249,9 +263,11 @@ Time conventions: use the project's established date conventions. When determini
 
 ## 14. Payment Reversals and Refunds
 
-Authorized Finance personnel may approve and execute payment reversals and refunds without separate Admin or Super Admin approval. No additional Admin approval step may be introduced merely because a payment is being reversed or refunded. This authority applies to the Finance payment transaction workflow and does not automatically authorize amending finalized contractual terms, cancelling contracts outside existing authorization rules, or bypassing other independently governed business processes.
+**Undoing an approved receipt (owner ruling R6 item 4, 2026-11-12).** Finance, the Administrator or the Super Administrator may undo an approved receipt, for a keying error or a bounced cheque, and must give a reason. The undo is a dated reversal linked to the original receipt; it is never a deletion. A closed month's figures do not change: the reversal's effect is recorded in the open month in which it is made (doc 13 §4.5 and §5.1). Workbook source: OPS §4.3 (DirectorReverseReceipt, DirectorReturnedCheck).
 
-Required safeguards: authorized Finance identity; reason for reversal or refund; reference to the original verified payment; reversal or refund amount; date and time; appropriate transaction status; complete audit history; reconciled financial impact; historical traceability.
+Refunds are approved and executed by authorized Finance personnel, the Administrator or the Super Administrator without a separate approval step. No additional approval step may be introduced merely because a payment is being reversed or refunded. This authority applies to the payment transaction workflow and does not automatically authorize amending finalized contractual terms, cancelling contracts outside existing authorization rules, or bypassing other independently governed business processes.
+
+Required safeguards: authorized actor identity (Finance, Administrator or Super Administrator); reason for reversal or refund; reference to the original verified payment; reversal or refund amount; date and time; appropriate transaction status; complete audit history; reconciled financial impact; historical traceability.
 
 Do not delete the original payment transaction. Do not silently overwrite a verified amount or verification event. Use linked reversal, refund, or adjustment events according to the existing architecture.
 
@@ -265,9 +281,11 @@ Reservation non-refundable rule: respect the applicable contractual non-refundab
 
 ## 15. Confirmed Sale Integration
 
-A sale becomes Confirmed only when: (1) the corresponding customer contract is Finalized, and (2) Finance has verified the payment required by the selected contractual payment scheme. A qualifying initial payment may be sufficient for Confirmed Sale under an approved installment scheme. The full purchase price does not necessarily need to have been settled for the sale to be Confirmed.
+**Owner ruling R7, 2026-11-12 (doc 13 §4).** A sale counts as sold (Closed Deal / Confirmed Sale) when approved receipts reach 25% of the contract price (workbook OPS §4.3). The full purchase price does not need to be settled for the sale to count. This replaces the earlier rule "finalized contract plus Finance-verified required payment".
 
-Reporting recognition: preserve existing Sales Performance Reporting rules. The full qualifying finalized contract value is counted once when the sale becomes Confirmed. The recognition date follows the relevant Finance confirmation event rather than an unverified payment claim. Avoid duplicate recognition when later installments are paid.
+A sale counts at 25% once the Administrator has approved the sale record; receipts cannot be approved before the sale itself is approved (OPS §4.2). Formal contract finalization (doc 05) is tracked separately and is not required for the count (owner follow-up ruling 3, 2026-11-12).
+
+Reporting recognition: the full contract value is counted once, on the date approved receipts first reach 25% (the Closed Deal date), rather than on any unapproved payment claim. The Stage 1 date (40%) and the Full Payment date (100%) are stamped and tracked separately. Avoid duplicate recognition when later installments are paid.
 
 Sales reversals: a reversal affecting a previously confirmed sale must be reconciled with the rules in `docs/business-rules/13-sales-performance-reporting.md`. Approved reporting principles include: a previously confirmed sale reversal may require a negative adjustment in the applicable reversal period; the affected sale returns to the appropriate pending or reconsideration workflow under existing rules; valid reconfirmation produces the corresponding positive adjustment in its new confirmation period; authorized price adjustments are reported through appropriate deltas; previously reported historical periods must remain auditable. Reconcile the precise trigger and consequences with document 13. Do not invent commission clawback calculations; those belong to future Commission Management business rules.
 
@@ -275,7 +293,7 @@ Sales reversals: a reversal affecting a previously confirmed sale must be reconc
 
 ## 16. Fully Paid Determination
 
-A contract is considered Fully Paid for activation eligibility only when Finance has verified that the entire applicable finalized contractual price is settled. The calculation must consider valid prior verified payments and any applicable reversal or correction events.
+A contract is considered Fully Paid for activation eligibility only when approved receipts (section 5.2) settle the entire applicable finalized contractual price. The date this is first reached is the Full Payment date (section 9.1). The calculation must consider valid prior verified payments and any applicable reversal or correction events.
 
 Do not assume a single payment with type `full` proves complete settlement. Do not equate customer record creation, contract submission, contract finalization, payment submission, Confirmed Sale, Fully Paid, and VIP Membership activation. These are separate lifecycle concepts.
 
@@ -283,7 +301,7 @@ Do not assume a single payment with type `full` proves complete settlement. Do n
 
 ## 17. VIP Membership Activation Eligibility
 
-An Active VIP Membership requires: (1) Admin-finalized VIP contract; (2) full settlement of the agreed purchase price; (3) Finance verification; (4) successful official membership activation.
+An Active VIP Membership requires: (1) Admin-finalized VIP contract; (2) full settlement of the agreed purchase price; (3) approval of the settling receipts by Finance, the Administrator or the Super Administrator (section 5.2); (4) successful official membership activation.
 
 Fully Paid does not automatically mean that the membership activation event has already occurred. Finance provides the verified settlement information needed for activation eligibility. The VIP Card Issuance and Membership workflows remain responsible for their respective authorized activation processes. Do not bypass the existing VIP Card Issuance rules.
 
@@ -291,11 +309,11 @@ Fully Paid does not automatically mean that the membership activation event has 
 
 ## 18. VIP Card ID Integration
 
-Preserve the latest approved official VIP Card ID rules documented in `docs/business-rules/06-vip-card-issuance.md`. The approved format is `YYMMDDNNNNNVTPMMS` (exactly 17 characters). Segments: YYMMDD = Actual official VIP Membership Activation Date; NNNNN = Existing official RA No. four-digit sequence padded to five digits; VT = VIP tier code; P+MM = Approved payment category and duration; S/N = Contract classification. Example: `27032000001G1C01S`.
+Preserve the latest approved official VIP Card ID rules documented in `docs/business-rules/06-vip-card-issuance.md`. The approved format is `YYMMDDNNNNNVTPMMS` (exactly 17 characters), one VIP Number for the Reservation Agreement, Grant and card (owner ruling R2, 2026-11-12). Segments: YYMMDD = Reservation Agreement recording date; NNNNN = monthly company-wide sequence; VT = VIP tier code; P+MM = payment category and duration snapshot; S/N = contract classification. Example: `27032000001G1C01S`.
 
-Required safeguards: no independent VIP serial generator; no official activation-date segment before actual activation; no card issuance merely because payment was submitted; no activation eligibility before Finance-verified full payment; no newly generated official ID when a historical payment is corrected; preserve the original assigned Card ID and its history; never recycle official issued identifiers.
+Required safeguards: one company-wide monthly allocator only; a payment correction never reissues the number; no card release merely because payment was submitted; no activation eligibility before Finance-verified full payment; no newly generated official ID when a historical payment is corrected; preserve the original assigned VIP Number and its history; never recycle official issued identifiers.
 
-Do not modify the VIP Card ID format or numbering allocator. If the actual RA numbering implementation conflicts with the documented policy, identify the conflict rather than inventing a new serial strategy.
+Do not modify the VIP Card ID format or numbering allocator. If the actual VIP Number implementation conflicts with the documented policy, identify the conflict rather than inventing a new serial strategy.
 
 ---
 
@@ -315,7 +333,7 @@ Required behavior:
 8. Finance monitors and reconciles the outstanding financial obligation.
 9. Once verified settlement and the required reconciliation conditions are satisfied, membership eligibility may be restored through the authorized workflow.
 
-Financial Hold must not delete the customer, delete the membership, create a replacement membership, generate a new VIP Card ID, replace the original activation date, restart the original validity duration, erase past benefit usage, rewrite existing finalized contract terms, or erase previously verified payment or refund records.
+Financial Hold must not delete the customer, delete the membership, create a replacement membership, generate a new VIP Number, replace the original activation date, restart the original validity duration, erase past benefit usage, rewrite existing finalized contract terms, or erase previously verified payment or refund records.
 
 Membership state modeling: inspect existing membership status conventions. If `Financial Hold` is not an existing status, describe it as a required business condition or controlled hold state. Do not assume it must be added to the same enum as Active, Expired, Suspended, or Cancelled. The future implementation must distinguish the underlying membership lifecycle from a temporary financial restriction.
 
@@ -327,7 +345,11 @@ Stay Points and other benefits: new benefit usage is restricted during Financial
 
 ## 20. Historical Payments and Imports
 
+**History import scope (owner ruling R11 item 5, 2026-11-12; Rollout Guide v1.4 §6 and §8).** Every seller and every unfinished sale is imported with its full receipt history. Finished sales are not imported; they stay in the Excel archives. A side-by-side parallel run follows, and the system takes over when a month closes with no unexplained differences. Details are in doc 11 (owner rulings amendment, 2026-11-12).
+
 The platform may support historical customer and financial records. Preserve existing original identities and verified financial facts. Historical financial records must not be treated as new unverified customer submissions when a documented and authorized certified-import process already governs them.
+
+**Imported receipts (owner follow-up ruling 8, 2026-11-12).** Receipts brought in by the history import are marked **Approved (imported)**. An Administrator signs off each import batch once; the receipts in a signed-off batch count as approved receipts without approving each one again. The sign-off is audited (doc 12) and the import marking stays visible on every imported receipt (doc 11 §26).
 
 Important distinctions:
 
@@ -346,9 +368,9 @@ The platform uses modular role permissions and record-level visibility rules. Th
 
 A module permission is not equivalent to unrestricted access to all financial transactions. Define the difference between submitting payment evidence through an authorized transaction workflow; viewing a customer's permitted payment history; accessing Finance verification queues; verifying or rejecting payments; approving and executing refunds or reversals; viewing complete Finance reports; and performing reconciliation.
 
-Staff, IST, and OST payment submission authorization must not grant Finance verification privileges.
+Receipt entry authorization (Clerk) must not grant approval privileges. Approval belongs to Finance, the Administrator and the Super Administrator (section 5.2).
 
-Sales Network record visibility: follow actual genealogy and customer access rules. IST members may have access to relevant own-customer and authorized team information. OST members may access only financial submission information relevant to their permitted customers and own sales. Do not expose unrelated customer financial data or payment evidence to another sales branch. Finance access must be appropriately authorized and auditable. Public Customer Lookup must never expose payment proofs, bank transaction information, receipts, or internal Finance audit details.
+Sales Network record visibility: follow actual genealogy and customer access rules. Sellers view only. IST members may view relevant own-customer and authorized team information. OST members may view only financial information relevant to their own sales. Do not expose unrelated customer financial data or payment evidence to another sales branch. Finance access must be appropriately authorized and auditable. There is no public card or customer lookup (owner ruling R11); payment proofs, bank transaction information, receipts and internal Finance audit details are never exposed publicly.
 
 ---
 
@@ -364,7 +386,7 @@ Reporting periods: use the project's established date and reporting conventions.
 
 ## 23. Mandatory Audit History
 
-All significant Finance operations must be auditable. Document audit requirements for: payment submission; proof upload or replacement; payment verification; payment rejection; return for correction; payment correction or resubmission; refund approval and execution; reversal approval and execution; payment reconciliation; balance-impacting adjustments; automatic overdue state changes; Financial Hold activation; Financial Hold resolution; resulting Sale or Membership eligibility changes.
+All significant Finance operations must be auditable. Document audit requirements for: receipt entry; blocked duplicate reference numbers; proof upload or replacement; receipt approval, flagging when the approver also entered the receipt; receipt rejection; return for correction; Fix and resend with the earlier version kept; late-receipt admission into the first open month; month close; Defaulted marking and restoration to Active; refund approval and execution; reversal approval and execution; payment reconciliation; balance-impacting adjustments; automatic overdue state changes; Financial Hold activation; Financial Hold resolution; resulting Sale or Membership eligibility changes.
 
 Audit information should preserve: acting user or system identity; authorized role or permission context; relevant customer and transaction identifiers; previous and resulting business state; timestamp; reason or supporting reference where applicable; correlation to the triggering financial event.
 
@@ -391,7 +413,7 @@ The Finance document explains its relationship with existing and planned modules
 | Reports and Analytics | Verified and reconciled financial figures |
 | Audit Logs | Traceable financial and membership changes |
 
-Do not duplicate business authority across modules. Finance remains responsible for payment verification and reconciliation. VIP Card Issuance must not develop a separate payment verification process. Sales Reporting must not independently accept unverified payments as confirmed revenue or sales qualification. The future Commission module must consume authorized verified sales events rather than invent an independent receipt-verification process.
+Do not duplicate business authority across modules. Receipt approval (Finance, Administrator or Super Administrator) and reconciliation stay in this module. VIP Card Issuance must not develop a separate payment verification process. Sales Reporting must not independently accept unverified payments as confirmed revenue or sales qualification. The future Commission module must consume authorized verified sales events rather than invent an independent receipt-verification process.
 
 ---
 
@@ -411,10 +433,10 @@ These values describe the updated standard-contract baselines and do not authori
 Known source-document concerns:
 
 1. A discrepancy between ₱390,000 and ₱780,000 in different sections of the Gold contract (Gold portion resolved by owner ruling 2026-11-10, doc 05 item 11).
-2. Unfinished payment amount wording in the Silver contract.
-3. Differences between historical Card Claim Date language and the newer official Membership Activation Date policy.
+2. Unfinished payment amount wording in an earlier Silver contract version (resolved by owner ruling 2026-11-12, doc 05 item 13: Php 240,000).
+3. Card Claim Date versus activation date as the validity start (resolved by owner ruling R2, 2026-11-12: the signed Grant's Card Claim Date applies, doc 06 §4.3).
 4. Missing definitive commercial details for some Move payment schemes.
-5. Unresolved details concerning Non-Standard commercial exceptions.
+5. Non-Standard commercial exceptions (resolved by doc 05 §10.2, 2026-11-12: Finance confirms the price and schedule after the Super Administrator approves).
 
 Do not silently resolve these legal or contractual issues through assumptions. Document them as requiring authoritative confirmation where they materially affect Finance requirements. Do not overwrite a finalized contractual amount merely to match a catalog price.
 
@@ -427,9 +449,9 @@ The finished Finance documentation must explicitly preserve these rules:
 1. Customer identity is separate from VIP contractual and financial records.
 2. Payment Scheme and Payment Type are separate concepts.
 3. Submitted payments are not verified payments.
-4. Authorized Staff, IST, and OST may submit permitted payment details and proof.
-5. Only authorized Finance personnel may verify and confirm receipt.
-6. Finance may approve and execute reversals and refunds without separate Admin approval.
+4. A Clerk enters receipts with a required, system-wide unique OR or bank reference number; sellers view only (R6, R4).
+5. Finance, the Administrator or the Super Administrator approves receipts; self-approval is allowed and audited; only approved receipts count (R6).
+6. Finance, the Administrator or the Super Administrator may reverse an approved receipt with a reason, as a dated reversal and never a deletion (R6).
 7. All financial corrections, refunds, and reversals require audit history.
 8. Original verified payment records remain traceable.
 9. Contract balances depend on verified financial activity.
@@ -440,11 +462,11 @@ The finished Finance documentation must explicitly preserve these rules:
 14. Confirmed Sale is separate from Fully Paid.
 15. Full payment does not automatically mean activation has occurred.
 16. Active VIP Membership requires official activation after verified full settlement.
-17. The final VIP Card ID is generated according to the approved activation-date and RA-derived numbering policy.
+17. The VIP Number follows doc 06 (issued at Reservation Agreement recording; Finance actions never reissue it).
 18. No independent VIP serial generator.
 19. Payment reversal that creates an outstanding balance on an Active membership triggers Financial Hold.
 20. Financial Hold restricts new VIP benefit usage.
-21. Financial Hold does not erase the customer, membership, original Card ID, activation date, or history.
+21. Financial Hold does not erase the customer, membership, original VIP Number, activation date, or history.
 22. Finance reconciliation may restore eligibility after valid verified settlement, subject to other eligibility requirements.
 23. Historical IDs and signed contract terms remain preserved.
 24. Sales and Finance reporting must not double-count transactions.
@@ -462,7 +484,7 @@ Staff submits reservation payment details and supporting proof. Finance has not 
 
 ### Scenario B — Finance Verifies Down Payment
 
-An approved installment contract receives a qualifying initial payment. Finance verifies receipt. The sale may become Confirmed if all contractual sale-confirmation conditions are satisfied. The membership is not automatically Active.
+An approved installment contract receives an initial payment. Finance, the Administrator or the Super Administrator approves the receipt. If approved receipts now reach 25% of the contract price, the sale counts as a Closed Deal on that date (doc 13 §4). The membership is not automatically Active.
 
 ### Scenario C — Installment Becomes Overdue
 
@@ -474,7 +496,7 @@ An authorized Finance user performs an approved reversal. The original transacti
 
 ### Scenario E — Active VIP Enters Financial Hold
 
-An Active VIP Membership loses its fully settled position due to an authorized verified-payment reversal. The system places it on Financial Hold. The original Card ID and activation date remain unchanged.
+An Active VIP Membership loses its fully settled position due to an authorized verified-payment reversal. The system places it on Financial Hold. The original VIP Number and activation date remain unchanged.
 
 ### Scenario F — Financial Hold Resolution
 
@@ -500,16 +522,16 @@ A previously verified payment affects a reported Confirmed Sale. The correction 
 
 ## 28. Unresolved Dependencies
 
-- Exact commercial formulas for Move A, Move B1, and Move B2.
+- Exact commercial formulas for Move A and Move B: resolved (doc 05 items 6, 7, 14).
 - Overpayment handling and customer-credit allocation.
 - Contract-specific refund exceptions.
-- Detailed Non-Standard commercial authorization.
+- Detailed Non-Standard commercial authorization: resolved (doc 05 §10.2).
 - Exact grace periods where none are established.
 - External payment-gateway or banking integrations.
 - Membership benefit treatment beyond the approved Financial Hold restriction.
 - Detailed Commission reversal and payout consequences.
 - Tax/accounting/reporting procedures not established by source documentation.
-- Gold/Silver contract source discrepancies.
+- Gold/Silver contract source discrepancies: resolved (doc 05 items 11 and 13).
 - RA numbering scope uniqueness verification.
 
 ---
@@ -517,9 +539,9 @@ A previously verified payment affects a reported Confirmed Sale. The correction 
 ## 29. Documentation Acceptance Checklist
 
 ### Authorization
-- [x] Staff, IST, and OST payment submission.
-- [x] Exclusive Finance verification authority.
-- [x] Finance refund/reversal authority.
+- [x] Clerk receipt entry with required, unique reference number (R6).
+- [x] Approval by Finance, Administrator or Super Administrator; audited self-approval (R6).
+- [x] Reversal by Finance, Administrator or Super Administrator with a reason; refunds.
 - [x] Record-level visibility and privacy.
 - [x] Protection against unauthorized financial changes.
 
@@ -549,8 +571,8 @@ A previously verified payment affects a reported Confirmed Sale. The correction 
 - [x] Dependent Sales and Membership effects.
 
 ### Sales
-- [x] Contract finalization dependency.
-- [x] Finance verification dependency.
+- [x] Contract finalization not required for the 25% count (section 15; follow-up ruling 3).
+- [x] 25% approved-collection Closed Deal trigger (R7).
 - [x] Confirmed Sale versus Fully Paid.
 - [x] Single full-value confirmation recognition.
 - [x] Reversal and reconfirmation adjustments.
@@ -581,8 +603,8 @@ A previously verified payment affects a reported Confirmed Sale. The correction 
 
 - **File created/updated:** `docs/business-rules/07-finance-and-payments.md`
 - **Major Finance sections completed:** Purpose and scope; responsibilities; roles/authorization/visibility; payment schemes vs types; payment purposes; payment record info; submission/verification workflow; schedules; balances; collection monitoring; overdue tracking; reversals/refunds; Confirmed Sale integration; Fully Paid; activation eligibility; Card ID integration; Financial Hold; historical payments; permission boundaries; reporting; audit; cross-module invariants; contractual restrictions; invariants; scenarios; unresolved dependencies; acceptance checklist.
-- **Payment authorization rules:** Staff/IST/OST may submit (subject to permissions); only Finance verifies; Finance may reverse/refund without Admin approval.
-- **Verification workflow:** submission → Finance review → verify/reject/return → verified payment counts; no self-verification; duplicate prevention.
+- **Payment authorization rules (original text, superseded by the 2026-11-12 amendment):** Staff/IST/OST may submit; only Finance verifies; Finance may reverse/refund without Admin approval.
+- **Verification workflow (original text, superseded by the 2026-11-12 amendment):** submission, Finance review, verify/reject/return, verified payment counts; no self-verification; duplicate prevention.
 - **Overdue tracking:** automatic from contractual schedules; no unauthorized penalties.
 - **Refund/reversal rules:** Finance authority, audit, idempotency, refund vs reversal distinction, reservation non-refundable.
 - **Financial Hold:** automatic on Active membership when verified payment reversed/refunded creating outstanding balance; restricts new benefit usage; preserves identity/history; restoration via verified settlement.
@@ -600,9 +622,33 @@ These rulings are authoritative and take precedence over earlier text in this do
 2. **Membership activation** may be performed by Finance, Admin and Super Administrator. Activation remains a separate event from Finance verification and from Fully Paid; none of them triggers the next automatically.
 3. **Payment allocation:** verified money is applied in order to the reservation fee, then the down payment, then installments. The reservation fee is part of the contract total, never added on top. One full payment with no separate reservation-fee payment therefore satisfies the reservation fee and every later line.
 4. **Reservation fee** is non-refundable. A reversal to correct an error is still allowed.
-5. **Contract cancellation with verified money** is two-step: Admin requests, Finance confirms or declines, and the requester cannot decide. Exception (owner decision, 2026-11-10): a Super Administrator bypasses this requester-cannot-decide separation-of-duties blocker and may both request and confirm/decline the same cancellation. Confirmed forfeiture preserves history and holds unpaid commissions.
-6. **Imported payment claims** are claims, not money. Each must be verified by Finance in the normal queue. Records already verified outside the system need a separate Historical import, which is not yet defined (open decision OD-8).
+5. **Contract cancellation with verified money** is two-step: Admin requests, Finance confirms or declines, and the requester cannot decide. Exception (owner decision, 2026-11-10): a Super Administrator bypasses this requester-cannot-decide separation-of-duties blocker and may both request and confirm/decline the same cancellation. Confirmed forfeiture preserves history and holds unpaid commissions. *(Amended 2026-11-12, item 8 below: under the overriding authority rule the Administrator, like the Super Administrator, may request and decide the same cancellation; the audit history shows it.)*
+6. **Imported payment claims** are claims, not money. Each must be verified by Finance in the normal queue. Records already verified outside the system need a separate Historical import, which is not yet defined (open decision OD-8). *(Amended 2026-11-12, item 9 below: the history import scope is now set; the approval treatment of imported receipts is still open.)*
 
-7. **Spot Cash, Move A and Move B (2026-11-09)** are released with the terms recorded in the doc 05 amendment. Finance consumes the finalized contract schedule: the Spot Cash balance is due 7 days after the reservation, Move B has a 40% down payment line that includes the reservation fee, and all lines follow the allocation order in item 3. A Move contract cannot be finalized until a Super Administrator records its written approval.
+7. **Spot Cash, Move A and Move B (2026-11-09)** are released with the terms recorded in the doc 05 amendment. Finance consumes the finalized contract schedule: the Spot Cash balance is due 7 days after the reservation, Move B has a 40% down payment line that includes the reservation fee, and all lines follow the allocation order in item 3. ~~A Move contract cannot be finalized until a Super Administrator records its written approval.~~ Superseded by doc 05 item 12 (effective 2026-11-09): Move A and Move B are standard approved schemes and need no per-contract written approval.
 8. **Due dates** derive from the reservation date (doc 05 amendment, item 9). The Move B down payment has no documented due date, so it is undated and is not overdue until a date is entered.
 9. **Collection views** show, per contract, a ledger of verified payments and adjustments with running net and balance, and the separate milestones: payment recorded, payment verified, sale confirmed, commission release threshold, fully paid, membership activated, Card ID issued. Overdue days are whole calendar days in Asia/Manila. No penalty, interest or grace period is computed.
+
+## Owner rulings amendment (2026-11-12, rounds R6, R7, R11)
+
+These rulings are authoritative and take precedence over earlier text in this document, including the 2026-11-09 and 2026-11-10 rulings, where they differ. Ground rule: the company workbook wins by default; dated owner rulings outrank everything. Workbook source: Commission System User Manual v2.3 (OPS) §4.3, §4.4 and §5.
+
+1. **Receipt entry (R6 item 1).** A Clerk enters each receipt with a required OR number or bank reference number (OPS §4.3). The Administrator and the Super Administrator may also enter receipts. Sellers view only. Sections 5.1 and 9.1.
+2. **Receipt approval (R6 item 1; overriding authority rule).** Finance, the Administrator or the Super Administrator approves a receipt. Only an approved receipt counts. Self-approval is allowed and the audit history shows that the same person entered and approved. This replaces "Finance is the sole authority", the no-self-verification block, and the 2026-11-10 Super Administrator exceptions. Section 5.2.
+3. **Unique reference number (R6 item 2).** The OR or bank reference number is unique across the whole system; a duplicate is blocked. Section 9.2.
+4. **Fix and resend (R6 item 3, U06).** A returned receipt has a "Fix and resend" control for the person who entered it. Resending creates a new version; the old version stays in history. Section 9.1.
+5. **Undoing an approved receipt (R6 item 4).** Finance, the Administrator or the Super Administrator may undo an approved receipt (keying error or bounced cheque) with a reason. It is a dated reversal, never a deletion; closed-month figures are not rewritten. Section 14. Note: OPS §4.3 limits a keying-error reversal to the open month and allows a returned cheque in any month; the owner ruling states no month limit, so none is added here.
+6. **Late receipts (R6 item 5, R7 item 2).** A receipt dated in a closed month counts in the first open month (OPS §4.3). Section 9.1.
+7. **Sales counting, month close and defaults (R7).** A sale counts (Closed Deal / Confirmed Sale) when approved receipts reach 25% of the contract price, dated on the day 25% is reached; the 40% (Stage 1) and 100% (Full Payment) dates are tracked separately. The Administrator or the Super Administrator closes a month, and closed figures never change. Sales with no approved receipt for 90 days are listed; the Administrator or the Super Administrator marks a sale Defaulted, and it returns to Active if the buyer pays again. Doc 13 §4 to §4.6 govern; clawback effects are in doc 08. Sections 12 and 15.
+8. **Cancellation decision (overriding authority rule).** 2026-11-09 item 5 is amended: the Administrator, like the Super Administrator, may both request and decide the same cancellation; the audit history shows it.
+9. **History import (R11 item 5).** Every seller and every unfinished sale is imported with its full receipt history; finished sales stay in the Excel archives; a side-by-side parallel run follows and the switch happens when a month closes with no unexplained differences (Rollout Guide v1.4 §6 and §8). This sets the scope of OD-8. Section 20. *Imported receipt approval settled 2026-11-12 (follow-ups, item 3 below).*
+10. **No public lookup (R11 item 1).** There is no public card or customer check; payment information is never exposed publicly. Sections 5.4 and 21.
+11. **Open, not decided here:** whether contract finalization is still required before the 25% count. Doc 05 §13 still requires a finalized contract; the workbook has no separate finalization step (OPS §4.2 only requires the sale itself to be approved before its receipts). Section 15.
+
+## Owner rulings amendment (2026-11-12, follow-ups)
+
+These rulings take precedence over earlier text in this document where they differ.
+
+1. **Counting at 25% (owner ruling).** A sale counts at 25% once the Administrator has approved the sale record. Formal contract finalization is tracked separately and is not required for the count (workbook OPS §4.2). Section 15; the former open question and the section 28 item are closed.
+2. **Seller payment slip.** A seller may upload a payment slip photo for their own customer. It is proof only and counts only after a Clerk enters the receipt and Finance, the Administrator or the Super Administrator approves it. Sections 5.1 and 9.1.
+3. **Imported receipts.** History receipts come in marked "Approved (imported)". An Administrator signs off each import batch once. Section 20; the section 28 item is closed.

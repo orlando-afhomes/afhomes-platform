@@ -4,7 +4,7 @@
 - Objective: the controlled product catalog, contract preparation, review and finalization, and the sales milestones.
 - Business rules: `docs/business-rules/05-vip-products-and-contracts.md` sections 10 to 13 and amendment; `06-vip-card-issuance.md` sections 4 and 6 to 9; `13-sales-performance-reporting.md` sections 3 to 6. Workbook references: NUM sections 2 to 6 and 9, OCT R31, R38, O2, OPS section 4.2.
 - Depends on: FP4.
-- Open decisions: G03, G05 (Conflicting), G06, G07, G12. From `AGENTS.md` section 5: Gold installment price, unfinished Silver amount, Non-Standard contract authorization.
+- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G03, G05 (Conflicting), G06, G07, G12. From `AGENTS.md` section 5: Gold installment price, unfinished Silver amount, Non-Standard contract authorization.
 
 Routes (from the atlas):
 
@@ -30,7 +30,7 @@ Routes (from the atlas):
 | Current | An authorized administrator edits approved product terms and configuration. Values are validated. Finalized contracts keep their terms. Standard Move A and Move B terms and Card ID mappings are recorded in docs 05 and 06. |
 | Target | Choose versioned product terms and the applicable contract template. Show the conflict between the doc 07 amendment item 7 and doc 05 item 12 on per-contract Move approval. |
 | Layer | Frontend (mock) |
-| Blocked by | none for the current catalog. The Move effective date and template are a separate decision (G06). |
+| Blocked by | none for the current catalog. The Move effective date and template are a separate decision (G06 (decided R6)). |
 | Acceptance | A configuration change never rewrites a finalized contract. Unapproved tier codes are not activated (only Bronze B1, Silver S1, Gold G1). No prices are invented. |
 | Status | Exists (per atlas) |
 
@@ -76,9 +76,9 @@ Routes (from the atlas):
 |---|---|
 | Journey | J06, J07 |
 | Current | The platform has Confirmed Sale. There is no complete Closed Deal, late-period, replacement or cure workflow. `src/modules/finance/milestones.ts` changed in `fc060bb`. |
-| Target | If adopted, keep both the platform Confirmed Sale and the workbook measures (Closed Deal at 25% for VIP or 10% for IGP, the 40% stage, and 100% settlement), derived from one verified ledger with linked reversals and decision evidence. |
+| Target | Per R7: a sale counts at 25% collected (Closed Deal), replacing the D25 rule. Months are closed and late receipts go into the first open month. A sale with no payment for 90 days is listed and an Administrator marks it Defaulted. Keep the platform Confirmed Sale and derive all measures from one verified ledger with linked reversals. |
 | Layer | Owner decision |
-| Blocked by | G07 |
+| Blocked by | G07 (decided R7) |
 | Acceptance | After the decision: one ledger source, no double-counting (doc 13). |
 | Status | Partial |
 
@@ -90,9 +90,9 @@ Routes (from the atlas):
 | Current | Separate RA and an activation-based Card ID. Format `YYMMDDNNNNNVTPMMS` per doc 06. |
 | Target | Preserve historical identifiers. Approve the issuance trigger and namespace before new real numbers. |
 | Layer | Owner decision |
-| Blocked by | G05 (Conflicting) |
+| Blocked by | G05 (decided R2) |
 | Acceptance | No duplicates. No competing serial allocator. Issued numbers are preserved. |
-| Status | Blocked |
+| Status | Decided, awaiting build authorization |
 
 ## F5.7 IGP flow
 
@@ -102,7 +102,7 @@ Routes (from the atlas):
 | Current | No IGP page exists. The workbook IGP process is documented (U10). |
 | Target | Scope decision first. If included, show it in the manual view and add a flow after approval. |
 | Layer | Owner decision |
-| Blocked by | G12, U10 |
+| Blocked by | G12 (decided R11 to R13), U10 (decided R13) |
 | Acceptance | To be defined after the decision. |
 | Status | Missing |
 

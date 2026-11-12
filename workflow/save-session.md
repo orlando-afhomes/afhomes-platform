@@ -114,62 +114,65 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 - Saved at: 2026-11-12
 - Repository: afhomes-platform (remote `https://github.com/orlando-afhomes/afhomes-platform.git`)
 - Branch: develop
-- HEAD: 5fdd8d3 "feat: redesign member detail page, remove Sales Network overview, and space page actions", equal to origin/develop (pushed this session). Parent a1eb1bf (owner commit "enhance: ui design components and remove unecessary components"). Verified this run: working tree clean, nothing staged, one stash kept.
-- Session objective: (1) responsive stat card, pointer cursor, accreditation dropdown restyle (committed earlier by the owner in a1eb1bf); (2) member detail page redesign; (3) remove the Sales Network overview page and space header action buttons; (4) fix the duplicate "AA" in the member header; (5) integrate with a1eb1bf, then commit and push.
+- HEAD: fc060bb "feat: opt routes out of instant navigation and fix commission/payout and stay-point rules" (verified this run). Whether it is pushed was not checked.
+- Session objective: (1) explore the Codex-built Workflow Atlas viewer and write a feature-by-feature implementation roadmap in `docs/implementation/`; (2) create the `/update-workflow-atlas` command, which updates the atlas (the project's workflow memory) when workflows, processes or rules change.
 - Development phase: frontend prototype with mock data, QA stage. Only the owner declares frontend completion.
-- Context note: no compaction notice. Subagents prepared merge resolutions in the scratchpad; their reports are model output, verified by running tsc, lint, tests, and build in the real repo.
+- Context note: no compaction notice. The model changed through `/model` (Opus 5.5 during planning, Sonnet 5.5 for writing). The previous snapshot's login and instant-navigation work is carried forward in sections 2 and 6.
 
 ## 2. Current Project State
-- Committed and pushed (5fdd8d3):
-  - Member detail page `src/panels/admin/pages/sales-network-member-detail-page.tsx`: `DetailHero` summary, tabs Overview/Profile/Downline/History (Profile and History only when data exists), grouped Profile cards with `InfoGrid`/`InfoItem`, formatted dates, header subtitle shows the AA number once (aaDisplay already includes the AA prefix). It also keeps the owner's `DetailSkeleton`, member and actor name lookups (`parentLabel`, `actorLabel`), `humanize`, and `AdminSectionHeading` sections. The local parent text variable is `parentDisplay`.
-  - New shared components: `src/shared/components/admin/detail-hero.tsx` (exported from the admin index) and `src/shared/components/modern/info-grid.tsx`. `AdminTabs` takes an optional `idPrefix` for tab-to-panel linkage. `DetailRow`/`DetailList` unchanged.
-  - Sales Network overview page and `sales-network-panel.tsx` removed; `/admin/sales-network` redirects to `/admin/sales-network/members`; "Sales Network" breadcrumb is plain text on Members, Genealogy and member detail. The member's own referral code is now a card on My Account (`MyReferralCodeCard`).
-  - `AdminPage`, `DashboardHeader` and `DashboardCard` wrap header actions in a flex container with `gap-2`.
-  - `accreditation-status-action.tsx`: select-style trigger with status dot, rotating chevron, check on the current item, and the owner's Spinner and `loading` props.
-- In the owner's a1eb1bf (already in the repo): global pointer-cursor rule in globals.css, responsive `AdminStatCard` with auto-shrinking values, new skeletons, pagination, `humanize`, `Spinner`, and `AdminSectionHeading` components.
+- Workflow Atlas (outside the repo, not in Git): `C:/Users/SSD-ORLANDO/.codex/visualizations/2026/11/12/01a1cd9b-0453-7c43-bed7-0f196ed66259/afhomes-viewer/dist/index.html`. Version `2026-11-12.1`, baseline `develop @ a0bdcef`, so it is one commit behind. Contents (read from `data/workflows.json`, `data/catalog.mjs`, `COVERAGE.md`): 10 modules, 16 roles, 53 routes, 12 journeys J01 to J12 (four views each), 12 decisions G01 to G12, 13 gaps U01 to U13. Build chain: `node data/build-workflows.mjs`, `npm run build`, `npm test`, `npm run qa`.
+- Roadmap: `docs/implementation/` holds `README.md`, `decisions-and-gaps.md` and `phase-01` to `phase-11` files (feature phases FP1 to FP11, 65 feature cards, IDs `F<phase>.<n>`). Phase order follows subphases 4A to 4L of `docs/development/implementation.md`, which was not edited.
+- Command: `.claude/skills/update-workflow-atlas/SKILL.md` (wrapper, `disable-model-invocation`) and `workflow/update-workflow-atlas.md` (procedure: resolve atlas, detect changes since the baseline, report and wait for approval, back up, edit, rebuild and verify, sync docs, report). The default atlas path is the newest `afhomes-viewer` under `~/.codex/visualizations/`.
+- Earlier state still true: login and mock auth (`src/panels/public/login/`, `src/data/mock/mock-credentials.ts`, `src/shared/providers/mock-session.ts`, `src/panels/admin/components/admin-auth-gate.tsx`), `export const instant = false` in 49 admin files.
 
 ## 3. Important Decisions
-- Owner ruled the 2-word limit covers stat card labels and descriptions; menu items and select options also show the pointer cursor; the referral code moves to My Account when the overview page is removed.
-- Owner granted a one-time permission to integrate, commit and push. The AGENTS.md Git prohibition is unchanged and applies again by default. Git operations performed by the agent this session: `git stash push -u`, `git pull --ff-only`, `git stash pop`, `git rm`, `git add`, `git commit`, `git push origin develop`. No merge, rebase, reset, force, or branch switch.
-- Earlier owner rulings still apply: Gold pricing finalized (Spot/Move A 312,000; Installment/Move B 390,000); Customer ID `YYYY-NNNN` assigned at submit; wizard draft in `sessionStorage` (`afhomes.customer-wizard.v1`) is the only persisted browser state.
-- Restrictions: AGENTS.md and CLAUDE.md edits need owner authorization.
+- Owner decision: the atlas acts as the project's workflow memory, and `/update-workflow-atlas` updates the atlas itself. The atlas path is passed as an argument. Owner chose that the command takes a path argument (not a repo copy).
+- Docs are planning only. No feature is authorized by the roadmap; each still needs explicit owner authorization (`AGENTS.md` section 7).
+- The atlas is evidence, not authority. Business-rule documents win on conflict. Conflicts are recorded as G items and not resolved.
+- Mock login and all `instant = false` lines must be removed when real authentication lands (memory `mock-login-removal.md`). Memory `workflow-atlas.md` records the atlas location and command.
+- AGENTS.md Git prohibition applies; the owner performs all commits.
 
 ## 4. Completed Work
-- All items in section 2, plus tests: new `src/panels/admin/sales-network-member-detail-page.test.tsx` (3 tests) and 2 new tests in `my-account-page.test.tsx`.
-- Verified before the commit, in the real repo after the merge: `npx tsc --noEmit` 0 errors; ESLint clean on the changed files; 58 of 58 targeted tests; `npm run build` compiled successfully.
-- Earlier browser checks (before the merge): member detail at 1280 and 360 px, tab-to-panel links, accreditation dropdown, cursors.
+- Created `docs/implementation/` (13 files) and the command files above.
+- Verified with a node script: all 53 routes, all J, G and U IDs appear in the docs; every feature ID cited in `decisions-and-gaps.md` has a card; no broken relative links.
+- Verified in code at `fc060bb`: U06 is real (`src/panels/admin/components/payment-actions.tsx` only mentions resubmission in text, while `src/data/mock/payment-repository.ts` supports it); `/verify` and `/register/ost` exist; no Redemption or Services route.
+- Not re-checked in code: other AS-IS statuses, which come from the atlas at `a0bdcef`.
 
 ## 5. Git Working Tree
-- Staged: none. Unstaged: none. Untracked: none. Working tree clean.
-- Stash: `stash@{0}` "local: sales-network cleanup + member detail redesign" kept as a backup; its content is in 5fdd8d3 and it can be removed with `git stash drop`.
-- Line endings: working copy is CRLF, Git stores LF; this caused false whole-file conflicts in a manual dry run until normalized. Warnings about LF to CRLF are expected.
+- Staged: none (verified).
+- Unstaged: `workflow/save-session.md` (modified before this session's work began, now replaced by this snapshot).
+- Untracked, this session: `.claude/skills/update-workflow-atlas/SKILL.md`, and the 13 files in `docs/implementation/`.
+- Ignored by Git: `workflow/update-workflow-atlas.md` was created this session but `.gitignore` line 16 (`/workflow/*`) ignores it. Only `load-session.md` and `save-session.md` are tracked. The owner decides whether to track it (for example with `git add -f`).
+- Stash: `stash@{0}` "local: sales-network cleanup + member detail redesign" is still kept as a backup.
+- Line endings: the working copy mixes CRLF and LF; compare with `git diff --ignore-cr-at-eol`.
 
 ## 6. Pending Tasks
-- Browser QA on the merged result: member detail page, Members dropdown with spinner, Add IST / Add OST gap, `/admin/sales-network` redirect, My Account as a sales identity (`dev-svd-a`). Not done after the merge.
-- Not covered: keyboard navigation of the member tabs (Arrow, Home, End), History tab and Downline collapse in the browser, tests for the History fallback and ambiguous-accreditation note.
-- Failing tests that are not from this work: `src/shared/components/modern/pagination.test.tsx` ("calls onPageChange from the controls and disables the ends", fails in a1eb1bf alone); `src/panels/admin/dashboard-page.test.tsx` ("derives every Super Admin figure", text "Customer submitted" not found; it also failed before a1eb1bf and with the owner's layout files, not checked against a pristine tree).
-- Open owner decisions carried over: Move B down-payment due date, required initial payment per scheme, overpayment/refund timing, Welcome Gift lapse, template authority, commission default rates. Doc 04 section 7.8 and the Customer ID decision D2 are still stale.
+- `/update-workflow-atlas` has never been run. The first run should refresh the atlas from `a0bdcef` to `fc060bb` (commission release, payout and stay-point rule changes affect G08 and G10 and journeys J09 and J11). Its atlas steps (resolve, back up, rebuild, browser QA) are untested.
+- F6.4 (Returned-receipt resubmit control, U06) is the clearest unblocked frontend feature.
+- Tests that failed before this session and were not investigated: `business-pages.test.tsx` ("CTR-4" contract list, and Reservation return with the Customer ID message); `pagination.test.tsx` is stale; `dashboard-page.test.tsx` "derives every Super Admin figure".
+- Open owner decisions: G01 to G12 in `docs/implementation/decisions-and-gaps.md`, plus those in `AGENTS.md` section 5. Doc 04 section 7.8 and Customer ID decision D2 are stale.
+- Browser QA not done: forgot-password screen, full admin sidebar, member detail page, My Account.
 - No blockers.
 
 ## 7. Verification State
-- Tests: targeted suites listed in section 4 passed; the full suite was not run. Known failures in section 6.
-- Lint: clean on changed files; full `npm run lint` not run.
-- Typecheck: 0 errors after the merge.
-- Build: succeeded after the merge.
-- Browser QA: see section 6.
+- Tests: not run this session (documentation only). Earlier failures in section 6.
+- Lint: not run. Typecheck: not run. Build: not run. No `src/` change.
+- Doc checks: the node script and link check above passed.
+- Browser QA: not run this session.
+- Checks not performed: the atlas rebuild, its tests and its browser check; statuses re-verified against code beyond the items in section 4.
 
 ## 8. Next Session Instructions
-- Recommended first action: `/load`, then a browser pass over the merged pages (list in section 6), then decide how to handle the two unrelated failing tests.
-- Relevant files: `src/panels/admin/pages/sales-network-member-detail-page.tsx`, `src/shared/components/admin/detail-hero.tsx`, `src/shared/components/modern/info-grid.tsx`, `src/shared/components/admin/admin-tabs.tsx`, `src/panels/admin/components/accreditation-status-action.tsx`, `src/panels/admin/pages/my-account-page.tsx`.
-- Required approvals: any commit or push (owner only unless explicitly authorized again), AGENTS.md/CLAUDE.md edits, new dependencies.
-- Warnings: do not run build and tests together; do not delete `.next`; a full page reload resets mock data to seed; stash is a backup, not needed after verification; scratchpad holds merge-prep and overlay folders that can be discarded.
+- Recommended first action: `/load`, then run `/update-workflow-atlas` to refresh the atlas, or pick one feature card (F6.4 first) for owner authorization.
+- Relevant files: `docs/implementation/README.md`, `docs/implementation/decisions-and-gaps.md`, `workflow/update-workflow-atlas.md`, the atlas `data/catalog.mjs`.
+- Required approvals: any commit or push (owner only), any feature implementation, atlas edits (the command waits for the owner), AGENTS.md or CLAUDE.md edits, new dependencies, real authentication work.
+- Warnings: the atlas is not in Git, so keep its backup step; do not run build and tests together; do not delete `.next`; a full page reload resets mock data; mock credentials must never be shown on the login page.
 
 ## 9. Execution Recommendation
-- Phase: QA
+- Phase: Plan
 - Recommended next mode: default (ask before edits)
 - Recommended model: Sonnet 5.5
-- Effort: low
+- Effort: medium
 - Ultracode: OFF
-- Token optimization: one browser pass and one targeted test run; investigate the two failing tests separately.
-- Reason: code, tests and build are verified and pushed, but the merged UI has not been checked in the browser.
+- Token optimization: read journey and route slices from `workflows.json` with one-line node commands, not the whole file; one feature card per task.
+- Reason: the next steps are an atlas refresh and one small unblocked feature, both ordinary scoped work.
 <!-- SESSION_SNAPSHOT_END -->

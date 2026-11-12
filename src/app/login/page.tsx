@@ -1,13 +1,11 @@
+import { Suspense } from "react";
+import { StaffLoginPage } from "@/panels/public/pages/staff-login-page";
 
-import "./login.css";
-
-export default function LoginPage() {
+// Sign-in state is client-side; Suspense streams it per request under cacheComponents.
+export default function Page() {
   return (
-    <main className="login-page">
-      <h1 className="login-page__title">Login</h1>
-      <p className="login-page__description">
-        Sign in to access authorized AFhomes features.
-      </p>
-    </main>
+    <Suspense fallback={<p role="status">Loading sign in…</p>}>
+      <StaffLoginPage />
+    </Suspense>
   );
 }

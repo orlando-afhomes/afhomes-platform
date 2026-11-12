@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { AdminAuthGate } from "@/panels/admin/components/admin-auth-gate";
 import { AdminLayout } from "@/panels/admin/layouts/admin-layout";
 import { AdminShellSkeleton } from "@/shared/components/modern/skeletons";
 
@@ -9,7 +10,9 @@ import { AdminShellSkeleton } from "@/shared/components/modern/skeletons";
 export default function AdminSectionLayout({ children }: { children: React.ReactNode }) {
   return (
     <Suspense fallback={<AdminShellSkeleton />}>
-      <AdminLayout>{children}</AdminLayout>
+      <AdminAuthGate>
+        <AdminLayout>{children}</AdminLayout>
+      </AdminAuthGate>
     </Suspense>
   );
 }

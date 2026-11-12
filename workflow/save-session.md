@@ -114,61 +114,62 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 - Saved at: 2026-11-12
 - Repository: afhomes-platform (remote `https://github.com/orlando-afhomes/afhomes-platform.git`)
 - Branch: develop
-- HEAD: 0c6d2c6 "feat: add customer attribution validation, exit protection, and UI polish" (owner-committed). Verified this run: nothing staged; 103 changed paths (93 modified, 10 untracked).
-- Session objective: UI standardization pass across all admin pages: skeleton loaders and button spinners; table and filter layout with one reusable pagination (10 rows per page); stat-card design; one searchable dropdown; title-case labels; no raw ids on screen. Each item was owner-requested; the larger ones were planned and approved first.
+- HEAD: 5fdd8d3 "feat: redesign member detail page, remove Sales Network overview, and space page actions", equal to origin/develop (pushed this session). Parent a1eb1bf (owner commit "enhance: ui design components and remove unecessary components"). Verified this run: working tree clean, nothing staged, one stash kept.
+- Session objective: (1) responsive stat card, pointer cursor, accreditation dropdown restyle (committed earlier by the owner in a1eb1bf); (2) member detail page redesign; (3) remove the Sales Network overview page and space header action buttons; (4) fix the duplicate "AA" in the member header; (5) integrate with a1eb1bf, then commit and push.
 - Development phase: frontend prototype with mock data, QA stage. Only the owner declares frontend completion.
-- Context note: no compaction notice. Subagents did much of the per-page work; their reports were relayed, not independently re-read.
+- Context note: no compaction notice. Subagents prepared merge resolutions in the scratchpad; their reports are model output, verified by running tsc, lint, tests, and build in the real repo.
 
 ## 2. Current Project State
-- Loading states: `Skeleton` (shimmer, 150 ms fade-in delay), `Spinner`, `Button loading` prop, composed skeletons in `src/shared/components/modern/skeletons.tsx`; `QueryState`/`DataTable` use them; admin layout and `/verify` have skeleton fallbacks. Opt-in mock latency: `NEXT_PUBLIC_MOCK_DELAY_MS` (read in `useMockRepositories`, `src/data/queries.ts`; off by default).
-- Tables: `DataTable` always shows 10 rows per page (`TABLE_PAGE_SIZE`), footer `Pagination` (`modern/pagination.tsx`: range/total, first/prev/numbers/next/last, no page-size select), optional `serverPagination` (used by Audit Logs). Old paginate prop and hand-written paging removed.
-- Layout: filter card and table card are direct siblings on pages (no titled card wrapping a table; `AdminSectionHeading` in `shared/components/admin` exists but the owner-marked headings were removed); `FilterBar` is one container, one row at md+, all controls 44 px, plus `header` slot; the filter sits directly above its table (stats moved above on Audit Logs and Payment History); Sales has one filter card (search, status, period dates).
-- Owner-removed content: headings Verification queue, Collections monitor, Confirmed sales, Approved commissions, All payments, Activation queue, Ledger (stay points), Product catalog, Payment scheme register (New scheme button moved to the page header), Commission records, the lone "All sales" tab, the "Showing N contracts" line, the stat-card vertical divider.
-- Stat cards (`AdminStatCard`): always row layout (chip + text, no divider), value shrinks to fit. Dashboard KPI cards unchanged.
-- Dropdowns: one `SearchSelect` (`modern/search-select.tsx`, type-to-filter combobox, 44 px) used by `SelectField` (showSearch removed), `FilterBar`, the dashboard date filter, and the Account, Department, Role dialogs and Genealogy team filter. `shared/ui/select.tsx` has no callers (left in place). Action menus (`DropdownMenu`) unchanged by owner decision.
-- Display text: `humanize` (`shared/lib/humanize.ts`) title-cases enum/status/action values; `StatusBadge` and `StatusPill` use it. Payment method labels were left alone (GCash).
-- Raw ids hidden: `recordLabel` (`shared/lib/record-label.ts`) builds labels like "Contract · Name · B1". Audit events now carry `entityLabel` and `actorName` (types in `modules/audit/types.ts`, built in `data/mock/audit-repository.ts`); Audit Logs hides ids and its actor filter matches names. Contracts table lost its id column; contract and customer detail titles, import job labels, member relationship history (branch columns removed), dashboard activity references, and duplicate-payment and status-transition error messages were updated.
+- Committed and pushed (5fdd8d3):
+  - Member detail page `src/panels/admin/pages/sales-network-member-detail-page.tsx`: `DetailHero` summary, tabs Overview/Profile/Downline/History (Profile and History only when data exists), grouped Profile cards with `InfoGrid`/`InfoItem`, formatted dates, header subtitle shows the AA number once (aaDisplay already includes the AA prefix). It also keeps the owner's `DetailSkeleton`, member and actor name lookups (`parentLabel`, `actorLabel`), `humanize`, and `AdminSectionHeading` sections. The local parent text variable is `parentDisplay`.
+  - New shared components: `src/shared/components/admin/detail-hero.tsx` (exported from the admin index) and `src/shared/components/modern/info-grid.tsx`. `AdminTabs` takes an optional `idPrefix` for tab-to-panel linkage. `DetailRow`/`DetailList` unchanged.
+  - Sales Network overview page and `sales-network-panel.tsx` removed; `/admin/sales-network` redirects to `/admin/sales-network/members`; "Sales Network" breadcrumb is plain text on Members, Genealogy and member detail. The member's own referral code is now a card on My Account (`MyReferralCodeCard`).
+  - `AdminPage`, `DashboardHeader` and `DashboardCard` wrap header actions in a flex container with `gap-2`.
+  - `accreditation-status-action.tsx`: select-style trigger with status dot, rotating chevron, check on the current item, and the owner's Spinner and `loading` props.
+- In the owner's a1eb1bf (already in the repo): global pointer-cursor rule in globals.css, responsive `AdminStatCard` with auto-shrinking values, new skeletons, pagination, `humanize`, `Spinner`, and `AdminSectionHeading` components.
 
 ## 3. Important Decisions
-- Owner: section titles became plain headings, later removed where marked; period dates join the single filter card; all tables 10 rows (no page-size choice); 4-card stat rows stay 4 across with shrinking values; action menus stay as menus; raw ids use "descriptive label" replacements.
-- Restrictions: agents perform no Git writes; AGENTS.md/CLAUDE.md edits need owner authorization. `docs/ui` was deleted once by mistake and restored from `C:\Users\user\OneDrive\Desktop\Pictures\Screenshots` (originals still there).
-- Earlier owner rulings still apply (Gold pricing, Move A/B schemes, uppercase government IDs, Customer ID `YYYY-NNNN`, wizard draft in sessionStorage only).
+- Owner ruled the 2-word limit covers stat card labels and descriptions; menu items and select options also show the pointer cursor; the referral code moves to My Account when the overview page is removed.
+- Owner granted a one-time permission to integrate, commit and push. The AGENTS.md Git prohibition is unchanged and applies again by default. Git operations performed by the agent this session: `git stash push -u`, `git pull --ff-only`, `git stash pop`, `git rm`, `git add`, `git commit`, `git push origin develop`. No merge, rebase, reset, force, or branch switch.
+- Earlier owner rulings still apply: Gold pricing finalized (Spot/Move A 312,000; Installment/Move B 390,000); Customer ID `YYYY-NNNN` assigned at submit; wizard draft in `sessionStorage` (`afhomes.customer-wizard.v1`) is the only persisted browser state.
+- Restrictions: AGENTS.md and CLAUDE.md edits need owner authorization.
 
 ## 4. Completed Work
-- All items in section 2, implemented across about 100 files. New files: `admin-section-heading.tsx`, `pagination.tsx` (+test), `search-select.tsx`, `skeletons.tsx`, `spinner.tsx`, `humanize.ts` (+test), `record-label.ts` (+test).
-- Verification actually run this session: `tsc --noEmit` 0 errors (last run at save time); ESLint 0 errors with one old warning (`modules/sales-network/genealogy.ts` unused `byId`); `npm run build` succeeded before the final raw-id edits.
+- All items in section 2, plus tests: new `src/panels/admin/sales-network-member-detail-page.test.tsx` (3 tests) and 2 new tests in `my-account-page.test.tsx`.
+- Verified before the commit, in the real repo after the merge: `npx tsc --noEmit` 0 errors; ESLint clean on the changed files; 58 of 58 targeted tests; `npm run build` compiled successfully.
+- Earlier browser checks (before the merge): member detail at 1280 and 360 px, tab-to-panel links, accreditation dropdown, cursors.
 
 ## 5. Git Working Tree
-- Staged: none.
-- Unstaged tracked: about 93 files across `src/shared`, `src/panels/admin`, `src/data/mock`, `src/modules/{audit,finance}`, `src/app`; mostly this session; earlier-session leftovers may be mixed in (unknown).
-- Untracked: `src/shared/components/admin/admin-section-heading.tsx`, `src/shared/components/modern/{pagination,pagination.test,search-select,skeletons}.ts(x)`, `src/shared/lib/{humanize,humanize.test,record-label,record-label.test}.ts`, `src/shared/ui/spinner.tsx`; `docs/ui/` (owner screenshots, also untracked).
-- Deleted or renamed: none.
+- Staged: none. Unstaged: none. Untracked: none. Working tree clean.
+- Stash: `stash@{0}` "local: sales-network cleanup + member detail redesign" kept as a backup; its content is in 5fdd8d3 and it can be removed with `git stash drop`.
+- Line endings: working copy is CRLF, Git stores LF; this caused false whole-file conflicts in a manual dry run until normalized. Warnings about LF to CRLF are expected.
 
 ## 6. Pending Tasks
-- Fix tests that assert old text (cannot run here): `src/panels/admin/dashboard-metrics.test.ts` (~lines 238-244 expect references like "COM-1", "PAY-4"; fixtures need `customerName`/`displayName`), `src/panels/admin/business-pages.test.tsx:276` (`findAllByText("CTR-4")`), page tests using "Actor id", old Audit Logs/section headings, or lowercase status text.
-- Re-run ESLint and `npm run build` after the final raw-id edits (not done after them).
-- Browser QA of everything above (none done): 4-card stat rows at 1280-1366 px, Audit Logs filter row width, dropdowns in dialogs, pagination on mobile, loaders with `NEXT_PUBLIC_MOCK_DELAY_MS=800`.
-- Possible leftovers the owner may want removed: "N matching customer(s)" next to Export, "N visible member(s)" in the team list, and the other "Commission records" text on the commission-assignment page.
-- Owner decisions carried over: Move B down-payment due date, required initial payment per scheme, overpayment/refund timing, Welcome Gift lapse, template authority, commission default rates; doc 04 §7.8 and Customer ID format (D2).
-- Blocker for tests: Vitest crashes on load (jsdom's bundled undici under Node v22.14.0); a newer Node 22.x is the likely fix (unconfirmed).
+- Browser QA on the merged result: member detail page, Members dropdown with spinner, Add IST / Add OST gap, `/admin/sales-network` redirect, My Account as a sales identity (`dev-svd-a`). Not done after the merge.
+- Not covered: keyboard navigation of the member tabs (Arrow, Home, End), History tab and Downline collapse in the browser, tests for the History fallback and ambiguous-accreditation note.
+- Failing tests that are not from this work: `src/shared/components/modern/pagination.test.tsx` ("calls onPageChange from the controls and disables the ends", fails in a1eb1bf alone); `src/panels/admin/dashboard-page.test.tsx` ("derives every Super Admin figure", text "Customer submitted" not found; it also failed before a1eb1bf and with the owner's layout files, not checked against a pristine tree).
+- Open owner decisions carried over: Move B down-payment due date, required initial payment per scheme, overpayment/refund timing, Welcome Gift lapse, template authority, commission default rates. Doc 04 section 7.8 and the Customer ID decision D2 are still stale.
+- No blockers.
 
 ## 7. Verification State
-- Tests: none run this session (environment crash above). Added and updated tests are unverified.
-- Lint: 0 errors (earlier run). Typecheck: clean at save time. Build: succeeded earlier this session.
-- Browser QA: not performed.
+- Tests: targeted suites listed in section 4 passed; the full suite was not run. Known failures in section 6.
+- Lint: clean on changed files; full `npm run lint` not run.
+- Typecheck: 0 errors after the merge.
+- Build: succeeded after the merge.
+- Browser QA: see section 6.
 
 ## 8. Next Session Instructions
-- Recommended first action: `/load`, `git status --short`, fix Node (or run tests elsewhere), run the full `npx vitest run` once alone, then update the stale assertions in section 6.
-- Relevant files: `src/shared/components/modern/{data-table,pagination,filter-bar,search-select,skeletons}.tsx`, `src/shared/lib/{humanize,record-label}.ts`, `src/data/mock/audit-repository.ts`, `src/panels/admin/dashboard-metrics.ts`, `src/panels/admin/pages/audit-logs-page.tsx`.
-- Required approvals: any commit or push (owner only), AGENTS.md/CLAUDE.md edits, new dependencies, deleting `select.tsx`.
-- Warnings: do not run build and tests together; do not delete `.next`; never delete untracked owner files (`docs/ui`); LF to CRLF warnings are expected.
+- Recommended first action: `/load`, then a browser pass over the merged pages (list in section 6), then decide how to handle the two unrelated failing tests.
+- Relevant files: `src/panels/admin/pages/sales-network-member-detail-page.tsx`, `src/shared/components/admin/detail-hero.tsx`, `src/shared/components/modern/info-grid.tsx`, `src/shared/components/admin/admin-tabs.tsx`, `src/panels/admin/components/accreditation-status-action.tsx`, `src/panels/admin/pages/my-account-page.tsx`.
+- Required approvals: any commit or push (owner only unless explicitly authorized again), AGENTS.md/CLAUDE.md edits, new dependencies.
+- Warnings: do not run build and tests together; do not delete `.next`; a full page reload resets mock data to seed; stash is a backup, not needed after verification; scratchpad holds merge-prep and overlay folders that can be discarded.
 
 ## 9. Execution Recommendation
 - Phase: QA
-- Recommended next mode: Build (after the owner reviews the browser result)
+- Recommended next mode: default (ask before edits)
 - Recommended model: Sonnet 5.5
-- Effort: medium
+- Effort: low
 - Ultracode: OFF
-- Token optimization: one test run once Node is fixed; browser pass per page group, not per component.
-- Reason: broad UI work is implemented but unverified at runtime; the remaining work is test repair and browser QA.
+- Token optimization: one browser pass and one targeted test run; investigate the two failing tests separately.
+- Reason: code, tests and build are verified and pushed, but the merged UI has not been checked in the browser.
 <!-- SESSION_SNAPSHOT_END -->

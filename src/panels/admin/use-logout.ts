@@ -3,6 +3,7 @@
 import { createElement, useState, type ReactElement } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 
 /**
@@ -12,6 +13,7 @@ import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 export function useLogout(): { logout: () => void; dialog: ReactElement } {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { signOut } = useDevIdentity();
   const [open, setOpen] = useState(false);
 
   const dialog = createElement(ConfirmDialog, {
@@ -22,7 +24,8 @@ export function useLogout(): { logout: () => void; dialog: ReactElement } {
     onConfirm: () => {
       setOpen(false);
       queryClient.clear();
-      router.push("/login");
+      signOut();
+      router.replace("/login");
     },
     onClose: () => setOpen(false),
   });

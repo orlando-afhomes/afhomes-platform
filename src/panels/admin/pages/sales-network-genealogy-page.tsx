@@ -113,7 +113,7 @@ export function SalesNetworkGenealogyPage() {
       anyOf={["sales-network"]}
       title="Sales Network Genealogy"
       description="Authorized hierarchy visualization."
-      crumbs={[{ label: "Sales Network", href: "/admin/sales-network" }, { label: "Genealogy" }]}
+      crumbs={[{ label: "Sales Network" }, { label: "Genealogy" }]}
     >
       <Card className="tw:flex-col tw:lg:flex-row tw:lg:items-start">
         <div className="tw:relative tw:w-full tw:lg:max-w-sm">

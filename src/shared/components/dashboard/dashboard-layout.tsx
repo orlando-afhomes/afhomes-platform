@@ -30,7 +30,7 @@ export function DashboardHeader({ title, description, actions }: { title: string
         <h1 className="tw:text-[1.75rem] tw:leading-tight tw:font-bold tw:tracking-tight tw:text-foreground">{title}</h1>
         <p className="tw:mt-1.5 tw:text-sm tw:text-muted-foreground">{description}</p>
       </div>
-      {actions ? <div className="tw:shrink-0">{actions}</div> : null}
+      {actions ? <div className="tw:flex tw:shrink-0 tw:flex-wrap tw:items-center tw:gap-2">{actions}</div> : null}
     </div>
   );
 }
@@ -77,7 +77,7 @@ export function DashboardCard({
             </p>
           ) : null}
         </div>
-        {actions ? <div className="tw:shrink-0">{actions}</div> : null}
+        {actions ? <div className="tw:flex tw:shrink-0 tw:flex-wrap tw:items-center tw:gap-2">{actions}</div> : null}
       </div>
       <div className="tw:mt-5 tw:flex tw:min-w-0 tw:flex-1 tw:flex-col">{children}</div>
     </section>

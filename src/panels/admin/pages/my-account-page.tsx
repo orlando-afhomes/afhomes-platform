@@ -8,6 +8,7 @@ import type { StaffMember } from "@/modules/organization/types";
 import {
   useDepartments,
   useEffectiveModuleIds,
+  useMembers,
   useMyProfile,
   useRoleOptions,
   useUpdateStaff,
@@ -60,7 +61,24 @@ export function MyAccountPage() {
       <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "My Account" }]} />
       <PageHeader title="My Account" description="View and update your profile information." />
       <MyAccountForm key={identity.id} />
+      <MyReferralCodeCard />
     </PageContainer>
+  );
+}
+
+/** Read-only referral code of the signed-in sales member. Renders nothing for identities without a member record. */
+function MyReferralCodeCard() {
+  const { identity } = useDevIdentity();
+  const membersQuery = useMembers();
+  const currentMember = (membersQuery.data ?? []).find((member) => member.id === identity.memberId) ?? null;
+  if (!identity.memberId || !currentMember) return null;
+  return (
+    <CardSection title="My referral code">
+      <DetailList>
+        <DetailRow term="Code">{currentMember.referralCode ?? "—"}</DetailRow>
+        <DetailRow term="Status">{currentMember.referralCode ? "Existing code" : "No code assigned"}</DetailRow>
+      </DetailList>
+    </CardSection>
   );
 }
 

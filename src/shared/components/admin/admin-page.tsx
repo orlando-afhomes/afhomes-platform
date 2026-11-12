@@ -54,7 +54,7 @@ export function AdminPage({
             <p className="tw:mt-1.5 tw:text-sm tw:text-muted-foreground">{description}</p>
           ) : null}
         </div>
-        {actions ? <div className="tw:shrink-0">{actions}</div> : null}
+        {actions ? <div className="tw:flex tw:shrink-0 tw:flex-wrap tw:items-center tw:gap-2">{actions}</div> : null}
       </div>
       <div className="tw:mt-6 tw:flex tw:flex-col tw:gap-6">{children}</div>
     </PageContainer>

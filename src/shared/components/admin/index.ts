@@ -15,3 +15,4 @@ export { AdminTabs, type AdminTabItem } from "./admin-tabs";
 export { AdminFilterBar, type AdminFilter, type AdminFilterOption } from "./admin-blocks";
 export { StepBlock, InfoSplitCard, InfoMiniCard } from "./admin-blocks";
 export { StatusPill, StatusPillForStatus } from "./status-pill";
+export { DetailHero } from "./detail-hero";

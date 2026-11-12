@@ -11,17 +11,24 @@ export type AdminTabItem = {
   count?: number;
 };
 
-/** Underline tab bar with roving tabindex (Arrow/Home/End). Panels are rendered by the caller. */
+/**
+ * Underline tab bar with roving tabindex (Arrow/Home/End). Panels are rendered by the caller.
+ * Pass `idPrefix` to link each tab to its panel: tab id `${idPrefix}-tab-${value}` and
+ * aria-controls `${idPrefix}-panel-${value}`; the caller gives the panel the matching id and
+ * aria-labelledby.
+ */
 export function AdminTabs({
   items,
   value,
   onChange,
   label,
+  idPrefix,
 }: {
   items: readonly AdminTabItem[];
   value: string;
   onChange: (value: string) => void;
   label: string;
+  idPrefix?: string;
 }) {
   const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const focusTab = (index: number) => {
@@ -47,6 +54,8 @@ export function AdminTabs({
             }}
             type="button"
             role="tab"
+            id={idPrefix ? `${idPrefix}-tab-${item.value}` : undefined}
+            aria-controls={idPrefix ? `${idPrefix}-panel-${item.value}` : undefined}
             aria-selected={selected}
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(item.value)}

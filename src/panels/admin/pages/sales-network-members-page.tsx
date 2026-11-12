@@ -215,7 +215,7 @@ export function SalesNetworkMembersPage() {
       anyOf={["sales-network"]}
       title="Sales Network Members"
       description="Authorized member directory, scoped by genealogy permissions."
-      crumbs={[{ label: "Sales Network", href: "/admin/sales-network" }, { label: "Members" }]}
+      crumbs={[{ label: "Sales Network" }, { label: "Members" }]}
       actions={
         canManage ? (
           <>

@@ -141,4 +141,16 @@ describe("my account page", () => {
     render(<TestWrapper identityId="dev-inactive" />);
     expect(await screen.findByText("Access restricted")).toBeInTheDocument();
   });
+
+  it("shows the read-only referral code card for a sales member identity", async () => {
+    render(<TestWrapper identityId="dev-svd-a" />);
+    expect(await screen.findByText("My referral code", {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(screen.getByText("Status")).toBeInTheDocument();
+  });
+
+  it("hides the referral code card for an identity without a member record", async () => {
+    render(<TestWrapper identityId="dev-super-admin" />);
+    await screen.findByText("Profile information", {}, { timeout: 5000 });
+    expect(screen.queryByText("My referral code")).toBeNull();
+  });
 });

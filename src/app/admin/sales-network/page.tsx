@@ -1,5 +1,5 @@
-import { SalesNetworkOverviewPage } from "@/panels/admin/pages/sales-network-overview-page";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <SalesNetworkOverviewPage />;
+  redirect("/admin/sales-network/members");
 }

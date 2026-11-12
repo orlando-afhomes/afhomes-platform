@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { toast } from "sonner";
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import type { AccreditationRecord } from "@/modules/accreditation/types";
 import type { AccreditationStatusRequest } from "@/data/contracts/accreditation-repository";
 import { transitionRequiresReason } from "@/modules/accreditation/transitions";
@@ -158,21 +158,26 @@ export function AccreditationStatusAction({
               size="sm"
               variant="outline"
               aria-label={`Accreditation status: ${ACCREDITATION_ACTION_LABELS[current]}. Activate to change.`}
-              className={cn(
-                "tw:min-h-11 tw:min-w-33 tw:sm:min-h-7",
-                current === "active" ? "tw:border-success tw:bg-success/10 tw:text-success" : "tw:border-warning tw:bg-warning/10 tw:text-warning",
-              )}
+              className="tw:group/accreditation-trigger tw:min-h-11 tw:min-w-36 tw:justify-between tw:gap-1.5 tw:rounded-lg tw:border-input tw:bg-card tw:pr-2.5 tw:pl-3 tw:font-normal tw:text-foreground tw:shadow-(--shadow-soft) tw:hover:border-foreground/30 tw:hover:bg-card tw:focus-visible:border-ring tw:focus-visible:ring-3 tw:focus-visible:ring-ring/30 tw:sm:min-h-8"
             />
           }
         >
-          {ACCREDITATION_ACTION_LABELS[current]} {busy ? <Spinner /> : <ChevronDown aria-hidden="true" />}
+          <StatusDot status={current === "active" ? "accredited" : current} />
+          {ACCREDITATION_ACTION_LABELS[current]}
+          {busy ? (
+            <Spinner className="tw:ml-auto tw:size-4 tw:shrink-0 tw:text-muted-foreground" />
+          ) : (
+            <ChevronDown aria-hidden="true" className="tw:ml-auto tw:size-4 tw:shrink-0 tw:text-muted-foreground tw:transition-transform tw:duration-150 tw:group-data-popup-open/accreditation-trigger:rotate-180" />
+          )}
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="tw:min-w-44">
+        <DropdownMenuContent align="start">
           <DropdownMenuItem disabled={current === "pending"} onClick={() => requestUpdate("pending")} title={current === "pending" ? "Current status" : "Revert to Pending (reason required)"} className={itemClass}>
             <StatusDot status="pending" /> {ACCREDITATION_ACTION_LABELS.pending}
+            {current === "pending" ? <Check aria-hidden="true" className="tw:ml-auto tw:size-4" /> : null}
           </DropdownMenuItem>
           <DropdownMenuItem disabled={current === "active"} onClick={() => requestUpdate("active")} title={current === "active" ? "Current status" : undefined} className={itemClass}>
             <StatusDot status="accredited" /> {ACCREDITATION_ACTION_LABELS.active}
+            {current === "active" ? <Check aria-hidden="true" className="tw:ml-auto tw:size-4" /> : null}
           </DropdownMenuItem>
           <DropdownMenuItem
             disabled={current !== "pending" && current !== "active"}

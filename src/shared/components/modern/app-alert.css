@@ -1,0 +1,47 @@
+/* Shared SweetAlert2 theme for every confirmation and notice pop-up (see app-alert.tsx).
+ * Unlayered on purpose: SweetAlert2 injects unlayered styles, so these need equal footing. */
+.swal2-container.app-alert__container {
+  padding: 1rem;
+}
+
+.swal2-popup.app-alert__popup {
+  width: min(32rem, 100%);
+  padding: 1.5rem 1.25rem 1.25rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.875rem;
+  background: var(--color-bg-surface-raised);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  box-shadow: 0 20px 50px rgb(14 43 32 / 0.18);
+}
+
+.swal2-popup.app-alert__popup .app-alert__title {
+  padding: 0;
+  color: var(--color-text-primary);
+  font-size: 1.125rem;
+  font-weight: 650;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.swal2-popup.app-alert__popup .app-alert__body {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.swal2-popup.app-alert__popup .app-alert__actions {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swal2-popup.app-alert__popup,
+  .swal2-container.app-alert__container {
+    animation: none !important;
+    transition: none !important;
+  }
+}

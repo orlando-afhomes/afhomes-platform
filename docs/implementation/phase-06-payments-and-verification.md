@@ -4,7 +4,7 @@
 - Objective: payment claims, Finance verification, correction, and the ledger and milestones that follow.
 - Business rules: `docs/business-rules/07-finance-and-payments.md` sections 5 and 8 to 14; `13-sales-performance-reporting.md` sections 3 to 6. Workbook references: OPS section 4.3, OCT O2, O6 to O9.
 - Depends on: FP5.
-- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G06, G07.
+- Decision items (all decided on 2026-11-12. Still open: automatic clawback recovery waits for the signed IST addendum (G09, U07); see `decisions-and-gaps.md`): G06, G07.
 
 Routes (from the atlas):
 
@@ -33,8 +33,8 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J07 |
-| Current | Finance queue: review, verify, reject or return. Reject and return need a reason. Verification checks state, scope, duplicate verified receipt, price cap and the self-verification restriction (documented Super Admin exception). |
-| Target | Same. Human verification stays. Only authorized Finance actors verify receipts. |
+| Current | Finance queue: review, verify, reject or return. Reject and return need a reason. Verification checks state, scope, duplicate verified receipt, price cap and flags a self-approval in the history (R6: Finance, the Administrator or the Super Administrator may approve a receipt they entered). |
+| Target | Per R6: a Clerk enters the receipt, and Finance, the Administrator or the Super Administrator approves it. The Administrator and Super Administrator may approve their own entries, with the audit trail showing it. Human approval stays. |
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Verification never activates membership. A rejected payment never counts toward the balance. |

@@ -4,7 +4,7 @@
 - Objective: the controlled product catalog, contract preparation, review and finalization, and the sales milestones.
 - Business rules: `docs/business-rules/05-vip-products-and-contracts.md` sections 10 to 13 and amendment; `06-vip-card-issuance.md` sections 4 and 6 to 9; `13-sales-performance-reporting.md` sections 3 to 6. Workbook references: NUM sections 2 to 6 and 9, OCT R31, R38, O2, OPS section 4.2.
 - Depends on: FP4.
-- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G03, G05 (Conflicting), G06, G07, G12. From `AGENTS.md` section 5: Gold installment price, unfinished Silver amount, Non-Standard contract authorization.
+- Decision items (all decided on 2026-11-12. Still open: automatic clawback recovery waits for the signed IST addendum (G09, U07); see `decisions-and-gaps.md`): G03, G05, G06, G07, G12. The Gold installment price, the Silver amount and Non-Standard authorization were decided in R1.
 
 Routes (from the atlas):
 
@@ -28,9 +28,9 @@ Routes (from the atlas):
 |---|---|
 | Journey | J06 |
 | Current | An authorized administrator edits approved product terms and configuration. Values are validated. Finalized contracts keep their terms. Standard Move A and Move B terms and Card ID mappings are recorded in docs 05 and 06. |
-| Target | Choose versioned product terms and the applicable contract template. Show the conflict between the doc 07 amendment item 7 and doc 05 item 12 on per-contract Move approval. |
+| Target | Choose versioned product terms and the applicable contract template. (The Move approval wording conflict was fixed in R1; Move A and Move B take effect on 2026-11-09.) |
 | Layer | Frontend (mock) |
-| Blocked by | none for the current catalog. The Move effective date and template are a separate decision (G06 (decided R6)). |
+| Blocked by | none for the current catalog. The Move effective date is decided (R1: 2026-11-09). |
 | Acceptance | A configuration change never rewrites a finalized contract. Unapproved tier codes are not activated (only Bronze B1, Silver S1, Gold G1). No prices are invented. |
 | Status | Exists (per atlas) |
 
@@ -88,7 +88,7 @@ Routes (from the atlas):
 |---|---|
 | Journey | J06 |
 | Current | Separate RA and an activation-based Card ID. Format `YYMMDDNNNNNVTPMMS` per doc 06. |
-| Target | Preserve historical identifiers. Approve the issuance trigger and namespace before new real numbers. |
+| Target | Per R2 (NUM v6.2): one VIP Number for the Reservation Agreement, the Grant and the Card, issued when the signed Reservation Agreement is recorded, with a monthly sequence. Preserve historical identifiers and never reuse a number. |
 | Layer | Owner decision |
 | Blocked by | G05 (decided R2) |
 | Acceptance | No duplicates. No competing serial allocator. Issued numbers are preserved. |
@@ -100,10 +100,10 @@ Routes (from the atlas):
 |---|---|
 | Journey | J06 |
 | Current | No IGP page exists. The workbook IGP process is documented (U10). |
-| Target | Scope decision first. If included, show it in the manual view and add a flow after approval. |
+| Target | Per R13 (doc 14): IGP is in scope and built together with VIP, for AFhomes-channel sales only, with a 16-character Series Number. The build needs authorization. |
 | Layer | Owner decision |
 | Blocked by | G12 (decided R11 to R13), U10 (decided R13) |
-| Acceptance | To be defined after the decision. |
+| Acceptance | See doc 14 sections 5 to 9 (Series Number, JA&D ID, 9M TCP limit, month-end commission releases). |
 | Status | Missing |
 
 ## Out of scope

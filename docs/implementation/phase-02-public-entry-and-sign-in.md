@@ -4,7 +4,7 @@
 - Objective: the public entry points, sign-in for Admin, Staff and Sales, sign-out, and the real-authentication work behind them.
 - Business rules: `docs/business-rules/01-roles-and-permissions.md` sections 3 to 9. Security: `docs/development/security.md` sections 10 and 11.
 - Depends on: FP1 (roles and scopes).
-- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G01 (public link placement), G11 (CMS).
+- Decision items (all decided on 2026-11-12. Still open: automatic clawback recovery waits for the signed IST addendum (G09, U07); see `decisions-and-gaps.md`): G01 (public link placement), G11 (CMS).
 
 Routes (from the atlas):
 
@@ -62,7 +62,7 @@ Reminder: the mock login is temporary. It must be removed when real authenticati
 | Target | Per R5: an Administrator resets forgotten passwords. Self-service email recovery is not part of the ruling. |
 | Layer | Backend (real authentication) |
 | Blocked by | G01 (decided R5), U03 (decided R5) |
-| Acceptance | Reset links expire and are single-use. The response does not reveal whether an email exists. |
+| Acceptance | An Administrator can set a temporary password for a user. The reset is audited and the new password is never shown to anyone else. The response does not reveal whether an email exists. |
 | Status | Missing |
 
 ## F2.5 Real identity and role check

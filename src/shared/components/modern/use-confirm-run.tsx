@@ -16,8 +16,8 @@ export type ConfirmRunInput = {
 };
 
 /**
- * Modern replacement for the SweetAlert2 `confirmAndRun`: asks first (Base UI
- * AlertDialog), shows progress on the confirm button while the action runs,
+ * Asks first (SweetAlert2 through the shared AppAlert), shows progress on the
+ * confirm button while the action runs,
  * then reports through a toast. Render `dialog` once in the owning component.
  * A failed action closes the dialog and shows the error, as before.
  */

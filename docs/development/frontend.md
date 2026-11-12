@@ -1,8 +1,8 @@
 # AFHomes Platform — Frontend Design
 
 > Authoritative frontend architecture and design specification for the AFHomes Platform.
-> Read `docs/development/architecture.md` for system architecture and `docs/business-rules/` (01–13) for authoritative business behavior.
-> This document is documentation only; no application code is implemented here.
+> Read `docs/development/architecture.md` for system architecture and `docs/business-rules/` (01–14) for authoritative business behavior.
+> This document is the frontend design reference. The prototype in `src/` implements much of it on typed in-memory mock data; where this document and the code differ, trust the code and `AGENTS.md` section 8.
 
 ---
 
@@ -24,8 +24,8 @@ It is specific to AFHomes, not a generic React guide.
 | Programming language | TypeScript |
 | Styling | Tailwind CSS 4 utilities plus namespaced regular CSS per feature |
 | Additional styling | None (no CSS Modules, no new project-authored CSS-in-JS) |
-| UI foundation | shadcn/ui on Base UI primitives; TanStack Table; Lucide (Ant Design 6 temporary, unmigrated modules only; see `AGENTS.md` section 8) |
-| Validation | Zod |
+| UI foundation | shadcn/ui on Base UI primitives; TanStack Table; Lucide (Ant Design was removed in commit 22c9b4f; see `AGENTS.md` section 8) |
+| Validation | Zod (approved; not yet used in `src/`) |
 | Client asynchronous state | TanStack Query |
 | Local UI state | React state/hooks |
 | Data access | Typed repository and API adapter interfaces |
@@ -40,13 +40,13 @@ It is specific to AFHomes, not a generic React guide.
 
 Next.js App Router is the approved target frontend framework. The repository's current implementation status must be verified separately; absence of installed application code does not change the approved decision.
 
-Zod is the selected validation approach, subject to normal dependency compatibility verification. Do not introduce a different validation framework without authorization.
+Zod is the selected validation approach (installed, not yet used in `src/`; current validation is hand-written, for example `src/modules/customers/field-validation.ts`), subject to normal dependency compatibility verification. Do not introduce a different validation framework without authorization.
 
 ---
 
 ## 3. Current Repository Status
 
-The repository contains a working Next.js frontend with typed in-memory mock data. Existing Organization and Sales Network screens still use Ant Design 6 and migrate incrementally (`AGENTS.md` section 8). The shadcn/ui foundation (M1-A) is installed but not yet used by any screen. Verify versions in `package.json`.
+The repository contains a working Next.js frontend with typed in-memory mock data. Every screen now uses the shadcn/ui on Base UI foundation (`src/shared/ui/`); Ant Design was removed in commit 22c9b4f (`AGENTS.md` section 8). Verify versions in `package.json`.
 
 ---
 
@@ -81,13 +81,13 @@ Do not create separate applications solely because layouts differ.
 
 `src/app/` owns routing and thin composition. Route groups organize layouts without changing URL paths. Page files compose feature pages. Error/loading boundaries where appropriate. Server Components by default; `"use client"` only where interactivity needed. API Route Handlers under `api/` delegate to backend services.
 
-Example: `src/app/(admin)/admin/customers/page.tsx` composes `src/panels/admin/features/customers/pages/CustomersPage.tsx`.
+Example: `src/app/admin/customers/page.tsx` composes `src/panels/admin/pages/customers-page.tsx`.
 
 ---
 
 ## 7. Target Frontend Folder Organization
 
-(See architecture.md target layout.) Key directories: `src/app/`, `src/panels/`, `src/modules/`, `src/data/`, `src/server/`, `src/shared/`, `src/config/`. This is a target layout, not an instruction to create directories now.
+(See architecture.md target layout.) Key directories: `src/app/`, `src/panels/`, `src/modules/`, `src/data/`, `src/shared/`, `src/theme/`; `src/server/` and `src/config/` are planned and do not exist yet. This is a target layout, not an instruction to create directories now.
 
 ---
 
@@ -162,7 +162,7 @@ Feature-based organization (see example in architecture.md). Pages compose featu
 
 ## 14. UI Design System
 
-- shadcn/ui on Base UI, Tailwind CSS 4, CSS variables from `src/theme/tokens.css`, namespaced regular CSS per feature; no CSS Modules. Ant Design 6 only in unmigrated modules.
+- shadcn/ui on Base UI, Tailwind CSS 4, CSS variables from `src/theme/tokens.css`, namespaced regular CSS per feature; no CSS Modules. Ant Design is no longer used.
 - Shared primitives in `src/shared/ui/` when genuinely reusable; panel-specific variants with panel; feature-specific UI within feature.
 - Panel-scoped themes (`.admin-theme`, `.public-theme`, `.customer-theme`) via scoped CSS variables; avoid global overrides.
 - Responsive design across desktop/tablet/mobile; data-intensive Admin screens use responsive tables, overflow, mobile filters, accessible sidebars, touch targets, responsive forms.
@@ -170,13 +170,13 @@ Feature-based organization (see example in architecture.md). Pages compose featu
 
 ### 14.0 Foundation (M1-A)
 
-- Packages: `@base-ui/react`, `class-variance-authority`, `clsx`, `tailwind-merge`, `sonner`, `tailwindcss` 4 with `@tailwindcss/postcss`, `tw-animate-css`. TanStack Table 8.21.3 is installed when the first table migrates. SweetAlert2 stays on unmigrated screens; migrated screens use AlertDialog and Sonner.
+- Packages: `@base-ui/react`, `class-variance-authority`, `clsx`, `tailwind-merge`, `sonner`, `tailwindcss` 4 with `@tailwindcss/postcss`, `tw-animate-css`. TanStack Table 8.21.3 is installed when the first table migrates. Every confirmation, discard prompt and notice pop-up uses SweetAlert2 through the shared `AppAlert` (`src/shared/components/modern/app-alert.tsx`) and its wrappers `ConfirmDialog`, `NoticeDialog` and `useConfirmRun` (owner decision 2026-11-12). Form dialogs with fields stay on the shadcn Dialog; toasts stay on Sonner. Feature code never calls SweetAlert2 directly. The shadcn `alert-dialog` primitive remains in `src/shared/ui/` but is no longer used by screens.
 - Configuration: `postcss.config.mjs`, `components.json` (style `base-nova`; aliases `@/shared/ui`, `@/shared/lib/utils`), `src/shared/lib/utils.ts` (`cn`). Primitives live in `src/shared/ui/`; compose them in `src/shared/components/`.
 - Prefix: Tailwind is namespaced with `tw` (`tw:flex`, `tw:size-4`) in both `globals.css` and `components.json`. Unmigrated screens contain leftover utility-looking class names (for example `size-4` on icons) that were inert; unprefixed utilities restyled them during M1-A verification. Always write utilities with the prefix in new code.
 - Preflight shims: generated shadcn components assume Tailwind's preflight. Where that mattered, the generated file carries a small shim and this list must be kept current: `button.tsx` adds `tw:bg-transparent` (otherwise link and ghost buttons show the browser button background) and `table.tsx` adds `tw:border-collapse` (otherwise row borders do not render). Re-apply both after `shadcn add --overwrite`.
 - Default border color: `globals.css` sets `border-color: var(--border)` for `[data-slot]` elements (every generated component) because preflight is absent; hand-written markup must add `tw:border-border` to bare border utilities.
-- Reset layer: the minimal reset in `globals.css` sits in `@layer base`, under Tailwind utilities, so utilities on migrated screens win over it (for example `tw:mt-1` on a paragraph, `tw:text-primary-foreground` on a button). Ant Design and feature CSS are unlayered and still win over it.
-- Cascade: `src/app/globals.css` declares `@layer theme, base, components, utilities` and imports only Tailwind's theme and utilities into those layers. Ant Design's runtime styles, `tokens.css`, the minimal reset, and feature CSS are unlayered and therefore always outrank Tailwind, so unmigrated screens are never restyled. Tailwind's preflight is not imported until Ant Design is removed; new components must not rely on it.
+- Reset layer: the minimal reset in `globals.css` sits in `@layer base`, under Tailwind utilities, so utilities win over it (for example `tw:mt-1` on a paragraph, `tw:text-primary-foreground` on a button). Feature CSS is unlayered and still wins over it.
+- Cascade: `src/app/globals.css` declares `@layer theme, base, components, utilities` and imports Tailwind's theme, preflight (in `base`) and utilities into those layers; Ant Design is gone, so preflight is imported. `tokens.css` and feature CSS are unlayered and outrank Tailwind. Utilities are prefixed `tw:`.
 - Tokens: `tokens.css` stays the single source. `@theme inline` maps Tailwind color names to the shadcn variables in `:root`, which resolve to `tokens.css`. Never put hex values in components.
 - No dark mode: `@custom-variant dark` binds `dark:` variants to a `.dark` ancestor that the application never sets.
 - The CLI is run only with `add`; do not run `shadcn init` (it rewrites `globals.css`). Review generated files and keep imports on `@/shared/lib/utils`.
@@ -187,7 +187,7 @@ Application-facing screens must not display developer notes, debug controls, tem
 
 ### 14.2 Class Naming Standard (regular CSS, corrected Stage 4)
 
-shadcn/ui on Base UI is the component foundation (`AGENTS.md` section 8); Ant Design internal DOM is exempt from custom naming only in unmigrated modules, and Tailwind utility classes are exempt. AFHomes uses regular `.css` files, not CSS Modules, for custom styling. Every developer-authored custom (non-utility) class on headings, paragraphs, spans, labels, sections, wrappers, and containers must be a descriptive kebab-case class with feature namespacing (e.g. `organization-page__title`, `staff-profile__name`, `account-page__toolbar`). Numbered, random, or bare generic names are prohibited. Import feature CSS at the narrowest server route/layout boundary; root CSS keeps tokens, resets, and base only. Global styles persist across navigation, so every feature selector must be namespaced and order-independent. Verify class names in browser DevTools, not only source. No automated class-name lint is enforced (brittle for framework-owned DOM); compliance is verified in code review + browser DOM.
+shadcn/ui on Base UI is the component foundation (`AGENTS.md` section 8); Tailwind utility classes are exempt. AFHomes uses regular `.css` files, not CSS Modules, for custom styling. Every developer-authored custom (non-utility) class on headings, paragraphs, spans, labels, sections, wrappers, and containers must be a descriptive kebab-case class with feature namespacing (e.g. `organization-page__title`, `staff-profile__name`, `account-page__toolbar`). Numbered, random, or bare generic names are prohibited. Import feature CSS at the narrowest server route/layout boundary; root CSS keeps tokens, resets, and base only. Global styles persist across navigation, so every feature selector must be namespaced and order-independent. Verify class names in browser DevTools, not only source. No automated class-name lint is enforced (brittle for framework-owned DOM); compliance is verified in code review + browser DOM.
 
 ---
 
@@ -477,7 +477,7 @@ Align with `implementation.md`. Phase 0 documentation; Phase 1 frontend foundati
 3. Feature-based organization.
 4. React and TypeScript.
 5. Next.js App Router.
-6. shadcn/ui on Base UI, Tailwind CSS 4, and namespaced regular CSS (effective November 8, 2026; Ant Design 6 temporary in unmigrated modules; the Stage 5 removal of Tailwind/shadcn is superseded).
+6. shadcn/ui on Base UI, Tailwind CSS 4, and namespaced regular CSS (effective November 8, 2026; Ant Design later removed; the Stage 5 removal of Tailwind/shadcn is superseded).
 7. Zod validation.
 8. TanStack Query for appropriate async state.
 9. Thin route composition.
@@ -525,7 +525,7 @@ Align with `implementation.md`. Phase 0 documentation; Phase 1 frontend foundati
 - `docs/development/implementation.md` — phases.
 - `docs/development/deployment.md` — deployment.
 - `docs/development/README.md` — navigation.
-- `docs/business-rules/01–13` — authoritative business rules.
+- `docs/business-rules/01–14` — authoritative business rules.
 
 ---
 
@@ -542,7 +542,7 @@ Align with `implementation.md`. Phase 0 documentation; Phase 1 frontend foundati
 - [ ] Future Customer/Mobile correctly deferred.
 
 ### Frontend Stack
-- [ ] shadcn/ui primitives in `src/shared/ui/`, Tailwind CSS 4 configured with the preserved tokens; no Ant Design in migrated modules.
+- [ ] shadcn/ui primitives in `src/shared/ui/`, Tailwind CSS 4 configured with the preserved tokens; no Ant Design anywhere.
 - [ ] Namespaced feature-scoped CSS for custom classes, no CSS Modules.
 - [ ] Zod.
 - [ ] TanStack Query.
@@ -622,7 +622,7 @@ STOP — awaiting explicit authorization before beginning Phase 1 implementation
 1. Reusable primitives live in `src/shared/ui/`; composed shared components, forms, and hooks live in `src/shared/`; feature interfaces stay in `src/panels/`.
 2. Compose existing primitives first; build a new primitive only when none can be composed and document the reason.
 3. Tailwind utilities for layout, spacing, and typography; regular CSS for specialized presentation; custom classes use namespaced kebab-case names (utility classes exempt). Preserve `src/theme/tokens.css` until a visual redesign is approved.
-4. Temporary Ant Design coexistence: Ant Design 6 stays only in unmigrated modules; no new usage; protect it from Tailwind resets; remove it only after all modules are migrated, verified, and the owner approves.
+4. Ant Design was removed in commit 22c9b4f; do not reintroduce it.
 5. Each migration milestone requires explicit owner approval, must preserve CRUD behavior, validation, permissions, business rules, and repository contracts, and is verified with tests, TypeScript, lint, production build, and browser workflows.
 6. Accessibility and responsiveness are mandatory. Future AI coding agents must follow `AGENTS.md`.
 

@@ -1,7 +1,7 @@
 # AFHomes Platform — Backend Architecture
 
 > Authoritative backend architecture for the AFHomes Platform.
-> Read `docs/development/architecture.md` for system architecture, `docs/development/database.md` for database architecture, and `docs/business-rules/` (01–13) for authoritative business behavior.
+> Read `docs/development/architecture.md` for system architecture, `docs/development/database.md` for database architecture, and `docs/business-rules/` (01–14) for authoritative business behavior.
 > This document is documentation only; no backend code is implemented here.
 
 ---
@@ -41,7 +41,7 @@ Next.js App Router is the approved backend framework and application architectur
 
 ## 3. Current Versus Target Implementation
 
-- **Verified current implementation:** documentation-only repository; no application code, database, or auth.
+- **Verified current implementation (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); no API, database or real authentication.
 - **Approved target:** as above.
 - **Future implementation work:** all backend development requires separate explicit authorization.
 
@@ -678,7 +678,7 @@ Response envelopes, repository method naming, API error code patterns, transacti
 
 ### Unresolved Dependencies
 
-Better Auth adapter compatibility; selected Node.js/Next.js versions; local replica-set setup; selected Atlas tier and transaction support; official RA uniqueness scope; financial rounding policies; audit retention requirements; selected object-storage provider. Do not invent approval. Keep concise and actionable.
+Better Auth adapter compatibility; selected Node.js/Next.js versions; local replica-set setup; selected Atlas tier and transaction support; financial rounding policies; a legally advised retention period (records are kept indefinitely until then); selected object-storage provider. Do not invent approval. Keep concise and actionable.
 
 ---
 
@@ -805,7 +805,7 @@ Background jobs, notifications, logging, health checks, testing, DigitalOcean de
 Aligned with architecture, frontend, database, security, testing, implementation, deployment, business rules 01–13. No material mismatches.
 
 ### I. Critical Dependencies
-Better Auth adapter compatibility; selected Node.js/Next.js versions; local replica-set setup; selected Atlas tier and transaction support; official RA uniqueness scope; financial rounding policies; audit retention requirements; selected object-storage provider.
+Better Auth adapter compatibility; selected Node.js/Next.js versions; local replica-set setup; selected Atlas tier and transaction support; financial rounding policies; a legally advised retention period (records are kept indefinitely until then); selected object-storage provider.
 
 ### J. Validation
 Markdown validation, link validation, Mermaid validation, cross-document review, git diff verification performed.

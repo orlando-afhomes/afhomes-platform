@@ -1,6 +1,6 @@
-import { payoutThresholdPayment, PAYOUT_RELEASE_WAIT_DAYS } from "@/modules/commissions/rules";
+import { payoutReleaseDateFor, payoutThresholdPayment } from "@/modules/commissions/rules";
 import type { Contract } from "@/modules/contracts/types";
-import { addDaysToDate, manilaDateOf } from "@/shared/lib/dates";
+import { manilaDateOf } from "@/shared/lib/dates";
 import { buildCollectionLedger, isFullySettled } from "./rules";
 import type { Payment } from "./types";
 
@@ -26,7 +26,7 @@ export function deriveMilestones(input: {
   const verified = payments.map((payment) => payment.verifiedDate).filter((date): date is string => Boolean(date)).sort()[0] ?? null;
   const qualifyingPayment = payoutThresholdPayment(contract, payments);
   const threshold = qualifyingPayment?.verifiedDate ?? null;
-  const release = threshold ? addDaysToDate(threshold, PAYOUT_RELEASE_WAIT_DAYS) : null;
+  const release = payoutReleaseDateFor(threshold);
   const paymentReference = input.includePaymentReference ? qualifyingPayment?.referenceNo : null;
   const releaseNote = release
     ? [`Payout opens ${release}`, paymentReference ? `Payment reference ${paymentReference}` : null].filter(Boolean).join(" · ")

@@ -4,7 +4,7 @@
 - Objective: draft and submit customer applications, correct submitted records, import and export, and attribute the sale to the right seller.
 - Business rules: `docs/business-rules/04-customer-management.md` sections 5, 7, 9, 10, 13 and 14. Workbook references: NUM section 9, OPS section 4.2.
 - Depends on: FP1, FP3.
-- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G03, G06. Doc 04 section 7.8 and Customer ID decision D2 are stale (see [decisions-and-gaps.md](decisions-and-gaps.md)).
+- Decision items (all decided on 2026-11-12. Still open: automatic clawback recovery waits for the signed IST addendum (G09, U07); see `decisions-and-gaps.md`): G03, G06. Doc 04 section 7.8 and Customer ID decision D2 are stale (see [decisions-and-gaps.md](decisions-and-gaps.md)).
 
 Routes (from the atlas):
 
@@ -21,7 +21,7 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J05 |
-| Current | VIP Card, Payment Plan, Customer identity and contact, Sales and Consent, Reservation and proof, Review. Field formatting, duplicate and eligibility checks and acknowledgments apply. ID image preview is temporary. Customer ID `YYYY-NNNN` is assigned at submit; the wizard draft lives in `sessionStorage`. |
+| Current | VIP Card, Payment Plan, Customer identity and contact, Sales and Consent, Reservation and proof, Review. Field formatting, duplicate and eligibility checks and acknowledgments apply. ID image preview is temporary. Customer ID `YYYY-NNNN` is assigned at submit; drafts are saved through the repository (`saveAsDraft`), and only a legacy `sessionStorage` key is cleared. |
 | Target | Same. Keep draft and submitted states distinct. |
 | Layer | Frontend (mock) |
 | Blocked by | none |

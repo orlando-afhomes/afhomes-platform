@@ -4,8 +4,8 @@
 - Objective: the points ledger and cycle, held-point handling, resort spend intake, and the disabled Redemption and Services.
 - Business rules: `docs/business-rules/09-vip-membership-and-stay-points.md` sections 8 to 20; `10-redemption.md` sections 5 and 16. Workbook reference: GRANT sections I-B, III and IV.
 - Depends on: FP9.
-- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G10, G12.
-- Changed since the atlas baseline: `src/modules/stay-points/engine.ts` changed in `fc060bb` (voided and held spend are excluded from verified minimum-spend totals, with historical bucket allocations preserved for reconciliation).
+- Decision items (all decided on 2026-11-12. Still open: automatic clawback recovery waits for the signed IST addendum (G09, U07); see `decisions-and-gaps.md`): G10, G12.
+- History: `src/modules/stay-points/engine.ts` changed in `fc060bb` (already inside the atlas baseline `0512a31`) (voided and held spend are excluded from verified minimum-spend totals, with historical bucket allocations preserved for reconciliation).
 
 Routes (from the atlas):
 
@@ -18,12 +18,12 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J11 |
-| Current | Select a membership and cycle, inspect points and ledger entries. |
-| Target | Ledger-controlled points. Prevent duplicate or invalid credits. The 70% weekday and 30% weekend principle applies. |
+| Current | Select a membership and cycle, inspect points and ledger entries. `src/modules/stay-points/engine.ts` still computes points as 1 verified peso = 1 point (Spend-to-Earn), which R10 removed. |
+| Target | Per R10: ledger-controlled points under the signed Grant's Annual Welcome Gift (fixed yearly tranches, each split 70% weekday/non-holiday and 30% weekend/holiday: Bronze 7,000 + 3,000, Silver 14,000 + 6,000, Gold 17,500 + 7,500; released only when the yearly qualifying spend is met). Prevent duplicate or invalid credits. |
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | The ledger is append-only for credits. Cycle totals reconcile with entries. |
-| Status | Exists (per atlas) |
+| Status | Partial. The ledger exists, but the earning model differs from R10. |
 
 ## F10.2 Release or void of held points
 

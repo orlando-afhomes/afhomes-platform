@@ -61,7 +61,7 @@ Recorded in `docs/business-rules/01-roles-and-permissions.md` §3.1, §3.7 and �
 
 ## 3. Active and Disabled Module Inventory
 
-Active areas: Dashboard (neutral landing), Organization Management (Departments, Staff/Employees, Roles & Permissions), Sales Network, IST/OST Accreditation, Customer Management, Customer Import/Export, VIP Products, Payment Schemes & Contracts, Sales Management, Finance & Payments, Commission Management, VIP Membership, VIP Card Issuance, Stay Points, Reports & Analytics, Sales Performance, Audit Logs & Governance, Public IST/OST Verification, Public Website CMS. Public Customer Lookup is removed from scope (owner ruling R11, 2026-11-12; doc 11 §21).
+Active areas: Dashboard (neutral landing), Organization Management (Departments, Staff/Employees, Roles & Permissions), Sales Network, IST/OST Accreditation, Customer Management, Customer Import/Export, VIP Products, Payment Schemes & Contracts, Sales Management, Finance & Payments, Commission Management, VIP Membership, VIP Card Issuance, Stay Points, Reports & Analytics, Sales Performance, Audit Logs & Governance, Public IST/OST Verification. The Public Website CMS is deferred (owner ruling R11, 2026-11-12). Public Customer Lookup is removed from scope (owner ruling R11, 2026-11-12; doc 11 §21).
 
 Disabled: Redemption, Services (`10` §19, `09` §333; preserved but hidden).
 

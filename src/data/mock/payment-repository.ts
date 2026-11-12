@@ -150,12 +150,10 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
       this.require(identity, "finance.verify", "Only Finance can verify payments.");
       const payment = this.paymentFor(identity, id);
       if (payment.status !== "submitted" && payment.status !== "under_review") throw new Error("Only a submitted payment can be verified.");
-      // A correction resubmitted by someone else keeps the original submitter, so the corrector is checked too (07 section 5.2).
-      // Owner decision 2026-11-10: Super Admin has full control, so the separation-of-duties block below does not apply to Super Admin.
-      // Last-Super-Admin/self-modification protections are separate and untouched.
-      const isSuperAdmin = activeIdentityRoles(identity).includes("super_admin");
+      // Owner ruling 2026-11-12 (R6, doc 07 section 5): Finance, the Administrator or the Super Administrator may approve a receipt they entered or corrected; the history flags it.
+      // A correction resubmitted by someone else keeps the original submitter, so the corrector is checked too.
       const corrected = payment.history.some((entry) => entry.event === BUSINESS_AUDIT_ACTIONS.PAYMENT_RESUBMITTED && entry.actorId === identity.id);
-      if (!isSuperAdmin && (payment.submittedBy === identity.id || corrected)) throw new Error("A payment cannot be verified by the person who submitted or corrected it.");
+      const selfNote = payment.submittedBy === identity.id || corrected ? "Self-approved: the approver also submitted or corrected this receipt." : undefined;
       const contract = this.contractFor(identity, payment.contractId);
       if (contract.status === "cancelled") throw new Error("This contract is cancelled. Its payment can be rejected or returned, not verified.");
       const others = paymentsOfContract(this.store, contract.id).filter((item) => item.id !== payment.id && item.status === "verified");
@@ -167,8 +165,8 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
       payment.verifiedBy = identity.id;
       payment.verifiedAt = nowIso();
       payment.verifiedDate = today();
-      this.event(payment, identity, BUSINESS_AUDIT_ACTIONS.PAYMENT_VERIFIED);
-      this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.PAYMENT_VERIFIED, entityType: "payment", entityId: payment.id, previousValue: previous, newValue: String(payment.amountCentavos), relatedRecordIds: [contract.id] });
+      this.event(payment, identity, BUSINESS_AUDIT_ACTIONS.PAYMENT_VERIFIED, selfNote ?? null);
+      this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.PAYMENT_VERIFIED, entityType: "payment", entityId: payment.id, previousValue: previous, newValue: String(payment.amountCentavos), reason: selfNote, relatedRecordIds: [contract.id] });
       reconcileContract(this.store, contract.id, identity);
       return this.view(payment);
     });

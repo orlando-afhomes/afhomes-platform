@@ -1,6 +1,6 @@
 # Decisions and Gaps
 
-Source: Workflow Atlas `2026-11-12.2` (`develop @ 0512a31`). The atlas now shows G01 to G12 as Decided, except G08 (Conflicting: the code still applies the 7-day wait that R8 removed) and G09 (Pending the signed IST addendum). The status values below are from the earlier atlas `2026-11-12.1`; the round results above them are the current owner rulings. None of these items is resolved here. Features that depend on an item stay blocked until the owner decides.
+Source: Workflow Atlas `2026-11-12.2` (`develop @ 0512a31`). The atlas now shows G01 to G12 as Decided, except G09 (Pending the signed IST addendum). The register below and the round results state the current owner rulings (R1 to R13, 2026-11-12). Each feature still needs explicit owner authorization before it is built.
 
 Related list: `AGENTS.md` section 5 "Unresolved decisions" covers the same ground from the business-rule side (Gold price, RA numbering, claim versus activation date, module-level permissions, and so on). The two lists overlap and neither replaces the other.
 
@@ -16,7 +16,7 @@ Related list: `AGENTS.md` section 5 "Unresolved decisions" covers the same groun
   - REG: Master File Register.
   - GRANT: the signed VIP Grant contracts.
 - AUG and OCT count as approved company practice. The IST Commission and Clawback Addendum is a DRAFT and is not applied until signed.
-- Decisions are made in domain rounds (R1 to R11). Each answer is written directly into the affected business-rule document as a dated owner amendment.
+- Decisions are made in domain rounds (R1 to R13). Each answer is written directly into the affected business-rule document as a dated owner amendment.
 
 ## Round results
 
@@ -139,12 +139,20 @@ Recorded in the "Owner rulings amendment (2026-11-12, follow-ups)" section of ea
 - Allow a provisional first-stay room hold under venue rules. Confirm points at successful check-in; cancelled or failed check-in does not set the Points Activation Date. Redemption stays disabled in the current build.
 - Plan the approved AFhomes-channel IGP sales flow and track grant paperwork. Grant terms gate IGP VIP memberships and benefits.
 
+### Payout day decisions (2026-11-12)
+
+The owner answered these directly on 2026-11-12. Recorded in the "Owner rulings amendment (2026-11-12, payout day)" section of doc 08.
+
+- **D-A, payout day.** A VIP commission payout may be recorded from the first day of the month after the month in which net verified collections first reached 40%. Doc 08 says the release is paid in that month's month-end payout, made after the month is closed. Until a month-close feature exists, the start of the next calendar month stands in for month close. The 7-day wait is removed from the code.
+- **D-B, which date sets the month.** For now the month is set by the verification (approval) date of the payment that reached 40%, as the code already does. Doc 13 (OCT O3) stamps Stage 1 by the receipt's own date. Aligning the code with doc 13 is a separate task; the rule is not changed.
+
 ### Still open
 
 - **AFHomes and JA&D:** Supply the signed Goodwill and Formal VIP Grant terms, a band code above ₱9M, and a written definition of `SUPERSEDED`. Until then, track grant paperwork only, block sales above ₱9M, and refer that status for review.
 - **Legal and Finance:** Review the IST Commission and Clawback Addendum and record who has signed it. Until a signed agreement authorizes deductions, record the debt and collect directly under the existing policy.
 - **Administrator:** Prepare the first dated points-per-night table by venue, room type, and night class, together with the holiday calendar and venue cancellation cut-offs. Apply the version in effect on the Card Claim Date.
 - **Data Protection Officer and Legal:** Supply a written retention schedule by record type, with a start date for each period, legal holds, and secure disposal. The prototype has no automatic deletion. Update the interim rule after the approved schedule is available.
+- **Commission stamping (D-B):** Stage 1 stamping by receipt date (doc 13, OCT O3) is not yet applied in the code; the approval date is used.
 
 ## Decisions (G01 to G12)
 
@@ -157,7 +165,7 @@ Recorded in the "Owner rulings amendment (2026-11-12, follow-ups)" section of ea
 | G05 | Unified VIP number and card validity | Decided 2026-11-12 (R2) | J06, J10 | F5.6, F9.2, F9.3 |
 | G06 | Receipt matching and verification authority | Decided 2026-11-12 (R6) | J05, J06, J07 | F6.3, F6.4 |
 | G07 | Sales milestones and adjustments | Decided 2026-11-12 (R7) | J06, J07, J08 | F5.5, F6.6, F7.5 |
-| G08 | Commission release, wait and disbursement | Decided 2026-11-12 (R8) | J08, J09 | F8.2, F8.4 |
+| G08 | Commission release, wait and disbursement | Decided 2026-11-12 (R8); code updated: payout from the first day of the next month | J08, J09 | F8.2, F8.4 |
 | G09 | Allowances and signed recovery | Decided 2026-11-12 (R9; recovery waits for the signed addendum) | J08, J09, J12 | F7.5, F8.5, F8.6, F11.4 |
 | G10 | Contract-specific benefits and points | Decided 2026-11-12 (R10) | J10, J11 | F9.4, F10.3, F10.4 |
 | G11 | Reports, Public Customer Lookup and CMS | Decided 2026-11-12 (R11; no public lookup, CMS deferred) | J01, J02, J12 | F2.6, F11.6 |
@@ -203,4 +211,4 @@ U01 to U13 descriptions are in the atlas `COVERAGE.md` section "Incomplete and u
 - ~~Doc 07 amendment item 7 (per-contract Move approval wording) is stale against doc 05 item 12.~~ Fixed in R1 (2026-11-12): item 7 is marked superseded, and the Move effective date is 2026-11-09.
 - Doc 04 section 7.8 and Customer ID decision D2 were already flagged as stale in the session snapshot (`workflow/save-session.md`).
 - ~~The atlas baseline `a0bdcef` predates `fc060bb`.~~ Refreshed on 2026-11-12 (atlas `2026-11-12.2`, baseline `0512a31`).
-- Code and rule disagree on the commission release wait: R8 removes the 7-day wait, but `src/modules/commissions/rules.ts` still defines `PAYOUT_RELEASE_WAIT_DAYS` and the payout milestone shows "Payout opens <date>". The atlas records this under G08 (Conflicting). It is for the owner to authorize a code change.
+- ~~Code and rule disagree on the commission release wait: R8 removes the 7-day wait, but `src/modules/commissions/rules.ts` still defines `PAYOUT_RELEASE_WAIT_DAYS` and the payout milestone shows "Payout opens <date>". The atlas records this under G08 (Conflicting). It is for the owner to authorize a code change.~~ Fixed 2026-11-12: the wait was removed; payout opens on the first day of the month after 40% (owner decision D-A).

@@ -30,7 +30,7 @@ It integrates with other modules without taking responsibility for their separat
 ## 3. Official Terminology
 
 - **Customer Master Record** — persistent identity and registered information of a person.
-- **Customer ID / RA Number** — official unique customer identifier.
+- **Customer ID** — official unique customer identifier. The Reservation Agreement has no separate number; it carries the VIP Number (doc 06).
 - **Draft** — a saved, possibly incomplete customer registration.
 - **Submit** — action to validate and finalize a customer registration.
 - **Closing Seller** — the IST or OST seller who closed the sale; linked to the VIP Number (owner ruling R5, 2026-11-12).
@@ -151,9 +151,9 @@ Fields: Landline, Mobile, Email. Support incomplete contact information in Draft
 
 Fields: Occupation / Business, Office / Business Address, Business / Industry, Employed Position. The accepted Office / Business Address shape is: No./Street, Municipality, Province, Zip Code. Support partial information during Draft. Do not require customers to be formally employed. Do not invent mandatory employer names, income declarations, or employment documents. The form should remain usable for customers whose employment or business circumstances do not apply to every field.
 
-### 7.7 Section G — Customer ID (RA Number)
+### 7.7 Section G — Customer ID
 
-The official identifier is referred to as RA Number / Customer ID. Support two methods: Automatic (system generates next unique Customer ID using the official AFHomes Customer ID format and allocator) and Manual (the Clerk, the Administrator or the Super Administrator, according to permissions, may manually enter; sellers do not, because sellers view only, doc 01 §3.7).
+The official identifier is the Customer ID. Support two methods: Automatic (system generates next unique Customer ID using the official AFHomes Customer ID format and allocator) and Manual (the Clerk, the Administrator or the Super Administrator, according to permissions, may manually enter; sellers do not, because sellers view only, doc 01 §3.7).
 
 Validation: every officially established Customer ID must be unique; duplicates prohibited; manual IDs must satisfy official company identifier format. A Customer ID belongs to its customer and does not change when a customer buys another VIP product, when a salesperson transfers teams, or when VIP membership expires.
 

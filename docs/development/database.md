@@ -1,7 +1,7 @@
 # AFHomes Platform — Database Architecture
 
 > Authoritative database architecture for the AFHomes Platform.
-> Read `docs/development/architecture.md` for system architecture and `docs/business-rules/` (01–13) for authoritative business behavior.
+> Read `docs/development/architecture.md` for system architecture and `docs/business-rules/` (01–14) for authoritative business behavior.
 > This document is documentation only; no database is configured or migrated here.
 
 ---
@@ -42,7 +42,7 @@ Mongoose is the selected target ODM under the approved architecture; actual inst
 
 ## 3. Current Versus Target State
 
-- **Verified current implementation:** documentation-only repository; no application code, database, or Atlas cluster.
+- **Verified current implementation (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); no database or Atlas cluster.
 - **Approved target:** local MongoDB first, then MongoDB Atlas Cloud for staging/production.
 - **Future implementation work:** all database setup, schema creation, migration, import requires separate authorization.
 
@@ -408,12 +408,12 @@ Align with `docs/development/implementation.md`. Do not create independent contr
 12. Appropriate MongoDB transaction support must be verified.
 13. Financial data must preserve consistency.
 14. Official identifiers must remain unique according to the approved scope.
-15. VIP Card ID allocation follows the authoritative RA-derived rules.
+15. One VIP Number (NUM v6.2) covers the Reservation Agreement, the Grant and the Card. It is issued when the signed Reservation Agreement is recorded, with a monthly sequence, and is never reused (doc 06, owner ruling R2).
 16. Historical issued identifiers are preserved.
 17. Canonical customer identities are not replaced by new purchase IDs.
 18. Historical genealogy attribution must survive transfers.
-19. Finance alone verifies payments.
-20. Commission approval remains Finance-controlled.
+19. A Clerk enters receipts; Finance, the Administrator or the Super Administrator approves them, and the Administrator and Super Administrator may approve their own entries with the audit trail showing it (docs 01 and 07).
+20. Commission approval and payout confirmation remain Finance controlled, with the Administrator and Super Administrator also authorized (doc 08).
 21. Membership activation follows applicable full-settlement and official activation rules.
 22. Stay Points ledger history remains auditable.
 23. Weekday and Weekend points remain separate.
@@ -537,7 +537,7 @@ Other dev docs already mention MongoDB Atlas; the local-first addition is new in
 - Official identifier uniqueness (RA scope).
 - Production data migration authorization.
 - Accreditation active-status/expiry evaluation rules.
-- Formal audit retention policy.
+- Formal retention period: records are kept indefinitely until legal advice sets a period (owner ruling R11, docs 11 and 12); only the legally advised period is open.
 
 ---
 

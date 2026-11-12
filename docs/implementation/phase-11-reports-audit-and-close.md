@@ -4,7 +4,7 @@
 - Objective: scoped dashboards and reports, the audit log, and the period close, reconciliation and transition from the company workbook.
 - Business rules: `docs/business-rules/11-reports-and-analytics.md` sections 6 to 8 and 24 to 27; `12-audit-logs-and-governance.md` sections 5 to 8; `13-sales-performance-reporting.md` sections 3 to 7. Workbook references: OPS sections 5 to 8, OCT section 5A, ROLL sections 6 to 8, DESIGN D9.
 - Depends on: FP6 to FP10 (reports read their records).
-- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G04, G09, G11.
+- Decision items (all decided on 2026-11-12. Still open: automatic clawback recovery waits for the signed IST addendum (G09, U07); see `decisions-and-gaps.md`): G04, G09, G11.
 
 Routes (from the atlas):
 

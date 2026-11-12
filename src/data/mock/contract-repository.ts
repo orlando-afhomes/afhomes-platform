@@ -303,13 +303,14 @@ export class MockContractRepository extends BusinessRepository implements Contra
       const contract = this.find(identity, id);
       const request = contract.cancellation;
       if (!request || request.status !== "requested") throw new Error("No cancellation is awaiting confirmation for this contract.");
-      // Separation of duties: requester cannot decide — except Super Admin, who has full control (owner decision 2026-11-10).
-      if (request.requestedBy === identity.id && !activeIdentityRoles(identity).includes("super_admin")) throw new Error("The person who requested the cancellation cannot also decide it.");
+      // Owner ruling 2026-11-12 (authority rule, doc 07 item 8): an authorized decider may decide a request they made themselves; the history flags it.
+      const selfDecided = request.requestedBy === identity.id;
+      const selfNote = selfDecided ? "Self-approved: the decider also requested this cancellation." : null;
 
       if (decision === "decline") {
         contract.cancellation = null;
-        this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLATION_DECLINED, reason.trim());
-        this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLATION_DECLINED, entityType: "contract", entityId: contract.id, previousValue: request.ground, newValue: "declined", reason: reason.trim() });
+        this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLATION_DECLINED, [reason.trim(), selfNote].filter(Boolean).join(" · "));
+        this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLATION_DECLINED, entityType: "contract", entityId: contract.id, previousValue: request.ground, newValue: "declined", reason: [reason.trim(), selfNote].filter(Boolean).join(" · ") });
         return viewContract(this.store, contract);
       }
 
@@ -322,8 +323,8 @@ export class MockContractRepository extends BusinessRepository implements Contra
       contract.status = "cancelled";
       contract.cancelReason = `${CANCELLATION_GROUND_LABELS[request.ground]}: ${request.reason}`;
       contract.cancellation = { ...request, status: "confirmed", decidedBy: identity.id, decidedAt: nowIso(), forfeitedCentavos: forfeited };
-      this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLED, reason.trim());
-      this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLED, entityType: "contract", entityId: contract.id, previousValue: previous, newValue: "cancelled", reason: reason.trim() });
+      this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLED, [reason.trim(), selfNote].filter(Boolean).join(" · "));
+      this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLED, entityType: "contract", entityId: contract.id, previousValue: previous, newValue: "cancelled", reason: [reason.trim(), selfNote].filter(Boolean).join(" · ") });
       this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.PAYMENTS_FORFEITED, entityType: "contract", entityId: contract.id, newValue: String(forfeited), relatedRecordIds: payments.map((item) => item.id) });
       cancelRelatedContractRecords(this.store, contract.id, identity, date);
       return viewContract(this.store, contract);

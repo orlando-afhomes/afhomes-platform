@@ -4,7 +4,7 @@
 - Objective: activation of finalized, fully settled contracts, Card ID issuance, and card servicing.
 - Business rules: `docs/business-rules/06-vip-card-issuance.md` sections 4 and 6 to 9; `07-finance-and-payments.md` amendment; `09-vip-membership-and-stay-points.md`. Workbook references: NUM sections 2 to 6, GRANT section I-B.
 - Depends on: FP5, FP6.
-- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G05 (Conflicting), G10. `AGENTS.md` section 5: Card Claim Date versus Activation Date validity start.
+- Decision items (all decided on 2026-11-12. Still open: automatic clawback recovery waits for the signed IST addendum (G09, U07); see `decisions-and-gaps.md`): G05, G10. Validity starts on the Card Claim Date (R2).
 
 Routes (from the atlas):
 

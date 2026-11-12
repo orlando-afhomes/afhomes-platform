@@ -194,7 +194,7 @@ Until real authentication exists, a user who forgets their password asks the off
 ### 6.3 Employee Lifecycle (Summary)
 
 1. Authorized user creates employee account → status `Pending`.
-2. Admin/Super Admin reviews and either approves (→ `Active`) or rejects (returns to creator for correction/resubmission; rejection recorded as approval decision on the Pending account).
+2. Admin/Super Admin (or HR, for office staff accounts) reviews and either approves (→ `Active`) or rejects (returns to creator for correction/resubmission; rejection recorded as approval decision on the Pending account).
 3. Active employee accesses authorized modules based on union of active assigned roles.
 4. Authorized Staff/Employees user may suspend or deactivate a non-protected account → access invalidated immediately.
 5. Reactivation requires explicit Admin/Super Admin approval → valid existing roles restored; archived/invalid roles do not restore permissions.
@@ -236,8 +236,8 @@ The following restrictions override ordinary module access and action permission
 - Super Admin role protection
 - Protected account restrictions
 - Bounded role delegation
-- Admin/Super Admin-only activation approval
-- Admin/Super Admin-only reactivation approval
+- Activation approval by the Admin/Super Admin, or by HR for office staff accounts
+- Reactivation approval by the Admin/Super Admin, or by HR for office staff accounts
 - Backend authorization enforcement
 - Audit logging
 

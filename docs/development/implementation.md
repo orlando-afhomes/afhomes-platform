@@ -1,7 +1,7 @@
 # AFHomes Platform — Implementation Roadmap
 
 > Authoritative implementation roadmap for the AFHomes Platform.
-> Read `docs/development/architecture.md` for system architecture and `docs/business-rules/` (01–13) for authoritative business behavior.
+> Read `docs/development/architecture.md` for system architecture and `docs/business-rules/` (01–14) for authoritative business behavior.
 > This document is documentation only; no implementation is authorized here.
 
 ---
@@ -14,13 +14,13 @@ This document defines the complete implementation roadmap for the AFHomes Platfo
 
 ## 2. Current Project Status
 
-The repository is documentation-only. No application code, package manifest, database, or deployment exists. 13 business-rule documents and 9 development documents form the documentation baseline. Phase 0 (documentation) is complete but not yet formally accepted by the project owner. No implementation phase is authorized.
+The repository is a frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); there is no API, database, real authentication or deployment. 14 business-rule documents (01 to 14) and 10 development documents form the documentation baseline. The subphases 4A to 4L below were built as frontend work on mocks; the per-feature status, decisions and blockers are tracked in `docs/implementation/` (feature phases FP1 to FP11), which follows the 4A to 4L order. Every new feature still needs explicit project-owner authorization.
 
 ---
 
 ## 3. Approved Technical Architecture
 
-Single-repository, single Next.js application, panel-based and feature-based modular monolith. Next.js App Router, React, TypeScript, shadcn/ui on Base UI, Tailwind CSS 4, namespaced custom CSS, Zod, TanStack Query (Ant Design 6 temporary in unmigrated modules; effective November 8, 2026). Frontend-first development with centralized mock data. REST `/api/v1`. Centralized auth (Better Auth direction, compatibility verification required) and RBAC. Mongoose. Local MongoDB first, then MongoDB Atlas. DigitalOcean Droplet + Docker Compose + HTTPS. Future Customer Portal, future React Native mobile. Redemption and Services preserved but disabled.
+Single-repository, single Next.js application, panel-based and feature-based modular monolith. Next.js App Router, React, TypeScript, shadcn/ui on Base UI, Tailwind CSS 4, namespaced custom CSS, Zod (approved, not yet used in `src/`), TanStack Query (Ant Design removed in commit 22c9b4f; UI standard effective November 8, 2026). Frontend-first development with centralized mock data. REST `/api/v1`. Centralized auth (Better Auth direction, compatibility verification required) and RBAC. Mongoose. Local MongoDB first, then MongoDB Atlas. DigitalOcean Droplet + Docker Compose + HTTPS. Future Customer Portal, future React Native mobile. Redemption and Services preserved but disabled.
 
 ---
 
@@ -33,7 +33,7 @@ Implementation is governed by: documentation authority (business-rules own busin
 ## 5. Source-of-Truth Documents
 
 - `docs/project.md` — product purpose and approved project context.
-- `docs/business-rules/01–13` — authoritative business behavior.
+- `docs/business-rules/01–14` — authoritative business behavior.
 - `docs/development/architecture.md` — complete system architecture.
 - `docs/development/frontend.md` — frontend design and implementation conventions.
 - `docs/development/database.md` — local MongoDB, Atlas and data architecture.
@@ -101,13 +101,13 @@ Every Phase 0–8 must contain: Objective, Starting state, Scope, In-scope imple
 
 ## 10. Phase 0: Documentation Foundation
 
-(As in earlier version.) Objective: establish authoritative business and technical documentation. Starting state: documentation-only repo. Scope: business rules 01–13, project scope, technical architecture, frontend, database, backend, security, testing, implementation, deployment, documentation navigation. Deliverables: 13 canonical business-rule docs, 9 dev docs. Validation: file completeness, business-rule references, architecture consistency, correct technology stack, local MongoDB-first strategy, deployment alignment, no contradictory module ownership, no invented commercial rules, working documentation links. Exit: required documentation complete, major contradictions identified, critical dependencies documented, documentation baseline submitted for project-owner acceptance. Restrictions: documentation-only; no scaffolding, DB provisioning, or cloud deployment. Do not claim project-owner approval if not explicitly given.
+Objective: establish authoritative business and technical documentation. Starting state: documentation-only repo (historical; the prototype has since been built). Scope: business rules 01–13, project scope, technical architecture, frontend, database, backend, security, testing, implementation, deployment, documentation navigation. Deliverables: 13 canonical business-rule docs, 9 dev docs. Validation: file completeness, business-rule references, architecture consistency, correct technology stack, local MongoDB-first strategy, deployment alignment, no contradictory module ownership, no invented commercial rules, working documentation links. Exit: required documentation complete, major contradictions identified, critical dependencies documented, documentation baseline submitted for project-owner acceptance. Restrictions: documentation-only; no scaffolding, DB provisioning, or cloud deployment. Do not claim project-owner approval if not explicitly given.
 
 ---
 
 ## 11. Phase 1: Frontend Foundation
 
-(As in earlier version.) Objective: establish Next.js application foundation and common presentation infrastructure. Starting state: documentation baseline. Approved architecture: single Next.js app, App Router, React, TypeScript, Ant Design 6, regular CSS, Zod, TanStack Query, feature-based panel structure [historical; superseded for UI by the November 8, 2026 decision in `AGENTS.md` section 8]. Core deliverables: application foundation, shared UI, panel shells (Admin/Ops, Public; future Customer documented not scaffolded), role-aware navigation, shared domain contracts, centralized mock store, TanStack Query. Out of scope: production Better Auth integration, live Finance transactions, production Atlas, real membership activation, actual payment verification, cloud deployment, complete Customer Portal, mobile app, enabled Redemption, enabled Services. Testing: manual-first UI verification (page rendering, navigation, component behavior, responsive layouts, forms, mock data relationships, demo role switching, permission-aware UI, loading/error/empty states); incremental component/unit automation where appropriate. Acceptance: Next.js app runs locally; approved panel shells render; shared UI conventions established; TS config valid; central mock data functions; role-aware navigation reflects mock permissions; refresh reset verified; no unauthorized additional frameworks; no production credentials; no hidden modules unintentionally activated. Exit: frontend foundation verified and accepted. Do not require full business workflow implementation for Phase 1 completion.
+Historical phase text. Objective: establish Next.js application foundation and common presentation infrastructure. Starting state: documentation baseline. Approved architecture: single Next.js app, App Router, React, TypeScript, Ant Design 6, regular CSS, Zod, TanStack Query, feature-based panel structure [historical; superseded for UI by the November 8, 2026 decision in `AGENTS.md` section 8]. Core deliverables: application foundation, shared UI, panel shells (Admin/Ops, Public; future Customer documented not scaffolded), role-aware navigation, shared domain contracts, centralized mock store, TanStack Query. Out of scope: production Better Auth integration, live Finance transactions, production Atlas, real membership activation, actual payment verification, cloud deployment, complete Customer Portal, mobile app, enabled Redemption, enabled Services. Testing: manual-first UI verification (page rendering, navigation, component behavior, responsive layouts, forms, mock data relationships, demo role switching, permission-aware UI, loading/error/empty states); incremental component/unit automation where appropriate. Acceptance: Next.js app runs locally; approved panel shells render; shared UI conventions established; TS config valid; central mock data functions; role-aware navigation reflects mock permissions; refresh reset verified; no unauthorized additional frameworks; no production credentials; no hidden modules unintentionally activated. Exit: frontend foundation verified and accepted. Do not require full business workflow implementation for Phase 1 completion.
 
 ---
 
@@ -137,7 +137,7 @@ Local MongoDB environment, persistent local storage, local security, transaction
 - Configure local replica set where transaction tests require it.
 - Establish Mongoose connection, model design, schema validation, controlled indexes, repository interfaces, transaction-session support.
 - Model relevant entities from authoritative business rules.
-- Design authoritative allocation for Customer identity, RA references, VIP Card IDs, accreditation numbers, financial references.
+- Design authoritative allocation for Customer identity, the VIP Number (one per RA, Grant and Card), accreditation numbers (monthly sequence), financial references.
 - Use synthetic development data; support controlled repeatable seeding; do not import actual legacy production data without separate authorization.
 
 ### Out of scope

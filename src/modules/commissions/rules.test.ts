@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Contract } from "@/modules/contracts/types";
 import type { Payment } from "@/modules/finance/types";
-import { collectedPercent, meetsPayoutRelease, payoutReleaseDate, payoutThresholdDate } from "./rules";
+import { collectedPercent, meetsPayoutRelease, payoutReleaseDate, payoutReleaseDateFor, payoutThresholdDate } from "./rules";
 
 const contract = { priceCentavos: 7_200_000 } as Pick<Contract, "priceCentavos">;
 
@@ -34,10 +34,16 @@ describe("40% payout release", () => {
     expect(meetsPayoutRelease(contract, [payment("a", 2_880_000, "2026-11-02")])).toBe(true);
   });
 
-  it("dates the threshold at the payment that reached it and opens payout 7 days later", () => {
+  it("dates the threshold at the payment that reached it and opens payout on the first day of the next month (R8)", () => {
     const payments = [payment("a", 1_000_000, "2026-11-02"), payment("b", 1_550_000, "2026-11-10"), payment("c", 1_550_000, "2026-11-20")];
     expect(payoutThresholdDate(contract, payments)).toBe("2026-11-20");
-    expect(payoutReleaseDate(contract, payments)).toBe("2026-11-27");
+    expect(payoutReleaseDate(contract, payments)).toBe("2026-12-01");
+  });
+
+  it("has no waiting period: a threshold on the last day of the month opens payout the next day", () => {
+    expect(payoutReleaseDate(contract, [payment("a", 2_880_000, "2026-11-30")])).toBe("2026-12-01");
+    expect(payoutReleaseDate(contract, [payment("a", 2_880_000, "2026-12-31")])).toBe("2027-01-01");
+    expect(payoutReleaseDateFor(null)).toBeNull();
   });
 
   it("returns null while below the threshold", () => {

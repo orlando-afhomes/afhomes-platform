@@ -46,7 +46,7 @@ This document does not define commission calculations, Stay Points rules, refund
 - **Outstanding Balance** — remaining unpaid contractual amount based on verified payments.
 - **Fully Paid** — Finance-verified complete settlement of the agreed contract price.
 - **Financial Hold** — restriction on new VIP benefit usage when an Active membership loses fully settled position due to authorized reversal/refund.
-- **Confirmed Sale** — separate from Fully Paid; a sale counts (Closed Deal) when approved receipts reach 25% of the contract price (owner ruling R7, 2026-11-12; doc 13 §4). Whether a finalized contract is also required is an open question (section 15).
+- **Confirmed Sale** — separate from Fully Paid; a sale counts (Closed Deal) when approved receipts reach 25% of the contract price (owner ruling R7, 2026-11-12; doc 13 §4). Contract finalization is not required for the count (follow-up item 1; section 15).
 
 ---
 
@@ -364,7 +364,7 @@ Source precedence: inspect the actual Customer Management, Finance, Import, and 
 
 ## 21. Finance Permission Boundaries (Reconciliation with Org Management)
 
-The platform uses modular role permissions and record-level visibility rules. The existing planning approach includes module-based Full CRUD access, subject to business restrictions.
+The platform uses modular role permissions and record-level visibility rules. The existing planning approach includes module-based page access that allows viewing, with sensitive actions needing separate operation permissions (owner ruling R4, doc 01 §3.1), subject to business restrictions.
 
 A module permission is not equivalent to unrestricted access to all financial transactions. Define the difference between submitting payment evidence through an authorized transaction workflow; viewing a customer's permitted payment history; accessing Finance verification queues; verifying or rejecting payments; approving and executing refunds or reversals; viewing complete Finance reports; and performing reconciliation.
 
@@ -405,7 +405,7 @@ The Finance document explains its relationship with existing and planned modules
 | VIP Contracts | Finalized contractual amount and payment obligations |
 | Sales | Finance verification supports Confirmed Sale eligibility |
 | Sales Performance Reporting | Confirmation recognition, reversals, and adjustment periods |
-| VIP Card Issuance | Full-payment eligibility before official activation and Card ID assignment |
+| VIP Card Issuance | Full-payment eligibility before official activation (the VIP Number is issued earlier, when the signed Reservation Agreement is recorded; doc 06) |
 | VIP Membership | Full settlement, activation eligibility, and Financial Hold |
 | IST/OST Sales Network | Payment submission and scoped visibility |
 | Commission Management | Future verified-sale and reversal integration; detailed commission policy remains separate |
@@ -435,8 +435,8 @@ Known source-document concerns:
 1. A discrepancy between ₱390,000 and ₱780,000 in different sections of the Gold contract (Gold portion resolved by owner ruling 2026-11-10, doc 05 item 11).
 2. Unfinished payment amount wording in an earlier Silver contract version (resolved by owner ruling 2026-11-12, doc 05 item 13: Php 240,000).
 3. Card Claim Date versus activation date as the validity start (resolved by owner ruling R2, 2026-11-12: the signed Grant's Card Claim Date applies, doc 06 §4.3).
-4. Missing definitive commercial details for some Move payment schemes.
-5. Non-Standard commercial exceptions (resolved by doc 05 §10.2, 2026-11-12: Finance confirms the price and schedule after the Super Administrator approves).
+4. ~~Missing definitive commercial details for some Move payment schemes.~~ Resolved (doc 05 items 6, 7, 14).
+5. Non-Standard commercial exceptions (resolved by doc 05 §10.2, 2026-11-12: Finance confirms the price and schedule after the Administrator or the Super Administrator approves; only the Super Administrator may do both).
 
 Do not silently resolve these legal or contractual issues through assumptions. Document them as requiring authoritative confirmation where they materially affect Finance requirements. Do not overwrite a finalized contractual amount merely to match a catalog price.
 
@@ -532,7 +532,7 @@ A previously verified payment affects a reported Confirmed Sale. The correction 
 - Detailed Commission reversal and payout consequences.
 - Tax/accounting/reporting procedures not established by source documentation.
 - Gold/Silver contract source discrepancies: resolved (doc 05 items 11 and 13).
-- RA numbering scope uniqueness verification.
+- ~~RA numbering scope uniqueness verification.~~ Resolved (doc 06, owner ruling R2: one VIP Number with a monthly sequence).
 
 ---
 
@@ -627,7 +627,7 @@ These rulings are authoritative and take precedence over earlier text in this do
 
 7. **Spot Cash, Move A and Move B (2026-11-09)** are released with the terms recorded in the doc 05 amendment. Finance consumes the finalized contract schedule: the Spot Cash balance is due 7 days after the reservation, Move B has a 40% down payment line that includes the reservation fee, and all lines follow the allocation order in item 3. ~~A Move contract cannot be finalized until a Super Administrator records its written approval.~~ Superseded by doc 05 item 12 (effective 2026-11-09): Move A and Move B are standard approved schemes and need no per-contract written approval.
 8. **Due dates** derive from the reservation date (doc 05 amendment, item 9). The Move B down payment has no documented due date, so it is undated and is not overdue until a date is entered.
-9. **Collection views** show, per contract, a ledger of verified payments and adjustments with running net and balance, and the separate milestones: payment recorded, payment verified, sale confirmed, commission release threshold, fully paid, membership activated, Card ID issued. Overdue days are whole calendar days in Asia/Manila. No penalty, interest or grace period is computed.
+9. **Collection views** show, per contract, a ledger of verified payments and adjustments with running net and balance, and the separate milestones: payment recorded, payment verified, sale confirmed, commission release threshold, fully paid, membership activated, VIP Number issued (at Reservation Agreement recording, doc 06). Overdue days are whole calendar days in Asia/Manila. No penalty, interest or grace period is computed.
 
 ## Owner rulings amendment (2026-11-12, rounds R6, R7, R11)
 
@@ -643,7 +643,7 @@ These rulings are authoritative and take precedence over earlier text in this do
 8. **Cancellation decision (overriding authority rule).** 2026-11-09 item 5 is amended: the Administrator, like the Super Administrator, may both request and decide the same cancellation; the audit history shows it.
 9. **History import (R11 item 5).** Every seller and every unfinished sale is imported with its full receipt history; finished sales stay in the Excel archives; a side-by-side parallel run follows and the switch happens when a month closes with no unexplained differences (Rollout Guide v1.4 §6 and §8). This sets the scope of OD-8. Section 20. *Imported receipt approval settled 2026-11-12 (follow-ups, item 3 below).*
 10. **No public lookup (R11 item 1).** There is no public card or customer check; payment information is never exposed publicly. Sections 5.4 and 21.
-11. **Open, not decided here:** whether contract finalization is still required before the 25% count. Doc 05 §13 still requires a finalized contract; the workbook has no separate finalization step (OPS §4.2 only requires the sale itself to be approved before its receipts). Section 15.
+11. ~~**Open, not decided here:**~~ **Settled by follow-up item 1 below:** whether contract finalization is still required before the 25% count. Doc 05 §13 still requires a finalized contract; the workbook has no separate finalization step (OPS §4.2 only requires the sale itself to be approved before its receipts). Section 15.
 
 ## Owner rulings amendment (2026-11-12, follow-ups)
 

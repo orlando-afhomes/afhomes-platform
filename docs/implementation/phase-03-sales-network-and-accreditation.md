@@ -4,7 +4,7 @@
 - Objective: the SVD, SSM, SM and OST hierarchy, seller records, accreditation lifecycle and the public checks around them.
 - Business rules: `docs/business-rules/02-sales-network-and-genealogy.md` sections 3 and 6 to 10; `docs/business-rules/03-ist-ost-accreditation.md` sections 4 to 9. Workbook references: NUM section 8, AUG R1, R23, R25, OCT I1 to I4, R28, R37 to R40.
 - Depends on: FP1.
-- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G01, G02 (Conflicting), G03, G04.
+- Decision items (all decided on 2026-11-12. Still open: automatic clawback recovery waits for the signed IST addendum (G09, U07); see `decisions-and-gaps.md`): G01, G02, G03, G04.
 
 Routes (from the atlas):
 
@@ -95,7 +95,7 @@ Routes (from the atlas):
 |---|---|
 | Journey | J02 |
 | Current | `/verify` takes the full identifier and does an exact-match mock query. An active eligible match shows number and class, plus Valid Until for OST only. IST shows no Valid Until. Failures show generic feedback and allow retry. No name search and no customer data. |
-| Target | Same. Keep verification distinct from onboarding. |
+| Target | Per R3: an expired seller shows as Expired (not hidden). Keep verification distinct from onboarding. There is no public customer or card lookup (R11). |
 | Layer | Frontend (mock) |
 | Blocked by | none (G02 (decided R3) may change date semantics) |
 | Acceptance | No partial match. No unrestricted records. |

@@ -1,7 +1,7 @@
 # AFHomes Platform — Security Architecture
 
 > Authoritative security architecture for the AFHomes Platform.
-> Read `docs/development/architecture.md` for system architecture and `docs/business-rules/` (01–13) for authoritative business behavior.
+> Read `docs/development/architecture.md` for system architecture and `docs/business-rules/` (01–14) for authoritative business behavior.
 > This document is documentation only; no security implementation is performed here.
 
 ---
@@ -23,7 +23,7 @@ AFHomes business rules are current approved operating policies and may change th
 - `docs/development/testing.md` — verification.
 - `docs/development/deployment.md` — production infrastructure security.
 - `docs/development/implementation.md` — phased implementation.
-- `docs/business-rules/01–13` — authoritative business authorization rules.
+- `docs/business-rules/01–14` — authoritative business authorization rules.
 
 ---
 
@@ -844,7 +844,7 @@ Do not invent answers to major unresolved security questions. Verify or flag the
 - Password recovery provider/configuration.
 
 ### Account Approval
-- Exact circumstances under which an Admin may approve a self-created account.
+- ~~Exact circumstances under which an Admin may approve a self-created account.~~ Decided (doc 01): the Administrator and Super Administrator may approve their own entries, and the audit trail shows it.
 - Direct Sales Network creation versus OST sponsor approval.
 - Exact accreditation login restrictions and any authorized renewal-access exceptions.
 
@@ -854,8 +854,8 @@ Do not invent answers to major unresolved security questions. Verify or flag the
 - Approved module access versus sensitive-operation authority.
 
 ### Privacy
-- Formal data retention periods.
-- Audit retention.
+- Formal data retention period: records are kept indefinitely until legal advice (R11); the advised period is open.
+- Audit retention: kept indefinitely until legal advice (R11, doc 12).
 - Export authority.
 - Exceptional lawful deletion procedures.
 - Specific privacy notification obligations.
@@ -997,7 +997,7 @@ Local MongoDB, MongoDB Atlas, DigitalOcean Droplet, Docker, HTTPS, secrets, moni
 Aligned with architecture, frontend, backend, database, testing, deployment, implementation, business rules 01–13. No material inconsistencies.
 
 ### I. Unresolved Critical Decisions
-Better Auth/MongoDB compatibility; production session configuration; MFA policy for privileged roles if not yet approved; password recovery provider/configuration; exact circumstances under which an Admin may approve a self-created account; direct Sales Network creation versus OST sponsor approval; exact accreditation login restrictions; effective role union and explicit restrictions; protected Super Administrator delegation rules; approved module access versus sensitive-operation authority; formal data retention periods; audit retention; export authority; exceptional lawful deletion procedures; specific privacy notification obligations; selected reverse proxy; cloud network topology; approved object-storage provider; selected CAPTCHA/challenge provider if applicable; monitoring/security tooling.
+Better Auth/MongoDB compatibility; production session configuration; MFA policy for privileged roles if not yet approved; password recovery provider/configuration; direct Sales Network creation versus OST sponsor approval; exact accreditation login restrictions; effective role union and explicit restrictions; protected Super Administrator delegation rules; approved module access versus sensitive-operation authority; formal data retention periods; audit retention; export authority; exceptional lawful deletion procedures; specific privacy notification obligations; selected reverse proxy; cloud network topology; approved object-storage provider; selected CAPTCHA/challenge provider if applicable; monitoring/security tooling.
 
 ### J. Validation Results
 Markdown formatting, link validation, diagram validation, cross-document consistency, git diff verification performed.

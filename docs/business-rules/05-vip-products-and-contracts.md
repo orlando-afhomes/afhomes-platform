@@ -298,7 +298,7 @@ Do not merge all of these into a single status or identifier. A customer may hav
 
 ## 16. Finance Integration
 
-Finance owns receipt recording, payment verification, installment collections, outstanding balances, full-payment confirmation, payment reversals, and financial reconciliation.
+A Clerk enters receipts, and Finance, the Administrator or the Super Administrator approves them (doc 07 §5, owner ruling R6). Finance owns payment verification, installment collections, outstanding balances, full-payment confirmation, payment reversals, and financial reconciliation.
 
 Membership activation must not rely only on user-submitted payment claims. Activation requires verified full settlement of the agreed contract price. The actual membership activation date must be recorded independently from the original payment claim or collection date.
 
@@ -414,7 +414,7 @@ These rulings are authoritative and take precedence over earlier text in this do
     | Move B | S1 | T08 |
     | Move B | G1 | T12 |
 
-    Card issuance only on activation after finalization, full settlement, and Finance verification. This item supersedes item 7 (Gold hold language for Move B) and item 8 (per-contract written approval); it preserves items 5, 6, 9, 10, 11.
+    Card issuance only on activation after finalization, full settlement, and Finance verification. (The VIP Number is issued earlier, when the signed Reservation Agreement is recorded: superseded by owner ruling R2, doc 06.) This item supersedes item 7 (Gold hold language for Move B) and item 8 (per-contract written approval); it preserves items 5, 6, 9, 10, 11.
 
 ## Owner rulings amendment (2026-11-12)
 
@@ -422,7 +422,7 @@ These rulings come from the 2026-11-12 decision round R1 and take precedence ove
 
 13. **Silver price finalized.** The updated Silver standard-pricing contract governs: Php 240,000 for 4-Month Installment (Php 10,000 reservation fee plus 4 x Php 57,500, zero interest). Spot Cash, Move A and Move B Silver keep items 5 to 7. The §6.2 placeholder note is history. Contracts signed on the earlier template keep their executed text.
 14. **Move A and Move B effective date** is 2026-11-09, the approval date (item 12).
-15. **Non-Standard policy approved.** See §10.2: only price and schedule may differ, the Super Administrator approves and then Finance confirms, there is no price floor, and commission uses the actual TCP. This replaces the §10.1 finalization hold.
+15. **Non-Standard policy approved.** See §10.2: only price and schedule may differ, the Administrator or the Super Administrator approves and then Finance confirms (only the Super Administrator may do both; see item 17), there is no price floor, and commission uses the actual TCP. This replaces the §10.1 finalization hold.
 16. **Company source authority.** When a company workbook source conflicts with this platform document, the workbook (the live manual process) wins by default. Exceptions where the stricter rule wins: signed contracts, privacy, legal and Finance control rules. Dated owner rulings outrank both. The Ruling Addenda of 2026-08-20 (AUG) and 24 Sep Issue 3 (OCT) count as approved company practice. The IST Commission and Clawback Addendum stays a DRAFT and is not applied until signed. The current company set is listed in `MASTER_FILE_REGISTER-issue29-2026-11-07`.
 ## Owner rulings amendment (2026-11-12, rounds R4–R5 and authority rule)
 

@@ -217,7 +217,7 @@ Original ₱240,000 → amended ₱220,000; adjustment −₱20,000 in approval 
 - **File created/updated:** `docs/business-rules/13-sales-performance-reporting.md`
 - **Sections:** Purpose and scope; dashboard views; status breakdown; Confirmed Sales recognition; payment reversals and reconfirmations; contract price amendments; historical ownership and audit; examples; acceptance criteria; deferred.
 - **Confirmation:** All approved sales performance reporting rules represented.
-- **Unresolved ambiguity:** None for approved rules at the time of writing. Open items after the 2026-11-12 rulings are listed in section 10.
+- **Unresolved ambiguity:** None for approved rules at the time of writing. Items still deferred or awaiting approval after the 2026-11-12 rulings are in section 10.
 - **Changes made:** Documentation only. No code, database, Git, or deployment changes.
 
 ## Owner rulings amendment (2026-11-12, rounds R6, R7, R11)
@@ -247,3 +247,4 @@ These rulings take precedence over earlier text in this document where they diff
 1. **Counting at 25% (owner ruling).** A sale counts at 25% once the Administrator has approved the sale record. Formal contract finalization is tracked separately and is not required for the count (workbook OPS §4.2). Section 4.
 2. **Stamp date (company rule OCT O3).** The Closed Deal, Stage 1 and Full Payment stamp date is the later of the triggering receipt's date and the latest receipt already counted (Ruling Addendum 2026-09-24 Issue 3, O3 clarifying AUG R12). Sections 4.3 and 4.4.
 3. **Defaulted and other non-Active sales (company rule OCT R33).** A Defaulted (or any non-Active) sale loses its Closed Deal at once. It leaves the Confirmed count and shows under its own status; reinstatement restores it. Sections 3.1 and 4.6.
+4. **Code status of the Stage 1 stamp (owner decision 2026-11-12).** The code currently stamps the 40% stage by the payment's approval date, not by the receipt date of item 2. Aligning the code with item 2 (OCT O3) is a pending task. The rule in item 2 is unchanged. See doc 08, "Owner rulings amendment (2026-11-12, payout day)" item 5.

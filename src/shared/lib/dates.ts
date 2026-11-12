@@ -50,6 +50,15 @@ export function addMonthsToDate(dateOnly: string, months: number): string | null
   return formatManilaDateParts({ year, month, day: Math.min(parts.day, dim) });
 }
 
+/** First calendar day of the month after a date-only value (2026-11-20 -> 2026-12-01; 2026-12-31 -> 2027-01-01). */
+export function startOfNextMonthDate(dateOnly: string): string | null {
+  const parts = parseManilaDateOnly(dateOnly);
+  if (!parts) return null;
+  const year = parts.month === 12 ? parts.year + 1 : parts.year;
+  const month = parts.month === 12 ? 1 : parts.month + 1;
+  return formatManilaDateParts({ year, month, day: 1 });
+}
+
 /** Whole-year age for a date-only birth date; null when invalid or in the future. Defaults to today's Asia/Manila business date. */
 export function computeAge(dateOfBirth: string, todayYMD?: string): number | null {
   const birth = parseManilaDateOnly(dateOfBirth);

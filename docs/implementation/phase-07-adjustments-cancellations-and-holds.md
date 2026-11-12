@@ -1,10 +1,10 @@
 # FP7: Adjustments, Cancellations and Holds
 
 - Atlas journey: J08 Reversal, refund, cancellation and holds (module: Finance and collections)
-- Objective: corrections to verified money, cancellation with an independent decision, and holds, with every linked effect reconciled.
+- Objective: corrections to verified money, cancellation with a recorded decision, and holds, with every linked effect reconciled.
 - Business rules: `docs/business-rules/07-finance-and-payments.md` sections 14, 19 and 20; `08-commission-management.md`. Workbook references: OPS section 4.4, OCT R32 to R34 and O6 to O9.
 - Depends on: FP6.
-- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): G07, G08, G09.
+- Decision items (all decided on 2026-11-12. Still open: automatic clawback recovery waits for the signed IST addendum (G09, U07); see `decisions-and-gaps.md`): G07, G08, G09.
 
 Routes (from the atlas):
 
@@ -28,16 +28,16 @@ Routes (from the atlas):
 | Acceptance | An adjustment above the adjustable amount is refused. The original receipt is never edited. |
 | Status | Exists (per atlas) |
 
-## F7.2 Cancellation with an independent decision
+## F7.2 Cancellation request and decision
 
 | Field | Value |
 |---|---|
 | Journey | J08 |
-| Current | An authorized Admin requests with grounds. Finance opens the request and confirms or declines. The requester and decider must differ, with the documented Super Admin exception. Confirmation applies contract, sale, membership and unpaid commission effects. Decline keeps the record and decision history. |
+| Current | An authorized Admin requests with grounds. Finance opens the request and confirms or declines. The requester may also decide (authority rule, doc 07 item 8); the history flags a self-decision. Confirmation applies contract, sale, membership and unpaid commission effects. Decline keeps the record and decision history. |
 | Target | Record approve or decline, link the signature, and do not invent forfeiture or recovery rights. |
 | Layer | Frontend (mock) |
 | Blocked by | none |
-| Acceptance | Self-decision is refused. A declined request leaves the record unchanged. |
+| Acceptance | A self-decision succeeds and is flagged in the history. A declined request leaves the record unchanged. |
 | Status | Exists (per atlas) |
 
 ## F7.3 Holds

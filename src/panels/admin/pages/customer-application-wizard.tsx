@@ -23,9 +23,9 @@ import { InfoNote } from "@/shared/components/modern/detail-list";
 import { CardGridSkeleton } from "@/shared/components/modern/skeletons";
 import { CheckboxField, FieldShell, RadioCardField, StandardDateField, TextField, describedBy, useFieldIds } from "@/shared/forms/modern";
 import { REFERENCE_LIMITS, cleanReferenceNumber, referencePolicyFor, validateReferenceNumber, type ReferencePolicy } from "@/shared/forms/validation/reference-number";
-import { Button, buttonVariants } from "@/shared/ui/button";
+import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/shared/ui/alert-dialog";
+import { AppAlert, appAlertOptions } from "@/shared/components/modern/app-alert";
 import {
   AddressSection,
   AttributionSection,
@@ -200,8 +200,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
       timer: SUBMISSION_SUCCESS_DURATION_MS,
       timerProgressBar: true,
       confirmButtonText: "Go to Customers",
-      buttonsStyling: false,
-      customClass: { confirmButton: buttonVariants({ className: "tw:min-h-11" }) },
+      ...appAlertOptions(),
       allowOutsideClick: false,
       allowEscapeKey: false,
       returnFocus: false,
@@ -790,32 +789,23 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
         )}
       </Card>
 
-      {exit.destination ? (
-        <AlertDialog open onOpenChange={(open) => { if (!open && !busy) exit.dismiss(); }}>
-          <AlertDialogContent className="tw:w-11/12 tw:sm:max-w-lg">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Leave this application?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Save the application as a customer draft to continue it later.
-                {hasReservationChanges ? " Re-enter reservation details and payment evidence when you reopen the draft." : ""}
-                {hasIdPreview ? " Government ID previews are temporary." : ""}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={busy}>Stay</AlertDialogCancel>
-              <AlertDialogAction type="button" variant="destructive" disabled={busy} onClick={() => {
-                const leave = exit.destination;
-                exit.dismiss();
-                resetNewApplication();
-                leave?.();
-              }}>Discard all Changes</AlertDialogAction>
-              <AlertDialogAction type="button" loading={saving} disabled={busy} onClick={() => void saveDraft(exit.destination ?? undefined)}>
-                Save Draft
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      ) : null}
+      <AppAlert
+        open={exit.destination !== null}
+        title="Leave this application?"
+        description={`Save the application as a customer draft to continue it later.${hasReservationChanges ? " Re-enter reservation details and payment evidence when you reopen the draft." : ""}${hasIdPreview ? " Government ID previews are temporary." : ""}`}
+        confirmText="Save Draft"
+        denyText="Discard all Changes"
+        cancelText="Stay"
+        pending={saving}
+        onConfirm={() => void saveDraft(exit.destination ?? undefined)}
+        onDeny={() => {
+          const leave = exit.destination;
+          exit.dismiss();
+          resetNewApplication();
+          leave?.();
+        }}
+        onClose={() => { if (!busy) exit.dismiss(); }}
+      />
 
       {isSubmitted ? (
         <ReasonDialog

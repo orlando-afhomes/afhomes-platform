@@ -79,7 +79,7 @@ Accreditation renewal is allowed even when the underlying account is Suspended o
 
 After renewal:
 
-- Active account + valid accreditation: login access is restored automatically.
+- Active account: login access is restored automatically. An expired accreditation does not block login (owner ruling R3, §9).
 - Suspended account: login remains blocked.
 - Deactivated account: login remains blocked.
 

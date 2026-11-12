@@ -598,7 +598,7 @@ Record only issues that materially affect correct implementation.
 
 - **File created/updated:** `docs/business-rules/08-commission-management.md`
 - **Rules coverage (restructured 2026-11-12):** per-person DSC and DRI rates frozen at VIP Number issuance; contract TCP basis; seller and referrer as the only per-sale recipients; staged release paid at month-end; status-independent commission; clawback and recovery; IST leader allowances; parallel run.
-- **Cross-module review:** open conflicts are tracked in `docs/implementation/decisions-and-gaps.md` (G08, G09) and section 24.
+- **Cross-module review:** open conflicts are tracked in `docs/implementation/decisions-and-gaps.md` (G09) and section 24.
 - **Change scope:** Documentation only.
 
 ## Owner rulings amendment (2026-11-09)
@@ -636,3 +636,10 @@ These rulings are authoritative and take precedence over earlier text in this do
 1. **No override for AFhomes leaders.** Per-sale pay goes only to the closing seller (DSC) and the referrer (DRI); leaders earn BA, PA and PB. "Override" is a JA&D pay item only. The section 24 item "Override, where applicable" is closed (section 6).
 2. **OST clawback.** The amount is recorded as owed and the office collects it directly. Nothing is deducted automatically from an OST seller's future pay unless a signed OST agreement allows it. The section 24 item "Recovery from OST" is closed (section 14.4.1).
 3. **Contract finalization.** A sale counts once the Administrator has approved the sale record; formal contract finalization is tracked separately and is not required (workbook OPS §4.2). It is not a precondition for attachment, release or the Closed Deal. The section 24 item is closed (section 8.4).
+
+## Owner rulings amendment (2026-11-12, payout day)
+
+These rulings were given directly by the owner on 2026-11-12. They take precedence over earlier text in this document where they differ.
+
+4. **Payout day (D-A).** A VIP commission payout may be recorded from the first day of the month after the month in which net verified collections first reached 40%. This is the month-end payout of Decision 5, sections 8.2 and 11, and R8 item 4, made after that month is closed. Until a month-close feature exists, the start of the next calendar month stands in for month close. This replaces any reading of "at month-end" as the last calendar day of the release month. There is no waiting period.
+5. **Which date sets the release month (D-B).** For now the release month is set by the verification (approval) date of the payment that brought net verified collections to 40%. Doc 13 (OCT O3) stamps Stage 1 by the receipt's own date (the later of the triggering receipt's date and the latest counted receipt's date). Aligning the code with doc 13 is a separate task; neither rule is changed here.

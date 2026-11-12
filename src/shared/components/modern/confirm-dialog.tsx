@@ -1,20 +1,12 @@
 "use client";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
+import { AppAlert } from "./app-alert";
 
 /**
- * Controlled confirmation (Base UI AlertDialog). The confirm button never
- * closes the dialog itself: the caller runs its action, then closes, so a
- * failed action keeps the dialog's context and the button shows progress.
+ * Controlled confirmation, shown with SweetAlert2 through the shared AppAlert.
+ * The confirm button never closes the pop-up itself: the caller runs its
+ * action, then closes, so a failed action keeps the context and the button
+ * shows progress.
  */
 export function ConfirmDialog({
   open,
@@ -36,32 +28,21 @@ export function ConfirmDialog({
   onClose: () => void;
 }) {
   return (
-    <AlertDialog
+    <AppAlert
       open={open}
-      onOpenChange={(next) => (!next && !pending ? onClose() : undefined)}
-    >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending} className="tw:min-h-11 tw:sm:min-h-8">Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            variant={danger ? "destructive" : "default"}
-            loading={pending}
-            onClick={onConfirm}
-            className="tw:min-h-11 tw:sm:min-h-8"
-          >
-            {confirmText}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      title={title}
+      description={description}
+      confirmText={confirmText}
+      cancelText="Cancel"
+      danger={danger}
+      pending={pending}
+      onConfirm={onConfirm}
+      onClose={onClose}
+    />
   );
 }
 
-/** Information-only dialog with a single acknowledgement (replaces a blocking informational modal). */
+/** Information-only pop-up with a single acknowledgement (replaces a blocking informational modal). */
 export function NoticeDialog({
   open,
   title,
@@ -73,20 +54,5 @@ export function NoticeDialog({
   description: string;
   onClose: () => void;
 }) {
-  return (
-    <AlertDialog
-      open={open}
-      onOpenChange={(next) => (!next ? onClose() : undefined)}
-    >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogAction onClick={onClose} className="tw:min-h-11 tw:sm:min-h-8">OK</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
+  return <AppAlert open={open} title={title} description={description} confirmText="OK" onConfirm={onClose} onClose={onClose} />;
 }

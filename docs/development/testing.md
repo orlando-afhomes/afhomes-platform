@@ -1,7 +1,7 @@
 # AFHomes Platform — Testing and Quality Assurance
 
 > Authoritative testing and quality assurance specification for the AFHomes Platform.
-> Read `docs/development/architecture.md` for system architecture and `docs/business-rules/` (01–13) for authoritative business behavior.
+> Read `docs/development/architecture.md` for system architecture and `docs/business-rules/` (01–14) for authoritative business behavior.
 > This document is documentation only; no tests are implemented or executed here.
 
 ---
@@ -14,7 +14,7 @@ This document defines the complete testing and quality assurance strategy for th
 
 ## 2. Current Versus Target Testing State
 
-- **Verified current implementation:** documentation-only repository; no application code, test infrastructure, or databases.
+- **Verified current implementation (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); Vitest and Testing Library run component and unit tests on the mocks; no API, database or end-to-end tests yet.
 - **Approved target testing architecture:** manual-first frontend development, automated verification before production, local MongoDB integration testing, Atlas staging validation.
 - **Planned testing work:** all test implementation requires separate authorization.
 
@@ -76,7 +76,7 @@ The existing repository may not contain any testing infrastructure. Document a p
 
 ## 7. Test Directory and File Organization
 
-Representative future structure:
+Current practice: tests sit next to the code as `*.test.ts(x)` and run with Vitest. The tree below is a representative future structure for integration, API and end-to-end tests:
 
 ```text
 tests/
@@ -264,6 +264,17 @@ A user must not gain access by changing `customerId`, `staffId`, `saleId`, `paym
 
 ---
 
+### 20.4 Owner-ruling test cases (2026-11-12)
+
+Add these cases when the matching feature is built:
+- A Clerk can enter a receipt, a customer record or an accreditation record but cannot approve any of them.
+- An Administrator or Super Administrator can approve their own entry, and the audit record shows that the approver and the enterer are the same person.
+- A seller (SVD, SSM, SM) sees only their own and their team's records, an OST sees only its own, and no seller can create or change a contract.
+- A sale counts at 25% approved collection once the Administrator has approved the sale record, and not before.
+- VIP commission is released 100% at the month-end of the month in which 40% is collected, with no 7-day wait. A confirmed disbursement is Paid; an approved commission is not.
+- A Non-Standard contract needs the Administrator or the Super Administrator to approve, then Finance to confirm; only the Super Administrator may do both.
+- A returned receipt can be corrected and resent, and a reversal is a dated entry with a reason, never a deletion.
+
 ## 21. Staff Lifecycle Testing
 
 Use documents 01 and 03. Test applicable states and transitions: registration, creation, Pending approval, approval, rejection, activation, suspension, deactivation, reactivation, archival. Distinguish ordinary staff approval from applicable Sales Network account creation exceptions. Do not assume every account follows one identical approval flow. Test session invalidation after suspension/deactivation. Test unauthorized approval attempts. Where self-created account approval is authorized, verify its exact permitted boundaries.
@@ -356,7 +367,7 @@ Use the applicable actual official activation date. Do not backdate merely to ma
 
 ### 26.5 RA uniqueness dependency
 
-If RA numbering reuse or uniqueness scope is not fully resolved, explicitly flag the affected uniqueness tests as dependent on that decision. Do not invent a new VIP serial allocator to make the tests pass.
+The VIP Number rule is decided (doc 06, R2): one number per Reservation Agreement, Grant and Card, issued at RA recording with a monthly sequence, never reused. Test uniqueness and non-reuse against it. Do not invent a competing serial allocator.
 
 ---
 
@@ -416,7 +427,7 @@ Use document 08. Test eligible recipient, direct seller, historical upline, manu
 
 ### 30.1 No automatic approval
 
-A Confirmed Sale must not automatically create an approved commission without the approved Finance action.
+A Confirmed Sale must not automatically create an approved commission without the approved action (Finance, the Administrator or the Super Administrator; doc 08).
 
 ### 30.2 Correct calculation
 
@@ -472,7 +483,7 @@ Use document 09. Testing must distinguish Earned points, Pending points, Unlocke
 
 ### 32.1 Earning
 
-Test approved eligible verified resort spending. Under the approved current earning direction: ₱1 eligible verified spending = 1 earned Stay Point. Verify the actual governing rule and any applicable rounding.
+Test approved eligible verified resort spending. Under the signed Grant's Annual Welcome Gift rule (doc 09, owner ruling R10), points come in fixed yearly tranches with weekday and weekend parts, released only when the yearly qualifying spend is met; Spend-to-Earn is removed. Test tranche release, a refund delaying an unreleased tranche, and waiver approval by the Administrator or the Super Administrator.
 
 ### 32.2 Annual capacity
 
@@ -562,7 +573,7 @@ Unauthorized users must not access restricted audit events or exports.
 
 ## 37. Historical Data Integrity Testing
 
-This is a cross-module priority. Test preservation of Customer IDs, RA references, VIP Card IDs, Accreditation IDs, Contract snapshots, Original sale attribution, Verified payment history, Commission history, Membership activation dates, Stay Points ledgers, Audit records.
+This is a cross-module priority. Test preservation of Customer IDs, VIP Numbers, Accreditation IDs, Contract snapshots, Original sale attribution, Verified payment history, Commission history, Membership activation dates, Stay Points ledgers, Audit records.
 
 ### 37.1 Policy changes
 
@@ -718,7 +729,7 @@ Document how future changes should be reviewed against existing business behavio
 | 06 VIP Card Issuance | Official format, concurrency, uniqueness | Unit, database |
 | 07 Finance and Payments | Verification, balances, reversals | Integration, transactions |
 | 08 Commission Management | Manual approval, payout, Holds | Unit, integration |
-| 09 Membership and Stay Points | Activation, earning, ledger integrity | Unit, transactions |
+| 09 Membership and Stay Points | Activation, Welcome Gift tranche release, ledger integrity | Unit, transactions |
 | 10 Redemption | Disabled-state protection, future reservation logic | Security, future integration |
 | 11 Reports and Analytics | Permissions, accurate totals and filters | Integration |
 | 12 Audit Logs and Governance | Traceability, privacy, history protection | Integration, security |
@@ -806,15 +817,15 @@ Align with `docs/development/implementation.md`: Phase 0 Documentation; Phase 1 
 18. Approved commission is not Paid commission.
 19. Commission payout must not be duplicated.
 20. VIP Card IDs must follow official allocation requirements.
-21. RA-derived identifier constraints must be respected.
+21. VIP Number rules (one number at RA recording, monthly sequence, never reused) must be respected.
 22. Historical identifiers remain unchanged.
 23. Genealogy transfers preserve historical attribution.
 24. IST/OST authorization must respect actual hierarchy.
 25. OST sponsor approval must not be bypassed where required.
 26. Customer Draft and final submission are different workflows.
-27. Customer Lookup must preserve privacy.
+27. There is no public customer or card lookup; no public route or API may return customer or card records (owner ruling R11).
 28. Public accreditation verification must preserve privacy.
-29. Stay Points earning must follow eligible spending.
+29. Stay Points release must follow the signed Grant's Annual Welcome Gift rule and verified qualifying spend.
 30. Annual capacity is not available balance.
 31. Weekday/Weekend balances remain distinct.
 32. Gold supplementary holders share one membership points pool.
@@ -836,7 +847,7 @@ Align with `docs/development/implementation.md`: Phase 0 Documentation; Phase 1 
 
 ## 58. Critical Unresolved Dependencies
 
-Only genuine blockers. Do not invent decisions. Examples: unresolved Gold/Silver contract price discrepancies; RA numbering scope uniqueness; accreditation active-status/expiry evaluation rules; Better Auth + MongoDB compatibility; local replica-set configuration; selected Atlas tier transaction support; formal audit retention policy; financial rounding policies; selected object-storage provider; selected reverse proxy; exact mandatory-field matrix for customer submission; exact mandatory certification conditions; complete payment scheme canonical register from approved docs; tier-code format expansion if needed; partial stay/completion rules for redemption; mixed weekday/weekend multi-day booking calculations; policy-version applicability when a booking spans a configuration change.
+Only genuine blockers. Do not invent decisions. Examples: Better Auth + MongoDB compatibility; local replica-set configuration; selected Atlas tier transaction support; a legally advised retention period; financial rounding policies; selected object-storage provider; selected reverse proxy; exact mandatory-field matrix for customer submission; exact mandatory certification conditions; complete payment scheme canonical register from approved docs; tier-code format expansion if needed; partial stay/completion rules for redemption; mixed weekday/weekend multi-day booking calculations; policy-version applicability when a booking spans a configuration change.
 
 ---
 
@@ -849,7 +860,7 @@ Only genuine blockers. Do not invent decisions. Examples: unresolved Gold/Silver
 - `docs/development/security.md`
 - `docs/development/implementation.md`
 - `docs/development/deployment.md`
-- `docs/business-rules/01–13`
+- `docs/business-rules/01–14`
 
 ---
 

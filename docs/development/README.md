@@ -2,7 +2,7 @@
 
 > Authoritative development documentation index and governance guide for the AFHomes Platform.
 > Read `docs/project.md` for project context and `docs/development/architecture.md` for system architecture.
-> This is a documentation-only repository; no application code is implemented yet.
+> The repository holds a working frontend prototype on typed in-memory mock data. There is no backend, database, real authentication or deployment yet. Trust the code and `package.json` over any older status line in these documents.
 
 ---
 
@@ -14,14 +14,14 @@ AFHomes Platform is a modular business management system for AFHomes. It covers 
 
 ## 2. Purpose of This Directory
 
-This directory (`docs/development/`) contains the authoritative development architecture and implementation documentation. It is the entry point for developers and AI coding agents. Business rules are authoritative in `docs/business-rules/` (01–13); development documents must not redefine business rules, only reference them.
+This directory (`docs/development/`) contains the authoritative development architecture and implementation documentation. It is the entry point for developers and AI coding agents. Business rules are authoritative in `docs/business-rules/` (01–14); development documents must not redefine business rules, only reference them.
 
 ---
 
 ## 3. Documentation Authority
 
 - `docs/project.md` — overall project context, purpose, scope, approved project direction.
-- `docs/business-rules/01–13` — authoritative business behavior. Implementation must follow the applicable business-rule document. Do not allow frontend, backend, or database agents to invent replacement business rules.
+- `docs/business-rules/01–14` — authoritative business behavior. Implementation must follow the applicable business-rule document. Do not allow frontend, backend, or database agents to invent replacement business rules.
 - `docs/development/architecture.md` — complete system topology, layer boundaries, panel organization, approved technology stack, infrastructure direction.
 - Layer-specific development documents — explain how the approved architecture should be implemented; must remain consistent with architecture and business rules.
 - `docs/development/implementation.md` — development phases, dependencies, acceptance criteria, risks, authorization boundaries. Documenting a phase does not automatically authorize implementation.
@@ -37,9 +37,9 @@ This directory (`docs/development/`) contains the authoritative development arch
 | Router | Next.js App Router |
 | Frontend | React + TypeScript |
 | Styling | Tailwind CSS 4 utilities plus namespaced regular CSS per feature |
-| UI foundation | shadcn/ui on Base UI; TanStack Table; Lucide (Ant Design 6 temporary, unmigrated modules only; `AGENTS.md` section 8) |
+| UI foundation | shadcn/ui on Base UI; TanStack Table; Lucide (Ant Design was removed in commit 22c9b4f; `AGENTS.md` section 8) |
 | Additional styling | None (no CSS Modules, no new project-authored CSS-in-JS) |
-| Validation | Zod |
+| Validation | Zod (approved; not yet used in `src/`) |
 | Client asynchronous state | TanStack Query |
 | Initial frontend data | Browser-scoped in-memory mock store |
 | API | Versioned REST `/api/v1` |
@@ -81,7 +81,7 @@ Do not require production Atlas access during early frontend development. Do not
 
 ## 7. Development Documentation Index
 
-Exactly nine development Markdown documents:
+Ten development Markdown documents (the nine below plus `role-module-permission-matrix-proposal.md`, the proposed role and module permission matrix):
 
 | File | Description |
 |---|---|
@@ -95,7 +95,7 @@ Exactly nine development Markdown documents:
 | [implementation.md](implementation.md) | Phases 0–8, dependency-driven execution, acceptance criteria, risks, authorization boundaries |
 | [deployment.md](deployment.md) | DigitalOcean Droplet, Docker Compose, Next.js production hosting, MongoDB Atlas, HTTPS, domain/DNS, monitoring, backups, recovery, CI/CD, operational maintenance |
 
-Do not create additional development documents. The directory must remain exactly nine Markdown files.
+Do not create additional development documents. Keep the set of development documents as listed here; add another only with owner approval.
 
 ---
 
@@ -279,7 +279,7 @@ Refer to `security.md`. Do not attempt to reproduce the entire threat model in t
 
 ## 16. Verified Current Project Status
 
-The repository is documentation-only: no application code, no package manifest, no database, no deployment. (Verify with `git status` and file inspection before each task; do not assume this remains true indefinitely.) Distinguish local repository evidence from external infrastructure verification — do not claim MongoDB Atlas or DigitalOcean account state has been verified solely by inspecting local files.
+The repository is a frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); no API route handlers, no database, no real authentication and no deployment. (Verify with `git status` and file inspection before each task; do not assume this remains true indefinitely.) Distinguish local repository evidence from external infrastructure verification — do not claim MongoDB Atlas or DigitalOcean account state has been verified solely by inspecting local files.
 
 Status categories: Documentation status; Application source status; Local MongoDB configuration status; Atlas configuration status; Deployment configuration status; Testing status.
 
@@ -374,8 +374,8 @@ Do not run deployment procedures merely because an example exists in README.
 ## 22. Quick Reference and Next Steps
 
 - Documentation baseline complete (13 business rules + 9 dev docs).
-- No application code exists yet.
-- Next authorized work (when approved): Phase 1 Frontend Foundation.
+- A frontend prototype exists (see section above); the backend, database, authentication and deployment do not.
+- Next work: each feature in `docs/implementation/` needs explicit project-owner authorization before it starts.
 - All changes require explicit project-owner authorization.
 - STOP — await explicit authorization before implementation, Git operations, or deployment.
 
@@ -385,7 +385,7 @@ Do not run deployment procedures merely because an example exists in README.
 
 - **File created/updated:** `docs/development/README.md` (rewritten/expanded).
 - **Documentation navigation:** Nine development documents indexed; thirteen business-rule documents referenced; relative links valid; AI agent reading order defined.
-- **Architecture alignment:** Next.js App Router, React/TypeScript, shadcn/ui/Base UI/Tailwind 4/custom CSS (Ant Design temporary), Zod, TanStack Query, REST `/api/v1`, Better Auth direction, Mongoose, Local MongoDB, MongoDB Atlas, DigitalOcean, Docker Compose, HTTPS.
+- **Architecture alignment:** Next.js App Router, React/TypeScript, shadcn/ui/Base UI/Tailwind 4/custom CSS, Zod (approved, not yet used in `src/`), TanStack Query, REST `/api/v1`, Better Auth direction, Mongoose, Local MongoDB, MongoDB Atlas, DigitalOcean, Docker Compose, HTTPS.
 - **Business scope:** Organization, Staff, Roles, Sales Network, Genealogy, Accreditation, Customers, VIP Products/Contracts, Sales, Finance, Commissions, Membership, Stay Points, Reports, Audit, Redemption disabled, Services disabled.
 - **Implementation roadmap:** Phases 0–8 included; Phase 2 local MongoDB correction; Phase 7 cloud deployment.
 - **Agent governance:** Required reading order, source-of-truth hierarchy, authorization boundaries, Git safety, historical data protection, security requirements.

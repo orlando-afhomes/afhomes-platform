@@ -2,7 +2,7 @@
 
 > Authoritative technical architecture for AI coding agents and contributors.
 > Read `docs/project.md` first for product scope and approved business decisions.
-> Business rules live under `docs/business-rules/` (01–13).
+> Business rules live under `docs/business-rules/` (01–14).
 > This document defines **where code belongs, how modules interact, and which boundaries must not be crossed**.
 > It is a target architecture, not a requirement to create every directory immediately.
 
@@ -23,8 +23,8 @@ This document is the authoritative technical architecture for the AFHomes Platfo
 | Programming language | TypeScript |
 | Frontend | React |
 | Styling | Tailwind CSS 4 utilities plus namespaced regular CSS per feature |
-| UI foundation | shadcn/ui on Base UI + Tailwind CSS 4 + namespaced custom CSS; TanStack Table; Lucide (Ant Design 6 temporary, unmigrated modules only; `AGENTS.md` section 8) |
-| Validation | Zod |
+| UI foundation | shadcn/ui on Base UI + Tailwind CSS 4 + namespaced custom CSS; TanStack Table; Lucide (Ant Design was removed in commit 22c9b4f; `AGENTS.md` section 8) |
+| Validation | Zod (approved; not yet used in `src/`) |
 | Client async state | TanStack Query |
 | Development approach | Frontend-first with centralized mock data |
 | Mock persistence | Browser-scoped, in-memory only; resets on full refresh |
@@ -48,7 +48,7 @@ This document is the authoritative technical architecture for the AFHomes Platfo
 
 ## 3. Current Versus Target Architecture
 
-- **Verified current implementation:** documentation-only repository; no application code, database, or deployment.
+- **Verified current implementation (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); no API, database or deployment.
 - **Approved target architecture:** as above.
 - **Future implementation work:** all application development requires separate explicit authorization.
 
@@ -143,12 +143,12 @@ Supporting diagrams (modular domain dependencies, frontend-to-backend request li
 |---|---|---|---|---|
 | 1 | Routing and composition | `src/app/` | Route definitions, layouts, thin page composition | Panels, shared |
 | 2 | Panel presentation | `src/panels/*` | Panel-specific UI, hooks, styling, navigation | Features, shared, modules (contracts) |
-| 3 | Frontend features | `src/panels/*/features/*` | Page composition, components, hooks, styles | Shared UI, modules |
-| 4 | Application services | `src/modules/*/application/` | Use cases, workflow orchestration | Domain, contracts, policies |
-| 5 | Domain rules and validation | `src/modules/*/domain/`, `schemas/` | Types, invariants, Zod schemas | Nothing platform-specific |
-| 6 | Repository contracts | `src/modules/*/contracts/` | Interfaces, typed operation boundaries | Domain types |
-| 7 | Data adapters | `src/data/adapters/*` | Mock/API implementations of contracts | Contracts, mock store / HTTP |
-| 8 | Backend infrastructure | `src/server/*` | DB connection, auth, repositories, security | Mongoose, Better Auth |
+| 3 | Frontend features | `src/panels/*/` (`pages/`, `components/`) | Page composition, components, hooks, styles | Shared UI, modules |
+| 4 | Application services | `src/modules/*/` | Use cases, workflow orchestration | Domain, contracts, policies |
+| 5 | Domain rules and validation | `src/modules/*/` (Zod schemas when adopted) | Types, invariants, Zod schemas | Nothing platform-specific |
+| 6 | Repository contracts | `src/data/contracts/` | Interfaces, typed operation boundaries | Domain types |
+| 7 | Data adapters | `src/data/mock/` (HTTP adapters later) | Mock/API implementations of contracts | Contracts, mock store / HTTP |
+| 8 | Backend infrastructure | `src/server/*` (planned; does not exist yet) | DB connection, auth, repositories, security | Mongoose, Better Auth |
 | 9 | Database and integrations | MongoDB Atlas | Persistence | — |
 
 ### 7.1 Dependency Direction
@@ -171,7 +171,7 @@ Three logically independent presentation panels: Admin (MVP), Public (limited MV
 
 ## 10. Frontend Technology and Design System
 
-Next.js App Router, React, TypeScript, shadcn/ui on Base UI, Tailwind CSS 4, namespaced custom CSS, Zod, TanStack Query (Ant Design 6 temporary in unmigrated modules). Panel-scoped themes (`.admin-theme`, `.public-theme`, `.customer-theme`). Shared shadcn/ui primitives under `src/shared/ui/` only when intentional. Server Components by default; `"use client"` only where needed.
+Next.js App Router, React, TypeScript, shadcn/ui on Base UI, Tailwind CSS 4, namespaced custom CSS, Zod (approved, not yet used in `src/`), TanStack Query (Ant Design was removed in commit 22c9b4f). Panel-scoped themes (`.admin-theme`, `.public-theme`, `.customer-theme`). Shared shadcn/ui primitives under `src/shared/ui/` only when intentional. Server Components by default; `"use client"` only where needed.
 
 ---
 
@@ -355,13 +355,13 @@ Align with `docs/development/implementation.md` Phases 0–8. Phases are plannin
 - Customer/Public website scope → distinguish target capability from current phase; do not permanently exclude approved public website/CMS.
 - Better Auth compatibility → intended direction subject to verification; do not claim verified.
 - VD vs SVD terminology → use SVD per authoritative Sales Network docs.
-- Current implementation claims → documentation-only repo; do not present modules/infra as present.
+- Current implementation claims → frontend prototype on mocks only; do not present the backend, database or infrastructure as present.
 
 ---
 
 ## 39. Architectural Invariants
 
-(As listed in task: one repo, one Next.js app, panel/feature modular monolith, App Router, React/TS, shadcn/ui/Base UI/Tailwind 4/custom CSS (Ant Design temporary; superseded Nov 8, 2026), Zod, TanStack Query, centralized mock data, mock reset on refresh, mock identity not production auth, `/api/v1`, thin handlers, domain logic outside presentation, server-only Mongoose/DB, MongoDB Atlas, DigitalOcean Droplet, Docker Compose, HTTPS reverse proxy, centralized auth, server-side RBAC, record-level visibility, historical genealogy preservation, Finance payment verification authority, manual Finance commission approvals, correct VIP membership activation eligibility, official VIP identifier uniqueness, correct Stay Points ledger lifecycle, audit history, no double processing, no automatic Supabase migration, Redemption disabled, Services disabled, future Customer Portal supported, future mobile can reuse REST API, no unauthorized microservice redesign, current business policies revisable through authorized decisions, historical signed contract terms protected, architecture doc does not authorize implementation, production readiness requires separate verification/approval.)
+(As listed in task: one repo, one Next.js app, panel/feature modular monolith, App Router, React/TS, shadcn/ui/Base UI/Tailwind 4/custom CSS (Ant Design superseded Nov 8, 2026 and later removed), Zod, TanStack Query, centralized mock data, mock reset on refresh, mock identity not production auth, `/api/v1`, thin handlers, domain logic outside presentation, server-only Mongoose/DB, MongoDB Atlas, DigitalOcean Droplet, Docker Compose, HTTPS reverse proxy, centralized auth, server-side RBAC, record-level visibility, historical genealogy preservation, Finance payment verification authority, manual Finance commission approvals, correct VIP membership activation eligibility, official VIP identifier uniqueness, correct Stay Points ledger lifecycle, audit history, no double processing, no automatic Supabase migration, Redemption disabled, Services disabled, future Customer Portal supported, future mobile can reuse REST API, no unauthorized microservice redesign, current business policies revisable through authorized decisions, historical signed contract terms protected, architecture doc does not authorize implementation, production readiness requires separate verification/approval.)
 
 ---
 
@@ -373,9 +373,9 @@ Align with `docs/development/implementation.md` Phases 0–8. Phases are plannin
 - DigitalOcean-to-Atlas connectivity.
 - Selected reverse proxy integration.
 - Deployment image/build compatibility.
-- RA numbering scope uniqueness.
-- Accreditation active-status/expiry evaluation rules.
-- Formal audit retention policy.
+- ~~RA numbering scope uniqueness.~~ Decided: one VIP Number, monthly sequence (doc 06, R2).
+- ~~Accreditation active-status/expiry evaluation rules.~~ Decided (doc 03, R3): an expired seller can still sell.
+- Formal retention period: records are kept indefinitely until legal advice sets a period (owner ruling R11, docs 11 and 12); only the legally advised period is open.
 
 ---
 

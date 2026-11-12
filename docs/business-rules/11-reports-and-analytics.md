@@ -99,7 +99,7 @@ Use `docs/business-rules/01-roles-and-permissions.md`. AFHomes supports module-b
 
 - **Super Admin:** may access all reporting information permitted by the established Super Admin role and security model.
 - **Admin:** may view management reporting according to assigned permissions; where existing authorization permits, Admin may access organization-wide reports and select particular Sales Network teams.
-- **Finance:** may access authorized financial reporting including Verified Collections, Outstanding Balances, Overdue Payments, Reversals and Refunds, Approved Commissions, Paid Commissions, Financial Reconciliation Cases. Finance reporting access must still respect applicable internal security restrictions.
+- **Finance:** may view all reports, including sales reports (owner ruling). Financial reporting includes Verified Collections, Outstanding Balances, Overdue Payments, Reversals and Refunds, Approved Commissions, Paid Commissions, Financial Reconciliation Cases. Finance reporting access must still respect applicable internal security restrictions.
 - **IST — SVD:** may access authorized personal and descendant-team performance information within the relevant SVD branch.
 - **IST — SSM:** may access authorized personal and downline reporting within the applicable SSM branch. The SVD upline may be shown as appropriate contextual information, but displaying an upline does not automatically grant access to their private reporting records.
 - **IST — SM:** may access authorized personal reporting and relevant OST downline performance. Do not expose unrelated branches.
@@ -157,7 +157,7 @@ Use `docs/business-rules/13-sales-performance-reporting.md`. Do not redefine its
 
 ### Confirmed Sale
 
-A sale becomes Confirmed (Closed Deal) when approved receipts reach 25% of the contract price (owner ruling R7, 2026-11-12; doc 13 §4). A Confirmed Sale does not necessarily mean Fully Paid. Whether a finalized contract is also required is an open question recorded in doc 13 §10.
+A sale becomes Confirmed (Closed Deal) when approved receipts reach 25% of the contract price (owner ruling R7, 2026-11-12; doc 13 §4). A Confirmed Sale does not necessarily mean Fully Paid. Contract finalization is not required for the count (doc 07 follow-up item 1; doc 13 §4).
 
 ### Reporting amount
 
@@ -354,7 +354,7 @@ Document how report visibility should correspond to the user's actual role and a
 - **SSM:** views authorized SSM branch performance and personal information.
 - **SM:** views authorized SM branch and OST downline performance.
 - **OST:** views their own relevant sales and permitted commission information.
-- **Finance:** views authorized collections, outstanding balances, verified payments, commissions, payouts, and reconciliation cases.
+- **Finance:** views all reports, including sales; in particular collections, outstanding balances, verified payments, commissions, payouts, and reconciliation cases.
 
 Important boundary: an authorized sales manager may view team sales performance without obtaining unrestricted private customer contact information or payout evidence. Do not bypass privacy rules through dashboards.
 
@@ -648,7 +648,7 @@ These rulings are authoritative and take precedence over earlier text in this do
 7. **Redemption (R11 item 3).** Planned in doc 10; it stays disabled until the owner authorizes the build. Sections 1 and 20.
 8. **History import (R11 item 5).** Every seller and every unfinished sale is imported with its full receipt history; a side-by-side parallel run follows; the switch happens when a month closes with no unexplained differences (Rollout Guide v1.4 §6 and §8). Finished sales stay in the Excel archives (U12). Section 26.
 9. **CMS deferred (R11 item 6, U09).** Section 1.
-10. **Open, not decided here:** whether contract finalization is still required before the 25% count (doc 05 §13 versus the workbook; see doc 13 §10).
+10. ~~**Open, not decided here:** whether contract finalization is still required before the 25% count.~~ **Settled:** it is not required (doc 07 follow-up item 1; doc 13 §4).
 
 ## Consistency update (2026-11-12)
 

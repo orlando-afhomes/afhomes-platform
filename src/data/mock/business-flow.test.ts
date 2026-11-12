@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
-import { meetsPayoutRelease, PAYOUT_RELEASE_WAIT_DAYS } from "@/modules/commissions/rules";
+import { meetsPayoutRelease } from "@/modules/commissions/rules";
 import { buildScheduleState } from "@/modules/finance/rules";
 import type { Payment } from "@/modules/finance/types";
 import type { DevIdentity } from "@/modules/identity/types";
@@ -10,7 +10,7 @@ import { registerCustomer } from "@/modules/customers/application/register-custo
 import { buildCardId, extractRaSequence } from "@/modules/membership/rules";
 import { computePointsLedger } from "@/modules/stay-points/engine";
 import { confirmedValueInPeriod, totalsFor } from "@/modules/sales/rules";
-import { addDaysToDate, manilaToday } from "@/shared/lib/dates";
+import { addDaysToDate, addMonthsToDate, manilaToday, startOfNextMonthDate } from "@/shared/lib/dates";
 import { pesos } from "@/shared/lib/money";
 import { getDevIdentity } from "./dev-identities";
 import { createMockRepositories } from "./repositories";
@@ -186,9 +186,9 @@ async function collectMa2(store: ReturnType<typeof createMockStore>) {
   return payment.id;
 }
 
-/** Moves a contract's verification dates back 8 days so the 7-day payout release has passed. */
+/** Moves a contract's verification dates into the previous month so the payout release (first day of the next month, R8) has passed. */
 function ageVerifications(store: ReturnType<typeof createMockStore>, contractId: string) {
-  const past = addDaysToDate(manilaToday(), -8)!;
+  const past = addMonthsToDate(manilaToday(), -1)!;
   for (const payment of store.payments) if (payment.contractId === contractId && payment.verifiedDate) payment.verifiedDate = past;
 }
 
@@ -455,25 +455,26 @@ describe("integrity guards (C1)", () => {
     expect((await finance.payments.reject("pay-4", "Contract cancelled")).status).toBe("rejected");
   });
 
-  it("lets a Super Admin verify a payment they corrected, but still blocks anyone else from self-verification", async () => {
+  it("lets an approver verify a receipt they submitted or corrected, and flags it in the history (R6)", async () => {
     const store = createMockStore();
     const finance = as(store, "dev-finance");
     const superAdmin = as(store, "dev-super-admin");
     await finance.payments.returnForCorrection("pay-4", "Wrong date");
     await superAdmin.payments.resubmit("pay-4", { paidDate: "2026-11-06" });
     expect(store.payments.find((p) => p.id === "pay-4")!.submittedBy).toBe("dev-ost-a2");
-    // Owner decision 2026-11-10: the separation-of-duties block does not apply to Super Admin.
+    // Owner ruling 2026-11-12 (R6): self-approval is allowed and audited.
     const verified = await superAdmin.payments.verify("pay-4");
     expect(verified.status).toBe("verified");
     expect(verified.verifiedBy).toBe("dev-super-admin");
     expect(store.payments.find((p) => p.id === "pay-4")!.status).toBe("verified");
 
-    // Anyone else who submits a payment still cannot verify it themselves.
+    // Finance can also verify a receipt they submitted themselves; the history flags it.
     const dual: DevIdentity = { id: "test-finance-ost", displayName: "Finance OST (Test)", roles: ["finance", "ost"], memberId: "mem-ost-a2", branchId: "branch-a", status: "active" };
     const dualRepos = createMockRepositories(store, () => dual);
     const own = await dualRepos.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(15500), method: "Cash", paidDate: manilaToday(), referenceNo: "SELF-1" });
-    await expect(dualRepos.payments.verify(own.id)).rejects.toThrow(/submitted or corrected/);
-    expect(store.payments.find((p) => p.id === own.id)!.status).toBe("submitted");
+    const selfVerified = await dualRepos.payments.verify(own.id);
+    expect(selfVerified.status).toBe("verified");
+    expect(store.payments.find((p) => p.id === own.id)!.history.some((h) => (h.note ?? "").includes("Self-approved"))).toBe(true);
   });
 
   it("records an RA only on a finalized contract, with an exact 4-digit sequence and its previous value audited", async () => {
@@ -910,7 +911,7 @@ describe("owner-decided restrictions (C2)", () => {
     const ma2 = await as(store, "dev-ost-a1").payments.submit({ contractId: "ctr-1", purpose: "installment", amountCentavos: pesos(57500), method: "Cash", paidDate: manilaToday(), referenceNo: "MA2" });
     await finance.payments.verify(ma2.id);
     const view = (await finance.commissions.list()).find((c) => c.id === commission.id)!;
-    expect(view.payoutReleaseDate).toBe(addDaysToDate(manilaToday(), PAYOUT_RELEASE_WAIT_DAYS));
+    expect(view.payoutReleaseDate).toBe(startOfNextMonthDate(manilaToday()));
     await expect(finance.commissions.recordPayout(commission.id, { reference: "P1", payoutDate: manilaToday() })).rejects.toThrow(/release opens on/);
     ageVerifications(store, "ctr-1");
     const releaseDate = (await finance.commissions.list()).find((item) => item.id === commission.id)!.payoutReleaseDate!;
@@ -968,15 +969,15 @@ describe("owner-decided restrictions (C2)", () => {
     }
   });
 
-  it("lets Finance decline a request, and still blocks a non-Super-Admin requester from deciding it", async () => {
+  it("lets a requester with Finance authority decide their own cancellation request, flagged in the history (authority rule)", async () => {
     const store = createMockStore();
-    // Admin + Finance authority without Super Admin: can both request and decide, so the requester check still applies.
+    // Admin + Finance authority: may both request and decide; the history flags the self-decision.
     const adminFinance: DevIdentity = { id: "test-admin-finance", displayName: "Admin Finance (Test)", roles: ["admin", "finance"], memberId: null, branchId: null, status: "active" };
     const both = createMockRepositories(store, () => adminFinance);
     await both.contracts.requestCancellation("ctr-1", "non_payment", "Missed MA2");
-    await expect(both.contracts.decideCancellation("ctr-1", "confirm", "Self")).rejects.toThrow(/cannot also decide/);
-    const declined = await as(store, "dev-finance").contracts.decideCancellation("ctr-1", "decline", "Customer paid MA2");
+    const declined = await both.contracts.decideCancellation("ctr-1", "decline", "Customer paid MA2");
     expect(declined.cancellation).toBeNull();
+    expect(store.contracts.find((c) => c.id === "ctr-1")!.history.some((h) => (h.note ?? "").includes("Self-approved"))).toBe(true);
     expect(declined.status).toBe("finalized");
     expect(store.sales.find((s) => s.id === "sale-1")!.status).toBe("confirmed");
     expect(store.auditEvents.some((e) => e.action === "CONTRACT_CANCELLATION_DECLINED" && e.entityId === "ctr-1")).toBe(true);

@@ -70,8 +70,9 @@ An earlier unexplained commit/push on `develop` reinforced this policy. Never tr
 Read the relevant documents before implementation; do not load all of them by default.
 
 - Master context: `docs/project.md`.
-- Business rules `docs/business-rules/`: `01-roles-and-permissions`, `02-sales-network-and-genealogy`, `03-ist-ost-accreditation`, `04-customer-management`, `05-vip-products-and-contracts`, `06-vip-card-issuance`, `07-finance-and-payments`, `08-commission-management`, `09-vip-membership-and-stay-points`, `10-redemption`, `11-reports-and-analytics`, `12-audit-logs-and-governance`, `13-sales-performance-reporting`.
-- Development specs `docs/development/`: `README`, `architecture`, `frontend`, `database`, `backend`, `security`, `testing`, `implementation`, `deployment`.
+- Business rules `docs/business-rules/`: `01-roles-and-permissions`, `02-sales-network-and-genealogy`, `03-ist-ost-accreditation`, `04-customer-management`, `05-vip-products-and-contracts`, `06-vip-card-issuance`, `07-finance-and-payments`, `08-commission-management`, `09-vip-membership-and-stay-points`, `10-redemption`, `11-reports-and-analytics`, `12-audit-logs-and-governance`, `13-sales-performance-reporting`, `14-igp-sales`.
+- Development specs `docs/development/`: `README`, `architecture`, `frontend`, `database`, `backend`, `security`, `testing`, `implementation`, `deployment`, `role-module-permission-matrix-proposal`.
+- Feature roadmap `docs/implementation/` (feature phases FP1 to FP11, decision log `decisions-and-gaps.md`). It is a planning record and does not authorize any work.
 
 Precedence: (1) latest verified explicit project-owner instructions, (2) canonical business-rule documents, (3) approved architecture/development specifications, (4) master project context, (5) verified historical material. The Git policy above overrides all of these as an agent-operation restriction.
 
@@ -90,8 +91,8 @@ Single Next.js application: **Panel-Based + Feature-Based Modular Monolith**. Ve
 | Layer | Technology |
 |---|---|
 | Framework | Next.js App Router, React, TypeScript |
-| UI | shadcn/ui on Base UI primitives + Tailwind CSS 4 + namespaced custom CSS; TanStack Table; Lucide. Ant Design 6 only in unmigrated modules (see section 8) |
-| Validation | Zod (installed; target for contracts and forms) |
+| UI | shadcn/ui on Base UI primitives + Tailwind CSS 4 + namespaced custom CSS; TanStack Table; Lucide. Ant Design was removed in commit 22c9b4f (see section 8) |
+| Validation | Zod (installed, not yet imported in `src/`; approved target for contracts and forms) |
 | Frontend async state | TanStack Query |
 | Tests | Vitest + Testing Library |
 | REST API (future) | `/api/v1` via Next.js Route Handlers |
@@ -102,9 +103,9 @@ Single Next.js application: **Panel-Based + Feature-Based Modular Monolith**. Ve
 
 Do not introduce a separate Express or NestJS backend, microservices, separate frontend/backend repositories, Kubernetes, Turborepo, unnecessary distributed infrastructure, or DigitalOcean App Platform as the default.
 
-Source layout: `src/app/` (routes, layouts), `src/panels/` (panel UI), `src/modules/` (domain contracts, validation, rules), `src/data/` (typed contracts and mock/HTTP adapters), `src/shared/` (composed shared components, forms, hooks, providers, utilities; `src/shared/ui/` for reusable shadcn/ui primitives), `src/theme/` (design tokens; Ant Design theme until removal). `src/server/` and `src/config/` are planned and may not exist yet. Do not restructure existing files unnecessarily, generate empty files or directories in advance, or create files outside the authorized task.
+Source layout: `src/app/` (routes, layouts), `src/panels/` (panel UI), `src/modules/` (domain contracts, validation, rules), `src/data/` (typed contracts and mock/HTTP adapters), `src/shared/` (composed shared components, forms, hooks, providers, utilities; `src/shared/ui/` for reusable shadcn/ui primitives), `src/theme/` (design tokens). `src/server/` and `src/config/` are planned and may not exist yet. Do not restructure existing files unnecessarily, generate empty files or directories in advance, or create files outside the authorized task.
 
-Panels: Public (website, public accreditation verification, Customer Lookup, login entry) and Admin/Operations (Super Administrator, Administrator, HR, Finance, authorized staff, sales network). Sales hierarchy: **SVD → SSM → SM → OST**. OST must not receive unrestricted team-wide access. A Customer Portal and React Native/Expo app are future capabilities and must not be implemented without separate authorization. Business logic must not be duplicated across panels.
+Panels: Public (website, public accreditation verification, login entry; there is no public customer or card lookup) and Admin/Operations (Super Administrator, Administrator, HR, Finance, authorized staff, sales network). Sales hierarchy: **SVD → SSM → SM → OST**. OST must not receive unrestricted team-wide access. A Customer Portal and React Native/Expo app are future capabilities and must not be implemented without separate authorization. Business logic must not be duplicated across panels.
 
 ---
 
@@ -193,10 +194,11 @@ The approved UI foundation is **shadcn/ui on Base UI primitives, Tailwind CSS 4,
 **Component architecture**
 
 1. `src/shared/ui/` holds reusable shadcn/ui primitives. `src/shared/` holds composed shared components, forms, hooks, and utilities. Feature interfaces stay in `src/panels/`; business rules stay in `src/modules/`; repository contracts stay in `src/data/`.
-2. Preserve existing Zod validation and the TanStack Query architecture.
+2. Preserve the existing validation helpers and the TanStack Query architecture. Zod is the approved target for contracts and forms but is not yet used in `src/`.
 3. Compose existing primitives first; build a new primitive only when none can be composed, and document the reason. No raw custom interactive controls where a suitable primitive exists.
-4. Do not introduce another competing component system, CSS Modules, or new project-authored CSS-in-JS.
-5. Accessibility and responsiveness are mandatory: semantic HTML, keyboard navigation, visible focus, labels, dialog focus management, contrast, reduced motion, and appropriate loading, empty, and error states.
+4. Do not introduce another competing component system, CSS Modules, or new project-authored CSS-in-JS. SweetAlert2 is the approved library for confirmation pop-ups (see item 5) and is not a competing system.
+5. Every confirmation, discard prompt and notice pop-up uses SweetAlert2 through the shared components in `src/shared/components/modern/` (`AppAlert`, `ConfirmDialog`, `NoticeDialog`, `useConfirmRun`), themed by `app-alert.css` and the shadcn button classes (owner decision, 2026-11-12). Do not call SweetAlert2 directly from feature code, and do not build another confirmation dialog. Form dialogs with fields stay on the shadcn Dialog, and toasts stay on Sonner.
+6. Accessibility and responsiveness are mandatory: semantic HTML, keyboard navigation, visible focus, labels, dialog focus management, contrast, reduced motion, and appropriate loading, empty, and error states.
 
 **Styling standards**
 
@@ -204,15 +206,11 @@ The approved UI foundation is **shadcn/ui on Base UI primitives, Tailwind CSS 4,
 2. `class-variance-authority`, `clsx`, and `tailwind-merge` are permitted as supporting utilities.
 3. Preserve the design tokens in `src/theme/tokens.css` and the existing brand palette until the owner approves a visual redesign. Add new tokens there; do not inline them.
 
-**Temporary Ant Design coexistence**
+**Ant Design**
 
-1. Ant Design 6 is deprecated as the target. It may remain only in existing modules until their approved migration milestones.
-2. No new Ant Design usage is authorized: do not introduce it into new or already migrated modules.
-3. Existing Ant Design CSS-in-JS internals are permitted until migration is complete.
-4. Protect unmigrated Ant Design interfaces from Tailwind reset and styling conflicts (cascade layers or scoping defined in the authorized milestone).
-5. Remove Ant Design dependencies, theme files, and styling only after all affected modules are migrated and verified, and the owner approves.
+Ant Design was removed in commit `22c9b4f` (no dependency, no imports, no theme). Do not reintroduce it, and do not add another component system.
 
-**Migration requirements**
+**Migration requirements** (the move to the approved stack is complete; these apply to any future UI migration)
 
 1. Each migration milestone requires explicit project-owner approval; do not migrate unrelated modules inside another milestone.
 2. Preserve CRUD behavior, validation, permissions, business rules, and repository contracts.
@@ -220,12 +218,12 @@ The approved UI foundation is **shadcn/ui on Base UI primitives, Tailwind CSS 4,
 4. Backend, database, infrastructure, and deployment work still require separate authorization.
 5. Production UI standards above apply to every migrated screen.
 
-**Class naming.** All developer-authored custom (non-utility) classes use descriptive kebab-case, feature-namespaced names (e.g. `account-page__toolbar`). Tailwind utility classes, Ant Design internals (until removal), and React Fragments are exempt.
+**Class naming.** All developer-authored custom (non-utility) classes use descriptive kebab-case, feature-namespaced names (e.g. `account-page__toolbar`). Tailwind utility classes and React Fragments are exempt.
 
 1. Prefer plain string classes. Never use numbered/random names (`div1`, `box2`) or bare generic names (`wrapper`, `container`, `title`).
 2. Remove unnecessary wrappers instead of naming them.
 3. Shared components (`PageContainer`, `PageHeader`) forward `className`.
-4. Never target hashed Ant Design classes; use theme tokens, component props, or narrow documented overrides. Move long, repeated utility strings into a shared component or a namespaced class.
+4. Use theme tokens, component props, or narrow documented overrides. Move long, repeated utility strings into a shared component or a namespaced class.
 5. Feature CSS lives beside its feature and is imported at the narrowest server route/layout boundary; root CSS keeps tokens, resets, and base only. Global styles persist across navigation: namespace everything, avoid order-dependent overrides.
 6. Verify class names in browser DevTools; compliance is checked in review and browser DOM.
 

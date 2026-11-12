@@ -4,7 +4,7 @@
 - Objective: directory of departments, roles and staff, and scoped access, with protected guards.
 - Business rules: `docs/business-rules/01-roles-and-permissions.md` sections 3 to 9. Workbook reference: OPS section 2.
 - Depends on: nothing. Every later phase relies on its roles and scopes.
-- Decision items (all decided on 2026-11-12 except G08, G09 and U07; see `decisions-and-gaps.md`): none in the atlas. The module-level versus operation-level permission policy in `AGENTS.md` section 5 still applies.
+- Decision items (all decided on 2026-11-12. Still open: automatic clawback recovery waits for the signed IST addendum (G09, U07); see `decisions-and-gaps.md`): none in the atlas. The module versus operation permission policy is decided (R4, doc 01).
 
 Routes (from the atlas):
 

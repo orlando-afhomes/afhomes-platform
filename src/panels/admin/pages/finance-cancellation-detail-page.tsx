@@ -44,7 +44,7 @@ export function FinanceCancellationDetailPage({ contractId }: { contractId: stri
         return (
           <>
             {request ? (
-              <AdminSection title="Cancellation request" description="Verified payments are forfeited if Finance confirms. The requester cannot decide it (unless Super Admin).">
+              <AdminSection title="Cancellation request" description="Verified payments are forfeited if Finance confirms. If the same person requested and decides it, the history flags it.">
                 <DetailList>
                   <DetailRow term="Status">{request.status === "requested" ? "Awaiting Finance decision" : "Confirmed"}</DetailRow>
                   <DetailRow term="Ground">{CANCELLATION_GROUND_LABELS[request.ground]}</DetailRow>

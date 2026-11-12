@@ -139,7 +139,7 @@ A cancelled transaction keeps its number with status CANCELLED. The number is ne
 
 ## 8. Process
 
-1. Authorized Staff or IST registers or selects the customer.
+1. A seller starts the customer draft, the Clerk completes it, and the Administrator approves it (doc 04 §5); the approved customer is then selected.
 2. The tier, classification, payment scheme and closing salesperson are recorded.
 3. The signed Reservation Agreement is recorded. The VIP Number is issued once, at this moment, with status ACTIVE.
 4. The contract (Grant) is prepared and finalized under the same number (doc 05).
@@ -251,7 +251,7 @@ Given / When / Then for core scenarios. Key:
 8. Customer selects a documented payment scheme.
 9. Completely blank Customer Draft is saveable.
 10. Authorized Staff prepares a contract.
-11. IST prepares a contract.
+11. The Clerk prepares a contract (sellers do not prepare contracts; doc 01 §3.7, doc 05 §11).
 12. Authorized Admin approves contract finalization.
 13. Unauthorized users cannot finalize contracts.
 14. Returned contracts can be corrected and resubmitted.
@@ -280,7 +280,7 @@ Given / When / Then for core scenarios. Key:
 37. Gold supplementary holder uses the shared membership pool.
 38. The deemed Card Claim Date is computed from the full-settlement date, not from activation.
 39. Gold and Silver prices follow doc 05 items 11 and 13; contracts signed on earlier templates keep their executed text.
-40. A Non-Standard contract cannot be finalized without both doc 05 §10.2 approvals (Super Administrator, then Finance).
+40. A Non-Standard contract cannot be finalized without both doc 05 §10.2 approvals (the Administrator or the Super Administrator approves, then Finance confirms; only the Super Administrator may do both).
 
 ---
 
@@ -316,7 +316,7 @@ See `05-vip-products-and-contracts.md` Section 19. Card-specific conflicts resol
 These rulings are authoritative and take precedence over earlier text in this document where they differ.
 
 1. **Move A and Move B payment codes are unresolved (superseded by item 3).** Their commercial terms are approved (doc 05 amendment), but no Card ID payment-code mapping is authorized for them. C01 applies only to Spot Cash and TXX only to installments, where XX is the actual approved number of months; neither is assigned automatically to a Move arrangement. Move contracts may be prepared, approved, finalized and paid, but membership activation and Card ID issuance stay blocked for them until the owner authorizes the mapping. Existing finalized contracts and issued Card IDs are unchanged. Move B1 and Move B2 are removed (see doc 05 amendment).
-2. **Card ID date.** The Card ID uses the official Membership Activation Date, as stated in section 6; the transaction date is not used.
+2. ~~**Card ID date.** The Card ID uses the official Membership Activation Date, as stated in section 6; the transaction date is not used.~~ Superseded by item 4 below (owner ruling R2): one VIP Number is issued when the signed Reservation Agreement is recorded.
 3. **Move A / Move B Card ID payment-code mapping approved.** Effective date: 2026-11-09 (confirmed by the owner on 2026-11-12, doc 05 item 14). Approved mapping (companion to doc 05 amendment item 12; T = installment category plus monthly count; no promotional names appear in IDs):
 
     | Scheme | Tier | Card ID payment code (P + MM) |

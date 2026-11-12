@@ -316,7 +316,7 @@ These rules apply to authenticated, authorized Sales Network views. Do not confu
 
 Organization Management governs employee account approval workflow, modular access control, roles and permissions, administrative account management, protected account rules, and reactivation authorization. Sales Network governs IST/OST accounts created through the two-step seller entry, activation on approval, designation-based Sales Network visibility, genealogy assignments, accreditation-based login eligibility, and personal and downline sales access.
 
-These policies coexist. Do not replace modular access controls with an entirely separate unrestricted role system. Enforce both whether the authenticated person has permission to access the module, and whether that person is entitled to access the specific genealogy, member, customer, or sale. A full module CRUD permission is not automatic ownership of unrelated customer or Sales Network data where business-scoped visibility restrictions apply.
+These policies coexist. Do not replace modular access controls with an entirely separate unrestricted role system. Enforce both whether the authenticated person has permission to access the module, and whether that person is entitled to access the specific genealogy, member, customer, or sale. A module permission is not automatic ownership of unrelated customer or Sales Network data where business-scoped visibility restrictions apply.
 
 ---
 

@@ -5,7 +5,7 @@ import type { Commission } from "@/modules/commissions/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { parseManilaDateOnly } from "@/shared/lib/dates";
 import { applyBasisPoints } from "@/shared/lib/money";
-import { collectedPercent, meetsPayoutRelease, PAYOUT_RELEASE_WAIT_DAYS, payoutReleaseDate } from "@/modules/commissions/rules";
+import { collectedPercent, meetsPayoutRelease, payoutReleaseDate } from "@/modules/commissions/rules";
 import { BusinessRepository, customerName, nowIso, today } from "./business-base";
 import { paymentsOfContract } from "./business-effects";
 import type { MockStore } from "./seed";
@@ -212,7 +212,7 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
       const releaseDate = payoutReleaseDate(contract, payments);
       if (!releaseDate) throw new Error("Finance must reconcile the payment verification date before recording this payout.");
       if (today() < releaseDate) {
-        throw new Error(`Commission release opens on ${releaseDate}, ${PAYOUT_RELEASE_WAIT_DAYS} days after 40% of the contract value was verified.`);
+        throw new Error(`Commission release opens on ${releaseDate}: payouts are made after the month in which 40% of the contract price was verified (R8).`);
       }
       if (!input.reference.trim()) throw new Error("Enter the payment reference.");
       if (!parseManilaDateOnly(input.payoutDate)) throw new Error("Enter a valid payout date.");

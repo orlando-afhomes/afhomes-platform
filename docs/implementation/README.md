@@ -2,7 +2,7 @@
 
 Atlas version: `2026-11-12.2`
 Atlas baseline: `develop @ 0512a31 · reviewed working copy · 12 Nov 2026`
-Docs written against: `develop @ fc060bb`, with the owner rulings R1 to R13 of 2026-11-12 (uncommitted at the time of the atlas update)
+Docs written against: `develop @ 0512a31`, with the owner rulings R1 to R13 of 2026-11-12 (uncommitted at the time of the atlas update)
 
 This folder turns the AFHomes Workflow Atlas into an implementation roadmap. It lists what exists, what is missing and what is blocked, one feature at a time, grouped into feature phases.
 
@@ -79,7 +79,7 @@ Each card is one feature, with ID `F<phase>.<n>` (for example `F6.3`).
 | Layer | `Frontend (mock)`: can be built now over typed in-memory data. `Owner decision`: blocked until the named G or U item is decided. `Backend`: needs separate owner authorization for backend, database or real authentication. |
 | Blocked by | G and U IDs from [decisions-and-gaps.md](decisions-and-gaps.md), or "none". |
 | Acceptance | Concrete checks: validation, permissions, lifecycle, tests. |
-| Status | `Exists` (frontend mock works), `Partial`, `Missing`, `Blocked` or `Disabled`. |
+| Status | `Exists` (frontend mock works), `Partial`, `Missing`, `Blocked`, `Disabled`, `Decided, awaiting build authorization`, `Deferred` or `Removed from scope`. |
 
 ## What was verified, and what was not
 
@@ -89,7 +89,7 @@ Verified against the code at `fc060bb` while writing:
 - There is no Redemption or Services route under `src/app/`.
 - The changes between `a0bdcef` and `fc060bb` touch `src/modules/commissions/rules.ts`, `src/data/mock/commission-repository.ts`, `src/modules/finance/milestones.ts`, `src/modules/stay-points/engine.ts` and a few panel files.
 
-Taken from the atlas and not re-checked in code: every other AS-IS statement. Treat those statuses as "per atlas at `a0bdcef`" until the feature is picked up. Tests, lint and build were not run, because this is documentation only.
+Taken from the atlas and not re-checked in code: every other AS-IS statement. Treat those statuses as "per atlas `2026-11-12.2`" until the feature is picked up. Tests, lint and build were not run, because this is documentation only.
 
 ## Rules that apply to every feature
 

@@ -1,7 +1,7 @@
 # AFHomes Platform — Deployment, Infrastructure, and Production Operations
 
 > Authoritative deployment and operations architecture for the AFHomes Platform.
-> Read `docs/development/architecture.md` for system architecture and `docs/business-rules/` (01–13) for authoritative business behavior.
+> Read `docs/development/architecture.md` for system architecture and `docs/business-rules/` (01–14) for authoritative business behavior.
 > This document is documentation only; no infrastructure is provisioned or deployed here.
 
 ---
@@ -14,7 +14,7 @@ This document defines the complete deployment, infrastructure, and production op
 
 ## 2. Current Versus Target Deployment State
 
-- **Verified current implementation:** documentation-only repository; no application code, infrastructure, or deployment.
+- **Verified current implementation (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); no infrastructure or deployment.
 - **Approved target deployment:** DigitalOcean Droplet (application) + Docker Compose + HTTPS reverse proxy + MongoDB Atlas Cloud (database).
 - **Future implementation work:** all infrastructure setup, deployment, migration requires separate authorization.
 

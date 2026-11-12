@@ -63,7 +63,7 @@ Signed customer contracts keep their governing terms. Historical bookings and po
 8. The first redemption sets the Points Activation Date if it comes before the second anniversary of the Card Claim Date (doc 09).
 9. The build stays disabled until the owner authorizes it.
 
-**Superseded.** The earlier "Seven Approved Redemption Rules" (undated) are replaced as follows: Rule 1 (Admin-configured monetary conversion or service-specific points pricing for any resort service) and Rule 5 (Admin-configured partial retention and no-show policies) are superseded by decisions 1, 3 and 5. Rule 2 (stay date selects the bucket), Rule 3 (staff review), Rule 4 (reserve, then consume after the stay) and Rule 7 (Finance verifies any money portion) are retained as refined below. Rule 6 (Points + Cash) is retained only for accommodation, with the split method outstanding (section 9.3).
+**Superseded.** The earlier "Seven Approved Redemption Rules" (undated) are replaced as follows: Rule 1 (Admin-configured monetary conversion or service-specific points pricing for any resort service) and Rule 5 (Admin-configured partial retention and no-show policies) are superseded by decisions 1, 3 and 5. Rule 2 (stay date selects the bucket), Rule 3 (staff review), Rule 4 (reserve, then consume after the stay) and Rule 7 (Finance verifies any money portion) are retained as refined below. Rule 6 (Points + Cash) is retained only for accommodation, with the split by whole nights (section 9.3).
 
 ---
 

@@ -13,7 +13,7 @@ import { BizBadge } from "@/shared/components/business/biz-badge";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { Money } from "@/shared/components/modern/money";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
-import { PAYOUT_RELEASE_THRESHOLD_BP, PAYOUT_RELEASE_WAIT_DAYS } from "@/modules/commissions/rules";
+import { PAYOUT_RELEASE_THRESHOLD_BP } from "@/modules/commissions/rules";
 import { formatDate } from "@/shared/lib/format-date";
 
 export const RELEASE_PERCENT = PAYOUT_RELEASE_THRESHOLD_BP / 100;
@@ -31,7 +31,7 @@ export const COMMISSION_COLUMNS: ColumnDef<CommissionView, unknown>[] = [
 
 
 export function payoutNote(item: CommissionView): string | null {
-  return item.status === "approved" && !item.payout && !releaseOpen(item) ? (item.payoutReleaseDate ? `Payout opens ${formatDate(item.payoutReleaseDate)}` : `Payout opens ${PAYOUT_RELEASE_WAIT_DAYS} days after ${RELEASE_PERCENT}% is verified`) : null;
+  return item.status === "approved" && !item.payout && !releaseOpen(item) ? (item.payoutReleaseDate ? `Payout opens ${formatDate(item.payoutReleaseDate)}` : `Payout opens the month after ${RELEASE_PERCENT}% is verified`) : null;
 }
 
 /** Details sheet shared by Commissions and Commission Payouts; the footer buttons come from the page's own actions. */
@@ -64,7 +64,7 @@ export function CommissionDetailsSheet({ detail, onClose, items }: { detail: Com
   );
 }
 
-/** Payout may be recorded once the release date (40% verified + 7 days) has arrived. */
+/** Payout may be recorded once the release date (first day of the month after 40% was verified) has arrived. */
 export function releaseOpen(item: CommissionView): boolean {
   return item.payoutReleaseDate !== null && manilaToday() >= item.payoutReleaseDate;
 }

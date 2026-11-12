@@ -3,7 +3,7 @@ import type { Commission } from "@/modules/commissions/types";
 
 export type CommissionView = Commission & {
   customerName: string;
-  /** First date a payout may be recorded (7 days after 40% was verified); null while 40% is not reached. */
+  /** First date a payout may be recorded (the first day of the month after 40% was verified, R8); null while 40% is not reached. */
   payoutReleaseDate: string | null;
 };
 

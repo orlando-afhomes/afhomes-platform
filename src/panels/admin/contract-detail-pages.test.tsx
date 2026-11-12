@@ -36,10 +36,9 @@ afterEach(cleanup);
 const button = (name: string) => screen.queryByRole("button", { name });
 
 describe("contract detail pages show only their own process actions", () => {
-  it("Review offers finalization and no payment submission", async () => {
+  it("Review lets an authorized reviewer finalize the approved Gold terms", async () => {
     show("dev-admin", <ContractReviewDetailPage contractId="ctr-3" />);
-    expect(await screen.findByText("Finalization is on hold")).toBeInTheDocument();
-    expect(button("Finalize")).toBeDisabled();
+    expect(await screen.findByRole("button", { name: "Finalize" })).toBeEnabled();
     expect(button("Submit payment")).toBeNull();
     expect(button("Edit details")).toBeNull();
   });

@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useMemberships } from "@/data/business-queries";
-import { InfoNote } from "@/shared/components/modern/detail-list";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { AdminPage, AdminStatGrid, AdminStatCard, AdminFilterBar } from "@/shared/components/admin";
 import { BadgeCheck, CircleCheck, Clock, Hourglass } from "lucide-react";
@@ -27,7 +26,6 @@ export function MembershipPage() {
         <AdminStatCard label="Ready" value={pending.filter((item) => item.eligible).length} icon={CircleCheck} tone="info" />
         <AdminStatCard label="Financial holds" value={all.filter((item) => item.financialHold).length} icon={Hourglass} tone="warning" />
       </AdminStatGrid>
-      <InfoNote title="Expiration boundary">Validity runs from the activation date for the contract term. The exact expiration boundary convention is still an open owner decision, so end dates are provisional.</InfoNote>
       <AdminFilterBar search={search} onSearch={setSearch} searchLabel="Search memberships" />
       <QueryState isLoading={memberships.isLoading} error={memberships.error}>
         <MembershipTable data={directory} caption="Memberships" emptyText="No memberships match." />

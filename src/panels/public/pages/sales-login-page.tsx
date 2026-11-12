@@ -10,7 +10,7 @@ export function SalesLoginPage() {
       <LoginForm
         portals={[{ value: "sales", label: "Sales" }]}
         defaultPortal="sales"
-        description="Sign in to your AFhomes sales network account."
+        description="Sign in to sales network."
         extraLinks={
           <Link href="/register/ost" className="login-form__link">
             Register as OST

@@ -51,7 +51,8 @@ export function computePointsLedger(activationDate: string, benefits: BenefitsSn
     }
     const cs = state.get(cycle) ?? { spend: 0, wd: 0, we: 0, unlocked: false };
     state.set(cycle, cs);
-    cs.spend += spend.amountCentavos;
+    // Keep historical allocations for reconciliation. Only verified spend qualifies for unlock.
+    if (spend.status === "verified") cs.spend += spend.amountCentavos;
     const wantWd = (points * WEEKDAY_SHARE) / 100;
     const wantWe = (points * WEEKEND_SHARE) / 100;
     const creditWd = Math.max(0, Math.min(wantWd, weekdayCap - cs.wd, totalCap - cs.wd - cs.we));

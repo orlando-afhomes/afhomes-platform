@@ -55,7 +55,7 @@ describe("report pages", () => {
   it.each(cases)("%s report shows only its own tiles", async (_name, page, own) => {
     show("dev-finance", page);
     expect(await screen.findByText(TILES[own])).toBeInTheDocument();
-    expect(screen.getByText(/\(Asia\/Manila\)/)).toBeInTheDocument();
+    expect(screen.queryByText(/No targets or unapproved formulas/)).toBeNull();
     for (const [key, label] of Object.entries(TILES)) {
       if (key !== own) expect(screen.queryByText(label)).toBeNull();
     }

@@ -124,9 +124,15 @@
 }
 .login-form__input::placeholder { color: var(--color-on-dark-faint); }
 .login-form__input[aria-invalid="true"] { border-color: var(--color-accent-light); }
-.login-form__input:focus-visible { outline: 2px solid var(--color-accent-light); outline-offset: 2px; }
+.login-form__input:focus-visible {
+  outline: 2px solid var(--color-accent-light);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(220, 192, 106, 0.25);
+}
 
+/* The pill width and offset are derived from the segment count and the selected index (set inline by login-form.tsx). */
 .login-form__segment-group {
+  position: relative;
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
@@ -134,8 +140,23 @@
   border-radius: 9999px;
   background: var(--color-brand-deep);
   padding: 4px;
+  --login-segment-width: calc((100% - 8px - (var(--login-segment-count) - 1) * 4px) / var(--login-segment-count));
+}
+/* Sliding pill behind the selected segment. */
+.login-form__segment-group::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  /* Animate left, not transform: percentages in translate() resolve against the pill's own width. */
+  left: calc(4px + var(--login-segment-index) * (var(--login-segment-width) + 4px));
+  width: var(--login-segment-width);
+  border-radius: 9999px;
+  background: var(--color-brand-soft);
 }
 .login-form__segment {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -146,7 +167,8 @@
   font-weight: 600;
   cursor: pointer;
 }
-.login-form__segment[data-checked] { background: var(--color-brand-soft); color: var(--color-brand-deep); }
+.login-form__segment:hover:not([data-checked]) { color: var(--color-on-dark); }
+.login-form__segment[data-checked] { color: var(--color-brand-deep); }
 .login-form__segment:focus-visible { outline: 2px solid var(--color-accent-light); outline-offset: 2px; }
 
 .login-form__submit.login-form__submit {
@@ -175,3 +197,34 @@
 .login-form__error { color: var(--color-accent-light); font-size: 13px; }
 .login-form__toggle { color: var(--color-on-dark-muted); }
 .login-form__toggle:focus-visible { outline: 2px solid var(--color-accent-light); outline-offset: 2px; border-radius: 9999px; }
+
+/* Motion: hover, focus, press, pill slide and fade-in. Users with reduced motion get instant state changes. */
+@keyframes login-form-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .login-form__segment-group::before { transition: left 250ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .login-form__segment { transition: color 200ms ease-out; }
+
+  .login-form__input.login-form__input {
+    transition: background-color 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+  }
+  .login-form__input.login-form__input:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-brand-deep) 80%, var(--color-on-dark));
+  }
+
+  .login-form__submit.login-form__submit {
+    transition: background-color 180ms ease-out, box-shadow 180ms ease-out, transform 150ms ease-out;
+  }
+  .login-form__submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-raised); }
+  .login-form__submit:active:not(:disabled) { transform: translateY(0); box-shadow: var(--shadow-soft); }
+
+  .login-form__link { transition: color 150ms ease-out, text-decoration-color 150ms ease-out; }
+  .login-form__toggle { transition: color 150ms ease-out; }
+  .login-form__toggle:hover { color: var(--color-on-dark); }
+
+  .login-form__error,
+  .login-form__view { animation: login-form-fade-in 200ms ease-out both; }
+}

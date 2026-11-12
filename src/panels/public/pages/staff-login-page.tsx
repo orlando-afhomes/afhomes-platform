@@ -12,7 +12,7 @@ export function StaffLoginPage() {
           { value: "staff", label: "Staff" },
         ]}
         defaultPortal="admin"
-        description="Sign in to the AFhomes administration workspace."
+        description="Sign in to your workspace."
       />
     </LoginShell>
   );

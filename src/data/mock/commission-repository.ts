@@ -3,9 +3,10 @@ import type { ApproveCommissionInput, CommissionRepository, CommissionView, Elig
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { Commission } from "@/modules/commissions/types";
 import type { DevIdentity } from "@/modules/identity/types";
+import { parseManilaDateOnly } from "@/shared/lib/dates";
 import { applyBasisPoints } from "@/shared/lib/money";
 import { collectedPercent, meetsPayoutRelease, PAYOUT_RELEASE_WAIT_DAYS, payoutReleaseDate } from "@/modules/commissions/rules";
-import { BusinessRepository, DATE_ONLY, customerName, nowIso, today } from "./business-base";
+import { BusinessRepository, customerName, nowIso, today } from "./business-base";
 import { paymentsOfContract } from "./business-effects";
 import type { MockStore } from "./seed";
 import { getDescendantIds } from "./scope";
@@ -209,11 +210,13 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
         throw new Error(`Commission pays out once 40% of the contract value is Finance-verified (currently ${collectedPercent(contract, payments)}%).`);
       }
       const releaseDate = payoutReleaseDate(contract, payments);
-      if (releaseDate && today() < releaseDate) {
+      if (!releaseDate) throw new Error("Finance must reconcile the payment verification date before recording this payout.");
+      if (today() < releaseDate) {
         throw new Error(`Commission release opens on ${releaseDate}, ${PAYOUT_RELEASE_WAIT_DAYS} days after 40% of the contract value was verified.`);
       }
       if (!input.reference.trim()) throw new Error("Enter the payment reference.");
-      if (!DATE_ONLY.test(input.payoutDate)) throw new Error("Enter the payout date.");
+      if (!parseManilaDateOnly(input.payoutDate)) throw new Error("Enter a valid payout date.");
+      if (input.payoutDate < releaseDate) throw new Error("The payout date must be on or after the release date.");
       commission.payout = { reference: input.reference.trim(), method: input.method?.trim() || null, payoutDate: input.payoutDate, processedBy: identity.id, initiatedAt: nowIso(), confirmedAt: null };
       this.event(commission, identity, BUSINESS_AUDIT_ACTIONS.COMMISSION_PAYOUT_RECORDED);
       this.audit(identity, { module: "commissions", action: BUSINESS_AUDIT_ACTIONS.COMMISSION_PAYOUT_RECORDED, entityType: "commission", entityId: commission.id, newValue: "payout_initiated" });

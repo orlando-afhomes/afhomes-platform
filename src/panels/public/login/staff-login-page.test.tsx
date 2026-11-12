@@ -83,6 +83,33 @@ describe("Staff login page", () => {
     expect(signIn).not.toHaveBeenCalled();
   });
 
+  it("resets the busy form when the preserved page is shown after sign-out", async () => {
+    const user = userEvent.setup();
+    const client = new QueryClient();
+    // A fresh element per render: React skips re-rendering an identical element passed to rerender.
+    const tree = () => (
+      <QueryClientProvider client={client}>
+        <StaffLoginPage />
+      </QueryClientProvider>
+    );
+    const { rerender } = render(tree());
+    await user.type(screen.getByLabelText("Email"), admin.email);
+    await user.type(screen.getByLabelText("Password"), PASSWORD);
+    await user.click(screen.getByRole("button", { name: "Sign In" }));
+    await waitFor(() => expect(signIn).toHaveBeenCalledWith(admin.identityId));
+    expect(screen.getByLabelText("Password")).toHaveValue("");
+
+    status = "signed-in";
+    rerender(tree());
+    status = "signed-out";
+    rerender(tree());
+
+    const submit = screen.getByRole("button", { name: "Sign In" });
+    expect(submit).toBeEnabled();
+    expect(submit).toHaveAttribute("aria-busy", "false");
+    expect(screen.getByLabelText("Email")).toHaveValue("");
+  });
+
   it("redirects an existing session to the admin panel", () => {
     status = "signed-in";
     renderWithQuery(<StaffLoginPage />);
@@ -97,7 +124,7 @@ describe("Staff login page", () => {
     expect(screen.getByText("Enter your email.")).toBeInTheDocument();
     await user.type(screen.getByLabelText("Registered email"), admin.email);
     await user.click(screen.getByRole("button", { name: "Send reset link" }));
-    expect(screen.getByText("Password recovery by email is not available yet. Contact your administrator.")).toBeInTheDocument();
+    expect(screen.getByText("Email recovery not available yet.")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Back to sign in" }));
     expect(screen.getByRole("heading", { name: "Login" })).toBeInTheDocument();
   });

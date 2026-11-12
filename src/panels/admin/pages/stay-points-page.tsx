@@ -66,14 +66,12 @@ export function StayPointsPage() {
   const balances = current?.ledger.balances;
   return (
     <AdminPage anyOf={["stay-points"]} title="Stay Points" description="Points ledger by membership. ₱1 of verified resort spend earns 1 point, split 70% Weekday and 30% Weekend." crumbs={[{ label: "Stay Points" }]}>
-      <InfoNote title="Redemption is not available">Redemption and Services are disabled. Points are earned and tracked here but cannot be redeemed or reserved yet, and 1 point is not a peso value.</InfoNote>
       <QueryState isLoading={points.isLoading} error={points.error}>
         {!current ? (
           <InfoNote>No active memberships are visible to this account.</InfoNote>
         ) : (
           <>
             <SelectField label="Membership" value={current.membershipId} options={list.map((item) => ({ value: item.membershipId, label: `${item.customerName} · ${item.productCode}${item.cardId ? ` · ${item.cardId}` : ""}` }))} onChange={setPicked} />
-            {current.financialHold ? <InfoNote title="Financial Hold">New VIP benefit usage is restricted while this membership has a Financial Hold. Finance reconciliation restores eligibility. Points already earned stay on the ledger.</InfoNote> : null}
             <AdminStatGrid columns={3}>
               <AdminStatCard label="Spendable weekday" value={balances?.spendableWeekday.toLocaleString("en-PH")} icon={Wallet} tone="success" />
               <AdminStatCard label="Spendable weekend" value={balances?.spendableWeekend.toLocaleString("en-PH")} icon={Coins} tone="success" />

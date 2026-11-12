@@ -19,10 +19,10 @@ export function meetsPayoutRelease(contract: Pick<Contract, "priceCentavos">, pa
 export const PAYOUT_RELEASE_WAIT_DAYS = 7;
 
 /**
- * Business date on which net verified money first reached the 40% threshold,
- * in verification order. Null while the threshold is not met.
+ * Payment that first reached the 40% threshold in verification order.
+ * Returns null when dated, net verified payments cannot establish a crossing.
  */
-export function payoutThresholdDate(contract: Pick<Contract, "priceCentavos">, payments: readonly Payment[]): string | null {
+export function payoutThresholdPayment(contract: Pick<Contract, "priceCentavos">, payments: readonly Payment[]): Payment | null {
   if (!meetsPayoutRelease(contract, payments)) return null;
   const verified = payments
     .filter((payment) => payment.status === "verified" && payment.verifiedDate)
@@ -30,9 +30,13 @@ export function payoutThresholdDate(contract: Pick<Contract, "priceCentavos">, p
   let cumulative = 0;
   for (const payment of verified) {
     cumulative += netVerifiedCentavos(payment);
-    if (cumulative * 10_000 >= contract.priceCentavos * PAYOUT_RELEASE_THRESHOLD_BP) return payment.verifiedDate;
+    if (cumulative * 10_000 >= contract.priceCentavos * PAYOUT_RELEASE_THRESHOLD_BP) return payment;
   }
   return null;
+}
+
+export function payoutThresholdDate(contract: Pick<Contract, "priceCentavos">, payments: readonly Payment[]): string | null {
+  return payoutThresholdPayment(contract, payments)?.verifiedDate ?? null;
 }
 
 /** First business date a payout may be recorded. Null while the 40% threshold is not met. */

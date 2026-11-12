@@ -23,7 +23,7 @@ export function LoginShell({ children }: { children: ReactNode }) {
             <span className="tw:text-xl tw:font-bold tw:tracking-tight tw:text-(--color-brand-primary)">AFhomes</span>
           </div>
           <p className="tw:relative tw:max-w-[18rem] tw:text-sm tw:text-(--color-text-secondary) tw:md:text-base">
-            Welcome back. Sign in to manage memberships, your network, and your day-to-day work.
+            Welcome back to AFhomes.
           </p>
           <div aria-hidden="true" className="tw:contents">
             <span className="login-shell__blob login-shell__blob--large tw:hidden tw:md:block" />

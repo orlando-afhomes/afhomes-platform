@@ -36,11 +36,12 @@ describe("deriveMilestones", () => {
       saleConfirmedDate: "2026-11-02",
       activationDate: null,
       cardId: null,
+      includePaymentReference: true,
     });
     expect(dateOf(milestones, "recorded")).toBe("2026-11-01");
     expect(dateOf(milestones, "verified")).toBe("2026-11-02");
     expect(dateOf(milestones, "release")).toBe("2026-11-02");
-    expect(milestones.find((item) => item.key === "release")?.note).toBe("Payout opens 2026-11-09");
+    expect(milestones.find((item) => item.key === "release")?.note).toBe("Payout opens 2026-11-09 · Payment reference a");
     expect(dateOf(milestones, "paid")).toBe("2026-11-20");
     expect(dateOf(milestones, "activated")).toBeNull();
     expect(dateOf(milestones, "card")).toBeNull();
@@ -57,6 +58,7 @@ describe("deriveMilestones", () => {
   it("reports activation and Card ID only from the membership", () => {
     const milestones = deriveMilestones({ contract, payments: [payment("a", 3_000_000, "2026-11-02")], saleConfirmedDate: "2026-11-02", activationDate: "2026-11-03", cardId: "26110300001B1T04S" });
     expect(dateOf(milestones, "activated")).toBe("2026-11-03");
+    expect(milestones.find((item) => item.key === "release")?.note).toBe("Payout opens 2026-11-09");
     expect(milestones.find((item) => item.key === "card")).toMatchObject({ date: "2026-11-03", note: "26110300001B1T04S" });
   });
 });

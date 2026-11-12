@@ -309,7 +309,7 @@ describe("business pages render for the intended roles", () => {
 
   it("lets Finance see confirmed sales on the Commission Assignment page", async () => {
     show("dev-finance", <CommissionAssignmentPage />);
-    expect(await screen.findByText("No default rates")).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "Confirmed sales awaiting commission assignment" })).toBeInTheDocument();
     await openMenuWith("Actions for sale", "Assign percentages");
   });
 
@@ -357,7 +357,7 @@ describe("business pages render for the intended roles", () => {
 
   it("shows the points ledger with redemption disabled", async () => {
     show("dev-finance", <StayPointsPage />);
-    expect(await screen.findByText("Redemption is not available")).toBeInTheDocument();
+    expect(screen.queryByText("Redemption is not available")).toBeNull();
     expect(await screen.findByRole("table", { name: "Points ledger" })).toBeInTheDocument();
     await openMenuWith("Actions for points entry", "Release held points");
   });
@@ -374,7 +374,8 @@ describe("business pages render for the intended roles", () => {
 
   it("shows audit history to Admin", async () => {
     show("dev-admin", <AuditLogsPage />);
-    expect(await screen.findByText("Restricted view")).toBeInTheDocument();
+    expect(await screen.findByText("Matching events")).toBeInTheDocument();
+    expect(screen.queryByText("Restricted view")).toBeNull();
   });
 });
 

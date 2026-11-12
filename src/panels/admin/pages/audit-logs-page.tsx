@@ -6,7 +6,6 @@ import { useAuditEvents } from "@/data/queries";
 import { DEV_IDENTITIES } from "@/data/mock/dev-identities";
 import { AUDIT_ENTITY_TYPES, AUDIT_MODULES, SYSTEM_ACTOR_ID, type AuditEventView, type AuditQuery } from "@/modules/audit/types";
 import { DataTable, TABLE_PAGE_SIZE, type ColumnDef } from "@/shared/components/modern/data-table";
-import { InfoNote } from "@/shared/components/modern/detail-list";
 import { ScrollText } from "lucide-react";
 import { AdminStatCard, AdminStatGrid, AdminPage } from "@/shared/components/admin";
 import { StandardDateField } from "@/shared/forms/modern";
@@ -72,7 +71,6 @@ export function AuditLogsPage() {
 
   return (
     <AdminPage anyOf={["audit-logs"]} title="Audit Logs" description="Append-only history of sensitive actions. Entries cannot be edited or deleted." crumbs={[{ label: "Audit Logs" }]}>
-      <InfoNote title="Restricted view">Access is limited to Administrators for now. User-entered reasons and sensitive values are withheld. Retention and export rules are not yet defined, so there is no export.</InfoNote>
       <AdminStatGrid>
         <AdminStatCard label="Matching events" value={total} icon={ScrollText} tone="info" loading={result.isLoading} error={result.error} />
       </AdminStatGrid>

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useApproveCommission, useEligibleSales, useOperation } from "@/data/business-queries";
 import type { EligibleSale } from "@/data/contracts/commission-repository";
-import { PAYOUT_RELEASE_THRESHOLD_BP, PAYOUT_RELEASE_WAIT_DAYS } from "@/modules/commissions/rules";
 import { applyBasisPoints, MoneyError, parsePercentToBasisPoints } from "@/shared/lib/money";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { InfoNote } from "@/shared/components/modern/detail-list";
@@ -58,9 +57,6 @@ export function CommissionAssignmentPage() {
     >
       {canApprove ? (
         <>
-          <InfoNote title="No default rates">
-            Enter each recipient&apos;s percentage. The system never proposes a rate. Payout opens {PAYOUT_RELEASE_WAIT_DAYS} days after {PAYOUT_RELEASE_THRESHOLD_BP / 100}% of the contract value is Finance-verified.
-          </InfoNote>
           <QueryState isLoading={eligible.isLoading} error={eligible.error}>
             <DataTable
               data={eligible.data ?? []}

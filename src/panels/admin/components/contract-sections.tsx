@@ -24,7 +24,7 @@ import { humanize } from "@/shared/lib/humanize";
 import { recordLabel } from "@/shared/lib/record-label";
 
 /** Contract with its payments, membership, schedule, ledger and milestones, derived once for every detail page. */
-export function useContractRecord(contractId: string) {
+export function useContractRecord(contractId: string, includePaymentReference = false) {
   const contracts = useContracts();
   const payments = usePayments();
   const memberships = useMemberships();
@@ -35,8 +35,8 @@ export function useContractRecord(contractId: string) {
   const schedule = useMemo(() => (contract ? buildScheduleState(contract, contractPayments, today) : []), [contract, contractPayments, today]);
   const ledger = useMemo(() => (contract ? buildCollectionLedger(contract, contractPayments) : []), [contract, contractPayments]);
   const milestones = useMemo(
-    () => (contract ? deriveMilestones({ contract, payments: contractPayments, saleConfirmedDate: contract.sale?.confirmedDate ?? null, activationDate: membership?.activationDate ?? null, cardId: membership?.cardId ?? null }) : []),
-    [contract, contractPayments, membership?.activationDate, membership?.cardId],
+    () => (contract ? deriveMilestones({ contract, payments: contractPayments, saleConfirmedDate: contract.sale?.confirmedDate ?? null, activationDate: membership?.activationDate ?? null, cardId: membership?.cardId ?? null, includePaymentReference }) : []),
+    [contract, contractPayments, membership?.activationDate, membership?.cardId, includePaymentReference],
   );
   return { isLoading: contracts.isLoading, contract, payments: contractPayments, membership, schedule, ledger, milestones };
 }
@@ -48,16 +48,18 @@ export function ContractPageFrame({
   contractId,
   anyOf,
   parentCrumbs,
+  includePaymentReference = false,
   actions,
   children,
 }: {
   contractId: string;
   anyOf: AdminModuleId[];
   parentCrumbs: BreadcrumbItem[];
+  includePaymentReference?: boolean;
   actions?: (record: ContractRecord) => ReactNode;
   children: (record: ContractRecord) => ReactNode;
 }) {
-  const record = useContractRecord(contractId);
+  const record = useContractRecord(contractId, includePaymentReference);
   if (record.isLoading) {
     return (
       <AdminPage anyOf={anyOf} title="Contract" crumbs={parentCrumbs}>

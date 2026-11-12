@@ -4,12 +4,12 @@ import { customerRecordName } from "@/modules/customers/rules";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { FileCheck, FileText, Info, Plus, Users } from "lucide-react";
+import { FileCheck, FileText, Plus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDiscardCustomerDraft, useOperation } from "@/data/business-queries";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { useCustomers, useMembers } from "@/data/queries";
-import { ACQUISITION_CHANNELS, type Customer } from "@/modules/customers/types";
+import type { Customer } from "@/modules/customers/types";
 import type { ColumnDef } from "@/shared/components/modern/data-table";
 import { buttonVariants } from "@/shared/ui/button";
 import { AdminPage } from "@/shared/components/admin";
@@ -133,12 +133,6 @@ export function CustomersPage() {
           }}
         />
       </QueryState>
-      <p className="customers-page__channels tw:flex tw:items-start tw:gap-2 tw:rounded-xl tw:bg-[var(--color-brand-soft)] tw:px-4 tw:py-3 tw:text-sm">
-        <Info aria-hidden="true" className="tw:mt-0.5 tw:size-4 tw:shrink-0 tw:text-primary" />
-        <span>
-          <strong className="tw:font-semibold">Acquisition channels in use:</strong> {ACQUISITION_CHANNELS.join(", ")}.
-        </span>
-      </p>
     </AdminPage>
   );
 }

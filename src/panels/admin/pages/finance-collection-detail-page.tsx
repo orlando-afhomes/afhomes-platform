@@ -13,7 +13,7 @@ const CRUMBS = [{ label: "Finance" }, { label: "Collections", href: "/admin/fina
 export function FinanceCollectionDetailPage({ contractId }: { contractId: string }) {
   const paymentActions = usePaymentActions();
   return (
-    <ContractPageFrame contractId={contractId} anyOf={["finance"]} parentCrumbs={CRUMBS}>
+    <ContractPageFrame contractId={contractId} anyOf={["finance"]} parentCrumbs={CRUMBS} includePaymentReference>
       {(record) => {
         const { contract } = record;
         const pendingCancel = contract.cancellation?.status === "requested" ? contract.cancellation : null;

@@ -73,6 +73,5 @@ describe("process pages are separated", () => {
     records.unmount();
     show("dev-finance", <CommissionPayoutsPage />);
     expect(await screen.findByRole("table", { name: "Commission payouts" })).toBeInTheDocument();
-    expect(screen.getByText("Payout release")).toBeInTheDocument();
   });
 });

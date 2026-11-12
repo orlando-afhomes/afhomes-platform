@@ -21,10 +21,10 @@ export function ForgotPasswordPanel({ onBack }: { onBack: () => void }) {
 
   if (submitted) {
     return (
-      <div className="tw:flex tw:flex-col tw:gap-5">
+      <div className="login-form__view tw:flex tw:flex-col tw:gap-5">
         <h1 className="tw:text-3xl tw:font-semibold">Forgot password</h1>
         <p role="status" className="tw:text-sm tw:text-(--color-on-dark-muted)">
-          Password recovery by email is not available yet. Contact your administrator.
+          Email recovery not available yet.
         </p>
         <Button type="button" className="login-form__submit" onClick={onBack}>
           Back to sign in
@@ -34,10 +34,10 @@ export function ForgotPasswordPanel({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <form noValidate onSubmit={handleSubmit} className="tw:flex tw:flex-col tw:gap-5">
+    <form noValidate onSubmit={handleSubmit} className="login-form__view tw:flex tw:flex-col tw:gap-5">
       <div className="tw:flex tw:flex-col tw:gap-2">
         <h1 className="tw:text-3xl tw:font-semibold">Forgot password</h1>
-        <p className="tw:text-sm tw:text-(--color-on-dark-muted)">Enter your registered email and we will send a reset link.</p>
+        <p className="tw:text-sm tw:text-(--color-on-dark-muted)">Enter your registered email.</p>
       </div>
       <div className="tw:flex tw:flex-col tw:gap-2">
         <Label htmlFor="forgot-email">Registered email</Label>

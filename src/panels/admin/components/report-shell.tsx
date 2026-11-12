@@ -3,7 +3,6 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { addMonthsToDate, manilaDateOf, manilaToday } from "@/shared/lib/dates";
 import { StandardDateField } from "@/shared/forms/modern";
-import { InfoNote } from "@/shared/components/modern/detail-list";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import type { BreadcrumbItem } from "@/shared/components/modern/breadcrumbs";
 import { AdminPage } from "@/shared/components/admin";
@@ -50,12 +49,11 @@ export function useReportRange() {
   return { from, to, inRange, filters };
 }
 
-/** Standard frame of a report page: module gate, breadcrumbs, date filter and the Manila range note. */
-export function ReportShell({ range, title, description, crumbs, note, children }: { range: ReturnType<typeof useReportRange>; title: string; description: string; crumbs: BreadcrumbItem[]; note?: string; children: ReactNode }) {
+/** Standard frame of a report page: module gate, breadcrumbs, and date filter. */
+export function ReportShell({ range, title, description, crumbs, children }: { range: ReturnType<typeof useReportRange>; title: string; description: string; crumbs: BreadcrumbItem[]; children: ReactNode }) {
   return (
     <AdminPage anyOf={["reports"]} title={title} description={description} crumbs={crumbs}>
       {range.filters}
-      <InfoNote>Showing {range.from} to {range.to} (Asia/Manila). {note ?? "Figures are limited to what your role may see."} No targets or unapproved formulas are shown.</InfoNote>
       {children}
     </AdminPage>
   );

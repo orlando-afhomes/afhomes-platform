@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { useCommissionAction, useCommissions, useOperation } from "@/data/business-queries";
 import type { CommissionView } from "@/data/contracts/commission-repository";
-import { PAYOUT_RELEASE_WAIT_DAYS } from "@/modules/commissions/rules";
 import { DataTable } from "@/shared/components/modern/data-table";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Money } from "@/shared/components/modern/money";
@@ -12,7 +11,7 @@ import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { AdminPage, AdminStatGrid, AdminStatCard } from "@/shared/components/admin";
 import { BadgeCheck, Banknote, Clock } from "lucide-react";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
-import { COMMISSION_COLUMNS, CommissionDetailsSheet, PayoutDialog, RELEASE_PERCENT, releaseOpen, type CommissionMenuItem } from "../components/commission-shared";
+import { COMMISSION_COLUMNS, CommissionDetailsSheet, PayoutDialog, releaseOpen, type CommissionMenuItem } from "../components/commission-shared";
 
 /** Commission payouts: record a payout once release opens, then confirm disbursement. Only confirmed disbursement makes a commission Paid. */
 export function CommissionPayoutsPage() {
@@ -45,7 +44,6 @@ export function CommissionPayoutsPage() {
             <AdminStatCard label="Payout ready" value={ready.length} icon={Banknote} tone="warning" />
             <AdminStatCard label="Awaiting confirmation" value={awaiting.length} icon={Clock} tone="info" />
           </AdminStatGrid>
-          <InfoNote title="Payout release">A payout can be recorded {PAYOUT_RELEASE_WAIT_DAYS} days after {RELEASE_PERCENT}% of the contract value is Finance-verified.</InfoNote>
           <QueryState isLoading={commissions.isLoading} error={commissions.error}>
             <DataTable
               data={approved}

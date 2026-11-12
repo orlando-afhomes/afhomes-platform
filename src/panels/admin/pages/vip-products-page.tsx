@@ -5,7 +5,6 @@ import { Pencil } from "lucide-react";
 import { useOperation, useVipProducts } from "@/data/business-queries";
 import type { VipProduct } from "@/modules/vip/types";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
-import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Button } from "@/shared/ui/button";
 import { AdminPage } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
@@ -41,7 +40,6 @@ export function VipProductsPage() {
       description="VIP tier catalog."
       crumbs={[{ label: "VIP Products", href: "/admin/vip-products" }, { label: "Product Catalog" }]}
     >
-      <InfoNote title="Contract-stated values">Prices and benefits are the values written in the standard contracts. Gold pricing is resolved by owner ruling effective 2026-11-10 (Spot Cash and Move A ₱312,000; 4-Month Installment and Move B ₱390,000; Spot Cash uses the Full Payment contract prices).</InfoNote>
         <QueryState isLoading={products.isLoading} error={products.error}>
           <DataTable data={products.data ?? []} columns={productColumns} getRowId={(row) => row.code} emptyText="No products." caption="VIP product catalog" onRowOpen={(row) => setProductCode(row.code)} getRowLabel={(row) => `Open ${row.name}`} rowActions={(row) => <RowActionsMenu itemName={row.name} onView={() => setProductCode(row.code)} onEdit={canManage ? () => setEditing(row) : undefined} />} />
         </QueryState>

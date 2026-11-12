@@ -913,7 +913,22 @@ describe("owner-decided restrictions (C2)", () => {
     expect(view.payoutReleaseDate).toBe(addDaysToDate(manilaToday(), PAYOUT_RELEASE_WAIT_DAYS));
     await expect(finance.commissions.recordPayout(commission.id, { reference: "P1", payoutDate: manilaToday() })).rejects.toThrow(/release opens on/);
     ageVerifications(store, "ctr-1");
+    const releaseDate = (await finance.commissions.list()).find((item) => item.id === commission.id)!.payoutReleaseDate!;
+    const earlyPayoutDate = addDaysToDate(releaseDate, -1)!;
+    await expect(finance.commissions.recordPayout(commission.id, { reference: "P1", payoutDate: earlyPayoutDate })).rejects.toThrow(/payout date.*release/i);
     expect((await finance.commissions.recordPayout(commission.id, { reference: "P1", payoutDate: manilaToday() })).payout?.reference).toBe("P1");
+  });
+
+  it("requires a verifiable threshold date before recording a payout", async () => {
+    const store = createMockStore();
+    const finance = as(store, "dev-finance");
+    const [commission] = await finance.commissions.approve({ saleId: "sale-1", entries: [{ memberId: "mem-ost-a1", percentBp: 500 }] });
+    const payment = await as(store, "dev-ost-a1").payments.submit({ contractId: "ctr-1", purpose: "installment", amountCentavos: pesos(57500), method: "Cash", paidDate: manilaToday(), referenceNo: "MA2" });
+    await finance.payments.verify(payment.id);
+    store.payments.find((item) => item.id === payment.id)!.verifiedDate = null;
+
+    await expect(finance.commissions.recordPayout(commission.id, { reference: "P1", payoutDate: manilaToday() })).rejects.toThrow(/verification date/i);
+    expect(store.commissions.find((item) => item.id === commission.id)?.payout).toBeNull();
   });
 
   it("routes cancellation of a contract with verified money through an Admin request and a Finance decision (OD-2)", async () => {
@@ -1058,6 +1073,19 @@ describe("public accreditation verification", () => {
 });
 
 describe("stay points reconciliation", () => {
+  it("keeps points pending if excluding held and voided spend puts the cycle below its minimum", async () => {
+    const store = createMockStore();
+    store.resortSpends.find((spend) => spend.id === "rs-2")!.amountCentavos = pesos(500);
+    const finance = as(store, "dev-finance");
+    const before = (await finance.stayPoints.list()).find((record) => record.membershipId === "memb-1")!;
+    expect(before.ledger.balances).toMatchObject({ pending: 900, held: 500, spendableWeekday: 0, spendableWeekend: 0 });
+
+    const after = await finance.stayPoints.reconcileHold("rs-3", "void", "Refund confirmed");
+    expect(after.ledger.cycles[0]).toMatchObject({ verifiedSpendCentavos: pesos(900), minimumReached: false });
+    expect(after.ledger.balances).toMatchObject({ pending: 900, held: 0, spendableWeekday: 0, spendableWeekend: 0 });
+    expect(after.ledger.entries).toContainEqual(expect.objectContaining({ spendId: "rs-3", status: "voided" }));
+  });
+
   it("lets only Finance reconcile held points", async () => {
     const store = createMockStore();
     await expect(as(store, "dev-admin").stayPoints.reconcileHold("rs-3", "release", "ok")).rejects.toThrow();

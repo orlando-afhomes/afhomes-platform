@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useId, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { Radio } from "@base-ui/react/radio";
 import { useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff } from "lucide-react";
@@ -48,6 +48,23 @@ export function LoginForm({ portals, defaultPortal, description, extraLinks }: P
     if (status === "signed-in") router.replace("/admin");
   }, [status, router]);
 
+  // This route stays mounted under cacheComponents, so its state survives logout.
+  // Reset the form when the session ends, or the preserved "submitting" state keeps Sign In busy.
+  const [seenStatus, setSeenStatus] = useState(status);
+  if (seenStatus !== status) {
+    setSeenStatus(status);
+    if (status === "signed-out") {
+      setView("login");
+      setPortal(defaultPortal);
+      setEmail("");
+      setPassword("");
+      setShowPassword(false);
+      setErrors({});
+      setAuthError(null);
+      setSubmitting(false);
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting) return;
@@ -67,6 +84,7 @@ export function LoginForm({ portals, defaultPortal, description, extraLinks }: P
       setSubmitting(false);
       return;
     }
+    setPassword("");
     signIn(result.identityId);
     queryClient.clear();
     router.replace("/admin");
@@ -77,8 +95,10 @@ export function LoginForm({ portals, defaultPortal, description, extraLinks }: P
   const emailErrorId = `${id}-email-error`;
   const passwordErrorId = `${id}-password-error`;
 
+  const portalIndex = Math.max(0, portals.findIndex((option) => option.value === portal));
+
   return (
-    <form noValidate onSubmit={handleSubmit} className="tw:flex tw:flex-col tw:gap-5">
+    <form noValidate onSubmit={handleSubmit} className="login-form__view tw:flex tw:flex-col tw:gap-5">
       <div className="tw:flex tw:flex-col tw:gap-2">
         <h1 className="tw:text-3xl tw:font-semibold">Login</h1>
         <p className="tw:text-sm tw:text-(--color-on-dark-muted)">{description}</p>
@@ -97,6 +117,12 @@ export function LoginForm({ portals, defaultPortal, description, extraLinks }: P
               setAuthError(null);
             }}
             className="login-form__segment-group"
+            style={
+              {
+                "--login-segment-index": portalIndex,
+                "--login-segment-count": portals.length,
+              } as CSSProperties
+            }
           >
             {portals.map((option) => (
               <Radio.Root key={option.value} value={option.value} className="login-form__segment">

@@ -133,13 +133,14 @@ describe("DataTable", () => {
     const data = rows(25);
     render(<DataTable data={data} columns={columns} getRowId={(row) => row.id} emptyText="-" />);
     expect(document.querySelectorAll("tbody tr")).toHaveLength(10);
-    expect(screen.getByText("Showing")).toBeInTheDocument();
+    expect(screen.getByText("1–10").parentElement).toHaveTextContent("Showing 1–10 of 25");
     expect(screen.getByRole("button", { name: "Page 1" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("button", { name: "Previous page" })).toBeDisabled();
     await user.click(screen.getByRole("button", { name: "Next page" }));
     await user.click(screen.getByRole("button", { name: "Next page" }));
     expect(screen.getByRole("button", { name: "Page 3" })).toHaveAttribute("aria-current", "page");
     expect(document.querySelectorAll("tbody tr")).toHaveLength(5);
+    expect(screen.getByText("21–25").parentElement).toHaveTextContent("Showing 21–25 of 25");
     expect(screen.getByRole("button", { name: "Next page" })).toBeDisabled();
   });
 

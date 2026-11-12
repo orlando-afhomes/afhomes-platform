@@ -82,9 +82,9 @@ describe("cleanReferenceNumber", () => {
     expect(cleanReferenceNumber("abc-123/456.789, 000", "cheque")).toBe("ABC-123/456.789, 000");
   });
 
-  it("collapses repeated spaces and drops other whitespace for cheques", () => {
+  it("collapses repeated spaces and keeps one outer space while typing a cheque reference", () => {
     expect(cleanReferenceNumber("ABC   123", "cheque")).toBe("ABC 123");
-    expect(cleanReferenceNumber("  ABC 123  ", "cheque")).toBe("ABC 123");
+    expect(cleanReferenceNumber("  ABC 123  ", "cheque")).toBe(" ABC 123 ");
     expect(cleanReferenceNumber("ABC\t123\n456", "cheque")).toBe("ABC123456");
   });
 
@@ -105,7 +105,7 @@ describe("cleanReferenceNumber", () => {
   });
 
   it("caps a cheque reference at the policy maximum", () => {
-    expect(cleanReferenceNumber(`${"A".repeat(29)} B`, "cheque")).toBe("A".repeat(30));
+    expect(cleanReferenceNumber(`${"A".repeat(29)} B`, "cheque")).toBe(`${"A".repeat(29)} `);
   });
 });
 

@@ -29,15 +29,14 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 
 afterEach(cleanup);
 
-// Each page has one section, named by its table caption or (holds, cancellations) its heading.
-const SECTIONS = ["Verification queue", "Collections", "All payments", "Financial holds", "Cancellation requests"];
+const SECTIONS = ["Verification queue", "Collections", "All payments", "Financial Holds", "Cancellation Requests"];
 
-const pages: [string, ReactElement, string, "table" | "heading"][] = [
+const pages: [string, ReactElement, string, "table" | "link"][] = [
   ["Payment Verification", <FinancePage key="a" />, "Verification queue", "table"],
   ["Collections", <FinanceCollectionsPage key="b" />, "Collections", "table"],
   ["Payment History", <FinancePaymentsPage key="c" />, "All payments", "table"],
-  ["Financial Holds", <FinanceHoldsPage key="d" />, "Financial holds", "heading"],
-  ["Cancellation Requests", <FinanceCancellationsPage key="e" />, "Cancellation requests", "heading"],
+  ["Financial Holds", <FinanceHoldsPage key="d" />, "Open contract", "link"],
+  ["Cancellation Requests", <FinanceCancellationsPage key="e" />, "Open request", "link"],
 ];
 
 describe("Finance pages are separate processes", () => {
@@ -46,7 +45,7 @@ describe("Finance pages are separate processes", () => {
     expect(await screen.findByRole("heading", { name: title, level: 1 })).toBeInTheDocument();
     expect(await screen.findByRole(role, { name: own })).toBeInTheDocument();
     for (const section of SECTIONS) {
-      if (section !== own) {
+      if (section !== own && section !== title) {
         expect(screen.queryByRole("heading", { name: section })).toBeNull();
         expect(screen.queryByRole("table", { name: section })).toBeNull();
       }

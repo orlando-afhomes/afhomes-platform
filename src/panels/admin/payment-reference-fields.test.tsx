@@ -173,18 +173,16 @@ describe("customer application wizard reservation reference field", () => {
     await user.click(screen.getByRole("checkbox", { name: /customer reviewed and accepted/i }));
     await user.click(screen.getByRole("button", { name: /submit application/i }));
 
-    // Blocked: still on Review, and nothing was submitted to Finance.
-    expect(screen.getByRole("heading", { name: "Review the application" })).toBeInTheDocument();
+    // The wizard returns to the step that owns the invalid field.
+    expect(await screen.findByRole("heading", { name: "Application form" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Review the application" })).toBeNull();
     expect(screen.queryByText(/waiting for Finance verification/i)).toBeNull();
     expect(screen.queryByText(/application submitted/i)).toBeNull();
 
-    // The Review step renders no reference error, so the field message is
-    // observed on the Reservation step that the Review section edits.
-    await user.click(screen.getByRole("button", { name: "Edit Reservation and acceptance" }));
     const again = referenceInput();
     expect(again.value).toBe("ABC");
-    expect(await screen.findByText(EWALLET_ERROR)).toBeInTheDocument();
     expect(again).toHaveAttribute("aria-invalid", "true");
+    expect(again).toHaveAccessibleDescription(new RegExp(escapeRegExp(EWALLET_ERROR)));
   });
 });
 

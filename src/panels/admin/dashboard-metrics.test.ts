@@ -211,35 +211,35 @@ describe("dashboard metrics", () => {
 
   it("builds recent activity across record kinds, newest first, with an optional filter", () => {
     const sources = {
-      customers: [{ id: "cus-9", submittedAt: "2026-11-07T09:00:00+08:00" }, { id: "cus-8", submittedAt: null }],
+      customers: [{ displayName: "Ida Cruz", submittedAt: "2026-11-07T09:00:00+08:00" }, { displayName: "Open draft", submittedAt: null }],
       contracts: [
         {
-          id: "ctr-4",
+          customerName: "Rafael Domingo",
           history: [
             { at: "2026-11-04", actorId: "a", event: "CONTRACT_SUBMITTED", note: null },
             { at: "2026-11-05", actorId: "a", event: "CONTRACT_FINALIZED", note: null },
           ],
         },
       ],
-      sales: [{ id: "sale-2", adjustments: [{ date: "2026-11-05", amountCentavos: 1, kind: "confirmation" }] }],
-      payments: [{ id: "pay-4", history: [{ at: "2026-11-06T10:00:00+08:00", actorId: "a", event: "PAYMENT_SUBMITTED", note: null }] }],
-      memberships: [{ id: "memb-2", history: [{ at: "2026-11-03", actorId: "a", event: "MEMBERSHIP_ACTIVATED", note: null }] }],
+      sales: [{ customerName: "Rafael Domingo", adjustments: [{ id: "adj-1", date: "2026-11-05", amountCentavos: 1, kind: "confirmation", reason: "Collection reached", actorId: "a" }] }],
+      payments: [{ customerName: "Tina Reyes", history: [{ at: "2026-11-06T10:00:00+08:00", actorId: "a", event: "PAYMENT_SUBMITTED", note: null }] }],
+      memberships: [{ customerName: "Marco Santos", history: [{ at: "2026-11-03", actorId: "a", event: "MEMBERSHIP_ACTIVATED", note: null }] }],
       commissions: [
         {
-          id: "com-1",
+          customerName: "Elena Bautista",
           history: [
             { at: "2026-11-08T10:00:00+08:00", actorId: "f", event: "COMMISSION_PAYOUT_RECORDED", note: null },
             { at: "2026-11-09T10:00:00+08:00", actorId: "f", event: "COMMISSION_PAID", note: null },
           ],
         },
       ],
-    } as unknown as Parameters<typeof buildActivityFeed>[0];
+    } satisfies Parameters<typeof buildActivityFeed>[0];
 
     expect(buildActivityFeed(sources, 4).map((item) => [item.label, item.reference])).toEqual([
-      ["Commission payout confirmed", "COM-1"],
-      ["Payout recorded, not confirmed", "COM-1"],
-      ["Customer submitted", "CUS-9"],
-      ["Payment submitted", "PAY-4"],
+      ["Commission payout confirmed", "Elena Bautista"],
+      ["Payout recorded, not confirmed", "Elena Bautista"],
+      ["Customer submitted", "Ida Cruz"],
+      ["Payment submitted", "Tina Reyes"],
     ]);
     expect(buildActivityFeed(sources, 10, (item) => item.kind === "sale" || item.kind === "contract").map((item) => item.label)).toEqual([
       "Contract finalized",

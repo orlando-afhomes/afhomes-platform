@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { pesos } from "@/shared/lib/money";
-import { confirmedCountInPeriod, confirmedValueInPeriod, mySales, snapshotCounts, teamSales } from "./rules";
+import { confirmedCountInPeriod, confirmedValueInPeriod, mySales, referredSales, snapshotCounts, teamSales } from "./rules";
 import type { Sale } from "./types";
 
 function sale(overrides: Partial<Sale> & Pick<Sale, "id">): Sale {
@@ -19,6 +19,7 @@ function sale(overrides: Partial<Sale> & Pick<Sale, "id">): Sale {
     status: "pending",
     confirmedDate: null,
     adjustments: [],
+    referrerMemberId: null,
     ...overrides,
   } as Sale;
 }
@@ -79,5 +80,22 @@ describe("dashboard sales counts (13 section 3.1)", () => {
     expect(mySales(sales, "mem-sm-a")).toHaveLength(0);
     expect(teamSales(sales, "mem-sm-a")).toHaveLength(6);
     expect(teamSales(sales, null)).toHaveLength(0);
+  });
+});
+
+describe("Referred by me (13 section 4; owner ruling 2026-11-12, A8)", () => {
+  const sales = [
+    sale({ id: "r1", referrerMemberId: "mem-ost-b1" }),
+    sale({ id: "r2", referrerMemberId: "mem-ost-a1" }),
+    sale({ id: "r3" }),
+  ];
+
+  it("lists referred sales separately from My Sales and never twice", () => {
+    expect(referredSales(sales, "mem-ost-b1").map((item) => item.id)).toEqual(["r1"]);
+    expect(mySales(sales, "mem-ost-b1")).toHaveLength(0);
+    // Seller = referrer: only in My Sales.
+    expect(referredSales(sales, "mem-ost-a1")).toHaveLength(0);
+    expect(mySales(sales, "mem-ost-a1")).toHaveLength(3);
+    expect(referredSales(sales, null)).toEqual([]);
   });
 });

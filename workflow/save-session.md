@@ -111,137 +111,70 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-12
-- Repository: afhomes-platform (remote `https://github.com/orlando-afhomes/afhomes-platform.git`, not re-checked)
+- Saved at: 2026-11-13
+- Repository: afhomes-platform (remote not re-checked)
 - Branch: develop
-- HEAD: 0512a31 "docs: add workflow atlas implementation roadmap and update-workflow-atlas skill" (verified)
-- Session objective: finalize every conflicting business rule and process before any further frontend work and before the backend/DB/API phase. Run plain-language decision rounds with the owner, then write the answers into the rule documents.
-- Development phase: frontend prototype with mock data. Business rules are now finalized (documentation). No `src/` change this session.
-- Context note: very long session. Rounds R4 to R13 were collected in plan mode and then applied by subagents. The plan file `C:/Users/SSD-ORLANDO/.claude/plans/proceed-muna-tayo-sa-cozy-popcorn.md` lists every answer.
+- HEAD: 67f0b68 (verified; unchanged). Nothing from this session or the previous one is committed.
+- Session objective: (1) `/load`; (2) browser check of the two new screens (HR turning an account on; "Referred by me" tab); (3) fix what the check found.
+- Development phase: frontend prototype with mock data, QA stage. Only the owner declares frontend completion.
+- Context note: the session started on Sonnet 5.5; the owner switched with /model to Fable 5.2, Haiku 5.5, then Fable 5.2 again. The session was interrupted once and resumed ("Try again"). No subagents were used. Owner wants every reply in "explain like I am 5" language (memory `plain-language-questions.md`).
 
 ## 2. Current Project State
-- The rule documents in `docs/business-rules/01` to `14` reflect the owner decisions of 2026-11-12. `14-igp-sales.md` is new. Each changed doc ends with dated "Owner rulings amendment (2026-11-12, ...)" sections.
-- `docs/implementation/decisions-and-gaps.md`: all G01 to G12 and U01 to U13 rows are Decided, Deferred or Out of scope. It also has "Round results", "Follow-up decisions (items 1-30)" and "Still open" lists. Its "What each decision asks for" section is marked historical.
-- The development docs (`architecture`, `backend`, `database`, `frontend`, `security`, `testing`, `README`), `docs/project.md` and the permission-matrix proposal have dated consistency notes.
-- `AGENTS.md` section 5 summary bullets and the "Unresolved decisions" list were updated with owner authorization. No other part of `AGENTS.md` changed.
-- Company sources are at `C:/Users/SSD-ORLANDO/Documents/AFHomes Document/Business Rules/` (reorganized during the session into `AFHomes/`, `JAD/` and `Shared/`). Text extracts were in the session scratchpad, which is temporary. Never read `Restricted Records`.
+- Rules: unchanged this session. Docs 01 to 14 carry R1 to R13, follow-ups and the answers A1 to A8; `decisions-and-gaps.md` is the newest summary.
+- Code: the Staff & Access screen now lets HR turn an office staff account back on (A4), matching what `staff-repository.ts` already allowed. The Sales page "Referred by me" tab (A8) works as built last session.
+- Seed: new suspended office staff login `acct-records` linked to staff `staff-records` ("Records Clerk", `role-ops-staff`, `dept-ops`) so the HR reactivate path can be seen in the browser.
 
-## 3. Important Decisions (owner, 2026-11-12)
-- **Authority.** The company workbook wins by default. Signed contracts, privacy, legal and Finance controls win where stricter. Dated owner rulings outrank all. AUG and OCT count as approved company practice. The IST Clawback Addendum is a DRAFT and is not applied.
-- **Roles.**
-  - The Administrator can do everything. The Super Administrator has full control with no blocks, and only a Super Administrator can give or remove the Super Administrator role.
-  - Self-approval is allowed and audited. A Clerk enters only; Admin acts as Supervisor; Director = Super Administrator.
-  - Sellers only view: SVD, SSM and SM see their own and their team's records; OST sees only its own.
-  - Page access means viewing; sensitive actions need operation permissions. HR activates staff accounts only. Finance sees all reports.
-- **Numbering.**
-  - One VIP Number (NUM v6.2) for the RA, Grant and Card, issued at RA signing, with a monthly sequence.
-  - Validity starts on the Card Claim Date, or the first anniversary of full settlement if the card is not claimed.
-  - Upgrades get a new number with a "Replaces" link (built later). Numbers are never reused.
-- **Sellers.**
-  - Expired sellers can still sell, with a reminder. Suspended or departed sellers cannot.
-  - Renewal issues a new monthly AA number and moves the history to it.
-  - A new seller is entered and approved in two steps.
-  - A vacant seat earns nothing; its downline rolls up. No Acting SM. JA&D IDs are stored separately for IGP.
-- **Customers.**
-  - Closing seller plus an optional, possibly different, referrer.
-  - A seller starts a customer draft, the Clerk completes it, and the Admin approves, returns or rejects it.
-  - The public OST application is kept, with a fix-and-resend link. Home gets links to seller login and the seller check.
-  - The Admin resets passwords. There is no public card lookup.
-- **Payments.**
-  - Clerk enters receipts. Finance, Admin or Super Admin approves them.
-  - Reference numbers are unique system-wide. Returned receipts can be fixed and resent. Reversals are dated, never deleted.
-  - Sellers may upload slip photos as proof only. Imported receipts count as approved, with one sign-off per batch.
-- **Sales.**
-  - A sale counts at 25% approved collection once the sale record is approved; contract finalization is not required for the count.
-  - Month close is used. Sales unpaid for 90 days are listed and an Admin marks them Defaulted.
-- **Commission.**
-  - Per-person DSC and DRI rates, frozen on the sale. Only the seller and the referrer earn per sale; there is no override.
-  - VIP is paid 100% at the month-end after 40% is collected. The 7-day wait is removed; it was not found in any company paper.
-  - Pay survives the seller leaving.
-  - BA, PA and PB are computed with a parallel run beside Excel. Team credit follows the current leader.
-  - Clawbacks are recorded. Automatic recovery waits for the signed addendum. OST clawbacks are collected directly.
-- **Non-Standard.** Price and schedule only. The Admin approves, then Finance confirms; only the Super Admin may do both. No price floor. Commission on the actual TCP.
-- **Silver** is PHP 240,000. Move A and Move B take effect 2026-11-09.
-- **Points.**
-  - The signed Grant Annual Welcome Gift applies; Spend-to-Earn is removed.
-  - The Points Activation Date is the earlier of the first actual stay using points or two years after card claim.
-  - Bills are entered by office staff with a receipt number and approved like receipts.
-  - A refund delays a tranche that has not been released. The supplementary holder's spend counts. A tranche due during a Hold waits.
-  - A failed Year 1 spend means tranche 1 is not released.
-  - The Admin may approve a waiver.
-- **Redemption (doc 10, still disabled).**
-  - Room stays only. Weekday and weekend points are kept separate.
-  - The Admin keeps the points-per-night table, versioned and fixed per card at its Card Claim Date. The Admin keeps a holiday calendar.
-  - Front-desk and office staff book with no extra approval. The card must be claimed first.
-  - Cancelling before the cut-off returns the points; a late cancel or no-show forfeits them.
-  - Points plus cash, split by whole nights.
-  - On transfer, the old holder's points are lost and their bookings cancelled. Heirs go through the transfer process.
-- **IGP (doc 14).**
-  - In scope and built together with VIP, for the AFhomes channel only.
-  - 16-character Series Number. Closed Deal at 10%. 40% of commission at 40% collected, the rest at full payment.
-  - Sellers need a JA&D ID. A TCP over PHP 9M is blocked. Refunds are decided outside the system.
-  - Re-numbering moves the payments to the new number. Basic unit fields only. Documents are tracked as a checklist.
-- **Records.** Kept forever until legal advice. History import with a parallel run. CMS deferred.
+## 3. Important Decisions
+- Owner approved this session: do the browser check; fix the HR reactivate button and pop-up text ("Yes, fix it"); "proceed" with the seed addition for visual proof.
+- A4 reading confirmed in code: HR may activate non-Administrator office staff accounts; `canActivateTarget` in `staff-repository.ts` blocks HR on accounts with the `admin` role; Super Administrator accounts are protected. The seed "Admin User" staff row links to `acct-admin`, so HR correctly gets no activate button there.
+- Owner answers A1 to A8 (2026-11-12) still stand: A1 points plus cash split by whole nights; A2 Customer ID `YYYY-NNNN` is the person, never the VIP Number; A3 preparer may approve own payout list, flagged; A4 as above; A5 no Acting or temporary leader, ever; A6 renewal allowed while login is Suspended or Deactivated; A7a card transfer cancels the former holder's future points bookings, A7b unmet Year 1 condition means tranche 1 is not released or carried over; A8 My Sales is the closing seller only, with a separate "Referred by me" list.
+- Still true: docs are planning only; Redemption stays disabled; only the owner commits or pushes; mock login is removed when real auth lands.
 
 ## 4. Completed Work
-- All decision rounds were applied to the docs listed in section 5.
-- Memory files added: `plain-language-questions.md`, plus its MEMORY.md line.
-- Verification: `git diff --check` passed. A grep sweep for superseded terms (Spend-to-Earn, Finance-Assigned, manually assign, Public Customer Lookup, RA No., sole authority, Move B1) found no live statements; the remaining hits are historical or marked superseded. `src/` is unchanged.
+- Browser check, "Referred by me": signed in as `ost.beta1@afhomes.test`. My sales shows only Customer B One (PHP 72,000). Referred by me shows only Customer A One (PHP 240,000, seller Ana Mendoza) with the note that it is not added to own totals. Dashboard counts one own sale. Pass.
+- Browser check, HR reactivate: found two defects. `linkedAccountActions` dropped "active", so no turn-on button could show; the suspend pop-up said only an Administrator or Super Administrator can reactivate.
+- Fix (test first): `src/panels/admin/pages/staff-account-actions.ts` (adds "active" with label "Activate account", non-danger confirm, new pop-up texts), `staff-dialogs.tsx` and `staff-page.tsx` (activate uses the normal button style), `src/data/queries.ts` (`useUpdateLinkedAccountStatus` accepts "active"), new `staff-account-actions.test.ts` (3 tests).
+- Seed and test: `src/data/mock/seed-data.ts` (Records Clerk rows), `staff-access-rows.test.ts` (role filter now expects `staff-3` and `staff-records`).
+- Browser recheck as `hr@afhomes.test`: Records Clerk shows Suspended; profile shows green "Activate account"; pop-up reads "The account regains access to the system."; after confirm the status is Active and the buttons become Suspend and Deactivate. Pass.
 
 ## 5. Git Working Tree
-- Staged: none.
-- Modified, this session: `AGENTS.md`; `docs/business-rules/01` to `13`; `docs/development/{README,architecture,backend,database,frontend,security,testing,role-module-permission-matrix-proposal}.md`; `docs/project.md`; `docs/implementation/decisions-and-gaps.md`; `phase-03`, `phase-11`.
-- Modified, origin unknown (small edits found at save time, not made by the main session; possibly subagent consistency edits or the owner): `docs/implementation/README.md`; `phase-01`, `02`, `04` to `10`.
-- Not from this session: `.gitignore` modified; `docs/ui-design-referrence/login-referrence.jpg` deleted. Ask the owner.
-- Untracked: `docs/business-rules/14-igp-sales.md` (this session).
-- Ignored: `workflow/save-session.md` (this snapshot).
-- Stash: `stash@{0}` "local: sales-network cleanup + member detail redesign" is still kept.
+- Staged: none. Stash: `stash@{0}` "local: sales-network cleanup + member detail redesign" still kept.
+- Unstaged: 45 modified files (611 insertions, 510 deletions).
+  - Pre-existing from the 2026-11-12 session: 28 docs (`docs/business-rules/01` to `14`, matrix proposal, `docs/implementation` README, decisions-and-gaps, phase-01 to phase-11) and 11 `src/` files (`account-repository.ts`, `business-flow.test.ts`, `contract-repository.ts`, `sale-repository.ts`, `seed-data.ts`, `staff-repository.ts`, `staff-repository.test.ts`, `src/modules/sales/{rules,rules.test,types}.ts`, `sales-page.tsx`).
+  - This session: `src/data/queries.ts`, `src/panels/admin/pages/staff-access-rows.test.ts`, `staff-account-actions.ts`, `staff-dialogs.tsx`, `staff-page.tsx`, plus more edits to `seed-data.ts` and this file.
+- Untracked: `src/panels/admin/pages/staff-account-actions.test.ts` (this session); `.claude/launch.json` (origin unknown; not written by an agent edit, appeared during this session, possibly from the app's browser preview; content not inspected).
+- No deleted or renamed files. Git warns that LF will become CRLF on the next Git touch.
 
 ## 6. Pending Tasks
-- Still open, outside the team's control:
-  - IGP VIP grant benefit terms (company document needed).
-  - IGP band code for a TCP over PHP 9M.
-  - Signing of the IST Clawback Addendum.
-  - The points-per-night table (an Admin fills it in).
-  - A legal records retention period.
-  - JA&D SUPERSEDED status meaning.
-- Run `/update-workflow-atlas`. The atlas baseline `a0bdcef` is badly outdated against these decisions.
-- Build the frontend alignment backlog. Areas to change:
-  - `src/modules/stay-points/engine.ts` (replace with the Welcome Gift model)
-  - `src/modules/commissions/rules.ts` (per-person rates, month-end release, no 7-day wait)
-  - `src/modules/membership/rules.ts` and `contract-repository.ts` (VIP Number at RA signing, monthly sequence, no RA reuse)
-  - `payment-repository.ts:158` (self-approval) and `payment-actions.tsx` (resend)
-  - `customer-form-sections.tsx` (closing seller plus referrer)
-  - `mock-credentials.ts` (status rules)
-  - `permissions.ts` (Clerk role, view-only sellers)
-  - accreditation numbering (monthly)
-  - IGP module
-  - 25% sale count
-  Each item needs owner authorization.
-- Earlier failing tests were not investigated: `business-pages.test.tsx`, `pagination.test.tsx`, `dashboard-page.test.tsx`. Many tests will need updating once the code is aligned.
+- Owner review and commit of the uncommitted changes (owner only). Decide whether `.claude/launch.json` should be kept, ignored or removed.
+- Optional: one read-only re-audit of the 28 changed docs (not done).
+- D-B: stamp the 40% month by receipt date (doc 13 OCT O3); code still uses the approval date.
+- Open owner item: overpayment and refund timing (phase-07 F7.1) is not on the decisions page.
+- Small cleanups: doc 08 "R8 items 3-6" citations; doc 07 section 18 title "VIP Card ID Integration".
+- Frontend alignment backlog (each needs authorization): stay-points engine (code still Spend-to-Earn), commission recipients (F8.1), VIP Number at RA signing, 25% sale count, Clerk role, accreditation numbering, IGP module (doc 14).
+- Open outside the team: signed IST Clawback Addendum, IGP grant terms and band code above PHP 9M, points-per-night table, legal retention period.
+- Workflow Atlas (outside the repo) not updated; consider `/update-workflow-atlas`.
 
 ## 7. Verification State
-- Tests, lint, typecheck and build: not run (documentation-only session).
-- Browser QA: not run.
-- Doc checks: `git diff --check` passed; grep sweep clean of live stale statements.
-- Checks not performed: link and ID check of `docs/implementation`; independent review of the subagent-written docs (08, 09, 10, 14 are large rewrites and worth an owner read).
+- Tests: after the UI fix, 72 passed (new file, `staff-repository.test.ts`, admin pages). After the seed addition, `src/data`, `src/modules` and `src/panels/admin` gave 923 passed and 1 failed (the role filter test); that test was updated and its file then passed 7 of 7. The whole group was not rerun after that one-line change. Full suite not run (known 15-second timeouts under load on wizard and staff-form tests).
+- Typecheck: `npx tsc --noEmit` clean after the last edit.
+- Lint: clean on the 5 files of the UI fix; not rerun on `seed-data.ts` and `staff-access-rows.test.ts`; full lint not run.
+- Build: not run.
+- Browser QA: both screens passed (section 4). Not seen in the browser: the new suspend pop-up wording, and HR being refused on an Administrator account (covered by repository tests only).
+- Not performed: second doc audit, build, full test suite.
 
 ## 8. Next Session Instructions
-- Recommended first action: `/load`. Ask the owner about the `.gitignore` change and the deleted jpg. Then run `/update-workflow-atlas`, or create the frontend alignment backlog.
-- Relevant files: `docs/implementation/decisions-and-gaps.md`, `docs/business-rules/06`, `08`, `09`, `10`, `14`, and the plan file above.
-- Required approvals: every code change (one feature per task), any `AGENTS.md` edit, commits (owner only), building Redemption or IGP.
-- Warnings:
-  - Ask the owner questions in plain, non-technical language (memory).
-  - The atlas is out of Git, so back it up before editing.
-  - Do not delete `.next`.
-  - Mock data resets on refresh.
+- Recommended first action: `/load`, then the owner reviews and commits. Optionally run one read-only audit helper on the changed docs.
+- Relevant files: `src/panels/admin/pages/staff-account-actions.ts`, `staff-dialogs.tsx`, `src/data/mock/seed-data.ts`, `src/data/mock/staff-repository.ts`, `docs/implementation/decisions-and-gaps.md`.
+- Required approvals: any commit or push (owner only), any new feature, real authentication.
+- Warnings: a dev server (`npm run dev`) was started this session and something still answered on port 3000 at save time; do not run build and tests together; do not delete `.next`; mock data resets on a full page reload; the Add staff dialog closes on Escape and loses typed data; mock sign-in details are in `src/data/mock/mock-credentials.ts`.
 
 ## 9. Execution Recommendation
-- Phase: Plan (frontend alignment backlog) / Build (atlas refresh)
+- Phase: QA
 - Recommended next mode: default (ask before edits)
-- Recommended model: Sonnet 5.5 for the atlas refresh and the backlog; Opus 5.5 for commission and points code changes
-- Effort: medium; high for money and points code
+- Recommended model: Sonnet 5.5
+- Effort: medium
 - Ultracode: OFF
-- Token optimization: start a fresh session; read only the doc sections a feature needs; one feature card per task
-- Reason: the rules are settled, so the remaining work is scoped implementation, one area at a time.
+- Token optimization: owner review and commit first; the doc re-audit is one read-only helper at most.
+- Reason: both screens are verified in the browser, so only the owner's review and the optional doc re-audit remain.
 <!-- SESSION_SNAPSHOT_END -->

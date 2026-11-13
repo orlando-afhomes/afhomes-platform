@@ -79,11 +79,11 @@ Accreditation renewal is allowed even when the underlying account is Suspended o
 
 After renewal:
 
-- Active account: login access is restored automatically. An expired accreditation does not block login (owner ruling R3, §9).
-- Suspended account: login remains blocked.
-- Deactivated account: login remains blocked.
+- Active account: nothing changes for login, because an expired accreditation never blocked login (owner ruling R3, §9).
+- Suspended account: the login stays off until it is turned on.
+- Deactivated account: the login stays off until it is turned on.
 
-Account reactivation follows the approved Organization Management rules.
+"Deactivated" is an account status. It does not mean resigned or terminated. A person who resigned or was terminated is never renewed (section 5.2.2). Account reactivation follows the approved Organization Management rules (doc 01; HR may reactivate office staff accounts, never seller accounts).
 
 ### 5.5 Expiration Reminders (OCT R40)
 
@@ -116,7 +116,7 @@ A date correction is not considered a renewal.
 
 ### 6.2 Effect on AA Number
 
-If the corrected date changes the original accreditation year or month:
+If the corrected date changes the original accreditation year or month, and no renewal has occurred:
 
 - Update the `YYMM` segment of the current AA number.
 - Preserve the member identity.
@@ -124,6 +124,8 @@ If the corrected date changes the original accreditation year or month:
 - Apply collision handling if the resulting number is already reserved for another member.
 
 Do not silently modify another member's AA number.
+
+If a renewal has already issued the current AA number, its `YYMM` is the renewal month and is not changed by a correction of the original date. The correction is recorded in the audit history and the AA Number History only (section 6.1).
 
 ---
 
@@ -142,13 +144,13 @@ Segments:
 - Team owner: `A` = AFhomes' own team. Other letters are reserved for future partner-company teams.
 - `I` = IST, `O` = OST.
 - `YYMM` = the month of accreditation, or of the renewal for a renewed number.
-- `NNNN` = the number of people accredited or renewed in that month, in order of accreditation date.
+- `NNNN` = the next unused number of that month's sequence, shared by new accreditations and renewals. A number is never renumbered once issued.
 
 Numbers issued in the former 10-character `AIYYMMNNNN` form stay valid and are read as AA-form numbers.
 
 ### 7.2 Sequence Rules
 
-- NNNN restarts at 0001 each month and is assigned in order of accreditation (or renewal) date within the month.
+- NNNN restarts at 0001 each month. Each new accreditation or renewal takes the next unused number of its month when it is recorded; issued numbers are never renumbered.
 - New accreditations and renewals in the same month share the count.
 - `YYMM` is the accreditation or renewal month, not the date the record was typed in.
 
@@ -283,7 +285,7 @@ Accreditation dated January 2025, the hundredth person of that month → `AAI250
 ## 12. Deferred / Requires Business Approval
 
 - Email/SMS reminders (not required in this version).
-- Commission effects of accreditation expiry or suspension (Commission Business Rules).
+- Commission effects of accreditation expiry or suspension are settled: existing sales are untouched and commission follows only what happens to the sale itself (section 9, OCT R27, R33; doc 08).
 - VIP activation requirements, refund rules, payment schedules, contract cancellation (respective modules).
 
 ---
@@ -324,3 +326,10 @@ These rulings take precedence over earlier text in this document, including the 
 These rulings take precedence over earlier text in this document where they differ.
 
 22. **Returned public OST application.** A returned applicant gets a private link (email or text) to correct the same application and resubmit it; the office sees the history (section 9.2).
+
+## Owner answers to the audit questions (2026-11-12)
+
+Item numbers in the amendments of this document follow the master follow-up list in `docs/implementation/decisions-and-gaps.md`; they are not renumbered here.
+
+- **A6, renewal and account status.** Renewal is allowed while the login is Suspended or Deactivated; the login stays off until it is turned on (section 5.4). "Deactivated" is an account status, not resigned or terminated. Leavers are never renewed; if they return, they get a new AA number (section 5.2.2).
+- **A4, HR.** HR may activate and reactivate office staff accounts only (doc 01). Seller accounts and the Administrator and Super Administrator accounts are not HR's to manage.

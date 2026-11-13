@@ -233,6 +233,15 @@ describe("card id and points rules", () => {
 });
 
 describe("sales reporting examples (doc 13)", () => {
+  it("shows a referred sale to its referrer outside the team, and only that sale (A8)", async () => {
+    const store = createMockStore();
+    const referred = store.sales.find((s) => s.id === "sale-1")!;
+    expect(referred.referrerMemberId).toBe("mem-ost-b1");
+    expect(referred.team.some((entry) => entry.memberId === "mem-ost-b1")).toBe(false);
+    const visible = await as(store, "dev-ost-b1").sales.list();
+    expect(visible.map((s) => s.id).sort()).toEqual(["sale-1", "sale-2"]);
+  });
+
   it("counts a sale once at full value and nets reversal and reconfirmation by month", () => {
     const sale = { adjustments: [
       { id: "a", date: "2026-10-28", amountCentavos: pesos(240000), kind: "confirmation", reason: "", actorId: "x" },

@@ -77,7 +77,7 @@ A product code appearing in a historical workbook does not automatically mean th
 
 AFHomes Platform explicitly allows Admin to create additional VIP tiers. Each new tier requires unique product identity, unique approved product code, defined price, defined validity entitlement, defined benefits, available payment schemes, appropriate configuration status, and audit history.
 
-Validate compatibility with the existing VIP Card ID structure, which contains a two-character product-code segment. Do not silently redesign or expand this code segment without approval. If future tier-code requirements exceed the existing format, document as a versioned numbering decision requiring explicit approval.
+Validate compatibility with the existing VIP Number structure (doc 06), which contains a two-character product-code segment. Do not silently redesign or expand this code segment without approval. If future tier-code requirements exceed the existing format, document as a versioned numbering decision requiring explicit approval.
 
 ---
 
@@ -114,13 +114,17 @@ The October 2026 contract reference identifies critical inconsistencies.
 
 ### 6.1 Gold Contract Price
 
-The Gold standard contract records ₱390,000 in Section II and Annex A, and ₱780,000 in Section IV. This is a contractual inconsistency.
+**Superseded (owner ruling, 2026-11-12):** the inconsistency below is closed. Owner ruling item 11 (2026-11-10) finalized the Gold prices (Spot Cash ₱312,000, Move A ₱312,000, 4-Month Installment ₱390,000, Move B ₱390,000) and rejected the ₱780,000 figure; item 12 makes Move A and Move B standard approved schemes, so no Gold scheme is held at finalization. The text of this section and §6.1.1 is history only.
+
+The Gold standard contract records ₱390,000 in Section II and Annex A, and ₱780,000 in Section IV. This was a contractual inconsistency.
 
 ### 6.1.1 Proposed correction (superseded by owner ruling item 11, 2026-11-10)
 
 Retained as history only; no longer operative following owner ruling item 11 (2026-11-10), which finalized Gold pricing.
 
 The proposed correction is to amend Section IV of the Gold standard contract from ₱780,000 to ₱390,000 so it matches Section II, Annex A, and the approved 4-Month Installment schedule basis. This proposal is not approved and changes no approved price.
+
+**Superseded (owner ruling, 2026-11-12):** the hold on 4-Month Installment and Move B Gold in the paragraph below no longer applies (items 11 and 12). Historical text follows.
 
 Pricing-basis distinction: Spot Cash and Move A Gold carry their own contract-stated package price of ₱312,000 under the Full Payment contracts, the OD-11 Spot Cash release, and the Move A approval, and are not affected by the installment-path conflict; 4-Month Installment and Move B Gold fall back to the catalog ₱390,000 and remain held at finalization until the correction is approved. A scheme may carry its own package price per tier and a contract snapshots that price (see Owner rulings amendment items 5–7).
 
@@ -173,7 +177,7 @@ The supplied membership workbook includes:
 
 Owner ruling item 7 (2026-11-09) merged the historical workbook options Move B1 and Move B2 into one scheme, Move B. B1 and B2 are historical source labels only and are not selectable schemes. The approved register is Spot Cash, Move A, 4-Month Installment and Move B, plus Admin-configured schemes.
 
-These values must not be omitted merely because a previous interface included only Spot Cash and Installment. Extract the complete list of approved company payment schemes from available business-rule documents. Do not assume the five values above are necessarily the only options across all source documents.
+These values must not be omitted merely because a previous interface included only Spot Cash and Installment. Extract the complete list of approved company payment schemes from available business-rule documents. Do not assume the four values above are necessarily the only options across all source documents.
 
 Produce a canonical option register containing: official display label, stable machine identifier, documented historical label, applicable VIP tier, payment category, required initial payment, down payment, installment duration, installment schedule, commercial status, relevant source document. Only populate commercial terms and applicability when supported by actual approved documents or configurations. The terms of Move A and Move B are defined only by owner ruling items 6 and 7 (2026-11-09); never infer a scheme's financial meaning from its label alone. Do not invent percentages, deposit requirements, or amortization formulas.
 
@@ -219,7 +223,7 @@ Basis: NUM v6.2 ("Non-Standard (N) transactions require documented justification
    Only the Super Administrator may do both steps alone; an Administrator approves the terms and Finance confirms (owner follow-up ruling 7, 2026-11-12). The Administrator or the Super Administrator may approve a contract they prepared; the audit history then shows that the same person prepared and approved it (owner authority rule, 2026-11-12, item 17). Only then may an authorized Admin finalize. Each step is audited separately. A rejection at either step returns the contract to Returned with a reason. Any later change to the price or schedule returns the contract to approval.
 4. **No price floor.** Each case is judged by the approvers; the platform enforces no minimum price.
 5. **Commission and sale measures** use the approved Non-Standard TCP and the actual verified collections, with the same rates, stages and measures as Standard sales.
-6. **Card ID.** The classification code is N; numbering otherwise follows the standard rules.
+6. **VIP Number.** The classification code is N; numbering otherwise follows the standard rules.
 7. Finance verification of payments, membership activation and every other Standard control apply unchanged.
 
 ---
@@ -333,7 +337,7 @@ Audit requirements: record authorized actor, time of change, previous value, new
 | Contract prices | Gold and Silver source inconsistencies | Gold resolved by owner ruling item 11 (2026-11-10); Silver resolved by item 13 (2026-11-12, updated contract, Php 240,000) |
 | VIP number | NUM unified number vs separate RA No. and activation-based Card ID | NUM v6.2 adopted (R2, 2026-11-12): one number, YYMMDD = Reservation Agreement recording date |
 | VIP sequence | Monthly sequence vs RA-derived sequence | Monthly company-wide sequence, reset each month (NUM) |
-| RA scope | RA uniqueness and possible collision scenarios | Flag collisions; do not fabricate |
+| RA scope | RA uniqueness and possible collision scenarios | Superseded (R2, 2026-11-12): the RA carries the VIP Number from one company-wide allocator, so collisions are prevented, not flagged (doc 06) |
 | Card issuance | Final activated ID vs earlier contract-stage issuance proposal | Superseded by R2 (2026-11-12): the VIP Number is issued when the signed Reservation Agreement is recorded; activation and card claim never create a number (doc 06) |
 | VIP activation | Full Finance-verified payment prerequisite | Required |
 | Validity start | Activation date vs signed Grant Card Claim Date | Card Claim Date, or first anniversary of full settlement if unclaimed (R2, 2026-11-12) |
@@ -344,7 +348,7 @@ Audit requirements: record authorized actor, time of change, previous value, new
 
 ## 20. Acceptance Criteria
 
-Given / When / Then for core scenarios (see Section 28 of the master prompt for full list). Key:
+Given / When / Then for core scenarios (key scenarios; the full list is in the project documentation). Key:
 
 1. Admin creates a VIP tier.
 2. Admin edits product pricing for future purchases; existing finalized contract price remains unchanged.
@@ -383,7 +387,7 @@ Given / When / Then for core scenarios (see Section 28 of the master prompt for 
 ## Completion Report
 
 - **Files created/updated:** `docs/business-rules/05-vip-products-and-contracts.md`
-- **Approved rules covered:** VIP product management, payment schemes, contract classification, contract approval, RA-derived numbering (cross-ref), membership activation (cross-ref), card ID issuance (cross-ref), VIP validity.
+- **Approved rules covered:** VIP product management, payment schemes, contract classification, contract approval, VIP Number issuance (cross-ref, doc 06; the earlier RA-derived and activation-based Card ID numbering is superseded by R2), membership activation (cross-ref), VIP validity.
 - **Official dropdown source mapping:** VIP tiers B1/S1/G1 (plus historical/reserved); payment schemes Spot Cash, Move A, 4-Month Installment, Move B (plus Admin-configurable); payment types Cash, Bank Transfer, GCash, Maya, Card, Cheque; contract classifications Standard (S), Non-Standard (N).
 - **Outstanding approval dependencies:** tier-code format expansion if needed. Gold and Silver prices and the Non-Standard policy were resolved by owner rulings items 11, 13 and 15.
 - **Validation:** All required sections included; no invented commercial terms; documentation only. No code, database, Git, or deployment changes.
@@ -394,18 +398,18 @@ These rulings are authoritative and take precedence over earlier text in this do
 1. **Spot Cash** was held pending the owner decision (OD-11). Superseded by item 5 below, which releases it. Existing finalized Spot Cash contracts are untouched.
 2. **Payment scheme register:** terms and tier applicability appear only where an approved document or Admin configuration supports them. The earlier hold on Move A, Move B1 and Move B2 is superseded by items 6 and 7 below.
 3. **Supplementary holder** is allowed only when the selected product permits one (currently Gold).
-4. **Internal customer identifier:** new customers receive a secure random, numeric-only, pattern-free internal id. The RA number rule is unchanged.
+4. **Internal customer identifier:** new customers receive a secure random, numeric-only, pattern-free internal id. **Superseded (owner ruling, 2026-11-12):** "The RA number rule is unchanged" no longer applies. There is no separate RA number; the Reservation Agreement carries the VIP Number (R2, doc 06). The internal id remains a technical identifier, and the Customer ID `YYYY-NNNN` (assigned when the application is submitted, doc 04 §7.7) identifies the person only.
 
 5. **Spot Cash released (OD-11, 2026-11-09).** Spot Cash is available at the Full Payment contract prices: Bronze Php 54,000, Silver Php 192,000, Gold Php 312,000. It takes the Php 10,000 reservation fee (part of the price), with the balance due within 7 days of the reservation. A scheme may carry its own package price per tier; a contract snapshots that price. Gold Spot Cash is not held by the Gold installment price conflict.
 6. **Move A approved (2026-11-09).** The Spot Cash package price is paid as the Php 10,000 reservation fee plus 4 equal monthly payments: Bronze Php 11,000 (slide 15 of the Group VIP IST Presentation, over slide 13), Silver Php 45,500, Gold Php 75,500.
-7. **Move B approved (2026-11-09) as one scheme.** The installment package price is paid as a 40% down payment that includes the reservation fee, then equal monthly payments: Bronze 4 x Php 10,800, Silver 8 x Php 18,000, Gold 12 x Php 19,500. Move B1 and Move B2 are removed from the register because no official source supports that split. The Gold installment price conflict still holds Gold Move B at finalization. No source dates the down payment; it stays undated until staff enter a date.
+7. **Move B approved (2026-11-09) as one scheme.** The installment package price is paid as a 40% down payment that includes the reservation fee, then equal monthly payments: Bronze 4 x Php 10,800, Silver 8 x Php 18,000, Gold 12 x Php 19,500. Move B1 and Move B2 are removed from the register because no official source supports that split. **Superseded (owner ruling, 2026-11-12):** the sentence "The Gold installment price conflict still holds Gold Move B at finalization" no longer applies (items 11 and 12). No source dates the down payment; it stays undated until staff enter a date.
 8. **Special arrangement approval (superseded by item 12).** Each Move A or Move B contract needs written approval before finalization. Only a Super Administrator records it, with the reference of the signed approval, and a Super Administrator may approve a contract they prepared. The approval is audited and kept on the contract separately from the payment code.
 9. **Due dates** derive from the reservation date: the reservation fee is due that day, monthly installment N is due N months later (clamped to the month end), and a Spot Cash balance is due 7 days later. Staff may override the dates while a contract is Draft or Returned.
 10. **No interest** is ever charged; a scheme has no interest field. Scheme configuration changes are validated (exact positive centavo amounts that add up to the package price per tier), versioned with an effective date and audited, and need no second approver.
 11. **Gold pricing finalized (2026-11-10).** Effective date 2026-11-10. Final Gold prices: Spot Cash ₱312,000 / Move A ₱312,000 / 4-Month Installment ₱390,000 / Move B ₱390,000. The ₱780,000 figure is rejected and is no longer active or unresolved. This ruling supersedes the pending-price-resolution requirement (the previous §6.1.1 proposal and any hold-pending-resolution language for Gold).
-12. **Move A and Move B are standard approved schemes.** Effective date: 2026-11-09 (confirmed by the owner on 2026-11-12, amendment item 14). Move A and Move B are standard approved schemes — no per-selection Super Admin written approval is required; the normal Standard preparation/acceptance/review/finalization path is mandatory. Non-Standard exceptions keep their restrictions. Historical arrangement approvals and audits are preserved. Approved Card ID payment-code mapping (T = installment category plus monthly count; no promotional names appear in IDs; the contract keeps the exact scheme, price, schedule, and version):
+12. **Move A and Move B are standard approved schemes.** Effective date: 2026-11-09 (confirmed by the owner on 2026-11-12, amendment item 14). Move A and Move B are standard approved schemes — no per-selection Super Admin written approval is required; the normal Standard preparation/acceptance/review/finalization path is mandatory. Non-Standard exceptions keep their restrictions. Historical arrangement approvals and audits are preserved. Approved VIP Number payment-code mapping (T = installment category plus monthly count; no promotional names appear in IDs; the contract keeps the exact scheme, price, schedule, and version):
 
-    | Scheme | Tier | Card ID payment code |
+    | Scheme | Tier | VIP Number payment code |
     |---|---|---|
     | Spot Cash | B1, S1, G1 | C01 |
     | 4-Month Installment | B1, S1, G1 | T04 |
@@ -428,11 +432,11 @@ These rulings come from the 2026-11-12 decision round R1 and take precedence ove
 
 This ruling takes precedence over earlier text in this document where it differs.
 
-17. **Non-Standard approval authority.** In §10.2 step 3, the Administrator or the Super Administrator approves the terms, then Finance confirms the price and schedule. The Super Administrator may do both steps alone. Under the owner authority rule (doc 01 §3.7), the Administrator or the Super Administrator may approve a contract they prepared, and the audit history shows that the same person prepared and approved it. This amends item 15, under which only the Super Administrator approved.
+17. **Non-Standard approval authority.** In §10.2 step 3, the Administrator or the Super Administrator approves the terms, then Finance confirms the price and schedule. The Super Administrator may do both steps alone. Under the owner authority rule (doc 01 §3.7), the Administrator or the Super Administrator may approve a contract they prepared, and the audit history shows that the same person prepared and approved it. This amends the original ruling of item 15, under which only the Super Administrator approved; item 15 above already states the amended rule.
 
 ## Owner rulings amendment (2026-11-12, follow-ups)
 
-These rulings take precedence over earlier text in this document where they differ.
+These rulings take precedence over earlier text in this document where they differ. Item numbers here follow the master follow-up list in `docs/implementation/decisions-and-gaps.md` where they correspond to it; the numbering of this document's own items is preserved because other documents cite it.
 
 18. **Counting without finalization.** A sale counts at 25% once the Administrator has approved the sale record. Formal contract finalization is tracked separately and is not required for the count (workbook OPS §4.2; doc 13 §4). Section 13 no longer makes a finalized contract a precondition for Confirmed Sales.
 19. **Contract preparation.** Sellers do not prepare contracts. The office (Clerk) prepares and the Administrator approves (sections 11 and 20). This replaces "Authorized Staff or IST prepares the VIP contract".

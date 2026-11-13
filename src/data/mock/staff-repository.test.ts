@@ -143,20 +143,31 @@ describe("staff repository S3-B workflows", () => {
     expect({ staff: store.staff.length, accounts: store.accounts.length, audit: store.auditEvents.length }).toEqual(counts);
   });
 
-  it("lets HR suspend and deactivate an eligible linked account but never reactivate it", async () => {
+  it("lets HR activate, suspend, deactivate and reactivate an office staff account", async () => {
+    // Owner ruling 2026-11-12 (A4): HR activates and reactivates office staff accounts.
     const store = createMockStore();
     const hr = createMockRepositories(store, () => getDevIdentity("dev-hr"));
     const created = await hr.staff.create({ ...newHire, provisionPendingAccount: true });
     const accountId = created.accountId as string;
-    // Pending accounts are activated only by Admin/Super Admin.
-    await expect(hr.staff.updateLinkedAccountStatus(created.id, "active")).rejects.toThrow("Only an Administrator or Super Administrator");
-    await createMockRepositories(store, () => getDevIdentity("dev-admin")).accounts.updateStatus(accountId, "active");
+    const statusEvents = () => store.auditEvents.filter((event) => event.action === AUDIT_ACTIONS.ACCOUNT_STATUS_CHANGED && event.entityId === accountId).length;
+    const before = statusEvents();
+    expect((await hr.staff.updateLinkedAccountStatus(created.id, "active")).status).toBe("active");
     expect((await hr.staff.updateLinkedAccountStatus(created.id, "suspended")).status).toBe("suspended");
-    await expect(hr.staff.updateLinkedAccountStatus(created.id, "active")).rejects.toThrow("Only an Administrator or Super Administrator");
-    expect(store.accounts.find((item) => item.id === accountId)?.status).toBe("suspended");
+    expect((await hr.staff.updateLinkedAccountStatus(created.id, "active")).status).toBe("active");
     expect((await hr.staff.updateLinkedAccountStatus(created.id, "deactivated")).status).toBe("deactivated");
-    await createMockRepositories(store, () => getDevIdentity("dev-admin")).accounts.updateStatus(accountId, "active");
-    expect(store.accounts.find((item) => item.id === accountId)?.status).toBe("active");
+    expect((await hr.staff.updateLinkedAccountStatus(created.id, "active")).status).toBe("active");
+    expect(statusEvents() - before).toBe(5);
+  });
+
+  it("blocks HR from activating an Administrator account", async () => {
+    const store = createMockStore();
+    const superAdmin = createMockRepositories(store, () => getDevIdentity("dev-super-admin"));
+    const hr = createMockRepositories(store, () => getDevIdentity("dev-hr"));
+    const adminAccount = store.accounts.find((item) => item.id === "acct-admin")!;
+    await superAdmin.accounts.updateStatus(adminAccount.id, "suspended");
+    await expect(hr.staff.updateLinkedAccountStatus("staff-admin", "active")).rejects.toThrow("Only an Administrator or Super Administrator can activate an Administrator account.");
+    expect(store.accounts.find((item) => item.id === adminAccount.id)?.status).toBe("suspended");
+    await expect(hr.staff.updateLinkedAccountStatus("staff-super", "active")).rejects.toThrow("Protected account");
   });
 
   it("rejects staff-path status changes on protected, own, or unlinked accounts without mutation", async () => {

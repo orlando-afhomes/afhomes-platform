@@ -170,6 +170,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
           valueCentavos: contract.priceCentavos,
           recordedDate: today(),
           sellerMemberId: contract.sellerMemberId,
+          referrerMemberId: customer?.referrerMemberId ?? null,
           team: contract.genealogy.map((entry) => ({ ...entry })),
           status: "pending" as const,
           confirmedDate: null,

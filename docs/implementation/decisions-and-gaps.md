@@ -1,6 +1,6 @@
 # Decisions and Gaps
 
-Source: Workflow Atlas `2026-11-12.2` (`develop @ 0512a31`). The atlas now shows G01 to G12 as Decided, except G09 (Pending the signed IST addendum). The register below and the round results state the current owner rulings (R1 to R13, 2026-11-12). Each feature still needs explicit owner authorization before it is built.
+Source: Workflow Atlas `2026-11-12.3` (`develop @ b784e30`). The atlas now shows G01 to G12 as Decided, except G09 (Pending the signed IST addendum). The register below and the round results state the current owner rulings (R1 to R13, 2026-11-12). Each feature still needs explicit owner authorization before it is built.
 
 Related list: `AGENTS.md` section 5 "Unresolved decisions" covers the same ground from the business-rule side (Gold price, RA numbering, claim versus activation date, module-level permissions, and so on). The two lists overlap and neither replaces the other.
 
@@ -31,16 +31,16 @@ Related list: `AGENTS.md` section 5 "Unresolved decisions" covers the same groun
   - The NUM upgrade rule is adopted and will be built later.
   - Numbers are never reused.
   - Left for R10: the Stay Points cycle anchor in doc 09 (activation date versus the Grant's Points Activation Date).
-- **R3, network and accreditation (2026-11-12): Decided (closes G02 and G04, and U05 as deferred).** Recorded in docs 02 and 03 (owner amendments).
+- **R3, network and accreditation (2026-11-12): Decided (closes G02 and G04; U05 Acting SM removed from scope by A5).** Recorded in docs 02 and 03 (owner amendments).
   - An expired seller can still log in, sell, refer and sponsor, with a reminder. The public check shows them as Expired.
   - A suspended, resigned or terminated seller cannot take new sales or sponsor.
   - A renewal is recorded in the expiry month or later and gives a new AA number; all history moves to it.
   - The AA sequence is monthly (NUM §8). The owner confirmed this on 2026-11-12.
   - A new seller needs two steps: one user enters, a second approves. Later changes, including renewals and transfers, are made by the Administrator or the Super Administrator (amended by the authority rule below).
   - A vacant seat earns nothing, and its downline counts toward the next active level.
-  - No Acting SM.
+  - No Acting SM (final; owner answer A5, 2026-11-12). A seat is filled only by promotion (doc 02 section 8) or team transfer (doc 02 section 6).
   - Settled in R9: team allowance credit follows the current upline (AUG R23); sale reports keep the original seller and team (doc 02 §6.3).
-- **Authority rule (owner, 2026-11-12).** The Administrator can do everything. The Super Administrator has full control with no blocks. Both may approve their own entries, and the audit trail shows it. Clerks only enter information. Sellers only view.
+- **Authority rule (owner, 2026-11-12).** The Administrator can do everything. The Super Administrator has full control with no blocks. Both may approve their own entries, and the audit trail shows it. Finance may also approve its own receipt entries and a payout list it prepared itself (owner answer A3), flagged in the history like receipts. Clerks only enter information. Sellers only view.
 - **R4, roles (2026-11-12): Decided.** Recorded in doc 01 and the permission-matrix proposal.
   - Director = Super Administrator; Supervisor = Administrator; a new Clerk job (enters only); Finance unchanged.
   - Sellers view only: SVD, SSM and SM see their own and their team's records; OST sees only its own.
@@ -112,7 +112,7 @@ Recorded in the "Owner rulings amendment (2026-11-12, follow-ups)" section of ea
 10. A tranche due during a Financial Hold is released when the hold ends, if it still qualifies and the card is valid (doc 09).
 11. No redemption before the card is claimed (docs 09, 10).
 12. Cancelling a points booking after the cut-off forfeits the points, like a no-show (doc 10).
-13. Points plus cash for a stay is allowed; the whole-night or part-night split stays open (doc 10).
+13. Points plus cash for a stay is allowed; the split is by whole nights, each night paid entirely in points or entirely in money (owner answer A1, doc 10).
 14. IGP with a TCP over ₱9M is blocked until a band code is defined (doc 14).
 15. A seller without a JA&D accreditation number cannot be salesperson or referrer on an IGP sale (doc 14).
 16. IGP refund amounts are decided outside the system; the system records the cancellation, refund amount and date, and any clawback (doc 14).
@@ -123,7 +123,7 @@ Recorded in the "Owner rulings amendment (2026-11-12, follow-ups)" section of ea
 21. On the cardholder's death, the heirs request a written transfer approved by management; the same rules apply (docs 09, 10).
 22. A returned public OST applicant corrects the same application through a private link; the office sees the history (doc 03).
 23. The Admin can approve a seller-started customer, send it back to the Clerk with a reason, or reject it with a reason; nothing is deleted (doc 04).
-24. HR creates and activates office staff accounts, cannot give Admin or Super Admin roles and cannot manage seller accounts (doc 01, matrix D3).
+24. HR creates, activates and reactivates office staff accounts, cannot give Admin or Super Admin roles and cannot manage seller accounts (doc 01, matrix D3; owner answer A4).
 25. Finance views all reports, view only (doc 01, matrix D5).
 26. Website content editing is deferred (matrix D8; R11).
 27. IGP property details: project name, unit or lot number, Property Owner name, TCP and payment plan (doc 14).
@@ -146,6 +146,20 @@ The owner answered these directly on 2026-11-12. Recorded in the "Owner rulings 
 - **D-A, payout day.** A VIP commission payout may be recorded from the first day of the month after the month in which net verified collections first reached 40%. Doc 08 says the release is paid in that month's month-end payout, made after the month is closed. Until a month-close feature exists, the start of the next calendar month stands in for month close. The 7-day wait is removed from the code.
 - **D-B, which date sets the month.** For now the month is set by the verification (approval) date of the payment that reached 40%, as the code already does. Doc 13 (OCT O3) stamps Stage 1 by the receipt's own date. Aligning the code with doc 13 is a separate task; the rule is not changed.
 
+### Owner answers to the audit questions (2026-11-12)
+
+The owner answered the questions raised by the documentation audit on 2026-11-12.
+
+- **A1, points plus cash stay.** Split by whole nights: each night is paid all in points or all in money. The redemption build stays disabled (docs 10, 09).
+- **A2, Customer ID.** Keep Customer ID `YYYY-NNNN`, assigned at submit. It identifies the person only and is never the Reservation Agreement, Grant or card number (the VIP Number) (doc 04).
+- **A3, payout list approval.** Finance, the Administrator or the Super Administrator may approve a payout list they prepared themselves; it is flagged in the history like receipts (docs 08, 12).
+- **A4, HR and accounts.** HR may activate and reactivate office staff accounts, never Administrator or Super Administrator accounts and never seller accounts. The app code already does this (doc 01, matrix).
+- **A5, Acting leader.** Final: there is no Acting or temporary leader, ever. The vacant seat rule stays. A seat is filled only by promotion (doc 02 section 8) or team transfer (doc 02 section 6) by the Administrator or Super Administrator. U05 is removed from scope (doc 02).
+- **A6, renewal and account status.** Renewal is allowed while the login is Suspended or Deactivated; the login stays off until turned on. "Deactivated" is an account status, not resigned or terminated. Leavers are never renewed; a returning leaver gets a new AA number (doc 03).
+- **A7a, card transfer and bookings.** When a card transfer takes effect, the former holder's future points bookings are cancelled. Staff inform the holder before the transfer is finalized (docs 10, 09).
+- **A7b, Year 1 condition at first redemption.** If the Year 1 condition is not met at first redemption, follow the signed Grant: tranche 1 is not released and not carried over. A late-entered bill dated within the period still counts. A waiver is possible (docs 09, 10).
+- **A8, My Sales.** My Sales lists sales where the member is the closing seller. A separate "Referred by me" list shows sales where the member is the referrer; these are never added to My Sales totals. The app code already does this (doc 13).
+
 ### Still open
 
 - **AFHomes and JA&D:** Supply the signed Goodwill and Formal VIP Grant terms, a band code above ₱9M, and a written definition of `SUPERSEDED`. Until then, track grant paperwork only, block sales above ₱9M, and refer that status for review.
@@ -161,7 +175,7 @@ The owner answered these directly on 2026-11-12. Recorded in the "Owner rulings 
 | G01 | Public route discoverability and OST intake | Decided 2026-11-12 (R5) | J01, J02 | F2.1, F3.8 |
 | G02 | Accreditation dates, expiry and seller standing | Decided 2026-11-12 (R3) | J02, J04 | F3.4 |
 | G03 | OST preparation, SM handoff and attribution | Decided 2026-11-12 (R5) | J04, J05, J06 | F4.4, F4.5 |
-| G04 | Vacant seat and Acting SM delegation | Decided 2026-11-12 (R3; Acting SM deferred) | J04, J12 | F3.5, F3.6, F11.5 |
+| G04 | Vacant seat and Acting SM delegation | Decided 2026-11-12 (R3; No Acting SM, final, A5) | J04, J12 | F3.5, F3.6, F11.5 |
 | G05 | Unified VIP number and card validity | Decided 2026-11-12 (R2) | J06, J10 | F5.6, F9.2, F9.3 |
 | G06 | Receipt matching and verification authority | Decided 2026-11-12 (R6) | J05, J06, J07 | F6.3, F6.4 |
 | G07 | Sales milestones and adjustments | Decided 2026-11-12 (R7) | J06, J07, J08 | F5.5, F6.6, F7.5 |
@@ -194,7 +208,7 @@ The owner answered these directly on 2026-11-12. Recorded in the "Owner rulings 
 | U02 | Sales sign-in and AA discoverability from Home | Decided: add Home links (R5) | J01 | G01 | F2.1 |
 | U03 | Account recovery | Decided: Admin temporary password until real auth (R5) | J01 | G01 | F2.4 |
 | U04 | OST draft and SM finalization handoff | Decided: seller draft, clerk completes, Admin approves (R5) | J05 | G03 | F4.5 |
-| U05 | Acting SM delegation | Deferred by owner (R3) | J04 | G04 | F3.6 |
+| U05 | Acting SM delegation | Removed from scope (no Acting SM, final; R3, A5) | J04 | G04 | F3.6 |
 | U06 | Returned payment submitter correction | Decided: Fix and resend (R6); UI still missing | J07 | G06 | F6.4 |
 | U07 | Live Finance process and paid commission recovery | Decided (R9); automatic recovery after the addendum is signed | J09 | G09 | F8.5 |
 | U08 | Public Customer Lookup and Customer Portal | Out of scope by owner (R11); portal deferred | J02 | G11 | F11.6 |
@@ -209,6 +223,5 @@ U01 to U13 descriptions are in the atlas `COVERAGE.md` section "Incomplete and u
 ## Known stale or conflicting documents
 
 - ~~Doc 07 amendment item 7 (per-contract Move approval wording) is stale against doc 05 item 12.~~ Fixed in R1 (2026-11-12): item 7 is marked superseded, and the Move effective date is 2026-11-09.
-- Doc 04 section 7.8 and Customer ID decision D2 were already flagged as stale in the session snapshot (`workflow/save-session.md`).
-- ~~The atlas baseline `a0bdcef` predates `fc060bb`.~~ Refreshed on 2026-11-12 (atlas `2026-11-12.2`, baseline `0512a31`).
+- ~~The atlas baseline `a0bdcef` predates `fc060bb`.~~ Refreshed on 2026-11-12 (atlas `2026-11-12.3`, baseline `b784e30`).
 - ~~Code and rule disagree on the commission release wait: R8 removes the 7-day wait, but `src/modules/commissions/rules.ts` still defines `PAYOUT_RELEASE_WAIT_DAYS` and the payout milestone shows "Payout opens <date>". The atlas records this under G08 (Conflicting). It is for the owner to authorize a code change.~~ Fixed 2026-11-12: the wait was removed; payout opens on the first day of the month after 40% (owner decision D-A).

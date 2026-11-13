@@ -89,7 +89,7 @@ The Customer Creation form supports the following official information groups. N
 
 ### 7.1 Section A — VIP Information
 
-Fields: VIP Plan, Payment Scheme.
+Fields: VIP Plan, Contract Classification (Standard — S; Non-Standard — N; doc 05 §7 and §10), Payment Scheme.
 
 VIP Plan options (exact identifiers):
 
@@ -101,7 +101,7 @@ VIP Plan options (exact identifiers):
 
 Do not introduce additional tiers without business approval.
 
-Payment Scheme uses the official payment schemes established by VIP Products, Contracts, and Finance business rules. Do not invent payment schemes, terms, down payments, installment schedules, or prices. The selected plan and payment scheme are associated with the relevant VIP application or intended purchase, not permanently embedded as immutable customer identity properties.
+Payment Scheme uses the official payment schemes established by VIP Products, Contracts, and Finance business rules. Do not invent payment schemes, terms, down payments, installment schedules, or prices. The selected plan, contract classification and payment scheme are associated with the relevant VIP application or intended purchase, not permanently embedded as immutable customer identity properties.
 
 ### 7.2 Section B — Government Identification
 
@@ -153,13 +153,15 @@ Fields: Occupation / Business, Office / Business Address, Business / Industry, E
 
 ### 7.7 Section G — Customer ID
 
-The official identifier is the Customer ID. Support two methods: Automatic (system generates next unique Customer ID using the official AFHomes Customer ID format and allocator) and Manual (the Clerk, the Administrator or the Super Administrator, according to permissions, may manually enter; sellers do not, because sellers view only, doc 01 §3.7).
+**Owner ruling (A2, 2026-11-12): keep the Customer ID `YYYY-NNNN`, assigned when the customer application is submitted.** It identifies the person only. It is never the Reservation Agreement, Grant or card number; that is the VIP Number, issued when the signed Reservation Agreement is recorded (doc 06). The two identifiers are independent and neither is derived from the other.
+
+The official identifier is the Customer ID. Support two methods: Automatic (system generates the next unique Customer ID in the format `YYYY-NNNN` when the application is submitted) and Manual (the Clerk, the Administrator or the Super Administrator, according to permissions, may manually enter; sellers do not, because sellers view only, doc 01 §3.7).
 
 Validation: every officially established Customer ID must be unique; duplicates prohibited; manual IDs must satisfy official company identifier format. A Customer ID belongs to its customer and does not change when a customer buys another VIP product, when a salesperson transfers teams, or when VIP membership expires.
 
-Inspect any documented official Customer ID generator before specifying its literal format. The Reservation Agreement has no separate RA Number pattern: it carries the VIP Number issued when the signed agreement is recorded (doc 06, owner ruling R2, 2026-11-12). Do not reuse the IST/OST `AAI`/`AAO` accreditation number format for customers. Do not confuse Customer ID with VIP Card ID, VIP Control Number, VIP Contract Number, IST/OST Accreditation Number, or Sales Transaction Number.
+The Reservation Agreement has no separate RA Number pattern: it carries the VIP Number issued when the signed agreement is recorded (doc 06, owner ruling R2, 2026-11-12), and the Customer ID format above is not reused for it. Do not reuse the IST/OST `AAI`/`AAO` accreditation number format for customers. Do not confuse Customer ID with the VIP Number, VIP Control Number, VIP Contract Number, IST/OST Accreditation Number, or Sales Transaction Number.
 
-Blank drafts must be possible without requiring a finalized Customer ID. Separate technical draft identification from official customer identity. Avoid unnecessary consumption of official Customer ID sequences by blank or abandoned drafts unless required by the established official allocator policy.
+Blank drafts must be possible without requiring a finalized Customer ID. Separate technical draft identification from official customer identity. Because the Customer ID is assigned at submission, blank or abandoned drafts never consume a Customer ID sequence number.
 
 ### 7.8 Section H — Sales and Recommender Details
 
@@ -261,7 +263,7 @@ Submit is distinct from Save as Draft. When Submit is used:
 
 If Submit fails validation: preserve the user's entered data, do not discard the draft, explain which applicable requirements remain incomplete or invalid, and do not fabricate information to make the submission pass.
 
-After successful submission: preserve the customer data, record the submitting user and appropriate timestamp, maintain customer identity and registration status, and make the resulting record available according to Customer Management access rules. The submitted registration then waits for approval. When reviewing a seller-started customer, the Administrator (or the Super Administrator) may approve it, send it back to the Clerk with a reason, or reject it with a reason. Nothing is deleted (owner follow-up ruling, 2026-11-12). The submitted registration waits for approval by the Administrator or the Super Administrator (section 5); the approver and timestamp are recorded. Do not automatically activate a VIP membership merely because customer registration was submitted or approved.
+After successful submission: preserve the customer data, record the submitting user and appropriate timestamp, maintain customer identity and registration status, and make the resulting record available according to Customer Management access rules. The submitted registration then waits for approval by the Administrator or the Super Administrator (section 5); the approver and timestamp are recorded. When reviewing a seller-started customer, the Administrator (or the Super Administrator) may approve it, send it back to the Clerk with a reason, or reject it with a reason. Nothing is deleted (owner follow-up ruling, 2026-11-12). The actual closing seller is required at approval; a blank draft may omit it. Do not automatically activate a VIP membership merely because customer registration was submitted or approved.
 
 ---
 
@@ -291,7 +293,7 @@ Sales Network team transfers must not rewrite customer identity.
 
 ## 13. Customer Search vs. Public VIP Lookup
 
-There is no public VIP lookup (owner ruling R11, 2026-11-12): only authorized staff check customers and cards. Internal search may show complete records only to appropriately authorized users within permitted scope. Do not assume unrestricted internal customer search visibility applies to the public website. Do not expose customer contact information, government ID images, sensitive personal information, or complete customer profiles through public lookup without an independently approved business rule.
+There is no public VIP lookup (owner ruling R11, 2026-11-12): only authorized staff check customers and cards. Internal search may show complete records only to appropriately authorized users within permitted scope. Internal customer search does not extend to the public website. The public website exposes no customer or card information. Do not expose customer contact information, government ID images, sensitive personal information, or complete customer profiles anywhere on the public website.
 
 ---
 
@@ -397,15 +399,21 @@ Given / When / Then style for core workflows:
 
 ## 20. Deferred Business Decisions
 
-- Exact literal Customer ID numbering format (use official allocator; do not invent).
-- Full official Payment Scheme enumeration (reference existing).
+Decided since the original list (2026-11-12):
+
+- **Customer ID format:** decided, `YYYY-NNNN`, assigned at submission (section 7.7).
+- **Payment Scheme enumeration:** decided, Spot Cash, Move A, 4-Month Installment, Move B plus Admin-configured schemes (doc 05 §8).
+- **Commission percentages and referral payouts:** decided, doc 08 (per-person rates, DSC and DRI).
+- **VIP activation requirements:** decided, docs 07 and 09 (Finance-verified full settlement; approval never auto-activates).
+- **Retention:** interim rule, records kept indefinitely with no automatic deletion until a legally advised schedule exists (docs 11, 12).
+
+Still deferred:
+
 - Exact mandatory field matrix for Submit.
 - Detailed ID verification standards.
 - Mandatory certification conditions for every registration scenario.
-- Customer record deletion and retention periods.
+- Legally advised customer record retention and deletion periods.
 - Detailed duplicate matching formulas.
-- Commission percentages or referral payouts.
-- VIP activation requirements.
 - Contract cancellation and refund procedures.
 
 ---
@@ -443,10 +451,11 @@ See Section 14.
 ## Completion Report
 
 - **File created/updated:** `docs/business-rules/04-customer-management.md`
-- **Approved rules covered:** Registration authority (Staff/IST allowed, OST not); full field inventory; VIP Plan G1/S1/B1; optional ID Number; dependent location dropdowns; RA Number/Customer ID auto or manual; Referrer/VIP Recommender same OST; optional OST recommender for direct IST sales; eight Acquisition Channels; two certifications; blank draft allowed; separate Submit with applicable validation; customer identity independent of VIP membership; role-based/Sales Network-scoped search; unmasked names in authorized views; historical access after transfers; duplicate prevention; audit/privacy; acceptance criteria.
+- **Superseded (owner ruling, 2026-11-12):** the original report below listed "Staff/IST allowed, OST not", "RA Number" and "Referrer/VIP Recommender same OST". These are replaced by seller-started drafts (R5), the Customer ID `YYYY-NNNN` for the person only (section 7.7) and closing seller plus optional referrer (R5).
+- **Approved rules covered:** Registration by seller-started draft, Clerk completion and Administrator approval; full field inventory; VIP Plan G1/S1/B1 and Contract Classification; optional ID Number; dependent location dropdowns; Customer ID `YYYY-NNNN` auto or manual; closing seller plus optional referrer; eight Acquisition Channels; two certifications; blank draft allowed; separate Submit with applicable validation; customer identity independent of VIP membership; role-based/Sales Network-scoped search; unmasked names in authorized views; historical access after transfers; duplicate prevention; audit/privacy; acceptance criteria.
 - **Draft and Submit verification:** Blank drafts allowed; Submit separate with applicable validation; incomplete submission preserves draft.
 - **Sales Network reconciliation:** Compatible with IST/OST, SVD/SSM/SM, genealogy, historical customer access, and Roles & Permissions.
-- **Outstanding dependencies:** Exact Customer ID format, Payment Scheme enumeration, mandatory field matrix, ID verification standards, mandatory certification conditions, deletion/retention periods, duplicate matching formulas, commission policies, VIP activation, contract cancellation/refund.
+- **Outstanding dependencies:** mandatory field matrix, ID verification standards, mandatory certification conditions, legally advised deletion/retention periods, duplicate matching formulas, contract cancellation/refund (see section 20).
 - **Validation results:** All approved sections included; no actual contradictions found; no invented business policies.
 - **File change summary:** Created `docs/business-rules/04-customer-management.md` only. No application implementation, database modification, push, merge, or deployment performed.
 ## Owner rulings amendment (2026-11-12, rounds R4–R5 and authority rule)
@@ -461,8 +470,8 @@ These rulings take precedence over earlier text in this document where they diff
 
 ## Owner rulings amendment (2026-11-12, follow-ups)
 
-These rulings take precedence over earlier text in this document where they differ.
+These rulings take precedence over earlier text in this document where they differ. Item numbers 6, 7 and 23 follow the master follow-up list in `docs/implementation/decisions-and-gaps.md` (that list's item 5 is this document's item 7); the numbers are kept because other documents cite them.
 
 6. **Contracts.** Sellers do not prepare contracts. The office (Clerk) prepares the contract and the Administrator approves it (section 5; doc 05 §11).
-7. **Seller payment slip.** A seller may upload a payment slip photo for their own customer. It is proof only and counts only after a Clerk enters the receipt and Finance, an Administrator or the Super Administrator approves it (section 5; doc 07).
+7. **Seller payment slip (master follow-up item 5).** A seller may upload a payment slip photo for their own customer. It is proof only and counts only after a Clerk enters the receipt and Finance, an Administrator or the Super Administrator approves it (section 5; doc 07).
 23. **Review of a seller-started customer.** The Administrator can approve it, send it back to the Clerk with a reason, or reject it with a reason. Nothing is deleted (sections 5 and 10).

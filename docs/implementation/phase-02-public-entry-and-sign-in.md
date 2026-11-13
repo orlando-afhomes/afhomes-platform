@@ -4,7 +4,7 @@
 - Objective: the public entry points, sign-in for Admin, Staff and Sales, sign-out, and the real-authentication work behind them.
 - Business rules: `docs/business-rules/01-roles-and-permissions.md` sections 3 to 9. Security: `docs/development/security.md` sections 10 and 11.
 - Depends on: FP1 (roles and scopes).
-- Decision items (all decided on 2026-11-12. Still open: automatic clawback recovery waits for the signed IST addendum (G09, U07); see `decisions-and-gaps.md`): G01 (public link placement), G11 (CMS).
+- Decision items (all decided on 2026-11-12; see `decisions-and-gaps.md`): G01 (public link placement), G11 (CMS).
 
 Routes (from the atlas):
 
@@ -24,9 +24,9 @@ Reminder: the mock login is temporary. It must be removed when real authenticati
 | Journey | J01, TO-BE "Approved homepage entry choices" |
 | Current | The homepage provides Home and Login only. Sales sign-in and AA verification work by direct address (U02). |
 | Target | Per R5: Home gets links to seller login and the seller check. There is no public card or customer check (R11). |
-| Layer | Owner decision, then Frontend (mock) |
-| Blocked by | G01 (decided R5), U02 (decided R5) |
-| Acceptance | Every public link leads to the intended page. Lookup, registration and account access stay distinct. |
+| Layer | Frontend (mock) |
+| Blocked by | none (G01 and U02 decided in R5) |
+| Acceptance | The homepage shows links to seller login (`/login/sales`) and the seller check (`/verify`). Every public link leads to the intended page. There is no public card or customer lookup. Registration, verification and account access stay distinct. |
 | Status | Decided, awaiting build authorization |
 
 ## F2.2 Admin/Staff and Sales sign-in
@@ -37,7 +37,7 @@ Reminder: the mock login is temporary. It must be removed when real authenticati
 | Current | `/login` has an Admin or Staff toggle and `/login/sales` is separate. Email and password get inline validation. The mock checks credentials, the selected portal and an active identity. Success clears permission-scoped queries and goes to `/admin`. The selector does not grant a role. |
 | Target | Same behavior, with real identity and role check (F2.5). |
 | Layer | Frontend (mock) |
-| Blocked by | none (the sales identifier may later become the AA number per doc 03) |
+| Blocked by | none |
 | Acceptance | Wrong credentials, portal mismatch and inactive identity each stop sign-in with a message. Mock credentials are never shown on the page. |
 | Status | Exists (mock) |
 
@@ -59,9 +59,9 @@ Reminder: the mock login is temporary. It must be removed when real authenticati
 |---|---|
 | Journey | J01 |
 | Current | Forgot password is a form state in each login route. A valid email shows "Email recovery not available yet." and no reset link is sent (U03). |
-| Target | Per R5: an Administrator resets forgotten passwords. Self-service email recovery is not part of the ruling. |
-| Layer | Backend (real authentication) |
-| Blocked by | G01 (decided R5), U03 (decided R5) |
+| Target | Per R5 and doc 01 (section on account recovery) until real authentication: an Administrator sets an interim temporary password for a forgotten account. Self-service email recovery is not part of the ruling and arrives with real authentication (F2.5). |
+| Layer | Frontend (mock) for the interim Administrator reset; Backend for real recovery |
+| Blocked by | none for the interim reset (G01 and U03 decided in R5); real recovery waits for F2.5 |
 | Acceptance | An Administrator can set a temporary password for a user. The reset is audited and the new password is never shown to anyone else. The response does not reveal whether an email exists. |
 | Status | Missing |
 
@@ -83,10 +83,10 @@ Reminder: the mock login is temporary. It must be removed when real authenticati
 |---|---|
 | Journey | J01 |
 | Current | No AFHomes CMS page exists (U09). |
-| Target | None. R11 defers the CMS. |
-| Layer | Owner decision |
-| Blocked by | G11 (decided R11), U09 (decided R11) |
-| Acceptance | To be defined after the decision. |
+| Target | None. R11 defers the CMS, and website content editing is deferred (follow-up 26). |
+| Layer | Frontend (mock), when later authorized |
+| Blocked by | none (G11 and U09 decided in R11; deferred by the owner) |
+| Acceptance | No CMS route, navigation entry or editing control exists in the current build. When it is later authorized, the role and publishing model are defined first. |
 | Status | Deferred (CMS deferred by R11) |
 
 ## Out of scope

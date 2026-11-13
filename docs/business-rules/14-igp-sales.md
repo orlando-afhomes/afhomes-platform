@@ -10,6 +10,7 @@
 > Finance and Payments: `docs/business-rules/07-finance-and-payments.md`.
 > Commission Management: `docs/business-rules/08-commission-management.md`.
 > Sales Performance Reporting: `docs/business-rules/13-sales-performance-reporting.md`.
+> Reports and Analytics: `docs/business-rules/11-reports-and-analytics.md`. Audit: `docs/business-rules/12-audit-logs-and-governance.md`.
 
 **Sources.** JA&D IGP Documentation Numbering Guidelines Rev 7 (4 October 2026; "JAD Rev 7"); AFhomes Commission System User Manual v2.3, §4.2 to §4.4, §5, §6.1, §6.2 ("OPS"); Upgrade Memorandum Ruling Addendum 2026-08-20, R13 and R23 ("AUG"); Ruling Addendum 2026-09-24 Issue 3, R27, R28, R31, R32 to R34, R38 ("OCT"); AFhomes VIP numbering guidelines v6.2 §8 and §9 ("NUM").
 
@@ -214,14 +215,14 @@ Audit: sale entry and approval; Series Number issuance; cancel and reissue with 
 ## 14. Outstanding Dependencies
 
 - Doc 08 (R8/R9 rewrite) carries the general commission, allowance and clawback rules this document refers to.
-- Cross-references to this document are in place in docs 02, 03, 08 and 13 (consistency update, 2026-11-12).
+- Cross-references to this document are in place in docs 02, 03, 08, 11, 12 and 13 (consistency update, 2026-11-12).
 - Frontend: IGP sales register, Series Number allocator, and checklist are on the frontend backlog; nothing is built yet.
 
 ### Outstanding owner decisions
 
 1. ~~**Unit details.**~~ Settled 2026-11-12 (follow-ups): project name, unit or lot number, Property Owner name, TCP and payment plan; more fields may be added later (section 5.2).
 2. ~~**Cancel and reissue effects.**~~ Settled 2026-11-12 (follow-ups): payments move to the new number, commission is recalculated on the new TCP, and the old number stays in history as Replaced (section 5.3). Former wording: Whether approved receipts move from the cancelled number to the new number, whether released commission on the old number is clawed back or carried over, and whether rates and the threshold are frozen again on the new number. The sources define the numbering only.
-3. ~~**TCP above ₱9,000,000.**~~ Settled 2026-11-12 (follow-ups): blocked until JA&D or the company defines its band code (section 5.1).
+3. **TCP above ₱9,000,000.** Decided 2026-11-12 (follow-ups): such a sale stays blocked until JA&D or the company defines its band code (section 5.1). The band code itself is still an open input from JA&D or the company; the block lifts only when it is supplied.
 4. ~~**Missing JA&D accreditation.**~~ Settled 2026-11-12 (follow-ups): a seller without a JA&D accreditation number cannot be the closing seller or the referrer (section 6).
 5. ~~**Reservation fee refund and cancellation charges.**~~ Settled 2026-11-12 (follow-ups): decided outside the system by the Property Owner or JA&D; the system records the cancellation, refund amount and date, and any clawback (section 7).
 6. **The buyer's VIP grant: waiting for the company's IGP VIP grant terms.** The Goodwill VIP Grant (after the first installment) and the Formal VIP Grant (after completion) are issued by AFhomes as tenant, but their benefits are not defined in any company paper (all current source texts searched, 2026-11-12). Nothing is invented. Former wording: What the Goodwill of VIP grant and the Formal VIP Grant confer (privileges, Stay Points) and whether they create a VIP membership record under docs 06 and 09.
@@ -249,9 +250,9 @@ Audit: sale entry and approval; Series Number issuance; cancel and reissue with 
 
 ## Owner rulings amendment (2026-11-12, follow-ups)
 
-These rulings take precedence over earlier text in this document where they differ.
+These rulings take precedence over earlier text in this document where they differ. Item numbers follow the master follow-up list in `docs/implementation/decisions-and-gaps.md` (hence the gaps between 9 and 27); do not renumber.
 
-7. **TCP above ₱9M.** An IGP sale with a TCP over ₱9,000,000 is blocked until JA&D or the company defines its band code (section 5.1).
+7. **TCP above ₱9M.** An IGP sale with a TCP over ₱9,000,000 is blocked until JA&D or the company defines its band code (section 5.1). The band code is still an open input; nothing is invented.
 8. **JA&D accreditation required.** A seller without a JA&D accreditation number cannot be the salesperson (closing seller) or the referrer on an IGP sale (sections 5.2 and 6).
 9. **Refunds.** IGP refund amounts are decided outside the system by the Property Owner or JA&D. The system records the cancellation, the refund amount and date, and any clawback (section 7).
 27. **IGP property details.** The sale records the project name, unit or lot number, Property Owner name, TCP and payment plan. More fields can be added later (section 5.2).

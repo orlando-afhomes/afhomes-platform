@@ -68,7 +68,7 @@ describe("staff access rows", () => {
     expect(ids(filterAccessRows(rows, { ...noFilters, search: "analyst" }, true))).toEqual(["staff-2"]);
     expect(ids(filterAccessRows(rows, { ...noFilters, departmentId: "dept-finance" }, true))).toEqual(["staff-2"]);
     const byRole = filterAccessRows(rows, { ...noFilters, roleId: "role-ops-staff" }, true);
-    expect(ids(byRole)).toEqual(["staff-3"]);
+    expect(ids(byRole)).toEqual(["staff-3", "staff-records"]);
     expect(filterAccessRows(rows, { ...noFilters, status: "active" }, true).some((row) => row.kind === "account")).toBe(false);
   });
 

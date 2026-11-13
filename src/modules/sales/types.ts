@@ -27,6 +27,8 @@ export type Sale = {
   valueCentavos: number;
   recordedDate: string;
   sellerMemberId: string | null;
+  /** VIP Referrer of the sale (doc 13 section 4; owner ruling 2026-11-12). Never counted in the referrer's My Sales. */
+  referrerMemberId: string | null;
   /** Seller and upline at recording time (13 section 4.3). */
   team: GenealogyEntry[];
   status: SaleStatus;

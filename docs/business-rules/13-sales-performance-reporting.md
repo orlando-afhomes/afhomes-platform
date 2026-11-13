@@ -34,7 +34,7 @@ It does not define commission calculations, VIP activation requirements, refund 
 
 The Sales Network dashboard supports two primary views:
 
-- **My Sales** — sales personally recorded by the logged-in member.
+- **My Sales** — sales where the logged-in member is the closing seller. A separate **Referred by me** list shows sales where the member is the referrer. Referred sales are never added to My Sales totals, and a sale is never counted twice (owner answer, 2026-11-12).
 - **Team Sales** — for authorized IST managers, includes the manager's own direct sales plus authorized downline sales.
 
 Count each distinct sale only once. A nested genealogy must not cause double counting.
@@ -191,7 +191,7 @@ Original ₱240,000 → amended ₱220,000; adjustment −₱20,000 in approval 
 
 ## 9. Acceptance Criteria
 
-- My Sales shows personally recorded sales.
+- My Sales shows sales where the member is the closing seller; "Referred by me" lists referred sales separately and never adds them to My Sales totals.
 - Team Sales includes own plus authorized downline sales without double counting.
 - Confirmed and Pending Sales remain separate.
 - Cancelled and Rejected sales are excluded from totals.
@@ -207,7 +207,7 @@ Original ₱240,000 → amended ₱220,000; adjustment −₱20,000 in approval 
 
 ## 10. Deferred / Requires Business Approval
 
-- Commission calculation rules (separate Commission Business Rules).
+- Commission calculation rules: defined in doc 08 (no longer deferred).
 - VIP activation requirements, refund entitlement rules, payment installment schedules, contract cancellation authorization (respective modules).
 
 ---
@@ -227,7 +227,7 @@ These rulings are authoritative and take precedence over earlier text in this do
 1. **Closed Deal / Confirmed Sale (R7 item 1).** A VIP sale counts as sold when 25% of the contract price has been collected through approved receipts (OPS §4.3). This replaces "finalized contract plus Finance verification of the required payment" in sections 3.1 item 1 and 4. Sections 3.1, 4, 4.1, 5, 8 and 9 updated.
 2. **Reporting date (R7 item 1).** The reporting date is the date the 25% is reached (the Closed Deal date). Section 4.3.
 3. **Milestone dates (R7 item 1).** The 40% (Stage 1) and 100% (Full Payment) dates are stamped and tracked separately. Section 4.4.
-4. **Month close (R7 item 2).** The Administrator or the Super Administrator closes a month; closed figures never change. A receipt dated in a closed month counts in the first open month (R6 item 5). Section 4.5.
+4. **Month close (R7 item 2).** The Administrator or the Super Administrator closes a month; closed figures never change. A receipt dated in a closed month counts in the first open month (R7 item 2; also cited as R6 item 5). Section 4.5.
 5. **Defaults (R7 item 3).** Sales with no approved receipt for 90 days are listed. The Administrator or the Super Administrator marks a sale Defaulted; it returns to Active if the buyer pays again. Clawback effects are in doc 08. Section 4.6.
 6. **Approved receipts (R6).** "Approved receipt" means a receipt approved by Finance, the Administrator or the Super Administrator (doc 07 §5.2). Reversals are dated, never deletions (doc 07 §14). Section 5.
 7. **IGP (R11 item 2).** IGP sales are in scope; their thresholds and numbering are in `docs/business-rules/14-igp-sales.md`. Section 1.

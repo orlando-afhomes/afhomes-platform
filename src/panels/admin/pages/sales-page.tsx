@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useOperation, useSales } from "@/data/business-queries";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import type { SaleView } from "@/data/contracts/sale-repository";
-import { confirmedValueInPeriod, mySales, teamSales, totalsFor } from "@/modules/sales/rules";
+import { confirmedValueInPeriod, mySales, referredSales, teamSales, totalsFor } from "@/modules/sales/rules";
 import { manilaToday } from "@/shared/lib/dates";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { StandardDateField } from "@/shared/forms/modern";
@@ -36,7 +36,7 @@ export function SalesPage() {
   const viewTeam = useOperation("sales.viewTeam");
   const contractHref = useContractHref();
   const monthStart = `${manilaToday().slice(0, 7)}-01`;
-  const [scope, setScope] = useState<"mine" | "team" | "all">(identity.memberId ? "mine" : "all");
+  const [scope, setScope] = useState<"mine" | "team" | "referred" | "all">(identity.memberId ? "mine" : "all");
   const [status, setStatus] = useState("all");
   const [search, setSearch] = useState("");
   const [from, setFrom] = useState(monthStart);
@@ -45,7 +45,9 @@ export function SalesPage() {
   const scoped = useMemo(() => {
     const all = sales.data ?? [];
     if (!identity.memberId || scope === "all") return all;
-    return scope === "mine" ? mySales(all, identity.memberId) : teamSales(all, identity.memberId);
+    if (scope === "mine") return mySales(all, identity.memberId);
+    if (scope === "referred") return referredSales(all, identity.memberId);
+    return teamSales(all, identity.memberId);
   }, [sales.data, scope, identity.memberId]);
 
   const rows = useMemo(() => {
@@ -56,9 +58,11 @@ export function SalesPage() {
   const totals = totalsFor(scoped);
   const inPeriod = confirmedValueInPeriod(scoped, from, to);
 
+  // A referrer may sit outside the sale's team, so the referred list shows no contract links.
+  const referredView = scope === "referred";
   const columns = useMemo<ColumnDef<SaleView, unknown>[]>(
     () => [
-      { id: "customer", header: "Customer", cell: ({ row }) => <Link href={contractHref(row.original.contractId)} className="tw:font-semibold tw:underline-offset-4 tw:hover:underline">{row.original.customerName}</Link> },
+      { id: "customer", header: "Customer", cell: ({ row }) => (referredView ? <span className="tw:font-semibold">{row.original.customerName}</span> : <Link href={contractHref(row.original.contractId)} className="tw:font-semibold tw:underline-offset-4 tw:hover:underline">{row.original.customerName}</Link>) },
       { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => `${row.original.productCode} · ${row.original.schemeLabel}` },
       { id: "value", header: "Contract value", cell: ({ row }) => <Money value={row.original.valueCentavos} /> },
       { id: "seller", header: "Seller", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.sellerName ?? "Company" },
@@ -66,20 +70,21 @@ export function SalesPage() {
       { id: "confirmed", header: "Confirmed", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => formatDate(row.original.confirmedDate) },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
     ],
-    [contractHref],
+    [contractHref, referredView],
   );
 
-  const tabs = identity.memberId ? [{ value: "mine", label: "My sales" }, ...(viewTeam ? [{ value: "team", label: "Team sales" }] : [])] : [{ value: "all", label: "All sales" }];
+  const tabs = identity.memberId ? [{ value: "mine", label: "My sales" }, { value: "referred", label: "Referred by me" }, ...(viewTeam ? [{ value: "team", label: "Team sales" }] : [])] : [{ value: "all", label: "All sales" }];
 
   return (
     <AdminPage anyOf={["sales"]} title="Sales" description="Confirmed sales count once at the full contract value, on the date Finance confirms them." crumbs={[{ label: "Sales", href: "/admin/sales" }, { label: "Sales" }]}>
-      {tabs.length > 1 ? <TabBar label="Sales view" tabs={tabs} value={scope} onChange={(value) => setScope(value as "mine" | "team" | "all")} /> : null}
-      <AdminStatGrid>
+      {tabs.length > 1 ? <TabBar label="Sales view" tabs={tabs} value={scope} onChange={(value) => setScope(value as "mine" | "team" | "referred" | "all")} /> : null}
+      {referredView ? <p className="tw:text-sm tw:text-muted-foreground">Sales you referred. They are not added to your own sales totals.</p> : null}
+      {referredView ? null : <AdminStatGrid>
         <AdminStatCard label="Confirmed" value={<Money value={totals.confirmed} />} icon={BadgeCheck} tone="brand" description={`${totals.confirmedCount} sale(s)`} />
         <AdminStatCard label="Pending" value={<Money value={totals.pending} />} icon={Clock} tone="warning" description={`${totals.pendingCount} sale(s)`} />
         <AdminStatCard label="Overall recorded" value={<Money value={totals.overall} />} icon={Receipt} tone="info" description="Combined" />
         <AdminStatCard label="Period confirmed" value={<Money value={inPeriod} />} icon={CalendarCheck} tone="violet" description="Net reversals" />
-      </AdminStatGrid>
+      </AdminStatGrid>}
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search sales" filters={[{ label: "Sale status filter", value: status, onChange: setStatus, options: STATUS_OPTIONS }]}>
         <StandardDateField label="Period from" value={from} onChange={setFrom} className="tw:md:min-w-0 tw:md:flex-1" />
         <StandardDateField label="Period to" value={to} onChange={setTo} className="tw:md:min-w-0 tw:md:flex-1" />
@@ -91,9 +96,9 @@ export function SalesPage() {
           getRowId={(row) => row.id}
           emptyText="No sales match."
           caption="Sales"
-          onRowOpen={(row) => router.push(contractHref(row.contractId))}
+          onRowOpen={referredView ? undefined : (row) => router.push(contractHref(row.contractId))}
           getRowLabel={(row) => `Open the sale for ${row.customerName}`}
-          rowActions={(row) => <RowActionsMenu itemName={`sale for ${row.customerName}`} onView={() => router.push(contractHref(row.contractId))} />}
+          rowActions={referredView ? undefined : (row) => <RowActionsMenu itemName={`sale for ${row.customerName}`} onView={() => router.push(contractHref(row.contractId))} />}
         />
       </QueryState>
     </AdminPage>

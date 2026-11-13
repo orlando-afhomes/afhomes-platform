@@ -11,7 +11,7 @@ This document establishes a centralized, secure, traceable audit framework for t
 
 Audit Logs record what happened. They do not independently authorize business actions. The originating business module remains responsible for applying its own business rules and authorization requirements. Audit Logs must not become an alternative interface for changing financial or customer records.
 
-This is documentation only. No application functionality implemented.
+This began as a documentation-only specification; the frontend is built against it in authorized steps, and the audit log is not yet backed by a real backend.
 
 ---
 
@@ -48,7 +48,7 @@ This is documentation only. No application functionality implemented.
 
 ## 4. Current Policy and Future Revisions
 
-AFHomes business rules are approved operational policies and may change following authorized management decisions. Examples of potentially revisable policy areas: VIP product pricing, payment schemes, commission percentages and procedures, Stay Points earning arrangements, annual earning limits for future products, redemption conversion rates, cancellation policies, reporting metric definitions, membership benefits for future contracts, operational approval workflows.
+AFHomes business rules are approved operational policies and may change following authorized management decisions. Examples of potentially revisable policy areas: VIP product pricing, payment schemes, commission percentages and procedures, Stay Points tranche arrangements (the former earning rates, annual earning limits and redemption conversion rates are **Superseded (owner ruling, 2026-11-12):** Spend-to-Earn was removed in R10 and monetary conversion in R12, so only the tranche rules of doc 09 and the points-per-night table of doc 10 remain), cancellation policies, reporting metric definitions, membership benefits for future contracts, operational approval workflows.
 
 Not every business-rule revision can be made through ordinary Admin settings. Some changes may require appropriate management approval, updated contractual documents, revised role permissions, new implementation work, legal review, or a future deployment. Do not invent universal approval powers.
 
@@ -92,7 +92,7 @@ Technical implementation boundary: treat these as conceptual requirements. Do no
 
 ## 8. Actor Attribution
 
-Audit events must distinguish who or what performed an action. Possible actor categories include Authorized Staff, Admin, Super Admin, Finance, IST, OST, Customer, Authorized Operations personnel, Authorized system process.
+Audit events must distinguish who or what performed an action. Possible actor categories include Authorized Staff, Clerk, HR, Admin, Super Admin, Finance, IST, OST, Authorized Operations personnel, Authorized system process, and Customer (a future actor only: the Customer Portal is deferred, so no customer-performed events exist today).
 
 Automated events: some operations may be automatically triggered by the system, such as installment becoming Overdue, commission release by stage, commission entering automatic Hold, a clawback raised by a sale event, VIP Membership entering Financial Hold, a tranche released or Non-Activated on its due date, the Points Activation Date deemed on the second anniversary of the Card Claim Date, forfeiture at card expiry, applicable scheduled policy transitions. Automated events must identify the system as the executing actor where appropriate. Preserve the triggering business event and relevant rule. Do not falsely attribute an automatic action to an unrelated human user.
 
@@ -132,7 +132,7 @@ Identity preservation: keep the canonical person/account identity traceable acro
 
 ## 12. Customer Management Audit
 
-Use `docs/business-rules/04-customer-management.md`. Document audit requirements for customer creation, customer draft creation, draft updates, application submission, application correction, customer information changes, customer status changes, authorized referral changes, supporting document updates, customer import, historical identity reconciliation, duplicate-record resolution.
+Use `docs/business-rules/04-customer-management.md`. Document audit requirements for customer creation, customer draft creation, draft updates, application submission, application correction, customer information changes, customer status changes, authorized referral changes, supporting document updates, customer import, historical identity reconciliation, duplicate-record resolution, and the Administrator's approval of a seller-started customer, its return to the Clerk with a reason, and its rejection with a reason (owner follow-up 23; nothing is deleted).
 
 Drafts: a customer draft may be saved with incomplete or blank fields. Audit logging must not incorrectly treat draft creation as a completed application or Active membership.
 
@@ -160,6 +160,10 @@ Use `docs/business-rules/07-finance-and-payments.md`. Document required audit ev
 
 Approved authority (owner ruling R6 and the overriding authority rule, 2026-11-12): a Clerk enters receipts; sellers view only. Finance, the Administrator or the Super Administrator approves receipts and may reverse an approved receipt with a reason. Self-approval is allowed; the audit record must show when the same person entered and approved a receipt. The Administrator or the Super Administrator closes months and marks sales Defaulted. The audit document must preserve this authority. Do not introduce new approval requirements.
 
+Self-approval applies to every approval, not only receipts: payout lists, cancellations, adjustments, customer approvals and sale-record approvals. Whenever the same person prepared and approved, the audit record flags it visibly (owner answer A3, 2026-11-12; Finance, the Administrator and the Super Administrator may approve what they prepared). The Administrator's approval of the sale record (the step that lets the 25% Closed Deal count, follow-up 3) is an audited event.
+
+IGP audit events (Series Number issuance, Replaced status on reissue, checklist updates, refund recording and the rest) are listed in doc 14 section 12 and follow the same rules.
+
 Financial traceability: the original financial transaction remains traceable after reversal or correction. Do not allow audit records to conceal financial discrepancies.
 
 Finance timestamps: distinguish submitted date, verification date, reversal date, refund date, reconciliation date. Do not substitute one event timestamp for another in reporting.
@@ -174,7 +178,7 @@ Use `docs/business-rules/08-commission-management.md` (owner rulings R8 and R9, 
 - freezing of the seller's DSC rate, the referrer's DRI rate and the Closed Deal threshold when the VIP Number (IGP: Series Number) is issued;
 - referrer or rate corrections under doc 08 §9.3;
 - release of each stage and the month it falls in;
-- month-end payout list approval, with a self-approval visibly flagged;
+- month-end payout list approval, cancellation and adjustment approval, each with a self-approval visibly flagged (owner answer A3, 2026-11-12);
 - payout initiation, voiding or confirmation of a stuck initiated payout, and actual disbursement confirmation (Paid);
 - automatic Hold on a sale event, and restoration or cancellation of a held release;
 - clawback raised, direct collection, recovery offset (only after the Clawback Addendum is signed), write-off with reason, and refund reporting after a Defaulted sale is reinstated;
@@ -245,7 +249,7 @@ Reporting is read-only: viewing an audit report must not become an alternate met
 
 ### 20.1 Current Policies Are Revisable
 
-AFHomes business rules are approved operational policies and may change following authorized management decisions. Examples of potentially revisable policy areas: VIP product pricing, payment schemes, commission percentages and procedures, Stay Points earning arrangements, annual earning limits for future products, redemption conversion rates, cancellation policies, reporting metric definitions, membership benefits for future contracts, operational approval workflows.
+AFHomes business rules are approved operational policies and may change following authorized management decisions. Examples of potentially revisable policy areas: VIP product pricing, payment schemes, commission percentages and procedures, Stay Points tranche arrangements (the former earning rates, annual earning limits and redemption conversion rates are **Superseded (owner ruling, 2026-11-12):** Spend-to-Earn was removed in R10 and monetary conversion in R12, so only the tranche rules of doc 09 and the points-per-night table of doc 10 remain), cancellation policies, reporting metric definitions, membership benefits for future contracts, operational approval workflows.
 
 Important limitation: not every business-rule revision can be made through ordinary Admin settings. Some changes may require appropriate management approval, updated contractual documents, revised role permissions, new implementation work, legal review, or a future deployment. Do not invent universal approval powers.
 
@@ -326,6 +330,7 @@ Important distinction: audit logging must not falsely confirm a business operati
 | VIP Products | Product and commercial configuration | Preserve policy changes |
 | VIP Contracts | Contract approval and finalization | Preserve contract lifecycle |
 | Finance | Payment verification, refunds and reversals | Preserve financial decisions |
+| IGP Sales (doc 14) | Series Number, IGP sale lifecycle, document checklist, refund recording | Preserve issuance, Replaced status, checklist updates and refund records (doc 14 §12) |
 | Commission Management | Rates, releases, payout approvals, payouts, clawbacks and allowances | Preserve commission and disbursement history |
 | VIP Card Issuance | VIP Number issuance and status | Preserve issued numbers and status changes |
 | VIP Membership | Official activation, Card Claim Date and membership states | Preserve membership history |
@@ -340,7 +345,7 @@ The audit system must not replace originating module authority.
 
 ## 24. Required Business Scenarios
 
-(See Part XX of the task prompt for scenarios A–N; summarized here with expected outcomes.)
+Scenarios A to N are summarized here with expected outcomes.
 
 - **Scenario A (Receipt approval):** a Clerk enters a receipt with its reference number; Finance, the Administrator or the Super Administrator approves it. Expected: entry event and approval event recorded, correct actors identified, a self-approval visibly flagged, no approval before the approver acts.
 - **Scenario B (Receipt reversal):** an approved receipt is reversed for a keying error or a bounced cheque. Expected: original approval remains traceable, reversal event recorded with actor and reason, nothing deleted, relevant reconciliation identifiable.
@@ -372,8 +377,8 @@ The completed document must preserve:
 5. Original financial records remain traceable.
 6. Canonical customer identities remain preserved.
 7. Historical Sales Network attribution remains preserved.
-8. Receipt approval belongs to Finance, the Administrator and the Super Administrator; self-approval is audited (R6).
-9. Finance, the Administrator or the Super Administrator approve and pay commission; self-approval is audited (doc 08).
+8. Receipt approval belongs to Finance, the Administrator and the Super Administrator; self-approval is audited (R6), and the same flag applies to every approval, including cancellations and adjustments (A3).
+9. Finance, the Administrator or the Super Administrator approve and pay commission and payout lists; self-approval is audited (doc 08; A3).
 10. Bookings with points are made by staff holding the booking action permission (doc 10 §9.2).
 11. Business modules retain their own operational authority.
 12. Audit access does not grant permission to modify business records.
@@ -485,10 +490,11 @@ Only include unresolved dependencies that materially affect future implementatio
 - **File created/updated:** `docs/business-rules/12-audit-logs-and-governance.md`
 - **Audit rules coverage:** Centralized audit standards; append-only history; actor attribution; financial traceability; security and access auditing; module-specific events; historical integrity; audit reporting.
 - **Governance coverage:** Current policy versus future revisions; authorized configuration changes; policy versioning; effective dates; historical contract protections; audit retention limitations.
-- **Cross-module review:** Consistent with 01–11 and 13. No material contradictions.
+- **Cross-module review:** Consistent with 01–11 and 13 (doc 14 added later; see the amendments). No material contradictions.
 - **Outstanding dependencies:** Listed in Section 26.
 - **Acceptance results:** All checklist items covered. Documentation completeness does not prove implementation readiness.
-- **Change scope:** Documentation only. No application code, database, migrations, other documentation files, Git commit/push/merge, or deployment. Only `docs/business-rules/12-audit-logs-and-governance.md` created. Redemption and Services remain disabled. No unauthorized implementation assumptions. No unsupported technical architecture represented as implemented. No invented retention periods.
+- **Doc 14:** IGP audit events (doc 14 §12) were added after this report.
+- **Change scope:** Documentation only (at the time of writing). No application code, database, migrations, other documentation files, Git commit/push/merge, or deployment. Only `docs/business-rules/12-audit-logs-and-governance.md` created. Redemption and Services remain disabled. No unauthorized implementation assumptions. No unsupported technical architecture represented as implemented. No invented retention periods.
 
 ## Owner rulings amendment (2026-11-12, rounds R6, R7, R11)
 
@@ -519,3 +525,8 @@ These rulings take precedence over earlier text in this document where they diff
 
 1. **Imported receipts.** History receipts come in marked "Approved (imported)". An Administrator signs off each import batch once; the batch sign-off is audited (history import paragraph above the append-only compatibility note; doc 07 §20).
 18. **Bookings.** Room bookings with points are made by front-desk or office staff with a Bookings operation permission, with no separate approval step. Every booking is audited, and Admins can cancel or correct any booking (section 18). The former outstanding item is resolved.
+3. **Sale record approval (follow-up 3).** The Administrator's approval of the sale record is an audited event; the sale counts at 25% once it is approved (section 14).
+23. **Customer approval (follow-up 23).** Admin approval of a seller-started customer, return to the Clerk with a reason, and rejection with a reason are audited events; nothing is deleted (section 12).
+- **Self-approval for all approvals (owner answer A3, 2026-11-12).** The self-approval flag covers every approval (receipts, payout lists, cancellations, adjustments), not only receipts and payouts (sections 14, 15 and 25). Actors now include Clerk and HR; Customer is a future actor (section 8). IGP events: doc 14 §12 and section 23.1.
+
+Numbering note: item numbers in this amendment follow the master follow-up list in `docs/implementation/decisions-and-gaps.md`; existing numbers are not renumbered.

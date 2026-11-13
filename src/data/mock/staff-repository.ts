@@ -23,8 +23,16 @@ import {
 } from "./authorization";
 import { simulateAsync } from "@/data/contracts/async-options";
 
-/** Account statuses a Staff/Employees holder may set (doc 01 §7); activation stays Admin/Super Admin only. */
-const STAFF_ACCOUNT_STATUSES: readonly AccountStatus[] = ["suspended", "deactivated"];
+/**
+ * Account statuses a Staff/Employees holder (HR) may set (doc 01 §7; owner ruling 2026-11-12, A4):
+ * HR activates and reactivates office staff accounts, but never an Administrator account.
+ */
+const STAFF_ACCOUNT_STATUSES: readonly AccountStatus[] = ["active", "suspended", "deactivated"];
+const ADMIN_ACTIVATION_ERROR = "Only an Administrator or Super Administrator can activate an Administrator account.";
+
+function canActivateTarget(store: MockStore, identity: DevIdentity, account: Account) {
+  return !account.roleIds.includes("admin") || isSuperAdmin(store, identity) || hasActiveSystemRole(store, identity, "admin");
+}
 
 function canManageStaff(store: MockStore, identity: DevIdentity) {
   return hasModuleAccess(store, identity, "staff");
@@ -120,7 +128,7 @@ export class MockStaffRepository {
     const isProtected = account.roleIds.includes("super_admin");
     const allowed =
       canManageStaff(this.store, identity) && !isProtected && identity.staffId !== staff.id
-        ? ACCOUNT_STATUS_TRANSITIONS[account.status].filter((status) => STAFF_ACCOUNT_STATUSES.includes(status))
+        ? ACCOUNT_STATUS_TRANSITIONS[account.status].filter((status) => STAFF_ACCOUNT_STATUSES.includes(status) && (status !== "active" || canActivateTarget(this.store, identity, account)))
         : [];
     return { id: account.id, email: account.email, status: account.status, isProtected, allowedStatuses: [...allowed] };
   }
@@ -174,10 +182,9 @@ export class MockStaffRepository {
     if (!staff) throw new Error("Staff member not found.");
     const account = this.linkedAccount(staff);
     if (!account) throw new Error("This staff record has no linked account.");
-    if (!STAFF_ACCOUNT_STATUSES.includes(status)) {
-      throw new Error("Only an Administrator or Super Administrator can activate or reactivate accounts.");
-    }
+    if (!STAFF_ACCOUNT_STATUSES.includes(status)) throw new Error("This account status cannot be set from Staff/Employees.");
     if (account.roleIds.includes("super_admin")) throw new Error("Protected account status cannot be modified by this actor.");
+    if (status === "active" && !canActivateTarget(this.store, identity, account)) throw new Error(ADMIN_ACTIVATION_ERROR);
     // Owner decision 2026-11-10: Super Admin has full control; the self-modification ban does not apply to Super Admin.
     if (identity.staffId === staff.id && !isSuperAdmin(this.store, identity)) throw new Error(SELF_MODIFICATION_ERROR);
     if (!ACCOUNT_STATUS_TRANSITIONS[account.status].includes(status)) {

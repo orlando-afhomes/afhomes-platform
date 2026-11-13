@@ -54,6 +54,11 @@ export function mySales<T extends Sale>(sales: readonly T[], memberId: string | 
   return memberId ? sales.filter((sale) => sale.sellerMemberId === memberId) : [];
 }
 
+/** Referred by me: sales where the member is the referrer but not the closing seller. Never added to My Sales totals. */
+export function referredSales<T extends Sale>(sales: readonly T[], memberId: string | null): T[] {
+  return memberId ? sales.filter((sale) => sale.referrerMemberId === memberId && sale.sellerMemberId !== memberId) : [];
+}
+
 /** Team Sales: own plus downline, using the recording-time team so transfers never move a sale. Each sale counts once. */
 export function teamSales<T extends Sale>(sales: readonly T[], memberId: string | null): T[] {
   return memberId ? sales.filter((sale) => sale.team.some((entry) => entry.memberId === memberId)) : [];

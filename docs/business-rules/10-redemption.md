@@ -55,9 +55,9 @@ Signed customer contracts keep their governing terms. Historical bookings and po
 
 1. Points pay only for accommodation at AFhomes Direct Operations that offer overnight stays: the AFhomes Smart Wellness Hotel when open, and the AFhomes Hotspring & Ecofarm Resort when open (first-portion opening targeted April 2028). Third-party concessionaires are excluded. No redemption before full payment is acknowledged.
 2. Weekday points are used for weekday and non-holiday stays; weekend points for weekend and holiday stays. They never convert.
-3. The points-per-night redemption basis is an Admin-maintained, versioned table with effective dates. Each card uses the version in effect on its Card Claim Date (Grant §I). Later changes apply only to cards issued after them.
+3. The points-per-night redemption basis is an Admin-maintained, versioned table with effective dates. Each card uses the version in effect on its Card Claim Date (Grant §I). Later changes apply only to cards whose Card Claim Date is on or after their effective date.
 4. Admin or Super Admin keeps a yearly holiday calendar.
-5. Cancellation before the venue's cut-off returns the points to the same bucket. A no-show forfeits them. Cut-off times are part of each venue's configuration.
+5. Cancellation before the venue's cut-off returns the points to the same bucket. A no-show or a cancellation after the cut-off forfeits them (section 10 item 4). Cut-off times are part of each venue's configuration.
 6. Office or front-desk staff make bookings for now. A customer self-service portal is deferred.
 7. A card transfer needs a written request and written management approval. Unused points do not pass to the new holder (Grant §V).
 8. The first redemption sets the Points Activation Date if it comes before the second anniversary of the Card Claim Date (doc 09).
@@ -119,7 +119,7 @@ Unreleased, Non-Activated or forfeited tranches are never usable. Points cannot 
 1. Authorized office or front-desk staff record the booking request for the cardholder: VIP Number, venue, dates, room type, guests.
 2. Staff check eligibility (section 6), night classification (section 7), the card's redemption basis version (section 8) and availability.
 3. If this is the first redemption and the PAD is not yet set, the PAD rules apply (section 11).
-4. On confirmation the required points are Reserved in each bucket. Reserved points cannot be used for another booking.
+4. On confirmation the required points are Reserved in each bucket. Reserved points cannot be used for another booking. The only exception is the provisional first-stay hold before the first gift is available, which reserves no points (section 11 item 4).
 5. After the completed stay, staff record completion and the Reserved points become Consumed.
 
 A booking request does not consume points. Confirmation is not consumption. Completion is recorded once; repeated actions never move points twice.
@@ -130,7 +130,7 @@ Bookings are an action permission (R4 item 6). Front-desk or office staff holdin
 
 ### 9.3 Points plus money
 
-Points plus cash for a stay is allowed (owner follow-up ruling, 2026-11-12). Where a stay is paid partly in money, the money part follows doc 07: it counts only after Finance (or the Administrator or the Super Administrator) approves the receipt, with a unique reference number. The booking stays Pending Payment until then. A stay is split by whole nights: each night is paid fully in points or fully in money (owner follow-up ruling, 2026-11-12).
+Points plus cash for a stay is allowed (owner follow-up ruling, 2026-11-12). Where a stay is paid partly in money, the money part follows doc 07: it counts only after Finance (or the Administrator or the Super Administrator) approves the receipt, with a unique reference number. The booking stays Pending Payment until then. A stay is split by whole nights: each night is paid fully in points or fully in money, never part points and part money within one night (owner ruling A1, 2026-11-12).
 
 ---
 
@@ -149,25 +149,25 @@ Points plus cash for a stay is allowed (owner follow-up ruling, 2026-11-12). Whe
 
 1. If the PAD is not yet set, the first redemption before the second anniversary of the Card Claim Date sets the PAD on that date. The first redemption is the first stay where points are actually used at check-in; a booking cancelled in time does not count (owner follow-up ruling, 2026-11-12).
 2. Tranche 1 is due on the PAD and is released only if the Year 1 condition is met (doc 09 §12). The booking proceeds only if points are then available.
-3. If the Year 1 condition is not met at that moment, tranche 1 is not released and is not carried over (owner follow-up ruling, 2026-11-12; doc 09). The booking proceeds only if other released points are available.
+3. If the Year 1 condition is not met at that moment, tranche 1 is not released and is not carried over, following the signed Grant (owner ruling A7, 2026-11-12; doc 09). A bill entered late but dated inside the period still counts (doc 09 section 12.5), and an Administrator or the Super Administrator can grant a waiver (doc 09 section 14). The booking proceeds only if other released points are available.
 
 ---
 
-**Owner follow-up (2026-11-12).** Before the first gift is available, staff may hold a room provisionally under the venue's normal booking rules. This hold reserves no points. At check-in, confirm points use only when the gift qualifies and covers the requested points nights. Record the first actual use and its Points Activation Date together. Cancellation or unsuccessful check-in does not set that date or forfeit points from a provisional request. Redemption remains disabled until separately authorized.
+4. **Provisional first-stay hold (owner follow-up ruling, 2026-11-12).** Before the first gift is available, staff may hold a room provisionally under the venue's normal booking rules. This hold reserves no points, so it is the one exception to section 9.1 step 4. At check-in, confirm points use only when the gift qualifies and covers the requested points nights. Record the first actual use and its Points Activation Date together. Cancellation or unsuccessful check-in does not set that date or forfeit points from a provisional request. Redemption remains disabled until separately authorized.
 
 ## 12. Card Transfer (R12 item 7; Grant §V)
 
 1. A transfer needs a formal written request from the Primary Cardholder and written management approval. Sellers cannot approve it.
 2. The transfer takes effect only after the company's required documents and conditions are met; any transfer fee is set by management. Unapproved transfers are void.
 3. The old holder's unused points are forfeited and cannot be used by anyone; they are closed as "not transferred" (doc 09 §18). The new holder gets only future tranches, under the original Grant terms (owner follow-up ruling, 2026-11-12).
-4. Confirmed future points bookings of the former holder are cancelled when the transfer takes effect, because the former holder's points are forfeited. Staff inform the former holder before the transfer is finalized (owner follow-up ruling, 2026-11-12).
+4. Confirmed future points bookings of the former holder are cancelled when the transfer takes effect, because the former holder's points are forfeited. Staff inform the former holder before the transfer is finalized (owner ruling A7, 2026-11-12).
 5. On the cardholder's death, the heirs request a written transfer, which management approves; the same transfer rules apply (owner follow-up ruling, 2026-11-12; Grant §V; doc 09 §18).
 
 ---
 
 ## 13. Points Ledger Integrity
 
-Every movement (reserve, consume, cancellation return, no-show forfeit, transfer closure) is a ledger entry referencing membership, VIP Number, booking, bucket, tranche, amount, redemption basis version, actor and date (doc 09 §15.2). Prevent over-reservation and double use. Repeated approval, cancellation or completion calls never create duplicate movements. Original records are never overwritten.
+Every movement (reserve, consume, cancellation return, no-show or late-cancellation forfeit, transfer closure) is a ledger entry referencing membership, VIP Number, booking, bucket, tranche, amount, redemption basis version, actor and date (doc 09 §15.2). Prevent over-reservation and double use. Repeated approval, cancellation or completion calls never create duplicate movements. Original records are never overwritten.
 
 ---
 
@@ -214,7 +214,7 @@ Integrity: Reserved is not Consumed; a Pending Payment booking is not Confirmed;
 
 ## 19. Audit History
 
-Audit: booking creation, confirmation, completion, cancellation, no-show; each points movement; PAD set by redemption; Terms of Use table versions; holiday calendar changes; venue and cut-off changes; transfer requests and approvals; Finance verification references; corrections. Each record keeps actor, timestamp, membership, booking, bucket, amounts, basis version, previous and resulting status, reason and reference. Audit history is never deleted.
+Audit: booking creation, confirmation, completion, cancellation (including late cancellation), no-show; each points movement; PAD set by redemption; Terms of Use table versions; holiday calendar changes; venue and cut-off changes; transfer requests and approvals; Finance verification references; corrections. Each record keeps actor, timestamp, membership, booking, bucket, amounts, basis version, previous and resulting status, reason and reference. Audit history is never deleted.
 
 ---
 
@@ -244,8 +244,10 @@ Audit: booking creation, confirmation, completion, cancellation, no-show; each p
 - **G (Not yet paid):** cardholder with a balance → no redemption.
 - **H (Cancellation before cut-off):** points returned to the same bucket.
 - **I (No-show):** staff record the no-show → reserved points forfeited.
-- **J (First redemption):** first booking before the second anniversary of the Card Claim Date → PAD set; tranche 1 release check runs.
-- **K (Transfer):** approved transfer with unused points → points not passed to the new holder.
+- **J (First redemption):** first stay with points used at check-in, before the second anniversary of the Card Claim Date → PAD set at check-in, not at booking; tranche 1 release check runs. A booking cancelled in time does not set the PAD.
+- **J2 (Year 1 condition not met):** at that check-in the Year 1 spend is below the minimum → tranche 1 is not released and not carried over; a late-entered bill dated inside the period still counts, or an Admin waiver may release it (A7).
+- **I2 (Late cancellation):** cancellation after the venue's cut-off → reserved points forfeited, like a no-show.
+- **K (Transfer):** approved transfer with unused points → points forfeited and not passed to the new holder; the former holder's future points bookings are cancelled, after staff inform the former holder before the transfer is finalized (A7).
 - **L (Duplicate completion):** completion recorded twice → points consumed once.
 - **M (Financial Hold):** membership on Financial Hold → no new booking with points.
 - **N (Module disabled):** no redemption workflow is reachable in the application until authorized.
@@ -261,12 +263,12 @@ These are documentation acceptance examples, not executed tests.
 3. Each night's date selects the bucket; buckets never convert.
 4. Holidays follow the Admin-kept yearly calendar.
 5. Each card uses the redemption basis version in effect on its Card Claim Date.
-6. Basis changes apply only to cards issued after them.
+6. Basis changes apply only to cards whose Card Claim Date is on or after the change's effective date.
 7. Cancellation before cut-off returns points to the same bucket; a cancellation after cut-off or a no-show forfeits them.
 8. Points are reserved on confirmation and consumed only after the completed stay.
 9. No duplicate reservation or consumption.
-10. The first redemption sets the PAD if before the second anniversary of the Card Claim Date.
-11. Unused points do not pass on a transfer.
+10. The first redemption (first stay with points used at check-in) sets the PAD if before the second anniversary of the Card Claim Date.
+11. Unused points are forfeited on a transfer and do not pass to the new holder.
 12. No cash value and no cash-out.
 13. Any money part is verified under doc 07.
 14. Redemption stays disabled until the owner authorizes the build.
@@ -275,8 +277,8 @@ These are documentation acceptance examples, not executed tests.
 
 ## 23. Outstanding Dependencies and Owner Decisions
 
-Outstanding owner decisions:
-- Resolved 2026-11-12: points plus money is split by whole nights; a former holder's future points bookings are cancelled at transfer; a failed Year 1 condition means tranche 1 is not released.
+Owner decisions resolved 2026-11-12 (none outstanding in this document):
+- Points plus money is split by whole nights (A1); a former holder's future points bookings are cancelled at transfer, with staff informing the former holder first (A7); a failed Year 1 condition means tranche 1 is not released and not carried over (A7).
 
 Configured by Admin or Super Admin (no values set here): points per night per venue and room type; which nights are weekend nights; holiday calendar; venue list and opening status; cut-off per venue; transfer fee (management).
 
@@ -310,7 +312,8 @@ Other dependencies: customer self-service portal (deferred); booking inventory a
 - [ ] Return to same bucket before cut-off.
 - [ ] No-show forfeit recorded by staff.
 - [ ] Cancellation after the cut-off forfeits the points.
-- [ ] Unused points not passed on transfer.
+- [ ] Unused points forfeited on transfer; former holder's future points bookings cancelled after notice.
+- [ ] Late-cancellation scenario passes (forfeit after the cut-off).
 
 ### System
 - [ ] Action permissions per doc 01; Admin and Super Admin self-approval audited.
@@ -334,7 +337,7 @@ These rulings take precedence over earlier text in this document where they diff
 
 1. **Scope of use.** Points pay only for accommodation at AFhomes Direct Operations offering overnight stays (the Smart Wellness Hotel when open; the Hotspring & Ecofarm Resort when open, targeted April 2028). Third-party concessionaires are excluded. No redemption before full payment is acknowledged.
 2. **Buckets.** Weekday points for weekday and non-holiday stays; weekend points for weekend and holiday stays. They never convert.
-3. **Redemption basis.** The points-per-night Terms of Use table is Admin-maintained, versioned and dated. Each card uses the version in effect on its Card Claim Date; later changes apply only to cards issued after them. This supersedes the earlier monetary-conversion and service-specific pricing methods.
+3. **Redemption basis.** The points-per-night Terms of Use table is Admin-maintained, versioned and dated. Each card uses the version in effect on its Card Claim Date; later changes apply only to cards whose Card Claim Date is on or after the change's effective date. This supersedes the earlier monetary-conversion and service-specific pricing methods.
 4. **Holiday calendar.** Admin or Super Admin keeps a yearly holiday calendar.
 5. **Cancellation.** Cancellation before the venue's cut-off returns the points to the same bucket. A no-show forfeits them. Cut-off times are part of each venue's configuration. This supersedes the earlier Admin-configured partial-retention policies.
 6. **Bookings.** Office or front-desk staff make bookings for now. A customer self-service portal is deferred.
@@ -345,11 +348,13 @@ These rulings take precedence over earlier text in this document where they diff
 
 ## Owner rulings amendment (2026-11-12, follow-ups)
 
+Item numbers are kept as first cited; the master follow-up list is in `docs/implementation/decisions-and-gaps.md`, so numbers may skip or differ from it.
+
 These rulings take precedence over earlier text in this document where they differ.
 
 11. **No redemption before card claim.** Points cannot be redeemed before the card is claimed (section 6; doc 09 §21).
 12. **Late cancellation.** Cancelling a points booking after the venue's cut-off forfeits the points, like a no-show (section 10).
-13. **Points plus cash.** Points plus cash for a stay is allowed (section 9.3). The split is by whole nights (owner follow-up ruling, 2026-11-12).
+13. **Points plus cash.** Points plus cash for a stay is allowed (section 9.3). The split is by whole nights: each night fully in points or fully in money (owner ruling A1, 2026-11-12).
 18. **Bookings.** Room bookings with points are made by front-desk or office staff with a Bookings operation permission. There is no separate approval step. Every booking is audited, and Admins can cancel or correct any booking (section 9.2).
 19. **First redemption.** The redemption that can set the Points Activation Date is the first stay where points are actually used at check-in. A booking cancelled in time does not count (section 11).
 20. **Card transfer.** After an approved card transfer, the old holder's unused points are forfeited and cannot be used; the new holder gets only future tranches (section 12).

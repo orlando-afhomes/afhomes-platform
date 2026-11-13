@@ -95,7 +95,7 @@ Finance, the Administrator or the Super Administrator approves a receipt. **Only
 
 Self-approval is allowed: Finance, the Administrator or the Super Administrator may approve a receipt they entered themselves. The audit history records that the same person entered and approved it (doc 12 §14).
 
-This replaces the earlier "Finance is the sole authority" rule, the general no-self-verification block, and the 2026-11-10 Super Administrator exceptions to that block. The prototype's self-verification block is a frontend backlog item; this document does not change code.
+This replaces the earlier "Finance is the sole authority" rule, the general no-self-verification block, and the 2026-11-10 Super Administrator exceptions to that block. *(Note, 2026-11-12: the earlier prototype self-verification block is no longer a backlog item; the code now allows self-approval and flags it in the history. This document does not change code.)*
 
 ### 5.3 Reversal and Refund Authority
 
@@ -191,8 +191,8 @@ Inspect existing repository models before prescribing precise database fields or
 4. The receipt enters the approval queue.
 5. Finance, the Administrator or the Super Administrator approves it, rejects it, or returns it for correction (section 5.2).
 6. A returned receipt shows a **Fix and resend** control to the person who entered it. Resending creates a new version for approval; the old version stays in history and is never overwritten (U06).
-7. Only an approved receipt counts. Approval adds the receipt to the sale's collected total and stamps, when first reached, the Closed Deal date (25%), the Stage 1 date (40%) and the Full Payment date (100%) (OPS §4.3; doc 13 §4).
-8. A receipt dated in a closed month is not added to that month. It is admitted into the first open month and counts there (owner ruling R6 item 5 and R7 item 2; OPS §4.3). The closed month's figures do not change.
+7. Only an approved receipt counts. Approval adds the receipt to the sale's collected total and stamps, when first reached, the Closed Deal date (25%), the Stage 1 date (40%) and the Full Payment date (100%) (OPS §4.3; doc 13 §4). The stamped date is not the approval date: it is the later of the triggering receipt's own date and the date of the latest receipt already counted (OCT O3; doc 13 §4.3 and open item 2). Interim note (D-B): the code still sets the commission release month from the payment's approval date; see doc 08, payout day item 5.
+8. A receipt dated in a closed month is not added to that month. It is admitted into the first open month and counts there (owner ruling R7 item 2, also cited as R6 item 5; OPS §4.3). The closed month's figures do not change.
 9. Any resulting balance, sales, or membership eligibility change follows approved cross-module rules.
 
 ### 9.2 Approval Rules
@@ -287,7 +287,7 @@ A sale counts at 25% once the Administrator has approved the sale record; receip
 
 Reporting recognition: the full contract value is counted once, on the date approved receipts first reach 25% (the Closed Deal date), rather than on any unapproved payment claim. The Stage 1 date (40%) and the Full Payment date (100%) are stamped and tracked separately. Avoid duplicate recognition when later installments are paid.
 
-Sales reversals: a reversal affecting a previously confirmed sale must be reconciled with the rules in `docs/business-rules/13-sales-performance-reporting.md`. Approved reporting principles include: a previously confirmed sale reversal may require a negative adjustment in the applicable reversal period; the affected sale returns to the appropriate pending or reconsideration workflow under existing rules; valid reconfirmation produces the corresponding positive adjustment in its new confirmation period; authorized price adjustments are reported through appropriate deltas; previously reported historical periods must remain auditable. Reconcile the precise trigger and consequences with document 13. Do not invent commission clawback calculations; those belong to future Commission Management business rules.
+Sales reversals: a reversal affecting a previously confirmed sale must be reconciled with the rules in `docs/business-rules/13-sales-performance-reporting.md`. Approved reporting principles include: a previously confirmed sale reversal may require a negative adjustment in the applicable reversal period; the affected sale returns to the appropriate pending or reconsideration workflow under existing rules; valid reconfirmation produces the corresponding positive adjustment in its new confirmation period; authorized price adjustments are reported through appropriate deltas; previously reported historical periods must remain auditable. Reconcile the precise trigger and consequences with document 13. Do not invent commission clawback calculations here; they are defined in doc 08 (sections 8, 14 and the R8/R9 amendment).
 
 ---
 
@@ -408,12 +408,12 @@ The Finance document explains its relationship with existing and planned modules
 | VIP Card Issuance | Full-payment eligibility before official activation (the VIP Number is issued earlier, when the signed Reservation Agreement is recorded; doc 06) |
 | VIP Membership | Full settlement, activation eligibility, and Financial Hold |
 | IST/OST Sales Network | Payment submission and scoped visibility |
-| Commission Management | Future verified-sale and reversal integration; detailed commission policy remains separate |
+| Commission Management | Verified-sale and reversal integration; commission policy is defined in doc 08 |
 | Stay Points and Redemption | Financial Hold restrictions and preserved benefit history |
 | Reports and Analytics | Verified and reconciled financial figures |
 | Audit Logs | Traceable financial and membership changes |
 
-Do not duplicate business authority across modules. Receipt approval (Finance, Administrator or Super Administrator) and reconciliation stay in this module. VIP Card Issuance must not develop a separate payment verification process. Sales Reporting must not independently accept unverified payments as confirmed revenue or sales qualification. The future Commission module must consume authorized verified sales events rather than invent an independent receipt-verification process.
+Do not duplicate business authority across modules. Receipt approval (Finance, Administrator or Super Administrator) and reconciliation stay in this module. VIP Card Issuance must not develop a separate payment verification process. Sales Reporting must not independently accept unverified payments as confirmed revenue or sales qualification. The Commission module (doc 08) consumes authorized verified sales events rather than invent an independent receipt-verification process.
 
 ---
 
@@ -472,7 +472,7 @@ The finished Finance documentation must explicitly preserve these rules:
 24. Sales and Finance reporting must not double-count transactions.
 25. Financial records and sensitive payment evidence are protected by authorization rules.
 26. Every state-changing financial event must be auditable.
-27. Future Commission and Stay Points rules must not be invented inside this document.
+27. Commission rules are defined in doc 08 and Stay Points rules in doc 09; they must not be invented inside this document.
 
 ---
 
@@ -529,7 +529,7 @@ A previously verified payment affects a reported Confirmed Sale. The correction 
 - Exact grace periods where none are established.
 - External payment-gateway or banking integrations.
 - Membership benefit treatment beyond the approved Financial Hold restriction.
-- Detailed Commission reversal and payout consequences.
+- Detailed Commission reversal and payout consequences: defined in doc 08 (sections 8, 11 and 14); no longer open here.
 - Tax/accounting/reporting procedures not established by source documentation.
 - Gold/Silver contract source discrepancies: resolved (doc 05 items 11 and 13).
 - ~~RA numbering scope uniqueness verification.~~ Resolved (doc 06, owner ruling R2: one VIP Number with a monthly sequence).
@@ -623,7 +623,7 @@ These rulings are authoritative and take precedence over earlier text in this do
 3. **Payment allocation:** verified money is applied in order to the reservation fee, then the down payment, then installments. The reservation fee is part of the contract total, never added on top. One full payment with no separate reservation-fee payment therefore satisfies the reservation fee and every later line.
 4. **Reservation fee** is non-refundable. A reversal to correct an error is still allowed.
 5. **Contract cancellation with verified money** is two-step: Admin requests, Finance confirms or declines, and the requester cannot decide. Exception (owner decision, 2026-11-10): a Super Administrator bypasses this requester-cannot-decide separation-of-duties blocker and may both request and confirm/decline the same cancellation. Confirmed forfeiture preserves history and holds unpaid commissions. *(Amended 2026-11-12, item 8 below: under the overriding authority rule the Administrator, like the Super Administrator, may request and decide the same cancellation; the audit history shows it.)*
-6. **Imported payment claims** are claims, not money. Each must be verified by Finance in the normal queue. Records already verified outside the system need a separate Historical import, which is not yet defined (open decision OD-8). *(Amended 2026-11-12, item 9 below: the history import scope is now set; the approval treatment of imported receipts is still open.)*
+6. **Imported payment claims** are claims, not money. ~~Each must be verified by Finance in the normal queue. Records already verified outside the system need a separate Historical import, which is not yet defined (open decision OD-8).~~ **Superseded (owner ruling, 2026-11-12):** history receipts come in marked "Approved (imported)" and an Administrator signs off each import batch once (item 9 below and follow-up item 3, section 20). Claims entered by hand (not imported history) still go through the normal approval queue.
 
 7. **Spot Cash, Move A and Move B (2026-11-09)** are released with the terms recorded in the doc 05 amendment. Finance consumes the finalized contract schedule: the Spot Cash balance is due 7 days after the reservation, Move B has a 40% down payment line that includes the reservation fee, and all lines follow the allocation order in item 3. ~~A Move contract cannot be finalized until a Super Administrator records its written approval.~~ Superseded by doc 05 item 12 (effective 2026-11-09): Move A and Move B are standard approved schemes and need no per-contract written approval.
 8. **Due dates** derive from the reservation date (doc 05 amendment, item 9). The Move B down payment has no documented due date, so it is undated and is not overdue until a date is entered.
@@ -641,7 +641,7 @@ These rulings are authoritative and take precedence over earlier text in this do
 6. **Late receipts (R6 item 5, R7 item 2).** A receipt dated in a closed month counts in the first open month (OPS §4.3). Section 9.1.
 7. **Sales counting, month close and defaults (R7).** A sale counts (Closed Deal / Confirmed Sale) when approved receipts reach 25% of the contract price, dated on the day 25% is reached; the 40% (Stage 1) and 100% (Full Payment) dates are tracked separately. The Administrator or the Super Administrator closes a month, and closed figures never change. Sales with no approved receipt for 90 days are listed; the Administrator or the Super Administrator marks a sale Defaulted, and it returns to Active if the buyer pays again. Doc 13 §4 to §4.6 govern; clawback effects are in doc 08. Sections 12 and 15.
 8. **Cancellation decision (overriding authority rule).** 2026-11-09 item 5 is amended: the Administrator, like the Super Administrator, may both request and decide the same cancellation; the audit history shows it.
-9. **History import (R11 item 5).** Every seller and every unfinished sale is imported with its full receipt history; finished sales stay in the Excel archives; a side-by-side parallel run follows and the switch happens when a month closes with no unexplained differences (Rollout Guide v1.4 §6 and §8). This sets the scope of OD-8. Section 20. *Imported receipt approval settled 2026-11-12 (follow-ups, item 3 below).*
+9. **History import (R11 item 5).** Every seller and every unfinished sale is imported with its full receipt history; finished sales stay in the Excel archives; a side-by-side parallel run follows and the switch happens when a month closes with no unexplained differences (Rollout Guide v1.4 §6 and §8). This sets the scope of OD-8. Section 20. *Imported receipt approval settled 2026-11-12 (follow-ups, item 3 below): receipts are "Approved (imported)" with a one-time Administrator batch sign-off.*
 10. **No public lookup (R11 item 1).** There is no public card or customer check; payment information is never exposed publicly. Sections 5.4 and 21.
 11. ~~**Open, not decided here:**~~ **Settled by follow-up item 1 below:** whether contract finalization is still required before the 25% count. Doc 05 §13 still requires a finalized contract; the workbook has no separate finalization step (OPS §4.2 only requires the sale itself to be approved before its receipts). Section 15.
 

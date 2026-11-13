@@ -297,7 +297,7 @@ export class MockAccountRepository {
     if (!ACCOUNT_STATUS_TRANSITIONS[account.status].includes(status)) {
       throw new Error(`Invalid status transition from ${humanize(account.status)} to ${humanize(status)}.`);
     }
-    // Activation and reactivation are Admin/Super Admin only (doc 01 §6.2, §7).
+    // The Accounts page is Admin/Super Admin only; HR activates office staff accounts through the staff path (doc 01 §7; owner ruling 2026-11-12, A4).
     if (status === "active" && !canActivateAccounts(this.store, identity)) {
       throw new Error("Only an Administrator or Super Administrator can activate or reactivate accounts.");
     }

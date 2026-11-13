@@ -36,6 +36,7 @@ It does not define Finance verification internals, Stay Points calculation, comm
 A single 17-character **VIP Number** is the document control number of the VIP Reservation Agreement, the number of the VIP Grant, and the number printed on the physical VIP Card. There is no separate RA No. and no separately generated Card ID.
 
 - **Issuance trigger.** The number is issued when the signed Reservation Agreement is recorded (NUM §6; owner ruling R2). It is not issued for a Draft, a submitted application or a prepared contract. Before issuance, the tier, the payment scheme (for P and MM), the classification (S/N) and the closing salesperson must be recorded.
+- **Missing-rate pause (owner follow-up, 2026-11-12).** Issuance pauses while an applicable approved commission rate is missing: the closing seller's DSC rate, or a recorded referrer's DRI rate (doc 08 §9.1). The application is kept. Issuance resumes once an Administrator or the Super Administrator records the approved rate. An explicitly approved zero is a rate and does not pause issuance. Where one person is both closing seller and referrer, a dated referral reference verified at customer approval is required before DRI attaches.
 - **Issuance is a separate event from activation.** A number exists from reservation onward. Membership activation (section 4) does not create or change the number.
 - **One transaction, one number.** Each VIP transaction gets exactly one number. An upgrade is a new transaction with a new number (section 9.3).
 - **IGP is separate.** IGP sales never use the VIP Number. They use a separate 16-character IGP Series Number with its own monthly sequence, and carry the seller's JA&D accreditation number (doc 14; owner ruling R13, 2026-11-12). VIP sales use only the AFhomes AA number (section 7).
@@ -65,9 +66,9 @@ Use the actual official Membership Activation Date, recorded in Philippine local
 
 The Validity Period starts on the **Card Claim Date**, the date the cardholder actually claims the card.
 
-- The card may be claimed at any time within one year after full settlement of the total purchase price, as evidenced by the company's official acknowledgment of receipt (Finance verification).
+- The card may be claimed at any time within one year after full settlement of the total purchase price, as evidenced by the company's official acknowledgment of receipt (approval of the settling receipt by Finance, an Administrator or the Super Administrator, doc 07 §5.2).
 - If the card is not claimed within that year, the Card Claim Date is deemed to occur on the first anniversary of full settlement, and validity starts on that date.
-- Full settlement means the date of the payment that completes the total price, once Finance has verified it.
+- Full settlement means the date of the payment that completes the total price, once it has been approved (doc 07 §5.2).
 - Validity does not start at reservation, number issuance, contract finalization, an installment, unverified full payment or activation.
 
 Validity length follows the signed contract (Bronze 7, Silver 12, Gold 22 years).
@@ -140,11 +141,11 @@ A cancelled transaction keeps its number with status CANCELLED. The number is ne
 ## 8. Process
 
 1. A seller starts the customer draft, the Clerk completes it, and the Administrator approves it (doc 04 §5); the approved customer is then selected.
-2. The tier, classification, payment scheme and closing salesperson are recorded.
-3. The signed Reservation Agreement is recorded. The VIP Number is issued once, at this moment, with status ACTIVE.
+2. The tier, classification, payment scheme and closing salesperson are recorded. The applicable approved commission rates (DSC for the closing seller, DRI for a recorded referrer) must exist; if one is missing, issuance pauses until an Administrator or the Super Administrator records it (section 3; an approved zero is a rate).
+3. The signed Reservation Agreement is recorded. The VIP Number is issued once, at this moment, with status ACTIVE, unless issuance is paused for a missing rate.
 4. The contract (Grant) is prepared and finalized under the same number (doc 05).
-5. The customer pays under the selected scheme. Finance verifies each payment.
-6. Finance verifies full settlement. The membership is activated (section 4.1).
+5. The customer pays under the selected scheme. A Clerk enters each receipt; Finance, an Administrator or the Super Administrator approves it (doc 07 §5.2).
+6. The settling receipt is approved, which establishes full settlement. The membership is activated (section 4.1).
 7. The card bearing the same number is claimed. The Card Claim Date is recorded and validity starts (section 4.3). If the card is not claimed within one year, the deemed Card Claim Date applies.
 
 ### 8.1 Integrity Requirement
@@ -258,7 +259,7 @@ Given / When / Then for core scenarios. Key:
 15. Contract finalization preserves approved commercial terms.
 16. A Draft or a submitted application has no VIP Number; recording the signed Reservation Agreement issues exactly one.
 17. Partial payment does not activate membership.
-18. Full payment without Finance verification does not activate membership.
+18. Full payment without approval of the settling receipts (by Finance, an Administrator or the Super Administrator) does not activate membership.
 19. Finance-verified full settlement satisfies the financial activation prerequisite.
 20. The date segment is the Reservation Agreement recording date (Asia/Manila).
 21. The monthly sequence restarts at 00001 on the 1st of each month and never repeats within a month.
@@ -281,12 +282,13 @@ Given / When / Then for core scenarios. Key:
 38. The deemed Card Claim Date is computed from the full-settlement date, not from activation.
 39. Gold and Silver prices follow doc 05 items 11 and 13; contracts signed on earlier templates keep their executed text.
 40. A Non-Standard contract cannot be finalized without both doc 05 §10.2 approvals (the Administrator or the Super Administrator approves, then Finance confirms; only the Super Administrator may do both).
+41. When an applicable approved DSC or DRI rate is missing, VIP Number issuance pauses, the application is kept, and issuance resumes once an Administrator or the Super Administrator records the rate; an explicitly approved zero does not pause issuance.
 
 ---
 
 ## 19. Reconciliation Report (Summary)
 
-See `05-vip-products-and-contracts.md` Section 19. Card-specific conflicts resolved by owner ruling R2 (2026-11-12): the platform follows NUM v6.2 (one number for the RA, Grant and Card, issued at Reservation Agreement signing, monthly sequence) and the signed Grant validity clause (Card Claim Date). The earlier activation-date Card ID and the separate RA No. are withdrawn.
+See `05-vip-products-and-contracts.md` Section 19. Card-specific conflicts resolved by owner ruling R2 (2026-11-12): the platform follows NUM v6.2 (one number for the RA, Grant and Card, issued when the signed Reservation Agreement is recorded, monthly sequence) and the signed Grant validity clause (Card Claim Date). The earlier activation-date Card ID and the separate RA No. are withdrawn.
 
 ---
 
@@ -299,13 +301,15 @@ See `05-vip-products-and-contracts.md` Section 19. Card-specific conflicts resol
 - RA numbering scope uniqueness: resolved (one company-wide monthly allocator, section 6.1).
 - Legacy ID reconciliation: resolved (section 9.1, workbook numbers imported unchanged).
 - Upgrade flow: rule adopted (section 9.3); building it is a later feature card.
+- Missing-rate pause: decided (section 3; doc 08 §9.1); nothing open.
 
 ---
 
 ## Completion Report
 
 - **Files created/updated:** `docs/business-rules/06-vip-card-issuance.md`
-- **Approved rules covered:** VIP Card ID generation, RA No. relationship, activation-date-based numbering, issuance eligibility, card lifecycle, membership activation and validity, historical identifier preservation, audit requirements.
+- **Superseded (owner ruling, 2026-11-12):** the original report listed "Card ID generation, RA No. relationship, activation-date-based numbering". These are withdrawn by R2 (amendment items 4 to 8).
+- **Approved rules covered:** VIP Number issuance (unified, at Reservation Agreement recording, with the missing-rate pause), issuance eligibility, card lifecycle, membership activation and validity, historical identifier preservation, audit requirements.
 - **VIP Number (2026-11-12):** YYMMDD = Reservation Agreement recording date; NNNNN = monthly sequence; VT = tier; P+MM = payment snapshot; S/N = classification. Example: first transaction of March 2027, recorded 2027-03-20, G1, Spot Cash, Standard → **27032000001G1C01S**.
 - **Outstanding approval dependencies:** Listed above.
 - **Validation:** All required sections included; no invented rules; documentation only. No code, database, Git, or deployment changes.
@@ -313,7 +317,7 @@ See `05-vip-products-and-contracts.md` Section 19. Card-specific conflicts resol
 
 ## Owner rulings amendment (2026-11-09)
 
-These rulings are authoritative and take precedence over earlier text in this document where they differ.
+These rulings are authoritative and take precedence over earlier text in this document where they differ. Item numbers here (1 to 9) follow this document's own sequence; the master follow-up list in `docs/implementation/decisions-and-gaps.md` is numbered separately. Wording such as "Card ID" in items 1 to 3 is historical: the term now means the VIP Number.
 
 1. **Move A and Move B payment codes are unresolved (superseded by item 3).** Their commercial terms are approved (doc 05 amendment), but no Card ID payment-code mapping is authorized for them. C01 applies only to Spot Cash and TXX only to installments, where XX is the actual approved number of months; neither is assigned automatically to a Move arrangement. Move contracts may be prepared, approved, finalized and paid, but membership activation and Card ID issuance stay blocked for them until the owner authorizes the mapping. Existing finalized contracts and issued Card IDs are unchanged. Move B1 and Move B2 are removed (see doc 05 amendment).
 2. ~~**Card ID date.** The Card ID uses the official Membership Activation Date, as stated in section 6; the transaction date is not used.~~ Superseded by item 4 below (owner ruling R2): one VIP Number is issued when the signed Reservation Agreement is recorded.
@@ -328,13 +332,14 @@ These rulings are authoritative and take precedence over earlier text in this do
     | Move B | S1 | T08 |
     | Move B | G1 | T12 |
 
-    T-category semantics: C01 applies only to Spot Cash; TXX applies to installment-category schemes, where XX is the actual approved number of monthly payments for that scheme and tier. Standard Move contracts proceed to activation and issuance once all prerequisites are met (finalized contract, full settlement, Finance verification, successful activation). Finalized contracts keep their snapshot protection — this mapping does not rewrite finalized terms or previously issued IDs. The unresolved-code block in item 1 now applies only to schemes without an approved mapping. Existing IDs are unchanged. This item supersedes item 1's block for Move A and Move B; item 1 is retained as history.
+    T-category semantics: C01 applies only to Spot Cash; TXX applies to installment-category schemes, where XX is the actual approved number of monthly payments for that scheme and tier. Standard Move contracts proceed to activation once all prerequisites are met (finalized contract, full settlement, approval of the settling receipts by Finance, an Administrator or the Super Administrator, successful activation). **Superseded in part (owner ruling R2, 2026-11-12):** issuance does not wait for activation; the VIP Number is issued when the signed Reservation Agreement is recorded (item 5). Finalized contracts keep their snapshot protection — this mapping does not rewrite finalized terms or previously issued IDs. The unresolved-code block in item 1 now applies only to schemes without an approved mapping. Existing IDs are unchanged. This item supersedes item 1's block for Move A and Move B; item 1 is retained as history.
 ## Owner rulings amendment (2026-11-12, round R2)
 
 These rulings take precedence over earlier text in this document where they differ.
 
-4. **Unified VIP Number adopted.** The platform follows NUM v6.2: one 17-character number for the Reservation Agreement, the Grant and the Card. The separate RA No. (`YYYY-NNNN`) and the activation-dated Card ID are withdrawn. The date segment is the Reservation Agreement recording date, and the sequence is monthly. The payment-code mapping in item 3 still applies to the P and MM segments.
+4. **Unified VIP Number adopted.** The platform follows NUM v6.2: one 17-character number for the Reservation Agreement, the Grant and the Card. The separate RA No. (`YYYY-NNNN`) and the activation-dated Card ID are withdrawn. This does not affect the Customer ID, which keeps the shape `YYYY-NNNN`, is assigned when the customer application is submitted, and identifies the person only (owner ruling A2, 2026-11-12; doc 04 §7.7); the Customer ID is never the VIP Number. The date segment is the Reservation Agreement recording date, and the sequence is monthly. The payment-code mapping in item 3 still applies to the P and MM segments.
 5. **Issuance trigger.** The number is issued when the signed Reservation Agreement is recorded (NUM §6). NUM §2 ("first valid payment or formal grant execution") is read together with §6; the platform uses the Reservation Agreement event.
 6. **Validity start.** Validity starts on the Card Claim Date under the signed Grant §I-B(a). If the card is not claimed within one year after full settlement, the claim is deemed to occur on the first anniversary of full settlement. Activation still requires full settlement verified by Finance.
 7. **Upgrades.** The NUM §5 upgrade rule is adopted (new number, old number UPGRADED, "Replaces" link, old card voided). Building the flow is a later feature card.
 8. **Numbers are never reused.** A CANCELLED or UPGRADED number is kept and never issued again.
+9. **Missing-rate pause (follow-up, 2026-11-12).** Issuance pauses while the closing seller's approved DSC rate or a recorded referrer's approved DRI rate is missing; an explicitly approved zero is a rate (section 3; doc 08 §9.1).

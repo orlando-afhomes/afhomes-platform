@@ -214,7 +214,7 @@ export function StaffPage() {
             items.push({
               key: status,
               label: LINKED_ACCOUNT_ACTION_LABELS[status],
-              danger: true,
+              danger: status !== "active",
               onClick: () => confirmLinkedAccountStatus(confirmRun, member.displayName, status, () => setLinkedStatus({ staffId: member.id, status })),
             });
           }

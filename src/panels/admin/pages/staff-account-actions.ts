@@ -1,20 +1,22 @@
 import type { ConfirmRunInput } from "@/shared/components/modern/use-confirm-run";
 
-export type LinkedAccountAction = "suspended" | "deactivated";
+export type LinkedAccountAction = "active" | "suspended" | "deactivated";
 
 export const LINKED_ACCOUNT_ACTION_LABELS: Record<LinkedAccountAction, string> = {
+  active: "Activate account",
   suspended: "Suspend account",
   deactivated: "Deactivate account",
 };
 
 export function linkedAccountActions(allowedStatuses: readonly string[]): LinkedAccountAction[] {
-  return allowedStatuses.filter((status): status is LinkedAccountAction => status === "suspended" || status === "deactivated");
+  return allowedStatuses.filter((status): status is LinkedAccountAction => status === "active" || status === "suspended" || status === "deactivated");
 }
 
 /**
- * Staff/Employees authority over a linked non-protected account: suspend or
- * deactivate only (doc 01 §7), always confirmed first. The repository
- * re-checks authority on every call.
+ * Staff/Employees authority over a linked non-protected account: activate,
+ * suspend or deactivate (doc 01 §7; owner ruling 2026-11-12, A4), always
+ * confirmed first. The repository re-checks authority on every call and
+ * refuses to activate an Administrator account for HR.
  */
 export function confirmLinkedAccountStatus(
   confirmRun: (input: ConfirmRunInput) => void,
@@ -24,9 +26,12 @@ export function confirmLinkedAccountStatus(
 ) {
   confirmRun({
     title: `${LINKED_ACCOUNT_ACTION_LABELS[status]} for ${staffName}?`,
-    description: "The account loses access immediately. Only an Administrator or Super Administrator can reactivate it.",
+    description:
+      status === "active"
+        ? "The account regains access to the system."
+        : "The account loses access immediately. It can be turned back on later by an authorized user.",
     confirmText: LINKED_ACCOUNT_ACTION_LABELS[status],
-    danger: true,
+    danger: status !== "active",
     action: async () => {
       await run();
     },

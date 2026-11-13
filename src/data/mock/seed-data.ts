@@ -176,6 +176,8 @@ const accounts: Account[] = [
   { id: "acct-hr", displayName: "HR User", email: "hr@afhomes.local", roleIds: ["hr"], status: "active", departmentId: null, createdAt: "2026-01-03" },
   { id: "acct-finance", displayName: "Finance User", email: "finance@afhomes.local", roleIds: ["finance"], status: "active", departmentId: null, createdAt: "2026-01-04" },
   { id: "acct-pending", displayName: "Pending User", email: "pending@afhomes.local", roleIds: [], status: "pending", departmentId: null, createdAt: "2026-01-05" },
+  // Suspended office staff login: lets HR exercise reactivation (owner ruling 2026-11-12, A4).
+  { id: "acct-records", displayName: "Records Clerk", email: "records@afhomes.local", roleIds: [], status: "suspended", departmentId: null, createdAt: "2026-01-06" },
 ];
 
 const departments: Department[] = [
@@ -215,6 +217,7 @@ const staff: StaffMember[] = [
   // name per the single Roles concept; grants stay within existing delegable modules.
   { id: "staff-admin", displayName: "Admin User", position: "HR Staff", departmentId: "dept-hr", departmentRoleId: "role-hr-staff", status: "active", email: "admin@afhomes.local", createdAt: "2026-01-04", avatarUrl: null, accountId: "acct-admin" },
   { id: "staff-super", displayName: "Super Admin User", position: "HR Staff", departmentId: "dept-hr", departmentRoleId: "role-hr-staff", status: "active", email: "superadmin@afhomes.local", createdAt: "2026-01-04", avatarUrl: null, accountId: "acct-super-admin" },
+  { id: "staff-records", displayName: "Records Clerk", position: "Operations Coordinator", departmentId: "dept-ops", departmentRoleId: "role-ops-staff", status: "active", email: "records@afhomes.local", createdAt: "2026-01-06", avatarUrl: null, accountId: "acct-records" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -383,15 +386,15 @@ const contracts: Contract[] = [
 
 const sales: Sale[] = [
   { id: "sale-1", contractId: "ctr-1", customerId: "cust-a1", productCode: "S1", branchId: "branch-a", valueCentavos: peso(240000), recordedDate: "2026-09-30",
-    sellerMemberId: "mem-ost-a1", team: team["mem-ost-a1"], status: "confirmed", confirmedDate: "2026-10-28",
+    sellerMemberId: "mem-ost-a1", referrerMemberId: "mem-ost-b1", team: team["mem-ost-a1"], status: "confirmed", confirmedDate: "2026-10-28",
     adjustments: [{ id: "adj-1", date: "2026-10-28", amountCentavos: peso(240000), kind: "confirmation", reason: "Required initial payment verified by Finance", actorId: "dev-finance" }] },
   { id: "sale-2", contractId: "ctr-2", customerId: "cust-b1", productCode: "B1", branchId: "branch-b", valueCentavos: peso(72000), recordedDate: "2026-10-22",
-    sellerMemberId: "mem-ost-b1", team: team["mem-ost-b1"], status: "confirmed", confirmedDate: "2026-10-30",
+    sellerMemberId: "mem-ost-b1", referrerMemberId: null, team: team["mem-ost-b1"], status: "confirmed", confirmedDate: "2026-10-30",
     adjustments: [{ id: "adj-2", date: "2026-10-30", amountCentavos: peso(72000), kind: "confirmation", reason: "Required initial payment verified by Finance", actorId: "dev-finance" }] },
   { id: "sale-3", contractId: "ctr-3", customerId: "cust-a3", productCode: "G1", branchId: "branch-a", valueCentavos: peso(390000), recordedDate: "2026-11-04",
-    sellerMemberId: "mem-sm-a", team: team["mem-sm-a"], status: "pending", confirmedDate: null, adjustments: [] },
+    sellerMemberId: "mem-sm-a", referrerMemberId: null, team: team["mem-sm-a"], status: "pending", confirmedDate: null, adjustments: [] },
   { id: "sale-4", contractId: "ctr-4", customerId: "cust-a4", productCode: "B1", branchId: "branch-a", valueCentavos: peso(72000), recordedDate: "2026-11-06",
-    sellerMemberId: "mem-ost-a2", team: team["mem-ost-a2"], status: "pending", confirmedDate: null, adjustments: [] },
+    sellerMemberId: "mem-ost-a2", referrerMemberId: null, team: team["mem-ost-a2"], status: "pending", confirmedDate: null, adjustments: [] },
 ];
 
 const pay = (id: string, contractId: string, customerId: string, saleId: string, purpose: PaymentPurpose, amount: number, paidDate: string, status: Payment["status"], extra?: Partial<Payment>): Payment => ({

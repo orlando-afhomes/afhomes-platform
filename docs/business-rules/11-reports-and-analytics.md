@@ -18,7 +18,7 @@
 
 Reports & Analytics provides authorized business users with consolidated operational and historical information across AFHomes. It is a consumer of authoritative business data and must not create independent financial truths. It must support reporting for Sales performance, Sales Network performance, genealogy-based team reporting, Customer Management, Finance and collections, Commission Management, VIP contracts and memberships, Stay Points earning and balances, Redemption activity (when authorized and active), Audit and operational activity, Historical comparisons, and Management dashboards.
 
-Reports & Analytics must not implement application functionality, dashboards, APIs, or database views. This is documentation only.
+Reports & Analytics must not implement application functionality, dashboards, APIs, or database views. This was a documentation-only specification when written; the frontend now builds against it, and building each report still needs owner authorization.
 
 Scope notes (owner ruling R11, 2026-11-12): IGP sales are in scope and built together with VIP (rules in `docs/business-rules/14-igp-sales.md`). Redemption is planned in doc 10 and stays disabled until the owner authorizes its build. There is no public VIP card or customer lookup (section 21). The CMS (website page editor) is deferred.
 
@@ -42,7 +42,7 @@ Scope notes (owner ruling R11, 2026-11-12): IGP sales are in scope and built tog
 
 ## 3. Terminology and Definitions
 
-- **Confirmed Sales Value** — full contract value counted once when a sale becomes Confirmed (Closed Deal: approved receipts reach 25% of the contract price, doc 13 §4).
+- **Confirmed Sales Value** — full contract value counted once when a sale becomes Confirmed (Closed Deal: approved receipts reach 25% of the contract price once the Administrator approves the sale record, doc 13 §4).
 - **Verified Collections** — amounts of approved receipts (approved by Finance, the Administrator or the Super Administrator, doc 07 §5.2).
 - **Approved Commission** — released commission included in a month-end payout list approved by Finance, the Administrator or the Super Administrator, not yet paid (doc 08 §11).
 - **Paid Commission** — commission with confirmed actual disbursement.
@@ -99,7 +99,7 @@ Use `docs/business-rules/01-roles-and-permissions.md`. AFHomes supports module-b
 
 - **Super Admin:** may access all reporting information permitted by the established Super Admin role and security model.
 - **Admin:** may view management reporting according to assigned permissions; where existing authorization permits, Admin may access organization-wide reports and select particular Sales Network teams.
-- **Finance:** may view all reports, including sales reports (owner ruling). Financial reporting includes Verified Collections, Outstanding Balances, Overdue Payments, Reversals and Refunds, Approved Commissions, Paid Commissions, Financial Reconciliation Cases. Finance reporting access must still respect applicable internal security restrictions.
+- **Finance:** may view all reports, including sales reports, view only (owner ruling, 2026-11-12; follow-up item 25). Financial reporting includes Verified Collections, Outstanding Balances, Overdue Payments, Reversals and Refunds, Approved Commissions, Paid Commissions, Financial Reconciliation Cases. Finance reporting access must still respect applicable internal security restrictions.
 - **IST — SVD:** may access authorized personal and descendant-team performance information within the relevant SVD branch.
 - **IST — SSM:** may access authorized personal and downline reporting within the applicable SSM branch. The SVD upline may be shown as appropriate contextual information, but displaying an upline does not automatically grant access to their private reporting records.
 - **IST — SM:** may access authorized personal reporting and relevant OST downline performance. Do not expose unrelated branches.
@@ -128,7 +128,7 @@ A reporting range must apply to the correct event:
 
 | Report | Relevant business date |
 |---|---|
-| Confirmed Sales | Closed Deal date: approved receipts first reach 25% of the contract price (doc 13 §4.3) |
+| Confirmed Sales | Closed Deal date: approved receipts first reach 25% of the contract price, once the Administrator approves the sale record (doc 13 §4.3) |
 | Stage 1 / Full Payment | Dates approved receipts first reach 40% / 100% (doc 13 §4.4) |
 | Verified Collections | Receipt approval; a late receipt for a closed month counts in the first open month (doc 07 §9.1) |
 | Commission Releases | Month in which a release stage (VIP 40%; IGP 40% and full payment) is first reached (doc 08 §8.2) |
@@ -157,7 +157,7 @@ Use `docs/business-rules/13-sales-performance-reporting.md`. Do not redefine its
 
 ### Confirmed Sale
 
-A sale becomes Confirmed (Closed Deal) when approved receipts reach 25% of the contract price (owner ruling R7, 2026-11-12; doc 13 §4). A Confirmed Sale does not necessarily mean Fully Paid. Contract finalization is not required for the count (doc 07 follow-up item 1; doc 13 §4).
+A sale becomes Confirmed (Closed Deal) when approved receipts reach 25% of the contract price once the Administrator approves the sale record (owner ruling R7, 2026-11-12; doc 13 §4). A Confirmed Sale does not necessarily mean Fully Paid. Contract finalization is not required for the count (doc 07 follow-up item 1; doc 13 §4).
 
 ### Reporting amount
 
@@ -433,7 +433,7 @@ Explain that Reports & Analytics must not independently override the authoritati
 
 ## 30. Required Business Scenarios
 
-(See Part XX of the task prompt for scenarios A–Q; summarized here with expected outcomes.)
+Scenarios A to Q are summarized here with expected outcomes.
 
 - **Scenario A (Confirmed installment sale):** Confirmed Sales Value reflects qualifying ₱240,000 contract once; Finance collections reflect actual verified payments; outstanding balance separate; membership not automatically Active.
 - **Scenario B (Additional installment):** verified collections update; outstanding balance changes; Confirmed Sales Value not counted again.
@@ -630,10 +630,11 @@ Status: **APPROVED** for dashboard KPI cards. This resolves dashboard period com
 
 - **File created/updated:** `docs/business-rules/11-reports-and-analytics.md`
 - **Business rule coverage:** Reporting governance and flexibility; role-based visibility; date filters; Sales reporting; genealogy reporting; seller analytics; Finance reporting; Commission reporting; VIP reporting; Stay Points reporting; Redemption reporting; Customer analytics; Audit and security.
-- **Cross-module review:** Consistent with 01–10 and 13. Document 13 preserved as authoritative for Sales Performance Reporting. No material contradictions.
+- **Cross-module review:** Consistent with 01–10 and 13 (doc 14 added later; see the amendments). Document 13 preserved as authoritative for Sales Performance Reporting. No material contradictions.
 - **Outstanding dependencies:** Listed in Section 32.
 - **Acceptance results:** All checklist items covered. Documentation completeness does not prove implementation readiness.
-- **Change scope:** Documentation only. No application code, database, migrations, existing documentation files, Git commit/push/merge, or deployment. Only `docs/business-rules/11-reports-and-analytics.md` created. Redemption and Services remain disabled. No unauthorized implementation assumptions.
+- **Doc 14:** IGP (doc 14) was added later (R13, 2026-11-12) and is covered in the amendments below; this original report predates it.
+- **Change scope:** Documentation only (at the time of writing). No application code, database, migrations, existing documentation files, Git commit/push/merge, or deployment. Only `docs/business-rules/11-reports-and-analytics.md` created. Redemption and Services remain disabled. No unauthorized implementation assumptions.
 
 ## Owner rulings amendment (2026-11-12, rounds R6, R7, R11)
 
@@ -665,3 +666,9 @@ Wording aligned with the rewritten docs 06, 08, 09, 10 and 14. No new rule is in
 These rulings take precedence over earlier text in this document where they differ.
 
 1. **Imported receipts.** History receipts come in marked "Approved (imported)". An Administrator signs off each import batch once (section 26; doc 07 §20).
+2. **Finance view only (follow-up item 25).** Finance views all reports, including sales reports, view only (section 7).
+3. **Closed Deal needs the approved sale record (follow-up item 3).** A sale counts at 25% once the Administrator approves the sale record; contract finalization is tracked separately (sections 3, 8 and 9).
+4. **Referred by me (follow-up of 2026-11-12, owner answer A8).** Sales where a member is the referrer but not the closing seller appear in a separate "Referred by me" list. They are not part of that member's My Sales totals and carry no contract links. A sale appears once per person.
+5. **IGP reporting.** IGP sales (doc 14) count in sales and team KPIs at their Closed Deal (10%); IGP stages and Series Number reporting follow doc 14 and doc 13.
+
+Numbering note: item numbers in this document's amendments follow the master follow-up list in `docs/implementation/decisions-and-gaps.md`; existing numbers are not renumbered.

@@ -210,14 +210,14 @@ Per membership and per bucket (weekday/non-holiday, weekend/holiday):
 - **Reserved** — set aside for an approved booking (doc 10).
 - **Redeemed** — used for completed stays (doc 10).
 - **Available** — Released less Reserved and Redeemed.
-- **Forfeited** — removed at expiry (section 19) or by a no-show (doc 10).
+- **Forfeited** — removed at expiry (section 19), by a no-show or by a late cancellation after the venue's cut-off (doc 10), or on an approved card transfer (section 18).
 - **Not transferred** — unused points closed on an approved card transfer (section 18).
 
 Per tranche: number, due date, measurement period, Qualifying Spend, status (Unreleased, Released, Non-Activated, Released by Waiver, Forfeited), and release date.
 
 ### 15.2 Ledger
 
-Every points movement is a ledger entry referencing the membership, VIP Number, tranche, bucket, amount, cause (release, waiver release, reservation, redemption, cancellation return, no-show forfeit, transfer closure, expiry forfeit, import), source document, actor and date. Entries are never overwritten; corrections are separate, reasoned entries. One tranche is released at most once.
+Every points movement is a ledger entry referencing the membership, VIP Number, tranche, bucket, amount, cause (release, waiver release, reservation, redemption, cancellation return, no-show or late-cancellation forfeit, transfer closure, expiry forfeit, import), source document, actor and date. Entries are never overwritten; corrections are separate, reasoned entries. One tranche is released at most once.
 
 ---
 
@@ -275,7 +275,7 @@ Required: preserve verified historical balances and dates; do not fabricate miss
 
 ## 21. Redemption Integration
 
-This module decides membership eligibility, the PAD, tranche release, balances per bucket, forfeiture and transfer effects. The Redemption module (`10-redemption.md`) decides how released points are used: venues, points per night (Terms of Use), weekday/weekend and holiday classification, bookings, cancellation and no-shows.
+This module decides membership eligibility, the PAD, tranche release, balances per bucket, forfeiture and transfer effects. The Redemption module (`10-redemption.md`) decides how released points are used: venues, points per night (Terms of Use), weekday/weekend and holiday classification, bookings, cancellation (with forfeit after the cut-off) and no-shows.
 
 Points cannot be redeemed before the card is claimed (owner follow-up ruling, 2026-11-12). A first redemption before the second anniversary of the Card Claim Date sets the PAD (section 8). Redemption stays disabled in the application until the owner authorizes its build (AGENTS.md section 5). Points have no cash value and are never cashed out.
 
@@ -307,7 +307,7 @@ Time dimensions kept separate: Full Settlement, Card Claim Date, PAD, tranche du
 
 ## 24. Audit Requirements
 
-Audited events: membership activation; Card Claim Date recording (actual or deemed); PAD setting and its cause; bill entry, approval, correction and refund; tranche release, non-activation and waiver release; waiver request, grant or refusal with reason; reservation, redemption, cancellation return and no-show forfeit (doc 10); transfer closure; expiry forfeit; Financial Hold and restoration; historical import.
+Audited events: membership activation; Card Claim Date recording (actual or deemed); PAD setting and its cause; bill entry, approval, correction and refund; tranche release, non-activation and waiver release; waiver request, grant or refusal with reason; reservation, redemption, cancellation return, and no-show or late-cancellation forfeit (doc 10); transfer closure; expiry forfeit; Financial Hold and restoration; historical import.
 
 Each record keeps the actor, timestamp, membership and VIP Number, tranche and bucket, previous and resulting values, reason, and supporting reference (OR number, request letter, approval). Never delete or rewrite history to conceal a correction.
 
@@ -378,8 +378,8 @@ These are documentation acceptance examples, not executed tests.
 
 ## 28. Outstanding Dependencies and Owner Decisions
 
-Outstanding owner decisions:
-- Resolved 2026-11-12: if the Year 1 condition is not met when the first redemption sets the PAD, tranche 1 is not released and is not carried over; later tranches keep their own conditions.
+Owner decisions resolved 2026-11-12 (none outstanding in this document):
+- If the Year 1 condition is not met when the first redemption sets the PAD, tranche 1 is not released and is not carried over, following the signed Grant; later tranches keep their own conditions. A bill entered late but dated inside the period still counts (section 12.5), and an Administrator or the Super Administrator can grant a waiver (section 14) (owner ruling A7, 2026-11-12; decisions-and-gaps.md).
 
 Configured by Admin or Super Admin (no value invented here): the meaning of "next administrative cycle" for waivers; expiry reminder schedule; eligible venue list.
 
@@ -458,6 +458,8 @@ These rulings take precedence over earlier text in this document where they diff
 10. **Redemption link (R12).** The first redemption sets the PAD if it comes before the second anniversary of the Card Claim Date. Unused points do not pass on a card transfer (Grant §V). Redemption rules are in doc 10 and stay disabled until the owner authorizes the build.
 
 ## Owner rulings amendment (2026-11-12, follow-ups)
+
+Item numbers are kept as first cited; the master follow-up list is in `docs/implementation/decisions-and-gaps.md`, so numbers may skip or differ from it.
 
 These rulings take precedence over earlier text in this document where they differ.
 

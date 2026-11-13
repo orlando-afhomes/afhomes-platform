@@ -24,7 +24,7 @@ Routes (from the atlas):
 | Current | From Payment History or Finance detail, choose reversal or refund, amount and reason. Checks: an eligible original receipt, an available adjustable amount, no duplicate adjustment, and non-refundable reservation restrictions. The original receipt is preserved and the linked balance updates. A reservation correction may be a reversal. |
 | Target | Same. Reversals keep a traceable history. |
 | Layer | Frontend (mock) |
-| Blocked by | none (overpayment and refund timing are open owner decisions) |
+| Blocked by | none. Overpayment and refund timing are not covered by any ruling in `decisions-and-gaps.md`; treat them as an unrecorded question for the owner, not a blocker for the control. |
 | Acceptance | An adjustment above the adjustable amount is refused. The original receipt is never edited. |
 | Status | Exists (per atlas) |
 
@@ -33,7 +33,7 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J08 |
-| Current | An authorized Admin requests with grounds. Finance opens the request and confirms or declines. The requester may also decide (authority rule, doc 07 item 8); the history flags a self-decision. Confirmation applies contract, sale, membership and unpaid commission effects. Decline keeps the record and decision history. |
+| Current | An authorized Admin requests with grounds. Finance opens the request and confirms or declines. The requester may also decide (authority rule, doc 07 R6/R7 amendment item 8, "Cancellation decision"); the history flags a self-decision. Confirmation applies contract, sale, membership and unpaid commission effects. Decline keeps the record and decision history. |
 | Target | Record approve or decline, link the signature, and do not invent forfeiture or recovery rights. |
 | Layer | Frontend (mock) |
 | Blocked by | none |
@@ -69,11 +69,11 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J08 |
-| Current | Not implemented. The workbook documents returned checks, default, cure, late admission, closed periods, replacement and rescission (OCT R32 to R34, O6 to O9). Default flagging is a prompt for authorized confirmation. |
-| Target | Keep these paths distinct. Recovery of paid commission and legally permitted offsets need the applicable signed basis. |
-| Layer | Owner decision |
-| Blocked by | G07 (decided R7), G09 |
-| Acceptance | To be defined after the decision. |
+| Current | Not implemented. The workbook documents returned checks, default, cure, late admission, closed periods, replacement and rescission (OCT R32 to R34, O6 to O9). Per R7 a sale with no approved receipt for 90 days is listed and an Administrator or the Super Administrator marks it Defaulted (doc 07 section 15, doc 13 section 4.6). |
+| Target | Keep these paths distinct. The 90-day no-payment list, then Defaulted marked by the Administrator or Super Administrator; a Defaulted sale loses its Closed Deal at once (OCT R33) and returns to Active if the buyer pays again. Reinstatement follows doc 08 (R9 item 4): the clawback still owed is written off, anything recovered is reported for refund, a returned-cheque clawback is never written off. Automatic recovery of paid commission waits for the signed addendum. |
+| Layer | Frontend (mock) |
+| Blocked by | none (G07 and G09 decided); automatic recovery waits for the signed IST addendum (see F8.5) |
+| Acceptance | A sale with no approved receipt for 90 days appears on the list. Only an Administrator or Super Administrator can mark it Defaulted. A Defaulted sale leaves the Confirmed count and shows its own status. A new approved receipt returns it to Active. Reinstatement writes off the owed clawback. |
 | Status | Missing |
 
 ## Out of scope

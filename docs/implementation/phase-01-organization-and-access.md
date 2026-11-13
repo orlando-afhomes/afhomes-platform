@@ -4,7 +4,7 @@
 - Objective: directory of departments, roles and staff, and scoped access, with protected guards.
 - Business rules: `docs/business-rules/01-roles-and-permissions.md` sections 3 to 9. Workbook reference: OPS section 2.
 - Depends on: nothing. Every later phase relies on its roles and scopes.
-- Decision items (all decided on 2026-11-12. Still open: automatic clawback recovery waits for the signed IST addendum (G09, U07); see `decisions-and-gaps.md`): none in the atlas. The module versus operation permission policy is decided (R4, doc 01).
+- Decision items (all decided on 2026-11-12; see `decisions-and-gaps.md`): none in the atlas. The module versus operation permission policy is decided (R4, doc 01).
 
 Routes (from the atlas):
 
@@ -35,10 +35,10 @@ Routes (from the atlas):
 |---|---|
 | Journey | J03 |
 | Current | Role dialogs change the directory subject to scope and references. Route `/admin/organization/roles`. |
-| Target | Same. Roles stay separate from account status. |
+| Target | Same. Roles stay separate from account status. Include the Clerk role (enters information only) and the Director = Super Administrator and Supervisor = Administrator mapping (R4, doc 01). |
 | Layer | Frontend (mock) |
 | Blocked by | none |
-| Acceptance | Roles in use cannot be removed. Protected roles stay protected. |
+| Acceptance | Roles in use cannot be removed. Protected roles stay protected. The Clerk role cannot approve anything. A Director or Supervisor label resolves to the Super Administrator or Administrator role. |
 | Status | Exists (per atlas) |
 
 ## F1.3 Staff onboarding with a department role
@@ -59,10 +59,10 @@ Routes (from the atlas):
 |---|---|
 | Journey | J03, TO-BE "Scoped approval and protected guards" |
 | Current | A pending linked account needs an allowed activation action. Role and status changes check the actor's grants. The account-only path needs the accounts grant (`/admin/accounts`). |
-| Target | Review before assigning or activating access, enforced by scope. |
+| Target | Review before assigning or activating access, enforced by scope. HR activates and reactivates office staff accounts only, never Administrator, Super Administrator or seller accounts (owner answer A4, doc 01). The Administrator and Super Administrator may approve their own entries; the audit trail flags it. |
 | Layer | Frontend (mock) |
 | Blocked by | none |
-| Acceptance | Without the grant, the action is hidden and the mutation is refused. A pending account cannot sign in. |
+| Acceptance | Without the grant, the action is hidden and the mutation is refused. A pending account cannot sign in. HR can activate and reactivate an office staff account but is refused for an Administrator, Super Administrator or seller account. A self-approved entry is flagged in history. |
 | Status | Exists (per atlas) |
 
 ## F1.5 Revocation and last-Super-Admin guard
@@ -71,10 +71,10 @@ Routes (from the atlas):
 |---|---|
 | Journey | J03 |
 | Current | Protected operations stop the mutation. The last-Super-Admin guard is documented as remaining in place. |
-| Target | Revocation takes effect immediately for the actor's scope. The last Super Admin cannot be removed or disabled. |
+| Target | Revocation takes effect immediately for the actor's scope. The last Super Admin cannot be removed or disabled. Only a Super Administrator can create, give or remove the Super Administrator role (follow-up 4, doc 01). |
 | Layer | Frontend (mock) |
 | Blocked by | none |
-| Acceptance | One test for the last-Super-Admin guard and one for revocation. |
+| Acceptance | One test for the last-Super-Admin guard and one for revocation. An Administrator is refused when granting the Super Administrator role. |
 | Status | Exists (per atlas), verify when picked up |
 
 ## F1.5a My Account

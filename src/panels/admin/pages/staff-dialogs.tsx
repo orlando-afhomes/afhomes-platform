@@ -794,9 +794,9 @@ function ProfileSection({ title, children }: { title: string; children: React.Re
 }
 
 /**
- * Staff/Employees authority over a linked non-protected account: suspend or
- * deactivate only (doc 01 §7). Activation and reactivation stay with
- * Administrators and Super Administrators.
+ * Staff/Employees authority over a linked non-protected account: activate,
+ * suspend or deactivate (doc 01 §7; A4). HR never activates an Administrator
+ * account; the repository enforces that and omits the option.
  */
 function LinkedAccountActions({
   staffId,
@@ -826,7 +826,7 @@ function LinkedAccountActions({
         <Button
           key={status}
           type="button"
-          variant="destructive"
+          variant={status === "active" ? "default" : "destructive"}
           className={BUTTON_CLASS}
           onClick={() => confirmLinkedAccountStatus(confirmRun, staffName, status, () => updateStatus.mutateAsync({ staffId, status }))}
         >

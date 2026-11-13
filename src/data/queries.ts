@@ -157,7 +157,7 @@ export function useUpdateLinkedAccountStatus() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
-    mutationFn: (input: { staffId: string; status: "suspended" | "deactivated" }) =>
+    mutationFn: (input: { staffId: string; status: "active" | "suspended" | "deactivated" }) =>
       repositories.staff.updateLinkedAccountStatus(input.staffId, input.status),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });

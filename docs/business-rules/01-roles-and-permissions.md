@@ -106,7 +106,7 @@ Settled by owner follow-up ruling 4 (2026-11-12): only a Super Administrator may
 | Supervisor | Administrator | Checks and approves what a Clerk entered; can do everything in the system and may approve their own entries (section 3.7). |
 | Clerk | Clerk (new office staff job) | Enters information; cannot approve. |
 | Finance | Finance | Verifies money and records payments out. Views all reports (sales, collections, pay), view only. |
-| HR | HR | Creates and activates office staff accounts. Cannot give the Administrator or Super Administrator role and cannot manage seller accounts. |
+| HR | HR | Creates, activates and reactivates office staff accounts. Cannot give the Administrator or Super Administrator role and cannot manage seller accounts. |
 | SVD, SSM, SM (IST) | Sales roles by designation (doc 02) | View only: their own and their team's customers, sales and pay. |
 | OST | Sales role (doc 02) | View only: their own customers, sales and pay. |
 
@@ -177,7 +177,7 @@ Archiving is a record-retention operation and must not result in continued accou
 - All newly created employee accounts start as `Pending`.
 - This applies even when the creator is an Admin or Super Admin.
 - Employee creation must not automatically activate the account.
-- Only an Admin or Super Admin may approve initial employee activation, except that HR may create and activate office staff accounts. HR cannot give the Administrator or Super Administrator role and cannot manage seller accounts (owner follow-up ruling, 2026-11-12).
+- Only an Admin or Super Admin may approve initial employee activation, except that HR may create, activate and reactivate office staff accounts (owner answer A4, 2026-11-12). HR cannot give the Administrator or Super Administrator role and cannot manage seller accounts (owner follow-up ruling, 2026-11-12).
 - Admin and Super Admin are allowed to approve employee accounts that they created themselves.
 - Approval must remain an explicit manual action.
 - Approved accounts become `Active`.
@@ -197,7 +197,7 @@ Until real authentication exists, a user who forgets their password asks the off
 2. Admin/Super Admin (or HR, for office staff accounts) reviews and either approves (→ `Active`) or rejects (returns to creator for correction/resubmission; rejection recorded as approval decision on the Pending account).
 3. Active employee accesses authorized modules based on union of active assigned roles.
 4. Authorized Staff/Employees user may suspend or deactivate a non-protected account → access invalidated immediately.
-5. Reactivation requires explicit Admin/Super Admin approval → valid existing roles restored; archived/invalid roles do not restore permissions.
+5. Reactivation requires explicit Admin/Super Admin approval, or HR approval for an office staff account → valid existing roles restored; archived/invalid roles do not restore permissions.
 6. Archiving retains the record and removes active access; no cascade deletion of historical records.
 
 ---
@@ -206,8 +206,8 @@ Until real authentication exists, a user who forgets their password asks the off
 
 - Any authorized user with Staff/Employees module access and the suspend or deactivate action permission may suspend or deactivate non-protected employee accounts.
 - Suspension and deactivation must immediately remove access to protected operations.
-- Reactivation requires explicit Admin or Super Admin approval.
-- Authorized users who can suspend or deactivate employees must not automatically gain reactivation approval authority.
+- Reactivation requires explicit Admin or Super Admin approval. HR may also approve the activation and reactivation of an office staff account, never an Administrator or Super Administrator account and never a seller account (owner answer A4, 2026-11-12).
+- Authorized users who can suspend or deactivate employees must not automatically gain reactivation approval authority (HR's authority over office staff accounts is explicit, not automatic).
 - When reactivation is approved:
   - Restore valid existing role assignments.
   - Do not require unnecessary reassignment.
@@ -278,7 +278,7 @@ The document establishes that:
 - Admin/Super Admin self-approval is allowed.
 - Rejected accounts can be corrected and resubmitted.
 - Authorized Staff/Employees users can suspend or deactivate non-protected accounts.
-- Only Admin/Super Admin can approve reactivation.
+- Only Admin/Super Admin, or HR for office staff accounts, can approve reactivation.
 - Existing valid roles are retained on reactivation.
 - Archived roles immediately stop granting permissions.
 - Historical records are preserved.
@@ -308,14 +308,14 @@ These rulings take precedence over earlier text in this document where they diff
 3. **Sellers view only (R4).** SVD, SSM and SM see their own and their team's customers, sales and pay. OST sees only their own. The single exception is the seller customer draft (doc 04 §5).
 4. **Modules for viewing, action permissions for changes (R4).** Module access controls navigation and viewing. Entering, editing and important actions (approve, verify payment, payout, refund, import) each need a separate action permission (section 3.1). This replaces the former rule that a module grant gives every function of the module.
 5. **Forgotten passwords (R5).** Until real authentication exists, an Administrator issues a temporary password; an email reset waits for real authentication (section 6.2.1).
-6. ~~**Open.** Whether the Administrator may assign or remove the Super Administrator role is not settled; section 3.4 stays in force until the owner decides.~~ **Settled 2026-11-12 (follow-ups, item 1 below).**
+6. ~~**Open.** (Superseded, owner ruling 2026-11-12: settled by follow-up item 1.) Whether the Administrator may assign or remove the Super Administrator role is not settled; section 3.4 stays in force until the owner decides.~~ **Settled 2026-11-12 (follow-ups, item 1 below).**
 
 ## Owner rulings amendment (2026-11-12, follow-ups)
 
-These rulings take precedence over earlier text in this document where they differ.
+These rulings take precedence over earlier text in this document where they differ. Item numbers follow the master follow-up list in `docs/implementation/decisions-and-gaps.md`; they are not renumbered here.
 
 1. **Super Administrator role.** Only a Super Administrator can create, give or remove the Super Administrator role; an Administrator cannot. Otherwise the Administrator can do everything (sections 3.4 and 3.7). This closes the former open question in section 12.
 2. **Seller payment slip.** A seller may upload a payment slip photo for their own customer. It is proof only and counts only after a Clerk enters the receipt and Finance, an Administrator or the Super Administrator approves it (sections 3.7 and 3.8; doc 07).
 3. **Contracts.** Sellers do not prepare contracts. The office (Clerk) prepares the contract and the Administrator approves it (section 3.8; doc 05).
-24. **HR.** HR can create and activate office staff accounts, but cannot give the Administrator or Super Administrator role and cannot manage seller accounts (sections 3.8 and 6.2).
+24. **HR.** HR can create, activate and reactivate office staff accounts (reactivation confirmed by owner answer A4, 2026-11-12), but cannot give the Administrator or Super Administrator role and cannot manage seller accounts (sections 3.8 and 6.2).
 25. **Finance reports.** Finance can view all reports (sales, collections, pay), view only (section 3.8).

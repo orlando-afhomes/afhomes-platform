@@ -21,7 +21,9 @@ export class MockSaleRepository extends BusinessRepository implements SaleReposi
       if (!contract) continue;
       // Sales follow the team recorded at the time of sale (13 section 4.3), never the current genealogy.
       const inTeam = Boolean(identity.memberId) && sale.team.some((entry) => entry.memberId === identity.memberId);
-      if (!(broad ? canSeeContract(identity, contract) : inTeam)) continue;
+      // A referrer also sees the sale in "Referred by me" (owner ruling 2026-11-12, A8).
+      const isReferrer = Boolean(identity.memberId) && sale.referrerMemberId === identity.memberId;
+      if (!(broad ? canSeeContract(identity, contract) : inTeam || isReferrer)) continue;
       const seller = sale.sellerMemberId ? this.store.members.find((member) => member.id === sale.sellerMemberId) : null;
       result.push(
         JSON.parse(JSON.stringify({ ...sale, customerName: customerName(this.store, sale.customerId), sellerName: seller?.displayName ?? null, schemeLabel: contract.schemeLabel })) as SaleView,

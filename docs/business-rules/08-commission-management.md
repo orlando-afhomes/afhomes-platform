@@ -225,7 +225,7 @@ The month-end cycle follows OPS §5:
 
 ### 11.2 Approval
 
-Approval of a payout is explicit and audited. It records the payees, sales, amounts, approver, and date. Under the overriding authority rule (doc 01) an Administrator or the Super Administrator may approve an entry they made; the audit history shows that the same person entered and approved. A seller account cannot approve or pay any commission through Sales Network permissions. Viewing a commission is not approving it.
+Approval of a payout is explicit and audited. It records the payees, sales, amounts, approver, and date. Under the overriding authority rule (doc 01) Finance, an Administrator or the Super Administrator may approve a payout list they prepared themselves (owner answer, 2026-11-12), as for receipts (doc 07 §5.2); the audit history flags that the same person prepared and approved. A seller account cannot approve or pay any commission through Sales Network permissions. Viewing a commission is not approving it.
 
 ### 11.3 Payout Process
 
@@ -478,9 +478,9 @@ Imported history (section 16) keeps the verified facts as recorded. Do not fabri
 
 ## 21. Audit and Security
 
-Audit events include: rate set or changed, sale referrer or rate corrected, rates frozen at VIP Number issuance, release, hold and restoration, payout list approval, payout initiation, void, recording and confirmation, clawback raised, recovered, offset and written off, Defaulted marking and reinstatement, month close, BA withholding, allowance figure change, and every financial correction.
+Audit events include: rate set or changed, sale referrer or rate corrected, rates frozen at VIP Number issuance, release, hold and restoration, payout list approval (including self-approval by Finance, an Administrator or the Super Administrator, flagged), payout initiation, void, recording and confirmation, clawback raised, recovered, offset and written off, Defaulted marking and reinstatement, month close, BA withholding, allowance figure change, and every financial correction.
 
-Audit details keep the actor, timestamp, sale, contract, recipient, previous and new values, reason, and supporting reference. Where an Administrator or the Super Administrator approves their own entry, the audit shows both roles held by the same person.
+Audit details keep the actor, timestamp, sale, contract, recipient, previous and new values, reason, and supporting reference. Where Finance, an Administrator or the Super Administrator approves their own entry (receipt or payout list), the audit flags the self-approval and shows the roles held by the same person.
 
 Ordinary record editing must never erase the decision trail. Payout evidence and recipient financial data stay protected and are never exposed through public pages or unrelated Sales Network views.
 
@@ -638,6 +638,8 @@ These rulings are authoritative and take precedence over earlier text in this do
 3. **Contract finalization.** A sale counts once the Administrator has approved the sale record; formal contract finalization is tracked separately and is not required (workbook OPS §4.2). It is not a precondition for attachment, release or the Closed Deal. The section 24 item is closed (section 8.4).
 
 ## Owner rulings amendment (2026-11-12, payout day)
+
+*Numbering note: items 4 and 5 below continue the follow-up list and are distinct from R8 items 4 and 5 and from the rate and recovery items of the R8/R9 amendment. Other documents cite them as "payout day item 4" (D-A) and "payout day item 5" (D-B). Do not renumber.*
 
 These rulings were given directly by the owner on 2026-11-12. They take precedence over earlier text in this document where they differ.
 

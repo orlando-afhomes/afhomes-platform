@@ -119,7 +119,7 @@ The system validates:
 
 - Parent designation
 - Parent account status
-- Parent accreditation validity
+- Parent standing: an expired accreditation does not make a parent ineligible (a reminder is shown); a suspended, resigned or terminated parent is ineligible (doc 03 §9, §5.2 below)
 - Genealogy compatibility
 
 Do not infer the parent from the account creator. Do not create intermediate parents automatically.
@@ -138,7 +138,7 @@ Keep the separate Organization Management manual employee approval rule unchange
 
 Account status and accreditation validity are independent conditions.
 
-Account statuses include Pending (where applicable to other account workflows), Active, Suspended, and Deactivated.
+Account statuses include Pending (an entered seller not yet approved, with no login), Active, Suspended, and Deactivated. "Deactivated" is an account status; it does not mean resigned or terminated.
 
 What each status allows is defined in doc 03 section 9 (owner ruling R3, 2026-11-12).
 - An **expired** accreditation does not block login, selling, referring or sponsoring; a reminder is shown and recorded.
@@ -157,7 +157,7 @@ When a leader seat (SM, SSM or SVD) becomes vacant because the holder left and h
 4. Accounts the departed holder managed (assumed accounts) pass upward to the first active level above.
 5. When a new holder fills the seat, the roll-up ends from the fill date.
 
-There is no Acting or temporary leader role (owner ruling R3: not now).
+There is no Acting or temporary leader role, ever (owner answer A5, 2026-11-12; final, no longer "not now"). A vacant seat is filled only by promotion (section 8) or by a team transfer (section 6), both made by the Administrator or the Super Administrator.
 
 ### 5.2 Receiving Manager Eligibility
 
@@ -274,7 +274,7 @@ When IST designation changes, recalculate Sales Network access and genealogy vis
 
 ### 9.6 Sellers View Only (owner ruling R4, 2026-11-12)
 
-Sellers can look but never change. SVD, SSM and SM see their own and their team's customers, sales and pay; OST sees only their own. The customer-information limits in section 10 still apply to team views. The only change a seller may make is to start a customer draft (doc 04 §5). Every change to seller records, genealogy, sales and pay is made by office roles (doc 01 §3.7).
+Sellers can look but never change. SVD, SSM and SM see their own and their team's customers, sales and pay; OST sees only their own. The customer-information limits in section 10 still apply to team views. The only changes a seller may make are to start a customer draft (doc 04 §5) and to upload a payment slip photo for their own customer as proof only (follow-up 5; doc 07). Every change to seller records, genealogy, sales and pay is made by office roles (doc 01 §3.7).
 
 ---
 
@@ -308,13 +308,13 @@ Former managers retain read-only visibility of sales recorded during their manag
 
 ### 10.7 Privacy Boundary
 
-These rules apply to authenticated, authorized Sales Network views. Do not confuse them with separate public customer-search privacy rules.
+These rules apply to authenticated, authorized Sales Network views. There is no public customer or card lookup (owner ruling R11), so no public customer-search rules exist to confuse them with.
 
 ---
 
 ## 11. Reconciliation with Organization Management
 
-Organization Management governs employee account approval workflow, modular access control, roles and permissions, administrative account management, protected account rules, and reactivation authorization. Sales Network governs IST/OST accounts created through the two-step seller entry, activation on approval, designation-based Sales Network visibility, genealogy assignments, accreditation-based login eligibility, and personal and downline sales access.
+Organization Management governs employee account approval workflow, modular access control, roles and permissions, administrative account management, protected account rules, and reactivation authorization. Sales Network governs IST/OST accounts created through the two-step seller entry, activation on approval, designation-based Sales Network visibility, genealogy assignments, login eligibility by account status and seller standing (an expired accreditation never blocks login, doc 03 §9), and personal and downline sales access.
 
 These policies coexist. Do not replace modular access controls with an entirely separate unrestricted role system. Enforce both whether the authenticated person has permission to access the module, and whether that person is entitled to access the specific genealogy, member, customer, or sale. A module permission is not automatic ownership of unrelated customer or Sales Network data where business-scoped visibility restrictions apply.
 
@@ -381,9 +381,9 @@ OST "X" with AA `AAO26100005` converts to SM. Remove OST genealogy, select eligi
 These rulings take precedence over earlier text in this document where they differ.
 
 1. **Status effects** follow doc 03 section 9. An expired accreditation blocks nothing. A suspension, resignation or termination blocks new sales and sponsoring.
-2. **Vacant seat** (section 5.1.1). The team stays in place, the seat earns nothing, and its downline counts toward the next active level until the seat is filled. No Acting leader role.
+2. **Vacant seat** (section 5.1.1). The team stays in place, the seat earns nothing, and its downline counts toward the next active level until the seat is filled. No Acting leader role (final, owner answer A5).
 3. **Transfers and other changes to an approved seller** are made by the Administrator or the Super Administrator (corrected by the owner authority rule, 2026-11-12; the earlier wording "by the Super Administrator only" is superseded, see the amendment below).
-4. **Open for round R8:** the workbook credits receipts to the current upline chain (AUG R23), while section 6.3 keeps sales with the team at the time of the sale. The pay and report attribution rule is decided with commissions.
+4. **Superseded (owner ruling, 2026-11-12): settled in R9 item 2 of the later amendment.** Formerly open for round R8: the workbook credits receipts to the current upline chain (AUG R23), while section 6.3 keeps sales with the team at the time of the sale. The pay and report attribution rule is decided with commissions.
 
 ## Owner rulings amendment (2026-11-12, rounds R4–R5 and authority rule)
 
@@ -404,3 +404,11 @@ These rulings take precedence over earlier text in this document, including the 
 These rulings take precedence over earlier text in this document where they differ.
 
 1. **No override for AFhomes leaders.** Per-sale pay goes only to the closing seller (DSC) and the referrer (DRI); leaders earn BA, PA and PB. "Override" is a JA&D pay item only (doc 08 §6). Section 5.1.1 item 2 no longer lists an override as something a vacant seat forgoes.
+
+## Owner answers to the audit questions (2026-11-12)
+
+Item numbers in the amendments of this document follow the master follow-up list in `docs/implementation/decisions-and-gaps.md`; they are not renumbered here.
+
+- **A5, no Acting leader.** Final: there is no Acting or temporary leader, ever (not "deferred"). The vacant seat rule (section 5.1.1) stays. A seat is filled only by promotion (section 8) or team transfer (section 6) by the Administrator or the Super Administrator. Scenario gap U05 is removed from scope.
+- **A4, HR.** HR may activate and reactivate office staff accounts only (doc 01). HR never manages seller accounts or Administrator and Super Administrator accounts.
+- **Follow-up 5.** Sellers may upload a payment slip photo for their own customer, as proof only (section 9.6; docs 07, 01).

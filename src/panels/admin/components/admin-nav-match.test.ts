@@ -13,10 +13,10 @@ describe("admin navigation matching", () => {
   it("groups processes under parent scopes that are never granted", () => {
     const items = getRoleAwareAdminNavigation(getDevIdentity("dev-admin"));
     const childIds = (id: string) => items.find((item) => item.id === id)?.children?.map((child) => child.id);
-    expect(childIds("finance-group")).toEqual(["commission-assignment", "commissions"]);
-    expect(childIds("membership-group")).toEqual(["membership-activation", "membership", "stay-points"]);
-    expect(childIds("reports-group")).toEqual(["customer-growth", "sales-performance", "commission-report", "membership-report", "stay-points-report", "reconciliation", "historical-import"]);
-    expect(childIds("sales-group")).toEqual(["customers", "sales-contracts", "contract-review", "sales"]);
+    expect(childIds("finance-group")).toEqual(["finance", "commission-assignment", "commissions", "commission-payouts", "allowance-review"]);
+    expect(childIds("membership-group")).toEqual(["membership-activation", "membership", "stay-points", "promos", "promo-points"]);
+    expect(childIds("reports-group")).toEqual(["customer-growth", "sales-performance", "commission-report", "membership-report", "stay-points-report", "promo-points-report", "reconciliation", "historical-import", "period-close"]);
+    expect(childIds("sales-group")).toEqual(["customers", "sales-contracts", "contract-review", "sales", "igp-sales"]);
     expect(childIds("vip-products-group")).toEqual(["vip-products", "payment-schemes", "scheme-guide", "tier-codes"]);
     expect(items.some((item) => item.id === ("insights-group" as string))).toBe(false);
     expect(findOpenKeys(items, "/admin/customers")).toEqual(["sales-group"]);

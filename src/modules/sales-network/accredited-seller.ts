@@ -1,3 +1,4 @@
+import { isValidTierCode, type VipTierCode } from "@/modules/vip/types";
 import type { Designation } from "@/modules/organization/types";
 import {
   addOneYear,
@@ -43,11 +44,11 @@ export const ACCREDITATION_STATUS_OPTIONS: ReadonlyArray<{ value: AccreditationF
   { value: "expired", label: "Expired" },
 ];
 
-/** Exact requested Program Category labels with stable internal keys. */
+/** Program Category labels with stable internal keys. Seed and fallback of the admin-managed list (Settings, Lists). */
 export const PROGRAM_CATEGORY_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
-  { value: "vip_privilege_card_holder", label: "VIP Previllage Card Holder" },
+  { value: "vip_privilege_card_holder", label: "VIP Privilege Card Holder" },
   { value: "non_vip_client", label: "Non-VIP Client" },
-  { value: "future_vip_privilege_card_holder", label: "Future VIP Prilevellage Card Holder" },
+  { value: "future_vip_privilege_card_holder", label: "Future VIP Privilege Card Holder" },
 ];
 
 /** Shared person-detail option sets used by the Add and Edit seller modals. */
@@ -75,18 +76,9 @@ export const GOV_ID_OPTIONS = [
   "Other",
 ].map((value) => ({ value, label: value }));
 
-export const VIP_LEVEL_OPTIONS: Array<{ value: "B1" | "S1" | "G1"; label: string }> = [
-  { value: "B1", label: "Bronze (B1)" },
-  { value: "S1", label: "Silver (S1)" },
-  { value: "G1", label: "Gold (G1)" },
-];
-
-export function programCategoryLabel(value: string): string {
-  return PROGRAM_CATEGORY_OPTIONS.find((option) => option.value === value)?.label ?? value;
-}
-
-function isProgramCategoryValue(value: string): boolean {
-  return PROGRAM_CATEGORY_OPTIONS.some((option) => option.value === value);
+/** Label of a stored category value; pass the managed list so admin-added categories resolve too. */
+export function programCategoryLabel(value: string, options: ReadonlyArray<{ value: string; label: string }> = PROGRAM_CATEGORY_OPTIONS): string {
+  return options.find((option) => option.value === value)?.label ?? PROGRAM_CATEGORY_OPTIONS.find((option) => option.value === value)?.label ?? value;
 }
 
 export type CreateAccreditedSellerInput = {
@@ -125,7 +117,7 @@ export type CreateAccreditedSellerInput = {
   /** Date-only YYYY-MM-DD. */
   cardApplicationDate: string;
   programCategory: string;
-  vipCardLevel: "B1" | "S1" | "G1";
+  vipCardLevel: VipTierCode;
   gender: string;
   civilStatus: string;
   governmentIdType: string;
@@ -169,7 +161,11 @@ export function calculateApprovedExpiry(approvedStart: string): string | null {
  * Shared field validation used by the form preview and rechecked inside the
  * repository before anything is committed. Returns the first error or null.
  */
-export function validateAccreditedSellerFields(input: CreateAccreditedSellerInput): string | null {
+/** `allowedProgramCategories`: active values of the managed list; defaults to the seed values. */
+export function validateAccreditedSellerFields(
+  input: CreateAccreditedSellerInput,
+  allowedProgramCategories: readonly string[] = PROGRAM_CATEGORY_OPTIONS.map((option) => option.value),
+): string | null {
   if (input.mode === "IST" && !["SVD", "SSM", "SM"].includes(input.designation)) {
     return "IST needs SVD, SSM, SM.";
   }
@@ -195,7 +191,7 @@ export function validateAccreditedSellerFields(input: CreateAccreditedSellerInpu
     validatePostalCode(input.postalCode) ??
     validateSponsor(input) ??
     validateDateString(input.cardApplicationDate, "Application date") ??
-    validateProgramCategoryValue(input.programCategory) ??
+    validateProgramCategoryValue(input.programCategory, allowedProgramCategories) ??
     validateVipTier(input.vipCardLevel) ??
     validateRequiredText(input.gender, "Gender") ??
     validateRequiredText(input.civilStatus, "Civil Status") ??
@@ -225,12 +221,12 @@ function validateTeamNameForDesignation(input: CreateAccreditedSellerInput): str
   return validateTeamName(input.teamName ?? "", true);
 }
 
-function validateProgramCategoryValue(value: string): string | null {
-  return isProgramCategoryValue(value) ? null : "Select a program category.";
+function validateProgramCategoryValue(value: string, allowed: readonly string[]): string | null {
+  return allowed.includes(value) ? null : "Select a program category.";
 }
 
 function validateVipTier(value: string): string | null {
-  return ["B1", "S1", "G1"].includes(value) ? null : "Card level must be valid.";
+  return isValidTierCode(value) ? null : "Card level must be valid.";
 }
 
 function validateRequiredText(value: string, label: string): string | null {

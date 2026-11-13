@@ -1,4 +1,6 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
+import { hasRedemptionReceiptReference, hasResortReceiptReference } from "./resort-receipt-reference";
+import { findReferenceConflict } from "@/modules/finance/rules";
 import type { HistoryImportRepository } from "@/data/contracts/history-import-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import { MAX_IMPORT_ROWS } from "@/modules/customers/import";
@@ -40,6 +42,9 @@ export class MockHistoryImportRepository extends BusinessRepository implements H
       if (input.records.length > MAX_IMPORT_ROWS) throw new Error(`A file may contain at most ${MAX_IMPORT_ROWS} rows.`);
       const rows = buildReceiptImportRows(input.records, { payments: this.store.payments, batches: this.store.receiptImportBatches, today: today() });
       const ready = rows.filter((row) => row.status === "ready");
+      if (ready.some(({ receipt }) => receipt && (hasResortReceiptReference(this.store, receipt.referenceNo) || hasRedemptionReceiptReference(this.store, receipt.referenceNo)))) {
+        throw new Error("A receipt reference is already on a resort bill or Redemption payment. Remove that row and retry.");
+      }
       if (ready.length === 0) throw new Error("No row can be imported. Fix the file and try again.");
       const id = nextId(this.store, "receiptImport", "rimp");
       const batch: ReceiptImportBatch = {
@@ -68,6 +73,10 @@ export class MockHistoryImportRepository extends BusinessRepository implements H
       this.require(identity, "history-import.signoff", "Only an Administrator can sign off an import batch.");
       const batch = this.batchFor(id);
       if (batch.status !== "pending_signoff") throw new Error("Only a batch awaiting sign-off can be signed off.");
+      if (batch.receipts.some(({ referenceNo }) => findReferenceConflict(this.store.payments, referenceNo) ||
+        hasResortReceiptReference(this.store, referenceNo) || hasRedemptionReceiptReference(this.store, referenceNo))) {
+        throw new Error("A receipt reference is already on record. Reject this batch and prepare a corrected copy.");
+      }
       batch.status = "signed_off";
       batch.decidedBy = identity.id;
       batch.decidedAt = nowIso();

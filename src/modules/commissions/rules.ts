@@ -1,7 +1,35 @@
 import type { Contract } from "@/modules/contracts/types";
-import { collectionPercent, netVerifiedCentavos, totalVerifiedCentavos } from "@/modules/finance/rules";
+import { approvedCollectionMilestone, collectionPercent, totalVerifiedCentavos } from "@/modules/finance/rules";
 import type { Payment } from "@/modules/finance/types";
 import { startOfNextMonthDate } from "@/shared/lib/dates";
+import { MoneyError } from "@/shared/lib/money";
+import type { CommissionClawback, CommissionProduct, CommissionStage } from "./types";
+
+export function clawbackBalance(clawback: CommissionClawback): number {
+  return clawback.writeOff ? 0 : clawback.amountCentavos - clawback.recoveries.reduce((sum, item) => sum + item.amountCentavos, 0);
+}
+
+export function commissionStageAmounts(
+  basisCentavos: number, rateBp: number, product: CommissionProduct,
+): { stage: CommissionStage; amountCentavos: number }[] {
+  if (!Number.isSafeInteger(basisCentavos) || basisCentavos < 0 || !Number.isSafeInteger(rateBp) || rateBp < 0) {
+    throw new MoneyError("Enter a valid contract value and commission rate.");
+  }
+  const exactShare = (amount: bigint, share: bigint) => {
+    const scale = BigInt(10_000);
+    const numerator = amount * share;
+    if (numerator % scale !== BigInt(0) || numerator / scale > BigInt(Number.MAX_SAFE_INTEGER)) {
+      throw new MoneyError("The commission must be a whole, supported number of centavos.");
+    }
+    return numerator / scale;
+  };
+  const total = exactShare(BigInt(basisCentavos), BigInt(rateBp));
+  const first = product === "IGP" ? exactShare(total, BigInt(4_000)) : total;
+  return [
+    { stage: "stage1", amountCentavos: Number(first) },
+    ...(product === "IGP" ? [{ stage: "full" as const, amountCentavos: Number(total - first) }] : []),
+  ];
+}
 
 /**
  * AFhomes stage-1 release: a VIP commission pays out in full once net
@@ -15,16 +43,7 @@ export function meetsPayoutRelease(contract: Pick<Contract, "priceCentavos">, pa
   return totalVerifiedCentavos(payments) * 10_000 >= contract.priceCentavos * PAYOUT_RELEASE_THRESHOLD_BP;
 }
 
-/**
- * Owner ruling R8 (2026-11-12, doc 08): a VIP commission is released 100% in the
- * month its sale's net verified collections first reach 40%, and is paid in that
- * month's month-end payout, made after the month is closed. There is no waiting
- * period (the earlier 7-day wait is removed). Owner decision 2026-11-12: a payout
- * may be recorded from the first day of the next month; the month is set by the
- * verification (approval) date of the payment that reached 40%.
- * shortcut: no month-close feature yet, so the next calendar month stands in for
- * "after the month is closed"; switch to the actual close once month close exists.
- */
+/** A payout may be recorded on or after the first day after the release month. */
 export function payoutReleaseDateFor(thresholdDate: string | null): string | null {
   return thresholdDate ? startOfNextMonthDate(thresholdDate) : null;
 }
@@ -34,20 +53,11 @@ export function payoutReleaseDateFor(thresholdDate: string | null): string | nul
  * Returns null when dated, net verified payments cannot establish a crossing.
  */
 export function payoutThresholdPayment(contract: Pick<Contract, "priceCentavos">, payments: readonly Payment[]): Payment | null {
-  if (!meetsPayoutRelease(contract, payments)) return null;
-  const verified = payments
-    .filter((payment) => payment.status === "verified" && payment.verifiedDate)
-    .sort((a, b) => a.verifiedDate!.localeCompare(b.verifiedDate!) || (a.verifiedAt ?? "").localeCompare(b.verifiedAt ?? ""));
-  let cumulative = 0;
-  for (const payment of verified) {
-    cumulative += netVerifiedCentavos(payment);
-    if (cumulative * 10_000 >= contract.priceCentavos * PAYOUT_RELEASE_THRESHOLD_BP) return payment;
-  }
-  return null;
+  return approvedCollectionMilestone(contract.priceCentavos, payments, PAYOUT_RELEASE_THRESHOLD_BP)?.payment ?? null;
 }
 
 export function payoutThresholdDate(contract: Pick<Contract, "priceCentavos">, payments: readonly Payment[]): string | null {
-  return payoutThresholdPayment(contract, payments)?.verifiedDate ?? null;
+  return approvedCollectionMilestone(contract.priceCentavos, payments, PAYOUT_RELEASE_THRESHOLD_BP)?.countedDate ?? null;
 }
 
 /** First business date a payout may be recorded (start of the month after 40% was reached). Null while the threshold is not met. */

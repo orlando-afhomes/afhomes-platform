@@ -21,8 +21,10 @@ import { CheckboxField, TextAreaField } from "@/shared/forms/modern";
 import { manilaToday } from "@/shared/lib/dates";
 import { downloadCsv, readSpreadsheet, SPREADSHEET_ACCEPT } from "@/shared/lib/spreadsheet";
 import { formatPeso } from "@/shared/lib/money";
+import { ReportExport, type ReportColumn } from "../components/report-shell";
 import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
+import { buildImportBatchMenuProps } from "../actions/history-import-actions";
 import { TemplateStep, UploadDropzone } from "../components/customer-import-steps";
 
 const SHEET_NAME = "Receipts";
@@ -145,6 +147,17 @@ function BatchesPanel({ batches, isLoading, error }: { batches: ReceiptImportBat
   const [detailId, setDetailId] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<ReceiptImportBatch | null>(null);
   const detail = batches.find((batch) => batch.id === detailId) ?? null;
+  const exportColumns = useMemo<ReportColumn<ReceiptImportBatch>[]>(
+    () => [
+      { header: "Batch", value: (batch) => batch.id },
+      { header: "File", value: (batch) => batch.fileName },
+      { header: "Receipts", value: (batch) => String(batch.receipts.length) },
+      { header: "Skipped", value: (batch) => String(batch.skipped.length) },
+      { header: "Total", value: (batch) => formatPeso(batch.receipts.reduce((sum, receipt) => sum + receipt.amountCentavos, 0)) },
+      { header: "Status", value: (batch) => (batch.status === "signed_off" ? "Signed off" : batch.status === "rejected" ? "Rejected" : "Awaiting sign-off") },
+    ],
+    [],
+  );
 
   const columns = useMemo<ColumnDef<ReceiptImportBatch, unknown>[]>(
     () => [
@@ -158,19 +171,18 @@ function BatchesPanel({ batches, isLoading, error }: { batches: ReceiptImportBat
     [],
   );
 
-  const itemsFor = (batch: ReceiptImportBatch) =>
-    batch.status !== "pending_signoff"
-      ? []
-      : [
-          ...(canSignOff
-            ? [{ key: "signoff", label: "Sign off batch", onClick: () => confirmRun({ title: "Sign off this batch?", description: `All ${batch.receipts.length} receipt(s) become Approved (imported) and count in reports. This cannot be undone.`, confirmText: "Sign off", action: () => action.mutateAsync({ action: "signOff", id: batch.id }), successTitle: "Batch signed off.", errorTitle: "Could not sign off" }) }]
-            : []),
-          { key: "reject", label: "Reject batch", danger: true, onClick: () => setRejecting(batch) },
-        ];
+  const signOffBatch = (batch: ReceiptImportBatch) =>
+    confirmRun({ title: "Sign off this batch?", description: `All ${batch.receipts.length} receipt(s) become Approved (imported) and count in reports. This cannot be undone.`, confirmText: "Sign off", action: () => action.mutateAsync({ action: "signOff", id: batch.id }), successTitle: "Batch signed off.", errorTitle: "Could not sign off" });
+
+  const menuPropsFor = (batch: ReceiptImportBatch, onView?: () => void) =>
+    buildImportBatchMenuProps(batch, { canSignOff }, { onView, onSignOff: () => signOffBatch(batch), onReject: () => setRejecting(batch) });
+
+  const detailMenu = detail ? menuPropsFor(detail) : null;
 
   return (
     <QueryState isLoading={isLoading} error={error}>
       {dialog}
+      <ReportExport report="Historical Import" fileName="historical-import" columns={exportColumns} rows={batches} range={null} printable={false} />
       <DataTable
         data={batches}
         columns={columns}
@@ -179,7 +191,10 @@ function BatchesPanel({ batches, isLoading, error }: { batches: ReceiptImportBat
         caption="Historical import batches"
         onRowOpen={(row) => setDetailId(row.id)}
         getRowLabel={(row) => `Open import batch ${row.id}`}
-        rowActions={(row) => <RowActionsMenu itemName={`batch ${row.id}`} onView={() => setDetailId(row.id)} extraItems={itemsFor(row)} />}
+        rowActions={(row) => {
+          const menu = menuPropsFor(row, () => setDetailId(row.id));
+          return <RowActionsMenu itemName={menu.itemName} onView={menu.onView} extraItems={menu.extraItems} />;
+        }}
       />
       <RecordDetailsSheet
         open={detail !== null}
@@ -187,6 +202,7 @@ function BatchesPanel({ batches, isLoading, error }: { batches: ReceiptImportBat
         title={detail ? `Batch ${detail.id}` : "Batch"}
         subtitle={detail?.fileName}
         badge={detail ? <BizBadge status={BATCH_BADGE[detail.status]} label={detail.status === "signed_off" ? "Signed off" : detail.status === "rejected" ? "Rejected" : "Awaiting sign-off"} /> : undefined}
+        footer={detailMenu && detailMenu.extraItems.length > 0 ? detailMenu.extraItems.map((item) => <Button key={item.key} type="button" variant={item.danger ? "danger" : "outline"} onClick={item.onClick}>{item.label}</Button>) : undefined}
         sections={
           detail
             ? [

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { useNotifications } from "@/shared/providers/notifications-provider";
 import type { AdminNavItem } from "../navigation";
 import { ADMIN_NAV_ICONS } from "./admin-nav-icons";
 import { findOpenKeys, findSelectedKeys } from "./admin-nav-match";
@@ -14,6 +15,15 @@ const ROW =
 // The current page is marked by a highlighted background and aria-current.
 const ROW_SELECTED =
   "tw:bg-white/10 tw:text-sidebar-foreground";
+
+// Badge counts are capped at render: the provider keeps exact counts, the nav
+// shows "99+" past 99.
+function formatBadgeCount(count: number): string {
+  return count > 99 ? "99+" : String(count);
+}
+
+const BADGE_PILL =
+  "tw:ml-auto tw:inline-flex tw:h-5 tw:min-w-5 tw:items-center tw:justify-center tw:rounded-full tw:bg-destructive tw:px-1 tw:text-[11px] tw:font-semibold tw:text-destructive-foreground";
 
 /**
  * Authorized navigation as a landmark list: links for pages, disclosure buttons
@@ -37,6 +47,8 @@ export function AdminNavList({
   const list = items ?? [];
   const selected = new Set(findSelectedKeys(list, pathname));
   const [openKeys, setOpenKeys] = useState<string[]>(() => findOpenKeys(list, pathname));
+  const { unreadByNavKey } = useNotifications();
+  const badgeFor = (id: string) => unreadByNavKey[id] ?? 0;
 
   // Accordion: opening one group closes the others.
   const toggle = (id: string) => setOpenKeys((current) => (current.includes(id) ? [] : [id]));
@@ -47,7 +59,7 @@ export function AdminNavList({
         item.children?.length ? (
           collapsed ? (
             item.children.map((child) => (
-              <NavLink key={child.id} item={child} selected={selected.has(child.id)} collapsed onNavigate={onNavigate} />
+              <NavLink key={child.id} item={child} selected={selected.has(child.id)} collapsed badge={badgeFor(child.id)} onNavigate={onNavigate} />
             ))
           ) : (
             <NavGroup
@@ -55,15 +67,16 @@ export function AdminNavList({
               item={item}
               open={openKeys.includes(item.id)}
               selectedChild={item.children.some((child) => selected.has(child.id))}
+              badge={item.children.reduce((sum, child) => sum + badgeFor(child.id), 0)}
               onToggle={() => toggle(item.id)}
             >
               {item.children.map((child) => (
-                <NavLink key={child.id} item={child} selected={selected.has(child.id)} nested onNavigate={onNavigate} />
+                <NavLink key={child.id} item={child} selected={selected.has(child.id)} nested badge={badgeFor(child.id)} onNavigate={onNavigate} />
               ))}
             </NavGroup>
           )
         ) : (
-          <NavLink key={item.id} item={item} selected={selected.has(item.id)} collapsed={collapsed} onNavigate={onNavigate} />
+          <NavLink key={item.id} item={item} selected={selected.has(item.id)} collapsed={collapsed} badge={badgeFor(item.id)} onNavigate={onNavigate} />
         ),
       )}
     </ul>
@@ -75,12 +88,14 @@ function NavLink({
   selected,
   nested = false,
   collapsed = false,
+  badge = 0,
   onNavigate,
 }: {
   item: AdminNavItem;
   selected: boolean;
   nested?: boolean;
   collapsed?: boolean;
+  badge?: number;
   onNavigate?: () => void;
 }) {
   const Icon = ADMIN_NAV_ICONS[item.id];
@@ -92,10 +107,24 @@ function NavLink({
         aria-current={selected ? "page" : undefined}
         aria-label={collapsed ? item.label : undefined}
         title={collapsed ? item.label : undefined}
-        className={cn(ROW, nested && "tw:min-h-10 tw:leading-snug", collapsed && "tw:justify-center tw:px-0", selected && ROW_SELECTED)}
+        className={cn(ROW, nested && "tw:min-h-10 tw:leading-snug", collapsed && "tw:relative tw:justify-center tw:px-0", selected && ROW_SELECTED)}
       >
         {Icon ? <Icon aria-hidden="true" className="tw:size-4 tw:shrink-0" /> : null}
         {collapsed ? null : <span className="tw:min-w-0">{item.label}</span>}
+        {badge > 0 ? (
+          collapsed ? (
+            <span
+              role="img"
+              aria-label={`${badge} new`}
+              title={`${badge} new`}
+              className="tw:absolute tw:top-1.5 tw:right-1.5 tw:size-2 tw:rounded-full tw:bg-destructive"
+            />
+          ) : (
+            <span aria-label={`${badge} new`} className={BADGE_PILL}>
+              {formatBadgeCount(badge)}
+            </span>
+          )
+        ) : null}
       </Link>
     </li>
   );
@@ -105,12 +134,14 @@ function NavGroup({
   item,
   open,
   selectedChild,
+  badge = 0,
   onToggle,
   children,
 }: {
   item: AdminNavItem;
   open: boolean;
   selectedChild: boolean;
+  badge?: number;
   onToggle: () => void;
   children: React.ReactNode;
 }) {
@@ -128,6 +159,11 @@ function NavGroup({
       >
         {Icon ? <Icon aria-hidden="true" className="tw:size-4 tw:shrink-0" /> : null}
         <span className="tw:min-w-0 tw:flex-1">{item.label}</span>
+        {badge > 0 ? (
+          <span aria-label={`${badge} new`} className={BADGE_PILL}>
+            {formatBadgeCount(badge)}
+          </span>
+        ) : null}
         <ChevronDown
           aria-hidden="true"
           className={cn("tw:size-4 tw:shrink-0 tw:transition-transform tw:motion-reduce:transition-none", open && "tw:rotate-180")}

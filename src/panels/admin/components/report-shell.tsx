@@ -1,6 +1,15 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
+import { FileSpreadsheet, FileText, Printer } from "lucide-react";
+import { toast } from "sonner";
+import { useRecordReportExport } from "@/data/business-queries";
+import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
+import { QueryState } from "@/shared/components/modern/query-state";
+import { downloadCsv, downloadXlsx } from "@/shared/lib/spreadsheet";
+import { formatDate } from "@/shared/lib/format-date";
+import { Button } from "@/shared/ui/button";
 import { addMonthsToDate, manilaDateOf, manilaToday } from "@/shared/lib/dates";
 import { StandardDateField } from "@/shared/forms/modern";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
@@ -53,8 +62,78 @@ export function useReportRange() {
 export function ReportShell({ range, title, description, crumbs, children }: { range: ReturnType<typeof useReportRange>; title: string; description: string; crumbs: BreadcrumbItem[]; children: ReactNode }) {
   return (
     <AdminPage anyOf={["reports"]} title={title} description={description} crumbs={crumbs}>
-      {range.filters}
-      {children}
+      <div className="report-print__page tw:flex tw:flex-col tw:gap-6">
+        <p className="report-print__range">Date range: {formatDate(range.from)} to {formatDate(range.to)}</p>
+        <div className="report-print__hide">{range.filters}</div>
+        {children}
+      </div>
     </AdminPage>
+  );
+}
+
+/** One report column: the header and the exact text shown in the table and written to the export. */
+export type ReportColumn<T> = { header: string; value: (row: T) => string };
+
+/** Header row plus one text row per record. Cell values are already formatted strings, so money stays exact. */
+export function buildExportRows<T>(columns: ReportColumn<T>[], rows: T[]): string[][] {
+  return [columns.map((column) => column.header), ...rows.map((row) => columns.map((column) => column.value(row)))];
+}
+
+/** Excel, CSV and Print buttons. An export is audited (report, format, range and row count only) before the file is written. */
+export function ReportExport<T>({ report, fileName, columns, rows, range, printable = true }: { report: string; fileName: string; columns: ReportColumn<T>[]; rows: T[]; range: { from: string; to: string } | null; /** False on pages that have no print layout. */ printable?: boolean }) {
+  const record = useRecordReportExport();
+  const [busy, setBusy] = useState(false);
+  const run = async (format: "xlsx" | "csv") => {
+    setBusy(true);
+    try {
+      await record.mutateAsync({ report, format, range, rowCount: rows.length });
+      const data = buildExportRows(columns, rows);
+      const name = `${fileName}-${manilaToday()}.${format}`;
+      if (format === "xlsx") await downloadXlsx(name, [{ name: report.slice(0, 31), rows: data }]);
+      else downloadCsv(name, data);
+      toast.success(`${rows.length} row(s) exported.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "The export failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="report-print__hide tw:flex tw:flex-wrap tw:justify-end tw:gap-2" role="group" aria-label="Export this report">
+      <Button variant="outline" disabled={busy} onClick={() => void run("xlsx")}><FileSpreadsheet aria-hidden /> Excel</Button>
+      <Button variant="outline" disabled={busy} onClick={() => void run("csv")}><FileText aria-hidden /> CSV</Button>
+      {printable ? <Button variant="outline" onClick={() => window.print()}><Printer aria-hidden /> Print</Button> : null}
+    </div>
+  );
+}
+
+/** True while the browser prints, so a table can show every row instead of one page. */
+function usePrinting(): boolean {
+  const [printing, setPrinting] = useState(false);
+  useEffect(() => {
+    const before = () => flushSync(() => setPrinting(true));
+    const after = () => setPrinting(false);
+    window.addEventListener("beforeprint", before);
+    window.addEventListener("afterprint", after);
+    return () => {
+      window.removeEventListener("beforeprint", before);
+      window.removeEventListener("afterprint", after);
+    };
+  }, []);
+  return printing;
+}
+
+/** Filters, export toolbar and a table of the rows behind a report's figures. Callers pass already filtered rows. */
+export function ReportTable<T>({ report, fileName, range, columns, rows, getRowId, filters, loading, error, emptyText }: { report: string; fileName: string; range: { from: string; to: string } | null; columns: ReportColumn<T>[]; rows: T[]; getRowId: (row: T) => string; filters?: ReactNode; loading?: boolean; error?: unknown; emptyText: string }) {
+  const printing = usePrinting();
+  const tableColumns = useMemo<ColumnDef<T, unknown>[]>(() => columns.map((column, index) => ({ id: `c${index}`, header: column.header, cell: ({ row }) => column.value(row.original) })), [columns]);
+  return (
+    <>
+      {filters ? <div className="report-print__hide">{filters}</div> : null}
+      <ReportExport report={report} fileName={fileName} columns={columns} rows={rows} range={range} />
+      <QueryState isLoading={Boolean(loading)} error={error}>
+        <DataTable data={rows} columns={tableColumns} getRowId={getRowId} emptyText={emptyText} caption={report} showAllRows={printing} />
+      </QueryState>
+    </>
   );
 }

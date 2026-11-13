@@ -6,6 +6,7 @@ import { useOperation } from "@/data/business-queries";
 import { useReconciliationEntries, useReconciliationTotals, useRecordReconciliation } from "@/data/reconciliation-queries";
 import { MEASURE_LABELS, latestEntry, type ReconciliationEntry, type SourceRecord, type SourceTotal } from "@/modules/reconciliation/rules";
 import { AdminPage } from "@/shared/components/admin";
+import { ReportExport, type ReportColumn } from "../components/report-shell";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { InfoNote } from "@/shared/components/modern/detail-list";
@@ -43,6 +44,16 @@ const ENTRY_COLUMNS: ColumnDef<ReconciliationEntry, unknown>[] = [
   { id: "decision", header: "Decision", cell: ({ row }) => <BizBadge status={row.original.decision === "signed_off" ? "approved" : "on_hold"} label={row.original.decision === "signed_off" ? "Signed off" : "Explained variance"} /> },
   { id: "reason", header: "Reason", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.reason ?? "" },
   { id: "recorded", header: "Recorded", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => row.original.recordedAt.slice(0, 10) },
+];
+
+const ENTRY_EXPORT: ReportColumn<ReconciliationEntry>[] = [
+  { header: "Measure", value: (entry) => MEASURE_LABELS[entry.measure] },
+  { header: "Workbook", value: (entry) => formatPeso(entry.workbookCentavos) },
+  { header: "Platform", value: (entry) => formatPeso(entry.liveCentavos) },
+  { header: "Difference", value: (entry) => formatPeso(entry.differenceCentavos) },
+  { header: "Decision", value: (entry) => (entry.decision === "signed_off" ? "Signed off" : "Explained variance") },
+  { header: "Reason", value: (entry) => entry.reason ?? "" },
+  { header: "Recorded", value: (entry) => entry.recordedAt.slice(0, 10) },
 ];
 
 /** F11.3: compare the platform's live source totals with the workbook, month by month. Differences are signed off or explained, never hidden. */
@@ -94,6 +105,7 @@ export function ReconciliationPage() {
             </div>
             <section aria-label="Decisions for this month" className="tw:flex tw:flex-col tw:gap-2">
               <h2 className="tw:text-base tw:font-semibold">Decisions for this month</h2>
+              <ReportExport report="Reconciliation" fileName={`reconciliation-${period}`} columns={ENTRY_EXPORT} rows={monthEntries} range={{ from: period, to: period }} printable={false} />
               <DataTable data={monthEntries} columns={ENTRY_COLUMNS} getRowId={(row) => row.id} emptyText="No decision has been recorded for this month." caption="Reconciliation decisions" />
             </section>
           </QueryState>

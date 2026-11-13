@@ -47,6 +47,7 @@ export function DataTable<T>({
   caption,
   rowActions,
   getRowLabel,
+  showAllRows = false,
 }: {
   data: T[];
   columns: ColumnDef<T, unknown>[];
@@ -68,6 +69,8 @@ export function DataTable<T>({
   rowActions?: (row: T) => ReactNode;
   /** Names a row for assistive tech, e.g. "Open Maria Santos". */
   getRowLabel?: (row: T) => string;
+  /** Shows every row on one page with no pager (used while printing a report). */
+  showAllRows?: boolean;
 }) {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: TABLE_PAGE_SIZE });
   // TanStack Table returns functions that React Compiler cannot memoize safely.
@@ -76,7 +79,7 @@ export function DataTable<T>({
     data,
     columns,
     getRowId,
-    state: serverPagination ? undefined : { pagination },
+    state: serverPagination ? undefined : { pagination: showAllRows ? { pageIndex: 0, pageSize: Math.max(data.length, 1) } : pagination },
     onPaginationChange: serverPagination ? undefined : setPagination,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: serverPagination ? undefined : getPaginationRowModel(),
@@ -176,7 +179,7 @@ export function DataTable<T>({
             )}
           </TableBody>
         </Table>
-        {!loading && footer.total > 0 ? <Pagination {...footer} /> : null}
+        {!loading && !showAllRows && footer.total > 0 ? <Pagination {...footer} /> : null}
       </div>
     </div>
   );

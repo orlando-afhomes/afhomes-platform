@@ -4,7 +4,9 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BadgeCheck, ChartColumn, Coins, FilePenLine, Hourglass, Layers, UserPen, UserPlus, UsersRound } from "lucide-react";
 import { useCustomers, useEffectiveModuleIds, useMembers, useMockRepositories } from "@/data/queries";
-import { useContracts, useOperation, useSales } from "@/data/business-queries";
+import { useContracts, useOperation, useSales, useVipProducts } from "@/data/business-queries";
+import { useIgpRegister } from "@/data/igp-queries";
+import { igpSalesReportRows } from "@/modules/igp/rules";
 import type { DevIdentity } from "@/modules/identity/types";
 import { confirmedCountInPeriod, confirmedValueInPeriod, mySales, snapshotCounts, teamSales } from "@/modules/sales/rules";
 import { Money } from "@/shared/components/modern/money";
@@ -48,7 +50,9 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
   const canSeeNetwork = granted.has("sales-network");
 
   const sales = useSales();
+  const igp = useIgpRegister(canSeeSales);
   const contracts = useContracts();
+  const products = useVipProducts();
   const customers = useCustomers();
   const members = useMembers();
   const repositories = useMockRepositories();
@@ -60,27 +64,30 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
   const memberId = identity.memberId;
   const mine = useMemo(() => mySales(sales.data ?? [], memberId), [sales.data, memberId]);
   const team = useMemo(() => (isManager ? teamSales(sales.data ?? [], memberId) : mine), [isManager, sales.data, memberId, mine]);
-  const counts = snapshotCounts(team);
+  const igpRows = useMemo(() => igpSalesReportRows(igp.data?.sales ?? []), [igp.data]);
+  const reportingMine = useMemo(() => [...mine, ...igpRows.filter((item) => item.sellerMemberId === memberId)], [mine, igpRows, memberId]);
+  const reportingTeam = useMemo(() => isManager ? [...team, ...igpRows.filter((item) => item.team.some((entry) => entry.memberId === memberId))] : reportingMine, [isManager, team, igpRows, memberId, reportingMine]);
+  const counts = snapshotCounts(reportingTeam);
   const { from, to, valid } = range;
   const dates = useMemo(() => (valid ? dateSpan(from, to) : []), [valid, from, to]);
   const series = useMemo(() => {
     const list: TrendSeries[] = [
-      { key: "mine", label: "My sales", color: SERIES_COLORS.primary, values: dailyConfirmedSales(mine, dates), emptyText: "You have no confirmed sales in this period." },
+      { key: "mine", label: "My sales", color: SERIES_COLORS.primary, values: dailyConfirmedSales(reportingMine, dates), emptyText: "You have no confirmed sales in this period." },
     ];
     if (isManager) {
-      list.push({ key: "team", label: "Team sales", color: SERIES_COLORS.secondary, values: dailyConfirmedSales(team, dates), emptyText: "Your team has no confirmed sales in this period." });
+      list.push({ key: "team", label: "Team sales", color: SERIES_COLORS.secondary, values: dailyConfirmedSales(reportingTeam, dates), emptyText: "Your team has no confirmed sales in this period." });
     }
     return list;
-  }, [mine, team, dates, isManager]);
+  }, [reportingMine, reportingTeam, dates, isManager]);
   const trends = useMemo(() => {
     const period = { from, to, valid };
     return {
-      mine: periodTrend(period, (start, end) => confirmedValueInPeriod(mine, start, end)),
-      team: periodTrend(period, (start, end) => confirmedValueInPeriod(team, start, end)),
-      count: periodTrend(period, (start, end) => confirmedCountInPeriod(team, start, end)),
+      mine: periodTrend(period, (start, end) => confirmedValueInPeriod(reportingMine, start, end)),
+      team: periodTrend(period, (start, end) => confirmedValueInPeriod(reportingTeam, start, end)),
+      count: periodTrend(period, (start, end) => confirmedCountInPeriod(reportingTeam, start, end)),
     };
-  }, [from, to, valid, mine, team]);
-  const tiers = useMemo(() => tierRows(confirmedSalesTierDistribution(team).rows), [team]);
+  }, [from, to, valid, reportingMine, reportingTeam]);
+  const tiers = useMemo(() => tierRows(confirmedSalesTierDistribution(team, products.data).rows), [team, products.data]);
   const activity = useMemo(
     () =>
       toActivityEntries(
@@ -115,7 +122,7 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
           <DashboardKpiGrid columns={4}>
             <DashboardKpiCard
               label="My confirmed sales value"
-              value={valid ? <Money value={confirmedValueInPeriod(mine, from, to)} /> : "—"}
+              value={valid ? <Money value={confirmedValueInPeriod(reportingMine, from, to)} /> : "—"}
               icon={Coins}
               tone="brand"
               scope={periodScope(range)}
@@ -126,7 +133,7 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
             {isManager ? (
               <DashboardKpiCard
                 label="Team confirmed sales value"
-                value={valid ? <Money value={confirmedValueInPeriod(team, from, to)} /> : "—"}
+                value={valid ? <Money value={confirmedValueInPeriod(reportingTeam, from, to)} /> : "—"}
                 icon={UsersRound}
                 tone="info"
                 scope={periodScope(range)}
@@ -148,7 +155,7 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
             )}
             <DashboardKpiCard
               label="Confirmed sales"
-              value={valid ? confirmedCountInPeriod(team, from, to).toLocaleString() : "—"}
+              value={valid ? confirmedCountInPeriod(reportingTeam, from, to).toLocaleString() : "—"}
               icon={BadgeCheck}
               tone="violet"
               scope={periodScope(range)}
@@ -179,7 +186,7 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
                 title="Sales Performance"
                 description={
                   isManager
-                    ? "Confirmed sales value by Finance confirmation date. Team sales include your own."
+                    ? "Confirmed sales value by counted receipt date. Team sales include your own."
                     : "Your confirmed sales value by Finance confirmation date."
                 }
                 icon={ChartColumn}

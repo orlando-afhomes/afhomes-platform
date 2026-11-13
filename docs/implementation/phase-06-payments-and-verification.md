@@ -57,36 +57,36 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J07 |
-| Current | The repository (`src/data/mock/payment-repository.ts`) supports resubmitting a Returned payment. The UI has no submitter control: `src/panels/admin/components/payment-actions.tsx` only says the submitter can correct and resubmit. The journey stops at Returned. |
+| Current | The Clerk can open Fix and resend for their own returned receipt on the contract Payments tab. The reference stays fixed and each previous version is retained. |
 | Target | Per R6: a returned receipt can be fixed and resent by the authorized submitter. The original submission stays in history. |
 | Layer | Frontend (mock) |
 | Blocked by | none for the control itself. G06 (decided R6) covers what counts as a valid correction. |
 | Acceptance | Only the submitter of a Returned receipt sees the control. Resubmission keeps the original in history. One test for the happy path and one for an unauthorized actor. |
-| Status | Missing UI. The clearest feature that can be built now. |
+| Status | Implemented in mock; Clerk-to-Finance Chrome walkthrough verified |
 
 ## F6.5 Exception queue
 
 | Field | Value |
 |---|---|
 | Journey | J07 |
-| Current | Not described in the atlas as existing. |
+| Current | Payment Verification has an Exceptions tab for possible matches, conflicting references and receipts blocked by sale approval. Approving a possible match requires a reason. True duplicate references stay blocked. |
 | Target | A queue for unmatched, duplicate or disputed receipts, with retained human verification. |
 | Layer | Frontend (mock) |
 | Blocked by | none (G06 decided R6) |
 | Acceptance | Unmatched, duplicate and disputed receipts are listed for Finance, the Administrator or the Super Administrator. Resolving one needs a human approval or rejection with a reason. Nothing is deleted. |
-| Status | Missing |
+| Status | Partial; standalone unmatched receipt intake remains open |
 
 ## F6.6 Ledger allocation and milestone recalculation
 
 | Field | Value |
 |---|---|
 | Journey | J07 |
-| Current | A verified receipt enters the ledger and is allocated in reservation, down-payment, installment order. The mock still moves the sale from Pending to Confirmed on a finalized contract plus an interim required initial amount from the payment schedule. This differs from the ruling and is a known gap. A full verified balance is a separate milestone. `src/modules/finance/milestones.ts` changed in `fc060bb`. |
+| Current | The mock requires sale approval before verifying a receipt. It tracks Closed Deal at 25%, Stage 1 at 40% and full settlement at 100% using receipt dates, and preserves the original date of receipts counted in a later open month. |
 | Target | Update only after authorized approval, and retain audit, status and related records. Per R7 and follow-up 3, a sale counts (Closed Deal) at 25% of the contract price in approved receipts once the Administrator has approved the sale record; contract finalization is tracked separately and is not required. The 40% (Stage 1) and 100% (Full Payment) dates are stamped separately, each as the later of the triggering receipt's date and the latest counted receipt (OCT O3, doc 13 section 4). |
 | Layer | Frontend (mock) |
 | Blocked by | none (G06 and G07 decided; not blocked by them) |
 | Acceptance | Milestone tests pass, including the 25% count with no finalized contract and the O3 stamp rule. A receipt in a closed month counts in the first open month. No floating-point money. Date-only fields use Asia/Manila semantics. |
-| Status | Partial |
+| Status | Implemented in mock; threshold and closed-month tests passed |
 
 ## Out of scope
 

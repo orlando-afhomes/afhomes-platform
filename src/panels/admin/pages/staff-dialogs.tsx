@@ -65,6 +65,7 @@ import {
   useUpdateLinkedAccountStatus,
   useUpdateStaff,
 } from "@/data/queries";
+import { useReferenceOptions } from "@/data/settings-queries";
 
 function initials(name: string) {
   return name
@@ -84,18 +85,6 @@ const CIVIL_STATUS_OPTIONS = ["Single", "Married", "Widowed", "Separated", "Divo
   value,
   label: value,
 }));
-
-const GOV_ID_OPTIONS = [
-  "Philippine National ID",
-  "Passport",
-  "Driver's License",
-  "SSS ID",
-  "GSIS ID",
-  "PRC ID",
-  "Voter's ID",
-  "Postal ID",
-  "Other",
-].map((value) => ({ value, label: value }));
 
 const BUTTON_CLASS = "tw:min-h-11 tw:sm:min-h-8";
 
@@ -205,6 +194,7 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
   const [tin, setTin] = useState(editStaff?.tin ?? "");
   const [gender, setGender] = useState<string | undefined>(editStaff?.gender ?? undefined);
   const [civilStatus, setCivilStatus] = useState<string | undefined>(editStaff?.civilStatus ?? undefined);
+  const govIdOptions = useReferenceOptions("gov-id-type", [editStaff?.governmentIdType]);
   const [governmentIdType, setGovernmentIdType] = useState<string | undefined>(editStaff?.governmentIdType ?? undefined);
   const [governmentIdNumber, setGovernmentIdNumber] = useState(editStaff?.governmentIdNumber ?? "");
   const [departmentId, setDepartmentId] = useState(editStaff?.departmentId ?? "");
@@ -433,7 +423,7 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
             onIdTypeChange={setGovernmentIdType}
             idNumber={governmentIdNumber}
             onIdNumberChange={setGovernmentIdNumber}
-            idTypeOptions={GOV_ID_OPTIONS}
+            idTypeOptions={govIdOptions}
             required
             errorType={visible("governmentIdType")}
             errorIdNumber={visible("governmentIdNumber")}

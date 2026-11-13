@@ -3,7 +3,7 @@
 import { Printer } from "lucide-react";
 import { usePaymentSchemes, useVipProducts } from "@/data/business-queries";
 import { downPaymentCentavos, paymentSchemeTierTerms, schemeHowItWorks } from "@/modules/vip/rules";
-import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
+import type { PaymentScheme, VipProduct } from "@/modules/vip/types";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Button } from "@/shared/ui/button";
 import { AdminPage, AdminSection } from "@/shared/components/admin";
@@ -11,12 +11,6 @@ import { BizBadge } from "@/shared/components/business/biz-badge";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { CardGridSkeleton } from "@/shared/components/modern/skeletons";
-
-const TIERS: Array<{ code: VipTierCode; label: string }> = [
-  { code: "B1", label: "Bronze (B1)" },
-  { code: "S1", label: "Silver (S1)" },
-  { code: "G1", label: "Gold (G1)" },
-];
 
 /** One line per tier: package price and how it is split (05 section 8). */
 function TierTerms({ scheme, product }: { scheme: PaymentScheme; product: VipProduct }) {
@@ -69,11 +63,10 @@ export function SchemeGuidePage() {
                       <dd><Money value={scheme.reservationCentavos} /> (counted in the total)</dd>
                     </div>
                   ) : null}
-                  {TIERS.filter((tier) => scheme.applicableTiers.includes(tier.code)).map((tier) => {
-                    const product = (products.data ?? []).find((item) => item.code === tier.code);
+                  {(products.data ?? []).filter((item) => scheme.applicableTiers.includes(item.code)).map((product) => {
                     return product ? (
-                      <div key={tier.code}>
-                        <dt className="tw:text-muted-foreground">{tier.label}</dt>
+                      <div key={product.code}>
+                        <dt className="tw:text-muted-foreground">{`${product.tier} (${product.code})`}</dt>
                         <TierTerms scheme={scheme} product={product} />
                       </div>
                     ) : null;

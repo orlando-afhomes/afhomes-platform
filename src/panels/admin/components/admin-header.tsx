@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { ChevronDown, LogOut, Menu as MenuIcon, User } from "lucide-react";
 import { AdminMobileNav } from "./admin-mobile-nav";
+import { NotificationsMenu } from "./notifications-menu";
 import { useLogout } from "../use-logout";
 import { getRoleDisplayLabel } from "../role-label";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
@@ -54,6 +55,7 @@ export function AdminHeader({
         <MenuIcon aria-hidden="true" />
       </Button>
       <div className="tw:ml-auto tw:flex tw:items-center">
+        <NotificationsMenu />
         <DropdownMenu>
           <DropdownMenuTrigger
             render={

@@ -43,7 +43,7 @@ export interface ContractRepository {
   /** Finance (not the requester) confirms or declines a requested cancellation (OD-2). */
   decideCancellation(id: string, decision: "confirm" | "decline", reason: string, options?: MockAsyncOptions): Promise<ContractView>;
   /** Records the Reservation Agreement reference from the signed form; collisions are flagged, not suffixed. */
-  recordRaNumber(id: string, raNumber: string, options?: MockAsyncOptions): Promise<ContractView>;
+  recordSignedAgreement(id: string, options?: MockAsyncOptions): Promise<ContractView>;
   /** Super Admin records the written approval of a Move arrangement (owner decision 2026-11-09). */
   approveArrangement(id: string, approvalReference: string, options?: MockAsyncOptions): Promise<ContractView>;
   /** Auditable recode of the Card ID payment segment for pre-resolution Move contracts; new contracts snapshot it at prepare. */

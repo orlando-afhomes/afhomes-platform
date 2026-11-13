@@ -83,8 +83,8 @@ describe("collection helpers", () => {
     expect(collectionStateFor(dated, [payment({ amountCentavos: 1_000_000 })], "2026-11-10").state).toBe("outstanding");
   });
 
-  it("totals a period by verification date and adjustment date", () => {
-    const adjusted = payment({ id: "p2", amountCentavos: 500_000, verifiedDate: "2026-11-20", adjustments: [{ id: "a", kind: "refund", amountCentavos: 100_000, date: "2026-11-21", reason: "r", actorId: "u" }] });
+  it("totals a period by counted receipt date and adjustment date", () => {
+    const adjusted = payment({ id: "p2", amountCentavos: 500_000, countedDate: "2026-11-20", adjustments: [{ id: "a", kind: "refund", amountCentavos: 100_000, date: "2026-11-21", reason: "r", actorId: "u" }] });
     expect(periodCollections([payment(), adjusted], "2026-11-01", "2026-11-30")).toEqual({ gross: 1_500_000, adjusted: 100_000, net: 1_400_000 });
     expect(periodCollections([payment(), adjusted], "2026-11-15", "2026-11-30")).toEqual({ gross: 500_000, adjusted: 100_000, net: 400_000 });
   });

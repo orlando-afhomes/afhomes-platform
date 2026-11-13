@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Contract } from "@/modules/contracts/types";
 import type { Payment } from "@/modules/finance/types";
-import { collectedPercent, meetsPayoutRelease, payoutReleaseDate, payoutReleaseDateFor, payoutThresholdDate } from "./rules";
+import { collectedPercent, commissionStageAmounts, meetsPayoutRelease, payoutReleaseDate, payoutReleaseDateFor, payoutThresholdDate } from "./rules";
 
 const contract = { priceCentavos: 7_200_000 } as Pick<Contract, "priceCentavos">;
 
@@ -13,7 +13,7 @@ const payment = (id: string, amountCentavos: number, verifiedDate: string | null
   purpose: "installment",
   amountCentavos,
   method: "Cash",
-  paidDate: "2026-11-01",
+  paidDate: verifiedDate ?? "2026-11-01",
   referenceNo: id,
   evidenceFileName: null,
   submittedBy: "u1",
@@ -46,6 +46,12 @@ describe("40% payout release", () => {
     expect(payoutReleaseDateFor(null)).toBeNull();
   });
 
+  it("uses the receipt posting date for the release month, including late admission", () => {
+    const backdated = payment("a", 2_880_000, "2026-11-05", { paidDate: "2026-10-31" });
+    expect(payoutReleaseDate(contract, [backdated])).toBe("2026-11-01");
+    expect(payoutReleaseDate(contract, [{ ...backdated, countedDate: "2026-11-01" }])).toBe("2026-12-01");
+  });
+
   it("returns null while below the threshold", () => {
     expect(payoutThresholdDate(contract, [payment("a", 1_000_000, "2026-11-02")])).toBeNull();
     expect(payoutReleaseDate(contract, [])).toBeNull();
@@ -66,5 +72,16 @@ describe("collectedPercent", () => {
   it("rounds down and guards a zero price", () => {
     expect(collectedPercent(contract, [payment("a", 2_879_999, "2026-11-02")])).toBe(39);
     expect(collectedPercent({ priceCentavos: 0 }, [payment("a", 1, "2026-11-02")])).toBe(0);
+  });
+});
+
+describe("commission stage amounts", () => {
+  it("releases all VIP commission at Stage 1 and 40% of IGP with the rest at full payment", () => {
+    expect(commissionStageAmounts(1_000_000, 500, "VIP")).toEqual([{ stage: "stage1", amountCentavos: 50_000 }]);
+    expect(commissionStageAmounts(1_000_000, 500, "IGP")).toEqual([
+      { stage: "stage1", amountCentavos: 20_000 },
+      { stage: "full", amountCentavos: 30_000 },
+    ]);
+    expect(commissionStageAmounts(1_000_000, 0, "VIP")).toEqual([{ stage: "stage1", amountCentavos: 0 }]);
   });
 });

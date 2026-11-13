@@ -98,7 +98,7 @@ describe("admin nav list rendering", () => {
     expect(superAdmin).not.toContain("Customer Import");
     const admin = renderNav("dev-admin");
     expect(admin).not.toContain("Customer Import");
-    expect(admin).not.toContain("Commission Payouts");
+    expect(admin).toContain("Commission Payouts");
     expect(admin).not.toContain("Collections Report");
     const finance = renderNav("dev-finance");
     expect(finance).toContain("Payment Verification");

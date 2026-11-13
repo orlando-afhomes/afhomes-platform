@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
@@ -40,7 +40,7 @@ const TILES = {
   collections: "Verified collections",
   commissions: "Approved",
   membership: "Activated",
-  points: "Points earned",
+  points: "Points released",
 };
 
 describe("report pages", () => {
@@ -54,11 +54,25 @@ describe("report pages", () => {
   ];
   it.each(cases)("%s report shows only its own tiles", async (_name, page, own) => {
     show("dev-finance", page);
-    expect(await screen.findByText(TILES[own])).toBeInTheDocument();
+    // Table cells and headers can repeat a tile label (for example "Approved"), so match all occurrences.
+    expect((await screen.findAllByText(TILES[own])).length).toBeGreaterThan(0);
     expect(screen.queryByText(/No targets or unapproved formulas/)).toBeNull();
     for (const [key, label] of Object.entries(TILES)) {
-      if (key !== own) expect(screen.queryByText(label)).toBeNull();
+      if (key !== own) expect(screen.queryAllByText(label)).toHaveLength(0);
     }
+    expect(screen.getByRole("button", { name: /Excel/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /CSV/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Print/ })).toBeInTheDocument();
+  });
+
+  it("filters the customer growth table by search text", async () => {
+    show("dev-finance", <CustomerGrowthReportPage />);
+    await screen.findAllByText("New customers");
+    const table = await screen.findByRole("table", { name: "Customer Growth" });
+    const before = within(table).queryAllByRole("row").length;
+    fireEvent.change(screen.getByLabelText("Search customers"), { target: { value: "zzzz-no-such-customer" } });
+    expect(await screen.findByText("No customers match.")).toBeInTheDocument();
+    expect(before).toBeGreaterThanOrEqual(1);
   });
 
   it("denies the collections report without finance.reports.view", async () => {

@@ -1,3 +1,4 @@
+import type { VipTierCode } from "@/modules/vip/types";
 import type { LinkedAccountSummary } from "@/modules/accounts/types";
 
 export type Designation = "SVD" | "SSM" | "SM" | "OST";
@@ -78,7 +79,7 @@ export type SellerProfile = {
   /** Free-text policy-dependent category; no official registry exists yet. */
   programCategory: string;
   /** Application metadata only; never creates VIP membership or benefits. */
-  vipCardLevel: "B1" | "S1" | "G1";
+  vipCardLevel: VipTierCode;
   gender: string;
   civilStatus: string;
   telephone: string | null;

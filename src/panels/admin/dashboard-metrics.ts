@@ -5,7 +5,7 @@ import type { MembershipView } from "@/data/contracts/membership-repository";
 import type { PaymentView } from "@/data/contracts/payment-repository";
 import type { SaleView } from "@/data/contracts/sale-repository";
 import type { Customer } from "@/modules/customers/types";
-import { collectionStateFor } from "@/modules/finance/rules";
+import { collectionStateFor, paymentCountedDate } from "@/modules/finance/rules";
 import { confirmedValueInPeriod, teamSales } from "@/modules/sales/rules";
 import type { OrgMember } from "@/modules/organization/types";
 import { addDaysToDate, manilaDateOf } from "@/shared/lib/dates";
@@ -22,14 +22,14 @@ export function countUplines(uplines: readonly { id: string }[]) {
   return uplines.length;
 }
 
-/** Active VIP tiers only (doc 05); no historical or reserved tier is shown. */
-export const DASHBOARD_TIERS = [
+/** Seeded VIP tiers (doc 05). Tiers created later come from the product catalog. */
+export const DASHBOARD_TIERS: ReadonlyArray<{ code: string; label: string }> = [
   { code: "B1", label: "Bronze" },
   { code: "S1", label: "Silver" },
   { code: "G1", label: "Gold" },
-] as const;
+];
 
-export type DashboardTierCode = (typeof DASHBOARD_TIERS)[number]["code"];
+export type DashboardTierCode = string;
 
 export type TierDistributionRow = {
   code: DashboardTierCode;
@@ -39,9 +39,20 @@ export type TierDistributionRow = {
   share: number;
 };
 
-function tierDistribution(records: readonly { productCode: string }[]): { total: number; rows: TierDistributionRow[] } {
+type TierProduct = { code: string; tier: string };
+
+/** Seeded tiers first, then any catalog tier not already listed. */
+function dashboardTiers(products: ReadonlyArray<TierProduct> | undefined) {
+  const tiers = [...DASHBOARD_TIERS];
+  for (const product of products ?? []) {
+    if (!tiers.some((tier) => tier.code === product.code)) tiers.push({ code: product.code, label: product.tier });
+  }
+  return tiers;
+}
+
+function tierDistribution(records: readonly { productCode: string }[], products?: ReadonlyArray<TierProduct>): { total: number; rows: TierDistributionRow[] } {
   const total = records.length;
-  const rows = DASHBOARD_TIERS.map(({ code, label }) => {
+  const rows = dashboardTiers(products).map(({ code, label }) => {
     const count = records.filter((record) => record.productCode === code).length;
     return { code, label, count, share: total === 0 ? 0 : (count * 100) / total };
   });
@@ -52,14 +63,14 @@ export function countVisibleContracts(contracts: readonly Pick<ContractView, "st
   return contracts.filter((contract) => contract.status !== "cancelled").length;
 }
 
-/** Contract mix across the three active VIP tiers. Cancelled contracts are excluded. */
-export function contractTierDistribution(contracts: readonly Pick<ContractView, "productCode" | "status">[]) {
-  return tierDistribution(contracts.filter((contract) => contract.status !== "cancelled"));
+/** Contract mix across the VIP tiers. Cancelled contracts are excluded. */
+export function contractTierDistribution(contracts: readonly Pick<ContractView, "productCode" | "status">[], products?: ReadonlyArray<TierProduct>) {
+  return tierDistribution(contracts.filter((contract) => contract.status !== "cancelled"), products);
 }
 
-/** Mix of currently Confirmed sales across the three active VIP tiers (current snapshot). */
-export function confirmedSalesTierDistribution(sales: readonly Pick<SaleView, "productCode" | "status">[]) {
-  return tierDistribution(sales.filter((sale) => sale.status === "confirmed"));
+/** Mix of currently Confirmed sales across the VIP tiers (current snapshot). */
+export function confirmedSalesTierDistribution(sales: readonly Pick<SaleView, "productCode" | "status">[], products?: ReadonlyArray<TierProduct>) {
+  return tierDistribution(sales.filter((sale) => sale.status === "confirmed"), products);
 }
 
 /** Submitted and under-review contracts still need an Admin decision (doc 05 section 11). */
@@ -201,7 +212,7 @@ export function dailyConfirmedSales(sales: readonly Pick<SaleView, "adjustments"
 }
 
 export type DailyCollections = {
-  /** Finance-verified amounts by verification date (doc 11 section 3). */
+  /** Approved amounts by receipt accounting date. */
   gross: number[];
   /** Reversals and refunds by their own dates, as positive amounts. */
   adjustments: number[];
@@ -211,14 +222,14 @@ export type DailyCollections = {
 
 /** Daily collections; totals match `periodCollections` for the same range. */
 export function dailyCollections(
-  payments: readonly Pick<PaymentView, "verifiedDate" | "amountCentavos" | "adjustments">[],
+  payments: readonly Pick<PaymentView, "status" | "countedDate" | "paidDate" | "amountCentavos" | "adjustments">[],
   dates: readonly string[],
 ): DailyCollections {
   const gross = zeroed(dates);
   const adjusted = zeroed(dates);
   for (const payment of payments) {
-    if (payment.verifiedDate) {
-      const date = manilaDateOf(payment.verifiedDate);
+    const date = paymentCountedDate(payment);
+    if (date) {
       const current = gross.get(date);
       if (current !== undefined) gross.set(date, current + payment.amountCentavos);
     }

@@ -40,6 +40,8 @@ export type AdminOperation =
   | "organization.departments.manage"
   | "organization.staff.manage"
   | "organization.roles.manage"
+  /** Maintain the admin-managed lists: program categories, government ID types, banks and outlets (Administrator, Super Administrator). */
+  | "settings.lists.manage"
   | "admin.protected"
   | "vip-products.manage"
   | "contracts.approve"
@@ -55,6 +57,10 @@ export type AdminOperation =
   | "history-import.signoff"
   | "commission.approve"
   | "commission.payout"
+  | "commission.payout.prepare"
+  | "commission.rates.manage"
+  | "commission.clawback.collect"
+  | "commission.clawback.writeOff"
   | "commission.viewOwn"
   | "commission.viewTeam"
   /** Complete, edit and submit customer registrations (Clerk, Administrator, Super Administrator). */
@@ -67,8 +73,17 @@ export type AdminOperation =
   | "customers.import"
   | "contracts.prepare"
   | "payments.submit"
+  | "igp.enter"
+  | "igp.manage"
   | "membership.activate"
-  | "stay-points.reconcile"
+  | "stay-points.enter"
+  | "stay-points.approve"
+  | "stay-points.refund"
+  | "stay-points.waiver"
+  /** Create, edit and end Promo Points promos (Administrator, Super Administrator; owner ruling 2026-11-13). */
+  | "promos.manage"
+  /** Record and void Promo Points use (Clerk, Administrator, Super Administrator). */
+  | "promo-points.use"
   /** Record, cancel, complete and mark no-show on points bookings (office staff, Administrator, Super Administrator; doc 10 section 9.2). */
   | "redemption.book"
   /** Maintain the points-per-night table, holiday calendar, venues and cut-offs (Administrator, Super Administrator; doc 10 section 16). */
@@ -99,7 +114,7 @@ const ROLE_MODULE_GRANTS: Record<DevRole, readonly AdminModuleId[]> = {
   admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products", "sales-network", "sales-network-members", "sales-network-genealogy", "accreditation-registrations", "accreditation-records", "accreditation-renewals", ...BUSINESS_ADMIN_MODULES],
   hr: [...BASE_MODULES, "departments", "staff"],
   // Interim baseline (doc 01 §3.2: module set per role stays open): the Clerk enters customers, contracts and receipts.
-  clerk: [...BASE_MODULES, "customers", "sales", "accreditation-registrations"],
+  clerk: [...BASE_MODULES, "customers", "sales", "accreditation-registrations", "stay-points"],
   finance: [...BASE_MODULES, "finance", "commissions", "membership", "stay-points", "redemption", "reports"],
   svd: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy", ...SELLER_BUSINESS_MODULES],
   ssm: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy", ...SELLER_BUSINESS_MODULES],
@@ -199,6 +214,9 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "organization.departments.manage",
     "organization.staff.manage",
     "organization.roles.manage",
+    "settings.lists.manage",
+    "promos.manage",
+    "promo-points.use",
     "admin.protected",
     "vip-products.manage",
     "contracts.approve",
@@ -211,6 +229,10 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "history-import.signoff",
     "commission.approve",
     "commission.payout",
+    "commission.payout.prepare",
+    "commission.rates.manage",
+    "commission.clawback.collect",
+    "commission.clawback.writeOff",
     "sales-network.manage",
     "sales-network.transfer",
     "sales-network.status",
@@ -220,8 +242,13 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "customers.import",
     "contracts.prepare",
     "payments.submit",
+    "igp.enter",
+    "igp.manage",
     "membership.activate",
-    "stay-points.reconcile",
+    "stay-points.enter",
+    "stay-points.approve",
+    "stay-points.refund",
+    "stay-points.waiver",
     "redemption.book",
     "redemption.configure",
     "audit.read",
@@ -230,10 +257,19 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "organization.departments.manage",
     "organization.staff.manage",
     "organization.roles.manage",
+    "settings.lists.manage",
+    "promos.manage",
+    "promo-points.use",
     "vip-products.manage",
     "contracts.approve",
     // Owner ruling R6 (2026-11-12): the Administrator approves receipts alongside Finance and the Super Administrator.
     "finance.verify",
+    "commission.approve",
+    "commission.payout",
+    "commission.payout.prepare",
+    "commission.rates.manage",
+    "commission.clawback.collect",
+    "commission.clawback.writeOff",
     "reconciliation.manage",
     "history-import.manage",
     "history-import.signoff",
@@ -246,14 +282,20 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "customers.import",
     "contracts.prepare",
     "payments.submit",
+    "igp.enter",
+    "igp.manage",
     "membership.activate",
+    "stay-points.enter",
+    "stay-points.approve",
+    "stay-points.refund",
+    "stay-points.waiver",
     "redemption.book",
     "redemption.configure",
     "audit.read",
   ],
   hr: ["organization.departments.manage", "organization.staff.manage"],
   // Doc 01 §3.7/§3.8: the Clerk enters and completes; never approves (no finance.verify, contracts.approve, membership.activate).
-  clerk: ["customers.manage", "customers.draft", "contracts.prepare", "payments.submit"],
+  clerk: ["customers.manage", "customers.draft", "contracts.prepare", "payments.submit", "stay-points.enter", "commission.payout.prepare", "igp.enter", "promo-points.use"],
   finance: [
     "finance.verify",
     "finance.refund",
@@ -262,9 +304,13 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "reconciliation.manage",
     "commission.approve",
     "commission.payout",
+    "commission.payout.prepare",
+    "commission.clawback.collect",
     // Owner ruling 2026-11-09: Finance activates memberships alongside Admin and Super Administrator.
     "membership.activate",
-    "stay-points.reconcile",
+    "stay-points.enter",
+    "stay-points.approve",
+    "stay-points.refund",
   ],
   svd: ["sales.viewTeam", "customers.viewDownline", "commission.viewOwn", "commission.viewTeam", "customers.draft", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
   ssm: ["sales.viewTeam", "customers.viewDownline", "commission.viewOwn", "commission.viewTeam", "customers.draft", "sales-network.manage", "sales-network.transfer", "sales-network.status"],

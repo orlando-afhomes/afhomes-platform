@@ -15,7 +15,7 @@ export class MockReconciliationRepository extends BusinessRepository implements 
   }
 
   private totals(period: string): SourceTotal[] {
-    return computeSourceTotals({ payments: this.store.payments, sales: this.store.sales, commissions: this.store.commissions, importBatches: this.store.receiptImportBatches }, period);
+    return computeSourceTotals({ payments: this.store.payments, sales: [...this.store.sales, ...this.store.igp.sales], commissions: this.store.commissions, importBatches: this.store.receiptImportBatches }, period);
   }
 
   async sourceTotals(period: string, options?: MockAsyncOptions): Promise<SourceTotal[]> {

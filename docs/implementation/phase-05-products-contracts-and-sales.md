@@ -80,7 +80,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none (the code still stamps by approval date; aligning it with OCT O3 is a separate task, decision D-B) |
 | Acceptance | One ledger source, no double-counting (doc 13). A sale reaches 25% counted only after the Administrator approves the sale record, without waiting for contract finalization. The stamp date follows the OCT O3 rule once aligned. A non-Active sale loses its Closed Deal. A sale with no payment for 90 days is listed and an Administrator marks it Defaulted. |
-| Status | Partial |
+| Status | Implemented in mock; final role walkthrough pending |
 
 ## F5.6 Unified VIP number and RA
 
@@ -92,7 +92,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | No duplicates. No competing serial allocator. Issued numbers are preserved. A repeated request returns the existing number; activation and card claim never create one. Issuance is refused (paused) when the closing seller's DSC rate or a recorded referrer's DRI rate is missing, resumes when an Administrator or Super Administrator records it, and is not paused by an approved zero rate (doc 06 section 18, item 41). Validity starts on the Card Claim Date (doc 06 section 4.3). |
-| Status | Decided (R2); verify against the code |
+| Status | Implemented in mock; tested for missing rate, approved zero and repeat issuance |
 
 ## F5.7 IGP flow
 
@@ -104,7 +104,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none for the flow; the band code above PHP 9M and the signed Grant terms are open (decisions-and-gaps "Still open") |
 | Acceptance | See doc 14 sections 5 to 9: 16-character Series Number with its own monthly sequence, JA&D ID stored separately, a TCP over PHP 9M blocked until a band code exists, a seller without a JA&D accreditation number cannot be salesperson or referrer, and commission released 40% at 40% collected and the rest at full payment. Grant paperwork is tracked as a checklist only. |
-| Status | Decided (R13), missing in code; needs build authorization |
+| Status | Implemented in mock within doc 14 restrictions; final role walkthrough pending |
 
 ## Out of scope
 

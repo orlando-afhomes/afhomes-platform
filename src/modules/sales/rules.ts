@@ -1,7 +1,7 @@
 import type { Sale } from "./types";
 
 /** Net confirmed sales value reported inside [from, to] (inclusive), by adjustment date (13 sections 4.3 and 5). */
-export function confirmedValueInPeriod(sales: readonly Sale[], from: string, to: string): number {
+export function confirmedValueInPeriod(sales: readonly Pick<Sale, "adjustments">[], from: string, to: string): number {
   let total = 0;
   for (const sale of sales) {
     for (const adjustment of sale.adjustments) {
@@ -27,7 +27,7 @@ export function totalsFor(sales: readonly Sale[]): SalesTotals {
  * Confirmed whose Finance confirmation date falls in [from, to]. A reconfirmed
  * sale is still one record, so it is never counted twice.
  */
-export function confirmedCountInPeriod(sales: readonly Sale[], from: string, to: string): number {
+export function confirmedCountInPeriod(sales: readonly Pick<Sale, "id" | "status" | "confirmedDate">[], from: string, to: string): number {
   const ids = new Set<string>();
   for (const sale of sales) {
     if (sale.status === "confirmed" && sale.confirmedDate && sale.confirmedDate >= from && sale.confirmedDate <= to) ids.add(sale.id);
@@ -39,7 +39,7 @@ export function confirmedCountInPeriod(sales: readonly Sale[], from: string, to:
  * Current-snapshot counts (13 section 3.1): Pending and Overall Recorded
  * (Confirmed + Pending) ignore the reporting period. Cancelled and Rejected are excluded.
  */
-export function snapshotCounts(sales: readonly Sale[]): { confirmed: number; pending: number; overall: number } {
+export function snapshotCounts(sales: readonly Pick<Sale, "id" | "status">[]): { confirmed: number; pending: number; overall: number } {
   const confirmed = new Set<string>();
   const pending = new Set<string>();
   for (const sale of sales) {

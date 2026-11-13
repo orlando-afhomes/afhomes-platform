@@ -55,8 +55,8 @@ export function RedemptionBookingDialog({ open, overview, onClose }: { open: boo
     try {
       const centavos = cash.length > 0 ? parsePesoToCentavos(amount) : 0;
       if (centavos === null) throw new Error("Enter the money part as an amount in pesos.");
-      await create.mutateAsync({ requestId, membershipId, venueId, roomType, checkIn, checkOut, guests: Number(guests.replace(/,/g, "")), stayingHolder: holder, cashNightDates: cash, cashAmountCentavos: centavos });
-      toast.success("Booking recorded.");
+      const booking = await create.mutateAsync({ requestId, membershipId, venueId, roomType, checkIn, checkOut, guests: Number(guests.replace(/,/g, "")), stayingHolder: holder, cashNightDates: cash, cashAmountCentavos: centavos });
+      toast.success(booking.provisional ? "Provisional room hold recorded. No points were reserved." : "Booking recorded.");
       close();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Request failed.");

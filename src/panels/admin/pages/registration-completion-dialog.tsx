@@ -3,13 +3,10 @@
 import { useEffect, useState } from "react";
 import type { RegistrationCompletion } from "@/modules/accreditation/types";
 import { validateCompletion } from "@/modules/accreditation/registration";
-import {
-  CIVIL_STATUS_OPTIONS,
-  GENDER_OPTIONS,
-  GOV_ID_OPTIONS,
-  PROGRAM_CATEGORY_OPTIONS,
-  VIP_LEVEL_OPTIONS,
-} from "@/modules/sales-network/accredited-seller";
+import { CIVIL_STATUS_OPTIONS, GENDER_OPTIONS } from "@/modules/sales-network/accredited-seller";
+import { useVipProducts } from "@/data/business-queries";
+import { useReferenceOptions } from "@/data/settings-queries";
+import { tierOptions } from "@/modules/vip/tier-options";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { FormGrid, FormSection } from "@/shared/components/modern/form-layout";
 import { GovernmentIdFields, ProfilePhotoUploader, SelectField, StandardDateField } from "@/shared/forms/modern";
@@ -38,6 +35,10 @@ export function RegistrationCompletionDialog({
   onClose: () => void;
   onSubmit: (completion: RegistrationCompletion) => Promise<unknown>;
 }) {
+  const products = useVipProducts();
+  // An inactive value already saved on this record stays selectable and valid.
+  const govIdOptions = useReferenceOptions("gov-id-type", [initial?.governmentIdType]);
+  const programOptions = useReferenceOptions("program-category", [initial?.programCategory]);
   const [value, setValue] = useState<RegistrationCompletion>(initial ?? EMPTY);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | undefined>();
@@ -63,7 +64,7 @@ export function RegistrationCompletionDialog({
   };
 
   const submit = async () => {
-    const problem = validateCompletion(value);
+    const problem = validateCompletion(value, { govIdTypes: govIdOptions.map((option) => option.value), programCategories: programOptions.map((option) => option.value) });
     if (problem) {
       setError(problem);
       return;
@@ -111,7 +112,7 @@ export function RegistrationCompletionDialog({
             onIdTypeChange={(governmentIdType) => patch({ governmentIdType })}
             idNumber={value.governmentIdNumber}
             onIdNumberChange={(governmentIdNumber) => patch({ governmentIdNumber })}
-            idTypeOptions={GOV_ID_OPTIONS}
+            idTypeOptions={govIdOptions}
             required
           />
         </FormGrid>
@@ -119,8 +120,8 @@ export function RegistrationCompletionDialog({
       <FormSection title="Program details">
         <FormGrid>
           <StandardDateField id="registration-card-date" label="Application date" required value={value.cardApplicationDate} onChange={(cardApplicationDate) => patch({ cardApplicationDate })} />
-          <SelectField id="registration-program" label="Program category" required value={value.programCategory || undefined} options={PROGRAM_CATEGORY_OPTIONS} onChange={(programCategory) => patch({ programCategory })} placeholder="Select program category" />
-          <SelectField id="registration-card-level" label="Card level" required value={value.vipCardLevel} options={VIP_LEVEL_OPTIONS} onChange={(vipCardLevel) => patch({ vipCardLevel })} />
+          <SelectField id="registration-program" label="Program category" required value={value.programCategory || undefined} options={programOptions} onChange={(programCategory) => patch({ programCategory })} placeholder="Select program category" />
+          <SelectField id="registration-card-level" label="Card level" required value={value.vipCardLevel} options={tierOptions(products.data, [value.vipCardLevel])} onChange={(vipCardLevel) => patch({ vipCardLevel })} />
         </FormGrid>
       </FormSection>
     </FormDialog>

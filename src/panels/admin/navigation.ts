@@ -6,7 +6,9 @@ import { getGrantedModuleIds, getGrantedOperations } from "@/modules/identity/pe
 export type AdminNavKey =
   | AdminModuleId
   | "customer-import"
+  | "settings-lists"
   | "sales-contracts"
+  | "igp-sales"
   | "contract-review"
   | "sales-performance"
   | "customer-growth"
@@ -22,13 +24,18 @@ export type AdminNavKey =
   | "collections-report"
   | "commission-assignment"
   | "commission-payouts"
+  | "allowance-review"
   | "commission-report"
   | "membership-activation"
   | "membership-report"
   | "stay-points-report"
+  | "promos"
+  | "promo-points"
+  | "promo-points-report"
   | "redemption-group"
   | "redemption-table"
   | "reconciliation"
+  | "period-close"
   | "historical-import";
 
 export type AdminNavItem = {
@@ -72,6 +79,7 @@ export const adminNavigation: AdminNavItem[] = [
       { id: "sales-contracts", label: "Contracts", href: "/admin/sales/contracts", available: true, grants: ["sales", "vip-products"] },
       { id: "contract-review", label: "Contract Review", href: "/admin/sales/contract-review", available: true, grants: ["vip-products"] },
       { id: "sales", label: "Sales Records", href: "/admin/sales", available: true },
+      { id: "igp-sales", label: "IGP Sales", href: "/admin/sales/igp", available: true, grants: ["sales", "finance"] },
     ],
   },
   {
@@ -80,11 +88,12 @@ export const adminNavigation: AdminNavItem[] = [
     href: "/admin/finance-group",
     available: true,
     children: [
-      { id: "finance", label: "Payment Verification", href: "/admin/finance", available: true },
+      { id: "finance", label: "Payment Verification", href: "/admin/finance", available: true, grants: ["finance", "sales"], operation: "finance.verify" },
       { id: "collections", label: "Collections", href: "/admin/finance/collections", available: true, grants: ["finance"] },
-      { id: "commission-assignment", label: "Commission Assignment", href: "/admin/commissions/assignment", available: true, grants: ["commissions"] },
+      { id: "commission-assignment", label: "Commission Rates", href: "/admin/commissions/assignment", available: true, grants: ["commissions"], operation: "commission.rates.manage" },
       { id: "commissions", label: "Commissions", href: "/admin/commissions", available: true },
-      { id: "commission-payouts", label: "Commission Payouts", href: "/admin/commissions/payouts", available: true, grants: ["commissions"], operation: "commission.payout" },
+      { id: "commission-payouts", label: "Commission Payouts", href: "/admin/commissions/payouts", available: true, grants: ["commissions", "sales"], operation: "commission.payout.prepare" },
+      { id: "allowance-review", label: "Allowance Review", href: "/admin/commissions/allowances", available: true, grants: ["commissions"], operation: "commission.approve" },
       { id: "payment-history", label: "Payment History", href: "/admin/finance/payments", available: true, grants: ["finance"] },
       { id: "financial-holds", label: "Financial Holds", href: "/admin/finance/holds", available: true, grants: ["finance"] },
       { id: "cancellation-requests", label: "Cancellation Requests", href: "/admin/finance/cancellations", available: true, grants: ["finance"] },
@@ -99,6 +108,8 @@ export const adminNavigation: AdminNavItem[] = [
       { id: "membership-activation", label: "Activation Queue", href: "/admin/membership/activation", available: true, grants: ["membership"], operation: "membership.activate" },
       { id: "membership", label: "VIP Memberships", href: "/admin/membership", available: true },
       { id: "stay-points", label: "Stay Points", href: "/admin/stay-points", available: true },
+      { id: "promos", label: "Promos", href: "/admin/promos", available: true, grants: ["stay-points"] },
+      { id: "promo-points", label: "Promo Points", href: "/admin/promos/points", available: true, grants: ["stay-points"] },
     ],
   },
   {
@@ -141,6 +152,7 @@ export const adminNavigation: AdminNavItem[] = [
       // Staff & Access also hosts account administration; its account
       // columns and actions are gated by the non-delegable "accounts" grant.
       { id: "staff", label: "Staff", href: "/admin/organization/staff", available: true },
+      { id: "settings-lists", label: "Lists", href: "/admin/settings/lists", available: true, grants: ["departments"], operation: "settings.lists.manage" },
     ],
   },
   // Compatibility entry point only: /admin/accounts forwards authorized users to
@@ -158,8 +170,10 @@ export const adminNavigation: AdminNavItem[] = [
       { id: "commission-report", label: "Commission Report", href: "/admin/reports/commissions", available: true, grants: ["reports"] },
       { id: "membership-report", label: "Membership Report", href: "/admin/reports/membership", available: true, grants: ["reports"] },
       { id: "stay-points-report", label: "Stay Points Report", href: "/admin/reports/stay-points", available: true, grants: ["reports"] },
+      { id: "promo-points-report", label: "Promo Points Report", href: "/admin/reports/promo-points", available: true, grants: ["reports"] },
       { id: "reconciliation", label: "Reconciliation", href: "/admin/reports/reconciliation", available: true, grants: ["reports"], operation: "reconciliation.manage" },
       { id: "historical-import", label: "Historical Import", href: "/admin/reports/historical-import", available: true, grants: ["reports"], operation: "history-import.manage" },
+      { id: "period-close", label: "Period Close", href: "/admin/reports/period-close", available: true, grants: ["reports"], operation: "finance.verify" },
     ],
   },
   { id: "audit-logs", label: "Audit Logs", href: "/admin/audit-logs", available: true },

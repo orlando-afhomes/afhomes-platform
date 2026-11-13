@@ -359,3 +359,11 @@ These rulings take precedence over earlier text in this document where they diff
 19. **First redemption.** The redemption that can set the Points Activation Date is the first stay where points are actually used at check-in. A booking cancelled in time does not count (section 11).
 20. **Card transfer.** After an approved card transfer, the old holder's unused points are forfeited and cannot be used; the new holder gets only future tranches (section 12).
 21. **Death of the cardholder.** The heirs request a written transfer, which management approves; the same transfer rules apply (section 12).
+
+## Owner ruling amendment (2026-11-13, Promo Points)
+
+These rulings take precedence over earlier text in this document where they differ. They add a separate wallet and change no Grant redemption rule above.
+
+22. **Separate wallet.** Promo Points (doc 09, items 22 to 26 of the 2026-11-13 amendment) are not Grant Stay Points. Redemption of Grant points (weekday and weekend buckets, overnight stays only) is unchanged.
+23. **Where Promo Points are used.** Only at the redeem outlets named by the promo, within the promo's rules. Staff record each use; it can be voided with a reason and is never deleted.
+24. **Expiry and value.** Promo Points expire on the promo's points expiry date if one is set. They have no cash value and are never cashed out.

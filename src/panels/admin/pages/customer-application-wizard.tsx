@@ -323,7 +323,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
   const choosePlan = (code: VipTierCode) => {
     const next = activeProducts.find((item) => item.code === code);
-    if (code !== "G1") secondaryIdPreview.onClear();
+    if (!(next && next.supplementaryHolders > 0)) secondaryIdPreview.onClear();
     const keepScheme = (schemes.data ?? []).some((item) => item.id === draft.paymentSchemeId && item.applicableTiers.includes(code));
     setDraft((current) => ({
       ...current,
@@ -618,11 +618,11 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
           <ContactSection draft={draft} set={set} errors={errors} newApplication={!existing} />
           <GovernmentIdSection draft={draft} set={set} errors={errors} idPreview={existing ? undefined : primaryIdPreview} />
           <EmploymentSection draft={draft} set={set} errors={errors} />
-          <SecondaryHolderToggle visible={draft.vipPlan === "G1"} enabled={draft.secEnabled} onChange={(enabled) => {
+          <SecondaryHolderToggle visible={supplementaryAllowed} enabled={draft.secEnabled} onChange={(enabled) => {
             if (!enabled) secondaryIdPreview.onClear();
             set("secEnabled", enabled);
           }} />
-          {draft.vipPlan === "G1" && draft.secEnabled ? (
+          {supplementaryAllowed && draft.secEnabled ? (
             <SecondaryHolderSection draft={draft} set={set} errors={errors} newApplication={!existing} idPreview={existing ? undefined : secondaryIdPreview} />
           ) : null}
         </div>

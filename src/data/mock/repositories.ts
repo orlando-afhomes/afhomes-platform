@@ -14,8 +14,18 @@ import type { StayPointsRepository } from "@/data/contracts/stay-points-reposito
 import type { RedemptionRepository } from "@/data/contracts/redemption-repository";
 import type { ReconciliationRepository } from "@/data/contracts/reconciliation-repository";
 import type { HistoryImportRepository } from "@/data/contracts/history-import-repository";
+import type { IgpRepository } from "@/data/contracts/igp-repository";
+import type { ReportRepository } from "@/data/contracts/report-repository";
+import { MockReportRepository } from "./report-repository";
+import type { ReferenceListRepository } from "@/data/contracts/reference-list-repository";
+import type { OutletRepository } from "@/data/contracts/outlet-repository";
+import { MockReferenceListRepository } from "./reference-list-repository";
+import { MockOutletRepository } from "./outlet-repository";
+import type { PromoRepository } from "@/data/contracts/promo-repository";
+import { MockPromoRepository } from "./promo-repository";
 import { MockReconciliationRepository } from "./reconciliation-repository";
 import { MockHistoryImportRepository } from "./history-import-repository";
+import { MockIgpRepository } from "./igp-repository";
 import { MockContractRepository } from "./contract-repository";
 import { MockSaleRepository } from "./sale-repository";
 import { MockPaymentRepository } from "./payment-repository";
@@ -58,8 +68,13 @@ export type MockRepositories = {
   commissions: CommissionRepository;
   stayPoints: StayPointsRepository;
   redemption: RedemptionRepository;
+  referenceLists: ReferenceListRepository;
+  outlets: OutletRepository;
+  promos: PromoRepository;
   reconciliation: ReconciliationRepository;
   historyImports: HistoryImportRepository;
+  igp: IgpRepository;
+  reports: ReportRepository;
 };
 
 export function createMockRepositories(
@@ -85,7 +100,12 @@ export function createMockRepositories(
     commissions: new MockCommissionRepository(store, getIdentity, asyncOptions),
     stayPoints: new MockStayPointsRepository(store, getIdentity, asyncOptions),
     redemption: new MockRedemptionRepository(store, getIdentity, asyncOptions),
+    referenceLists: new MockReferenceListRepository(store, getIdentity, asyncOptions),
+    outlets: new MockOutletRepository(store, getIdentity, asyncOptions),
+    promos: new MockPromoRepository(store, getIdentity, asyncOptions),
     reconciliation: new MockReconciliationRepository(store, getIdentity, asyncOptions),
     historyImports: new MockHistoryImportRepository(store, getIdentity, asyncOptions),
+    igp: new MockIgpRepository(store, getIdentity, asyncOptions),
+    reports: new MockReportRepository(store, getIdentity, asyncOptions),
   };
 }

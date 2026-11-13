@@ -9,7 +9,7 @@ import { AddressSection, ContactSection, GovernmentIdSection, IdentitySection, S
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
-import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { MockStoreProvider, useMockStore } from "@/shared/providers/mock-store-provider";
 import { AccreditationVerificationPage } from "@/panels/public/pages/accreditation-verification-page";
 import { AdminSidebarContext } from "./layouts/admin-sidebar-context";
 import { AdminMobileNav } from "./components/admin-mobile-nav";
@@ -25,6 +25,7 @@ import { CustomerDetailPage } from "./pages/customer-detail-page";
 import { CustomerFormPage } from "./pages/customer-form-page";
 import { CustomersPage } from "./pages/customers-page";
 import { FinancePage } from "./pages/finance-page";
+import { SalesContractDetailPage } from "./pages/sales-contract-detail-page";
 import { MembershipActivationPage } from "./pages/membership-activation-page";
 import { CollectionsReportPage } from "./pages/collections-report-page";
 import { SalesPage } from "./pages/sales-page";
@@ -297,6 +298,32 @@ describe("business pages render for the intended roles", () => {
     await openMenuWith("Actions for payment", "Verify");
   });
 
+  it("lets the Administrator open the receipt verification queue", async () => {
+    show("dev-admin", <FinancePage />);
+    expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
+    await openMenuWith("Actions for payment", "Verify");
+  });
+
+  it("lets the Clerk fix their returned receipt on the contract with its original reference", async () => {
+    function ReturnedReceiptFixture() {
+      const store = useMockStore();
+      const [contractId] = useState(() => {
+        const payment = store.payments.find((item) => item.id === "pay-4")!;
+        Object.assign(payment, { submittedBy: "dev-clerk", status: "returned", decisionReason: "Check receipt amount" });
+        return payment.contractId;
+      });
+      return <SalesContractDetailPage contractId={contractId} />;
+    }
+    show("dev-clerk", <ReturnedReceiptFixture />);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("tab", { name: "Payments" }));
+    await openMenuWith("Actions for payment", "Fix and resend");
+    expect(screen.queryByRole("menuitem", { name: "Verify" })).toBeNull();
+    await user.click(screen.getByRole("menuitem", { name: "Fix and resend" }));
+    expect(await screen.findByRole("textbox", { name: "Receipt or reference number" })).toHaveAttribute("readonly");
+    expect(screen.getByText(/Check receipt amount/)).toBeInTheDocument();
+  });
+
   it("opens a payment details sheet when anywhere on a Finance row is clicked", async () => {
     const user = userEvent.setup();
     show("dev-finance", <FinancePage />);
@@ -313,10 +340,10 @@ describe("business pages render for the intended roles", () => {
     expect(screen.queryByText("Customer B One")).toBeNull();
   });
 
-  it("lets Finance see confirmed sales on the Commission Assignment page", async () => {
-    show("dev-finance", <CommissionAssignmentPage />);
-    expect(await screen.findByRole("table", { name: "Confirmed sales awaiting commission assignment" })).toBeInTheDocument();
-    await openMenuWith("Actions for sale", "Assign percentages");
+  it("lets Administrators open the Commission Rates directory", async () => {
+    show("dev-admin", <CommissionAssignmentPage />);
+    expect(await screen.findByRole("heading", { name: "Commission Rates" })).toBeInTheDocument();
+    expect(await screen.findByText("No approved rates recorded.")).toBeInTheDocument();
   });
 
   it("shows Administrators the customer import steps and templates", async () => {
@@ -334,10 +361,10 @@ describe("business pages render for the intended roles", () => {
     expect(screen.queryByLabelText(/Customer file/)).toBeNull();
   });
 
-  it("tells a seller that only Finance assigns commission percentages", async () => {
+  it("keeps seller accounts out of Commission Rates", async () => {
     show("dev-ost-a1", <CommissionAssignmentPage />);
-    expect(await screen.findByText("Only authorized Finance personnel assign commission percentages.")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Assign percentages" })).toBeNull();
+    expect(await screen.findByRole("heading", { name: "Access restricted" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Set rate" })).toBeNull();
   });
 
   it("lists every official scheme in the guide and gives pending ones no figures", async () => {
@@ -351,9 +378,9 @@ describe("business pages render for the intended roles", () => {
     expect(screen.getByRole("button", { name: "Print guide" })).toBeInTheDocument();
   });
 
-  it("links Finance from Commissions to Commission Assignment", async () => {
-    show("dev-finance", <CommissionsPage />);
-    expect(await screen.findByRole("link", { name: "Commission assignment" })).toHaveAttribute("href", "/admin/commissions/assignment");
+  it("links Administrators from Commissions to Commission Rates", async () => {
+    show("dev-admin", <CommissionsPage />);
+    expect(await screen.findByRole("link", { name: "Commission rates" })).toHaveAttribute("href", "/admin/commissions/assignment");
   });
 
   it("shows the activation queue to Admin", async () => {
@@ -361,11 +388,12 @@ describe("business pages render for the intended roles", () => {
     expect(await screen.findByRole("table", { name: "Activation queue" })).toBeInTheDocument();
   });
 
-  it("shows the points ledger with redemption disabled", async () => {
+  it("shows Welcome Gift tranches and resort bill actions to Finance", async () => {
     show("dev-finance", <StayPointsPage />);
-    expect(screen.queryByText("Redemption is not available")).toBeNull();
-    expect(await screen.findByRole("table", { name: "Points ledger" })).toBeInTheDocument();
-    await openMenuWith("Actions for points entry", "Release held points");
+    expect(await screen.findByRole("table", { name: "Annual Welcome Gift" })).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "Resort bills" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Enter resort bill" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Record refund" }).length).toBeGreaterThan(0);
   });
 
   it("renders role-scoped reports", async () => {
@@ -1434,13 +1462,14 @@ describe("customer application realtime field validation", () => {
   }) {
     const [draft, setDraft] = useState(() => toDraft());
     const set: SetDraft = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
-    if (secondary) return <SecondaryHolderSection draft={draft} set={set} errors={errors} />;
+    // The ID type options come from the admin-managed list, so the sections need the data providers.
+    if (secondary) return <Wrapper identityId="dev-admin"><SecondaryHolderSection draft={draft} set={set} errors={errors} /></Wrapper>;
     return (
-      <>
+      <Wrapper identityId="dev-admin">
         <IdentitySection draft={draft} set={set} errors={errors} />
         <ContactSection draft={draft} set={set} errors={errors} />
         <GovernmentIdSection draft={draft} set={set} errors={errors} />
-      </>
+      </Wrapper>
     );
   }
 

@@ -1,3 +1,4 @@
+import type { VipTierCode } from "@/modules/vip/types";
 export type AccreditationClassification = "IST" | "OST";
 
 export type AccreditationAdminStatus = "pending" | "active" | "suspended" | "revoked" | "cancelled";
@@ -127,7 +128,7 @@ export type RegistrationCompletion = {
   /** Date-only YYYY-MM-DD. */
   cardApplicationDate: string;
   programCategory: string;
-  vipCardLevel: "B1" | "S1" | "G1";
+  vipCardLevel: VipTierCode;
   /** File name only; no binary is stored. */
   profilePhotoName: string;
 };

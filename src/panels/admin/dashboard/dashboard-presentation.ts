@@ -11,11 +11,21 @@ import { DASHBOARD_TIERS, type DashboardActivityItem, type DashboardActivityKind
  * Each tier uses its own metal: warm saturated gold, cool neutral silver, and
  * deep copper-brown bronze. Labels and shares always accompany the color.
  */
-export const TIER_COLORS: Record<DashboardTierCode, string> = {
+export const TIER_COLORS: Record<string, string> = {
   G1: "var(--color-tier-gold)",
   S1: "var(--color-tier-silver)",
   B1: "var(--color-tier-bronze)",
 };
+
+/** Extra tiers get a deterministic chart colour by position, from the brand series colours. */
+const FALLBACK_TIER_COLORS = ["var(--color-brand-primary)", "var(--color-accent)", "var(--color-info)", "var(--color-dashboard-violet)"];
+
+export function tierColor(code: DashboardTierCode): string {
+  if (TIER_COLORS[code]) return TIER_COLORS[code];
+  let hash = 0;
+  for (const char of code) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return FALLBACK_TIER_COLORS[hash % FALLBACK_TIER_COLORS.length];
+}
 
 /** Chart colors from the brand tokens; every dashboard uses the same meaning for a color. */
 export const SERIES_COLORS = {
@@ -28,7 +38,7 @@ export const SERIES_COLORS = {
 export function tierRows(rows: readonly TierDistributionRow[]): DistributionRow[] {
   return [...rows]
     .reverse()
-    .map((row) => ({ key: row.code, label: `VIP ${row.label}`, count: row.count, color: TIER_COLORS[row.code] }));
+    .map((row) => ({ key: row.code, label: `VIP ${row.label}`, count: row.count, color: tierColor(row.code) }));
 }
 
 const ACTIVITY_PRESENTATION: Record<DashboardActivityKind, { icon: LucideIcon; tone: DashboardTone; noun: string }> = {

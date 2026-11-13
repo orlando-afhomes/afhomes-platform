@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import { meetsPayoutRelease } from "@/modules/commissions/rules";
+import type { Commission } from "@/modules/commissions/types";
 import { buildScheduleState } from "@/modules/finance/rules";
 import type { Payment } from "@/modules/finance/types";
 import type { DevIdentity } from "@/modules/identity/types";
@@ -8,7 +9,6 @@ import type { CustomerDraftInput } from "@/modules/customers/types";
 import { currentManilaYear } from "@/modules/customers/customer-number";
 import { registerCustomer } from "@/modules/customers/application/register-customer";
 import { buildCardId, extractRaSequence } from "@/modules/membership/rules";
-import { computePointsLedger } from "@/modules/stay-points/engine";
 import { confirmedValueInPeriod, totalsFor } from "@/modules/sales/rules";
 import { addDaysToDate, addMonthsToDate, manilaToday, startOfNextMonthDate } from "@/shared/lib/dates";
 import { pesos } from "@/shared/lib/money";
@@ -18,6 +18,19 @@ import { createMockStore } from "./seed";
 
 function as(store: ReturnType<typeof createMockStore>, id: string) {
   return createMockRepositories(store, () => getDevIdentity(id));
+}
+
+function historicalCommission(store: ReturnType<typeof createMockStore>, saleId = "sale-1", recipientMemberId = "mem-ost-a1", percentBp = 500): Commission {
+  const sale = store.sales.find((item) => item.id === saleId)!;
+  const member = store.members.find((item) => item.id === recipientMemberId)!;
+  const entry: Commission = {
+    id: `test-commission-${store.commissions.length}`, saleId, contractId: sale.contractId,
+    recipientMemberId, recipientName: member.displayName, recipientDesignation: member.designation,
+    basisCentavos: sale.valueCentavos, percentBp, amountCentavos: sale.valueCentavos * percentBp / 10_000,
+    status: "approved", approvedAt: manilaToday(), approvedBy: "dev-finance", holdReason: null, payout: null, history: [],
+  };
+  store.commissions.push(entry);
+  return entry;
 }
 
 /** Minimum Submit-ready customer; Customer ID tests override only the ID fields. */
@@ -186,50 +199,19 @@ async function collectMa2(store: ReturnType<typeof createMockStore>) {
   return payment.id;
 }
 
-/** Moves a contract's verification dates into the previous month so the payout release (first day of the next month, R8) has passed. */
+/** Posts a contract's receipts to a previous month so the payout window has opened. */
 function ageVerifications(store: ReturnType<typeof createMockStore>, contractId: string) {
   const past = addMonthsToDate(manilaToday(), -1)!;
-  for (const payment of store.payments) if (payment.contractId === contractId && payment.verifiedDate) payment.verifiedDate = past;
+  for (const payment of store.payments) if (payment.contractId === contractId && payment.verifiedDate) payment.countedDate = past;
 }
 
-describe("card id and points rules", () => {
+describe("card id rules", () => {
   it("builds the documented example Card ID", () => {
     expect(buildCardId({ activationDate: "2027-03-20", raNumber: "2027-0001", tierCode: "G1", paymentCode: "C01", classification: "S" })).toEqual({ cardId: "27032000001G1C01S" });
     expect(buildCardId({ activationDate: "2027-03-20", raNumber: null, tierCode: "G1", paymentCode: "C01", classification: "S" })).toHaveProperty("error");
     expect(buildCardId({ activationDate: "2027-03-20", raNumber: "2027-0001", tierCode: "G1", paymentCode: null, classification: "S" })).toHaveProperty("error");
   });
 
-  it("splits Bronze spend 700 weekday and 300 weekend once the minimum is reached", () => {
-    const store = createMockStore();
-    const memb = store.memberships.find((m) => m.id === "memb-1")!;
-    const contract = store.contracts.find((c) => c.id === memb.contractId)!;
-    const spends = store.resortSpends.filter((s) => s.membershipId === "memb-1" && s.status === "verified");
-    const first = computePointsLedger(memb.activationDate!, contract.benefits, [spends[0]]);
-    expect(first.balances.pending).toBe(400);
-    expect(first.balances.spendableWeekday).toBe(0);
-    const both = computePointsLedger(memb.activationDate!, contract.benefits, spends);
-    expect(both.balances.spendableWeekday).toBe(700);
-    expect(both.balances.spendableWeekend).toBe(300);
-  });
-
-  it("caps Bronze credit at 10,000 and records the excess", () => {
-    const store = createMockStore();
-    const contract = store.contracts.find((c) => c.id === "ctr-2")!;
-    const ledger = computePointsLedger("2026-11-02", contract.benefits, [
-      { id: "x", membershipId: "memb-1", date: "2026-11-03", amountCentavos: pesos(12000), description: "", status: "verified", verificationRef: null },
-    ]);
-    expect(ledger.entries[0].earnedWeekday + ledger.entries[0].earnedWeekend).toBe(10000);
-    expect(ledger.entries[0].cappedExcess).toBe(2000);
-  });
-
-  it("blocks fractional splits instead of rounding", () => {
-    const store = createMockStore();
-    const contract = store.contracts.find((c) => c.id === "ctr-2")!;
-    const ledger = computePointsLedger("2026-11-02", contract.benefits, [
-      { id: "y", membershipId: "memb-1", date: "2026-11-03", amountCentavos: pesos(5), description: "", status: "verified", verificationRef: null },
-    ]);
-    expect(ledger.entries[0].status).toBe("blocked_rounding");
-  });
 });
 
 describe("sales reporting examples (doc 13)", () => {
@@ -331,7 +313,7 @@ describe("contract, payment, sale and membership workflow", () => {
     expect(sale.status).toBe("confirmed");
     expect(sale.adjustments.at(-1)?.amountCentavos).toBe(pesos(72000));
 
-    const [first] = await finance.commissions.approve({ saleId: "sale-4", entries: [{ memberId: "mem-svd-a", percentBp: 100 }] });
+    const first = historicalCommission(store, "sale-4", "mem-svd-a", 100);
     await finance.payments.adjust(ma1.id, { kind: "refund", amountCentavos: pesos(15500), reason: "Customer refund" });
     expect(sale.status).toBe("pending");
     expect(sale.adjustments.at(-1)?.amountCentavos).toBe(-pesos(72000));
@@ -366,6 +348,53 @@ describe("contract, payment, sale and membership workflow", () => {
     await expect(clerk.payments.verify("pay-4")).rejects.toThrow();
   });
 
+  it("requires separate sale approval and counts 25% before contract finalization", async () => {
+    const store = createMockStore();
+    const sale = store.sales.find((item) => item.id === "sale-4")!;
+    sale.approval = null;
+    const finance = as(store, "dev-finance");
+    const clerk = as(store, "dev-clerk");
+    await expect(finance.payments.verify("pay-4")).rejects.toThrow(/sale.*approv/i);
+    await expect(clerk.sales.approve(sale.id)).rejects.toThrow(/Administrator/i);
+    await as(store, "dev-admin").sales.approve(sale.id);
+    await finance.payments.verify("pay-4");
+    const older = await clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(8000), method: "Cash", paidDate: "2026-11-06", referenceNo: "EXACT25" });
+    await finance.payments.verify(older.id);
+    expect(sale).toMatchObject({ status: "confirmed", confirmedDate: "2026-11-07" });
+    expect(store.contracts.find((item) => item.id === "ctr-4")!.status).toBe("under_review");
+  });
+
+  it("keeps a closed snapshot and admits late receipts in the first open month", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const finance = as(store, "dev-finance");
+    const clerk = as(store, "dev-clerk");
+    await expect(finance.sales.closeMonth("2026-10")).rejects.toThrow(/Administrator/);
+    const snapshot = await admin.sales.closeMonth("2026-10");
+    const late = await clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(18000), method: "Cash", paidDate: "2026-10-31", referenceNo: "LATE25" });
+    expect(await finance.payments.verify(late.id)).toMatchObject({ paidDate: "2026-10-31", countedDate: "2026-11-01" });
+    const sale = store.sales.find((item) => item.id === "sale-4")!;
+    expect(sale.confirmedDate).toBe("2026-10-31");
+    expect(sale.adjustments.at(-1)?.date).toBe("2026-11-01");
+    expect(await admin.sales.closeMonth("2026-10")).toEqual(snapshot);
+  });
+
+  it("marks an approved 90-day sale Defaulted and restores it when an approved receipt arrives", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const finance = as(store, "dev-finance");
+    const clerk = as(store, "dev-clerk");
+    const sale = store.sales.find((item) => item.id === "sale-4")!;
+    sale.recordedDate = addDaysToDate(manilaToday(), -90)!;
+    expect(await admin.sales.getById(sale.id)).toMatchObject({ defaultEligible: true });
+    await expect(finance.sales.markDefaulted(sale.id, "No receipt for 90 days")).rejects.toThrow(/Administrator/);
+    expect(await admin.sales.markDefaulted(sale.id, "No receipt for 90 days")).toMatchObject({ status: "defaulted" });
+    const payment = await clerk.payments.submit({ contractId: sale.contractId, purpose: "installment", amountCentavos: pesos(18000), method: "Cash", paidDate: manilaToday(), referenceNo: "CURE90" });
+    await finance.payments.verify(payment.id);
+    expect(sale.status).toBe("confirmed");
+    expect(store.auditEvents.some((item) => item.action === "SALE_REINSTATED" && item.entityId === sale.id)).toBe(true);
+  });
+
   it("requires a reference number and blocks one already used on any contract (R6)", async () => {
     const store = createMockStore();
     const clerk = as(store, "dev-clerk");
@@ -376,25 +405,49 @@ describe("contract, payment, sale and membership workflow", () => {
     await expect(clerk.payments.submit({ ...base, referenceNo: "FRESH-1" })).resolves.toMatchObject({ referenceNo: "FRESH-1" });
   });
 
+  it("requires a reason to approve a possible matching receipt", async () => {
+    const store = createMockStore();
+    const clerk = as(store, "dev-clerk");
+    const finance = as(store, "dev-finance");
+    const entered = { contractId: "ctr-4", purpose: "installment" as const, amountCentavos: pesos(1200), method: "Cash" as const, paidDate: manilaToday() };
+    const first = await clerk.payments.submit({ ...entered, referenceNo: "MATCH-A" });
+    await clerk.payments.submit({ ...entered, referenceNo: "MATCH-B" });
+    await expect(finance.payments.verify(first.id)).rejects.toThrow(/explain/i);
+    expect((await finance.payments.verify(first.id, { exceptionReason: "Separate signed receipt checked." })).history.at(-1)?.note).toBe("Separate signed receipt checked.");
+  });
+
   it("lets only the submitter or a broad role fix and resend a returned receipt, keeping the original in history (F6.4)", async () => {
     const store = createMockStore();
     const finance = as(store, "dev-finance");
-    const entered = await as(store, "dev-clerk").payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(15500), method: "Cash", paidDate: manilaToday(), referenceNo: "FIX-1" });
+    const clerk = as(store, "dev-clerk");
+    const entered = await clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(15500), method: "Cash", paidDate: manilaToday(), referenceNo: "FIX-1", evidenceFileName: "original.pdf" });
     await finance.payments.returnForCorrection(entered.id, "Wrong date");
     // Finance did not enter this receipt and holds no broad entry role, so it cannot resend it.
     await expect(finance.payments.resubmit(entered.id, { paidDate: "2026-11-06" })).rejects.toThrow(/not allowed|only the submitter/i);
+    await expect(clerk.payments.resubmit(entered.id, { method: "GCash" })).rejects.toThrow(/reference/i);
     expect(store.payments.find((p) => p.id === entered.id)!.status).toBe("returned");
-    const fixed = await as(store, "dev-clerk").payments.resubmit(entered.id, { paidDate: "2026-11-06", referenceNo: "FIX-2" });
-    expect(fixed).toMatchObject({ status: "submitted", paidDate: "2026-11-06", referenceNo: "FIX-2" });
+    await expect(clerk.payments.resubmit(entered.id, { referenceNo: "FIX-2" })).rejects.toThrow(/reference/i);
+    const fixed = await clerk.payments.resubmit(entered.id, { paidDate: "2026-11-06", method: "Cheque", evidenceFileName: "corrected.pdf" });
+    expect(fixed).toMatchObject({ status: "submitted", paidDate: "2026-11-06", referenceNo: "FIX-1", evidenceFileName: "corrected.pdf" });
     expect(fixed.history.map((entry) => entry.event)).toEqual(["PAYMENT_SUBMITTED", "PAYMENT_RETURNED", "PAYMENT_RESUBMITTED"]);
+    expect(fixed.history.at(-1)).toMatchObject({ previousVersion: {
+      amountCentavos: entered.amountCentavos, paidDate: entered.paidDate, method: "Cash",
+      purpose: "installment", referenceNo: "FIX-1", evidenceFileName: "original.pdf",
+    } });
+    await finance.payments.returnForCorrection(entered.id, "Wrong amount");
+    const resentAgain = await clerk.payments.resubmit(entered.id, { amountCentavos: pesos(15000) });
+    expect(resentAgain.history.filter((entry) => entry.previousVersion).map((entry) => entry.previousVersion?.evidenceFileName))
+      .toEqual(["original.pdf", "corrected.pdf"]);
+    await expect(finance.payments.verify(entered.id)).resolves.toMatchObject({ status: "verified", referenceNo: "FIX-1" });
+    await finance.payments.returnForCorrection("pay-4", "Check receipt date");
+    await expect(clerk.payments.resubmit("pay-4", { paidDate: "2026-11-06" })).rejects.toThrow(/submitter/i);
   });
 
   it("pays a commission only after confirmed disbursement and never twice", async () => {
     const store = createMockStore();
     const finance = as(store, "dev-finance");
-    const [commission] = await finance.commissions.approve({ saleId: "sale-1", entries: [{ memberId: "mem-ost-a1", percentBp: 500 }] });
+    const commission = historicalCommission(store);
     expect(commission.amountCentavos).toBe(pesos(12000));
-    await expect(finance.commissions.approve({ saleId: "sale-1", entries: [{ memberId: "mem-ost-a1", percentBp: 500 }] })).rejects.toThrow(/already/);
     await expect(finance.commissions.confirmPayout(commission.id)).rejects.toThrow();
     await collectMa2(store);
     await finance.commissions.recordPayout(commission.id, { reference: "PAYREF", payoutDate: manilaToday() });
@@ -422,15 +475,43 @@ describe("contract, payment, sale and membership workflow", () => {
       const payment = await clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(15500), method: "Cash", paidDate: manilaToday(), referenceNo: `MA${index}` });
       await finance.payments.verify(payment.id);
     }
-    await expect(admin.memberships.activate(membership.id)).rejects.toThrow(/RA/);
-    await admin.contracts.recordRaNumber("ctr-4", "2026-0002");
-    await expect(admin.contracts.recordRaNumber("ctr-1", "2026-0002")).rejects.toThrow(/already/);
+    await expect(admin.memberships.activate(membership.id)).rejects.toThrow(/VIP Number/);
+    store.commissionRateSettings.push({ memberId: "mem-ost-a2", product: "VIP", role: "DSC", rateBp: 0, standardRateBp: 0 });
+    const issued = await admin.contracts.recordSignedAgreement("ctr-4");
     await expect(clerk.memberships.activate(membership.id)).rejects.toThrow();
     const active = await finance.memberships.activate(membership.id); // Finance activates too (owner ruling 2026-11-09)
-    const today = manilaToday().replace(/-/g, "").slice(2);
-    expect(active.cardId).toBe(`${today}00002B1T04S`);
+    expect(active.cardId).toBe(issued.vipNumber);
     expect(active.cardId).toHaveLength(17);
+    expect(active.validityEndDate).toBeNull();
+    expect(await finance.memberships.recordCardClaim(membership.id)).toMatchObject({ cardClaimDate: manilaToday(), cardClaimKind: "actual" });
     await expect(admin.memberships.activate(membership.id)).rejects.toThrow(/already/);
+  });
+
+  it("records a deemed card claim once when first encountered by a membership read", async () => {
+    const store = createMockStore();
+    const membership = store.memberships.find((item) => item.id === "memb-1")!;
+    membership.cardClaimDate = null;
+    membership.fullSettlementDate = "2025-10-31";
+    const admin = as(store, "dev-admin");
+    const expected = { cardClaimDate: "2026-10-31", cardClaimKind: "deemed", validityEndDate: "2033-10-31" };
+    expect((await admin.memberships.list()).find((item) => item.id === membership.id)).toMatchObject(expected);
+    expect(membership).toMatchObject(expected);
+    await admin.memberships.recordCardClaim(membership.id);
+    expect(store.auditEvents.filter((item) => item.action === "CARD_CLAIM_DEEMED" && item.entityId === membership.id)).toHaveLength(1);
+  });
+
+  it("records approved card servicing without issuing a different VIP Number", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const membership = store.memberships.find((item) => item.id === "memb-1")!;
+    const existingNumber = membership.cardId;
+    const request = { kind: "transfer" as const, nextCustomerId: "cust-a6", holderNotified: false, requestReference: "REQ-1", approvalReference: "APP-1" };
+    await expect(as(store, "dev-finance").memberships.serviceCard(membership.id, request)).rejects.toThrow(/management approval/i);
+    await expect(admin.memberships.serviceCard(membership.id, request)).rejects.toThrow(/notify/i);
+    const updated = await admin.memberships.serviceCard(membership.id, { ...request, holderNotified: true });
+    expect(updated).toMatchObject({ customerId: "cust-a6", cardId: existingNumber });
+    expect(updated.cardServices?.[0]).toMatchObject({ kind: "transfer", previousCustomerId: "cust-b1", approvalReference: "APP-1" });
+    await expect(admin.memberships.serviceCard(membership.id, { ...request, holderNotified: true })).rejects.toThrow(/already been recorded/i);
   });
 
   it("applies a Financial Hold when a verified payment is reversed on an active membership, then releases it", async () => {
@@ -446,10 +527,10 @@ describe("contract, payment, sale and membership workflow", () => {
 });
 
 describe("integrity guards (C1)", () => {
-  it("keeps an initiated payout on a reversed sale, flags it, and refuses to confirm or cancel it", async () => {
+  it("keeps an initiated payout on a reversed sale and allows void with history", async () => {
     const store = createMockStore();
     const finance = as(store, "dev-finance");
-    const [commission] = await finance.commissions.approve({ saleId: "sale-1", entries: [{ memberId: "mem-ost-a1", percentBp: 500 }] });
+    const commission = historicalCommission(store);
     const ma2 = await collectMa2(store);
     await finance.commissions.recordPayout(commission.id, { reference: "PAYREF", payoutDate: manilaToday() });
     await finance.payments.adjust(ma2, { kind: "reversal", amountCentavos: pesos(57500), reason: "Bank reversal" });
@@ -459,18 +540,20 @@ describe("integrity guards (C1)", () => {
     expect(held.status).toBe("on_hold");
     expect(held.holdReason).toMatch(/payout was recorded but not confirmed/);
     expect(held.payout).toMatchObject({ reference: "PAYREF", confirmedAt: null });
-    await expect(finance.commissions.confirmPayout(commission.id)).rejects.toThrow(/approved/);
     await expect(finance.commissions.cancel(commission.id, "Sale reversed")).rejects.toThrow(/not confirmed/);
     await expect(finance.commissions.resolveHold(commission.id, "cancel", "Sale reversed")).rejects.toThrow(/not confirmed/);
-    await expect(finance.commissions.resolveHold(commission.id, "restore", "Try")).rejects.toThrow(/not Confirmed/);
-    expect(held.payout).toMatchObject({ reference: "PAYREF", confirmedAt: null });
+    await expect(finance.commissions.resolveHold(commission.id, "restore", "Try")).rejects.toThrow(/no longer Confirmed/);
+    await finance.commissions.voidPayout(commission.id, "The transfer was not made");
+    expect(held.payout).toBeNull();
+    expect(held.previousPayouts).toEqual([expect.objectContaining({ reference: "PAYREF", reason: "The transfer was not made" })]);
     expect(held.status).toBe("on_hold");
   });
 
   it("refuses to record or confirm a payout once the sale is no longer Confirmed", async () => {
     const store = createMockStore();
     const finance = as(store, "dev-finance");
-    const [first, second] = await finance.commissions.approve({ saleId: "sale-1", entries: [{ memberId: "mem-ost-a1", percentBp: 500 }, { memberId: "mem-sm-a", percentBp: 100 }] });
+    const first = historicalCommission(store);
+    const second = historicalCommission(store, "sale-1", "mem-sm-a", 100);
     await collectMa2(store);
     await finance.commissions.recordPayout(second.id, { reference: "PAY-2", payoutDate: manilaToday() });
     // Defense in depth: every current path holds approved commissions when a sale leaves Confirmed, but payout steps still re-check the sale.
@@ -485,7 +568,7 @@ describe("integrity guards (C1)", () => {
     const store = createMockStore();
     await as(store, "dev-admin").contracts.cancel("ctr-4", "Customer withdrew");
     const finance = as(store, "dev-finance");
-    await expect(finance.payments.verify("pay-4")).rejects.toThrow(/cancelled/);
+    await expect(finance.payments.verify("pay-4")).rejects.toThrow(/closed|cancelled/);
     expect(store.payments.find((p) => p.id === "pay-4")!.status).toBe("submitted");
     expect((await finance.payments.reject("pay-4", "Contract cancelled")).status).toBe("rejected");
   });
@@ -512,19 +595,20 @@ describe("integrity guards (C1)", () => {
     expect(store.payments.find((p) => p.id === own.id)!.history.some((h) => (h.note ?? "").includes("Self-approved"))).toBe(true);
   });
 
-  it("records an RA only on a finalized contract, with an exact 4-digit sequence and its previous value audited", async () => {
+  it("pauses VIP issuance for a missing rate, accepts approved zero, and issues once", async () => {
     const store = createMockStore();
     const admin = as(store, "dev-admin");
     expect(extractRaSequence("2027-0001")).toBe("0001");
     expect(extractRaSequence("2027-1")).toBeNull();
     expect(extractRaSequence("2027-00001")).toBeNull();
-    await expect(admin.contracts.recordRaNumber("ctr-3", "2026-0007")).rejects.toThrow(/finalized/);
-    await expect(admin.contracts.recordRaNumber("ctr-1", "2026-7")).rejects.toThrow(/4-digit/);
-    await expect(admin.contracts.recordRaNumber("ctr-1", "2026-0001")).rejects.toThrow(/already/);
-    await admin.contracts.recordRaNumber("ctr-1", "2026-0007");
-    await admin.contracts.recordRaNumber("ctr-1", "2026-0008");
-    const events = store.auditEvents.filter((e) => e.action === "CONTRACT_RA_RECORDED" && e.entityId === "ctr-1");
-    expect(events.map((e) => [e.previousValue, e.newValue])).toEqual([["not recorded", "2026-0007"], ["2026-0007", "2026-0008"]]);
+    await expect(admin.contracts.recordSignedAgreement("ctr-4")).rejects.toThrow(/approved DSC rate/);
+    expect(store.contracts.find((item) => item.id === "ctr-4")!.vipNumber).toBeUndefined();
+    store.commissionRateSettings.push({ memberId: "mem-ost-a2", product: "VIP", role: "DSC", rateBp: 0, standardRateBp: 0 });
+    const issued = await admin.contracts.recordSignedAgreement("ctr-4");
+    expect(issued.vipNumber).toMatch(/^\d{11}B1T04S$/);
+    expect((await admin.contracts.recordSignedAgreement("ctr-4")).vipNumber).toBe(issued.vipNumber);
+    const events = store.auditEvents.filter((e) => e.action === "CONTRACT_RA_RECORDED" && e.entityId === "ctr-4");
+    expect(events.map((e) => e.newValue)).toEqual([issued.vipNumber]);
   });
 
   it("audits the actual previous contract status on finalize and the previous Customer ID on correction", async () => {
@@ -670,7 +754,7 @@ describe("Move schemes with an authorized Card ID payment code (06 section 6.3, 
   it.each([
     ["scheme-move-a", pesos(54000)],
     ["scheme-move-b", pesos(72000)],
-  ])("%s: pays and finalizes, and activation issues a B1 T04 Card ID", async (schemeId, price) => {
+  ])("%s: pays and finalizes, and activation reuses the B1 T04 VIP Number", async (schemeId, price) => {
     const store = createMockStore();
     const superAdmin = as(store, "dev-super-admin");
     const finance = as(store, "dev-finance");
@@ -682,6 +766,7 @@ describe("Move schemes with an authorized Card ID payment code (06 section 6.3, 
     await superAdmin.contracts.startReview(prepared.id);
     const finalized = await superAdmin.contracts.finalize(prepared.id);
     expect(finalized.status).toBe("finalized");
+    await superAdmin.sales.approve(store.sales.find((item) => item.contractId === prepared.id)!.id);
 
     for (const [index, line] of prepared.schedule.entries()) {
       const payment = await superAdmin.payments.submit({ contractId: prepared.id, purpose: line.purpose, amountCentavos: line.amountCentavos, method: "Cash", paidDate: manilaToday(), referenceNo: `${schemeId}-${index}` });
@@ -691,13 +776,13 @@ describe("Move schemes with an authorized Card ID payment code (06 section 6.3, 
     expect(verified).toBe(price);
     expect(store.sales.find((s) => s.contractId === prepared.id)!.status).toBe("confirmed");
 
-    await superAdmin.contracts.recordRaNumber(prepared.id, "2026-0009");
+    store.commissionRateSettings.push({ memberId: prepared.sellerMemberId!, product: "VIP", role: "DSC", rateBp: 0, standardRateBp: 0 });
+    const issued = await superAdmin.contracts.recordSignedAgreement(prepared.id);
     const membership = store.memberships.find((m) => m.contractId === prepared.id)!;
     const active = await finance.memberships.activate(membership.id);
-    const today = manilaToday().replace(/-/g, "").slice(2);
-    expect(active.cardId).toBe(`${today}00009B1T04S`);
-    expect(active.cardId).toMatch(/^\d{6}0\d{4}B1T04S$/);
-    expect(store.auditEvents.some((e) => e.action === "CARD_ID_ISSUED" && e.relatedRecordIds?.includes(prepared.id))).toBe(true);
+    expect(active.cardId).toBe(issued.vipNumber);
+    expect(active.cardId).toMatch(/^\d{11}B1T04S$/);
+    expect(store.auditEvents.some((e) => e.action === "VIP_NUMBER_ISSUED" && e.entityId === prepared.id)).toBe(true);
   });
 
   it("keeps the official codes and the historical Card ID: Spot Cash C01, 4-month installment T04", () => {
@@ -876,15 +961,16 @@ describe("owner-decided restrictions (C2)", () => {
     const prepared = await superAdmin.contracts.prepare({ customerId: "cust-a3", schemeId: "scheme-move-b", customerAccepted: true });
     await superAdmin.contracts.submit(prepared.id);
     await superAdmin.contracts.finalize(prepared.id);
+    await superAdmin.sales.approve(store.sales.find((item) => item.contractId === prepared.id)!.id);
     const full = await superAdmin.payments.submit({ contractId: prepared.id, purpose: "full", amountCentavos: pesos(390000), method: "Bank Transfer", paidDate: manilaToday(), referenceNo: "MOVE-B-GOLD-FULL" });
     await finance.payments.verify(full.id);
     expect(store.sales.find((s) => s.contractId === prepared.id)!.status).toBe("confirmed");
-    await superAdmin.contracts.recordRaNumber(prepared.id, "2026-0011");
+    store.commissionRateSettings.push({ memberId: prepared.sellerMemberId!, product: "VIP", role: "DSC", rateBp: 0, standardRateBp: 0 });
+    const issued = await superAdmin.contracts.recordSignedAgreement(prepared.id);
     const membership = store.memberships.find((m) => m.contractId === prepared.id)!;
     const active = await finance.memberships.activate(membership.id);
-    const today = manilaToday().replace(/-/g, "").slice(2);
-    expect(active.cardId).toBe(`${today}00011G1T12S`);
-    expect(active.cardId).toMatch(/^\d{6}0\d{4}G1T12S$/);
+    expect(active.cardId).toBe(issued.vipNumber);
+    expect(active.cardId).toMatch(/^\d{11}G1T12S$/);
   });
 
   it("resolves the payment code on a finalized pre-resolution legacy contract", async () => {
@@ -940,7 +1026,7 @@ describe("owner-decided restrictions (C2)", () => {
 
     const store = createMockStore();
     const finance = as(store, "dev-finance");
-    const [commission] = await finance.commissions.approve({ saleId: "sale-1", entries: [{ memberId: "mem-ost-a1", percentBp: 500 }] });
+    const commission = historicalCommission(store);
     await expect(finance.commissions.recordPayout(commission.id, { reference: "P1", payoutDate: manilaToday() })).rejects.toThrow(/40%.*currently 28%/);
     expect(store.commissions.find((c) => c.id === commission.id)!.payout).toBeNull();
     const ma2 = await as(store, "dev-clerk").payments.submit({ contractId: "ctr-1", purpose: "installment", amountCentavos: pesos(57500), method: "Cash", paidDate: manilaToday(), referenceNo: "MA2" });
@@ -958,7 +1044,7 @@ describe("owner-decided restrictions (C2)", () => {
   it("requires a verifiable threshold date before recording a payout", async () => {
     const store = createMockStore();
     const finance = as(store, "dev-finance");
-    const [commission] = await finance.commissions.approve({ saleId: "sale-1", entries: [{ memberId: "mem-ost-a1", percentBp: 500 }] });
+    const commission = historicalCommission(store);
     const payment = await as(store, "dev-clerk").payments.submit({ contractId: "ctr-1", purpose: "installment", amountCentavos: pesos(57500), method: "Cash", paidDate: manilaToday(), referenceNo: "MA2" });
     await finance.payments.verify(payment.id);
     store.payments.find((item) => item.id === payment.id)!.verifiedDate = null;
@@ -971,7 +1057,7 @@ describe("owner-decided restrictions (C2)", () => {
     const store = createMockStore();
     const admin = as(store, "dev-admin");
     const finance = as(store, "dev-finance");
-    const [commission] = await finance.commissions.approve({ saleId: "sale-1", entries: [{ memberId: "mem-ost-a1", percentBp: 500 }] });
+    const commission = historicalCommission(store);
 
     await expect(admin.contracts.cancel("ctr-1", "Customer withdrew")).rejects.toThrow(/Request a cancellation/);
     await expect(admin.contracts.requestCancellation("ctr-1", "other" as never, "x")).rejects.toThrow(/ground/);
@@ -991,7 +1077,7 @@ describe("owner-decided restrictions (C2)", () => {
     const sale = store.sales.find((s) => s.id === "sale-1")!;
     expect(sale.status).toBe("cancelled");
     expect(sale.adjustments.at(-1)).toMatchObject({ amountCentavos: -sale.valueCentavos, date: manilaToday() });
-    expect(store.commissions.find((c) => c.id === commission.id)).toMatchObject({ status: "on_hold", holdReason: "The contract was cancelled with forfeiture." });
+    expect(store.commissions.find((c) => c.id === commission.id)).toMatchObject({ status: "on_hold", holdTrigger: "cancellation" });
     expect(store.memberships.find((m) => m.contractId === "ctr-1")!.status).toBe("cancelled");
     expect(store.payments.filter((p) => p.contractId === "ctr-1").map((p) => p.status)).toEqual(["verified", "verified"]);
     const actions = store.auditEvents.filter((e) => e.relatedRecordIds?.includes("ctr-1") || e.entityId === "ctr-1").map((e) => e.action);
@@ -1109,25 +1195,29 @@ describe("public accreditation verification", () => {
   });
 });
 
-describe("stay points reconciliation", () => {
-  it("keeps points pending if excluding held and voided spend puts the cycle below its minimum", async () => {
+describe("resort bills", () => {
+  it("lets Clerk enter a bill, blocks duplicate ORs and permits Finance approval only", async () => {
     const store = createMockStore();
-    store.resortSpends.find((spend) => spend.id === "rs-2")!.amountCentavos = pesos(500);
+    const clerk = as(store, "dev-clerk");
     const finance = as(store, "dev-finance");
-    const before = (await finance.stayPoints.list()).find((record) => record.membershipId === "memb-1")!;
-    expect(before.ledger.balances).toMatchObject({ pending: 900, held: 500, spendableWeekday: 0, spendableWeekend: 0 });
-
-    const after = await finance.stayPoints.reconcileHold("rs-3", "void", "Refund confirmed");
-    expect(after.ledger.cycles[0]).toMatchObject({ verifiedSpendCentavos: pesos(900), minimumReached: false });
-    expect(after.ledger.balances).toMatchObject({ pending: 900, held: 0, spendableWeekday: 0, spendableWeekend: 0 });
-    expect(after.ledger.entries).toContainEqual(expect.objectContaining({ spendId: "rs-3", status: "voided" }));
+    const input = {
+      action: "enter", membershipId: "memb-1", venueId: "venue-wellness-hotel", date: manilaToday(),
+      grossCentavos: pesos(1200), excludedCentavos: pesos(100), reference: "TEST-STAY-OR", holder: "primary", description: "Restaurant",
+    } as const;
+    const entered = await clerk.stayPoints.act(input);
+    const bill = entered.spends.at(-1)!;
+    expect(bill).toMatchObject({ status: "submitted", amountCentavos: pesos(1100) });
+    await expect(finance.stayPoints.act({ ...input, reference: "test-stay-or" })).rejects.toThrow(/already used/);
+    await expect(clerk.stayPoints.act({ action: "approve", spendId: bill.id })).rejects.toThrow(/Only Finance/);
+    expect((await finance.stayPoints.act({ action: "approve", spendId: bill.id })).spends.at(-1)).toMatchObject({ status: "verified", approvedBy: "dev-finance" });
   });
 
-  it("lets only Finance reconcile held points", async () => {
+  it("records refunds as separate events while preserving the original bill", async () => {
     const store = createMockStore();
-    await expect(as(store, "dev-admin").stayPoints.reconcileHold("rs-3", "release", "ok")).rejects.toThrow();
-    const result = await as(store, "dev-finance").stayPoints.reconcileHold("rs-3", "release", "Refund reversed");
-    expect(result.ledger.balances.held).toBe(0);
-    expect(result.ledger.balances.spendableWeekday).toBe(1050);
+    const input = { action: "refund", spendId: "rs-1", date: manilaToday(), amountCentavos: pesos(100), reason: "Part of the bill was refunded." } as const;
+    await expect(as(store, "dev-clerk").stayPoints.act(input)).rejects.toThrow(/Only Finance/);
+    const result = await as(store, "dev-finance").stayPoints.act(input);
+    expect(result.refunds).toContainEqual(expect.objectContaining({ spendId: "rs-1", amountCentavos: pesos(100) }));
+    expect(result.spends.find((bill) => bill.id === "rs-1")).toMatchObject({ amountCentavos: pesos(400), status: "verified" });
   });
 });

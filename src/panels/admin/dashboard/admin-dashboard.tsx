@@ -3,7 +3,8 @@
 import { useMemo } from "react";
 import { ChartColumn, ClipboardCheck, Coins, FileText, Layers, ListChecks, UserPlus, Users, Wallet } from "lucide-react";
 import { useCustomers, useEffectiveModuleIds, useMembers } from "@/data/queries";
-import { useContracts, useMemberships, useOperation, usePayments, useSales } from "@/data/business-queries";
+import { useContracts, useMemberships, useOperation, usePayments, useSales, useVipProducts } from "@/data/business-queries";
+import { useIgpRegister } from "@/data/igp-queries";
 import { periodCollections } from "@/modules/finance/rules";
 import { confirmedValueInPeriod } from "@/modules/sales/rules";
 import { Money } from "@/shared/components/modern/money";
@@ -50,10 +51,13 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
   const canSeeActivation = granted.has("membership") && canActivate;
   const canSeeActivity = canSeeContracts || granted.has("finance");
 
+  const products = useVipProducts();
   const customers = useCustomers();
   const members = useMembers();
   const contracts = useContracts();
   const sales = useSales();
+  const igp = useIgpRegister(canSeeSales);
+  const reportingSales = useMemo(() => [...(sales.data ?? []), ...(igp.data?.sales ?? [])], [sales.data, igp.data]);
   const payments = usePayments();
   const memberships = useMemberships();
 
@@ -65,7 +69,7 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
         key: "sales",
         label: "Sales",
         color: SERIES_COLORS.primary,
-        values: dailyConfirmedSales(sales.data ?? [], dates),
+        values: dailyConfirmedSales(reportingSales, dates),
         emptyText: "No confirmed sales in this period.",
       });
     }
@@ -79,14 +83,14 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
       });
     }
     return list;
-  }, [canSeeSales, canViewCollections, sales.data, payments.data, dates]);
+  }, [canSeeSales, canViewCollections, reportingSales, payments.data, dates]);
   const { from, to, valid } = range;
   const salesTrend = useMemo(
-    () => (canSeeSales ? periodTrend({ from, to, valid }, (start, end) => confirmedValueInPeriod(sales.data ?? [], start, end)) : undefined),
-    [canSeeSales, from, to, valid, sales.data],
+    () => (canSeeSales ? periodTrend({ from, to, valid }, (start, end) => confirmedValueInPeriod(reportingSales, start, end)) : undefined),
+    [canSeeSales, from, to, valid, reportingSales],
   );
   const adjusted = canViewCollections && range.valid ? periodCollections(payments.data ?? [], range.from, range.to).adjusted : 0;
-  const tiers = useMemo(() => tierRows(contractTierDistribution(contracts.data ?? []).rows), [contracts.data]);
+  const tiers = useMemo(() => tierRows(contractTierDistribution(contracts.data ?? [], products.data).rows), [contracts.data, products.data]);
   const activity = useMemo(
     () =>
       toActivityEntries(
@@ -155,7 +159,7 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
             {canSeeSales ? (
               <DashboardKpiCard
                 label="Confirmed sales value"
-                value={range.valid ? <Money value={confirmedValueInPeriod(sales.data ?? [], range.from, range.to)} /> : "—"}
+                value={range.valid ? <Money value={confirmedValueInPeriod(reportingSales, range.from, range.to)} /> : "—"}
                 icon={Coins}
                 tone="violet"
                 scope={periodScope(range)}
@@ -179,7 +183,7 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
                 description={
                   series.length > 1
                     ? "Confirmed sales value or verified collections over time"
-                    : "Confirmed sales value over time, by Finance confirmation date."
+                    : "Confirmed sales value over time, by counted receipt date."
                 }
                 icon={ChartColumn}
                 dates={dates}

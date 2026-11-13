@@ -1,0 +1,42 @@
+/* Print / Save as PDF layout of the report pages. Imported at src/app/admin/reports/layout.tsx.
+ * Every rule is scoped to a page that contains .report-print__page, so other screens print as before. */
+
+.report-print__range {
+  display: none;
+}
+
+@media print {
+  body:has(.report-print__page) aside,
+  body:has(.report-print__page) header,
+  body:has(.report-print__page) main nav,
+  body:has(.report-print__page) [data-sonner-toaster],
+  body:has(.report-print__page) .report-print__hide {
+    display: none !important;
+  }
+
+  /* The sidebar is hidden, so drop the margin that made room for it. */
+  body:has(.report-print__page) div:has(> #main-content) {
+    margin-left: 0 !important;
+  }
+
+  body:has(.report-print__page) .report-print__range {
+    display: block;
+    font-size: 0.875rem;
+  }
+
+  body:has(.report-print__page) .report-print__page {
+    gap: 1rem;
+  }
+
+  body:has(.report-print__page) table {
+    font-size: 0.75rem;
+  }
+
+  body:has(.report-print__page) tr {
+    break-inside: avoid;
+  }
+
+  body:has(.report-print__page) thead {
+    display: table-header-group;
+  }
+}

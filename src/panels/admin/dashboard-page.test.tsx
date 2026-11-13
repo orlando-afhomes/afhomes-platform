@@ -161,7 +161,6 @@ describe("Finance dashboard with loaded records", () => {
 
     for (const [name, href] of [
       ["Payment Verification: 1 pending", "/admin/finance"],
-      ["Commission Assignment: 2 pending", "/admin/commissions/assignment"],
       ["Commission Payouts: 1 pending", "/admin/commissions/payouts"],
       ["Cancellation Requests: 1 pending", "/admin/finance/cancellations"],
       ["Financial Holds: 1 pending", "/admin/finance/holds"],

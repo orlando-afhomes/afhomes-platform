@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { Ban, ChartColumn, Coins, HandCoins, Landmark, ListChecks, PieChart, ReceiptText, ShieldAlert, UserCheck, Wallet } from "lucide-react";
+import { Ban, ChartColumn, Coins, HandCoins, Landmark, ListChecks, PieChart, ReceiptText, ShieldAlert, Wallet } from "lucide-react";
 import { useEffectiveModuleIds } from "@/data/queries";
-import { useCommissions, useContracts, useEligibleSales, useMemberships, useOperation, usePayments } from "@/data/business-queries";
+import { useCommissions, useContracts, useMemberships, useOperation, usePayments } from "@/data/business-queries";
 import { periodCollections } from "@/modules/finance/rules";
 import { Money } from "@/shared/components/modern/money";
 import { InfoNote } from "@/shared/components/modern/detail-list";
@@ -51,7 +51,6 @@ export function FinanceDashboard() {
   const canVerify = useOperation("finance.verify");
   const canDecideCancellations = useOperation("finance.refund");
   const canReconcile = useOperation("finance.reconcile");
-  const canAssign = useOperation("commission.approve");
   const canPayout = useOperation("commission.payout");
   const canActivate = useOperation("membership.activate");
 
@@ -62,7 +61,6 @@ export function FinanceDashboard() {
   const contracts = useContracts();
   const commissions = useCommissions();
   const memberships = useMemberships();
-  const eligible = useEligibleSales(hasCommissions && canAssign);
 
   const dates = useMemo(() => (valid ? dateSpan(from, to) : []), [valid, from, to]);
   const daily = useMemo(() => dailyCollections(payments.data ?? [], dates), [payments.data, dates]);
@@ -93,7 +91,6 @@ export function FinanceDashboard() {
   const kpiCount = [hasFinance, canViewCollections, hasFinance, hasCommissions].filter(Boolean).length;
   const queues = {
     payments: hasFinance && canVerify,
-    assignment: hasCommissions && canAssign,
     payouts: hasCommissions && canPayout,
     cancellations: hasFinance && canDecideCancellations,
     holds: hasFinance && canReconcile,
@@ -230,17 +227,6 @@ export function FinanceDashboard() {
                     tone="info"
                     loading={payments.isLoading}
                     error={payments.error}
-                  />
-                ) : null}
-                {queues.assignment ? (
-                  <DashboardPendingItem
-                    href="/admin/commissions/assignment"
-                    label="Commission Assignment"
-                    count={eligible.data?.length ?? 0}
-                    icon={UserCheck}
-                    tone="brand"
-                    loading={eligible.isLoading}
-                    error={eligible.error}
                   />
                 ) : null}
                 {queues.payouts ? (

@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Pencil } from "lucide-react";
-import { useOperation, useVipProducts } from "@/data/business-queries";
+import { Pencil, Plus } from "lucide-react";
+import { useDeleteProduct, useOperation, useProductDeleteBlockers, useVipProducts } from "@/data/business-queries";
 import type { VipProduct } from "@/modules/vip/types";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { Button } from "@/shared/ui/button";
+import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { matchesSearch } from "@/shared/lib/search";
 import { AdminPage } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { Money } from "@/shared/components/modern/money";
@@ -17,8 +19,19 @@ import { ProductDialog } from "../components/vip-product-dialogs";
 export function VipProductsPage() {
   const products = useVipProducts();
   const canManage = useOperation("vip-products.manage");
+  const blockers = useProductDeleteBlockers();
+  const deleteProduct = useDeleteProduct();
+  const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<VipProduct | null>(null);
   const [productCode, setProductCode] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [tierFilter, setTierFilter] = useState("all");
+  const tierNameOptions = useMemo(() => [...new Set((products.data ?? []).map((item) => item.tier))].map((tier) => ({ value: tier, label: tier })), [products.data]);
+  const visibleProducts = useMemo(
+    () => (products.data ?? []).filter((item) => (statusFilter === "all" || item.status === statusFilter) && (tierFilter === "all" || item.tier === tierFilter) && matchesSearch(search, item.name, item.code)),
+    [products.data, search, statusFilter, tierFilter],
+  );
 
   const productColumns = useMemo<ColumnDef<VipProduct, unknown>[]>(
     () => [
@@ -39,9 +52,20 @@ export function VipProductsPage() {
       title="Product Catalog"
       description="VIP tier catalog."
       crumbs={[{ label: "VIP Products", href: "/admin/vip-products" }, { label: "Product Catalog" }]}
+      actions={
+        canManage ? (
+          <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setCreating(true)}>
+            <Plus aria-hidden="true" /> New product
+          </Button>
+        ) : null
+      }
     >
         <QueryState isLoading={products.isLoading} error={products.error}>
-          <DataTable data={products.data ?? []} columns={productColumns} getRowId={(row) => row.code} emptyText="No products." caption="VIP product catalog" onRowOpen={(row) => setProductCode(row.code)} getRowLabel={(row) => `Open ${row.name}`} rowActions={(row) => <RowActionsMenu itemName={row.name} onView={() => setProductCode(row.code)} onEdit={canManage ? () => setEditing(row) : undefined} />} />
+          <FilterBar search={search} onSearch={setSearch} searchLabel="Search products" filters={[
+            { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: [{ value: "all", label: "All statuses" }, { value: "active", label: "Active" }, { value: "retired", label: "Retired" }] },
+            { label: "Tier filter", value: tierFilter, onChange: setTierFilter, options: [{ value: "all", label: "All tiers" }, ...tierNameOptions] },
+          ]} />
+          <DataTable data={visibleProducts} columns={productColumns} getRowId={(row) => row.code} emptyText={(products.data ?? []).length === 0 ? "No products." : "No products match the filters."} caption="VIP product catalog" onRowOpen={(row) => setProductCode(row.code)} getRowLabel={(row) => `Open ${row.name}`} rowActions={(row) => <RowActionsMenu itemName={row.name} onView={() => setProductCode(row.code)} onEdit={canManage ? () => setEditing(row) : undefined} onDelete={canManage && blockers.data && blockers.data[row.code] === null ? () => deleteProduct.mutateAsync({ code: row.code, reason: "Unused product removed from the catalog." }) : undefined} deleteDisabledReason={canManage ? blockers.data?.[row.code] : undefined} deleteDescription="This removes the product from the catalog. It has not been used, and the removal is recorded in the audit log." />} />
         </QueryState>
       <RecordDetailsSheet
         open={productDetail !== null}
@@ -76,7 +100,7 @@ export function VipProductsPage() {
         history={productDetail ? productDetail.changes.map((item) => ({ key: `v${item.version}`, when: `Version ${item.version} · ${item.date}`, text: `${item.summary} (${item.reason})` })) : []}
         footer={productDetail && canManage ? <Button type="button" variant="outline" onClick={() => { setEditing(productDetail); setProductCode(null); }}><Pencil aria-hidden="true" /> Edit product</Button> : undefined}
       />
-      <ProductDialog product={editing} onClose={() => setEditing(null)} />
+      <ProductDialog product={editing} creating={creating} onClose={() => { setEditing(null); setCreating(false); }} />
     </AdminPage>
   );
 }

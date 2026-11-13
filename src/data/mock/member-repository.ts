@@ -7,6 +7,7 @@ import type { OrgMember } from "@/modules/organization/types";
 import type { CreateAccreditedSellerInput, AccreditedSellerResult, CreateSalesNetworkMemberInput, ReferralSponsorVerificationResult, TransferSalesNetworkMemberTarget, UpdateSalesNetworkMemberInput } from "@/modules/sales-network/types";
 import { validateSalesParent, getDirectChildren, isValidParentEdge } from "@/modules/sales-network/genealogy";
 import { calculateApprovedExpiry, validateAccreditedSellerFields } from "@/modules/sales-network/accredited-seller";
+import { allowedValues } from "@/modules/settings/lists";
 import { allocateSharedAaNumber, collectReservedAaNumbers, toAaYearMonth, validateManualAaNumber } from "@/modules/accreditation/issuance";
 import { manilaToday, parseManilaDateOnly } from "@/modules/accreditation/dates";
 import { getCurrentAccreditationRecord, resolveAaNumber, resolveEffectiveAccreditationEligibility } from "@/modules/accreditation/eligibility";
@@ -639,8 +640,9 @@ export class MockMemberRepository implements MemberRepository {
    * The caller authorizes the actor: createAccreditedSeller above, and the OST application approval
    * (registration-repository), which is decided by the Administrator or Super Administrator (doc 03 section 9.2).
    */
-  async commitAccreditedSeller(identity: DevIdentity, input: CreateAccreditedSellerInput): Promise<AccreditedSellerResult> {
-    const fieldError = validateAccreditedSellerFields(input);
+  async commitAccreditedSeller(identity: DevIdentity, input: CreateAccreditedSellerInput, keepProgramCategory?: string): Promise<AccreditedSellerResult> {
+    // Active categories only; an approval keeps the category already saved on the application, even if since deactivated.
+    const fieldError = validateAccreditedSellerFields(input, allowedValues(this.store.referenceEntries, "program-category", [keepProgramCategory]));
     if (fieldError) throw new Error(fieldError);
 
     const email = input.email.trim();

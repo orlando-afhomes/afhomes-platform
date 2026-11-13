@@ -111,74 +111,72 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-13
-- Repository: afhomes-platform, remote `https://github.com/orlando-afhomes/afhomes-platform.git` (verified with `git remote -v` earlier this session)
-- Branch: develop
-- HEAD: d7a6ca5 (verified at save time). Commit `d7a6ca5` was pushed to `origin/develop` this session with the owner's explicit permission ("do the git add . && git commit && git push", one time only). Everything built after it is uncommitted.
-- Session objective: (1) `/load`; (2) commit and push the previous session's work (owner permission); (3) create the plan to finish the whole frontend prototype before any backend, database or API work; (4) build milestones M1 to M4, M9 and M10 with parallel subagents.
-- Development phase: frontend prototype with mock data, build stage. Only the owner declares the frontend complete. No backend work is authorized.
-- Context note: model switched by the owner between Sonnet 5.5 and Opus 5.5 several times. Plan was made on Opus 5.5 in plan mode, then approved; the build agents ran on Sonnet 5.5. Owner wants every reply in "explain like I am 5" language (memory `plain-language-questions.md`) and each reply starts with "Dos".
-- Plan file (outside the repo): `C:\Users\SSD-ORLANDO\.claude\plans\read-the-docs-claude-md-replicated-cloud.md` (milestones M1 to M11, inputs Dos must supply).
+
+- Saved at: 2026-11-13 (Asia/Singapore).
+- Repository: `C:/Users/SSD-ORLANDO/Documents/Project/afhomes-platform`. Configured origin: `https://github.com/orlando-afhomes/afhomes-platform.git`.
+- Branch: `develop`. HEAD and local `origin/develop` tracking ref both at `a0cba09` at save time. Remote was not fetched.
+- Objective: finish the remaining frontend prototype work in stages (M5, M6, M7, M8, M10–M11), preserving receipt fixes. The owner explicitly approved implementation and requested maximum available subagent participation.
+- Phase: frontend mock build and QA. Three subagents assisted with commissions/allowances, Stay Points/Redemption, and IGP. The owner decides prototype sign-off.
 
 ## 2. Current Project State
-- Audit this session (3 read-only agents) found much of the code still followed pre-2026-11-12 rules. Remaining prototype work is milestones M5 to M8 and M11 (see section 6).
-- Built this session (uncommitted, see section 4): error and status pages, sign-in return flow, Clerk role and permission rework, payment fix-and-resend, unique receipt references, accreditation expiry/renewal/alias history, vacant seats, public OST application and office review queue, customer approval flow and attribution, Redemption (with sample points table), reconciliation and historical receipt import.
-- Not touched yet: sale counting (25%), month close, VIP Number issuance and Card Claim Date, commissions (rates, payout list, clawback, allowances), stay-points engine rewrite (still Spend-to-Earn), card servicing, IGP module, report updates.
+
+- Next.js frontend using typed repositories, TanStack Query and synthetic browser-memory records. Full refresh restores seed data. Real authentication, backend, database and deployment still need separate authorization.
+- Main flows for M5–M8, period close and reporting exist in the working copy. This is not a sign-off. See `docs/implementation/README.md` and the related phase cards.
+- Workflow Atlas `2026-11-13.1`, baseline `develop @ a0cba09` plus the reviewed working copy. Viewer: `C:/Users/SSD-ORLANDO/.codex/visualizations/2026/11/13/01a1d2c4-6803-75d2-b0f7-ecc65baa94f1/afhomes-viewer/dist/index.html`. Prior release remains in its original folder.
 
 ## 3. Important Decisions
-- Owner answers this session: Redemption IS included in the prototype (Admin-editable points-per-night table with clearly marked SAMPLE rows); the 40% commission month uses the receipt date (doc 13 section 4.3 to 4.4, settles D-B); custom error pages for 400, 401, 403, 404, 500 and all error or warning states; a signed-out user returns to the requested page after sign-in; build order: M1 to M4, M9, M10 on Sonnet 5.5 (medium, M4 high), then M5 to M8 on Opus 5.5 (high).
-- Permission model now: `clerk` role exists; `customers.draft` (own draft only) for sellers; `customers.manage` (complete, submit) for Clerk, Admin, Super Admin; `customers.approve` for Admin and Super Admin; Administrator now holds `finance.verify`; sellers lost `payments.submit` and `contracts.prepare`.
-- Owner answers A1 to A8 (2026-11-12) and R1 to R13 still stand. Redemption build is authorized by the owner on 2026-11-13, but `AGENTS.md`, `CLAUDE.md` and doc 10 still say it is disabled; only the owner can authorize edits to `AGENTS.md`.
-- Git: only the owner commits or pushes. The one-time permission this session does not carry forward.
+
+- The owner chose staged delivery while business inputs are pending. Use the local October 4 AFHomes Sales and Collections (Rev Q) and Allowances (Rev E) workbooks and modules listed by Master File Register Issue 29 for comparison. Later dated owner rulings take precedence. Excel continues to pay during the parallel run.
+- VIP sale approval is separate from contract finalization. VIP milestones are 25%, 40% and 100% approved collections. Retain original receipt date and post late items to the first open month. IGP uses a separate monthly Series Number and frozen threshold (initially 10%).
+- Issue one VIP Number when recording the signed Reservation Agreement. Freeze applicable seller/referrer rates then. Missing approved rate pauses issuance, approved zero is valid. Activation reuses the number and validity starts at actual or deemed claim.
+- Automatic recovery waits for signed terms. Grant paperwork can be tracked while IGP benefits are pending. Redemption uses clearly marked sample configuration. Do not invent any unresolved policy, fees, rates, signed terms or workbook figures.
+- Owner prefers plain language and replies starting with Dos. Absolute Git rules in `AGENTS.md` remain in force.
 
 ## 4. Completed Work
-- M1a: `src/shared/components/status/` (StatusPage 400/401/403/404/500/notice), `src/app/error.tsx`, `global-error.tsx`, `src/app/status/[code]`, `not-found.tsx` restyled (`not-found.css` deleted), `src/shared/lib/safe-return-path.ts`, `admin-auth-gate.tsx` (401 view with `?next`), `login-form.tsx` (returns to `next`, passes the mock store to sign-in), `use-logout.ts` (sales go to `/login/sales`), `admin-page.tsx` uses the 403 view (heading still "Access restricted").
-- M1b: Fix and resend dialog (`payment-actions.tsx`), required and system-unique receipt reference with suggested-match hint (`finance/rules.ts`, `payment-repository.ts`), public header and home links, My Account password note, audit for role delete and department create/update.
-- M2: Clerk role, grants above, mock sign-in respects account status, Administrator "Set temporary password" (audited without the value), neutral forgot-password message, self-approved account activation flagged in audit, `ACCOUNT_UPDATED` audit.
-- M4a: expired sellers eligible with a reminder on the sale, renewal from the expiry month with a new monthly AA number, AA Number History and alias lookup, public verify shows "expired", `vacancy.ts` with seat vacancy and roll-up functions and repository methods, UI badges.
-- M4b: public OST application (`/register/ost`), private correction link (`/register/ost/correct/[token]`), admin queue `/admin/sales-network/registrations`, Clerk check then Administrator approve, return or reject; approval creates the OST and a Pending account.
-- M3: customer statuses `approved`, `sent_back`, `rejected`; closing seller chosen explicitly, optional referrer, referral reference when the same person is both; wizard step in the URL (`?step=`) with Back, Forward and the Save/Discard/Stay prompt; four synthetic customers `cust-a5` to `cust-a8`.
-- M9: `/admin/redemption` and `/admin/redemption/points-table`, `src/modules/redemption/`, versioned sample points table, booking, cancellation, forfeiture, `cancelFutureBookingsForTransfer`, `evaluateFirstRedemption`. No Services built (doc 10 defines none).
-- M10: `/admin/reports/reconciliation` and `/admin/reports/historical-import` (receipts only), new operations `reconciliation.manage`, `history-import.manage`, `history-import.signoff`.
-- Orchestrator edits: Clerk gets the `accreditation-registrations` module; login form and its test use the mock store; `admin-nav-match.test.ts` expects `redemption-group`; removed an unused variable in `genealogy.ts`.
+
+- Receipt correction and history: Administrator can open verification. Clerk can correct their own returned receipts from contract Payments. Reference remains fixed and prior versions are visible. Earlier Chrome check verified Clerk submission of ₱1,200, Finance return, Clerk correction to ₱1,250, and Finance verification with original version retained.
+- M5: separate sale approval, receipt milestones, late receipt posting, 90-day default and reinstatement, signed agreement/VIP issuance, actual and deemed claims. Payment Verification Exceptions handles submitted possible matches, conflicting references and approval blocks. See `src/data/mock/business-effects.ts`, `sale-repository.ts`, `contract-repository.ts`, `membership-repository.ts`, and untracked `card-claim.ts`.
+- M6: rate settings and frozen commission rates, product release stages, month-end payout lists and audit flags, held payout disposition, recovery ledger, late payout confirmation posting, and saved workbook-input allowance reviews. See `src/data/mock/commission-effects.ts`, `commission-repository.ts`, and `src/modules/commissions/allowances.ts`.
+- M7: fixed Annual Welcome Gift tranches, resort bill approval, refunds, waivers, card servicing and transfer, and Redemption balance/check-in integration. See `src/modules/stay-points/engine.ts`, `src/data/mock/stay-points-repository.ts`, and `redemption-points-source.ts`.
+- M8: IGP intake, JA&D accreditation, separate numbering and reissue, shared receipts, staged commissions and grant checklist. See `src/modules/igp/` and `src/data/mock/igp-repository.ts`.
+- M10–M11: period-close snapshots, VIP/IGP reporting, historical receipt duplicate protection, roadmap notes and atlas update. New routes: `/admin/sales/igp`, `/admin/commissions/allowances`, `/admin/reports/period-close`.
 
 ## 5. Git Working Tree
-- Staged: none. Stash: `stash@{0}` "local: sales-network cleanup + member detail redesign" still kept.
-- Unstaged: 91 modified files (2,462 insertions, 682 deletions), all from this session's agents and edits. `src/app/not-found.css` is deleted. The docs under `docs/` are unchanged since commit `d7a6ca5`.
-- Untracked (new this session): routes `src/app/admin/redemption/`, `admin/reports/historical-import/`, `admin/reports/reconciliation/`, `admin/sales-network/registrations/`, `src/app/error.tsx`, `global-error.tsx`, `register/ost/correct/`, `status/`; modules `src/modules/imports/`, `reconciliation/`, `redemption/`, `accreditation/registration.ts`, `customers/review.ts`, `sales-network/vacancy.ts`, `sales/accreditation-standing.ts`; data contracts, mock repositories and query files for redemption, reconciliation, history import; new admin pages and dialogs; `src/shared/components/status/`, `src/shared/lib/safe-return-path.ts`; about 20 new test files.
-- Git warns that LF will become CRLF on the next Git touch.
+
+- At pre-save inspection: 132 staged paths (44 adds and 88 edits), 31 paths with unstaged changes (20 also staged), and one untracked file, `src/data/mock/card-claim.ts`. Saving this snapshot adds a working-tree edit to the already staged `workflow/save-session.md`.
+- Staged contents include receipt fixes present before the prototype work, this-session milestone code and docs, and concurrent notification/admin action-menu changes of unknown provenance. Staging appeared during the earlier work and was not performed by the Codex agents. Do not attribute all staged files to this session.
+- Unstaged contents include this-session follow-ups in receipt/import deduplication, claim/transfer, payout posting, dashboard/reporting and phase cards. Notification tests/provider, admin action parity tests and sales-network UI also show concurrent edits with uncertain ownership. No deleted or renamed paths were reported in either diff.
+- No Git writes or deployment were performed by Codex. Preserve the index and unrelated work. Use read-only Git to review before the owner handles any commit.
 
 ## 6. Pending Tasks
-- Owner review and commit of the uncommitted work (owner only).
-- M5 (Opus, high): 25% sale count and Administrator sale approval, Closed Deal / 40% / fully paid states, Defaulted and 90-day list, receipt-date stamping (D-B), minimal month close, one VIP Number issued when the signed RA is recorded (monthly allocator, no hand-typed RA number), Card Claim Date and validity, exception queue (F6.5).
-- M6 (Opus): per-person DSC and DRI rates frozen on the sale, payout list with preparer self-approval flag (A3), release policy, held-commission void or confirm, F7.4 rebased on the 25% rule, default/cure/late admission, clawback ledger (no automatic deduction until the addendum is signed), BA/PA/PB allowances (needs the owner's workbook).
-- M7 (Opus): rewrite the stay-points engine to the Annual Welcome Gift tranches, remove the Points Hold code, resort spend entry, refunds and Compassionate Waiver, card servicing (calls `cancelFutureBookingsForTransfer`). Redemption reads points only through `src/data/mock/redemption-points-source.ts`; update that one file when tranches land.
-- M8 (Opus): IGP module (doc 14 five-step sequence).
-- M10 rest: F11.4 period close, report updates to the new rules (after M5).
-- M11: full QA, browser walkthrough of J01 to J12 for every role, update phase card statuses and `decisions-and-gaps.md`, `/update-workflow-atlas`. Not yet done: phase card status lines in `docs/implementation/` were not updated for the built features.
-- Open owner questions (unanswered): update `AGENTS.md`/`CLAUDE.md`/doc 10 for Redemption; cancellation exactly at the cut-off (in time or late); points reserved at creation or on confirmation for cash-pending bookings; front-desk role for booking; who may prepare and self sign off an import batch; back-dated renewal and renewal of a rights-suspended record; rejected receipts keep their reference number; explicit "sent to Clerk" status for seller drafts; move AA issuance to the monthly sequence; seed accreditations for SVD, SSM, SM are `pending` (cannot be picked as sellers) and the only seeded card holder `memb-1` is on a financial hold.
-- Open outside the team: signed IST Clawback Addendum, IGP grant terms and band code above PHP 9M, real points-per-night table, legal retention period, workbook figures for F8.6 and F11.3, overpayment and refund timing (F7.1).
+
+- Finish standalone unmatched receipt intake and any unresolved servicing/reporting edge cases. Separate VIP rescission/downgrade entry paths and post-issuance attribution corrections were not implemented. Reissued IGP sales with prior paid or in-flight commissions need staff reconciliation before another payout.
+- Finish automatic allowance input assembly from authorized service/appointment records and compare an official month of sales, commissions, and BA/PA/PB results against the registered workbooks. The present allowance review uses workbook inputs and published position terms.
+- Inputs still pending: signed IST Commission and Clawback Addendum and its effective terms, signed IGP grant terms, approved IGP price-band code above ₱9 million and JA&D definition of `SUPERSEDED`, real Redemption points-per-night table, and unresolved booking policy questions. The canonical Redemption disabled wording is stale against the authorized sample prototype.
+- Finish a fresh full-suite run, production validation on the final tree, and the full J01–J12 browser walkthrough by applicable role. Then update status and obtain owner sign-off.
 
 ## 7. Verification State
-- Typecheck: `npx tsc --noEmit` clean after the last edit.
-- Lint: `npx eslint src` clean (0 errors, 0 warnings) after removing the unused variable.
-- Tests: `src/modules`, `src/data`, `src/panels/admin/components`, `src/panels/public`: 59 files, 768 tests passed. `src/panels/admin` (rest), `src/shared`, `src/app`: 624 passed, 7 failed with the 15-second default timeout (wizard and staff-page tests under load); all of those files passed when rerun with `--testTimeout=60000` (staff-page and payment-reference-fields 24 of 24; the business-pages "scheme pricing" tests 9 of 9). `admin-nav-match.test.ts` was fixed after that run and its single file was not rerun after the one-line edit.
-- Build: not run. Full suite in one run: not run.
-- Browser QA: NOT done. The dev server started on port 3001 and exited with code 1, and the browser pane refused the page load (pane hidden). None of the new screens has been seen in a browser.
-- Not verified: the 401 page flash on logout, the `global-error.tsx` CSS, wizard Back-button behavior in the real Next router, new screens for each role.
+
+- Full application suite during implementation: 1,494 passed, 9 failed out of 1,503. Six wizard timeouts passed on isolated rerun. Follow-up nav/dashboard/sales-page run passed 32. Later focused runs passed 134, 102 and 28 tests in their respective slices. Counts overlap and must not be added. A fresh full-suite pass on the final working copy was not performed.
+- TypeScript, final observed application ESLint, and `git diff --check` passed during implementation. Earlier lint found issues in concurrent notifications/sales-network changes; a later full lint invocation exited zero. This save did not rerun tests or lint.
+- Default Turbopack build stalled during optimization and was stopped. `npm run build -- --webpack` passed, generating 69 static pages. Later dashboard/report edits had focused tests and typecheck, not a fresh production build.
+- Chrome: public landing, Super Admin commission rates, Admin new milestone screens and successful sample month close, Clerk Stay Points, Finance verification, HR denial for period close, and SVD/SSM/SM/OST dashboards. Full per-role workflow, application mobile and keyboard coverage are still pending. A transient concurrent notification-provider error interrupted the first seller check; a fresh session reached all four seller dashboards.
+- Atlas: 60 indexed routes, 12 journeys, 48 perspective graphs. Build and 3 tests passed. Chrome passed at 1440px and 390px. Atlas coverage is separate from application QA.
 
 ## 8. Next Session Instructions
-- Recommended first action: `/load`, then answer the open owner questions in section 6, do the browser check (show the browser pane; port 3000 may already be in use), then authorize M5 to M8 on Opus 5.5 (high). Review and commit the current work first if the owner wants a safe checkpoint.
-- Relevant files: the plan file above, `docs/implementation/decisions-and-gaps.md`, `src/modules/identity/permissions.ts`, `src/data/mock/payment-repository.ts`, `src/data/mock/business-effects.ts`, `src/modules/commissions/rules.ts`, `src/modules/membership/rules.ts`, `src/modules/stay-points/engine.ts`, `src/data/mock/redemption-points-source.ts`.
-- Required approvals: any commit or push, each milestone start, edits to `AGENTS.md`, any backend or real authentication.
-- Warnings: shared files (`src/data/queries.ts`, `seed.ts`, `seed-data.ts`, `permissions.ts`, `navigation.ts`) were edited by several agents; parallel agents need strict file ownership and targeted edits. Do not run build and tests together; do not delete `.next`; mock data resets on a full page reload; mock sign-in details are in `src/data/mock/mock-credentials.ts` (Clerk: `clerk@afhomes.test`).
+
+- Run `/load`, verify branch and staged/unstaged changes, then run full Vitest with restrained worker count, TypeScript, lint and webpack build sequentially. Use targeted reruns for explicit 30-second wizard timeouts. Do not delete `.next`.
+- Complete the remaining application workflows with sample data and record exact checks and blockers. The official workbook comparison needs period totals; use the registered files and later owner rulings, never copy real customer/financial records into source or browser fixtures.
+- Preserve existing approvals, receipt versions, number sequences and closed snapshots. Check `docs/implementation/decisions-and-gaps.md` and current canonical rules before treating a historical item as open or resolved.
+- Owner alone handles staging, commits and pushes. Separate authorization is required for backend, real auth, database or deployment.
 
 ## 9. Execution Recommendation
-- Phase: Build (M5 to M8 next), then QA
-- Recommended next mode: default (ask before edits)
-- Recommended model: Opus 5.5
-- Effort: high
-- Ultracode: OFF
-- Token optimization: one milestone per agent wave with strict file ownership, targeted tests only, `/save` after each wave.
-- Reason: M5 to M8 change money, numbering and points rules, which carry the highest rework risk.
+
+- Phase: QA, then Build for remaining approved prototype gaps.
+- Current mode: Codex Default. Current model: not verified.
+- Recommended next mode: Default for approved fixes and QA, Plan for business decisions.
+- Recommended model: continue in Codex. Exact model availability was not verified. Effort: high for money and lifecycle verification.
+- Ultracode: OFF. Assign distinct files to subagents only when authorized and useful.
+- Token optimization: run the final checks sequentially, rerun failing slices, and review only affected files and rules.
+- Reason: overlapping changes affect approvals, money, card numbering, and points. The isolated checks establish behavior, and a final whole-tree run is needed for sign-off.
 <!-- SESSION_SNAPSHOT_END -->

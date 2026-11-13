@@ -48,4 +48,11 @@ describe("OST application rules", () => {
     expect(validateDecisionReason("Fix the birth date.")).toBeNull();
     expect(validateCompletion({ gender: "", civilStatus: "", governmentIdType: "", governmentIdNumber: "", cardApplicationDate: "", programCategory: "", vipCardLevel: "B1", profilePhotoName: "" })).toBe("Select a gender.");
   });
+
+  it("checks the ID type and program category against the allowed lists passed in", () => {
+    const completion = { gender: "Male", civilStatus: "Single", governmentIdType: "Passport", governmentIdNumber: "P1234567A", cardApplicationDate: "2026-11-01", programCategory: "event_guest", vipCardLevel: "B1" as const, profilePhotoName: "me.jpg" };
+    expect(validateCompletion(completion)).toBe("Select a program category.");
+    expect(validateCompletion(completion, { govIdTypes: ["Passport"], programCategories: ["event_guest"] })).not.toBe("Select a program category.");
+    expect(validateCompletion(completion, { govIdTypes: ["UMID"], programCategories: ["event_guest"] })).toBe("Select a government ID type.");
+  });
 });

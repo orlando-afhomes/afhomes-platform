@@ -7,7 +7,8 @@ import { currentManilaYear, nextCustomerId } from "@/modules/customers/customer-
 import { validateCustomerField, validateSecondaryField, type CustomerFieldContext } from "@/modules/customers/field-validation";
 import { composeCustomerName } from "@/modules/customers/rules";
 import type { OrgMember } from "@/modules/organization/types";
-import { CIVIL_STATUS_OPTIONS, GENDER_OPTIONS, GOV_ID_OPTIONS } from "@/modules/sales-network/accredited-seller";
+import { CIVIL_STATUS_OPTIONS, GENDER_OPTIONS } from "@/modules/sales-network/accredited-seller";
+import { useReferenceOptions } from "@/data/settings-queries";
 import type { AddressValue, OfficeAddressValue } from "@/shared/forms/types";
 import { computeAge } from "@/shared/lib/dates";
 import { dialingPrefixFor } from "@/shared/data/philippine-locations";
@@ -408,6 +409,7 @@ export function AddressSection({ draft, set, errors }: SectionProps) {
 
 export function GovernmentIdSection({ draft, set, errors, idPreview }: SectionProps & { idPreview?: CustomerIdImagePreviewState }) {
   const { markTouched, localError } = useTouchedFields();
+  const govIdOptions = useReferenceOptions("gov-id-type", [draft.governmentIdType]);
   return (
     <SectionBlock title="Government ID" description="The ID presented with the application." icon={<IdCard className="tw:size-4" />}>
       <FormGrid>
@@ -422,7 +424,7 @@ export function GovernmentIdSection({ draft, set, errors, idPreview }: SectionPr
             }}
             idNumber={draft.governmentIdNumber}
             onIdNumberChange={(value) => set("governmentIdNumber", uppercaseGovId(value, govIdPolicyFor(draft.governmentIdType)))}
-            idTypeOptions={GOV_ID_OPTIONS}
+            idTypeOptions={govIdOptions}
             errorIdNumber={errors.governmentIdNumber ?? localError("governmentIdNumber", draft.governmentIdNumber, { idType: draft.governmentIdType })}
           />
         </div>
@@ -513,6 +515,7 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
   const secAge = computeAge(draft.secDateOfBirth);
   const secDial = dialingPrefixFor(draft.secAddress.province, draft.secAddress.city);
   const { markTouched, localSecondaryError } = useTouchedFields();
+  const govIdOptions = useReferenceOptions("gov-id-type", [draft.secGovernmentIdType]);
   return (
     <>
       <SectionBlock title="Personal details (Secondary holder)" description="Name, gender, civil status, and birth date of the secondary card holder as shown on their government ID." icon={<UserRound className="tw:size-4" />}>
@@ -611,7 +614,7 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
               }}
               idNumber={draft.secGovernmentIdNumber}
               onIdNumberChange={(value) => set("secGovernmentIdNumber", uppercaseGovId(value, govIdPolicyFor(draft.secGovernmentIdType)))}
-              idTypeOptions={GOV_ID_OPTIONS}
+              idTypeOptions={govIdOptions}
               idPrefix="sec-gov-id"
               errorIdNumber={localSecondaryError("governmentIdNumber", draft.secGovernmentIdNumber, { idType: draft.secGovernmentIdType })}
             />

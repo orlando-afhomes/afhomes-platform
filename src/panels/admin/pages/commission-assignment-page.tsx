@@ -1,154 +1,102 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { matchesSearch } from "@/shared/lib/search";
 import { toast } from "sonner";
-import { useApproveCommission, useEligibleSales, useOperation } from "@/data/business-queries";
-import type { EligibleSale } from "@/data/contracts/commission-repository";
-import { applyBasisPoints, MoneyError, parsePercentToBasisPoints } from "@/shared/lib/money";
-import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
-import { InfoNote } from "@/shared/components/modern/detail-list";
-import { CheckboxField, PercentField } from "@/shared/forms/modern";
-import { Button, buttonVariants } from "@/shared/ui/button";
-import { FormDialog } from "@/shared/components/modern/form-dialog";
-import { Money } from "@/shared/components/modern/money";
-import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
-import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
-import { QueryState } from "@/shared/components/modern/query-state";
+import { useCommissionRates, useOperation, useSaveCommissionRate } from "@/data/business-queries";
+import type { CommissionRateDirectory } from "@/data/contracts/commission-repository";
+import type { CommissionProduct, CommissionRole } from "@/modules/commissions/types";
+import { formatBasisPoints } from "@/shared/lib/money";
 import { AdminPage } from "@/shared/components/admin";
-import { formatDate } from "@/shared/lib/format-date";
+import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
+import { FormDialog } from "@/shared/components/modern/form-dialog";
+import { QueryState } from "@/shared/components/modern/query-state";
+import { SelectField, TextField } from "@/shared/forms/modern";
+import { Button } from "@/shared/ui/button";
 
-const peso = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" });
+const columns: ColumnDef<CommissionRateDirectory["rates"][number], unknown>[] = [
+  { header: "Seller", accessorKey: "memberName" },
+  { header: "Product", accessorKey: "product" },
+  { header: "Type", accessorKey: "role" },
+  { header: "Approved rate", cell: ({ row }) => formatBasisPoints(row.original.rateBp) },
+  { header: "Standard rate", cell: ({ row }) => row.original.standardRateBp === null ? "Not recorded" : formatBasisPoints(row.original.standardRateBp) },
+  { header: "Exception", cell: ({ row }) => row.original.standardRateBp !== null && row.original.standardRateBp !== row.original.rateBp ? "Yes" : "—" },
+];
 
-/**
- * Commission Assignment (owner ruling 2026-11-09): Finance manually enters the
- * percentage for each seller of a Confirmed Sale. No default rate exists (08 section 9.1).
- */
+function parseRate(value: string): number | null {
+  const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(value.trim());
+  if (!match) return null;
+  const rate = Number(match[1]) * 100 + Number(match[2]?.padEnd(2, "0") ?? "0");
+  return Number.isSafeInteger(rate) ? rate : null;
+}
+
 export function CommissionAssignmentPage() {
-  const canApprove = useOperation("commission.approve");
-  const eligible = useEligibleSales(canApprove);
-  const [selected, setSelected] = useState<EligibleSale | null>(null);
-  const [viewingId, setViewingId] = useState<string | null>(null);
-
-  const columns = useMemo<ColumnDef<EligibleSale, unknown>[]>(
-    () => [
-      { id: "customer", header: "Customer", cell: ({ row }) => <span className="tw:font-semibold">{row.original.customerName}</span> },
-      { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.productCode },
-      { id: "value", header: "Contract value", cell: ({ row }) => <Money value={row.original.valueCentavos} /> },
-      { id: "confirmed", header: "Confirmed", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => formatDate(row.original.confirmedDate) },
-      { id: "recipients", header: "Recipients", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => `${row.original.recipients.filter((item) => item.existingCommissionId).length} of ${row.original.recipients.length} assigned` },
-    ],
-    [],
+  const allowed = useOperation("commission.rates.manage");
+  const query = useCommissionRates(allowed);
+  const [editing, setEditing] = useState(false);
+  const [search, setSearch] = useState("");
+  const [product, setProduct] = useState("all");
+  const [role, setRole] = useState("all");
+  const rates = useMemo(
+    () => (query.data?.rates ?? []).filter((item) => (product === "all" || item.product === product) && (role === "all" || item.role === role) && matchesSearch(search, item.memberName)),
+    [query.data, search, product, role],
   );
-  const fullyAssigned = (sale: EligibleSale) => sale.recipients.every((item) => item.existingCommissionId);
-  const viewing = viewingId ? (eligible.data ?? []).find((item) => item.saleId === viewingId) ?? null : null;
-
   return (
-    <AdminPage
-      anyOf={["commissions"]}
-      title="Commission Assignment"
-      description="Assign each seller's commission percentage for a Confirmed Sale."
-      crumbs={[{ label: "Finance" }, { label: "Commission Assignment" }]}
-      actions={
-        <Link href="/admin/commissions" className={buttonVariants({ variant: "outline", className: "tw:min-h-11 tw:sm:min-h-8" })}>
-          Commission records
-        </Link>
-      }
-    >
-      {canApprove ? (
-        <>
-          <QueryState isLoading={eligible.isLoading} error={eligible.error}>
-            <DataTable
-              data={eligible.data ?? []}
-              columns={columns}
-              getRowId={(row) => row.saleId}
-              emptyText="No confirmed sales yet."
-              caption="Confirmed sales awaiting commission assignment"
-              onRowOpen={(row) => setViewingId(row.saleId)}
-              getRowLabel={(row) => `Open the sale for ${row.customerName}`}
-              rowActions={(row) => (
-                <RowActionsMenu
-                  itemName={`sale for ${row.customerName}`}
-                  onView={() => setViewingId(row.saleId)}
-                  extraItems={fullyAssigned(row) ? [] : [{ key: "assign", label: "Assign percentages", onClick: () => setSelected(row) }]}
-                />
-              )}
-            />
-          </QueryState>
-        </>
-      ) : (
-        <InfoNote title="Not available">Only authorized Finance personnel assign commission percentages.</InfoNote>
-      )}
-      {selected ? <AssignDialog sale={selected} onClose={() => setSelected(null)} /> : null}
-      <RecordDetailsSheet
-        open={viewing !== null}
-        onClose={() => setViewingId(null)}
-        title={viewing?.customerName ?? "Confirmed sale"}
-        subtitle={viewing ? `${viewing.productCode} · confirmed ${formatDate(viewing.confirmedDate)}` : undefined}
-        sections={
-          viewing
-            ? [
-                { title: "Sale", rows: [{ label: "Contract value", value: <Money value={viewing.valueCentavos} /> }, { label: "Confirmed", value: formatDate(viewing.confirmedDate) }] },
-                { title: "Recipients", rows: viewing.recipients.map((item) => ({ label: `${item.displayName} (${item.designation})`, value: item.existingCommissionId ? "Assigned" : "Not assigned" })) },
-              ]
-            : []
-        }
-        footer={
-          viewing && !fullyAssigned(viewing) ? (
-            <Button
-              type="button"
-              onClick={() => {
-                setSelected(viewing);
-                setViewingId(null);
-              }}
-            >
-              Assign percentages
-            </Button>
-          ) : undefined
-        }
-      />
+    <AdminPage anyOf={["commissions"]} allowed={allowed} title="Commission Rates"
+      description="Set the approved rate for a seller. Issued numbers keep their original rates."
+      crumbs={[{ label: "Commissions", href: "/admin/commissions" }, { label: "Commission Rates" }]}
+      actions={<Button type="button" disabled={!query.data} onClick={() => setEditing(true)}>Set rate</Button>}>
+      <FilterBar search={search} onSearch={setSearch} searchLabel="Search sellers" filters={[
+        { label: "Product filter", value: product, onChange: setProduct, options: [{ value: "all", label: "All products" }, { value: "VIP", label: "VIP" }, { value: "IGP", label: "IGP" }] },
+        { label: "Commission type filter", value: role, onChange: setRole, options: [{ value: "all", label: "All types" }, { value: "DSC", label: "Closing seller (DSC)" }, { value: "DRI", label: "Referrer (DRI)" }] },
+      ]} />
+      <QueryState isLoading={query.isLoading} error={query.error}>
+        <DataTable data={rates} columns={columns} caption="Approved seller rates"
+          emptyText={(query.data?.rates ?? []).length === 0 ? "No approved rates recorded." : "No rates match the filters."} getRowId={(row) => `${row.memberId}-${row.product}-${row.role}`} />
+      </QueryState>
+      {editing && query.data ? <RateDialog directory={query.data} onClose={() => setEditing(false)} /> : null}
     </AdminPage>
   );
 }
 
-function AssignDialog({ sale, onClose }: { sale: EligibleSale; onClose: () => void }) {
-  const approve = useApproveCommission();
-  const free = sale.recipients.filter((item) => !item.existingCommissionId);
-  const [picked, setPicked] = useState<Record<string, boolean>>({});
-  const [rates, setRates] = useState<Record<string, string>>({});
-  const [error, setError] = useState<string | undefined>();
-
-  const preview = (memberId: string): string => {
-    const bp = parsePercentToBasisPoints(rates[memberId] ?? "");
-    if (bp === null || bp <= 0 || bp > 10_000) return "";
-    try {
-      return peso.format(applyBasisPoints(sale.valueCentavos, bp) / 100);
-    } catch (failure) {
-      return failure instanceof MoneyError ? "Needs a rounding policy" : "";
-    }
+function RateDialog({ directory, onClose }: { directory: CommissionRateDirectory; onClose: () => void }) {
+  const [memberId, setMemberId] = useState("");
+  const [product, setProduct] = useState<CommissionProduct>("VIP");
+  const [role, setRole] = useState<CommissionRole>("DSC");
+  const [reason, setReason] = useState("");
+  const [draft, setDraft] = useState<{ key: string; rate: string; standard: string }>();
+  const [error, setError] = useState<string>();
+  const save = useSaveCommissionRate();
+  const current = directory.rates.find((item) => item.memberId === memberId && item.product === product && item.role === role);
+  const key = `${memberId}-${product}-${role}`;
+  const values = draft?.key === key ? draft : {
+    key,
+    rate: current ? String(current.rateBp / 100) : "",
+    standard: current?.standardRateBp != null ? String(current.standardRateBp / 100) : "",
   };
-
-  const send = async () => {
-    const entries = free.filter((item) => picked[item.memberId]).map((item) => ({ memberId: item.memberId, percentBp: parsePercentToBasisPoints(rates[item.memberId] ?? "") ?? 0 }));
-    if (entries.length === 0) return setError("Select at least one recipient.");
-    if (entries.some((entry) => entry.percentBp <= 0)) return setError("Enter a valid percentage for every selected recipient.");
-    try {
-      await approve.mutateAsync({ saleId: sale.saleId, entries });
-      toast.success("Commission assigned.");
-      onClose();
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Could not assign.");
-    }
-  };
-
   return (
-    <FormDialog open title="Assign commission percentages" description={`${sale.customerName} · contract value ${peso.format(sale.valueCentavos / 100)}`} submitText="Assign" pending={approve.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
-      {free.map((recipient) => (
-        <div key={recipient.memberId} className="tw:grid tw:grid-cols-1 tw:gap-2 tw:sm:grid-cols-2 tw:sm:items-end">
-          <CheckboxField label={`${recipient.displayName} (${recipient.designation})`} checked={Boolean(picked[recipient.memberId])} onChange={(checked) => setPicked((current) => ({ ...current, [recipient.memberId]: checked }))} />
-          {picked[recipient.memberId] ? <PercentField label="Percentage" value={rates[recipient.memberId] ?? ""} onChange={(value) => setRates((current) => ({ ...current, [recipient.memberId]: value }))} hint={preview(recipient.memberId) ? `Amount: ${preview(recipient.memberId)}` : "Calculated on the contract value."} /> : null}
-        </div>
-      ))}
+    <FormDialog open title="Set approved commission rate" submitText="Save rate" error={error} pending={save.isPending}
+      onClose={onClose} onSubmit={() => {
+        const rateBp = parseRate(values.rate);
+        const standard = values.standard.trim();
+        const standardRateBp = standard ? parseRate(standard) : null;
+        if (!memberId || rateBp === null || (standard && standardRateBp === null)) {
+          setError("Choose a seller and enter a valid rate. Use 0 for an approved zero.");
+          return;
+        }
+        void save.mutateAsync({ memberId, product, role, rateBp, standardRateBp, reason }).then(() => {
+          toast.success("Commission rate saved.");
+          onClose();
+        }).catch((failure: Error) => setError(failure.message));
+      }}>
+      <SelectField label="Seller" required value={memberId} onChange={setMemberId}
+        options={directory.members.map(({ id, name }) => ({ value: id, label: name }))} />
+      <SelectField label="Product" required value={product} onChange={setProduct} options={[{ value: "VIP", label: "VIP" }, { value: "IGP", label: "IGP" }]} />
+      <SelectField label="Commission type" required value={role} onChange={setRole} options={[{ value: "DSC", label: "Closing seller (DSC)" }, { value: "DRI", label: "Referrer (DRI)" }]} />
+      <TextField label="Approved rate (%)" required inputMode="decimal" value={values.rate} onChange={(rate) => setDraft({ ...values, rate })} />
+      <TextField label="Standard rate (%)" inputMode="decimal" value={values.standard} onChange={(standard) => setDraft({ ...values, standard })} />
+      <TextField label="Reason" required value={reason} onChange={setReason} />
     </FormDialog>
   );
 }

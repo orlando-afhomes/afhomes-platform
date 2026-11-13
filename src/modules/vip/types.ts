@@ -1,4 +1,17 @@
-export type VipTierCode = "B1" | "S1" | "G1";
+/**
+ * A catalog product code: exactly 2 characters (one uppercase letter then one digit) so it
+ * fits the VIP Number tier segment (05 section 4.1); validate with isValidTierCode. The
+ * seeded codes are B1, S1 and G1; an Admin can create more in the Product Catalog.
+ */
+export type VipTierCode = string;
+
+export const TIER_CODE_PATTERN = /^[A-Z][0-9]$/;
+
+export function isValidTierCode(value: string): boolean {
+  return TIER_CODE_PATTERN.test(value);
+}
+
+export const PRODUCT_TIER_LEVELS = ["Bronze", "Silver", "Gold"] as const;
 
 export type ProductChange = {
   version: number;
@@ -17,7 +30,7 @@ export type ProductChange = {
 export type VipProduct = {
   code: VipTierCode;
   name: string;
-  tier: "Bronze" | "Silver" | "Gold";
+  tier: (typeof PRODUCT_TIER_LEVELS)[number];
   /** Integer centavos. */
   priceCentavos: number;
   /** "conflict" blocks contract finalization (D5). */

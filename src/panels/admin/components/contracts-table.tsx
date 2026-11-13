@@ -4,7 +4,10 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Hourglass } from "lucide-react";
-import { useContracts, useOperation } from "@/data/business-queries";
+import { useContractAction, useContracts, useMemberships, useOperation, usePayments } from "@/data/business-queries";
+import { totalVerifiedCentavos } from "@/modules/finance/rules";
+import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { StatusPill } from "@/shared/components/admin";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
@@ -15,6 +18,8 @@ import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { formatDate } from "@/shared/lib/format-date";
 import { recordLabel } from "@/shared/lib/record-label";
+import { buildContractMenuProps } from "../actions/sales-contract-actions";
+import { ApproveArrangementDialog, CancelContractDialog, RaDialog, RequestCancellationDialog, ResolvePaymentCodeDialog, ReturnContractDialog } from "./contract-dialogs";
 import { useContractHref } from "./use-contract-href";
 
 const STATUS_OPTIONS = [
@@ -32,6 +37,16 @@ export function ContractsTable({ initialStatus = "all", contractHref: hrefOverri
   const router = useRouter();
   const contracts = useContracts();
   const canPrepare = useOperation("contracts.prepare");
+  const canApprove = useOperation("contracts.approve");
+  const action = useContractAction();
+  const { confirmRun, dialog: confirmDialog } = useConfirmRun();
+  const payments = usePayments();
+  const memberships = useMemberships();
+  const { identity } = useDevIdentity();
+  // Owner decision 2026-11-09: only Super Admin approves a Move arrangement (the repository enforces it too).
+  const isSuperAdmin = identity.status === "active" && identity.roles.includes("super_admin");
+  const [target, setTarget] = useState<{ contract: ContractView; kind: "return" | "cancel" | "ra" | "requestCancel" | "approveArrangement" | "resolvePaymentCode" } | null>(null);
+  const closeTarget = () => setTarget(null);
   const defaultHref = useContractHref();
   const contractHref = hrefOverride ?? defaultHref;
   const [search, setSearch] = useState("");
@@ -68,15 +83,46 @@ export function ContractsTable({ initialStatus = "all", contractHref: hrefOverri
           caption="Contracts"
           onRowOpen={(row) => router.push(contractHref(row.id))}
           getRowLabel={(row) => recordLabel("Open contract", row.customerName, row.productCode)}
-          rowActions={(row) => (
-            <RowActionsMenu
-              itemName={recordLabel("contract", row.customerName, row.productCode)}
-              onView={() => router.push(contractHref(row.id))}
-              onEdit={canPrepare && ["draft", "returned"].includes(row.status) ? () => router.push(contractHref(row.id)) : undefined}
-            />
-          )}
+          rowActions={(row) => {
+            const contractPayments = (payments.data ?? []).filter((payment) => payment.contractId === row.id);
+            const membership = (memberships.data ?? []).find((item) => item.contractId === row.id);
+            const run = (kind: "startReview" | "finalize", title: string, description: string, success: string) =>
+              confirmRun({ title, description, confirmText: title.replace("?", ""), action: () => action.mutateAsync({ id: row.id, action: kind }), successTitle: success, errorTitle: "Action failed" });
+            const menu = buildContractMenuProps(row, {
+              canPrepare,
+              canApprove,
+              canSubmitPayment: false,
+              isSuperAdmin,
+              hasVerifiedMoney: totalVerifiedCentavos(contractPayments) > 0 || row.sale?.status === "confirmed",
+              hasActiveMembership: membership?.status === "active",
+              hasCard: membership?.cardId != null,
+            }, {
+              onView: () => router.push(contractHref(row.id)),
+              onEdit: canPrepare && ["draft", "returned"].includes(row.status) ? () => router.push(contractHref(row.id)) : undefined,
+              onStartReview: () => run("startReview", "Start review?", "The contract moves to Under Admin Review.", "Review started."),
+              onFinalize: () => run("finalize", "Finalize this contract?", "The contract terms become fixed and a pending membership is created.", "Contract finalized."),
+              onReturn: () => setTarget({ contract: row, kind: "return" }),
+              onRecordSignedAgreement: () => setTarget({ contract: row, kind: "ra" }),
+              onRecordPaymentCode: () => setTarget({ contract: row, kind: "resolvePaymentCode" }),
+              onApproveArrangement: () => setTarget({ contract: row, kind: "approveArrangement" }),
+              onCancel: () => setTarget({ contract: row, kind: "cancel" }),
+              onRequestCancellation: () => setTarget({ contract: row, kind: "requestCancel" }),
+            });
+            return <RowActionsMenu {...menu} />;
+          }}
         />
       </QueryState>
+      {confirmDialog}
+      {target?.kind === "ra" ? <RaDialog contract={target.contract} onClose={closeTarget} /> : null}
+      {target?.kind === "requestCancel" ? <RequestCancellationDialog contract={target.contract} onClose={closeTarget} /> : null}
+      {target ? (
+        <>
+          <ReturnContractDialog contract={target.contract} open={target.kind === "return"} onClose={closeTarget} />
+          <CancelContractDialog contract={target.contract} open={target.kind === "cancel"} onClose={closeTarget} />
+          <ApproveArrangementDialog contract={target.contract} open={target.kind === "approveArrangement"} onClose={closeTarget} />
+          <ResolvePaymentCodeDialog contract={target.contract} open={target.kind === "resolvePaymentCode"} onClose={closeTarget} />
+        </>
+      ) : null}
     </div>
   );
 }

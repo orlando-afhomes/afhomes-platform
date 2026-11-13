@@ -1,114 +1,137 @@
-import type { BenefitsSnapshot } from "@/modules/contracts/types";
 import { addYearsToDate } from "@/shared/lib/dates";
-import type { CycleSummary, PointsEntry, PointsLedger, ResortSpend } from "./types";
+import type { PointsBucket } from "@/modules/redemption/types";
+import type { GiftLedgerEntry, PointsLedger, PointsMovement, PointsTerms, ResortSpend, StayPointsState } from "./types";
 
-const WEEKDAY_SHARE = 70;
-const WEEKEND_SHARE = 30;
+export function createStayPointsState(): StayPointsState {
+  return { ledger: [], refunds: [], waivers: [], deemedPads: {}, transferDates: {} };
+}
 
-/**
- * Computes the Stay Points ledger from verified resort spend (doc 09).
- * 1 verified peso = 1 point (09 section 10). Every transaction splits 70% Weekday and
- * 30% Weekend regardless of its date (09 section 14). Points stay Pending until the cycle
- * minimum is reached, then unlock (09 section 12). Caps apply per bucket and in total
- * (09 sections 13-14). Fractional pesos or fractional splits are never rounded: no
- * rounding policy is approved (D14), so those entries are blocked.
- */
-export function computePointsLedger(activationDate: string, benefits: BenefitsSnapshot, spends: readonly ResortSpend[]): PointsLedger {
-  const sorted = [...spends].sort((a, b) => (a.date === b.date ? a.id.localeCompare(b.id) : a.date.localeCompare(b.date)));
-  const entries: PointsEntry[] = [];
-  const cycles: CycleSummary[] = [];
-  const weekdayCap = benefits.weekdayPointsPerCycle;
-  const weekendCap = benefits.weekendPointsPerCycle;
-  const totalCap = benefits.pointsPerCycle;
+export function spendInPeriod(
+  spends: readonly ResortSpend[], state: StayPointsState, start: string, end: string,
+  asOf: string, includeStart: boolean,
+): number {
+  return spends.filter((bill) =>
+    bill.status === "verified" && (includeStart ? bill.date >= start : bill.date > start)
+    && bill.date <= end && (bill.approvedDate ?? bill.date) <= asOf,
+  ).reduce((sum, bill) => sum + bill.amountCentavos - state.refunds
+    .filter((refund) => refund.spendId === bill.id && refund.date <= asOf)
+    .reduce((refunded, refund) => refunded + refund.amountCentavos, 0), 0);
+}
 
-  const cycleOf = (date: string): number => {
-    for (let n = 1; n <= benefits.earningCycles; n += 1) {
-      const start = addYearsToDate(activationDate, n - 1);
-      const end = addYearsToDate(activationDate, n);
-      if (start && end && date >= start && date < end) return n;
-    }
-    return 0;
+export function firstPeriodEnd(settlement: string, pad: string): string {
+  const cap = addYearsToDate(settlement, 2);
+  return cap && cap < pad ? cap : pad;
+}
+
+function qualifyingRelease(
+  spends: readonly ResortSpend[], state: StayPointsState, start: string, end: string, asOf: string,
+  includeStart: boolean, earliest: string, minimum: number,
+) {
+  const dates = new Set([earliest]);
+  for (const spend of spends) {
+    const approved = spend.approvedDate ?? spend.date;
+    if (approved > earliest && approved <= asOf) dates.add(approved);
+  }
+  for (const refund of state.refunds) {
+    if (refund.date > earliest && refund.date <= asOf) dates.add(refund.date);
+  }
+  let qualification: string | null = null;
+  for (const date of [...dates].sort()) {
+    qualification = spendInPeriod(spends, state, start, end, date, includeStart) >= minimum ? qualification ?? date : null;
+  }
+  return qualification;
+}
+
+export function trancheAvailable(
+  entry: GiftLedgerEntry, entries: readonly GiftLedgerEntry[], movement?: PointsMovement,
+): number {
+  const closed = entries.filter((other) => other.tranche === entry.tranche && other.bucket === entry.bucket
+    && (other.type === "transfer" || other.type === "expiry"))
+    .reduce((sum, other) => sum + other.points, 0);
+  const used = movement
+    ? (movement.reserved[entry.tranche]?.[entry.bucket] ?? 0)
+      + (movement.redeemed[entry.tranche]?.[entry.bucket] ?? 0)
+      + (movement.forfeited[entry.tranche]?.[entry.bucket] ?? 0)
+    : 0;
+  return Math.max(0, entry.points - closed - used);
+}
+
+export function isGiftRelease(entry: GiftLedgerEntry): boolean {
+  return entry.type === "release" || entry.type === "waiver_release";
+}
+
+/** Decisions append once. Refunds change qualifying spend while prior release entries remain intact. */
+export function computePointsLedger(
+  terms: PointsTerms, spends: readonly ResortSpend[], state: StayPointsState,
+  asOf: string, redemptionPad?: string, movement?: PointsMovement,
+): PointsLedger {
+  const { membershipId, vipNumber, claimDate, fullSettlementDate, benefits } = terms;
+  const deemed = addYearsToDate(claimDate, 2);
+  const padDate = redemptionPad ?? state.deemedPads[membershipId] ?? (deemed && deemed <= asOf ? deemed : null);
+  if (padDate && !redemptionPad) state.deemedPads[membershipId] = padDate;
+  const entries = state.ledger.filter((entry) => entry.membershipId === membershipId);
+  const expired = asOf >= terms.validityEndDate;
+  const transferDate = state.transferDates[membershipId];
+  const append = (entry: Omit<GiftLedgerEntry, "membershipId" | "vipNumber">) => {
+    const record = { ...entry, membershipId, vipNumber };
+    entries.push(record);
+    state.ledger.push(record);
+    return record;
   };
 
-  const state = new Map<number, { spend: number; wd: number; we: number; unlocked: boolean }>();
-  const byCycle = new Map<number, PointsEntry[]>();
-
-  for (const spend of sorted) {
-    const cycle = cycleOf(spend.date);
-    const base = { spendId: spend.id, date: spend.date, cycle, earnedWeekday: 0, earnedWeekend: 0, cappedExcess: 0 };
-    if (cycle === 0) {
-      entries.push({ ...base, status: "outside_cycles", note: "Outside the earning cycles of this membership." });
-      continue;
+  const tranches: PointsLedger["tranches"] = [];
+  if (padDate) {
+    for (let number = 1; number <= benefits.earningCycles; number += 1) {
+      const dueDate = addYearsToDate(padDate, number - 1)!;
+      const startDate = number === 1 ? fullSettlementDate : addYearsToDate(padDate, number - 2)!;
+      const endDate = number === 1 ? firstPeriodEnd(fullSettlementDate, padDate) : dueDate;
+      const qualifyingCentavos = spendInPeriod(spends, state, startDate, endDate, asOf, number === 1);
+      const minimumCentavos = benefits.minSpendPerCycleCentavos;
+      const waiver = state.waivers.find((item) => item.membershipId === membershipId && item.tranche === number && item.decision?.granted);
+      const waiverDue = waiver?.decision?.releaseDate;
+      let release = entries.find((entry) => entry.tranche === number && isGiftRelease(entry));
+      const due = dueDate <= asOf;
+      const earliest = terms.restoredFromHoldOn && terms.restoredFromHoldOn > dueDate ? terms.restoredFromHoldOn : dueDate;
+      const qualifyingDate = due && qualifyingCentavos >= minimumCentavos
+        ? qualifyingRelease(spends, state, startDate, endDate, asOf, number === 1, earliest, minimumCentavos) : null;
+      const waiverDate = waiverDue && waiverDue <= asOf ? (waiverDue > earliest ? waiverDue : earliest) : null;
+      const fromWaiver = Boolean(waiverDate && (!qualifyingDate || waiverDate < qualifyingDate));
+      const releaseDate = fromWaiver ? waiverDate : qualifyingDate;
+      const closedForTransfer = Boolean(transferDate && dueDate <= transferDate);
+      if (!release && due && !expired && !closedForTransfer && terms.mayRelease && !terms.financialHold
+        && releaseDate && releaseDate <= asOf) {
+        for (const [bucket, points] of [["weekday", benefits.weekdayPointsPerCycle], ["weekend", benefits.weekendPointsPerCycle]] as const) {
+          release = append({
+            tranche: number, bucket, type: fromWaiver ? "waiver_release" : "release", points, date: releaseDate,
+            reference: fromWaiver ? waiver?.supportingReference ?? null : null,
+            actorId: fromWaiver ? waiver?.decision?.actorId ?? "system" : "system",
+          });
+        }
+      }
+      const status = release ? (release.type === "waiver_release" ? "released_by_waiver" : "released")
+        : expired || closedForTransfer ? "forfeited" : due && !terms.financialHold ? "non_activated" : "unreleased";
+      tranches.push({ number, dueDate, startDate, endDate, qualifyingCentavos, minimumCentavos, status, releaseDate: release?.date ?? null });
     }
-    if (spend.amountCentavos % 100 !== 0) {
-      entries.push({ ...base, status: "blocked_rounding", note: "Fractional pesos need an approved rounding policy." });
-      continue;
+  }
+
+  const balances = { spendableWeekday: 0, spendableWeekend: 0, released: 0, reserved: 0, redeemed: 0, forfeited: 0 };
+  for (const release of entries.filter(isGiftRelease)) {
+    const { bucket, tranche } = release;
+    let unused = trancheAvailable(release, entries, movement);
+    if (expired && unused > 0) {
+      append({ tranche, bucket, type: "expiry", points: unused, date: terms.validityEndDate, reference: null, actorId: "system" });
+      unused = 0;
     }
-    const points = spend.amountCentavos / 100;
-    if ((points * WEEKDAY_SHARE) % 100 !== 0 || (points * WEEKEND_SHARE) % 100 !== 0) {
-      entries.push({ ...base, status: "blocked_rounding", note: "The 70/30 split is not a whole number of points; a rounding policy is not approved." });
-      continue;
-    }
-    const cs = state.get(cycle) ?? { spend: 0, wd: 0, we: 0, unlocked: false };
-    state.set(cycle, cs);
-    // Keep historical allocations for reconciliation. Only verified spend qualifies for unlock.
-    if (spend.status === "verified") cs.spend += spend.amountCentavos;
-    const wantWd = (points * WEEKDAY_SHARE) / 100;
-    const wantWe = (points * WEEKEND_SHARE) / 100;
-    const creditWd = Math.max(0, Math.min(wantWd, weekdayCap - cs.wd, totalCap - cs.wd - cs.we));
-    const creditWe = Math.max(0, Math.min(wantWe, weekendCap - cs.we, totalCap - cs.wd - cs.we - creditWd));
-    cs.wd += creditWd;
-    cs.we += creditWe;
-    if (cs.spend >= benefits.minSpendPerCycleCentavos) cs.unlocked = true;
-    const excess = wantWd - creditWd + (wantWe - creditWe);
-    const entry: PointsEntry = {
-      ...base,
-      status: spend.status === "refund_hold" ? "held" : spend.status === "voided" ? "voided" : "pending",
-      earnedWeekday: creditWd,
-      earnedWeekend: creditWe,
-      cappedExcess: excess,
-      note: excess > 0 ? "Part of this spend exceeded the cycle cap." : null,
-    };
-    entries.push(entry);
-    const list = byCycle.get(cycle) ?? [];
-    list.push(entry);
-    byCycle.set(cycle, list);
+    balances.released += release.points;
+    balances[bucket === "weekday" ? "spendableWeekday" : "spendableWeekend"] += unused;
+    balances.reserved += movement?.reserved[tranche]?.[bucket] ?? 0;
+    balances.redeemed += movement?.redeemed[tranche]?.[bucket] ?? 0;
+    balances.forfeited += movement?.forfeited[tranche]?.[bucket] ?? 0;
   }
+  balances.forfeited += entries.filter((entry) => !isGiftRelease(entry)).reduce((sum, entry) => sum + entry.points, 0);
+  return { padDate, tranches, entries, balances };
+}
 
-  // Unlock pending entries of cycles that reached the minimum.
-  for (const [cycle, list] of byCycle) {
-    if (state.get(cycle)?.unlocked) for (const entry of list) if (entry.status === "pending") entry.status = "spendable";
-  }
-
-  for (const [cycle, cs] of [...state.entries()].sort((a, b) => a[0] - b[0])) {
-    cycles.push({
-      cycle,
-      startDate: addYearsToDate(activationDate, cycle - 1) ?? "",
-      endDate: addYearsToDate(activationDate, cycle) ?? "",
-      verifiedSpendCentavos: cs.spend,
-      minimumSpendCentavos: benefits.minSpendPerCycleCentavos,
-      minimumReached: cs.unlocked,
-      weekdayCredited: cs.wd,
-      weekendCredited: cs.we,
-      weekdayCap,
-      weekendCap,
-      totalCap,
-    });
-  }
-
-  let spendableWeekday = 0;
-  let spendableWeekend = 0;
-  let pending = 0;
-  let held = 0;
-  for (const entry of entries) {
-    const sum = entry.earnedWeekday + entry.earnedWeekend;
-    if (entry.status === "spendable") {
-      spendableWeekday += entry.earnedWeekday;
-      spendableWeekend += entry.earnedWeekend;
-    } else if (entry.status === "pending") pending += sum;
-    else if (entry.status === "held") held += sum;
-  }
-  const latest = cycles.length ? cycles[cycles.length - 1] : null;
-  const remainingCapacity = latest ? totalCap - latest.weekdayCredited - latest.weekendCredited : totalCap;
-  return { entries, cycles, balances: { spendableWeekday, spendableWeekend, pending, held, redeemed: 0, remainingCapacity } };
+export function availableByBucket(ledger: PointsLedger): Record<PointsBucket, number> {
+  return { weekday: ledger.balances.spendableWeekday, weekend: ledger.balances.spendableWeekend };
 }

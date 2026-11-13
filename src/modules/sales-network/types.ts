@@ -1,3 +1,4 @@
+import type { VipTierCode } from "@/modules/vip/types";
 import type { Designation, OrgMember } from "@/modules/organization/types";
 
 export type SalesNetworkDesignation = Designation;
@@ -57,7 +58,7 @@ export type UpdateSalesNetworkMemberInput = {
   /** Date-only YYYY-MM-DD. */
   cardApplicationDate?: string;
   programCategory?: string;
-  vipCardLevel?: "B1" | "S1" | "G1";
+  vipCardLevel?: VipTierCode;
 };
 
 export type ReferralVerificationFailureReason =

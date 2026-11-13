@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
+import { useVipProducts } from "@/data/business-queries";
+import { tierOptions } from "@/modules/vip/tier-options";
 import { Download } from "lucide-react";
 import { MAX_EXPORT_ROWS, type CustomerImportJob } from "@/modules/customers/import";
 import { type ColumnDef } from "@/shared/components/modern/data-table";
@@ -30,12 +32,10 @@ export const EXPORT_STATUS_OPTIONS = [
   { value: "inactive", label: "Inactive" },
 ];
 
-export const EXPORT_PLAN_OPTIONS = [
-  { value: "all", label: "All VIP tiers" },
-  { value: "B1", label: "Bronze (B1)" },
-  { value: "S1", label: "Silver (S1)" },
-  { value: "G1", label: "Gold (G1)" },
-];
+/** "All VIP tiers" plus every tier in the product catalog (seeded labels until it loads). */
+export function exportPlanOptions(products: Parameters<typeof tierOptions>[0]) {
+  return [{ value: "all", label: "All VIP tiers" }, ...tierOptions(products)];
+}
 
 export const EXPORT_FORMAT_OPTIONS: { value: "xlsx" | "csv"; label: string }[] = [
   { value: "xlsx", label: "Excel (.xlsx)" },
@@ -70,6 +70,8 @@ export function ExportCustomersCard({
   exporting: boolean;
   onExport: () => void;
 }) {
+  const products = useVipProducts();
+  const planOptions = useMemo(() => exportPlanOptions(products.data), [products.data]);
   return (
     <TemplateStep
       step={1}
@@ -78,7 +80,7 @@ export function ExportCustomersCard({
     >
       <div className="tw:mt-4 tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-3">
         <SelectField label="Status" value={status} options={EXPORT_STATUS_OPTIONS} onChange={setStatus} />
-        <SelectField label="VIP tier" value={plan} options={EXPORT_PLAN_OPTIONS} onChange={setPlan} />
+        <SelectField label="VIP tier" value={plan} options={planOptions} onChange={setPlan} />
         <SelectField label="Format" value={format} options={EXPORT_FORMAT_OPTIONS} onChange={setFormat} />
       </div>
       <div className="tw:mt-4 tw:flex tw:flex-wrap tw:items-center tw:gap-3">

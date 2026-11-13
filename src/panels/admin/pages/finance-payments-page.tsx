@@ -32,7 +32,7 @@ export function FinancePaymentsPage() {
       <AdminStatGrid>
         <AdminStatCard label="Verified" value={<Money value={verifiedInPeriod} />} icon={BadgeCheck} tone="success" />
         <AdminStatCard label="Reversals" value={<Money value={adjustedInPeriod} />} icon={Undo2} tone="danger" />
-        <AdminStatCard label="Net collections" value={<Money value={verifiedInPeriod - adjustedInPeriod} />} icon={Scale} tone="brand" description="Verification date" />
+        <AdminStatCard label="Net collections" value={<Money value={verifiedInPeriod - adjustedInPeriod} />} icon={Scale} tone="brand" description="Counted receipt date" />
       </AdminStatGrid>
       <FilterBar filters={[]}>
         <StandardDateField label="Period from" value={from} onChange={setFrom} className="tw:md:w-56" />

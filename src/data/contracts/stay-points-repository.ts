@@ -1,5 +1,5 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
-import type { PointsLedger, ResortSpend } from "@/modules/stay-points/types";
+import type { PointsLedger, ResortSpend, SpendRefund, WaiverRequest } from "@/modules/stay-points/types";
 
 export type MembershipPoints = {
   membershipId: string;
@@ -9,11 +9,25 @@ export type MembershipPoints = {
   status: string;
   financialHold: boolean;
   spends: ResortSpend[];
-  ledger: PointsLedger;
+  refunds: SpendRefund[];
+  waivers: WaiverRequest[];
+  ledger: PointsLedger | null;
 };
 
-/** Read-only ledger plus Finance reconciliation of held points. Redemption stays disabled. */
+export type StayPointsAction =
+  | { action: "enter"; membershipId: string; venueId: string; date: string; reference: string; grossCentavos: number; excludedCentavos: number; holder: "primary" | "supplementary"; description: string }
+  | { action: "approve"; spendId: string }
+  | { action: "refund"; spendId: string; date: string; amountCentavos: number; reason: string }
+  | { action: "request-waiver"; membershipId: string; tranche: number; date: string; ground: WaiverRequest["ground"]; supportingReference: string }
+  | { action: "decide-waiver"; waiverId: string; granted: boolean; releaseDate: string | null; reason: string };
+
+export type StayPointsOverview = {
+  memberships: MembershipPoints[];
+  venues: { id: string; name: string }[];
+};
+
 export interface StayPointsRepository {
   list(options?: MockAsyncOptions): Promise<MembershipPoints[]>;
-  reconcileHold(spendId: string, decision: "release" | "void", reason: string, options?: MockAsyncOptions): Promise<MembershipPoints>;
+  venues(options?: MockAsyncOptions): Promise<StayPointsOverview["venues"]>;
+  act(action: StayPointsAction, options?: MockAsyncOptions): Promise<MembershipPoints>;
 }

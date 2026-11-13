@@ -67,6 +67,8 @@ export type RedemptionBooking = {
   basisVersion: number;
   reservedWeekday: number;
   reservedWeekend: number;
+  /** A first stay may hold a room before the first gift is released, without reserving points. */
+  provisional?: boolean;
   cashNights: number;
   cashAmountCentavos: number;
   /** Receipt reference of the cash part once Finance approves it (doc 07). */
@@ -89,7 +91,7 @@ export type RedemptionLedgerEntry = {
   bucket: PointsBucket;
   points: number;
   basisVersionId: string;
-  /** shortcut: tranche tracking arrives with the earning-model rewrite (doc 09); null until then. */
+  /** Tranche number for this movement. Null represents a legacy movement. */
   trancheId: string | null;
   actorId: string;
   at: string;

@@ -15,6 +15,7 @@ import {
 } from "@/modules/accreditation/registration";
 import { manilaToday } from "@/modules/accreditation/dates";
 import { programCategoryLabel } from "@/modules/sales-network/accredited-seller";
+import { useProgramCategoryLabels } from "@/data/settings-queries";
 import { AdminPage } from "@/shared/components/admin";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
@@ -75,7 +76,7 @@ function applicantRows(item: RegistrationApplication["applicant"]) {
   ];
 }
 
-function detailSections(application: RegistrationApplication): DetailSection[] {
+function detailSections(application: RegistrationApplication, programOptions: ReadonlyArray<{ value: string; label: string }>): DetailSection[] {
   const sections: DetailSection[] = [
     {
       title: "Application",
@@ -98,7 +99,7 @@ function detailSections(application: RegistrationApplication): DetailSection[] {
         { label: "Civil status", value: completion.civilStatus },
         { label: "Government ID", value: `${completion.governmentIdType}, ${maskedId(completion.governmentIdNumber)}` },
         { label: "Application date", value: formatDate(completion.cardApplicationDate) },
-        { label: "Program", value: programCategoryLabel(completion.programCategory) },
+        { label: "Program", value: programCategoryLabel(completion.programCategory, programOptions) },
         { label: "Card level", value: completion.vipCardLevel },
         { label: "Profile photo", value: completion.profilePhotoName },
       ],
@@ -117,6 +118,7 @@ function detailSections(application: RegistrationApplication): DetailSection[] {
 export function RegistrationApplicationsPage() {
   const { identity } = useDevIdentity();
   const applications = useRegistrationApplications();
+  const programOptions = useProgramCategoryLabels();
   const review = useRegistrationReview();
   const canReview = canReviewRegistrations(identity);
   const canDecide = canDecideRegistrations(identity);
@@ -221,7 +223,7 @@ export function RegistrationApplicationsPage() {
         sections={
           detail
             ? [
-                ...detailSections(detail),
+                ...detailSections(detail, programOptions),
                 ...(detail.status === "needs_info" && detail.correctionToken
                   ? [
                       {

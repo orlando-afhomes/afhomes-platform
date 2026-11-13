@@ -15,7 +15,7 @@ export function MembershipActivationPage() {
   const pending = useMemo(() => (memberships.data ?? []).filter((item) => item.status === "pending"), [memberships.data]);
 
   return (
-    <AdminPage anyOf={["membership"]} title="Activation Queue" description="Activate eligible memberships and issue Card IDs. Fully Paid is not Active until activation." crumbs={[{ label: "Membership" }, { label: "Activation Queue" }]}>
+    <AdminPage anyOf={["membership"]} title="Activation Queue" description="Activate eligible memberships using their issued VIP Numbers." crumbs={[{ label: "Membership" }, { label: "Activation Queue" }]}>
       {canActivate ? (
         <>
           <AdminStatGrid columns={2}>

@@ -471,3 +471,13 @@ These rulings take precedence over earlier text in this document where they diff
 19. **First redemption (owner ruling).** The first redemption, which can set the Points Activation Date, is the first stay where points are actually used at check-in. A booking cancelled in time does not count (section 8).
 20. **Card transfer (owner ruling).** After an approved card transfer, the old holder's unused points are forfeited and cannot be used; the new holder gets only future tranches (section 18).
 21. **Death of the cardholder (owner ruling).** The heirs request a written transfer, which management approves; the same transfer rules apply (section 18).
+
+## Owner ruling amendment (2026-11-13, Promo Points)
+
+These rulings take precedence over earlier text in this document where they differ. They add a separate wallet and change no Grant rule above.
+
+22. **Separate wallet.** Promo Points are separate from the Annual Welcome Gift. They are a different balance, never added to, converted into or mixed with the weekday and weekend Grant points.
+23. **Admin-defined promos.** Promo Points exist only under a promo defined by an Administrator or the Super Administrator, with dates (Asia/Manila business dates), earn outlets, an earn rate (pesos spent per point), redeem outlets, and an optional points expiry date.
+24. **Earning.** Promo Points are earned on Finance-approved resort bills at a promo's earn outlets, dated within the promo dates. Whole points, rounded down; a bill earns once.
+25. **Refunds.** A refund of a bill reverses only that bill's earned Promo Points. Promo Points never change Qualifying Spend, tranche release or any Grant balance (sections 11 to 13 are unchanged).
+26. **Uses and no cash value.** Staff record Promo Points uses at the promo's redeem outlets. A use is voidable with a reason and never deleted. Promo Points have no cash value and are never cashed out.

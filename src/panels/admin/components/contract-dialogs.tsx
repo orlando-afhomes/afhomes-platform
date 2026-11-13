@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useContractAction, useUpdateContract } from "@/data/business-queries";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import { CANCELLATION_GROUNDS, CANCELLATION_GROUND_LABELS, type ContractCancellationGround } from "@/modules/contracts/types";
-import { CheckboxField, SelectField, StandardDateField, TextAreaField, TextField } from "@/shared/forms/modern";
+import { CheckboxField, SelectField, StandardDateField, TextAreaField } from "@/shared/forms/modern";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
 
 type DialogProps = { contract: ContractView; onClose: () => void };
@@ -58,28 +58,21 @@ export function RequestCancellationDialog({ contract, onClose }: DialogProps) {
   );
 }
 
-/** Owner ruling: the RA number uses the NNNN of the Customer ID `YYYY-NNNN`. */
-type RaDialogProps = DialogProps & { suggestedRa?: string | null };
-
-export function RaDialog({ contract, suggestedRa, onClose }: RaDialogProps) {
+export function RaDialog({ contract, onClose }: DialogProps) {
   const action = useContractAction();
-  // An RA already on the contract always wins; the Customer ID sequence only fills a blank field.
-  const existingRa = contract.raNumber?.trim() || null;
-  const suggestion = suggestedRa?.trim() || null;
-  const [value, setValue] = useState(existingRa ?? suggestion ?? "");
   const [error, setError] = useState<string | undefined>();
   const send = async () => {
     try {
-      await action.mutateAsync({ id: contract.id, action: "ra", raNumber: value });
-      toast.success("RA number recorded.");
+      const issued = await action.mutateAsync({ id: contract.id, action: "ra" });
+      toast.success(`VIP Number issued: ${issued.vipNumber}`);
       onClose();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Could not save.");
     }
   };
   return (
-    <FormDialog open title="Record RA number" description="Copy the number from the signed Reservation Agreement. It is needed to issue the VIP Card ID." submitText="Record" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
-      <TextField label="RA number" required value={value} onChange={setValue} hint={!existingRa && suggestion ? "Matches the customer's Customer ID sequence." : "For example 2027-0001. The official numbering format is pending an owner decision."} />
+    <FormDialog open title="Record signed Reservation Agreement" description="Confirm that the agreement has been signed. The system will assign one VIP Number for the agreement, Grant, and card." submitText="Record and issue number" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+      {null}
     </FormDialog>
   );
 }

@@ -3,7 +3,8 @@
 import { useState, type ReactElement, type ReactNode } from "react";
 import { useOperation, usePaymentAction, usePayments, useSubmitPayment } from "@/data/business-queries";
 import type { PaymentView } from "@/data/contracts/payment-repository";
-import { BROAD_ROLES, activeIdentityRoles } from "@/data/mock/scope";
+import { canCorrectPayment } from "@/data/mock/scope";
+import { useReferenceEntries } from "@/data/settings-queries";
 import { adjustableCentavos, adjustmentTotalCentavos, findSuggestedMatch } from "@/modules/finance/rules";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { PAYMENT_METHODS, PAYMENT_PURPOSES, type PaymentMethod, type PaymentPurpose } from "@/modules/finance/types";
@@ -42,8 +43,11 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
   const [reference, setReference] = useState("");
   const [referenceTouched, setReferenceTouched] = useState(false);
   const [file, setFile] = useState("");
+  const [bankId, setBankId] = useState("");
   const [error, setError] = useState<string | undefined>();
   const refPolicy = referencePolicyFor(method);
+  const bankOptions = (useReferenceEntries().data ?? []).filter((entry) => entry.list === "bank" && entry.status === "active").map((entry) => ({ value: entry.id, label: entry.label }));
+  const usesBank = method === "Bank Transfer" || method === "Cheque";
 
   const send = async () => {
     const amountCentavos = parsePesoToCentavos(amount);
@@ -58,8 +62,9 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
       return;
     }
     try {
-      await submit.mutateAsync({ contractId, purpose, amountCentavos, method, paidDate, referenceNo: reference, evidenceFileName: file || null });
+      await submit.mutateAsync({ contractId, purpose, amountCentavos, method, paidDate, referenceNo: reference, evidenceFileName: file || null, bankId: usesBank && bankId ? bankId : null });
       toast.success("Payment submitted for Finance verification.");
+      setBankId("");
       setAmount("");
       setReference("");
       setReferenceTouched(false);
@@ -76,6 +81,7 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
       <SelectField label="Purpose" required value={purpose} options={PAYMENT_PURPOSES.map((value) => ({ value, label: PURPOSE_LABELS[value] }))} onChange={setPurpose} />
       <MoneyField label="Amount" required value={amount} onChange={setAmount} />
       <SelectField label="Method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value }))} onChange={(value) => { setMethod(value); setReference(cleanReferenceNumber(reference, referencePolicyFor(value))); }} />
+      {usesBank && bankOptions.length > 0 ? <SelectField label="Bank" value={bankId} options={bankOptions} onChange={setBankId} allowClear placeholder="Select bank (optional)" /> : null}
       <StandardDateField label="Date on the receipt" required value={paidDate} onChange={setPaidDate} />
       <TextField
         label="Receipt or reference number"
@@ -108,22 +114,14 @@ function PaymentResubmitDialog({ payment, onClose }: { payment: PaymentView; onC
   const [amount, setAmount] = useState(centavosToInputText(payment.amountCentavos));
   const [method, setMethod] = useState<PaymentMethod>(payment.method);
   const [paidDate, setPaidDate] = useState(payment.paidDate);
-  const [reference, setReference] = useState(payment.referenceNo ?? "");
-  const [referenceTouched, setReferenceTouched] = useState(false);
   const [file, setFile] = useState("");
   const [error, setError] = useState<string | undefined>();
-  const refPolicy = referencePolicyFor(method);
 
   const send = async () => {
     const amountCentavos = parsePesoToCentavos(amount);
     if (!amountCentavos) return setError("Enter a valid amount.");
-    const referenceError = requiredReferenceError(reference, refPolicy);
-    if (referenceError) {
-      setReferenceTouched(true);
-      return setError(referenceError);
-    }
     try {
-      await action.mutateAsync({ id: payment.id, action: "resubmit", input: { amountCentavos, method, paidDate, referenceNo: reference, ...(file ? { evidenceFileName: file } : {}) } });
+      await action.mutateAsync({ id: payment.id, action: "resubmit", input: { amountCentavos, method, paidDate, ...(file ? { evidenceFileName: file } : {}) } });
       toast.success("Payment resent for Finance verification.");
       onClose();
     } catch (failure) {
@@ -134,18 +132,12 @@ function PaymentResubmitDialog({ payment, onClose }: { payment: PaymentView; onC
   return (
     <FormDialog open title="Fix and resend payment" description={`Finance returned this payment${payment.decisionReason ? `: ${payment.decisionReason}` : "."} Correct it and resend it for verification. The original version stays in history.`} submitText="Resend payment" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <MoneyField label="Amount" required value={amount} onChange={setAmount} />
-      <SelectField label="Method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value }))} onChange={(value) => { setMethod(value); setReference(cleanReferenceNumber(reference, referencePolicyFor(value))); }} />
+      <SelectField label="Method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value }))} onChange={setMethod} />
       <StandardDateField label="Date on the receipt" required value={paidDate} onChange={setPaidDate} />
-      <TextField
-        label="Receipt or reference number"
-        required
-        value={reference}
-        onChange={(value) => setReference(cleanReferenceNumber(value, refPolicy))}
-        onBlur={() => setReferenceTouched(true)}
-        maxLength={REFERENCE_LIMITS[refPolicy].max}
-        hint={referenceHint(refPolicy)}
-        error={referenceTouched ? (requiredReferenceError(reference, refPolicy) ?? undefined) : undefined}
-      />
+      <div className="tw:flex tw:flex-col tw:gap-1.5">
+        <Label htmlFor="payment-resend-reference">Receipt or reference number</Label>
+        <Input id="payment-resend-reference" value={payment.referenceNo ?? ""} readOnly />
+      </div>
       <div className="tw:flex tw:flex-col tw:gap-1.5">
         <Label htmlFor="payment-resend-evidence">New receipt file</Label>
         <Input id="payment-resend-evidence" type="file" accept="image/*,application/pdf" onChange={(event) => setFile(event.target.files?.[0]?.name ?? "")} />
@@ -162,8 +154,8 @@ function AdjustDialog({ payment, onClose }: { payment: PaymentView | null; onClo
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | undefined>();
   if (!payment) return null;
-  // The Reservation Fee is non-refundable (OD-12): only a reversal is offered for it.
-  const refundAllowed = payment.purpose !== "reservation";
+  // The VIP Reservation Fee is non-refundable. JA&D or the Property Owner decides IGP refunds.
+  const refundAllowed = payment.isIgp || payment.purpose !== "reservation";
   const effectiveKind = refundAllowed ? kind : "reversal";
   const send = async () => {
     const amountCentavos = parsePesoToCentavos(amount);
@@ -212,7 +204,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
   const { confirmRun, dialog } = useConfirmRun();
   const canVerify = useOperation("finance.verify");
   const canRefund = useOperation("finance.refund");
-  const [reasonFor, setReasonFor] = useState<{ payment: PaymentView; kind: "reject" | "return" } | null>(null);
+  const [reasonFor, setReasonFor] = useState<{ payment: PaymentView; kind: "reject" | "return" | "verify" } | null>(null);
   const canSubmit = useOperation("payments.submit");
   const { identity } = useDevIdentity();
   const [adjusting, setAdjusting] = useState<PaymentView | null>(null);
@@ -224,16 +216,23 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
   const itemsFor = (payment: PaymentView): PaymentItem[] => {
     const open = payment.status === "submitted" || payment.status === "under_review";
     const items: PaymentItem[] = [];
-    // Same check as the repository: the submitter or a broad office role fixes and resends a returned receipt.
-    if (canSubmit && payment.status === "returned" && (payment.submittedBy === identity.id || activeIdentityRoles(identity).some((role) => BROAD_ROLES.has(role)))) {
+    if (canSubmit && payment.status === "returned" && canCorrectPayment(identity, payment.submittedBy)) {
       items.push({ key: "resend", label: "Fix and resend", onClick: () => setResending(payment) });
     }
     if (canVerify && open) {
       if (payment.status === "submitted") {
         items.push({ key: "review", label: "Start review", onClick: () => void toast.promise(action.mutateAsync({ id: payment.id, action: "startReview" }), { loading: "Starting review…", success: "Review started.", error: (error: Error) => error.message }) });
       }
+      if (!payment.approvalBlocked && !payment.referenceConflict) {
+        items.push({ key: "verify", label: "Verify", onClick: () => {
+          if (findSuggestedMatch(payments.data ?? [], payment)) {
+            setReasonFor({ payment, kind: "verify" });
+            return;
+          }
+          confirmRun({ title: "Verify this payment?", description: `${formatPeso(payment.amountCentavos)} for ${payment.customerName} will count toward the sale's approved collections.`, confirmText: "Verify", action: () => action.mutateAsync({ id: payment.id, action: "verify" }), successTitle: "Payment verified.", errorTitle: "Could not verify" });
+        } });
+      }
       items.push(
-        { key: "verify", label: "Verify", onClick: () => confirmRun({ title: "Verify this payment?", description: `${formatPeso(payment.amountCentavos)} for ${payment.customerName} will be counted as paid. A reservation alone never confirms a sale.`, confirmText: "Verify", action: () => action.mutateAsync({ id: payment.id, action: "verify" }), successTitle: "Payment verified.", errorTitle: "Could not verify" }) },
         { key: "return", label: "Return for correction", onClick: () => setReasonFor({ payment, kind: "return" }) },
         { key: "reject", label: "Reject", danger: true, onClick: () => setReasonFor({ payment, kind: "reject" }) },
       );
@@ -261,13 +260,17 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
       {dialog}
       <ReasonDialog
         open={reasonFor !== null}
-        title={reasonFor?.kind === "reject" ? "Reject payment" : "Return payment for correction"}
-        description={reasonFor?.kind === "reject" ? "A rejected payment never counts toward the balance." : "The submitter can correct and resubmit. The original submission stays in history."}
-        confirmText={reasonFor?.kind === "reject" ? "Reject" : "Return"}
+        title={reasonFor?.kind === "verify" ? "Verify possible matching receipt" : reasonFor?.kind === "reject" ? "Reject payment" : "Return payment for correction"}
+        description={reasonFor?.kind === "verify" ? "Explain why this is a separate payment." : reasonFor?.kind === "reject" ? "A rejected payment never counts toward the balance." : "The submitter can correct and resubmit. The original submission stays in history."}
+        confirmText={reasonFor?.kind === "verify" ? "Verify" : reasonFor?.kind === "reject" ? "Reject" : "Return"}
         danger={reasonFor?.kind === "reject"}
-        successText={reasonFor?.kind === "reject" ? "Payment rejected." : "Payment returned."}
+        successText={reasonFor?.kind === "verify" ? "Payment verified." : reasonFor?.kind === "reject" ? "Payment rejected." : "Payment returned."}
         onClose={() => setReasonFor(null)}
-        onSubmit={(reason) => (reasonFor ? action.mutateAsync({ id: reasonFor.payment.id, action: reasonFor.kind === "reject" ? "reject" : "return", reason }) : Promise.resolve())}
+        onSubmit={(reason) => {
+          if (!reasonFor) return Promise.resolve();
+          const id = reasonFor.payment.id;
+          return action.mutateAsync(reasonFor.kind === "verify" ? { id, action: "verify", exceptionReason: reason } : { id, action: reasonFor.kind, reason });
+        }}
       />
       <AdjustDialog payment={adjusting} onClose={() => setAdjusting(null)} />
       {resending ? <PaymentResubmitDialog key={resending.id} payment={resending} onClose={() => setResending(null)} /> : null}
@@ -297,13 +300,20 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
                     { label: "Verified on", value: detail.verifiedDate ? formatDate(detail.verifiedDate) : null },
                     { label: "Decision note", value: detail.decisionReason },
                     { label: "Possible match", value: suggestedMatch ? `Another open payment on this contract has the same amount and date (${suggestedMatch.referenceNo ?? "no reference"}). Check it before verifying.` : null },
+                    { label: "Exception", value: detail.referenceConflict ? "This reference is already in use." : detail.approvalBlocked ? "The sale is awaiting approval or closed." : null },
                     { label: "Adjusted", value: detail.adjustments.length > 0 ? `${detail.adjustments.length} adjustment(s), ${formatPeso(adjustmentTotalCentavos(detail.adjustments))}` : null },
                   ],
                 },
               ]
             : []
         }
-        history={detail ? detail.history.map((item, index) => ({ key: `${item.at}-${index}`, when: formatDate(item.at), text: `${humanize(item.event)}${item.note ? `: ${item.note}` : ""}` })) : []}
+        history={detail?.history.map((item, index) => {
+          const prior = item.previousVersion;
+          const note = prior
+            ? `Previous version · ${humanize(prior.purpose)} · ${formatPeso(prior.amountCentavos)} · ${prior.method} · ${formatDate(prior.paidDate)} · Ref. ${prior.referenceNo ?? "—"} · File: ${prior.evidenceFileName ?? "None"}`
+            : item.note;
+          return { key: `${item.at}-${index}`, when: formatDate(item.at), text: `${humanize(item.event)}${note ? `: ${note}` : ""}` };
+        })}
         footer={detailFooter && detailFooter.length > 0 ? detailFooter : undefined}
       />
     </>

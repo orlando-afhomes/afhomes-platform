@@ -6,12 +6,14 @@ import { recordLabel } from "@/shared/lib/record-label";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Check, Pencil, RotateCcw, X } from "lucide-react";
-import { useApproveCustomer, useContracts, useMemberships, useOperation, useRejectCustomer, useSales, useSendBackCustomer } from "@/data/business-queries";
+import { useApproveCustomer, useContracts, useDiscardCustomerDraft, useMemberships, useOperation, useRejectCustomer, useSales, useSendBackCustomer } from "@/data/business-queries";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import { canReviewRegistration } from "@/modules/customers/review";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { ReasonDialog } from "@/shared/components/modern/form-dialog";
+import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { toast } from "sonner";
 import { useCustomers, useMembers } from "@/data/queries";
 import { useAuditEvents } from "@/data/queries";
@@ -20,6 +22,7 @@ import { buttonVariants, Button } from "@/shared/ui/button";
 import { DetailSkeleton } from "@/shared/components/modern/skeletons";
 import { AdminPage } from "@/shared/components/admin";
 import { PrepareContractDialog } from "../components/prepare-contract-dialog";
+import { buildCustomerMenuProps } from "../actions/customer-actions";
 import { useContractHref } from "../components/use-contract-href";
 import { CustomerDetailHero } from "../components/customer-detail-hero";
 import { CustomerDetailTabs, type CustomerDetailTab } from "../components/customer-detail-tabs";
@@ -35,6 +38,7 @@ import {
 } from "../components/customer-detail-panels";
 
 export function CustomerDetailPage({ customerId }: { customerId: string }) {
+  const router = useRouter();
   const customers = useCustomers();
   const members = useMembers();
   const contracts = useContracts();
@@ -44,6 +48,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
   const canDraft = useOperation("customers.draft");
   const canApprove = useOperation("customers.approve");
   const approve = useApproveCustomer();
+  const discard = useDiscardCustomerDraft();
   const sendBack = useSendBackCustomer();
   const reject = useRejectCustomer();
   const [review, setReview] = useState<"approve" | "send_back" | "reject" | null>(null);
@@ -116,6 +121,18 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
     label: humanize(event.action),
     timestamp: event.timestamp,
   }));
+  const kebabMenu = buildCustomerMenuProps(
+    customer,
+    { canManage, canDraft, canApprove, canPrepare, ownRecord, hasContract: Boolean(contract) },
+    {
+      onEdit: () => router.push(`/admin/customers/${customer.id}/edit`),
+      onDiscard: () => discard.mutateAsync(customer.id),
+      onApprove: () => setReview("approve"),
+      onSendBack: () => setReview("send_back"),
+      onReject: () => setReview("reject"),
+      onPrepare: () => setPreparing(true),
+    },
+  );
 
   return (
     <AdminPage
@@ -148,6 +165,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
               Prepare contract
             </Button>
           ) : null}
+          <RowActionsMenu {...kebabMenu} onView={undefined} />
         </>
       }
     >

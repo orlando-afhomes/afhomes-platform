@@ -90,21 +90,19 @@ export type EligibilityMembership = {
   status: string;
   financialHold: boolean;
   activationDate: string | null;
+  cardClaimDate?: string | null;
   validityEndDate: string | null;
   cardId: string | null;
 };
 
-/**
- * Card-side eligibility (doc 10 section 6 items 1, 2, 3, 6). Returns the blocking reasons.
- * shortcut: the Membership model has no Card Claim Date or full-payment flag; an Active
- * membership with a Card ID stands in for both. Replace when the card-claim work lands.
- */
+/** Card-side eligibility (doc 10 section 6 items 1, 2, 3, 6). */
 export function checkMembershipEligibility(membership: EligibilityMembership, checkIn: string, checkOut: string): string[] {
   const reasons: string[] = [];
   if (membership.status !== "active") reasons.push("The membership is not Active.");
   if (membership.financialHold) reasons.push("The membership is on Financial Hold.");
-  if (!membership.cardId || !membership.activationDate) reasons.push("The card has not been claimed.");
-  else if (checkIn < membership.activationDate) reasons.push("The stay starts before the card was claimed.");
+  const claimDate = membership.cardClaimDate === undefined ? membership.activationDate : membership.cardClaimDate;
+  if (!membership.cardId || !claimDate) reasons.push("The card has not been claimed.");
+  else if (checkIn < claimDate) reasons.push("The stay starts before the card was claimed.");
   if (membership.validityEndDate && checkOut > membership.validityEndDate) reasons.push("The stay is outside the card's validity period.");
   return reasons;
 }

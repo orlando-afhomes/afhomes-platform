@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Pencil, Plus } from "lucide-react";
-import { useOperation, usePaymentSchemes } from "@/data/business-queries";
+import { useOperation, usePaymentSchemes, useVipProducts } from "@/data/business-queries";
+import { tierOptions } from "@/modules/vip/tier-options";
 import type { PaymentScheme, VipTierCode } from "@/modules/vip/types";
 import { schemeHowItWorks as termsSummary } from "@/modules/vip/rules";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
@@ -14,15 +15,25 @@ import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sh
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { formatPeso } from "@/shared/lib/money";
+import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { matchesSearch } from "@/shared/lib/search";
 import { SchemeDialog } from "../components/vip-product-dialogs";
 import { humanize } from "@/shared/lib/humanize";
 
 export function PaymentSchemesPage() {
   const schemes = usePaymentSchemes();
+  const products = useVipProducts();
   const canManage = useOperation("vip-products.manage");
   const [schemeOpen, setSchemeOpen] = useState(false);
   const [editingScheme, setEditingScheme] = useState<PaymentScheme | null>(null);
   const [schemeId, setSchemeId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [tierFilter, setTierFilter] = useState("all");
+  const visibleSchemes = useMemo(
+    () => (schemes.data ?? []).filter((item) => (statusFilter === "all" || item.availability === statusFilter) && (tierFilter === "all" || item.applicableTiers.includes(tierFilter as VipTierCode)) && matchesSearch(search, item.label, item.historicalLabel, cardCodeValue(item))),
+    [schemes.data, search, statusFilter, tierFilter],
+  );
 
   const schemeColumns = useMemo<ColumnDef<PaymentScheme, unknown>[]>(
     () => [
@@ -54,7 +65,11 @@ export function PaymentSchemesPage() {
       }
     >
         <QueryState isLoading={schemes.isLoading} error={schemes.error}>
-          <DataTable data={schemes.data ?? []} columns={schemeColumns} getRowId={(row) => row.id} emptyText="No schemes." caption="Payment schemes" onRowOpen={(row) => setSchemeId(row.id)} getRowLabel={(row) => `Open ${row.label}`} rowActions={(row) => <RowActionsMenu itemName={row.label} onView={() => setSchemeId(row.id)} onEdit={canManage ? () => openSchemeEditor(row) : undefined} />} />
+          <FilterBar search={search} onSearch={setSearch} searchLabel="Search schemes" filters={[
+            { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: [{ value: "all", label: "All statuses" }, { value: "available", label: "Available" }, { value: "unavailable", label: "Unavailable" }] },
+            { label: "Tier filter", value: tierFilter, onChange: setTierFilter, options: [{ value: "all", label: "All tiers" }, ...tierOptions(products.data, schemes.data?.flatMap((item) => item.applicableTiers))] },
+          ]} />
+          <DataTable data={visibleSchemes} columns={schemeColumns} getRowId={(row) => row.id} emptyText={(schemes.data ?? []).length === 0 ? "No schemes." : "No schemes match the filters."} caption="Payment schemes" onRowOpen={(row) => setSchemeId(row.id)} getRowLabel={(row) => `Open ${row.label}`} rowActions={(row) => <RowActionsMenu itemName={row.label} onView={() => setSchemeId(row.id)} onEdit={canManage ? () => openSchemeEditor(row) : undefined} />} />
         </QueryState>
       <RecordDetailsSheet
         open={schemeDetail !== null}
@@ -92,7 +107,8 @@ export function PaymentSchemesPage() {
 /** Card code display: the single code when present, else per-tier codes in B1/S1/G1 order, else an em dash. */
 function cardCodeValue(scheme: Pick<PaymentScheme, "paymentCode"> & { paymentCodeByTier?: Partial<Record<VipTierCode, string>> }): string {
   if (scheme.paymentCode) return scheme.paymentCode;
-  const entries = (["B1", "S1", "G1"] as VipTierCode[])
+  const entries = Object.keys(scheme.paymentCodeByTier ?? {})
+    .sort()
     .map((tier) => (scheme.paymentCodeByTier?.[tier] ? `${tier} ${scheme.paymentCodeByTier[tier]}` : null))
     .filter((entry): entry is string => entry !== null);
   return entries.length > 0 ? entries.join(" · ") : "—";

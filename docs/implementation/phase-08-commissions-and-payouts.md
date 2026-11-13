@@ -25,7 +25,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Each rejection has a test or an existing test. A new person's rate defaults to the position standard. A frozen rate does not change after issuance (and never after release). A missing rate pauses issuance. A same-person closing seller and referrer keeps a dated referral reference. |
-| Status | Partial. The code lets any genealogy recipient receive any percentage, which differs from R8. |
+| Status | Implemented in mock for newly issued numbers; historical commission records are preserved |
 
 ## F8.2 Release policy by product and effective date
 
@@ -37,7 +37,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none (G08 decided R8) |
 | Acceptance | Rules live in `src/modules/commissions/` with tests, and effective dates drive which policy applies. VIP releases 100% at 40% collected with no waiting period. The IGP release (40% at 40% collected, the rest at full payment, doc 14 section 8) is not built. |
-| Status | Partial. VIP month-end release exists (D-A); receipt-date stamping per doc 13 is a known gap (D-B); IGP 40/60 release not built. |
+| Status | VIP and IGP release stages use counted receipt dates; monthly lists require close |
 
 ## F8.3 Payout recording and confirmation
 
@@ -61,7 +61,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none (G08 decided R8; the route is in doc 08 section 11.6) |
 | Acceptance | An initiated payout on a held commission can be voided or confirmed by an authorized actor with a reason, and the history stays visible. A paid commission is never silently edited. A payout date before release is refused. |
-| Status | Partial |
+| Status | Held initiated payouts can be confirmed or voided with history |
 
 ## F8.5 Paid-commission recovery
 
@@ -73,7 +73,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none for recording, direct collection and write-off. Automatic deduction waits for the signed addendum (open item). |
 | Acceptance | A clawback can be raised, recorded as recovered and written off, with actor and reason. No automatic offset happens without signed authority. Reinstatement writes off the owed amount except for a returned cheque. |
-| Status | Missing |
+| Status | Recovery ledger and direct collection implemented; automatic deductions await signed terms |
 
 ## F8.6 Allowance (BA, PA, PB) calculation review
 
@@ -85,7 +85,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none (G09 decided R9). Engagement reviews (doc 08 open items) are not yet written into the rules. |
 | Acceptance | Computed BA, PA and PB match the workbook figures in the parallel run, with differences listed. Policy version and approval are stored with the calculation. |
-| Status | Missing |
+| Status | Workbook-input calculation and saved allowance reviews implemented; automatic assembly and official month comparison pending |
 
 ## Out of scope
 

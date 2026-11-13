@@ -18,17 +18,19 @@ export function AdminPage({
   description,
   crumbs,
   actions,
+  allowed = true,
   children,
 }: {
-  anyOf: AdminModuleId[];
+  anyOf: readonly AdminModuleId[];
   title: string;
   description?: string;
   crumbs: BreadcrumbItem[];
   actions?: ReactNode;
+  allowed?: boolean;
   children: ReactNode;
 }) {
   const granted = useEffectiveModuleIds();
-  if (!anyOf.some((moduleId) => granted.has(moduleId))) {
+  if (!allowed || !anyOf.some((moduleId) => granted.has(moduleId))) {
     return (
       <PageContainer>
         <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, ...crumbs]} />

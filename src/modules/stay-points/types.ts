@@ -1,60 +1,91 @@
-/**
- * Verified spend at AFHomes Direct Resort Operations (09 section 9). The source
- * system and the recording role are open decisions (D16), so this data comes
- * from the seed only; no screen creates it.
- */
+import type { BenefitsSnapshot } from "@/modules/contracts/types";
+import type { PointsBucket } from "@/modules/redemption/types";
+
 export type ResortSpend = {
   id: string;
   membershipId: string;
   date: string;
-  /** Verified eligible spend in centavos. */
+  /** Gross pre-discount less excluded components, in exact centavos. */
   amountCentavos: number;
   description: string;
-  /** refund_hold: source transaction refunded, points held until Finance reconciles. voided: reconciled as lost. */
-  status: "verified" | "refund_hold" | "voided";
+  status: "submitted" | "verified" | "voided";
   verificationRef: string | null;
+  venueId?: string;
+  grossCentavos?: number;
+  excludedCentavos?: number;
+  holder?: "primary" | "supplementary";
+  enteredBy?: string;
+  approvedBy?: string;
+  approvedDate?: string;
 };
 
-export type PointsEntryStatus = "pending" | "spendable" | "held" | "voided" | "blocked_rounding" | "outside_cycles";
+export type SpendRefund = { id: string; spendId: string; date: string; amountCentavos: number; reason: string; actorId: string };
 
-export type PointsEntry = {
-  spendId: string;
+export const WAIVER_GROUNDS = ["Hospitalization or serious illness", "Residence outside the Philippines", "Government travel restrictions or public health emergency", "Other extraordinary circumstances"] as const;
+
+export type WaiverRequest = {
+  id: string;
+  membershipId: string;
+  tranche: number;
   date: string;
-  cycle: number;
-  status: PointsEntryStatus;
-  earnedWeekday: number;
-  earnedWeekend: number;
-  /** Points not credited because a cap was reached (recorded with a capped reason, 09 section 13). */
-  cappedExcess: number;
-  note: string | null;
+  ground: (typeof WAIVER_GROUNDS)[number];
+  supportingReference: string;
+  requestedBy: string;
+  decision?: { granted: boolean; actorId: string; date: string; reason: string; releaseDate: string | null };
 };
 
-export type CycleSummary = {
-  cycle: number;
+export type PointsTerms = {
+  membershipId: string;
+  vipNumber: string;
+  fullSettlementDate: string;
+  claimDate: string;
+  validityEndDate: string;
+  financialHold: boolean;
+  restoredFromHoldOn?: string;
+  mayRelease: boolean;
+  benefits: Pick<BenefitsSnapshot, "earningCycles" | "minSpendPerCycleCentavos" | "weekdayPointsPerCycle" | "weekendPointsPerCycle">;
+};
+
+export type TrancheStatus = "unreleased" | "released" | "released_by_waiver" | "non_activated" | "forfeited";
+
+export type PointsTranche = {
+  number: number;
+  dueDate: string;
   startDate: string;
   endDate: string;
-  verifiedSpendCentavos: number;
-  minimumSpendCentavos: number;
-  minimumReached: boolean;
-  weekdayCredited: number;
-  weekendCredited: number;
-  weekdayCap: number;
-  weekendCap: number;
-  totalCap: number;
+  qualifyingCentavos: number;
+  minimumCentavos: number;
+  status: TrancheStatus;
+  releaseDate: string | null;
 };
 
-export type PointsBalances = {
-  spendableWeekday: number;
-  spendableWeekend: number;
-  pending: number;
-  held: number;
-  /** Redemption is disabled, so nothing is ever redeemed or reserved. */
-  redeemed: 0;
-  remainingCapacity: number;
+export type GiftLedgerEntry = {
+  membershipId: string;
+  vipNumber: string;
+  tranche: number;
+  bucket: PointsBucket;
+  type: "release" | "waiver_release" | "expiry" | "transfer";
+  points: number;
+  date: string;
+  reference: string | null;
+  actorId: string;
+};
+
+export type PointsUse = Record<PointsBucket, number>;
+export type TrancheUse = Record<number, PointsUse>;
+export type PointsMovement = { reserved: TrancheUse; redeemed: TrancheUse; forfeited: TrancheUse };
+
+export type StayPointsState = {
+  ledger: GiftLedgerEntry[];
+  refunds: SpendRefund[];
+  waivers: WaiverRequest[];
+  deemedPads: Record<string, string>;
+  transferDates: Record<string, string>;
 };
 
 export type PointsLedger = {
-  entries: PointsEntry[];
-  cycles: CycleSummary[];
-  balances: PointsBalances;
+  padDate: string | null;
+  tranches: PointsTranche[];
+  entries: GiftLedgerEntry[];
+  balances: { spendableWeekday: number; spendableWeekend: number; released: number; reserved: number; redeemed: number; forfeited: number };
 };

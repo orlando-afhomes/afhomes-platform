@@ -198,8 +198,9 @@ function mapRecord(record: CustomerImportRecord, context: ImportContext) {
   input.address = street || province || city || barangay || postalCode ? { street, province, city, barangay, postalCode } : null;
 
   const tier = text("VIP tier");
-  input.vipPlan = tier ? TIER_ALIASES[tier.toLowerCase()] ?? null : null;
-  if (tier && !input.vipPlan) errors.push("VIP tier must be Bronze (B1), Silver (S1) or Gold (G1).");
+  // Seeded names (Bronze, Silver, Gold) stay as aliases; any other catalog product matches by its code.
+  input.vipPlan = tier ? TIER_ALIASES[tier.toLowerCase()] ?? context.products.find((product) => product.code.toLowerCase() === tier.toLowerCase())?.code ?? null : null;
+  if (tier && !input.vipPlan) errors.push(`VIP tier must be a product code in the catalog (${context.products.filter((product) => product.status === "active").map((product) => product.code).join(", ")}) or Bronze, Silver or Gold.`);
   else if (input.vipPlan && !context.products.some((product) => product.code === input.vipPlan && product.status === "active")) errors.push("The VIP tier is not available.");
 
   const warnings: string[] = [];

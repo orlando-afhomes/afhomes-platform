@@ -11,7 +11,7 @@ import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 
-const PLAN_IMAGES: Record<VipTierCode, { src: string; alt: string }> = {
+const PLAN_IMAGES: Partial<Record<VipTierCode, { src: string; alt: string }>> = {
   B1: { src: "/images/cards/bronze.webp", alt: "Bronze VIP privilege card" },
   S1: { src: "/images/cards/silver.webp", alt: "Silver VIP privilege card" },
   G1: { src: "/images/cards/gold.webp", alt: "Gold VIP privilege card" },
@@ -24,6 +24,14 @@ const PLAN_IMAGES: Record<VipTierCode, { src: string; alt: string }> = {
  */
 export function PlanCardImage({ code, className, priority = false }: { code: VipTierCode; className?: string; priority?: boolean }) {
   const image = PLAN_IMAGES[code];
+  // A product created in the catalog has no card art yet: show its code on a neutral card.
+  if (!image) {
+    return (
+      <span className={cn("customer-plan__image tw:flex tw:aspect-[1920/1198] tw:items-center tw:justify-center tw:rounded-lg tw:bg-muted tw:text-2xl tw:font-semibold tw:text-muted-foreground", className)} role="img" aria-label={`VIP card ${code}`}>
+        {code}
+      </span>
+    );
+  }
   return (
     <span className={cn("customer-plan__image tw:block tw:aspect-[1920/1198] tw:overflow-hidden", className)}>
       <Image

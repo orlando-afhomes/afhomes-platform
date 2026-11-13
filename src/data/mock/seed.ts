@@ -7,12 +7,19 @@ import type { VipProduct, PaymentScheme } from "@/modules/vip/types";
 import type { Contract } from "@/modules/contracts/types";
 import type { Sale } from "@/modules/sales/types";
 import type { Payment } from "@/modules/finance/types";
+import { createIgpState, type IgpState } from "@/modules/igp/types";
+import type { ClosedMonth } from "@/modules/finance/month-close";
 import type { Membership } from "@/modules/membership/types";
-import type { Commission } from "@/modules/commissions/types";
-import type { ResortSpend } from "@/modules/stay-points/types";
+import type { Commission, CommissionRateSetting, CommissionClawback, CommissionPayoutList } from "@/modules/commissions/types";
+import type { AllowanceReview } from "@/modules/commissions/allowances";
+import type { ResortSpend, StayPointsState } from "@/modules/stay-points/types";
+import { createStayPointsState } from "@/modules/stay-points/engine";
 import type { RedemptionState } from "@/modules/redemption/types";
 import { createRedemptionSeed } from "@/modules/redemption/sample-seed";
+import { seedOutlets, seedReferenceEntries, type Outlet, type ReferenceEntry } from "@/modules/settings/lists";
 import type { Account } from "@/modules/accounts/types";
+import type { Promo, PromoPointsEntry } from "@/modules/promos/types";
+import { seedPromos } from "@/modules/promos/sample-seed";
 import type { AuditEvent } from "@/modules/audit/types";
 import type { ReceiptImportBatch } from "@/modules/imports/receipt-import";
 import type { ReconciliationEntry } from "@/modules/reconciliation/rules";
@@ -29,12 +36,25 @@ export type MockStore = {
   paymentSchemes: PaymentScheme[];
   contracts: Contract[];
   sales: Sale[];
+  igp: IgpState;
   payments: Payment[];
+  closedMonths: ClosedMonth[];
   memberships: Membership[];
   commissions: Commission[];
+  commissionRateSettings: CommissionRateSetting[];
+  commissionClawbacks: CommissionClawback[];
+  commissionPayoutLists: CommissionPayoutList[];
+  allowanceReviews: AllowanceReview[];
   resortSpends: ResortSpend[];
+  stayPoints: StayPointsState;
   /** Redemption configuration, bookings and points ledger; browser memory only. */
   redemption: RedemptionState;
+  /** Admin-managed lists (program categories, government ID types, banks) and outlets. */
+  referenceEntries: ReferenceEntry[];
+  outlets: Outlet[];
+  /** Promo Points: admin-defined promos and their separate points ledger (not Grant Stay Points). */
+  promos: Promo[];
+  promoPoints: PromoPointsEntry[];
   accounts: Account[];
   departments: Department[];
   roles: DepartmentRole[];
@@ -79,11 +99,22 @@ export function createSeedStore(): MockStore {
     paymentSchemes: clone(paymentSchemes),
     contracts: clone(contracts),
     sales: clone(sales),
+    igp: createIgpState(),
     payments: clone(payments),
+    closedMonths: [],
     memberships: clone(memberships),
     commissions: clone(commissions),
+    commissionRateSettings: [],
+    commissionClawbacks: [],
+    commissionPayoutLists: [],
+    allowanceReviews: [],
     resortSpends: clone(resortSpends),
+    stayPoints: createStayPointsState(),
     redemption: createRedemptionSeed(),
+    referenceEntries: seedReferenceEntries(),
+    outlets: seedOutlets(),
+    promos: seedPromos(),
+    promoPoints: [],
     accounts: accounts.map((item) => ({ ...item, roleIds: [...item.roleIds] })),
     departments: departments.map((item) => ({ ...item })),
     roles: roles.map((item) => ({ ...item, moduleIds: [...item.moduleIds] })),
@@ -104,7 +135,7 @@ export function createSeedStore(): MockStore {
     registrationSequence: 1,
     // Continues after the seeded audit-1..audit-8 display records.
     auditSequence: 9,
-    counters: { ...seedData.counters },
+    counters: { promo: 2, ...seedData.counters },
   };
 }
 
@@ -129,11 +160,22 @@ export function createMockStore(seed: MockStore = createSeedStore()): MockStore 
     paymentSchemes: clone(seed.paymentSchemes),
     contracts: clone(seed.contracts),
     sales: clone(seed.sales),
+    igp: clone(seed.igp),
     payments: clone(seed.payments),
+    closedMonths: clone(seed.closedMonths),
     memberships: clone(seed.memberships),
     commissions: clone(seed.commissions),
+    commissionRateSettings: clone(seed.commissionRateSettings),
+    commissionClawbacks: clone(seed.commissionClawbacks),
+    commissionPayoutLists: clone(seed.commissionPayoutLists),
+    allowanceReviews: clone(seed.allowanceReviews),
     resortSpends: clone(seed.resortSpends),
+    stayPoints: clone(seed.stayPoints),
     redemption: clone(seed.redemption),
+    referenceEntries: seed.referenceEntries.map((item) => ({ ...item })),
+    outlets: seed.outlets.map((item) => ({ ...item })),
+    promos: clone(seed.promos),
+    promoPoints: clone(seed.promoPoints),
     accounts: seed.accounts.map((item) => ({ ...item, roleIds: [...item.roleIds] })),
     departments: seed.departments.map((item) => ({ ...item })),
     roles: seed.roles.map((item) => ({ ...item, moduleIds: [...item.moduleIds] })),

@@ -23,7 +23,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | The ledger is append-only for credits. Cycle totals reconcile with entries. Points Activation Date is the earlier of the first redemption (first stay with points used at check-in) or the second anniversary of the Card Claim Date, and is fixed once set. Year 1 measurement runs from Full Settlement to the PAD, capped at 24 months. A released tranche is never taken back. Missed tranches never carry over. No Spend-to-Earn (1 peso = 1 point) path remains. A Gold supplementary holder's spend counts toward the shared minimum. |
-| Status | Partial. The ledger exists, but the earning model differs from R10. |
+| Status | Fixed Annual Welcome Gift tranches implemented and tested in mock |
 
 ## F10.2 Tranche waiting during a Financial Hold
 
@@ -47,7 +47,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | OR numbers are unique system-wide. Qualifying Spend is the gross pre-discount value of eligible paid transactions at AFhomes Direct Operations, excluding free items, points redemptions, third-party purchases, taxes and tips; VIP membership payments never count. Only approved bills count. Admin and Super Admin self-approval is audited. A bill entered late but dated inside a period counts for that period. A tranche releases once, in full, at the tier minimum (Bronze 1,000, Silver 2,000, Gold 3,000 pesos), with no partial or extra release. No caps, cap restoration or rounding exist. |
-| Status | Missing |
+| Status | Resort bill entry and approval implemented and tested in mock |
 
 ## F10.4 Refunds and waivers
 
@@ -59,7 +59,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | A refund is a dated reversal entry and the original bill stays in history. A refund before release delays the tranche; after release it changes nothing. A waiver needs a written request within 60 days after the affected year, a documented ground and a written reason, is audited for both outcomes, releases that year's tranche, never creates a tranche beyond the tier count and never extends validity. |
-| Status | Missing |
+| Status | Dated refunds and Compassionate Waiver implemented and tested in mock |
 
 ## F10.5 Redemption and Services (disabled)
 
@@ -71,7 +71,7 @@ Routes (from the atlas):
 | Layer | Disabled |
 | Blocked by | Owner authorization to build (G12 and U11 are decided) |
 | Acceptance | No routes, APIs or navigation. No points consumed through redemption. When later authorized, the decided rules apply: no redemption before the card is claimed; the first redemption is the first stay with points used at check-in, and a booking cancelled in time does not count; a provisional first-stay room hold reserves no points; cancellation before the cut-off returns points and a no-show or late cancellation after the cut-off forfeits them; points plus cash is split by whole nights (A1); the points-per-night table version is fixed at the Card Claim Date and later versions apply only to cards claimed on or after their effective date; a card transfer or the cardholder's death forfeits the old holder's unused points and cancels the old holder's future points bookings after staff inform the old holder (A7). If Year 1 is not met when the first redemption sets the PAD, tranche 1 is not released and not carried over, a late bill dated inside the period still counts and an Admin waiver is possible (A7). |
-| Status | Disabled |
+| Status | Redemption exists in the prototype with sample configuration. Services remains outside scope. Canonical documentation still carries the earlier disabled status. |
 
 ## Out of scope
 

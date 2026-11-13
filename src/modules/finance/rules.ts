@@ -15,6 +15,26 @@ export function totalVerifiedCentavos(payments: readonly Payment[]): number {
   return payments.reduce((total, payment) => total + netVerifiedCentavos(payment), 0);
 }
 
+/** Find a collection milestone in approval order while keeping its receipt date from moving backward. */
+export function approvedCollectionMilestone(priceCentavos: number, payments: readonly Payment[], thresholdBp: number) {
+  if (priceCentavos <= 0) return null;
+  const ordered = payments.filter((payment) => payment.status === "verified" && payment.verifiedDate)
+    .sort((a, b) => a.verifiedDate!.localeCompare(b.verifiedDate!) || (a.verifiedAt ?? "").localeCompare(b.verifiedAt ?? ""));
+  let cumulative = 0;
+  let date = "";
+  let countedDate = "";
+  for (const payment of ordered) {
+    const net = netVerifiedCentavos(payment);
+    if (net <= 0) continue;
+    cumulative += net;
+    if (payment.paidDate > date) date = payment.paidDate;
+    const postingDate = payment.countedDate ?? payment.paidDate;
+    if (postingDate > countedDate) countedDate = postingDate;
+    if (cumulative * 10_000 >= priceCentavos * thresholdBp) return { payment, date, countedDate };
+  }
+  return null;
+}
+
 /** Balance = finalized contract snapshot price minus verified payments (07 section 11). Never the catalog price. */
 export function outstandingBalanceCentavos(contract: Pick<Contract, "priceCentavos">, payments: readonly Payment[]): number {
   return Math.max(0, contract.priceCentavos - totalVerifiedCentavos(payments));
@@ -91,10 +111,14 @@ export function adjustmentTotalCentavos(adjustments: readonly { amountCentavos: 
   return adjustments.reduce((total, adjustment) => total + adjustment.amountCentavos, 0);
 }
 
-/** Gross verified, adjusted, and net amounts for a date range; Verified Collections are dated by verification date. */
+/** Gross verified, adjusted, and net amounts for a date range by accounting date. */
+export function paymentCountedDate(payment: Pick<Payment, "status" | "countedDate" | "paidDate">): string | null {
+  return payment.status === "verified" ? payment.countedDate ?? payment.paidDate : null;
+}
+
 export function periodCollections(payments: readonly Payment[], from: string, to: string): { gross: number; adjusted: number; net: number } {
   const inRange = (date: string | null | undefined) => Boolean(date) && manilaDateOf(date as string) >= from && manilaDateOf(date as string) <= to;
-  const gross = payments.filter((payment) => inRange(payment.verifiedDate)).reduce((sum, payment) => sum + payment.amountCentavos, 0);
+  const gross = payments.filter((payment) => inRange(paymentCountedDate(payment))).reduce((sum, payment) => sum + payment.amountCentavos, 0);
   const adjusted = adjustmentTotalCentavos(payments.flatMap((payment) => payment.adjustments).filter((adjustment) => inRange(adjustment.date)));
   return { gross, adjusted, net: gross - adjusted };
 }

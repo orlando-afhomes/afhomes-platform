@@ -9,6 +9,8 @@ import { manilaToday } from "@/shared/lib/dates";
 import type { ColumnDef } from "@/shared/components/modern/data-table";
 import { PercentField, SelectField, StandardDateField, TextField } from "@/shared/forms/modern";
 import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { Money } from "@/shared/components/modern/money";
@@ -24,7 +26,7 @@ export const COMMISSION_COLUMNS: ColumnDef<CommissionView, unknown>[] = [
     { id: "recipient", header: "Recipient", cell: ({ row }) => <span className="tw:font-semibold">{row.original.recipientName} <span className="tw:text-muted-foreground">({row.original.recipientDesignation})</span></span> },
     { id: "customer", header: "Sale", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.customerName },
     { id: "basis", header: "Contract value", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => <Money value={row.original.basisCentavos} /> },
-    { id: "rate", header: "Rate", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => formatBasisPoints(row.original.percentBp) },
+    { id: "rate", header: "Rate", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.role ? `${row.original.role} · ${formatBasisPoints(row.original.percentBp)}` : formatBasisPoints(row.original.percentBp) },
     { id: "amount", header: "Amount", cell: ({ row }) => <Money value={row.original.amountCentavos} /> },
     { id: "status", header: "Status", cell: ({ row }) => <div className="tw:flex tw:flex-col tw:gap-1"><BizBadge status={row.original.status} />{row.original.payout && !row.original.payout.confirmedAt ? <span className="tw:text-xs tw:text-muted-foreground">Payout initiated, not confirmed</span> : null}{row.original.holdReason ? <span className="tw:text-xs tw:text-muted-foreground">{row.original.holdReason}</span> : null}</div> },
 ];
@@ -50,15 +52,22 @@ export function CommissionDetailsSheet({ detail, onClose, items }: { detail: Com
                   title: "Commission",
                   rows: [
                     { label: "Contract value", value: <Money value={detail.basisCentavos} /> },
+                    { label: "Sale number", value: detail.saleReference },
                     { label: "Rate", value: formatBasisPoints(detail.percentBp) },
                     { label: "Amount", value: <Money value={detail.amountCentavos} /> },
                     { label: "Payout", value: detail.payout ? (detail.payout.confirmedAt ? "Disbursement confirmed" : "Initiated, not confirmed") : payoutNote(detail) },
+                    { label: "Payout reference", value: detail.payout?.reference },
+                    { label: "Proof", value: detail.payout?.evidenceFileName },
                     { label: "On hold because", value: detail.holdReason },
                   ],
                 },
               ]
             : []
         }
+        history={detail?.previousPayouts?.map((payout, index) => ({
+          key: `${payout.voidedAt}-${index}`, when: formatDate(payout.voidedAt),
+          text: `Payout voided · ${payout.reference} · ${payout.reason}`,
+        }))}
         footer={detail && items.length > 0 ? items.map((item) => <Button key={item.key} type="button" variant={item.danger ? "danger" : "outline"} onClick={item.onClick}>{item.label}</Button>) : undefined}
       />
   );
@@ -99,10 +108,11 @@ export function PayoutDialog({ commission, onClose }: { commission: CommissionVi
   const [reference, setReference] = useState("");
   const [method, setMethod] = useState("");
   const [date, setDate] = useState(manilaToday());
+  const [file, setFile] = useState("");
   const [error, setError] = useState<string | undefined>();
   const send = async () => {
     try {
-      await action.mutateAsync({ id: commission.id, action: "payout", reference, method: method || null, payoutDate: date });
+      await action.mutateAsync({ id: commission.id, action: "payout", reference, method: method || null, payoutDate: date, evidenceFileName: file });
       toast.success("Payout recorded. Confirm disbursement to mark it Paid.");
       onClose();
     } catch (failure) {
@@ -112,8 +122,12 @@ export function PayoutDialog({ commission, onClose }: { commission: CommissionVi
   return (
     <FormDialog open title="Record payout" description={`${commission.recipientName} · the commission stays Approved until disbursement is confirmed.`} submitText="Record payout" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <TextField label="Payment reference" required value={reference} onChange={setReference} />
-      <TextField label="Payment method" value={method} onChange={setMethod} hint="Follow the company financial process." />
+      <TextField label="Payment method" required={Boolean(commission.releaseDate)} value={method} onChange={setMethod} />
       <StandardDateField label="Payout date" required value={date} onChange={setDate} />
+      <div className="tw:grid tw:gap-2">
+        <Label htmlFor="commission-payout-evidence">Payment proof</Label>
+        <Input id="commission-payout-evidence" type="file" required={Boolean(commission.releaseDate)} accept="image/*,application/pdf" onChange={(event) => setFile(event.target.files?.[0]?.name ?? "")} />
+      </div>
     </FormDialog>
   );
 }

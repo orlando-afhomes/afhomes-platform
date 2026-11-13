@@ -4,13 +4,11 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { Designation, OrgMember } from "@/modules/organization/types";
 import { normalizeLandline, normalizePhilippineMobile, normalizePostalCode } from "@/shared/utils/input-sanitizers";
-import {
-  CIVIL_STATUS_OPTIONS,
-  GENDER_OPTIONS,
-  GOV_ID_OPTIONS,
-  PROGRAM_CATEGORY_OPTIONS,
-  VIP_LEVEL_OPTIONS,
-} from "@/modules/sales-network/accredited-seller";
+import { CIVIL_STATUS_OPTIONS, GENDER_OPTIONS } from "@/modules/sales-network/accredited-seller";
+import { useVipProducts } from "@/data/business-queries";
+import { useReferenceOptions } from "@/data/settings-queries";
+import { tierOptions } from "@/modules/vip/tier-options";
+import { isValidTierCode, type VipTierCode } from "@/modules/vip/types";
 import {
   formatPhilippineLandlineDisplay,
   validateBarangay,
@@ -109,6 +107,9 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
   const formRef = useRef<HTMLFormElement>(null);
   const profile = member.sellerProfile ?? null;
   const split = splitMemberDisplayName(member.displayName);
+  // A value already saved on this member stays selectable even if its entry was deactivated.
+  const programOptions = useReferenceOptions("program-category", [profile?.programCategory]);
+  const govIdOptions = useReferenceOptions("gov-id-type", [profile?.governmentIdType]);
 
   const [firstName, setFirstName] = useState(profile?.firstName ?? split.first);
   const [middleName, setMiddleName] = useState(profile?.middleName ?? split.middle);
@@ -135,7 +136,8 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
   const [governmentIdNumber, setGovernmentIdNumber] = useState(profile?.governmentIdNumber ?? "");
   const [cardApplicationDate, setCardApplicationDate] = useState(profile?.cardApplicationDate ?? "");
   const [programCategory, setProgramCategory] = useState<string | undefined>(profile?.programCategory ?? undefined);
-  const [vipCardLevel, setVipCardLevel] = useState<"B1" | "S1" | "G1">(profile?.vipCardLevel ?? "B1");
+  const [vipCardLevel, setVipCardLevel] = useState<VipTierCode>(profile?.vipCardLevel ?? "B1");
+  const products = useVipProducts();
   const [confirmSave, setConfirmSave] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -163,7 +165,7 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
       jobPosition: orUndefined(validateJobPosition(jobPosition)),
       cardApplicationDate: orUndefined(validateDateString(cardApplicationDate, "Application date")),
       programCategory: programCategory ? undefined : "Select a program category.",
-      vipCardLevel: ["B1", "S1", "G1"].includes(vipCardLevel) ? undefined : "Card level must be valid.",
+      vipCardLevel: isValidTierCode(vipCardLevel) ? undefined : "Card level must be valid.",
       gender: gender?.trim() ? undefined : "Gender is required.",
       civilStatus: civilStatus?.trim() ? undefined : "Civil Status is required.",
       governmentIdType: governmentIdType ? undefined : "Government ID type is required.",
@@ -314,13 +316,13 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
       <FormSection title="Program Details">
         <FormGrid>
           <StandardDateField id="edit-card-application" label="Application Date" required value={cardApplicationDate} onChange={setCardApplicationDate} error={visible("cardApplicationDate")} />
-          <SelectField id="edit-vip-level" label="Card Level" required value={vipCardLevel} options={VIP_LEVEL_OPTIONS} onChange={setVipCardLevel} error={visible("vipCardLevel")} />
+          <SelectField id="edit-vip-level" label="Card Level" required value={vipCardLevel} options={tierOptions(products.data, [vipCardLevel])} onChange={setVipCardLevel} error={visible("vipCardLevel")} />
           <SelectField
             id="edit-program-category"
             label="Program Category"
             required
             value={programCategory}
-            options={PROGRAM_CATEGORY_OPTIONS}
+            options={programOptions}
             onChange={setProgramCategory}
             placeholder="Select program category"
             error={visible("programCategory")}
@@ -337,7 +339,7 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
             onIdTypeChange={setGovernmentIdType}
             idNumber={governmentIdNumber}
             onIdNumberChange={setGovernmentIdNumber}
-            idTypeOptions={GOV_ID_OPTIONS}
+            idTypeOptions={govIdOptions}
             required
             errorType={visible("governmentIdType")}
             errorIdNumber={visible("governmentIdNumber")}

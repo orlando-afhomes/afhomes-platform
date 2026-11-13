@@ -6,7 +6,8 @@ import type {
 } from "@/modules/accreditation/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { getEffectiveRoles, isModuleGranted } from "@/modules/identity/permissions";
-import { GENDER_OPTIONS, CIVIL_STATUS_OPTIONS, GOV_ID_OPTIONS, PROGRAM_CATEGORY_OPTIONS, VIP_LEVEL_OPTIONS } from "@/modules/sales-network/accredited-seller";
+import { GENDER_OPTIONS, CIVIL_STATUS_OPTIONS, GOV_ID_OPTIONS, PROGRAM_CATEGORY_OPTIONS } from "@/modules/sales-network/accredited-seller";
+import { isValidTierCode } from "@/modules/vip/types";
 import { validateDateString, validatePastDate } from "@/shared/forms/validation/dates";
 import { validateEmailAddress, validateMobileNumber } from "@/shared/forms/validation/contact";
 import { validateBarangay, validateCity, validatePostalCode, validateProvince, validateStreet } from "@/shared/forms/validation/address";
@@ -157,15 +158,24 @@ export function isDuplicateApplication(applicant: RegistrationApplicant, applica
 const hasOption = (options: ReadonlyArray<{ value: string }>, value: string) => options.some((option) => option.value === value);
 
 /** Validation of the details the office completes before a decision. Returns the first error or null. */
-export function validateCompletion(completion: RegistrationCompletion): string | null {
+export type CompletionAllowedValues = { govIdTypes: readonly string[]; programCategories: readonly string[] };
+
+/**
+ * `allowed`: values of the admin-managed lists the completion may use (active
+ * values plus any value already saved on the record). Defaults to the seed lists.
+ */
+export function validateCompletion(
+  completion: RegistrationCompletion,
+  allowed: CompletionAllowedValues = { govIdTypes: GOV_ID_OPTIONS.map((option) => option.value), programCategories: PROGRAM_CATEGORY_OPTIONS.map((option) => option.value) },
+): string | null {
   if (!hasOption(GENDER_OPTIONS, completion.gender)) return "Select a gender.";
   if (!hasOption(CIVIL_STATUS_OPTIONS, completion.civilStatus)) return "Select a civil status.";
-  if (!hasOption(GOV_ID_OPTIONS, completion.governmentIdType)) return "Select a government ID type.";
+  if (!allowed.govIdTypes.includes(completion.governmentIdType)) return "Select a government ID type.";
   return (
     validateGovIdNumber(completion.governmentIdNumber, completion.governmentIdType) ??
     validateDateString(completion.cardApplicationDate, "Application date") ??
-    (hasOption(PROGRAM_CATEGORY_OPTIONS, completion.programCategory) ? null : "Select a program category.") ??
-    (hasOption(VIP_LEVEL_OPTIONS, completion.vipCardLevel) ? null : "Select a card level.") ??
+    (allowed.programCategories.includes(completion.programCategory) ? null : "Select a program category.") ??
+    (isValidTierCode(completion.vipCardLevel) ? null : "Select a card level.") ??
     (completion.profilePhotoName.trim() ? null : "Profile photo is required.")
   );
 }

@@ -417,7 +417,7 @@ const contracts: Contract[] = [
     history: [{ at: "2026-11-06", actorId: "dev-ost-a2", event: "CONTRACT_SUBMITTED", note: null }] },
 ];
 
-const sales: Sale[] = [
+const sales: Sale[] = ([
   { id: "sale-1", contractId: "ctr-1", customerId: "cust-a1", productCode: "S1", branchId: "branch-a", valueCentavos: peso(240000), recordedDate: "2026-09-30",
     sellerMemberId: "mem-ost-a1", referrerMemberId: "mem-ost-b1", team: team["mem-ost-a1"], status: "confirmed", confirmedDate: "2026-10-28",
     adjustments: [{ id: "adj-1", date: "2026-10-28", amountCentavos: peso(240000), kind: "confirmation", reason: "Required initial payment verified by Finance", actorId: "dev-finance" }] },
@@ -428,7 +428,10 @@ const sales: Sale[] = [
     sellerMemberId: "mem-sm-a", referrerMemberId: null, team: team["mem-sm-a"], status: "pending", confirmedDate: null, adjustments: [] },
   { id: "sale-4", contractId: "ctr-4", customerId: "cust-a4", productCode: "B1", branchId: "branch-a", valueCentavos: peso(72000), recordedDate: "2026-11-06",
     sellerMemberId: "mem-ost-a2", referrerMemberId: null, team: team["mem-ost-a2"], status: "pending", confirmedDate: null, adjustments: [] },
-];
+] satisfies Omit<Sale, "approval">[]).map((sale) => ({
+  ...sale,
+  approval: { approvedAt: sale.recordedDate, approvedBy: "dev-admin" },
+}));
 
 const pay = (id: string, contractId: string, customerId: string, saleId: string, purpose: PaymentPurpose, amount: number, paidDate: string, status: Payment["status"], extra?: Partial<Payment>): Payment => ({
   id, contractId, customerId, saleId, purpose, amountCentavos: amount, method: "Bank Transfer", paidDate, referenceNo: "BT-" + id.toUpperCase(),
@@ -452,7 +455,7 @@ const payments: Payment[] = [
 
 const memberships: Membership[] = [
   { id: "memb-1", customerId: "cust-b1", contractId: "ctr-2", productCode: "B1", status: "active", activationDate: "2026-11-02",
-    validityEndDate: "2033-11-02", cardId: "26110200001B1T04S", raNumber: "2026-0001", financialHold: true, createdAt: "2026-10-30",
+    validityEndDate: "2033-11-02", cardClaimDate: "2026-11-02", fullSettlementDate: "2026-11-02", cardClaimKind: "actual", cardId: "26110200001B1T04S", raNumber: "2026-0001", financialHold: true, createdAt: "2026-10-30",
     history: [{ at: "2026-11-02", actorId: "dev-admin", event: "MEMBERSHIP_ACTIVATED", note: null }] },
   { id: "memb-2", customerId: "cust-a1", contractId: "ctr-1", productCode: "S1", status: "pending", activationDate: null,
     validityEndDate: null, cardId: null, raNumber: null, financialHold: false, createdAt: "2026-10-01", history: [] },
@@ -461,7 +464,7 @@ const memberships: Membership[] = [
 const resortSpends: ResortSpend[] = [
   { id: "rs-1", membershipId: "memb-1", date: "2026-11-04", amountCentavos: peso(400), description: "Resort restaurant", status: "verified", verificationRef: null },
   { id: "rs-2", membershipId: "memb-1", date: "2026-11-06", amountCentavos: peso(600), description: "Resort accommodation extras", status: "verified", verificationRef: null },
-  { id: "rs-3", membershipId: "memb-1", date: "2026-11-07", amountCentavos: peso(500), description: "Resort activity pass (refunded)", status: "refund_hold", verificationRef: null },
+  { id: "rs-3", membershipId: "memb-1", date: "2026-11-07", amountCentavos: peso(500), description: "Resort activity pass (refunded)", status: "voided", verificationRef: null },
 ];
 
 const commissions: Commission[] = [

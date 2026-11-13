@@ -1,8 +1,20 @@
 # Feature-by-Feature Implementation Plan
 
-Atlas version: `2026-11-12.3`
-Atlas baseline: `develop @ b784e30 · 12 Nov 2026`
-Docs written against: `develop @ b784e30`, with the owner rulings R1 to R13 and the audit answers A1 to A8 of 2026-11-12
+Atlas version: `2026-11-13.1`
+Atlas baseline: `develop @ a0cba09 · reviewed working copy · 13 Nov 2026`
+Docs written against: `develop @ a0cba09` plus local changes, with owner rulings R1 to R13 and answers A1 to A8.
+
+## Prototype working-copy update (2026-11-13)
+
+Reviewed against `develop @ a0cba09` plus the local working copy. The atlas version above identifies the last built viewer.
+
+| Milestone | Prototype status |
+|---|---|
+| M5 | Separate sale approval, 25/40/100 receipt milestones, 90-day default review, month close, receipt exceptions, unified VIP Number and card claim are implemented. The receipt exceptions tab handles posted receipts with possible matches or approval/reference issues. Unmatched receipt intake remains open. |
+| M6 | Issuance freezes the approved seller/referrer rates. Payout lists, hold resolution, recovery tracking and workbook-based allowance reviews exist. Automatic deductions await signed terms. Full automatic allowance input assembly and payroll reconciliation remain open. |
+| M7 | Annual Welcome Gift, resort bill review, refund, waiver, Redemption check-in, and card servicing use the mock store. The points-per-night table still uses sample rows. |
+| M8 | IGP intake, shared receipts, JA&D accreditation, Series Number and reissue, staged commission and Grant checklist exist. Grant benefits and prices over ₱9 million remain restricted by doc 14. |
+| M10–M11 | Period close snapshots preserve sales, collections, commissions and saved allowance review totals in browser memory. Sales Performance includes IGP. Reconciliation and historical receipt import remain available. Final role-by-role browser sign-off and workbook comparison with official period totals are pending. |
 
 This folder turns the AFHomes Workflow Atlas into an implementation roadmap. It lists what exists, what is missing and what is blocked, one feature at a time, grouped into feature phases.
 
@@ -10,9 +22,9 @@ It does not authorize any work. Per `AGENTS.md` section 7, every feature still n
 
 ## Source and authority
 
-- The Workflow Atlas is an offline viewer built by Codex: `C:/Users/SSD-ORLANDO/.codex/visualizations/2026/11/12/01a1cd9b-0453-7c43-bed7-0f196ed66259/afhomes-viewer/dist/index.html`. It is the project's workflow memory. The command `/update-workflow-atlas` keeps it current (see `workflow/update-workflow-atlas.md`).
+- The Workflow Atlas is an offline viewer built by Codex: `C:/Users/SSD-ORLANDO/.codex/visualizations/2026/11/13/01a1d2c4-6803-75d2-b0f7-ecc65baa94f1/afhomes-viewer/dist/index.html`. The previous viewer is preserved in its original folder.
 - The atlas is evidence, not authority. Canonical business rules in `docs/business-rules/` win. Where the atlas and a rule differ, the feature card cites both and points to the decision item. It never resolves the difference.
-- Atlas coverage: 10 modules, 16 roles, 53 routes, 12 journeys (J01 to J12), 12 decisions (G01 to G12), 13 scenario gaps (U01 to U13). Each journey has four views: AS-IS Manual, AS-IS System, TO-BE Proposed and Changes.
+- Atlas coverage: 10 modules, 16 roles, 60 indexed routes, 12 journeys (J01 to J12), 12 decisions (G01 to G12), 13 scenario gaps (U01 to U13). Each journey has four views: AS-IS Manual, AS-IS System, TO-BE Proposed and Changes.
 - The atlas was refreshed to `b784e30` on 2026-11-12 (version `2026-11-12.3`): G01 to G12 and U01 to U13 now carry the R1 to R13 rulings, and the text of 11 journeys (all but J03), three diagram lines and five flow-node texts were updated. The earlier build was at `a0bdcef`. Commit `fc060bb` changed commission release and payout rules, stay-point rules and instant navigation. Cards that these changes affect say so.
 
 ## Not the same as the technical phases

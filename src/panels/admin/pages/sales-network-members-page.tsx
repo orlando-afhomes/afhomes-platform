@@ -9,8 +9,12 @@ import type { OrgMember } from "@/modules/organization/types";
 import type { AccreditationRecord } from "@/modules/accreditation/types";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
-import { useAccreditations, useChangeSalesNetworkMemberStatus, useMembers } from "@/data/queries";
+import { useAccreditations, useChangeSalesNetworkMemberStatus, useIssuePendingAccreditation, useMembers, useRenewAccreditation } from "@/data/queries";
 import { aaDisplay, designationLabel, resolveAccreditationDisplay, teamDisplayName } from "@/modules/sales-network/display";
+import { resolveRenewTarget, buildMemberMenuProps } from "../actions/sales-network-actions";
+import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
+import { formatDate } from "@/shared/lib/format-date";
+import { toast } from "sonner";
 import { hasOperationPermission } from "@/modules/identity/permissions";
 import { resolveEffectiveModules } from "@/data/mock/authorization";
 import { PageContainer } from "@/shared/components/modern/page-container";
@@ -21,7 +25,7 @@ import { AdminPage } from "@/shared/components/admin";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { Button } from "@/shared/ui/button";
-import { SalesNetworkRowActions } from "../components/sales-network-row-actions";
+import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { AccreditationStatusAction } from "../components/accreditation-status-action";
 import { DesignationBadge } from "@/shared/components/business/designation-badge";
 import { AccreditedSellerDialog } from "./sales-network-accredited-seller-dialog";
@@ -70,7 +74,11 @@ export function SalesNetworkMembersPage() {
   const [accreditedMode, setAccreditedMode] = useState<"IST" | "OST" | null>(null);
   const [editMember, setEditMember] = useState<OrgMember | null>(null);
   const [transferMember, setTransferMember] = useState<OrgMember | null>(null);
+  const [accreditMember, setAccreditMember] = useState<OrgMember | null>(null);
+  const [renewTarget, setRenewTarget] = useState<{ record: AccreditationRecord; memberName: string } | null>(null);
   const { mutateAsync: changeStatus } = useChangeSalesNetworkMemberStatus();
+  const issuePending = useIssuePendingAccreditation();
+  const renewAccreditation = useRenewAccreditation();
 
   const members = useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
 
@@ -78,6 +86,7 @@ export function SalesNetworkMembersPage() {
   const canTransfer = hasOperationPermission(identity, "sales-network.transfer");
   const canChangeStatus = hasOperationPermission(identity, "sales-network.status");
   const canEditAccreditation = identity.status === "active" && identity.roles.includes("super_admin");
+  const canRenew = identity.status === "active" && identity.roles.some((role) => role === "super_admin" || role === "admin");
   const isAdmin = identity.roles.some((role) => role === "super_admin" || role === "admin");
 
   const accreditationRecordsByMember = useMemo(() => {
@@ -182,25 +191,37 @@ export function SalesNetworkMembersPage() {
         header: () => <span className="tw:sr-only">Actions</span>,
         cell: ({ row }) => {
           const record = row.original;
+          const records = accreditationRecordsByMember.get(record.id);
+          const renew = resolveRenewTarget(records);
           return (
-            <SalesNetworkRowActions
-              itemName={record.displayName}
-              onView={() => router.push(`/admin/sales-network/members/${record.aaNumber ?? record.id}`)}
-              onEdit={() => setEditMember(record)}
-              onTransfer={() => setTransferMember(record)}
-              transferLabel={record.designation === "OST" ? "Transfer to IST" : "Transfer to OST"}
-              onChangeStatus={() => toggleStatus(record)}
-              canEdit={canManage}
-              canTransfer={canTransfer && record.designation !== "SVD"}
-              canChangeStatus={canChangeStatus}
-              canReactivate={isAdmin}
-              status={record.status}
+            <RowActionsMenu
+              {...buildMemberMenuProps(
+                record,
+                {
+                  canManage,
+                  canTransfer,
+                  canChangeStatus,
+                  canReactivate: isAdmin,
+                  canEditAccreditation,
+                  canRenew,
+                  accreditationNone: resolveAccreditationDisplay(records).kind === "none",
+                  renewalAllowed: renew.open,
+                },
+                {
+                  onView: () => router.push(`/admin/sales-network/members/${record.aaNumber ?? record.id}`),
+                  onEdit: () => setEditMember(record),
+                  onTransfer: () => setTransferMember(record),
+                  onChangeStatus: () => toggleStatus(record),
+                  onSetAccreditation: () => setAccreditMember(record),
+                  onRenew: renew.record ? () => setRenewTarget({ record: renew.record as AccreditationRecord, memberName: record.displayName }) : undefined,
+                },
+              )}
             />
           );
         },
       },
     ];
-  }, [members, accreditationRecordsByMember, canEditAccreditation, canManage, canTransfer, canChangeStatus, isAdmin, changeStatus, confirmRun, setEditMember, setTransferMember, router]);
+  }, [members, accreditationRecordsByMember, canEditAccreditation, canRenew, canManage, canTransfer, canChangeStatus, isAdmin, changeStatus, confirmRun, setEditMember, setTransferMember, setAccreditMember, setRenewTarget, router]);
 
   if (!granted.has("sales-network")) {
     return (
@@ -274,6 +295,52 @@ export function SalesNetworkMembersPage() {
         />
       ) : null}
       {confirmDialog}
+      <ConfirmDialog
+        open={accreditMember !== null}
+        title="Create Pending Accreditation"
+        description={`Create a pending accreditation with automatic AA issuance for seller ${accreditMember?.displayName ?? ""}?`}
+        confirmText="Create"
+        pending={issuePending.isPending}
+        onConfirm={() => {
+          const target = accreditMember;
+          if (!target) return;
+          void issuePending.mutateAsync(target.id).then(
+            (created) => {
+              setAccreditMember(null);
+              toast.success("Pending accreditation created.", {
+                description: `Issued ${created.aaNumber ?? "AA number"}. Accreditation stays Pending until approval.`,
+              });
+            },
+            (err: unknown) => {
+              setAccreditMember(null);
+              toast.error("Creation failed.", { description: err instanceof Error ? err.message : "Failed to create accreditation." });
+            },
+          );
+        }}
+        onClose={() => setAccreditMember(null)}
+      />
+      <ConfirmDialog
+        open={renewTarget !== null}
+        title="Renew accreditation?"
+        description={`Renew the accreditation of ${renewTarget?.memberName ?? ""} today? A new AA number is issued for this month and is valid for one year from today. The current number ${renewTarget?.record.aaNumber} is kept in the AA Number History, and all sales, team and referrer links carry over.`}
+        confirmText="Renew"
+        pending={renewAccreditation.isPending}
+        onConfirm={() => {
+          const target = renewTarget;
+          if (!target) return;
+          void renewAccreditation.mutateAsync({ recordId: target.record.id, expectedAaNumber: target.record.aaNumber ?? undefined }).then(
+            (renewed) => {
+              setRenewTarget(null);
+              toast.success("Accreditation renewed.", { description: `New AA number ${renewed.aaNumber ?? ""}, valid until ${formatDate(renewed.expiryDate)}.` });
+            },
+            (err: unknown) => {
+              setRenewTarget(null);
+              toast.error("Renewal failed.", { description: err instanceof Error ? err.message : "Failed to renew accreditation." });
+            },
+          );
+        }}
+        onClose={() => setRenewTarget(null)}
+      />
     </AdminPage>
   );
 }

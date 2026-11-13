@@ -36,7 +36,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | One VIP Number per Reservation Agreement, Grant and Card, in the form `YYMMDDNNNNNVTPMMS`, issued when the signed RA is recorded. Monthly sequence with no duplicates from one company-wide allocator. Issued numbers are never reused or renumbered. Activation creates no number. |
-| Status | Decided, awaiting build authorization |
+| Status | Implemented in mock; activation reuses the VIP Number |
 
 ## F9.3 Validity from the Card Claim Date
 
@@ -48,7 +48,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Validity start equals the recorded or deemed Card Claim Date, not the activation date. Claim history is kept. The Card Claim Date feeds the redemption basis version, the Points Activation Date and the 24-month Year 1 rule (docs 06, 09, 10). |
-| Status | Decided, awaiting build authorization |
+| Status | Implemented in mock; actual and deemed Card Claim Dates |
 
 ## F9.4 Entitlement version and card servicing
 
@@ -60,7 +60,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Replacement, holder change and transfer record the applicable entitlement version and evidence. A transfer needs a written request and written management approval; the old holder's unused points are forfeited and cannot be used by anyone, the new holder gets only future tranches, and the old holder's future points bookings are cancelled after staff inform the old holder before the transfer is finalized (docs 09, 10, A7). On the cardholder's death the heirs request a written transfer with the same rules. Gold supplementary shared benefits are preserved. No invented contractual terms. |
-| Status | Missing |
+| Status | Replacement and transfer recorded in mock; full servicing walkthrough pending |
 
 ## Rules carried by this phase
 

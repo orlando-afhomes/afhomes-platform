@@ -16,7 +16,15 @@ export type PaymentAdjustment = {
   actorId: string;
 };
 
-export type PaymentEvent = { at: string; actorId: string; event: string; note: string | null };
+type PaymentVersion = Pick<Payment, "purpose" | "amountCentavos" | "method" | "paidDate" | "referenceNo" | "evidenceFileName">;
+
+export type PaymentEvent = {
+  at: string;
+  actorId: string;
+  event: string;
+  note: string | null;
+  previousVersion?: PaymentVersion;
+};
 
 /**
  * Payment record (07 section 8). Evidence is a file name only: no file content
@@ -33,8 +41,12 @@ export type Payment = {
   method: PaymentMethod;
   /** Business date on the receipt (YYYY-MM-DD, Asia/Manila). */
   paidDate: string;
+  /** Accounting date for a receipt admitted after its own month closed. */
+  countedDate?: string;
   referenceNo: string | null;
   evidenceFileName: string | null;
+  /** Optional bank (list entry id) for bank transfers and cheques; absent on older receipts. */
+  bankId?: string | null;
   submittedBy: string;
   submittedAt: string;
   status: PaymentStatus;

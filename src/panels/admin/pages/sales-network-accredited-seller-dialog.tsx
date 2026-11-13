@@ -2,6 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useVipProducts } from "@/data/business-queries";
+import { useReferenceOptions } from "@/data/settings-queries";
+import { tierOptions } from "@/modules/vip/tier-options";
+import { isValidTierCode, type VipTierCode } from "@/modules/vip/types";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { teamDisplayName } from "@/modules/sales-network/display";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
@@ -11,9 +15,6 @@ import {
   ACCREDITATION_STATUS_OPTIONS,
   CIVIL_STATUS_OPTIONS,
   GENDER_OPTIONS,
-  GOV_ID_OPTIONS,
-  PROGRAM_CATEGORY_OPTIONS,
-  VIP_LEVEL_OPTIONS,
   calculateApprovedExpiry,
   isLeapDayStart,
   programCategoryLabel,
@@ -115,6 +116,8 @@ export function AccreditedSellerDialog({
   const staffQuery = useStaff();
   const accountsQuery = useAccounts();
   const membersQuery = useMembers();
+  const programOptions = useReferenceOptions("program-category");
+  const govIdOptions = useReferenceOptions("gov-id-type");
 
   const isSuperAdmin = identity.status === "active" && identity.roles.includes("super_admin");
   const prefix = mode === "IST" ? "AAI" : "AAO";
@@ -145,7 +148,8 @@ export function AccreditedSellerDialog({
   const [parentId, setParentId] = useState<string | undefined>(undefined);
   const [cardApplicationDate, setCardApplicationDate] = useState(manilaToday());
   const [programCategory, setProgramCategory] = useState<string | undefined>(undefined);
-  const [vipCardLevel, setVipCardLevel] = useState<"B1" | "S1" | "G1">("B1");
+  const [vipCardLevel, setVipCardLevel] = useState<VipTierCode>("B1");
+  const products = useVipProducts();
   const [gender, setGender] = useState<string | undefined>(undefined);
   const [civilStatus, setCivilStatus] = useState<string | undefined>(undefined);
   const [governmentIdType, setGovernmentIdType] = useState<string | undefined>(undefined);
@@ -321,7 +325,7 @@ export function AccreditedSellerDialog({
     teamName: effectiveDesignation === "SVD" ? orUndefined(validateTeamName(teamName, true)) : undefined,
     cardApplicationDate: orUndefined(validateDateString(cardApplicationDate, "Application date")),
     programCategory: programCategory ? undefined : "Select a program category.",
-    vipCardLevel: ["B1", "S1", "G1"].includes(vipCardLevel) ? undefined : "Card level must be valid.",
+    vipCardLevel: isValidTierCode(vipCardLevel) ? undefined : "Card level must be valid.",
     gender: gender?.trim() ? undefined : "Gender is required.",
     civilStatus: civilStatus?.trim() ? undefined : "Civil Status is required.",
     governmentIdType: governmentIdType ? undefined : "Government ID type is required.",
@@ -374,7 +378,7 @@ export function AccreditedSellerDialog({
   const handleFinish = () => {
     const payload = buildPayload();
     const messages: string[] = [];
-    const repositoryMessage = validateAccreditedSellerFields(payload);
+    const repositoryMessage = validateAccreditedSellerFields(payload, programOptions.map((option) => option.value));
     if (repositoryMessage) messages.push(repositoryMessage);
     if (sellerIdentity === "existing" && emailMismatch(payload)) messages.push("Email must match account.");
     if (stepHasErrors(3) || messages.length > 0) {
@@ -591,8 +595,8 @@ export function AccreditedSellerDialog({
               <FormSection title="Program Details">
                 <FormGrid>
                   <StandardDateField id="card-application" label="Application Date" required value={cardApplicationDate} onChange={setCardApplicationDate} error={visible("cardApplicationDate")} />
-                  <SelectField id="program-category" label="Program Category" required value={programCategory} options={PROGRAM_CATEGORY_OPTIONS} onChange={setProgramCategory} placeholder="Select program category" error={visible("programCategory")} />
-                  <SelectField id="vip-level" label="Card Level" required value={vipCardLevel} options={VIP_LEVEL_OPTIONS} onChange={setVipCardLevel} error={visible("vipCardLevel")} />
+                  <SelectField id="program-category" label="Program Category" required value={programCategory} options={programOptions} onChange={setProgramCategory} placeholder="Select program category" error={visible("programCategory")} />
+                  <SelectField id="vip-level" label="Card Level" required value={vipCardLevel} options={tierOptions(products.data, [vipCardLevel])} onChange={setVipCardLevel} error={visible("vipCardLevel")} />
                 </FormGrid>
               </FormSection>
 
@@ -605,7 +609,7 @@ export function AccreditedSellerDialog({
                     onIdTypeChange={setGovernmentIdType}
                     idNumber={governmentIdNumber}
                     onIdNumberChange={setGovernmentIdNumber}
-                    idTypeOptions={GOV_ID_OPTIONS}
+                    idTypeOptions={govIdOptions}
                     required
                     errorType={visible("governmentIdType")}
                     errorIdNumber={visible("governmentIdNumber")}
@@ -676,7 +680,7 @@ export function AccreditedSellerDialog({
                   <ReviewLine term="Position" value={effectiveDesignation} />
                   <ReviewLine term="Sponsor" value={effectiveDesignation === "SVD" ? "Root — no sponsor" : sponsorName ? `${sponsorName.displayName} (${sponsorName.designation})` : "—"} />
                   <ReviewLine term="Team" value={effectiveDesignation === "SVD" ? teamName.trim() || "—" : (inheritedTeam ?? "—")} />
-                  <ReviewLine term="Program Category" value={programCategory ? programCategoryLabel(programCategory) : "—"} />
+                  <ReviewLine term="Program Category" value={programCategory ? programCategoryLabel(programCategory, programOptions) : "—"} />
                   <ReviewLine term="Accreditation Status" value={accreditationStatus ? (ACCREDITATION_STATUS_OPTIONS.find((option) => option.value === accreditationStatus)?.label ?? "—") : "—"} />
                   <ReviewLine term="Issuance Method" value={aaMethod === "automatic" ? "Automatic" : "Manual"} />
                   {aaMethod === "manual" ? <ReviewLine term="AA Number" value={manualFull} /> : null}

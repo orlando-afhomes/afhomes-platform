@@ -52,6 +52,8 @@ export type Contract = {
   requiredInitialCentavos: number | null;
   /** Reservation Agreement reference entered from the signed form. Format pending D2/D11. */
   raNumber: string | null;
+  vipNumber?: string;
+  signedAgreementRecordedDate?: string;
   sellerMemberId: string | null;
   /** Seller and upline at recording time; later transfers never change it (02, 13 section 4.3). */
   genealogy: GenealogyEntry[];

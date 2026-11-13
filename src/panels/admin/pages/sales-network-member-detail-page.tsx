@@ -7,7 +7,8 @@ import { BadgeCheck, Briefcase, CalendarDays, FileText, History, Home, Layers, M
 import type { OrgMember } from "@/modules/organization/types";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
-import { useMembers, useSalesNetworkMemberByKey, useMemberAccreditations, useSeatVacancies } from "@/data/queries";
+import { useMembers, useSalesNetworkMemberByKey, useMemberAccreditations, useSeatVacancies, useChangeSalesNetworkMemberStatus, useIssuePendingAccreditation } from "@/data/queries";
+import { hasOperationPermission } from "@/modules/identity/permissions";
 import { resolveEffectiveModules } from "@/data/mock/authorization";
 import { getDescendantIds } from "@/data/mock/scope";
 import { buildAuthorizedGenealogyTree } from "@/modules/sales-network/genealogy";
@@ -16,6 +17,7 @@ import { ACCREDITATION_REMINDER_LABELS, getAccreditationReminder, manilaToday } 
 import { findOpenVacancy, openVacancyStartByMember } from "@/modules/sales-network/vacancy";
 import { aaDisplay, designationLabel, resolveAccreditationDisplay, teamDisplayName } from "@/modules/sales-network/display";
 import { programCategoryLabel } from "@/modules/sales-network/accredited-seller";
+import { useProgramCategoryLabels } from "@/data/settings-queries";
 import { maskGovIdNumber } from "@/shared/forms";
 import { formatDate } from "@/shared/lib/format-date";
 import { PageContainer } from "@/shared/components/modern/page-container";
@@ -32,6 +34,11 @@ import { DetailSkeleton } from "@/shared/components/modern/skeletons";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
+import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
+import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
+import { buildMemberMenuProps, resolveRenewTarget } from "../actions/sales-network-actions";
+import { SalesNetworkMemberDialogs } from "./sales-network-member-dialogs";
+import { toast } from "sonner";
 import { AccreditationEligibilityTag } from "../components/accreditation-status";
 import { AccreditationRenewAction } from "../components/accreditation-renew-action";
 import { DesignationBadge, toneFromColor } from "@/shared/components/business/designation-badge";
@@ -61,6 +68,7 @@ export function SalesNetworkMemberDetailPage() {
   const membersQuery = useMembers();
   const accreditationsQuery = useMemberAccreditations(memberQuery.data?.id ?? "");
   const vacanciesQuery = useSeatVacancies();
+  const programCategoryLabels = useProgramCategoryLabels();
 
   const member = memberQuery.data ?? null;
   const members = useMemo<OrgMember[]>(() => membersQuery.data ?? [], [membersQuery.data]);
@@ -72,6 +80,17 @@ export function SalesNetworkMemberDetailPage() {
   const vacantSince = useMemo(() => openVacancyStartByMember(vacanciesQuery.data ?? []), [vacanciesQuery.data]);
   const openVacancy = member ? findOpenVacancy(vacanciesQuery.data ?? [], member.id) : null;
   const canRenew = identity.status === "active" && identity.roles.some((role) => role === "super_admin" || role === "admin");
+  const canManage = hasOperationPermission(identity, "sales-network.manage");
+  const canTransfer = hasOperationPermission(identity, "sales-network.transfer");
+  const canChangeStatus = hasOperationPermission(identity, "sales-network.status");
+  const canEditAccreditation = identity.status === "active" && identity.roles.includes("super_admin");
+  const isAdmin = identity.roles.some((role) => role === "super_admin" || role === "admin");
+  const { confirmRun, dialog: confirmDialog } = useConfirmRun();
+  const { mutateAsync: changeStatus } = useChangeSalesNetworkMemberStatus();
+  const issuePending = useIssuePendingAccreditation();
+  const [editOpen, setEditOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [accreditOpen, setAccreditOpen] = useState(false);
   const directDownline = member ? members.filter((item) => item.parentId === member.id) : [];
   const parent = member?.parentId ? members.find((item) => item.id === member.parentId) : undefined;
   const downlineTree = useMemo(() => {
@@ -139,6 +158,39 @@ export function SalesNetworkMemberDetailPage() {
   const hasHistory = (member.parentHistory?.length ?? 0) > 0;
   const parentDisplay = parent ? `${parent.displayName} (${designationLabel(parent.designation)})` : "—";
 
+  const toggleStatus = () => {
+    const reactivate = member.status !== "active";
+    confirmRun({
+      title: reactivate ? `Reactivate ${member.displayName}?` : `Deactivate ${member.displayName}?`,
+      description: reactivate ? "The member will regain active access." : "The member will lose active access and move to Inactive.",
+      confirmText: reactivate ? "Reactivate" : "Deactivate",
+      danger: !reactivate,
+      action: () => changeStatus({ id: member.id, status: reactivate ? "active" : "inactive" }),
+      successTitle: reactivate ? "Member reactivated." : "Member deactivated.",
+      successDescription: `${member.displayName} is now ${reactivate ? "Active" : "Inactive"}.`,
+      errorTitle: "Status update failed.",
+    });
+  };
+  const menu = buildMemberMenuProps(
+    member,
+    {
+      canManage,
+      canTransfer,
+      canChangeStatus,
+      canReactivate: isAdmin,
+      canEditAccreditation,
+      canRenew,
+      accreditationNone: display.kind === "none",
+      renewalAllowed: resolveRenewTarget(accreditations).open,
+    },
+    {
+      onEdit: () => setEditOpen(true),
+      onTransfer: () => setTransferOpen(true),
+      onChangeStatus: toggleStatus,
+      onSetAccreditation: () => setAccreditOpen(true),
+    },
+  );
+
   const accreditationBadge =
     display.kind === "none" ? (
       <StatusBadge status="No record" />
@@ -171,9 +223,12 @@ export function SalesNetworkMemberDetailPage() {
         { label: member.displayName },
       ]}
       actions={
-        <Link href="/admin/sales-network/members" className={cn(buttonVariants({ variant: "outline" }), "tw:min-h-11 tw:sm:min-h-8")}>
-          Back
-        </Link>
+        <div className="tw:flex tw:items-center tw:gap-2">
+          <Link href="/admin/sales-network/members" className={cn(buttonVariants({ variant: "outline" }), "tw:min-h-11 tw:sm:min-h-8")}>
+            Back
+          </Link>
+          <RowActionsMenu {...menu} onView={undefined} />
+        </div>
       }
     >
       <div className="tw:flex tw:flex-col tw:gap-6">
@@ -303,7 +358,7 @@ export function SalesNetworkMemberDetailPage() {
                 <InfoItem term="Government ID Number">{maskGovIdNumber(profile.governmentIdNumber)}</InfoItem>
                 {profile.tin ? <InfoItem term="TIN">{profile.tin}</InfoItem> : null}
                 <InfoItem term="Date of Card Application">{formatDate(profile.cardApplicationDate)}</InfoItem>
-                <InfoItem term="Program Category">{programCategoryLabel(profile.programCategory)}</InfoItem>
+                <InfoItem term="Program Category">{programCategoryLabel(profile.programCategory, programCategoryLabels)}</InfoItem>
                 <InfoItem term="VIP Card Level">{store.products.find((product) => product.code === profile.vipCardLevel)?.name ?? profile.vipCardLevel}</InfoItem>
                 <InfoItem term="Seller Source">Manual admin creation</InfoItem>
               </InfoGrid>
@@ -386,6 +441,35 @@ export function SalesNetworkMemberDetailPage() {
           </div>
         ) : null}
       </div>
+      <SalesNetworkMemberDialogs
+        editMember={editOpen ? member : null}
+        transferMember={transferOpen ? member : null}
+        onCloseEdit={() => setEditOpen(false)}
+        onCloseTransfer={() => setTransferOpen(false)}
+      />
+      <ConfirmDialog
+        open={accreditOpen}
+        title="Create Pending Accreditation"
+        description={`Create a pending accreditation with automatic AA issuance for seller ${member.displayName}?`}
+        confirmText="Create"
+        pending={issuePending.isPending}
+        onConfirm={() => {
+          void issuePending.mutateAsync(member.id).then(
+            (created) => {
+              setAccreditOpen(false);
+              toast.success("Pending accreditation created.", {
+                description: `Issued ${created.aaNumber ?? "AA number"}. Accreditation stays Pending until approval.`,
+              });
+            },
+            (err: unknown) => {
+              setAccreditOpen(false);
+              toast.error("Creation failed.", { description: err instanceof Error ? err.message : "Failed to create accreditation." });
+            },
+          );
+        }}
+        onClose={() => setAccreditOpen(false)}
+      />
+      {confirmDialog}
     </AdminPage>
   );
 }

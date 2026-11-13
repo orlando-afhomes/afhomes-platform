@@ -35,7 +35,7 @@ export function useContractRecord(contractId: string, includePaymentReference = 
   const schedule = useMemo(() => (contract ? buildScheduleState(contract, contractPayments, today) : []), [contract, contractPayments, today]);
   const ledger = useMemo(() => (contract ? buildCollectionLedger(contract, contractPayments) : []), [contract, contractPayments]);
   const milestones = useMemo(
-    () => (contract ? deriveMilestones({ contract, payments: contractPayments, saleConfirmedDate: contract.sale?.confirmedDate ?? null, activationDate: membership?.activationDate ?? null, cardId: membership?.cardId ?? null, includePaymentReference }) : []),
+    () => (contract ? deriveMilestones({ contract, payments: contractPayments, saleConfirmedDate: contract.sale?.confirmedDate ?? null, activationDate: membership?.activationDate ?? null, cardId: membership?.cardId ?? null, vipNumber: contract.vipNumber, signedAgreementRecordedDate: contract.signedAgreementRecordedDate, includePaymentReference }) : []),
     [contract, contractPayments, membership?.activationDate, membership?.cardId, includePaymentReference],
   );
   return { isLoading: contracts.isLoading, contract, payments: contractPayments, membership, schedule, ledger, milestones };
@@ -148,7 +148,8 @@ export function ContractTermsSection({ record }: { record: ContractRecord }) {
       : []),
     { icon: Diamond, term: "Classification", value: contract.classification === "S" ? "Standard (S)" : "Non-Standard (N)" },
     { icon: Star, term: "Benefits", value: `${contract.benefits.vipDiscountPercent}% VIP discount · ${contract.benefits.lifetimePoints.toLocaleString("en-PH")} lifetime points · ${contract.benefits.pointsPerCycle.toLocaleString("en-PH")} per cycle` },
-    { icon: IdCard, term: "RA number", value: contract.raNumber ?? "Not recorded" },
+    { icon: IdCard, term: "VIP Number", value: contract.vipNumber ?? "Not issued" },
+    ...(contract.raNumber && contract.raNumber !== contract.vipNumber ? [{ icon: IdCard, term: "Historical RA number", value: contract.raNumber }] : []),
     { icon: Check, term: "Customer accepted", value: contract.customerAccepted ? "Yes" : "No" },
     { icon: CalendarCheck, term: "Finalized", value: formatDate(contract.finalizedAt) },
     { icon: Receipt, term: "Sale", value: contract.sale ? <BizBadge status={contract.sale.status} /> : "Not recorded yet" },
@@ -278,7 +279,7 @@ export function ContractLedgerSection({ record }: { record: ContractRecord }) {
 }
 
 /** Payments list. Pass `actions` (from usePaymentActions) to make rows actionable; omitted, the list is read-only. */
-export function ContractPaymentsSection({ record, actions }: { record: ContractRecord; actions?: { rowActions: (payment: PaymentView) => ReactNode; open: (payment: PaymentView) => void } }) {
+export function ContractPaymentsSection({ record, actions }: { record: ContractRecord; actions?: { rowActions: (payment: PaymentView) => ReactNode; open?: (payment: PaymentView) => void } }) {
   const columns = useMemo<ColumnDef<PaymentView, unknown>[]>(
     () => [
       { id: "date", header: "Receipt date", cell: ({ row }) => formatDate(row.original.paidDate) },

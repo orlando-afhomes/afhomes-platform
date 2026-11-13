@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
@@ -35,6 +35,20 @@ describe("VIP products pages split by process", () => {
     expect(await screen.findByRole("table", { name: "VIP product catalog" })).toBeInTheDocument();
     expect(screen.queryByRole("table", { name: "Payment schemes" })).toBeNull();
     expect(screen.queryByText(/Historical and reserved tier codes/)).toBeNull();
+  });
+
+  it("catalog offers New product to a manager and opens the create dialog", async () => {
+    show(<VipProductsPage />);
+    await screen.findByRole("table", { name: "VIP product catalog" });
+    fireEvent.click(await screen.findByRole("button", { name: /New product/ }));
+    expect(await screen.findByRole("dialog", { name: "New product" })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Product code/)).toBeInTheDocument();
+  });
+
+  it("used products show Delete unavailable with the reason", async () => {
+    show(<VipProductsPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Actions for Bronze VIP" }));
+    expect(await screen.findByText(/Delete unavailable: Already used by/)).toBeInTheDocument();
   });
 
   it("schemes page shows the scheme table with Move schemes", async () => {

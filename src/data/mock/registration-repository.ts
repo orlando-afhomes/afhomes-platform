@@ -6,6 +6,7 @@ import type {
 } from "@/data/contracts/registration-repository";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { DevIdentity } from "@/modules/identity/types";
+import { allowedValues } from "@/modules/settings/lists";
 import type {
   RegistrationApplicant,
   RegistrationApplication,
@@ -226,7 +227,12 @@ export class MockRegistrationRepository implements RegistrationRepository {
   async complete(id: string, completion: RegistrationCompletion, options?: MockAsyncOptions): Promise<RegistrationApplication> {
     await simulateAsync(this.merge(options));
     const { application, identity } = this.open(id, canReviewRegistrations);
-    const error = validateCompletion(completion);
+    // Active values only, plus the values already saved on this application.
+    const saved = application.completion;
+    const error = validateCompletion(completion, {
+      govIdTypes: allowedValues(this.store.referenceEntries, "gov-id-type", [saved?.governmentIdType]),
+      programCategories: allowedValues(this.store.referenceEntries, "program-category", [saved?.programCategory]),
+    });
     if (error) throw new Error(error);
     application.completion = { ...completion, governmentIdNumber: completion.governmentIdNumber.trim(), profilePhotoName: completion.profilePhotoName.trim() };
     application.reviewerId = identity.id;
@@ -308,7 +314,7 @@ export class MockRegistrationRepository implements RegistrationRepository {
       accreditationStatus: "accredited",
       aaMethod: "automatic",
     };
-    const created = await this.members().commitAccreditedSeller(identity, seller);
+    const created = await this.members().commitAccreditedSeller(identity, seller, completion.programCategory);
 
     application.memberId = created.memberId;
     application.accountId = created.accountId;

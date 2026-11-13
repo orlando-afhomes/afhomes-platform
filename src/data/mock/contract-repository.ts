@@ -5,7 +5,9 @@ import { buildSchedule, finalizationHolds, snapshotBenefits } from "@/modules/co
 import { CANCELLATION_GROUNDS, CANCELLATION_GROUND_LABELS, type Contract, type ContractCancellationGround } from "@/modules/contracts/types";
 import { totalVerifiedCentavos } from "@/modules/finance/rules";
 import type { DevIdentity } from "@/modules/identity/types";
-import { extractRaSequence } from "@/modules/membership/rules";
+import { buildVipNumber } from "@/modules/membership/rules";
+import { freezeCommissionRates } from "./commission-effects";
+import { commissionStageAmounts } from "@/modules/commissions/rules";
 import { evaluateSaleParties, salePartyBlockMessage } from "@/modules/sales/accreditation-standing";
 import { applicablePriceStatus } from "@/modules/vip/pricing";
 import type { PaymentScheme, VipTierCode } from "@/modules/vip/types";
@@ -179,6 +181,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
           branchId: customer?.branchId ?? "branch-a",
           valueCentavos: contract.priceCentavos,
           recordedDate: today(),
+          approval: null,
           sellerMemberId: contract.sellerMemberId,
           referrerMemberId: customer?.referrerMemberId ?? null,
           team: contract.genealogy.map((entry) => ({ ...entry })),
@@ -255,7 +258,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
         this.store.memberships.push(membership);
         this.audit(identity, { module: "membership", action: BUSINESS_AUDIT_ACTIONS.MEMBERSHIP_CREATED, entityType: "membership", entityId: membership.id, newValue: "pending", relatedRecordIds: [contract.id] });
       }
-      // Money may already be verified (for example a reservation): a finalized contract can now confirm its sale.
+      // Reconcile the new membership against any receipts already approved.
       reconcileContract(this.store, contract.id, identity);
       return viewContract(this.store, contract);
     });
@@ -379,25 +382,39 @@ export class MockContractRepository extends BusinessRepository implements Contra
     });
   }
 
-  async recordRaNumber(id: string, raNumber: string, options?: MockAsyncOptions): Promise<ContractView> {
+  async recordSignedAgreement(id: string, options?: MockAsyncOptions): Promise<ContractView> {
     return this.run(options, (identity) => {
-      this.require(identity, "contracts.approve", "Recording an RA number needs Admin rights.");
+      this.require(identity, "contracts.approve", "Recording a signed Reservation Agreement needs Admin rights.");
       const contract = this.find(identity, id);
-      // Same lifecycle point the contract page offers: the RA is recorded on a finalized contract only.
-      if (contract.status !== "finalized") throw new Error("An RA number can only be recorded on a finalized contract.");
-      const value = raNumber.trim();
-      if (!extractRaSequence(value)) throw new Error("The RA number must end in a hyphen and a 4-digit sequence, for example 2027-0001.");
-      if (this.store.contracts.some((item) => item.id !== contract.id && item.status !== "cancelled" && item.raNumber?.toLowerCase() === value.toLowerCase())) {
-        throw new Error("This RA number is already recorded on another contract. Collisions are flagged for review, not suffixed.");
+      if (contract.vipNumber) return viewContract(this.store, contract);
+      if (!["submitted", "under_review", "finalized"].includes(contract.status)) throw new Error("Submit the contract before recording the signed agreement.");
+      const sale = this.store.sales.find((item) => item.contractId === contract.id);
+      if (!sale?.approval) throw new Error("Approve the sale before recording the signed agreement.");
+      if (sale.sellerMemberId && sale.sellerMemberId === sale.referrerMemberId) {
+        const customer = this.store.customers.find((item) => item.id === sale.customerId);
+        if (!customer?.approvedAt || !customer.referralReference?.trim()) throw new Error("The Administrator must verify the dated referral reference before VIP Number issuance.");
       }
-      if (this.store.memberships.some((item) => item.contractId === contract.id && item.cardId)) throw new Error("A Card ID was already issued; the RA number can no longer change.");
-      const previous = contract.raNumber;
-      contract.raNumber = value;
+      const rates = freezeCommissionRates(this.store, "VIP", sale.sellerMemberId, sale.referrerMemberId);
+      for (const rate of rates) commissionStageAmounts(sale.valueCentavos, rate.rateBp, "VIP");
       const membership = this.store.memberships.find((item) => item.contractId === contract.id);
-      if (membership) membership.raNumber = value;
+      if (membership?.cardId) throw new Error("This contract has an existing card number. Keep it for historical review.");
+      const date = today();
+      const prefix = date.slice(2, 7).replace("-", "");
+      const key = `vip-number:${date.slice(0, 7)}`;
+      const issued = [...this.store.contracts.map((item) => item.vipNumber), ...this.store.memberships.map((item) => item.cardId)];
+      const highest = issued.reduce((max, number) => number?.startsWith(prefix) ? Math.max(max, Number(number.slice(6, 11)) || 0) : max, 0);
+      const sequence = Math.max(highest, this.store.counters[key] ?? 0) + 1;
+      const value = buildVipNumber(date, sequence, contract.productCode, contract.paymentCode, contract.classification);
+      this.store.counters[key] = sequence;
+      contract.vipNumber = value;
+      contract.signedAgreementRecordedDate = date;
+      contract.raNumber ??= value;
+      sale.commissionRates = rates;
+      if (membership) membership.raNumber = contract.raNumber;
       this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_RA_RECORDED);
-      // Previous and new official values are kept for card issuance traceability (06 section 16).
-      this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_RA_RECORDED, entityType: "contract", entityId: contract.id, previousValue: previous ?? "not recorded", newValue: value });
+      this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_RA_RECORDED, entityType: "contract", entityId: contract.id, newValue: value });
+      this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.VIP_NUMBER_ISSUED, entityType: "contract", entityId: contract.id, displayReference: value, relatedRecordIds: [sale.id] });
+      reconcileContract(this.store, contract.id, identity);
       return viewContract(this.store, contract);
     });
   }

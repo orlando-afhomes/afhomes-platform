@@ -49,36 +49,36 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J12 |
-| Current | Not implemented. Finance compares figures with the present payment process during a parallel run (documented in the workbook plan). |
+| Current | Finance and administrators can compare platform figures with entered workbook totals and record an explained difference. The official parallel-run totals still need validation. |
 | Target | Check that source totals, prior pay and scopes reconcile. Investigate discrepancies and apply an authorized linked correction. The monthly comparison runs side by side with the workbook (R9, R11). |
 | Layer | Frontend (mock) first |
 | Blocked by | none (G11 decided R11; G09 decided R9) |
 | Acceptance | A month's platform totals can be compared with the workbook figures, and each difference is listed with its explanation or linked correction. |
-| Status | Missing |
+| Status | Implemented in mock; workbook comparison pending |
 
 ## F11.4 Period close snapshot
 
 | Field | Value |
 |---|---|
 | Journey | J12 |
-| Current | No durable payroll, period close or historical import in the web prototype (U12). The Director closes the month in the workbook. |
+| Current | The Period Close screen captures sales, collections, commissions and saved allowance reviews in a browser-memory snapshot. The latest saved review per person contributes to the allowance subtotal; an empty review set is shown as missing. |
 | Target | The Administrator or the Super Administrator closes a month (R7; docs 11 and 13). A closed month never changes and is never reopened. A late receipt or event is a dated adjustment in the first open month. Store policy version and approval with each calculation. |
 | Layer | Frontend (mock) first |
 | Blocked by | none (G09, U12 decided R7, R9, R11) |
 | Acceptance | After a month is closed, its figures stay the same; a late receipt appears in the first open month with its original date and an adjustment marker. |
-| Status | Missing |
+| Status | Implemented in mock; Chrome close action verified |
 
 ## F11.5 Historical import and transition
 
 | Field | Value |
 |---|---|
 | Journey | J12 |
-| Current | Not implemented. The workbook plan carries unfinished-sale history, preserves original dates and prevents pre-2027 amounts from being paid again. |
+| Current | The prototype previews unfinished-sale receipt batches, blocks duplicate references, and shows signed-off historical receipts separately from live collections. |
 | Target | Import history and reconcile before replacing the workbook. Vacancy roll-up is respected. The switch happens when a month closes with no unexplained differences, decided by the Super Administrator (R4; doc 11 §26). Only unfinished sales are imported; finished sales stay in the Excel archives. Imported receipts are marked "Approved (imported)" and count once an Administrator signs off the import batch (follow-up 8; doc 07 §20). |
 | Layer | Frontend (mock) first, then Backend |
 | Blocked by | none (G04 decided R3, G09 decided R9, G11 decided R11) |
 | Acceptance | An import batch shows its receipts as "Approved (imported)" only after one Admin sign-off, imported and live receipts can be told apart in reports, and no finished sale is imported. |
-| Status | Missing |
+| Status | Receipt batch prototype implemented; transition still pending |
 
 ## F11.6 Public Customer Lookup and Customer Portal (removed from scope)
 

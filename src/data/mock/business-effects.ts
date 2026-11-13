@@ -1,13 +1,16 @@
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { DevIdentity } from "@/modules/identity/types";
-import { isFullySettled, meetsRequiredInitial } from "@/modules/finance/rules";
+import { approvedCollectionMilestone, isFullySettled } from "@/modules/finance/rules";
+import { firstOpenDate } from "@/modules/finance/month-close";
 import type { Payment } from "@/modules/finance/types";
 import { appendAuditEvent } from "./audit";
 import { today, nowIso } from "./business-base";
 import { nextId } from "./ids";
+import { membershipPointsLedger } from "./redemption-points-source";
 import { SYSTEM_ACTOR_ID } from "@/modules/audit/types";
 import { activeRoles } from "./dev-identities";
 import type { MockStore } from "./seed";
+import { applyCommissionTrigger, holdUnpaidCommissionForReview, releaseSaleCommissions } from "./commission-effects";
 
 type Actor = DevIdentity | "system";
 
@@ -65,11 +68,11 @@ export function cancelRelatedContractRecords(
   const sale = store.sales.find((item) => item.contractId === contractId);
   if (sale && sale.status !== "cancelled") {
     const previousValue = sale.status;
-    if (forfeitureDate && previousValue === "confirmed") {
+    if (previousValue === "confirmed") {
       // A previously reported sale is reversed in the cancellation month (13 §5.1).
       sale.adjustments.push({
         id: nextId(store, "adjustment", "adj"),
-        date: forfeitureDate,
+        date: firstOpenDate(store.closedMonths, forfeitureDate ?? today()),
         amountCentavos: -sale.valueCentavos,
         kind: "reversal",
         reason: "Contract cancelled with forfeiture",
@@ -77,13 +80,12 @@ export function cancelRelatedContractRecords(
       });
     }
     sale.status = "cancelled";
-    if (forfeitureDate) sale.confirmedDate = null;
     auditEffect(store, actor, "sales", BUSINESS_AUDIT_ACTIONS.SALE_CANCELLED, "sale", sale.id, {
       previousValue,
       newValue: "cancelled",
       relatedRecordIds: [contractId],
     });
-    if (forfeitureDate) holdUnpaidCommissions(store, sale.id, "The contract was cancelled with forfeiture.");
+    applyCommissionTrigger(store, actor, sale.id, "cancellation", firstOpenDate(store.closedMonths, forfeitureDate ?? today()));
   }
 
   const membership = store.memberships.find((item) => item.contractId === contractId);
@@ -102,8 +104,7 @@ export function cancelRelatedContractRecords(
 /**
  * Re-derives everything that depends on verified money for one contract, after
  * a payment verification, reversal, or refund (docs 07, 13, 08, 09):
- *  - the Pending sale is confirmed once the required initial payment is verified
- *    (a reservation alone never confirms, 13 section 4.1);
+ *  - an approved Pending sale is confirmed when net approved receipts reach 25%;
  *  - a Confirmed sale whose required payment is reversed returns to Pending with
  *    a negative adjustment, and its unpaid commissions are held automatically;
  *  - an Active membership with a balance owed after a reversal gets a Financial
@@ -117,18 +118,18 @@ export function reconcileContract(store: MockStore, contractId: string, actor: A
   const sale = store.sales.find((item) => item.contractId === contractId);
   const businessDate = today();
 
-  if (sale && contract.status === "finalized") {
-    const meets = meetsRequiredInitial(contract, payments);
-    if (sale.status === "pending" && meets) {
+  if (sale?.approval) {
+    const milestone = approvedCollectionMilestone(sale.valueCentavos, payments, 2_500);
+    if (sale.status === "pending" && milestone) {
       const reconfirmation = sale.adjustments.some((adjustment) => adjustment.kind === "reversal");
       sale.status = "confirmed";
-      sale.confirmedDate = businessDate;
+      sale.confirmedDate = milestone.date;
       sale.adjustments.push({
         id: nextId(store, "adjustment", "adj"),
-        date: businessDate,
+        date: reconfirmation ? firstOpenDate(store.closedMonths, businessDate) : milestone.countedDate,
         amountCentavos: sale.valueCentavos,
         kind: reconfirmation ? "reconfirmation" : "confirmation",
-        reason: "Required initial payment verified by Finance",
+        reason: "Approved collection reached 25%",
         actorId: actor === "system" ? SYSTEM_ACTOR_ID : actor.id,
       });
       auditEffect(store, actor, "sales", reconfirmation ? BUSINESS_AUDIT_ACTIONS.SALE_RECONFIRMED : BUSINESS_AUDIT_ACTIONS.SALE_CONFIRMED, "sale", sale.id, {
@@ -136,12 +137,11 @@ export function reconcileContract(store: MockStore, contractId: string, actor: A
         newValue: "confirmed",
         relatedRecordIds: [contract.id],
       });
-    } else if (sale.status === "confirmed" && !meets) {
+    } else if (sale.status === "confirmed" && !milestone) {
       sale.status = "pending";
-      sale.confirmedDate = null;
       sale.adjustments.push({
         id: nextId(store, "adjustment", "adj"),
-        date: businessDate,
+        date: firstOpenDate(store.closedMonths, businessDate),
         amountCentavos: -sale.valueCentavos,
         kind: "reversal",
         reason: "Required payment reversed or refunded",
@@ -153,13 +153,25 @@ export function reconcileContract(store: MockStore, contractId: string, actor: A
         relatedRecordIds: [contract.id],
       });
     }
+    if (sale.status === "pending" && actor !== "system" && sale.commissionRates) {
+      holdUnpaidCommissionForReview(store, actor, sale.id, "The sale is no longer Confirmed.", ["stage1"], true);
+    }
     if (sale.status !== "confirmed") holdUnpaidCommissions(store, sale.id, "The sale is no longer Confirmed.");
+    if (actor !== "system" && sale.status === "confirmed" && sale.commissionRates) {
+      const stageOne = approvedCollectionMilestone(sale.valueCentavos, payments, 4_000);
+      const full = approvedCollectionMilestone(sale.valueCentavos, payments, 10_000);
+      if (!stageOne) holdUnpaidCommissionForReview(store, actor, sale.id, "Approved collections fell below 40%.", ["stage1"], true);
+      releaseSaleCommissions(store, actor, { saleId: sale.id, contractId, product: "VIP",
+        valueCentavos: sale.valueCentavos, rates: sale.commissionRates,
+        stage1Date: stageOne?.countedDate ?? null, fullPaymentDate: full?.countedDate ?? null });
+    }
   }
 
   const membership = store.memberships.find((item) => item.contractId === contractId);
   if (membership && membership.status === "active") {
     const settled = isFullySettled(contract, payments);
     if (!settled && !membership.financialHold) {
+      membershipPointsLedger(membership, store);
       membership.financialHold = true;
       membership.history.push({ at: nowIso(), actorId: SYSTEM_ACTOR_ID, event: BUSINESS_AUDIT_ACTIONS.FINANCIAL_HOLD_APPLIED, note: null });
       auditEffect(store, "system", "finance", BUSINESS_AUDIT_ACTIONS.FINANCIAL_HOLD_APPLIED, "membership", membership.id, {
@@ -170,6 +182,7 @@ export function reconcileContract(store: MockStore, contractId: string, actor: A
     } else if (settled && membership.financialHold) {
       membership.financialHold = false;
       membership.history.push({ at: nowIso(), actorId: SYSTEM_ACTOR_ID, event: BUSINESS_AUDIT_ACTIONS.FINANCIAL_HOLD_RELEASED, note: null });
+      membershipPointsLedger(membership, store);
       auditEffect(store, "system", "finance", BUSINESS_AUDIT_ACTIONS.FINANCIAL_HOLD_RELEASED, "membership", membership.id, {
         previousValue: "financial_hold",
         newValue: "no_hold",

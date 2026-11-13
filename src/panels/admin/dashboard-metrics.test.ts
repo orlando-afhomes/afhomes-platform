@@ -142,9 +142,9 @@ describe("dashboard metrics", () => {
 
   it("keeps gross collections, reversals and refunds, and net on their own event dates", () => {
     const payments = [
-      { verifiedDate: "2026-11-02", amountCentavos: pesos(57500), adjustments: [{ date: "2026-11-03", amountCentavos: pesos(7500) }] },
-      { verifiedDate: null, amountCentavos: pesos(10000), adjustments: [] },
-      { verifiedDate: "2026-10-31", amountCentavos: pesos(15500), adjustments: [{ date: "2026-11-01", amountCentavos: pesos(15500) }] },
+      { status: "verified", paidDate: "2026-10-30", countedDate: "2026-11-02", amountCentavos: pesos(57500), adjustments: [{ date: "2026-11-03", amountCentavos: pesos(7500) }] },
+      { status: "submitted", paidDate: "2026-11-01", amountCentavos: pesos(10000), adjustments: [] },
+      { status: "verified", paidDate: "2026-10-31", amountCentavos: pesos(15500), adjustments: [{ date: "2026-11-01", amountCentavos: pesos(15500) }] },
     ] as unknown as PaymentView[];
     const dates = dateSpan("2026-11-01", "2026-11-03");
     const daily = dailyCollections(payments, dates);

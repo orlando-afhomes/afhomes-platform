@@ -53,6 +53,13 @@ describe("receipt import validation", () => {
 });
 
 describe("history import repository", () => {
+  it("blocks a live receipt reference reserved by a historical batch", async () => {
+    const { store, repos } = reposFor();
+    await repos.historyImports.createBatch({ fileName: "history.csv", records: [row()], declaration: true });
+    const clerk = reposFor(store, "dev-clerk").repos;
+    await expect(clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: 250000, method: "Cash", paidDate: "2026-11-10", referenceNo: "or-h-1" }))
+      .rejects.toThrow(/already used/i);
+  });
   const records = [row(), row({ "Receipt reference": "OR-H-2", "Receipt date": "2026-08-16" }), row({ "Receipt reference": "OR-H-3", "Sale status": "Finished" })];
 
   it("stores a pending batch, counts nothing until sign-off, and touches no live record", async () => {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { BookingInput } from "@/data/contracts/redemption-repository";
 import { getDevIdentity } from "./dev-identities";
 import { MockRedemptionRepository } from "./redemption-repository";
@@ -23,6 +23,52 @@ function setup(identity = "dev-admin", gross = { weekday: 10000, weekend: 5000 }
 const memb = async (repo: MockRedemptionRepository) => (await repo.overview()).members.find((m) => m.membershipId === "memb-1")!;
 
 describe("booking with points", () => {
+  it("holds a first stay without points, then sets the PAD and uses its tranche once at check-in", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-03-02T03:00:00.000Z"));
+    try {
+      const store = createMockStore();
+      const member = store.memberships.find((item) => item.id === "memb-1")!;
+      Object.assign(member, { financialHold: false, cardClaimDate: "2026-11-02", fullSettlementDate: "2026-11-02" });
+      const repo = new MockRedemptionRepository(store, () => getDevIdentity("dev-admin"));
+      const input = stay({ checkOut: "2027-03-05" });
+      const booking = await repo.createBooking(input);
+      expect(booking.provisional).toBe(true);
+      expect(store.redemption.ledger).toHaveLength(0);
+      expect(store.redemption.pads[member.id]).toBeUndefined();
+      vi.setSystemTime(new Date("2027-03-04T06:00:00.000Z"));
+      expect((await repo.completeBooking(booking.id)).status).toBe("completed");
+      await repo.completeBooking(booking.id);
+      expect(store.redemption.pads[member.id]?.date).toBe("2027-03-04");
+      expect(store.redemption.ledger).toEqual([
+        expect.objectContaining({ trancheId: "1", type: "reserve", bucket: "weekday", points: 3000 }),
+        expect.objectContaining({ trancheId: "1", type: "consume", bucket: "weekday", points: 3000 }),
+      ]);
+      expect((await memb(repo)).weekday).toMatchObject({ available: 4000, reserved: 0 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("leaves the PAD and ledger untouched when a provisional check-in fails to qualify", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-03-04T03:00:00.000Z"));
+    try {
+      const store = createMockStore();
+      const member = store.memberships.find((item) => item.id === "memb-1")!;
+      Object.assign(member, { financialHold: false, cardClaimDate: "2026-11-02", fullSettlementDate: "2026-11-02" });
+      store.resortSpends = [];
+      const repo = new MockRedemptionRepository(store, () => getDevIdentity("dev-admin"));
+      const booking = await repo.createBooking(stay({ checkOut: "2027-03-05" }));
+      await expect(repo.completeBooking(booking.id)).rejects.toThrow(/Year 1/);
+      expect(store.redemption.pads[member.id]).toBeUndefined();
+      await repo.cancelBooking(booking.id, "Cancelled");
+      expect(store.redemption.ledger).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("reserves points per bucket from the card's table version, and a repeated request key books once", async () => {
     const { repo, store } = setup();
     const input = stay({ requestId: "same" });

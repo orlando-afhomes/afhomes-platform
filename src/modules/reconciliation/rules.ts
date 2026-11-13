@@ -1,5 +1,5 @@
 import type { Commission } from "@/modules/commissions/types";
-import { periodCollections } from "@/modules/finance/rules";
+import { paymentCountedDate, periodCollections } from "@/modules/finance/rules";
 import type { Payment } from "@/modules/finance/types";
 import { countedImportedReceipts, type ReceiptImportBatch } from "@/modules/imports/receipt-import";
 import { confirmedValueInPeriod } from "@/modules/sales/rules";
@@ -56,7 +56,7 @@ export function periodRange(period: string): { from: string; to: string } | null
 
 export type SourceData = {
   payments: readonly Payment[];
-  sales: readonly Sale[];
+  sales: readonly Pick<Sale, "id" | "adjustments">[];
   commissions: readonly Commission[];
   importBatches: readonly ReceiptImportBatch[];
 };
@@ -72,8 +72,9 @@ export function computeSourceTotals(data: SourceData, period: string): SourceTot
   const verifiedRecords: SourceRecord[] = [];
   for (const payment of data.payments) {
     if (payment.status !== "verified") continue;
-    if (payment.verifiedDate && inRange(manilaDateOf(payment.verifiedDate), from, to)) {
-      verifiedRecords.push({ id: payment.id, label: `Receipt ${payment.referenceNo ?? payment.id}`, date: manilaDateOf(payment.verifiedDate), amountCentavos: payment.amountCentavos, note: "Verified" });
+    const countedDate = paymentCountedDate(payment);
+    if (countedDate && inRange(countedDate, from, to)) {
+      verifiedRecords.push({ id: payment.id, label: `Receipt ${payment.referenceNo ?? payment.id}`, date: countedDate, amountCentavos: payment.amountCentavos, note: countedDate !== payment.paidDate ? "Late receipt" : "Verified" });
     }
     for (const adjustment of payment.adjustments) {
       if (inRange(manilaDateOf(adjustment.date), from, to)) {
@@ -100,8 +101,8 @@ export function computeSourceTotals(data: SourceData, period: string): SourceTot
     .map((item): SourceRecord => ({ id: item.id, label: `${item.recipientName} (${item.recipientDesignation})`, date: manilaDateOf(item.approvedAt), amountCentavos: item.amountCentavos, note: `Sale ${item.saleId}` }));
 
   const paidRecords = data.commissions
-    .filter((item) => item.status === "paid" && item.payout && inRange(manilaDateOf(item.payout.payoutDate), from, to))
-    .map((item): SourceRecord => ({ id: item.id, label: `${item.recipientName} (${item.recipientDesignation})`, date: item.payout!.payoutDate, amountCentavos: item.amountCentavos, note: `Sale ${item.saleId}` }));
+    .filter((item) => item.status === "paid" && item.payout && inRange(manilaDateOf(item.payout.countedDate ?? item.payout.payoutDate), from, to))
+    .map((item): SourceRecord => ({ id: item.id, label: `${item.recipientName} (${item.recipientDesignation})`, date: item.payout!.countedDate ?? item.payout!.payoutDate, amountCentavos: item.amountCentavos, note: `Sale ${item.saleId}` }));
 
   return [
     // Totals come from the existing rules so a reconciliation always agrees with the reports.

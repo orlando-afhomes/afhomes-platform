@@ -88,7 +88,6 @@ describe("dashboard page role gating (initial render)", () => {
       "Receivables Overview",
       "Pending Approvals",
       "Payment Verification",
-      "Commission Assignment",
       "Commission Payouts",
       "Cancellation Requests",
       "Financial Holds",

@@ -160,6 +160,15 @@ The owner answered the questions raised by the documentation audit on 2026-11-12
 - **A7b, Year 1 condition at first redemption.** If the Year 1 condition is not met at first redemption, follow the signed Grant: tranche 1 is not released and not carried over. A late-entered bill dated within the period still counts. A waiver is possible (docs 09, 10).
 - **A8, My Sales.** My Sales lists sales where the member is the closing seller. A separate "Referred by me" list shows sales where the member is the referrer; these are never added to My Sales totals. The app code already does this (doc 13).
 
+### Promo Points ruling (2026-11-13)
+
+- **P1, separate Promo Points wallet.** Promo Points are separate from the Annual Welcome Gift (Grant Stay Points). They are earned only under admin-defined promos and never add to, change or convert into Grant points. Grant rules in docs 09 and 10 are unchanged (docs 09, 10).
+- **P2, promo setup.** An Administrator or the Super Administrator defines each promo: name, start and end dates (Asia/Manila business dates), earn outlets, earn rate (pesos spent per 1 point), redeem outlets, and an optional points expiry date.
+- **P3, earning.** Points are earned on Finance-approved resort bills at the promo's earn outlets, dated inside the promo dates. Whole points, rounded down. One bill earns once.
+- **P4, refunds.** A refund reverses only that bill's earned promo points. It never touches Grant points or Qualifying Spend rules beyond doc 09.
+- **P5, uses.** Staff record each use at a redeem outlet. A use can be voided with a reason; entries are never deleted.
+- **P6, no cash value.** Promo Points have no cash value and are never cashed out. They never count toward Grant qualifying spend changes and never add Grant points.
+
 ### Still open
 
 - **AFHomes and JA&D:** Supply the signed Goodwill and Formal VIP Grant terms, a band code above ₱9M, and a written definition of `SUPERSEDED`. Until then, track grant paperwork only, block sales above ₱9M, and refer that status for review.

@@ -4,12 +4,15 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { BadgeCheck, CalendarCheck, Clock, Receipt } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useOperation, useSales } from "@/data/business-queries";
-import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
+import { useApproveSale, useMarkSaleDefaulted, useOperation, useSales } from "@/data/business-queries";
+import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
+import { ReasonDialog } from "@/shared/components/modern/form-dialog";
+import { buildSalesMenuProps } from "../actions/sales-contract-actions";
 import type { SaleView } from "@/data/contracts/sale-repository";
 import { confirmedValueInPeriod, mySales, referredSales, teamSales, totalsFor } from "@/modules/sales/rules";
 import { manilaToday } from "@/shared/lib/dates";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
+import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { StandardDateField } from "@/shared/forms/modern";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useContractHref } from "../components/use-contract-href";
@@ -28,11 +31,17 @@ const STATUS_OPTIONS = [
   { value: "pending", label: "Pending" },
   { value: "cancelled", label: "Cancelled" },
   { value: "rejected", label: "Rejected" },
+  { value: "defaulted", label: "Defaulted" },
 ];
 
 export function SalesPage() {
   const router = useRouter();
   const sales = useSales();
+  const approve = useApproveSale();
+  const markDefaulted = useMarkSaleDefaulted();
+  const [defaultSale, setDefaultSale] = useState<SaleView | null>(null);
+  const { confirmRun, dialog } = useConfirmRun();
+  const canApprove = useOperation("contracts.approve");
   const { identity } = useDevIdentity();
   const viewTeam = useOperation("sales.viewTeam");
   const contractHref = useContractHref();
@@ -53,7 +62,7 @@ export function SalesPage() {
 
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return scoped.filter((sale) => (status === "all" || sale.status === status) && (term === "" || sale.customerName.toLowerCase().includes(term))).sort((a, b) => b.recordedDate.localeCompare(a.recordedDate));
+    return scoped.filter((sale) => (status === "all" || (status === "no-payment" ? sale.defaultEligible : sale.status === status)) && (term === "" || sale.customerName.toLowerCase().includes(term))).sort((a, b) => b.recordedDate.localeCompare(a.recordedDate));
   }, [scoped, status, search]);
 
   const totals = totalsFor(scoped);
@@ -74,7 +83,7 @@ export function SalesPage() {
       ) },
       { id: "recorded", header: "Recorded", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => formatDate(row.original.recordedDate) },
       { id: "confirmed", header: "Confirmed", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => formatDate(row.original.confirmedDate) },
-      { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
+      { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.approval || row.original.status !== "pending" ? row.original.status : "awaiting_approval"} /> },
     ],
     [contractHref, referredView],
   );
@@ -82,7 +91,9 @@ export function SalesPage() {
   const tabs = identity.memberId ? [{ value: "mine", label: "My sales" }, { value: "referred", label: "Referred by me" }, ...(viewTeam ? [{ value: "team", label: "Team sales" }] : [])] : [{ value: "all", label: "All sales" }];
 
   return (
-    <AdminPage anyOf={["sales"]} title="Sales" description="Confirmed sales count once at the full contract value, on the date Finance confirms them." crumbs={[{ label: "Sales", href: "/admin/sales" }, { label: "Sales" }]}>
+    <AdminPage anyOf={["sales"]} title="Sales" description="Approved VIP sales count once at their full contract value when approved receipts reach 25%." crumbs={[{ label: "Sales", href: "/admin/sales" }, { label: "Sales" }]}>
+      {dialog}
+      <ReasonDialog open={defaultSale !== null} title="Mark sale Defaulted" description={defaultSale?.customerName ?? ""} confirmText="Mark Defaulted" successText="Sale marked Defaulted." onClose={() => setDefaultSale(null)} onSubmit={(reason) => defaultSale ? markDefaulted.mutateAsync({ id: defaultSale.id, reason }) : Promise.resolve()} />
       {tabs.length > 1 ? <TabBar label="Sales view" tabs={tabs} value={scope} onChange={(value) => setScope(value as "mine" | "team" | "referred" | "all")} /> : null}
       {referredView ? <p className="tw:text-sm tw:text-muted-foreground">Sales you referred. They are not added to your own sales totals.</p> : null}
       {referredView ? null : <AdminStatGrid>
@@ -91,7 +102,7 @@ export function SalesPage() {
         <AdminStatCard label="Overall recorded" value={<Money value={totals.overall} />} icon={Receipt} tone="info" description="Combined" />
         <AdminStatCard label="Period confirmed" value={<Money value={inPeriod} />} icon={CalendarCheck} tone="violet" description="Net reversals" />
       </AdminStatGrid>}
-      <FilterBar search={search} onSearch={setSearch} searchLabel="Search sales" filters={[{ label: "Sale status filter", value: status, onChange: setStatus, options: STATUS_OPTIONS }]}>
+      <FilterBar search={search} onSearch={setSearch} searchLabel="Search sales" filters={[{ label: "Sale status filter", value: status, onChange: setStatus, options: canApprove ? [...STATUS_OPTIONS, { value: "no-payment", label: "No approved receipt for 90 days" }] : STATUS_OPTIONS }]}>
         <StandardDateField label="Period from" value={from} onChange={setFrom} className="tw:md:min-w-0 tw:md:flex-1" />
         <StandardDateField label="Period to" value={to} onChange={setTo} className="tw:md:min-w-0 tw:md:flex-1" />
       </FilterBar>
@@ -104,7 +115,21 @@ export function SalesPage() {
           caption="Sales"
           onRowOpen={referredView ? undefined : (row) => router.push(contractHref(row.contractId))}
           getRowLabel={(row) => `Open the sale for ${row.customerName}`}
-          rowActions={referredView ? undefined : (row) => <RowActionsMenu itemName={`sale for ${row.customerName}`} onView={() => router.push(contractHref(row.contractId))} />}
+          rowActions={referredView ? undefined : (row) => {
+            const menu = buildSalesMenuProps(row, { canApprove }, {
+              onView: () => router.push(contractHref(row.contractId)),
+              onApprove: () => confirmRun({
+                title: "Approve this sale?",
+                description: "This allows its receipts to be reviewed for approval.",
+                confirmText: "Approve sale",
+                action: () => approve.mutateAsync(row.id),
+                successTitle: "Sale approved.",
+                errorTitle: "Could not approve sale",
+              }),
+              onMarkDefaulted: () => setDefaultSale(row),
+            });
+            return <RowActionsMenu {...menu} />;
+          }}
         />
       </QueryState>
     </AdminPage>

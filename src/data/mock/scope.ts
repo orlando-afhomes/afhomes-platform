@@ -15,6 +15,12 @@ export function activeIdentityRoles(identity: DevIdentity): string[] {
   return activeRoles(identity);
 }
 
+/** A Clerk can correct only the receipt they entered. Office administrators retain their override. */
+export function canCorrectPayment(identity: DevIdentity, submittedBy: string): boolean {
+  return isActiveIdentity(identity) && (identity.id === submittedBy ||
+    activeIdentityRoles(identity).some((role) => role === "super_admin" || role === "admin"));
+}
+
 export function getDescendantIds(memberId: string, members: readonly OrgMember[], visited = new Set<string>()): Set<string> {
   const result = new Set<string>();
   const children = members.filter((member) => member.parentId === memberId);

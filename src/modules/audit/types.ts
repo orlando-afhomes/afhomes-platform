@@ -3,8 +3,8 @@ export type AuditModule =
   | "customers" | "vip-products" | "contracts" | "finance" | "sales" | "commissions" | "membership" | "stay-points";
 
 export type AuditEntityType =
-  | "member" | "accreditation" | "account" | "staff" | "department-role" | "department"
-  | "customer" | "customer-import" | "customer-export" | "product" | "payment-scheme" | "contract" | "sale" | "payment" | "membership" | "commission" | "resort-spend";
+  | "member" | "accreditation" | "registration" | "account" | "staff" | "department-role" | "department"
+  | "customer" | "customer-import" | "customer-export" | "product" | "payment-scheme" | "contract" | "sale" | "payment" | "membership" | "commission" | "resort-spend" | "receipt-import" | "reconciliation" | "redemption-booking" | "redemption-config";
 
 /** Minimal append-only mock audit event for Sales Network / Accreditation / Organization actions. */
 export type AuditEvent = {
@@ -33,6 +33,8 @@ export type AuditEvent = {
 export const AUDIT_ACTIONS = {
   ACCOUNT_CREATED: "ACCOUNT_CREATED",
   ACCOUNT_DELETED: "ACCOUNT_DELETED",
+  ACCOUNT_UPDATED: "ACCOUNT_UPDATED",
+  ACCOUNT_PASSWORD_RESET: "ACCOUNT_PASSWORD_RESET",
   ACCOUNT_STATUS_CHANGED: "ACCOUNT_STATUS_CHANGED",
   ACCOUNT_ROLE_ASSIGNED: "ACCOUNT_ROLE_ASSIGNED",
   ACCOUNT_ROLE_REVOKED: "ACCOUNT_ROLE_REVOKED",
@@ -40,6 +42,9 @@ export const AUDIT_ACTIONS = {
   STAFF_UPDATED: "STAFF_UPDATED",
   ROLE_CREATED: "ROLE_CREATED",
   ROLE_UPDATED: "ROLE_UPDATED",
+  ROLE_DELETED: "ROLE_DELETED",
+  DEPARTMENT_CREATED: "DEPARTMENT_CREATED",
+  DEPARTMENT_UPDATED: "DEPARTMENT_UPDATED",
   DEPARTMENT_STATUS_CHANGED: "DEPARTMENT_STATUS_CHANGED",
 } as const;
 
@@ -48,8 +53,8 @@ export const AUDIT_MODULES = [
   "customers", "vip-products", "contracts", "finance", "sales", "commissions", "membership", "stay-points",
 ] as const satisfies ReadonlyArray<AuditEvent["module"]>;
 export const AUDIT_ENTITY_TYPES = [
-  "member", "accreditation", "account", "staff", "department-role", "department",
-  "customer", "product", "payment-scheme", "contract", "sale", "payment", "membership", "commission", "resort-spend",
+  "member", "accreditation", "registration", "account", "staff", "department-role", "department",
+  "customer", "product", "payment-scheme", "contract", "sale", "payment", "membership", "commission", "resort-spend", "receipt-import", "reconciliation", "redemption-booking", "redemption-config",
 ] as const satisfies ReadonlyArray<AuditEvent["entityType"]>;
 
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;
@@ -122,6 +127,9 @@ export const BUSINESS_AUDIT_ACTIONS = {
   CUSTOMER_DRAFT_UPDATED: "CUSTOMER_DRAFT_UPDATED",
   CUSTOMER_DRAFT_DISCARDED: "CUSTOMER_DRAFT_DISCARDED",
   CUSTOMER_SUBMITTED: "CUSTOMER_SUBMITTED",
+  CUSTOMER_APPROVED: "CUSTOMER_APPROVED",
+  CUSTOMER_SENT_BACK: "CUSTOMER_SENT_BACK",
+  CUSTOMER_REJECTED: "CUSTOMER_REJECTED",
   CUSTOMER_CORRECTED: "CUSTOMER_CORRECTED",
   CUSTOMER_IMPORT_COMPLETED: "CUSTOMER_IMPORT_COMPLETED",
   CUSTOMERS_EXPORTED: "CUSTOMERS_EXPORTED",
@@ -167,6 +175,11 @@ export const BUSINESS_AUDIT_ACTIONS = {
   COMMISSION_PAYOUT_RECORDED: "COMMISSION_PAYOUT_RECORDED",
   COMMISSION_PAID: "COMMISSION_PAID",
   POINTS_HOLD_RECONCILED: "POINTS_HOLD_RECONCILED",
+  RECEIPT_IMPORT_CREATED: "RECEIPT_IMPORT_CREATED",
+  RECEIPT_IMPORT_SIGNED_OFF: "RECEIPT_IMPORT_SIGNED_OFF",
+  RECEIPT_IMPORT_REJECTED: "RECEIPT_IMPORT_REJECTED",
+  RECONCILIATION_SIGNED_OFF: "RECONCILIATION_SIGNED_OFF",
+  RECONCILIATION_VARIANCE_EXPLAINED: "RECONCILIATION_VARIANCE_EXPLAINED",
 } as const;
 
 /** Actor id used for automated actions (overdue, holds). */

@@ -5,6 +5,7 @@ import { useEffectiveModuleIds } from "@/data/queries";
 import type { AdminModuleId } from "@/modules/identity/permissions";
 import { Breadcrumbs, type BreadcrumbItem } from "@/shared/components/modern/breadcrumbs";
 import { PageContainer } from "@/shared/components/modern/page-container";
+import { StatusLink, StatusPage } from "@/shared/components/status/status-page";
 
 /**
  * Standard admin page shell: module gate, breadcrumbs, dashboard-scale
@@ -31,14 +32,11 @@ export function AdminPage({
     return (
       <PageContainer>
         <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, ...crumbs]} />
-        <div className="tw:mt-1">
-          <h1 className="tw:text-[1.75rem] tw:leading-tight tw:font-bold tw:tracking-tight tw:text-foreground">
-            Access restricted
-          </h1>
-          <p className="tw:mt-1.5 tw:text-sm tw:text-muted-foreground">
-            This account does not have access to {title}.
-          </p>
-        </div>
+        <StatusPage variant="403" embedded description={`This account does not have access to ${title}.`}>
+          <StatusLink href="/admin" primary>
+            Back to dashboard
+          </StatusLink>
+        </StatusPage>
       </PageContainer>
     );
   }

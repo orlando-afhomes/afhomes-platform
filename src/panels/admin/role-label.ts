@@ -8,6 +8,8 @@ export function getSystemRoleLabel(role: string): string {
       return "Administrator";
     case "hr":
       return "Human Resources";
+    case "clerk":
+      return "Clerk";
     case "finance":
       return "Finance";
     case "svd":
@@ -28,6 +30,7 @@ export function getRoleDisplayLabel(roles: string[]): string {
   if (roles.includes("super_admin")) return getSystemRoleLabel("super_admin");
   if (roles.includes("admin")) return getSystemRoleLabel("admin");
   if (roles.includes("hr")) return getSystemRoleLabel("hr");
+  if (roles.includes("clerk")) return getSystemRoleLabel("clerk");
   if (roles.includes("finance")) return getSystemRoleLabel("finance");
   if (roles.includes("svd")) return getSystemRoleLabel("svd");
   if (roles.includes("ssm")) return getSystemRoleLabel("ssm");

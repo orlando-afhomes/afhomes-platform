@@ -50,12 +50,14 @@ export function AccreditationVerificationPage() {
         {failed ? <InfoNote>{GENERIC_FAILURE}</InfoNote> : null}
         {result ? (
           <Card><section aria-label="Verification result">
-            <h2 className="tw:text-lg tw:font-semibold">Accreditation is active</h2>
+            <h2 className="tw:text-lg tw:font-semibold">{result.status === "expired" ? "Accreditation has expired" : "Accreditation is active"}</h2>
             <dl className="tw:mt-2 tw:flex tw:flex-col tw:gap-1 tw:text-sm">
               <div><dt className="tw:inline tw:text-muted-foreground">Number: </dt><dd className="tw:inline">{result.aaNumber}</dd></div>
+              <div><dt className="tw:inline tw:text-muted-foreground">Status: </dt><dd className="tw:inline">{result.status === "expired" ? "Expired" : "Valid"}</dd></div>
               <div><dt className="tw:inline tw:text-muted-foreground">Type: </dt><dd className="tw:inline">{result.classification}</dd></div>
               {result.validUntil ? <div><dt className="tw:inline tw:text-muted-foreground">Valid until: </dt><dd className="tw:inline">{result.validUntil}</dd></div> : null}
             </dl>
+            {result.quotedNumberSuperseded ? <p className="tw:mt-2 tw:text-sm tw:text-muted-foreground">The number you entered was replaced when this accreditation was renewed. The current number is shown.</p> : null}
             </section></Card>
         ) : null}
       </div>

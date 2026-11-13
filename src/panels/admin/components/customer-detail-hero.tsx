@@ -3,8 +3,9 @@
 import { CalendarDays, Crown, Layers, Tag, User } from "lucide-react";
 import { formatDate } from "@/shared/lib/format-date";
 import { BizBadge } from "@/shared/components/business/biz-badge";
+import type { CustomerStatus } from "@/modules/customers/types";
 
-export type CustomerDetailStatus = "draft" | "submitted" | "active_member" | "inactive";
+export type CustomerDetailStatus = CustomerStatus;
 
 /** Sage tint identity banner for the customer detail page (see docs/ui-redesign/customer-detail.png). */
 export function CustomerDetailHero({

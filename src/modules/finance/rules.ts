@@ -151,6 +151,28 @@ export function findDuplicatePayment(
   );
 }
 
+/**
+ * The OR or bank reference number is unique across the whole system (07 section 9.2). Receipts are never
+ * deleted, so every payment on record, whatever its status or contract, keeps its number taken.
+ */
+export function findReferenceConflict(payments: readonly Payment[], referenceNo: string | null | undefined, selfId?: string): Payment | undefined {
+  const wanted = (referenceNo ?? "").trim().toLowerCase();
+  if (!wanted) return undefined;
+  return payments.find((existing) => existing.id !== selfId && (existing.referenceNo ?? "").trim().toLowerCase() === wanted);
+}
+
+/** A hint for the approver only (07 section 9.1, F6.3): another open receipt on the same contract with the same amount and date. */
+export function findSuggestedMatch(payments: readonly Payment[], payment: Pick<Payment, "id" | "contractId" | "amountCentavos" | "paidDate">): Payment | undefined {
+  return payments.find(
+    (existing) =>
+      existing.id !== payment.id &&
+      existing.contractId === payment.contractId &&
+      (existing.status === "submitted" || existing.status === "under_review") &&
+      existing.amountCentavos === payment.amountCentavos &&
+      existing.paidDate === payment.paidDate,
+  );
+}
+
 /** Remaining amount of a verified payment that may still be reversed or refunded. */
 export function adjustableCentavos(payment: Payment): number {
   return netVerifiedCentavos(payment);

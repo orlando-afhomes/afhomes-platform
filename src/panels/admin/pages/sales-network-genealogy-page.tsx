@@ -6,7 +6,8 @@ import { ChevronRight, Search } from "lucide-react";
 import type { OrgMember } from "@/modules/organization/types";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
-import { useMembers } from "@/data/queries";
+import { useMembers, useSeatVacancies } from "@/data/queries";
+import { openVacancyStartByMember } from "@/modules/sales-network/vacancy";
 import { resolveEffectiveModules } from "@/data/mock/authorization";
 import { getAuthorizedGenealogyMemberIds, buildAuthorizedGenealogyTree, type GenealogyTreeNode } from "@/modules/sales-network/genealogy";
 import { aaDisplay, designationLabel, teamDisplayName } from "@/modules/sales-network/display";
@@ -31,6 +32,8 @@ export function SalesNetworkGenealogyPage() {
   const granted = resolveEffectiveModules(store, identity);
   const membersQuery = useMembers();
   const members = useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
+  const vacanciesQuery = useSeatVacancies();
+  const vacantSince = useMemo(() => openVacancyStartByMember(vacanciesQuery.data ?? []), [vacanciesQuery.data]);
 
   const authorizedIds = useMemo(() => getAuthorizedGenealogyMemberIds(identity, store), [identity, store]);
   const tree = useMemo(() => buildAuthorizedGenealogyTree(members, authorizedIds), [members, authorizedIds]);
@@ -170,6 +173,7 @@ export function SalesNetworkGenealogyPage() {
               members={members}
               selectedKey={selectedKey}
               onSelect={setSelectedKey}
+              vacantSince={vacantSince}
               expandedKeys={expandedKeys}
               onToggle={(key) => setExpandedKeys((previous) => (previous.includes(key) ? previous.filter((item) => item !== key) : [...previous, key]))}
             />
@@ -284,6 +288,7 @@ export function GenealogyTree({
   onToggle,
   nested = false,
   detailed = false,
+  vacantSince,
 }: {
   nodes: GenealogyTreeNode[];
   members: readonly OrgMember[];
@@ -294,6 +299,8 @@ export function GenealogyTree({
   nested?: boolean;
   /** Read-only rows with the full node content (AA number, status, counts) and no selection. */
   detailed?: boolean;
+  /** Open seat vacancies by member id (start date), shown as a read-only indicator. */
+  vacantSince?: ReadonlyMap<string, string>;
 }) {
   return (
     <ul className={cn("tw:m-0 tw:flex tw:list-none tw:flex-col tw:gap-0.5 tw:p-0", nested && "tw:ml-4 tw:animate-in tw:fade-in-0 tw:slide-in-from-top-1 tw:border-l tw:border-border tw:pl-2 tw:duration-200 tw:ease-out")}>
@@ -319,7 +326,7 @@ export function GenealogyTree({
               )}
               {detailed ? (
                 <div className="tw:min-w-0 tw:flex-1 tw:px-1 tw:py-2">
-                  <SalesNetworkTreeNodeTitle node={node} members={members} />
+                  <SalesNetworkTreeNodeTitle node={node} members={members} vacantSince={vacantSince?.get(node.key) ?? null} />
                 </div>
               ) : (
                 // Raw button exception: tree node select control with tree semantics.
@@ -329,12 +336,12 @@ export function GenealogyTree({
                   className="tw:min-h-11 tw:min-w-0 tw:flex-1 tw:rounded-md tw:px-1 tw:py-1.5 tw:text-left tw:hover:bg-muted tw:focus-visible:ring-3 tw:focus-visible:ring-ring/50 tw:focus-visible:outline-none tw:sm:min-h-8"
                   onClick={() => onSelect(node.key)}
                 >
-                  <SalesNetworkTreeNodeTitle node={node} members={members} compact />
+                  <SalesNetworkTreeNodeTitle node={node} members={members} compact vacantSince={vacantSince?.get(node.key) ?? null} />
                 </button>
               )}
             </div>
             {expanded && node.children.length > 0 ? (
-              <GenealogyTree nodes={node.children} members={members} selectedKey={selectedKey} onSelect={onSelect} expandedKeys={expandedKeys} onToggle={onToggle} nested detailed={detailed} />
+              <GenealogyTree nodes={node.children} members={members} selectedKey={selectedKey} onSelect={onSelect} expandedKeys={expandedKeys} onToggle={onToggle} nested detailed={detailed} vacantSince={vacantSince} />
             ) : null}
           </li>
         );

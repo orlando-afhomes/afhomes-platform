@@ -55,7 +55,7 @@ describe("Admin dashboard with loaded records", () => {
     show("dev-super-admin");
 
     await waitFor(async () => expect(await kpi("Confirmed sales value")).toBe("₱312,000.00"));
-    expect(await kpi("Customers")).toBe("5");
+    expect(await kpi("Customers")).toBe("9");
     expect(await kpi("Sales network members")).toBe("7");
     expect(await kpi("Contracts requiring review")).toBe("2");
 
@@ -224,7 +224,7 @@ describe("Sales dashboard with loaded records", () => {
     show("dev-ost-a1");
 
     await waitFor(async () => expect(await kpi("My confirmed sales value")).toBe("₱240,000.00"));
-    expect(await kpi("My customers")).toBe("1");
+    expect(await kpi("My customers")).toBe("3");
     expect(await kpi("Pending sales")).toBe("0");
     expect(screen.queryByText("Team confirmed sales value")).toBeNull();
     expect(screen.queryByText("Team sales")).toBeNull();
@@ -239,7 +239,8 @@ describe("Sales dashboard with loaded records", () => {
 
     await waitFor(async () => expect(await kpi("Team confirmed sales value")).toBe("₱240,000.00"));
     expect(await screen.findByRole("link", { name: "My customer drafts: 1 pending" })).toHaveAttribute("href", "/admin/customers");
-    expect(screen.getByRole("link", { name: "My returned contracts: 0 pending" })).toHaveAttribute("href", "/admin/sales/contracts");
+    // Sellers no longer prepare contracts (doc 04 section 5), so there is no returned-contracts shortcut.
+    expect(screen.queryByRole("link", { name: /My returned contracts/ })).toBeNull();
     expect(screen.queryByText("Contracts requiring review")).toBeNull();
   });
 });

@@ -23,6 +23,17 @@ import { simulateAsync } from "@/data/contracts/async-options";
 export const PROTECTED_ACCOUNT_RESTRICTION = "Protected Super Administrator account. Only a Super Administrator can change it.";
 export const OWN_ACCOUNT_RESTRICTION = "This is your own account. Another administrator must change its roles or status.";
 export const LINKED_ACCOUNT_RESTRICTION = "Linked to a staff record. Name and email are managed in Staff Management.";
+export const SELF_APPROVED_NOTE = "Self-approved: the approver also requested this account.";
+export const PASSWORD_RESET_ERROR = "Only an Administrator or Super Administrator can set a temporary password.";
+
+const TEMP_PASSWORD_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+
+/** One-time mock password shown to the Administrator once; never stored in audit history. */
+function generateTemporaryPassword(): string {
+  const bytes = new Uint8Array(10);
+  globalThis.crypto.getRandomValues(bytes);
+  return `Tmp-${Array.from(bytes, (byte) => TEMP_PASSWORD_ALPHABET[byte % TEMP_PASSWORD_ALPHABET.length]).join("")}`;
+}
 
 function canManageAccounts(store: MockStore, identity: DevIdentity) {
   return hasModuleAccess(store, identity, "accounts");
@@ -93,7 +104,7 @@ export class MockAccountRepository {
     const linkedToStaff = this.store.staff.some((item) => item.accountId === account.id);
     // Deletion is disabled for every account pending the R8 archive policy.
     const deletion = { canDelete: false, deleteRestriction: ACCOUNT_DELETE_DISABLED };
-    const none = { canManageRoles: false, assignableRoles: [], revocableRoles: [], allowedStatuses: [], linkedToStaff, ...deletion };
+    const none = { canManageRoles: false, canResetPassword: false, assignableRoles: [], revocableRoles: [], allowedStatuses: [], linkedToStaff, ...deletion };
     if (isProtectedAccount(account) && !isSuperAdmin(this.store, identity)) {
       return { ...none, canEdit: false, restriction: PROTECTED_ACCOUNT_RESTRICTION };
     }
@@ -104,6 +115,7 @@ export class MockAccountRepository {
     return {
       canEdit: true,
       canManageRoles: true,
+      canResetPassword: canActivateAccounts(this.store, identity),
       assignableRoles: SYSTEM_ROLES.filter((role) => !account.roleIds.includes(role) && assignable(role)),
       revocableRoles: account.roleIds.filter(
         (role) =>
@@ -158,6 +170,7 @@ export class MockAccountRepository {
       status: "pending",
       departmentId: input.departmentId ?? null,
       createdAt: new Date().toISOString().slice(0, 10),
+      createdBy: identity.id,
     };
     this.store.accountSequence += 1;
     this.store.accounts.push(account);
@@ -214,7 +227,21 @@ export class MockAccountRepository {
       if (input.departmentId) assertAssignableDepartment(this.store, input.departmentId);
       next.departmentId = input.departmentId;
     }
+    const previousDepartmentId = account.departmentId;
     Object.assign(account, next);
+    if (next.departmentId !== previousDepartmentId) {
+      appendAuditEvent(this.store, {
+        actorId: identity.id,
+        actorRoles: activeRoles(identity),
+        module: "organization",
+        action: AUDIT_ACTIONS.ACCOUNT_UPDATED,
+        entityType: "account",
+        entityId: id,
+        previousValue: `department:${previousDepartmentId ?? "none"}`,
+        newValue: `department:${next.departmentId ?? "none"}`,
+        outcome: "success",
+      });
+    }
     return copy(account);
   }
 
@@ -303,6 +330,8 @@ export class MockAccountRepository {
     }
     assertKeepsActiveSuperAdmin(this.store, id, { roleIds: account.roleIds, status });
     const previousStatus = account.status;
+    // Allowed, but the audit entry shows that the requester also approved it (owner authority rule, 2026-11-12).
+    const selfApproved = previousStatus === "pending" && status === "active" && account.createdBy === identity.id;
     account.status = status;
     appendAuditEvent(this.store, {
       actorId: identity.id,
@@ -313,9 +342,41 @@ export class MockAccountRepository {
       entityId: id,
       previousValue: previousStatus,
       newValue: status,
+      reason: selfApproved ? SELF_APPROVED_NOTE : undefined,
       outcome: "success",
     });
     return copy(account);
+  }
+
+  /**
+   * Interim account recovery (doc 01 section 6.2.1): an Administrator or Super
+   * Administrator issues a temporary password the mock sign-in then honors. The
+   * password is returned once and never written to the audit history.
+   */
+  async setTemporaryPassword(id: string, options?: MockAsyncOptions): Promise<{ temporaryPassword: string }> {
+    const merged = this.mergeOptions(options);
+    await simulateAsync(merged);
+    const identity = this.getIdentity();
+    if (!canManageAccounts(this.store, identity) || !canActivateAccounts(this.store, identity)) throw new Error(PASSWORD_RESET_ERROR);
+    const account = this.store.accounts.find((a) => a.id === id);
+    if (!account) throw new Error("Account not found.");
+    if (isProtectedAccount(account) && !isSuperAdmin(this.store, identity)) {
+      throw new Error("Protected account password cannot be reset by this actor.");
+    }
+    // Own account: the self-modification ban applies except to the Super Administrator (owner rule 2026-11-10).
+    if (this.isSelf(identity, id) && !isSuperAdmin(this.store, identity)) throw new Error(SELF_MODIFICATION_ERROR);
+    const temporaryPassword = generateTemporaryPassword();
+    this.store.temporaryPasswords[id] = temporaryPassword;
+    appendAuditEvent(this.store, {
+      actorId: identity.id,
+      actorRoles: activeRoles(identity),
+      module: "organization",
+      action: AUDIT_ACTIONS.ACCOUNT_PASSWORD_RESET,
+      entityType: "account",
+      entityId: id,
+      outcome: "success",
+    });
+    return { temporaryPassword };
   }
 
   /**

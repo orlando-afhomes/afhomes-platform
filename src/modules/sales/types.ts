@@ -1,7 +1,17 @@
+import type { AccreditationReminder } from "@/modules/accreditation/dates";
 import type { GenealogyEntry } from "@/modules/contracts/types";
 import type { VipTierCode } from "@/modules/vip/types";
 
 export type SaleStatus = "pending" | "confirmed" | "cancelled" | "rejected";
+
+/** Recorded on a sale whose salesperson or referrer had an expired accreditation on the sale date (doc 03 section 9). */
+export type SaleExpiryReminder = {
+  role: "seller" | "referrer";
+  memberId: string;
+  /** Date-only valid-until date that had passed. */
+  expiryDate: string;
+  reminder: AccreditationReminder;
+};
 
 export type SaleAdjustment = {
   id: string;
@@ -34,4 +44,6 @@ export type Sale = {
   status: SaleStatus;
   confirmedDate: string | null;
   adjustments: SaleAdjustment[];
+  /** Expiry reminders recorded when the sale was created; absent or empty when none applied. */
+  expiryReminders?: SaleExpiryReminder[];
 };

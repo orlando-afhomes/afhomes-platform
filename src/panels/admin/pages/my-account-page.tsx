@@ -22,9 +22,8 @@ import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { CardSection } from "@/shared/components/modern/card-section";
 import { Card } from "@/shared/ui/card";
 import { DetailList, DetailRow } from "@/shared/components/modern/detail-list";
-import { EmailField, PasswordField, TextField } from "@/shared/forms/modern";
+import { EmailField, TextField } from "@/shared/forms/modern";
 import {
-  MIN_PASSWORD_LENGTH,
   cleanEmailInput,
   cleanTitleInput,
   isValidEmail,
@@ -96,7 +95,7 @@ function MyAccountForm() {
   return <MyAccountProfileForm key={profile.staff.id} staff={profile.staff} linkedAccount={profile.linkedAccount} />;
 }
 
-type FieldErrors = { name?: string; email?: string; newPassword?: string; confirmPassword?: string };
+type FieldErrors = { name?: string; email?: string };
 
 
 /**
@@ -118,8 +117,6 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
   const [email, setEmail] = useState(staff.email);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(staff.avatarUrl ?? null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [confirmSave, setConfirmSave] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -148,10 +145,6 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
     if (!name.trim()) next.name = "Full name is required.";
     else if (!isValidName(name)) next.name = "Full name must contain letters only.";
     if (email.trim() && !isValidEmail(email)) next.email = "Enter a valid email address.";
-    if (newPassword || confirmPassword) {
-      if (newPassword.length < MIN_PASSWORD_LENGTH) next.newPassword = `New password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
-      else if (newPassword !== confirmPassword) next.confirmPassword = "Passwords do not match.";
-    }
     return next;
   };
 
@@ -163,13 +156,8 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
         // the linked account's name and email in step with the staff record.
         await updateStaff.mutateAsync({ id: staff.id, displayName: name.trim(), email: email.trim() || staff.email, avatarUrl });
       }
-      const changedPassword = newPassword !== "";
-      setNewPassword("");
-      setConfirmPassword("");
       setConfirmSave(false);
-      toast.success("Account updated successfully.", {
-        description: changedPassword ? "Your profile and password change have been recorded." : "Your profile has been saved.",
-      });
+      toast.success("Account updated successfully.", { description: "Your profile has been saved." });
     } catch (err) {
       setConfirmSave(false);
       toast.error("Update failed.", { description: err instanceof Error ? err.message : "Failed to update account." });
@@ -264,27 +252,7 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
       </CardSection>
 
       <CardSection title="Change password">
-        <PasswordField
-          label="New Password"
-          placeholder="New Password"
-          value={newPassword}
-          error={errors.newPassword}
-          onChange={(value) => {
-            setNewPassword(value);
-            clearError("newPassword");
-          }}
-        />
-        <PasswordField
-          label="Confirm Password"
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          error={errors.confirmPassword}
-          hint="Mock build: passwords are validated, not stored."
-          onChange={(value) => {
-            setConfirmPassword(value);
-            clearError("confirmPassword");
-          }}
-        />
+        <p className="tw:text-sm tw:text-muted-foreground">To change your password, ask an Administrator to reset it for you.</p>
       </CardSection>
 
       <CardSection title="Employment and access">
@@ -296,7 +264,7 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
       </CardSection>
 
       <div className="tw:flex tw:justify-end">
-        <Button type="submit" loading={submitting} disabled={!canEditProfile && !newPassword} className="tw:min-h-11 tw:w-full tw:sm:min-h-8 tw:sm:w-auto">
+        <Button type="submit" loading={submitting} disabled={!canEditProfile} className="tw:min-h-11 tw:w-full tw:sm:min-h-8 tw:sm:w-auto">
           Save changes
         </Button>
       </div>

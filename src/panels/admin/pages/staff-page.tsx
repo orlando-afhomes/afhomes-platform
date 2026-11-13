@@ -13,6 +13,7 @@ import {
   useEffectiveModuleIds,
   useRevokeAccountRole,
   useRoleOptions,
+  useSetTemporaryPassword,
   useStaff,
   useStaffPolicies,
   useUpdateAccount,
@@ -27,6 +28,7 @@ import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { AdminPage } from "@/shared/components/admin";
 import { RowActionsMenu, type RowActionItem } from "@/shared/components/modern/row-actions-menu";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
+import { AppAlert } from "@/shared/components/modern/app-alert";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Badge } from "@/shared/ui/badge";
@@ -99,6 +101,8 @@ export function StaffPage() {
   const assignRole = useAssignAccountRole();
   const revokeRole = useRevokeAccountRole();
   const updateAccountStatus = useUpdateAccountStatus();
+  const setTemporaryPassword = useSetTemporaryPassword();
+  const [issuedPassword, setIssuedPassword] = useState<{ name: string; value: string } | null>(null);
   const { confirmRun, dialog: confirmDialog } = useConfirmRun();
 
   // The directory view is addressable: ?view=account opens the Account-only view
@@ -181,8 +185,22 @@ export function StaffPage() {
       const items: RowActionItem[] = [];
       if (policy.canManageRoles) items.push({ key: "roles", label: "System roles", onClick: () => openAccount("role", account.id) });
       if (policy.allowedStatuses.length > 0) items.push({ key: "status", label: "Change status", onClick: () => openAccount("status", account.id) });
+      if (policy.canResetPassword) items.push({ key: "password", label: "Set temporary password", onClick: () => resetPassword(account) });
       return items;
     };
+
+    const resetPassword = (account: Account) =>
+      confirmRun({
+        title: `Set a temporary password for ${account.displayName}?`,
+        description: "The current password stops working. The new password is shown once, so give it to the user in person or by phone.",
+        confirmText: "Set password",
+        action: async () => {
+          const { temporaryPassword } = await setTemporaryPassword.mutateAsync(account.id);
+          setIssuedPassword({ name: account.displayName, value: temporaryPassword });
+        },
+        successTitle: "Temporary password set.",
+        errorTitle: "Password was not changed.",
+      });
 
     const activate = (account: Account) =>
       confirmRun({
@@ -359,7 +377,7 @@ export function StaffPage() {
     );
     return cols;
     // openAccount and the state setters are stable enough: they only call setState.
-  }, [accountPolicies, roles, departments, staffPolicies, canManageAccounts, identity.staffId, confirmRun, setAccountStatus, setLinkedStatus]);
+  }, [accountPolicies, roles, departments, staffPolicies, canManageAccounts, identity.staffId, confirmRun, setAccountStatus, setTemporaryPassword, setLinkedStatus]);
 
   const filtered = useMemo(
     () =>
@@ -499,6 +517,14 @@ export function StaffPage() {
         />
       ) : null}
       {confirmDialog}
+      <AppAlert
+        open={issuedPassword !== null}
+        title="Temporary password"
+        description={issuedPassword ? `Password for ${issuedPassword.name}: ${issuedPassword.value}. It is shown only once and is not recorded in the audit history.` : ""}
+        confirmText="Done"
+        onConfirm={() => setIssuedPassword(null)}
+        onClose={() => setIssuedPassword(null)}
+      />
     </AdminPage>
   );
 }

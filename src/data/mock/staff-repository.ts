@@ -10,6 +10,7 @@ import { SYSTEM_ROLES } from "@/modules/identity/permissions";
 import type { MockStore } from "./seed";
 import { appendAuditEvent } from "./audit";
 import { activeRoles } from "./dev-identities";
+import { SELF_APPROVED_NOTE } from "./account-repository";
 import {
   PROTECTED_STAFF_ERROR,
   SELF_MODIFICATION_ERROR,
@@ -191,6 +192,7 @@ export class MockStaffRepository {
       throw new Error(`Invalid status transition from ${humanize(account.status)} to ${humanize(status)}.`);
     }
     const previousStatus = account.status;
+    const selfApproved = previousStatus === "pending" && status === "active" && account.createdBy === identity.id;
     account.status = status;
     appendAuditEvent(this.store, {
       actorId: identity.id,
@@ -201,6 +203,7 @@ export class MockStaffRepository {
       entityId: account.id,
       previousValue: previousStatus,
       newValue: status,
+      reason: selfApproved ? SELF_APPROVED_NOTE : undefined,
       outcome: "success",
       relatedRecordIds: [staffId],
     });
@@ -267,7 +270,7 @@ export class MockStaffRepository {
       // Least privilege by default: no system roles unless an Accounts-module
       // holder grants them above; the account starts Pending until an
       // Administrator or Super Administrator activates it (doc 01 §6.2).
-      const account: Account = { id: `acct-${this.store.accountSequence}`, displayName, email, roleIds: systemRoleIds, status: "pending", departmentId: input.departmentId ?? null, createdAt: today };
+      const account: Account = { id: `acct-${this.store.accountSequence}`, displayName, email, roleIds: systemRoleIds, status: "pending", departmentId: input.departmentId ?? null, createdAt: today, createdBy: identity.id };
       this.store.accountSequence += 1;
       this.store.accounts.push(account);
       accountId = account.id;

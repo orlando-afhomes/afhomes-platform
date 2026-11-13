@@ -95,7 +95,7 @@ describe("role-aware permissions", () => {
     expect(isModuleGranted(identity, "finance")).toBe(false);
     expect(isModuleGranted(identity, "organization")).toBe(false);
     expect(hasOperationPermission(identity, "vip-products.manage")).toBe(true);
-    expect(hasOperationPermission(identity, "finance.verify")).toBe(false);
+    expect(hasOperationPermission(identity, "finance.verify")).toBe(true);
   });
 
   it("keeps parent and unresolved scopes denied while business modules follow the interim grants", () => {
@@ -112,13 +112,51 @@ describe("role-aware permissions", () => {
     expect(isModuleGranted(ost, "audit-logs")).toBe(false);
     expect(isModuleGranted(ost, "finance")).toBe(false);
     expect(hasOperationPermission(ost, "customers.manage")).toBe(false);
-    expect(hasOperationPermission(ost, "payments.submit")).toBe(true);
-    expect(hasOperationPermission(getDevIdentity("dev-admin"), "finance.verify")).toBe(false);
+    // Slip upload is proof only (doc 07 5.1): sellers neither enter receipts nor prepare contracts.
+    expect(hasOperationPermission(ost, "payments.submit")).toBe(false);
+    expect(hasOperationPermission(getDevIdentity("dev-admin"), "finance.verify")).toBe(true);
   });
 
   it("grants super admin protected operations", () => {
     const identity = getDevIdentity("dev-super-admin");
     expect(hasOperationPermission(identity, "admin.protected")).toBe(true);
     expect(hasOperationPermission(identity, "organization.roles.manage")).toBe(true);
+  });
+
+  it("lets sellers start a draft only: no submit, receipts, or contracts", () => {
+    for (const id of ["dev-svd-a", "dev-ssm-a", "dev-sm-a", "dev-ost-a1"]) {
+      const seller = getDevIdentity(id);
+      expect(hasOperationPermission(seller, "customers.draft")).toBe(true);
+      for (const operation of ["customers.manage", "payments.submit", "contracts.prepare", "finance.verify"] as const) {
+        expect(hasOperationPermission(seller, operation)).toBe(false);
+      }
+    }
+  });
+
+  it("limits customer registration approval to the Administrator and Super Administrator", () => {
+    for (const id of ["dev-admin", "dev-super-admin"]) expect(hasOperationPermission(getDevIdentity(id), "customers.approve")).toBe(true);
+    for (const id of ["dev-clerk", "dev-finance", "dev-hr", "dev-svd-a", "dev-ost-a1"]) expect(hasOperationPermission(getDevIdentity(id), "customers.approve")).toBe(false);
+  });
+
+  it("lets the Clerk enter and complete but never approve", () => {
+    const clerk = getDevIdentity("dev-clerk");
+    for (const operation of ["customers.manage", "customers.draft", "contracts.prepare", "payments.submit"] as const) {
+      expect(hasOperationPermission(clerk, operation)).toBe(true);
+    }
+    for (const operation of ["finance.verify", "contracts.approve", "membership.activate", "organization.staff.manage", "audit.read", "customers.approve"] as const) {
+      expect(hasOperationPermission(clerk, operation)).toBe(false);
+    }
+  });
+
+  it("limits reconciliation and the history import to the right roles", () => {
+    const can = (id: string, operation: "reconciliation.manage" | "history-import.manage" | "history-import.signoff") => hasOperationPermission(getDevIdentity(id), operation);
+    for (const id of ["dev-admin", "dev-super-admin"]) {
+      for (const operation of ["reconciliation.manage", "history-import.manage", "history-import.signoff"] as const) expect(can(id, operation)).toBe(true);
+    }
+    expect(can("dev-finance", "reconciliation.manage")).toBe(true);
+    expect(can("dev-finance", "history-import.signoff")).toBe(false);
+    for (const id of ["dev-clerk", "dev-hr", "dev-svd-a", "dev-ost-a1"]) {
+      for (const operation of ["reconciliation.manage", "history-import.manage", "history-import.signoff"] as const) expect(can(id, operation)).toBe(false);
+    }
   });
 });

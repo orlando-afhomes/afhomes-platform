@@ -20,6 +20,7 @@ import { formatPeso } from "@/shared/lib/money";
 import { humanize } from "@/shared/lib/humanize";
 import { recordLabel } from "@/shared/lib/record-label";
 import { hasActiveSystemRole } from "./authorization";
+import { APPLICANT_ACTOR_ID, REGISTRATION_AUDIT_ACTIONS } from "@/modules/accreditation/registration";
 import { DEV_IDENTITIES } from "./dev-identities";
 import type { MockStore } from "./seed";
 
@@ -37,20 +38,22 @@ const REDACTED = "[changed]";
 
 /** Actions whose previousValue/newValue are enumerations, statuses, ids, or role/module configuration. */
 const VALUE_ACTIONS: ReadonlySet<string> = new Set([
-  "ACCOUNT_CREATED", "ACCOUNT_STATUS_CHANGED", "ACCOUNT_ROLE_ASSIGNED", "ACCOUNT_ROLE_REVOKED",
-  "DEPARTMENT_STATUS_CHANGED", "STAFF_CREATED", "ROLE_CREATED", "ROLE_UPDATED",
-  "ACCREDITATION_ISSUED", "ACCREDITATION_STATUS_CHANGED", "ACCREDITATION_CANCELLED",
+  "ACCOUNT_CREATED", "ACCOUNT_UPDATED", "ACCOUNT_STATUS_CHANGED", "ACCOUNT_ROLE_ASSIGNED", "ACCOUNT_ROLE_REVOKED",
+  "DEPARTMENT_STATUS_CHANGED", "STAFF_CREATED", "ROLE_CREATED", "ROLE_UPDATED", "ROLE_DELETED", "DEPARTMENT_CREATED", "DEPARTMENT_UPDATED",
+  "ACCREDITATION_ISSUED", "ACCREDITATION_STATUS_CHANGED", "ACCREDITATION_CANCELLED", "ACCREDITATION_RENEWED",
   "MEMBER_CREATED", "MEMBER_STATUS_CHANGED", "MEMBER_TRANSFERRED", "SELLER_CREATED",
+  "SEAT_VACANCY_RECORDED", "SEAT_VACANCY_FILLED",
+  ...Object.values(REGISTRATION_AUDIT_ACTIONS),
   ...Object.values(BUSINESS_AUDIT_ACTIONS),
 ]);
 /** STAFF_UPDATED carries "field:value" pairs; only these fields expose their values. */
 const STAFF_UPDATED_VALUE_FIELDS: ReadonlySet<string> = new Set(["department", "role", "account"]);
 /** Actions carrying an official AA number in displayReference. */
 const REFERENCE_ACTIONS: ReadonlySet<string> = new Set([
-  "ACCREDITATION_ISSUED", "ACCREDITATION_STATUS_CHANGED", "ACCREDITATION_CANCELLED", "MEMBER_CREATED", "SELLER_CREATED",
+  "ACCREDITATION_ISSUED", "ACCREDITATION_STATUS_CHANGED", "ACCREDITATION_CANCELLED", "ACCREDITATION_RENEWED", "MEMBER_CREATED", "SELLER_CREATED",
 ]);
 /** Actions whose reason is system-generated text; other reasons are user-entered and withheld. */
-const REASON_ACTIONS: ReadonlySet<string> = new Set(["ACCREDITATION_ISSUED", "SELLER_CREATED"]);
+const REASON_ACTIONS: ReadonlySet<string> = new Set(["ACCREDITATION_ISSUED", "ACCREDITATION_RENEWED", "SELLER_CREATED", "ACCOUNT_STATUS_CHANGED", "ACCOUNT_PASSWORD_RESET"]);
 
 function projectStaffUpdated(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -72,6 +75,7 @@ function projectValue(action: string, value: string | null | undefined): string 
 
 function actorNameOf(store: MockStore, actorId: string): string {
   if (actorId === SYSTEM_ACTOR_ID) return "System";
+  if (actorId === APPLICANT_ACTOR_ID) return "Applicant";
   const dev = DEV_IDENTITIES.find((identity) => identity.id === actorId);
   if (dev) return dev.displayName;
   const named =

@@ -20,6 +20,8 @@ export const ACCOUNT_DELETE_DISABLED = "Account deletion is unavailable until th
 export type AccountActionPolicy = {
   canEdit: boolean;
   canManageRoles: boolean;
+  /** Administrator and Super Administrator may issue a temporary password (doc 01 section 6.2.1). */
+  canResetPassword: boolean;
   assignableRoles: DevRole[];
   revocableRoles: DevRole[];
   allowedStatuses: AccountStatus[];
@@ -56,4 +58,6 @@ export type Account = {
   status: AccountStatus;
   departmentId: string | null;
   createdAt: string;
+  /** Identity id of whoever requested the account; lets activation flag self-approval in the audit entry. */
+  createdBy?: string;
 };

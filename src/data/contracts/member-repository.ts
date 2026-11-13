@@ -1,5 +1,6 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { OrgMember } from "@/modules/organization/types";
+import type { SeatFillMethod, SeatVacancy } from "@/modules/sales-network/vacancy";
 import type {
   CreateAccreditedSellerInput,
   AccreditedSellerResult,
@@ -8,6 +9,14 @@ import type {
   TransferSalesNetworkMemberTarget,
   UpdateSalesNetworkMemberInput,
 } from "@/modules/sales-network/types";
+
+export type FillSeatVacancyInput = {
+  /** A vacant seat is filled only by promotion or team transfer (doc 02 section 5.1.1; owner answer A5). */
+  method: SeatFillMethod;
+  /** Date-only. The roll-up ends from this date. */
+  filledOn: string;
+  newHolderMemberId: string;
+};
 
 export type UplineSummary = {
   id: string;
@@ -18,8 +27,17 @@ export type UplineSummary = {
 export interface MemberRepository {
   list(options?: MockAsyncOptions): Promise<OrgMember[]>;
   getById(id: string, options?: MockAsyncOptions): Promise<OrgMember | null>;
-  /** Visibility-scoped lookup by official AA number (case-insensitive). */
+  /** Visibility-scoped lookup by official AA number (case-insensitive); an old number from the AA Number History resolves to the current holder. */
   getByAaNumber(aaNumber: string, options?: MockAsyncOptions): Promise<OrgMember | null>;
+  /** Effective-dated vacant leader seats within the caller's visible scope. */
+  listSeatVacancies(options?: MockAsyncOptions): Promise<SeatVacancy[]>;
+  /**
+   * Administrator or Super Administrator, audited. Records the departed holder's end date and a vacancy
+   * starting the day after it. The team stays in place; nobody is moved.
+   */
+  recordSeatVacancy(seatMemberId: string, holderEndDate: string, options?: MockAsyncOptions): Promise<SeatVacancy>;
+  /** Administrator or Super Administrator, audited. Ends the roll-up from the fill date. Promotion or transfer only. */
+  fillSeatVacancy(vacancyId: string, input: FillSeatVacancyInput, options?: MockAsyncOptions): Promise<SeatVacancy>;
   listUplineSummaries(options?: MockAsyncOptions): Promise<UplineSummary[]>;
   create(input: CreateSalesNetworkMemberInput, options?: MockAsyncOptions): Promise<OrgMember>;
   update(id: string, input: UpdateSalesNetworkMemberInput, options?: MockAsyncOptions): Promise<OrgMember>;

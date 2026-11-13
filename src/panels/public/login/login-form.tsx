@@ -1,18 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { Radio } from "@base-ui/react/radio";
 import { useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff } from "lucide-react";
 import { authenticateMock, type MockPortal } from "@/data/mock/mock-credentials";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { RadioGroup } from "@/shared/ui/radio-group";
 import { Spinner } from "@/shared/ui/spinner";
+import { safeReturnPath } from "@/shared/lib/safe-return-path";
 import { ForgotPasswordPanel } from "./forgot-password-panel";
 import { validateEmail } from "./login-validation";
 
@@ -33,7 +35,10 @@ const MOCK_LATENCY_MS = 400;
 export function LoginForm({ portals, defaultPortal, description, extraLinks }: Props) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  // Page the user asked for before being sent to sign in; the 403 view covers a page their role cannot open.
+  const returnTo = safeReturnPath(useSearchParams()?.get("next"));
   const { status, signIn } = useDevIdentity();
+  const store = useMockStore();
   const id = useId();
   const [view, setView] = useState<"login" | "forgot">("login");
   const [portal, setPortal] = useState<MockPortal>(defaultPortal);
@@ -45,8 +50,8 @@ export function LoginForm({ portals, defaultPortal, description, extraLinks }: P
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (status === "signed-in") router.replace("/admin");
-  }, [status, router]);
+    if (status === "signed-in") router.replace(returnTo);
+  }, [status, router, returnTo]);
 
   // This route stays mounted under cacheComponents, so its state survives logout.
   // Reset the form when the session ends, or the preserved "submitting" state keeps Sign In busy.
@@ -78,7 +83,7 @@ export function LoginForm({ portals, defaultPortal, description, extraLinks }: P
 
     setSubmitting(true);
     await new Promise((resolve) => setTimeout(resolve, MOCK_LATENCY_MS));
-    const result = authenticateMock(email.trim(), password, portal);
+    const result = authenticateMock(email.trim(), password, portal, store);
     if (!result.ok) {
       setAuthError(result.error);
       setSubmitting(false);
@@ -87,7 +92,7 @@ export function LoginForm({ portals, defaultPortal, description, extraLinks }: P
     setPassword("");
     signIn(result.identityId);
     queryClient.clear();
-    router.replace("/admin");
+    router.replace(returnTo);
   }
 
   if (view === "forgot") return <ForgotPasswordPanel onBack={() => setView("login")} />;

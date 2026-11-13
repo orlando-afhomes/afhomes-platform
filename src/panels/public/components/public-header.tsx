@@ -12,6 +12,12 @@ export function PublicHeader() {
           <Link href="/login" className="public-header__nav-link">
             Login
           </Link>
+          <Link href="/login/sales" className="public-header__nav-link">
+            Sales sign-in
+          </Link>
+          <Link href="/verify" className="public-header__nav-link">
+            Verify accreditation
+          </Link>
         </nav>
       </div>
     </header>

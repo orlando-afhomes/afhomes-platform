@@ -20,6 +20,7 @@ import { QueryState } from "@/shared/components/modern/query-state";
 import { TabBar } from "@/shared/components/modern/tab-bar";
 import { formatDate } from "@/shared/lib/format-date";
 import { AdminPage, AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
+import { saleExpiryReminderText } from "@/modules/sales/accreditation-standing";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
@@ -65,7 +66,12 @@ export function SalesPage() {
       { id: "customer", header: "Customer", cell: ({ row }) => (referredView ? <span className="tw:font-semibold">{row.original.customerName}</span> : <Link href={contractHref(row.original.contractId)} className="tw:font-semibold tw:underline-offset-4 tw:hover:underline">{row.original.customerName}</Link>) },
       { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => `${row.original.productCode} · ${row.original.schemeLabel}` },
       { id: "value", header: "Contract value", cell: ({ row }) => <Money value={row.original.valueCentavos} /> },
-      { id: "seller", header: "Seller", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.sellerName ?? "Company" },
+      { id: "seller", header: "Seller", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => (
+        <>
+          {row.original.sellerName ?? "Company"}
+          {(row.original.expiryReminders ?? []).map((reminder) => <span key={reminder.role} className="tw:block tw:text-xs tw:text-muted-foreground">{saleExpiryReminderText(reminder)}</span>)}
+        </>
+      ) },
       { id: "recorded", header: "Recorded", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => formatDate(row.original.recordedDate) },
       { id: "confirmed", header: "Confirmed", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => formatDate(row.original.confirmedDate) },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },

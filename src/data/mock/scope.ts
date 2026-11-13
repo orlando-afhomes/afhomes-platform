@@ -4,7 +4,7 @@ import type { MockStore } from "./seed";
 import { activeRoles } from "./dev-identities";
 
 /** Roles with unrestricted record scope in the mock repositories. */
-export const BROAD_ROLES = new Set(["super_admin", "admin"]);
+export const BROAD_ROLES = new Set(["super_admin", "admin", "clerk"]);
 
 export function isActiveIdentity(identity: DevIdentity) {
   return identity.status === "active";

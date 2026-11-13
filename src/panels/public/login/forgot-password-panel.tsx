@@ -6,7 +6,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { validateEmail } from "./login-validation";
 
-// shortcut: no recovery backend; wire code + link email to the account's registered email when auth is built.
+// shortcut: interim recovery (doc 01 6.2.1): the message never reveals whether the email exists; an Administrator sets a temporary password until real auth sends a reset link.
 export function ForgotPasswordPanel({ onBack }: { onBack: () => void }) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export function ForgotPasswordPanel({ onBack }: { onBack: () => void }) {
       <div className="login-form__view tw:flex tw:flex-col tw:gap-5">
         <h1 className="tw:text-3xl tw:font-semibold">Forgot password</h1>
         <p role="status" className="tw:text-sm tw:text-(--color-on-dark-muted)">
-          Email recovery not available yet.
+          If the email belongs to an account, an Administrator can set a temporary password for it. Contact your Administrator to reset your password.
         </p>
         <Button type="button" className="login-form__submit" onClick={onBack}>
           Back to sign in
@@ -37,7 +37,7 @@ export function ForgotPasswordPanel({ onBack }: { onBack: () => void }) {
     <form noValidate onSubmit={handleSubmit} className="login-form__view tw:flex tw:flex-col tw:gap-5">
       <div className="tw:flex tw:flex-col tw:gap-2">
         <h1 className="tw:text-3xl tw:font-semibold">Forgot password</h1>
-        <p className="tw:text-sm tw:text-(--color-on-dark-muted)">Enter your registered email.</p>
+        <p className="tw:text-sm tw:text-(--color-on-dark-muted)">Enter your registered email. Password resets are done by an Administrator.</p>
       </div>
       <div className="tw:flex tw:flex-col tw:gap-2">
         <Label htmlFor="forgot-email">Registered email</Label>
@@ -58,7 +58,7 @@ export function ForgotPasswordPanel({ onBack }: { onBack: () => void }) {
         ) : null}
       </div>
       <Button type="submit" className="login-form__submit">
-        Send reset link
+        Continue
       </Button>
       <button type="button" className="login-form__link tw:self-center" onClick={onBack}>
         Back to sign in

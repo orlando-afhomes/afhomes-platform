@@ -211,7 +211,7 @@ describe("account repository S3-A protections", () => {
   it("derives account policies for admin from the enforced rules", async () => {
     const store = createMockStore();
     const policies = await createMockRepositories(store, () => getDevIdentity("dev-admin")).accounts.getPolicies();
-    expect(policies.creatableRoles).toEqual(["hr", "svd", "ssm", "sm", "ost"]);
+    expect(policies.creatableRoles).toEqual(["hr", "clerk", "svd", "ssm", "sm", "ost"]);
     expect(policies.accounts["acct-super-admin"]).toMatchObject({ canEdit: false, canManageRoles: false, allowedStatuses: [], linkedToStaff: true });
     expect(policies.accounts["acct-super-admin"].restriction).toMatch(/Protected/);
     expect(policies.accounts["acct-admin"]).toMatchObject({ canEdit: true, canManageRoles: false, allowedStatuses: [], linkedToStaff: true });
@@ -223,7 +223,7 @@ describe("account repository S3-A protections", () => {
   it("gives super admins every system role and hides last-super-admin removals", async () => {
     const store = createMockStore();
     const linked = await createMockRepositories(store, () => getDevIdentity("dev-super-admin")).accounts.getPolicies();
-    expect(linked.creatableRoles).toEqual(["super_admin", "admin", "hr", "finance", "svd", "ssm", "sm", "ost"]);
+    expect(linked.creatableRoles).toEqual(["super_admin", "admin", "hr", "clerk", "finance", "svd", "ssm", "sm", "ost"]);
     expect(linked.accounts["acct-hr"].assignableRoles).toContain("finance");
     const unlinked = await createMockRepositories(store, () => unlinkedSuperAdmin).accounts.getPolicies();
     expect(unlinked.accounts["acct-super-admin"]).toMatchObject({ revocableRoles: [], allowedStatuses: [] });
@@ -443,5 +443,51 @@ describe("account repository delete (disabled pending R8)", () => {
     for (const policy of Object.values(policies)) {
       expect(policy).toMatchObject({ canDelete: false, deleteRestriction: ACCOUNT_DELETE_DISABLED });
     }
+  });
+
+  describe("temporary password and audit flags", () => {
+    it("lets an Administrator set a temporary password, audited without the value", async () => {
+      const store = createMockStore();
+      const repo = createMockRepositories(store, () => getDevIdentity("dev-admin")).accounts;
+      const { temporaryPassword } = await repo.setTemporaryPassword("acct-hr");
+      expect(temporaryPassword).toMatch(/^Tmp-/);
+      expect(store.temporaryPasswords["acct-hr"]).toBe(temporaryPassword);
+      const event = store.auditEvents.at(-1)!;
+      expect(event.action).toBe(AUDIT_ACTIONS.ACCOUNT_PASSWORD_RESET);
+      expect(event.entityId).toBe("acct-hr");
+      expect(JSON.stringify(event)).not.toContain(temporaryPassword);
+    });
+
+    it("denies HR, Finance and a non-Super-Administrator on a protected account", async () => {
+      const store = createMockStore();
+      for (const id of ["dev-hr", "dev-finance"]) {
+        const repo = createMockRepositories(store, () => getDevIdentity(id)).accounts;
+        await expect(repo.setTemporaryPassword("acct-pending")).rejects.toThrow();
+      }
+      const admin = createMockRepositories(store, () => getDevIdentity("dev-admin")).accounts;
+      await expect(admin.setTemporaryPassword("acct-super-admin")).rejects.toThrow();
+      expect(store.temporaryPasswords).toEqual({});
+    });
+
+    it("flags a self-approved account activation in the audit entry", async () => {
+      const store = createMockStore();
+      const admin = createMockRepositories(store, () => getDevIdentity("dev-admin")).accounts;
+      const mine = await admin.create({ displayName: "Mine", email: "mine@afhomes.local", roleIds: ["hr"] });
+      await admin.updateStatus(mine.id, "active");
+      expect(store.auditEvents.at(-1)?.reason).toMatch(/^Self-approved/);
+      const other = await createMockRepositories(store, () => getDevIdentity("dev-super-admin")).accounts.create({ displayName: "Other", email: "other@afhomes.local", roleIds: ["hr"] });
+      await admin.updateStatus(other.id, "active");
+      expect(store.auditEvents.at(-1)?.reason).toBeUndefined();
+    });
+
+    it("audits a department change made through account update", async () => {
+      const store = createMockStore();
+      const repo = createMockRepositories(store, () => getDevIdentity("dev-admin")).accounts;
+      await repo.update("acct-pending", { departmentId: "dept-ops" });
+      const event = store.auditEvents.at(-1)!;
+      expect(event.action).toBe(AUDIT_ACTIONS.ACCOUNT_UPDATED);
+      expect(event.previousValue).toBe("department:none");
+      expect(event.newValue).toBe("department:dept-ops");
+    });
   });
 });

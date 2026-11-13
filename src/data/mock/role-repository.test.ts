@@ -330,12 +330,20 @@ describe("department role repository S3-C1 audit events", () => {
     expect(store.auditEvents).toHaveLength(0);
   });
 
-  it("records no event for role deletion (deferred)", async () => {
+  it("records one ROLE_DELETED with the removed role's name and modules", async () => {
     const store = createMockStore();
     const role = await adminRepos(store).roles.create({ name: "Audit Gone", departmentId: "dept-hr", moduleIds: ["staff"] });
     store.auditEvents.length = 0;
     await adminRepos(store).roles.delete(role.id);
-    expect(store.auditEvents).toHaveLength(0);
+    expect(store.auditEvents).toHaveLength(1);
+    expect(store.auditEvents[0]).toMatchObject({
+      actorId: "dev-admin",
+      action: AUDIT_ACTIONS.ROLE_DELETED,
+      entityType: "department-role",
+      entityId: role.id,
+      previousValue: "Audit Gone [staff]",
+      relatedRecordIds: ["dept-hr"],
+    });
   });
 
   it("attributes protected-role changes to the super admin actor", async () => {

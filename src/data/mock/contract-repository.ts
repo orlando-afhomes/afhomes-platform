@@ -6,6 +6,7 @@ import { CANCELLATION_GROUNDS, CANCELLATION_GROUND_LABELS, type Contract, type C
 import { totalVerifiedCentavos } from "@/modules/finance/rules";
 import type { DevIdentity } from "@/modules/identity/types";
 import { extractRaSequence } from "@/modules/membership/rules";
+import { evaluateSaleParties, salePartyBlockMessage } from "@/modules/sales/accreditation-standing";
 import { applicablePriceStatus } from "@/modules/vip/pricing";
 import type { PaymentScheme, VipTierCode } from "@/modules/vip/types";
 import { BusinessRepository, DATE_ONLY, canSeeContract, customerName, genealogyFor, nowIso, today } from "./business-base";
@@ -83,7 +84,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
       const customer = this.store.customers.find((item) => item.id === input.customerId);
       const broad = activeIdentityRoles(identity).some((role) => BROAD_ROLES.has(role));
       if (!customer || (!broad && customer.ownerMemberId !== identity.memberId)) throw new Error("Customer not found.");
-      if (customer.status !== "submitted") throw new Error("Only a submitted customer can have a contract prepared.");
+      if (customer.status !== "submitted" && customer.status !== "approved") throw new Error("Only a submitted or approved customer can have a contract prepared.");
       if (this.store.contracts.some((item) => item.customerId === customer.id && item.status !== "cancelled")) {
         throw new Error("This customer already has an open or finalized contract.");
       }
@@ -154,12 +155,21 @@ export class MockContractRepository extends BusinessRepository implements Contra
       const contract = this.find(identity, id);
       if (!this.isPreparer(identity, contract)) throw new Error("Submitting this contract is not allowed for this identity.");
       if (contract.status !== "draft" && contract.status !== "returned") throw new Error("Only a Draft or Returned contract can be submitted.");
+      // Doc 03 section 9: an expired salesperson or referrer never blocks a sale (a reminder is recorded on it);
+      // a suspension or departure blocks a new sale dated on or after it. Checked before anything changes.
+      const isNewSale = !this.store.sales.some((item) => item.contractId === contract.id);
+      const saleParties = evaluateSaleParties(
+        [{ role: "seller", memberId: contract.sellerMemberId }, { role: "referrer", memberId: this.store.customers.find((item) => item.id === contract.customerId)?.referrerMemberId }],
+        this.store.accreditations,
+        today(),
+      );
+      if (isNewSale && saleParties.blocked.length > 0) throw new Error(salePartyBlockMessage(saleParties.blocked[0]));
       contract.status = "submitted";
       contract.submittedAt = today();
       contract.returnReason = null;
       this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_SUBMITTED);
       this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_SUBMITTED, entityType: "contract", entityId: contract.id, newValue: "submitted" });
-      if (!this.store.sales.some((item) => item.contractId === contract.id)) {
+      if (isNewSale) {
         const customer = this.store.customers.find((item) => item.id === contract.customerId);
         const sale = {
           id: nextId(this.store, "sale", "sale"),
@@ -175,6 +185,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
           status: "pending" as const,
           confirmedDate: null,
           adjustments: [],
+          ...(saleParties.reminders.length > 0 ? { expiryReminders: saleParties.reminders } : {}),
         };
         this.store.sales.push(sale);
         this.audit(identity, { module: "sales", action: BUSINESS_AUDIT_ACTIONS.SALE_RECORDED, entityType: "sale", entityId: sale.id, newValue: "pending", relatedRecordIds: [contract.id] });

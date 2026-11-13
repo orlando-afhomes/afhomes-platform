@@ -69,3 +69,17 @@
   max-width: 42rem;
   color: var(--color-text-muted);
 }
+
+.public-home__links {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.public-home__link {
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}

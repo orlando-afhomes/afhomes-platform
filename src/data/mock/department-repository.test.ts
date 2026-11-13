@@ -127,7 +127,8 @@ describe("department repository", () => {
     expect(updated).toMatchObject({ name: "Administration", code: "ADMIN", description: "Central administration", status: "active" });
     await expect(admin.update("dept-admin", { name: "Administration", description: "Central administration", status: "deactivated" })).rejects.toThrow(PROTECTED_ROLE_ERROR);
     expect(store.departments.find((dept) => dept.id === "dept-admin")).toMatchObject({ name: "Administration", status: "active" });
-    expect(store.auditEvents).toHaveLength(auditCount);
+    // Only the metadata edit is audited; the rejected status change adds nothing.
+    expect(store.auditEvents).toHaveLength(auditCount + 1);
   });
 
   it("rejects reactivation that restores grants beyond the actor's authority", async () => {
@@ -181,14 +182,17 @@ describe("department repository S3-C1 audit events", () => {
     expect(events[1]).toMatchObject({ previousValue: "deactivated", newValue: "active" });
   });
 
-  it("records no event for metadata-only updates, creation, deletion, or rejections", async () => {
+  it("records department creation and detail updates, but nothing for rejections or no-op updates", async () => {
     const store = createMockStore();
     const repos = createMockRepositories(store, () => getDevIdentity("dev-admin"));
-    const created = await repos.departments.create({ name: "Unaudited" });
-    await repos.departments.update(created.id, { name: "Unaudited Renamed", code: "U" });
+    const created = await repos.departments.create({ name: "Audited" });
+    await repos.departments.update(created.id, { name: "Audited Renamed", code: "U", description: "Secret text" });
+    await repos.departments.update(created.id, { name: "Audited Renamed" });
     await expect(repos.departments.update("dept-admin", { status: "deactivated" })).rejects.toThrow(PROTECTED_ROLE_ERROR);
-    await repos.departments.delete(created.id);
-    expect(store.auditEvents).toHaveLength(SEED_AUDIT_EVENT_COUNT);
+    expect(store.auditEvents.slice(SEED_AUDIT_EVENT_COUNT)).toMatchObject([
+      { action: AUDIT_ACTIONS.DEPARTMENT_CREATED, entityType: "department", entityId: created.id, newValue: "Audited" },
+      { action: AUDIT_ACTIONS.DEPARTMENT_UPDATED, entityId: created.id, previousValue: "name:Audited;code:;description:changed", newValue: "name:Audited Renamed;code:U;description:changed" },
+    ]);
   });
 
   it("attributes protected-department status changes to the super admin actor", async () => {

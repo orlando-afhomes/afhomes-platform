@@ -11,12 +11,18 @@ import type { PaymentRepository } from "@/data/contracts/payment-repository";
 import type { MembershipRepository } from "@/data/contracts/membership-repository";
 import type { CommissionRepository } from "@/data/contracts/commission-repository";
 import type { StayPointsRepository } from "@/data/contracts/stay-points-repository";
+import type { RedemptionRepository } from "@/data/contracts/redemption-repository";
+import type { ReconciliationRepository } from "@/data/contracts/reconciliation-repository";
+import type { HistoryImportRepository } from "@/data/contracts/history-import-repository";
+import { MockReconciliationRepository } from "./reconciliation-repository";
+import { MockHistoryImportRepository } from "./history-import-repository";
 import { MockContractRepository } from "./contract-repository";
 import { MockSaleRepository } from "./sale-repository";
 import { MockPaymentRepository } from "./payment-repository";
 import { MockMembershipRepository } from "./membership-repository";
 import { MockCommissionRepository } from "./commission-repository";
 import { MockStayPointsRepository } from "./stay-points-repository";
+import { MockRedemptionRepository } from "./redemption-repository";
 import type { AuditRepository } from "@/data/contracts/audit-repository";
 import { MockAuditRepository } from "./audit-repository";
 import type { DevIdentity } from "@/modules/identity/types";
@@ -51,6 +57,9 @@ export type MockRepositories = {
   memberships: MembershipRepository;
   commissions: CommissionRepository;
   stayPoints: StayPointsRepository;
+  redemption: RedemptionRepository;
+  reconciliation: ReconciliationRepository;
+  historyImports: HistoryImportRepository;
 };
 
 export function createMockRepositories(
@@ -75,5 +84,8 @@ export function createMockRepositories(
     memberships: new MockMembershipRepository(store, getIdentity, asyncOptions),
     commissions: new MockCommissionRepository(store, getIdentity, asyncOptions),
     stayPoints: new MockStayPointsRepository(store, getIdentity, asyncOptions),
+    redemption: new MockRedemptionRepository(store, getIdentity, asyncOptions),
+    reconciliation: new MockReconciliationRepository(store, getIdentity, asyncOptions),
+    historyImports: new MockHistoryImportRepository(store, getIdentity, asyncOptions),
   };
 }

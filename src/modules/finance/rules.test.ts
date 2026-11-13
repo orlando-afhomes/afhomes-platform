@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Contract } from "@/modules/contracts/types";
-import { buildCollectionLedger, buildScheduleState, collectionStateFor, daysPastDue, exceedsContractPrice, findDuplicatePayment, periodCollections, isFullySettled, meetsRequiredInitial, netVerifiedCentavos, outstandingBalanceCentavos, totalVerifiedCentavos } from "./rules";
+import { buildCollectionLedger, buildScheduleState, collectionStateFor, daysPastDue, exceedsContractPrice, findDuplicatePayment, findReferenceConflict, findSuggestedMatch,periodCollections, isFullySettled, meetsRequiredInitial, netVerifiedCentavos, outstandingBalanceCentavos, totalVerifiedCentavos } from "./rules";
 import type { Payment } from "./types";
 
 const payment = (over: Partial<Payment> = {}): Payment => ({
@@ -132,6 +132,31 @@ describe("schedule order and days past due", () => {
   it("counts whole calendar days and never goes negative", () => {
     expect(daysPastDue("2026-11-01", "2026-11-10")).toBe(9);
     expect(daysPastDue("2026-11-10", "2026-11-01")).toBe(0);
+  });
+});
+
+describe("findReferenceConflict", () => {
+  it("matches the same number on any contract or status, ignoring case and spacing", () => {
+    expect(findReferenceConflict([payment({ contractId: "c9", status: "rejected" })], " ref-1 ")?.id).toBe("p1");
+  });
+
+  it("ignores blank numbers and the payment itself", () => {
+    expect(findReferenceConflict([payment({ referenceNo: null })], "")).toBeUndefined();
+    expect(findReferenceConflict([payment()], "REF-1", "p1")).toBeUndefined();
+  });
+});
+
+describe("findSuggestedMatch", () => {
+  const open = payment({ id: "p2", status: "submitted", referenceNo: "REF-2" });
+
+  it("suggests another open receipt on the same contract with the same amount and date", () => {
+    expect(findSuggestedMatch([payment({ status: "under_review" })], open)?.id).toBe("p1");
+  });
+
+  it("does not suggest verified receipts, other amounts or other contracts", () => {
+    expect(findSuggestedMatch([payment()], open)).toBeUndefined();
+    expect(findSuggestedMatch([payment({ status: "submitted", amountCentavos: 5 })], open)).toBeUndefined();
+    expect(findSuggestedMatch([payment({ status: "submitted", contractId: "c2" })], open)).toBeUndefined();
   });
 });
 

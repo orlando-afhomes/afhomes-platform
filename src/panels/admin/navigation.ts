@@ -25,7 +25,11 @@ export type AdminNavKey =
   | "commission-report"
   | "membership-activation"
   | "membership-report"
-  | "stay-points-report";
+  | "stay-points-report"
+  | "redemption-group"
+  | "redemption-table"
+  | "reconciliation"
+  | "historical-import";
 
 export type AdminNavItem = {
   id: AdminNavKey;
@@ -98,6 +102,16 @@ export const adminNavigation: AdminNavItem[] = [
     ],
   },
   {
+    id: "redemption-group",
+    label: "Redemption",
+    href: "/admin/redemption-group",
+    available: true,
+    children: [
+      { id: "redemption", label: "Bookings", href: "/admin/redemption", available: true },
+      { id: "redemption-table", label: "Points Table", href: "/admin/redemption/points-table", available: true, grants: ["redemption"], operation: "redemption.configure" },
+    ],
+  },
+  {
     id: "vip-products-group",
     label: "VIP Products",
     href: "/admin/vip-products-group",
@@ -112,6 +126,7 @@ export const adminNavigation: AdminNavItem[] = [
   { id: "sales-network", label: "Sales Network", href: "/admin/sales-network", available: true, children: [
     { id: "sales-network-members", label: "Members", href: "/admin/sales-network/members", available: true },
     { id: "sales-network-genealogy", label: "Genealogy", href: "/admin/sales-network/genealogy", available: true },
+    { id: "accreditation-registrations", label: "OST Applications", href: "/admin/sales-network/registrations", available: true },
   ] },
   // Organization is a parent scope: visible when at least one child module
   // is granted. "organization" itself is never granted (deny by default).
@@ -143,6 +158,8 @@ export const adminNavigation: AdminNavItem[] = [
       { id: "commission-report", label: "Commission Report", href: "/admin/reports/commissions", available: true, grants: ["reports"] },
       { id: "membership-report", label: "Membership Report", href: "/admin/reports/membership", available: true, grants: ["reports"] },
       { id: "stay-points-report", label: "Stay Points Report", href: "/admin/reports/stay-points", available: true, grants: ["reports"] },
+      { id: "reconciliation", label: "Reconciliation", href: "/admin/reports/reconciliation", available: true, grants: ["reports"], operation: "reconciliation.manage" },
+      { id: "historical-import", label: "Historical Import", href: "/admin/reports/historical-import", available: true, grants: ["reports"], operation: "history-import.manage" },
     ],
   },
   { id: "audit-logs", label: "Audit Logs", href: "/admin/audit-logs", available: true },

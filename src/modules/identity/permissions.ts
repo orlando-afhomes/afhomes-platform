@@ -30,6 +30,7 @@ export type AdminModuleId =
   | "commissions"
   | "membership"
   | "stay-points"
+  | "redemption"
   | "reports"
   | "audit-logs";
 
@@ -46,17 +47,32 @@ export type AdminOperation =
   | "finance.refund"
   | "finance.reconcile"
   | "finance.reports.view"
+  /** Compare platform source totals with the workbook, sign off or explain differences (docs 11 and 12; Administrator, Super Administrator, Finance). */
+  | "reconciliation.manage"
+  /** Prepare a historical receipt import batch and reject it (Administrator, Super Administrator). */
+  | "history-import.manage"
+  /** Sign off a historical import batch so its receipts count (Administrator, Super Administrator; doc 07 section 20). */
+  | "history-import.signoff"
   | "commission.approve"
   | "commission.payout"
   | "commission.viewOwn"
   | "commission.viewTeam"
+  /** Complete, edit and submit customer registrations (Clerk, Administrator, Super Administrator). */
   | "customers.manage"
+  /** Start and edit one's OWN customer draft only; never submit it (sellers, doc 04 section 5). */
+  | "customers.draft"
+  /** Approve, send back or reject a submitted customer registration (Administrator, Super Administrator; doc 04 section 5). */
+  | "customers.approve"
   /** Customer import and export (personal data in bulk): Admin and Super Administrator only. */
   | "customers.import"
   | "contracts.prepare"
   | "payments.submit"
   | "membership.activate"
   | "stay-points.reconcile"
+  /** Record, cancel, complete and mark no-show on points bookings (office staff, Administrator, Super Administrator; doc 10 section 9.2). */
+  | "redemption.book"
+  /** Maintain the points-per-night table, holiday calendar, venues and cut-offs (Administrator, Super Administrator; doc 10 section 16). */
+  | "redemption.configure"
   | "audit.read"
   | "sales.viewOwn"
   | "sales.viewTeam"
@@ -70,7 +86,7 @@ const BASE_MODULES: readonly AdminModuleId[] = ["dashboard"];
 
 // Business modules (interim grants pending the D-series decisions). Record-level scope and
 // operation grants below decide what each role can actually do inside a module.
-const BUSINESS_ADMIN_MODULES: readonly AdminModuleId[] = ["customers", "sales", "commissions", "membership", "stay-points", "reports", "audit-logs"];
+const BUSINESS_ADMIN_MODULES: readonly AdminModuleId[] = ["customers", "sales", "commissions", "membership", "stay-points", "redemption", "reports", "audit-logs"];
 const SELLER_BUSINESS_MODULES: readonly AdminModuleId[] = ["customers", "sales", "commissions", "membership", "stay-points", "reports"];
 const OST_BUSINESS_MODULES: readonly AdminModuleId[] = ["customers", "sales", "commissions", "membership", "stay-points", "reports"];
 
@@ -82,7 +98,9 @@ const ROLE_MODULE_GRANTS: Record<DevRole, readonly AdminModuleId[]> = {
   super_admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products", "sales-network", "sales-network-members", "sales-network-genealogy", "accreditation-registrations", "accreditation-records", "accreditation-renewals", ...BUSINESS_ADMIN_MODULES],
   admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products", "sales-network", "sales-network-members", "sales-network-genealogy", "accreditation-registrations", "accreditation-records", "accreditation-renewals", ...BUSINESS_ADMIN_MODULES],
   hr: [...BASE_MODULES, "departments", "staff"],
-  finance: [...BASE_MODULES, "finance", "commissions", "membership", "stay-points", "reports"],
+  // Interim baseline (doc 01 §3.2: module set per role stays open): the Clerk enters customers, contracts and receipts.
+  clerk: [...BASE_MODULES, "customers", "sales", "accreditation-registrations"],
+  finance: [...BASE_MODULES, "finance", "commissions", "membership", "stay-points", "redemption", "reports"],
   svd: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy", ...SELLER_BUSINESS_MODULES],
   ssm: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy", ...SELLER_BUSINESS_MODULES],
   sm: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy", ...SELLER_BUSINESS_MODULES],
@@ -168,6 +186,7 @@ export const ALL_MODULE_IDS: ReadonlySet<AdminModuleId> = new Set([
   "commissions",
   "membership",
   "stay-points",
+  "redemption",
   "reports",
   "audit-logs",
 ]);
@@ -187,17 +206,24 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "finance.refund",
     "finance.reconcile",
     "finance.reports.view",
+    "reconciliation.manage",
+    "history-import.manage",
+    "history-import.signoff",
     "commission.approve",
     "commission.payout",
     "sales-network.manage",
     "sales-network.transfer",
     "sales-network.status",
     "customers.manage",
+    "customers.draft",
+    "customers.approve",
     "customers.import",
     "contracts.prepare",
     "payments.submit",
     "membership.activate",
     "stay-points.reconcile",
+    "redemption.book",
+    "redemption.configure",
     "audit.read",
   ],
   admin: [
@@ -206,32 +232,44 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "organization.roles.manage",
     "vip-products.manage",
     "contracts.approve",
+    // Owner ruling R6 (2026-11-12): the Administrator approves receipts alongside Finance and the Super Administrator.
+    "finance.verify",
+    "reconciliation.manage",
+    "history-import.manage",
+    "history-import.signoff",
     "sales-network.manage",
     "sales-network.transfer",
     "sales-network.status",
     "customers.manage",
+    "customers.draft",
+    "customers.approve",
     "customers.import",
     "contracts.prepare",
     "payments.submit",
     "membership.activate",
+    "redemption.book",
+    "redemption.configure",
     "audit.read",
   ],
   hr: ["organization.departments.manage", "organization.staff.manage"],
+  // Doc 01 §3.7/§3.8: the Clerk enters and completes; never approves (no finance.verify, contracts.approve, membership.activate).
+  clerk: ["customers.manage", "customers.draft", "contracts.prepare", "payments.submit"],
   finance: [
     "finance.verify",
     "finance.refund",
     "finance.reconcile",
     "finance.reports.view",
+    "reconciliation.manage",
     "commission.approve",
     "commission.payout",
     // Owner ruling 2026-11-09: Finance activates memberships alongside Admin and Super Administrator.
     "membership.activate",
     "stay-points.reconcile",
   ],
-  svd: ["sales.viewTeam", "customers.viewDownline", "commission.viewOwn", "commission.viewTeam", "customers.manage", "contracts.prepare", "payments.submit", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
-  ssm: ["sales.viewTeam", "customers.viewDownline", "commission.viewOwn", "commission.viewTeam", "customers.manage", "contracts.prepare", "payments.submit", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
-  sm: ["sales.viewTeam", "customers.viewDownline", "commission.viewOwn", "commission.viewTeam", "customers.manage", "contracts.prepare", "payments.submit", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
-  ost: ["sales.viewOwn", "customers.viewOwn", "commission.viewOwn", "payments.submit"],
+  svd: ["sales.viewTeam", "customers.viewDownline", "commission.viewOwn", "commission.viewTeam", "customers.draft", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
+  ssm: ["sales.viewTeam", "customers.viewDownline", "commission.viewOwn", "commission.viewTeam", "customers.draft", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
+  sm: ["sales.viewTeam", "customers.viewDownline", "commission.viewOwn", "commission.viewTeam", "customers.draft", "sales-network.manage", "sales-network.transfer", "sales-network.status"],
+  ost: ["sales.viewOwn", "customers.viewOwn", "customers.draft", "commission.viewOwn"],
 };
 
 export function getEffectiveRoles(identity: DevIdentity) {

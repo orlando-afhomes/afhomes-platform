@@ -10,6 +10,8 @@ export interface AccountRepository {
   assignRole(id: string, role: string, options?: MockAsyncOptions): Promise<Account>;
   revokeRole(id: string, role: string, options?: MockAsyncOptions): Promise<Account>;
   updateStatus(id: string, status: AccountStatus, options?: MockAsyncOptions): Promise<Account>;
+  /** Interim recovery: issues a one-time temporary password (Administrator and Super Administrator only); the value is never audited. */
+  setTemporaryPassword(id: string, options?: MockAsyncOptions): Promise<{ temporaryPassword: string }>;
   /** Removes an inactive, unlinked, non-protected account the actor has authority over. */
   delete(id: string, options?: MockAsyncOptions): Promise<void>;
 }

@@ -1,0 +1,82 @@
+/* Shared status pages (400, 401, 403, 404, 500, notice). Imported by status-page.tsx. */
+
+.status-page {
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  width: 100%;
+  max-width: 34rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 16px;
+  text-align: center;
+}
+
+.status-page--full {
+  min-height: 100vh;
+  justify-content: center;
+}
+
+.status-page__code {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--color-brand-secondary);
+}
+
+.status-page--warning .status-page__code,
+.status-page--500 .status-page__code {
+  color: var(--color-warning);
+}
+
+.status-page__title {
+  font-size: 1.75rem;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--color-text-primary);
+}
+
+.status-page__description {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.status-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.status-page__link {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  border-radius: 8px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-brand-primary);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg-surface-raised);
+  cursor: pointer;
+}
+
+.status-page__link--primary {
+  color: var(--color-text-on-brand);
+  background: var(--color-brand-primary);
+  border-color: var(--color-brand-primary);
+}
+
+.status-page__link--primary:hover {
+  background: var(--color-brand-primary-hover);
+}
+
+.status-page__link:focus-visible {
+  outline: 2px solid var(--color-brand-secondary);
+  outline-offset: 2px;
+}

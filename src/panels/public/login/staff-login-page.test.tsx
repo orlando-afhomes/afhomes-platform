@@ -10,7 +10,16 @@ const replace = vi.fn();
 const signIn = vi.fn();
 let status: "loading" | "signed-in" | "signed-out" = "signed-out";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
+let search = "";
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace }),
+  useSearchParams: () => new URLSearchParams(search),
+}));
+vi.mock("@/shared/providers/mock-store-provider", async () => {
+  const { createMockStore } = await import("@/data/mock/seed");
+  const store = createMockStore();
+  return { useMockStore: () => store };
+});
 vi.mock("@/shared/providers/dev-identity-provider", () => ({
   useDevIdentity: () => ({ status, signIn }),
 }));
@@ -26,6 +35,7 @@ function renderWithQuery(ui: React.ReactElement) {
 beforeEach(() => {
   status = "signed-out";
   replace.mockClear();
+  search = "";
   signIn.mockClear();
 });
 afterEach(cleanup);
@@ -110,6 +120,18 @@ describe("Staff login page", () => {
     expect(screen.getByLabelText("Email")).toHaveValue("");
   });
 
+  it("returns to the requested admin page after sign-in, and ignores unsafe targets", () => {
+    status = "signed-in";
+    search = "next=%2Fadmin%2Fcustomers";
+    const first = renderWithQuery(<StaffLoginPage />);
+    expect(replace).toHaveBeenCalledWith("/admin/customers");
+    first.unmount();
+    replace.mockClear();
+    search = "next=https%3A%2F%2Fevil.com";
+    renderWithQuery(<StaffLoginPage />);
+    expect(replace).toHaveBeenCalledWith("/admin");
+  });
+
   it("redirects an existing session to the admin panel", () => {
     status = "signed-in";
     renderWithQuery(<StaffLoginPage />);
@@ -120,11 +142,11 @@ describe("Staff login page", () => {
     const user = userEvent.setup();
     renderWithQuery(<StaffLoginPage />);
     await user.click(screen.getByRole("button", { name: "Forgot password?" }));
-    await user.click(screen.getByRole("button", { name: "Send reset link" }));
+    await user.click(screen.getByRole("button", { name: "Continue" }));
     expect(screen.getByText("Enter your email.")).toBeInTheDocument();
     await user.type(screen.getByLabelText("Registered email"), admin.email);
-    await user.click(screen.getByRole("button", { name: "Send reset link" }));
-    expect(screen.getByText("Email recovery not available yet.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByText(/Contact your Administrator to reset your password/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Back to sign in" }));
     expect(screen.getByRole("heading", { name: "Login" })).toBeInTheDocument();
   });

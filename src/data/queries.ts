@@ -7,7 +7,8 @@ import type { CustomerDraftInput } from "@/modules/customers/types";
 import type { DepartmentRole, Designation, StaffMember } from "@/modules/organization/types";
 import type { CreateAccreditedSellerInput, CreateSalesNetworkMemberInput, UpdateSalesNetworkMemberInput } from "@/modules/sales-network/types";
 import type { AccreditationStatusRequest } from "@/data/contracts/accreditation-repository";
-import type { AccreditationAdminStatus } from "@/modules/accreditation/types";
+import type { AccreditationAdminStatus, RegistrationApplicant, RegistrationCompletion } from "@/modules/accreditation/types";
+import type { SubmitRegistrationInput } from "@/data/contracts/registration-repository";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { resolveEffectiveModules } from "@/data/mock/authorization";
@@ -367,6 +368,16 @@ export function useUpdateAccountStatus() {
   });
 }
 
+/** Interim account recovery: returns the one-time temporary password; it is never cached or audited. */
+export function useSetTemporaryPassword() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => repositories.accounts.setTemporaryPassword(id),
+    onSuccess: () => invalidateAudit(queryClient),
+  });
+}
+
 export function useCreateCustomerDraft() {
   const repositories = useMockRepositories();
   const queryClient = useQueryClient();
@@ -548,6 +559,36 @@ export function useIssuePendingAccreditation() {
   });
 }
 
+/** Renew an approved seller: issues a new AA number and keeps the old one in the AA Number History (doc 03 section 5). */
+export function useRenewAccreditation() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  const { identity } = useDevIdentity();
+  return useMutation({
+    mutationFn: (input: { recordId: string; expectedAaNumber?: string; renewalDate?: string }) =>
+      repositories.accreditations.renew(input.recordId, { expectedAaNumber: input.expectedAaNumber, renewalDate: input.renewalDate }),
+    onSuccess: () => {
+      invalidateAudit(queryClient);
+      queryClient.invalidateQueries({ queryKey: ["members", identity.id] });
+      queryClient.invalidateQueries({ queryKey: ["sales-network-members", identity.id] });
+      queryClient.invalidateQueries({ queryKey: ["sales-network-member"] });
+      queryClient.invalidateQueries({ queryKey: ["accreditations", identity.id] });
+      queryClient.invalidateQueries({ queryKey: ["member-accreditations"] });
+      queryClient.invalidateQueries({ queryKey: ["accreditation-record"] });
+    },
+  });
+}
+
+/** Effective-dated vacant leader seats in the caller's visible scope (doc 02 section 5.1.1). */
+export function useSeatVacancies() {
+  const repositories = useMockRepositories();
+  const { identity } = useDevIdentity();
+  return useQuery({
+    queryKey: ["seat-vacancies", identity.id],
+    queryFn: ({ signal }) => repositories.members.listSeatVacancies({ signal }),
+  });
+}
+
 export function useVerifyReferralSponsor() {
   const repositories = useMockRepositories();
   return useMutation({
@@ -592,6 +633,66 @@ export function useRegistrationApplication(id: string) {
     queryFn: ({ signal }) => repositories.registrations.getById(id, { signal }),
     enabled: Boolean(id),
   });
+}
+
+/** Public OST application (no sign-in): submit a new application. */
+export function useSubmitRegistration() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SubmitRegistrationInput) => repositories.registrations.submit(input),
+    onSuccess: () => {
+      invalidateAudit(queryClient);
+      queryClient.invalidateQueries({ queryKey: ["registration-applications"] });
+    },
+  });
+}
+
+/** Private correction link: what the applicant may see and correct. */
+export function useRegistrationCorrection(token: string) {
+  const repositories = useMockRepositories();
+  return useQuery({
+    queryKey: ["registration-correction", token],
+    queryFn: ({ signal }) => repositories.registrations.getForCorrection(token, { signal }),
+    enabled: Boolean(token),
+  });
+}
+
+export function useResubmitRegistration(token: string) {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (applicant: RegistrationApplicant) => repositories.registrations.resubmit(token, applicant),
+    onSuccess: () => {
+      invalidateAudit(queryClient);
+      queryClient.invalidateQueries({ queryKey: ["registration-applications"] });
+    },
+  });
+}
+
+/** Office actions on an OST application: check and complete, approve, return for correction, reject. */
+export function useRegistrationReview() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  const { identity } = useDevIdentity();
+  const refresh = (approved: boolean) => {
+    invalidateAudit(queryClient);
+    queryClient.invalidateQueries({ queryKey: ["registration-applications"] });
+    queryClient.invalidateQueries({ queryKey: ["registration-application"] });
+    if (approved) {
+      for (const key of ["members", "sales-network-members", "accreditations", "accounts", "uplines"]) {
+        queryClient.invalidateQueries({ queryKey: [key, identity.id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ["sales-network-member"] });
+    }
+  };
+  const registrations = repositories.registrations;
+  return {
+    complete: useMutation({ mutationFn: (input: { id: string; completion: RegistrationCompletion }) => registrations.complete(input.id, input.completion), onSuccess: () => refresh(false) }),
+    approve: useMutation({ mutationFn: (input: { id: string; approvedStart: string }) => registrations.approve(input.id, { approvedStart: input.approvedStart }), onSuccess: () => refresh(true) }),
+    returnForCorrection: useMutation({ mutationFn: (input: { id: string; reason: string }) => registrations.returnForCorrection(input.id, input.reason), onSuccess: () => refresh(false) }),
+    reject: useMutation({ mutationFn: (input: { id: string; reason: string }) => registrations.reject(input.id, input.reason), onSuccess: () => refresh(false) }),
+  };
 }
 
 export function useAccreditations() {

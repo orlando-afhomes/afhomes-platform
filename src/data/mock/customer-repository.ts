@@ -2,10 +2,11 @@ import { CustomerValidationError, type CustomerRepository } from "@/data/contrac
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import { customerAttributionErrors, pendingAttributionMemberIds } from "@/modules/customers/attribution";
+import { approvalErrors, canReviewRegistration, isEditableRegistration } from "@/modules/customers/review";
 import { buildImportRows, MAX_EXPORT_ROWS, MAX_IMPORT_ROWS, type CustomerImportJob, type CustomerImportRecord } from "@/modules/customers/import";
 import { currentManilaYear, nextCustomerId } from "@/modules/customers/customer-number";
 import { composeCustomerName, restrictCustomer, validateCustomerForSubmit } from "@/modules/customers/rules";
-import type { Customer, CustomerDraftInput } from "@/modules/customers/types";
+import type { Customer, CustomerDraftInput, CustomerStatus } from "@/modules/customers/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { BusinessRepository, nowIso, today } from "./business-base";
 import { nextId, randomNumericId } from "./ids";
@@ -16,7 +17,7 @@ import { BROAD_ROLES, getVisibleCustomerIds, getVisibleMemberIds, isActiveIdenti
 const COPY_KEYS = [
   "customerNumber", "firstName", "middleName", "lastName", "suffix", "gender", "civilStatus", "dateOfBirth", "mobileNumber",
   "email", "address", "governmentIdType", "governmentIdNumber", "vipPlan", "supplementaryHolder", "paymentSchemeId", "contractClassification",
-  "recommenderMemberId", "acquisitionChannel", "consentDataPrivacy", "idReceivedCertified",
+  "recommenderMemberId", "referralReference", "acquisitionChannel", "consentDataPrivacy", "idReceivedCertified",
 ] as const;
 const DRAFT_COPY_KEYS = [
   ...COPY_KEYS, "referrerMemberId", "customerIdMode", "noMiddleName", "citizenship", "landline", "tinNumber",
@@ -47,6 +48,22 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
     return this.can(identity, "customers.manage");
   }
 
+  /** Records one registration step on the record (04 section 16); the caller writes the audit event. */
+  private step(customer: Customer, identity: DevIdentity, status: CustomerStatus, reason: string | null = null) {
+    (customer.statusHistory ??= []).push({ status, at: nowIso(), actorId: identity.id, ...(reason ? { reason } : {}) });
+  }
+
+  /**
+   * The closing seller is `ownerMemberId` (04 section 7.8, R5). A seller draft is always owned by that seller;
+   * office users may name or change the closing seller until the registration is approved.
+   */
+  private assignClosingSeller(identity: DevIdentity, customer: Customer, input: CustomerDraftInput) {
+    if (!this.canManage(identity) || !input.ownerMemberId || input.ownerMemberId === customer.ownerMemberId) return;
+    if (!isEditableRegistration(customer.status) && customer.status !== "submitted") return;
+    if (!this.store.members.some((member) => member.id === input.ownerMemberId)) throw new CustomerValidationError({ ownerMemberId: "Choose a seller from the Sales Network." });
+    customer.ownerMemberId = input.ownerMemberId;
+  }
+
   private ownRecord(identity: DevIdentity, id: string): Customer {
     const customer = this.store.customers.find((item) => item.id === id);
     if (!customer) throw new Error("Customer not found.");
@@ -56,9 +73,8 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
   }
 
   private assertReferences(input: CustomerDraftInput) {
-    if (input.recommenderMemberId) {
-      const member = this.store.members.find((item) => item.id === input.recommenderMemberId);
-      if (!member || member.designation !== "OST") throw new Error("The recommender must be an OST member.");
+    if (input.recommenderMemberId && !this.store.members.some((item) => item.id === input.recommenderMemberId)) {
+      throw new Error("The referrer must be a Sales Network seller.");
     }
     if (input.vipPlan && !this.store.products.some((item) => item.code === input.vipPlan && item.status === "active")) {
       throw new Error("The selected VIP plan is not available.");
@@ -77,8 +93,8 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
     const unavailable: CustomerValidationError["errors"] = {};
     for (const field of ["recommenderMemberId", "referrerMemberId"] as const) {
       const id = input[field];
-      if (id && (!visibleIds.has(id) || !this.store.members.some((member) => member.id === id && member.designation === "OST"))) {
-        unavailable[field] = "Choose an OST available to your account.";
+      if (id && (!visibleIds.has(id) || !this.store.members.some((member) => member.id === id))) {
+        unavailable[field] = "Choose a seller available to your account.";
       }
     }
     if (Object.keys(unavailable).length > 0) throw new CustomerValidationError(unavailable);
@@ -93,7 +109,7 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
 
   private apply(customer: Customer, input: CustomerDraftInput) {
     const target = customer as unknown as Record<string, unknown>;
-    const keys = customer.status === "draft" ? DRAFT_COPY_KEYS : COPY_KEYS;
+    const keys = isEditableRegistration(customer.status) ? DRAFT_COPY_KEYS : COPY_KEYS;
     for (const key of keys) {
       const value = (input as Record<string, unknown>)[key];
       if (value !== undefined) target[key] = value;
@@ -113,7 +129,7 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
 
   async createDraft(input: CustomerDraftInput, options?: MockAsyncOptions): Promise<Customer> {
     return this.run(options, (identity) => {
-      if (!this.canManage(identity)) throw new Error("Customer draft creation is not allowed for this identity.");
+      if (!this.can(identity, "customers.draft")) throw new Error("Customer draft creation is not allowed for this identity.");
       this.assertRegistrationAttribution(identity, input);
       const customer = this.newDraft(identity, input);
       this.audit(identity, { module: "customers", action: BUSINESS_AUDIT_ACTIONS.CUSTOMER_DRAFT_CREATED, entityType: "customer", entityId: customer.id, newValue: "draft" });
@@ -196,11 +212,14 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
 
   async updateDraft(id: string, input: CustomerDraftInput, options?: MockAsyncOptions): Promise<Customer> {
     return this.run(options, (identity) => {
-      if (!this.canManage(identity)) throw new Error("Customer draft update is not allowed for this identity.");
+      // A seller holds only customers.draft: their own draft (ownRecord), never a sent-back or submitted record.
+      if (!this.can(identity, "customers.draft")) throw new Error("Customer draft update is not allowed for this identity.");
       const customer = this.ownRecord(identity, id);
-      if (customer.status !== "draft") throw new Error("Only draft customers can be updated.");
+      const editable = customer.status === "draft" || (customer.status === "sent_back" && this.canManage(identity));
+      if (!editable) throw new Error("Only draft customers can be updated.");
       this.assertRegistrationAttribution(identity, input);
       this.assertReferences(input);
+      this.assignClosingSeller(identity, customer, input);
       this.apply(customer, input);
       this.audit(identity, { module: "customers", action: BUSINESS_AUDIT_ACTIONS.CUSTOMER_DRAFT_UPDATED, entityType: "customer", entityId: customer.id, newValue: "draft" });
       return this.copy(customer);
@@ -209,7 +228,7 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
 
   async discardDraft(id: string, options?: MockAsyncOptions): Promise<void> {
     return this.run(options, (identity) => {
-      if (!this.canManage(identity)) throw new Error("Customer draft discard is not allowed for this identity.");
+      if (!this.can(identity, "customers.draft")) throw new Error("Customer draft discard is not allowed for this identity.");
       const customer = this.ownRecord(identity, id);
       if (customer.status !== "draft") throw new Error("Only draft customers can be discarded.");
       this.store.customers.splice(this.store.customers.indexOf(customer), 1);
@@ -221,7 +240,7 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
     return this.run(options, (identity) => {
       if (!this.canManage(identity)) throw new Error("Customer submission is not allowed for this identity.");
       const customer = this.ownRecord(identity, id);
-      if (customer.status !== "draft") throw new Error("Only draft customers can be submitted.");
+      if (!isEditableRegistration(customer.status)) throw new Error("Only draft or sent-back customers can be submitted.");
       const merged: CustomerDraftInput = {
         ...this.copy(customer),
         ...input,
@@ -235,20 +254,68 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
       // assignment is part of the audited submission change.
       const customerIdMode = merged.customerIdMode;
       const requestedNumber = typeof merged.customerNumber === "string" ? merged.customerNumber.trim() : "";
-      const assignsNumber = customerIdMode === "auto" || (customerIdMode === undefined && requestedNumber === "");
+      const assignsNumber = !customer.customerNumber && (customerIdMode === "auto" || (customerIdMode === undefined && requestedNumber === ""));
       if (assignsNumber) merged.customerNumber = nextCustomerId(this.store.customers, currentManilaYear());
       const errors = validateCustomerForSubmit(merged, this.store.customers, customer.id, this.supplementaryAllowed(merged.vipPlan));
       if (Object.keys(errors).length > 0) throw new CustomerValidationError(errors);
       this.assertRegistrationAttribution(identity, merged);
       this.assertReferences(merged);
+      const previousStatus = customer.status;
+      this.assignClosingSeller(identity, customer, input);
       this.apply(customer, input);
       if (assignsNumber) customer.customerNumber = merged.customerNumber;
       customer.status = "submitted";
       customer.submittedAt = today();
+      customer.reviewReason = null;
+      this.step(customer, identity, "submitted");
       const assignedNumber = assignsNumber ? merged.customerNumber : null;
-      this.audit(identity, { module: "customers", action: BUSINESS_AUDIT_ACTIONS.CUSTOMER_SUBMITTED, entityType: "customer", entityId: customer.id, previousValue: "draft", newValue: assignedNumber ? `submitted; customerNumber:${assignedNumber}` : "submitted" });
+      this.audit(identity, { module: "customers", action: BUSINESS_AUDIT_ACTIONS.CUSTOMER_SUBMITTED, entityType: "customer", entityId: customer.id, previousValue: previousStatus, newValue: assignedNumber ? `submitted; customerNumber:${assignedNumber}` : "submitted" });
       return this.copy(customer);
     });
+  }
+
+  /** Administrator or Super Administrator only; may approve a registration they entered (doc 01 3.7), the audit trail shows both. */
+  async approve(id: string, options?: MockAsyncOptions): Promise<Customer> {
+    return this.run(options, (identity) => {
+      this.require(identity, "customers.approve", "Customer approval is not allowed for this identity.");
+      const customer = this.reviewable(identity, id);
+      const errors = approvalErrors(customer, this.store.accreditations, today());
+      if (Object.keys(errors).length > 0) throw new CustomerValidationError(errors);
+      customer.status = "approved";
+      customer.approvedAt = today();
+      customer.reviewReason = null;
+      this.step(customer, identity, "approved");
+      this.audit(identity, { module: "customers", action: BUSINESS_AUDIT_ACTIONS.CUSTOMER_APPROVED, entityType: "customer", entityId: customer.id, previousValue: "submitted", newValue: "approved" });
+      return this.copy(customer);
+    });
+  }
+
+  async sendBack(id: string, reason: string, options?: MockAsyncOptions): Promise<Customer> {
+    return this.review(id, reason, "sent_back", BUSINESS_AUDIT_ACTIONS.CUSTOMER_SENT_BACK, options);
+  }
+
+  async reject(id: string, reason: string, options?: MockAsyncOptions): Promise<Customer> {
+    return this.review(id, reason, "rejected", BUSINESS_AUDIT_ACTIONS.CUSTOMER_REJECTED, options);
+  }
+
+  private review(id: string, reason: string, status: "sent_back" | "rejected", action: typeof BUSINESS_AUDIT_ACTIONS.CUSTOMER_SENT_BACK | typeof BUSINESS_AUDIT_ACTIONS.CUSTOMER_REJECTED, options?: MockAsyncOptions): Promise<Customer> {
+    return this.run(options, (identity) => {
+      this.require(identity, "customers.approve", "Customer review is not allowed for this identity.");
+      const trimmed = reason.trim();
+      if (!trimmed) throw new Error("A reason is required.");
+      const customer = this.reviewable(identity, id);
+      customer.status = status;
+      customer.reviewReason = trimmed;
+      this.step(customer, identity, status, trimmed);
+      this.audit(identity, { module: "customers", action, entityType: "customer", entityId: customer.id, previousValue: "submitted", newValue: status, reason: trimmed });
+      return this.copy(customer);
+    });
+  }
+
+  private reviewable(identity: DevIdentity, id: string): Customer {
+    const customer = this.ownRecord(identity, id);
+    if (!canReviewRegistration(customer.status)) throw new Error("Only a submitted registration can be reviewed.");
+    return customer;
   }
 
   async correct(id: string, input: CustomerDraftInput, reason: string, options?: MockAsyncOptions): Promise<Customer> {
@@ -256,12 +323,14 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
       if (!this.canManage(identity)) throw new Error("Customer correction is not allowed for this identity.");
       if (!reason.trim()) throw new Error("A reason is required for a data correction.");
       const customer = this.ownRecord(identity, id);
-      if (customer.status === "draft") throw new Error("Draft customers are edited directly.");
+      if (isEditableRegistration(customer.status)) throw new Error("Draft customers are edited directly.");
+      if (customer.status === "rejected") throw new Error("A rejected registration cannot be corrected.");
       const merged = { ...this.copy(customer), ...input, displayName: input.displayName || customer.displayName } as CustomerDraftInput;
       const errors = validateCustomerForSubmit(merged, this.store.customers, customer.id, this.supplementaryAllowed(merged.vipPlan));
       if (Object.keys(errors).length > 0) throw new CustomerValidationError(errors);
       this.assertReferences(merged);
       const previousNumber = customer.customerNumber ?? null;
+      this.assignClosingSeller(identity, customer, input);
       this.apply(customer, input);
       // A change to the official Customer ID keeps its previous and new value; other corrected fields stay out of the audit payload.
       const nextNumber = customer.customerNumber ?? null;

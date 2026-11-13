@@ -208,6 +208,17 @@ export class MockDepartmentRoleRepository implements DepartmentRoleRepository {
     if (assigned.length > 0) {
       throw new Error(`Role is assigned to ${assigned.length} staff member(s) and cannot be deleted.`);
     }
-    this.store.roles.splice(index, 1);
+    const [removed] = this.store.roles.splice(index, 1);
+    appendAuditEvent(this.store, {
+      actorId: identity.id,
+      actorRoles: activeRoles(identity),
+      module: "organization",
+      action: AUDIT_ACTIONS.ROLE_DELETED,
+      entityType: "department-role",
+      entityId: id,
+      previousValue: `${removed.name} [${removed.moduleIds.join(",")}]`,
+      outcome: "success",
+      relatedRecordIds: [removed.departmentId],
+    });
   }
 }

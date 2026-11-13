@@ -65,6 +65,22 @@ describe("sales network genealogy", () => {
     expect(validateSalesParent("SSM", parent, store.members).ok).toBe(false);
   });
 
+  it("accepts an expired receiving manager but refuses a suspended or departed one (doc 03 section 9)", () => {
+    const store = createMockStore();
+    const parent = store.members.find((member) => member.id === "mem-svd-a")!;
+    const record = store.accreditations.find((item) => item.memberId === parent.id)!;
+    record.adminStatus = "active";
+    record.expiryDate = "2020-01-01";
+    expect(validateSalesParent("SSM", parent, store.members, undefined, store.accreditations).ok).toBe(true);
+    record.adminStatus = "suspended";
+    record.suspensionEffectiveDate = "2020-02-01";
+    expect(validateSalesParent("SSM", parent, store.members, undefined, store.accreditations).ok).toBe(false);
+    record.adminStatus = "active";
+    record.suspensionEffectiveDate = null;
+    record.endDate = "2020-02-01";
+    expect(validateSalesParent("SSM", parent, store.members, undefined, store.accreditations).ok).toBe(false);
+  });
+
   it("counts direct and total descendants", () => {
     const store = createMockStore();
     expect(getDirectDownlineCount("mem-svd-a", store.members)).toBe(2);

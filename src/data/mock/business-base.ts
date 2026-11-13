@@ -83,7 +83,7 @@ export function genealogyFor(store: MockStore, memberId: string | null): Genealo
   return chain;
 }
 
-export const BROAD_BUSINESS_ROLES = new Set(["super_admin", "admin", "finance"]);
+export const BROAD_BUSINESS_ROLES = new Set(["super_admin", "admin", "finance", "clerk"]);
 /** Date-only business dates (YYYY-MM-DD, Asia/Manila). */
 export const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 

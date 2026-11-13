@@ -3,6 +3,7 @@ import type { DevIdentity } from "@/modules/identity/types";
 export const DEV_IDENTITIES: DevIdentity[] = [
   { id: "dev-super-admin", displayName: "Super Admin (Dev)", roles: ["super_admin"], memberId: null, branchId: null, status: "active", staffId: "staff-super" },
   { id: "dev-admin", displayName: "Administrator (Dev)", roles: ["admin"], memberId: null, branchId: null, status: "active", staffId: "staff-admin" },
+  { id: "dev-clerk", displayName: "Clerk (Dev)", roles: ["clerk"], memberId: null, branchId: null, status: "active", staffId: "staff-clerk" },
   { id: "dev-finance", displayName: "Finance (Dev)", roles: ["finance"], memberId: null, branchId: null, status: "active" },
   { id: "dev-hr", displayName: "HR (Dev)", roles: ["hr"], memberId: null, branchId: null, status: "active", staffId: "staff-1" },
   { id: "dev-svd-a", displayName: "SVD Alpha (Dev)", roles: ["svd"], memberId: "mem-svd-a", branchId: "branch-a", status: "active" },

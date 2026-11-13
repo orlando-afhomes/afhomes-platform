@@ -109,12 +109,15 @@ export function CustomerInfoCard({
   customer,
   ownerName,
   recommenderName,
+  referralReference,
 }: {
   customer: Customer;
-  /** Pre-resolved seller display name (parent substitutes "—" when withheld). */
+  /** Pre-resolved closing seller display name (parent substitutes "—" when withheld). */
   ownerName: string;
-  /** Pre-resolved recommender display name (parent substitutes "—" when withheld). */
+  /** Pre-resolved referrer display name (parent substitutes "—" when withheld). */
   recommenderName: string;
+  /** Dated referral reference, shown only when recorded. */
+  referralReference?: string | null;
 }) {
   const addressLines = customer.address
     ? [
@@ -158,10 +161,15 @@ export function CustomerInfoCard({
             <Fact icon={Share2} term="Channel">
               {customer.acquisitionChannel ?? "—"}
             </Fact>
-            <Fact icon={User} term="Recommender">
+            <Fact icon={User} term="Referrer">
               {recommenderName}
             </Fact>
-            <Fact icon={Briefcase} term="Seller">
+            {referralReference ? (
+              <Fact icon={Share2} term="Referral reference">
+                {referralReference}
+              </Fact>
+            ) : null}
+            <Fact icon={Briefcase} term="Closing seller">
               {ownerName}
             </Fact>
           </FactList>

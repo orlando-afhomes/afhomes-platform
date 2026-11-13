@@ -8,11 +8,10 @@ import { validateCustomerField, validateSecondaryField, type CustomerFieldContex
 import { composeCustomerName } from "@/modules/customers/rules";
 import type { OrgMember } from "@/modules/organization/types";
 import { CIVIL_STATUS_OPTIONS, GENDER_OPTIONS, GOV_ID_OPTIONS } from "@/modules/sales-network/accredited-seller";
-import { genealogyTeamOstIds, resolveAttributionChain, type AttributionPerson } from "@/modules/sales-network/genealogy";
 import type { AddressValue, OfficeAddressValue } from "@/shared/forms/types";
 import { computeAge } from "@/shared/lib/dates";
 import { dialingPrefixFor } from "@/shared/data/philippine-locations";
-import { customerAttributionErrors } from "@/modules/customers/attribution";
+import { customerAttributionErrors, sellerUpline } from "@/modules/customers/attribution";
 import { CustomerIdImagePreview, type CustomerIdImagePreviewState } from "./customer-id-image-preview";
 import { CheckboxField, EmailField, GovernmentIdFields, MiddleNameField, PersonNameField, PhilippineAddressFields, PhilippineLandlineField, PhilippineMobileField, RadioCardField, SelectField, StandardDateField, SuffixField, TextField, TIN_DISPLAY_LENGTH, TinField } from "@/shared/forms/modern";
 import { OfficeAddressFields } from "@/shared/forms/modern/structured-fields";
@@ -73,14 +72,17 @@ export type CustomerDraft = {
   secOfficeAddress: OfficeAddressValue;
   paymentSchemeId: string;
   contractClassification: string;
+  /** Same person as the referrer ("Referrer / VIP Recommender" is one field, doc 04 section 7.8); kept in step with it. */
   recommenderMemberId: string;
-  /** OST who referred the customer; anchors the derived SM, SSM, and SVD. */
+  /** Optional referrer, IST or OST; may be a different person from the closing seller. */
   referrerMemberId: string;
+  /** Short reference to an existing dated referral, needed when the closing seller is also the referrer. */
+  referralReference: string;
   acquisitionChannel: string;
   /** Automatic IDs are assigned on submit; manual IDs are entered and fixed. */
   customerIdMode: "auto" | "manual";
   customerNumber: string;
-  /** Legacy/seller fallback for ownership when no referrer or recommender is set. */
+  /** Closing seller (IST or OST). Empty on a seller's own draft, which belongs to that seller. */
   ownerMemberId: string;
   consentDataPrivacy: boolean;
   idReceivedCertified: boolean;
@@ -151,8 +153,9 @@ export function toDraft(customer?: Customer): CustomerDraft {
     secOfficeAddress: holder?.officeAddress ? { ...holder.officeAddress } : { ...EMPTY_OFFICE },
     paymentSchemeId: customer?.paymentSchemeId ?? "",
     contractClassification: customer?.contractClassification ?? "",
-    recommenderMemberId: customer?.recommenderMemberId ?? "",
-    referrerMemberId: customer?.referrerMemberId ?? "",
+    recommenderMemberId: customer?.referrerMemberId ?? customer?.recommenderMemberId ?? "",
+    referrerMemberId: customer?.referrerMemberId ?? customer?.recommenderMemberId ?? "",
+    referralReference: customer?.referralReference ?? "",
     acquisitionChannel: customer?.acquisitionChannel ?? "",
     // Saved numbers are fixed: editing them reopens the manual path.
     customerIdMode: customer?.status === "draft" && customer.customerIdMode
@@ -222,18 +225,17 @@ export function toInput(draft: CustomerDraft, { saveAsDraft = false } = {}): Cus
       draft.secEnabled && (saveAsDraft || secondaryProfileStarted) ? secondaryProfile : null,
     paymentSchemeId: draft.paymentSchemeId || null,
     contractClassification: (draft.contractClassification || null) as CustomerDraftInput["contractClassification"],
-    recommenderMemberId: draft.recommenderMemberId || null,
-    referrerMemberId: draft.referrerMemberId || null,
+    recommenderMemberId: draft.referrerMemberId || draft.recommenderMemberId || null,
+    referrerMemberId: draft.referrerMemberId || draft.recommenderMemberId || null,
+    referralReference: draft.referralReference.trim() || null,
     acquisitionChannel: (draft.acquisitionChannel || null) as AcquisitionChannel | null,
     customerIdMode: draft.customerIdMode,
     customerNumber: draft.customerIdMode === "manual" ? draft.customerNumber.trim() || null : null,
     consentDataPrivacy: draft.consentDataPrivacy,
     idReceivedCertified: draft.idReceivedCertified,
   };
-  // Ownership is derived from the attribution chain; the explicit owner stays as
-  // the fallback so drafts started before attribution keep their owning seller.
-  const ownerMemberId = draft.referrerMemberId || draft.recommenderMemberId || draft.ownerMemberId;
-  return ownerMemberId ? { ...input, ownerMemberId } : input;
+  // The closing seller is chosen, never derived from the referrer (owner ruling R5). A blank draft may omit it.
+  return draft.ownerMemberId ? { ...input, ownerMemberId: draft.ownerMemberId } : input;
 }
 
 /** Titled block (own card, icon, short intro) so related inputs read as one unit. */
@@ -684,7 +686,7 @@ function attributionPartyLabel(person: { displayName: string; aaNumber?: string 
 
 const EMPTY_ATTRIBUTION_PARTY = "—";
 
-function derivedAttributionValue(person: AttributionPerson | null): string {
+function derivedAttributionValue(person: { displayName: string; aaNumber?: string | null } | null): string {
   return person ? attributionPartyLabel(person) : EMPTY_ATTRIBUTION_PARTY;
 }
 
@@ -694,45 +696,35 @@ const CUSTOMER_ID_MODE_OPTIONS: ReadonlyArray<{ value: CustomerDraft["customerId
 ];
 
 export type AttributionSectionProps = SectionProps & {
-  /** Sales Network roster: active OSTs become options and the derived upline comes from its genealogy. */
+  /** Sales Network roster: active IST and OST members become the closing seller and referrer options. */
   members: readonly OrgMember[];
   pendingOstIds: ReadonlySet<string> | null;
   accreditationLoading?: boolean;
   /** Customers already on file, used to preview the next automatic Customer ID. */
   existing: readonly Customer[];
+  /** Office users (Clerk, Administrator, Super Administrator) choose the closing seller and record the referral reference. */
+  office?: boolean;
 };
 
-export function AttributionSection({ draft, set, errors, members, existing, pendingOstIds, accreditationLoading }: AttributionSectionProps) {
+export function AttributionSection({ draft, set, errors, members, existing, pendingOstIds, accreditationLoading, office = false }: AttributionSectionProps) {
   const attributionErrors = customerAttributionErrors(draft, pendingOstIds);
-  const recommenderId = attributionErrors.recommenderMemberId ? "" : draft.recommenderMemberId;
-  const referrerId = attributionErrors.referrerMemberId ? "" : draft.referrerMemberId;
+  const referrerId = attributionErrors.referrerMemberId || attributionErrors.recommenderMemberId ? "" : draft.referrerMemberId || draft.recommenderMemberId;
+  const closingSellerId = draft.ownerMemberId;
   const accreditationHint = pendingOstIds === null
-    ? (accreditationLoading ? "Checking OST accreditation…" : "OST accreditation is unavailable.")
+    ? (accreditationLoading ? "Checking seller accreditation…" : "Seller accreditation is unavailable.")
     : undefined;
-  const ostOptions = useMemo(
+  const sellerOptions = useMemo(
     () =>
       members
-        .filter((member) => member.designation === "OST" && member.status === "active" && pendingOstIds && !pendingOstIds.has(member.id))
+        .filter((member) => member.status === "active" && pendingOstIds && !pendingOstIds.has(member.id))
         .slice()
         .sort((left, right) => left.displayName.localeCompare(right.displayName))
-        .map((member) => ({ value: member.id, label: attributionPartyLabel(member) })),
+        .map((member) => ({ value: member.id, label: `${attributionPartyLabel(member)} (${member.designation})` })),
     [members, pendingOstIds],
   );
-
-  // Both parties must sit in the same genealogy team: the referrer list is
-  // limited to the recommender's team and vice versa. Before either is chosen,
-  // the full active-OST roster is offered.
-  const recommenderTeam = useMemo(() => genealogyTeamOstIds(members, recommenderId), [members, recommenderId]);
-  const referrerTeam = useMemo(() => genealogyTeamOstIds(members, referrerId), [members, referrerId]);
-  const recommenderOptions = referrerTeam.size > 0 ? ostOptions.filter((option) => referrerTeam.has(option.value)) : ostOptions;
-  const referrerOptions = recommenderTeam.size > 0 ? ostOptions.filter((option) => recommenderTeam.has(option.value)) : ostOptions;
-
-  // The resolver falls back to the recommender when no referrer is set and walks
-  // the actual genealogy, so the read-only upline always matches network records.
-  const chain = useMemo(
-    () => resolveAttributionChain(members, referrerId, recommenderId),
-    [members, referrerId, recommenderId],
-  );
+  const closingSeller = members.find((member) => member.id === closingSellerId);
+  const upline = useMemo(() => sellerUpline(members, closingSellerId), [members, closingSellerId]);
+  const sameSeller = Boolean(closingSellerId) && closingSellerId === referrerId;
 
   const customerIdMode = draft.customerIdMode === "manual" ? "manual" : "auto";
 
@@ -746,54 +738,61 @@ export function AttributionSection({ draft, set, errors, members, existing, pend
   }, [existing]);
 
   return (
-    <SectionBlock title="Sales attribution" description="Who recommended the customer and how the lead arrived." icon={<Handshake className="tw:size-4" />}>
+    <SectionBlock title="Sales attribution" description="Who closed the sale, who referred the customer, and how the lead arrived." icon={<Handshake className="tw:size-4" />}>
       <FormGrid>
+        {office ? (
+          <SelectField
+            label="Closing seller"
+            disabled={pendingOstIds === null}
+            error={errors.ownerMemberId}
+            value={closingSellerId || undefined}
+            options={sellerOptions}
+            onChange={(value) => set("ownerMemberId", value)}
+            allowClear
+            clearLabel="No closing seller yet"
+            placeholder="Type to search sellers"
+            hint={accreditationHint ?? "IST or OST who closed the sale. Required before approval."}
+          />
+        ) : (
+          <TextField label="Closing seller" value={closingSeller ? attributionPartyLabel(closingSeller) : "You (the seller starting this draft)"} onChange={() => {}} disabled hint="The office confirms the closing seller before approval." />
+        )}
         <SelectField
-          label="OST (Recommender)"
+          label="Referrer / VIP Recommender"
           disabled={pendingOstIds === null}
-          error={attributionErrors.recommenderMemberId}
-          value={recommenderId || undefined}
-          options={recommenderOptions}
-          onChange={(value) => {
-            set("recommenderMemberId", value);
-            const chosenTeam = genealogyTeamOstIds(members, value);
-            if (value && (!referrerId || (chosenTeam.size > 0 && !chosenTeam.has(referrerId)))) {
-              set("referrerMemberId", value);
-            }
-          }}
-          allowClear
-          clearLabel="No recommender"
-          placeholder="Type to search OST members"
-          hint={accreditationHint ?? "Optional for direct IST sales."}
-        />
-        <SelectField
-          label="OST (Referrer)"
-          disabled={pendingOstIds === null}
-          error={attributionErrors.referrerMemberId}
+          error={attributionErrors.referrerMemberId ?? attributionErrors.recommenderMemberId}
           value={referrerId || undefined}
-          options={referrerOptions}
+          options={sellerOptions}
           onChange={(value) => {
             set("referrerMemberId", value);
-            const chosenTeam = genealogyTeamOstIds(members, value);
-            const recommenderOutside = value && recommenderId && chosenTeam.size > 0 && !chosenTeam.has(recommenderId);
-            if (recommenderOutside) set("recommenderMemberId", value);
+            set("recommenderMemberId", value);
           }}
           allowClear
           clearLabel="No referrer"
-          placeholder="Type to search OST members"
-          hint={accreditationHint ?? "Same team as the recommender."}
+          placeholder="Type to search sellers"
+          hint={accreditationHint ?? "Optional. IST or OST, who may be a different person from the closing seller."}
         />
-        <TextField label="SM" value={derivedAttributionValue(chain.sm)} onChange={() => {}} disabled />
-        <TextField label="SSM" value={derivedAttributionValue(chain.ssm)} onChange={() => {}} disabled />
-        <TextField label="SVD" value={derivedAttributionValue(chain.svd)} onChange={() => {}} disabled />
+        {office && sameSeller ? (
+          <TextField
+            label="Dated referral reference"
+            value={draft.referralReference}
+            onChange={(value) => set("referralReference", value)}
+            error={errors.referralReference}
+            maxLength={120}
+            hint="The closing seller is also the referrer. Note the existing dated referral; the approver verifies it."
+          />
+        ) : null}
+        <TextField label="SM" value={derivedAttributionValue(upline.sm)} onChange={() => {}} disabled />
+        <TextField label="SSM" value={derivedAttributionValue(upline.ssm)} onChange={() => {}} disabled />
+        <TextField label="SVD" value={derivedAttributionValue(upline.svd)} onChange={() => {}} disabled />
       </FormGrid>
-      {pendingOstIds === null && (draft.recommenderMemberId || draft.referrerMemberId) ? (
+      {pendingOstIds === null && (draft.recommenderMemberId || draft.referrerMemberId || (office && draft.ownerMemberId)) ? (
         <div>
           <Button type="button" variant="outline" onClick={() => {
             set("recommenderMemberId", "");
             set("referrerMemberId", "");
+            if (office) set("ownerMemberId", "");
           }}>
-            Clear OST selections
+            Clear seller selections
           </Button>
         </div>
       ) : null}

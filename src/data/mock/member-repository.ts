@@ -1,4 +1,4 @@
-import type { MemberRepository, UplineSummary } from "@/data/contracts/member-repository";
+import type { FillSeatVacancyInput, MemberRepository, UplineSummary } from "@/data/contracts/member-repository";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { DevIdentity } from "@/modules/identity/types";
 import type { Account } from "@/modules/accounts/types";
@@ -8,8 +8,10 @@ import type { CreateAccreditedSellerInput, AccreditedSellerResult, CreateSalesNe
 import { validateSalesParent, getDirectChildren, isValidParentEdge } from "@/modules/sales-network/genealogy";
 import { calculateApprovedExpiry, validateAccreditedSellerFields } from "@/modules/sales-network/accredited-seller";
 import { allocateSharedAaNumber, collectReservedAaNumbers, toAaYearMonth, validateManualAaNumber } from "@/modules/accreditation/issuance";
-import { manilaToday } from "@/modules/accreditation/dates";
-import { resolveEffectiveAccreditationEligibility } from "@/modules/accreditation/eligibility";
+import { manilaToday, parseManilaDateOnly } from "@/modules/accreditation/dates";
+import { getCurrentAccreditationRecord, resolveAaNumber, resolveEffectiveAccreditationEligibility } from "@/modules/accreditation/eligibility";
+import { findOpenVacancy, vacancyStartDate, type SeatVacancy } from "@/modules/sales-network/vacancy";
+import { nextId } from "./ids";
 import { getUplineSummaries, getVisibleMemberIds, isActiveIdentity } from "./scope";
 import { getDescendantIds } from "./scope";
 import { hasModuleAccess } from "./authorization";
@@ -52,7 +54,93 @@ export class MockMemberRepository implements MemberRepository {
     const normalized = aaNumber.trim().toUpperCase();
     if (!normalized) return null;
     const visible = await this.list(merged);
-    return visible.find((member) => (member.aaNumber ?? "").toUpperCase() === normalized) ?? null;
+    // A number replaced by a renewal resolves to the member's current number (doc 03 section 5.2.1).
+    const holderId = resolveAaNumber(this.store.accreditations, normalized)?.record.memberId;
+    return visible.find((member) => (member.aaNumber ?? "").toUpperCase() === normalized || member.id === holderId) ?? null;
+  }
+
+  async listSeatVacancies(options?: MockAsyncOptions): Promise<SeatVacancy[]> {
+    const merged = this.mergeOptions(options);
+    await simulateAsync(merged);
+    const identity = this.getIdentity();
+    if (!isActiveIdentity(identity)) return [];
+    const visible = this.visibleIds(identity);
+    return this.store.seatVacancies.filter((vacancy) => visible.has(vacancy.seatMemberId)).map((vacancy) => ({ ...vacancy }));
+  }
+
+  async recordSeatVacancy(seatMemberId: string, holderEndDate: string, options?: MockAsyncOptions): Promise<SeatVacancy> {
+    const merged = this.mergeOptions(options);
+    await simulateAsync(merged);
+    const identity = this.getIdentity();
+    // A seat change is a change to an approved seller record: Administrator or Super Administrator (doc 02 section 6, doc 03 section 9.1).
+    if (!isActiveIdentity(identity) || !this.isAdmin(identity)) throw new Error("Recording a vacant seat requires Administrator or Super Administrator authorization.");
+    const seat = this.store.members.find((item) => item.id === seatMemberId);
+    if (!seat) throw new Error("Member not found.");
+    if (seat.designation === "OST") throw new Error("Only a leader seat (SVD, SSM or SM) can be vacant.");
+    if (!parseManilaDateOnly(holderEndDate)) throw new Error("The holder's end date must be a valid date.");
+    if (findOpenVacancy(this.store.seatVacancies, seatMemberId)) throw new Error("This seat is already vacant.");
+    const record = getCurrentAccreditationRecord(this.store.accreditations.filter((item) => item.memberId === seatMemberId));
+    if (record?.endDate && record.endDate !== holderEndDate) throw new Error("The holder already has a different end date recorded.");
+    // The team stays where it is in the genealogy; nobody is moved (doc 02 section 5.1.1 item 1).
+    if (record) record.endDate = holderEndDate;
+    const vacancy: SeatVacancy = {
+      id: nextId(this.store, "seatVacancy", "vac"),
+      seatMemberId,
+      holderEndDate,
+      startDate: vacancyStartDate(holderEndDate),
+      filledOn: null,
+      filledMethod: null,
+      filledByMemberId: null,
+      recordedBy: identity.id,
+      recordedAt: new Date().toISOString(),
+    };
+    this.store.seatVacancies.push(vacancy);
+    appendAuditEvent(this.store, {
+      actorId: identity.id,
+      actorRoles: activeRoles(identity),
+      module: "sales-network",
+      action: "SEAT_VACANCY_RECORDED",
+      entityType: "member",
+      entityId: seatMemberId,
+      newValue: vacancy.startDate,
+      outcome: "success",
+      relatedRecordIds: [vacancy.id],
+    });
+    return { ...vacancy };
+  }
+
+  async fillSeatVacancy(vacancyId: string, input: FillSeatVacancyInput, options?: MockAsyncOptions): Promise<SeatVacancy> {
+    const merged = this.mergeOptions(options);
+    await simulateAsync(merged);
+    const identity = this.getIdentity();
+    if (!isActiveIdentity(identity) || !this.isAdmin(identity)) throw new Error("Filling a vacant seat requires Administrator or Super Administrator authorization.");
+    const vacancy = this.store.seatVacancies.find((item) => item.id === vacancyId);
+    if (!vacancy) throw new Error("Vacancy not found.");
+    if (vacancy.filledOn) throw new Error("This seat is already filled.");
+    // There is no Acting or temporary leader, ever (owner answer A5).
+    if (input.method !== "promotion" && input.method !== "transfer") throw new Error("A vacant seat is filled only by promotion or team transfer.");
+    if (!parseManilaDateOnly(input.filledOn)) throw new Error("The fill date must be a valid date.");
+    if (input.filledOn < vacancy.startDate) throw new Error("The fill date must be on or after the vacancy starts.");
+    if (input.newHolderMemberId === vacancy.seatMemberId || !this.store.members.some((item) => item.id === input.newHolderMemberId)) {
+      throw new Error("Choose the member who fills the seat.");
+    }
+    // The roll-up ends from the fill date; earlier periods keep their vacant treatment.
+    vacancy.filledOn = input.filledOn;
+    vacancy.filledMethod = input.method;
+    vacancy.filledByMemberId = input.newHolderMemberId;
+    appendAuditEvent(this.store, {
+      actorId: identity.id,
+      actorRoles: activeRoles(identity),
+      module: "sales-network",
+      action: "SEAT_VACANCY_FILLED",
+      entityType: "member",
+      entityId: vacancy.seatMemberId,
+      previousValue: vacancy.startDate,
+      newValue: input.method,
+      outcome: "success",
+      relatedRecordIds: [vacancy.id, input.newHolderMemberId],
+    });
+    return { ...vacancy };
   }
 
   async listUplineSummaries(options?: MockAsyncOptions): Promise<UplineSummary[]> {
@@ -543,7 +631,15 @@ export class MockMemberRepository implements MemberRepository {
     if (!this.canIssueAccreditation(identity)) {
       throw new Error("Complete Now requires Super Administrator authorization.");
     }
+    return this.commitAccreditedSeller(identity, input);
+  }
 
+  /**
+   * Validated all-or-nothing commit of a seller, account and accreditation with an issued AA number.
+   * The caller authorizes the actor: createAccreditedSeller above, and the OST application approval
+   * (registration-repository), which is decided by the Administrator or Super Administrator (doc 03 section 9.2).
+   */
+  async commitAccreditedSeller(identity: DevIdentity, input: CreateAccreditedSellerInput): Promise<AccreditedSellerResult> {
     const fieldError = validateAccreditedSellerFields(input);
     if (fieldError) throw new Error(fieldError);
 

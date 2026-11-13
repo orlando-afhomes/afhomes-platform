@@ -71,7 +71,7 @@ async function fillResidentialAddress(user: ReturnType<typeof userEvent.setup>, 
 
 /** Walks the wizard with valid data up to the Reservation step (Application form). */
 async function reachReservationStep(user: ReturnType<typeof userEvent.setup>) {
-  show("dev-sm-a", <CustomerFormPage />);
+  show("dev-clerk", <CustomerFormPage />);
   await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
   await user.click(screen.getByRole("button", { name: /continue/i }));
   const schemes = await screen.findByRole("radiogroup", { name: "Payment scheme" });
@@ -203,9 +203,9 @@ describe("finance payment dialog reference field", () => {
     await user.click(screen.getByRole("combobox", { name: "Method" }));
     await user.click(await screen.findByRole("option", { name: "GCash" }));
     expect(input).toHaveAttribute("maxlength", "16");
-    // The bank value is shorter than the e-wallet minimum, so clearing it lets the hint return.
+    // The reference is required, so a cleared (touched) field asks for it.
     await user.clear(input);
-    expect(screen.getByText(EWALLET_HINT)).toBeInTheDocument();
+    expect(await screen.findByText("Enter the receipt or reference number.")).toBeInTheDocument();
 
     await user.type(input, "abc-12 3!");
     expect(input.value).toBe("ABC123");

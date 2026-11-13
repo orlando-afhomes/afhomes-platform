@@ -1,7 +1,21 @@
 import type { AddressValue, OfficeAddressValue } from "@/shared/forms/types";
 import type { VipTierCode } from "@/modules/vip/types";
 
-export type CustomerStatus = "draft" | "submitted" | "active_member" | "inactive";
+/**
+ * Registration lifecycle (doc 04 sections 5 and 10): draft, then submitted by the Clerk, then the
+ * Administrator approves it, sends it back to the Clerk with a reason, or rejects it with a reason.
+ * "approved" is customer registration only; VIP membership activation is a separate later step (doc 04 section 8).
+ */
+export type CustomerStatus = "draft" | "submitted" | "approved" | "sent_back" | "rejected" | "active_member" | "inactive";
+
+/** One audited registration step kept on the record (doc 04 section 16). */
+export type CustomerStatusEntry = {
+  status: CustomerStatus;
+  at: string;
+  actorId: string;
+  /** Required for send back and reject. */
+  reason?: string | null;
+};
 
 export const ACQUISITION_CHANNELS = ["CMP", "DRP", "GDP", "Corporate", "Walk-In", "Public Servant", "Referral", "FB Ads"] as const;
 export type AcquisitionChannel = (typeof ACQUISITION_CHANNELS)[number];
@@ -84,14 +98,15 @@ export type Customer = {
   supplementaryHolder?: SupplementaryHolder | null;
   paymentSchemeId?: string | null;
   contractClassification?: ContractClassification | null;
-  /** Referrer = VIP Recommender: one OST member (04 section 7.8). */
-  recommenderMemberId?: string | null;
   /**
-   * VIP Referrer: modeled as its own field, separate from `recommenderMemberId`.
-   * Doc 04 section 7.8 currently requires the Referrer and VIP Recommender to be the
-   * same OST member, so callers must keep both references consistent.
+   * "Referrer" and "VIP Recommender" are two labels for the same optional person, IST or OST (04 section 7.8,
+   * owner ruling R5). The closing seller is `ownerMemberId`, a different field; the two may be different people.
    */
+  recommenderMemberId?: string | null;
+  /** Same person as `recommenderMemberId`; the sale copies this one. Keep both consistent. */
   referrerMemberId?: string | null;
+  /** Short reference to an existing dated referral, recorded by the Clerk when the closing seller is also the referrer (04 section 7.8). */
+  referralReference?: string | null;
   acquisitionChannel?: AcquisitionChannel | null;
   /** RA 10173 consent certification; never pre-checked (04 section 7.10). */
   consentDataPrivacy?: boolean;
@@ -99,6 +114,11 @@ export type Customer = {
   idReceivedCertified?: boolean;
   createdAt?: string;
   submittedAt?: string | null;
+  /** Registration review trail: submit, approve, send back, reject (reasons included). */
+  statusHistory?: CustomerStatusEntry[];
+  /** Latest send back or reject reason, kept visible so the Clerk knows what to fix. */
+  reviewReason?: string | null;
+  approvedAt?: string | null;
   /** True on projections that withhold contact, ID and address details (04 section 11 downline view). */
   restricted?: boolean;
 };

@@ -1,5 +1,6 @@
 // shortcut: mock login only, remove when real authentication (Better Auth/API) is implemented
 import { describe, expect, it } from "vitest";
+import { createMockStore } from "@/data/mock/seed";
 import { DEV_IDENTITIES } from "@/data/mock/dev-identities";
 import { MOCK_ACCOUNTS, authenticateMock } from "@/data/mock/mock-credentials";
 
@@ -43,5 +44,26 @@ describe("mock credentials", () => {
       ok: false,
       error: "This account is not active. Contact your administrator.",
     });
+  });
+
+  it("blocks sign-in when the stored account is not active, with a clear message", () => {
+    const store = createMockStore();
+    expect(authenticateMock("hr@afhomes.test", PW, "staff", store)).toEqual({ ok: true, identityId: "dev-hr" });
+    const account = store.accounts.find((item) => item.id === "acct-hr")!;
+    account.status = "suspended";
+    expect(authenticateMock("hr@afhomes.test", PW, "staff", store)).toEqual({ ok: false, error: "This account is suspended. Contact your administrator." });
+    account.status = "deactivated";
+    expect(authenticateMock("hr@afhomes.test", PW, "staff", store)).toEqual({ ok: false, error: "This account has been deactivated. Contact your administrator." });
+  });
+
+  it("honors a temporary password set for the linked account, and a wrong password still fails", () => {
+    const store = createMockStore();
+    store.temporaryPasswords["acct-hr"] = "Tmp-Example123";
+    expect(authenticateMock("hr@afhomes.test", "Tmp-Example123", "staff", store)).toEqual({ ok: true, identityId: "dev-hr" });
+    expect(authenticateMock("hr@afhomes.test", PW, "staff", store)).toEqual({ ok: false, error: "Incorrect email or password." });
+  });
+
+  it("signs in the seeded Clerk through the staff portal", () => {
+    expect(authenticateMock("clerk@afhomes.test", PW, "staff", createMockStore())).toEqual({ ok: true, identityId: "dev-clerk" });
   });
 });

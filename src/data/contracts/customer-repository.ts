@@ -10,6 +10,12 @@ export interface CustomerRepository {
   discardDraft(id: string, options?: MockAsyncOptions): Promise<void>;
   /** Validates the full Submit rules (04 section 10); a failed Submit keeps the draft and reports every error. */
   submit(id: string, input: CustomerDraftInput, options?: MockAsyncOptions): Promise<Customer>;
+  /** Administrator or Super Administrator approves a submitted registration; needs an eligible closing seller (04 sections 5, 7.8, 10). */
+  approve(id: string, options?: MockAsyncOptions): Promise<Customer>;
+  /** Returns a submitted registration to the Clerk; a reason is required and nothing is deleted. */
+  sendBack(id: string, reason: string, options?: MockAsyncOptions): Promise<Customer>;
+  /** Rejects a submitted registration; a reason is required and nothing is deleted. */
+  reject(id: string, reason: string, options?: MockAsyncOptions): Promise<Customer>;
   /** Audited data correction of a submitted customer (04 section 16). */
   correct(id: string, input: CustomerDraftInput, reason: string, options?: MockAsyncOptions): Promise<Customer>;
   /** Re-validates every record and creates drafts for ready rows only; possible duplicates are skipped for review. */

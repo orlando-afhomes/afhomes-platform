@@ -175,6 +175,7 @@ const accounts: Account[] = [
   { id: "acct-admin", displayName: "Administrator", email: "admin@afhomes.local", roleIds: ["admin"], status: "active", departmentId: null, createdAt: "2026-01-02" },
   { id: "acct-hr", displayName: "HR User", email: "hr@afhomes.local", roleIds: ["hr"], status: "active", departmentId: null, createdAt: "2026-01-03" },
   { id: "acct-finance", displayName: "Finance User", email: "finance@afhomes.local", roleIds: ["finance"], status: "active", departmentId: null, createdAt: "2026-01-04" },
+  { id: "acct-clerk", displayName: "Office Clerk", email: "clerk@afhomes.local", roleIds: ["clerk"], status: "active", departmentId: "dept-ops", createdAt: "2026-01-07" },
   { id: "acct-pending", displayName: "Pending User", email: "pending@afhomes.local", roleIds: [], status: "pending", departmentId: null, createdAt: "2026-01-05" },
   // Suspended office staff login: lets HR exercise reactivation (owner ruling 2026-11-12, A4).
   { id: "acct-records", displayName: "Records Clerk", email: "records@afhomes.local", roleIds: [], status: "suspended", departmentId: null, createdAt: "2026-01-06" },
@@ -218,6 +219,7 @@ const staff: StaffMember[] = [
   { id: "staff-admin", displayName: "Admin User", position: "HR Staff", departmentId: "dept-hr", departmentRoleId: "role-hr-staff", status: "active", email: "admin@afhomes.local", createdAt: "2026-01-04", avatarUrl: null, accountId: "acct-admin" },
   { id: "staff-super", displayName: "Super Admin User", position: "HR Staff", departmentId: "dept-hr", departmentRoleId: "role-hr-staff", status: "active", email: "superadmin@afhomes.local", createdAt: "2026-01-04", avatarUrl: null, accountId: "acct-super-admin" },
   { id: "staff-records", displayName: "Records Clerk", position: "Operations Coordinator", departmentId: "dept-ops", departmentRoleId: "role-ops-staff", status: "active", email: "records@afhomes.local", createdAt: "2026-01-06", avatarUrl: null, accountId: "acct-records" },
+  { id: "staff-clerk", displayName: "Office Clerk", position: "Clerk", departmentId: "dept-ops", departmentRoleId: "role-ops-staff", status: "active", email: "clerk@afhomes.local", createdAt: "2026-01-07", avatarUrl: null, accountId: "acct-clerk" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -257,6 +259,37 @@ const customers: Customer[] = [
     address: { street: "8 Acacia Road", province: "Cebu", city: "Lapu-Lapu City", barangay: "Pajo", postalCode: "6015" },
     vipPlan: "B1", paymentSchemeId: "scheme-installment-4m", contractClassification: "S", recommenderMemberId: "mem-ost-a2", acquisitionChannel: "Walk-In",
     consentDataPrivacy: true, idReceivedCertified: true, createdAt: "2026-11-04", submittedAt: "2026-11-05" },
+  // Registration review examples (doc 04 sections 5 and 10): a seller draft awaiting the Clerk, then an approved, a sent-back and a rejected record.
+  { id: "cust-a5", displayName: "Lourdes Fabian", branchId: "branch-a", ownerMemberId: "mem-ost-a1", status: "draft",
+    firstName: "Lourdes", lastName: "Fabian", mobileNumber: "09171110005", vipPlan: "S1", createdAt: "2026-11-10", submittedAt: null },
+  { id: "cust-a6", displayName: "Noel Pascual", branchId: "branch-a", ownerMemberId: "mem-ost-a2", status: "approved",
+    firstName: "Noel", lastName: "Pascual", gender: "Male", civilStatus: "Married", dateOfBirth: "1981-06-09",
+    mobileNumber: "09171110006", email: "noel.pascual@afhomes.local",
+    address: { street: "3 Molave Street", province: "Cebu", city: "Lapu-Lapu City", barangay: "Pajo", postalCode: "6015" },
+    vipPlan: "B1", paymentSchemeId: "scheme-installment-4m", contractClassification: "S", acquisitionChannel: "CMP",
+    consentDataPrivacy: true, idReceivedCertified: true, createdAt: "2026-10-12", submittedAt: "2026-10-13", approvedAt: "2026-10-15",
+    statusHistory: [
+      { status: "submitted", at: "2026-10-13T09:00:00+08:00", actorId: "dev-clerk" },
+      { status: "approved", at: "2026-10-15T10:30:00+08:00", actorId: "dev-admin" },
+    ] },
+  { id: "cust-a7", displayName: "Gina Soriano", branchId: "branch-a", ownerMemberId: "mem-ost-a1", status: "sent_back",
+    firstName: "Gina", lastName: "Soriano", gender: "Female", civilStatus: "Single", dateOfBirth: "1995-12-01",
+    mobileNumber: "09171110007", vipPlan: "S1", paymentSchemeId: "scheme-installment-4m", contractClassification: "S",
+    consentDataPrivacy: true, idReceivedCertified: true, createdAt: "2026-10-13", submittedAt: "2026-10-14",
+    reviewReason: "Residential address is missing.",
+    statusHistory: [
+      { status: "submitted", at: "2026-10-14T09:15:00+08:00", actorId: "dev-clerk" },
+      { status: "sent_back", at: "2026-10-16T14:00:00+08:00", actorId: "dev-admin", reason: "Residential address is missing." },
+    ] },
+  { id: "cust-a8", displayName: "Victor Alcantara", branchId: "branch-a", ownerMemberId: "mem-ost-a2", status: "rejected",
+    firstName: "Victor", lastName: "Alcantara", gender: "Male", civilStatus: "Single", dateOfBirth: "1988-03-22",
+    mobileNumber: "09171110008", vipPlan: "B1", paymentSchemeId: "scheme-installment-4m", contractClassification: "S",
+    consentDataPrivacy: true, idReceivedCertified: true, createdAt: "2026-10-11", submittedAt: "2026-10-12",
+    reviewReason: "Duplicate of an existing customer record.",
+    statusHistory: [
+      { status: "submitted", at: "2026-10-12T09:00:00+08:00", actorId: "dev-clerk" },
+      { status: "rejected", at: "2026-10-14T11:00:00+08:00", actorId: "dev-admin", reason: "Duplicate of an existing customer record." },
+    ] },
 ];
 
 const products: VipProduct[] = [
@@ -398,7 +431,7 @@ const sales: Sale[] = [
 ];
 
 const pay = (id: string, contractId: string, customerId: string, saleId: string, purpose: PaymentPurpose, amount: number, paidDate: string, status: Payment["status"], extra?: Partial<Payment>): Payment => ({
-  id, contractId, customerId, saleId, purpose, amountCentavos: amount, method: "Bank Transfer", paidDate, referenceNo: null,
+  id, contractId, customerId, saleId, purpose, amountCentavos: amount, method: "Bank Transfer", paidDate, referenceNo: "BT-" + id.toUpperCase(),
   evidenceFileName: "receipt-" + id + ".jpg", submittedBy: "dev-ost-a1", submittedAt: paidDate, status,
   verifiedBy: status === "verified" ? "dev-finance" : null, verifiedAt: status === "verified" ? paidDate : null,
   verifiedDate: status === "verified" ? paidDate : null, decisionReason: null, adjustments: [],

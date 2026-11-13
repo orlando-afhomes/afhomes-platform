@@ -8,7 +8,7 @@ const store = createSeedStore();
 const linkedIds = new Set(store.staff.map((member) => member.accountId).filter(Boolean));
 
 function policy(linkedToStaff: boolean): AccountActionPolicy {
-  return { canEdit: true, canManageRoles: true, assignableRoles: [], revocableRoles: [], allowedStatuses: [], restriction: null, linkedToStaff, canDelete: true, deleteRestriction: null };
+  return { canEdit: true, canManageRoles: true, canResetPassword: false, assignableRoles: [], revocableRoles: [], allowedStatuses: [], restriction: null, linkedToStaff, canDelete: true, deleteRestriction: null };
 }
 
 const accountPolicies: AccountPolicies = {
@@ -68,7 +68,7 @@ describe("staff access rows", () => {
     expect(ids(filterAccessRows(rows, { ...noFilters, search: "analyst" }, true))).toEqual(["staff-2"]);
     expect(ids(filterAccessRows(rows, { ...noFilters, departmentId: "dept-finance" }, true))).toEqual(["staff-2"]);
     const byRole = filterAccessRows(rows, { ...noFilters, roleId: "role-ops-staff" }, true);
-    expect(ids(byRole)).toEqual(["staff-3", "staff-records"]);
+    expect(ids(byRole)).toEqual(["staff-clerk", "staff-3", "staff-records"]);
     expect(filterAccessRows(rows, { ...noFilters, status: "active" }, true).some((row) => row.kind === "account")).toBe(false);
   });
 

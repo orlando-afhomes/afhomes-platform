@@ -156,10 +156,11 @@ describe("business pages render for the intended roles", () => {
     expect(screen.queryByRole("link", { name: "New customer" })).toBeInTheDocument();
   });
 
-  it("hides the new-customer action from an OST", async () => {
+  it("lets an OST start a customer draft but not open another seller's customer", async () => {
     show("dev-ost-a1", <CustomersPage />);
     expect(await screen.findByText("Customer A One")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /new customer/i })).toBeNull();
+    expect(screen.getByRole("link", { name: /new customer/i })).toBeInTheDocument();
+    expect(screen.queryByText("Customer B One")).toBeNull();
   });
 
   it("shows a summary-only customer detail for downline records", async () => {
@@ -170,7 +171,7 @@ describe("business pages render for the intended roles", () => {
 
   it("shows only the VIP card choice first and opens the application after a card is chosen", async () => {
     const user = userEvent.setup();
-    show("dev-sm-a", <CustomerFormPage />);
+    show("dev-clerk", <CustomerFormPage />);
     expect(await screen.findByRole("radiogroup", { name: "VIP card" })).toBeInTheDocument();
     expect(screen.queryByLabelText(/first name/i)).toBeNull();
     const continueButton = screen.getByRole("button", { name: /continue/i });
@@ -185,7 +186,7 @@ describe("business pages render for the intended roles", () => {
     const user = userEvent.setup();
     const calls: boolean[] = [];
     const sidebar = { collapsed: false, setCollapsed: (value: boolean) => calls.push(value) };
-    const view = show("dev-sm-a", <AdminSidebarContext.Provider value={sidebar}><CustomerFormPage /></AdminSidebarContext.Provider>);
+    const view = show("dev-clerk", <AdminSidebarContext.Provider value={sidebar}><CustomerFormPage /></AdminSidebarContext.Provider>);
     expect(await screen.findByAltText("Gold VIP privilege card")).toBeInTheDocument();
     await user.click(await screen.findByRole("radio", { name: /gold vip/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
@@ -199,7 +200,7 @@ describe("business pages render for the intended roles", () => {
 
   it("moves focus to the first invalid field and lets a finished step be reopened from the progress bar", async () => {
     const user = userEvent.setup();
-    show("dev-sm-a", <CustomerFormPage />);
+    show("dev-clerk", <CustomerFormPage />);
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await user.click(await screen.findByRole("button", { name: /continue/i }));
@@ -211,7 +212,7 @@ describe("business pages render for the intended roles", () => {
 
   it("lets any step in the progress bar be clicked but stops a forward jump at the first incomplete step", async () => {
     const user = userEvent.setup();
-    show("dev-sm-a", <CustomerFormPage />);
+    show("dev-clerk", <CustomerFormPage />);
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
     const progress = await screen.findByRole("list", { name: "Progress" });
@@ -223,7 +224,7 @@ describe("business pages render for the intended roles", () => {
 
   it("blocks Continue until the payment plan is chosen, then shows customer detail blocks", async () => {
     const user = userEvent.setup();
-    show("dev-sm-a", <CustomerFormPage />);
+    show("dev-clerk", <CustomerFormPage />);
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await user.click(await screen.findByRole("button", { name: /continue/i }));
@@ -392,7 +393,7 @@ describe("customer application wizard scheme pricing", () => {
   }
 
   async function startApplication(user: ReturnType<typeof userEvent.setup>, card: RegExp) {
-    show("dev-sm-a", <CustomerFormPage />);
+    show("dev-clerk", <CustomerFormPage />);
     await user.click(await screen.findByRole("radio", { name: card }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await screen.findByRole("radiogroup", { name: "Payment scheme" });
@@ -613,7 +614,7 @@ describe("customer application new fields and secondary holder", () => {
   }
 
   async function startApplication(user: ReturnType<typeof userEvent.setup>, card: RegExp) {
-    const view = show("dev-sm-a", <CustomerFormPage />);
+    const view = show("dev-clerk", <CustomerFormPage />);
     await user.click(await screen.findByRole("radio", { name: card }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await screen.findByRole("radiogroup", { name: "Payment scheme" });
@@ -677,7 +678,7 @@ describe("customer application new fields and secondary holder", () => {
     selectIdImage("exit.png");
     cleanup();
     expect(revoke).toHaveBeenCalledWith("blob:exit.png");
-    show("dev-sm-a", <CustomerFormPage />);
+    show("dev-clerk", <CustomerFormPage />);
     expect(await screen.findByRole("heading", { name: "Choose a VIP card" })).toBeVisible();
     expect(screen.queryByText("exit.png")).toBeNull();
   });
@@ -729,6 +730,8 @@ describe("customer application new fields and secondary holder", () => {
     await screen.findByRole("heading", { name: "Application form" });
     const proof = screen.getByLabelText(/proof of payment/i) as HTMLInputElement;
     fireEvent.change(proof, { target: { files: [new File(["proof"], "receipt.png", { type: "image/png" })] } });
+    // The Clerk enters the receipt reference with the reservation fee (bank transfer: 6-20 letters or digits).
+    await user.type(screen.getByLabelText(/receipt or reference number/i), "BT1234567");
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await screen.findByRole("heading", { name: "Review the application" });
   }
@@ -1073,7 +1076,7 @@ describe("customer application new fields and secondary holder", () => {
     const user = userEvent.setup();
     const manualId = `${currentManilaYear()}-0042`;
     show(
-      "dev-sm-a",
+      "dev-clerk",
       <>
         <CustomerDraftProbe customerNumber={manualId} />
         <CustomerFormPage />
@@ -1291,19 +1294,20 @@ describe("customer application new fields and secondary holder", () => {
       );
     });
     const update = vi.spyOn(MockCustomerRepository.prototype, "updateDraft");
-    show("dev-sm-a", <CustomerFormPage customerId="cust-a2" />);
+    show("dev-clerk", <CustomerFormPage customerId="cust-a2" />);
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await choosePlanAndContinue(user);
     await fillValidPrimary(user);
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    const recommender = await screen.findByRole("combobox", { name: "OST (Recommender)" });
+    const recommender = await screen.findByRole("combobox", { name: "Referrer / VIP Recommender" });
     await waitFor(() => expect(recommender).toHaveAccessibleDescription(/pending accreditation/i));
     await user.click(screen.getByRole("button", { name: "Save as draft" }));
     expect(update).not.toHaveBeenCalled();
     await user.click(recommender);
-    expect(screen.queryByRole("option", { name: /Ana Mendoza|Paolo Ramos/ })).toBeNull();
-    await user.click(screen.getByRole("option", { name: "No recommender" }));
+    expect(screen.queryByRole("option", { name: /Ana Mendoza/ })).toBeNull();
+    expect(screen.getByRole("option", { name: /Paolo Ramos/ })).toBeInTheDocument();
+    await user.click(screen.getByRole("option", { name: "No referrer" }));
     await user.click(screen.getByRole("button", { name: "Save as draft" }));
     expect(await screen.findByText("Draft saved.")).toBeVisible();
     expect(update.mock.calls[0]?.[1].recommenderMemberId).toBeNull();
@@ -1321,7 +1325,7 @@ describe("new customer unsaved changes", () => {
 
   it("starts fresh after a refresh and removes the old autosaved input", async () => {
     const user = userEvent.setup();
-    const before = show("dev-sm-a", <CustomerFormPage />);
+    const before = show("dev-clerk", <CustomerFormPage />);
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
     expect(await screen.findByRole("heading", { name: "Payment plan" })).toBeInTheDocument();
@@ -1329,7 +1333,7 @@ describe("new customer unsaved changes", () => {
 
     before.unmount();
     sessionStorage.setItem("afhomes.customer-wizard.v1", JSON.stringify({ step: 1, draft: { vipPlan: "S1" } }));
-    show("dev-sm-a", <CustomerFormPage />);
+    show("dev-clerk", <CustomerFormPage />);
 
     expect(await screen.findByRole("heading", { name: "Choose a VIP card" })).toBeInTheDocument();
     expect(await screen.findByRole("radio", { name: /silver vip/i })).toHaveAttribute("aria-checked", "false");
@@ -1776,7 +1780,7 @@ describe("public accreditation verification", () => {
 
 describe("customer edit reuses the application wizard", () => {
   it("renders the wizard for an existing draft instead of the old single-page form", async () => {
-    show("dev-sm-a", <CustomerFormPage customerId="cust-a2" />);
+    show("dev-clerk", <CustomerFormPage customerId="cust-a2" />);
     expect(await screen.findByRole("heading", { name: "Choose a VIP card" })).toBeInTheDocument();
     expect(await screen.findByRole("radiogroup", { name: "VIP card" })).toBeInTheDocument();
     // The old single-page CustomerForm opened with this SectionBlock heading.
@@ -1793,7 +1797,7 @@ describe("customer edit reuses the application wizard", () => {
   it("updates the existing draft on save instead of creating a duplicate", { timeout: 30_000 }, async () => {
     const user = userEvent.setup();
     show(
-      "dev-sm-a",
+      "dev-clerk",
       <>
         <CustomerRecordProbe id="cust-a2" />
         <CustomerFormPage customerId="cust-a2" />

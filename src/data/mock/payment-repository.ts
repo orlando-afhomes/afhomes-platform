@@ -2,7 +2,7 @@ import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { PaymentRepository, PaymentView, SubmitPaymentInput } from "@/data/contracts/payment-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { Contract } from "@/modules/contracts/types";
-import { adjustableCentavos, exceedsContractPrice, findDuplicatePayment } from "@/modules/finance/rules";
+import { adjustableCentavos, exceedsContractPrice, findDuplicatePayment, findReferenceConflict } from "@/modules/finance/rules";
 import { PAYMENT_METHODS, PAYMENT_PURPOSES, type Payment } from "@/modules/finance/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { DEV_IDENTITIES } from "./dev-identities";
@@ -58,6 +58,12 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
     if (exceedsContractPrice(contract, paymentsOfContract(this.store, contract.id).filter((item) => item.id !== selfId), input.amountCentavos)) throw new Error("This amount exceeds the outstanding balance of the contract.");
   }
 
+  /** The OR or bank reference number is required and unique across the whole system (07 sections 5.1 and 9.2). */
+  private validateReference(referenceNo: string | null | undefined, selfId?: string) {
+    if (!referenceNo?.trim()) throw new Error("Enter the receipt or reference number.");
+    if (findReferenceConflict(this.store.payments, referenceNo, selfId)) throw new Error("This receipt or reference number is already used by another payment. A duplicate is not accepted.");
+  }
+
   async list(options?: MockAsyncOptions): Promise<PaymentView[]> {
     return this.run(options, (identity) =>
       this.store.payments
@@ -75,8 +81,7 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
       const contract = this.contractFor(identity, input.contractId);
       if (contract.status === "cancelled" || contract.status === "returned") throw new Error("Payments cannot be submitted for this contract.");
       this.validateFields(contract, input);
-      const duplicate = findDuplicatePayment(this.store.payments, { ...input, referenceNo: input.referenceNo ?? null });
-      if (duplicate) throw new Error("A matching payment was already submitted for this contract. Duplicates are not accepted.");
+      this.validateReference(input.referenceNo);
       const sale = this.store.sales.find((item) => item.contractId === contract.id);
       const payment: Payment = {
         id: nextId(this.store, "payment", "pay"),
@@ -121,6 +126,8 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
         paidDate: input.paidDate ?? payment.paidDate,
       };
       this.validateFields(contract, next, payment.id);
+      // A resent version is the same receipt and keeps its number unless corrected (07 section 9.2).
+      this.validateReference(input.referenceNo !== undefined ? input.referenceNo : payment.referenceNo, payment.id);
       // The original submission is preserved in history (07 section 9.2).
       this.event(payment, identity, BUSINESS_AUDIT_ACTIONS.PAYMENT_RESUBMITTED, `Original: ${payment.amountCentavos} centavos on ${payment.paidDate}`);
       Object.assign(payment, next);
@@ -156,6 +163,7 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
       const selfNote = payment.submittedBy === identity.id || corrected ? "Self-approved: the approver also submitted or corrected this receipt." : undefined;
       const contract = this.contractFor(identity, payment.contractId);
       if (contract.status === "cancelled") throw new Error("This contract is cancelled. Its payment can be rejected or returned, not verified.");
+      if (findReferenceConflict(this.store.payments, payment.referenceNo, payment.id)) throw new Error("This receipt or reference number is already used by another payment. A duplicate is never verified.");
       const others = paymentsOfContract(this.store, contract.id).filter((item) => item.id !== payment.id && item.status === "verified");
       const duplicate = findDuplicatePayment(others, payment);
       if (duplicate) throw new Error("A matching verified payment already exists for this contract. A duplicate is never verified twice.");

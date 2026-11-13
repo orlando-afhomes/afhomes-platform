@@ -41,7 +41,7 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
   const range = useDashboardRange();
   const isManager = useOperation("sales.viewTeam");
   const canPrepareContracts = useOperation("contracts.prepare");
-  const canManageCustomers = useOperation("customers.manage");
+  const canManageCustomers = useOperation("customers.draft");
 
   const canSeeSales = granted.has("sales");
   const canSeeCustomers = granted.has("customers");

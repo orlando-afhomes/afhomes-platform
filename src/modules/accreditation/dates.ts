@@ -52,30 +52,67 @@ export function getAccreditationExpiryState(expiryDate: string | null, asOfDate:
   return "expired";
 }
 
-export type RenewalTiming = "invalid" | "too_early" | "early" | "on_date" | "late";
+function monthIndex(parts: ManilaDateParts): number {
+  return parts.year * 12 + (parts.month - 1);
+}
+
+/** Calendar-month shift that clamps to the last day of a shorter month. */
+export function addMonths(parts: ManilaDateParts, months: number): ManilaDateParts {
+  const index = monthIndex(parts) + months;
+  const year = Math.floor(index / 12);
+  const month = (index % 12) + 1;
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return { year, month, day: Math.min(parts.day, daysInMonth) };
+}
+
+/**
+ * Doc 03 section 5.1 (owner ruling R3): a renewal is recorded in the expiry
+ * month or later, never earlier. Papers received before that month are held.
+ */
+export type RenewalTiming = "invalid" | "too_early" | "in_expiry_month" | "late";
 
 export function classifyRenewalTiming(expiryDate: string | null, renewalDate: string | null): RenewalTiming {
   const expiry = parseManilaDateOnly(expiryDate);
   const renewal = parseManilaDateOnly(renewalDate);
   if (!expiry || !renewal) return "invalid";
-  const diff = diffCalendarDays(renewal, expiry);
-  if (diff < 0) return "late";
-  if (diff === 0) return "on_date";
-  if (diff <= 30) return "early";
-  return "too_early";
+  const monthsAfterExpiry = monthIndex(renewal) - monthIndex(expiry);
+  if (monthsAfterExpiry < 0) return "too_early";
+  if (monthsAfterExpiry === 0) return "in_expiry_month";
+  return "late";
 }
 
 export function isRenewalAllowed(expiryDate: string | null, renewalDate: string | null): boolean {
   const timing = classifyRenewalTiming(expiryDate, renewalDate);
-  return timing === "early" || timing === "on_date" || timing === "late";
+  return timing === "in_expiry_month" || timing === "late";
 }
 
+/** A renewal is valid for one year from the actual renewal date (doc 03 section 5.2). */
 export function calculateRenewedExpiry(existingExpiryDate: string, renewalDate: string): string | null {
-  const timing = classifyRenewalTiming(existingExpiryDate, renewalDate);
-  if (timing === "invalid" || timing === "too_early") return null;
-  const base = timing === "late" ? parseManilaDateOnly(renewalDate) : parseManilaDateOnly(existingExpiryDate);
-  if (!base) return null;
-  return formatManilaDateParts(addOneYear(base));
+  if (!isRenewalAllowed(existingExpiryDate, renewalDate)) return null;
+  const base = parseManilaDateOnly(renewalDate);
+  return base ? formatManilaDateParts(addOneYear(base)) : null;
+}
+
+export type AccreditationReminder = "renewal_due" | "expired_grace" | "closed_not_renewed";
+
+export const ACCREDITATION_REMINDER_LABELS: Record<AccreditationReminder, string> = {
+  renewal_due: "Renewal due",
+  expired_grace: "Expired - grace",
+  closed_not_renewed: "Closed - not renewed",
+};
+
+/**
+ * Doc 03 section 5.5 reminder labels. Status and report label only: nothing is blocked.
+ * Renewal due from one month before the valid-until date; grace for one month after.
+ */
+export function getAccreditationReminder(expiryDate: string | null, asOfDate: string): AccreditationReminder | null {
+  const expiry = parseManilaDateOnly(expiryDate);
+  const asOf = parseManilaDateOnly(asOfDate);
+  if (!expiry || !asOf) return null;
+  if (diffCalendarDays(asOf, addMonths(expiry, -1)) > 0) return null;
+  if (diffCalendarDays(asOf, expiry) >= 0) return "renewal_due";
+  if (diffCalendarDays(asOf, addMonths(expiry, 1)) >= 0) return "expired_grace";
+  return "closed_not_renewed";
 }
 
 export function isAccreditationEligibleOnDate(expiryDate: string | null, asOfDate: string): boolean {

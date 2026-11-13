@@ -7,6 +7,7 @@ export type DevRole =
   | "admin"
   | "finance"
   | "hr"
+  | "clerk"
   | "svd"
   | "ssm"
   | "sm"

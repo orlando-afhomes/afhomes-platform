@@ -43,7 +43,9 @@ describe("my account page", () => {
   it("shows profile fields for a linked admin identity", async () => {
     render(<TestWrapper />);
     expect(await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 })).toBeDefined();
-    expect(screen.getByPlaceholderText("New Password")).toBeDefined();
+    // No password field: nothing is saved here, so the page says who resets passwords.
+    expect(screen.queryByPlaceholderText("New Password")).toBeNull();
+    expect(screen.getByText("To change your password, ask an Administrator to reset it for you.")).toBeInTheDocument();
   });
 
   // S3-04/S3-B: department and role are read-only on My Account, including for admins.
@@ -80,36 +82,14 @@ describe("my account page", () => {
     expect(screen.getByDisplayValue("Admin User Updated")).toBeInTheDocument();
   });
 
-  it("rejects mismatched passwords before saving", async () => {
-    const user = userEvent.setup();
-    render(<TestWrapper />);
-    await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 });
-    fireEvent.change(screen.getByPlaceholderText("New Password"), { target: { value: "password1234" } });
-    fireEvent.change(screen.getByPlaceholderText("Confirm Password"), { target: { value: "different1234" } });
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
-    expect(await screen.findByText("Passwords do not match.")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Confirm Password")).toHaveAttribute("aria-invalid", "true");
-    expect(screen.queryByRole("alertdialog")).toBeNull();
-  });
-
-  it("requires a name and a long enough new password", async () => {
+  it("requires a name before saving", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
     const nameInput = await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 });
     fireEvent.change(nameInput, { target: { value: "" } });
-    fireEvent.change(screen.getByPlaceholderText("New Password"), { target: { value: "short" } });
     await user.click(screen.getByRole("button", { name: "Save changes" }));
     expect(await screen.findByText("Full name is required.")).toBeInTheDocument();
-    expect(screen.getByText(/New password must be at least 12 characters\./)).toBeInTheDocument();
-  });
-
-  it("shows and hides the password text", async () => {
-    const user = userEvent.setup();
-    render(<TestWrapper />);
-    const input = await screen.findByPlaceholderText("New Password");
-    expect(input).toHaveAttribute("type", "password");
-    await user.click(screen.getByRole("button", { name: "Show new password" }));
-    expect(input).toHaveAttribute("type", "text");
+    expect(screen.queryByRole("alertdialog")).toBeNull();
   });
 
   it("rejects non-image and oversized profile pictures", async () => {

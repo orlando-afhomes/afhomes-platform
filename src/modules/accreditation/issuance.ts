@@ -29,6 +29,8 @@ export function collectReservedAaNumbers(
   const reserved = new Set<string>();
   for (const record of accreditations) {
     if (record.aaNumber) reserved.add(record.aaNumber.trim().toUpperCase());
+    // Numbers replaced by a renewal stay reserved: they are never reissued (doc 03 section 5.2.1).
+    for (const entry of record.aaNumberHistory ?? []) reserved.add(entry.aaNumber.trim().toUpperCase());
   }
   for (const member of members) {
     if (member.aaNumber) reserved.add(member.aaNumber.trim().toUpperCase());

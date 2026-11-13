@@ -11,6 +11,7 @@ import type { Customer } from "@/modules/customers/types";
 import { useCorrectCustomer, useOperation, usePaymentSchemes, useRegisterCustomer, useUpdateCustomerDraft, useVipProducts } from "@/data/business-queries";
 import { customerAttributionErrors, pendingAttributionMemberIds } from "@/modules/customers/attribution";
 import { validateCustomerForSubmit } from "@/modules/customers/rules";
+import { isEditableRegistration } from "@/modules/customers/review";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/modules/finance/types";
 import { applicablePriceStatus, displayPriceFor } from "@/modules/vip/pricing";
 import type { VipTierCode } from "@/modules/vip/types";
@@ -46,6 +47,7 @@ import {
 import { PlanSummary } from "../components/customer-plan-summary";
 import { useCustomerIdImagePreview } from "../components/customer-id-image-preview";
 import { useNewCustomerExit } from "../components/use-new-customer-exit";
+import { useWizardStepHistory } from "../components/use-wizard-step-history";
 import { ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { PaymentOptionGrid, type PaymentOption } from "../components/payment-option-card";
 import { schemeCardContent } from "../components/scheme-card-content";
@@ -155,6 +157,8 @@ function ReviewBlock({ title, onEdit, children }: { title: string; onEdit: () =>
 
 export function CustomerApplicationWizard({ existing }: { existing?: Customer } = {}) {
   const router = useRouter();
+  // Sellers hold only customers.draft: they start and save their own draft, and the office completes and submits it (doc 04 section 5).
+  const canDraft = useOperation("customers.draft");
   const canManage = useOperation("customers.manage");
   const canPrepare = useOperation("contracts.prepare");
   const canPay = useOperation("payments.submit");
@@ -173,7 +177,9 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const [step, setStep] = useState(STEP_CARD);
   const [draft, setDraft] = useState<CustomerDraft>(() => toDraft(existing));
   const [correcting, setCorrecting] = useState(false);
-  const isSubmitted = existing != null && existing.status !== "draft";
+  const isSubmitted = existing != null && !isEditableRegistration(existing.status);
+  // A registration sent back for fixes keeps the contract and reservation from its first submission; only the customer data is resubmitted.
+  const resubmitting = existing?.status === "sent_back";
   const pendingOstIds = useMemo(() => {
     if (isSubmitted) return new Set<string>();
     if (!accreditations.isSuccess || accreditations.isFetching) return null;
@@ -248,12 +254,15 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
   const hasReservationChanges = method !== DEFAULT_PAYMENT_METHOD || paidDate !== initialPaidDate || Boolean(reference || proofName || accepted);
   const hasIdPreview = Boolean(primaryIdPreview.value || secondaryIdPreview.value);
+  const dirty = JSON.stringify(draft) !== EMPTY_DRAFT || hasReservationChanges || hasIdPreview;
   const exit = useNewCustomerExit({
     enabled: !existing && !submissionSuccess,
-    dirty: JSON.stringify(draft) !== EMPTY_DRAFT || hasReservationChanges || hasIdPreview,
+    dirty,
     busy,
     navigate: router.push,
   });
+  // The step is in the address, so browser Back and Forward move between steps; Back out of the wizard raises the same prompt.
+  const { allowExit } = useWizardStepHistory({ step, onStep: setStep, guarded: !existing && !submissionSuccess && dirty, requestExit: exit.requestExit });
 
   // Each new step starts at the top of the form, below the sticky header.
   useEffect(() => {
@@ -285,9 +294,11 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const supplementaryAllowed = Boolean(product && product.supplementaryHolders > 0);
   const reservationCentavos = scheme?.reservationCentavos ?? null;
   const refPolicy = referencePolicyFor(method);
-  const osts = (members.data ?? []).filter((member) => member.designation === "OST").map((member) => ({ value: member.id, label: member.displayName }));
+  const sellers = (members.data ?? []).map((member) => ({ value: member.id, label: member.displayName }));
+  const steps = canManage ? STEPS : STEPS.slice(0, STEP_SALES + 1);
+  const lastStep = canManage ? STEP_REVIEW : STEP_SALES;
 
-  if (!canManage) return <InfoNote title="View only">This account cannot create or edit customers.</InfoNote>;
+  if (!canDraft) return <InfoNote title="View only">This account cannot create or edit customers.</InfoNote>;
 
   const attributionErrors = customerAttributionErrors(draft, pendingOstIds);
   const allErrors = (): CustomerErrors => ({
@@ -415,7 +426,10 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
       const saved = existing
         ? await updateDraft.mutateAsync({ id: existing.id, input })
         : await create.mutateAsync(input);
-      if (!existing) resetNewApplication();
+      if (!existing) {
+        allowExit();
+        resetNewApplication();
+      }
       toast.success("Draft saved.");
       exit.dismiss();
       if (leave) leave();
@@ -439,11 +453,11 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
     }
     if (reportAttributionErrors(attributionErrors)) return;
     const found: Record<string, string | undefined> = {};
-    if (canPrepare && !accepted) found.accepted = "Confirm that the customer accepted the payment schedule.";
-    if (canPrepare && canPay && reservationCentavos) {
+    if (canPrepare && !resubmitting && !accepted) found.accepted = "Confirm that the customer accepted the payment schedule.";
+    if (canPrepare && !resubmitting && canPay && reservationCentavos) {
       if (!proofName) found.proof = "Attach the proof of the reservation fee payment.";
       if (paidDate > manilaToday()) found.paidDate = "The payment date cannot be in the future.";
-      const referenceError = validateReferenceNumber(reference, refPolicy);
+      const referenceError = reference.trim() ? validateReferenceNumber(reference, refPolicy) : "Enter the receipt or reference number.";
       if (referenceError) {
         found.reference = referenceError;
         setReferenceTouched(true);
@@ -466,7 +480,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
       const result = await register.mutateAsync({
         customer: toInput(draft),
         draftId: existing?.id,
-        contract: canPrepare && scheme ? {
+        contract: canPrepare && scheme && !resubmitting ? {
           schemeId: scheme.id,
           customerAccepted: accepted,
           reservation: canPay && reservationCentavos
@@ -501,6 +515,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
           break;
       }
       if (successMessage) {
+        allowExit();
         resetNewApplication();
         setSubmissionSuccess(successMessage);
         return;
@@ -546,13 +561,13 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
         <>
           <div className="tw:flex tw:flex-col tw:gap-1.5 tw:lg:hidden">
             <p className="tw:text-sm tw:font-medium">
-              {STEPS[step]}
+              {steps[step]}
             </p>
-            <div role="progressbar" aria-label="Application progress" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={step + 1} className="tw:h-1.5 tw:rounded-full tw:bg-border">
-              <div className="tw:h-full tw:rounded-full tw:bg-primary tw:transition-[width] tw:motion-reduce:transition-none" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
+            <div role="progressbar" aria-label="Application progress" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={step + 1} className="tw:h-1.5 tw:rounded-full tw:bg-border">
+              <div className="tw:h-full tw:rounded-full tw:bg-primary tw:transition-[width] tw:motion-reduce:transition-none" style={{ width: `${((step + 1) / steps.length) * 100}%` }} />
             </div>
           </div>
-          <StepIndicator steps={STEPS} current={step} onStepClick={goTo} className="tw:hidden tw:lg:flex" />
+          <StepIndicator steps={steps} current={step} onStepClick={goTo} className="tw:hidden tw:lg:flex" />
         </>
       ) : null}
 
@@ -623,6 +638,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             existing={customers.data ?? []}
             pendingOstIds={pendingOstIds}
             accreditationLoading={accreditations.isFetching}
+            office={canManage}
           />
           <CertificationsSection draft={draft} set={set} errors={errors} />
         </div>
@@ -658,7 +674,9 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
           </ReviewBlock>
           <ReviewBlock title="Sales and consent" onEdit={() => setStep(STEP_SALES)}>
             {supplementaryAllowed ? <Row label="Supplementary holder" value={[draft.secFirstName, draft.secNoMiddleName ? "" : draft.secMiddleName, draft.secLastName, draft.secSuffix].filter(Boolean).join(" ")} /> : null}
-            <Row label="Recommender" value={osts.find((item) => item.value === draft.recommenderMemberId)?.label} />
+            <Row label="Closing seller" value={sellers.find((item) => item.value === draft.ownerMemberId)?.label} />
+            <Row label="Referrer / VIP Recommender" value={sellers.find((item) => item.value === (draft.referrerMemberId || draft.recommenderMemberId))?.label} />
+            {draft.referralReference ? <Row label="Dated referral reference" value={draft.referralReference} /> : null}
             <Row label="Acquisition channel" value={draft.acquisitionChannel} />
             <Row label="Customer ID" value={draft.customerNumber} />
             <Row label="Data privacy consent" value={draft.consentDataPrivacy ? "Certified" : "Not certified"} />
@@ -705,7 +723,9 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             </div>
           </SectionBlock>
 
-          {!canPrepare ? (
+          {resubmitting ? (
+            <InfoNote title="Resubmitting the customer">The reservation and contract from the first submission stay as they are. Open the customer page to review them.</InfoNote>
+          ) : !canPrepare ? (
             <InfoNote title="Submitting the customer only">This account cannot prepare contracts. The application is submitted for a seller or staff member to continue.</InfoNote>
           ) : (
             <SectionBlock title="Reservation fee and proof" description={reservationCentavos ? `Submit the ${formatPeso(reservationCentavos)} reservation fee with its proof. Finance verifies it before the sale moves on.` : "This payment scheme has no reservation fee. The contract is drafted without a payment."} icon={<Banknote className="tw:size-4" />}>
@@ -716,12 +736,13 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
                     <StandardDateField label="Date on the receipt" required value={paidDate} onChange={setPaidDate} error={reservationErrors.paidDate} />
                     <TextField
                       label="Receipt or reference number"
+                      required
                       value={reference}
                       onChange={(value) => setReference(cleanReferenceNumber(value, refPolicy))}
                       onBlur={() => setReferenceTouched(true)}
                       maxLength={REFERENCE_LIMITS[refPolicy].max}
                       hint={referenceHint(refPolicy)}
-                      error={referenceTouched ? (validateReferenceNumber(reference, refPolicy) ?? undefined) : undefined}
+                      error={referenceTouched ? ((reference.trim() ? validateReferenceNumber(reference, refPolicy) : "Enter the receipt or reference number.") ?? undefined) : undefined}
                     />
                   </div>
                   <FieldShell ids={proofIds} label="Proof of payment" required error={reservationErrors.proof} hint="Only the file name is kept in this prototype.">
@@ -769,7 +790,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
       <Card className="customer-application__actions tw:sticky tw:bottom-2 tw:z-10 tw:flex-col-reverse tw:gap-2 tw:p-3 tw:shadow-md tw:sm:flex-row tw:sm:items-center tw:sm:justify-between tw:lg:static tw:lg:shadow-none">
         <div className="tw:flex tw:gap-2">
-          <Button type="button" variant="outline" disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => (step === STEP_CARD ? exit.requestExit(() => router.back()) : setStep(step - 1))}>
+          <Button type="button" variant="outline" disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => (step === STEP_CARD ? exit.requestExit(() => { allowExit(); router.back(); }) : setStep(step - 1))}>
             {step === STEP_CARD ? "Cancel" : (<><ArrowLeft aria-hidden="true" className="tw:size-4" /> Back</>)}
           </Button>
           {!isSubmitted ? (
@@ -778,9 +799,13 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             </Button>
           ) : null}
         </div>
-        {step < STEP_REVIEW ? (
+        {step < lastStep ? (
           <Button type="button" disabled={busy || (step === STEP_CARD && !draft.vipPlan) || (step === STEP_REVIEW && reviewErrorList.length > 0)} className="tw:min-h-11 tw:sm:min-h-8" onClick={next}>
             Continue <ArrowRight aria-hidden="true" className="tw:size-4" />
+          </Button>
+        ) : !canManage ? (
+          <Button type="button" loading={saving && action === "draft"} disabled={busy} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => void saveDraft()}>
+            Save draft for the office
           </Button>
         ) : (
           <Button type="button" loading={saving && action === "submit"} disabled={busy} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => void submitApplication()}>
@@ -801,6 +826,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
         onDeny={() => {
           const leave = exit.destination;
           exit.dismiss();
+          allowExit();
           resetNewApplication();
           leave?.();
         }}

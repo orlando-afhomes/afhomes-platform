@@ -1,7 +1,7 @@
 import type { Designation, OrgMember } from "@/modules/organization/types";
 import type { AccreditationRecord } from "@/modules/accreditation/types";
-import { isAccreditationEligibleOnDate, manilaToday } from "@/modules/accreditation/dates";
-import { getCurrentAccreditationRecord } from "@/modules/accreditation/eligibility";
+import { manilaToday } from "@/modules/accreditation/dates";
+import { getCurrentAccreditationRecord, getSellerStanding } from "@/modules/accreditation/eligibility";
 import type { DevIdentity } from "@/modules/identity/types";
 import { getVisibleMemberIds, getUplineSummaries } from "@/data/mock/scope";
 import { getDescendantIds } from "@/data/mock/scope";
@@ -19,9 +19,8 @@ export function isEligibleReceivingManager(
   if (records.length > 0) {
     const current = getCurrentAccreditationRecord(records);
     if (!current) return false;
-    if (current.adminStatus !== "active") return false;
-    if (!current.expiryDate) return false;
-    return isAccreditationEligibleOnDate(current.expiryDate, manilaToday());
+    // An expired accreditation does not make a receiving manager ineligible (doc 02 section 5.2, R3).
+    return getSellerStanding(current, manilaToday()).state !== "blocked";
   }
   return parent.status === "active" && parent.mockAccreditationEligible === true;
 }
@@ -72,7 +71,7 @@ export function validateSalesParent(
     return {
       ok: false,
       code: "INELIGIBLE_PARENT",
-      message: "The receiving manager must be active with approved mock accreditation eligibility.",
+      message: "The receiving manager must be active and eligible: accredited, and not suspended, resigned or terminated.",
     };
   }
 
@@ -138,7 +137,6 @@ export function getAuthorizedGenealogyMemberIds(identity: DevIdentity, store: Mo
 
 export function buildAuthorizedGenealogyTree(members: readonly OrgMember[], authorizedIds: Set<string>): GenealogyTreeNode[] {
   const authorizedMembers = members.filter((member) => authorizedIds.has(member.id));
-  const byId = new Map(authorizedMembers.map((member) => [member.id, member]));
   const childrenByParent = new Map<string, OrgMember[]>();
 
   for (const member of authorizedMembers) {

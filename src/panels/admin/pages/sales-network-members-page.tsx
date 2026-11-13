@@ -106,7 +106,9 @@ export function SalesNetworkMembersPage() {
           if (accreditationFilter === "accredited" && !(state.kind === "action" && state.value === "active")) return false;
           if (accreditationFilter === "expired" && !(state.kind === "static" && state.label === "Expired")) return false;
         }
-        return term === "" || member.displayName.toLowerCase().includes(term) || (member.aaNumber ?? "").toLowerCase().includes(term);
+        // An old AA number from the AA Number History finds the member under the current number (doc 03 section 5.2.1).
+        const oldNumberMatches = (accreditationRecordsByMember.get(member.id) ?? []).some((record) => record.aaNumberHistory?.some((entry) => entry.aaNumber.toLowerCase().includes(term)));
+        return term === "" || member.displayName.toLowerCase().includes(term) || (member.aaNumber ?? "").toLowerCase().includes(term) || oldNumberMatches;
       })
       .sort((a, b) => (sortAsc ? a.displayName.localeCompare(b.displayName) : b.displayName.localeCompare(a.displayName)));
   }, [members, search, designationFilter, statusFilter, teamFilter, accreditationFilter, accreditationRecordsByMember, sortAsc]);

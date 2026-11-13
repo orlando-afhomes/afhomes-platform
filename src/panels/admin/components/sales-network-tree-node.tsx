@@ -1,7 +1,8 @@
 import type { OrgMember } from "@/modules/organization/types";
 import { aaDisplay, teamDisplayName } from "@/modules/sales-network/display";
 import type { GenealogyTreeNode } from "@/modules/sales-network/genealogy";
-import { StatusBadge } from "@/shared/components/modern/status-badge";
+import { StatusBadge, ToneBadge } from "@/shared/components/modern/status-badge";
+import { formatDate } from "@/shared/lib/format-date";
 import { DesignationBadge } from "@/shared/components/business/designation-badge";
 
 /**
@@ -14,10 +15,13 @@ export function SalesNetworkTreeNodeTitle({
   node,
   members,
   compact = false,
+  vacantSince = null,
 }: {
   node: GenealogyTreeNode;
   members: readonly OrgMember[];
   compact?: boolean;
+  /** Date-only start of an open seat vacancy; shows a read-only "Vacant since" indicator. */
+  vacantSince?: string | null;
 }) {
   const showTeam = !compact || node.member.designation === "SVD";
   return (
@@ -32,6 +36,7 @@ export function SalesNetworkTreeNodeTitle({
           {node.directCount} direct / {node.totalDescendantCount} total
         </span>
       )}
+      {vacantSince ? <ToneBadge tone="warning">Vacant since {formatDate(vacantSince)}</ToneBadge> : null}
       {node.restrictedParent ? <span className="tw:text-xs tw:text-muted-foreground tw:italic">Restricted upline</span> : null}
     </span>
   );

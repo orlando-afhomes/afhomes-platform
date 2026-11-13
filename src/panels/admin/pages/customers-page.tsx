@@ -24,6 +24,9 @@ const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
   { value: "draft", label: "Draft" },
   { value: "submitted", label: "Submitted" },
+  { value: "approved", label: "Approved" },
+  { value: "sent_back", label: "Sent back" },
+  { value: "rejected", label: "Rejected" },
   { value: "active_member", label: "Active Member" },
   { value: "inactive", label: "Inactive" },
 ];
@@ -34,6 +37,8 @@ export function CustomersPage() {
   const members = useMembers();
   const discard = useDiscardCustomerDraft();
   const canManage = useOperation("customers.manage");
+  // Sellers start and edit only their own draft (doc 04 section 5).
+  const canDraft = useOperation("customers.draft");
   const canImport = useOperation("customers.import");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -80,14 +85,14 @@ export function CustomersPage() {
       description="Customer master records and VIP applications."
       crumbs={[{ label: "Sales" }, { label: "Customers" }]}
       actions={
-        canManage || canImport ? (
+        canDraft || canImport ? (
           <div className="tw:flex tw:flex-wrap tw:gap-2">
             {canImport ? (
               <Link href="/admin/customers/import-export" className={buttonVariants({ variant: "outline", className: "tw:min-h-11 tw:sm:min-h-8" })}>
                 Import / Export
               </Link>
             ) : null}
-            {canManage ? (
+            {canDraft ? (
               <Link href="/admin/customers/new" className={buttonVariants({ className: "tw:min-h-11 tw:sm:min-h-8" })}>
                 <Plus aria-hidden="true" /> New customer
               </Link>
@@ -119,7 +124,7 @@ export function CustomersPage() {
           onRowOpen={(row) => router.push(`/admin/customers/${row.id}`)}
           getRowLabel={(row) => `Open ${customerRecordName(row)}`}
           rowActions={(row) => {
-            const editable = canManage && !row.restricted;
+            const editable = !row.restricted && (canManage || (canDraft && row.status === "draft"));
             return (
               <RowActionsMenu
                 itemName={customerRecordName(row)}
@@ -127,7 +132,7 @@ export function CustomersPage() {
                 onEdit={editable ? () => router.push(`/admin/customers/${row.id}/edit`) : undefined}
                 onDelete={editable && row.status === "draft" ? () => discard.mutateAsync(row.id) : undefined}
                 deleteTitle={`Discard the draft for ${customerRecordName(row)}?`}
-                deleteDescription="Only drafts can be discarded. Submitted customers are never deleted."
+                deleteDescription="Only drafts can be discarded. Submitted, approved, sent back and rejected customers are never deleted."
               />
             );
           }}

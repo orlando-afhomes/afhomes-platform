@@ -3,10 +3,12 @@
 import { useState, type ReactElement, type ReactNode } from "react";
 import { useOperation, usePaymentAction, usePayments, useSubmitPayment } from "@/data/business-queries";
 import type { PaymentView } from "@/data/contracts/payment-repository";
-import { adjustableCentavos, adjustmentTotalCentavos } from "@/modules/finance/rules";
+import { BROAD_ROLES, activeIdentityRoles } from "@/data/mock/scope";
+import { adjustableCentavos, adjustmentTotalCentavos, findSuggestedMatch } from "@/modules/finance/rules";
+import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { PAYMENT_METHODS, PAYMENT_PURPOSES, type PaymentMethod, type PaymentPurpose } from "@/modules/finance/types";
 import { manilaToday } from "@/shared/lib/dates";
-import { formatPeso, parsePesoToCentavos } from "@/shared/lib/money";
+import { centavosToInputText, formatPeso, parsePesoToCentavos } from "@/shared/lib/money";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { MoneyField, SelectField, StandardDateField, TextAreaField, TextField } from "@/shared/forms/modern";
 import { REFERENCE_LIMITS, cleanReferenceNumber, referencePolicyFor, validateReferenceNumber, type ReferencePolicy } from "@/shared/forms/validation/reference-number";
@@ -49,14 +51,14 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
       setError("Enter a valid amount.");
       return;
     }
-    const referenceError = validateReferenceNumber(reference, refPolicy);
+    const referenceError = requiredReferenceError(reference, refPolicy);
     if (referenceError) {
       setReferenceTouched(true);
       setError(referenceError);
       return;
     }
     try {
-      await submit.mutateAsync({ contractId, purpose, amountCentavos, method, paidDate, referenceNo: reference || null, evidenceFileName: file || null });
+      await submit.mutateAsync({ contractId, purpose, amountCentavos, method, paidDate, referenceNo: reference, evidenceFileName: file || null });
       toast.success("Payment submitted for Finance verification.");
       setAmount("");
       setReference("");
@@ -77,17 +79,77 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
       <StandardDateField label="Date on the receipt" required value={paidDate} onChange={setPaidDate} />
       <TextField
         label="Receipt or reference number"
+        required
         value={reference}
         onChange={(value) => setReference(cleanReferenceNumber(value, refPolicy))}
         onBlur={() => setReferenceTouched(true)}
         maxLength={REFERENCE_LIMITS[refPolicy].max}
         hint={referenceHint(refPolicy)}
-        error={referenceTouched ? (validateReferenceNumber(reference, refPolicy) ?? undefined) : undefined}
+        error={referenceTouched ? (requiredReferenceError(reference, refPolicy) ?? undefined) : undefined}
       />
       <div className="tw:flex tw:flex-col tw:gap-1.5">
         <Label htmlFor="payment-evidence">Receipt file</Label>
         <Input id="payment-evidence" type="file" accept="image/*,application/pdf" onChange={(event) => setFile(event.target.files?.[0]?.name ?? "")} />
         <p className="tw:text-xs tw:text-muted-foreground">Only the file name is kept in this prototype.</p>
+      </div>
+    </FormDialog>
+  );
+}
+
+/** The receipt or reference number is required (07 section 5.1); uniqueness is checked when the payment is saved. */
+function requiredReferenceError(reference: string, policy: ReferencePolicy): string | null {
+  if (!reference.trim()) return "Enter the receipt or reference number.";
+  return validateReferenceNumber(reference, policy);
+}
+
+/** Fix and resend a returned receipt. The original version stays in the payment history (07 section 9.1, U06). */
+function PaymentResubmitDialog({ payment, onClose }: { payment: PaymentView; onClose: () => void }) {
+  const action = usePaymentAction();
+  const [amount, setAmount] = useState(centavosToInputText(payment.amountCentavos));
+  const [method, setMethod] = useState<PaymentMethod>(payment.method);
+  const [paidDate, setPaidDate] = useState(payment.paidDate);
+  const [reference, setReference] = useState(payment.referenceNo ?? "");
+  const [referenceTouched, setReferenceTouched] = useState(false);
+  const [file, setFile] = useState("");
+  const [error, setError] = useState<string | undefined>();
+  const refPolicy = referencePolicyFor(method);
+
+  const send = async () => {
+    const amountCentavos = parsePesoToCentavos(amount);
+    if (!amountCentavos) return setError("Enter a valid amount.");
+    const referenceError = requiredReferenceError(reference, refPolicy);
+    if (referenceError) {
+      setReferenceTouched(true);
+      return setError(referenceError);
+    }
+    try {
+      await action.mutateAsync({ id: payment.id, action: "resubmit", input: { amountCentavos, method, paidDate, referenceNo: reference, ...(file ? { evidenceFileName: file } : {}) } });
+      toast.success("Payment resent for Finance verification.");
+      onClose();
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Could not resend.");
+    }
+  };
+
+  return (
+    <FormDialog open title="Fix and resend payment" description={`Finance returned this payment${payment.decisionReason ? `: ${payment.decisionReason}` : "."} Correct it and resend it for verification. The original version stays in history.`} submitText="Resend payment" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+      <MoneyField label="Amount" required value={amount} onChange={setAmount} />
+      <SelectField label="Method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value }))} onChange={(value) => { setMethod(value); setReference(cleanReferenceNumber(reference, referencePolicyFor(value))); }} />
+      <StandardDateField label="Date on the receipt" required value={paidDate} onChange={setPaidDate} />
+      <TextField
+        label="Receipt or reference number"
+        required
+        value={reference}
+        onChange={(value) => setReference(cleanReferenceNumber(value, refPolicy))}
+        onBlur={() => setReferenceTouched(true)}
+        maxLength={REFERENCE_LIMITS[refPolicy].max}
+        hint={referenceHint(refPolicy)}
+        error={referenceTouched ? (requiredReferenceError(reference, refPolicy) ?? undefined) : undefined}
+      />
+      <div className="tw:flex tw:flex-col tw:gap-1.5">
+        <Label htmlFor="payment-resend-evidence">New receipt file</Label>
+        <Input id="payment-resend-evidence" type="file" accept="image/*,application/pdf" onChange={(event) => setFile(event.target.files?.[0]?.name ?? "")} />
+        <p className="tw:text-xs tw:text-muted-foreground">{payment.evidenceFileName ? `Current file: ${payment.evidenceFileName}. Leave empty to keep it.` : "Only the file name is kept in this prototype."}</p>
       </div>
     </FormDialog>
   );
@@ -151,13 +213,21 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
   const canVerify = useOperation("finance.verify");
   const canRefund = useOperation("finance.refund");
   const [reasonFor, setReasonFor] = useState<{ payment: PaymentView; kind: "reject" | "return" } | null>(null);
+  const canSubmit = useOperation("payments.submit");
+  const { identity } = useDevIdentity();
   const [adjusting, setAdjusting] = useState<PaymentView | null>(null);
+  const [resending, setResending] = useState<PaymentView | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const detail = detailId ? (payments.data ?? []).find((item) => item.id === detailId) ?? null : null;
+  const suggestedMatch = detail && (detail.status === "submitted" || detail.status === "under_review") && canVerify ? findSuggestedMatch(payments.data ?? [], detail) : undefined;
 
   const itemsFor = (payment: PaymentView): PaymentItem[] => {
     const open = payment.status === "submitted" || payment.status === "under_review";
     const items: PaymentItem[] = [];
+    // Same check as the repository: the submitter or a broad office role fixes and resends a returned receipt.
+    if (canSubmit && payment.status === "returned" && (payment.submittedBy === identity.id || activeIdentityRoles(identity).some((role) => BROAD_ROLES.has(role)))) {
+      items.push({ key: "resend", label: "Fix and resend", onClick: () => setResending(payment) });
+    }
     if (canVerify && open) {
       if (payment.status === "submitted") {
         items.push({ key: "review", label: "Start review", onClick: () => void toast.promise(action.mutateAsync({ id: payment.id, action: "startReview" }), { loading: "Starting review…", success: "Review started.", error: (error: Error) => error.message }) });
@@ -200,6 +270,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
         onSubmit={(reason) => (reasonFor ? action.mutateAsync({ id: reasonFor.payment.id, action: reasonFor.kind === "reject" ? "reject" : "return", reason }) : Promise.resolve())}
       />
       <AdjustDialog payment={adjusting} onClose={() => setAdjusting(null)} />
+      {resending ? <PaymentResubmitDialog key={resending.id} payment={resending} onClose={() => setResending(null)} /> : null}
       <RecordDetailsSheet
         open={detail !== null}
         onClose={() => setDetailId(null)}
@@ -225,6 +296,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
                   rows: [
                     { label: "Verified on", value: detail.verifiedDate ? formatDate(detail.verifiedDate) : null },
                     { label: "Decision note", value: detail.decisionReason },
+                    { label: "Possible match", value: suggestedMatch ? `Another open payment on this contract has the same amount and date (${suggestedMatch.referenceNo ?? "no reference"}). Check it before verifying.` : null },
                     { label: "Adjusted", value: detail.adjustments.length > 0 ? `${detail.adjustments.length} adjustment(s), ${formatPeso(adjustmentTotalCentavos(detail.adjustments))}` : null },
                   ],
                 },

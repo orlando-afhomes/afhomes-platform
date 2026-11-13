@@ -52,6 +52,16 @@ export class MockDepartmentRepository {
     const dept = { id: `dept-${this.store.departmentSequence}`, name, code: (input.code ?? "").trim(), description: input.description?.trim() ?? "", headStaffId: null, status };
     this.store.departmentSequence += 1;
     this.store.departments.push(dept);
+    appendAuditEvent(this.store, {
+      actorId: identity.id,
+      actorRoles: activeRoles(identity),
+      module: "organization",
+      action: AUDIT_ACTIONS.DEPARTMENT_CREATED,
+      entityType: "department",
+      entityId: dept.id,
+      newValue: name,
+      outcome: "success",
+    });
     return { ...dept };
   }
 
@@ -91,11 +101,27 @@ export class MockDepartmentRepository {
       }
       next.status = nextStatus;
     }
-    // Status changes gate role grants and are security-sensitive; metadata-only
-    // updates stay unaudited (S3-C1).
     const previousStatus = normalizeDepartmentStatus(dept.status);
     const statusChanged = next.status !== previousStatus;
+    // Descriptions are free text, so only the fact that one changed is recorded.
+    const changedDetails: Array<[field: string, before: string, after: string]> = [];
+    if (next.name !== dept.name) changedDetails.push(["name", dept.name, next.name]);
+    if (next.code !== dept.code) changedDetails.push(["code", dept.code, next.code]);
+    if (next.description !== dept.description) changedDetails.push(["description", "changed", "changed"]);
     Object.assign(dept, next);
+    if (changedDetails.length > 0) {
+      appendAuditEvent(this.store, {
+        actorId: identity.id,
+        actorRoles: activeRoles(identity),
+        module: "organization",
+        action: AUDIT_ACTIONS.DEPARTMENT_UPDATED,
+        entityType: "department",
+        entityId: id,
+        previousValue: changedDetails.map(([field, before]) => `${field}:${before}`).join(";"),
+        newValue: changedDetails.map(([field, , after]) => `${field}:${after}`).join(";"),
+        outcome: "success",
+      });
+    }
     if (statusChanged) {
       appendAuditEvent(this.store, {
         actorId: identity.id,

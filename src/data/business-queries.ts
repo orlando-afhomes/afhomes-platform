@@ -66,6 +66,15 @@ export function useDiscardCustomerDraft() {
 export function useSubmitCustomer() {
   return useBusinessMutation((r, v: { id: string; input: CustomerDraftInput }) => r.customers.submit(v.id, v.input));
 }
+export function useApproveCustomer() {
+  return useBusinessMutation((r, id: string) => r.customers.approve(id));
+}
+export function useSendBackCustomer() {
+  return useBusinessMutation((r, v: { id: string; reason: string }) => r.customers.sendBack(v.id, v.reason));
+}
+export function useRejectCustomer() {
+  return useBusinessMutation((r, v: { id: string; reason: string }) => r.customers.reject(v.id, v.reason));
+}
 export function useCustomerImportJobs(enabled: boolean) {
   return useBusinessQuery("customer-imports", (r, signal) => (enabled ? r.customers.listImportJobs({ signal }) : Promise.resolve([])));
 }

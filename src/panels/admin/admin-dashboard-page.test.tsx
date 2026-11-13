@@ -110,17 +110,17 @@ describe("dashboard page role gating (initial render)", () => {
         "Sales by VIP Product",
         "Recent Activities",
         "Team overview",
-        "My returned contracts",
         "My customer drafts",
       ]);
-      expectNone(html, ["Contracts requiring review", "Outstanding receivables", "Approved unpaid commissions"]);
+      // Sellers no longer prepare contracts (doc 04 section 5), so no returned-contracts shortcut.
+      expectNone(html, ["My returned contracts", "Contracts requiring review", "Outstanding receivables", "Approved unpaid commissions"]);
     }
   });
 
   it("gives an OST only individual figures", () => {
     const html = renderPage("dev-ost-a1");
-    expectAll(html, ["My confirmed sales value", "My customers", "Pending sales", "Account overview"]);
-    expectNone(html, ["Team confirmed sales value", "Team overview", "Needs Your Attention", "Outstanding receivables"]);
+    expectAll(html, ["My confirmed sales value", "My customers", "Pending sales", "Account overview", "My customer drafts"]);
+    expectNone(html, ["Team confirmed sales value", "Team overview", "My returned contracts", "Outstanding receivables"]);
   });
 
   it("shows an honest empty dashboard for HR", () => {

@@ -1,11 +1,11 @@
-import type { AccreditationRepository, AccreditationStatusRequest, PublicAccreditationResult } from "@/data/contracts/accreditation-repository";
+import type { AaNumberResolution, AccreditationRepository, AccreditationStatusRequest, PublicAccreditationResult, RenewAccreditationInput } from "@/data/contracts/accreditation-repository";
 import { validateExistingAaIdentifier } from "@/modules/accreditation/identifiers";
 import type { AccreditationAdminStatus } from "@/modules/accreditation/types";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { DevIdentity } from "@/modules/identity/types";
 import type { AccreditationRecord } from "@/modules/accreditation/types";
-import { addOneYear, formatManilaDateParts, isAccreditationEligibleOnDate, manilaToday, parseManilaDateOnly } from "@/modules/accreditation/dates";
-import { getCurrentAccreditationRecord, hasAmbiguousAccreditation } from "@/modules/accreditation/eligibility";
+import { addOneYear, calculateRenewedExpiry, classifyRenewalTiming, formatManilaDateParts, manilaToday, parseManilaDateOnly } from "@/modules/accreditation/dates";
+import { getCurrentAccreditationRecord, getSellerStanding, hasAmbiguousAccreditation, resolveAaNumber } from "@/modules/accreditation/eligibility";
 import { canTransitionAccreditationStatus, transitionRequiresReason } from "@/modules/accreditation/transitions";
 import { allocateSharedAaNumber, collectReservedAaNumbers, toAaYearMonth } from "@/modules/accreditation/issuance";
 import { getVisibleMemberIds, isActiveIdentity } from "./scope";
@@ -14,9 +14,11 @@ import { activeRoles } from "./dev-identities";
 import type { MockStore } from "./seed";
 import { simulateAsync } from "@/data/contracts/async-options";
 
+/** An expired seller is still eligible; `expired` tells the caller to record a reminder (doc 03 section 9). */
 export type AccreditationEligibilityCheck = {
   eligible: boolean;
-  reason: "NO_RECORD" | "NOT_ACTIVE" | "EXPIRED" | "INCOMPLETE_DATES" | null;
+  reason: "NO_RECORD" | "NOT_ACTIVE" | "SUSPENDED" | "ENDED" | "INCOMPLETE_DATES" | null;
+  expired: boolean;
 };
 
 export class MockAccreditationRepository implements AccreditationRepository {
@@ -28,6 +30,14 @@ export class MockAccreditationRepository implements AccreditationRepository {
 
   private merge(options?: MockAsyncOptions) {
     return { ...this.asyncOptions, ...options };
+  }
+
+  private copy(record: AccreditationRecord): AccreditationRecord {
+    return {
+      ...record,
+      history: record.history.map((entry) => ({ ...entry })),
+      aaNumberHistory: record.aaNumberHistory?.map((entry) => ({ ...entry })),
+    };
   }
 
   private canReadAll(identity: DevIdentity): boolean {
@@ -51,10 +61,7 @@ export class MockAccreditationRepository implements AccreditationRepository {
     await simulateAsync(merged);
     const identity = this.getIdentity();
     if (!isActiveIdentity(identity)) return [];
-    return this.scoped(this.store.accreditations, identity).map((record) => ({
-      ...record,
-      history: record.history.map((entry) => ({ ...entry })),
-    }));
+    return this.scoped(this.store.accreditations, identity).map((record) => this.copy(record));
   }
 
   async getById(id: string, options?: MockAsyncOptions): Promise<AccreditationRecord | null> {
@@ -64,7 +71,7 @@ export class MockAccreditationRepository implements AccreditationRepository {
     if (!isActiveIdentity(identity)) return null;
     const record = this.store.accreditations.find((item) => item.id === id);
     if (!record || !this.visibleMemberIds(identity).has(record.memberId)) return null;
-    return { ...record, history: record.history.map((entry) => ({ ...entry })) };
+    return this.copy(record);
   }
 
   async listByMember(memberId: string, options?: MockAsyncOptions): Promise<AccreditationRecord[]> {
@@ -75,7 +82,7 @@ export class MockAccreditationRepository implements AccreditationRepository {
     if (!this.visibleMemberIds(identity).has(memberId)) return [];
     return this.store.accreditations
       .filter((record) => record.memberId === memberId)
-      .map((record) => ({ ...record, history: record.history.map((entry) => ({ ...entry })) }));
+      .map((record) => this.copy(record));
   }
 
   async getCurrentForMember(memberId: string, options?: MockAsyncOptions): Promise<AccreditationRecord | null> {
@@ -87,24 +94,120 @@ export class MockAccreditationRepository implements AccreditationRepository {
     await simulateAsync(this.merge(options));
     const parsed = validateExistingAaIdentifier(aaNumber);
     if (!parsed.ok) return null;
-    const normalized = aaNumber.trim().toUpperCase();
-    const record = this.store.accreditations.find((item) => item.aaNumber?.toUpperCase() === normalized);
-    if (!record || record.adminStatus !== "active") return null;
+    // A number replaced by a renewal resolves to the holder's current record (doc 03 section 5.2.1).
+    const resolved = resolveAaNumber(this.store.accreditations, aaNumber);
+    const record = resolved?.record;
+    if (!resolved || !record?.aaNumber) return null;
     // Only the member's single current record can verify; superseded or ambiguous records return the generic result.
     const memberRecords = this.store.accreditations.filter((item) => item.memberId === record.memberId);
     if (hasAmbiguousAccreditation(memberRecords) || getCurrentAccreditationRecord(memberRecords)?.id !== record.id) return null;
+    // Expired is shown as Expired; pending, cancelled, suspended and departed sellers are not shown as valid (doc 03 section 9).
+    const standing = getSellerStanding(record, manilaToday());
+    if (standing.state === "blocked") return null;
     // Both IST and OST accreditation expire (doc 03); IST only hides its "Valid Until" date, OST shows it (project 22).
-    if (!isAccreditationEligibleOnDate(record.expiryDate, manilaToday())) return null;
-    return { aaNumber: normalized, classification: record.classification, validUntil: record.classification === "OST" ? record.expiryDate : null };
+    return {
+      aaNumber: record.aaNumber,
+      status: standing.state === "expired" ? "expired" : "valid",
+      classification: record.classification,
+      validUntil: record.classification === "OST" ? record.expiryDate : null,
+      quotedNumberSuperseded: !resolved.quotedNumberIsCurrent,
+    };
+  }
+
+  async resolveAaNumber(aaNumber: string, options?: MockAsyncOptions): Promise<AaNumberResolution | null> {
+    await simulateAsync(this.merge(options));
+    const identity = this.getIdentity();
+    if (!isActiveIdentity(identity)) return null;
+    const resolved = resolveAaNumber(this.scoped(this.store.accreditations, identity), aaNumber);
+    if (!resolved?.record.aaNumber) return null;
+    return { memberId: resolved.record.memberId, recordId: resolved.record.id, currentAaNumber: resolved.record.aaNumber, quotedNumberIsCurrent: resolved.quotedNumberIsCurrent };
   }
 
   async checkEligibility(memberId: string, asOfDate: string = manilaToday(), options?: MockAsyncOptions): Promise<AccreditationEligibilityCheck> {
     const current = await this.getCurrentForMember(memberId, options);
-    if (!current) return { eligible: false, reason: "NO_RECORD" };
-    if (current.adminStatus !== "active") return { eligible: false, reason: "NOT_ACTIVE" };
-    if (!current.expiryDate) return { eligible: false, reason: "INCOMPLETE_DATES" };
-    if (!isAccreditationEligibleOnDate(current.expiryDate, asOfDate)) return { eligible: false, reason: "EXPIRED" };
-    return { eligible: true, reason: null };
+    if (!current) return { eligible: false, reason: "NO_RECORD", expired: false };
+    // Action-specific (doc 03 section 9): an expired seller can still sell, refer and sponsor, with a reminder.
+    const standing = getSellerStanding(current, asOfDate);
+    if (standing.state === "blocked") return { eligible: false, reason: standing.reason, expired: false };
+    return { eligible: true, reason: null, expired: standing.state === "expired" };
+  }
+
+  async renew(recordId: string, input: RenewAccreditationInput = {}, options?: MockAsyncOptions): Promise<AccreditationRecord> {
+    await simulateAsync(this.merge(options));
+    const identity = this.getIdentity();
+    // Doc 03 section 5.3: the Administrator or the Super Administrator renews an approved seller.
+    if (!isActiveIdentity(identity) || !this.canReadAll(identity)) {
+      throw new Error("Accreditation renewal requires Administrator or Super Administrator authorization.");
+    }
+    const record = this.store.accreditations.find((item) => item.id === recordId);
+    if (!record) throw new Error("Accreditation record not found.");
+    const memberRecords = this.store.accreditations.filter((item) => item.memberId === record.memberId);
+    if (hasAmbiguousAccreditation(memberRecords)) {
+      throw new Error("Accreditation records for this seller are ambiguous; resolve them before renewing.");
+    }
+    if (getCurrentAccreditationRecord(memberRecords)?.id !== record.id) {
+      throw new Error("Only the seller's current accreditation can be renewed.");
+    }
+    if (input.expectedAaNumber && record.aaNumber?.toUpperCase() !== input.expectedAaNumber.trim().toUpperCase()) {
+      throw new Error("This accreditation has already been renewed since this view loaded; refresh and check the new number.");
+    }
+    if (record.endDate) {
+      throw new Error("A person who resigned or was terminated is not renewed; they are accredited again under a new number.");
+    }
+    if (record.adminStatus !== "active" || !record.aaNumber || !record.expiryDate) {
+      throw new Error("Only an approved, active accreditation can be renewed. A person who resigned or was terminated is accredited again under a new number.");
+    }
+    const today = manilaToday();
+    const renewalDate = input.renewalDate ?? today;
+    const renewalParts = parseManilaDateOnly(renewalDate);
+    if (!renewalParts) throw new Error("The renewal date must be a valid date.");
+    if (renewalDate > today) throw new Error("The renewal date cannot be in the future.");
+    if (renewalParts.month === 2 && renewalParts.day === 29) {
+      throw new Error("February 29 renewals need owner policy confirmation before issuance.");
+    }
+    if (classifyRenewalTiming(record.expiryDate, renewalDate) === "too_early") {
+      throw new Error("A renewal is recorded in the expiry month or later. Hold early papers until the expiry month.");
+    }
+    const newExpiry = calculateRenewedExpiry(record.expiryDate, renewalDate);
+    const yymm = toAaYearMonth(renewalDate);
+    if (!newExpiry || !yymm) throw new Error("The renewal date must be a valid date.");
+    // The team letter (I or O) is unchanged; NNNN is the next unused number of the renewal month, shared with new accreditations.
+    const prefix = record.classification === "IST" ? "AAI" : "AAO";
+    const reserved = collectReservedAaNumbers(this.store.accreditations, this.store.members);
+    const { aaNumber: newNumber } = allocateSharedAaNumber(prefix, yymm, reserved, 1);
+
+    const previousNumber = record.aaNumber;
+    const changedAt = new Date().toISOString();
+    record.aaNumberHistory = [...(record.aaNumberHistory ?? []), { aaNumber: previousNumber, replacedBy: newNumber, replacedOn: renewalDate, actorId: identity.id, changedAt }];
+    record.aaNumber = newNumber;
+    record.effectiveDate = renewalDate;
+    record.expiryDate = newExpiry;
+    record.history.push({
+      operation: "renewed",
+      previousValue: previousNumber,
+      newValue: newNumber,
+      reason: `Renewed on ${renewalDate}; valid until ${newExpiry}`,
+      actorId: identity.id,
+      changedAt,
+    });
+    // Everything recorded under the old number carries over: links are by member id, so only the displayed number moves.
+    const member = this.store.members.find((item) => item.id === record.memberId);
+    if (member) member.aaNumber = newNumber;
+    appendAuditEvent(this.store, {
+      actorId: identity.id,
+      actorRoles: activeRoles(identity),
+      module: "accreditation",
+      action: "ACCREDITATION_RENEWED",
+      entityType: "accreditation",
+      entityId: record.id,
+      displayReference: newNumber,
+      previousValue: previousNumber,
+      newValue: newNumber,
+      outcome: "success",
+      reason: `Renewed on ${renewalDate}`,
+      relatedRecordIds: [record.memberId],
+    });
+    return this.copy(record);
   }
 
   async updateStatus(recordId: string, requested: AccreditationStatusRequest, options?: MockAsyncOptions, expectedPrevious?: AccreditationAdminStatus, reason?: string): Promise<AccreditationRecord> {
@@ -158,7 +261,7 @@ export class MockAccreditationRepository implements AccreditationRepository {
       reason: trimmedReason,
       relatedRecordIds: [record.memberId],
     });
-    return { ...record, history: record.history.map((entry) => ({ ...entry })) };
+    return this.copy(record);
   }
 
   async issuePendingAccreditation(memberId: string, options?: MockAsyncOptions): Promise<AccreditationRecord> {
@@ -215,6 +318,6 @@ export class MockAccreditationRepository implements AccreditationRepository {
       reason: "Pending accreditation issued with automatic AA allocation",
       relatedRecordIds: [memberId],
     });
-    return { ...record, history: record.history.map((entry) => ({ ...entry })) };
+    return this.copy(record);
   }
 }

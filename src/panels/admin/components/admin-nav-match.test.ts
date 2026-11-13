@@ -6,7 +6,7 @@ import { getDevIdentity } from "@/data/mock/dev-identities";
 describe("admin navigation matching", () => {
   it("lists authorized top-level items without a separate Accounts entry", () => {
     const items = getRoleAwareAdminNavigation(getDevIdentity("dev-admin"));
-    expect(items.map((item) => item.id)).toEqual(["dashboard", "sales-group", "finance-group", "membership-group", "vip-products-group", "sales-network", "organization", "reports-group", "audit-logs"]);
+    expect(items.map((item) => item.id)).toEqual(["dashboard", "sales-group", "finance-group", "membership-group", "redemption-group", "vip-products-group", "sales-network", "organization", "reports-group", "audit-logs"]);
     expect(items.some((item) => item.id === "accreditation")).toBe(false);
   });
 
@@ -15,7 +15,7 @@ describe("admin navigation matching", () => {
     const childIds = (id: string) => items.find((item) => item.id === id)?.children?.map((child) => child.id);
     expect(childIds("finance-group")).toEqual(["commission-assignment", "commissions"]);
     expect(childIds("membership-group")).toEqual(["membership-activation", "membership", "stay-points"]);
-    expect(childIds("reports-group")).toEqual(["customer-growth", "sales-performance", "commission-report", "membership-report", "stay-points-report"]);
+    expect(childIds("reports-group")).toEqual(["customer-growth", "sales-performance", "commission-report", "membership-report", "stay-points-report", "reconciliation", "historical-import"]);
     expect(childIds("sales-group")).toEqual(["customers", "sales-contracts", "contract-review", "sales"]);
     expect(childIds("vip-products-group")).toEqual(["vip-products", "payment-schemes", "scheme-guide", "tier-codes"]);
     expect(items.some((item) => item.id === ("insights-group" as string))).toBe(false);

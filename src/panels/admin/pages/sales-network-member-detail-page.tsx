@@ -7,12 +7,13 @@ import { BadgeCheck, Briefcase, CalendarDays, FileText, History, Home, Layers, M
 import type { OrgMember } from "@/modules/organization/types";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
-import { useMembers, useSalesNetworkMemberByKey, useMemberAccreditations } from "@/data/queries";
+import { useMembers, useSalesNetworkMemberByKey, useMemberAccreditations, useSeatVacancies } from "@/data/queries";
 import { resolveEffectiveModules } from "@/data/mock/authorization";
 import { getDescendantIds } from "@/data/mock/scope";
 import { buildAuthorizedGenealogyTree } from "@/modules/sales-network/genealogy";
 import { resolveEffectiveAccreditationEligibility, getCurrentAccreditationRecord, hasAmbiguousAccreditation } from "@/modules/accreditation/eligibility";
-import { manilaToday } from "@/modules/accreditation/dates";
+import { ACCREDITATION_REMINDER_LABELS, getAccreditationReminder, manilaToday } from "@/modules/accreditation/dates";
+import { findOpenVacancy, openVacancyStartByMember } from "@/modules/sales-network/vacancy";
 import { aaDisplay, designationLabel, resolveAccreditationDisplay, teamDisplayName } from "@/modules/sales-network/display";
 import { programCategoryLabel } from "@/modules/sales-network/accredited-seller";
 import { maskGovIdNumber } from "@/shared/forms";
@@ -32,6 +33,7 @@ import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { AccreditationEligibilityTag } from "../components/accreditation-status";
+import { AccreditationRenewAction } from "../components/accreditation-renew-action";
 import { DesignationBadge, toneFromColor } from "@/shared/components/business/designation-badge";
 import { GenealogyTree } from "./sales-network-genealogy-page";
 import { humanize } from "@/shared/lib/humanize";
@@ -58,6 +60,7 @@ export function SalesNetworkMemberDetailPage() {
   const memberQuery = useSalesNetworkMemberByKey(id);
   const membersQuery = useMembers();
   const accreditationsQuery = useMemberAccreditations(memberQuery.data?.id ?? "");
+  const vacanciesQuery = useSeatVacancies();
 
   const member = memberQuery.data ?? null;
   const members = useMemo<OrgMember[]>(() => membersQuery.data ?? [], [membersQuery.data]);
@@ -65,6 +68,10 @@ export function SalesNetworkMemberDetailPage() {
   const currentAccreditation = getCurrentAccreditationRecord(accreditations);
   const ambiguousAccreditation = hasAmbiguousAccreditation(accreditations);
   const eligibility = member ? resolveEffectiveAccreditationEligibility(member, accreditations, manilaToday()) : null;
+  const reminder = getAccreditationReminder(currentAccreditation?.expiryDate ?? null, manilaToday());
+  const vacantSince = useMemo(() => openVacancyStartByMember(vacanciesQuery.data ?? []), [vacanciesQuery.data]);
+  const openVacancy = member ? findOpenVacancy(vacanciesQuery.data ?? [], member.id) : null;
+  const canRenew = identity.status === "active" && identity.roles.some((role) => role === "super_admin" || role === "admin");
   const directDownline = member ? members.filter((item) => item.parentId === member.id) : [];
   const parent = member?.parentId ? members.find((item) => item.id === member.parentId) : undefined;
   const downlineTree = useMemo(() => {
@@ -142,7 +149,8 @@ export function SalesNetworkMemberDetailPage() {
     ) : (
       <StatusBadge status={display.value === "active" ? "Accredited" : "Pending"} />
     );
-  const validityNode = eligibility ? <AccreditationEligibilityTag eligible={eligibility.eligible} /> : "—";
+  const validityNode = eligibility ? <AccreditationEligibilityTag eligible={eligibility.eligible} expired={eligibility.eligible && eligibility.expired === true} /> : "—";
+  const aaNumberHistory = currentAccreditation?.aaNumberHistory ?? [];
 
   const tabItems: AdminTabItem[] = [
     { value: "overview", label: "Overview", Icon: Home },
@@ -185,6 +193,7 @@ export function SalesNetworkMemberDetailPage() {
               <DesignationBadge designation={member.designation} full />
               <StatusBadge status={member.status} />
               {accreditationBadge}
+              {openVacancy ? <StatusBadge status={`Seat vacant since ${formatDate(openVacancy.startDate)}`} tone="warning" /> : null}
             </>
           }
           subtitle={aaDisplay(member)}
@@ -211,6 +220,7 @@ export function SalesNetworkMemberDetailPage() {
                   <StatusBadge status={member.status} />
                 </InfoItem>
                 <InfoItem term="Team">{teamDisplayName(member, members)}</InfoItem>
+                {openVacancy ? <InfoItem term="Seat">Vacant since {formatDate(openVacancy.startDate)}. No allowance is earned until it is filled; its downline counts toward the next active level above.</InfoItem> : null}
                 <InfoItem term="Parent" wide>
                   {parentDisplay}
                 </InfoItem>
@@ -225,13 +235,27 @@ export function SalesNetworkMemberDetailPage() {
                 <InfoItem term="Original Accreditation Date">{formatDate(currentAccreditation?.originalAccreditationDate)}</InfoItem>
                 <InfoItem term="Approved Start">{formatDate(currentAccreditation?.effectiveDate)}</InfoItem>
                 <InfoItem term="Approved Expiry">{formatDate(currentAccreditation?.expiryDate)}</InfoItem>
+                {reminder ? <InfoItem term="Renewal Reminder">{ACCREDITATION_REMINDER_LABELS[reminder]}</InfoItem> : null}
               </InfoGrid>
+              <AccreditationRenewAction record={currentAccreditation} memberName={member.displayName} canRenew={canRenew} />
               {ambiguousAccreditation ? (
                 <p role="note" className="tw:mt-4 tw:text-sm tw:text-muted-foreground">
                   Multiple accreditation records share the latest date; status cannot be resolved automatically.
                 </p>
               ) : null}
             </AdminSection>
+            {aaNumberHistory.length > 0 ? (
+              <AdminSection title="AA Number History" icon={History} className="tw:lg:col-span-2">
+                <ul aria-label="AA Number History" className="tw:flex tw:flex-col tw:gap-1 tw:text-sm">
+                  {aaNumberHistory.map((entry) => (
+                    <li key={entry.aaNumber}>
+                      <span className="tw:font-medium">{entry.aaNumber}</span> replaced by {entry.replacedBy} on {formatDate(entry.replacedOn)}
+                    </li>
+                  ))}
+                </ul>
+                <p className="tw:mt-3 tw:text-sm tw:text-muted-foreground">Old numbers are never deleted or issued again. A quoted old number resolves to the current one.</p>
+              </AdminSection>
+            ) : null}
           </div>
         ) : null}
 
@@ -313,6 +337,7 @@ export function SalesNetworkMemberDetailPage() {
                     members={members}
                     selectedKey={null}
                     onSelect={() => {}}
+                    vacantSince={vacantSince}
                     expandedKeys={expandedKeys}
                     onToggle={(key) => setCollapsed((previous) => (previous.includes(key) ? previous.filter((item) => item !== key) : [...previous, key]))}
                     detailed

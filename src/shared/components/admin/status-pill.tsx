@@ -38,6 +38,7 @@ const STATUS_MAP: Record<string, { tone: BadgeTone; icon?: LucideIcon }> = {
   paid: { tone: "success", icon: BadgeCheck },
   draft: { tone: "warning", icon: Pencil },
   returned: { tone: "warning", icon: Pencil },
+  sent_back: { tone: "warning", icon: Pencil },
   pending: { tone: "warning", icon: Clock },
   on_hold: { tone: "warning", icon: Hourglass },
   due: { tone: "warning", icon: Clock },

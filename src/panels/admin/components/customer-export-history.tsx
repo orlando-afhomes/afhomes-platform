@@ -23,6 +23,9 @@ export const EXPORT_STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
   { value: "draft", label: "Draft" },
   { value: "submitted", label: "Submitted" },
+  { value: "approved", label: "Approved" },
+  { value: "sent_back", label: "Sent back" },
+  { value: "rejected", label: "Rejected" },
   { value: "active_member", label: "Active Member" },
   { value: "inactive", label: "Inactive" },
 ];

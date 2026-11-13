@@ -1,4 +1,6 @@
 import {
+  FileUp,
+  Scale,
   LayoutDashboard,
   Building2,
   Briefcase,
@@ -41,6 +43,9 @@ import {
   UserCheck,
   Banknote,
   ListChecks,
+  BedDouble,
+  Hotel,
+  Table2,
   type LucideIcon,
 } from "lucide-react";
 import type { AdminNavKey } from "../navigation";
@@ -88,8 +93,13 @@ export const ADMIN_NAV_ICONS: Partial<Record<AdminNavKey, LucideIcon>> = {
   "membership-activation": ListChecks,
   membership: IdCard,
   "stay-points": Coins,
+  "redemption-group": Hotel,
+  redemption: BedDouble,
+  "redemption-table": Table2,
   "membership-report": UsersRound,
   "stay-points-report": ChartLine,
+  reconciliation: Scale,
+  "historical-import": FileUp,
   reports: BarChart3,
   "audit-logs": ScrollText,
 };

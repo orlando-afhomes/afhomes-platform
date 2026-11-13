@@ -26,6 +26,8 @@ export function AccreditationExpiryTag({ state }: { state: ExpiryState }) {
   return <ToneBadge tone={EXPIRY_TONES[state]}>{EXPIRY_LABELS[state]}</ToneBadge>;
 }
 
-export function AccreditationEligibilityTag({ eligible }: { eligible: boolean }) {
+/** An expired seller stays eligible to sell, refer and sponsor, with a renewal reminder (doc 03 section 9). */
+export function AccreditationEligibilityTag({ eligible, expired = false }: { eligible: boolean; expired?: boolean }) {
+  if (eligible && expired) return <StatusBadge status="Eligible, renewal due" tone="warning" />;
   return <StatusBadge status={eligible ? "Eligible" : "Ineligible"} tone={eligible ? "success" : "danger"} />;
 }

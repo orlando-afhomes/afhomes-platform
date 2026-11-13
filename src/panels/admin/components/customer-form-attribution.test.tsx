@@ -16,8 +16,8 @@ const seedPendingIds = pendingAttributionMemberIds(store.accreditations);
 
 afterEach(cleanup);
 
-/** The two searchable OST comboboxes, in DOM order: recommender then referrer. */
-function ostCombos() {
+/** The searchable seller comboboxes in DOM order: closing seller (office only) then referrer. */
+function sellerCombos() {
   return screen.getAllByRole("combobox") as HTMLInputElement[];
 }
 
@@ -27,148 +27,131 @@ function Harness({
   members: roster = members,
   existing: onFile = existing,
   pendingOstIds = seedPendingIds,
+  office = true,
 }: {
   initial?: Partial<CustomerDraft>;
   errors?: CustomerErrors;
   members?: readonly OrgMember[];
   existing?: readonly Customer[];
   pendingOstIds?: ReadonlySet<string> | null;
+  office?: boolean;
 }) {
   const [draft, setDraft] = useState<CustomerDraft>(() => ({ ...toDraft(), ...initial }));
   const set: SetDraft = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
-  return <AttributionSection draft={draft} set={set} errors={errors} members={roster} existing={onFile} pendingOstIds={pendingOstIds} />;
+  return <AttributionSection draft={draft} set={set} errors={errors} members={roster} existing={onFile} pendingOstIds={pendingOstIds} office={office} />;
 }
 
-async function pickOst(user: ReturnType<typeof userEvent.setup>, index: number, filter: string, name: RegExp) {
-  await user.click(ostCombos()[index]);
-  await user.type(ostCombos()[index], filter);
+/** Looked up by name each time: an open popup hides the other combobox from the accessibility tree. */
+async function pickSeller(user: ReturnType<typeof userEvent.setup>, field: "Closing seller" | "Referrer / VIP Recommender", filter: string, name: RegExp) {
+  const input = screen.getByRole("combobox", { name: field });
+  await user.click(input);
+  await user.type(input, filter);
   await user.click(await screen.findByRole("option", { name }));
 }
 
 describe("sales attribution section", () => {
-  it.each([0, 1])("offers all three seeded OSTs in default picker %i", async (index) => {
+  it.each([0, 1])("offers the active sellers without pending accreditation in picker %i", async (index) => {
     const user = userEvent.setup();
     render(<Harness />);
-    await user.click(ostCombos()[index]);
+    await user.click(sellerCombos()[index]);
     for (const name of [/Ana Mendoza/, /Mark Villanueva/, /Paolo Ramos/]) {
       expect(screen.getByRole("option", { name })).toBeVisible();
     }
   });
 
-  it.each([0, 1])("excludes pending OSTs from picker %i", async (index) => {
+  it.each([0, 1])("excludes pending sellers from picker %i", async (index) => {
     const user = userEvent.setup();
     const accreditations = store.accreditations.map((record) =>
       record.memberId === "mem-ost-a1" ? { ...record, adminStatus: "pending" as const } : record,
     );
-    const teamAlab = members.filter((member) => member.branchId === "branch-a");
-    render(<Harness members={teamAlab} pendingOstIds={pendingAttributionMemberIds(accreditations)} />);
-    await user.click(ostCombos()[index]);
+    render(<Harness pendingOstIds={pendingAttributionMemberIds(accreditations)} />);
+    await user.click(sellerCombos()[index]);
     expect(screen.queryByRole("option", { name: /Ana Mendoza/ })).toBeNull();
     expect(screen.getByRole("option", { name: /Mark Villanueva/ })).toBeVisible();
-    expect(screen.queryByRole("option", { name: /Paolo Ramos/ })).toBeNull();
   });
 
-  it("shows a restored pending selection as invalid and allows clearing it", async () => {
+  it("offers an IST who is not pending as a closing seller", async () => {
     const user = userEvent.setup();
-    render(<Harness initial={{ recommenderMemberId: "mem-ost-a1" }} pendingOstIds={new Set(["mem-ost-a1"])} />);
-    expect(ostCombos()[0]).toHaveAccessibleDescription(/pending accreditation/i);
-    await user.click(ostCombos()[0]);
-    await user.click(screen.getByRole("option", { name: "No recommender" }));
-    expect(ostCombos()[0]).not.toHaveAttribute("aria-invalid", "true");
+    const accreditations = store.accreditations.map((record) => (record.memberId === "mem-ssm-a" ? { ...record, adminStatus: "active" as const } : record));
+    render(<Harness pendingOstIds={pendingAttributionMemberIds(accreditations)} />);
+    await user.click(sellerCombos()[0]);
+    expect(screen.getByRole("option", { name: /Maria Santos/ })).toBeVisible();
+  });
+
+  it("shows a restored pending referrer as invalid and allows clearing it", async () => {
+    const user = userEvent.setup();
+    render(<Harness initial={{ referrerMemberId: "mem-ost-a1", recommenderMemberId: "mem-ost-a1" }} pendingOstIds={new Set(["mem-ost-a1"])} />);
+    expect(sellerCombos()[1]).toHaveAccessibleDescription(/pending accreditation/i);
+    await user.click(sellerCombos()[1]);
+    await user.click(screen.getByRole("option", { name: "No referrer" }));
+    expect(sellerCombos()[1]).not.toHaveAttribute("aria-invalid", "true");
   });
 
   it("disables both pickers when accreditation cannot be checked and lets users clear saved selections", async () => {
     const user = userEvent.setup();
-    render(<Harness pendingOstIds={null} initial={{ referrerMemberId: "mem-ost-a1" }} />);
-    expect(ostCombos()[0]).toBeDisabled();
-    expect(ostCombos()[1]).toBeDisabled();
-    expect(ostCombos()[1]).toHaveAccessibleDescription(/could not be checked/i);
-    await user.click(screen.getByRole("button", { name: "Clear OST selections" }));
-    expect(ostCombos()[1]).not.toHaveAttribute("aria-invalid", "true");
-    expect(screen.queryByRole("button", { name: "Clear OST selections" })).toBeNull();
+    render(<Harness pendingOstIds={null} initial={{ referrerMemberId: "mem-ost-a1", ownerMemberId: "mem-ost-a2" }} />);
+    expect(sellerCombos()[0]).toBeDisabled();
+    expect(sellerCombos()[1]).toBeDisabled();
+    expect(sellerCombos()[1]).toHaveAccessibleDescription(/could not be checked/i);
+    await user.click(screen.getByRole("button", { name: "Clear seller selections" }));
+    expect(sellerCombos()[1]).not.toHaveAttribute("aria-invalid", "true");
+    expect(screen.queryByRole("button", { name: "Clear seller selections" })).toBeNull();
   });
 
-  it("labels the pair as OST (Recommender) and OST (Referrer) and drops the old labels and derived hint", () => {
+  it("labels the pair Closing seller and Referrer / VIP Recommender", () => {
     render(<Harness />);
-
-    expect(screen.getByRole("combobox", { name: "OST (Recommender)" })).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "OST (Referrer)" })).toBeInTheDocument();
-    expect(screen.queryByRole("combobox", { name: /VIP recommender/i })).toBeNull();
-    expect(screen.queryByRole("combobox", { name: /^Recommender/i })).toBeNull();
-    expect(screen.queryByRole("combobox", { name: /^Referrer/i })).toBeNull();
-    expect(screen.queryByText(/VIP recommender/i)).toBeNull();
-    expect(screen.queryByText(/SM, SSM, and SVD are derived/i)).toBeNull();
+    expect(screen.getByRole("combobox", { name: "Closing seller" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Referrer / VIP Recommender" })).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: /OST \(/ })).toBeNull();
   });
 
-  it("defaults the referrer from the recommender and derives the seed SM, SSM, and SVD", async () => {
+  it("keeps the closing seller and the referrer separate and derives the upline from the closing seller", async () => {
     const user = userEvent.setup();
     render(<Harness />);
-    expect(screen.queryByText(/owning seller/i)).toBeNull();
-    expect(screen.queryByRole("combobox", { name: /owning seller/i })).toBeNull();
 
-    await pickOst(user, 0, "Ana", /Ana Mendoza/);
-
-    expect(ostCombos()[1]).toHaveValue("Ana Mendoza · AAO26100004");
+    await pickSeller(user, "Closing seller", "Ana", /Ana Mendoza/);
+    expect(sellerCombos()[0]).toHaveValue("Ana Mendoza · AAO26100004 (OST)");
+    expect(sellerCombos()[1]).toHaveValue("");
     expect(screen.getByLabelText("SM")).toHaveValue("Jose Reyes Jr. · AAI26100003");
     expect(screen.getByLabelText("SSM")).toHaveValue("Maria Santos · AAI26100002");
     expect(screen.getByLabelText("SVD")).toHaveValue("Ramon Del Rosario · AAI26100001");
+
+    // A referrer from another team is allowed and does not change the closing seller.
+    await pickSeller(user, "Referrer / VIP Recommender", "Paolo", /Paolo Ramos/);
+    expect(sellerCombos()[1]).toHaveValue("Paolo Ramos · AAO26100007 (OST)");
+    expect(sellerCombos()[0]).toHaveValue("Ana Mendoza · AAO26100004 (OST)");
+    expect(screen.queryByLabelText("Dated referral reference")).toBeNull();
   });
 
-  it("shows an em dash for SM and SSM when the OST reports straight to the SVD", async () => {
+  it("shows an em dash for SM and SSM when the closing OST reports straight to the SVD", async () => {
     const user = userEvent.setup();
     render(<Harness />);
-
-    await pickOst(user, 0, "Mark", /Mark Villanueva/);
-
-    expect(ostCombos()[1]).toHaveValue("Mark Villanueva · AAO26100005");
+    await pickSeller(user, "Closing seller", "Mark", /Mark Villanueva/);
     expect(screen.getByLabelText("SM")).toHaveValue("—");
     expect(screen.getByLabelText("SSM")).toHaveValue("—");
     expect(screen.getByLabelText("SVD")).toHaveValue("Ramon Del Rosario · AAI26100001");
   });
 
-  it("limits the referrer list to the recommender's team", async () => {
+  it("asks the office for a dated referral reference when the closing seller is also the referrer", async () => {
     const user = userEvent.setup();
-    render(<Harness />);
-
-    await pickOst(user, 0, "Ana", /Ana Mendoza/);
-    expect(ostCombos()[1]).toHaveValue("Ana Mendoza · AAO26100004");
-
-    // Cleared text leaves the team filter in place: only Team Alab is offered.
-    const referrer = ostCombos()[1];
-    await user.clear(referrer);
-    await user.click(referrer);
-
-    expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual([
-      "No referrer",
-      "Ana Mendoza · AAO26100004",
-      "Mark Villanueva · AAO26100005",
-    ]);
-    expect(screen.queryByRole("option", { name: /Paolo Ramos/ })).toBeNull();
-
-    // A same-team pick is kept.
-    await user.click(screen.getByRole("option", { name: /Mark Villanueva/ }));
-    expect(ostCombos()[1]).toHaveValue("Mark Villanueva · AAO26100005");
-    expect(ostCombos()[0]).toHaveValue("Ana Mendoza · AAO26100004");
+    render(<Harness initial={{ ownerMemberId: "mem-ost-a1" }} />);
+    expect(screen.queryByLabelText("Dated referral reference")).toBeNull();
+    await pickSeller(user, "Referrer / VIP Recommender", "Ana", /Ana Mendoza/);
+    await user.type(screen.getByLabelText("Dated referral reference"), "FB lead 2026-10-30");
+    expect(screen.getByLabelText("Dated referral reference")).toHaveValue("FB lead 2026-10-30");
   });
 
-  it("swaps the recommender to the referrer's team when a cross-team referrer is picked", async () => {
-    const user = userEvent.setup();
-    // A scoped roster can leave a team's SVD root unloaded, so the recommender's
-    // team cannot be resolved and the Referrer list falls back to the full OST
-    // roster. Picking another team's OST then repairs the pair.
-    const partialRoster = members.filter((member) => member.id !== "mem-svd-a");
-    render(<Harness members={partialRoster} />);
+  it("shows a seller only their own read-only closing seller and no referral reference field", () => {
+    render(<Harness office={false} initial={{ ownerMemberId: "mem-ost-a1", referrerMemberId: "mem-ost-a1", recommenderMemberId: "mem-ost-a1" }} />);
+    expect(screen.getAllByRole("combobox")).toHaveLength(1);
+    expect(screen.getByLabelText("Closing seller")).toBeDisabled();
+    expect(screen.queryByLabelText("Dated referral reference")).toBeNull();
+  });
 
-    await pickOst(user, 0, "Ana", /Ana Mendoza/);
-    expect(ostCombos()[1]).toHaveValue("Ana Mendoza · AAO26100004");
-
-    await user.clear(ostCombos()[1]);
-    await user.type(ostCombos()[1], "Paolo");
-    await user.click(await screen.findByRole("option", { name: /Paolo Ramos/ }));
-
-    expect(ostCombos()[1]).toHaveValue("Paolo Ramos · AAO26100007");
-    expect(ostCombos()[0]).toHaveValue("Paolo Ramos · AAO26100007");
-    expect(screen.getByLabelText("SVD")).toHaveValue("Liza Aquino · AAI26100006");
+  it("sends the chosen closing seller and keeps the referrer fields in step", () => {
+    const input = toInput({ ...toDraft(), ownerMemberId: "mem-ost-a1", referrerMemberId: "mem-ost-a2", recommenderMemberId: "mem-ost-a2", referralReference: " ref " });
+    expect(input).toMatchObject({ ownerMemberId: "mem-ost-a1", referrerMemberId: "mem-ost-a2", recommenderMemberId: "mem-ost-a2", referralReference: "ref" });
+    expect(toInput(toDraft()).ownerMemberId).toBeUndefined();
   });
 
   it("previews the next automatic Customer ID without assigning it", () => {

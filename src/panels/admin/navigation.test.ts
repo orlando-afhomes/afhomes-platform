@@ -35,14 +35,16 @@ describe("admin navigation", () => {
     expect(getAvailableAdminNavigation().some((item) => item.href === "/admin")).toBe(true);
   });
 
-  it("lists the business modules and keeps Redemption and Services out of navigation", () => {
+  it("lists the business modules and lists Redemption but no Services entry", () => {
     const items = getAvailableAdminNavigation();
     const hrefs = items.flatMap((item) => [item.href, ...(item.children ?? []).map((child) => child.href)]);
     for (const href of ["/admin/customers", "/admin/vip-products", "/admin/sales", "/admin/finance", "/admin/commissions", "/admin/membership", "/admin/stay-points", "/admin/audit-logs"]) {
       expect(hrefs).toContain(href);
     }
     expect(hrefs).not.toContain("/admin/reports");
-    expect(JSON.stringify(items).toLowerCase()).not.toMatch(/redemption|services/);
+    // Owner authorized Redemption on 2026-11-13; doc 10 defines no separate Services workflow, so none is listed.
+    expect(hrefs).toEqual(expect.arrayContaining(["/admin/redemption", "/admin/redemption/points-table"]));
+    expect(JSON.stringify(items).toLowerCase()).not.toMatch(/services/);
   });
 
   it("uses one unique key and href per navigation item", () => {
@@ -64,12 +66,13 @@ describe("admin navigation", () => {
     expect(visibleTree("dev-super-admin")).toEqual({
       dashboard: null,
       organization: ["departments", "roles", "staff"],
-      "sales-network": ["sales-network-members", "sales-network-genealogy"],
+      "sales-network": ["sales-network-members", "sales-network-genealogy", "accreditation-registrations"],
       "sales-group": SALES_ALL,
       "vip-products-group": VIP_ALL,
       "finance-group": ["finance", "collections", "commission-assignment", "commissions", "commission-payouts", "payment-history", "financial-holds", "cancellation-requests"],
       "membership-group": ["membership-activation", "membership", "stay-points"],
-      "reports-group": ["customer-growth", "sales-performance", "collections-report", "commission-report", "membership-report", "stay-points-report"],
+      "redemption-group": ["redemption", "redemption-table"],
+      "reports-group": ["customer-growth", "sales-performance", "collections-report", "commission-report", "membership-report", "stay-points-report", "reconciliation", "historical-import"],
       "audit-logs": null,
     });
   });
@@ -78,12 +81,13 @@ describe("admin navigation", () => {
     expect(visibleTree("dev-admin")).toEqual({
       dashboard: null,
       organization: ["departments", "roles", "staff"],
-      "sales-network": ["sales-network-members", "sales-network-genealogy"],
+      "sales-network": ["sales-network-members", "sales-network-genealogy", "accreditation-registrations"],
       "sales-group": SALES_ALL,
       "vip-products-group": VIP_ALL,
       "finance-group": ["commission-assignment", "commissions"],
       "membership-group": ["membership-activation", "membership", "stay-points"],
-      "reports-group": ["customer-growth", "sales-performance", "commission-report", "membership-report", "stay-points-report"],
+      "redemption-group": ["redemption", "redemption-table"],
+      "reports-group": ["customer-growth", "sales-performance", "commission-report", "membership-report", "stay-points-report", "reconciliation", "historical-import"],
       "audit-logs": null,
     });
   });
@@ -93,7 +97,8 @@ describe("admin navigation", () => {
       dashboard: null,
       "finance-group": ["finance", "collections", "commission-assignment", "commissions", "commission-payouts", "payment-history", "financial-holds", "cancellation-requests"],
       "membership-group": ["membership-activation", "membership", "stay-points"],
-      "reports-group": ["customer-growth", "sales-performance", "collections-report", "commission-report", "membership-report", "stay-points-report"],
+      "redemption-group": ["redemption"],
+      "reports-group": ["customer-growth", "sales-performance", "collections-report", "commission-report", "membership-report", "stay-points-report", "reconciliation"],
     });
   });
 

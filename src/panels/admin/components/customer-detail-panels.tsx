@@ -89,7 +89,7 @@ function Fact({
         <Icon aria-hidden="true" className="tw:size-4 tw:shrink-0" />
         <span className="tw:truncate">{term}</span>
       </dt>
-      <dd className="tw:m-0 tw:min-w-0 tw:flex-1 tw:break-words tw:text-sm tw:font-medium tw:text-foreground">{children}</dd>
+      <dd className="tw:m-0 tw:min-w-0 tw:flex-1 tw:wrap-break-word tw:text-sm tw:font-medium tw:text-foreground">{children}</dd>
     </div>
   );
 }
@@ -434,7 +434,7 @@ function FactsTable({ rows }: { rows: readonly CustomerDetailFact[] }) {
           className="tw:flex tw:items-start tw:gap-3 tw:border-b tw:border-border tw:py-2.5 tw:last:border-b-0"
         >
           <dt className="tw:w-40 tw:shrink-0 tw:text-sm tw:text-muted-foreground">{row.label}</dt>
-          <dd className="tw:m-0 tw:min-w-0 tw:flex-1 tw:break-words tw:text-sm tw:font-medium tw:text-foreground">
+          <dd className="tw:m-0 tw:min-w-0 tw:flex-1 tw:wrap-break-word tw:text-sm tw:font-medium tw:text-foreground">
             {row.value}
           </dd>
         </div>
@@ -510,7 +510,7 @@ export function MembershipTabPanel({
             <CreditCard aria-hidden="true" className="tw:size-4 tw:shrink-0" />
             Card ID
           </dt>
-          <dd className="tw:m-0 tw:min-w-0 tw:flex-1 tw:break-words tw:text-sm tw:font-medium tw:text-foreground">
+          <dd className="tw:m-0 tw:min-w-0 tw:flex-1 tw:wrap-break-word tw:text-sm tw:font-medium tw:text-foreground">
             {cardId ?? "—"}
           </dd>
         </div>
@@ -519,7 +519,7 @@ export function MembershipTabPanel({
             <CalendarDays aria-hidden="true" className="tw:size-4 tw:shrink-0" />
             Valid Until
           </dt>
-          <dd className="tw:m-0 tw:min-w-0 tw:flex-1 tw:break-words tw:text-sm tw:font-medium tw:text-foreground">
+          <dd className="tw:m-0 tw:min-w-0 tw:flex-1 tw:wrap-break-word tw:text-sm tw:font-medium tw:text-foreground">
             {formatDate(validUntil)}
           </dd>
         </div>

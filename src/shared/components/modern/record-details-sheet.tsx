@@ -88,7 +88,7 @@ export function RecordDetailsSheet({
                     className={cn("tw:flex tw:min-w-0 tw:flex-col tw:gap-0.5", row.wide && "tw:sm:col-span-2")}
                   >
                     <dt className="tw:text-xs tw:text-muted-foreground">{row.label}</dt>
-                    <dd className="tw:m-0 tw:text-sm tw:font-medium tw:break-words tw:text-foreground tw:tabular-nums">
+                    <dd className="tw:m-0 tw:text-sm tw:font-medium tw:wrap-break-word tw:text-foreground tw:tabular-nums">
                       {row.value === null || row.value === undefined || row.value === "" ? "—" : row.value}
                     </dd>
                   </div>
@@ -107,10 +107,10 @@ export function RecordDetailsSheet({
                   <li key={item.key} className="tw:relative tw:flex tw:flex-col tw:gap-0.5">
                     <span
                       aria-hidden="true"
-                      className="tw:absolute tw:top-1.5 tw:-left-[1.625rem] tw:size-2 tw:rounded-full tw:bg-primary tw:ring-4 tw:ring-background"
+                      className="tw:absolute tw:top-1.5 tw:-left-6.5 tw:size-2 tw:rounded-full tw:bg-primary tw:ring-4 tw:ring-background"
                     />
                     <span className="tw:text-xs tw:text-muted-foreground tw:tabular-nums">{item.when}</span>
-                    <span className="tw:text-sm tw:break-words">{item.text}</span>
+                    <span className="tw:text-sm tw:wrap-break-word">{item.text}</span>
                   </li>
                 ))}
               </ol>

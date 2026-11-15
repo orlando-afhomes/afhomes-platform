@@ -71,7 +71,7 @@ function Comparison({ current, previous, comparable }: { current: number; previo
   if (current === previous) return <p className="tw:m-0 tw:text-xs tw:text-muted-foreground">No change vs previous period</p>;
   const up = current > previous;
   return (
-    <p className={cn("tw:m-0 tw:text-xs tw:font-medium", up ? "tw:text-[var(--color-success-strong)]" : "tw:text-destructive")}>
+    <p className={cn("tw:m-0 tw:text-xs tw:font-medium", up ? "tw:text-(--color-success-strong)" : "tw:text-destructive")}>
       <span aria-hidden="true">{up ? "▲" : "▼"} {percent}% vs previous period</span>
       <span className="tw:sr-only">{up ? "Up" : "Down"} {percent}% vs previous period</span>
     </p>

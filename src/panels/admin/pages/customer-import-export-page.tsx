@@ -94,7 +94,7 @@ function ImportSteps() {
   const columns = useMemo<ColumnDef<CustomerImportRow, unknown>[]>(
     () => [
       { id: "row", header: "Row", cell: ({ row }) => row.original.rowNumber },
-      { id: "name", header: "Customer", cell: ({ row }) => <span className="tw:block tw:max-w-[9rem] tw:truncate tw:font-semibold" title={row.original.displayName}>{row.original.displayName}</span> },
+      { id: "name", header: "Customer", cell: ({ row }) => <span className="tw:block tw:max-w-36 tw:truncate tw:font-semibold" title={row.original.displayName}>{row.original.displayName}</span> },
       { id: "status", header: "Result", cell: ({ row }) => <BizBadge {...ROW_BADGE[row.original.status]} /> },
       { id: "issues", header: "Problems", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.errors.length + row.original.warnings.length || "—" },
     ],

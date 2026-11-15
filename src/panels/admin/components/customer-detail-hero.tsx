@@ -37,27 +37,27 @@ export function CustomerDetailHero({
   return (
     <section
       aria-label={`Customer summary for ${displayName}`}
-      className="customer-detail-hero tw:flex tw:flex-col tw:gap-6 tw:rounded-2xl tw:bg-[var(--color-brand-soft)] tw:px-5 tw:py-5 tw:sm:px-6 tw:lg:flex-row tw:lg:items-center"
+      className="customer-detail-hero tw:flex tw:flex-col tw:gap-6 tw:rounded-2xl tw:bg-(--color-brand-soft) tw:px-5 tw:py-5 tw:sm:px-6 tw:lg:flex-row tw:lg:items-center"
     >
       <div className="customer-detail-hero__identity tw:flex tw:items-center tw:gap-4 tw:lg:max-w-md tw:lg:flex-1">
         <span
           aria-hidden="true"
-          className="customer-detail-hero__avatar tw:flex tw:size-16 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-full tw:bg-[var(--color-bg-surface-raised)] tw:text-[var(--color-brand-primary)]"
+          className="customer-detail-hero__avatar tw:flex tw:size-16 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-full tw:bg-(--color-bg-surface-raised) tw:text-(--color-brand-primary)"
         >
           <User className="tw:size-8" />
         </span>
         <div className="customer-detail-hero__summary tw:min-w-0">
-          <h2 className="customer-detail-hero__name tw:truncate tw:text-xl tw:font-bold tw:text-[var(--color-text-primary)]">
+          <h2 className="customer-detail-hero__name tw:truncate tw:text-xl tw:font-bold tw:text-(--color-text-primary)">
             {displayName}
           </h2>
           <p className="customer-detail-hero__pills tw:mt-1.5 tw:flex tw:flex-wrap tw:items-center tw:gap-2">
             <BizBadge status={status} />
-            <span className="customer-detail-hero__vip tw:inline-flex tw:min-h-6 tw:items-center tw:gap-1 tw:rounded-full tw:bg-[var(--color-accent-soft)] tw:px-2.5 tw:py-0.5 tw:text-xs tw:font-semibold tw:text-[var(--color-accent-strong)]">
+            <span className="customer-detail-hero__vip tw:inline-flex tw:min-h-6 tw:items-center tw:gap-1 tw:rounded-full tw:bg-(--color-accent-soft) tw:px-2.5 tw:py-0.5 tw:text-xs tw:font-semibold tw:text-(--color-accent-strong)">
               <Crown aria-hidden="true" className="tw:size-3.5" />
               {vipPlan ? `VIP ${vipPlan}` : "VIP —"}
             </span>
           </p>
-          <p className="customer-detail-hero__id tw:mt-1.5 tw:text-sm tw:text-[var(--color-text-secondary)]">
+          <p className="customer-detail-hero__id tw:mt-1.5 tw:text-sm tw:text-(--color-text-secondary)">
             Customer ID: {customerNumber ?? "—"}
           </p>
         </div>
@@ -65,16 +65,16 @@ export function CustomerDetailHero({
 
       <div
         aria-hidden="true"
-        className="customer-detail-hero__divider tw:hidden tw:w-px tw:self-stretch tw:bg-[var(--color-border-default)] tw:lg:block"
+        className="customer-detail-hero__divider tw:hidden tw:w-px tw:self-stretch tw:bg-(--color-border-default) tw:lg:block"
       />
 
       <dl className="customer-detail-hero__meta tw:grid tw:grid-cols-1 tw:gap-4 tw:sm:grid-cols-3 tw:lg:flex-1">
         {meta.map(({ label, value, Icon }) => (
           <div key={label} className="customer-detail-hero__meta-item tw:flex tw:items-start tw:gap-2.5">
-            <Icon aria-hidden="true" className="tw:mt-0.5 tw:size-5 tw:shrink-0 tw:text-[var(--color-brand-primary)]" />
+            <Icon aria-hidden="true" className="tw:mt-0.5 tw:size-5 tw:shrink-0 tw:text-(--color-brand-primary)" />
             <div className="tw:min-w-0">
-              <dt className="tw:text-xs tw:font-medium tw:text-[var(--color-text-muted)]">{label}</dt>
-              <dd className="tw:truncate tw:text-sm tw:font-semibold tw:text-[var(--color-text-primary)]">{value}</dd>
+              <dt className="tw:text-xs tw:font-medium tw:text-(--color-text-muted)">{label}</dt>
+              <dd className="tw:truncate tw:text-sm tw:font-semibold tw:text-(--color-text-primary)">{value}</dd>
             </div>
           </div>
         ))}

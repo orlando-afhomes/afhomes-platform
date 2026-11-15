@@ -38,7 +38,7 @@ type User = ReturnType<typeof userEvent.setup>;
 const rowFor = (name: string) => screen.getByText(name).closest("tr")!;
 const rowKeys = () => [...document.querySelectorAll("tbody tr[data-row-key]")].map((row) => row.getAttribute("data-row-key"));
 
-async function clickRowAction(user: User, row: HTMLElement, action: "View" | "Edit" | "Delete") {
+async function clickRowAction(user: User, row: HTMLElement, action: "View full details" | "Edit" | "Delete") {
   await user.click(within(row).getByRole("button", { name: /actions for/i }));
   await user.click(await screen.findByRole("menuitem", { name: action }));
 }
@@ -66,7 +66,7 @@ describe("departments page", () => {
     expect(screen.getByText("Finance")).toBeInTheDocument();
     const hr = within(rowFor("Human Resources")).getAllByRole("cell");
     expect(hr.map((cell) => cell.textContent)).toEqual(expect.arrayContaining(["Human Resources", "Active"]));
-    expect(screen.getByRole("columnheader", { name: "Department Name" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Name" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Departments" })).toBeInTheDocument();
   });
 

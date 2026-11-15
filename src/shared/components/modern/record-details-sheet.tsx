@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
+import { cn } from "@/shared/lib/utils";
 import { DetailList, DetailRow } from "./detail-list";
 
 export type DetailSection = {
@@ -25,6 +26,7 @@ export function RecordDetailsSheet({
   sections,
   history,
   footer,
+  size = "md",
 }: {
   open: boolean;
   onClose: () => void;
@@ -34,10 +36,17 @@ export function RecordDetailsSheet({
   sections: ReadonlyArray<DetailSection>;
   history?: ReadonlyArray<DetailHistoryItem>;
   footer?: ReactNode;
+  /** Panel width from the sm breakpoint: "md" (default) or "lg" for wide records. */
+  size?: "md" | "lg";
 }) {
   return (
     <Sheet open={open} onOpenChange={(next) => (next ? undefined : onClose())}>
-      <SheetContent className="record-details tw:overflow-y-auto tw:data-[side=right]:w-full tw:sm:data-[side=right]:max-w-md">
+      <SheetContent
+        className={cn(
+          "record-details tw:overflow-y-auto tw:data-[side=right]:w-full",
+          size === "lg" ? "tw:sm:data-[side=right]:max-w-2xl" : "tw:sm:data-[side=right]:max-w-md",
+        )}
+      >
         <SheetHeader className="tw:gap-2 tw:border-b tw:border-border tw:pr-12">
           <SheetTitle className="tw:text-lg tw:font-semibold tw:tracking-tight">{title}</SheetTitle>
           {subtitle ? <SheetDescription>{subtitle}</SheetDescription> : null}

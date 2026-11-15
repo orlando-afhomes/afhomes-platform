@@ -1,11 +1,11 @@
 import type { Promo } from "./types";
 
-/** One sample promo so the Promo Points screens have something to show. Marked as sample. */
+/** One sample promo so the Promo Points screens have something to show. Flagged `sample` in data only. */
 export function seedPromos(): Promo[] {
   return [
     {
       id: "promo-1",
-      name: "Teppanyaki Dining Points (sample)",
+      name: "Teppanyaki Dining Points",
       status: "active",
       startDate: "2026-11-01",
       endDate: "2026-12-31",

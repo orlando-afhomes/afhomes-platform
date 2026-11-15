@@ -17,6 +17,13 @@ import { matchesSearch, optionsFrom } from "@/shared/lib/search";
 import { useContractHref } from "./use-contract-href";
 import { CardServiceDialog } from "./card-service-dialog";
 
+/** A Financial Hold is shown as the membership's status (one badge, one filter value). */
+const statusKey = (item: MembershipView) => (item.financialHold ? "financial_hold" : item.status);
+const statusLabel = (key: string) => (key === "financial_hold" ? "Financial Hold" : humanize(key));
+function MembershipStatusBadge({ item }: { item: MembershipView }) {
+  return item.financialHold ? <BizBadge status="on_hold" label="Financial Hold" /> : <BizBadge status={item.status} />;
+}
+
 /** Membership table with its details sheet and the Activate action (gated by membership.activate). Shared by Memberships and Activation Queue. */
 export function MembershipTable({ data, caption, emptyText }: { data: MembershipView[]; caption: string; emptyText: string }) {
   const memberships = useMemberships();
@@ -33,20 +40,19 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
   const [planFilter, setPlanFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const visible = useMemo(
-    () => data.filter((item) => (planFilter === "all" || item.productName === planFilter) && (statusFilter === "all" || item.status === statusFilter) && matchesSearch(search, item.customerName, item.cardId)),
+    () => data.filter((item) => (planFilter === "all" || item.productName === planFilter) && (statusFilter === "all" || statusKey(item) === statusFilter) && matchesSearch(search, item.customerName, item.cardId)),
     [data, search, planFilter, statusFilter],
   );
   const planOptions = useMemo(() => optionsFrom("All plans", data.map((item) => item.productName)), [data]);
-  const statusOptions = useMemo(() => optionsFrom("All statuses", data.map((item) => item.status), humanize), [data]);
+  const statusOptions = useMemo(() => optionsFrom("All statuses", data.map(statusKey), statusLabel), [data]);
 
   const columns = useMemo<ColumnDef<MembershipView, unknown>[]>(
     () => [
       { id: "customer", header: "Customer", cell: ({ row }) => <Link href={contractHref(row.original.contractId)} className="tw:font-semibold tw:underline-offset-4 tw:hover:underline">{row.original.customerName}</Link> },
-      { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => `${row.original.productName}` },
-      { id: "card", header: "Card ID", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => <span className="tw:font-mono">{row.original.cardId ?? "Not issued"}</span> },
+      { id: "card", header: "Card number", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => <span className="tw:font-mono">{row.original.cardId ?? "Not issued"}</span> },
+      { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.productName },
+      { id: "status", header: "Status", cell: ({ row }) => <MembershipStatusBadge item={row.original} /> },
       { id: "activation", header: "Activated", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => formatDate(row.original.activationDate) },
-      { id: "valid", header: "Valid until", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => formatDate(row.original.validityEndDate) },
-      { id: "status", header: "Status", cell: ({ row }) => <div className="tw:flex tw:flex-col tw:gap-1"><BizBadge status={row.original.status} />{row.original.financialHold ? <BizBadge status="on_hold" label="Financial Hold" /> : null}</div> },
     ],
     [contractHref],
   );
@@ -83,14 +89,15 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
         onClose={() => setDetailId(null)}
         title={detail?.customerName ?? "Membership"}
         subtitle={detail?.productName}
-        badge={detail ? <div className="tw:flex tw:flex-wrap tw:gap-1"><BizBadge status={detail.status} />{detail.financialHold ? <BizBadge status="on_hold" label="Financial Hold" /> : null}</div> : undefined}
+        badge={detail ? <MembershipStatusBadge item={detail} /> : undefined}
         sections={
           detail
             ? [
                 {
                   title: "Membership",
                   rows: [
-                    { label: "Card ID", value: detail.cardId ? <span className="tw:font-mono">{detail.cardId}</span> : "Not issued" },
+                    ...(detail.financialHold ? [{ label: "Membership status", value: <BizBadge status={detail.status} /> }] : []),
+                    { label: "Card number", value: detail.cardId ? <span className="tw:font-mono">{detail.cardId}</span> : "Not issued" },
                     { label: "Activated", value: detail.activationDate ? formatDate(detail.activationDate) : null },
                     { label: "Card Claim Date", value: detail.cardClaimDate ? `${formatDate(detail.cardClaimDate)}${detail.cardClaimKind === "deemed" ? " (deemed)" : ""}` : null },
                     { label: "Valid until", value: detail.validityEndDate ? formatDate(detail.validityEndDate) : null },

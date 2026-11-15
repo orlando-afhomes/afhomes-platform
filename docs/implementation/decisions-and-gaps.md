@@ -169,13 +169,22 @@ The owner answered the questions raised by the documentation audit on 2026-11-12
 - **P5, uses.** Staff record each use at a redeem outlet. A use can be voided with a reason; entries are never deleted.
 - **P6, no cash value.** Promo Points have no cash value and are never cashed out. They never count toward Grant qualifying spend changes and never add Grant points.
 
+### Admin interface rulings (2026-11-15)
+
+These rulings change presentation and navigation only. Business rules, permissions, repository contracts and data are unchanged.
+
+- **UI1, one page per area, with tabs.** The sidebar becomes a short flat list of areas. Related pages become tabs on one area page. Old links still open the right tab. Each person sees only the tabs they are allowed to use, under the same rules as before.
+- **UI2, sample-data notices removed.** Sentences such as "Sample table. Replace with the approved table." and the "Sample" badges and labels are removed from the screens. This overrides the earlier "clearly marked sample" wording. The `sample` flags stay in the data.
+- **UI3, at most 5 table columns.** A table shows at most 5 data columns plus the row menu. Each column holds one value. Everything else moves to "View full details".
+- **UI4, same brand colors and fonts.** Only layout, spacing, hierarchy and clutter change. The design tokens in `src/theme/tokens.css` stay as they are.
+
 ### Still open
 
 - **AFHomes and JA&D:** Supply the signed Goodwill and Formal VIP Grant terms, a band code above ₱9M, and a written definition of `SUPERSEDED`. Until then, track grant paperwork only, block sales above ₱9M, and refer that status for review.
 - **Legal and Finance:** Review the IST Commission and Clawback Addendum and record who has signed it. Until a signed agreement authorizes deductions, record the debt and collect directly under the existing policy.
 - **Administrator:** Prepare the first dated points-per-night table by venue, room type, and night class, together with the holiday calendar and venue cancellation cut-offs. Apply the version in effect on the Card Claim Date.
 - **Data Protection Officer and Legal:** Supply a written retention schedule by record type, with a start date for each period, legal holds, and secure disposal. The prototype has no automatic deletion. Update the interim rule after the approved schedule is available.
-- **Commission stamping (D-B):** Stage 1 stamping by receipt date (doc 13, OCT O3) is not yet applied in the code; the approval date is used.
+- **Commission stamping (D-B):** Stage 1 uses the counted receipt date under doc 13 (OCT O3). Monthly payout lists require the month to be closed.
 
 ## Decisions (G01 to G12)
 

@@ -80,7 +80,7 @@ describe("Admin dashboard with loaded records", () => {
     expect(within(chart).getByRole("radio", { name: "Collections" })).toHaveAttribute("aria-checked", "false");
 
     const distribution = screen.getByRole("region", { name: "Contracts by VIP Product" });
-    expect(distribution).toHaveAccessibleDescription("Distribution of visible contracts, cancelled excluded (current).");
+    expect(distribution).toHaveAccessibleDescription("");
     expect(
       await within(distribution).findByRole("img", {
         name: "Contracts by VIP Product: 4 contracts. VIP Gold: 1 contract, 25%. VIP Silver: 1 contract, 25%. VIP Bronze: 2 contracts, 50%.",
@@ -92,9 +92,9 @@ describe("Admin dashboard with loaded records", () => {
     expect(await within(distribution).findByText("50%")).toBeInTheDocument();
     expect(within(distribution).getAllByText("25%")).toHaveLength(2);
 
-    expect(await screen.findByRole("link", { name: "Contract Review: 2 pending" })).toHaveAttribute("href", "/admin/sales/contract-review");
-    expect(await screen.findByRole("link", { name: "Payment Verification: 1 pending" })).toHaveAttribute("href", "/admin/finance");
-    expect(screen.getByRole("link", { name: "Membership Activation: 1 pending" })).toHaveAttribute("href", "/admin/membership/activation");
+    expect(await screen.findByRole("link", { name: "Contract Review: 2 pending" })).toHaveAttribute("href", "/admin/sales?tab=contract-review");
+    expect(await screen.findByRole("link", { name: "Payment Verification: 1 pending" })).toHaveAttribute("href", "/admin/finance?tab=verification");
+    expect(screen.getByRole("link", { name: "Membership Activation: 1 pending" })).toHaveAttribute("href", "/admin/membership?tab=activation");
     expect(screen.queryByText(/Account Approvals/)).toBeNull();
     expect(await screen.findByText("Payment submitted")).toBeInTheDocument();
     expect(screen.getByText("Contract submitted")).toBeInTheDocument();
@@ -160,11 +160,11 @@ describe("Finance dashboard with loaded records", () => {
     expect(within(receivables).getByText("Overdue")).toBeInTheDocument();
 
     for (const [name, href] of [
-      ["Payment Verification: 1 pending", "/admin/finance"],
-      ["Commission Payouts: 1 pending", "/admin/commissions/payouts"],
-      ["Cancellation Requests: 1 pending", "/admin/finance/cancellations"],
-      ["Financial Holds: 1 pending", "/admin/finance/holds"],
-      ["Membership Activation: 1 pending", "/admin/membership/activation"],
+      ["Payment Verification: 1 pending", "/admin/finance?tab=verification"],
+      ["Commission Payouts: 1 pending", "/admin/commissions?tab=payouts"],
+      ["Cancellation Requests: 1 pending", "/admin/finance?tab=cancellations"],
+      ["Financial Holds: 1 pending", "/admin/finance?tab=holds"],
+      ["Membership Activation: 1 pending", "/admin/membership?tab=activation"],
     ]) {
       expect(await screen.findByRole("link", { name })).toHaveAttribute("href", href);
     }

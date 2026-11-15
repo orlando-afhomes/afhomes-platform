@@ -297,7 +297,6 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
             {errors.modules}
           </p>
         ) : null}
-        <p className="tw:text-xs tw:text-muted-foreground">Only implemented modules within your own authorized scope can be delegated.</p>
       </fieldset>
       <div className="tw:flex tw:flex-col tw:gap-1.5">
         <Label>

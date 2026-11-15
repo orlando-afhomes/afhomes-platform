@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { ArrowDownAZ, ArrowUpAZ, Plus } from "lucide-react";
-import { MODULE_CATALOG } from "@/modules/identity/permissions";
 import type { DepartmentRole } from "@/modules/organization/types";
 import { useDeleteDepartmentRole, useDepartments, useDepartmentRoles, useRoleOptions, useStaff } from "@/data/queries";
 import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
@@ -13,7 +12,6 @@ import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { humanize } from "@/shared/lib/humanize";
 
 const STATUS_FILTER_ITEMS = [
   { value: "all", label: "All statuses" },
@@ -30,7 +28,7 @@ const RoleDialogs = dynamic(() => import("./role-dialogs").then((mod) => mod.Rol
   loading: () => null,
 });
 
-export function RolesPage() {
+export function RolesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const rolesQuery = useDepartmentRoles();
   const roleOptionsQuery = useRoleOptions();
   const departmentsQuery = useDepartments();
@@ -79,7 +77,7 @@ export function RolesPage() {
     return [
       {
         id: "name",
-        header: "Role Name",
+        header: "Name",
         cell: ({ row }) => (
           <Button
             variant="link"
@@ -93,26 +91,13 @@ export function RolesPage() {
       { id: "department", header: "Department", meta: HIDE_BELOW_SM, cell: ({ row }) => departmentName(row.original.departmentId) },
       {
         id: "modules",
-        header: "Authorized Modules",
+        header: "Modules",
         meta: HIDE_BELOW_LG,
-        cell: ({ row }) => {
-          const [first, ...rest] = row.original.moduleIds;
-          if (!first) return "—";
-          return (
-            <div className="tw:flex tw:flex-wrap tw:gap-1">
-              <Badge variant="outline">{moduleLabel(first)}</Badge>
-              {rest.length > 0 ? (
-                <Badge variant="outline" title={rest.map(moduleLabel).join(", ")}>
-                  +{rest.length}
-                </Badge>
-              ) : null}
-            </div>
-          );
-        },
+        cell: ({ row }) => row.original.moduleIds.length,
       },
       {
         id: "assigned",
-        header: "Assigned Staff",
+        header: "Staff",
         meta: HIDE_BELOW_LG,
         cell: ({ row }) => staff.filter((member) => member.departmentRoleId === row.original.id).length,
       },
@@ -154,9 +139,9 @@ export function RolesPage() {
 
   return (
     <AdminPage
+      embedded={embedded}
       anyOf={["roles"]}
       title="Roles & Permissions"
-      description="Manage department roles and the modules they may access."
       crumbs={[{ label: "Organization" }, { label: "Roles & Permissions" }]}
       actions={
         <Button
@@ -205,8 +190,4 @@ export function RolesPage() {
       />
     </AdminPage>
   );
-}
-
-function moduleLabel(moduleId: string): string {
-  return MODULE_CATALOG.find((entry) => entry.id === moduleId)?.label ?? humanize(moduleId);
 }

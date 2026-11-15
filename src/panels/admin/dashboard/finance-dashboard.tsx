@@ -102,7 +102,6 @@ export function FinanceDashboard() {
     <>
       <DashboardHeader
         title="Finance overview"
-        description="Verified collections, receivables, commissions, and the Finance queues you can act on."
         actions={canViewCollections ? <DashboardDateFilter range={range} /> : undefined}
       />
 
@@ -169,7 +168,7 @@ export function FinanceDashboard() {
             canViewCollections ? (
               <DashboardTrendChart
                 title="Collections Performance"
-                description="Finance-verified collections, reversals and refunds, and net collections, each on its own event date."
+                description=""
                 icon={ChartColumn}
                 dates={dates}
                 series={[
@@ -188,7 +187,7 @@ export function FinanceDashboard() {
             hasFinance ? (
               <DashboardDistributionChart
                 title="Receivables Overview"
-                description="Finalized contracts by collection state (current). Amounts are remaining balances."
+                description=""
                 icon={PieChart}
                 rows={receivableRows}
                 unit={["contract", "contracts"]}
@@ -206,12 +205,12 @@ export function FinanceDashboard() {
           primary={
             hasFinance ? (
               <DashboardActivityList
-                description="Latest payment events and commission payouts"
+                description=""
                 items={activity}
                 loading={payments.isLoading || commissions.isLoading}
                 error={payments.error ?? commissions.error}
                 emptyText="No recent Finance activity."
-                viewAllHref="/admin/finance/payments"
+                viewAllHref="/admin/finance?tab=payments"
               />
             ) : undefined
           }
@@ -220,7 +219,7 @@ export function FinanceDashboard() {
               <DashboardPendingActions>
                 {queues.payments ? (
                   <DashboardPendingItem
-                    href="/admin/finance"
+                    href="/admin/finance?tab=verification"
                     label="Payment Verification"
                     count={countPendingPaymentVerifications(payments.data ?? [])}
                     icon={Wallet}
@@ -231,7 +230,7 @@ export function FinanceDashboard() {
                 ) : null}
                 {queues.payouts ? (
                   <DashboardPendingItem
-                    href="/admin/commissions/payouts"
+                    href="/admin/commissions?tab=payouts"
                     label="Commission Payouts"
                     count={payouts.ready + payouts.awaitingConfirmation}
                     icon={HandCoins}
@@ -242,7 +241,7 @@ export function FinanceDashboard() {
                 ) : null}
                 {queues.cancellations ? (
                   <DashboardPendingItem
-                    href="/admin/finance/cancellations"
+                    href="/admin/finance?tab=cancellations"
                     label="Cancellation Requests"
                     count={countCancellationRequests(contracts.data ?? [])}
                     icon={Ban}
@@ -253,7 +252,7 @@ export function FinanceDashboard() {
                 ) : null}
                 {queues.holds ? (
                   <DashboardPendingItem
-                    href="/admin/finance/holds"
+                    href="/admin/finance?tab=holds"
                     label="Financial Holds"
                     count={countFinancialHolds(memberships.data ?? [])}
                     icon={ShieldAlert}
@@ -264,7 +263,7 @@ export function FinanceDashboard() {
                 ) : null}
                 {queues.activation ? (
                   <DashboardPendingItem
-                    href="/admin/membership/activation"
+                    href="/admin/membership?tab=activation"
                     label="Membership Activation"
                     count={countPendingMembershipActivations(memberships.data ?? [])}
                     icon={ListChecks}

@@ -22,7 +22,8 @@ export type RowActionItem = {
 
 /**
  * Row action menu for migrated directory tables (Base UI Menu). Same contract
- * as the legacy menu: View, Edit, policy-filtered extra items, and Delete.
+ * as the legacy menu: View full details, Edit, policy-filtered extra items,
+ * and Delete.
  * Delete always asks for confirmation (AlertDialog), then reports through a
  * toast. When Delete is not allowed, `deleteDisabledReason` keeps it visible:
  * it is keyboard-focusable, announced as "Delete (unavailable)", never runs a
@@ -125,7 +126,7 @@ export function RowActionsMenu({
         <DropdownMenuContent align="end" className="tw:min-w-44">
           {onView ? (
             <DropdownMenuItem onClick={onView} className={itemClass}>
-              <Eye aria-hidden="true" /> View
+              <Eye aria-hidden="true" /> View full details
             </DropdownMenuItem>
           ) : null}
           {onEdit ? (

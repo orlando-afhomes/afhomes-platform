@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { useOperation, usePayments } from "@/data/business-queries";
 import { useReceiptImportAction, useReceiptImportBatches } from "@/data/reconciliation-queries";
 import { buildReceiptImportRows, importedReceiptStatusLabel, RECEIPT_IMPORT_COLUMNS, rowsToReceiptRecords, type ReceiptImportBatch, type ReceiptImportRecord, type ReceiptImportRow } from "@/modules/imports/receipt-import";
-import { AdminPage } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { InfoNote } from "@/shared/components/modern/detail-list";
@@ -15,12 +14,12 @@ import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
-import { TabBar } from "@/shared/components/modern/tab-bar";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { CheckboxField, TextAreaField } from "@/shared/forms/modern";
 import { manilaToday } from "@/shared/lib/dates";
 import { downloadCsv, readSpreadsheet, SPREADSHEET_ACCEPT } from "@/shared/lib/spreadsheet";
 import { formatPeso } from "@/shared/lib/money";
+import { formatDate } from "@/shared/lib/format-date";
 import { ReportExport, type ReportColumn } from "../components/report-shell";
 import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
@@ -36,30 +35,38 @@ const ROW_COLUMNS: ColumnDef<ReceiptImportRow, unknown>[] = [
   { id: "reference", header: "Receipt", cell: ({ row }) => <span className="tw:font-semibold">{row.original.receipt?.referenceNo ?? "-"}</span> },
   { id: "amount", header: "Amount", cell: ({ row }) => (row.original.receipt ? <Money value={row.original.receipt.amountCentavos} /> : "-") },
   { id: "status", header: "Result", cell: ({ row }) => <BizBadge status={row.original.status === "ready" ? "verified" : "rejected"} label={row.original.status === "ready" ? "Ready" : "Invalid"} /> },
-  { id: "issues", header: "Issues", cell: ({ row }) => (row.original.errors.length === 0 ? <span className="tw:text-muted-foreground">None</span> : <ul className="tw:space-y-0.5 tw:text-xs">{row.original.errors.map((message) => <li key={message} className="tw:text-destructive">{message}</li>)}</ul>) },
+  {
+    id: "issues",
+    header: "Issues",
+    // A short count only: the full messages live in the row details sheet.
+    cell: ({ row }) =>
+      row.original.errors.length === 0 ? (
+        <span className="tw:text-muted-foreground">None</span>
+      ) : (
+        <span className="tw:text-xs tw:font-medium tw:text-destructive">
+          {row.original.errors.length} {row.original.errors.length === 1 ? "issue" : "issues"}
+        </span>
+      ),
+  },
 ];
 
-/** F11.5: bring unfinished-sale receipt history in as a batch. Counts only after an Administrator signs the batch off. */
-export function HistoryImportPage() {
+/** F11.5: Historical import tab of the Finance area. Bring unfinished-sale receipt history in as a batch; it counts only after an Administrator signs the batch off. */
+export function HistoryImportPanel() {
   const canManage = useOperation("history-import.manage");
-  const [tab, setTab] = useState("import");
   const batches = useReceiptImportBatches(canManage);
+  if (!canManage) return <InfoNote title="Access restricted">Historical import is limited to the Administrator and the Super Administrator.</InfoNote>;
   return (
-    <AdminPage anyOf={["reports"]} title="Historical Import" description="Import receipts of unfinished sales from the workbook. They count as Approved (imported) after an Administrator signs off the batch." crumbs={[{ label: "Reports" }, { label: "Historical Import" }]}>
-      {canManage ? (
-        <>
-          <InfoNote title="What this import does not do">It does not issue VIP Numbers, create or pay commissions, or change any live payment. Finished sales stay in the Excel archives and are not imported.</InfoNote>
-          <TabBar label="Historical import" value={tab} onChange={setTab} tabs={[{ value: "import", label: "New import" }, { value: "batches", label: "Batches", count: batches.data?.length ?? 0 }]} />
-          {tab === "import" ? <ImportPanel onImported={() => setTab("batches")} /> : <BatchesPanel batches={batches.data ?? []} isLoading={batches.isLoading} error={batches.error} />}
-        </>
-      ) : (
-        <InfoNote title="Access restricted">Historical import is limited to the Administrator and the Super Administrator.</InfoNote>
-      )}
-    </AdminPage>
+    <>
+      <ImportPanel />
+      <section aria-label="Import batches" className="tw:flex tw:flex-col tw:gap-2">
+        <h2 className="tw:text-base tw:font-semibold">Import batches</h2>
+        <BatchesPanel batches={batches.data ?? []} isLoading={batches.isLoading} error={batches.error} />
+      </section>
+    </>
   );
 }
 
-function ImportPanel({ onImported }: { onImported: () => void }) {
+function ImportPanel() {
   const payments = usePayments();
   const batches = useReceiptImportBatches(true);
   const action = useReceiptImportAction();
@@ -67,17 +74,20 @@ function ImportPanel({ onImported }: { onImported: () => void }) {
   const [fileError, setFileError] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
   const [declaration, setDeclaration] = useState(false);
+  const [detailRowNumber, setDetailRowNumber] = useState<number | null>(null);
 
   const rows = useMemo(
     () => (preview ? buildReceiptImportRows(preview.records, { payments: payments.data ?? [], batches: batches.data ?? [], today: manilaToday() }) : []),
     [preview, payments.data, batches.data],
   );
   const ready = rows.filter((row) => row.status === "ready").length;
+  const detailRow = detailRowNumber === null ? null : rows.find((row) => row.rowNumber === detailRowNumber) ?? null;
 
   const onFile = async (file: File | undefined) => {
     setPreview(null);
     setFileError(null);
     setDeclaration(false);
+    setDetailRowNumber(null);
     if (!file) return;
     setReading(true);
     try {
@@ -96,7 +106,6 @@ function ImportPanel({ onImported }: { onImported: () => void }) {
       if ("receipts" in batch) toast.success(`Batch ${batch.id} created with ${batch.receipts.length} receipt(s). It awaits an Administrator sign-off.`);
       setPreview(null);
       setDeclaration(false);
-      onImported();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "The import failed.");
     }
@@ -119,8 +128,50 @@ function ImportPanel({ onImported }: { onImported: () => void }) {
         <UploadDropzone inputId="receipt-import-file" accept={SPREADSHEET_ACCEPT} disabled={action.isPending} reading={reading} error={fileError} onFile={(file) => void onFile(file)} />
         {preview ? (
           <div className="tw:mt-4">
-            <p className="tw:mb-2 tw:text-sm tw:text-muted-foreground">{rows.length} row(s): {ready} ready, {rows.length - ready} invalid. Invalid rows are skipped and listed on the batch.</p>
-            <DataTable data={rows} columns={ROW_COLUMNS} getRowId={(row) => String(row.rowNumber)} emptyText="The file has no data rows." caption={`Import preview for ${preview.fileName}`} />
+            <p className="tw:mb-2 tw:text-sm tw:text-muted-foreground">{rows.length} row(s): {ready} ready, {rows.length - ready} invalid.</p>
+            <DataTable
+              data={rows}
+              columns={ROW_COLUMNS}
+              getRowId={(row) => String(row.rowNumber)}
+              emptyText="The file has no data rows."
+              caption={`Import preview for ${preview.fileName}`}
+              onRowOpen={(row) => setDetailRowNumber(row.rowNumber)}
+              getRowLabel={(row) => `View receipt row ${row.rowNumber}`}
+            />
+            <RecordDetailsSheet
+              open={detailRow !== null}
+              onClose={() => setDetailRowNumber(null)}
+              title={detailRow ? `Receipt row ${detailRow.rowNumber}` : "Receipt row"}
+              subtitle={detailRow?.receipt?.referenceNo}
+              badge={detailRow ? <BizBadge status={detailRow.status === "ready" ? "verified" : "rejected"} label={detailRow.status === "ready" ? "Ready" : "Invalid"} /> : undefined}
+              footer={
+                <Button type="button" variant="outline" onClick={() => setDetailRowNumber(null)}>
+                  Close
+                </Button>
+              }
+              sections={
+                detailRow
+                  ? [
+                      {
+                        title: "Row",
+                        rows: [
+                          { label: "Row", value: detailRow.rowNumber },
+                          { label: "Receipt", value: detailRow.receipt?.referenceNo ?? "" },
+                          { label: "Amount", value: detailRow.receipt ? <Money value={detailRow.receipt.amountCentavos} /> : "" },
+                          { label: "Result", value: detailRow.status === "ready" ? "Ready" : "Invalid" },
+                        ],
+                      },
+                      {
+                        title: "Issues",
+                        rows:
+                          detailRow.errors.length > 0
+                            ? detailRow.errors.map((message, index) => ({ label: `Issue ${index + 1}`, value: message }))
+                            : [{ label: "Issues", value: "No issues" }],
+                      },
+                    ]
+                  : []
+              }
+            />
           </div>
         ) : null}
       </TemplateStep>
@@ -164,7 +215,6 @@ function BatchesPanel({ batches, isLoading, error }: { batches: ReceiptImportBat
       { id: "id", header: "Batch", cell: ({ row }) => <span className="tw:font-semibold">{row.original.id}</span> },
       { id: "file", header: "File", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.fileName },
       { id: "receipts", header: "Receipts", cell: ({ row }) => row.original.receipts.length },
-      { id: "skipped", header: "Skipped", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.skipped.length },
       { id: "total", header: "Total", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => <Money value={row.original.receipts.reduce((sum, receipt) => sum + receipt.amountCentavos, 0)} /> },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={BATCH_BADGE[row.original.status]} label={row.original.status === "signed_off" ? "Signed off" : row.original.status === "rejected" ? "Rejected" : "Awaiting sign-off"} /> },
     ],
@@ -206,7 +256,7 @@ function BatchesPanel({ batches, isLoading, error }: { batches: ReceiptImportBat
         sections={
           detail
             ? [
-                { title: "Batch", rows: [{ label: "Rows in file", value: detail.totalRows }, { label: "Prepared", value: detail.createdAt.slice(0, 10) }, { label: "Decided", value: detail.decidedAt ? detail.decidedAt.slice(0, 10) : "" }, { label: "Reason", value: detail.decisionReason ?? "" }, { label: "Self sign-off", value: detail.selfSignedOff ? "Yes, the signer also prepared this batch" : "No" }] },
+                { title: "Batch", rows: [{ label: "Rows in file", value: detail.totalRows }, { label: "Skipped", value: detail.skipped.length }, { label: "Prepared", value: formatDate(detail.createdAt) }, { label: "Decided", value: detail.decidedAt ? formatDate(detail.decidedAt) : "" }, { label: "Reason", value: detail.decisionReason ?? "" }, { label: "Self sign-off", value: detail.selfSignedOff ? "Yes, the signer also prepared this batch" : "No" }] },
                 { title: "Receipts", rows: detail.receipts.map((receipt) => ({ label: receipt.referenceNo, value: `${receipt.paidDate} · ${formatPeso(receipt.amountCentavos)} · ${importedReceiptStatusLabel(detail.status)}` })) },
                 { title: "Skipped rows", rows: detail.skipped.map((item) => ({ label: `Row ${item.rowNumber}`, value: item.reason })) },
               ]

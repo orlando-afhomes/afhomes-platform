@@ -34,7 +34,7 @@ describe("accreditation renewal (doc 03 section 5)", () => {
 
   it("shares the monthly sequence with new accreditations and never reissues a history number", async () => {
     const { store, record } = setup();
-    store.accreditations.push({ ...record, id: "accr-other", memberId: "mem-other", aaNumber: "AAO25020001", history: [] });
+    store.accreditations.push({ ...record, id: "accr-other", memberId: "mem-other", aaNumber: "AAI25020001", history: [] });
     store.accreditations.push({ ...record, id: "accr-hist", memberId: "mem-hist", aaNumber: "AAO25020009", aaNumberHistory: [{ aaNumber: "AAO25020002", replacedBy: "AAO25020009", replacedOn: "2025-02-02", actorId: "x", changedAt: "2025-02-02T00:00:00.000Z" }], history: [] });
     const renewed = await as(store, "dev-super-admin").accreditations.renew(record.id, { renewalDate: "2025-02-18" });
     expect(renewed.aaNumber).toBe("AAO25020003");

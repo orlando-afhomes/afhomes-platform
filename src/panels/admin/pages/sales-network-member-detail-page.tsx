@@ -216,7 +216,6 @@ export function SalesNetworkMemberDetailPage() {
     <AdminPage
       anyOf={["sales-network"]}
       title={member.displayName}
-      description={`${designationLabel(member.designation)} · ${classification} · ${teamDisplayName(member, members)}`}
       crumbs={[
         { label: "Sales Network" },
         { label: "Members", href: "/admin/sales-network/members" },
@@ -268,14 +267,14 @@ export function SalesNetworkMemberDetailPage() {
             <AdminSection title="Membership" icon={User}>
               <InfoGrid label="Membership details" columns={2}>
                 <InfoItem term="AA Number">{aaDisplay(member)}</InfoItem>
-                <InfoItem term="Position">
+                <InfoItem term="Designation">
                   <DesignationBadge designation={member.designation} full />
                 </InfoItem>
                 <InfoItem term="Member Status">
                   <StatusBadge status={member.status} />
                 </InfoItem>
                 <InfoItem term="Team">{teamDisplayName(member, members)}</InfoItem>
-                {openVacancy ? <InfoItem term="Seat">Vacant since {formatDate(openVacancy.startDate)}. No allowance is earned until it is filled; its downline counts toward the next active level above.</InfoItem> : null}
+                {openVacancy ? <InfoItem term="Seat">Vacant since {formatDate(openVacancy.startDate)}</InfoItem> : null}
                 <InfoItem term="Parent" wide>
                   {parentDisplay}
                 </InfoItem>
@@ -308,7 +307,6 @@ export function SalesNetworkMemberDetailPage() {
                     </li>
                   ))}
                 </ul>
-                <p className="tw:mt-3 tw:text-sm tw:text-muted-foreground">Old numbers are never deleted or issued again. A quoted old number resolves to the current one.</p>
               </AdminSection>
             ) : null}
           </div>
@@ -382,7 +380,7 @@ export function SalesNetworkMemberDetailPage() {
         {activeTab === "downline" ? (
           <div role="tabpanel" id={`${tabPrefix}-panel-downline`} aria-labelledby={`${tabPrefix}-tab-downline`}>
             <section aria-label="Team downline" className="tw:flex tw:flex-col tw:gap-3">
-              <AdminSectionHeading title="Team downline" icon={Network} description={`${directDownline.length} direct · ${downlineTotal} total`} />
+              <AdminSectionHeading title="Team downline" icon={Network} />
               {directDownline.length === 0 ? (
                 <p className="tw:p-4 tw:text-center tw:text-muted-foreground">No direct downline members.</p>
               ) : (

@@ -78,7 +78,7 @@ function ProductForm({ product, onClose }: { product: VipProduct | null; onClose
   };
 
   return (
-    <FormDialog open title={product ? `Edit ${product.name}` : "New product"} description={product ? "Saving creates a new configuration version. Contracts already finalized keep the terms they were signed with." : "Enter terms taken from an approved document. The code is permanent and appears in every VIP Number."} submitText={product ? "Save new version" : "Create product"} pending={update.isPending || create.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
+    <FormDialog open title={product ? `Edit ${product.name}` : "New product"} description={product ? "Signed contracts keep their original terms." : undefined} submitText={product ? "Save new version" : "Create product"} pending={update.isPending || create.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
       <FormGrid>
         {product ? null : (
           <>
@@ -179,7 +179,7 @@ function SchemeForm({ scheme, onClose }: { scheme: PaymentScheme | null; onClose
   };
 
   return (
-    <FormDialog open title={scheme ? `Edit ${scheme.label}` : "New payment scheme"} description="Only enter terms taken from an approved document. A scheme with incomplete terms stays unavailable." submitText="Save scheme" pending={pending} error={error} onClose={onClose} onSubmit={() => void submit()}>
+    <FormDialog open title={scheme ? `Edit ${scheme.label}` : "New payment scheme"} description="A scheme with incomplete terms stays unavailable." submitText="Save scheme" pending={pending} error={error} onClose={onClose} onSubmit={() => void submit()}>
       <FormGrid>
         <TextField label="Scheme name" required value={label} onChange={setLabel} />
         <TextField label="Card ID payment code" value={code} onChange={setCode} hint="For example C01 or T04." maxLength={3} />

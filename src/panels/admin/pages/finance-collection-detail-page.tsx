@@ -7,7 +7,7 @@ import { Money } from "@/shared/components/modern/money";
 import { ContractLedgerSection, ContractMilestonesSection, ContractPageFrame, ContractPaymentsSection, ContractScheduleSection, ContractTiles } from "../components/contract-sections";
 import { usePaymentActions } from "../components/payment-actions";
 
-const CRUMBS = [{ label: "Finance" }, { label: "Collections", href: "/admin/finance/collections" }];
+const CRUMBS = [{ label: "Finance" }, { label: "Collections", href: "/admin/finance?tab=collections" }];
 
 /** Finance view of a contract's collection: balances, schedule, milestones, ledger and payment actions. No contract editing. */
 export function FinanceCollectionDetailPage({ contractId }: { contractId: string }) {
@@ -22,7 +22,7 @@ export function FinanceCollectionDetailPage({ contractId }: { contractId: string
             {paymentActions.dialogs}
             {pendingCancel ? (
               <InfoNote title="Cancellation awaiting Finance confirmation">
-                {CANCELLATION_GROUND_LABELS[pendingCancel.ground]} · requested {formatDate(pendingCancel.requestedAt)} — {pendingCancel.reason}. Decide it from Cancellation Requests.
+                {CANCELLATION_GROUND_LABELS[pendingCancel.ground]} · requested {formatDate(pendingCancel.requestedAt)} — {pendingCancel.reason}. Decide it in Cancellations.
               </InfoNote>
             ) : null}
             {contract.cancellation?.status === "confirmed" ? (

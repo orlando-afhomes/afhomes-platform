@@ -44,20 +44,18 @@ describe("admin sidebar", () => {
     expect(screen.queryByText("Accounts and Permissions")).toBeNull();
   });
 
-  it("lists process pages under their department parent and keeps Audit Logs top level", async () => {
-    const user = userEvent.setup();
+  it("lists one direct link per allowed area, with no groups", async () => {
     renderSidebar(false, "dev-finance");
-    const finance = await screen.findByRole("button", { name: /Finance/ });
-    await user.click(finance);
-    for (const name of ["Payment Verification", "Collections", "Payment History", "Commission Payouts"]) {
+    expect(await screen.findByRole("link", { name: "Finance" })).toHaveAttribute("href", "/admin/finance");
+    for (const name of ["Commissions", "Membership", "Stay Points", "Redemption", "Reports"]) {
       expect(screen.getByRole("link", { name })).toBeDefined();
     }
-    expect(screen.queryByRole("button", { name: /VIP Products/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /Insights/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: "VIP Products" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Insights|Finance/ })).toBeNull();
     cleanup();
     renderSidebar(false, "dev-admin");
     expect(await screen.findByRole("link", { name: "Audit Logs" })).toBeDefined();
-    expect(screen.getByRole("button", { name: /VIP Products/ })).toBeDefined();
+    expect(screen.getByRole("link", { name: "VIP Products" })).toBeDefined();
   });
 
   it("asks for confirmation before logging out", async () => {
@@ -73,17 +71,12 @@ describe("admin sidebar", () => {
     const { container } = renderSidebar(true);
     expect(container.querySelector("aside[data-collapsed='true']")).not.toBeNull();
     expect(screen.queryByText("AFHomes")).toBeNull();
-    expect(await screen.findByRole("link", { name: "Departments" })).toBeDefined();
+    expect(await screen.findByRole("link", { name: "Organization" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Log out" })).toBeDefined();
   });
 
-  it("expands the Organization group on demand", async () => {
-    const user = userEvent.setup();
+  it("links Organization straight to its area page", async () => {
     renderSidebar();
-    const group = await screen.findByRole("button", { name: /Organization/ });
-    expect(group).toHaveAttribute("aria-expanded", "false");
-    await user.click(group);
-    expect(group).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("link", { name: "Staff" })).toBeDefined();
+    expect(await screen.findByRole("link", { name: "Organization" })).toHaveAttribute("href", "/admin/organization");
   });
 });

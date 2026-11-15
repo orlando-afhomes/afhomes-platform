@@ -30,6 +30,7 @@ export type AllowanceReviewInput = {
   extended: AllowanceStretch;
   withholdingReason?: string;
   workbook: AllowanceTotals | null;
+  workbookDifferenceReason?: string;
 };
 
 export type AllowanceReview = AllowanceReviewInput & {

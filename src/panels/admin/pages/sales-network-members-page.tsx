@@ -10,7 +10,7 @@ import type { AccreditationRecord } from "@/modules/accreditation/types";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { useAccreditations, useChangeSalesNetworkMemberStatus, useIssuePendingAccreditation, useMembers, useRenewAccreditation } from "@/data/queries";
-import { aaDisplay, designationLabel, resolveAccreditationDisplay, teamDisplayName } from "@/modules/sales-network/display";
+import { resolveAccreditationDisplay, teamDisplayName } from "@/modules/sales-network/display";
 import { resolveRenewTarget, buildMemberMenuProps } from "../actions/sales-network-actions";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { formatDate } from "@/shared/lib/format-date";
@@ -34,12 +34,11 @@ const SalesNetworkMemberDialogs = dynamic(() => import("./sales-network-member-d
   loading: () => null,
 });
 
-// Narrow screens keep member, status, and actions; the accreditation control
-// moves under the member name below 768px so it stays reachable.
+// Narrow screens keep name, accreditation, and actions so the accreditation
+// control stays reachable; the other columns appear as the screen widens.
 const FROM_SM: DataTableColumnMeta = { className: "tw:hidden tw:sm:table-cell" };
 const FROM_MD: DataTableColumnMeta = { className: "tw:hidden tw:md:table-cell" };
 const FROM_LG: DataTableColumnMeta = { className: "tw:hidden tw:lg:table-cell" };
-const FROM_XL: DataTableColumnMeta = { className: "tw:hidden tw:xl:table-cell" };
 
 const withAll = (label: string, items: Array<{ value: string; label: string }>) => [{ value: "all", label }, ...items];
 const DESIGNATION_ITEMS = withAll("All designations", ["SVD", "SSM", "SM", "OST"].map((value) => ({ value, label: value })));
@@ -55,7 +54,7 @@ const ACCREDITATION_ITEMS = withAll("All accreditation", [
   { value: "none", label: "No record" },
 ]);
 
-export function SalesNetworkMembersPage() {
+export function SalesNetworkMembersPage({ embedded = false }: { embedded?: boolean } = {}) {
   const router = useRouter();
   const { identity } = useDevIdentity();
   const store = useMockStore();
@@ -153,39 +152,24 @@ export function SalesNetworkMembersPage() {
       />
     );
     return [
-      { id: "aaNumber", header: "AA Number", meta: FROM_LG, cell: ({ row }) => <span className="tw:text-muted-foreground">{aaDisplay(row.original)}</span> },
       {
         id: "displayName",
-        header: "Member",
+        header: "Name",
         cell: ({ row }) => (
-          <div className="tw:flex tw:flex-col tw:gap-1">
-            <Link className="tw:inline-flex tw:min-h-11 tw:items-center tw:font-semibold tw:text-primary tw:underline-offset-4 tw:hover:underline tw:sm:min-h-0" href={`/admin/sales-network/members/${row.original.aaNumber ?? row.original.id}`}>
-              {row.original.displayName}
-            </Link>
-            <div className="tw:md:hidden">{accreditation(row.original)}</div>
-          </div>
+          <Link className="tw:inline-flex tw:min-h-11 tw:items-center tw:font-semibold tw:text-primary tw:underline-offset-4 tw:hover:underline tw:sm:min-h-0" href={`/admin/sales-network/members/${row.original.aaNumber ?? row.original.id}`}>
+            {row.original.displayName}
+          </Link>
         ),
       },
       {
         id: "designation",
-        header: "Position",
+        header: "Designation",
         meta: FROM_MD,
         cell: ({ row }) => <DesignationBadge designation={row.original.designation} full />,
       },
-      { id: "team", header: "Team", meta: FROM_XL, cell: ({ row }) => teamDisplayName(row.original, members) },
-      {
-        id: "parent",
-        header: "Parent",
-        meta: FROM_XL,
-        cell: ({ row }) => {
-          const parent = members.find((member) => member.id === row.original.parentId);
-          if (!parent) return "—";
-          const firstName = parent.displayName.trim().split(/\s+/)[0] ?? parent.displayName;
-          return `${firstName} (${designationLabel(parent.designation)})`;
-        },
-      },
+      { id: "team", header: "Team", meta: FROM_LG, cell: ({ row }) => teamDisplayName(row.original, members) },
+      { id: "accreditationStatus", header: "Accreditation", cell: ({ row }) => accreditation(row.original) },
       { id: "status", header: "Status", meta: FROM_SM, cell: ({ row }) => <StatusBadge status={row.original.status} /> },
-      { id: "accreditationStatus", header: "Accreditation Status", meta: FROM_MD, cell: ({ row }) => accreditation(row.original) },
       {
         id: "actions",
         header: () => <span className="tw:sr-only">Actions</span>,
@@ -223,7 +207,7 @@ export function SalesNetworkMembersPage() {
     ];
   }, [members, accreditationRecordsByMember, canEditAccreditation, canRenew, canManage, canTransfer, canChangeStatus, isAdmin, changeStatus, confirmRun, setEditMember, setTransferMember, setAccreditMember, setRenewTarget, router]);
 
-  if (!granted.has("sales-network")) {
+  if (!granted.has("sales-network-members")) {
     return (
       <PageContainer>
         <PageHeader title="Access restricted" description="This account does not have access to Sales Network." />
@@ -235,9 +219,9 @@ export function SalesNetworkMembersPage() {
 
   return (
     <AdminPage
-      anyOf={["sales-network"]}
+      embedded={embedded}
+      anyOf={["sales-network-members"]}
       title="Sales Network Members"
-      description="Authorized member directory, scoped by genealogy permissions."
       crumbs={[{ label: "Sales Network" }, { label: "Members" }]}
       actions={
         canManage ? (

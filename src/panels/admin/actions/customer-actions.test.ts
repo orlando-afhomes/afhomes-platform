@@ -105,13 +105,11 @@ describe("buildCustomerMenuProps", () => {
     }
   });
 
-  it("gates prepare contract on submitted/approved, ownership, the prepare right and no existing contract", () => {
+  it("gates prepare contract on submitted/approved, ownership, and the prepare right", () => {
     const submitted = buildCustomerMenuProps(customer("submitted"), FULL_PERMS, rowCb());
     expect(keysOf(submitted)).toEqual(["approve", "send-back", "reject", "prepare-contract"]);
     const approved = buildCustomerMenuProps(customer("approved"), FULL_PERMS, rowCb());
     expect(keysOf(approved)).toEqual(["prepare-contract"]);
-    const withContract = buildCustomerMenuProps(customer("submitted"), { ...FULL_PERMS, hasContract: true }, rowCb());
-    expect(keysOf(withContract)).toEqual(["approve", "send-back", "reject"]);
     const restricted = buildCustomerMenuProps(customer("submitted", true), { ...FULL_PERMS, ownRecord: false }, rowCb());
     expect(keysOf(restricted)).not.toContain("prepare-contract");
     const noRight = buildCustomerMenuProps(customer("submitted"), { ...FULL_PERMS, canPrepare: false }, rowCb());
@@ -134,7 +132,6 @@ describe("buildCustomerMenuProps", () => {
       { canManage: false, canDraft: false, canApprove: true, canPrepare: false, ownRecord: true },
       { canManage: false, canDraft: false, canApprove: false, canPrepare: true, ownRecord: true },
       { ...FULL_PERMS },
-      { ...FULL_PERMS, hasContract: true },
       { ...FULL_PERMS, ownRecord: false },
       { canManage: false, canDraft: false, canApprove: false, canPrepare: false, ownRecord: true },
     ];

@@ -31,7 +31,8 @@ const STATUS_MAP: Record<string, { tone: BadgeTone; icon?: LucideIcon }> = {
   under_review: { tone: "info", icon: CircleCheck },
   verified: { tone: "success", icon: CircleCheck },
   finalized: { tone: "success", icon: BadgeCheck },
-  approved: { tone: "info", icon: CircleCheck },
+  // Same tone as STATUS_TONES in status-badge.tsx: one badge vocabulary.
+  approved: { tone: "success", icon: CircleCheck },
   confirmed: { tone: "success", icon: BadgeCheck },
   active: { tone: "success", icon: BadgeCheck },
   active_member: { tone: "success", icon: BadgeCheck },

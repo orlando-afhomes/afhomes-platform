@@ -63,3 +63,4 @@ export function referredSales<T extends Sale>(sales: readonly T[], memberId: str
 export function teamSales<T extends Sale>(sales: readonly T[], memberId: string | null): T[] {
   return memberId ? sales.filter((sale) => sale.team.some((entry) => entry.memberId === memberId)) : [];
 }
+export const VIP_CLOSED_DEAL_THRESHOLD_BP = 2_500;

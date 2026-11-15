@@ -7,17 +7,17 @@ import { useOperation } from "@/data/business-queries";
 import type { BookingView, MemberPoints } from "@/data/contracts/redemption-repository";
 import { useRedemption, useRedemptionBookingAction } from "@/data/redemption-queries";
 import type { BookingStatus } from "@/modules/redemption/types";
-import { AdminPage, AdminSectionHeading } from "@/shared/components/admin";
+import { AreaPage } from "@/shared/components/admin/area-page";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
-import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { TextAreaField, TextField } from "@/shared/forms/modern";
+import { humanize } from "@/shared/lib/humanize";
 import { Input } from "@/shared/ui/input";
 import { formatDate } from "@/shared/lib/format-date";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
@@ -25,6 +25,9 @@ import { matchesSearch } from "@/shared/lib/search";
 import { Button } from "@/shared/ui/button";
 import { RedemptionBookingDialog } from "../components/redemption-booking-dialog";
 import { buildRedemptionBookingMenuProps } from "../actions/redemption-actions";
+import { ADMIN_AREA_TABS } from "../navigation";
+import { useAdminAreaTabAccess } from "../use-role-aware-navigation";
+import { RedemptionHolidaysPanel, RedemptionPointsTablePanel, RedemptionVenuesPanel } from "./redemption-points-table-page";
 
 const fmt = (n: number) => n.toLocaleString("en-PH");
 
@@ -49,13 +52,16 @@ function nowManilaInput(): string {
   return parts.replace(" ", "T");
 }
 
-export function RedemptionPage() {
+/** Create dialogs are opened from the area header; each panel renders its own dialog. */
+export type RedemptionPanelCreateProps = { createOpen?: boolean; onCreateClose?: () => void };
+
+/** Bookings tab: New booking (redemption.book), booking actions (redemption.book; money part needs finance.verify). */
+export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = () => {} }: RedemptionPanelCreateProps) {
   const data = useRedemption();
   const act = useRedemptionBookingAction();
   const canBook = useOperation("redemption.book");
   const canApprove = useOperation("finance.verify");
   const { confirmRun, dialog: confirmDialog } = useConfirmRun();
-  const [newOpen, setNewOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
   const [text, setText] = useState("");
@@ -67,11 +73,9 @@ export function RedemptionPage() {
   const venueOf = (id: string) => overview?.venues.find((item) => item.id === id);
   const ledger = useMemo(() => (detail && overview ? overview.ledger.filter((item) => item.bookingId === detail.id).reverse() : []), [detail, overview]);
 
-  const [memberSearch, setMemberSearch] = useState("");
   const [bookingSearch, setBookingSearch] = useState("");
   const [bookingStatus, setBookingStatus] = useState("all");
   const [bookingVenue, setBookingVenue] = useState("all");
-  const visibleMembers = useMemo(() => (overview?.members ?? []).filter((item) => matchesSearch(memberSearch, item.customerName, item.vipNumber)), [overview, memberSearch]);
   const visibleBookings = useMemo(
     () => (overview?.bookings ?? []).filter((item) => (bookingStatus === "all" || item.status === bookingStatus) && (bookingVenue === "all" || item.venueId === bookingVenue) && matchesSearch(bookingSearch, item.reference, item.customerName, item.venueName)),
     [overview, bookingSearch, bookingStatus, bookingVenue],
@@ -79,23 +83,12 @@ export function RedemptionPage() {
   const bookingStatusOptions = [{ value: "all", label: "All statuses" }, ...(Object.keys(STATUS) as BookingStatus[]).map((value) => ({ value, label: STATUS[value].label }))];
   const venueOptions = [{ value: "all", label: "All venues" }, ...(overview?.venues ?? []).map((item) => ({ value: item.id, label: item.name }))];
 
-  const memberColumns = useMemo<ColumnDef<MemberPoints, unknown>[]>(
-    () => [
-      { id: "holder", header: "Cardholder", cell: ({ row }) => <div><div className="tw:font-semibold">{row.original.customerName}</div><div className="tw:text-xs tw:text-muted-foreground">{row.original.vipNumber ?? "No card"} · {row.original.productCode}</div></div> },
-      { id: "weekday", header: "Weekday points", cell: ({ row }) => <span>{fmt(row.original.weekday.available)}<span className="tw:block tw:text-xs tw:text-muted-foreground">{fmt(row.original.weekday.reserved)} reserved</span></span> },
-      { id: "weekend", header: "Weekend points", cell: ({ row }) => <span>{fmt(row.original.weekend.available)}<span className="tw:block tw:text-xs tw:text-muted-foreground">{fmt(row.original.weekend.reserved)} reserved</span></span> },
-      { id: "table", header: "Points table", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => (row.original.tableVersion ? `Version ${row.original.tableVersion}` : "None") },
-      { id: "pad", header: "Activation date", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => (row.original.padDate ? formatDate(row.original.padDate) : "Not set") },
-      { id: "state", header: "Can book", cell: ({ row }) => (row.original.blockedReasons.length === 0 ? <BizBadge status="active" label="Yes" /> : <span className="tw:text-xs tw:text-muted-foreground">{row.original.blockedReasons[0]}</span>) },
-    ],
-    [],
-  );
   const bookingColumns = useMemo<ColumnDef<BookingView, unknown>[]>(
     () => [
-      { id: "ref", header: "Booking", cell: ({ row }) => <div><div className="tw:font-semibold">{row.original.reference}</div><div className="tw:text-xs tw:text-muted-foreground">{row.original.customerName}</div></div> },
-      { id: "venue", header: "Venue", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => `${row.original.venueName} · ${row.original.roomType}` },
-      { id: "stay", header: "Stay", cell: ({ row }) => `${formatDate(row.original.checkIn)} to ${formatDate(row.original.checkOut)}` },
-      { id: "points", header: "Points", cell: ({ row }) => `${fmt(row.original.reservedWeekday)} wd / ${fmt(row.original.reservedWeekend)} we${row.original.provisional ? " needed" : ""}` },
+      { id: "ref", header: "Booking no.", cell: ({ row }) => <span className="tw:font-semibold">{row.original.reference}</span> },
+      { id: "holder", header: "Cardholder", cell: ({ row }) => row.original.customerName },
+      { id: "stay", header: "Stay dates", cell: ({ row }) => `${formatDate(row.original.checkIn)} to ${formatDate(row.original.checkOut)}` },
+      { id: "points", header: "Points", cell: ({ row }) => `${fmt(row.original.reservedWeekday)} weekday, ${fmt(row.original.reservedWeekend)} weekend` },
       { id: "status", header: "Status", cell: ({ row }) => statusBadge(row.original) },
     ],
     [],
@@ -148,22 +141,10 @@ export function RedemptionPage() {
   const deadline = detail && venueOf(detail.venueId) ? `${venueOf(detail.venueId)!.cutoffHours} hours before check-in at ${venueOf(detail.venueId)!.checkInTime}` : null;
 
   return (
-    <AdminPage
-      anyOf={["redemption"]}
-      title="Redemption"
-      description="Book accommodation with Stay Points at open AFhomes Direct Operations venues. Staff record points use at check-in."
-      crumbs={[{ label: "Redemption" }]}
-      actions={canBook ? <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setNewOpen(true)}><Plus aria-hidden="true" /> New booking</Button> : null}
-    >
+    <>
       <QueryState isLoading={data.isLoading} error={data.error}>
         {overview ? (
           <>
-            {overview.tableVersions.every((item) => item.sample) ? <InfoNote>Sample table. Replace with the approved table.</InfoNote> : null}
-            <InfoNote>Points have no cash value and pay accommodation only.</InfoNote>
-            <AdminSectionHeading title="Points by cardholder" description="Available points per bucket after reservations. Weekday and weekend points never convert." />
-            <FilterBar search={memberSearch} onSearch={setMemberSearch} searchLabel="Search cardholders" />
-            <DataTable data={visibleMembers} columns={memberColumns} getRowId={(row) => row.membershipId} emptyText={overview.members.length === 0 ? "No activated memberships." : "No cardholders match the search."} caption="Points by cardholder" />
-            <AdminSectionHeading title="Bookings" />
             <FilterBar search={bookingSearch} onSearch={setBookingSearch} searchLabel="Search bookings" filters={[{ label: "Booking status filter", value: bookingStatus, onChange: setBookingStatus, options: bookingStatusOptions }, { label: "Venue filter", value: bookingVenue, onChange: setBookingVenue, options: venueOptions }]} />
             <DataTable data={visibleBookings} columns={bookingColumns} getRowId={(row) => row.id} emptyText={overview.bookings.length === 0 ? "No bookings yet." : "No bookings match the filters."} caption="Redemption bookings" onRowOpen={(row) => setOpenId(row.id)} getRowLabel={(row) => `Open booking ${row.reference}`} rowActions={(row) => {
               const menu = buildRedemptionBookingMenuProps(row, { canBook, canApprove }, {
@@ -175,7 +156,7 @@ export function RedemptionPage() {
               });
               return <RowActionsMenu {...menu} />;
             }} />
-            <RedemptionBookingDialog open={newOpen} overview={overview} onClose={() => setNewOpen(false)} />
+            <RedemptionBookingDialog open={createOpen && canBook} overview={overview} onClose={onCreateClose} />
           </>
         ) : null}
       </QueryState>
@@ -189,7 +170,8 @@ export function RedemptionPage() {
           detail
             ? [
                 { title: "Stay", rows: [
-                  { label: "Venue", value: `${detail.venueName} · ${detail.roomType}` },
+                  { label: "Venue", value: detail.venueName },
+                  { label: "Room type", value: detail.roomType },
                   { label: "Check-in", value: formatDate(detail.checkIn) },
                   { label: "Departure", value: formatDate(detail.checkOut) },
                   { label: "Guests", value: String(detail.guests) },
@@ -198,8 +180,8 @@ export function RedemptionPage() {
                 ] },
                 { title: "Points", rows: [
                   { label: "Points table", value: `Version ${detail.basisVersion}` },
-                  { label: detail.provisional ? "Weekday needed" : "Weekday reserved", value: fmt(detail.reservedWeekday) },
-                  { label: detail.provisional ? "Weekend needed" : "Weekend reserved", value: fmt(detail.reservedWeekend) },
+                  { label: detail.provisional ? "Weekday points needed" : "Weekday points reserved", value: fmt(detail.reservedWeekday) },
+                  { label: detail.provisional ? "Weekend points needed" : "Weekend points reserved", value: fmt(detail.reservedWeekend) },
                   ...detail.nights.map((night) => ({ label: formatDate(night.date), value: `${night.reason === "holiday" ? "Holiday" : night.reason === "weekend" ? "Weekend" : "Weekday"} night · ${night.payment === "cash" ? "money" : `${fmt(night.points)} points`}` })),
                 ] },
                 ...(detail.cashNights > 0 ? [{ title: "Money part", rows: [
@@ -207,7 +189,7 @@ export function RedemptionPage() {
                   { label: "Amount", value: <Money value={detail.cashAmountCentavos} /> },
                   { label: "Receipt reference", value: detail.cashReference ?? "Awaiting Finance approval" },
                 ] }] : []),
-                ...(ledger.length > 0 ? [{ title: "Points movements", rows: ledger.map((entry) => ({ label: `${entry.type} · ${entry.bucket}`, value: fmt(entry.points) })) }] : []),
+                ...(ledger.length > 0 ? [{ title: "Points movements", rows: ledger.map((entry) => ({ label: `${humanize(entry.type)} · ${humanize(entry.bucket)}`, value: fmt(entry.points) })) }] : []),
               ]
             : []
         }
@@ -217,7 +199,7 @@ export function RedemptionPage() {
       <FormDialog
         open={dialog !== null}
         title={dialog?.kind === "cancel" ? "Cancel booking" : dialog?.kind === "no-show" ? "Record no-show" : "Approve money part"}
-        description={dialog?.kind === "cancel" ? "Cancelled by the venue cut-off, the points return to the same buckets. After it, they are forfeited." : dialog?.kind === "no-show" ? "The reserved points are forfeited." : "Enter the approved receipt reference (doc 07). The booking becomes Confirmed."}
+        description={dialog?.kind === "cancel" ? "Cancelled by the venue cut-off, the points return to the same buckets. After it, they are forfeited." : dialog?.kind === "no-show" ? "The reserved points are forfeited." : "Enter the approved receipt reference. The booking becomes Confirmed."}
         submitText={dialog?.kind === "approve-cash" ? "Approve" : "Confirm"}
         pending={act.isPending}
         error={error}
@@ -237,6 +219,109 @@ export function RedemptionPage() {
         ) : null}
       </FormDialog>
       {confirmDialog}
-    </AdminPage>
+    </>
+  );
+}
+
+/** Cardholder points tab: read-only balances for anyone with the redemption grant. */
+export function RedemptionCardholderPointsPanel() {
+  const data = useRedemption();
+  const [memberSearch, setMemberSearch] = useState("");
+  const [openId, setOpenId] = useState<string | null>(null);
+  const overview = data.data;
+  const detail = overview?.members.find((item) => item.membershipId === openId) ?? null;
+  const visibleMembers = useMemo(() => (overview?.members ?? []).filter((item) => matchesSearch(memberSearch, item.customerName, item.vipNumber)), [overview, memberSearch]);
+
+  const memberColumns = useMemo<ColumnDef<MemberPoints, unknown>[]>(
+    () => [
+      { id: "holder", header: "Cardholder", cell: ({ row }) => <span className="tw:font-semibold">{row.original.customerName}</span> },
+      { id: "vip", header: "VIP no.", cell: ({ row }) => row.original.vipNumber ?? "No card" },
+      { id: "weekday", header: "Weekday points", cell: ({ row }) => fmt(row.original.weekday.available) },
+      { id: "weekend", header: "Weekend points", cell: ({ row }) => fmt(row.original.weekend.available) },
+      { id: "state", header: "Can book", cell: ({ row }) => (row.original.blockedReasons.length === 0 ? <BizBadge status="active" label="Yes" /> : <span className="tw:text-xs tw:text-muted-foreground">{row.original.blockedReasons[0]}</span>) },
+    ],
+    [],
+  );
+
+  return (
+    <>
+      <QueryState isLoading={data.isLoading} error={data.error}>
+        {overview ? (
+          <>
+            <FilterBar search={memberSearch} onSearch={setMemberSearch} searchLabel="Search cardholders" />
+            <DataTable data={visibleMembers} columns={memberColumns} getRowId={(row) => row.membershipId} emptyText={overview.members.length === 0 ? "No activated memberships." : "No cardholders match the search."} caption="Points by cardholder" onRowOpen={(row) => setOpenId(row.membershipId)} getRowLabel={(row) => `Open points for ${row.customerName}`} rowActions={(row) => <RowActionsMenu itemName={row.customerName} onView={() => setOpenId(row.membershipId)} />} />
+          </>
+        ) : null}
+      </QueryState>
+      <RecordDetailsSheet
+        open={detail !== null}
+        onClose={() => setOpenId(null)}
+        title={detail ? detail.customerName : "Cardholder"}
+        subtitle={detail ? (detail.vipNumber ?? "No card") : undefined}
+        badge={detail ? (detail.blockedReasons.length === 0 ? <BizBadge status="active" label="Can book" /> : <BizBadge status="inactive" label="Cannot book" />) : undefined}
+        sections={
+          detail
+            ? [
+                { title: "Card", rows: [
+                  { label: "Product", value: detail.productCode },
+                  { label: "Points table", value: detail.tableVersion ? `Version ${detail.tableVersion}` : "None" },
+                  { label: "Activation date", value: detail.padDate ? formatDate(detail.padDate) : "Not set" },
+                ] },
+                { title: "Points", rows: [
+                  { label: "Weekday points available", value: fmt(detail.weekday.available) },
+                  { label: "Weekday points reserved", value: fmt(detail.weekday.reserved) },
+                  { label: "Weekend points available", value: fmt(detail.weekend.available) },
+                  { label: "Weekend points reserved", value: fmt(detail.weekend.reserved) },
+                ] },
+                ...(detail.blockedReasons.length > 0 ? [{ title: "Why booking is blocked", rows: detail.blockedReasons.map((reason, index) => ({ label: `Reason ${index + 1}`, value: reason })) }] : []),
+              ]
+            : []
+        }
+      />
+    </>
+  );
+}
+
+type CreateKind = "booking" | "version" | "holiday" | "venue";
+const CREATE_BUTTONS: Partial<Record<string, { kind: CreateKind; label: string; operation: "book" | "configure" }>> = {
+  bookings: { kind: "booking", label: "New booking", operation: "book" },
+  "points-table": { kind: "version", label: "New version", operation: "configure" },
+  holidays: { kind: "holiday", label: "Add holiday", operation: "configure" },
+  venues: { kind: "venue", label: "Add venue", operation: "configure" },
+};
+
+/** Redemption area: one page with the tabs of `ADMIN_AREA_TABS.redemption`; tab visibility follows `useAdminAreaTabAccess`. */
+export function RedemptionAreaPage() {
+  const access = useAdminAreaTabAccess("redemption");
+  const canBook = useOperation("redemption.book");
+  const canConfigure = useOperation("redemption.configure");
+  const [creating, setCreating] = useState<CreateKind | null>(null);
+  const close = () => setCreating(null);
+  const createProps = (kind: CreateKind) => ({ createOpen: creating === kind, onCreateClose: close });
+
+  return (
+    <AreaPage
+      anyOf={["redemption"]}
+      title="Redemption"
+      actions={(tab) => {
+        const button = CREATE_BUTTONS[tab];
+        if (!button || !(button.operation === "book" ? canBook : canConfigure)) return null;
+        return <Button type="button" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setCreating(button.kind)}><Plus aria-hidden="true" /> {button.label}</Button>;
+      }}
+      tabs={ADMIN_AREA_TABS.redemption.map(({ value, label }) => ({
+        value,
+        label,
+        allowed: access[value],
+        render: () => {
+          switch (value) {
+            case "bookings": return <RedemptionBookingsPanel {...createProps("booking")} />;
+            case "cardholder-points": return <RedemptionCardholderPointsPanel />;
+            case "points-table": return <RedemptionPointsTablePanel {...createProps("version")} />;
+            case "holidays": return <RedemptionHolidaysPanel {...createProps("holiday")} />;
+            case "venues": return <RedemptionVenuesPanel {...createProps("venue")} />;
+          }
+        },
+      }))}
+    />
   );
 }

@@ -16,8 +16,7 @@ export type CustomerMenuProps = {
 
 /**
  * Plain booleans the page already computes from `useOperation` and the record.
- * `ownRecord` is `!customer.restricted`; `hasContract` is whether a
- * non-cancelled contract already exists for the customer.
+ * `ownRecord` is `!customer.restricted`. The customer may have several contracts.
  */
 export type CustomerMenuPerms = {
   canManage: boolean;
@@ -25,7 +24,6 @@ export type CustomerMenuPerms = {
   canApprove: boolean;
   canPrepare: boolean;
   ownRecord: boolean;
-  hasContract?: boolean;
 };
 
 /** Callbacks wired by the page; the bundle only plugs them into the gated slots. */
@@ -69,7 +67,6 @@ export function buildCustomerMenuProps(
     perms.canPrepare &&
     perms.ownRecord &&
     (customer.status === "submitted" || customer.status === "approved") &&
-    !perms.hasContract &&
     cb.onPrepare
   ) {
     extraItems.push({ key: "prepare-contract", label: "Prepare contract", onClick: cb.onPrepare });

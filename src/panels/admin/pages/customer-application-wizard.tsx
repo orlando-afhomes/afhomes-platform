@@ -597,12 +597,12 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
       {step === STEP_PLAN ? (
         <div className="tw:flex tw:flex-col tw:gap-4">
-          <SectionBlock title="Payment plan" description="Choose how the customer pays." icon={<Banknote className="tw:size-4" />}>
+          <SectionBlock title="Payment plan" icon={<Banknote className="tw:size-4" />}>
             <FieldShell ids={schemeIds} label="Payment scheme" required error={errors.paymentSchemeId} labelFor={false}>
               <PaymentOptionGrid label="Payment scheme" value={draft.paymentSchemeId || undefined} onChange={(value: string) => set("paymentSchemeId", value)} options={schemeOptions} columns="three" describedBy={describedBy(schemeIds, errors.paymentSchemeId)} invalid={Boolean(errors.paymentSchemeId)} />
             </FieldShell>
           </SectionBlock>
-          <SectionBlock title="Contract terms" description="Select contract type." icon={<FileText className="tw:size-4" />}>
+          <SectionBlock title="Contract terms" icon={<FileText className="tw:size-4" />}>
             <FieldShell ids={classificationIds} label="Contract classification" required error={errors.contractClassification} labelFor={false}>
               <PaymentOptionGrid label="Contract classification" value={(draft.contractClassification || undefined) as "S" | "N" | undefined} onChange={(value: "S" | "N") => set("contractClassification", value)} options={CLASSIFICATION_OPTIONS.map((option) => ({ value: option.value, label: option.label, icon: option.icon }))} columns="two" describedBy={describedBy(classificationIds, errors.contractClassification)} invalid={Boolean(errors.contractClassification)} />
             </FieldShell>
@@ -745,7 +745,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
                       error={referenceTouched ? ((reference.trim() ? validateReferenceNumber(reference, refPolicy) : "Enter the receipt or reference number.") ?? undefined) : undefined}
                     />
                   </div>
-                  <FieldShell ids={proofIds} label="Proof of payment" required error={reservationErrors.proof} hint="Only the file name is kept in this prototype.">
+                  <FieldShell ids={proofIds} label="Proof of payment" required error={reservationErrors.proof} hint="Only the file name is recorded with this payment.">
                     <div className="tw:flex tw:items-stretch tw:gap-2">
                       <input key={proofKey} id={proofIds.id} type="file" accept="image/*,application/pdf" aria-invalid={Boolean(reservationErrors.proof) || undefined} className="tw:peer tw:sr-only" onChange={(event) => setProofName(event.target.files?.[0]?.name ?? "")} />
                       <label

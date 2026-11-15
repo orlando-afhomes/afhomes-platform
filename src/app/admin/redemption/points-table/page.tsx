@@ -1,8 +1,8 @@
-import { RedemptionPointsTablePage } from "@/panels/admin/pages/redemption-points-table-page";
+import { redirectToAreaTab, type AreaRedirectPageProps } from "@/panels/admin/area-redirect";
 
 // shortcut: the client-only mock auth gate drops this page from instant-navigation validation; remove with the mock login.
 export const instant = false;
 
-export default function Page() {
-  return <RedemptionPointsTablePage />;
+export default async function Page({ searchParams }: AreaRedirectPageProps) {
+  return redirectToAreaTab("redemption", "points-table", searchParams);
 }

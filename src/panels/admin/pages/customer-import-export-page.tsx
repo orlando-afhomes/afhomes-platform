@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { CircleCheck, CircleX, Download, Hourglass, ListOrdered, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useCustomerImportJobs, useExportCustomers, useImportCustomers, useOperation, usePaymentSchemes, useVipProducts } from "@/data/business-queries";
@@ -12,7 +11,6 @@ import {
   customerToExportRow,
   MAX_EXPORT_ROWS,
   rowsToImportRecords,
-  type CustomerImportJob,
   type CustomerImportRecord,
   type CustomerImportRow,
 } from "@/modules/customers/import";
@@ -20,16 +18,14 @@ import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { CheckboxField } from "@/shared/forms/modern";
 import { downloadCsv, downloadXlsx, readSpreadsheet, SPREADSHEET_ACCEPT } from "@/shared/lib/spreadsheet";
-import { Button, buttonVariants } from "@/shared/ui/button";
+import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
-import { AdminPage, AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
+import { AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
 import { ExportCustomersCard, HistoryCard } from "../components/customer-export-history";
-import { CustomerImportHowItWorks } from "../components/customer-import-how-it-works";
 import { TemplateStep, UploadDropzone } from "../components/customer-import-steps";
-import { CustomerImportTabs } from "../components/customer-import-tabs";
 import { humanize } from "@/shared/lib/humanize";
 
 const SHEET_NAME = "Customers";
@@ -43,38 +39,39 @@ const ROW_BADGE: Record<CustomerImportRow["status"], { status: string; label: st
 
 type Preview = { fileName: string; records: CustomerImportRecord[] };
 
-export function CustomerImportExportPage() {
-  const canImport = useOperation("customers.import");
-  const [tab, setTab] = useState("import");
-  const jobs = useCustomerImportJobs(canImport);
-
+export function CustomerImportExportTab() {
   return (
-    <AdminPage
-      anyOf={["customers"]}
-      title="Customer Import and Export"
-      description="Bring company customer records in as drafts, or export customer records."
-      crumbs={[{ label: "Sales" }, { label: "Customer Import" }]}
-      actions={
-        <Link href="/admin/customers" className={buttonVariants({ variant: "outline", className: "tw:min-h-11 tw:sm:min-h-8" })}>
-          Customers
-        </Link>
-      }
-    >
-      {canImport ? (
-        <>
-          <CustomerImportTabs value={tab} onChange={setTab} jobCount={jobs.data?.length ?? 0} />
-          {tab === "import" ? <ImportPanel onImported={() => setTab("history")} /> : null}
-          {tab === "export" ? <ExportPanel /> : null}
-          {tab === "history" ? <HistoryPanel jobs={jobs.data ?? []} isLoading={jobs.isLoading} error={jobs.error} /> : null}
-        </>
-      ) : (
-        <InfoNote title="Not available">Customer import and export are limited to Administrators.</InfoNote>
-      )}
-    </AdminPage>
+    <>
+      <CustomerImportPanel />
+      <CustomerExportPanel />
+    </>
   );
 }
 
-function ImportPanel({ onImported }: { onImported: () => void }) {
+const NOT_AVAILABLE = <InfoNote title="Not available">Customer import and export are limited to Administrators.</InfoNote>;
+
+/** Import steps and the import job history. Needs `customers.import`; anyone else sees a "Not available" note. */
+export function CustomerImportPanel() {
+  const canImport = useOperation("customers.import");
+  const jobs = useCustomerImportJobs(canImport);
+  const [jobId, setJobId] = useState<string | null>(null);
+  if (!canImport) return NOT_AVAILABLE;
+  return (
+    <section aria-label="Import customers" className="customer-import-panel tw:flex tw:flex-col tw:gap-4">
+      <ImportSteps />
+      <HistoryCard jobs={jobs.data ?? []} isLoading={jobs.isLoading} error={jobs.error} jobId={jobId} setJobId={setJobId} />
+    </section>
+  );
+}
+
+/** Customer export. Needs `customers.import`; anyone else sees a "Not available" note. */
+export function CustomerExportPanel() {
+  const canImport = useOperation("customers.import");
+  if (!canImport) return NOT_AVAILABLE;
+  return <ExportSteps />;
+}
+
+function ImportSteps() {
   const customers = useCustomers();
   const products = useVipProducts();
   const schemes = usePaymentSchemes();
@@ -95,19 +92,9 @@ function ImportPanel({ onImported }: { onImported: () => void }) {
   const columns = useMemo<ColumnDef<CustomerImportRow, unknown>[]>(
     () => [
       { id: "row", header: "Row", cell: ({ row }) => row.original.rowNumber },
-      { id: "name", header: "Customer", cell: ({ row }) => <span className="tw:font-semibold">{row.original.displayName}</span> },
+      { id: "name", header: "Customer", cell: ({ row }) => <span className="tw:block tw:max-w-[9rem] tw:truncate tw:font-semibold" title={row.original.displayName}>{row.original.displayName}</span> },
       { id: "status", header: "Result", cell: ({ row }) => <BizBadge {...ROW_BADGE[row.original.status]} /> },
-      {
-        id: "issues",
-        header: "Issues",
-        cell: ({ row }) => (
-          <ul className="tw:space-y-0.5 tw:text-xs">
-            {row.original.errors.map((message) => <li key={message} className="tw:text-destructive">{message}</li>)}
-            {row.original.warnings.map((message) => <li key={message} className="tw:text-muted-foreground">{message}</li>)}
-            {row.original.errors.length + row.original.warnings.length === 0 ? <li className="tw:text-muted-foreground">None</li> : null}
-          </ul>
-        ),
-      },
+      { id: "issues", header: "Problems", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.errors.length + row.original.warnings.length || "None" },
     ],
     [],
   );
@@ -134,7 +121,6 @@ function ImportPanel({ onImported }: { onImported: () => void }) {
       toast.success(`${job.createdCount} draft customer(s) created. ${job.needsReviewCount + job.invalidCount} row(s) skipped.`);
       setPreview(null);
       setDeclaration(false);
-      onImported();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "The import failed.");
     }
@@ -144,18 +130,17 @@ function ImportPanel({ onImported }: { onImported: () => void }) {
 
   return (
     <>
-      <CustomerImportHowItWorks />
       <TemplateStep
         step={1}
         title="Get the template"
-        description="Required in every row: First name and Last name. Dates use YYYY-MM-DD. VIP tier accepts Bronze, Silver, Gold or B1, S1, G1. Payment scheme uses the register name. The Example sheet shows one filled row."
+        description="First name and Last name are required. Dates use YYYY-MM-DD. The Example sheet shows one filled row."
         connector
         actions={
           <>
-            <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => void downloadXlsx("customer-import-template.xlsx", [{ name: SHEET_NAME, rows: template }, { name: "Example", rows: [...template, EXAMPLE_ROW] }]).catch(() => toast.error("The template could not be created."))}>
+            <Button variant="outline" className="tw:min-h-11 tw:w-full tw:sm:min-h-8 tw:sm:w-auto" onClick={() => void downloadXlsx("customer-import-template.xlsx", [{ name: SHEET_NAME, rows: template }, { name: "Example", rows: [...template, EXAMPLE_ROW] }]).catch(() => toast.error("The template could not be created."))}>
               <Download aria-hidden="true" /> XLSX template
             </Button>
-            <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => downloadCsv("customer-import-template.csv", template)}>
+            <Button variant="outline" className="tw:min-h-11 tw:w-full tw:sm:min-h-8 tw:sm:w-auto" onClick={() => downloadCsv("customer-import-template.csv", template)}>
               <Download aria-hidden="true" /> CSV template
             </Button>
           </>
@@ -202,7 +187,7 @@ function ImportPanel({ onImported }: { onImported: () => void }) {
               sections={
                 viewRow
                   ? [
-                      { title: "Parsed values", rows: [{ label: "VIP card", value: humanize(viewRow.input.vipPlan) }, { label: "Payment scheme", value: humanize(viewRow.input.paymentSchemeId) }, { label: "Classification", value: humanize(viewRow.input.contractClassification) }] },
+                      { title: "Parsed values", rows: [{ label: "VIP card", value: humanize(viewRow.input.vipPlan) }, { label: "Payment scheme", value: schemes.data?.find((item) => item.id === viewRow.input.paymentSchemeId)?.label ?? null }, { label: "Classification", value: viewRow.input.contractClassification === "N" ? "Non-Standard" : viewRow.input.contractClassification === "S" ? "Standard" : null }] },
                       { title: "Problems", rows: [...viewRow.errors.map((message, index) => ({ label: index === 0 ? "Errors" : "", value: <span className="tw:text-destructive">{message}</span> })), ...viewRow.warnings.map((message, index) => ({ label: index === 0 ? "Warnings" : "", value: message }))] },
                     ]
                   : []
@@ -227,7 +212,7 @@ function ImportPanel({ onImported }: { onImported: () => void }) {
   );
 }
 
-function ExportPanel() {
+function ExportSteps() {
   const customers = useCustomers();
   const schemes = usePaymentSchemes();
   const exportCustomers = useExportCustomers();
@@ -269,9 +254,4 @@ function ExportPanel() {
       onExport={() => void run()}
     />
   );
-}
-
-function HistoryPanel({ jobs, isLoading, error }: { jobs: CustomerImportJob[]; isLoading: boolean; error: unknown }) {
-  const [jobId, setJobId] = useState<string | null>(null);
-  return <HistoryCard jobs={jobs} isLoading={isLoading} error={error} jobId={jobId} setJobId={setJobId} />;
 }

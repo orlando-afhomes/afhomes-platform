@@ -115,7 +115,7 @@ function detailSections(application: RegistrationApplication, programOptions: Re
 }
 
 /** OST application queue (doc 03 section 9.2): Clerk checks, the Administrator or Super Administrator decides. */
-export function RegistrationApplicationsPage() {
+export function RegistrationApplicationsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { identity } = useDevIdentity();
   const applications = useRegistrationApplications();
   const programOptions = useProgramCategoryLabels();
@@ -167,7 +167,6 @@ export function RegistrationApplicationsPage() {
       { id: "applicant", header: "Applicant", cell: ({ row }) => <span className="tw:font-semibold">{applicantDisplayName(row.original.applicant)}</span> },
       { id: "sponsor", header: "Sponsor", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.sponsorLabel },
       { id: "submitted", header: "Submitted", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => formatDate(row.original.submittedAt) },
-      { id: "version", header: "Version", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => `v${row.original.version}` },
       { id: "status", header: "Status", cell: ({ row }) => <StatusTag status={row.original.status} /> },
     ],
     [],
@@ -197,9 +196,9 @@ export function RegistrationApplicationsPage() {
 
   return (
     <AdminPage
+      embedded={embedded}
       anyOf={["accreditation-registrations"]}
       title="OST Applications"
-      description="Applications sent through the public registration form. An application is not a seller until the Administrator approves it."
       crumbs={[{ label: "Sales Network" }, { label: "OST Applications" }]}
     >
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search applications" filters={[{ label: "Status filter", value: status, onChange: setStatus, options: STATUS_FILTER }]} />

@@ -20,7 +20,6 @@ import {
   useUpdateAccountStatus,
   useUpdateLinkedAccountStatus,
 } from "@/data/queries";
-import { getSystemRoleLabel } from "@/panels/admin/role-label";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { RoleBadge } from "@/shared/components/business/role-badge";
 import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
@@ -30,7 +29,6 @@ import { RowActionsMenu, type RowActionItem } from "@/shared/components/modern/r
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { AppAlert } from "@/shared/components/modern/app-alert";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import type { AccountDialogMode } from "./account-dialogs";
@@ -54,12 +52,10 @@ const AccountDialogs = dynamic(() => import("./account-dialogs").then((mod) => m
   loading: () => null,
 });
 
-// Narrow screens keep name, account status, and actions; the rest stay in the
-// employee profile and account dialogs.
+// Narrow screens keep name, account status, and actions. Position, email,
+// record type, and system roles stay in the employee profile and account dialogs.
 const SHOW_FROM_SM: DataTableColumnMeta = { className: "tw:hidden tw:sm:table-cell" };
 const SHOW_FROM_LG: DataTableColumnMeta = { className: "tw:hidden tw:lg:table-cell" };
-const SHOW_FROM_XL: DataTableColumnMeta = { className: "tw:hidden tw:xl:table-cell" };
-const SHOW_FROM_2XL: DataTableColumnMeta = { className: "tw:hidden tw:2xl:table-cell" };
 
 const STATUS_FILTER_ITEMS = [
   { value: "all", label: "All employment statuses" },
@@ -67,15 +63,6 @@ const STATUS_FILTER_ITEMS = [
   { value: "inactive", label: "Inactive" },
   { value: "suspended", label: "Suspended" },
 ];
-
-function initials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .slice(0, 2)
-    .join("");
-}
 
 const MUTED = "tw:text-muted-foreground";
 
@@ -85,7 +72,7 @@ const MUTED = "tw:text-muted-foreground";
  * need the Accounts module (Admin/Super Admin); every action is filtered by
  * the actor's policy and re-checked by the repository.
  */
-export function StaffPage() {
+export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { identity } = useDevIdentity();
   const granted = useEffectiveModuleIds();
   const canManageAccounts = granted.has("accounts");
@@ -279,35 +266,17 @@ export function StaffPage() {
         cell: ({ row: tableRow }) => {
           const row = tableRow.original;
           const name = row.kind === "employee" ? row.staff.displayName : row.account.displayName;
-          const avatarUrl = row.kind === "employee" ? row.staff.avatarUrl : null;
           const accountPolicy = row.account ? accountPolicyFor(row.account.id) : null;
           const isYou = row.kind === "employee" ? identity.staffId === row.staff.id : Boolean(accountPolicy?.canEdit && accountPolicy.restriction);
           return (
-            <div className="tw:flex tw:items-center tw:gap-2.5">
-              <Avatar className="tw:size-8 tw:text-xs">
-                {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
-                <AvatarFallback>{initials(name)}</AvatarFallback>
-              </Avatar>
-              <div className="tw:flex tw:min-w-0 tw:flex-col">
-                <Button variant="link" className="tw:h-auto tw:min-h-11 tw:justify-start tw:p-0 tw:text-left tw:font-semibold tw:sm:min-h-0" onClick={() => openRow(row)}>
-                  {name}
-                  {isYou ? <span className="tw:font-normal tw:text-muted-foreground"> (You)</span> : null}
-                </Button>
-                <span className={`tw:truncate tw:text-xs ${MUTED}`}>{row.kind === "employee" ? row.staff.position : row.account.email}</span>
-              </div>
-            </div>
+            <Button variant="link" className="tw:h-auto tw:min-h-11 tw:justify-start tw:p-0 tw:text-left tw:font-semibold tw:sm:min-h-0" onClick={() => openRow(row)}>
+              {name}
+              {isYou ? <span className="tw:font-normal tw:text-muted-foreground"> (You)</span> : null}
+            </Button>
           );
         },
       },
     ];
-    if (canManageAccounts) {
-      cols.push({
-        id: "type",
-        header: "Type",
-        meta: SHOW_FROM_2XL,
-        cell: ({ row }) => <Badge variant="outline">{row.original.kind === "employee" ? "Employee" : "Account only"}</Badge>,
-      });
-    }
     cols.push(
       {
         id: "department",
@@ -317,7 +286,7 @@ export function StaffPage() {
       },
       {
         id: "role",
-        header: "Assigned Role",
+        header: "Role",
         meta: SHOW_FROM_LG,
         cell: ({ row }) => {
           const record = row.original;
@@ -331,27 +300,6 @@ export function StaffPage() {
         },
       },
     );
-    if (canManageAccounts) {
-      cols.push({
-        id: "system-roles",
-        header: "System Roles",
-        meta: SHOW_FROM_XL,
-        cell: ({ row }) => {
-          const roleIds = row.original.account?.roleIds ?? [];
-          return roleIds.length === 0 ? (
-            <span className={MUTED}>No system roles</span>
-          ) : (
-            <div className="tw:flex tw:flex-wrap tw:gap-1">
-              {roleIds.map((role) => (
-                <Badge key={role} variant="outline">
-                  {getSystemRoleLabel(role)}
-                </Badge>
-              ))}
-            </div>
-          );
-        },
-      });
-    }
     cols.push(
       {
         id: "account",
@@ -364,7 +312,7 @@ export function StaffPage() {
       },
       {
         id: "employment",
-        header: "Employment",
+        header: "Status",
         meta: SHOW_FROM_LG,
         cell: ({ row }) =>
           row.original.kind === "employee" ? <StatusBadge status={row.original.staff.status} /> : <span className={MUTED}>No employment record</span>,
@@ -377,7 +325,7 @@ export function StaffPage() {
     );
     return cols;
     // openAccount and the state setters are stable enough: they only call setState.
-  }, [accountPolicies, roles, departments, staffPolicies, canManageAccounts, identity.staffId, confirmRun, setAccountStatus, setTemporaryPassword, setLinkedStatus]);
+  }, [accountPolicies, roles, departments, staffPolicies, identity.staffId, confirmRun, setAccountStatus, setTemporaryPassword, setLinkedStatus]);
 
   const filtered = useMemo(
     () =>
@@ -422,9 +370,9 @@ export function StaffPage() {
 
   return (
     <AdminPage
+      embedded={embedded}
       anyOf={["staff"]}
       title="Staff & Access"
-      description="Manage employees, their system access, and pending account approvals in one place."
       crumbs={[{ label: "Organization" }, { label: "Staff & Access" }]}
       actions={
         <Button

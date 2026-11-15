@@ -7,12 +7,13 @@ import { CANCELLATION_GROUND_LABELS } from "@/modules/contracts/types";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { AdminPage } from "@/shared/components/admin";
 import { matchesSearch, optionsFrom } from "@/shared/lib/search";
+import { humanize } from "@/shared/lib/humanize";
 
 type CancellationRow = NonNullable<ReturnType<typeof useContracts>["data"]>[number];
 
-export function FinanceCancellationsPage() {
+/** Cancellations tab of the Finance area ([finance]). */
+export function FinanceCancellationsPanel() {
   const contracts = useContracts();
   const [search, setSearch] = useState("");
   const [groundFilter, setGroundFilter] = useState("all");
@@ -32,11 +33,9 @@ export function FinanceCancellationsPage() {
   );
 
   return (
-    <AdminPage anyOf={["finance"]} title="Cancellation Requests" description="Cancellations with forfeiture awaiting Finance confirmation." crumbs={[{ label: "Finance" }, { label: "Cancellation Requests" }]}>
-      <QueryState isLoading={contracts.isLoading} error={contracts.error}>
-        <FilterBar search={search} onSearch={setSearch} searchLabel="Search cancellation requests" filters={[{ label: "Ground filter", value: groundFilter, onChange: setGroundFilter, options: optionsFrom("All grounds", requests.map((item) => item.cancellation?.ground), (value) => CANCELLATION_GROUND_LABELS[value as keyof typeof CANCELLATION_GROUND_LABELS] ?? value) }]} />
-        <DataTable data={visible} columns={columns} getRowId={(row) => row.id} caption="Cancellation requests" emptyText={requests.length === 0 ? "No cancellation is awaiting confirmation." : "No requests match the filters."} />
-      </QueryState>
-    </AdminPage>
+    <QueryState isLoading={contracts.isLoading} error={contracts.error}>
+      <FilterBar search={search} onSearch={setSearch} searchLabel="Search cancellation requests" filters={[{ label: "Ground filter", value: groundFilter, onChange: setGroundFilter, options: optionsFrom("All grounds", requests.map((item) => item.cancellation?.ground), (value) => CANCELLATION_GROUND_LABELS[value as keyof typeof CANCELLATION_GROUND_LABELS] ?? humanize(value)) }]} />
+      <DataTable data={visible} columns={columns} getRowId={(row) => row.id} caption="Cancellation requests" emptyText={requests.length === 0 ? "No cancellation is awaiting confirmation." : "No requests match the filters."} />
+    </QueryState>
   );
 }

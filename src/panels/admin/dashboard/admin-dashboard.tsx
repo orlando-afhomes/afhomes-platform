@@ -116,7 +116,6 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
     <>
       <DashboardHeader
         title={`Welcome back, ${getRoleDisplayLabel(roles)}`}
-        description="Here's an overview of your organization, sales network, and operations."
         actions={series.length > 0 ? <DashboardDateFilter range={range} /> : undefined}
       />
 
@@ -200,7 +199,7 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
             canSeeContracts ? (
               <DashboardDistributionChart
                 title="Contracts by VIP Product"
-                description="Distribution of visible contracts, cancelled excluded (current)."
+                description=""
                 icon={Layers}
                 rows={tiers}
                 unit={["contract", "contracts"]}
@@ -231,7 +230,7 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
               <DashboardPendingActions>
                 {canReview ? (
                   <DashboardPendingItem
-                    href="/admin/sales/contract-review"
+                    href="/admin/sales?tab=contract-review"
                     label="Contract Review"
                     count={countPendingContractReviews(contracts.data ?? [])}
                     icon={ClipboardCheck}
@@ -242,7 +241,7 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
                 ) : null}
                 {canSeePaymentQueue ? (
                   <DashboardPendingItem
-                    href="/admin/finance"
+                    href="/admin/finance?tab=verification"
                     label="Payment Verification"
                     count={countPendingPaymentVerifications(payments.data ?? [])}
                     icon={Wallet}
@@ -253,7 +252,7 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
                 ) : null}
                 {canSeeActivation ? (
                   <DashboardPendingItem
-                    href="/admin/membership/activation"
+                    href="/admin/membership?tab=activation"
                     label="Membership Activation"
                     count={countPendingMembershipActivations(memberships.data ?? [])}
                     icon={ListChecks}

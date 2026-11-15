@@ -1,16 +1,18 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
-import type { SaleRepository, SaleView } from "@/data/contracts/sale-repository";
+import type { SaleRepository, SaleView, VipCommissionCorrection } from "@/data/contracts/sale-repository";
 import type { DevIdentity } from "@/modules/identity/types";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import { firstOpenDate } from "@/modules/finance/month-close";
 import { daysPastDue, isFullySettled, periodCollections } from "@/modules/finance/rules";
+import { commissionStageAmounts } from "@/modules/commissions/rules";
+import { evaluateSaleParties, salePartyBlockMessage } from "@/modules/sales/accreditation-standing";
 import { confirmedValueInPeriod } from "@/modules/sales/rules";
 import { periodRange } from "@/modules/reconciliation/rules";
 import type { Sale } from "@/modules/sales/types";
 import { activeRoles } from "./dev-identities";
 import { BROAD_BUSINESS_ROLES, BusinessRepository, canSeeContract, customerName, nowIso, today } from "./business-base";
-import { paymentsOfContract } from "./business-effects";
-import { applyCommissionTrigger } from "./commission-effects";
+import { paymentsOfContract, reconcileContract } from "./business-effects";
+import { applyCommissionTrigger, freezeCommissionRates } from "./commission-effects";
 import { nextId } from "./ids";
 import type { MockStore } from "./seed";
 import { isActiveIdentity } from "./scope";
@@ -66,6 +68,62 @@ export class MockSaleRepository extends BusinessRepository implements SaleReposi
         newValue: "approved", relatedRecordIds: [sale.contractId],
       });
       return { ...visible, approval: { ...sale.approval } };
+    });
+  }
+
+  async correctCommission(id: string, input: VipCommissionCorrection, options?: MockAsyncOptions): Promise<SaleView> {
+    return this.run(options, (identity) => {
+      const canApprove = this.can(identity, "contracts.approve");
+      this.require(identity, canApprove ? "contracts.approve" : "contracts.prepare", "Only authorized office staff can correct a VIP sale.");
+      const previous = this.visible(identity).find((item) => item.id === id);
+      const sale = this.store.sales.find((item) => item.id === previous?.id);
+      if (!sale || !["pending", "confirmed"].includes(sale.status)) throw new Error("Choose an active VIP sale.");
+      if (this.store.commissions.some((item) => item.saleId === id && item.contractId === sale.contractId && item.product !== "IGP" && (item.releaseDate || item.status === "released" || item.status === "paid" || item.payout))) {
+        throw new Error("A sale cannot be corrected after commission release.");
+      }
+      if (!canApprove && paymentsOfContract(this.store, sale.contractId).some((payment) => payment.verifiedDate)) {
+        throw new Error("Only an Administrator or Super Administrator can correct a sale after its first approved receipt.");
+      }
+      if (!canApprove && (input.dscRateBp !== undefined || input.driRateBp !== undefined)) throw new Error("Only an Administrator or Super Administrator can correct a frozen rate.");
+      const reason = input.reason.trim();
+      if (!reason) throw new Error("Enter the reason for the correction.");
+      const referrer = input.referrerMemberId;
+      if (referrer && !this.store.members.some((member) => member.id === referrer)) throw new Error("Choose a valid referrer.");
+      if (referrer && referrer === sale.sellerMemberId) {
+        const customer = this.store.customers.find((item) => item.id === sale.customerId);
+        if (!customer?.approvedAt || customer.referrerMemberId !== referrer || !customer.referralReference?.trim()) {
+          throw new Error("The Administrator must verify a dated referral reference for the seller to earn both commissions.");
+        }
+      }
+      const standing = evaluateSaleParties([{ role: "referrer", memberId: referrer }], this.store.accreditations, sale.recordedDate);
+      if (standing.blocked[0]) throw new Error(salePartyBlockMessage(standing.blocked[0]));
+
+      const previousRates = sale.commissionRates;
+      let rates = previousRates;
+      if (previousRates) {
+        const closing = previousRates.find((rate) => rate.role === "DSC");
+        if (!closing) throw new Error("The frozen closing seller rate is missing.");
+        const referral = referrer
+          ? previousRates.find((rate) => rate.role === "DRI" && rate.memberId === referrer)
+            ?? freezeCommissionRates(this.store, "VIP", closing.memberId, referrer, previousRates).find((rate) => rate.role === "DRI")
+          : undefined;
+        if (input.driRateBp !== undefined && !referral) throw new Error("Choose a referrer before correcting a DRI rate.");
+        rates = [{ ...closing, rateBp: input.dscRateBp ?? closing.rateBp }, ...(referral ? [{ ...referral, rateBp: input.driRateBp ?? referral.rateBp }] : [])];
+        for (const rate of rates) commissionStageAmounts(sale.valueCentavos, rate.rateBp, "VIP");
+      } else if (input.dscRateBp !== undefined || input.driRateBp !== undefined) {
+        throw new Error("Record the signed Reservation Agreement before correcting a frozen rate.");
+      }
+
+      sale.referrerMemberId = referrer;
+      sale.commissionRates = rates;
+      sale.expiryReminders = [...(sale.expiryReminders ?? []).filter((reminder) => reminder.role === "seller"), ...standing.reminders];
+      this.audit(identity, {
+        module: "sales", action: "VIP_SALE_COMMISSION_CORRECTED", entityType: "sale", entityId: id,
+        previousValue: JSON.stringify({ referrer: previous?.referrerMemberId, rates: previousRates }),
+        newValue: JSON.stringify({ referrer, rates }), reason, relatedRecordIds: [sale.contractId],
+      });
+      reconcileContract(this.store, sale.contractId, identity);
+      return this.visible(identity).find((item) => item.id === id)!;
     });
   }
 

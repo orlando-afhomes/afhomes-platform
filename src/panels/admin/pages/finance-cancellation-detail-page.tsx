@@ -13,7 +13,7 @@ import { Button } from "@/shared/ui/button";
 import { ConfirmCancellationDialog, DeclineCancellationDialog } from "../components/contract-dialogs";
 import { ContractLedgerSection, ContractPageFrame } from "../components/contract-sections";
 
-const CRUMBS = [{ label: "Finance" }, { label: "Cancellation Requests", href: "/admin/finance/cancellations" }];
+const CRUMBS = [{ label: "Finance" }, { label: "Cancellations", href: "/admin/finance?tab=cancellations" }];
 const BUTTON = "tw:min-h-11 tw:sm:min-h-8";
 
 /** Finance decision on a requested cancellation with forfeiture. The requester can never decide it. */
@@ -44,7 +44,7 @@ export function FinanceCancellationDetailPage({ contractId }: { contractId: stri
         return (
           <>
             {request ? (
-              <AdminSection title="Cancellation request" description="Verified payments are forfeited if Finance confirms. If the same person requested and decides it, the history flags it.">
+              <AdminSection title="Cancellation request">
                 <DetailList>
                   <DetailRow term="Status">{request.status === "requested" ? "Awaiting Finance decision" : "Confirmed"}</DetailRow>
                   <DetailRow term="Ground">{CANCELLATION_GROUND_LABELS[request.ground]}</DetailRow>

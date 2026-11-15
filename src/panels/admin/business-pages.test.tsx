@@ -15,23 +15,18 @@ import { AdminSidebarContext } from "./layouts/admin-sidebar-context";
 import { AdminMobileNav } from "./components/admin-mobile-nav";
 import { AdminSidebar } from "./components/admin-sidebar";
 import { AuditLogsPage } from "./pages/audit-logs-page";
-import { CommissionAssignmentPage } from "./pages/commission-assignment-page";
-import { CommissionsPage } from "./pages/commissions-page";
-import { SchemeGuidePage } from "./pages/scheme-guide-page";
-import { CustomerImportExportPage } from "./pages/customer-import-export-page";
+import { CommissionsAreaPage } from "./pages/commissions-area-page";
+import { VipProductsAreaPage } from "./pages/vip-products-page";
+import { CustomersAreaPage } from "./pages/customers-area-page";
 import { ContractReviewDetailPage } from "./pages/contract-review-detail-page";
-import { ContractsPage } from "./pages/contracts-page";
+import { SalesAreaPage } from "./pages/sales-area-page";
 import { CustomerDetailPage } from "./pages/customer-detail-page";
 import { CustomerFormPage } from "./pages/customer-form-page";
-import { CustomersPage } from "./pages/customers-page";
-import { FinancePage } from "./pages/finance-page";
+import { FinanceAreaPage } from "./pages/finance-area-page";
 import { SalesContractDetailPage } from "./pages/sales-contract-detail-page";
-import { MembershipActivationPage } from "./pages/membership-activation-page";
+import { MembershipAreaPage } from "./pages/membership-page";
 import { CollectionsReportPage } from "./pages/collections-report-page";
-import { SalesPage } from "./pages/sales-page";
-import { StayPointsPage } from "./pages/stay-points-page";
-import { PaymentSchemesPage } from "./pages/payment-schemes-page";
-import { VipProductsPage } from "./pages/vip-products-page";
+import { StayPointsAreaPage } from "./pages/stay-points-page";
 import { PrepareContractDialog } from "./components/prepare-contract-dialog";
 import { useCreateCustomerDraft, useCustomers } from "@/data/queries";
 import { currentManilaYear } from "@/modules/customers/customer-number";
@@ -47,6 +42,7 @@ vi.mock("next/navigation", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/navigation")>()),
   useRouter: () => navigation,
   usePathname: () => "/admin",
+  useSearchParams: () => new URLSearchParams(window.location.search),
 }));
 
 function Wrapper({ identityId, children }: { identityId: string; children: React.ReactNode }) {
@@ -65,6 +61,7 @@ function Wrapper({ identityId, children }: { identityId: string; children: React
 
 afterEach(() => {
   cleanup();
+  window.history.replaceState(null, "", "/");
   Swal.close();
   toast.dismiss();
   vi.restoreAllMocks();
@@ -100,7 +97,8 @@ function CustomerRecordProbe({ id }: { id: string }) {
   );
 }
 
-function show(identityId: string, page: ReactElement) {
+function show(identityId: string, page: ReactElement, tab?: string) {
+  window.history.replaceState(null, "", tab ? "/admin?tab=" + tab : "/admin");
   return render(<Wrapper identityId={identityId}>{page}</Wrapper>);
 }
 
@@ -151,14 +149,14 @@ async function fillResidentialAddress(
 }
 describe("business pages render for the intended roles", () => {
   it("lists customers for a seller and restricts the OST view of others", async () => {
-    show("dev-ssm-a", <CustomersPage />);
+    show("dev-ssm-a", <CustomersAreaPage />, "customers");
     expect(await screen.findByRole("table", { name: "Customers" })).toBeInTheDocument();
     expect(await screen.findByText("Customer A One")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "New customer" })).toBeInTheDocument();
   });
 
   it("lets an OST start a customer draft but not open another seller's customer", async () => {
-    show("dev-ost-a1", <CustomersPage />);
+    show("dev-ost-a1", <CustomersAreaPage />, "customers");
     expect(await screen.findByText("Customer A One")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /new customer/i })).toBeInTheDocument();
     expect(screen.queryByText("Customer B One")).toBeNull();
@@ -241,19 +239,23 @@ describe("business pages render for the intended roles", () => {
   });
 
   it("renders the catalog with Gold resolved to Contract-stated", async () => {
-    show("dev-admin", <VipProductsPage />);
+    show("dev-admin", <VipProductsAreaPage />, "products");
     expect(await screen.findByRole("table", { name: "VIP product catalog" })).toBeInTheDocument();
     expect(await screen.findByText("Gold VIP")).toBeInTheDocument();
     expect(screen.queryByText("Source conflict")).toBeNull();
-    // Bronze, Silver, and Gold each carry a Contract-stated price badge.
-    expect((await screen.findAllByText("Contract-stated")).length).toBe(3);
+    // The price source lives in the product details, not the table.
+    fireEvent.click(screen.getByRole("row", { name: "Open Gold VIP" }));
+    const sheet = await screen.findByRole("dialog", { name: "Gold VIP" });
+    expect(within(sheet).getByText("Contract-stated")).toBeInTheDocument();
+    expect(within(sheet).queryByText("Source conflict")).toBeNull();
   });
 
   it("renders the payment schemes as configured, Move ones flagged for Super Admin approval", async () => {
-    show("dev-admin", <PaymentSchemesPage />);
-    expect(await screen.findByRole("table", { name: "Payment schemes" })).toBeInTheDocument();
-    expect(screen.queryAllByText("Pending owner decision")).toHaveLength(0);
-    expect((await screen.findAllByText("Configured")).length).toBe(4);
+    show("dev-admin", <VipProductsAreaPage />, "schemes");
+    const table = await screen.findByRole("table", { name: "Payment schemes" });
+    // One status badge per row: configured schemes show their availability.
+    expect(within(table).queryAllByText("Terms pending")).toHaveLength(0);
+    expect(within(table).getAllByText("Available")).toHaveLength(4);
   });
 
   it("shows finalization available to Admin for the resolved Gold contract", async () => {
@@ -277,7 +279,7 @@ describe("business pages render for the intended roles", () => {
   });
 
   it("lists contracts for review with a New contract action and a count footer", async () => {
-    show("dev-admin", <ContractsPage />);
+    show("dev-admin", <SalesAreaPage />, "contracts");
     expect(await screen.findByRole("table", { name: "Contracts" })).toBeInTheDocument();
     expect(await screen.findByRole("link", { name: "Rafael Domingo" })).toHaveAttribute("href", expect.stringMatching(/\/ctr-4$/));
     expect(screen.getByRole("link", { name: /new contract/i })).toHaveAttribute("href", "/admin/customers/new");
@@ -286,20 +288,20 @@ describe("business pages render for the intended roles", () => {
   });
 
   it("hides the New contract action from identities without contracts.prepare", async () => {
-    show("dev-ost-a1", <ContractsPage />);
+    show("dev-ost-a1", <SalesAreaPage />, "contracts");
     expect(await screen.findByRole("table", { name: "Contracts" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /new contract/i })).toBeNull();
     expect(document.querySelectorAll("tbody tr[data-row-key]")).toHaveLength(1);
   });
 
   it("gives Finance a verification queue with the pending reservation", async () => {
-    show("dev-finance", <FinancePage />);
+    show("dev-finance", <FinanceAreaPage />, "verification");
     expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
     await openMenuWith("Actions for payment", "Verify");
   });
 
   it("lets the Administrator open the receipt verification queue", async () => {
-    show("dev-admin", <FinancePage />);
+    show("dev-admin", <FinanceAreaPage />, "verification");
     expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
     await openMenuWith("Actions for payment", "Verify");
   });
@@ -326,14 +328,14 @@ describe("business pages render for the intended roles", () => {
 
   it("opens a payment details sheet when anywhere on a Finance row is clicked", async () => {
     const user = userEvent.setup();
-    show("dev-finance", <FinancePage />);
+    show("dev-finance", <FinanceAreaPage />, "verification");
     const table = await screen.findByRole("table", { name: "Verification queue" });
     await user.click(within(table).getAllByRole("row")[1]);
     expect(await screen.findByRole("heading", { name: /payment/i })).toBeInTheDocument();
     expect(await screen.findByText("Finance review")).toBeInTheDocument();
   });
   it("shows sellers only their own sales scope", async () => {
-    show("dev-ost-a1", <SalesPage />);
+    show("dev-ost-a1", <SalesAreaPage />, "sales");
     expect(await screen.findByRole("table", { name: "Sales" })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Team sales" })).toBeNull();
     expect((await screen.findAllByText("Customer A One")).length).toBeGreaterThan(0);
@@ -341,34 +343,36 @@ describe("business pages render for the intended roles", () => {
   });
 
   it("lets Administrators open the Commission Rates directory", async () => {
-    show("dev-admin", <CommissionAssignmentPage />);
-    expect(await screen.findByRole("heading", { name: "Commission Rates" })).toBeInTheDocument();
+    show("dev-admin", <CommissionsAreaPage />, "rates");
+    expect(await screen.findByRole("heading", { name: "Commissions" })).toBeInTheDocument();
     expect(await screen.findByText("No approved rates recorded.")).toBeInTheDocument();
   });
 
   it("shows Administrators the customer import steps and templates", async () => {
-    show("dev-admin", <CustomerImportExportPage />);
-    expect(await screen.findByRole("tab", { name: /Import/ })).toBeInTheDocument();
+    show("dev-admin", <CustomersAreaPage />, "import-export");
+    expect(await screen.findByRole("region", { name: "Import customers" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Export customers" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "XLSX template" })).toBeInTheDocument();
     expect(screen.getByLabelText(/Customer file/)).toHaveAttribute("accept", ".xlsx,.csv");
   });
 
   it("keeps customer import and commission assignment away from roles without the permission", async () => {
-    show("dev-finance", <CustomerImportExportPage />);
+    show("dev-finance", <CustomersAreaPage />, "import-export");
     // Finance has no Customers module, so the page is refused before any import control renders.
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Customer Import and Export" })).toBeNull());
-    expect(screen.queryByRole("tab", { name: /Import/ })).toBeNull();
+    expect(screen.queryByRole("region", { name: "Import customers" })).toBeNull();
     expect(screen.queryByLabelText(/Customer file/)).toBeNull();
   });
 
   it("keeps seller accounts out of Commission Rates", async () => {
-    show("dev-ost-a1", <CommissionAssignmentPage />);
-    expect(await screen.findByRole("heading", { name: "Access restricted" })).toBeInTheDocument();
+    show("dev-ost-a1", <CommissionsAreaPage />, "rates");
+    expect(await screen.findByRole("tab", { name: "Commissions" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Rates" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Set rate" })).toBeNull();
   });
 
   it("lists every official scheme in the guide and gives pending ones no figures", async () => {
-    show("dev-admin", <SchemeGuidePage />);
+    show("dev-admin", <VipProductsAreaPage />, "scheme-guide");
     expect(await screen.findByRole("heading", { name: "4-Month Installment" })).toBeInTheDocument();
     for (const name of ["Spot Cash", "Move A", "Move B"]) expect(screen.getByRole("heading", { name })).toBeInTheDocument();
     // Spot Cash (OD-11) and the Move schemes are configured by owner decision (2026-11-09); none is pending.
@@ -378,22 +382,35 @@ describe("business pages render for the intended roles", () => {
     expect(screen.getByRole("button", { name: "Print guide" })).toBeInTheDocument();
   });
 
-  it("links Administrators from Commissions to Commission Rates", async () => {
-    show("dev-admin", <CommissionsPage />);
-    expect(await screen.findByRole("link", { name: "Commission rates" })).toHaveAttribute("href", "/admin/commissions/assignment");
+  it("shows Administrators the Rates tab", async () => {
+    show("dev-admin", <CommissionsAreaPage />, "commissions");
+    expect(await screen.findByRole("tab", { name: "Rates" })).toBeInTheDocument();
   });
 
   it("shows the activation queue to Admin", async () => {
-    show("dev-admin", <MembershipActivationPage />);
+    show("dev-admin", <MembershipAreaPage />, "activation");
     expect(await screen.findByRole("table", { name: "Activation queue" })).toBeInTheDocument();
   });
 
   it("shows Welcome Gift tranches and resort bill actions to Finance", async () => {
-    show("dev-finance", <StayPointsPage />);
+    show("dev-finance", <StayPointsAreaPage />, "welcome-gift");
     expect(await screen.findByRole("table", { name: "Annual Welcome Gift" })).toBeInTheDocument();
-    expect(await screen.findByRole("table", { name: "Resort bills" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "Resort bills" }));
+    const bills = await screen.findByRole("table", { name: "Resort bills" });
     expect(screen.getByRole("button", { name: "Enter resort bill" })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Record refund" }).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Awaiting first redemption/)).toBeNull();
+    // Refunds are recorded from a verified bill's details.
+    fireEvent.click(within(bills).getAllByText("Verified")[0].closest("tr")!);
+    expect(await screen.findByRole("button", { name: "Record refund" })).toBeInTheDocument();
+  });
+
+  it("keeps Stay Points tables within five columns and shows the activation date in the points summary", async () => {
+    const user = userEvent.setup();
+    show("dev-finance", <StayPointsAreaPage />, "welcome-gift");
+    const tranches = await screen.findByRole("table", { name: "Annual Welcome Gift" });
+    expect(within(tranches).getAllByRole("columnheader").length).toBeLessThanOrEqual(5);
+    await user.click(screen.getByRole("button", { name: "View full details" }));
+    expect(await screen.findByText("Points Activation Date")).toBeInTheDocument();
   });
 
   it("renders role-scoped reports", async () => {
@@ -597,14 +614,12 @@ describe("customer application wizard scheme pricing", () => {
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
   });
 
-  it("titles the plan step Payment plan and Contract terms with chooser guidance", async () => {
+  it("titles the plan step Payment plan and Contract terms", async () => {
     const user = userEvent.setup();
     await startApplication(user, /silver vip/i);
     const main = wizardMain();
     expect(within(main).getByRole("heading", { name: "Payment plan" })).toBeInTheDocument();
-    expect(within(main).getByText("Choose how the customer pays.")).toBeInTheDocument();
     expect(within(main).getByRole("heading", { name: "Contract terms" })).toBeInTheDocument();
-    expect(within(main).getByText("Select contract type.")).toBeInTheDocument();
   });
 
   it("keeps the Standard and Non-Standard classification cards selectable", async () => {
@@ -1394,7 +1409,7 @@ describe("new customer unsaved changes", () => {
     await user.click(within(prompt).getByRole("button", { name: "Save Draft" }));
     await waitFor(() => expect(navigation.back).toHaveBeenCalledTimes(1));
 
-    view.rerender(<Wrapper identityId="dev-super-admin"><CustomersPage /></Wrapper>);
+    view.rerender(<Wrapper identityId="dev-super-admin"><CustomersAreaPage /></Wrapper>);
     const draftLink = await screen.findByRole("link", { name: "Untitled draft" });
     expect(draftLink.closest("tr")).toHaveTextContent("Draft");
     const customerId = draftLink.getAttribute("href")!.split("/").at(-1);
@@ -1424,6 +1439,8 @@ describe("new customer unsaved changes", () => {
       {mode === "desktop" ? <AdminSidebar collapsed={false} /> : <AdminMobileNav />}
       <CustomerFormPage />
     </>);
+    // The real form lives at /admin/customers/new; keep the location distinct from the Dashboard link.
+    window.history.replaceState(null, "", "/admin/customers/new");
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
     if (mode === "mobile") await user.click(screen.getByRole("button", { name: "Open navigation" }));
     const nav = screen.getByRole("navigation", { name: "Administration" });

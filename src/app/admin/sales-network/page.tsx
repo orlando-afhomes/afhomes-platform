@@ -1,8 +1,9 @@
-import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { SalesNetworkAreaPage } from "@/panels/admin/pages/sales-network-area-page";
 
-// shortcut: the client-only mock auth gate drops this page from instant-navigation validation; remove with the mock login.
+// The admin role is resolved by the client in the mock app.
 export const instant = false;
 
 export default function Page() {
-  redirect("/admin/sales-network/members");
+  return <Suspense><SalesNetworkAreaPage /></Suspense>;
 }

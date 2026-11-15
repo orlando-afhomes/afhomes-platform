@@ -1,32 +1,33 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useCommissionAction, useCommissionClawbackAction, useCommissionClawbacks, useCommissions, useOperation } from "@/data/business-queries";
 import type { CommissionView } from "@/data/contracts/commission-repository";
-import { DataTable } from "@/shared/components/modern/data-table";
+import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
-import { Button, buttonVariants } from "@/shared/ui/button";
+import { Button } from "@/shared/ui/button";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { Money } from "@/shared/components/modern/money";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { AdminPage, AdminStatGrid, AdminStatCard } from "@/shared/components/admin";
+import { AdminStatGrid, AdminStatCard } from "@/shared/components/admin";
 import { BadgeCheck, Clock, CircleCheck, ReceiptText } from "lucide-react";
 import { AdjustDialog, COMMISSION_COLUMNS, CommissionDetailsSheet, HoldDialog, type CommissionMenuItem } from "../components/commission-shared";
 import { clawbackBalance } from "@/modules/commissions/rules";
 import type { CommissionClawback } from "@/modules/commissions/types";
 import { MoneyField, TextField } from "@/shared/forms/modern";
-import { parsePesoToCentavos } from "@/shared/lib/money";
+import { formatPeso, parsePesoToCentavos } from "@/shared/lib/money";
+import { formatDate } from "@/shared/lib/format-date";
+import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { humanize } from "@/shared/lib/humanize";
 import { matchesSearch, optionsFrom } from "@/shared/lib/search";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 
 type DialogState = { kind: "adjust" | "cancel" | "hold"; commission: CommissionView } | null;
 
-export function CommissionsPage() {
+/** Commissions tab of the Commissions area: everyone with the commissions grant sees the records their scope allows; workflow actions need commission.approve. */
+export function CommissionsPanel() {
   const canApprove = useOperation("commission.approve");
-  const canSetRates = useOperation("commission.rates.manage");
   const commissions = useCommissions();
   const action = useCommissionAction();
   const { dialog } = useConfirmRun();
@@ -65,19 +66,7 @@ export function CommissionsPage() {
     [all, search, statusFilter, productFilter],
   );
   return (
-    <AdminPage
-      anyOf={["commissions"]}
-      title="Commissions"
-      description={canApprove ? "Finance approves and confirms payouts. Approved is not Paid." : "Your commissions. Approved is not Paid; only confirmed disbursement makes a commission Paid."}
-      crumbs={[{ label: "Finance" }, { label: "Commissions" }]}
-      actions={
-        canSetRates ? (
-          <Link href="/admin/commissions/assignment" className={buttonVariants({ className: "tw:min-h-11 tw:sm:min-h-8" })}>
-            Commission rates
-          </Link>
-        ) : null
-      }
-    >
+    <>
       {dialog}
       <AdminStatGrid>
         <AdminStatCard label="Approved, unpaid" value={<Money value={totals.approved} />} icon={BadgeCheck} tone="brand" />
@@ -110,39 +99,90 @@ export function CommissionsPage() {
       {state?.kind === "adjust" ? <AdjustDialog commission={state.commission} onClose={() => setState(null)} /> : null}
       <ReasonDialog open={state?.kind === "cancel"} title="Cancel commission" description="A cancelled commission can no longer be paid. This is recorded in the audit history." confirmText="Cancel commission" danger successText="Commission cancelled." onClose={() => setState(null)} onSubmit={(reason) => (state?.kind === "cancel" ? action.mutateAsync({ id: state.commission.id, action: "cancel", reason }) : Promise.resolve())} />
       {state?.kind === "hold" ? <HoldDialog commission={state.commission} onClose={() => setState(null)} /> : null}
-      <ClawbackLedger enabled={canApprove || all.length > 0} commissions={all} />
-    </AdminPage>
+    </>
   );
 }
 
-function ClawbackLedger({ enabled, commissions }: { enabled: boolean; commissions: CommissionView[] }) {
+function recoveredOf(row: CommissionClawback): number {
+  return row.recoveries.reduce((sum, item) => sum + item.amountCentavos, 0);
+}
+
+function recoveryStatus(row: CommissionClawback): string {
+  return row.refundDueCentavos ? "Refund due" : row.writeOff ? "Written off" : clawbackBalance(row) === 0 ? "Recovered" : "Owed";
+}
+
+/** Recovery is shown to people who approve commissions or who have commission records of their own. */
+export function useCommissionRecoveryVisible(): boolean {
+  const canApprove = useOperation("commission.approve");
+  const commissions = useCommissions();
+  return canApprove || (commissions.data ?? []).length > 0;
+}
+
+/**
+ * Commission recovery (clawback) ledger, the Recovery tab. Visibility follows
+ * `useCommissionRecoveryVisible`; collection and write-off follow their own operations.
+ */
+export function CommissionRecoveryPanel() {
   const canCollect = useOperation("commission.clawback.collect");
   const canWriteOff = useOperation("commission.clawback.writeOff");
+  const commissionsQuery = useCommissions();
+  const commissions = useMemo(() => commissionsQuery.data ?? [], [commissionsQuery.data]);
+  const enabled = useCommissionRecoveryVisible();
   const query = useCommissionClawbacks(enabled);
   const action = useCommissionClawbackAction();
   const [collecting, setCollecting] = useState<CommissionClawback | null>(null);
   const [writeOff, setWriteOff] = useState<CommissionClawback | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
   const [error, setError] = useState<string>();
+  // Memoized: TanStack renders cell functions as components, so a new columns
+  // array on every render would remount every cell (and close an open row menu).
+  const recoveryColumns = useMemo<ColumnDef<CommissionClawback, unknown>[]>(() => [
+    { header: "Seller", cell: ({ row }) => commissions.find((item) => item.id === row.original.commissionId)?.recipientName ?? row.original.recipientMemberId },
+    { header: "Reason", cell: ({ row }) => humanize(row.original.trigger) },
+    { header: "Original amount", cell: ({ row }) => <Money value={row.original.amountCentavos} /> },
+    { header: "Balance", cell: ({ row }) => <Money value={clawbackBalance(row.original)} /> },
+    { header: "Status", cell: ({ row }) => recoveryStatus(row.original) },
+  ], [commissions]);
   if (!enabled) return null;
+  const sellerOf = (row: CommissionClawback) => commissions.find((item) => item.id === row.commissionId)?.recipientName ?? row.recipientMemberId;
+  const itemsFor = (row: CommissionClawback): CommissionMenuItem[] => {
+    if (clawbackBalance(row) <= 0) return [];
+    const items: CommissionMenuItem[] = [];
+    if (canCollect) items.push({ key: "collect", label: "Record collection", onClick: () => { setDetailId(null); setError(undefined); setAmount(""); setReference(""); setCollecting(row); } });
+    if (canWriteOff) items.push({ key: "writeOff", label: "Write off", danger: true, onClick: () => { setDetailId(null); setWriteOff(row); } });
+    return items;
+  };
+  const detail = detailId ? (query.data ?? []).find((row) => row.id === detailId) ?? null : null;
   return (
-    <section className="tw:grid tw:gap-3 tw:mt-5">
-      <h2 className="tw:text-lg tw:font-semibold">Commission recovery</h2>
+    <section className="tw:grid tw:gap-3" aria-label="Commission recovery">
       <QueryState isLoading={query.isLoading} error={query.error}>
-        <DataTable data={query.data ?? []} caption="Commission recovery" emptyText="No recovery records." getRowId={(row) => row.id} columns={[
-          { header: "Seller", cell: ({ row }) => commissions.find((item) => item.id === row.original.commissionId)?.recipientName ?? row.original.recipientMemberId },
-          { header: "Reason", cell: ({ row }) => humanize(row.original.trigger) },
-          { header: "Original amount", cell: ({ row }) => <Money value={row.original.amountCentavos} /> },
-          { header: "Recovered", cell: ({ row }) => <Money value={row.original.recoveries.reduce((sum, item) => sum + item.amountCentavos, 0)} /> },
-          { header: "Balance", cell: ({ row }) => <Money value={clawbackBalance(row.original)} /> },
-          { header: "Status", cell: ({ row }) => row.original.refundDueCentavos ? <>Refund due <Money value={row.original.refundDueCentavos} /></> : row.original.writeOff ? "Written off" : clawbackBalance(row.original) === 0 ? "Recovered" : "Owed" },
-          { header: "Actions", cell: ({ row }) => clawbackBalance(row.original) > 0 ? <div className="tw:flex tw:flex-wrap tw:gap-2">
-            {canCollect ? <Button variant="outline" onClick={() => { setError(undefined); setAmount(""); setReference(""); setCollecting(row.original); }}>Record collection</Button> : null}
-            {canWriteOff ? <Button variant="outline" onClick={() => setWriteOff(row.original)}>Write off</Button> : null}
-          </div> : null },
-        ]} />
+        <DataTable data={query.data ?? []} caption="Commission recovery" emptyText="No recovery records." getRowId={(row) => row.id}
+          onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open recovery for ${sellerOf(row)}`}
+          rowActions={(row) => <RowActionsMenu itemName={`recovery for ${sellerOf(row)}`} onView={() => setDetailId(row.id)} extraItems={itemsFor(row)} />}
+          columns={recoveryColumns} />
       </QueryState>
+      <RecordDetailsSheet
+        open={detail !== null}
+        onClose={() => setDetailId(null)}
+        title={detail ? sellerOf(detail) : "Commission recovery"}
+        subtitle={detail ? humanize(detail.trigger) : undefined}
+        sections={detail ? [{
+          title: "Recovery",
+          rows: [
+            { label: "Status", value: recoveryStatus(detail) },
+            { label: "Raised on", value: formatDate(detail.raisedDate) },
+            { label: "Original amount", value: <Money value={detail.amountCentavos} /> },
+            { label: "Recovered", value: <Money value={recoveredOf(detail)} /> },
+            { label: "Balance", value: <Money value={clawbackBalance(detail)} /> },
+            { label: "Refund due", value: detail.refundDueCentavos ? <Money value={detail.refundDueCentavos} /> : null },
+            { label: "Write-off reason", value: detail.writeOff?.reason },
+          ],
+        }] : []}
+        history={detail?.recoveries.map((item, index) => ({ key: `${item.date}-${index}`, when: formatDate(item.date), text: `Collected ${formatPeso(item.amountCentavos)}, reference ${item.reference}` }))}
+        footer={detail && itemsFor(detail).length > 0 ? itemsFor(detail).map((item) => <Button key={item.key} type="button" variant={item.danger ? "danger" : "outline"} onClick={item.onClick}>{item.label}</Button>) : undefined}
+      />
       {collecting ? <FormDialog open title="Record direct collection" submitText="Record collection" pending={action.isPending} error={error}
         onClose={() => setCollecting(null)} onSubmit={() => {
           const amountCentavos = parsePesoToCentavos(amount);

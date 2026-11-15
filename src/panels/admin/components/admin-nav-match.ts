@@ -1,10 +1,11 @@
 import type { AdminNavItem } from "../navigation";
-import { normalizePath } from "../navigation";
+import { navItemPaths, normalizePath } from "../navigation";
 
 // Precise route matching for navigation selection. Exact matches win; otherwise the
 // longest href that is a path-segment parent wins. The dashboard root (/admin)
 // is never a prefix parent: it selects only on exact "/admin", so unknown
-// routes do not highlight Dashboard as a fallback.
+// routes do not highlight Dashboard as a fallback. An item's former routes
+// (`matchPaths`, e.g. /admin/promos for Stay Points) match like its own href.
 type RouteMatch = { item: AdminNavItem; ancestors: AdminNavItem[] };
 
 function findRouteMatch(
@@ -25,14 +26,16 @@ function findRouteMatch(
   };
 
   for (const item of entries) {
-    const href = normalizePath(item.href);
-    if (current === href) {
+    const paths = navItemPaths(item);
+    if (paths.includes(current)) {
       consider(item, ancestors, Number.MAX_SAFE_INTEGER, true);
       continue;
     }
     // Segment-boundary prefix only; dashboard root excluded as a fallback.
-    if (href !== "/admin" && current.startsWith(`${href}/`)) {
-      consider(item, ancestors, href.length, false);
+    for (const href of paths) {
+      if (href !== "/admin" && current.startsWith(`${href}/`)) {
+        consider(item, ancestors, href.length, false);
+      }
     }
     if (item.children?.length) {
       const child = findRouteMatch(item.children, current, [...ancestors, item]);

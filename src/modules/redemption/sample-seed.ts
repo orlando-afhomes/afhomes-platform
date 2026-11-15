@@ -1,8 +1,5 @@
 import type { RedemptionState } from "./types";
 
-/** Label shown wherever the sample points table appears. */
-export const SAMPLE_TABLE_NOTICE = "Sample table. Replace with the approved table.";
-
 /**
  * Initial Redemption configuration. shortcut: the approved points-per-night table, the
  * weekend nights, the venue cut-offs and the holiday calendar have not been supplied
@@ -26,15 +23,16 @@ export function createRedemptionSeed(): RedemptionState {
           { venueId: "venue-wellness-hotel", roomType: "Deluxe", weekdayPoints: 4500, weekendPoints: 6500 },
           { venueId: "venue-hotspring-resort", roomType: "Villa", weekdayPoints: 6000, weekendPoints: 9000 },
         ],
-        note: SAMPLE_TABLE_NOTICE,
+        // Sample values carry the `sample` flag only; no notice is shown (owner ruling 2026-11-15).
+        note: null,
         sample: true,
         createdAt: "2026-11-13T00:00:00.000Z",
         createdBy: "system",
       },
     ],
     holidays: [
-      { id: "hol-seed-1", date: "2026-12-25", name: "Christmas Day (sample)", removed: false, addedBy: "system", addedAt: "2026-11-13T00:00:00.000Z" },
-      { id: "hol-seed-2", date: "2027-01-01", name: "New Year's Day (sample)", removed: false, addedBy: "system", addedAt: "2026-11-13T00:00:00.000Z" },
+      { id: "hol-seed-1", date: "2026-12-25", name: "Christmas Day", removed: false, addedBy: "system", addedAt: "2026-11-13T00:00:00.000Z" },
+      { id: "hol-seed-2", date: "2027-01-01", name: "New Year's Day", removed: false, addedBy: "system", addedAt: "2026-11-13T00:00:00.000Z" },
     ],
     bookings: [],
     ledger: [],

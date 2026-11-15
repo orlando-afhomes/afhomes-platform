@@ -59,7 +59,9 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
     if (!this.store.members.some((member) => member.id === memberId)) throw new Error("Choose a seller.");
     businessDate(approvedDate, "JA&D approval date");
     const number = required(rawNumber, "the JA&D accreditation number").toUpperCase();
-    if (/\s/.test(number)) throw new Error("The JA&D number cannot contain spaces.");
+    if (!/^JA[IO]\d{2}(0[1-9]|1[0-2])(?!0000)\d{4}$/.test(number)) {
+      throw new Error("Enter a JA&D number in JAI or JAO format followed by YYMM and four sequence digits.");
+    }
     if (this.store.igp.accreditations.some((record) => record.number === number)) throw new Error("This JA&D number is already recorded.");
     const previous = jadAccreditationOn(this.store.igp.accreditations, memberId, today());
     if (previous && previous.approvedDate >= approvedDate) throw new Error("The renewal date must be after the previous approval date.");

@@ -45,7 +45,7 @@ const closeDialog = async (user: ReturnType<typeof userEvent.setup>, name: strin
   await waitFor(() => expect(screen.queryByRole("dialog", { name })).toBeNull());
 };
 
-async function clickRowAction(user: ReturnType<typeof userEvent.setup>, row: HTMLElement, action: "View" | "Edit" | "Delete") {
+async function clickRowAction(user: ReturnType<typeof userEvent.setup>, row: HTMLElement, action: "View full details" | "Edit" | "Delete") {
   await user.click(within(row).getByRole("button", { name: /actions for/i }));
   await user.click(await screen.findByRole("menuitem", { name: action }));
 }
@@ -126,13 +126,13 @@ async function pickOption(user: ReturnType<typeof userEvent.setup>, label: strin
 describe("staff page", () => {
   it("lists seeded staff with departments and roles", async () => {
     render(<TestWrapper />);
-    expect(await screen.findByText("HR Specialist", {}, { timeout: 5000 })).toBeInTheDocument();
-    expect(screen.getByText("Finance Analyst")).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Finance Staff" })).toBeInTheDocument();
   });
 
   it("gives each assigned role its own badge color", async () => {
     render(<TestWrapper />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
     const badges = Array.from(document.querySelectorAll("tbody [data-slot='badge'][style*='background']")) as HTMLElement[];
     const byRole = new Map<string, Set<string>>();
     for (const badge of badges) {
@@ -160,7 +160,7 @@ describe("staff page", () => {
   it("adds staff with cascading department role", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
     await fillNewStaffForm(user);
     await user.click(screen.getByRole("button", { name: /^add$/i }));
     await waitFor(() => expect(screen.getByText("New Hire")).toBeInTheDocument());
@@ -170,7 +170,7 @@ describe("staff page", () => {
   it("requires a department role before saving", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
     const firstNameInput = await openAdd(user);
     fireEvent.change(firstNameInput, { target: { value: "Roleless" } });
     fireEvent.change(screen.getByPlaceholderText("Last Name"), { target: { value: "User" } });
@@ -187,7 +187,7 @@ describe("staff page", () => {
   it("clears an incompatible role when the department changes", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
     const firstNameInput = await openAdd(user);
     fireEvent.change(firstNameInput, { target: { value: "Mover" } });
     fireEvent.change(screen.getByPlaceholderText("Last Name"), { target: { value: "User" } });
@@ -209,8 +209,8 @@ describe("staff page", () => {
   it("edits a staff member", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
-    const row = screen.getByText("HR Specialist").closest("tr")!;
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
+    const row = screen.getByRole("button", { name: /^HR Staff/ }).closest("tr")!;
     await clickRowAction(user, row, "Edit");
     const firstNameInput = await screen.findByDisplayValue("HR");
     fireEvent.change(firstNameInput, { target: { value: "HR Updated" } });
@@ -224,8 +224,8 @@ describe("staff page", () => {
   it("shows staff profile without temporary password", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
-    const row = screen.getByText("HR Specialist").closest("tr")!;
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
+    const row = screen.getByRole("button", { name: /^HR Staff/ }).closest("tr")!;
     await user.click(row);
     const dialog = await screen.findByRole("dialog", { name: "Employee profile" });
     expect(within(dialog).getAllByText("Human Resources").length).toBeGreaterThan(0);
@@ -235,7 +235,7 @@ describe("staff page", () => {
   it("keeps Delete disabled with a visible reason and leaves the staff row in place", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
     await fillNewStaffForm(user, { firstName: "Temp", lastName: "Staff", email: "tempstaff@afhomes.local" });
     await user.click(screen.getByRole("button", { name: /^add$/i }));
     await waitFor(() => expect(screen.getByText("Temp Staff")).toBeInTheDocument());
@@ -250,19 +250,19 @@ describe("staff page", () => {
   it("filters staff by department", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
     await user.click(screen.getByRole("combobox", { name: "Staff department filter" }));
     await pickOption(user, "Finance");
-    await waitFor(() => expect(screen.queryByText("HR Specialist")).not.toBeInTheDocument());
-    expect(screen.getByText("Finance Analyst")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("button", { name: /^HR Staff/ })).not.toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Finance Staff" })).toBeInTheDocument();
   });
 
   it("searches staff", async () => {
     render(<TestWrapper />);
     const search = await screen.findByPlaceholderText("Search staff and accounts");
     fireEvent.change(search, { target: { value: "Finance" } });
-    await waitFor(() => expect(screen.queryByText("HR Specialist")).not.toBeInTheDocument());
-    expect(screen.getByText("Finance Analyst")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("button", { name: /^HR Staff/ })).not.toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Finance Staff" })).toBeInTheDocument();
   });
 });
 
@@ -276,7 +276,7 @@ describe("staff page S3-B permissions", () => {
 
   it("shows HR the assigned role names without Roles management", async () => {
     render(<TestWrapper identityId="dev-hr" />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
     await waitFor(() => expect(within(row("staff-3")).getByText("Operations Staff", { selector: "[data-slot='badge']" })).toBeInTheDocument());
     expect(screen.queryByText("Unassigned")).toBeNull();
   });
@@ -284,20 +284,20 @@ describe("staff page S3-B permissions", () => {
   it("offers HR only department roles it may assign", async () => {
     const user = userEvent.setup();
     render(<TestWrapper identityId="dev-hr" />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
     await openAdd(user);
     await pickSharedSelect(user, "Select department", "Admin");
     expect(await screen.findByText("No roles you can assign in this department.")).toBeInTheDocument();
     await user.click(within(screen.getByRole("dialog")).getByRole("combobox", { name: "Department" }));
     await pickOption(user, "Human Resources");
     await user.click(screen.getByRole("combobox", { name: "Role" }));
-    expect(await screen.findByRole("option", { name: "HR Staff" })).toBeInTheDocument();
+    expect(await screen.findByRole("option", { name: /^HR Staff/ })).toBeInTheDocument();
   });
 
   it("lets HR add staff with a Pending account", async () => {
     const user = userEvent.setup();
     render(<TestWrapper identityId="dev-hr" />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
     await fillNewStaffForm(user);
     await user.click(screen.getByRole("button", { name: /^add$/i }));
     await waitFor(() => expect(screen.getByText("New Hire")).toBeInTheDocument());
@@ -311,7 +311,7 @@ describe("staff page S3-B permissions", () => {
   it("locks HR's own department and role and hides self-deletion", async () => {
     const user = userEvent.setup();
     render(<TestWrapper identityId="dev-hr" />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
     await waitFor(() => expect(within(row("staff-1")).getByText("HR Staff", { selector: "[data-slot='badge']" })).toBeInTheDocument());
     await user.click(within(row("staff-1")).getByRole("button", { name: /actions for/i }));
     expect(await screen.findByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
@@ -325,7 +325,7 @@ describe("staff page S3-B permissions", () => {
   it("lets HR suspend an eligible linked account, but not its own or the protected one", async () => {
     const user = userEvent.setup();
     render(<TestWrapper identityId="dev-hr" />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
     await openProfile(user, "staff-admin");
     await user.click(await screen.findByRole("button", { name: "Suspend account" }));
     await confirmInAlertDialog(user, "Suspend account");
@@ -347,7 +347,7 @@ describe("staff page S3-B permissions", () => {
   it("locks protected-record name and email while keeping other profile fields editable", async () => {
     const user = userEvent.setup();
     render(<TestWrapper identityId="dev-admin" />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
     await clickRowAction(user, row("staff-super"), "Edit");
     expect(await screen.findByText("Only a Super Administrator can change this record's name or email.")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("First Name")).toBeDisabled();
@@ -362,7 +362,7 @@ describe("add staff system access", () => {
   it("offers Admin only in-scope system roles and creates the Pending account with the chosen role", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
     await fillNewStaffForm(user);
     expect(await screen.findByText("System Access")).toBeInTheDocument();
     await screen.findByRole("checkbox", { name: "Human Resources" });
@@ -373,14 +373,17 @@ describe("add staff system access", () => {
     await user.click(screen.getByRole("button", { name: /^add$/i }));
     await waitFor(() => expect(screen.getByText("New Hire")).toBeInTheDocument());
     const newRow = screen.getByText("New Hire").closest("tr") as HTMLElement;
-    expect(within(newRow).getByText("Human Resources", { selector: "[data-slot='badge']" })).toBeInTheDocument();
     expect(within(newRow).getByText("Pending")).toBeInTheDocument();
+    // System roles live in the employee profile, not the table.
+    await user.click(newRow);
+    const profile = await screen.findByRole("dialog", { name: "Employee profile" });
+    expect(within(within(profile).getByRole("region", { name: "Account Access" })).getByText("Human Resources")).toBeInTheDocument();
   });
 
   it("offers Super Admin the Finance and Administrator roles", async () => {
     const user = userEvent.setup();
     render(<TestWrapper identityId="dev-super-admin" />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
     await openAdd(user);
     expect(await screen.findByRole("checkbox", { name: "Finance" })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Administrator" })).toBeInTheDocument();
@@ -389,7 +392,7 @@ describe("add staff system access", () => {
   it("does not show system access to HR", async () => {
     const user = userEvent.setup();
     render(<TestWrapper identityId="dev-hr" />);
-    await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
     await openAdd(user);
     expect(await screen.findByText("Account Credentials")).toBeInTheDocument();
     expect(screen.queryByText("System Access")).toBeNull();

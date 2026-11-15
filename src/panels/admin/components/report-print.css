@@ -10,6 +10,7 @@
   body:has(.report-print__page) header,
   body:has(.report-print__page) main nav,
   body:has(.report-print__page) [data-sonner-toaster],
+  body:has(.report-print__page) [role="tablist"],
   body:has(.report-print__page) .report-print__hide {
     display: none !important;
   }

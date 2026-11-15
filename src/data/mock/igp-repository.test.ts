@@ -22,6 +22,10 @@ async function accredit({ admin, input }: ReturnType<typeof setup>) {
 }
 
 describe("IGP sale and receipts", () => {
+  it("rejects incorrectly formatted JA&D accreditation numbers", async () => {
+    const { admin, input } = setup();
+    await expect(admin.igp.act({ type: "accredit", memberId: input.sellerMemberId, number: "AAO23010001", approvedDate: "2023-01-01" })).rejects.toThrow(/JAI|JAO/);
+  });
   it("validates before allocating a number, and Clerk records but cannot approve", async () => {
     const fixture = setup();
     const { store, input, clerk, finance, admin, otherSeller } = fixture;

@@ -4,26 +4,59 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { BadgeCheck, CalendarCheck, Clock, Receipt } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useApproveSale, useMarkSaleDefaulted, useOperation, useSales } from "@/data/business-queries";
+import { useApproveSale, useCorrectVipCommission, useMarkSaleDefaulted, useOperation, useSales } from "@/data/business-queries";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
-import { ReasonDialog } from "@/shared/components/modern/form-dialog";
+import { useMembers } from "@/data/queries";
+import { parsePesoToCentavos } from "@/shared/lib/money";
+import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { buildSalesMenuProps } from "../actions/sales-contract-actions";
 import type { SaleView } from "@/data/contracts/sale-repository";
 import { confirmedValueInPeriod, mySales, referredSales, teamSales, totalsFor } from "@/modules/sales/rules";
 import { manilaToday } from "@/shared/lib/dates";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
-import { StandardDateField } from "@/shared/forms/modern";
+import { SelectField, StandardDateField, TextField } from "@/shared/forms/modern";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useContractHref } from "../components/use-contract-href";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { TabBar } from "@/shared/components/modern/tab-bar";
+import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
+import { Button } from "@/shared/ui/button";
 import { formatDate } from "@/shared/lib/format-date";
-import { AdminPage, AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
+import { AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
 import { saleExpiryReminderText } from "@/modules/sales/accreditation-standing";
+
+function VipCommissionCorrectionDialog({ sale, canApprove, onClose }: { sale: SaleView; canApprove: boolean; onClose: () => void }) {
+  const members = useMembers();
+  const save = useCorrectVipCommission();
+  const [referrer, setReferrer] = useState(sale.referrerMemberId ?? "none");
+  const [dsc, setDsc] = useState("");
+  const [dri, setDri] = useState("");
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState<string>();
+
+  return (
+    <FormDialog open title="Correct VIP commission" description={sale.customerName} submitText="Save correction" pending={save.isPending} error={error} onClose={onClose} onSubmit={() => {
+      const dscRateBp = dsc.trim() ? parsePesoToCentavos(dsc) : undefined;
+      const driRateBp = referrer !== "none" && dri.trim() ? parsePesoToCentavos(dri) : undefined;
+      if (dscRateBp === null || driRateBp === null) {
+        setError("Enter a valid rate as a percentage.");
+        return;
+      }
+      void save.mutateAsync({ id: sale.id, referrerMemberId: referrer === "none" ? null : referrer, dscRateBp, driRateBp, reason })
+        .then(onClose, (failure: Error) => setError(failure.message));
+    }}>
+      <SelectField label="Referrer" value={referrer} onChange={(value) => { setReferrer(value); setDri(""); }} options={[{ value: "none", label: "No referrer" }, ...(members.data ?? []).map((member) => ({ value: member.id, label: member.displayName }))]} />
+      {canApprove && sale.commissionRates ? <>
+        <TextField label="Closing seller rate (%)" hint="Leave blank to keep the frozen rate." value={dsc} onChange={setDsc} inputMode="decimal" />
+        {referrer !== "none" ? <TextField label="Referrer rate (%)" hint="Leave blank to use the applicable approved rate." value={dri} onChange={setDri} inputMode="decimal" /> : null}
+      </> : null}
+      <TextField label="Reason" required value={reason} onChange={setReason} />
+    </FormDialog>
+  );
+}
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
@@ -34,23 +67,34 @@ const STATUS_OPTIONS = [
   { value: "defaulted", label: "Defaulted" },
 ];
 
-export function SalesPage() {
+/** Pending sales show "Awaiting approval" until an approver approves them. */
+function saleBadgeStatus(sale: SaleView): string {
+  return sale.approval || sale.status !== "pending" ? sale.status : "awaiting_approval";
+}
+
+type SalesScope = "mine" | "team" | "referred" | "all";
+
+/** Sales tab of the Sales area (the area page checks the `sales` grant). */
+export function SalesTab() {
   const router = useRouter();
   const sales = useSales();
   const approve = useApproveSale();
   const markDefaulted = useMarkSaleDefaulted();
   const [defaultSale, setDefaultSale] = useState<SaleView | null>(null);
   const { confirmRun, dialog } = useConfirmRun();
+  const [correction, setCorrection] = useState<SaleView | null>(null);
+  const canPrepare = useOperation("contracts.prepare");
   const canApprove = useOperation("contracts.approve");
   const { identity } = useDevIdentity();
   const viewTeam = useOperation("sales.viewTeam");
   const contractHref = useContractHref();
   const monthStart = `${manilaToday().slice(0, 7)}-01`;
-  const [scope, setScope] = useState<"mine" | "team" | "referred" | "all">(identity.memberId ? "mine" : "all");
+  const [scope, setScope] = useState<SalesScope>(identity.memberId ? "mine" : "all");
   const [status, setStatus] = useState("all");
   const [search, setSearch] = useState("");
   const [from, setFrom] = useState(monthStart);
   const [to, setTo] = useState(manilaToday());
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const scoped = useMemo(() => {
     const all = sales.data ?? [];
@@ -72,37 +116,30 @@ export function SalesPage() {
   const referredView = scope === "referred";
   const columns = useMemo<ColumnDef<SaleView, unknown>[]>(
     () => [
+      { id: "value", header: "Sale", cell: ({ row }) => <Money value={row.original.valueCentavos} /> },
       { id: "customer", header: "Customer", cell: ({ row }) => (referredView ? <span className="tw:font-semibold">{row.original.customerName}</span> : <Link href={contractHref(row.original.contractId)} className="tw:font-semibold tw:underline-offset-4 tw:hover:underline">{row.original.customerName}</Link>) },
-      { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => `${row.original.productCode} · ${row.original.schemeLabel}` },
-      { id: "value", header: "Contract value", cell: ({ row }) => <Money value={row.original.valueCentavos} /> },
-      { id: "seller", header: "Seller", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => (
-        <>
-          {row.original.sellerName ?? "Company"}
-          {(row.original.expiryReminders ?? []).map((reminder) => <span key={reminder.role} className="tw:block tw:text-xs tw:text-muted-foreground">{saleExpiryReminderText(reminder)}</span>)}
-        </>
-      ) },
-      { id: "recorded", header: "Recorded", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => formatDate(row.original.recordedDate) },
-      { id: "confirmed", header: "Confirmed", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => formatDate(row.original.confirmedDate) },
-      { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.approval || row.original.status !== "pending" ? row.original.status : "awaiting_approval"} /> },
+      { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.productCode },
+      { id: "seller", header: "Seller", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.sellerName ?? "Company" },
+      { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={saleBadgeStatus(row.original)} /> },
     ],
     [contractHref, referredView],
   );
 
-  const tabs = identity.memberId ? [{ value: "mine", label: "My sales" }, { value: "referred", label: "Referred by me" }, ...(viewTeam ? [{ value: "team", label: "Team sales" }] : [])] : [{ value: "all", label: "All sales" }];
+  const detail = detailId ? rows.find((row) => row.id === detailId) ?? null : null;
+  const scopes = identity.memberId ? [{ value: "mine", label: "My sales" }, { value: "referred", label: "Referred by me" }, ...(viewTeam ? [{ value: "team", label: "Team sales" }] : [])] : [{ value: "all", label: "All sales" }];
 
   return (
-    <AdminPage anyOf={["sales"]} title="Sales" description="Approved VIP sales count once at their full contract value when approved receipts reach 25%." crumbs={[{ label: "Sales", href: "/admin/sales" }, { label: "Sales" }]}>
+    <>
       {dialog}
+      {correction ? <VipCommissionCorrectionDialog sale={correction} canApprove={canApprove} onClose={() => setCorrection(null)} /> : null}
       <ReasonDialog open={defaultSale !== null} title="Mark sale Defaulted" description={defaultSale?.customerName ?? ""} confirmText="Mark Defaulted" successText="Sale marked Defaulted." onClose={() => setDefaultSale(null)} onSubmit={(reason) => defaultSale ? markDefaulted.mutateAsync({ id: defaultSale.id, reason }) : Promise.resolve()} />
-      {tabs.length > 1 ? <TabBar label="Sales view" tabs={tabs} value={scope} onChange={(value) => setScope(value as "mine" | "team" | "referred" | "all")} /> : null}
-      {referredView ? <p className="tw:text-sm tw:text-muted-foreground">Sales you referred. They are not added to your own sales totals.</p> : null}
       {referredView ? null : <AdminStatGrid>
         <AdminStatCard label="Confirmed" value={<Money value={totals.confirmed} />} icon={BadgeCheck} tone="brand" description={`${totals.confirmedCount} sale(s)`} />
         <AdminStatCard label="Pending" value={<Money value={totals.pending} />} icon={Clock} tone="warning" description={`${totals.pendingCount} sale(s)`} />
-        <AdminStatCard label="Overall recorded" value={<Money value={totals.overall} />} icon={Receipt} tone="info" description="Combined" />
-        <AdminStatCard label="Period confirmed" value={<Money value={inPeriod} />} icon={CalendarCheck} tone="violet" description="Net reversals" />
+        <AdminStatCard label="Overall recorded" value={<Money value={totals.overall} />} icon={Receipt} tone="info" />
+        <AdminStatCard label="Period confirmed" value={<Money value={inPeriod} />} icon={CalendarCheck} tone="violet" description="After reversals" />
       </AdminStatGrid>}
-      <FilterBar search={search} onSearch={setSearch} searchLabel="Search sales" filters={[{ label: "Sale status filter", value: status, onChange: setStatus, options: canApprove ? [...STATUS_OPTIONS, { value: "no-payment", label: "No approved receipt for 90 days" }] : STATUS_OPTIONS }]}>
+      <FilterBar search={search} onSearch={setSearch} searchLabel="Search sales" filters={[...(scopes.length > 1 ? [{ label: "Show", value: scope, onChange: (value: string) => setScope(value as SalesScope), options: scopes }] : []), { label: "Sale status filter", value: status, onChange: setStatus, options: canApprove ? [...STATUS_OPTIONS, { value: "no-payment", label: "No approved receipt for 90 days" }] : STATUS_OPTIONS }]}>
         <StandardDateField label="Period from" value={from} onChange={setFrom} className="tw:md:min-w-0 tw:md:flex-1" />
         <StandardDateField label="Period to" value={to} onChange={setTo} className="tw:md:min-w-0 tw:md:flex-1" />
       </FilterBar>
@@ -113,11 +150,14 @@ export function SalesPage() {
           getRowId={(row) => row.id}
           emptyText="No sales match."
           caption="Sales"
-          onRowOpen={referredView ? undefined : (row) => router.push(contractHref(row.contractId))}
-          getRowLabel={(row) => `Open the sale for ${row.customerName}`}
-          rowActions={referredView ? undefined : (row) => {
+          onRowOpen={referredView ? (row) => setDetailId(row.id) : (row) => router.push(contractHref(row.contractId))}
+          getRowLabel={(row) => (referredView ? `View full details of the sale for ${row.customerName}` : `Open the sale for ${row.customerName}`)}
+          rowActions={(row) => {
+            if (referredView) {
+              return <RowActionsMenu itemName={`sale for ${row.customerName}`} extraItems={[{ key: "details", label: "View full details", onClick: () => setDetailId(row.id) }]} />;
+            }
             const menu = buildSalesMenuProps(row, { canApprove }, {
-              onView: () => router.push(contractHref(row.contractId)),
+              onView: () => setDetailId(row.id),
               onApprove: () => confirmRun({
                 title: "Approve this sale?",
                 description: "This allows its receipts to be reviewed for approval.",
@@ -128,10 +168,31 @@ export function SalesPage() {
               }),
               onMarkDefaulted: () => setDefaultSale(row),
             });
-            return <RowActionsMenu {...menu} />;
+            return <RowActionsMenu {...menu} extraItems={[...menu.extraItems, ...((canApprove || canPrepare) && (row.status === "pending" || row.status === "confirmed") ? [{ key: "correct-commission", label: "Correct commission", onClick: () => setCorrection(row) }] : [])]} />;
           }}
         />
       </QueryState>
-    </AdminPage>
+      <RecordDetailsSheet
+        open={detail !== null}
+        onClose={() => setDetailId(null)}
+        title={detail ? `Sale for ${detail.customerName}` : "Sale"}
+        badge={detail ? <BizBadge status={saleBadgeStatus(detail)} /> : undefined}
+        sections={detail ? [
+          {
+            rows: [
+              { label: "Customer", value: detail.customerName },
+              { label: "Plan", value: detail.productCode },
+              { label: "Payment scheme", value: detail.schemeLabel },
+              { label: "Sale value", value: <Money value={detail.valueCentavos} /> },
+              { label: "Seller", value: detail.sellerName ?? "Company" },
+              { label: "Recorded", value: formatDate(detail.recordedDate) },
+              { label: "Confirmed", value: formatDate(detail.confirmedDate) },
+            ],
+          },
+          ...((detail.expiryReminders ?? []).length > 0 ? [{ title: "Reminders", rows: (detail.expiryReminders ?? []).map((reminder) => ({ label: reminder.role === "seller" ? "Seller" : "Referrer", value: saleExpiryReminderText(reminder) })) }] : []),
+        ] : []}
+        footer={detail && !referredView ? <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => router.push(contractHref(detail.contractId))}>Open contract</Button> : undefined}
+      />
+    </>
   );
 }

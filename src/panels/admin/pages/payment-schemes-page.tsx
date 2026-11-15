@@ -1,14 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { useOperation, usePaymentSchemes, useVipProducts } from "@/data/business-queries";
 import { tierOptions } from "@/modules/vip/tier-options";
 import type { PaymentScheme, VipTierCode } from "@/modules/vip/types";
 import { schemeHowItWorks as termsSummary } from "@/modules/vip/rules";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { Button } from "@/shared/ui/button";
-import { AdminPage } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { Money } from "@/shared/components/modern/money";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
@@ -20,7 +19,11 @@ import { matchesSearch } from "@/shared/lib/search";
 import { SchemeDialog } from "../components/vip-product-dialogs";
 import { humanize } from "@/shared/lib/humanize";
 
-export function PaymentSchemesPage() {
+/**
+ * Payment schemes tab of the VIP Products area. The area page owns the New
+ * scheme button (shown with `vip-products.manage`) and passes `creating` down.
+ */
+export function PaymentSchemesTab({ creating, onCloseCreate }: { creating: boolean; onCloseCreate: () => void }) {
   const schemes = usePaymentSchemes();
   const products = useVipProducts();
   const canManage = useOperation("vip-products.manage");
@@ -37,10 +40,10 @@ export function PaymentSchemesPage() {
 
   const schemeColumns = useMemo<ColumnDef<PaymentScheme, unknown>[]>(
     () => [
-      { id: "label", header: "Scheme", cell: ({ row }) => <div><div className="tw:font-semibold">{row.original.label}</div>{row.original.historicalLabel ? <div className="tw:text-xs tw:text-muted-foreground">Source label: {row.original.historicalLabel}</div> : null}</div> },
-      { id: "code", header: "Card code", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => cardCodeValue(row.original) },
+      { id: "label", header: "Scheme", cell: ({ row }) => <span className="tw:font-semibold">{row.original.label}</span> },
+      { id: "code", header: "Card code", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.paymentCode ?? (Object.values(row.original.paymentCodeByTier ?? {}).some(Boolean) ? "By plan" : "—") },
       { id: "terms", header: "Terms", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => (row.original.commercialStatus === "configured" ? termsSummary(row.original) : "Not configured") },
-      { id: "state", header: "Status", cell: ({ row }) => <div className="tw:flex tw:flex-col tw:gap-1"><BizBadge status={row.original.commercialStatus} label={row.original.commercialStatus === "configured" ? "Configured" : "Pending owner decision"} /><BizBadge status={row.original.availability} /></div> },
+      { id: "state", header: "Status", cell: ({ row }) => <SchemeStatusBadge scheme={row.original} /> },
     ],
     [],
   );
@@ -51,19 +54,7 @@ export function PaymentSchemesPage() {
   const schemeDetail = (schemes.data ?? []).find((item) => item.id === schemeId) ?? null;
 
   return (
-    <AdminPage
-      anyOf={["vip-products"]}
-      title="Payment Schemes"
-      description="Register of official payment schemes."
-      crumbs={[{ label: "VIP Products", href: "/admin/vip-products" }, { label: "Payment Schemes" }]}
-      actions={
-        canManage ? (
-          <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => { setEditingScheme(null); setSchemeOpen(true); }}>
-            <Plus aria-hidden="true" /> New scheme
-          </Button>
-        ) : null
-      }
-    >
+    <>
         <QueryState isLoading={schemes.isLoading} error={schemes.error}>
           <FilterBar search={search} onSearch={setSearch} searchLabel="Search schemes" filters={[
             { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: [{ value: "all", label: "All statuses" }, { value: "available", label: "Available" }, { value: "unavailable", label: "Unavailable" }] },
@@ -75,8 +66,8 @@ export function PaymentSchemesPage() {
         open={schemeDetail !== null}
         onClose={() => setSchemeId(null)}
         title={schemeDetail?.label ?? "Payment scheme"}
-        subtitle={schemeDetail?.historicalLabel ? `Source label: ${schemeDetail.historicalLabel}` : undefined}
-        badge={schemeDetail ? <div className="tw:flex tw:flex-wrap tw:gap-1"><BizBadge status={schemeDetail.commercialStatus} label={schemeDetail.commercialStatus === "configured" ? "Configured" : "Pending owner decision"} /><BizBadge status={schemeDetail.availability} /></div> : undefined}
+        subtitle={schemeDetail?.historicalLabel ? `Also known as ${schemeDetail.historicalLabel}` : undefined}
+        badge={schemeDetail ? <SchemeStatusBadge scheme={schemeDetail} /> : undefined}
         sections={
           schemeDetail
             ? [
@@ -85,7 +76,9 @@ export function PaymentSchemesPage() {
                   rows: [
                     { label: "Category", value: humanize(schemeDetail.category) },
                     { label: "Card code", value: schemeDetail ? cardCodeValue(schemeDetail) : "—" },
-                    { label: "Applies to", value: schemeDetail.applicableTiers.join(", ") },
+                    { label: "Availability", value: humanize(schemeDetail.availability) },
+                    { label: "Terms status", value: schemeDetail.commercialStatus === "configured" ? "Configured" : "Pending owner decision" },
+                    { label: "Applies to", value: schemeDetail.applicableTiers.map((tier) => (products.data ?? []).find((item) => item.code === tier)?.name ?? tier).join(", ") },
                     { label: "Summary", value: schemeDetail.commercialStatus === "configured" ? termsSummary(schemeDetail) : "Not configured" },
                     { label: "Package price", value: schemePrices(schemeDetail) ?? "Catalog price" },
                     { label: "Reservation fee", value: schemeDetail.reservationCentavos ? <Money value={schemeDetail.reservationCentavos} /> : null },
@@ -99,9 +92,14 @@ export function PaymentSchemesPage() {
         history={schemeDetail ? schemeDetail.changes.map((item) => ({ key: `v${item.version}`, when: `Version ${item.version} · ${item.date}`, text: `${item.summary} (${item.reason})` })) : []}
         footer={schemeDetail && canManage ? <Button type="button" variant="outline" onClick={() => { openSchemeEditor(schemeDetail); setSchemeId(null); }}><Pencil aria-hidden="true" /> Edit scheme</Button> : undefined}
       />
-      <SchemeDialog open={schemeOpen} scheme={editingScheme} onClose={() => setSchemeOpen(false)} />
-    </AdminPage>
+      <SchemeDialog open={creating || schemeOpen} scheme={creating ? null : editingScheme} onClose={() => { setSchemeOpen(false); onCloseCreate(); }} />
+    </>
   );
+}
+
+/** One badge per scheme: "Terms pending" until terms are configured, then its availability. */
+function SchemeStatusBadge({ scheme }: { scheme: PaymentScheme }) {
+  return scheme.commercialStatus === "configured" ? <BizBadge status={scheme.availability} /> : <BizBadge status={scheme.commercialStatus} label="Terms pending" />;
 }
 
 /** Card code display: the single code when present, else per-tier codes in B1/S1/G1 order, else an em dash. */

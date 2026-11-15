@@ -174,7 +174,7 @@ export class MockAccreditationRepository implements AccreditationRepository {
     // The team letter (I or O) is unchanged; NNNN is the next unused number of the renewal month, shared with new accreditations.
     const prefix = record.classification === "IST" ? "AAI" : "AAO";
     const reserved = collectReservedAaNumbers(this.store.accreditations, this.store.members);
-    const { aaNumber: newNumber } = allocateSharedAaNumber(prefix, yymm, reserved, 1);
+    const { aaNumber: newNumber } = allocateSharedAaNumber(prefix, yymm, reserved);
 
     const previousNumber = record.aaNumber;
     const changedAt = new Date().toISOString();
@@ -287,7 +287,7 @@ export class MockAccreditationRepository implements AccreditationRepository {
     const yymm = toAaYearMonth(approvedStart);
     if (!yymm) throw new Error("Approved Start must be a valid date.");
     const reserved = collectReservedAaNumbers(this.store.accreditations, this.store.members);
-    const allocation = allocateSharedAaNumber(prefix, yymm, reserved, this.store.accreditationSequence);
+    const allocation = allocateSharedAaNumber(prefix, yymm, reserved);
 
     const record: AccreditationRecord = {
       id: `accr-${this.store.accreditationSequence}`,
@@ -303,7 +303,7 @@ export class MockAccreditationRepository implements AccreditationRepository {
       ],
     };
     this.store.accreditations.push(record);
-    this.store.accreditationSequence = allocation.sequence + 1;
+    this.store.accreditationSequence += 1;
     member.aaNumber = allocation.aaNumber;
     appendAuditEvent(this.store, {
       actorId: identity.id,

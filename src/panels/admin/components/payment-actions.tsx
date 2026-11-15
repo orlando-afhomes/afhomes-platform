@@ -96,7 +96,7 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
       <div className="tw:flex tw:flex-col tw:gap-1.5">
         <Label htmlFor="payment-evidence">Receipt file</Label>
         <Input id="payment-evidence" type="file" accept="image/*,application/pdf" onChange={(event) => setFile(event.target.files?.[0]?.name ?? "")} />
-        <p className="tw:text-xs tw:text-muted-foreground">Only the file name is kept in this prototype.</p>
+        <p className="tw:text-xs tw:text-muted-foreground">Only the file name is recorded with this payment.</p>
       </div>
     </FormDialog>
   );
@@ -141,7 +141,7 @@ function PaymentResubmitDialog({ payment, onClose }: { payment: PaymentView; onC
       <div className="tw:flex tw:flex-col tw:gap-1.5">
         <Label htmlFor="payment-resend-evidence">New receipt file</Label>
         <Input id="payment-resend-evidence" type="file" accept="image/*,application/pdf" onChange={(event) => setFile(event.target.files?.[0]?.name ?? "")} />
-        <p className="tw:text-xs tw:text-muted-foreground">{payment.evidenceFileName ? `Current file: ${payment.evidenceFileName}. Leave empty to keep it.` : "Only the file name is kept in this prototype."}</p>
+        <p className="tw:text-xs tw:text-muted-foreground">{payment.evidenceFileName ? `Current file: ${payment.evidenceFileName}. Leave empty to keep it.` : "Only the file name is recorded with this payment."}</p>
       </div>
     </FormDialog>
   );

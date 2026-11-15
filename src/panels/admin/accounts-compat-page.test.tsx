@@ -36,7 +36,7 @@ afterEach(() => {
 
 describe("/admin/accounts compatibility route", () => {
   it("targets the Account-only view of Staff & Access, using the real chip identifier", () => {
-    expect(ACCOUNTS_COMPAT_TARGET).toBe("/admin/organization/staff?view=account");
+    expect(ACCOUNTS_COMPAT_TARGET).toBe("/admin/organization?tab=staff&view=account");
   });
 
   for (const identityId of ["dev-admin", "dev-super-admin"]) {

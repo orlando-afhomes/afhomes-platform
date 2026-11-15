@@ -1,7 +1,6 @@
 import type { AccreditationRecord } from "@/modules/accreditation/types";
 import type { OrgMember } from "@/modules/organization/types";
 import { parseManilaDateOnly } from "@/modules/accreditation/dates";
-import { validateExistingAaIdentifier } from "@/modules/accreditation/identifiers";
 
 export type AaPrefix = "AAI" | "AAO";
 
@@ -12,7 +11,7 @@ export function toAaYearMonth(dateOnly: string): string | null {
   return `${String(parts.year).slice(2)}${String(parts.month).padStart(2, "0")}`;
 }
 
-/** Shared sequence rendered with at least four digits; grows past 9999. */
+/** Render the four-digit sequence for an issued AA number. */
 export function formatSharedSequence(sequence: number): string {
   return String(Math.max(1, Math.floor(sequence))).padStart(4, "0");
 }
@@ -38,54 +37,19 @@ export function collectReservedAaNumbers(
   return reserved;
 }
 
-/**
- * Allocate the next unused shared-sequence AA number. Pure: the caller owns
- * committing the consumed sequence so a failed creation consumes nothing.
- */
+/** Allocate the next unused sequence shared across seller classifications for this month. */
 export function allocateSharedAaNumber(
   prefix: AaPrefix,
   yymm: string,
   reserved: ReadonlySet<string>,
-  startSequence: number,
 ): { aaNumber: string; sequence: number } {
-  let sequence = Math.max(1, Math.floor(startSequence));
-  for (let attempts = 0; attempts < 100000; attempts += 1) {
-    const candidate = buildAaNumber(prefix, yymm, sequence);
-    if (!reserved.has(candidate.toUpperCase())) {
-      return { aaNumber: candidate, sequence };
-    }
-    sequence += 1;
+  const used = new Set<number>();
+  for (const number of reserved) {
+    const match = /^(?:AA[IO]|AI)(\d{4})(\d{4,})$/.exec(number);
+    if (match?.[1] === yymm) used.add(Number(match[2]));
+  }
+  for (let sequence = 1; sequence <= 9999; sequence += 1) {
+    if (!used.has(sequence)) return { aaNumber: buildAaNumber(prefix, yymm, sequence), sequence };
   }
   throw new Error("Shared AA sequence exhausted.");
-}
-
-/**
- * Validate a manually entered AA number against the canonical contract.
- * Returns the first error or null. Historical reservations are enforced via
- * the reserved set; classification and YYMM must match the active workflow.
- */
-export function validateManualAaNumber(
-  value: string,
-  prefix: AaPrefix,
-  approvedStart: string,
-  reserved: ReadonlySet<string>,
-): string | null {
-  const trimmed = value.trim().toUpperCase();
-  if (!trimmed) return "AA number required in Manual.";
-  const parsed = validateExistingAaIdentifier(trimmed);
-  if (!parsed.ok) {
-    if (parsed.reason === "BAD_MONTH") return "AA number has invalid month.";
-    if (parsed.reason === "SHORT_SEQUENCE") return "AA sequence needs four digits.";
-    return "Invalid AA format.";
-  }
-  if (parsed.parts.prefix !== prefix) {
-    return `AA must start with ${prefix}.`;
-  }
-  const expectedYyMm = toAaYearMonth(approvedStart);
-  if (!expectedYyMm) return "Approved Start must be a valid date.";
-  if (parsed.parts.yymm !== expectedYyMm) {
-    return "AA YYMM must match start.";
-  }
-  if (reserved.has(trimmed)) return "AA number already reserved.";
-  return null;
 }

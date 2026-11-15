@@ -7,12 +7,12 @@ import { useOperation } from "@/data/business-queries";
 import type { PromoInput, PromoView } from "@/data/contracts/promo-repository";
 import { useDeletePromo, useEndPromo, usePromos, useSavePromo } from "@/data/promo-queries";
 import { useActiveOutlets, useOutlets } from "@/data/settings-queries";
-import { AdminPage } from "@/shared/components/admin";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
+import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
-import { StatusBadge, ToneBadge } from "@/shared/components/modern/status-badge";
+import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { CheckboxField, MoneyField, SelectField, StandardDateField, TextField } from "@/shared/forms/modern";
 import { formatDate } from "@/shared/lib/format-date";
@@ -27,7 +27,25 @@ const STATUS_ITEMS = [
   { value: "ended", label: "Ended" },
 ];
 
-export function PromosPage() {
+const promoDates = (promo: PromoView) => `${formatDate(promo.startDate)} to ${formatDate(promo.endDate)}`;
+
+/** "Add promo" (promos.manage). Owns its form dialog. */
+export function AddPromoButton() {
+  const canManage = useOperation("promos.manage");
+  const [open, setOpen] = useState(false);
+  if (!canManage) return null;
+  return (
+    <>
+      <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setOpen(true)}>
+        <Plus aria-hidden="true" /> Add promo
+      </Button>
+      {open ? <PromoDialog editing={null} onClose={() => setOpen(false)} /> : null}
+    </>
+  );
+}
+
+/** Promos list with details; Edit, End and Delete need promos.manage. */
+export function PromosPanel() {
   const canManage = useOperation("promos.manage");
   const promos = usePromos();
   const outlets = useOutlets();
@@ -36,8 +54,8 @@ export function PromosPage() {
   const { confirmRun, dialog: confirmDialog } = useConfirmRun();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
-  const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<PromoView | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const outletNames = useMemo(() => new Map((outlets.data ?? []).map((outlet) => [outlet.id, outlet.name])), [outlets.data]);
   const names = (ids: string[]) => ids.map((id) => outletNames.get(id) ?? id).join(", ");
@@ -50,26 +68,23 @@ export function PromosPage() {
 
   const columns = useMemo<ColumnDef<PromoView, unknown>[]>(() => [
     {
-      id: "name", header: "Promo",
-      cell: ({ row }) => <span className="tw:font-medium">{row.original.name}{row.original.sample ? <ToneBadge className="tw:ml-2">Sample</ToneBadge> : null}</span>,
+      id: "name", header: "Name",
+      cell: ({ row }) => <span className="tw:font-medium">{row.original.name}</span>,
     },
+    { id: "dates", header: "Dates", cell: ({ row }) => promoDates(row.original) },
     { id: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
-    { id: "dates", header: "Promo dates", cell: ({ row }) => `${formatDate(row.original.startDate)} to ${formatDate(row.original.endDate)}` },
-    { id: "earn", header: "Earn at", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => names(row.original.earnOutletIds) },
-    { id: "rate", header: "Pesos per point", cell: ({ row }) => formatPeso(row.original.earnPesosPerPointCentavos) },
-    { id: "redeem", header: "Use at", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => names(row.original.redeemOutletIds) },
-    { id: "expiry", header: "Points expire", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => (row.original.pointsExpiryDate ? formatDate(row.original.pointsExpiryDate) : "Never") },
     { id: "earned", header: "Points earned", cell: ({ row }) => row.original.pointsEarned.toLocaleString("en-PH") },
     {
       id: "actions", header: () => <span className="tw:sr-only">Actions</span>,
       cell: ({ row }) => {
         const promo = row.original;
-        if (!canManage || promo.status === "ended") return null;
+        const canManagePromo = canManage && promo.status !== "ended";
         return (
           <RowActionsMenu
             itemName={promo.name}
-            onEdit={() => { setEditing(promo); setFormOpen(true); }}
-            extraItems={[{
+            onView={() => setDetailId(promo.id)}
+            onEdit={canManagePromo ? () => setEditing(promo) : undefined}
+            extraItems={canManagePromo ? [{
               key: "end", label: "End promo", danger: true,
               onClick: () => confirmRun({
                 title: `End ${promo.name}?`,
@@ -77,36 +92,42 @@ export function PromosPage() {
                 confirmText: "End promo", danger: true, action: () => end(promo.id),
                 successTitle: `${promo.name} ended.`, errorTitle: "Could not end the promo.",
               }),
-            }]}
-            onDelete={promo.pointsEarned > 0 ? undefined : () => remove(promo.id)}
-            deleteDisabledReason={promo.pointsEarned > 0 ? "Points were already earned. End the promo instead." : null}
+            }] : []}
+            onDelete={canManagePromo && promo.pointsEarned === 0 ? () => remove(promo.id) : undefined}
+            deleteDisabledReason={canManagePromo && promo.pointsEarned > 0 ? "Points were already earned. End the promo instead." : null}
             deleteTitle={`Delete ${promo.name}?`}
             deleteDescription="This removes the promo. Only a promo that never earned points can be deleted."
           />
         );
       },
     },
-    // names reads outletNames, which changes with the outlet query.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [canManage, confirmRun, end, remove, outletNames]);
+  ], [canManage, confirmRun, end, remove]);
+  const detail = detailId ? (promos.data ?? []).find((promo) => promo.id === detailId) ?? null : null;
 
   return (
-    <AdminPage
-      anyOf={["stay-points"]}
-      title="Promos"
-      description="Promo Points are a separate wallet from Grant Stay Points. Each promo sets where points are earned, how many, and where they can be used."
-      crumbs={[{ label: "Membership" }, { label: "Promos" }]}
-      actions={canManage ? (
-        <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => { setEditing(null); setFormOpen(true); }}>
-          <Plus aria-hidden="true" /> Add promo
-        </Button>
-      ) : undefined}
-    >
+    <>
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search promos" filters={[{ label: "Status filter", value: status, onChange: setStatus, options: STATUS_ITEMS }]} />
-      <DataTable<PromoView> caption="Promos" data={rows} columns={columns} getRowId={(row) => row.id} emptyText="No promos found." loading={promos.isLoading} />
-      {formOpen ? <PromoDialog key={editing?.id ?? "new"} editing={editing} onClose={() => { setFormOpen(false); setEditing(null); }} /> : null}
+      <DataTable<PromoView> caption="Promos" data={rows} columns={columns} getRowId={(row) => row.id} emptyText="No promos found." loading={promos.isLoading}
+        onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open ${row.name}`} />
+      <RecordDetailsSheet
+        open={detail !== null}
+        onClose={() => setDetailId(null)}
+        title={detail?.name ?? "Promo"}
+        badge={detail ? <StatusBadge status={detail.status} /> : undefined}
+        sections={detail ? [{
+          rows: [
+            { label: "Dates", value: promoDates(detail) },
+            { label: "Earn at", value: names(detail.earnOutletIds) },
+            { label: "Pesos per point", value: formatPeso(detail.earnPesosPerPointCentavos) },
+            { label: "Use at", value: names(detail.redeemOutletIds) },
+            { label: "Points expire", value: detail.pointsExpiryDate ? formatDate(detail.pointsExpiryDate) : "Never" },
+            { label: "Points earned", value: detail.pointsEarned.toLocaleString("en-PH") },
+          ],
+        }] : []}
+      />
+      {editing ? <PromoDialog key={editing.id} editing={editing} onClose={() => setEditing(null)} /> : null}
       {confirmDialog}
-    </AdminPage>
+    </>
   );
 }
 
@@ -154,7 +175,7 @@ function PromoDialog({ editing, onClose }: { editing: PromoView | null; onClose:
     <FormDialog
       open
       title={editing ? "Edit promo" : "Add promo"}
-      description={locked ? "Points were already earned, so the earning rule and dates are locked." : "A draft promo earns nothing until it is made active."}
+      description={locked ? "Points were already earned, so the earning rule and dates are locked." : undefined}
       submitText={editing ? "Save" : "Add promo"}
       pending={save.isPending}
       error={error}

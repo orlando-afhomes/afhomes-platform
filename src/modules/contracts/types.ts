@@ -55,6 +55,7 @@ export type Contract = {
   vipNumber?: string;
   signedAgreementRecordedDate?: string;
   sellerMemberId: string | null;
+  referrerMemberId?: string | null;
   /** Seller and upline at recording time; later transfers never change it (02, 13 section 4.3). */
   genealogy: GenealogyEntry[];
   status: ContractStatus;

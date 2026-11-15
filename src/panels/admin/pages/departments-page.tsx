@@ -26,7 +26,7 @@ const DepartmentDialogs = dynamic(() => import("./department-dialogs").then((mod
   loading: () => null,
 });
 
-export function DepartmentsPage() {
+export function DepartmentsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const departmentsQuery = useDepartments();
   const rolesQuery = useDepartmentRoles();
   const staffQuery = useStaff();
@@ -64,7 +64,7 @@ export function DepartmentsPage() {
     () => [
     {
       id: "name",
-      header: "Department Name",
+      header: "Name",
       cell: ({ row }) => (
         <Button
           variant="link"
@@ -103,9 +103,9 @@ export function DepartmentsPage() {
 
   return (
     <AdminPage
+      embedded={embedded}
       anyOf={["departments"]}
       title="Departments"
-      description="Manage departments and their roles."
       crumbs={[{ label: "Organization" }, { label: "Departments" }]}
       actions={
         <Button

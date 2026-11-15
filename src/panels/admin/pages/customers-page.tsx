@@ -18,10 +18,8 @@ import { useCustomers, useMembers } from "@/data/queries";
 import type { Customer } from "@/modules/customers/types";
 import type { ColumnDef } from "@/shared/components/modern/data-table";
 import { buttonVariants } from "@/shared/ui/button";
-import { AdminPage } from "@/shared/components/admin";
-import { AdminFilterBar } from "@/shared/components/admin";
+import { AdminFilterBar, AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { DataTable } from "@/shared/components/modern/data-table";
 import { humanize } from "@/shared/lib/humanize";
@@ -37,11 +35,19 @@ const STATUS_OPTIONS = [
   { value: "inactive", label: "Inactive" },
 ];
 
-export function CustomersPage() {
+export function CustomersActions() {
+  const canDraft = useOperation("customers.draft");
+  return canDraft ? (
+    <Link href="/admin/customers/new" className={buttonVariants({ className: "tw:min-h-11 tw:sm:min-h-8" })}>
+      <Plus aria-hidden="true" /> New customer
+    </Link>
+  ) : null;
+}
+
+export function CustomersTab() {
   const router = useRouter();
   const customers = useCustomers();
   const members = useMembers();
-  const contracts = useContracts();
   const discard = useDiscardCustomerDraft();
   const approve = useApproveCustomer();
   const sendBack = useSendBackCustomer();
@@ -49,19 +55,15 @@ export function CustomersPage() {
   const canManage = useOperation("customers.manage");
   // Sellers start and edit only their own draft (doc 04 section 5).
   const canDraft = useOperation("customers.draft");
-  const canImport = useOperation("customers.import");
   const canApprove = useOperation("customers.approve");
   const canPrepare = useOperation("contracts.prepare");
+  const contracts = useContracts();
   const [reviewTarget, setReviewTarget] = useState<{ customer: Customer; action: "approve" | "send_back" | "reject" } | null>(null);
   const [preparingCustomer, setPreparingCustomer] = useState<Customer | null>(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
 
   const memberName = useMemo(() => new Map((members.data ?? []).map((member) => [member.id, member.displayName])), [members.data]);
-  const contractCustomerIds = useMemo(
-    () => new Set((contracts.data ?? []).filter((contract) => contract.status !== "cancelled").map((contract) => contract.customerId)),
-    [contracts.data],
-  );
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
     return (customers.data ?? [])
@@ -97,28 +99,7 @@ export function CustomersPage() {
   );
 
   return (
-    <AdminPage
-      anyOf={["customers"]}
-      title="Customers"
-      description="Customer master records and VIP applications."
-      crumbs={[{ label: "Sales" }, { label: "Customers" }]}
-      actions={
-        canDraft || canImport ? (
-          <div className="tw:flex tw:flex-wrap tw:gap-2">
-            {canImport ? (
-              <Link href="/admin/customers/import-export" className={buttonVariants({ variant: "outline", className: "tw:min-h-11 tw:sm:min-h-8" })}>
-                Import / Export
-              </Link>
-            ) : null}
-            {canDraft ? (
-              <Link href="/admin/customers/new" className={buttonVariants({ className: "tw:min-h-11 tw:sm:min-h-8" })}>
-                <Plus aria-hidden="true" /> New customer
-              </Link>
-            ) : null}
-          </div>
-        ) : null
-      }
-    >
+    <>
       <AdminStatGrid columns={3}>
         <AdminStatCard label="Total customers" value={totalCustomers.toLocaleString()} icon={Users} tone="brand" loading={customers.isLoading} error={customers.error} />
         <AdminStatCard
@@ -144,7 +125,7 @@ export function CustomersPage() {
           rowActions={(row) => {
             const menu = buildCustomerMenuProps(
               row,
-              { canManage, canDraft, canApprove, canPrepare, ownRecord: !row.restricted, hasContract: contractCustomerIds.has(row.id) },
+              { canManage, canDraft, canApprove, canPrepare, ownRecord: !row.restricted },
               {
                 onView: () => router.push(`/admin/customers/${row.id}`),
                 onEdit: () => router.push(`/admin/customers/${row.id}/edit`),
@@ -202,7 +183,7 @@ export function CustomersPage() {
         onClose={() => setReviewTarget(null)}
         onSubmit={(reason) => (reviewTarget ? reject.mutateAsync({ id: reviewTarget.customer.id, reason }) : Promise.reject(new Error("No customer selected.")))}
       />
-      {preparingCustomer ? <PrepareContractDialog customer={preparingCustomer} open onClose={() => setPreparingCustomer(null)} /> : null}
-    </AdminPage>
+      {preparingCustomer ? <PrepareContractDialog customer={preparingCustomer} repeatPurchase={contracts.data?.some((contract) => contract.customerId === preparingCustomer.id)} open onClose={() => setPreparingCustomer(null)} /> : null}
+    </>
   );
 }

@@ -1,8 +1,13 @@
-import { StayPointsPage } from "@/panels/admin/pages/stay-points-page";
+import { Suspense } from "react";
+import { StayPointsAreaPage } from "@/panels/admin/pages/stay-points-page";
 
 // shortcut: the client-only mock auth gate drops this page from instant-navigation validation; remove with the mock login.
 export const instant = false;
 
 export default function Page() {
-  return <StayPointsPage />;
+  return (
+    <Suspense>
+      <StayPointsAreaPage />
+    </Suspense>
+  );
 }

@@ -4,46 +4,6 @@ import { isFullySettled } from "@/modules/finance/rules";
 import { isValidTierCode } from "@/modules/vip/types";
 import { addYearsToDate, parseManilaDateOnly } from "@/shared/lib/dates";
 
-/**
- * RA sequence: the trailing four-digit NNNN sequence of the Reservation
- * Agreement reference (for example 2027-0001 gives 0001). The source sequence
- * is exactly four digits (06 section 6.2); shorter forms are rejected rather
- * than padded, so two spellings cannot map to one Card ID sequence. The RA
- * numbering scope is an open decision (D2, D11), so no other pattern is assumed.
- */
-export function extractRaSequence(raNumber: string | null | undefined): string | null {
-  if (!raNumber) return null;
-  const match = /^[A-Za-z0-9]{1,12}-(\d{4})$/.exec(raNumber.trim());
-  return match ? match[1] : null;
-}
-
-export type CardIdParts = {
-  activationDate: string;
-  raNumber: string | null;
-  tierCode: string;
-  paymentCode: string | null;
-  classification: "S" | "N";
-};
-
-/**
- * VIP Card ID YYMMDDNNNNNVTPMMS (06 section 6): activation date YYMMDD, five-digit
- * RA sequence (four digits with one leading zero), tier code, payment code
- * (C01, T04), and S/N classification. Returns an error text instead of guessing.
- */
-export function buildCardId(parts: CardIdParts): { cardId: string } | { error: string } {
-  const date = parseManilaDateOnly(parts.activationDate);
-  if (!date) return { error: "The activation date is not a valid date." };
-  const sequence = extractRaSequence(parts.raNumber);
-  if (!sequence) return { error: "A valid RA number is required before a Card ID can be issued." };
-  if (!parts.paymentCode || !/^[CT]\d{2}$/.test(parts.paymentCode)) return { error: "The payment scheme has no documented Card ID payment code." };
-  if (!/^[A-Z]\d$/.test(parts.tierCode)) return { error: "The tier code does not fit the 2-character segment." };
-  const yy = String(date.year).slice(2);
-  const mm = String(date.month).padStart(2, "0");
-  const dd = String(date.day).padStart(2, "0");
-  const cardId = `${yy}${mm}${dd}0${sequence}${parts.tierCode}${parts.paymentCode}${parts.classification}`;
-  return cardId.length === 17 ? { cardId } : { error: "The Card ID is not 17 characters." };
-}
-
 /** Validity end date: activation date plus the contract validity years (boundary convention pending, D12). */
 export function computeValidityEnd(activationDate: string, validityYears: number): string | null {
   return addYearsToDate(activationDate, validityYears);

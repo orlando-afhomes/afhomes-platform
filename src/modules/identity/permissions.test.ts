@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getDevIdentity } from "@/data/mock/dev-identities";
-import { getRoleAwareAdminNavigation as getNav } from "@/panels/admin/navigation";
+import { getAdminAreaTabAccess, getRoleAwareAdminNavigation as getNav } from "@/panels/admin/navigation";
 import {
   getGrantedModuleIds,
   getGrantedOperations,
@@ -80,10 +80,12 @@ describe("role-aware permissions", () => {
     const identity = getDevIdentity("dev-hr");
     const items = getNav(identity);
     expect(items.map((item) => item.href)).toEqual(["/admin", "/admin/organization"]);
-    expect(items.find((item) => item.id === "organization")?.children?.map((child) => child.id)).toEqual([
-      "departments",
-      "staff",
-    ]);
+    expect(getAdminAreaTabAccess("organization", getGrantedModuleIds(identity), getGrantedOperations(identity))).toEqual({
+      staff: true,
+      departments: true,
+      roles: false,
+      lists: false,
+    });
   });
 
   it("grants admin departments, roles, accounts and vip products", () => {

@@ -58,7 +58,7 @@ export function MyAccountPage() {
   return (
     <PageContainer>
       <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, { label: "My Account" }]} />
-      <PageHeader title="My Account" description="View and update your profile information." />
+      <PageHeader title="My Account" />
       <MyAccountForm key={identity.id} />
       <MyReferralCodeCard />
     </PageContainer>

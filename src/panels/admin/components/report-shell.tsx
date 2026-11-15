@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { FileSpreadsheet, FileText, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useRecordReportExport } from "@/data/business-queries";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { QueryState } from "@/shared/components/modern/query-state";
+import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
+import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { downloadCsv, downloadXlsx } from "@/shared/lib/spreadsheet";
 import { formatDate } from "@/shared/lib/format-date";
 import { Button } from "@/shared/ui/button";
@@ -30,7 +32,7 @@ function addDays(dateOnly: string, days: number): string {
 }
 
 /** Shared date-range state of every report. Each figure filters on its own source event date (doc 11). */
-export function useReportRange() {
+export function useReportRangeState() {
   const today = manilaToday();
   const [preset, setPreset] = useState("28d");
   const [customFrom, setCustomFrom] = useState(addDays(today, -28));
@@ -58,21 +60,52 @@ export function useReportRange() {
   return { from, to, inRange, filters };
 }
 
+export type ReportRange = ReturnType<typeof useReportRangeState>;
+
+/** One date range for every report inside the provider, so a hub's Summary and report tabs stay on the same range. */
+export const ReportRangeContext = createContext<ReportRange | null>(null);
+
+/** Holds the single report range of a hub; mount it above the tabs so switching tabs keeps the choice. */
+export function ReportRangeProvider({ children }: { children: ReactNode }) {
+  const range = useReportRangeState();
+  return <ReportRangeContext.Provider value={range}>{children}</ReportRangeContext.Provider>;
+}
+
+/**
+ * The date range of a report. Inside `ReportRangeProvider` every report reads the one shared
+ * range (context wins); a report page rendered outside it keeps its own state.
+ */
+export function useReportRange(): ReportRange {
+  const local = useReportRangeState();
+  return useContext(ReportRangeContext) ?? local;
+}
+
+/** Body of a report without the page chrome: printed date range, date filter, then the content. Report tabs mount this directly. */
+export function ReportFrame({ range, children }: { range: ReportRange; children: ReactNode }) {
+  return (
+    <div className="report-print__page tw:flex tw:flex-col tw:gap-6">
+      <p className="report-print__range">Date range: {formatDate(range.from)} to {formatDate(range.to)}</p>
+      <div className="report-print__hide">{range.filters}</div>
+      {children}
+    </div>
+  );
+}
+
 /** Standard frame of a report page: module gate, breadcrumbs, and date filter. */
-export function ReportShell({ range, title, description, crumbs, children }: { range: ReturnType<typeof useReportRange>; title: string; description: string; crumbs: BreadcrumbItem[]; children: ReactNode }) {
+export function ReportShell({ range, title, description, crumbs, children }: { range: ReportRange; title: string; /** Optional; one short sentence at most. */ description?: string; crumbs: BreadcrumbItem[]; children: ReactNode }) {
   return (
     <AdminPage anyOf={["reports"]} title={title} description={description} crumbs={crumbs}>
-      <div className="report-print__page tw:flex tw:flex-col tw:gap-6">
-        <p className="report-print__range">Date range: {formatDate(range.from)} to {formatDate(range.to)}</p>
-        <div className="report-print__hide">{range.filters}</div>
-        {children}
-      </div>
+      <ReportFrame range={range}>{children}</ReportFrame>
     </AdminPage>
   );
 }
 
-/** One report column: the header and the exact text shown in the table and written to the export. */
-export type ReportColumn<T> = { header: string; value: (row: T) => string };
+/**
+ * One report column: the header and the exact text shown in the table and written to the export.
+ * Exports always carry every column; `screen: false` keeps a column out of the on-screen table
+ * (5 data columns at most) and shows it only in "View full details".
+ */
+export type ReportColumn<T> = { header: string; value: (row: T) => string; screen?: boolean };
 
 /** Header row plus one text row per record. Cell values are already formatted strings, so money stays exact. */
 export function buildExportRows<T>(columns: ReportColumn<T>[], rows: T[]): string[][] {
@@ -123,17 +156,43 @@ function usePrinting(): boolean {
   return printing;
 }
 
-/** Filters, export toolbar and a table of the rows behind a report's figures. Callers pass already filtered rows. */
-export function ReportTable<T>({ report, fileName, range, columns, rows, getRowId, filters, loading, error, emptyText }: { report: string; fileName: string; range: { from: string; to: string } | null; columns: ReportColumn<T>[]; rows: T[]; getRowId: (row: T) => string; filters?: ReactNode; loading?: boolean; error?: unknown; emptyText: string }) {
+/**
+ * Filters, export toolbar and a table of the rows behind a report's figures. Callers pass already filtered rows.
+ * The table shows the `screen` columns; a row click or its "View full details" menu item opens every column,
+ * and the Excel and CSV files always hold every column.
+ */
+export function ReportTable<T>({ report, fileName, range, columns, rows, getRowId, getRowTitle, filters, loading, error, emptyText }: { report: string; fileName: string; range: { from: string; to: string } | null; columns: ReportColumn<T>[]; rows: T[]; getRowId: (row: T) => string; /** Names a row in its details panel and menu; defaults to the first column's value. */ getRowTitle?: (row: T) => string; filters?: ReactNode; loading?: boolean; error?: unknown; emptyText: string }) {
   const printing = usePrinting();
-  const tableColumns = useMemo<ColumnDef<T, unknown>[]>(() => columns.map((column, index) => ({ id: `c${index}`, header: column.header, cell: ({ row }) => column.value(row.original) })), [columns]);
+  const [detail, setDetail] = useState<T | null>(null);
+  const tableColumns = useMemo<ColumnDef<T, unknown>[]>(
+    () => columns.flatMap((column, index) => (column.screen === false ? [] : [{ id: `c${index}`, header: column.header, cell: ({ row }) => column.value(row.original) }])),
+    [columns],
+  );
+  const titleOf = (row: T) => getRowTitle?.(row) ?? columns[0]?.value(row) ?? report;
   return (
     <>
       {filters ? <div className="report-print__hide">{filters}</div> : null}
       <ReportExport report={report} fileName={fileName} columns={columns} rows={rows} range={range} />
       <QueryState isLoading={Boolean(loading)} error={error}>
-        <DataTable data={rows} columns={tableColumns} getRowId={getRowId} emptyText={emptyText} caption={report} showAllRows={printing} />
+        <DataTable
+          data={rows}
+          columns={tableColumns}
+          getRowId={getRowId}
+          emptyText={emptyText}
+          caption={report}
+          showAllRows={printing}
+          onRowOpen={setDetail}
+          getRowLabel={(row) => `View full details of ${titleOf(row)}`}
+          rowActions={printing ? undefined : (row) => <RowActionsMenu itemName={titleOf(row)} extraItems={[{ key: "details", label: "View full details", onClick: () => setDetail(row) }]} />}
+        />
       </QueryState>
+      <RecordDetailsSheet
+        open={detail !== null}
+        onClose={() => setDetail(null)}
+        title={detail ? titleOf(detail) : report}
+        subtitle={report}
+        sections={detail ? [{ rows: columns.map((column) => ({ label: column.header, value: column.value(detail) })) }] : []}
+      />
     </>
   );
 }

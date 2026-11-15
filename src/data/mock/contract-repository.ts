@@ -5,6 +5,7 @@ import { buildSchedule, finalizationHolds, snapshotBenefits } from "@/modules/co
 import { CANCELLATION_GROUNDS, CANCELLATION_GROUND_LABELS, type Contract, type ContractCancellationGround } from "@/modules/contracts/types";
 import { totalVerifiedCentavos } from "@/modules/finance/rules";
 import type { DevIdentity } from "@/modules/identity/types";
+import { VIP_CLOSED_DEAL_THRESHOLD_BP } from "@/modules/sales/rules";
 import { buildVipNumber } from "@/modules/membership/rules";
 import { freezeCommissionRates } from "./commission-effects";
 import { commissionStageAmounts } from "@/modules/commissions/rules";
@@ -87,10 +88,12 @@ export class MockContractRepository extends BusinessRepository implements Contra
       const broad = activeIdentityRoles(identity).some((role) => BROAD_ROLES.has(role));
       if (!customer || (!broad && customer.ownerMemberId !== identity.memberId)) throw new Error("Customer not found.");
       if (customer.status !== "submitted" && customer.status !== "approved") throw new Error("Only a submitted or approved customer can have a contract prepared.");
-      if (this.store.contracts.some((item) => item.customerId === customer.id && item.status !== "cancelled")) {
-        throw new Error("This customer already has an open or finalized contract.");
-      }
-      const productCode = customer.vipPlan;
+      const productCode = input.productCode ?? customer.vipPlan;
+      const classification = input.classification ?? customer.contractClassification ?? "S";
+      if (classification !== "S" && classification !== "N") throw new Error("Choose Standard or Non-Standard terms.");
+      const sellerMemberId = input.sellerMemberId ?? customer.ownerMemberId;
+      if (input.sellerMemberId !== undefined && !this.store.members.some((item) => item.id === sellerMemberId)) throw new Error("Choose a valid closing seller.");
+      if (input.referrerMemberId && !this.store.members.some((item) => item.id === input.referrerMemberId)) throw new Error("Choose a valid referrer.");
       const product = this.store.products.find((item) => item.code === productCode && item.status === "active");
       if (!product) throw new Error("The customer has no active VIP plan.");
       const scheme = this.store.paymentSchemes.find((item) => item.id === input.schemeId);
@@ -110,14 +113,15 @@ export class MockContractRepository extends BusinessRepository implements Contra
         schemeLabel: scheme.label,
         schemeStatus: scheme.commercialStatus,
         paymentCode: snapshotPaymentCode(scheme, product.code),
-        classification: customer.contractClassification ?? "S",
+        classification,
         validityYears: product.validityYears,
         benefits: snapshotBenefits(product),
         schedule: built.schedule,
         requiredInitialCentavos: built.requiredInitialCentavos,
         raNumber: null,
-        sellerMemberId: customer.ownerMemberId,
-        genealogy: genealogyFor(this.store, customer.ownerMemberId),
+        sellerMemberId,
+        ...(input.referrerMemberId !== undefined ? { referrerMemberId: input.referrerMemberId } : {}),
+        genealogy: genealogyFor(this.store, sellerMemberId),
         status: "draft",
         customerAccepted: input.customerAccepted,
         preparedBy: identity.id,
@@ -160,8 +164,10 @@ export class MockContractRepository extends BusinessRepository implements Contra
       // Doc 03 section 9: an expired salesperson or referrer never blocks a sale (a reminder is recorded on it);
       // a suspension or departure blocks a new sale dated on or after it. Checked before anything changes.
       const isNewSale = !this.store.sales.some((item) => item.contractId === contract.id);
+      const customer = this.store.customers.find((item) => item.id === contract.customerId);
+      const referrerMemberId = contract.referrerMemberId === undefined ? customer?.referrerMemberId ?? null : contract.referrerMemberId;
       const saleParties = evaluateSaleParties(
-        [{ role: "seller", memberId: contract.sellerMemberId }, { role: "referrer", memberId: this.store.customers.find((item) => item.id === contract.customerId)?.referrerMemberId }],
+        [{ role: "seller", memberId: contract.sellerMemberId }, { role: "referrer", memberId: referrerMemberId }],
         this.store.accreditations,
         today(),
       );
@@ -172,18 +178,17 @@ export class MockContractRepository extends BusinessRepository implements Contra
       this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_SUBMITTED);
       this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_SUBMITTED, entityType: "contract", entityId: contract.id, newValue: "submitted" });
       if (isNewSale) {
-        const customer = this.store.customers.find((item) => item.id === contract.customerId);
         const sale = {
           id: nextId(this.store, "sale", "sale"),
           contractId: contract.id,
           customerId: contract.customerId,
           productCode: contract.productCode,
-          branchId: customer?.branchId ?? "branch-a",
+          branchId: this.store.members.find((member) => member.id === contract.sellerMemberId)?.branchId ?? customer?.branchId ?? "branch-a",
           valueCentavos: contract.priceCentavos,
           recordedDate: today(),
           approval: null,
           sellerMemberId: contract.sellerMemberId,
-          referrerMemberId: customer?.referrerMemberId ?? null,
+          referrerMemberId,
           team: contract.genealogy.map((entry) => ({ ...entry })),
           status: "pending" as const,
           confirmedDate: null,
@@ -392,7 +397,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
       if (!sale?.approval) throw new Error("Approve the sale before recording the signed agreement.");
       if (sale.sellerMemberId && sale.sellerMemberId === sale.referrerMemberId) {
         const customer = this.store.customers.find((item) => item.id === sale.customerId);
-        if (!customer?.approvedAt || !customer.referralReference?.trim()) throw new Error("The Administrator must verify the dated referral reference before VIP Number issuance.");
+        if (!customer?.approvedAt || customer.referrerMemberId !== sale.referrerMemberId || !customer.referralReference?.trim()) throw new Error("The Administrator must verify the dated referral reference before VIP Number issuance.");
       }
       const rates = freezeCommissionRates(this.store, "VIP", sale.sellerMemberId, sale.referrerMemberId);
       for (const rate of rates) commissionStageAmounts(sale.valueCentavos, rate.rateBp, "VIP");
@@ -410,6 +415,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
       contract.signedAgreementRecordedDate = date;
       contract.raNumber ??= value;
       sale.commissionRates = rates;
+      sale.closedDealThresholdBp = VIP_CLOSED_DEAL_THRESHOLD_BP;
       if (membership) membership.raNumber = contract.raNumber;
       this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_RA_RECORDED);
       this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_RA_RECORDED, entityType: "contract", entityId: contract.id, newValue: value });

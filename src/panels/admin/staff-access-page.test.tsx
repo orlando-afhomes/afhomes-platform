@@ -46,7 +46,7 @@ const closeDialog = async (user: User, name: string) => {
 
 async function ready(identityId?: string) {
   render(<TestWrapper identityId={identityId} />);
-  await screen.findByText("HR Specialist", {}, { timeout: 5000 });
+  await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
   // Account-only rows appear once account policies load.
   if (identityId !== "dev-hr") await waitFor(() => expect(row("acct-pending")).not.toBeNull());
 }
@@ -114,7 +114,7 @@ describe("staff & access directory", () => {
     expect(row("acct-hr")).toBeNull();
     expect(row("acct-admin")).toBeNull();
     expect(row("acct-super-admin")).toBeNull();
-    expect(within(row("staff-1")!).getByText("Human Resources", { selector: "[data-slot='badge']" })).toBeInTheDocument();
+    expect(within(row("staff-1")!).getByText("Human Resources")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Account only" }));
     await waitFor(() => expect(row("staff-1")).toBeNull());
     expect(row("acct-pending")).not.toBeNull();
@@ -154,12 +154,10 @@ describe("staff & access directory", () => {
     await user.click(screen.getByRole("button", { name: "Assign" }));
     await waitFor(() => expect(within(dialog("Role assignments")).getByRole("button", { name: "Revoke Sales Vice Director" })).toBeInTheDocument());
     await closeDialog(user, "Role assignments");
-    await waitFor(() => expect(within(row("staff-1")!).getByText("Sales Vice Director")).toBeInTheDocument());
     await rowAction(user, "staff-1", "System roles");
     await user.click(await within(dialog("Role assignments")).findByRole("button", { name: "Revoke Sales Vice Director" }));
     await waitFor(() => expect(within(dialog("Role assignments")).queryByRole("button", { name: "Revoke Sales Vice Director" })).toBeNull());
     await closeDialog(user, "Role assignments");
-    await waitFor(() => expect(within(row("staff-1")!).queryByText("Sales Vice Director")).toBeNull());
   });
 
   it("offers Super Admin the Finance and Administrator system roles", async () => {

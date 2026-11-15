@@ -26,7 +26,7 @@ describe("admin mobile nav", () => {
     renderNav();
     await user.click(screen.getByRole("button", { name: "Open navigation" }));
     expect(screen.getByRole("dialog", { name: "Navigation" })).toBeDefined();
-    expect(screen.getByRole("button", { name: /Organization/ })).toBeDefined();
+    expect(screen.getByRole("link", { name: /Organization/ })).toBeDefined();
   });
 
   it("closes on Escape", async () => {
@@ -41,11 +41,7 @@ describe("admin mobile nav", () => {
     const user = userEvent.setup();
     renderNav();
     await user.click(screen.getByRole("button", { name: "Open navigation" }));
-    const group = screen.getByRole("button", { name: /Organization/ });
-    expect(group).toHaveAttribute("aria-expanded", "false");
-    await user.click(group);
-    expect(group).toHaveAttribute("aria-expanded", "true");
-    await user.click(screen.getByRole("link", { name: "Departments" }));
+    await user.click(screen.getByRole("link", { name: "Organization" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 

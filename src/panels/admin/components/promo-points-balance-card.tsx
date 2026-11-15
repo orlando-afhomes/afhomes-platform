@@ -1,22 +1,19 @@
 "use client";
 
-import { Gift } from "lucide-react";
 import { usePromoBalances } from "@/data/promo-queries";
-import { AdminSectionHeading, AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
+import type { DetailSection } from "@/shared/components/modern/record-details-sheet";
 
-/** Promo Points of one membership. A separate wallet: it never changes the Grant Stay Points above it. */
-export function PromoPointsBalanceCard({ membershipId }: { membershipId: string }) {
+/** Promo Points of one membership as a details-sheet section (available, earned, used). */
+export function usePromoPointsBalanceSection(membershipId: string | undefined): DetailSection {
   const balances = usePromoBalances();
   const mine = balances.data?.find((item) => item.membershipId === membershipId);
-  const fmt = (value: number | undefined) => (value ?? 0).toLocaleString("en-PH");
-  return (
-    <>
-      <AdminSectionHeading title="Promo Points" />
-      <AdminStatGrid columns={3}>
-        <AdminStatCard loading={balances.isLoading} error={balances.error} label="Promo Points available" value={fmt(mine?.total.available)} icon={Gift} tone="success" />
-        <AdminStatCard loading={balances.isLoading} error={balances.error} label="Promo Points earned" value={fmt(mine?.total.earned)} icon={Gift} />
-        <AdminStatCard loading={balances.isLoading} error={balances.error} label="Promo Points used" value={fmt(mine ? mine.total.used - mine.total.voided : 0)} icon={Gift} />
-      </AdminStatGrid>
-    </>
-  );
+  const show = (value: number) => (balances.isLoading ? "Loading" : balances.error ? "Could not load" : value.toLocaleString("en-PH"));
+  return {
+    title: "Promo Points",
+    rows: [
+      { label: "Available", value: show(mine?.total.available ?? 0) },
+      { label: "Earned", value: show(mine?.total.earned ?? 0) },
+      { label: "Used", value: show(mine ? mine.total.used - mine.total.voided : 0) },
+    ],
+  };
 }

@@ -3,11 +3,11 @@
 import { useMemo, useState } from "react";
 import { useCommissionAction, useCommissionPayoutListAction, useCommissionPayoutLists, useCommissions, useOperation } from "@/data/business-queries";
 import type { CommissionView } from "@/data/contracts/commission-repository";
-import { DataTable } from "@/shared/components/modern/data-table";
+import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
-import { AdminPage, AdminStatGrid, AdminStatCard } from "@/shared/components/admin";
+import { AdminStatGrid, AdminStatCard } from "@/shared/components/admin";
 import { BadgeCheck, Banknote, Clock } from "lucide-react";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { COMMISSION_COLUMNS, CommissionDetailsSheet, PayoutDialog, releaseOpen, type CommissionMenuItem } from "../components/commission-shared";
@@ -21,8 +21,11 @@ import type { CommissionPayoutList } from "@/modules/commissions/types";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { matchesSearch } from "@/shared/lib/search";
 
-/** Commission payouts: record a payout once release opens, then confirm disbursement. Only confirmed disbursement makes a commission Paid. */
-export function CommissionPayoutsPage() {
+/**
+ * Payouts tab: record a payout once release opens, then confirm disbursement. Only confirmed disbursement makes a commission Paid.
+ * The "Prepare payout list" button lives in the area page actions, which control `preparing`.
+ */
+export function CommissionPayoutsPanel({ preparing, onPreparingChange }: { preparing: boolean; onPreparingChange: (open: boolean) => void }) {
   const canPayout = useOperation("commission.payout");
   const canPrepare = useOperation("commission.payout.prepare");
   const canApprove = useOperation("commission.approve");
@@ -32,12 +35,21 @@ export function CommissionPayoutsPage() {
   const [payoutFor, setPayoutFor] = useState<CommissionView | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [voidId, setVoidId] = useState<string | null>(null);
-  const [preparing, setPreparing] = useState(false);
   const [month, setMonth] = useState(manilaToday().slice(0, 7));
   const [prepareError, setPrepareError] = useState<string>();
+  const closePrepare = () => { setPrepareError(undefined); onPreparingChange(false); };
   const [listId, setListId] = useState<string | null>(null);
   const lists = useCommissionPayoutLists(canPrepare);
   const listAction = useCommissionPayoutListAction();
+  // Memoized: TanStack renders cell functions as components, so a new columns
+  // array on every render would remount every cell (and close an open row menu).
+  const listColumns = useMemo<ColumnDef<CommissionPayoutList, unknown>[]>(() => [
+    { header: "Month", accessorKey: "month" },
+    { header: "Commissions", cell: ({ row }) => row.original.entries.length },
+    { header: "Amount", cell: ({ row }) => <Money value={row.original.entries.reduce((sum, item) => sum + item.amountCentavos, 0)} /> },
+    { header: "Status", cell: ({ row }) => row.original.approvedAt ? "Approved" : "Prepared" },
+    { header: "Approved on", cell: ({ row }) => row.original.approvedAt ? formatDate(row.original.approvedAt) : "—" },
+  ], []);
 
   const approved = useMemo(() => (commissions.data ?? []).filter((item) => item.status === "approved" || (item.status === "on_hold" && item.payout && !item.payout.confirmedAt)), [commissions.data]);
   const awaiting = approved.filter((item) => item.payout && !item.payout.confirmedAt);
@@ -78,26 +90,19 @@ export function CommissionPayoutsPage() {
   }
 
   return (
-    <AdminPage anyOf={["commissions", "sales"]} allowed={canPrepare || canPayout} title="Commission Payouts" description="Prepare month-end payout lists, record disbursements, and confirm payment." crumbs={[{ label: "Finance" }, { label: "Commission Payouts" }]}>
+    <>
       {dialog}
       {canPrepare ? (
         <section className="tw:grid tw:gap-3 tw:mb-5">
-          <div className="tw:flex tw:flex-wrap tw:justify-between tw:items-center tw:gap-2">
-            <h2 className="tw:text-lg tw:font-semibold">Monthly payout lists</h2>
-            <Button onClick={() => { setPrepareError(undefined); setPreparing(true); }}>Prepare payout list</Button>
-          </div>
+          <h2 className="tw:text-lg tw:font-semibold">Monthly payout lists</h2>
           <FilterBar search={listSearch} onSearch={setListSearch} searchLabel="Search payout lists by month" filters={[{ label: "List status filter", value: listStatus, onChange: setListStatus, options: [{ value: "all", label: "All lists" }, { value: "prepared", label: "Prepared" }, { value: "approved", label: "Approved" }] }]} />
           <QueryState isLoading={lists.isLoading} error={lists.error}>
             <DataTable data={visibleLists} caption="Monthly payout lists" emptyText={(lists.data ?? []).length === 0 ? "No payout lists prepared." : "No payout lists match the filters."} getRowId={(row) => row.id}
-              onRowOpen={(row) => setListId(row.id)} getRowLabel={(row) => `Review payout list for ${row.month}`} columns={[
-              { header: "Month", accessorKey: "month" },
-              { header: "Commissions", cell: ({ row }) => row.original.entries.length },
-              { header: "Amount", cell: ({ row }) => <Money value={row.original.entries.reduce((sum, item) => sum + item.amountCentavos, 0)} /> },
-              { header: "Status", cell: ({ row }) => row.original.approvedAt ? `Approved ${formatDate(row.original.approvedAt)}` : "Prepared" },
-              { header: "Review", cell: ({ row }) => <Button variant="outline" onClick={() => setListId(row.original.id)}>Review list</Button> },
-            ]} />
+              onRowOpen={(row) => setListId(row.id)} getRowLabel={(row) => `Review payout list for ${row.month}`}
+              rowActions={(row) => <RowActionsMenu itemName={`payout list for ${row.month}`} onView={() => setListId(row.id)} />} columns={listColumns} />
           </QueryState>
           <RecordDetailsSheet open={Boolean(selectedList)} title={selectedList ? `Payout list for ${selectedList.month}` : "Payout list"} onClose={() => setListId(null)}
+            subtitle={selectedList ? (selectedList.approvedAt ? `Approved ${formatDate(selectedList.approvedAt)}` : "Prepared") : undefined}
             sections={selectedList ? [{
               title: "Commissions",
               rows: selectedList.entries.map((entry) => {
@@ -109,8 +114,8 @@ export function CommissionPayoutsPage() {
             }] : []}
             footer={canApprove && selectedList && !selectedList.approvedAt ? <Button onClick={() => approve(selectedList)}>Approve list</Button> : undefined} />
           {preparing ? <FormDialog open title="Prepare payout list" submitText="Prepare list" error={prepareError}
-            pending={listAction.isPending} onClose={() => setPreparing(false)}
-            onSubmit={() => void listAction.mutateAsync({ kind: "prepare", month }).then(() => setPreparing(false)).catch((failure: Error) => setPrepareError(failure.message))}>
+            pending={listAction.isPending} onClose={closePrepare}
+            onSubmit={() => void listAction.mutateAsync({ kind: "prepare", month }).then(closePrepare).catch((failure: Error) => setPrepareError(failure.message))}>
             <TextField label="Closed month (YYYY-MM)" required value={month} onChange={setMonth} />
           </FormDialog> : null}
         </section>
@@ -141,6 +146,6 @@ export function CommissionPayoutsPage() {
       ) : null}
       <ReasonDialog open={voidId !== null} title="Void initiated payout" description="The voided payout stays in the record." confirmText="Void payout" danger successText="Payout voided."
         onClose={() => setVoidId(null)} onSubmit={(reason) => voidId ? action.mutateAsync({ id: voidId, action: "void", reason }) : Promise.resolve()} />
-    </AdminPage>
+    </>
   );
 }

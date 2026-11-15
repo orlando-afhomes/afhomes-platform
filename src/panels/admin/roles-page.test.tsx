@@ -37,7 +37,7 @@ type User = ReturnType<typeof userEvent.setup>;
 
 const rowFor = (name: string) => screen.getAllByText(name)[0].closest("tr")!;
 
-async function clickRowAction(user: User, row: HTMLElement, action: "View" | "Edit" | "Delete") {
+async function clickRowAction(user: User, row: HTMLElement, action: "View full details" | "Edit" | "Delete") {
   await user.click(within(row).getByRole("button", { name: /actions for/i }));
   await user.click(await screen.findByRole("menuitem", { name: action }));
 }
@@ -71,7 +71,7 @@ describe("roles page", () => {
     expect(await screen.findByText("HR Staff", {}, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByText("Finance Staff")).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Roles" })).toBeInTheDocument();
-    expect(screen.getByRole("columnheader", { name: "Role Name" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Name" })).toBeInTheDocument();
   });
 
   it("requires roles module access", async () => {

@@ -26,7 +26,7 @@ export function TemplateStep({
   return (
     <section
       aria-labelledby={titleId}
-      className="customer-import-step tw:relative tw:flex tw:flex-col tw:gap-4 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-5 tw:shadow-(--shadow-soft) tw:sm:flex-row"
+      className="customer-import-step tw:relative tw:flex tw:flex-col tw:gap-4 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-5 tw:shadow-(--shadow-soft) tw:lg:flex-row"
     >
       <span
         aria-hidden="true"
@@ -43,12 +43,12 @@ export function TemplateStep({
         {children}
       </div>
       {actions ? (
-        <div className="tw:flex tw:shrink-0 tw:flex-wrap tw:items-center tw:gap-2 tw:sm:self-center">{actions}</div>
+        <div className="tw:flex tw:w-full tw:shrink-0 tw:flex-wrap tw:items-center tw:gap-2 tw:lg:w-auto tw:lg:self-center">{actions}</div>
       ) : null}
       {connector ? (
         <span
           aria-hidden="true"
-          className="customer-import-step__connector tw:absolute tw:top-14 tw:-bottom-6 tw:left-[37px] tw:hidden tw:border-l tw:border-dashed tw:border-border tw:sm:block"
+          className="customer-import-step__connector tw:absolute tw:top-14 tw:-bottom-6 tw:left-[37px] tw:hidden tw:border-l tw:border-dashed tw:border-border tw:lg:block"
         />
       ) : null}
     </section>
@@ -89,20 +89,24 @@ export function UploadDropzone({
 
   return (
     <div className="customer-import-dropzone tw:mt-4">
-      <Input
-        ref={inputRef}
-        id={inputId}
-        type="file"
-        accept={accept}
-        disabled={busy}
-        tabIndex={-1}
-        aria-describedby={error ? errorId : undefined}
-        onChange={(event) => {
-          onFile(event.target.files?.[0]);
-          event.target.value = "";
-        }}
-        className="tw:sr-only"
-      />
+      {/* The file input is visually hidden but still clickable through the button.
+          Wrap it instead of using `sr-only` on the Input: the Input's `w-full`
+          would override sr-only's 1px width and stretch the page. */}
+      <div className="tw:sr-only">
+        <Input
+          ref={inputRef}
+          id={inputId}
+          type="file"
+          accept={accept}
+          disabled={busy}
+          tabIndex={-1}
+          aria-describedby={error ? errorId : undefined}
+          onChange={(event) => {
+            onFile(event.target.files?.[0]);
+            event.target.value = "";
+          }}
+        />
+      </div>
       <div
         onDragOver={(event) => {
           event.preventDefault();

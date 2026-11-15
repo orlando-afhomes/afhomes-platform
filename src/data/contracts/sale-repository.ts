@@ -4,8 +4,11 @@ import type { ClosedMonth } from "@/modules/finance/month-close";
 
 export type SaleView = Sale & { customerName: string; sellerName: string | null; schemeLabel: string; defaultEligible?: boolean };
 
+export type VipCommissionCorrection = { referrerMemberId: string | null; dscRateBp?: number; driRateBp?: number; reason: string };
+
 /** Sales are created by the contract workflow and approved separately. */
 export interface SaleRepository {
+  correctCommission(id: string, input: VipCommissionCorrection, options?: MockAsyncOptions): Promise<SaleView>;
   approve(id: string, options?: MockAsyncOptions): Promise<SaleView>;
   markDefaulted(id: string, reason: string, options?: MockAsyncOptions): Promise<SaleView>;
   listClosedMonths(options?: MockAsyncOptions): Promise<ClosedMonth[]>;

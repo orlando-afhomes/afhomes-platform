@@ -20,11 +20,11 @@ import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
-import { StatusBadge, ToneBadge } from "@/shared/components/modern/status-badge";
+import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { SelectField, TextField } from "@/shared/forms/modern";
 import { Button } from "@/shared/ui/button";
-import { TabBar } from "@/shared/components/modern/tab-bar";
+import { humanize } from "@/shared/lib/humanize";
 
 type TabId = "program-category" | "gov-id-type" | "bank" | "outlet";
 
@@ -42,9 +42,9 @@ const STATUS_FILTER_ITEMS = [
 /** One row for every tab: a list entry or an outlet. */
 type ListRow = { id: string; name: string; detail: string; status: ListEntryStatus; inUse: boolean; sample: boolean; type?: OutletType };
 
-const typeLabel = (type: OutletType) => OUTLET_TYPES.find((item) => item.value === type)?.label ?? type;
+const typeLabel = (type: OutletType) => OUTLET_TYPES.find((item) => item.value === type)?.label ?? humanize(type);
 
-export function ListsPage() {
+export function ListsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const canManage = useOperation("settings.lists.manage");
   const entriesQuery = useReferenceEntries();
   const outletsQuery = useOutlets();
@@ -113,13 +113,12 @@ export function ListsPage() {
         cell: ({ row }) => (
           <span className="tw:font-medium">
             {row.original.name}
-            {row.original.sample ? <ToneBadge className="tw:ml-2">Sample</ToneBadge> : null}
           </span>
         ),
       },
-      ...(tab === "bank" ? [] : [{ id: "detail", header: isOutlet ? "Type" : "Stored value", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }: { row: { original: ListRow } }) => row.original.detail } as ColumnDef<ListRow, unknown>]),
+      ...(!isOutlet ? [] : [{ id: "detail", header: "Type", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }: { row: { original: ListRow } }) => row.original.detail } as ColumnDef<ListRow, unknown>]),
       { id: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
-      { id: "used", header: "In use", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => (row.original.inUse ? "Yes" : "No") },
+      { id: "used", header: "Used", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => (row.original.inUse ? "Yes" : "No") },
       {
         id: "actions",
         header: () => <span className="tw:sr-only">Actions</span>,
@@ -154,10 +153,10 @@ export function ListsPage() {
 
   return (
     <AdminPage
+      embedded={embedded}
       anyOf={["departments"]}
       allowed={canManage}
       title="Lists"
-      description="Manage the lists used in forms across the platform. An entry that records already use can only be deactivated."
       crumbs={[{ label: "Organization" }, { label: "Lists" }]}
       actions={
         <Button
@@ -171,21 +170,23 @@ export function ListsPage() {
         </Button>
       }
     >
-      <TabBar
-        label="Lists"
-        value={tab}
-        tabs={TABS.map((item) => ({ value: item.value, label: item.label, count: rowsByTab[item.value].length }))}
-        onChange={(next) => {
-          setTab(next as TabId);
-          setSearch("");
-          setStatusFilter("all");
-        }}
-      />
       <FilterBar
         search={search}
         onSearch={setSearch}
         searchLabel={`Search ${current.label.toLowerCase()}`}
-        filters={[{ label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_FILTER_ITEMS }]}
+        filters={[
+          {
+            label: "List",
+            value: tab,
+            onChange: (next) => {
+              setTab(next as TabId);
+              setSearch("");
+              setStatusFilter("all");
+            },
+            options: TABS.map((item) => ({ value: item.value, label: item.label })),
+          },
+          { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_FILTER_ITEMS },
+        ]}
       />
       <DataTable<ListRow>
         caption={current.label}
@@ -258,7 +259,6 @@ function ListEntryDialog({
     <FormDialog
       open
       title={editing ? `Edit ${singular}` : `Add ${singular}`}
-      description={editing ? "The stored value stays the same, so existing records keep showing correctly." : undefined}
       submitText={editing ? "Save" : "Add"}
       pending={pending}
       error={error}

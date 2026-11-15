@@ -1,5 +1,6 @@
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { DevIdentity } from "@/modules/identity/types";
+import { VIP_CLOSED_DEAL_THRESHOLD_BP } from "@/modules/sales/rules";
 import { approvedCollectionMilestone, isFullySettled } from "@/modules/finance/rules";
 import { firstOpenDate } from "@/modules/finance/month-close";
 import type { Payment } from "@/modules/finance/types";
@@ -119,7 +120,7 @@ export function reconcileContract(store: MockStore, contractId: string, actor: A
   const businessDate = today();
 
   if (sale?.approval) {
-    const milestone = approvedCollectionMilestone(sale.valueCentavos, payments, 2_500);
+    const milestone = approvedCollectionMilestone(sale.valueCentavos, payments, sale.closedDealThresholdBp ?? VIP_CLOSED_DEAL_THRESHOLD_BP);
     if (sale.status === "pending" && milestone) {
       const reconfirmation = sale.adjustments.some((adjustment) => adjustment.kind === "reversal");
       sale.status = "confirmed";

@@ -356,7 +356,7 @@ export function ContactSection({ draft, set, errors, newApplication }: SectionPr
   const dial = dialingPrefixFor(draft.address.province, draft.address.city);
   const { markTouched, localError } = useTouchedFields();
   return (
-    <SectionBlock title="Contact" description="How the company reaches the customer." icon={<Phone className="tw:size-4" />}>
+    <SectionBlock title="Contact" icon={<Phone className="tw:size-4" />}>
       <FormGrid>
         <PhilippineMobileField
           label="Mobile number"
@@ -394,7 +394,7 @@ export function ContactSection({ draft, set, errors, newApplication }: SectionPr
 export function AddressSection({ draft, set, errors }: SectionProps) {
   const { markTouched, localError } = useTouchedFields();
   return (
-    <SectionBlock title="Address" description="Residential address in the Philippines." icon={<MapPin className="tw:size-4" />}>
+    <SectionBlock title="Address" icon={<MapPin className="tw:size-4" />}>
       <div onBlur={(event) => markBlurredField(event, "afhomes-street", "street", markTouched)}>
         <PhilippineAddressFields
           value={draft.address}
@@ -411,7 +411,7 @@ export function GovernmentIdSection({ draft, set, errors, idPreview }: SectionPr
   const { markTouched, localError } = useTouchedFields();
   const govIdOptions = useReferenceOptions("gov-id-type", [draft.governmentIdType]);
   return (
-    <SectionBlock title="Government ID" description="The ID presented with the application." icon={<IdCard className="tw:size-4" />}>
+    <SectionBlock title="Government ID" icon={<IdCard className="tw:size-4" />}>
       <FormGrid>
         {/* display:contents keeps both ID fields as direct grid cells while the wrapper catches their blur. */}
         <div className="tw:contents" onBlur={(event) => markBlurredField(event, "gov-id-number", "governmentIdNumber", markTouched)}>
@@ -445,7 +445,7 @@ export function GovernmentIdSection({ draft, set, errors, idPreview }: SectionPr
 export function EmploymentSection({ draft, set, errors }: SectionProps) {
   const { markTouched, localError } = useTouchedFields();
   return (
-    <SectionBlock title="Employment" description="Work and business details plus the office address. All fields are optional." icon={<Briefcase className="tw:size-4" />}>
+    <SectionBlock title="Employment" description="Optional" icon={<Briefcase className="tw:size-4" />}>
       <FormGrid>
         <TextField
           label="Occupation/Business Name"
@@ -561,7 +561,7 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
         <RadioCardField label="Gender (Secondary holder)" value={draft.secGender || undefined} options={GENDER_CARDS} onChange={(value) => set("secGender", value)} />
         <RadioCardField label="Civil status (Secondary holder)" value={draft.secCivilStatus || undefined} options={CIVIL_CARDS} onChange={(value) => set("secCivilStatus", value)} />
       </SectionBlock>
-      <SectionBlock title="Address (Secondary holder)" description="Residential address of the secondary card holder in the Philippines." icon={<MapPin className="tw:size-4" />}>
+      <SectionBlock title="Address (Secondary holder)" icon={<MapPin className="tw:size-4" />}>
         <div onBlur={(event) => markBlurredField(event, "afhomes-street", "street", markTouched)}>
           <PhilippineAddressFields
             value={draft.secAddress}
@@ -570,7 +570,7 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
           />
         </div>
       </SectionBlock>
-      <SectionBlock title="Contact (Secondary holder)" description="How the company reaches the secondary card holder." icon={<Phone className="tw:size-4" />}>
+      <SectionBlock title="Contact (Secondary holder)" icon={<Phone className="tw:size-4" />}>
         <FormGrid>
           <PhilippineMobileField
             label="Mobile number (Secondary holder)"
@@ -601,7 +601,7 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
           />
         </FormGrid>
       </SectionBlock>
-      <SectionBlock title="Government ID (Secondary holder)" description="The ID presented with the secondary holder application." icon={<IdCard className="tw:size-4" />}>
+      <SectionBlock title="Government ID (Secondary holder)" icon={<IdCard className="tw:size-4" />}>
         <FormGrid>
           {/* display:contents keeps both ID fields as direct grid cells while the wrapper catches their blur. */}
           <div className="tw:contents" onBlur={(event) => markBlurredField(event, "sec-gov-id-number", "governmentIdNumber", markTouched)}>
@@ -630,7 +630,7 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
           {idPreview ? <CustomerIdImagePreview preview={idPreview} secondary /> : null}
         </FormGrid>
       </SectionBlock>
-      <SectionBlock title="Employment (Secondary holder)" description="Work and business details plus the office address of the secondary card holder. All fields are optional." icon={<Briefcase className="tw:size-4" />}>
+      <SectionBlock title="Employment (Secondary holder)" description="Optional" icon={<Briefcase className="tw:size-4" />}>
         <FormGrid>
           <TextField
             label="Occupation/Business Name (Secondary holder)"
@@ -741,7 +741,7 @@ export function AttributionSection({ draft, set, errors, members, existing, pend
   }, [existing]);
 
   return (
-    <SectionBlock title="Sales attribution" description="Who closed the sale, who referred the customer, and how the lead arrived." icon={<Handshake className="tw:size-4" />}>
+    <SectionBlock title="Sales attribution" icon={<Handshake className="tw:size-4" />}>
       <FormGrid>
         {office ? (
           <SelectField

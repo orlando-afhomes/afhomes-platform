@@ -113,7 +113,6 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
     <>
       <DashboardHeader
         title={`Welcome back, ${role ? getSystemRoleLabel(role) : "Sales Network"}`}
-        description={isManager ? "Here's an overview of your sales and your authorized team's performance." : "Here's an overview of your personal sales performance."}
         actions={canSeeSales ? <DashboardDateFilter range={range} /> : undefined}
       />
 
@@ -228,10 +227,10 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
           }
           secondary={
             showReturned || showDrafts ? (
-              <DashboardPendingActions title="Needs Your Attention" description="Your records waiting on you">
+              <DashboardPendingActions title="Needs Your Attention">
                 {showReturned ? (
                   <DashboardPendingItem
-                    href="/admin/sales/contracts"
+                    href="/admin/sales?tab=contracts"
                     label="My returned contracts"
                     count={ownReturned}
                     icon={FilePenLine}

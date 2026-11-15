@@ -6,23 +6,29 @@ import { matchesSearch } from "@/shared/lib/search";
 import { toast } from "sonner";
 import { useCommissionRates, useOperation, useSaveCommissionRate } from "@/data/business-queries";
 import type { CommissionRateDirectory } from "@/data/contracts/commission-repository";
-import type { CommissionProduct, CommissionRole } from "@/modules/commissions/types";
+import { COMMISSION_ROLE_LABELS, commissionRoleLabel, type CommissionProduct, type CommissionRole } from "@/modules/commissions/types";
 import { formatBasisPoints } from "@/shared/lib/money";
-import { AdminPage } from "@/shared/components/admin";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { QueryState } from "@/shared/components/modern/query-state";
+import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
+import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { SelectField, TextField } from "@/shared/forms/modern";
-import { Button } from "@/shared/ui/button";
 
 const columns: ColumnDef<CommissionRateDirectory["rates"][number], unknown>[] = [
   { header: "Seller", accessorKey: "memberName" },
   { header: "Product", accessorKey: "product" },
-  { header: "Type", accessorKey: "role" },
+  { header: "Type", cell: ({ row }) => commissionRoleLabel(row.original.role) },
   { header: "Approved rate", cell: ({ row }) => formatBasisPoints(row.original.rateBp) },
-  { header: "Standard rate", cell: ({ row }) => row.original.standardRateBp === null ? "Not recorded" : formatBasisPoints(row.original.standardRateBp) },
-  { header: "Exception", cell: ({ row }) => row.original.standardRateBp !== null && row.original.standardRateBp !== row.original.rateBp ? "Yes" : "—" },
+  { header: "Exception", cell: ({ row }) => isException(row.original) ? "Yes" : "—" },
 ];
+
+type RateRow = CommissionRateDirectory["rates"][number];
+const rateKey = (row: RateRow) => `${row.memberId}-${row.product}-${row.role}`;
+
+function isException(row: RateRow): boolean {
+  return row.standardRateBp !== null && row.standardRateBp !== row.rateBp;
+}
 
 function parseRate(value: string): number | null {
   const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(value.trim());
@@ -31,32 +37,44 @@ function parseRate(value: string): number | null {
   return Number.isSafeInteger(rate) ? rate : null;
 }
 
-export function CommissionAssignmentPage() {
+/** Rates tab (commission.rates.manage). The "Set rate" button lives in the area page actions, which control `editing`. */
+export function CommissionRatesPanel({ editing, onEditingChange }: { editing: boolean; onEditingChange: (open: boolean) => void }) {
   const allowed = useOperation("commission.rates.manage");
   const query = useCommissionRates(allowed);
-  const [editing, setEditing] = useState(false);
   const [search, setSearch] = useState("");
   const [product, setProduct] = useState("all");
   const [role, setRole] = useState("all");
+  const [detailKey, setDetailKey] = useState<string | null>(null);
+  const detail = detailKey ? (query.data?.rates ?? []).find((item) => rateKey(item) === detailKey) ?? null : null;
   const rates = useMemo(
     () => (query.data?.rates ?? []).filter((item) => (product === "all" || item.product === product) && (role === "all" || item.role === role) && matchesSearch(search, item.memberName)),
     [query.data, search, product, role],
   );
   return (
-    <AdminPage anyOf={["commissions"]} allowed={allowed} title="Commission Rates"
-      description="Set the approved rate for a seller. Issued numbers keep their original rates."
-      crumbs={[{ label: "Commissions", href: "/admin/commissions" }, { label: "Commission Rates" }]}
-      actions={<Button type="button" disabled={!query.data} onClick={() => setEditing(true)}>Set rate</Button>}>
+    <>
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search sellers" filters={[
         { label: "Product filter", value: product, onChange: setProduct, options: [{ value: "all", label: "All products" }, { value: "VIP", label: "VIP" }, { value: "IGP", label: "IGP" }] },
-        { label: "Commission type filter", value: role, onChange: setRole, options: [{ value: "all", label: "All types" }, { value: "DSC", label: "Closing seller (DSC)" }, { value: "DRI", label: "Referrer (DRI)" }] },
+        { label: "Commission type filter", value: role, onChange: setRole, options: [{ value: "all", label: "All types" }, { value: "DSC", label: COMMISSION_ROLE_LABELS.DSC }, { value: "DRI", label: COMMISSION_ROLE_LABELS.DRI }] },
       ]} />
       <QueryState isLoading={query.isLoading} error={query.error}>
         <DataTable data={rates} columns={columns} caption="Approved seller rates"
-          emptyText={(query.data?.rates ?? []).length === 0 ? "No approved rates recorded." : "No rates match the filters."} getRowId={(row) => `${row.memberId}-${row.product}-${row.role}`} />
+          emptyText={(query.data?.rates ?? []).length === 0 ? "No approved rates recorded." : "No rates match the filters."} getRowId={rateKey}
+          onRowOpen={(row) => setDetailKey(rateKey(row))} getRowLabel={(row) => `Open rate for ${row.memberName}`}
+          rowActions={(row) => <RowActionsMenu itemName={`rate for ${row.memberName}`} onView={() => setDetailKey(rateKey(row))} />} />
       </QueryState>
-      {editing && query.data ? <RateDialog directory={query.data} onClose={() => setEditing(false)} /> : null}
-    </AdminPage>
+      <RecordDetailsSheet open={detail !== null} onClose={() => setDetailKey(null)} title={detail ? detail.memberName : "Commission rate"}
+        sections={detail ? [{
+          title: "Rate",
+          rows: [
+            { label: "Product", value: detail.product },
+            { label: "Commission type", value: `${commissionRoleLabel(detail.role)} (${detail.role})` },
+            { label: "Approved rate", value: formatBasisPoints(detail.rateBp) },
+            { label: "Standard rate", value: detail.standardRateBp === null ? "Not recorded" : formatBasisPoints(detail.standardRateBp) },
+            { label: "Exception", value: isException(detail) ? "Yes" : "No" },
+          ],
+        }] : []} />
+      {editing && query.data ? <RateDialog directory={query.data} onClose={() => onEditingChange(false)} /> : null}
+    </>
   );
 }
 
@@ -78,9 +96,9 @@ function RateDialog({ directory, onClose }: { directory: CommissionRateDirectory
   return (
     <FormDialog open title="Set approved commission rate" submitText="Save rate" error={error} pending={save.isPending}
       onClose={onClose} onSubmit={() => {
-        const rateBp = parseRate(values.rate);
         const standard = values.standard.trim();
         const standardRateBp = standard ? parseRate(standard) : null;
+        const rateBp = values.rate.trim() ? parseRate(values.rate) : standardRateBp;
         if (!memberId || rateBp === null || (standard && standardRateBp === null)) {
           setError("Choose a seller and enter a valid rate. Use 0 for an approved zero.");
           return;
@@ -93,8 +111,8 @@ function RateDialog({ directory, onClose }: { directory: CommissionRateDirectory
       <SelectField label="Seller" required value={memberId} onChange={setMemberId}
         options={directory.members.map(({ id, name }) => ({ value: id, label: name }))} />
       <SelectField label="Product" required value={product} onChange={setProduct} options={[{ value: "VIP", label: "VIP" }, { value: "IGP", label: "IGP" }]} />
-      <SelectField label="Commission type" required value={role} onChange={setRole} options={[{ value: "DSC", label: "Closing seller (DSC)" }, { value: "DRI", label: "Referrer (DRI)" }]} />
-      <TextField label="Approved rate (%)" required inputMode="decimal" value={values.rate} onChange={(rate) => setDraft({ ...values, rate })} />
+      <SelectField label="Commission type" required value={role} onChange={setRole} options={[{ value: "DSC", label: COMMISSION_ROLE_LABELS.DSC }, { value: "DRI", label: COMMISSION_ROLE_LABELS.DRI }]} />
+      <TextField label="Approved rate (%)" hint="Leave blank to use the approved standard rate." inputMode="decimal" value={values.rate} onChange={(rate) => setDraft({ ...values, rate })} />
       <TextField label="Standard rate (%)" inputMode="decimal" value={values.standard} onChange={(standard) => setDraft({ ...values, standard })} />
       <TextField label="Reason" required value={reason} onChange={setReason} />
     </FormDialog>

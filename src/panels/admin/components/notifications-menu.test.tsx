@@ -105,8 +105,8 @@ describe("notifications menu", () => {
     await openMenu();
     const row = await screen.findByRole("menuitem", { name: /Clerk Dev/ });
     expect(row).toHaveTextContent("Clerk Dev");
-    // humanize() keeps all-caps action words as written by design.
-    expect(row).toHaveTextContent("CUSTOMER SUBMITTED");
+    // Action codes render as plain sentence-case labels.
+    expect(row).toHaveTextContent("Customer submitted");
     expect(row).toHaveTextContent("Juan Dela Cruz");
     expect(row).toHaveTextContent("Customers");
     expect(row).toHaveTextContent("5 min ago");

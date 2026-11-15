@@ -22,13 +22,17 @@ export const DASHBOARD_TONE_COLORS: Record<DashboardTone, string> = {
   soft: "var(--color-brand-secondary)",
 };
 
-/** Dashboard heading: large title, short description, and an optional control such as the date filter. */
-export function DashboardHeader({ title, description, actions }: { title: string; description: string; actions?: ReactNode }) {
+/**
+ * Page heading shared by dashboards and `AdminPage`: large title and the
+ * actions on one line (the actions wrap below the title only when space runs
+ * out), plus an optional description of one short sentence (prefer none).
+ */
+export function DashboardHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
   return (
-    <div className="tw:mt-1 tw:flex tw:flex-col tw:gap-4 tw:sm:flex-row tw:sm:items-start tw:sm:justify-between">
-      <div className="tw:min-w-0">
+    <div className="tw:mt-1 tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-x-4 tw:gap-y-3">
+      <div className="tw:min-w-0 tw:flex-[1_1_16rem]">
         <h1 className="tw:text-[1.75rem] tw:leading-tight tw:font-bold tw:tracking-tight tw:text-foreground">{title}</h1>
-        <p className="tw:mt-1.5 tw:text-sm tw:text-muted-foreground">{description}</p>
+        {description ? <p className="tw:mt-1.5 tw:text-sm tw:text-muted-foreground">{description}</p> : null}
       </div>
       {actions ? <div className="tw:flex tw:shrink-0 tw:flex-wrap tw:items-center tw:gap-2">{actions}</div> : null}
     </div>

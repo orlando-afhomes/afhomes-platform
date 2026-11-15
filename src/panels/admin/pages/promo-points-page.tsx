@@ -7,30 +7,51 @@ import { useOperation, useStayPoints } from "@/data/business-queries";
 import type { PromoLedgerRow } from "@/data/contracts/promo-repository";
 import { usePromoLedger, usePromos, useRecordPromoUse, useVoidPromoUse } from "@/data/promo-queries";
 import { useOutlets } from "@/data/settings-queries";
-import { AdminPage } from "@/shared/components/admin";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
+import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { PointsField, SelectField, TextField } from "@/shared/forms/modern";
 import { formatDate } from "@/shared/lib/format-date";
-import { humanize } from "@/shared/lib/humanize";
 import { matchesSearch, optionsFrom } from "@/shared/lib/search";
 import { Button } from "@/shared/ui/button";
 
 /** Signed points for display: credits are positive, debits negative. */
 const SIGN: Record<PromoLedgerRow["type"], 1 | -1> = { earn: 1, use_void: 1, earn_reversal: -1, use: -1, expiry: -1 };
 export const signedPoints = (row: Pick<PromoLedgerRow, "type" | "points">) => SIGN[row.type] * row.points;
+const pointsText = (row: PromoLedgerRow) => signedPoints(row).toLocaleString("en-PH", { signDisplay: "exceptZero" });
 
-export function PromoPointsPage() {
+const ENTRY_TYPE_LABELS: Record<PromoLedgerRow["type"], string> = {
+  earn: "Earned", earn_reversal: "Earn reversed", use: "Used", use_void: "Use voided", expiry: "Expired",
+};
+const entryType = (row: PromoLedgerRow) => `${ENTRY_TYPE_LABELS[row.type]}${row.voided ? " (voided)" : ""}`;
+
+/** "Record points use" (promo-points.use). Owns its form dialog. */
+export function RecordPromoUseButton() {
+  const canUse = useOperation("promo-points.use");
+  const [open, setOpen] = useState(false);
+  if (!canUse) return null;
+  return (
+    <>
+      <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setOpen(true)}>
+        <Coins aria-hidden="true" /> Record points use
+      </Button>
+      {open ? <UseDialog onClose={() => setOpen(false)} /> : null}
+    </>
+  );
+}
+
+/** Promo Points ledger with details; Void use needs promo-points.use. */
+export function PromoPointsPanel() {
   const canUse = useOperation("promo-points.use");
   const ledger = usePromoLedger();
   const voidUse = useVoidPromoUse();
   const [search, setSearch] = useState("");
   const [type, setType] = useState("all");
   const [promoId, setPromoId] = useState("all");
-  const [useOpen, setUseOpen] = useState(false);
   const [voiding, setVoiding] = useState<PromoLedgerRow | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const data = useMemo(() => ledger.data ?? [], [ledger.data]);
   const rows = useMemo(
@@ -42,39 +63,45 @@ export function PromoPointsPage() {
 
   const columns = useMemo<ColumnDef<PromoLedgerRow, unknown>[]>(() => [
     { id: "date", header: "Date", cell: ({ row }) => formatDate(row.original.date) },
-    { id: "customer", header: "Customer", cell: ({ row }) => row.original.customerName },
-    { id: "vip", header: "VIP Number", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.vipNumber ?? "—" },
-    { id: "promo", header: "Promo", cell: ({ row }) => row.original.promoName },
-    { id: "type", header: "Type", cell: ({ row }) => `${humanize(row.original.type)}${row.original.voided ? " (voided)" : ""}` },
-    { id: "outlet", header: "Outlet", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => row.original.outletName ?? "—" },
-    { id: "points", header: "Points", cell: ({ row }) => signedPoints(row.original).toLocaleString("en-PH", { signDisplay: "exceptZero" }) },
-    { id: "note", header: "Note", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => row.original.note ?? row.original.sourceBillId ?? "—" },
+    { id: "customer", header: "Cardholder", cell: ({ row }) => row.original.customerName },
+    { id: "points", header: "Points", cell: ({ row }) => pointsText(row.original) },
+    { id: "type", header: "Type", cell: ({ row }) => entryType(row.original) },
+    { id: "promo", header: "Promo", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.promoName },
     {
       id: "actions", header: () => <span className="tw:sr-only">Actions</span>,
-      cell: ({ row }) => (canUse && row.original.type === "use" && !row.original.voided
-        ? <RowActionsMenu itemName={`${row.original.customerName} points use`} extraItems={[{ key: "void", label: "Void use", danger: true, onClick: () => setVoiding(row.original) }]} />
-        : null),
+      cell: ({ row }) => (
+        <RowActionsMenu itemName={`${row.original.customerName} ${ENTRY_TYPE_LABELS[row.original.type].toLowerCase()} entry`} onView={() => setDetailId(row.original.id)}
+          extraItems={canUse && row.original.type === "use" && !row.original.voided ? [{ key: "void", label: "Void use", danger: true, onClick: () => setVoiding(row.original) }] : []} />
+      ),
     },
   ], [canUse]);
+  const detail = detailId ? data.find((row) => row.id === detailId) ?? null : null;
 
   return (
-    <AdminPage
-      anyOf={["stay-points"]}
-      title="Promo Points"
-      description="Every earn, reversal, use and void of Promo Points. This wallet is separate from Grant Stay Points."
-      crumbs={[{ label: "Membership" }, { label: "Promos", href: "/admin/promos" }, { label: "Promo Points" }]}
-      actions={canUse ? (
-        <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setUseOpen(true)}>
-          <Coins aria-hidden="true" /> Record points use
-        </Button>
-      ) : undefined}
-    >
+    <>
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search Promo Points" filters={[
         { label: "Promo filter", value: promoId, onChange: setPromoId, options: promoOptions },
-        { label: "Entry type filter", value: type, onChange: setType, options: optionsFrom("All entry types", data.map((row) => row.type), humanize) },
+        { label: "Entry type filter", value: type, onChange: setType, options: optionsFrom("All entry types", data.map((row) => row.type), (value) => ENTRY_TYPE_LABELS[value as PromoLedgerRow["type"]] ?? value) },
       ]} />
-      <DataTable<PromoLedgerRow> caption="Promo Points ledger" data={rows} columns={columns} getRowId={(row) => row.id} emptyText="No Promo Points entries yet." loading={ledger.isLoading} />
-      {useOpen ? <UseDialog onClose={() => setUseOpen(false)} /> : null}
+      <DataTable<PromoLedgerRow> caption="Promo Points ledger" data={rows} columns={columns} getRowId={(row) => row.id} emptyText="No Promo Points entries yet." loading={ledger.isLoading}
+        onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open ${row.customerName} ${ENTRY_TYPE_LABELS[row.type].toLowerCase()} entry`} />
+      <RecordDetailsSheet
+        open={detail !== null}
+        onClose={() => setDetailId(null)}
+        title={detail?.customerName ?? "Promo Points entry"}
+        subtitle={detail ? entryType(detail) : undefined}
+        sections={detail ? [{
+          rows: [
+            { label: "Date", value: formatDate(detail.date) },
+            { label: "VIP Number", value: detail.vipNumber },
+            { label: "Promo", value: detail.promoName },
+            { label: "Type", value: entryType(detail) },
+            { label: "Points", value: pointsText(detail) },
+            { label: "Outlet", value: detail.outletName },
+            { label: "Note", value: detail.note },
+          ],
+        }] : []}
+      />
       <ReasonDialog
         open={voiding !== null}
         title="Void this points use?"
@@ -86,7 +113,7 @@ export function PromoPointsPage() {
         onClose={() => setVoiding(null)}
         onSubmit={(reason) => voidUse.mutateAsync({ entryId: voiding!.id, reason })}
       />
-    </AdminPage>
+    </>
   );
 }
 
@@ -120,7 +147,7 @@ function UseDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <FormDialog open title="Record points use" description="Records Promo Points used by a member at an outlet. Grant Stay Points are not affected." submitText="Record use" pending={record.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
+    <FormDialog open title="Record points use" submitText="Record use" pending={record.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
       <SelectField label="Member" required value={membershipId} placeholder="Select a member"
         options={(memberships.data ?? []).filter((item) => item.cardId).map((item) => ({ value: item.membershipId, label: `${item.customerName} · ${item.cardId}` }))}
         onChange={(value) => { setMembershipId(value); setError(undefined); }} />

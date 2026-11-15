@@ -20,7 +20,7 @@ import { ContractHistorySection, ContractLedgerSection, ContractMilestonesSectio
 import { PaymentSubmitDialog, usePaymentActions } from "../components/payment-actions";
 import { humanize } from "@/shared/lib/humanize";
 
-const CRUMBS = [{ label: "Sales" }, { label: "Contracts", href: "/admin/sales/contracts" }];
+const CRUMBS = [{ label: "Sales" }, { label: "Contracts", href: "/admin/sales?tab=contracts" }];
 const BUTTON = "tw:min-h-11 tw:sm:min-h-8";
 
 /** Sales view of a contract: terms, schedule, submitted payments and the preparer's actions. */

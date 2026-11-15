@@ -14,6 +14,10 @@ export type ContractView = Contract & {
 export type PrepareContractInput = {
   customerId: string;
   schemeId: string;
+  productCode?: Sale["productCode"];
+  classification?: Contract["classification"];
+  sellerMemberId?: string;
+  referrerMemberId?: string | null;
   /** Reservation date (YYYY-MM-DD, Asia/Manila) that due dates derive from; defaults to the preparation date. */
   reservationDate?: string;
   /** Optional due dates per schedule sequence (YYYY-MM-DD); they override the derived dates. */

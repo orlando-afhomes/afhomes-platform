@@ -3,15 +3,16 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
-import { MODULE_PRIMARY_NAV } from "@/modules/notifications/module-nav";
+import { MODULE_PRIMARY_NAV, MODULE_PRIMARY_TAB, isAreaNavKey } from "@/modules/notifications/module-nav";
 import { isCreationEvent } from "@/modules/notifications/creation-actions";
 import { formatNotificationTime } from "@/modules/notifications/format-time";
 import type { AuditModule } from "@/modules/audit/types";
 import type { AdminModuleId } from "@/modules/identity/permissions";
 import { useEffectiveModuleIds } from "@/data/queries";
-import { adminNavigation, type AdminNavItem, type AdminNavKey } from "@/panels/admin/navigation";
+import { ADMIN_AREA_TABS, adminNavigation, type AdminAreaTabRule, type AdminNavItem, type AdminNavKey } from "@/panels/admin/navigation";
 import { useNotifications } from "@/shared/providers/notifications-provider";
 import { humanize } from "@/shared/lib/humanize";
+import { formatNotificationAction } from "@/modules/notifications/format-action";
 import { Button } from "@/shared/ui/button";
 import {
   DropdownMenu,
@@ -34,11 +35,24 @@ function findNavItem(items: readonly AdminNavItem[], navKey: AdminNavKey): Admin
   return null;
 }
 
-/** Primary page href for an audit module; falls back to /admin when unmapped. */
+/** The area tab a module's events open on, with the former page's access rule. */
+function primaryTab(module: AuditModule) {
+  const navKey = MODULE_PRIMARY_NAV[module];
+  if (!navKey || !isAreaNavKey(navKey)) return null;
+  const tabs: readonly AdminAreaTabRule[] = ADMIN_AREA_TABS[navKey];
+  const index = tabs.findIndex((tab) => tab.value === MODULE_PRIMARY_TAB[module]);
+  return index < 0 ? null : { tab: tabs[index], first: index === 0 };
+}
+
+/** Primary page href for an audit module (area plus tab); falls back to /admin when unmapped. */
 function hrefForModule(module: AuditModule): string {
   const navKey = MODULE_PRIMARY_NAV[module];
   if (!navKey) return "/admin";
-  return findNavItem(adminNavigation, navKey)?.href ?? "/admin";
+  const href = findNavItem(adminNavigation, navKey)?.href;
+  if (!href) return "/admin";
+  const primary = primaryTab(module);
+  // The first tab is the area's default, so its link stays the plain area route.
+  return primary && !primary.first ? `${href}?tab=${primary.tab.value}` : href;
 }
 
 /**
@@ -55,10 +69,10 @@ function useGrantedModules(): Set<AdminModuleId> | null {
 }
 
 /**
- * True when the module's primary page is visible to the identity. Mirrors the
- * sidebar grant check (item grants default to its own id); operation-level
- * requirements are not evaluated here, so access is fail-open on those.
- * Missing nav items and unavailable grants also fail open.
+ * True when the module's primary tab is visible to the identity. Mirrors the
+ * sidebar grant check (the tab's module grants; item grants default to its own
+ * id); operation-level requirements are not evaluated here, so access is
+ * fail-open on those. Missing nav items and unavailable grants also fail open.
  */
 function isModuleVisible(module: AuditModule, granted: Set<AdminModuleId> | null): boolean {
   if (!granted) return true;
@@ -66,7 +80,7 @@ function isModuleVisible(module: AuditModule, granted: Set<AdminModuleId> | null
   if (!navKey) return true;
   const item = findNavItem(adminNavigation, navKey);
   if (!item) return true;
-  const grants = item.grants ?? [item.id as AdminModuleId];
+  const grants = primaryTab(module)?.tab.rule.grants ?? item.grants ?? [item.id as AdminModuleId];
   return grants.some((grant) => granted.has(grant));
 }
 
@@ -135,7 +149,7 @@ export function NotificationsMenu() {
                         {event.actorName}
                       </span>
                       <span className="tw:block tw:truncate tw:text-[13px] tw:text-muted-foreground">
-                        {humanize(event.action)} · {event.entityLabel}
+                        {formatNotificationAction(event.action)} · {event.entityLabel}
                       </span>
                       <span className="tw:block tw:text-xs tw:text-muted-foreground">
                         {humanize(event.module)} ·{" "}

@@ -11,13 +11,15 @@ import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { StatusPill } from "@/shared/components/admin";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
+import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { formatDate } from "@/shared/lib/format-date";
 import { recordLabel } from "@/shared/lib/record-label";
+import { formatDate } from "@/shared/lib/format-date";
+import { buttonVariants } from "@/shared/ui/button";
 import { buildContractMenuProps } from "../actions/sales-contract-actions";
 import { ApproveArrangementDialog, CancelContractDialog, RaDialog, RequestCancellationDialog, ResolvePaymentCodeDialog, ReturnContractDialog } from "./contract-dialogs";
 import { useContractHref } from "./use-contract-href";
@@ -46,6 +48,7 @@ export function ContractsTable({ initialStatus = "all", contractHref: hrefOverri
   // Owner decision 2026-11-09: only Super Admin approves a Move arrangement (the repository enforces it too).
   const isSuperAdmin = identity.status === "active" && identity.roles.includes("super_admin");
   const [target, setTarget] = useState<{ contract: ContractView; kind: "return" | "cancel" | "ra" | "requestCancel" | "approveArrangement" | "resolvePaymentCode" } | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
   const closeTarget = () => setTarget(null);
   const defaultHref = useContractHref();
   const contractHref = hrefOverride ?? defaultHref;
@@ -62,14 +65,14 @@ export function ContractsTable({ initialStatus = "all", contractHref: hrefOverri
   const columns = useMemo<ColumnDef<ContractView, unknown>[]>(
     () => [
       { id: "customer", header: "Customer", cell: ({ row }) => <Link href={contractHref(row.original.id)} className="tw:font-semibold tw:underline-offset-4 tw:hover:underline">{row.original.customerName}</Link> },
-      { id: "plan", header: "Plan and scheme", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => `${row.original.productCode} · ${row.original.schemeLabel}` },
+      { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.productCode },
       { id: "price", header: "Price", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => <Money value={row.original.priceCentavos} /> },
-      { id: "date", header: "Submitted", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => formatDate(row.original.submittedAt) },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
       { id: "holds", header: "Holds", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => (["submitted", "under_review"].includes(row.original.status) && row.original.holds.length > 0 ? <StatusPill tone="warning" icon={Hourglass}>{`${row.original.holds.length} hold${row.original.holds.length > 1 ? "s" : ""}`}</StatusPill> : "—") },
     ],
     [contractHref],
   );
+  const detail = detailId ? contracts.data?.find((contract) => contract.id === detailId) : undefined;
 
   return (
     <div className="contracts-table__wrap tw:flex tw:flex-col tw:gap-3">
@@ -97,7 +100,6 @@ export function ContractsTable({ initialStatus = "all", contractHref: hrefOverri
               hasActiveMembership: membership?.status === "active",
               hasCard: membership?.cardId != null,
             }, {
-              onView: () => router.push(contractHref(row.id)),
               onEdit: canPrepare && ["draft", "returned"].includes(row.status) ? () => router.push(contractHref(row.id)) : undefined,
               onStartReview: () => run("startReview", "Start review?", "The contract moves to Under Admin Review.", "Review started."),
               onFinalize: () => run("finalize", "Finalize this contract?", "The contract terms become fixed and a pending membership is created.", "Contract finalized."),
@@ -108,10 +110,26 @@ export function ContractsTable({ initialStatus = "all", contractHref: hrefOverri
               onCancel: () => setTarget({ contract: row, kind: "cancel" }),
               onRequestCancellation: () => setTarget({ contract: row, kind: "requestCancel" }),
             });
-            return <RowActionsMenu {...menu} />;
+            return <RowActionsMenu {...menu} extraItems={[{ key: "details", label: "View full details", onClick: () => setDetailId(row.id) }, ...menu.extraItems]} />;
           }}
         />
       </QueryState>
+      <RecordDetailsSheet
+        open={detail !== undefined}
+        onClose={() => setDetailId(null)}
+        title={detail?.customerName ?? "Contract"}
+        badge={detail ? <BizBadge status={detail.status} /> : undefined}
+        sections={detail ? [{ rows: [
+          { label: "VIP number", value: detail.vipNumber },
+          { label: "Plan", value: detail.productCode },
+          { label: "Payment scheme", value: detail.schemeLabel },
+          { label: "Price", value: <Money value={detail.priceCentavos} /> },
+          { label: "Seller", value: detail.sellerName ?? "Company" },
+          { label: "Created", value: formatDate(detail.createdAt) },
+          { label: "Holds", value: detail.holds.length > 0 ? <ul className="tw:list-disc tw:ps-5">{detail.holds.map((hold) => <li key={hold}>{hold}</li>)}</ul> : "None" },
+        ] }] : []}
+        footer={detail ? <Link href={contractHref(detail.id)} className={buttonVariants({ className: "tw:min-h-11 tw:sm:min-h-8" })}>Open contract</Link> : undefined}
+      />
       {confirmDialog}
       {target?.kind === "ra" ? <RaDialog contract={target.contract} onClose={closeTarget} /> : null}
       {target?.kind === "requestCancel" ? <RequestCancellationDialog contract={target.contract} onClose={closeTarget} /> : null}

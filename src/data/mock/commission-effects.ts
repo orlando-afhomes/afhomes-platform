@@ -13,9 +13,12 @@ export function freezeCommissionRates(
   product: CommissionProduct,
   sellerMemberId: string | null,
   referrerMemberId: string | null,
+  preservedRates: readonly FrozenCommissionRate[] = [],
 ): FrozenCommissionRate[] {
   if (!sellerMemberId) throw new Error("Choose a closing seller before issuing the number.");
   const rateFor = (memberId: string, role: CommissionRole): FrozenCommissionRate => {
+    const preserved = preservedRates.find((rate) => rate.memberId === memberId && rate.role === role);
+    if (preserved) return preserved;
     const setting = store.commissionRateSettings.find((item) => item.memberId === memberId && item.product === product && item.role === role);
     if (!setting) throw new Error(`Record the approved ${role} rate for the ${role === "DSC" ? "closing seller" : "referrer"} before issuing the number.`);
     return { memberId, role, rateBp: setting.rateBp };

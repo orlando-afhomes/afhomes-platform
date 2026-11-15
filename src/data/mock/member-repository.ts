@@ -8,7 +8,7 @@ import type { CreateAccreditedSellerInput, AccreditedSellerResult, CreateSalesNe
 import { validateSalesParent, getDirectChildren, isValidParentEdge } from "@/modules/sales-network/genealogy";
 import { calculateApprovedExpiry, validateAccreditedSellerFields } from "@/modules/sales-network/accredited-seller";
 import { allowedValues } from "@/modules/settings/lists";
-import { allocateSharedAaNumber, collectReservedAaNumbers, toAaYearMonth, validateManualAaNumber } from "@/modules/accreditation/issuance";
+import { allocateSharedAaNumber, collectReservedAaNumbers, toAaYearMonth } from "@/modules/accreditation/issuance";
 import { manilaToday, parseManilaDateOnly } from "@/modules/accreditation/dates";
 import { getCurrentAccreditationRecord, resolveAaNumber, resolveEffectiveAccreditationEligibility } from "@/modules/accreditation/eligibility";
 import { findOpenVacancy, vacancyStartDate, type SeatVacancy } from "@/modules/sales-network/vacancy";
@@ -688,20 +688,8 @@ export class MockMemberRepository implements MemberRepository {
     if (!yymm) throw new Error("Start date must be valid.");
     const prefix = input.mode === "IST" ? "AAI" : "AAO";
     const reserved = collectReservedAaNumbers(this.store.accreditations, this.store.members);
-    // Manual numbers are validated against the same reservations; they never
-    // advance the shared sequence because automatic allocation always scans
-    // from the sequence mark and skips every reserved identifier.
-    let aaNumber: string;
-    let consumeSequence: number | null = null;
-    if (input.aaMethod === "manual") {
-      const manualError = validateManualAaNumber(`${prefix}${input.manualAaSuffix ?? ""}`, prefix, input.approvedStart, reserved);
-      if (manualError) throw new Error(manualError);
-      aaNumber = `${prefix}${(input.manualAaSuffix ?? "").trim().toUpperCase()}`;
-    } else {
-      const allocation = allocateSharedAaNumber(prefix, yymm, reserved, this.store.accreditationSequence);
-      aaNumber = allocation.aaNumber;
-      consumeSequence = allocation.sequence + 1;
-    }
+    if (input.aaMethod === "manual") throw new Error("AA numbers are issued automatically.");
+    const { aaNumber } = allocateSharedAaNumber(prefix, yymm, reserved);
 
     const expiryDate = calculateApprovedExpiry(input.approvedStart);
     if (!expiryDate) throw new Error("Start date must be valid.");
@@ -816,9 +804,7 @@ export class MockMemberRepository implements MemberRepository {
     this.store.memberSequence += 1;
     this.store.members.push(member);
     this.store.accreditations.push(accreditation);
-    if (consumeSequence !== null) {
-      this.store.accreditationSequence = consumeSequence;
-    }
+    this.store.accreditationSequence += 1;
     appendAuditEvent(this.store, {
       actorId: identity.id,
       actorRoles: activeRoles(identity),

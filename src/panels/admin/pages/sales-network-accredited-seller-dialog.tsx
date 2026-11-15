@@ -10,7 +10,6 @@ import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { teamDisplayName } from "@/modules/sales-network/display";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { manilaToday } from "@/modules/accreditation/dates";
-import { collectReservedAaNumbers, toAaYearMonth, validateManualAaNumber } from "@/modules/accreditation/issuance";
 import {
   ACCREDITATION_STATUS_OPTIONS,
   CIVIL_STATUS_OPTIONS,
@@ -19,7 +18,6 @@ import {
   isLeapDayStart,
   programCategoryLabel,
   validateAccreditedSellerFields,
-  type AaIssuanceMethod,
   type AccreditationFormStatus,
   type AccreditedSellerMode,
   type CreateAccreditedSellerInput,
@@ -120,7 +118,6 @@ export function AccreditedSellerDialog({
   const govIdOptions = useReferenceOptions("gov-id-type");
 
   const isSuperAdmin = identity.status === "active" && identity.roles.includes("super_admin");
-  const prefix = mode === "IST" ? "AAI" : "AAO";
 
   const [step, setStep] = useState(0);
   const [sellerIdentity, setSellerIdentity] = useState<"new" | "existing">("new");
@@ -161,8 +158,6 @@ export function AccreditedSellerDialog({
   const [businessAddress, setBusinessAddress] = useState("");
   const [jobPosition, setJobPosition] = useState("");
   const [accreditationStatus, setAccreditationStatus] = useState<AccreditationFormStatus | undefined>("pending");
-  const [aaMethod, setAaMethod] = useState<AaIssuanceMethod>("automatic");
-  const [manualAaSuffix, setManualAaSuffix] = useState("");
   const [approvedStart, setApprovedStart] = useState(manilaToday());
   const [submitting, setSubmitting] = useState(false);
   const [confirmCreate, setConfirmCreate] = useState(false);
@@ -179,10 +174,6 @@ export function AccreditedSellerDialog({
 
   const effectiveDesignation = mode === "OST" ? "OST" : designation;
   const eligibleQuery = useEligibleSalesNetworkParents(effectiveDesignation);
-  const reservedAaNumbers = useMemo(
-    () => collectReservedAaNumbers(store.accreditations, store.members),
-    [store.accreditations, store.members],
-  );
 
   const employeeOptions = useMemo(() => {
     const staff = staffQuery.data ?? [];
@@ -205,10 +196,6 @@ export function AccreditedSellerDialog({
 
   const expiryPreview = calculateApprovedExpiry(approvedStart);
   const leapDay = isLeapDayStart(approvedStart);
-  const manualError = aaMethod === "manual"
-    ? validateManualAaNumber(`${prefix}${manualAaSuffix.trim().toUpperCase()}`, prefix, approvedStart, reservedAaNumbers)
-    : null;
-  const manualFull = aaMethod === "manual" ? `${prefix}${manualAaSuffix.trim().toUpperCase()}` : "";
   const sponsorMember = (eligibleQuery.data ?? []).find((member) => member.id === parentId);
   const sponsorName = sponsorMember;
   const inheritedTeam = sponsorMember
@@ -290,8 +277,7 @@ export function AccreditedSellerDialog({
     jobPosition: jobPosition.trim() || null,
     approvedStart,
     accreditationStatus: accreditationStatus ?? "pending",
-    aaMethod,
-    manualAaSuffix: aaMethod === "manual" ? manualAaSuffix.trim() : "",
+    aaMethod: "automatic",
   });
 
   const orUndefined = (message: string | null) => message ?? undefined;
@@ -336,15 +322,14 @@ export function AccreditedSellerDialog({
         ? "Pending or Accredited only."
         : undefined,
     approvedStart: orUndefined(validateDateString(approvedStart, "Start date")),
-    manualAa: aaMethod === "manual" ? (manualError ?? undefined) : undefined,
   };
   const stepOf: Record<string, number> = {
     existingAccount: 0, photo: 0, firstName: 0, middleName: 0, lastName: 0, suffix: 0, mobile: 0, dateOfBirth: 0, email: 0, tempPassword: 0, confirmPassword: 0,
     street: 1, province: 1, city: 1, barangay: 1, postalCode: 1, telephone: 1, facebook: 1, tin: 1, businessEmployer: 1, businessAddress: 1, jobPosition: 1,
     position: 2, sponsor: 2, teamName: 2, cardApplicationDate: 2, programCategory: 2, vipCardLevel: 2, gender: 2, civilStatus: 2, governmentIdType: 2, governmentIdNumber: 2,
-    accreditationStatus: 3, approvedStart: 3, manualAa: 3,
+    accreditationStatus: 3, approvedStart: 3,
   };
-  const liveKeys: Record<string, boolean> = { email: Boolean(email), postalCode: Boolean(postalCode), tin: Boolean(tin), mobile: Boolean(mobileNumber.trim()), manualAa: aaMethod === "manual" && Boolean(manualAaSuffix.trim()) };
+  const liveKeys: Record<string, boolean> = { email: Boolean(email), postalCode: Boolean(postalCode), tin: Boolean(tin), mobile: Boolean(mobileNumber.trim()) };
   const visible = (key: string): string | undefined => (shownSteps.includes(stepOf[key]) || liveKeys[key] ? rules[key] : undefined);
   const stepHasErrors = (stepIndex: number) => Object.entries(rules).some(([key, message]) => message && stepOf[key] === stepIndex);
 
@@ -361,13 +346,6 @@ export function AccreditedSellerDialog({
 
   const handleBack = () => {
     setStep((value) => Math.max(value - 1, 0));
-  };
-
-  const switchAaMethod = (method: AaIssuanceMethod) => {
-    setAaMethod(method);
-    if (method === "manual" && !manualAaSuffix.trim()) {
-      setManualAaSuffix(toAaYearMonth(approvedStart) ?? "");
-    }
   };
 
   const emailMismatch = (payload: CreateAccreditedSellerInput): boolean => {
@@ -422,8 +400,7 @@ export function AccreditedSellerDialog({
   const canComplete =
     isSuperAdmin &&
     !leapDay &&
-    (accreditationStatus === "pending" || accreditationStatus === "accredited") &&
-    (aaMethod === "automatic" || !manualError);
+    (accreditationStatus === "pending" || accreditationStatus === "accredited");
 
   const STEPS = ["Personal", "Address", "Assignment", "Accreditation"];
   const fullName = fullNameOf(firstName, middleName, noMiddleName, lastName, suffix);
@@ -635,34 +612,7 @@ export function AccreditedSellerDialog({
                     error={visible("accreditationStatus")}
                   />
                 </FormGrid>
-                <fieldset className="tw:m-0 tw:flex tw:min-w-0 tw:flex-col tw:gap-1.5 tw:border-0 tw:p-0">
-                  <legend className="tw:mb-1.5 tw:p-0 tw:text-sm tw:font-medium">AA Method</legend>
-                  <RadioGroup value={aaMethod} onValueChange={(value) => switchAaMethod(value as AaIssuanceMethod)} className="tw:flex tw:gap-4" aria-label="AA Method">
-                    <Label className={radioClass}>
-                      <RadioGroupItem value="automatic" />
-                      Automatic
-                    </Label>
-                    <Label className={radioClass}>
-                      <RadioGroupItem value="manual" />
-                      Manual
-                    </Label>
-                  </RadioGroup>
-                  {aaMethod === "automatic" ? <p className="tw:text-xs tw:text-muted-foreground">Auto-issues next number on completion.</p> : null}
-                </fieldset>
-                {aaMethod === "manual" ? (
-                  <TextField
-                    id="aa-number"
-                    label="AA Number"
-                    required
-                    value={manualAaSuffix}
-                    onChange={(value) => setManualAaSuffix(value.toUpperCase())}
-                    addonBefore={prefix}
-                    maxLength={12}
-                    autoComplete="off"
-                    placeholder={toAaYearMonth(approvedStart) ?? "YYMM####"}
-                    error={visible("manualAa")}
-                  />
-                ) : null}
+                <p className="tw:text-xs tw:text-muted-foreground">The monthly AA number is assigned automatically.</p>
                 <FormGrid>
                   <StandardDateField id="approved-start" label="Start Date" required value={approvedStart} onChange={setApprovedStart} error={visible("approvedStart")} />
                   <TextField id="approved-expiry" label="Expiry Date" value={expiryPreview ?? "—"} onChange={() => undefined} disabled />
@@ -682,8 +632,6 @@ export function AccreditedSellerDialog({
                   <ReviewLine term="Team" value={effectiveDesignation === "SVD" ? teamName.trim() || "—" : (inheritedTeam ?? "—")} />
                   <ReviewLine term="Program Category" value={programCategory ? programCategoryLabel(programCategory, programOptions) : "—"} />
                   <ReviewLine term="Accreditation Status" value={accreditationStatus ? (ACCREDITATION_STATUS_OPTIONS.find((option) => option.value === accreditationStatus)?.label ?? "—") : "—"} />
-                  <ReviewLine term="Issuance Method" value={aaMethod === "automatic" ? "Automatic" : "Manual"} />
-                  {aaMethod === "manual" ? <ReviewLine term="AA Number" value={manualFull} /> : null}
                   <ReviewLine term="Approved Start" value={approvedStart || "—"} />
                   <ReviewLine term="Approved Expiry" value={expiryPreview ?? "—"} />
                 </dl>
@@ -723,8 +671,8 @@ export function AccreditedSellerDialog({
           title={accreditationStatus === "accredited" ? `Create and accredit ${mode} seller?` : `Create ${mode} seller as Pending?`}
           description={
             accreditationStatus === "accredited"
-              ? `Confirm ${aaMethod} AA issuance for ${fullName}.`
-              : `Confirm ${aaMethod} AA issuance for ${fullName}. Accreditation stays Pending.`
+              ? `Confirm automatic AA issuance for ${fullName}.`
+              : `Confirm automatic AA issuance for ${fullName}. Accreditation stays Pending.`
           }
           confirmText={accreditationStatus === "accredited" ? "Create & Accredit" : "Create Seller"}
           pending={submitting}

@@ -57,8 +57,6 @@ export function AuditLogsPage() {
       { id: "action", header: "Action", cell: ({ row }) => <span className="tw:font-medium">{humanize(row.original.action)}</span> },
       { id: "entity", header: "Record", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.entityLabel },
       { id: "actor", header: "Actor", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.actorName },
-      { id: "change", header: "Change", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => (row.original.previousValue || row.original.newValue ? `${row.original.previousValue ? humanize(row.original.previousValue) : "—"} → ${row.original.newValue ? humanize(row.original.newValue) : "—"}` : "—") },
-      { id: "reason", header: "Reason", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => row.original.reason ?? (row.original.reasonRecorded ? "Recorded (restricted)" : "—") },
     ],
     [],
   );
@@ -70,11 +68,11 @@ export function AuditLogsPage() {
   };
 
   return (
-    <AdminPage anyOf={["audit-logs"]} title="Audit Logs" description="Append-only history of sensitive actions. Entries cannot be edited or deleted." crumbs={[{ label: "Audit Logs" }]}>
+    <AdminPage anyOf={["audit-logs"]} title="Audit Logs" crumbs={[{ label: "Audit Logs" }]}>
       <AdminStatGrid>
         <AdminStatCard label="Matching events" value={total} icon={ScrollText} tone="info" loading={result.isLoading} error={result.error} />
       </AdminStatGrid>
-      <FilterBar search={action} onSearch={reset(setAction)} searchLabel="Filter by action code" filters={[{ label: "Module filter", value: moduleFilter, onChange: reset(setModuleFilter), options: MODULE_OPTIONS }, { label: "Record type filter", value: entityFilter, onChange: reset(setEntityFilter), options: ENTITY_OPTIONS }]}>
+      <FilterBar search={action} onSearch={reset(setAction)} searchLabel="Search by action" filters={[{ label: "Module filter", value: moduleFilter, onChange: reset(setModuleFilter), options: MODULE_OPTIONS }, { label: "Record type filter", value: entityFilter, onChange: reset(setEntityFilter), options: ENTITY_OPTIONS }]}>
         <Input aria-label="Filter by actor" placeholder="Actor" value={actor} onChange={(event) => reset(setActor)(event.target.value)} className="tw:h-11 tw:md:min-w-0 tw:md:flex-1" />
         <StandardDateField label="From" value={from} onChange={reset(setFrom)} className="tw:md:min-w-0 tw:md:flex-1" />
         <StandardDateField label="To" value={to} onChange={reset(setTo)} className="tw:md:min-w-0 tw:md:flex-1" />

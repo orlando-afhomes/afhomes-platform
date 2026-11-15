@@ -10,7 +10,7 @@ import type { ContractView } from "@/data/contracts/contract-repository";
 import { collectionStateFor, type CollectionState } from "@/modules/finance/rules";
 import { manilaToday } from "@/shared/lib/dates";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
-import { AdminStatCard, AdminStatGrid, AdminPage } from "@/shared/components/admin";
+import { AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { Money } from "@/shared/components/modern/money";
@@ -18,6 +18,8 @@ import { QueryState } from "@/shared/components/modern/query-state";
 import { formatDate } from "@/shared/lib/format-date";
 import { useContractHref } from "../components/use-contract-href";
 import { humanize } from "@/shared/lib/humanize";
+import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
+import { Button } from "@/shared/ui/button";
 
 type CollectionRow = CollectionState & { contract: ContractView };
 
@@ -28,7 +30,8 @@ const COLLECTION_FILTERS = [
   { value: "settled", label: "Fully Settled" },
 ];
 
-export function FinanceCollectionsPage() {
+/** Collections tab of the Finance area ([finance]). */
+export function FinanceCollectionsPanel() {
   const router = useRouter();
   const payments = usePayments();
   const contracts = useContracts();
@@ -36,6 +39,7 @@ export function FinanceCollectionsPage() {
   const today = manilaToday();
   const [search, setSearch] = useState("");
   const [collectionState, setCollectionState] = useState("all");
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const allPayments = useMemo(() => payments.data ?? [], [payments.data]);
   const allCollections = useMemo<CollectionRow[]>(
@@ -51,26 +55,54 @@ export function FinanceCollectionsPage() {
   const columns = useMemo<ColumnDef<CollectionRow, unknown>[]>(
     () => [
       { id: "customer", header: "Customer", cell: ({ row }) => <Link href={contractHref(row.original.contract.id)} className="tw:font-semibold tw:underline-offset-4 tw:hover:underline">{row.original.contract.customerName}</Link> },
-      { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => `${row.original.contract.productCode} · ${row.original.contract.schemeLabel}` },
-      { id: "verified", header: "Verified", cell: ({ row }) => <Money value={row.original.verified} /> },
       { id: "balance", header: "Balance", cell: ({ row }) => <Money value={row.original.balance} /> },
-      { id: "percent", header: "Collected", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => `${row.original.percent}%` },
-      { id: "overdue", header: "Overdue", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => (row.original.overdue > 0 ? <span><Money value={row.original.overdue} /> · {row.original.daysPastDue} {row.original.daysPastDue === 1 ? "day" : "days"}</span> : "—") },
-      { id: "next", header: "Next due", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => formatDate(row.original.nextDue) },
-      { id: "state", header: "State", cell: ({ row }) => <BizBadge status={row.original.state === "settled" ? "paid" : row.original.state === "overdue" ? "overdue" : "partial"} label={row.original.state === "settled" ? "Fully Settled" : humanize(row.original.state)} /> },
+      { id: "overdue", header: "Overdue", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => (row.original.overdue > 0 ? <Money value={row.original.overdue} /> : "—") },
+      { id: "state", header: "Status", cell: ({ row }) => <CollectionBadge state={row.original.state} /> },
+      { id: "next", header: "Next due", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => formatDate(row.original.nextDue) },
     ],
     [contractHref],
   );
+  const detail = detailId ? allCollections.find((row) => row.contract.id === detailId) ?? null : null;
+  const openContract = (row: CollectionRow) => router.push(contractHref(row.contract.id));
 
   return (
-    <AdminPage anyOf={["finance"]} title="Collections" description="Monitor verified balances and overdue installments of finalized contracts." crumbs={[{ label: "Finance" }, { label: "Collections" }]}>
+    <>
       <AdminStatGrid>
-        <AdminStatCard label="Receivables" value={<Money value={receivables} />} icon={Wallet} tone="accent" description="Open balance" />
+        <AdminStatCard label="Receivables" value={<Money value={receivables} />} icon={Wallet} tone="accent" />
       </AdminStatGrid>
-      <FilterBar search={search} onSearch={setSearch} searchLabel="Search customers" filters={[{ label: "Collection state filter", value: collectionState, onChange: setCollectionState, options: COLLECTION_FILTERS }]} />
+      <FilterBar search={search} onSearch={setSearch} searchLabel="Search customers" filters={[{ label: "Status filter", value: collectionState, onChange: setCollectionState, options: COLLECTION_FILTERS }]} />
       <QueryState isLoading={payments.isLoading || contracts.isLoading} error={payments.error ?? contracts.error}>
-        <DataTable data={collections} columns={columns} getRowId={(row) => row.contract.id} emptyText="No contracts match." caption="Collections" onRowOpen={(row) => router.push(contractHref(row.contract.id))} getRowLabel={(row) => `Open contract for ${row.contract.customerName}`} rowActions={(row) => <RowActionsMenu itemName={`collection for ${row.contract.customerName}`} onView={() => router.push(contractHref(row.contract.id))} />} />
+        <DataTable data={collections} columns={columns} getRowId={(row) => row.contract.id} emptyText="No contracts match." caption="Collections" onRowOpen={(row) => setDetailId(row.contract.id)} getRowLabel={(row) => `View collection for ${row.contract.customerName}`} rowActions={(row) => <RowActionsMenu itemName={`collection for ${row.contract.customerName}`} onView={() => setDetailId(row.contract.id)} extraItems={[{ key: "contract", label: "Open contract", onClick: () => openContract(row) }]} />} />
       </QueryState>
-    </AdminPage>
+      <RecordDetailsSheet
+        open={detail !== null}
+        onClose={() => setDetailId(null)}
+        title={detail?.contract.customerName ?? "Collection"}
+        badge={detail ? <CollectionBadge state={detail.state} /> : undefined}
+        sections={
+          detail
+            ? [
+                { title: "Plan", rows: [{ label: "VIP Number", value: detail.contract.vipNumber }, { label: "Product", value: detail.contract.productCode }, { label: "Payment scheme", value: detail.contract.schemeLabel }] },
+                {
+                  title: "Collection",
+                  rows: [
+                    { label: "Verified", value: <Money value={detail.verified} /> },
+                    { label: "Balance", value: <Money value={detail.balance} /> },
+                    { label: "Collected", value: `${detail.percent}%` },
+                    { label: "Overdue", value: detail.overdue > 0 ? <Money value={detail.overdue} /> : null },
+                    { label: "Days past due", value: detail.daysPastDue > 0 ? `${detail.daysPastDue} ${detail.daysPastDue === 1 ? "day" : "days"}` : null },
+                    { label: "Next due", value: formatDate(detail.nextDue) },
+                  ],
+                },
+              ]
+            : []
+        }
+        footer={detail ? <Button type="button" variant="outline" onClick={() => openContract(detail)}>Open contract</Button> : undefined}
+      />
+    </>
   );
+}
+
+function CollectionBadge({ state }: { state: CollectionState["state"] }) {
+  return <BizBadge status={state === "settled" ? "paid" : state === "overdue" ? "overdue" : "partial"} label={state === "settled" ? "Fully Settled" : humanize(state)} />;
 }

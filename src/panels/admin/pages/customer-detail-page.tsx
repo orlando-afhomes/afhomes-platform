@@ -4,11 +4,11 @@ import { customerRecordName } from "@/modules/customers/rules";
 import { humanize } from "@/shared/lib/humanize";
 import { recordLabel } from "@/shared/lib/record-label";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, Pencil, RotateCcw, X } from "lucide-react";
-import { useApproveCustomer, useContracts, useDiscardCustomerDraft, useMemberships, useOperation, useRejectCustomer, useSales, useSendBackCustomer } from "@/data/business-queries";
+import { useApproveCustomer, useContracts, useDiscardCustomerDraft, useMemberships, useOperation, usePaymentSchemes, useRejectCustomer, useSales, useSendBackCustomer } from "@/data/business-queries";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import { canReviewRegistration } from "@/modules/customers/review";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
@@ -17,6 +17,7 @@ import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { toast } from "sonner";
 import { useCustomers, useMembers } from "@/data/queries";
 import { useAuditEvents } from "@/data/queries";
+import { SelectField } from "@/shared/forms/modern";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { buttonVariants, Button } from "@/shared/ui/button";
 import { DetailSkeleton } from "@/shared/components/modern/skeletons";
@@ -44,6 +45,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
   const contracts = useContracts();
   const sales = useSales();
   const memberships = useMemberships();
+  const schemes = usePaymentSchemes();
   const canManage = useOperation("customers.manage");
   const canDraft = useOperation("customers.draft");
   const canApprove = useOperation("customers.approve");
@@ -59,14 +61,16 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
   const [tab, setTab] = useState<CustomerDetailTab>("overview");
 
   const customer = customers.data?.find((item) => item.id === customerId);
-  const contract = contracts.data?.find((item) => item.customerId === customerId && item.status !== "cancelled");
-  const sale = sales.data?.find((item) => item.customerId === customerId);
-  const membership = memberships.data?.find((item) => item.customerId === customerId);
+  const [selectedContractId, setSelectedContractId] = useState("");
+  const purchases = (contracts.data ?? []).filter((item) => item.customerId === customerId);
+  const contract = purchases.find((item) => item.id === selectedContractId) ?? purchases.find((item) => item.status !== "cancelled") ?? purchases[0];
+  const sale = sales.data?.find((item) => item.contractId === contract?.id);
+  const membership = memberships.data?.find((item) => item.contractId === contract?.id);
   const owner = members.data?.find((item) => item.id === customer?.ownerMemberId);
   const recommender = members.data?.find((item) => item.id === (customer?.referrerMemberId || customer?.recommenderMemberId));
   const audit = useAuditEvents({ relatedRecordId: customerId, pageSize: 20 });
 
-  const activity = useMemo(() => {
+  const activity = (() => {
     const items: { id: string; label: string; timestamp: string }[] = [];
     if (customer?.statusHistory?.length) {
       customer.statusHistory.forEach((entry, index) => items.push({ id: `${customer.id}-${index}-${entry.status}`, label: `Registration ${humanize(entry.status).toLowerCase()}`, timestamp: entry.at }));
@@ -85,7 +89,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
     return items
       .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
       .slice(0, 3);
-  }, [customer, contract, sale, membership]);
+  })();
 
   if (customers.isLoading) {
     return (
@@ -115,7 +119,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
       };
   const ownerName = owner?.displayName ?? "Company";
   const recommenderName = recommender?.displayName ?? "—";
-  const schemeLabel = contract?.schemeLabel ?? (customer.paymentSchemeId ? humanize(customer.paymentSchemeId) : null);
+  const schemeLabel = contract?.schemeLabel ?? schemes.data?.find((item) => item.id === customer.paymentSchemeId)?.label ?? null;
   const auditEvents = (audit.data?.items ?? []).map((event) => ({
     id: event.id,
     label: humanize(event.action),
@@ -123,7 +127,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
   }));
   const kebabMenu = buildCustomerMenuProps(
     customer,
-    { canManage, canDraft, canApprove, canPrepare, ownRecord, hasContract: Boolean(contract) },
+    { canManage, canDraft, canApprove, canPrepare, ownRecord },
     {
       onEdit: () => router.push(`/admin/customers/${customer.id}/edit`),
       onDiscard: () => discard.mutateAsync(customer.id),
@@ -138,7 +142,6 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
     <AdminPage
       anyOf={["customers"]}
       title={customerRecordName(customer)}
-      description="Customer record and related business information."
       crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: customerRecordName(customer) }]}
       actions={
         <>
@@ -160,7 +163,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
               </Button>
             </>
           ) : null}
-          {canPrepare && ownRecord && (customer.status === "submitted" || customer.status === "approved") && !contract ? (
+          {canPrepare && ownRecord && (customer.status === "submitted" || customer.status === "approved") ? (
             <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setPreparing(true)}>
               Prepare contract
             </Button>
@@ -182,6 +185,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
         classification={customer.contractClassification ?? null}
         schemeLabel={schemeLabel}
       />
+      {purchases.length > 1 ? <SelectField label="VIP purchase" value={contract?.id} options={purchases.map((item) => ({ value: item.id, label: `${item.vipNumber ?? item.id} · ${item.productCode} · ${humanize(item.status)}` }))} onChange={(value) => setSelectedContractId(value ?? "")} /> : null}
       <CustomerDetailTabs value={tab} onChange={setTab} />
       {tab === "overview" ? (
         <div className="tw:grid tw:gap-6 tw:lg:grid-cols-5">
@@ -214,7 +218,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
               { label: "VIP plan", value: contract.productCode },
               { label: "Scheme", value: contract.schemeLabel },
               { label: "Status", value: humanize(contract.status) },
-              { label: "Classification", value: customer.contractClassification === "N" ? "Non-Standard (N)" : customer.contractClassification === "S" ? "Standard (S)" : "—" },
+              { label: "Classification", value: contract.classification === "N" ? "Non-Standard (N)" : "Standard (S)" },
             ]}
             contractHref={contractHref(contract.id)}
           />
@@ -241,7 +245,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
         />
       ) : null}
       {tab === "audit" ? <AuditTabPanel events={auditEvents} authorized={canReadAudit && !audit.error} /> : null}
-      {canPrepare && ownRecord && (customer.status === "submitted" || customer.status === "approved") && !contract ? <PrepareContractDialog customer={customer} open={preparing} onClose={() => setPreparing(false)} /> : null}
+      {preparing && canPrepare && ownRecord && (customer.status === "submitted" || customer.status === "approved") ? <PrepareContractDialog customer={customer} repeatPurchase={purchases.length > 0} open onClose={() => setPreparing(false)} /> : null}
       <ConfirmDialog
         open={review === "approve"}
         title="Approve this registration?"

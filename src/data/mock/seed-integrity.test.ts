@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { buildCardId } from "@/modules/membership/rules";
 import { buildCollectionLedger, meetsRequiredInitial, outstandingBalanceCentavos, totalVerifiedCentavos } from "@/modules/finance/rules";
 import { createMockStore, createSeedStore } from "./seed";
 
@@ -65,10 +64,11 @@ describe("centralized seed integrity", () => {
     }
   });
 
-  it("seeds only a Card ID the builder would produce", () => {
+  it("preserves the historical issued Card ID and RA number", () => {
     const membership = store.memberships.find((item) => item.cardId)!;
     const contract = store.contracts.find((item) => item.id === membership.contractId)!;
-    expect(buildCardId({ activationDate: membership.activationDate!, raNumber: contract.raNumber, tierCode: contract.productCode, paymentCode: contract.paymentCode, classification: contract.classification })).toEqual({ cardId: membership.cardId });
+    expect(membership.cardId).toBe("26110200001B1T04S");
+    expect(contract.raNumber).toBe(membership.raNumber);
   });
 
   it("starts counters above every seeded id and seeds display commissions", () => {

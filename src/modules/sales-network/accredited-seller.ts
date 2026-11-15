@@ -1,4 +1,5 @@
 import { isValidTierCode, type VipTierCode } from "@/modules/vip/types";
+import { humanize } from "@/shared/lib/humanize";
 import type { Designation } from "@/modules/organization/types";
 import {
   addOneYear,
@@ -76,9 +77,12 @@ export const GOV_ID_OPTIONS = [
   "Other",
 ].map((value) => ({ value, label: value }));
 
-/** Label of a stored category value; pass the managed list so admin-added categories resolve too. */
+/**
+ * Label of a stored category value; pass the managed list so admin-added
+ * categories resolve too. An unknown value shows humanized, never as a raw slug.
+ */
 export function programCategoryLabel(value: string, options: ReadonlyArray<{ value: string; label: string }> = PROGRAM_CATEGORY_OPTIONS): string {
-  return options.find((option) => option.value === value)?.label ?? PROGRAM_CATEGORY_OPTIONS.find((option) => option.value === value)?.label ?? value;
+  return options.find((option) => option.value === value)?.label ?? PROGRAM_CATEGORY_OPTIONS.find((option) => option.value === value)?.label ?? humanize(value);
 }
 
 export type CreateAccreditedSellerInput = {

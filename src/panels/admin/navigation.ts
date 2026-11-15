@@ -2,41 +2,28 @@ import type { ComponentType } from "react";
 import type { AdminModuleId, AdminOperation } from "@/modules/identity/permissions";
 import { getGrantedModuleIds, getGrantedOperations } from "@/modules/identity/permissions";
 
-/** Module ids plus one unique key per navigation page that shares a module grant. */
+/** Sidebar keys: one per area page, plus the hidden /admin/accounts compatibility entry. */
 export type AdminNavKey =
-  | AdminModuleId
-  | "customer-import"
-  | "settings-lists"
-  | "sales-contracts"
-  | "igp-sales"
-  | "contract-review"
-  | "sales-performance"
-  | "customer-growth"
-  | "reports-group"
-  | "vip-products-group"
-  | "payment-schemes"
-  | "scheme-guide"
-  | "tier-codes"
-  | "collections"
-  | "payment-history"
-  | "financial-holds"
-  | "cancellation-requests"
-  | "collections-report"
-  | "commission-assignment"
-  | "commission-payouts"
-  | "allowance-review"
-  | "commission-report"
-  | "membership-activation"
-  | "membership-report"
-  | "stay-points-report"
-  | "promos"
-  | "promo-points"
-  | "promo-points-report"
-  | "redemption-group"
-  | "redemption-table"
-  | "reconciliation"
-  | "period-close"
-  | "historical-import";
+  | "dashboard"
+  | "customers"
+  | "sales"
+  | "finance"
+  | "commissions"
+  | "membership"
+  | "stay-points"
+  | "redemption"
+  | "vip-products"
+  | "sales-network"
+  | "organization"
+  | "reports"
+  | "audit-logs"
+  | "accounts";
+
+/** One access rule: any of `grants` must be held and, when set, `operation` too. */
+export type NavAccessRule = {
+  grants: readonly AdminModuleId[];
+  operation?: AdminOperation;
+};
 
 export type AdminNavItem = {
   id: AdminNavKey;
@@ -45,10 +32,14 @@ export type AdminNavItem = {
   available: boolean;
   icon?: ComponentType<{ className?: string }>;
   children?: AdminNavItem[];
-  /** Any-of module grants; defaults to [id]. */
+  /** Any-of module grants; defaults to [id]. Ignored for access when `access` is set. */
   grants?: AdminModuleId[];
-  /** Additional operation grant required to see the item. */
+  /** Additional operation grant required to see the item (with `grants`). */
   operation?: AdminOperation;
+  /** Area items: shown while ANY rule passes (one rule per tab). */
+  access?: readonly NavAccessRule[];
+  /** Former routes outside `href` that still belong to this item (sidebar highlight). */
+  matchPaths?: readonly string[];
   /**
    * Presentation-only: hidden from the sidebar and mobile Drawer, while the
    * route, permission grants, and breadcrumbs stay intact.
@@ -56,126 +47,170 @@ export type AdminNavItem = {
   hideFromNav?: boolean;
 };
 
+/** A tab of an area page and the access rule of the former page it replaces. */
+export type AdminAreaTabRule = {
+  /** The `?tab=` value. */
+  value: string;
+  label: string;
+  /** The former route (now a redirect to `area?tab=value`, or the area itself). */
+  formerHref: string;
+  rule: NavAccessRule;
+};
+
+/**
+ * Tab access per area (owner ruling 2026-11-15: one page per area, with tabs).
+ * Each rule is copied unchanged from the sidebar item the tab replaces, so hub
+ * pages must gate every tab with its rule (use `useAdminAreaTabAccess` from
+ * `use-role-aware-navigation.ts`) to keep today's visibility. The page body may
+ * still apply its own `allowed` checks (for example Commission Payouts also
+ * opens for `commission.payout` holders); keep those inside the tab panel.
+ *
+ * Former sidebar rules (grants default to the item id):
+ * - Customers: customers [customers]; Customer Import [customers] + customers.import (was hidden).
+ * - Sales: Sales Records [sales]; Contracts [sales, vip-products]; Contract Review [vip-products];
+ *   IGP Sales [sales, finance].
+ * - Finance: Payment Verification [finance, sales] + finance.verify; Collections, Payment History,
+ *   Financial Holds, Cancellation Requests [finance]; Period Close [reports] + finance.verify;
+ *   Reconciliation [reports] + reconciliation.manage; Historical Import [reports] + history-import.manage.
+ * - Commissions: Commissions [commissions] (also hosts the clawback ledger, now Recovery);
+ *   Commission Payouts [commissions, sales] + commission.payout.prepare; Commission Rates
+ *   [commissions] + commission.rates.manage; Allowance Review [commissions] + commission.approve.
+ * - Membership: VIP Memberships [membership]; Activation Queue [membership] + membership.activate.
+ * - Stay Points: Stay Points, Promos, Promo Points [stay-points].
+ * - Redemption: Bookings [redemption] (also cardholder points); Points Table, Holidays and Venues
+ *   [redemption] + redemption.configure (the former Points Table page required the operation, so
+ *   the three tabs stay hidden from Finance and other read-only holders).
+ * - VIP Products: Product Catalog, Payment Schemes, Tier Codes [vip-products]; Scheme Guide
+ *   [vip-products, sales].
+ * - Sales Network: the group itself [sales-network]; Members [sales-network-members]; Genealogy
+ *   [sales-network-genealogy]; OST Applications [accreditation-registrations]. Every role holding
+ *   "sales-network" also holds the Members grant, so the union is unchanged.
+ * - Organization: Departments [departments]; Roles [roles]; Staff [staff]; Lists [departments] +
+ *   settings.lists.manage.
+ * - Reports: every report [reports]; Collections Report also + finance.reports.view. Period
+ *   Close, Reconciliation and Historical Import moved to Finance with their rules.
+ */
+export const ADMIN_AREA_TABS = {
+  customers: [
+    { value: "customers", label: "Customers", formerHref: "/admin/customers", rule: { grants: ["customers"] } },
+    { value: "import-export", label: "Import and export", formerHref: "/admin/customers/import-export", rule: { grants: ["customers"], operation: "customers.import" } },
+  ],
+  sales: [
+    { value: "sales", label: "Sales", formerHref: "/admin/sales", rule: { grants: ["sales"] } },
+    { value: "contracts", label: "Contracts", formerHref: "/admin/sales/contracts", rule: { grants: ["sales", "vip-products"] } },
+    { value: "contract-review", label: "Contract review", formerHref: "/admin/sales/contract-review", rule: { grants: ["vip-products"] } },
+    { value: "igp", label: "IGP", formerHref: "/admin/sales/igp", rule: { grants: ["sales", "finance"] } },
+  ],
+  finance: [
+    { value: "verification", label: "Verification", formerHref: "/admin/finance", rule: { grants: ["finance", "sales"], operation: "finance.verify" } },
+    { value: "collections", label: "Collections", formerHref: "/admin/finance/collections", rule: { grants: ["finance"] } },
+    { value: "payments", label: "Payment history", formerHref: "/admin/finance/payments", rule: { grants: ["finance"] } },
+    { value: "holds", label: "Holds", formerHref: "/admin/finance/holds", rule: { grants: ["finance"] } },
+    { value: "cancellations", label: "Cancellations", formerHref: "/admin/finance/cancellations", rule: { grants: ["finance"] } },
+    { value: "month-end-close", label: "Month-end close", formerHref: "/admin/reports/period-close", rule: { grants: ["reports"], operation: "finance.verify" } },
+    { value: "reconciliation", label: "Reconciliation", formerHref: "/admin/reports/reconciliation", rule: { grants: ["reports"], operation: "reconciliation.manage" } },
+    { value: "historical-import", label: "Historical import", formerHref: "/admin/reports/historical-import", rule: { grants: ["reports"], operation: "history-import.manage" } },
+  ],
+  commissions: [
+    { value: "commissions", label: "Commissions", formerHref: "/admin/commissions", rule: { grants: ["commissions"] } },
+    { value: "payouts", label: "Payouts", formerHref: "/admin/commissions/payouts", rule: { grants: ["commissions", "sales"], operation: "commission.payout.prepare" } },
+    { value: "recovery", label: "Recovery", formerHref: "/admin/commissions", rule: { grants: ["commissions"] } },
+    { value: "rates", label: "Rates", formerHref: "/admin/commissions/assignment", rule: { grants: ["commissions"], operation: "commission.rates.manage" } },
+    { value: "allowances", label: "Allowances", formerHref: "/admin/commissions/allowances", rule: { grants: ["commissions"], operation: "commission.approve" } },
+  ],
+  membership: [
+    { value: "memberships", label: "Memberships", formerHref: "/admin/membership", rule: { grants: ["membership"] } },
+    { value: "activation", label: "Activation queue", formerHref: "/admin/membership/activation", rule: { grants: ["membership"], operation: "membership.activate" } },
+  ],
+  "stay-points": [
+    { value: "welcome-gift", label: "Welcome Gift", formerHref: "/admin/stay-points", rule: { grants: ["stay-points"] } },
+    { value: "resort-bills", label: "Resort bills", formerHref: "/admin/stay-points", rule: { grants: ["stay-points"] } },
+    { value: "waivers", label: "Waivers", formerHref: "/admin/stay-points", rule: { grants: ["stay-points"] } },
+    { value: "promos", label: "Promos", formerHref: "/admin/promos", rule: { grants: ["stay-points"] } },
+    { value: "promo-points", label: "Promo Points", formerHref: "/admin/promos/points", rule: { grants: ["stay-points"] } },
+  ],
+  redemption: [
+    { value: "bookings", label: "Bookings", formerHref: "/admin/redemption", rule: { grants: ["redemption"] } },
+    { value: "cardholder-points", label: "Cardholder points", formerHref: "/admin/redemption", rule: { grants: ["redemption"] } },
+    { value: "points-table", label: "Points table", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
+    { value: "holidays", label: "Holidays", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
+    { value: "venues", label: "Venues", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
+  ],
+  "vip-products": [
+    { value: "products", label: "Products", formerHref: "/admin/vip-products", rule: { grants: ["vip-products"] } },
+    { value: "schemes", label: "Payment schemes", formerHref: "/admin/vip-products/schemes", rule: { grants: ["vip-products"] } },
+    { value: "scheme-guide", label: "Scheme guide", formerHref: "/admin/vip-products/scheme-guide", rule: { grants: ["vip-products", "sales"] } },
+    { value: "tier-codes", label: "Tier codes", formerHref: "/admin/vip-products/tier-codes", rule: { grants: ["vip-products"] } },
+  ],
+  "sales-network": [
+    { value: "members", label: "Members", formerHref: "/admin/sales-network/members", rule: { grants: ["sales-network-members"] } },
+    { value: "genealogy", label: "Genealogy", formerHref: "/admin/sales-network/genealogy", rule: { grants: ["sales-network-genealogy"] } },
+    { value: "registrations", label: "Registrations", formerHref: "/admin/sales-network/registrations", rule: { grants: ["accreditation-registrations"] } },
+  ],
+  organization: [
+    { value: "staff", label: "Staff", formerHref: "/admin/organization/staff", rule: { grants: ["staff"] } },
+    { value: "departments", label: "Departments", formerHref: "/admin/organization/departments", rule: { grants: ["departments"] } },
+    { value: "roles", label: "Roles", formerHref: "/admin/organization/roles", rule: { grants: ["roles"] } },
+    { value: "lists", label: "Lists", formerHref: "/admin/settings/lists", rule: { grants: ["departments"], operation: "settings.lists.manage" } },
+  ],
+  reports: [
+    { value: "summary", label: "Summary", formerHref: "/admin/reports", rule: { grants: ["reports"] } },
+    { value: "sales", label: "Sales", formerHref: "/admin/reports/sales-performance", rule: { grants: ["reports"] } },
+    { value: "customers", label: "Customers", formerHref: "/admin/reports/customer-growth", rule: { grants: ["reports"] } },
+    { value: "collections", label: "Collections", formerHref: "/admin/reports/collections", rule: { grants: ["reports"], operation: "finance.reports.view" } },
+    { value: "commissions", label: "Commissions", formerHref: "/admin/reports/commissions", rule: { grants: ["reports"] } },
+    { value: "membership", label: "Membership", formerHref: "/admin/reports/membership", rule: { grants: ["reports"] } },
+    { value: "stay-points", label: "Stay Points", formerHref: "/admin/reports/stay-points", rule: { grants: ["reports"] } },
+    { value: "promo-points", label: "Promo Points", formerHref: "/admin/reports/promo-points", rule: { grants: ["reports"] } },
+  ],
+} as const satisfies Record<string, readonly AdminAreaTabRule[]>;
+
+/** Areas whose page is a tab hub. */
+export type AdminAreaKey = keyof typeof ADMIN_AREA_TABS;
+/** The `?tab=` values of one area. */
+export type AdminAreaTabValue<A extends AdminAreaKey> = (typeof ADMIN_AREA_TABS)[A][number]["value"];
+
+/** Area route: `/admin/<area>`. */
+export function adminAreaHref(area: AdminAreaKey): string {
+  return `/admin/${area}`;
+}
+
+function areaItem(id: AdminAreaKey, label: string): AdminNavItem {
+  const href = adminAreaHref(id);
+  const tabs: readonly AdminAreaTabRule[] = ADMIN_AREA_TABS[id];
+  const grants = [...new Set(tabs.flatMap((tab) => tab.rule.grants))];
+  const formerOutside = tabs.map((tab) => tab.formerHref).filter((path) => path !== href && !path.startsWith(`${href}/`));
+  return {
+    id,
+    label,
+    href,
+    available: true,
+    // Union of the module grants (used by fail-open consumers such as the notifications menu).
+    grants,
+    access: tabs.map((tab) => tab.rule),
+    matchPaths: formerOutside.length > 0 ? [...new Set(formerOutside)] : undefined,
+  };
+}
+
+// Flat sidebar (owner ruling 2026-11-15). Order follows the business process:
+// customers and sales, money, membership and points, setup, then reports and
+// the audit log last. Each area shows while any of its tabs is allowed.
 export const adminNavigation: AdminNavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/admin", available: true },
-  // Sidebar order follows the business process from top to bottom: Sales first,
-  // then Finance (verify, collect, commissions), then membership activation and
-  // points. Setup and administration follow: products, sales network,
-  // organization. Reports sit directly above the audit log, which is last.
-  // Children follow the same order inside each group. Groups are parent scopes
-  // like Organization: shown when a child is visible, never granted themselves
-  // (deny by default). One page per process; pages sharing a module grant have
-  // their own key and href.
-  {
-    id: "sales-group",
-    label: "Sales",
-    href: "/admin/sales-group",
-    available: true,
-    children: [
-      { id: "customers", label: "Customers", href: "/admin/customers", available: true },
-      // Entered from the Customers page; kept out of the sidebar and Drawer
-      // while the route, permission grant, and breadcrumbs stay intact.
-      { id: "customer-import", label: "Customer Import", href: "/admin/customers/import-export", available: true, grants: ["customers"], operation: "customers.import", hideFromNav: true },
-      { id: "sales-contracts", label: "Contracts", href: "/admin/sales/contracts", available: true, grants: ["sales", "vip-products"] },
-      { id: "contract-review", label: "Contract Review", href: "/admin/sales/contract-review", available: true, grants: ["vip-products"] },
-      { id: "sales", label: "Sales Records", href: "/admin/sales", available: true },
-      { id: "igp-sales", label: "IGP Sales", href: "/admin/sales/igp", available: true, grants: ["sales", "finance"] },
-    ],
-  },
-  {
-    id: "finance-group",
-    label: "Finance",
-    href: "/admin/finance-group",
-    available: true,
-    children: [
-      { id: "finance", label: "Payment Verification", href: "/admin/finance", available: true, grants: ["finance", "sales"], operation: "finance.verify" },
-      { id: "collections", label: "Collections", href: "/admin/finance/collections", available: true, grants: ["finance"] },
-      { id: "commission-assignment", label: "Commission Rates", href: "/admin/commissions/assignment", available: true, grants: ["commissions"], operation: "commission.rates.manage" },
-      { id: "commissions", label: "Commissions", href: "/admin/commissions", available: true },
-      { id: "commission-payouts", label: "Commission Payouts", href: "/admin/commissions/payouts", available: true, grants: ["commissions", "sales"], operation: "commission.payout.prepare" },
-      { id: "allowance-review", label: "Allowance Review", href: "/admin/commissions/allowances", available: true, grants: ["commissions"], operation: "commission.approve" },
-      { id: "payment-history", label: "Payment History", href: "/admin/finance/payments", available: true, grants: ["finance"] },
-      { id: "financial-holds", label: "Financial Holds", href: "/admin/finance/holds", available: true, grants: ["finance"] },
-      { id: "cancellation-requests", label: "Cancellation Requests", href: "/admin/finance/cancellations", available: true, grants: ["finance"] },
-    ],
-  },
-  {
-    id: "membership-group",
-    label: "Membership",
-    href: "/admin/membership-group",
-    available: true,
-    children: [
-      { id: "membership-activation", label: "Activation Queue", href: "/admin/membership/activation", available: true, grants: ["membership"], operation: "membership.activate" },
-      { id: "membership", label: "VIP Memberships", href: "/admin/membership", available: true },
-      { id: "stay-points", label: "Stay Points", href: "/admin/stay-points", available: true },
-      { id: "promos", label: "Promos", href: "/admin/promos", available: true, grants: ["stay-points"] },
-      { id: "promo-points", label: "Promo Points", href: "/admin/promos/points", available: true, grants: ["stay-points"] },
-    ],
-  },
-  {
-    id: "redemption-group",
-    label: "Redemption",
-    href: "/admin/redemption-group",
-    available: true,
-    children: [
-      { id: "redemption", label: "Bookings", href: "/admin/redemption", available: true },
-      { id: "redemption-table", label: "Points Table", href: "/admin/redemption/points-table", available: true, grants: ["redemption"], operation: "redemption.configure" },
-    ],
-  },
-  {
-    id: "vip-products-group",
-    label: "VIP Products",
-    href: "/admin/vip-products-group",
-    available: true,
-    children: [
-      { id: "vip-products", label: "Product Catalog", href: "/admin/vip-products", available: true },
-      { id: "payment-schemes", label: "Payment Schemes", href: "/admin/vip-products/schemes", available: true, grants: ["vip-products"] },
-      { id: "scheme-guide", label: "Scheme Guide", href: "/admin/vip-products/scheme-guide", available: true, grants: ["vip-products", "sales"] },
-      { id: "tier-codes", label: "Tier Codes", href: "/admin/vip-products/tier-codes", available: true, grants: ["vip-products"] },
-    ],
-  },
-  { id: "sales-network", label: "Sales Network", href: "/admin/sales-network", available: true, children: [
-    { id: "sales-network-members", label: "Members", href: "/admin/sales-network/members", available: true },
-    { id: "sales-network-genealogy", label: "Genealogy", href: "/admin/sales-network/genealogy", available: true },
-    { id: "accreditation-registrations", label: "OST Applications", href: "/admin/sales-network/registrations", available: true },
-  ] },
-  // Organization is a parent scope: visible when at least one child module
-  // is granted. "organization" itself is never granted (deny by default).
-  {
-    id: "organization",
-    label: "Organization",
-    href: "/admin/organization",
-    available: true,
-    children: [
-      { id: "departments", label: "Departments", href: "/admin/organization/departments", available: true },
-      { id: "roles", label: "Roles", href: "/admin/organization/roles", available: true },
-      // Staff & Access also hosts account administration; its account
-      // columns and actions are gated by the non-delegable "accounts" grant.
-      { id: "staff", label: "Staff", href: "/admin/organization/staff", available: true },
-      { id: "settings-lists", label: "Lists", href: "/admin/settings/lists", available: true, grants: ["departments"], operation: "settings.lists.manage" },
-    ],
-  },
+  areaItem("customers", "Customers"),
+  areaItem("sales", "Sales"),
+  areaItem("finance", "Finance"),
+  areaItem("commissions", "Commissions"),
+  areaItem("membership", "Membership"),
+  areaItem("stay-points", "Stay Points"),
+  areaItem("redemption", "Redemption"),
+  areaItem("vip-products", "VIP Products"),
+  areaItem("sales-network", "Sales Network"),
+  areaItem("organization", "Organization"),
   // Compatibility entry point only: /admin/accounts forwards authorized users to
   // the Account-only view of Staff & Access. Never listed in the sidebar or Drawer.
   { id: "accounts", label: "Accounts and Permissions", href: "/admin/accounts", available: true, hideFromNav: true },
-  {
-    id: "reports-group",
-    label: "Reports",
-    href: "/admin/reports-group",
-    available: true,
-    children: [
-      { id: "customer-growth", label: "Customer Growth", href: "/admin/reports/customer-growth", available: true, grants: ["reports"] },
-      { id: "sales-performance", label: "Sales Performance", href: "/admin/reports/sales-performance", available: true, grants: ["reports"] },
-      { id: "collections-report", label: "Collections Report", href: "/admin/reports/collections", available: true, grants: ["reports"], operation: "finance.reports.view" },
-      { id: "commission-report", label: "Commission Report", href: "/admin/reports/commissions", available: true, grants: ["reports"] },
-      { id: "membership-report", label: "Membership Report", href: "/admin/reports/membership", available: true, grants: ["reports"] },
-      { id: "stay-points-report", label: "Stay Points Report", href: "/admin/reports/stay-points", available: true, grants: ["reports"] },
-      { id: "promo-points-report", label: "Promo Points Report", href: "/admin/reports/promo-points", available: true, grants: ["reports"] },
-      { id: "reconciliation", label: "Reconciliation", href: "/admin/reports/reconciliation", available: true, grants: ["reports"], operation: "reconciliation.manage" },
-      { id: "historical-import", label: "Historical Import", href: "/admin/reports/historical-import", available: true, grants: ["reports"], operation: "history-import.manage" },
-      { id: "period-close", label: "Period Close", href: "/admin/reports/period-close", available: true, grants: ["reports"], operation: "finance.verify" },
-    ],
-  },
+  areaItem("reports", "Reports"),
   { id: "audit-logs", label: "Audit Logs", href: "/admin/audit-logs", available: true },
 ];
 
@@ -196,18 +231,22 @@ export function getAvailableAdminNavigation(items: AdminNavItem[] = adminNavigat
     .filter((item) => item.available || (item.children?.length ?? 0) > 0);
 }
 
+/** The item's own route plus its former routes, normalized. */
+export function navItemPaths(item: AdminNavItem): string[] {
+  return [item.href, ...(item.matchPaths ?? [])].map(normalizePath);
+}
+
 export function isAdminNavItemActive(item: AdminNavItem, pathname: string | null) {
   const current = normalizePath(pathname);
-  const href = normalizePath(item.href);
+  const paths = navItemPaths(item);
 
-  if (current === href) return true;
+  if (paths.includes(current)) return true;
 
   if (item.children?.some((child) => isAdminNavItemActive(child, current))) {
     return true;
   }
 
-  if (href === "/") return false;
-  return current.startsWith(`${href}/`);
+  return paths.some((href) => href !== "/" && current.startsWith(`${href}/`));
 }
 
 export type BreadcrumbItem = {
@@ -226,8 +265,8 @@ export function getAdminBreadcrumbs(pathname: string): BreadcrumbItem[] {
 
   const trail = findNavTrail(adminNavigation, current);
   if (trail.length > 0) {
-    // Ancestor entries (e.g. the Organization group) render as plain text;
-    // only Dashboard and the final destination link where a route exists.
+    // Ancestor entries render as plain text; only Dashboard and the final
+    // destination link where a route exists.
     for (const ancestor of trail.slice(0, -1)) {
       if (normalizePath(ancestor.href) === "/admin") continue;
       items.push({ label: ancestor.label });
@@ -259,11 +298,34 @@ export function getRoleAwareAdminBreadcrumbs(identity: import("@/modules/identit
   });
 }
 
+/** True when any of the rule's module grants is held and its operation (if any) is held too. */
+export function isNavRuleAllowed(
+  rule: NavAccessRule,
+  grantedModules: ReadonlySet<AdminModuleId>,
+  grantedOperations: ReadonlySet<AdminOperation>,
+): boolean {
+  return rule.grants.some((moduleId) => grantedModules.has(moduleId)) && (!rule.operation || grantedOperations.has(rule.operation));
+}
+
+/** `{ [tabValue]: allowed }` for one area, using the same rules as the sidebar. */
+export function getAdminAreaTabAccess<A extends AdminAreaKey>(
+  area: A,
+  grantedModules: ReadonlySet<AdminModuleId>,
+  grantedOperations: ReadonlySet<AdminOperation>,
+): Record<AdminAreaTabValue<A>, boolean> {
+  const access = {} as Record<string, boolean>;
+  for (const tab of ADMIN_AREA_TABS[area] as readonly AdminAreaTabRule[]) {
+    access[tab.value] = isNavRuleAllowed(tab.rule, grantedModules, grantedOperations);
+  }
+  return access as Record<AdminAreaTabValue<A>, boolean>;
+}
+
 /**
- * Single access filter for the sidebar and Drawer. An item is shown when any of
- * its module grants (default: its own id) is held and, if it names an operation,
- * that operation is held too. Parents with no grant of their own stay visible
- * while at least one child is.
+ * Single access filter for the sidebar and Drawer. An area item (with
+ * `access`) is shown while any of its tab rules passes. Other items are shown
+ * when any of their module grants (default: their own id) is held and, if they
+ * name an operation, that operation is held too. Parents with no grant of
+ * their own stay visible while at least one child is.
  */
 export function filterNavForAccess(
   items: AdminNavItem[],
@@ -273,8 +335,9 @@ export function filterNavForAccess(
   const result: AdminNavItem[] = [];
   for (const item of items) {
     const children = item.children ? filterNavForAccess(item.children, grantedModules, grantedOperations) : undefined;
-    const grants = item.grants ?? [item.id as AdminModuleId];
-    const allowed = grants.some((moduleId) => grantedModules.has(moduleId)) && (!item.operation || grantedOperations.has(item.operation));
+    const allowed = item.access
+      ? item.access.some((rule) => isNavRuleAllowed(rule, grantedModules, grantedOperations))
+      : isNavRuleAllowed({ grants: item.grants ?? [item.id as AdminModuleId], operation: item.operation }, grantedModules, grantedOperations);
     if (allowed || (children && children.length > 0)) {
       result.push({ ...item, children });
     }
@@ -284,7 +347,7 @@ export function filterNavForAccess(
 
 function findNavTrail(items: AdminNavItem[], pathname: string, trail: AdminNavItem[] = []): AdminNavItem[] {
   for (const item of items) {
-    if (normalizePath(item.href) === pathname) return [...trail, item];
+    if (navItemPaths(item).includes(pathname)) return [...trail, item];
     if (item.children) {
       const childTrail = findNavTrail(item.children, pathname, [...trail, item]);
       if (childTrail.length > 0) return childTrail;

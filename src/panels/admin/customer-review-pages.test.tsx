@@ -10,12 +10,13 @@ import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { CustomerDetailPage } from "./pages/customer-detail-page";
 import { CustomerFormPage } from "./pages/customer-form-page";
-import { CustomersPage } from "./pages/customers-page";
+import CustomersRoute from "@/app/admin/customers/page";
 
 vi.mock("next/navigation", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/navigation")>()),
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
   usePathname: () => "/admin",
+  useSearchParams: () => new URLSearchParams(window.location.search),
 }));
 
 function Wrapper({ identityId, children }: { identityId: string; children: React.ReactNode }) {
@@ -38,6 +39,7 @@ function show(identityId: string, page: ReactElement) {
 
 afterEach(() => {
   cleanup();
+  window.history.replaceState(null, "", "/");
   Swal.close();
   toast.dismiss();
   vi.restoreAllMocks();
@@ -45,6 +47,24 @@ afterEach(() => {
 
 // cust-a3 is submitted and its closing seller (SM) differs from the referrer (OST), so it can be approved as seeded.
 const SUBMITTED = "cust-a3";
+
+describe("Customers area", () => {
+  it("opens the Import and export tab for an Administrator from the URL", async () => {
+    window.history.replaceState(null, "", "/admin/customers?tab=import-export");
+    show("dev-admin", <CustomersRoute />);
+    expect(screen.getByRole("tab", { name: "Import and export" })).toHaveAttribute("aria-selected", "true");
+    expect(await screen.findByRole("button", { name: "XLSX template" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "New customer" })).toBeNull();
+  });
+
+  it("falls back to Customers for a seller with an import bookmark", async () => {
+    window.history.replaceState(null, "", "/admin/customers?tab=import-export");
+    show("dev-ost-a1", <CustomersRoute />);
+    expect(await screen.findByRole("table", { name: "Customers" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Import and export" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "XLSX template" })).toBeNull();
+  });
+});
 
 describe("customer registration review pages (doc 04 sections 5 and 10)", () => {
   it("offers Approve, Send back and Reject to the Administrator only", async () => {
@@ -98,7 +118,7 @@ describe("customer registration review pages (doc 04 sections 5 and 10)", () => 
   });
 
   it("lists the review statuses and filters by them", async () => {
-    show("dev-admin", <CustomersPage />);
+    show("dev-admin", <CustomersRoute />);
     expect(await screen.findByText("Noel Pascual")).toBeInTheDocument();
     expect(screen.getByText("Gina Soriano")).toBeInTheDocument();
     expect(screen.getByText("Victor Alcantara")).toBeInTheDocument();

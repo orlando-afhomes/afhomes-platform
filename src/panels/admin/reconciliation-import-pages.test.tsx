@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
-import { HistoryImportPage } from "./pages/history-import-page";
-import { ReconciliationPage } from "./pages/reconciliation-page";
+import { HistoryImportPanel } from "./pages/history-import-page";
+import { ReconciliationPanel } from "./pages/reconciliation-page";
 
 vi.mock("next/navigation", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/navigation")>()),
@@ -29,22 +30,44 @@ const show = (identityId: string, page: ReactElement) => render(<Wrapper identit
 
 describe("reconciliation and historical import pages", () => {
   it("shows Finance the measures to reconcile", async () => {
-    show("dev-finance", <ReconciliationPage />);
+    show("dev-finance", <ReconciliationPanel />);
     expect(await screen.findByText("Verified receipts (net)")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Record workbook total" }).length).toBeGreaterThan(0);
   });
 
   it("restricts reconciliation and the import for sellers", async () => {
-    show("dev-svd-a", <ReconciliationPage />);
+    show("dev-svd-a", <ReconciliationPanel />);
     expect(await screen.findByText("Access restricted")).toBeInTheDocument();
     cleanup();
-    show("dev-finance", <HistoryImportPage />);
+    show("dev-finance", <HistoryImportPanel />);
     expect(await screen.findByText("Access restricted")).toBeInTheDocument();
   });
 
-  it("tells the Administrator what the import does not do", async () => {
-    show("dev-admin", <HistoryImportPage />);
-    expect(await screen.findByText(/does not issue VIP Numbers/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /CSV template/ })).toBeInTheDocument();
+  it("gives the Administrator the import steps without an explainer note", async () => {
+    show("dev-admin", <HistoryImportPanel />);
+    expect(await screen.findByRole("button", { name: /CSV template/ })).toBeInTheDocument();
+    expect(screen.queryByText(/does not issue VIP Numbers/)).toBeNull();
+  });
+
+  it("summarizes invalid receipt rows and shows the full errors on demand", async () => {
+    const user = userEvent.setup();
+    show("dev-admin", <HistoryImportPanel />);
+    const csv = "Receipt reference,Receipt date,Amount,Payment method,Customer,Sale reference,Sale status\nR-1,bad-date,-5,Cash,Customer,Sale,Open";
+    const file = new File([csv], "receipts.csv", { type: "text/csv" });
+    Object.defineProperty(file, "text", { value: async () => csv });
+    await user.upload(screen.getByLabelText(/Receipt file/), file);
+    const table = await screen.findByRole("table", { name: "Import preview for receipts.csv" });
+    expect(within(table).getByRole("cell", { name: "2 issues" })).toBeInTheDocument();
+    expect(within(table).queryByText(/Receipt date must be/)).toBeNull();
+    await user.click(within(table).getByRole("row", { name: "View receipt row 2" }));
+    const details = await screen.findByRole("dialog", { name: "Receipt row 2" });
+    expect(within(details).getByText(/Receipt date must be/)).toBeInTheDocument();
+    expect(within(details).getByText(/Amount must be greater than zero/)).toBeInTheDocument();
+  });
+
+  it("drops the parallel-run explainer from reconciliation", async () => {
+    show("dev-finance", <ReconciliationPanel />);
+    expect(await screen.findByText("Verified receipts (net)")).toBeInTheDocument();
+    expect(screen.queryByText("Parallel run")).toBeNull();
   });
 });

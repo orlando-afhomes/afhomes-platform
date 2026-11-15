@@ -191,7 +191,7 @@ Inspect existing repository models before prescribing precise database fields or
 4. The receipt enters the approval queue.
 5. Finance, the Administrator or the Super Administrator approves it, rejects it, or returns it for correction (section 5.2).
 6. A returned receipt shows a **Fix and resend** control to the person who entered it. Resending creates a new version for approval; the old version stays in history and is never overwritten (U06).
-7. Only an approved receipt counts. Approval adds the receipt to the sale's collected total and stamps, when first reached, the Closed Deal date (25%), the Stage 1 date (40%) and the Full Payment date (100%) (OPS §4.3; doc 13 §4). The stamped date is not the approval date: it is the later of the triggering receipt's own date and the date of the latest receipt already counted (OCT O3; doc 13 §4.3 and open item 2). Interim note (D-B): the code still sets the commission release month from the payment's approval date; see doc 08, payout day item 5.
+7. Only an approved receipt counts. Approval adds the receipt to the sale's collected total and stamps, when first reached, the Closed Deal date (25%), the Stage 1 date (40%) and the Full Payment date (100%) (OPS §4.3; doc 13 §4). The stamped date is not the approval date: it is the later of the triggering receipt's own date and the date of the latest receipt already counted (OCT O3; doc 13 §4.3 and open item 2).
 8. A receipt dated in a closed month is not added to that month. It is admitted into the first open month and counts there (owner ruling R7 item 2, also cited as R6 item 5; OPS §4.3). The closed month's figures do not change.
 9. Any resulting balance, sales, or membership eligibility change follows approved cross-module rules.
 

@@ -3,6 +3,17 @@ export type CommissionStatus = "released" | "approved" | "on_hold" | "paid" | "c
 
 export type CommissionProduct = "VIP" | "IGP";
 export type CommissionRole = "DSC" | "DRI";
+
+/** Plain words for the commission role codes (doc 08): DSC is the closing seller, DRI the referrer. */
+export const COMMISSION_ROLE_LABELS: Readonly<Record<CommissionRole, string>> = {
+  DSC: "Closing seller",
+  DRI: "Referrer",
+};
+
+/** Display label of a stored commission role; unknown values pass through unchanged. */
+export function commissionRoleLabel(role: string): string {
+  return COMMISSION_ROLE_LABELS[role as CommissionRole] ?? role;
+}
 export type CommissionStage = "stage1" | "full";
 export type FrozenCommissionRate = { memberId: string; role: CommissionRole; rateBp: number };
 

@@ -4,13 +4,15 @@ import type { ReactNode } from "react";
 import { useEffectiveModuleIds } from "@/data/queries";
 import type { AdminModuleId } from "@/modules/identity/permissions";
 import { Breadcrumbs, type BreadcrumbItem } from "@/shared/components/modern/breadcrumbs";
+import { DashboardHeader } from "@/shared/components/dashboard/dashboard-layout";
 import { PageContainer } from "@/shared/components/modern/page-container";
 import { StatusLink, StatusPage } from "@/shared/components/status/status-page";
 
 /**
  * Standard admin page shell: module gate, breadcrumbs, dashboard-scale
- * heading, and content column. Presentation only; access and record scope
- * stay with the repositories.
+ * heading with the actions on the same line, and content column.
+ * Presentation only; access and record scope stay with the repositories.
+ * For an area with tabs use `AreaPage`.
  */
 export function AdminPage({
   anyOf,
@@ -19,14 +21,17 @@ export function AdminPage({
   crumbs,
   actions,
   allowed = true,
+  embedded = false,
   children,
 }: {
   anyOf: readonly AdminModuleId[];
   title: string;
+  /** One short sentence at most; prefer none (owner ruling 2026-11-15: less text). */
   description?: string;
   crumbs: BreadcrumbItem[];
   actions?: ReactNode;
   allowed?: boolean;
+  embedded?: boolean;
   children: ReactNode;
 }) {
   const granted = useEffectiveModuleIds();
@@ -42,20 +47,13 @@ export function AdminPage({
       </PageContainer>
     );
   }
+  if (embedded) {
+    return <>{actions ? <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">{actions}</div> : null}{children}</>;
+  }
   return (
     <PageContainer>
       <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, ...crumbs]} />
-      <div className="tw:mt-1 tw:flex tw:flex-col tw:gap-4 tw:sm:flex-row tw:sm:items-start tw:sm:justify-between">
-        <div className="tw:min-w-0">
-          <h1 className="tw:text-[1.75rem] tw:leading-tight tw:font-bold tw:tracking-tight tw:text-foreground">
-            {title}
-          </h1>
-          {description ? (
-            <p className="tw:mt-1.5 tw:text-sm tw:text-muted-foreground">{description}</p>
-          ) : null}
-        </div>
-        {actions ? <div className="tw:flex tw:shrink-0 tw:flex-wrap tw:items-center tw:gap-2">{actions}</div> : null}
-      </div>
+      <DashboardHeader title={title} description={description} actions={actions} />
       <div className="tw:mt-6 tw:flex tw:flex-col tw:gap-6">{children}</div>
     </PageContainer>
   );

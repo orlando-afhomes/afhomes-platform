@@ -83,7 +83,7 @@ describe("contract detail pages show only their own process actions", () => {
     await user.click(screen.getByRole("tab", { name: "Payment Schedule" }));
     await screen.findByRole("table", { name: "Payment schedule" });
     await user.click(screen.getByRole("button", { name: "Actions for MA1" }));
-    await user.click(await screen.findByRole("menuitem", { name: "View" }));
+    await user.click(await screen.findByRole("menuitem", { name: "View full details" }));
     expect(await screen.findByText("Installment Details")).toBeInTheDocument();
     expect(screen.getByText("Remaining")).toBeInTheDocument();
     await user.keyboard("{Escape}");
@@ -99,6 +99,22 @@ describe("contract detail pages show only their own process actions", () => {
     expect(await screen.findByRole("table", { name: "Payment ledger" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Payments" })).toBeInTheDocument();
     for (const name of ["Finalize", "Edit details", "Submit contract", "Submit payment", "Cancel contract", "Confirm cancellation"]) expect(button(name)).toBeNull();
+  });
+
+  it("Finance collection ledger rows keep 5 columns and open details with the running Net verified value", async () => {
+    const user = userEvent.setup();
+    show("dev-finance", <FinanceCollectionDetailPage contractId="ctr-1" />);
+    const ledger = await screen.findByRole("table", { name: "Payment ledger" });
+    // The 5 data columns stay on screen; Net verified is only in the row details.
+    expect(within(ledger).getAllByRole("columnheader")).toHaveLength(5);
+    expect(within(ledger).queryByText("Net verified")).toBeNull();
+    // ctr-1: ₱10,000 reservation + ₱57,500 installment = ₱67,500 net verified, ₱172,500 balance on a ₱240,000 contract.
+    await user.click(within(ledger).getByText("Installment"));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Net verified")).toBeInTheDocument();
+    expect(within(dialog).getByText("₱67,500.00")).toBeInTheDocument();
+    expect(within(dialog).getByText("₱172,500.00")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
   });
 
   it("Finance cancellation page has no decision buttons when nothing is requested", async () => {

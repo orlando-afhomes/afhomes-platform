@@ -8,7 +8,7 @@ import type { DevIdentity } from "@/modules/identity/types";
 import type { CustomerDraftInput } from "@/modules/customers/types";
 import { currentManilaYear } from "@/modules/customers/customer-number";
 import { registerCustomer } from "@/modules/customers/application/register-customer";
-import { buildCardId, extractRaSequence } from "@/modules/membership/rules";
+import { buildVipNumber } from "@/modules/membership/rules";
 import { confirmedValueInPeriod, totalsFor } from "@/modules/sales/rules";
 import { addDaysToDate, addMonthsToDate, manilaToday, startOfNextMonthDate } from "@/shared/lib/dates";
 import { pesos } from "@/shared/lib/money";
@@ -206,10 +206,9 @@ function ageVerifications(store: ReturnType<typeof createMockStore>, contractId:
 }
 
 describe("card id rules", () => {
-  it("builds the documented example Card ID", () => {
-    expect(buildCardId({ activationDate: "2027-03-20", raNumber: "2027-0001", tierCode: "G1", paymentCode: "C01", classification: "S" })).toEqual({ cardId: "27032000001G1C01S" });
-    expect(buildCardId({ activationDate: "2027-03-20", raNumber: null, tierCode: "G1", paymentCode: "C01", classification: "S" })).toHaveProperty("error");
-    expect(buildCardId({ activationDate: "2027-03-20", raNumber: "2027-0001", tierCode: "G1", paymentCode: null, classification: "S" })).toHaveProperty("error");
+  it("builds the VIP Number from the signed agreement recording date and monthly sequence", () => {
+    expect(buildVipNumber("2026-02-03", 1, "B1", "C01", "S")).toBe("26020300001B1C01S");
+    expect(() => buildVipNumber("2026-02-03", 1, "B1", null, "S")).toThrow(/approved tier and payment code/);
   });
 
 });
@@ -282,6 +281,42 @@ describe("supplementary holder and internal ids (G5)", () => {
 });
 
 describe("contract, payment, sale and membership workflow", () => {
+  it("prepares a second purchase for the same customer", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const input = { customerId: "cust-a3", schemeId: "scheme-spot-cash", customerAccepted: true };
+    const first = await admin.contracts.prepare(input);
+    const second = await admin.contracts.prepare(input);
+    expect(second.customerId).toBe(first.customerId);
+    expect(second.id).not.toBe(first.id);
+    store.commissionRateSettings.push({ memberId: first.sellerMemberId!, product: "VIP", role: "DSC", rateBp: 500, standardRateBp: null });
+    store.customers.find((customer) => customer.id === first.customerId)!.referrerMemberId = null;
+    for (const contract of [first, second]) {
+      await admin.contracts.submit(contract.id);
+      await admin.sales.approve(store.sales.find((sale) => sale.contractId === contract.id)!.id);
+    }
+    const issuedFirst = await admin.contracts.recordSignedAgreement(first.id);
+    const issuedSecond = await admin.contracts.recordSignedAgreement(second.id);
+    expect(issuedFirst.vipNumber).toMatch(/^\d{11}/);
+    expect(issuedSecond.vipNumber).not.toBe(issuedFirst.vipNumber);
+    expect(await admin.contracts.recordSignedAgreement(first.id)).toMatchObject({ vipNumber: issuedFirst.vipNumber });
+    const sale = store.sales.find((entry) => entry.contractId === first.id)!;
+    expect(sale.closedDealThresholdBp).toBe(2500);
+    await admin.sales.correctCommission(sale.id, { referrerMemberId: null, dscRateBp: 600, reason: "Approved original rate correction" });
+    expect(sale.commissionRates).toMatchObject([{ role: "DSC", rateBp: 600 }]);
+    const secondSale = store.sales.find((entry) => entry.contractId === second.id)!;
+    expect(secondSale.commissionRates).toMatchObject([{ role: "DSC", rateBp: 500 }]);
+    const payment = await admin.payments.submit({
+      contractId: first.id, purpose: first.schedule[0].purpose, amountCentavos: first.priceCentavos,
+      method: "Cash", paidDate: manilaToday(), referenceNo: "REPEAT-VIP-ONE",
+    });
+    await as(store, "dev-finance").payments.verify(payment.id);
+    expect(sale.status).toBe("confirmed");
+    expect(secondSale.status).toBe("pending");
+    expect(store.commissions.filter((item) => item.saleId === sale.id)).toEqual([expect.objectContaining({ percentBp: 600, status: "released" })]);
+    expect(store.commissions.some((item) => item.saleId === secondSale.id)).toBe(false);
+    await expect(admin.sales.correctCommission(sale.id, { referrerMemberId: null, dscRateBp: 700, reason: "Too late" })).rejects.toThrow(/after commission release/);
+  });
   it("limits contract visibility to the recorded team", async () => {
     const store = createMockStore();
     expect((await as(store, "dev-ost-a1").contracts.list()).map((c) => c.id)).toEqual(["ctr-1"]);
@@ -598,9 +633,6 @@ describe("integrity guards (C1)", () => {
   it("pauses VIP issuance for a missing rate, accepts approved zero, and issues once", async () => {
     const store = createMockStore();
     const admin = as(store, "dev-admin");
-    expect(extractRaSequence("2027-0001")).toBe("0001");
-    expect(extractRaSequence("2027-1")).toBeNull();
-    expect(extractRaSequence("2027-00001")).toBeNull();
     await expect(admin.contracts.recordSignedAgreement("ctr-4")).rejects.toThrow(/approved DSC rate/);
     expect(store.contracts.find((item) => item.id === "ctr-4")!.vipNumber).toBeUndefined();
     store.commissionRateSettings.push({ memberId: "mem-ost-a2", product: "VIP", role: "DSC", rateBp: 0, standardRateBp: 0 });

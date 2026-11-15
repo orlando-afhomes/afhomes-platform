@@ -38,6 +38,7 @@ export type Sale = {
   recordedDate: string;
   approval: { approvedAt: string; approvedBy: string } | null;
   commissionRates?: { memberId: string; role: "DSC" | "DRI"; rateBp: number }[];
+  closedDealThresholdBp?: number;
   defaultedAt?: string;
   sellerMemberId: string | null;
   /** VIP Referrer of the sale (doc 13 section 4; owner ruling 2026-11-12). Never counted in the referrer's My Sales. */

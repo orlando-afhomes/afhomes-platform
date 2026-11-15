@@ -4,9 +4,8 @@ import { Printer } from "lucide-react";
 import { usePaymentSchemes, useVipProducts } from "@/data/business-queries";
 import { downPaymentCentavos, paymentSchemeTierTerms, schemeHowItWorks } from "@/modules/vip/rules";
 import type { PaymentScheme, VipProduct } from "@/modules/vip/types";
-import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Button } from "@/shared/ui/button";
-import { AdminPage, AdminSection } from "@/shared/components/admin";
+import { AdminSection } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
@@ -26,27 +25,23 @@ function TierTerms({ scheme, product }: { scheme: PaymentScheme; product: VipPro
   );
 }
 
+export function PrintSchemeGuideButton() {
+  return (
+    <Button type="button" variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => window.print()}>
+      <Printer aria-hidden="true" /> Print guide
+    </Button>
+  );
+}
+
 /**
  * Read-only guide to the official payment schemes (doc 05 section 8). It shows
  * only what the register holds: schemes without approved terms are listed as
  * pending and never given figures.
  */
-export function SchemeGuidePage() {
+export function SchemeGuidePanel() {
   const schemes = usePaymentSchemes();
   const products = useVipProducts();
   return (
-    <AdminPage
-      anyOf={["vip-products", "sales"]}
-      title="Payment Scheme Guide"
-      description="How each official payment scheme works. Read only."
-      crumbs={[{ label: "VIP Products", href: "/admin/vip-products" }, { label: "Scheme Guide" }]}
-      actions={
-        <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => window.print()}>
-          <Printer aria-hidden="true" /> Print guide
-        </Button>
-      }
-    >
-      <InfoNote title="Confidential">For authorized staff only. Amounts shown are the approved contract terms; a scheme without approved terms cannot be offered.</InfoNote>
       <QueryState isLoading={schemes.isLoading || products.isLoading} error={schemes.error ?? products.error} skeleton={<CardGridSkeleton cards={2} className="tw:lg:grid-cols-2" />}>
         <div className="tw:flex tw:flex-col tw:gap-4">
           {(schemes.data ?? []).map((scheme) => (
@@ -66,19 +61,18 @@ export function SchemeGuidePage() {
                   {(products.data ?? []).filter((item) => scheme.applicableTiers.includes(item.code)).map((product) => {
                     return product ? (
                       <div key={product.code}>
-                        <dt className="tw:text-muted-foreground">{`${product.tier} (${product.code})`}</dt>
+                        <dt className="tw:text-muted-foreground">{product.name}</dt>
                         <TierTerms scheme={scheme} product={product} />
                       </div>
                     ) : null;
                   })}
                 </dl>
               ) : (
-                <p className="tw:text-sm tw:text-muted-foreground">Terms are pending owner approval, so this scheme cannot be offered yet. {scheme.ownerHold ?? scheme.source}</p>
+                <p className="tw:text-sm tw:text-muted-foreground">Terms are pending owner approval, so this scheme cannot be offered yet.{scheme.ownerHold ? ` ${scheme.ownerHold}` : null}</p>
               )}
             </AdminSection>
           ))}
         </div>
       </QueryState>
-    </AdminPage>
   );
 }

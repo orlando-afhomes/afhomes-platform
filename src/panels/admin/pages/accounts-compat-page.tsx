@@ -9,7 +9,7 @@ import { PageContainer } from "@/shared/components/modern/page-container";
 import { PageHeader } from "@/shared/components/modern/page-header";
 
 /** Account-only view of Staff & Access: the single account directory. */
-export const ACCOUNTS_COMPAT_TARGET = "/admin/organization/staff?view=account";
+export const ACCOUNTS_COMPAT_TARGET = "/admin/organization?tab=staff&view=account";
 
 /**
  * Compatibility entry point for the former /admin/accounts route. It owns no
@@ -30,7 +30,7 @@ export function AccountsCompatibilityPage() {
     <PageContainer>
       <Breadcrumbs items={getAdminBreadcrumbs("/admin/accounts")} />
       {allowed ? (
-        <PageHeader title="Opening Staff & Access" description="Account administration now lives in Staff & Access." />
+        <PageHeader title="Opening Staff & Access" />
       ) : (
         <PageHeader title="Access restricted" description="This account does not have access to account administration." />
       )}

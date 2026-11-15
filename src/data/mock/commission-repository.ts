@@ -182,12 +182,13 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
       const review: AllowanceReview = {
         id: nextId(this.store, "allowanceReview", "allowance"), month, memberId, memberName: member.displayName, position,
         result, workbook, qualifying, extended, withholdingReason, withholdBa: Boolean(withholdingReason),
+        workbookDifferenceReason: workbook ? input.workbookDifferenceReason?.trim() || undefined : undefined,
         reviewedAt: nowIso(), reviewedBy: identity.id,
       };
       this.store.allowanceReviews.push(structuredClone(review));
       this.audit(identity, { module: "commissions", action: "COMMISSION_ALLOWANCE_REVIEWED", entityType: "member", entityId: memberId,
         previousValue: previous ? JSON.stringify(previous.result) : undefined, newValue: JSON.stringify(result),
-        reason: withholdingReason || undefined, relatedRecordIds: [review.id] });
+        reason: [withholdingReason, review.workbookDifferenceReason].filter(Boolean).join(" / ") || undefined, relatedRecordIds: [review.id] });
       return review;
     });
   }

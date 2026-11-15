@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { useOperation } from "@/data/business-queries";
 import { useReconciliationEntries, useReconciliationTotals, useRecordReconciliation } from "@/data/reconciliation-queries";
 import { MEASURE_LABELS, latestEntry, type ReconciliationEntry, type SourceRecord, type SourceTotal } from "@/modules/reconciliation/rules";
-import { AdminPage } from "@/shared/components/admin";
 import { ReportExport, type ReportColumn } from "../components/report-shell";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
@@ -13,6 +12,9 @@ import { InfoNote } from "@/shared/components/modern/detail-list";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
+import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
+import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
+import { formatDate } from "@/shared/lib/format-date";
 import { MoneyField, SelectField, TextAreaField } from "@/shared/forms/modern";
 import { manilaToday } from "@/shared/lib/dates";
 import { formatPeso, parsePesoToCentavos } from "@/shared/lib/money";
@@ -30,20 +32,20 @@ function monthOptions(): Array<{ value: string; label: string }> {
 }
 
 const RECORD_COLUMNS: ColumnDef<SourceRecord, unknown>[] = [
-  { id: "date", header: "Date", cell: ({ row }) => row.original.date },
+  { id: "date", header: "Date", cell: ({ row }) => formatDate(row.original.date) },
   { id: "label", header: "Record", cell: ({ row }) => <span className="tw:font-semibold">{row.original.label}</span> },
   { id: "note", header: "Note", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.note ?? "" },
   { id: "amount", header: "Amount", cell: ({ row }) => <Money value={row.original.amountCentavos} /> },
 ];
+
+const decisionLabel = (entry: ReconciliationEntry) => (entry.decision === "signed_off" ? "Signed off" : "Explained variance");
 
 const ENTRY_COLUMNS: ColumnDef<ReconciliationEntry, unknown>[] = [
   { id: "measure", header: "Measure", cell: ({ row }) => MEASURE_LABELS[row.original.measure] },
   { id: "workbook", header: "Workbook", cell: ({ row }) => <Money value={row.original.workbookCentavos} /> },
   { id: "platform", header: "Platform", cell: ({ row }) => <Money value={row.original.liveCentavos} /> },
   { id: "difference", header: "Difference", cell: ({ row }) => <Money value={row.original.differenceCentavos} /> },
-  { id: "decision", header: "Decision", cell: ({ row }) => <BizBadge status={row.original.decision === "signed_off" ? "approved" : "on_hold"} label={row.original.decision === "signed_off" ? "Signed off" : "Explained variance"} /> },
-  { id: "reason", header: "Reason", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.reason ?? "" },
-  { id: "recorded", header: "Recorded", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => row.original.recordedAt.slice(0, 10) },
+  { id: "decision", header: "Decision", cell: ({ row }) => <BizBadge status={row.original.decision === "signed_off" ? "approved" : "on_hold"} label={decisionLabel(row.original)} /> },
 ];
 
 const ENTRY_EXPORT: ReportColumn<ReconciliationEntry>[] = [
@@ -51,13 +53,13 @@ const ENTRY_EXPORT: ReportColumn<ReconciliationEntry>[] = [
   { header: "Workbook", value: (entry) => formatPeso(entry.workbookCentavos) },
   { header: "Platform", value: (entry) => formatPeso(entry.liveCentavos) },
   { header: "Difference", value: (entry) => formatPeso(entry.differenceCentavos) },
-  { header: "Decision", value: (entry) => (entry.decision === "signed_off" ? "Signed off" : "Explained variance") },
+  { header: "Decision", value: decisionLabel },
   { header: "Reason", value: (entry) => entry.reason ?? "" },
   { header: "Recorded", value: (entry) => entry.recordedAt.slice(0, 10) },
 ];
 
 /** F11.3: compare the platform's live source totals with the workbook, month by month. Differences are signed off or explained, never hidden. */
-export function ReconciliationPage() {
+export function ReconciliationPanel() {
   const canReconcile = useOperation("reconciliation.manage");
   const options = useMemo(() => monthOptions(), []);
   const [period, setPeriod] = useState(options[0].value);
@@ -65,13 +67,14 @@ export function ReconciliationPage() {
   const entries = useReconciliationEntries(canReconcile);
   const [recording, setRecording] = useState<SourceTotal | null>(null);
   const [drill, setDrill] = useState<SourceTotal | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
   const monthEntries = (entries.data ?? []).filter((entry) => entry.period === period).reverse();
+  const detail = detailId ? (entries.data ?? []).find((entry) => entry.id === detailId) ?? null : null;
 
   return (
-    <AdminPage anyOf={["reports"]} title="Reconciliation" description="Compare the platform's totals for a month with the workbook. Sign off matching totals or explain each difference." crumbs={[{ label: "Reports" }, { label: "Reconciliation" }]}>
+    <>
       {canReconcile ? (
         <>
-          <InfoNote title="Parallel run">The workbook keeps paying until a month closes with no unexplained differences. Enter the workbook total for each measure; a difference needs a written reason.</InfoNote>
           <div className="tw:max-w-xs">
             <SelectField label="Month" value={period} options={options} onChange={setPeriod} />
           </div>
@@ -106,7 +109,28 @@ export function ReconciliationPage() {
             <section aria-label="Decisions for this month" className="tw:flex tw:flex-col tw:gap-2">
               <h2 className="tw:text-base tw:font-semibold">Decisions for this month</h2>
               <ReportExport report="Reconciliation" fileName={`reconciliation-${period}`} columns={ENTRY_EXPORT} rows={monthEntries} range={{ from: period, to: period }} printable={false} />
-              <DataTable data={monthEntries} columns={ENTRY_COLUMNS} getRowId={(row) => row.id} emptyText="No decision has been recorded for this month." caption="Reconciliation decisions" />
+              <DataTable data={monthEntries} columns={ENTRY_COLUMNS} getRowId={(row) => row.id} emptyText="No decision has been recorded for this month." caption="Reconciliation decisions" onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `View decision for ${MEASURE_LABELS[row.measure]}`} rowActions={(row) => <RowActionsMenu itemName={`decision for ${MEASURE_LABELS[row.measure]}`} onView={() => setDetailId(row.id)} />} />
+              <RecordDetailsSheet
+                open={detail !== null}
+                onClose={() => setDetailId(null)}
+                title={detail ? MEASURE_LABELS[detail.measure] : "Decision"}
+                badge={detail ? <BizBadge status={detail.decision === "signed_off" ? "approved" : "on_hold"} label={decisionLabel(detail)} /> : undefined}
+                sections={
+                  detail
+                    ? [
+                        {
+                          rows: [
+                            { label: "Workbook", value: <Money value={detail.workbookCentavos} /> },
+                            { label: "Platform", value: <Money value={detail.liveCentavos} /> },
+                            { label: "Difference", value: <Money value={detail.differenceCentavos} /> },
+                            { label: "Reason", value: detail.reason },
+                            { label: "Recorded", value: formatDate(detail.recordedAt) },
+                          ],
+                        },
+                      ]
+                    : []
+                }
+              />
             </section>
           </QueryState>
           {recording ? <RecordDialog period={period} total={recording} onClose={() => setRecording(null)} /> : null}
@@ -114,7 +138,7 @@ export function ReconciliationPage() {
             <DialogContent className="tw:max-h-[90vh] tw:overflow-y-auto tw:sm:max-w-3xl">
               <DialogHeader>
                 <DialogTitle>{drill ? MEASURE_LABELS[drill.measure] : "Records"}</DialogTitle>
-                <DialogDescription>The records behind the platform total. Corrections are made on the records themselves, never here.</DialogDescription>
+                <DialogDescription>The records behind the platform total.</DialogDescription>
               </DialogHeader>
               {drill ? <DataTable data={drill.records} columns={RECORD_COLUMNS} getRowId={(row) => row.id} emptyText="No records in this month." caption="Source records" /> : null}
             </DialogContent>
@@ -123,7 +147,7 @@ export function ReconciliationPage() {
       ) : (
         <InfoNote title="Access restricted">Reconciliation is limited to the Administrator, the Super Administrator and Finance.</InfoNote>
       )}
-    </AdminPage>
+    </>
   );
 }
 

@@ -113,7 +113,7 @@ export function IgpSettingsDialog({ register, mode, onClose }: {
   const title = mode === "accredit" ? "Record JA&D accreditation" : "Change Closed Deal threshold";
   return (
     <IgpForm title={title} submitText="Save" onClose={onClose}
-      description={mode === "threshold" ? "The new threshold applies to numbers issued after this change." : "Use the number and approval date issued by JA&D."}
+      description={mode === "threshold" ? "Applies to numbers issued after this change." : undefined}
       build={() => mode === "accredit" ? { type: "accredit", memberId: seller, number, approvedDate: date } : { type: "threshold", basisPoints: parsePesoToCentavos(threshold) ?? 0, reason }}>
       {mode === "accredit" ? <>
         <SelectField label="Seller" value={seller} options={register.sellers} required onChange={setSeller} />
@@ -143,7 +143,7 @@ export function IgpRecordDetailDialog({ sale, mode, documentKey, onClose }: {
   };
   return (
     <IgpForm title={title} submitText={mode === "document" ? "Save document details" : title} build={build} onClose={onClose}
-      description={mode === "cancel" ? "Record the refund amount decided by JA&D or the Property Owner. The Series Number stays in the register." : undefined}>
+      description={mode === "cancel" ? "Enter the refund decided by JA&D or the Property Owner." : undefined}>
       {mode === "document" && document ? <>
         <StandardDateField label="Signature date" value={date} required onChange={setDate} />
         <TextField label="Signers" value={signers} required hint={`Expected signer: ${IGP_DOCUMENT_LABELS[document.key].signedBy}`} onChange={setSigners} />

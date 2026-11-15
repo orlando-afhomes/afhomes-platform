@@ -23,6 +23,13 @@ export type DataTableColumnMeta = {
 /** Every table shows this many rows per page. */
 export const TABLE_PAGE_SIZE = 10;
 
+/**
+ * Most data columns a table may show (owner ruling 2026-11-15). The row menu
+ * (the `rowActions` column, or a column with id "actions") does not count;
+ * everything else belongs in "View full details".
+ */
+export const MAX_DATA_COLUMNS = 5;
+
 const columnClass = (meta: unknown) => (meta as DataTableColumnMeta | undefined)?.className;
 
 /**
@@ -84,6 +91,14 @@ export function DataTable<T>({
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: serverPagination ? undefined : getPaginationRowModel(),
   });
+  // Test-only guard: every table rendered in the test suite enforces the
+  // 5-column rule. Production never throws.
+  if (process.env.NODE_ENV === "test") {
+    const dataColumns = table.getAllLeafColumns().filter((column) => column.id !== "actions").length;
+    if (dataColumns > MAX_DATA_COLUMNS) {
+      throw new Error(`DataTable "${caption ?? "(no caption)"}" has ${dataColumns} data columns; the limit is ${MAX_DATA_COLUMNS}. Move the rest to the record details.`);
+    }
+  }
   const rows = table.getRowModel().rows;
   const columnCount = columns.length + (rowActions ? 1 : 0);
   const footer = serverPagination ?? {

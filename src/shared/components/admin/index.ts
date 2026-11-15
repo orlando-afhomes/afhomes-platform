@@ -1,4 +1,5 @@
 export { AdminPage } from "./admin-page";
+export { AreaPage, type AreaPageTab } from "./area-page";
 export { AdminKpiCard, type AdminKpiTrend } from "./admin-primitives";
 export { AdminKpiGrid } from "./admin-primitives";
 export {

@@ -26,7 +26,7 @@ import { Card } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/utils";
 import { SalesNetworkTreeNodeTitle } from "../components/sales-network-tree-node";
 
-export function SalesNetworkGenealogyPage() {
+export function SalesNetworkGenealogyPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { identity } = useDevIdentity();
   const store = useMockStore();
   const granted = resolveEffectiveModules(store, identity);
@@ -103,7 +103,7 @@ export function SalesNetworkGenealogyPage() {
     setSearch("");
   };
 
-  if (!granted.has("sales-network")) {
+  if (!granted.has("sales-network-genealogy")) {
     return (
       <PageContainer>
         <PageHeader title="Access restricted" description="This account does not have access to Sales Network." />
@@ -113,9 +113,9 @@ export function SalesNetworkGenealogyPage() {
 
   return (
     <AdminPage
-      anyOf={["sales-network"]}
+      embedded={embedded}
+      anyOf={["sales-network-genealogy"]}
       title="Sales Network Genealogy"
-      description="Authorized hierarchy visualization."
       crumbs={[{ label: "Sales Network" }, { label: "Genealogy" }]}
     >
       <Card className="tw:flex-col tw:lg:flex-row tw:lg:items-start">
@@ -123,8 +123,8 @@ export function SalesNetworkGenealogyPage() {
           <Search aria-hidden="true" className="tw:pointer-events-none tw:absolute tw:top-3 tw:left-2.5 tw:size-4 tw:text-muted-foreground tw:sm:top-2" />
           <Input
             type="search"
-            aria-label="Search authorized members"
-            placeholder="Search authorized members"
+            aria-label="Search members"
+            placeholder="Search members"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             className="tw:h-11 tw:pl-8 tw:sm:h-8"
@@ -166,7 +166,7 @@ export function SalesNetworkGenealogyPage() {
           {membersQuery.isLoading ? (
             <TextLinesSkeleton lines={6} className="tw:p-3" />
           ) : tree.length === 0 ? (
-            <p className="tw:p-6 tw:text-center tw:text-muted-foreground">No authorized genealogy members.</p>
+            <p className="tw:p-6 tw:text-center tw:text-muted-foreground">No members to show.</p>
           ) : (
             <GenealogyTree
               nodes={visibleTree}
@@ -220,7 +220,7 @@ function MemberSummary({ node, members }: { node: GenealogyTreeNode; members: re
       </DetailList>
       <NameChips title={`Direct downline (${node.directCount})`} names={directNames} empty="No direct downline" />
       <NameChips title={`Total downline (${node.totalDescendantCount})`} names={allNames} empty="No downline members" />
-      {node.restrictedParent ? <p className="tw:text-sm tw:text-muted-foreground tw:italic">Restricted upline context</p> : null}
+      {node.restrictedParent ? <p className="tw:text-sm tw:text-muted-foreground tw:italic">Upline not shown to you</p> : null}
       <Link
         href={`/admin/sales-network/members/${node.member.aaNumber ?? node.member.id}`}
         className={cn(buttonVariants(), "tw:min-h-11 tw:w-full tw:sm:min-h-8")}

@@ -1,8 +1,8 @@
-import { ListsPage } from "@/panels/admin/pages/lists-page";
+import { redirectToAreaTab, type AreaRedirectPageProps } from "@/panels/admin/area-redirect";
 
-// shortcut: the client-only mock auth gate drops this page from instant-navigation validation; remove with the mock login.
+// The target area resolves the mock role on the client.
 export const instant = false;
 
-export default function Page() {
-  return <ListsPage />;
+export default function Page({ searchParams }: AreaRedirectPageProps) {
+  return redirectToAreaTab("organization", "lists", searchParams);
 }

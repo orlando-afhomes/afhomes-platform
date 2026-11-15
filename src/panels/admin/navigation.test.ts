@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { AdminNavItem } from "./navigation";
 import {
+  ADMIN_AREA_TABS,
   adminNavigation,
   filterNavForAccess,
+  getAdminAreaTabAccess,
   getAvailableAdminNavigation,
   getRoleAwareAdminNavigation,
   isAdminNavItemActive,
@@ -10,51 +12,52 @@ import {
   getAdminBreadcrumbs,
 } from "./navigation";
 import { getDevIdentity } from "@/data/mock/dev-identities";
+import { getGrantedModuleIds, getGrantedOperations } from "@/modules/identity/permissions";
 import { ADMIN_NAV_ICONS } from "./components/admin-nav-icons";
 
-function visibleTree(identityId: string) {
-  return Object.fromEntries(
-    getRoleAwareAdminNavigation(getDevIdentity(identityId)).map((item) => [item.id, item.children?.map((child) => child.id) ?? null]),
-  );
+function visibleIds(identityId: string) {
+  return getRoleAwareAdminNavigation(getDevIdentity(identityId)).map((item) => item.id);
 }
 
-const SALES_ALL = ["customers", "sales-contracts", "contract-review", "sales", "igp-sales"];
-const VIP_ALL = ["vip-products", "payment-schemes", "scheme-guide", "tier-codes"];
-const SELLER_TREE = {
-  dashboard: null,
-  "sales-network": ["sales-network-members", "sales-network-genealogy"],
-  "sales-group": ["customers", "sales-contracts", "sales", "igp-sales"],
-  "vip-products-group": ["scheme-guide"],
-  "finance-group": ["commissions"],
-  "membership-group": ["membership", "stay-points", "promos", "promo-points"],
-  "reports-group": ["customer-growth", "sales-performance", "commission-report", "membership-report", "stay-points-report", "promo-points-report"],
-};
+function tabAccess(identityId: string, area: keyof typeof ADMIN_AREA_TABS) {
+  const identity = getDevIdentity(identityId);
+  const access: Record<string, boolean> = getAdminAreaTabAccess(area, getGrantedModuleIds(identity), getGrantedOperations(identity));
+  return Object.keys(access).filter((tab) => access[tab]);
+}
+
+const ALL_AREAS = ["dashboard", "customers", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "vip-products", "sales-network", "organization", "reports", "audit-logs"];
+const SELLER_AREAS = ["dashboard", "customers", "sales", "commissions", "membership", "stay-points", "vip-products", "sales-network", "reports"];
 
 describe("admin navigation", () => {
-  it("includes the dashboard destination", () => {
-    expect(getAvailableAdminNavigation().some((item) => item.href === "/admin")).toBe(true);
-  });
-
-  it("lists the business modules and lists Redemption but no Services entry", () => {
+  it("is a flat list of 13 area pages with no groups", () => {
     const items = getAvailableAdminNavigation();
-    const hrefs = items.flatMap((item) => [item.href, ...(item.children ?? []).map((child) => child.href)]);
-    for (const href of ["/admin/customers", "/admin/vip-products", "/admin/sales", "/admin/finance", "/admin/commissions", "/admin/membership", "/admin/stay-points", "/admin/audit-logs"]) {
-      expect(hrefs).toContain(href);
-    }
-    expect(hrefs).not.toContain("/admin/reports");
+    expect(items.map((item) => item.href)).toEqual([
+      "/admin",
+      "/admin/customers",
+      "/admin/sales",
+      "/admin/finance",
+      "/admin/commissions",
+      "/admin/membership",
+      "/admin/stay-points",
+      "/admin/redemption",
+      "/admin/vip-products",
+      "/admin/sales-network",
+      "/admin/organization",
+      "/admin/reports",
+      "/admin/audit-logs",
+    ]);
+    expect(items.every((item) => !item.children?.length)).toBe(true);
     // Owner authorized Redemption on 2026-11-13; doc 10 defines no separate Services workflow, so none is listed.
-    expect(hrefs).toEqual(expect.arrayContaining(["/admin/redemption", "/admin/redemption/points-table"]));
     expect(JSON.stringify(items).toLowerCase()).not.toMatch(/services/);
   });
 
   it("uses one unique key and href per navigation item", () => {
-    const flat = adminNavigation.flatMap((item) => [item, ...(item.children ?? [])]);
-    expect(new Set(flat.map((item) => item.id)).size).toBe(flat.length);
-    expect(new Set(flat.map((item) => item.href)).size).toBe(flat.length);
+    expect(new Set(adminNavigation.map((item) => item.id)).size).toBe(adminNavigation.length);
+    expect(new Set(adminNavigation.map((item) => item.href)).size).toBe(adminNavigation.length);
   });
 
-  it("gives every visible navigation item, parents and children, a unique label and icon", () => {
-    const flat = getAvailableAdminNavigation().flatMap((item) => [item, ...(item.children ?? [])]);
+  it("gives every visible navigation item a unique label and icon", () => {
+    const flat = getAvailableAdminNavigation();
     const labels = flat.map((item) => item.label.toLowerCase());
     expect(new Set(labels).size).toBe(labels.length);
     const icons = flat.map((item) => ADMIN_NAV_ICONS[item.id]);
@@ -62,69 +65,77 @@ describe("admin navigation", () => {
     expect(new Set(icons).size).toBe(icons.length);
   });
 
-  it("shows the Super Administrator tree, with operation-gated items", () => {
-    expect(visibleTree("dev-super-admin")).toEqual({
-      dashboard: null,
-      organization: ["departments", "roles", "staff", "settings-lists"],
-      "sales-network": ["sales-network-members", "sales-network-genealogy", "accreditation-registrations"],
-      "sales-group": SALES_ALL,
-      "vip-products-group": VIP_ALL,
-      "finance-group": ["finance", "collections", "commission-assignment", "commissions", "commission-payouts", "allowance-review", "payment-history", "financial-holds", "cancellation-requests"],
-      "membership-group": ["membership-activation", "membership", "stay-points", "promos", "promo-points"],
-      "redemption-group": ["redemption", "redemption-table"],
-      "reports-group": ["customer-growth", "sales-performance", "collections-report", "commission-report", "membership-report", "stay-points-report", "promo-points-report", "reconciliation", "historical-import", "period-close"],
-      "audit-logs": null,
-    });
-  });
-
-  it("shows the Administrator tree with receipt verification", () => {
-    expect(visibleTree("dev-admin")).toEqual({
-      dashboard: null,
-      organization: ["departments", "roles", "staff", "settings-lists"],
-      "sales-network": ["sales-network-members", "sales-network-genealogy", "accreditation-registrations"],
-      "sales-group": SALES_ALL,
-      "vip-products-group": VIP_ALL,
-      "finance-group": ["finance", "commission-assignment", "commissions", "commission-payouts", "allowance-review"],
-      "membership-group": ["membership-activation", "membership", "stay-points", "promos", "promo-points"],
-      "redemption-group": ["redemption", "redemption-table"],
-      "reports-group": ["customer-growth", "sales-performance", "commission-report", "membership-report", "stay-points-report", "promo-points-report", "reconciliation", "historical-import", "period-close"],
-      "audit-logs": null,
-    });
-  });
-
-  it("shows Finance its own processes, IGP sales and all reports", () => {
-    expect(visibleTree("dev-finance")).toEqual({
-      dashboard: null,
-      "sales-group": ["igp-sales"],
-      "finance-group": ["finance", "collections", "commissions", "commission-payouts", "allowance-review", "payment-history", "financial-holds", "cancellation-requests"],
-      "membership-group": ["membership-activation", "membership", "stay-points", "promos", "promo-points"],
-      "redemption-group": ["redemption"],
-      "reports-group": ["customer-growth", "sales-performance", "collections-report", "commission-report", "membership-report", "stay-points-report", "promo-points-report", "reconciliation", "period-close"],
-    });
-  });
-
-  it("shows sellers no review, import, payout, activation or finance pages", () => {
-    for (const identityId of ["dev-svd-a", "dev-ost-a1"]) {
-      expect(visibleTree(identityId)).toEqual(SELLER_TREE);
+  it("uses unique tab values per area", () => {
+    for (const tabs of Object.values(ADMIN_AREA_TABS)) {
+      const values = tabs.map((tab) => tab.value);
+      expect(new Set(values).size).toBe(values.length);
     }
+  });
+
+  it("shows every area to the Super Administrator and the Administrator", () => {
+    expect(visibleIds("dev-super-admin")).toEqual(ALL_AREAS);
+    expect(visibleIds("dev-admin")).toEqual(ALL_AREAS);
+  });
+
+  it("shows Finance its own areas, IGP sales and reports", () => {
+    expect(visibleIds("dev-finance")).toEqual(["dashboard", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "reports"]);
+    expect(tabAccess("dev-finance", "sales")).toEqual(["igp"]);
+    expect(tabAccess("dev-finance", "finance")).toEqual(["verification", "collections", "payments", "holds", "cancellations", "month-end-close", "reconciliation"]);
+    expect(tabAccess("dev-finance", "commissions")).toEqual(["commissions", "payouts", "recovery", "allowances"]);
+    expect(tabAccess("dev-finance", "redemption")).toEqual(["bookings", "cardholder-points"]);
+    expect(tabAccess("dev-finance", "reports")).toContain("collections");
+  });
+
+  it("keeps the former per-page rules for the Administrator", () => {
+    expect(tabAccess("dev-admin", "finance")).toEqual(["verification", "month-end-close", "reconciliation", "historical-import"]);
+    expect(tabAccess("dev-admin", "organization")).toEqual(["staff", "departments", "roles", "lists"]);
+    expect(tabAccess("dev-admin", "reports")).not.toContain("collections");
+    expect(tabAccess("dev-super-admin", "reports")).toContain("collections");
+  });
+
+  it("shows sellers no review, import, payout, activation or finance tabs", () => {
+    for (const identityId of ["dev-svd-a", "dev-ost-a1"]) {
+      expect(visibleIds(identityId)).toEqual(SELLER_AREAS);
+      expect(tabAccess(identityId, "customers")).toEqual(["customers"]);
+      expect(tabAccess(identityId, "sales")).toEqual(["sales", "contracts", "igp"]);
+      expect(tabAccess(identityId, "vip-products")).toEqual(["scheme-guide"]);
+      expect(tabAccess(identityId, "commissions")).toEqual(["commissions", "recovery"]);
+      expect(tabAccess(identityId, "membership")).toEqual(["memberships"]);
+      expect(tabAccess(identityId, "sales-network")).toEqual(["members", "genealogy"]);
+      expect(tabAccess(identityId, "reports")).not.toContain("collections");
+    }
+  });
+
+  it("shows HR only the Organization tabs it holds", () => {
+    expect(visibleIds("dev-hr")).toEqual(["dashboard", "organization"]);
+    expect(tabAccess("dev-hr", "organization")).toEqual(["staff", "departments"]);
   });
 
   it("requires the operation grant as well as the module grant", () => {
     const modules = new Set(["customers", "commissions", "membership", "reports"] as const);
-    const ids = (ops: string[]) =>
-      filterNavForAccess(getAvailableAdminNavigation(), modules, new Set(ops as never[])).flatMap((item) => (item.children ?? []).map((child) => child.id));
-    expect(ids([])).not.toEqual(expect.arrayContaining(["commission-payouts", "membership-activation", "collections-report"]));
-    expect(ids(["customers.import", "commission.payout.prepare", "membership.activate", "finance.reports.view"])).toEqual(
-      expect.arrayContaining(["commission-payouts", "membership-activation", "collections-report"]),
-    );
+    const access = (ops: string[]) => getAdminAreaTabAccess("commissions", modules, new Set(ops as never[]));
+    expect(access([]).payouts).toBe(false);
+    expect(access(["commission.payout.prepare"]).payouts).toBe(true);
+    // Finance is shown only through its operation-gated tabs for a reports holder.
+    const ids = (ops: string[]) => filterNavForAccess(getAvailableAdminNavigation(), modules, new Set(ops as never[])).map((item) => item.id);
+    expect(ids([])).not.toContain("finance");
+    expect(ids(["reconciliation.manage"])).toContain("finance");
+  });
+
+  it("shows the Redemption table tabs only with redemption.configure", () => {
+    // Finance holds the redemption module but not the configure operation (owner ruling: permissions unchanged).
+    expect(tabAccess("dev-finance", "redemption")).toEqual(["bookings", "cardholder-points"]);
+    expect(tabAccess("dev-admin", "redemption")).toEqual(["bookings", "cardholder-points", "points-table", "holidays", "venues"]);
+    const modules = new Set(["redemption"] as const);
+    const access = (ops: string[]) => getAdminAreaTabAccess("redemption", modules, new Set(ops as never[]));
+    expect(access([])).toEqual({ bookings: true, "cardholder-points": true, "points-table": false, holidays: false, venues: false });
+    expect(access(["redemption.configure"])).toEqual({ bookings: true, "cardholder-points": true, "points-table": true, holidays: true, venues: true });
   });
 
   it("grants Contracts to sales or vip-products holders and Scheme Guide to either", () => {
-    const ids = (modules: string[]) =>
-      filterNavForAccess(getAvailableAdminNavigation(), new Set(modules as never[]), new Set()).flatMap((item) => (item.children ?? []).map((child) => child.id));
-    expect(ids(["vip-products"])).toEqual(expect.arrayContaining(["sales-contracts", "contract-review", "scheme-guide"]));
-    expect(ids(["sales"])).toEqual(expect.arrayContaining(["sales-contracts", "scheme-guide"]));
-    expect(ids(["sales"])).not.toContain("contract-review");
+    expect(getAdminAreaTabAccess("sales", new Set(["vip-products"] as const), new Set())).toMatchObject({ contracts: true, "contract-review": true, sales: false });
+    expect(getAdminAreaTabAccess("sales", new Set(["sales"] as const), new Set())).toMatchObject({ contracts: true, "contract-review": false });
+    expect(getAdminAreaTabAccess("vip-products", new Set(["sales"] as const), new Set())).toEqual({ products: false, schemes: false, "scheme-guide": true, "tier-codes": false });
   });
 
   it("normalizes trailing slashes", () => {
@@ -132,60 +143,33 @@ describe("admin navigation", () => {
     expect(normalizePath("/")).toBe("/");
   });
 
-  it("matches exact and descendant routes without false prefix matches", () => {
+  it("matches exact, descendant and former routes without false prefix matches", () => {
     const item = { id: "sales", label: "Sales", href: "/admin/sales", available: true } as AdminNavItem;
     expect(isAdminNavItemActive(item, "/admin/sales")).toBe(true);
     expect(isAdminNavItemActive(item, "/admin/sales/123")).toBe(true);
     expect(isAdminNavItemActive(item, "/admin/sales-reports")).toBe(false);
     expect(isAdminNavItemActive(item, "/admin")).toBe(false);
-  });
-
-  it("marks a parent group active when a child is active", () => {
-    const item = {
-      id: "dashboard",
-      label: "Group",
-      href: "/admin/group",
-      available: true,
-      children: [{ id: "sales", label: "Child", href: "/admin/group/child", available: true }],
-    } as AdminNavItem;
-    expect(isAdminNavItemActive(item, "/admin/group/child")).toBe(true);
+    const stayPoints = adminNavigation.find((entry) => entry.id === "stay-points")!;
+    expect(isAdminNavItemActive(stayPoints, "/admin/promos/points")).toBe(true);
+    const finance = adminNavigation.find((entry) => entry.id === "finance")!;
+    expect(finance.matchPaths).toEqual(["/admin/reports/period-close", "/admin/reports/reconciliation", "/admin/reports/historical-import"]);
   });
 
   it("returns dashboard breadcrumbs for the dashboard", () => {
     expect(getAdminBreadcrumbs("/admin")).toEqual([{ label: "Dashboard" }]);
   });
 
-  it("returns nested breadcrumbs for organization children", () => {
-    expect(getAdminBreadcrumbs("/admin/organization/departments")).toEqual([
-      { label: "Dashboard", href: "/admin" },
-      { label: "Organization" },
-      { label: "Departments" },
-    ]);
+  it("returns area breadcrumbs for area and former routes", () => {
+    expect(getAdminBreadcrumbs("/admin/organization")).toEqual([{ label: "Dashboard", href: "/admin" }, { label: "Organization" }]);
+    expect(getAdminBreadcrumbs("/admin/settings/lists")).toEqual([{ label: "Dashboard", href: "/admin" }, { label: "Organization" }]);
   });
 
-  it("serves account administration from Staff & Access, keeping /admin/accounts as a hidden compatibility route", () => {
-    const hrefs = getAvailableAdminNavigation().flatMap((item) => [item.href, ...(item.children ?? []).map((child) => child.href)]);
+  it("keeps /admin/accounts as a hidden compatibility route", () => {
+    const hrefs = getAvailableAdminNavigation().map((item) => item.href);
     expect(hrefs).not.toContain("/admin/accounts");
-    expect(hrefs).toContain("/admin/organization/staff");
-    expect(getAdminBreadcrumbs("/admin/organization/staff")).toEqual([
-      { label: "Dashboard", href: "/admin" },
-      { label: "Organization" },
-      { label: "Staff" },
-    ]);
     expect(getAdminBreadcrumbs("/admin/accounts")).toEqual([
       { label: "Dashboard", href: "/admin" },
       { label: "Accounts and Permissions" },
-    ]);
-  });
-
-  it("hides the Customer Import sidebar link while keeping its route and breadcrumbs", () => {
-    const hrefs = getAvailableAdminNavigation().flatMap((item) => [item.href, ...(item.children ?? []).map((child) => child.href)]);
-    expect(hrefs).not.toContain("/admin/customers/import-export");
-    expect(adminNavigation.flatMap((item) => item.children ?? []).find((item) => item.id === "customer-import")?.hideFromNav).toBe(true);
-    expect(getAdminBreadcrumbs("/admin/customers/import-export")).toEqual([
-      { label: "Dashboard", href: "/admin" },
-      { label: "Sales" },
-      { label: "Customer Import" },
     ]);
   });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import { useVipProducts } from "@/data/business-queries";
 import { tierOptions } from "@/modules/vip/tier-options";
 import { Download } from "lucide-react";
@@ -13,7 +13,6 @@ import { SelectField } from "@/shared/forms/modern";
 import { Button } from "@/shared/ui/button";
 import { DataTable } from "@/shared/components/modern/data-table";
 import { AdminSectionHeading } from "@/shared/components/admin";
-import { TemplateStep } from "./customer-import-steps";
 import { recordLabel } from "@/shared/lib/record-label";
 
 function importJobLabel(job: CustomerImportJob): string {
@@ -43,7 +42,7 @@ export const EXPORT_FORMAT_OPTIONS: { value: "xlsx" | "csv"; label: string }[] =
 ];
 
 /**
- * Presentational export card in the import-tab step language. All data,
+ * Presentational export card. All data,
  * filtering, and repository work stays with the owning panel; this card only
  * renders the selects, the export button, and the matching-row count.
  */
@@ -72,12 +71,11 @@ export function ExportCustomersCard({
 }) {
   const products = useVipProducts();
   const planOptions = useMemo(() => exportPlanOptions(products.data), [products.data]);
+  const titleId = useId();
   return (
-    <TemplateStep
-      step={1}
-      title="Export customers"
-      description={`Exports use the template columns. At most ${MAX_EXPORT_ROWS.toLocaleString("en-PH")} rows per file. Every export is recorded in the audit log.`}
-    >
+    <section aria-labelledby={titleId} className="customer-export-card tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-5 tw:shadow-(--shadow-soft)">
+      <h2 id={titleId} className="tw:text-base tw:font-semibold">Export customers</h2>
+      <p className="tw:mt-1 tw:text-sm tw:text-muted-foreground">{`At most ${MAX_EXPORT_ROWS.toLocaleString("en-PH")} rows per file.`}</p>
       <div className="tw:mt-4 tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-3">
         <SelectField label="Status" value={status} options={EXPORT_STATUS_OPTIONS} onChange={setStatus} />
         <SelectField label="VIP tier" value={plan} options={planOptions} onChange={setPlan} />
@@ -89,7 +87,7 @@ export function ExportCustomersCard({
         </Button>
         <span className="tw:text-sm tw:text-muted-foreground" role="status">{matchingCount} matching customer(s)</span>
       </div>
-    </TemplateStep>
+    </section>
   );
 }
 
@@ -113,18 +111,18 @@ export function HistoryCard({
 }) {
   const columns = useMemo<ColumnDef<CustomerImportJob, unknown>[]>(
     () => [
-      { id: "id", header: "Job", cell: ({ row }) => <span className="tw:font-semibold">{importJobLabel(row.original)}</span> },
-      { id: "file", header: "File", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.fileName },
-      { id: "when", header: "Imported", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => new Date(row.original.createdAt).toLocaleString("en-PH", { timeZone: "Asia/Manila" }) },
-      { id: "created", header: "Drafts created", cell: ({ row }) => `${row.original.createdCount} of ${row.original.totalRows}` },
-      { id: "skipped", header: "Skipped", cell: ({ row }) => `${row.original.needsReviewCount} for review, ${row.original.invalidCount} invalid` },
+      { id: "file", header: "File", cell: ({ row }) => <span className="tw:block tw:max-w-[10rem] tw:truncate tw:font-semibold" title={row.original.fileName}>{row.original.fileName}</span> },
+      { id: "when", header: "Imported", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => new Date(row.original.createdAt).toLocaleString("en-PH", { timeZone: "Asia/Manila" }) },
+      { id: "rows", header: "Rows", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.totalRows },
+      { id: "created", header: "Drafts created", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.createdCount },
+      { id: "skipped", header: "Skipped", cell: ({ row }) => row.original.needsReviewCount + row.original.invalidCount },
     ],
     [],
   );
   const job = jobId ? jobs.find((item) => item.id === jobId) ?? null : null;
   return (
     <section aria-label="Job history" className="customer-history-card tw:flex tw:flex-col tw:gap-4">
-      <AdminSectionHeading title="Job history" description="Recent customer imports, newest first." />
+      <AdminSectionHeading title="Job history" />
       <QueryState isLoading={isLoading} error={error}>
         <DataTable
           data={jobs}

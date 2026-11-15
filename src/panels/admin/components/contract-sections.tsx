@@ -16,6 +16,7 @@ import type { BreadcrumbItem } from "@/shared/components/modern/breadcrumbs";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { DetailList, DetailRow, InfoNote } from "@/shared/components/modern/detail-list";
 import { Money } from "@/shared/components/modern/money";
+import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
 import { DetailSkeleton } from "@/shared/components/modern/skeletons";
@@ -77,7 +78,7 @@ export function ContractPageFrame({
   }
   const full: ContractRecord = { ...record, contract };
   return (
-    <AdminPage anyOf={anyOf} title={recordLabel("Contract", contract.customerName, contract.productCode)} description={`${contract.customerName} · ${contract.productCode} · ${contract.schemeLabel}`} crumbs={[...parentCrumbs, { label: recordLabel("Contract", contract.customerName, contract.productCode) }]} actions={actions?.(full)}>
+    <AdminPage anyOf={anyOf} title={recordLabel("Contract", contract.customerName, contract.productCode)} crumbs={[...parentCrumbs, { label: recordLabel("Contract", contract.customerName, contract.productCode) }]} actions={actions?.(full)}>
       {children(full)}
     </AdminPage>
   );
@@ -156,7 +157,7 @@ export function ContractTermsSection({ record }: { record: ContractRecord }) {
     { icon: Award, term: "Membership", value: membership ? <span>{humanize(membership.status)}{membership.cardId ? ` · Card ${membership.cardId}` : ""}{membership.financialHold ? " · Financial Hold" : ""}</span> : "Not created yet" },
   ];
   return (
-    <ContractCard icon={FileText} title="Contract terms" description="Fixed snapshot. Later catalog changes never alter this contract.">
+    <ContractCard icon={FileText} title="Contract terms">
       <dl className="contract-detail__terms tw:m-0 tw:flex tw:flex-col">
         {rows.map((row) => {
           const Icon = row.icon;
@@ -212,10 +213,7 @@ export function ContractScheduleSection({ record }: { record: ContractRecord }) 
                   <span aria-hidden="true" className="tw:flex tw:size-9 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-lg tw:bg-[var(--color-brand-soft)] tw:text-primary">
                     <FileText className="tw:size-5" strokeWidth={1.75} />
                   </span>
-                  <div className="tw:min-w-0">
-                    <h3 className="tw:text-sm tw:font-semibold tw:text-foreground">Installment Details</h3>
-                    <p className="tw:mt-0.5 tw:text-sm tw:text-muted-foreground">Payment information for this installment.</p>
-                  </div>
+                  <h3 className="tw:min-w-0 tw:text-sm tw:font-semibold tw:text-foreground">Installment Details</h3>
                 </div>
                 <dl className="tw:m-0 tw:mt-3 tw:flex tw:flex-col">
                   {sheetRows.map((item) => {
@@ -237,7 +235,7 @@ export function ContractScheduleSection({ record }: { record: ContractRecord }) 
         </SheetContent>
       </Sheet>
       <section className="tw:flex tw:flex-col tw:gap-4">
-        <AdminSectionHeading title="Payment schedule" description="Verified money is applied to the schedule in order. No penalty or interest is ever added." icon={CalendarDays} />
+        <AdminSectionHeading title="Payment schedule" icon={CalendarDays} />
         <DataTable data={schedule} columns={columns} getRowId={(row) => String(row.seq)} emptyText="No schedule." caption="Payment schedule" onRowOpen={setLine} getRowLabel={(row) => `Open ${row.label}`} rowActions={(row) => <RowActionsMenu itemName={row.label} onView={() => setLine(row)} />} />
       </section>
     </>
@@ -246,7 +244,7 @@ export function ContractScheduleSection({ record }: { record: ContractRecord }) 
 
 export function ContractMilestonesSection({ record }: { record: ContractRecord }) {
   return (
-    <AdminSection title="Collection milestones" description="Each step is separate: a verified payment never activates a membership.">
+    <AdminSection title="Collection milestones">
       <DetailList>
         {record.milestones.map((milestone) => (
           <DetailRow key={milestone.key} term={milestone.label}>
@@ -259,22 +257,72 @@ export function ContractMilestonesSection({ record }: { record: ContractRecord }
   );
 }
 
+/** Readable name for a ledger entry kind, shared by the table column, row label and details sheet. */
+function ledgerEntryLabel(kind: LedgerEntry["kind"]): string {
+  return kind === "payment" ? "Payment" : kind === "reversal" ? "Reversal" : "Refund";
+}
+
 export function ContractLedgerSection({ record }: { record: ContractRecord }) {
+  const { contract, payments, ledger } = record;
+  const [entry, setEntry] = useState<LedgerEntry | null>(null);
+  // A ledger row only carries its payment id; reference and status come from the payment itself.
+  const entryPayment = entry ? payments.find((payment) => payment.id === entry.paymentId) : undefined;
   const columns = useMemo<ColumnDef<LedgerEntry, unknown>[]>(
     () => [
       { id: "date", header: "Date", cell: ({ row }) => formatDate(row.original.date) },
-      { id: "event", header: "Entry", cell: ({ row }) => `${row.original.kind === "payment" ? "Payment" : row.original.kind === "reversal" ? "Reversal" : "Refund"} · ${row.original.label}` },
+      { id: "event", header: "Entry", cell: ({ row }) => ledgerEntryLabel(row.original.kind) },
+      { id: "purpose", header: "Purpose", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.label },
       { id: "amount", header: "Amount", cell: ({ row }) => <Money value={row.original.amountCentavos} /> },
-      { id: "net", header: "Net verified", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => <Money value={row.original.netCentavos} /> },
       { id: "balance", header: "Balance", cell: ({ row }) => <Money value={row.original.balanceCentavos} /> },
     ],
     [],
   );
   return (
-    <section className="tw:flex tw:flex-col tw:gap-4">
-      <AdminSectionHeading title="Payment ledger" description="Verified payments, reversals and refunds in date order. Original payments are never changed." />
-      <DataTable data={record.ledger} columns={columns} getRowId={(row) => `${row.paymentId}-${row.kind}-${row.date}-${row.netCentavos}`} emptyText="No verified payments yet." caption="Payment ledger" />
-    </section>
+    <>
+      <RecordDetailsSheet
+        open={entry !== null}
+        onClose={() => setEntry(null)}
+        title={entry ? `${ledgerEntryLabel(entry.kind)} · ${entry.label}` : "Ledger entry"}
+        subtitle={`${contract.customerName} · ${contract.productCode}`}
+        badge={entry ? <BizBadge status={entry.kind} label={ledgerEntryLabel(entry.kind)} /> : undefined}
+        sections={
+          entry
+            ? [
+                {
+                  title: "Ledger entry",
+                  rows: [
+                    { label: "Date", value: formatDate(entry.date) },
+                    { label: "Entry", value: ledgerEntryLabel(entry.kind) },
+                    { label: "Purpose", value: entry.label },
+                    { label: "Amount", value: <Money value={entry.amountCentavos} /> },
+                    { label: "Balance", value: <Money value={entry.balanceCentavos} /> },
+                    { label: "Net verified", value: <Money value={entry.netCentavos} /> },
+                  ],
+                },
+                {
+                  title: "Payment",
+                  rows: [
+                    { label: "Reference no.", value: entryPayment?.referenceNo ?? null },
+                    { label: "Status", value: entryPayment ? <BizBadge status={entryPayment.status} /> : null },
+                  ],
+                },
+              ]
+            : []
+        }
+      />
+      <section className="tw:flex tw:flex-col tw:gap-4">
+        <AdminSectionHeading title="Payment ledger" />
+        <DataTable
+          data={ledger}
+          columns={columns}
+          getRowId={(row) => `${row.paymentId}-${row.kind}-${row.date}-${row.netCentavos}`}
+          emptyText="No verified payments yet."
+          caption="Payment ledger"
+          onRowOpen={setEntry}
+          getRowLabel={(row) => `Open ${ledgerEntryLabel(row.kind).toLowerCase()} entry of ${formatDate(row.date)}`}
+        />
+      </section>
+    </>
   );
 }
 
@@ -286,7 +334,7 @@ export function ContractPaymentsSection({ record, actions }: { record: ContractR
       { id: "purpose", header: "Purpose", cell: ({ row }) => humanize(row.original.purpose) },
       { id: "amount", header: "Amount", cell: ({ row }) => <Money value={row.original.amountCentavos} /> },
       { id: "net", header: "Counted", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => <Money value={netVerifiedCentavos(row.original)} /> },
-      { id: "status", header: "Status", cell: ({ row }) => <div className="tw:flex tw:flex-col tw:gap-1"><BizBadge status={row.original.status} />{row.original.adjustments.length > 0 ? <span className="tw:text-xs tw:text-muted-foreground">{row.original.adjustments.length} adjustment(s)</span> : null}</div> },
+      { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
     ],
     [],
   );

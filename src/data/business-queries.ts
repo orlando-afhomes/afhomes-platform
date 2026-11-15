@@ -161,6 +161,9 @@ export function useContractAction() {
 export function useSales() {
   return useBusinessQuery("sales", (r, signal) => r.sales.list({ signal }));
 }
+export function useCorrectVipCommission() {
+  return useBusinessMutation((r, { id, ...input }: import("@/data/contracts/sale-repository").VipCommissionCorrection & { id: string }) => r.sales.correctCommission(id, input));
+}
 export function useApproveSale() {
   return useBusinessMutation((r, id: string) => r.sales.approve(id));
 }

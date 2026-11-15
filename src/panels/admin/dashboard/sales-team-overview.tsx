@@ -66,7 +66,6 @@ export function SalesTeamOverview({
     <DashboardCard
       icon={Network}
       title={showTeam ? "Team overview" : "Account overview"}
-      description={showTeam ? "Your account, authorized upline, and direct downline." : "Your account and authorized upline."}
       actions={actions}
     >
       {loading ? (

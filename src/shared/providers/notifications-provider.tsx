@@ -6,7 +6,9 @@ import { AUDIT_MODULES, type AuditEventView, type AuditModule } from "@/modules/
 import { useAuditEvents } from "@/data/queries";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { isCreationEvent } from "@/modules/notifications/creation-actions";
-import { MODULE_PRIMARY_NAV } from "@/modules/notifications/module-nav";
+import { MODULE_PRIMARY_NAV, modulesForNavKey } from "@/modules/notifications/module-nav";
+import { findSelectedKeys } from "@/panels/admin/components/admin-nav-match";
+import { adminNavigation, type AdminNavKey } from "@/panels/admin/navigation";
 
 export type NotificationsValue = {
   unreadTotal: number;
@@ -29,6 +31,9 @@ const EMPTY_NOTIFICATIONS: NotificationsValue = {
   markAllSeen: () => {},
 };
 
+/** Latched sequence number per audit module. */
+type SeenSeq = Record<AuditModule, number>;
+
 /** Sequence number of an audit event id (`audit-N`). Pure; unparseable ids sort as 0. */
 function seqOf(event: Pick<AuditEventView, "id">): number {
   const match = /(\d+)$/.exec(event.id);
@@ -36,14 +41,34 @@ function seqOf(event: Pick<AuditEventView, "id">): number {
 }
 
 /** Latch the newest seen sequence per module from the loaded items. Pure. */
-function latchSeen(items: readonly AuditEventView[]): Record<AuditModule, number> {
-  const seen = {} as Record<AuditModule, number>;
+function latchSeen(items: readonly AuditEventView[]): SeenSeq {
+  const seen = {} as SeenSeq;
   for (const auditModule of AUDIT_MODULES) seen[auditModule] = 0;
   for (const event of items) {
     const seq = seqOf(event);
     if (seq > (seen[event.module] ?? 0)) seen[event.module] = seq;
   }
   return seen;
+}
+
+/**
+ * Latch only the given modules to their newest loaded sequence; every other
+ * module keeps its marker, so badges outside the visited area stay unread.
+ * Pure (sequence numbers only).
+ */
+function latchModules(seen: SeenSeq, items: readonly AuditEventView[], auditModules: readonly AuditModule[]): SeenSeq {
+  if (auditModules.length === 0) return seen;
+  const next = { ...seen };
+  for (const auditModule of auditModules) {
+    let newest = next[auditModule] ?? 0;
+    for (const event of items) {
+      if (event.module !== auditModule) continue;
+      const seq = seqOf(event);
+      if (seq > newest) newest = seq;
+    }
+    next[auditModule] = newest;
+  }
+  return next;
 }
 
 /**
@@ -58,19 +83,31 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const denied = audit.isError;
   const currentPath = pathname ?? "/admin";
   const items = useMemo(() => audit.data?.items ?? [], [audit.data]);
+  // Audit modules whose badge renders on the area the current route selects.
+  const selectedModules = useMemo<AuditModule[]>(() => {
+    const modules = new Set<AuditModule>();
+    for (const navKey of findSelectedKeys(adminNavigation, currentPath) as AdminNavKey[]) {
+      for (const auditModule of modulesForNavKey(navKey)) modules.add(auditModule);
+    }
+    return [...modules];
+  }, [currentPath]);
 
   // Seen markers adjust during render (React's "adjust state when props
-  // change" pattern: conditioned on identity/path/first-data change, so no
-  // render loop; everything is pure, no clocks). Identity switch resets every
-  // marker (no cross-identity leaks); visiting a page re-latches to the loaded
-  // items so its modules read as seen.
-  const [tracker, setTracker] = useState(() => ({ identityId: identity.id, path: currentPath, seenSeq: null as Record<AuditModule, number> | null }));
-  const epochChanged = identity.id !== tracker.identityId || currentPath !== tracker.path;
-  // Latch once per epoch when data is first available (never on empty data,
-  // or every pre-existing record would badge). Later refetches with new
-  // events do not re-latch, so post-mount creations stay unread.
-  if ((epochChanged || tracker.seenSeq === null) && items.length > 0) {
-    setTracker({ identityId: identity.id, path: currentPath, seenSeq: latchSeen(items) });
+  // change" pattern: each branch is conditioned on a tracker field, so no
+  // render loop; everything is pure, no clocks).
+  // - First non-empty load: latch every module, so records that existed before
+  //   mount never badge. Later refetches do not re-latch (post-mount creations
+  //   stay unread).
+  // - Identity switch: re-latch every module (no cross-identity markers).
+  // - Path change: re-latch only the visited area's modules, so navigating
+  //   away from a badge does not mark that badge seen.
+  const [tracker, setTracker] = useState(() => ({ identityId: identity.id, path: currentPath, seenSeq: null as SeenSeq | null }));
+  if (items.length > 0) {
+    if (identity.id !== tracker.identityId || tracker.seenSeq === null) {
+      setTracker({ identityId: identity.id, path: currentPath, seenSeq: latchSeen(items) });
+    } else if (currentPath !== tracker.path) {
+      setTracker({ identityId: identity.id, path: currentPath, seenSeq: latchModules(tracker.seenSeq, items, selectedModules) });
+    }
   }
   const seenSeq = tracker.seenSeq;
 

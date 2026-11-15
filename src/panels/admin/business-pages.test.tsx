@@ -281,7 +281,8 @@ describe("business pages render for the intended roles", () => {
   it("lists contracts for review with a New contract action and a count footer", async () => {
     show("dev-admin", <SalesAreaPage />, "contracts");
     expect(await screen.findByRole("table", { name: "Contracts" })).toBeInTheDocument();
-    expect(await screen.findByRole("link", { name: "Rafael Domingo" })).toHaveAttribute("href", expect.stringMatching(/\/ctr-4$/));
+    expect(await screen.findByText("Rafael Domingo")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Rafael Domingo" })).toBeNull();
     expect(screen.getByRole("link", { name: /new contract/i })).toHaveAttribute("href", "/admin/customers/new");
     expect(document.querySelectorAll("tbody tr[data-row-key]")).toHaveLength(4);
     expect(screen.getByText("1–4", { selector: "span" }).parentElement).toHaveTextContent("Showing 1–4 of 4");
@@ -352,7 +353,7 @@ describe("business pages render for the intended roles", () => {
     show("dev-admin", <CustomersAreaPage />, "import-export");
     expect(await screen.findByRole("region", { name: "Import customers" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Export customers" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "XLSX template" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Download template" })).toBeInTheDocument();
     expect(screen.getByLabelText(/Customer file/)).toHaveAttribute("accept", ".xlsx,.csv");
   });
 
@@ -392,9 +393,15 @@ describe("business pages render for the intended roles", () => {
     expect(await screen.findByRole("table", { name: "Activation queue" })).toBeInTheDocument();
   });
 
-  it("shows Welcome Gift tranches and resort bill actions to Finance", async () => {
+  it("asks staff to pick a cardholder, then shows yearly gifts and resort bill actions to Finance", async () => {
+    const user = userEvent.setup();
     show("dev-finance", <StayPointsAreaPage />, "welcome-gift");
-    expect(await screen.findByRole("table", { name: "Annual Welcome Gift" })).toBeInTheDocument();
+    const search = await screen.findByRole("combobox", { name: /find a cardholder/i });
+    expect(search).toHaveAttribute("placeholder", "Search by name or card number");
+    expect(screen.getByText("Pick a cardholder to see their yearly gifts and points.")).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "Yearly gifts" })).toBeNull();
+    await pickFilteredOption(user, search, "Customer B", /Customer B One/);
+    expect(await screen.findByRole("table", { name: "Yearly gifts" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("tab", { name: "Resort bills" }));
     const bills = await screen.findByRole("table", { name: "Resort bills" });
     expect(screen.getByRole("button", { name: "Enter resort bill" })).toBeInTheDocument();
@@ -404,13 +411,19 @@ describe("business pages render for the intended roles", () => {
     expect(await screen.findByRole("button", { name: "Record refund" })).toBeInTheDocument();
   });
 
-  it("keeps Stay Points tables within five columns and shows the activation date in the points summary", async () => {
+  it("shows the cardholder summary, the payment hold alert and plain balance cards without a details button", async () => {
     const user = userEvent.setup();
     show("dev-finance", <StayPointsAreaPage />, "welcome-gift");
-    const tranches = await screen.findByRole("table", { name: "Annual Welcome Gift" });
+    await pickFilteredOption(user, await screen.findByRole("combobox", { name: /find a cardholder/i }), "Customer B", /Customer B One/);
+    const tranches = await screen.findByRole("table", { name: "Yearly gifts" });
     expect(within(tranches).getAllByRole("columnheader").length).toBeLessThanOrEqual(5);
-    await user.click(screen.getByRole("button", { name: "View full details" }));
-    expect(await screen.findByText("Points Activation Date")).toBeInTheDocument();
+    const summary = screen.getByLabelText("Cardholder summary");
+    expect(within(summary).getByText("Customer B One")).toBeInTheDocument();
+    expect(within(summary).getByText("Card claim date")).toBeInTheDocument();
+    expect(within(summary).getByText("Points start date")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("Points are paused: this account has a payment hold. New gifts and stays resume when the hold is cleared.");
+    for (const label of ["Weekday points available", "Weekend points available", "Gifts released", "Points used"]) expect(screen.getByText(label)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "View full details" })).toBeNull();
   });
 
   it("renders role-scoped reports", async () => {
@@ -1410,9 +1423,11 @@ describe("new customer unsaved changes", () => {
     await waitFor(() => expect(navigation.back).toHaveBeenCalledTimes(1));
 
     view.rerender(<Wrapper identityId="dev-super-admin"><CustomersAreaPage /></Wrapper>);
-    const draftLink = await screen.findByRole("link", { name: "Untitled draft" });
-    expect(draftLink.closest("tr")).toHaveTextContent("Draft");
-    const customerId = draftLink.getAttribute("href")!.split("/").at(-1);
+    const draftRow = await screen.findByRole("row", { name: /Untitled draft/ });
+    expect(draftRow).toHaveTextContent("Draft");
+    navigation.push.mockClear();
+    await user.click(draftRow);
+    const customerId = String(navigation.push.mock.calls.at(-1)?.[0]).split("/").at(-1);
     view.rerender(<Wrapper identityId="dev-super-admin"><CustomerFormPage customerId={customerId} /></Wrapper>);
     expect(await screen.findByRole("radio", { name: /silver vip/i })).toHaveAttribute("aria-checked", "true");
 

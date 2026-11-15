@@ -9,7 +9,7 @@ import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { AppToaster } from "@/shared/components/modern/app-toaster";
-import { StaffPage } from "./pages/staff-page";
+import { OrganizationAreaPage } from "./pages/organization-area-page";
 
 // Unified Staff & Access directory: account administration merged from the
 // former Accounts and Permissions page (chips, inline activation, system
@@ -22,7 +22,7 @@ function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
       <MockStoreProvider>
         <DevIdentityProvider initialIdentityId={identityId}>
           <AppToaster />
-          <StaffPage />
+          <OrganizationAreaPage />
         </DevIdentityProvider>
       </MockStoreProvider>
     </QueryClientProvider>
@@ -46,7 +46,7 @@ const closeDialog = async (user: User, name: string) => {
 
 async function ready(identityId?: string) {
   render(<TestWrapper identityId={identityId} />);
-  await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
+  await screen.findByRole("row", { name: /^Open HR Staff/ }, { timeout: 5000 });
   // Account-only rows appear once account policies load.
   if (identityId !== "dev-hr") await waitFor(() => expect(row("acct-pending")).not.toBeNull());
 }
@@ -75,7 +75,8 @@ describe("staff & access directory", () => {
     expect(row("acct-pending")).toBeNull();
     // HR still sees each linked account's status (account plus employment badge).
     await waitFor(() => expect(within(row("staff-1")!).getAllByText("Active")).toHaveLength(2));
-    expect(within(row("staff-2")!).getByText("No account")).toBeInTheDocument();
+    expect(within(row("staff-2")!).getAllByText("—").length).toBeGreaterThan(0);
+    expect(within(row("staff-2")!).queryByText("No account")).toBeNull();
   });
 
   it("gives HR suspend and deactivate shortcuts but no system-role actions", async () => {
@@ -103,9 +104,9 @@ describe("staff & access directory", () => {
     await ready();
     const buttonNames = (key: string) =>
       within(row(key)!).getAllByRole("button").map((button) => button.getAttribute("aria-label") ?? button.textContent);
-    // Only the name link and the menu trigger; Activate and Delete live in the menu.
-    expect(buttonNames("staff-1")).toEqual(["HR Staff", "Actions for HR Staff"]);
-    expect(buttonNames("acct-pending")).toEqual(["Pending User", "Actions for Pending User"]);
+    // Only the menu trigger (the name is plain text; the row opens the record). Activate and Delete live in the menu.
+    expect(buttonNames("staff-1")).toEqual(["Actions for HR Staff"]);
+    expect(buttonNames("acct-pending")).toEqual(["Actions for Pending User"]);
   });
 
   it("lists linked accounts once, on the employee row, and unlinked accounts as account-only rows", async () => {
@@ -208,7 +209,7 @@ describe("staff & access directory", () => {
   it("opens account actions from the employee profile for Admin", async () => {
     const user = userEvent.setup();
     await ready();
-    await user.click(within(row("staff-1")!).getAllByRole("button")[0]);
+    await user.click(row("staff-1")!);
     await screen.findByRole("dialog", { name: "Employee profile" });
     expect(screen.queryByRole("button", { name: "Suspend account" })).toBeNull();
     await user.click(await screen.findByRole("button", { name: "System roles" }));

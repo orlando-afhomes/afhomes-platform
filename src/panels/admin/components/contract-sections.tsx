@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState, type ReactNode } from "react";
-import { Award, Calendar, CalendarCheck, CalendarDays, Check, Clock, CreditCard, Diamond, FileText, IdCard, Layers, Receipt, Star, Tag, User, UserCheck, type LucideIcon } from "lucide-react";
+import { Award, Calendar, CalendarCheck, CalendarDays, Check, Clock, CreditCard, Diamond, FileText, Hourglass, IdCard, Layers, Receipt, Star, Tag, User, UserCheck, type LucideIcon } from "lucide-react";
 import { useContracts, useMemberships, usePayments } from "@/data/business-queries";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import type { PaymentView } from "@/data/contracts/payment-repository";
@@ -10,6 +10,7 @@ import { buildCollectionLedger, buildScheduleState, netVerifiedCentavos, outstan
 import type { ScheduleLineState } from "@/modules/finance/types";
 import type { AdminModuleId } from "@/modules/identity/permissions";
 import { manilaToday } from "@/shared/lib/dates";
+import { EMPTY } from "@/shared/lib/empty-value";
 import { formatDate } from "@/shared/lib/format-date";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import type { BreadcrumbItem } from "@/shared/components/modern/breadcrumbs";
@@ -17,7 +18,6 @@ import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table
 import { DetailList, DetailRow, InfoNote } from "@/shared/components/modern/detail-list";
 import { Money } from "@/shared/components/modern/money";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
-import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
 import { DetailSkeleton } from "@/shared/components/modern/skeletons";
 import { AdminPage, AdminSection, AdminSectionHeading, AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
@@ -133,7 +133,7 @@ export function ContractTermsSection({ record }: { record: ContractRecord }) {
   const rows: Array<{ icon: LucideIcon; term: string; value: ReactNode }> = [
     { icon: User, term: "Customer", value: contract.customerName },
     { icon: UserCheck, term: "Seller", value: contract.sellerName ?? "Company" },
-    { icon: Layers, term: "Plan", value: `${contract.productCode} · version ${contract.productConfigVersion} · ${contract.validityYears} years` },
+    { icon: Layers, term: "Plan", value: `${contract.productCode} · ${contract.validityYears} years` },
     { icon: CalendarDays, term: "Scheme", value: `${contract.schemeLabel}${contract.paymentCode ? ` (${contract.paymentCode})` : ""}` },
     ...(contract.arrangement
       ? [
@@ -149,12 +149,13 @@ export function ContractTermsSection({ record }: { record: ContractRecord }) {
       : []),
     { icon: Diamond, term: "Classification", value: contract.classification === "S" ? "Standard (S)" : "Non-Standard (N)" },
     { icon: Star, term: "Benefits", value: `${contract.benefits.vipDiscountPercent}% VIP discount · ${contract.benefits.lifetimePoints.toLocaleString("en-PH")} lifetime points · ${contract.benefits.pointsPerCycle.toLocaleString("en-PH")} per cycle` },
-    { icon: IdCard, term: "VIP Number", value: contract.vipNumber ?? "Not issued" },
+    { icon: IdCard, term: "VIP Number", value: contract.vipNumber ?? EMPTY },
     ...(contract.raNumber && contract.raNumber !== contract.vipNumber ? [{ icon: IdCard, term: "Historical RA number", value: contract.raNumber }] : []),
     { icon: Check, term: "Customer accepted", value: contract.customerAccepted ? "Yes" : "No" },
     { icon: CalendarCheck, term: "Finalized", value: formatDate(contract.finalizedAt) },
-    { icon: Receipt, term: "Sale", value: contract.sale ? <BizBadge status={contract.sale.status} /> : "Not recorded yet" },
-    { icon: Award, term: "Membership", value: membership ? <span>{humanize(membership.status)}{membership.cardId ? ` · Card ${membership.cardId}` : ""}{membership.financialHold ? " · Financial Hold" : ""}</span> : "Not created yet" },
+    { icon: Receipt, term: "Sale", value: contract.sale ? <BizBadge status={contract.sale.status} /> : EMPTY },
+    { icon: Hourglass, term: "Holds", value: contract.holds.length > 0 ? <ul className="tw:m-0 tw:list-disc tw:ps-5">{contract.holds.map((hold) => <li key={hold}>{hold}</li>)}</ul> : EMPTY },
+    { icon: Award, term: "Membership", value: membership ? <span>{humanize(membership.status)}{membership.cardId ? ` · Card ${membership.cardId}` : ""}{membership.financialHold ? " · Financial Hold" : ""}</span> : EMPTY },
   ];
   return (
     <ContractCard icon={FileText} title="Contract terms">
@@ -181,8 +182,8 @@ export function ContractScheduleSection({ record }: { record: ContractRecord }) 
   const [line, setLine] = useState<ScheduleLineState | null>(null);
   const columns = useMemo<ColumnDef<ScheduleLineState, unknown>[]>(
     () => [
-      { id: "label", header: "Installment", cell: ({ row }) => row.original.label },
-      { id: "due", header: "Due", cell: ({ row }) => (row.original.dueDate ? formatDate(row.original.dueDate) : "Date not set") },
+      { id: "label", header: "Installment", cell: ({ row }) => <span className="tw:font-semibold">{row.original.label}</span> },
+      { id: "due", header: "Due", cell: ({ row }) => (row.original.dueDate ? formatDate(row.original.dueDate) : EMPTY) },
       { id: "amount", header: "Amount", cell: ({ row }) => <Money value={row.original.amountCentavos} /> },
       { id: "paid", header: "Paid", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => <Money value={row.original.allocatedCentavos} /> },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
@@ -191,7 +192,7 @@ export function ContractScheduleSection({ record }: { record: ContractRecord }) 
   );
   const sheetRows: Array<{ icon: LucideIcon; label: string; value: ReactNode }> = line
     ? [
-        { icon: Calendar, label: "Due", value: line.dueDate ? formatDate(line.dueDate) : "Date not set" },
+        { icon: Calendar, label: "Due", value: line.dueDate ? formatDate(line.dueDate) : EMPTY },
         { icon: Layers, label: "Amount", value: <Money value={line.amountCentavos} /> },
         { icon: CreditCard, label: "Paid", value: <Money value={line.allocatedCentavos} /> },
         { icon: Layers, label: "Remaining", value: <Money value={line.amountCentavos - line.allocatedCentavos} /> },
@@ -236,7 +237,7 @@ export function ContractScheduleSection({ record }: { record: ContractRecord }) 
       </Sheet>
       <section className="tw:flex tw:flex-col tw:gap-4">
         <AdminSectionHeading title="Payment schedule" icon={CalendarDays} />
-        <DataTable data={schedule} columns={columns} getRowId={(row) => String(row.seq)} emptyText="No schedule." caption="Payment schedule" onRowOpen={setLine} getRowLabel={(row) => `Open ${row.label}`} rowActions={(row) => <RowActionsMenu itemName={row.label} onView={() => setLine(row)} />} />
+        <DataTable data={schedule} columns={columns} getRowId={(row) => String(row.seq)} emptyText="No schedule." caption="Payment schedule" onRowOpen={setLine} getRowLabel={(row) => `Open ${row.label}`} />
       </section>
     </>
   );
@@ -248,7 +249,7 @@ export function ContractMilestonesSection({ record }: { record: ContractRecord }
       <DetailList>
         {record.milestones.map((milestone) => (
           <DetailRow key={milestone.key} term={milestone.label}>
-            {milestone.date ? formatDate(milestone.date) : "Not yet"}
+            {milestone.date ? formatDate(milestone.date) : EMPTY}
             {milestone.note ? <span className="tw:text-muted-foreground"> · {milestone.note.replace(/\d{4}-\d{2}-\d{2}/, (date) => formatDate(date))}</span> : null}
           </DetailRow>
         ))}

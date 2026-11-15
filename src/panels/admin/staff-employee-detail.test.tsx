@@ -59,13 +59,13 @@ const section = (name: "profile" | "employment" | "access") =>
 
 async function ready(identityId: string) {
   render(<TestWrapper identityId={identityId} />);
-  await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
+  await screen.findByRole("row", { name: /^Open HR Staff/ }, { timeout: 5000 });
   if (identityId !== "dev-hr") await waitFor(() => expect(row("acct-pending")).not.toBeNull());
   else await waitFor(() => expect(within(row("staff-admin")!).getAllByText("Active")).toHaveLength(2));
 }
 
 async function openProfile(user: User, key: string) {
-  await user.click(within(row(key)!).getAllByRole("button")[0]);
+  await user.click(row(key)!);
   await screen.findByRole("dialog", { name: "Employee profile" });
 }
 

@@ -55,10 +55,10 @@ export function CommissionReportPanel() {
         <AdminStatCard loading={commissions.isLoading} error={commissions.error} label="Approved, unpaid" value={<Money value={approvedUnpaid} />} icon={Clock} tone="accent" />
       </AdminStatGrid>
       <ReportTable report="Commission Report" fileName="commissions" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => row.id} loading={commissions.isLoading} error={commissions.error} emptyText="No commissions match."
-        filters={<FilterBar search={search} onSearch={setSearch} searchLabel="Search commissions" filters={[
+        filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search commissions" filters={[
           { label: "Commission status filter", value: status, onChange: setStatus, options: optionsFrom("All statuses", inPeriod.map((item) => item.status), humanize) },
           { label: "Commission role filter", value: role, onChange: setRole, options: optionsFrom("All roles", inPeriod.map((item) => item.role), commissionRoleLabel) },
-        ]} />} />
+        ]}>{range.dateFields}{exportButton}</FilterBar>} />
     </ReportFrame>
   );
 }

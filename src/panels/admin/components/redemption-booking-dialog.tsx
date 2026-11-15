@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import type { RedemptionOverview } from "@/data/contracts/redemption-repository";
+import { useVipProducts } from "@/data/business-queries";
 import { useCreateRedemptionBooking } from "@/data/redemption-queries";
 import { priceStay, selectTableVersion } from "@/modules/redemption/rules";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
@@ -16,6 +17,7 @@ const fmt = (n: number) => n.toLocaleString("en-PH");
 /** Records a points booking for a cardholder (office staff entry, doc 10 section 9). */
 export function RedemptionBookingDialog({ open, overview, onClose }: { open: boolean; overview: RedemptionOverview; onClose: () => void }) {
   const create = useCreateRedemptionBooking();
+  const products = useVipProducts();
   const [requestId, setRequestId] = useState(newKey);
   const [membershipId, setMembershipId] = useState("");
   const [venueId, setVenueId] = useState("");
@@ -29,6 +31,7 @@ export function RedemptionBookingDialog({ open, overview, onClose }: { open: boo
   const [error, setError] = useState<string | undefined>();
 
   const member = overview.members.find((item) => item.membershipId === membershipId);
+  const allowsSupplementary = ((products.data ?? []).find((item) => item.code === member?.productCode)?.supplementaryHolders ?? 0) > 0;
   const version = member?.claimDate ? selectTableVersion(overview.tableVersions, member.claimDate) : null;
   const venues = overview.venues.filter((item) => item.status === "open");
   const rooms = version && venueId ? version.rows.filter((row) => row.venueId === venueId).map((row) => row.roomType) : [];
@@ -72,7 +75,7 @@ export function RedemptionBookingDialog({ open, overview, onClose }: { open: boo
       <StandardDateField label="Check-in" required value={checkIn} onChange={(value) => { setCheckIn(value); setCash([]); }} />
       <StandardDateField label="Departure" required value={checkOut} onChange={(value) => { setCheckOut(value); setCash([]); }} />
       <PointsField label="Guests" required value={guests} onChange={setGuests} />
-      <SelectField label="Staying cardholder" required value={holder} options={[{ value: "Primary cardholder", label: "Primary cardholder" }, ...(member?.productCode === "G1" ? [{ value: "Gold supplementary cardholder", label: "Gold supplementary cardholder" }] : [])]} onChange={setHolder} hint="A Gold supplementary cardholder uses the same points balance." />
+      <SelectField label="Staying cardholder" required value={holder} options={[{ value: "Primary cardholder", label: "Primary cardholder" }, ...(allowsSupplementary ? [{ value: "Gold supplementary cardholder", label: "Gold supplementary cardholder" }] : [])]} onChange={setHolder} hint="A Gold supplementary cardholder uses the same points balance." />
       {nights.length > 0 ? (
         <fieldset className="tw:flex tw:flex-col tw:gap-2">
           <legend className="tw:text-sm tw:font-medium">Nights paid in money instead of points (optional)</legend>
@@ -84,7 +87,7 @@ export function RedemptionBookingDialog({ open, overview, onClose }: { open: boo
       {cash.length > 0 ? <MoneyField label="Money part" required value={amount} onChange={setAmount} hint="Held as Pending Payment until Finance approves the receipt." /> : null}
       {pricing?.value ? (
         <p className="tw:rounded-md tw:bg-muted tw:p-3 tw:text-sm" aria-live="polite">
-          Points needed: {fmt(pricing.value.weekdayPoints)} weekday and {fmt(pricing.value.weekendPoints)} weekend{pricing.value.cashNights > 0 ? `; ${pricing.value.cashNights} night${pricing.value.cashNights === 1 ? "" : "s"} in money` : ""}. Points table version {version?.version}.
+          Points needed: {fmt(pricing.value.weekdayPoints)} weekday and {fmt(pricing.value.weekendPoints)} weekend{pricing.value.cashNights > 0 ? `; ${pricing.value.cashNights} night${pricing.value.cashNights === 1 ? "" : "s"} in money` : ""}. Points table {version ? `from ${formatDate(version.effectiveDate)}` : ""}.
         </p>
       ) : pricing?.message ? (
         <p className="tw:text-sm tw:text-muted-foreground" aria-live="polite">{pricing.message}</p>

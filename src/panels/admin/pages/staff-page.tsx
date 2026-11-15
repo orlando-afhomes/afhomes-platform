@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { ArrowDownAZ, ArrowUpAZ, Plus } from "lucide-react";
+import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
 import type { Account, AccountStatus } from "@/modules/accounts/types";
 import {
   useAccountPolicies,
@@ -26,11 +26,12 @@ import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/co
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { AdminPage } from "@/shared/components/admin";
 import { RowActionsMenu, type RowActionItem } from "@/shared/components/modern/row-actions-menu";
-import { StatusBadge } from "@/shared/components/modern/status-badge";
+import { StatusBadge, ToneBadge } from "@/shared/components/modern/status-badge";
 import { AppAlert } from "@/shared/components/modern/app-alert";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import { EMPTY } from "@/shared/lib/empty-value";
 import type { AccountDialogMode } from "./account-dialogs";
 import type { ProfileAccountActions } from "./staff-dialogs";
 import {
@@ -64,15 +65,18 @@ const STATUS_FILTER_ITEMS = [
   { value: "suspended", label: "Suspended" },
 ];
 
-const MUTED = "tw:text-muted-foreground";
-
 /**
  * Staff & Access: one directory for employees and their account access, plus
  * accounts no staff record links to. Account columns, chips, and actions
  * need the Accounts module (Admin/Super Admin); every action is filtered by
- * the actor's policy and re-checked by the repository.
+ * the actor's policy and re-checked by the repository. "Add staff" lives in the
+ * area page header, which passes `adding` down.
  */
-export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
+export function StaffPage({
+  embedded = false,
+  adding = false,
+  onAddingChange,
+}: { embedded?: boolean; adding?: boolean; onAddingChange?: (adding: boolean) => void } = {}) {
   const { identity } = useDevIdentity();
   const granted = useEffectiveModuleIds();
   const canManageAccounts = granted.has("accounts");
@@ -116,8 +120,10 @@ export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortAsc, setSortAsc] = useState(true);
-  const [staffDialog, setStaffDialog] = useState(false);
+  const [editDialog, setEditDialog] = useState(false);
   const [editStaffId, setEditStaffId] = useState<string | null>(null);
+  // A stale employee from an earlier edit must not leak into the add form.
+  if (adding && editStaffId !== null) setEditStaffId(null);
   const [profileStaffId, setProfileStaffId] = useState<string | null>(null);
   const [accountMode, setAccountMode] = useState<AccountDialogMode>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
@@ -161,9 +167,7 @@ export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
   const columns = useMemo<ColumnDef<AccessRow, unknown>[]>(() => {
     const accountPolicyFor = (id: string) => accountPolicies?.accounts[id] ?? null;
     const roleById = (id: string | null) => (id ? (roles.find((role) => role.id === id) ?? null) : null);
-    const departmentName = (id: string | null) => departments.find((dept) => dept.id === id)?.name ?? "No department";
-    const openRow = (row: AccessRow) =>
-      row.kind === "employee" ? setProfileStaffId(row.staff.id) : openAccount("view", row.account.id);
+    const departmentName = (id: string | null) => departments.find((dept) => dept.id === id)?.name ?? EMPTY;
 
     /** Role and status actions on a full account record, per the actor's account policy. */
     const accountItems = (account: Account | null): RowActionItem[] => {
@@ -194,6 +198,7 @@ export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
         title: `Activate ${account.displayName}?`,
         description: "The account gains access to its authorized modules immediately.",
         confirmText: "Activate",
+        tone: "success",
         action: async () => {
           await setAccountStatus({ id: account.id, status: "active" });
         },
@@ -206,7 +211,7 @@ export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
       const policy = account ? accountPolicyFor(account.id) : null;
       const activateItems: RowActionItem[] =
         account && account.status === "pending" && (policy?.allowedStatuses.includes("active") ?? false)
-          ? [{ key: "activate", label: "Activate", onClick: () => activate(account) }]
+          ? [{ key: "activate", label: "Activate", tone: "success", onClick: () => activate(account) }]
           : [];
       let menu = null;
       if (row.kind === "employee") {
@@ -219,7 +224,7 @@ export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
             items.push({
               key: status,
               label: LINKED_ACCOUNT_ACTION_LABELS[status],
-              danger: status !== "active",
+              tone: status === "active" ? "success" : "danger",
               onClick: () => confirmLinkedAccountStatus(confirmRun, member.displayName, status, () => setLinkedStatus({ staffId: member.id, status })),
             });
           }
@@ -227,10 +232,9 @@ export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
         menu = (
           <RowActionsMenu
             itemName={member.displayName}
-            onView={() => setProfileStaffId(member.id)}
             onEdit={() => {
               setEditStaffId(member.id);
-              setStaffDialog(true);
+              setEditDialog(true);
             }}
             extraItems={items}
             deleteDisabledReason={staffPolicy?.deleteRestriction}
@@ -240,7 +244,6 @@ export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
         menu = (
           <RowActionsMenu
             itemName={row.account.displayName}
-            onView={() => openAccount("view", row.account.id)}
             onEdit={policy.canEdit ? () => openAccount("edit", row.account.id) : undefined}
             extraItems={[...activateItems, ...accountItems(row.account)]}
             deleteDisabledReason={policy.deleteRestriction}
@@ -269,10 +272,10 @@ export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
           const accountPolicy = row.account ? accountPolicyFor(row.account.id) : null;
           const isYou = row.kind === "employee" ? identity.staffId === row.staff.id : Boolean(accountPolicy?.canEdit && accountPolicy.restriction);
           return (
-            <Button variant="link" className="tw:h-auto tw:min-h-11 tw:justify-start tw:p-0 tw:text-left tw:font-semibold tw:sm:min-h-0" onClick={() => openRow(row)}>
+            <span className="tw:font-semibold">
               {name}
               {isYou ? <span className="tw:font-normal tw:text-muted-foreground"> (You)</span> : null}
-            </Button>
+            </span>
           );
         },
       },
@@ -290,12 +293,12 @@ export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
         meta: SHOW_FROM_LG,
         cell: ({ row }) => {
           const record = row.original;
-          if (record.kind === "account") return <span className={MUTED}>No department role</span>;
+          if (record.kind === "account") return EMPTY;
           const role = roleById(record.staff.departmentRoleId);
           return role ? (
             <RoleBadge roleId={role.id} label={role.name} />
           ) : (
-            <span className="tw:text-warning">Unassigned</span>
+            <ToneBadge tone="warning">Unassigned</ToneBadge>
           );
         },
       },
@@ -307,7 +310,7 @@ export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
         meta: SHOW_FROM_SM,
         cell: ({ row }) => {
           const status: AccountStatus | null = accessRowAccountStatus(row.original);
-          return status ? <StatusBadge status={status} /> : <span className={MUTED}>No account</span>;
+          return status ? <StatusBadge status={status} /> : EMPTY;
         },
       },
       {
@@ -315,7 +318,7 @@ export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
         header: "Status",
         meta: SHOW_FROM_LG,
         cell: ({ row }) =>
-          row.original.kind === "employee" ? <StatusBadge status={row.original.staff.status} /> : <span className={MUTED}>No employment record</span>,
+          row.original.kind === "employee" ? <StatusBadge status={row.original.staff.status} /> : EMPTY,
       },
       {
         id: "actions",
@@ -374,17 +377,6 @@ export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
       anyOf={["staff"]}
       title="Staff & Access"
       crumbs={[{ label: "Organization" }, { label: "Staff & Access" }]}
-      actions={
-        <Button
-          className="tw:min-h-11 tw:sm:min-h-8"
-          onClick={() => {
-            setEditStaffId(null);
-            setStaffDialog(true);
-          }}
-        >
-          <Plus aria-hidden="true" /> Add staff
-        </Button>
-      }
     >
         <FilterBar
           header={
@@ -436,9 +428,10 @@ export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
         emptyText={chip === "pending" && canManageAccounts ? "No pending accounts." : "No staff or accounts found."}
         loading={loading}
         onRowOpen={(row) => (row.kind === "employee" ? setProfileStaffId(row.staff.id) : openAccount("view", row.account.id))}
+        getRowLabel={(row) => `Open ${row.kind === "employee" ? row.staff.displayName : row.account.displayName}`}
       />
       <StaffDialogs
-        open={staffDialog}
+        open={editDialog || adding}
         editStaff={editStaff}
         profileStaff={profileStaff}
         profileAccountActions={profileAccountActions}
@@ -447,9 +440,12 @@ export function StaffPage({ embedded = false }: { embedded?: boolean } = {}) {
         onOpenEdit={(member) => {
           setProfileStaffId(null);
           setEditStaffId(member.id);
-          setStaffDialog(true);
+          setEditDialog(true);
         }}
-        onCloseForm={() => setStaffDialog(false)}
+        onCloseForm={() => {
+          setEditDialog(false);
+          onAddingChange?.(false);
+        }}
         onCloseProfile={() => setProfileStaffId(null)}
       />
       {canManageAccounts ? (

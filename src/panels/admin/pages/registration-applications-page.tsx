@@ -21,7 +21,7 @@ import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { RecordDetailsSheet, type DetailSection } from "@/shared/components/modern/record-details-sheet";
-import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
+import { RowActionsMenu, type RowActionItem } from "@/shared/components/modern/row-actions-menu";
 import { ToneBadge, type BadgeTone } from "@/shared/components/modern/status-badge";
 import { StandardDateField } from "@/shared/forms/modern";
 import { formatDate } from "@/shared/lib/format-date";
@@ -82,7 +82,7 @@ function detailSections(application: RegistrationApplication, programOptions: Re
       title: "Application",
       rows: [
         { label: "Reference", value: <span className="tw:font-mono">{application.reference}</span> },
-        { label: "Version", value: application.version },
+        { label: "Submission number", value: application.version },
         { label: "Submitted", value: formatDate(application.submittedAt) },
         { label: "Sponsor", value: application.sponsorLabel },
         ...(application.decisionReason ? [{ label: application.status === "rejected" ? "Rejected because" : "Returned because", value: application.decisionReason }] : []),
@@ -107,7 +107,7 @@ function detailSections(application: RegistrationApplication, programOptions: Re
   }
   for (const version of application.versions.filter((item) => item.version < application.version).reverse()) {
     sections.push({
-      title: `Earlier version ${version.version}`,
+      title: `Earlier submission ${version.version}`,
       rows: [{ label: "Submitted", value: formatDate(version.submittedAt) }, ...applicantRows(version.applicant), { label: "Returned because", value: version.returnReason ?? "—" }],
     });
   }
@@ -147,19 +147,21 @@ export function RegistrationApplicationsPage({ embedded = false }: { embedded?: 
     setAction({ kind, id });
   };
 
-  const actionsFor = (item: RegistrationApplication) => {
+  // Colors follow purpose: Approve green, Return amber, Reject red; the check-and-complete step is the main action.
+  const actionsFor = (item: RegistrationApplication): RowActionItem[] => {
     const awaiting = isAwaitingOffice(item.status);
     return [
       ...(canReview && awaiting ? [{ key: "complete", label: item.completion ? "Update seller details" : "Check and complete", onClick: () => openAction("complete", item.id) }] : []),
-      ...(canDecide && item.status === "pending_review" ? [{ key: "approve", label: "Approve", onClick: () => openAction("approve", item.id) }] : []),
+      ...(canDecide && item.status === "pending_review" ? [{ key: "approve", label: "Approve", tone: "success" as const, onClick: () => openAction("approve", item.id) }] : []),
       ...(canDecide && awaiting
         ? [
-            { key: "return", label: "Return for correction", onClick: () => openAction("return", item.id) },
-            { key: "reject", label: "Reject", onClick: () => openAction("reject", item.id) },
+            { key: "return", label: "Return for correction", tone: "warning" as const, onClick: () => openAction("return", item.id) },
+            { key: "reject", label: "Reject", tone: "danger" as const, onClick: () => openAction("reject", item.id) },
           ]
         : []),
     ];
   };
+  const FOOTER_VARIANT = { complete: "default", approve: "success", return: "warning", reject: "destructive" } as const;
 
   const columns = useMemo<ColumnDef<RegistrationApplication, unknown>[]>(
     () => [
@@ -211,7 +213,7 @@ export function RegistrationApplicationsPage({ embedded = false }: { embedded?: 
         loading={applications.isLoading}
         onRowOpen={(item) => setDetailId(item.id)}
         getRowLabel={(item) => `Open application ${item.reference}`}
-        rowActions={(item) => <RowActionsMenu itemName={`application ${item.reference}`} onView={() => setDetailId(item.id)} extraItems={actionsFor(item)} />}
+        rowActions={(item) => <RowActionsMenu itemName={`application ${item.reference}`} extraItems={actionsFor(item)} />}
       />
       <RecordDetailsSheet
         open={detail !== null}
@@ -245,16 +247,25 @@ export function RegistrationApplicationsPage({ embedded = false }: { embedded?: 
         footer={
           detail ? (
             <>
-              {actionsFor(detail).map((item) => (
-                <Button key={item.key} type="button" variant={item.key === "reject" ? "destructive" : item.key === "approve" ? "default" : "outline"} onClick={item.onClick}>
-                  {item.label}
-                </Button>
-              ))}
+              {actionsFor(detail)
+                .filter((item) => item.key !== "reject")
+                .map((item) => (
+                  <Button key={item.key} type="button" variant={FOOTER_VARIANT[item.key as keyof typeof FOOTER_VARIANT]} onClick={item.onClick}>
+                    {item.label}
+                  </Button>
+                ))}
               {detail.status === "needs_info" && detail.correctionToken ? (
-                <Button type="button" variant="outline" onClick={() => void copyLink(detail.correctionToken as string)}>
+                <Button type="button" variant="info" onClick={() => void copyLink(detail.correctionToken as string)}>
                   Copy correction link
                 </Button>
               ) : null}
+              {actionsFor(detail)
+                .filter((item) => item.key === "reject")
+                .map((item) => (
+                  <Button key={item.key} type="button" variant="destructive" onClick={item.onClick}>
+                    {item.label}
+                  </Button>
+                ))}
             </>
           ) : undefined
         }
@@ -275,6 +286,7 @@ export function RegistrationApplicationsPage({ embedded = false }: { embedded?: 
         title="Approve this application?"
         description={`This creates the OST seller record under ${target?.sponsorLabel ?? "the sponsor"} and issues the AA number. The seller cannot sign in until an Administrator sets a temporary password.`}
         submitText="Approve and issue AA number"
+        submitVariant="success"
         pending={review.approve.isPending}
         error={approveError}
         onClose={() => setAction(null)}
@@ -287,7 +299,7 @@ export function RegistrationApplicationsPage({ embedded = false }: { embedded?: 
         title="Return for correction"
         description="The applicant gets a private link to fix this same application and send it again. Tell them what to fix."
         label="What the applicant should fix"
-        confirmText="Return application"
+        confirmText="Return application" tone="warning"
         successText="Application returned. Copy the correction link from the application to send it."
         onClose={() => setAction(null)}
         onSubmit={(reason) => review.returnForCorrection.mutateAsync({ id: action?.id ?? "", reason })}

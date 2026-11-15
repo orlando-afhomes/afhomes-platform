@@ -45,7 +45,13 @@ describe("dashboard metrics", () => {
     expect(countVisibleContracts([])).toBe(0);
   });
 
-  it("distributes contracts across the three active VIP tiers", () => {
+  const catalog = [
+    { code: "B1", tier: "Bronze", tierColorKey: "bronze" },
+    { code: "S1", tier: "Silver", tierColorKey: "silver" },
+    { code: "G1", tier: "Gold", tierColorKey: "gold" },
+  ];
+
+  it("distributes contracts across the catalog tiers", () => {
     const contracts = [
       { productCode: "B1", status: "finalized" },
       { productCode: "B1", status: "submitted" },
@@ -53,7 +59,7 @@ describe("dashboard metrics", () => {
       { productCode: "G1", status: "draft" },
       { productCode: "G1", status: "cancelled" },
     ] as Array<Pick<ContractView, "productCode" | "status">>;
-    const { total, rows } = contractTierDistribution(contracts);
+    const { total, rows } = contractTierDistribution(contracts, catalog);
     expect(total).toBe(4);
     expect(rows.map((row) => [row.code, row.label, row.count])).toEqual([
       ["B1", "Bronze", 2],
@@ -61,7 +67,16 @@ describe("dashboard metrics", () => {
       ["G1", "Gold", 1],
     ]);
     expect(rows.map((row) => row.share)).toEqual([50, 25, 25]);
-    expect(contractTierDistribution([]).rows.every((row) => row.count === 0 && row.share === 0)).toBe(true);
+    expect(contractTierDistribution([], catalog).rows.every((row) => row.count === 0 && row.share === 0)).toBe(true);
+  });
+
+  it("follows the catalog: a tier an Admin adds gets its own row and an empty catalog has none", () => {
+    const withPlatinum = [...catalog, { code: "P3", tier: "Platinum", tierColorKey: "neutral" }];
+    const { rows } = contractTierDistribution([{ productCode: "P3", status: "finalized" }] as Array<Pick<ContractView, "productCode" | "status">>, withPlatinum);
+    expect(rows.map((row) => [row.code, row.label, row.count, row.colorKey])).toEqual([
+      ["B1", "Bronze", 0, "bronze"], ["S1", "Silver", 0, "silver"], ["G1", "Gold", 0, "gold"], ["P3", "Platinum", 1, "neutral"],
+    ]);
+    expect(contractTierDistribution([]).rows).toEqual([]);
   });
 
   it("distributes only currently confirmed sales", () => {
@@ -71,7 +86,7 @@ describe("dashboard metrics", () => {
       { productCode: "B1", status: "pending" },
       { productCode: "S1", status: "cancelled" },
     ] as Array<Pick<SaleView, "productCode" | "status">>;
-    const { total, rows } = confirmedSalesTierDistribution(sales);
+    const { total, rows } = confirmedSalesTierDistribution(sales, catalog);
     expect(total).toBe(2);
     expect(rows.map((row) => row.count)).toEqual([1, 0, 1]);
   });

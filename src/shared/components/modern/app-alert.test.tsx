@@ -37,4 +37,14 @@ describe("AppAlert", () => {
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
     expect(onClose).not.toHaveBeenCalled();
   });
+  it("colors the confirm button by tone and keeps the default when none is given", async () => {
+    const { rerender } = render(<AppAlert open title="Approve it?" description="Go." confirmText="Approve" tone="success" onConfirm={() => undefined} onClose={() => undefined} cancelText="Cancel" />);
+    const alert = await screen.findByRole("alertdialog", { name: "Approve it?" });
+    expect(within(alert).getByRole("button", { name: "Approve" }).className).toContain("success");
+    rerender(<AppAlert open={false} title="Approve it?" description="Go." onConfirm={() => undefined} onClose={() => undefined} cancelText="Cancel" />);
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    render(<AppAlert open title="Plain?" description="Go." confirmText="Go on" onConfirm={() => undefined} onClose={() => undefined} cancelText="Cancel" />);
+    const plain = await screen.findByRole("alertdialog", { name: "Plain?" });
+    expect(within(plain).getByRole("button", { name: "Go on" }).className).not.toContain("success");
+  });
 });

@@ -65,3 +65,21 @@ describe("customer import", () => {
     expect(safeSpreadsheetText("Maria")).toBe("Maria");
   });
 });
+
+describe("customer import tier names", () => {
+  it("reads a product code or any tier level name from the catalog, including one an Admin added", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const platinum = await admin.tierLevels.create({ name: "Platinum", colorKey: "neutral" });
+    await admin.products.create({
+      code: "P3", name: "Platinum VIP", tierLevelId: platinum.id, priceCentavos: 60_000_000, validityYears: 22, earningCycles: 20, vipDiscountPercent: 30,
+      lifetimePoints: 600_000, pointsPerCycle: 30_000, weekdayPointsPerCycle: 20_000, weekendPointsPerCycle: 10_000, minSpendPerCycleCentavos: 400_000, supplementaryHolders: 0,
+    }, "Approved by memo");
+    const products = await admin.products.list();
+    const context = { existing: [], products, schemes: store.paymentSchemes };
+    const plans = buildImportRows([row({ "VIP tier": "bronze" }), row({ "VIP tier": "G1" }), row({ "VIP tier": "Platinum" }), row({ "VIP tier": "Diamond" })], context).map((item) => item.input.vipPlan);
+    expect(plans).toEqual(["B1", "G1", "P3", null]);
+    const [diamond] = buildImportRows([row({ "VIP tier": "Diamond" })], context);
+    expect(diamond.errors.join(" ")).toMatch(/tier level name \(Bronze, Silver, Gold, Platinum\)/);
+  });
+});

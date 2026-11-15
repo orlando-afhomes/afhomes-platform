@@ -1,26 +1,54 @@
 "use client";
 
+import { useState, type ReactNode } from "react";
+import { useOperation } from "@/data/business-queries";
 import { AreaPage } from "@/shared/components/admin";
+import { Button } from "@/shared/ui/button";
+import { Plus } from "lucide-react";
 import { ADMIN_AREA_TABS, type AdminAreaTabValue } from "../navigation";
 import { useAdminAreaTabAccess } from "../use-role-aware-navigation";
 import { StaffPage } from "./staff-page";
 import { DepartmentsPage } from "./departments-page";
 import { RolesPage } from "./roles-page";
-import { ListsPage } from "./lists-page";
-
-const panels = {
-  staff: StaffPage,
-  departments: DepartmentsPage,
-  roles: RolesPage,
-  lists: ListsPage,
-} satisfies Record<AdminAreaTabValue<"organization">, unknown>;
+import { LIST_TABS, ListsPage, type ListTabId } from "./lists-page";
 
 export function OrganizationAreaPage() {
   const access = useAdminAreaTabAccess("organization");
-  const tabs = ADMIN_AREA_TABS["organization"].map(({ value, label }) => {
-    const Panel = panels[value];
-    return { value, label, allowed: access[value], render: () => <Panel embedded /> };
-  });
+  const canManageLists = useOperation("settings.lists.manage");
+  const [addingStaff, setAddingStaff] = useState(false);
+  const [creatingDepartment, setCreatingDepartment] = useState(false);
+  const [creatingRole, setCreatingRole] = useState(false);
+  const [list, setList] = useState<ListTabId>("program-category");
+  const [addingListItem, setAddingListItem] = useState(false);
+  const panels: Record<AdminAreaTabValue<"organization">, () => ReactNode> = {
+    staff: () => <StaffPage embedded adding={addingStaff} onAddingChange={setAddingStaff} />,
+    departments: () => <DepartmentsPage embedded creating={creatingDepartment} onCreatingChange={setCreatingDepartment} />,
+    roles: () => <RolesPage embedded creating={creatingRole} onCreatingChange={setCreatingRole} />,
+    lists: () => <ListsPage embedded list={list} onListChange={setList} adding={addingListItem} onAddingChange={setAddingListItem} />,
+  };
+  const tabs = ADMIN_AREA_TABS["organization"].map(({ value, label }) => ({ value, label, allowed: access[value], render: panels[value] }));
+  const singular = (LIST_TABS.find((item) => item.value === list) ?? LIST_TABS[0]).singular;
 
-  return <AreaPage anyOf={["staff", "departments", "roles"]} title="Organization" tabs={tabs} />;
+  return (
+    <AreaPage
+      anyOf={["staff", "departments", "roles"]}
+      title="Organization"
+      tabs={tabs}
+      actions={(active) => {
+        if (active === "staff") return <AddButton onClick={() => setAddingStaff(true)}>Add staff</AddButton>;
+        if (active === "departments") return <AddButton onClick={() => setCreatingDepartment(true)}>Create department</AddButton>;
+        if (active === "roles") return <AddButton onClick={() => setCreatingRole(true)}>Create role</AddButton>;
+        if (active === "lists" && canManageLists) return <AddButton onClick={() => setAddingListItem(true)}>Add {singular}</AddButton>;
+        return null;
+      }}
+    />
+  );
+}
+
+function AddButton({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+  return (
+    <Button type="button" onClick={onClick}>
+      <Plus aria-hidden="true" /> {children}
+    </Button>
+  );
 }

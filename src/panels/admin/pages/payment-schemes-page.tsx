@@ -13,7 +13,7 @@ import { Money } from "@/shared/components/modern/money";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
-import { formatPeso } from "@/shared/lib/money";
+import { formatDate } from "@/shared/lib/format-date";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { matchesSearch } from "@/shared/lib/search";
 import { SchemeDialog } from "../components/vip-product-dialogs";
@@ -41,8 +41,8 @@ export function PaymentSchemesTab({ creating, onCloseCreate }: { creating: boole
   const schemeColumns = useMemo<ColumnDef<PaymentScheme, unknown>[]>(
     () => [
       { id: "label", header: "Scheme", cell: ({ row }) => <span className="tw:font-semibold">{row.original.label}</span> },
-      { id: "code", header: "Card code", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.paymentCode ?? (Object.values(row.original.paymentCodeByTier ?? {}).some(Boolean) ? "By plan" : "—") },
-      { id: "terms", header: "Terms", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => (row.original.commercialStatus === "configured" ? termsSummary(row.original) : "Not configured") },
+      { id: "code", header: "Card ID code", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.paymentCode ?? (Object.values(row.original.paymentCodeByTier ?? {}).some(Boolean) ? "Per tier" : null) },
+      { id: "terms", header: "Terms", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => (row.original.commercialStatus === "configured" ? termsSummary(row.original) : null) },
       { id: "state", header: "Status", cell: ({ row }) => <SchemeStatusBadge scheme={row.original} /> },
     ],
     [],
@@ -52,6 +52,7 @@ export function PaymentSchemesTab({ creating, onCloseCreate }: { creating: boole
     setSchemeOpen(true);
   };
   const schemeDetail = (schemes.data ?? []).find((item) => item.id === schemeId) ?? null;
+  const tierName = (tier: string) => (products.data ?? []).find((item) => item.code === tier)?.name ?? tier;
 
   return (
     <>
@@ -60,7 +61,7 @@ export function PaymentSchemesTab({ creating, onCloseCreate }: { creating: boole
             { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: [{ value: "all", label: "All statuses" }, { value: "available", label: "Available" }, { value: "unavailable", label: "Unavailable" }] },
             { label: "Tier filter", value: tierFilter, onChange: setTierFilter, options: [{ value: "all", label: "All tiers" }, ...tierOptions(products.data, schemes.data?.flatMap((item) => item.applicableTiers))] },
           ]} />
-          <DataTable data={visibleSchemes} columns={schemeColumns} getRowId={(row) => row.id} emptyText={(schemes.data ?? []).length === 0 ? "No schemes." : "No schemes match the filters."} caption="Payment schemes" onRowOpen={(row) => setSchemeId(row.id)} getRowLabel={(row) => `Open ${row.label}`} rowActions={(row) => <RowActionsMenu itemName={row.label} onView={() => setSchemeId(row.id)} onEdit={canManage ? () => openSchemeEditor(row) : undefined} />} />
+          <DataTable data={visibleSchemes} columns={schemeColumns} getRowId={(row) => row.id} emptyText={(schemes.data ?? []).length === 0 ? "No schemes." : "No schemes match the filters."} caption="Payment schemes" onRowOpen={(row) => setSchemeId(row.id)} getRowLabel={(row) => `Open ${row.label}`} rowActions={(row) => <RowActionsMenu itemName={row.label} onEdit={canManage ? () => openSchemeEditor(row) : undefined} />} />
         </QueryState>
       <RecordDetailsSheet
         open={schemeDetail !== null}
@@ -75,22 +76,25 @@ export function PaymentSchemesTab({ creating, onCloseCreate }: { creating: boole
                   title: "Terms",
                   rows: [
                     { label: "Category", value: humanize(schemeDetail.category) },
-                    { label: "Card code", value: schemeDetail ? cardCodeValue(schemeDetail) : "—" },
+                    { label: "Card ID code", value: schemeDetail.paymentCode },
+                    ...tierEntries(schemeDetail.paymentCodeByTier).map(([tier, value]) => ({ label: `${tierName(tier)} Card ID code`, value })),
                     { label: "Availability", value: humanize(schemeDetail.availability) },
-                    { label: "Terms status", value: schemeDetail.commercialStatus === "configured" ? "Configured" : "Pending owner decision" },
-                    { label: "Applies to", value: schemeDetail.applicableTiers.map((tier) => (products.data ?? []).find((item) => item.code === tier)?.name ?? tier).join(", ") },
-                    { label: "Summary", value: schemeDetail.commercialStatus === "configured" ? termsSummary(schemeDetail) : "Not configured" },
-                    { label: "Package price", value: schemePrices(schemeDetail) ?? "Catalog price" },
+                    { label: "Terms status", value: schemeDetail.commercialStatus === "configured" ? "Ready" : "Waiting for owner approval" },
+                    { label: "Applies to", value: schemeDetail.applicableTiers.map(tierName).join(", ") },
+                    { label: "Summary", value: schemeDetail.commercialStatus === "configured" ? termsSummary(schemeDetail) : null, wide: true },
+                    ...(tierEntries(schemeDetail.priceCentavosByTier).length > 0
+                      ? tierEntries(schemeDetail.priceCentavosByTier).map(([tier, value]) => ({ label: `${tierName(tier)} package price`, value: <Money value={value} /> }))
+                      : [{ label: "Package price", value: "Catalog price" }]),
                     { label: "Reservation fee", value: schemeDetail.reservationCentavos ? <Money value={schemeDetail.reservationCentavos} /> : null },
-                    { label: "Source", value: schemeDetail.source },
-                    { label: "Version", value: `v${schemeDetail.configVersion}${schemeDetail.effectiveDate ? ` · effective ${schemeDetail.effectiveDate}` : ""}` },
+                    { label: "Source", value: schemeDetail.source, wide: true },
+                    { label: "Effective from", value: schemeDetail.effectiveDate ? formatDate(schemeDetail.effectiveDate) : null },
                   ],
                 },
               ]
             : []
         }
-        history={schemeDetail ? schemeDetail.changes.map((item) => ({ key: `v${item.version}`, when: `Version ${item.version} · ${item.date}`, text: `${item.summary} (${item.reason})` })) : []}
-        footer={schemeDetail && canManage ? <Button type="button" variant="outline" onClick={() => { openSchemeEditor(schemeDetail); setSchemeId(null); }}><Pencil aria-hidden="true" /> Edit scheme</Button> : undefined}
+        history={schemeDetail ? schemeDetail.changes.map((item) => ({ key: `${item.date}-${item.version}`, when: `Changed on ${formatDate(item.date)}`, text: item.reason })) : []}
+        footer={schemeDetail && canManage ? <Button type="button" variant="warning" onClick={() => { openSchemeEditor(schemeDetail); setSchemeId(null); }}><Pencil aria-hidden="true" /> Edit scheme</Button> : undefined}
       />
       <SchemeDialog open={creating || schemeOpen} scheme={creating ? null : editingScheme} onClose={() => { setSchemeOpen(false); onCloseCreate(); }} />
     </>
@@ -102,17 +106,14 @@ function SchemeStatusBadge({ scheme }: { scheme: PaymentScheme }) {
   return scheme.commercialStatus === "configured" ? <BizBadge status={scheme.availability} /> : <BizBadge status={scheme.commercialStatus} label="Terms pending" />;
 }
 
-/** Card code display: the single code when present, else per-tier codes in B1/S1/G1 order, else an em dash. */
+/** Every card code of a scheme as one searchable text (the single code, or each tier code). */
 function cardCodeValue(scheme: Pick<PaymentScheme, "paymentCode"> & { paymentCodeByTier?: Partial<Record<VipTierCode, string>> }): string {
-  if (scheme.paymentCode) return scheme.paymentCode;
-  const entries = Object.keys(scheme.paymentCodeByTier ?? {})
-    .sort()
-    .map((tier) => (scheme.paymentCodeByTier?.[tier] ? `${tier} ${scheme.paymentCodeByTier[tier]}` : null))
-    .filter((entry): entry is string => entry !== null);
-  return entries.length > 0 ? entries.join(" · ") : "—";
+  return [scheme.paymentCode, ...tierEntries(scheme.paymentCodeByTier).map(([, code]) => code)].filter(Boolean).join(" ");
 }
 
-function schemePrices(scheme: PaymentScheme): string | null {
-  const entries = Object.entries(scheme.priceCentavosByTier);
-  return entries.length > 0 ? entries.map(([tier, amount]) => `${tier} ${formatPeso(amount ?? 0)}`).join(" · ") : null;
+/** Entries of a per-tier record that carry a value, in tier-code order. */
+function tierEntries<T>(byTier: Partial<Record<string, T>> | undefined): Array<[string, NonNullable<T>]> {
+  return Object.entries(byTier ?? {})
+    .sort(([a], [b]) => a.localeCompare(b))
+    .filter((entry): entry is [string, NonNullable<T>] => Boolean(entry[1]));
 }

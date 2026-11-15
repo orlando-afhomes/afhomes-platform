@@ -92,8 +92,9 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
     () =>
       toActivityEntries(
         buildActivityFeed({ customers: canSeeCustomers ? customers.data : [], contracts: contracts.data, sales: team }, 3),
+        products.data,
       ),
-    [canSeeCustomers, customers.data, contracts.data, team],
+    [canSeeCustomers, customers.data, contracts.data, team, products.data],
   );
   const contributions = useMemo(
     () => (isManager && valid ? teamContributions(members.data ?? [], memberId, sales.data ?? [], from, to) : []),

@@ -1,5 +1,6 @@
 "use client";
 
+import { EMPTY } from "@/shared/lib/empty-value";
 import { customerRecordName } from "@/modules/customers/rules";
 
 import { useMemo, useState } from "react";
@@ -80,11 +81,7 @@ export function CustomersTab() {
       {
         id: "name",
         header: "Customer",
-        cell: ({ row }) => (
-          <Link href={`/admin/customers/${row.original.id}`} className="tw:font-semibold tw:underline-offset-4 tw:hover:underline">
-            {customerRecordName(row.original)}
-          </Link>
-        ),
+        cell: ({ row }) => <span className="tw:font-semibold">{customerRecordName(row.original)}</span>,
       },
       { id: "plan", header: "VIP plan", cell: ({ row }) => (row.original.vipPlan ? humanize(row.original.vipPlan) : "—") },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
@@ -92,7 +89,7 @@ export function CustomersTab() {
         id: "owner",
         header: "Seller",
         meta: { className: "tw:hidden tw:sm:table-cell" },
-        cell: ({ row }) => (row.original.ownerMemberId ? (memberName.get(row.original.ownerMemberId) ?? "Unknown seller") : "Company"),
+        cell: ({ row }) => (row.original.ownerMemberId ? (memberName.get(row.original.ownerMemberId) ?? EMPTY) : "Company"),
       },
     ],
     [memberName],
@@ -127,7 +124,6 @@ export function CustomersTab() {
               row,
               { canManage, canDraft, canApprove, canPrepare, ownRecord: !row.restricted },
               {
-                onView: () => router.push(`/admin/customers/${row.id}`),
                 onEdit: () => router.push(`/admin/customers/${row.id}/edit`),
                 onDiscard: () => discard.mutateAsync(row.id),
                 onApprove: () => setReviewTarget({ customer: row, action: "approve" }),
@@ -144,7 +140,7 @@ export function CustomersTab() {
         open={reviewTarget?.action === "approve"}
         title="Approve this registration?"
         description="The customer registration is approved. This does not activate a VIP membership."
-        confirmText="Approve"
+        confirmText="Approve" tone="success"
         pending={approve.isPending}
         onClose={() => setReviewTarget(null)}
         onConfirm={() => {
@@ -168,7 +164,7 @@ export function CustomersTab() {
         open={reviewTarget?.action === "send_back"}
         title="Send back to the Clerk"
         description="The Clerk sees the reason and can fix and resubmit. Nothing is deleted."
-        confirmText="Send back"
+        confirmText="Send back" tone="warning"
         successText="Sent back to the Clerk."
         onClose={() => setReviewTarget(null)}
         onSubmit={(reason) => (reviewTarget ? sendBack.mutateAsync({ id: reviewTarget.customer.id, reason }) : Promise.reject(new Error("No customer selected.")))}

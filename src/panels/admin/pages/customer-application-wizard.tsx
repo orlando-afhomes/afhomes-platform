@@ -1,5 +1,6 @@
 "use client";
 
+import { EMPTY } from "@/shared/lib/empty-value";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -119,7 +120,7 @@ function pick(errors: CustomerErrors, keys: string[]): CustomerErrors {
 
 function addressLine(draft: CustomerDraft) {
   const a = draft.address;
-  return [a.street, a.barangay, a.city, a.province, a.postalCode].filter(Boolean).join(", ") || "Not provided";
+  return [a.street, a.barangay, a.city, a.province, a.postalCode].filter(Boolean).join(", ") || EMPTY;
 }
 
 function PriceConflictNote() {
@@ -135,7 +136,7 @@ function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="tw:flex tw:flex-col tw:gap-0.5">
       <dt className="tw:text-xs tw:font-medium tw:tracking-wide tw:text-muted-foreground tw:uppercase">{label}</dt>
-      {value ? <dd className="tw:text-sm tw:font-medium">{value}</dd> : <dd className="tw:text-sm tw:text-muted-foreground">Not provided</dd>}
+      {value ? <dd className="tw:text-sm tw:font-medium">{value}</dd> : <dd className="tw:text-sm tw:text-muted-foreground">{EMPTY}</dd>}
     </div>
   );
 }
@@ -705,7 +706,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
                 <span className="tw:text-xs tw:text-muted-foreground">Prepared {manilaToday()}</span>
               </div>
               <dl className="tw:grid tw:grid-cols-1 tw:gap-x-6 tw:gap-y-4 tw:sm:grid-cols-2">
-                <Row label="Customer ID" value={draft.customerNumber || "Assigned on submission"} />
+                <Row label="Customer ID" value={draft.customerNumber || EMPTY} />
                 <Row label="Applicant" value={[draft.firstName, draft.noMiddleName ? "" : draft.middleName, draft.lastName, draft.suffix].filter(Boolean).join(" ")} />
                 <Row label="Mobile number" value={draft.mobileNumber} />
                 <Row label="VIP card" value={product ? `${product.name} (${product.code}) · ${formatPeso(displayPriceFor(product, scheme))}` : ""} />

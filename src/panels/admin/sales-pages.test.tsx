@@ -41,14 +41,13 @@ describe("process pages are separated", () => {
     expect(screen.queryByRole("table", { name: "Contracts" })).toBeNull();
   });
 
-  it("Sales shows 5 columns and moves dates and reminders to View full details", async () => {
+  it("Sales shows 5 columns and opens the sale details from the row", async () => {
     const user = userEvent.setup();
     show("dev-admin", <SalesAreaPage />, "sales");
     const table = await screen.findByRole("table", { name: "Sales" });
     const headers = within(table).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter((text) => text && text !== "Actions");
-    expect(headers).toEqual(["Sale", "Customer", "Plan", "Seller", "Status"]);
-    await user.click(within(table).getAllByRole("button", { name: /^Actions for sale for/ })[0]);
-    await user.click(await screen.findByRole("menuitem", { name: "View full details" }));
+    expect(headers).toEqual(["Customer", "Sale", "Plan", "Seller", "Status"]);
+    await user.click(within(table).getAllByRole("row", { name: /^Open the sale for/ })[0]);
     const sheet = await screen.findByRole("dialog");
     expect(within(sheet).getByText("Recorded")).toBeInTheDocument();
     expect(within(sheet).getByText("Payment scheme")).toBeInTheDocument();

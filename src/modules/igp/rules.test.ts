@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatIgpSeriesNumber, igpPriceBand, igpChecklist, igpMilestones } from "./rules";
+import { buildJadNumber, defaultJadPrefix, formatIgpSeriesNumber, igpPriceBand, igpChecklist, igpMilestones, isValidJadNumber, jadNumberProblem } from "./rules";
 import type { Payment } from "@/modules/finance/types";
 
 describe("IGP numbering", () => {
@@ -14,6 +14,30 @@ describe("IGP numbering", () => {
     expect(() => formatIgpSeriesNumber({ ...input, priceCentavos: 900_000_001 })).toThrow(/₱9,000,000/);
     expect(() => formatIgpSeriesNumber({ ...input, date: "2026-02-29" })).toThrow(/date/);
     expect(() => formatIgpSeriesNumber({ ...input, sequence: 10_000 })).toThrow(/sequence/);
+  });
+});
+
+describe("JA&D accreditation number", () => {
+  it("builds the number from the type, the approval date and the typed last four digits", () => {
+    expect(buildJadNumber({ prefix: "JAI", approvedDate: "2026-11-15", sequence: "0001" })).toBe("JAI26110001");
+    expect(buildJadNumber({ prefix: "JAO", approvedDate: "2023-01-01", sequence: "1234" })).toBe("JAO23011234");
+    expect(() => buildJadNumber({ prefix: "JAI", approvedDate: "2026-11-15", sequence: "12" })).toThrow(/4 digits/);
+    expect(() => buildJadNumber({ prefix: "JAI", approvedDate: "2026-11-15", sequence: "12a4" })).toThrow(/4 digits/);
+    expect(() => buildJadNumber({ prefix: "", approvedDate: "2026-11-15", sequence: "0001" })).toThrow(/type/);
+    expect(() => buildJadNumber({ prefix: "JAI", approvedDate: "2026-02-30", sequence: "0001" })).toThrow(/date/);
+  });
+
+  it("accepts only JAI or JAO plus YYMM that matches the approval date, with a sequence other than 0000", () => {
+    expect(isValidJadNumber("JAI26110001", "2026-11-15")).toBe(true);
+    expect(isValidJadNumber("JAI26110001", "2026-12-01")).toBe(false);
+    expect(jadNumberProblem("JAI26110001", "2026-12-01")).toMatch(/match the approval date/);
+    for (const bad of ["JAX26110001", "JAI2611001", "JAI26130001", "JAI26110000", "jai26110001"]) expect(isValidJadNumber(bad, "2026-11-15")).toBe(false);
+  });
+
+  it("starts the type from the seller designation", () => {
+    expect(["SVD", "SSM", "SM"].map(defaultJadPrefix)).toEqual(["JAI", "JAI", "JAI"]);
+    expect(defaultJadPrefix("OST")).toBe("JAO");
+    expect(defaultJadPrefix(undefined)).toBe("");
   });
 });
 

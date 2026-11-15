@@ -1,6 +1,6 @@
 "use client";
 
-import { AppAlert } from "./app-alert";
+import { AppAlert, type ConfirmTone } from "./app-alert";
 
 /**
  * Controlled confirmation, shown with SweetAlert2 through the shared AppAlert.
@@ -14,6 +14,7 @@ export function ConfirmDialog({
   description,
   confirmText = "Confirm",
   danger = false,
+  tone,
   pending = false,
   onConfirm,
   onClose,
@@ -23,6 +24,7 @@ export function ConfirmDialog({
   description: string;
   confirmText?: string;
   danger?: boolean;
+  tone?: ConfirmTone;
   pending?: boolean;
   onConfirm: () => void;
   onClose: () => void;
@@ -35,6 +37,7 @@ export function ConfirmDialog({
       confirmText={confirmText}
       cancelText="Cancel"
       danger={danger}
+      tone={tone}
       pending={pending}
       onConfirm={onConfirm}
       onClose={onClose}

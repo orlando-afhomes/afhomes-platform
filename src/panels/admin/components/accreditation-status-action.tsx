@@ -1,5 +1,6 @@
 "use client";
 
+import { EMPTY } from "@/shared/lib/empty-value";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import { Check, ChevronDown } from "lucide-react";
@@ -67,7 +68,7 @@ export function AccreditationStatusAction({
   const [change, setChange] = useState<{ requested: AccreditationStatusRequest; needsReason: boolean; copy: ChangeCopy } | null>(null);
 
   if (state.kind === "none") {
-    if (!canEdit) return <ToneBadge>No record</ToneBadge>;
+    if (!canEdit) return <ToneBadge>{EMPTY}</ToneBadge>;
     return (
       <>
         <Button type="button" size="sm" variant="outline" loading={issuePending.isPending} disabled={busy} className="tw:min-h-11 tw:min-w-33 tw:sm:min-h-7" onClick={() => setCreateOpen(true)}>

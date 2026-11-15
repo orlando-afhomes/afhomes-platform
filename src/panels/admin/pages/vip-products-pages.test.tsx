@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
@@ -46,18 +47,35 @@ describe("VIP products pages split by process", () => {
     show(<VipProductsAreaPage />);
     const table = await screen.findByRole("table", { name: "VIP product catalog" });
     const headers = within(table).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter((text) => text && text !== "Actions");
-    expect(headers).toEqual(["Product", "Code", "Price", "Status", "Version"]);
+    expect(headers).toEqual(["Product", "Code", "Price", "Status", "Last updated"]);
     fireEvent.click(within(table).getByRole("row", { name: "Open Bronze VIP" }));
     const sheet = await screen.findByRole("dialog", { name: "Bronze VIP" });
     expect(within(sheet).getByText("VIP discount")).toBeInTheDocument();
     expect(within(sheet).getByText("Lifetime points")).toBeInTheDocument();
+    expect(within(sheet).queryByText(/version|v1/i)).toBeNull();
+    expect(within(sheet).getByRole("button", { name: "Edit product" })).toBeInTheDocument();
+    expect(within(sheet).getByRole("button", { name: "Make unavailable" })).toBeInTheDocument();
+  });
+
+  it("Make unavailable asks for a reason before retiring a product", async () => {
+    show(<VipProductsAreaPage />);
+    fireEvent.click(await screen.findByRole("row", { name: "Open Bronze VIP" }));
+    const sheet = await screen.findByRole("dialog", { name: "Bronze VIP" });
+    fireEvent.click(within(sheet).getByRole("button", { name: "Make unavailable" }));
+    expect(await screen.findByRole("dialog", { name: "Make Bronze VIP unavailable" })).toBeInTheDocument();
+  });
+
+  it("catalog rows open the details without a View full details item", async () => {
+    show(<VipProductsAreaPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Actions for Bronze VIP" }));
+    expect(screen.queryByText("View full details")).toBeNull();
   });
 
   it("scheme table shows one status badge per row", async () => {
     show(<VipProductsAreaPage />, "schemes");
     const table = await screen.findByRole("table", { name: "Payment schemes" });
     const headers = within(table).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter((text) => text && text !== "Actions");
-    expect(headers).toEqual(["Scheme", "Card code", "Terms", "Status"]);
+    expect(headers).toEqual(["Scheme", "Card ID code", "Terms", "Status"]);
     for (const row of within(table).getAllByRole("row").slice(1)) expect(within(row).getAllByText(/^(Available|Unavailable|Terms pending)$/)).toHaveLength(1);
   });
 
@@ -82,9 +100,68 @@ describe("VIP products pages split by process", () => {
     expect(screen.queryByRole("table", { name: "VIP product catalog" })).toBeNull();
   });
 
-  it("tier codes page lists the reserved codes", () => {
+  it("tier levels tab lists the managed levels and the codes that are not available", async () => {
     show(<VipProductsAreaPage />, "tier-codes");
-    for (const item of NON_ACTIVE_TIER_CODES) expect(screen.getByText(new RegExp(`^${item.code} ·`))).toBeInTheDocument();
+    expect(await screen.findByText("These codes cannot be used for new products.")).toBeInTheDocument();
+    const table = screen.getByRole("table", { name: "Tier codes that are not available" });
+    for (const item of NON_ACTIVE_TIER_CODES) expect(within(table).getByRole("cell", { name: item.code })).toBeInTheDocument();
+    expect(within(table).getAllByText("Held for future use")).toHaveLength(3);
+    expect(screen.queryByText(/\((Historical|Reserved)\)/)).toBeNull();
+    const levels = await screen.findByRole("table", { name: "VIP tier levels" });
+    expect(within(levels).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter((text) => text && text !== "Actions")).toEqual(["Name", "Color", "Products", "Status"]);
+    for (const name of ["Bronze", "Silver", "Gold"]) expect(await within(levels).findByRole("row", { name: `Open ${name}` })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Tier levels" })).toBeInTheDocument();
+  });
+
+  it("an admin adds a tier level, then picks it for a new product", async () => {
+    show(<VipProductsAreaPage />, "tier-codes");
+    fireEvent.click(await screen.findByRole("button", { name: /Add tier level/ }));
+    const dialog = await screen.findByRole("dialog", { name: "Add tier level" });
+    fireEvent.change(within(dialog).getByLabelText(/Name/), { target: { value: "Platinum" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add" }));
+    expect(await screen.findByRole("row", { name: "Open Platinum" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Products" }));
+    fireEvent.click(await screen.findByRole("button", { name: /New product/ }));
+    const form = await screen.findByRole("dialog", { name: "New product" });
+    await userEvent.setup().click(within(form).getByRole("combobox", { name: /Tier level/ }));
+    expect(await screen.findByRole("option", { name: "Platinum" })).toBeInTheDocument();
+  });
+
+  it("a used tier level cannot be deleted", async () => {
+    show(<VipProductsAreaPage />, "tier-codes");
+    fireEvent.click(await screen.findByRole("button", { name: "Actions for Bronze" }));
+    expect(await screen.findByText(/Delete unavailable: Products use this tier level/)).toBeInTheDocument();
+  });
+
+  it("the product form explains why a held or old code cannot be used", async () => {
+    show(<VipProductsAreaPage />);
+    fireEvent.click(await screen.findByRole("button", { name: /New product/ }));
+    const form = await screen.findByRole("dialog", { name: "New product" });
+    fireEvent.change(within(form).getByLabelText(/Product code/), { target: { value: "g2" } });
+    expect(await within(form).findByText("This code is held for future use and cannot be used yet.")).toBeInTheDocument();
+    fireEvent.change(within(form).getByLabelText(/Product code/), { target: { value: "B2" } });
+    expect(await within(form).findByText("This code was used before and is kept for old records.")).toBeInTheDocument();
+    expect(within(form).getByLabelText(/Description/)).toBeInTheDocument();
+    expect(within(form).getByLabelText("Upload product image file", { exact: false })).toBeInTheDocument();
+  });
+
+  it("scheme guide shows a comparison table by tier for each configured scheme", async () => {
+    show(<VipProductsAreaPage />, "scheme-guide");
+    expect(await screen.findByText("Spot Cash")).toBeInTheDocument();
+    const [first] = screen.getAllByRole("table");
+    expect(within(first).getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual(["Tier", "Total", "Reservation fee", "Balance"]);
+    expect(within(first).getByText("Bronze VIP")).toBeInTheDocument();
+  });
+
+  it("new scheme dialog groups each ticked tier into one card of three fields", async () => {
+    show(<VipProductsAreaPage />, "schemes");
+    await screen.findByRole("table", { name: "Payment schemes" });
+    fireEvent.click(await screen.findByRole("button", { name: /New scheme/ }));
+    const dialog = await screen.findByRole("dialog", { name: "New payment scheme" });
+    expect(within(dialog).queryByRole("group", { name: "B1 terms" })?.querySelector("input[type=text]")).toBeNull();
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^B1/ }));
+    const card = within(dialog).getByRole("group", { name: "B1 terms" });
+    for (const label of ["Package price", "Monthly installment", "Number of installments"]) expect(within(card).getByLabelText(label)).toBeInTheDocument();
   });
 
   it("opens the scheme guide when a seller follows the product catalog link", async () => {

@@ -3,7 +3,7 @@ import type { Customer } from "@/modules/customers/types";
 import type { OrgMember, Department, DepartmentRole, StaffMember } from "@/modules/organization/types";
 import type { AccreditationRecord, RegistrationApplication } from "@/modules/accreditation/types";
 import type { SeatVacancy } from "@/modules/sales-network/vacancy";
-import type { VipProduct, PaymentScheme } from "@/modules/vip/types";
+import type { VipProduct, PaymentScheme, TierLevel } from "@/modules/vip/types";
 import type { Contract } from "@/modules/contracts/types";
 import type { Sale } from "@/modules/sales/types";
 import type { Payment } from "@/modules/finance/types";
@@ -17,6 +17,7 @@ import { createStayPointsState } from "@/modules/stay-points/engine";
 import type { RedemptionState } from "@/modules/redemption/types";
 import { createRedemptionSeed } from "@/modules/redemption/sample-seed";
 import { seedOutlets, seedReferenceEntries, type Outlet, type ReferenceEntry } from "@/modules/settings/lists";
+import { seedTierLevels } from "@/modules/vip/tier-levels";
 import type { Account } from "@/modules/accounts/types";
 import type { Promo, PromoPointsEntry } from "@/modules/promos/types";
 import { seedPromos } from "@/modules/promos/sample-seed";
@@ -51,6 +52,8 @@ export type MockStore = {
   redemption: RedemptionState;
   /** Admin-managed lists (program categories, government ID types, banks) and outlets. */
   referenceEntries: ReferenceEntry[];
+  /** Admin-managed VIP tier levels (Bronze, Silver, Gold and later ones); products point to them. */
+  tierLevels: TierLevel[];
   outlets: Outlet[];
   /** Promo Points: admin-defined promos and their separate points ledger (not Grant Stay Points). */
   promos: Promo[];
@@ -112,6 +115,7 @@ export function createSeedStore(): MockStore {
     stayPoints: createStayPointsState(),
     redemption: createRedemptionSeed(),
     referenceEntries: seedReferenceEntries(),
+    tierLevels: seedTierLevels(),
     outlets: seedOutlets(),
     promos: seedPromos(),
     promoPoints: [],
@@ -173,6 +177,7 @@ export function createMockStore(seed: MockStore = createSeedStore()): MockStore 
     stayPoints: clone(seed.stayPoints),
     redemption: clone(seed.redemption),
     referenceEntries: seed.referenceEntries.map((item) => ({ ...item })),
+    tierLevels: seed.tierLevels.map((item) => ({ ...item })),
     outlets: seed.outlets.map((item) => ({ ...item })),
     promos: clone(seed.promos),
     promoPoints: clone(seed.promoPoints),

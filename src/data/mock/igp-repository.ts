@@ -5,7 +5,7 @@ import { getCurrentAccreditationRecord, getSellerStanding } from "@/modules/accr
 import { firstOpenDate } from "@/modules/finance/month-close";
 import { totalVerifiedCentavos } from "@/modules/finance/rules";
 import type { DevIdentity } from "@/modules/identity/types";
-import { formatIgpSeriesNumber, igpChecklist, igpPriceBand, isIgpDefaultReviewDue, jadAccreditationOn } from "@/modules/igp/rules";
+import { formatIgpSeriesNumber, igpChecklist, igpPriceBand, isIgpDefaultReviewDue, jadAccreditationOn, jadNumberProblem } from "@/modules/igp/rules";
 import type { IgpIntake, IgpSale } from "@/modules/igp/types";
 import { addYearsToDate, parseManilaDateOnly } from "@/shared/lib/dates";
 import { BusinessRepository, customerName, genealogyFor, nowIso, today } from "./business-base";
@@ -39,7 +39,7 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
         }).reverse(),
         buyers: canEnter ? this.store.customers.filter((customer) => customer.status === "approved" || customer.status === "active_member")
           .map(({ id, displayName }) => ({ value: id, label: displayName })) : [],
-        sellers: canEnter ? this.store.members.map(({ id, displayName }) => ({ value: id, label: displayName })) : [],
+        sellers: canEnter ? this.store.members.map(({ id, displayName, designation }) => ({ value: id, label: displayName, designation })) : [],
         accreditations: canEnter ? structuredClone(this.store.igp.accreditations) : [],
         thresholdBp: this.store.igp.thresholdBp,
       };
@@ -59,10 +59,9 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
     if (!this.store.members.some((member) => member.id === memberId)) throw new Error("Choose a seller.");
     businessDate(approvedDate, "JA&D approval date");
     const number = required(rawNumber, "the JA&D accreditation number").toUpperCase();
-    if (!/^JA[IO]\d{2}(0[1-9]|1[0-2])(?!0000)\d{4}$/.test(number)) {
-      throw new Error("Enter a JA&D number in JAI or JAO format followed by YYMM and four sequence digits.");
-    }
-    if (this.store.igp.accreditations.some((record) => record.number === number)) throw new Error("This JA&D number is already recorded.");
+    const problem = jadNumberProblem(number, approvedDate);
+    if (problem) throw new Error(problem);
+    if (this.store.igp.accreditations.some((record) => record.number === number)) throw new Error("This JA&D number is already on another accreditation. Check the number on the JA&D paper.");
     const previous = jadAccreditationOn(this.store.igp.accreditations, memberId, today());
     if (previous && previous.approvedDate >= approvedDate) throw new Error("The renewal date must be after the previous approval date.");
     this.store.igp.accreditations.push({ memberId, number, approvedDate, validUntil: addYearsToDate(approvedDate, 1)!, replaces: previous?.number ?? null });
@@ -86,8 +85,21 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
     return { jad, reminder: jad.validUntil < date ? { party: label, validUntil: jad.validUntil } : null };
   }
 
-  private prepare(identity: DevIdentity, input: IgpIntake, replaced?: IgpSale): IgpSale {
+  /** Names are copied onto the sale so later catalog changes never change it. A reissue on the same unit keeps the old copy. */
+  private catalogCopy(projectId: string, unitId: string, replaced?: IgpSale) {
+    if (replaced && replaced.projectId === projectId && replaced.unitId === unitId) {
+      return { project: replaced.project, unit: replaced.unit, propertyOwner: replaced.propertyOwner };
+    }
+    const project = this.store.igp.projects.find(({ id }) => id === projectId);
+    if (!project || project.status !== "active") throw new Error("Choose an active project.");
+    const unit = this.store.igp.units.find(({ id, projectId: owner }) => id === unitId && owner === projectId);
+    if (!unit || unit.status !== "active") throw new Error("Choose an active unit or lot of this project.");
+    return { project: project.name, unit: unit.unitOrLot, propertyOwner: unit.propertyOwner };
+  }
+
+  private prepare(identity: DevIdentity, input: Omit<IgpIntake, "project" | "unit" | "propertyOwner">, replaced?: IgpSale): IgpSale {
     businessDate(input.date, "issue date");
+    const copy = this.catalogCopy(input.projectId, input.unitId, replaced);
     igpPriceBand(input.priceCentavos);
     const month = input.date.slice(0, 7);
     const sequence = this.store.igp.sales.reduce((next, sale) => sale.date.startsWith(month) ? Math.max(next, sale.sequence + 1) : next, 1);
@@ -107,8 +119,7 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
     const commissionRates = freezeCommissionRates(this.store, "IGP", input.sellerMemberId, input.referrerMemberId);
     commissionRates.forEach(({ rateBp }) => commissionStageAmounts(input.priceCentavos, rateBp, "IGP"));
     return {
-      customerId: input.customerId, project: required(input.project, "the project"), unit: required(input.unit, "the unit or lot"),
-      propertyOwner: required(input.propertyOwner, "the property owner"), priceCentavos: input.priceCentavos, scheme: input.scheme,
+      customerId: input.customerId, projectId: input.projectId, unitId: input.unitId, ...copy, priceCentavos: input.priceCentavos, scheme: input.scheme,
       termMonths: input.termMonths, clauses: input.clauses, sellerMemberId: input.sellerMemberId,
       referrerMemberId: input.referrerMemberId, referralReference: input.referralReference?.trim(),
       entry: input.entry, date: input.date, id: `igp-${seriesNumber}`, sequence, seriesNumber,
@@ -140,7 +151,7 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
     this.requireManagement(identity);
     const reason = required(input.reason, "the reissue reason");
     if (input.date < sale.date) throw new Error("The new issue date cannot be before the old issue date.");
-    if (input.unit.trim() === sale.unit && input.project.trim() === sale.project && input.propertyOwner.trim() === sale.propertyOwner
+    if (input.unitId === sale.unitId && input.projectId === sale.projectId
       && igpPriceBand(input.priceCentavos) === igpPriceBand(sale.priceCentavos) && input.scheme === sale.scheme
       && input.termMonths === sale.termMonths && input.clauses === sale.clauses) throw new Error("Use a correction for a price change within the same band.");
     const next = this.prepare(identity, { ...sale, ...input, entry: sale.entry === "cts" && input.scheme === "C" ? "reservation" : sale.entry }, sale);

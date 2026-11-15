@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { ArrowDownAZ, ArrowUpAZ, Plus } from "lucide-react";
+import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
 import { useDepartments, useDeleteDepartment, useDepartmentRoles, useStaff } from "@/data/queries";
 import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
@@ -26,7 +26,12 @@ const DepartmentDialogs = dynamic(() => import("./department-dialogs").then((mod
   loading: () => null,
 });
 
-export function DepartmentsPage({ embedded = false }: { embedded?: boolean } = {}) {
+/** The area page owns "Create department" in the page header and passes `creating` down. */
+export function DepartmentsPage({
+  embedded = false,
+  creating = false,
+  onCreatingChange,
+}: { embedded?: boolean; creating?: boolean; onCreatingChange?: (creating: boolean) => void } = {}) {
   const departmentsQuery = useDepartments();
   const rolesQuery = useDepartmentRoles();
   const staffQuery = useStaff();
@@ -35,9 +40,11 @@ export function DepartmentsPage({ embedded = false }: { embedded?: boolean } = {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortAsc, setSortAsc] = useState(true);
-  const [deptDialog, setDeptDialog] = useState(false);
+  const [editDialog, setEditDialog] = useState(false);
   const [editDept, setEditDept] = useState<Department | null>(null);
   const [viewDept, setViewDept] = useState<Department | null>(null);
+  // A stale department from an earlier edit must not leak into the create form.
+  if (creating && editDept !== null) setEditDept(null);
 
   const departments = useMemo(() => departmentsQuery.data ?? [], [departmentsQuery.data]);
   const roles = useMemo(() => rolesQuery.data ?? [], [rolesQuery.data]);
@@ -66,13 +73,7 @@ export function DepartmentsPage({ embedded = false }: { embedded?: boolean } = {
       id: "name",
       header: "Name",
       cell: ({ row }) => (
-        <Button
-          variant="link"
-          className="tw:h-auto tw:min-h-11 tw:p-0 tw:font-semibold tw:sm:min-h-0"
-          onClick={() => setViewDept(row.original)}
-        >
-          {row.original.name}
-        </Button>
+        <span className="tw:font-semibold">{row.original.name}</span>
       ),
     },
     { id: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
@@ -84,10 +85,9 @@ export function DepartmentsPage({ embedded = false }: { embedded?: boolean } = {
       cell: ({ row }) => (
         <RowActionsMenu
           itemName={row.original.name}
-          onView={() => setViewDept(row.original)}
           onEdit={() => {
             setEditDept(row.original);
-            setDeptDialog(true);
+            setEditDialog(true);
           }}
           onDelete={() => removeDepartment(row.original.id)}
           deleteTitle={`Delete ${row.original.name}?`}
@@ -107,17 +107,6 @@ export function DepartmentsPage({ embedded = false }: { embedded?: boolean } = {
       anyOf={["departments"]}
       title="Departments"
       crumbs={[{ label: "Organization" }, { label: "Departments" }]}
-      actions={
-        <Button
-          className="tw:min-h-11 tw:sm:min-h-8"
-          onClick={() => {
-            setEditDept(null);
-            setDeptDialog(true);
-          }}
-        >
-          <Plus aria-hidden="true" /> Create department
-        </Button>
-      }
     >
       <FilterBar
         search={search}
@@ -140,13 +129,14 @@ export function DepartmentsPage({ embedded = false }: { embedded?: boolean } = {
         onRowOpen={(dept) => setViewDept(dept)}
       />
       <DepartmentDialogs
-        open={deptDialog}
+        open={editDialog || creating}
         editDept={editDept}
         viewDept={viewDept}
         roleCount={viewDept ? roleCountByDept(viewDept.id) : 0}
         staffCount={viewDept ? staffCountByDept(viewDept.id) : 0}
         onCloseForm={() => {
-          setDeptDialog(false);
+          setEditDialog(false);
+          onCreatingChange?.(false);
           setEditDept(null);
         }}
         onCloseView={() => setViewDept(null)}

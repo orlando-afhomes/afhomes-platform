@@ -3,8 +3,13 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCreatePaymentScheme, useCreateProduct, useUpdatePaymentScheme, useUpdateProduct, useVipProducts } from "@/data/business-queries";
-import { PRODUCT_TIER_LEVELS, type PaymentScheme, type VipProduct, type VipTierCode } from "@/modules/vip/types";
-import { CheckboxField, MoneyField, PointsField, SelectField, TextAreaField, TextField } from "@/shared/forms/modern";
+import { useTierLevels } from "@/data/tier-level-queries";
+import { productCodeError } from "@/modules/vip/rules";
+import { tierLevelOptions } from "@/modules/vip/tier-levels";
+import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
+import { manilaToday } from "@/modules/accreditation/dates";
+import { formatDate } from "@/shared/lib/format-date";
+import { CheckboxField, MoneyField, PointsField, ProfilePhotoUploader, SelectField, TextAreaField, TextField } from "@/shared/forms/modern";
 import { FormGrid } from "@/shared/components/modern/form-layout";
 import { centavosToInputText, formatIntegerInput, parsePercentToBasisPoints, parsePesoToCentavos } from "@/shared/lib/money";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
@@ -21,7 +26,7 @@ const toInt = (value: string) => {
 const groupedInt = (value: number) => formatIntegerInput(String(value));
 
 /**
- * Edit a VIP product (saving creates a new configuration version; finalized contracts keep their
+ * Edit a VIP product (saving records a new configuration version; finalized contracts keep their
  * snapshot), or, with `creating`, add a new one at version 1.
  */
 export function ProductDialog({ product, creating = false, onClose }: { product: VipProduct | null; creating?: boolean; onClose: () => void }) {
@@ -30,12 +35,22 @@ export function ProductDialog({ product, creating = false, onClose }: { product:
   return <ProductForm key={`${product.code}-${product.configVersion}`} product={product} onClose={onClose} />;
 }
 
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
 function ProductForm({ product, onClose }: { product: VipProduct | null; onClose: () => void }) {
   const update = useUpdateProduct();
   const create = useCreateProduct();
+  const products = useVipProducts();
+  const levels = useTierLevels();
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
-  const [tier, setTier] = useState<VipProduct["tier"]>("Bronze");
+  const [chosenLevelId, setChosenLevelId] = useState(product?.tierLevelId ?? "");
+  const [description, setDescription] = useState(product?.description ?? "");
+  const [benefits, setBenefits] = useState(product?.benefitsSummary ?? "");
+  const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl ?? null);
+  const [imageName, setImageName] = useState<string | null>(product?.imageFileName ?? null);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [price, setPrice] = useState(product ? toPesoText(product.priceCentavos) : "");
   const [validity, setValidity] = useState(product ? String(product.validityYears) : "");
   const [cycles, setCycles] = useState(product ? String(product.earningCycles) : "");
@@ -50,10 +65,33 @@ function ProductForm({ product, onClose }: { product: VipProduct | null; onClose
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | undefined>();
 
+  // Active levels, plus the level this product already has (a deactivated one stays visible on it).
+  const levelOptions = tierLevelOptions(levels.data ?? [], [product?.tierLevelId]);
+  const tierLevelId = chosenLevelId || levelOptions[0]?.value || "";
+  const existingCodes = (products.data ?? []).map((item) => item.code);
+  const codeIssue = !product && code.length === 2 ? productCodeError(code, existingCodes) : null;
+
+  const acceptImage = (file: File) => {
+    if (!IMAGE_TYPES.includes(file.type) || file.size > MAX_IMAGE_BYTES) {
+      setImageError("The image must be a JPEG, PNG or WebP file of 5MB or less.");
+      return;
+    }
+    setImageError(null);
+    // A saved product keeps its stored image link, so only an image picked in this form is released.
+    if (imageUrl && imageUrl !== product?.imageUrl && typeof URL.revokeObjectURL === "function") URL.revokeObjectURL(imageUrl);
+    setImageUrl(typeof URL.createObjectURL === "function" ? URL.createObjectURL(file) : null);
+    setImageName(file.name);
+  };
+
   const submit = async () => {
     const priceCentavos = parsePesoToCentavos(price);
     const minCentavos = parsePesoToCentavos(minSpend);
     const numbers = { validityYears: toInt(validity), earningCycles: toInt(cycles), vipDiscountPercent: toInt(discount), pointsPerCycle: toInt(perCycle), weekdayPointsPerCycle: toInt(weekday), weekendPointsPerCycle: toInt(weekend), lifetimePoints: toInt(lifetime), supplementaryHolders: toInt(holders) };
+    if (!product) {
+      const problem = productCodeError(code, existingCodes);
+      if (problem) return setError(problem);
+    }
+    if (!tierLevelId) return setError("Choose a tier level. Add one in the Tier levels tab if the list is empty.");
     if (priceCentavos === null || minCentavos === null || Object.values(numbers).some((value) => value === null)) {
       setError("Enter valid numbers in every field.");
       return;
@@ -62,12 +100,20 @@ function ProductForm({ product, onClose }: { product: VipProduct | null; onClose
       setError("A reason or management approval reference is required.");
       return;
     }
+    const text = { description: description.trim() || null, benefitsSummary: benefits.trim() || null };
     try {
       if (product) {
-        await update.mutateAsync({ code: product.code, reason, input: { priceCentavos, minSpendPerCycleCentavos: minCentavos, status, ...(numbers as Record<string, number>) } });
-        toast.success(`${product.name} updated to a new configuration version.`);
+        // Send only what differs, so an untouched optional field never counts as a change.
+        const optional = {
+          ...(tierLevelId !== product.tierLevelId ? { tierLevelId } : {}),
+          ...(text.description !== (product.description ?? null) ? { description: text.description } : {}),
+          ...(text.benefitsSummary !== (product.benefitsSummary ?? null) ? { benefitsSummary: text.benefitsSummary } : {}),
+          ...(imageUrl !== (product.imageUrl ?? null) ? { imageUrl, imageFileName: imageUrl ? imageName : null } : {}),
+        };
+        await update.mutateAsync({ code: product.code, reason, input: { priceCentavos, minSpendPerCycleCentavos: minCentavos, status, ...optional, ...(numbers as Record<string, number>) } });
+        toast.success(`${product.name} updated on ${formatDate(manilaToday())}.`);
       } else {
-        const input = { code: code.trim().toUpperCase(), name, tier, priceCentavos, minSpendPerCycleCentavos: minCentavos, ...(numbers as Record<keyof typeof numbers, number>) };
+        const input = { code: code.trim().toUpperCase(), name, tierLevelId, ...text, imageUrl, imageFileName: imageUrl ? imageName : null, priceCentavos, minSpendPerCycleCentavos: minCentavos, ...(numbers as Record<keyof typeof numbers, number>) };
         await create.mutateAsync({ reason, input });
         toast.success(`${name.trim()} added to the catalog.`);
       }
@@ -78,15 +124,32 @@ function ProductForm({ product, onClose }: { product: VipProduct | null; onClose
   };
 
   return (
-    <FormDialog open title={product ? `Edit ${product.name}` : "New product"} description={product ? "Signed contracts keep their original terms." : undefined} submitText={product ? "Save new version" : "Create product"} pending={update.isPending || create.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
+    <FormDialog open title={product ? `Edit ${product.name}` : "New product"} description={product ? "Signed contracts keep their original terms." : undefined} submitText={product ? "Save changes" : "Create product"} size="lg" pending={update.isPending || create.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
+      <ProfilePhotoUploader
+        label="Product image"
+        document
+        value={imageUrl}
+        fileName={imageName}
+        onSelect={acceptImage}
+        onClear={() => {
+          if (imageUrl && imageUrl !== product?.imageUrl && typeof URL.revokeObjectURL === "function") URL.revokeObjectURL(imageUrl);
+          setImageUrl(null);
+          setImageName(null);
+        }}
+        error={imageError}
+        ariaLabel="Upload product image"
+        uploadLabel="Upload image"
+        previewAlt="Product image preview"
+        hint="JPEG, PNG or WebP, up to 5MB. Optional."
+      />
       <FormGrid>
         {product ? null : (
           <>
-            <TextField label="Product code" required value={code} onChange={(value) => setCode(value.toUpperCase())} maxLength={2} hint="One letter and one digit, for example B3. It cannot be changed later." />
+            <TextField label="Product code" required value={code} onChange={(value) => { setCode(value.toUpperCase()); setError(undefined); }} maxLength={2} error={codeIssue ?? undefined} hint="One letter and one digit, for example B3. It cannot be changed later." />
             <TextField label="Product name" required value={name} onChange={setName} />
-            <SelectField label="Tier level" required value={tier} options={PRODUCT_TIER_LEVELS.map((level) => ({ value: level, label: level }))} onChange={(value) => setTier(value)} />
           </>
         )}
+        <SelectField label="Tier level" required value={tierLevelId || undefined} options={levelOptions} onChange={setChosenLevelId} placeholder="Choose a tier level" hint="Tier levels are managed in the Tier levels tab." />
         <MoneyField label="Price" required value={price} onChange={setPrice} hint={product?.priceStatus === "conflict" ? "Source conflict: correcting the price needs management approval." : undefined} />
         <TextField label="Validity (years)" required inputMode="numeric" value={validity} onChange={setValidity} />
         <TextField label="Earning cycles" required inputMode="numeric" value={cycles} onChange={setCycles} />
@@ -99,6 +162,8 @@ function ProductForm({ product, onClose }: { product: VipProduct | null; onClose
         <TextField label="Supplementary holders" required inputMode="numeric" value={holders} onChange={setHolders} />
         {product ? <SelectField label="Availability" value={status} options={[{ value: "active", label: "Active" }, { value: "retired", label: "Retired" }]} onChange={(value) => setStatus(value)} hint="A product that has been used can only be retired." /> : null}
       </FormGrid>
+      <TextAreaField label="Description" value={description} onChange={setDescription} hint="Optional. Up to 500 characters." />
+      <TextAreaField label="Other benefits" value={benefits} onChange={setBenefits} hint="Optional. Benefits beyond the discount and Stay Points above, in plain words." />
       <TextAreaField label="Reason or approval reference" required value={reason} onChange={setReason} />
     </FormDialog>
   );
@@ -179,12 +244,12 @@ function SchemeForm({ scheme, onClose }: { scheme: PaymentScheme | null; onClose
   };
 
   return (
-    <FormDialog open title={scheme ? `Edit ${scheme.label}` : "New payment scheme"} description="A scheme with incomplete terms stays unavailable." submitText="Save scheme" pending={pending} error={error} onClose={onClose} onSubmit={() => void submit()}>
+    <FormDialog open title={scheme ? `Edit ${scheme.label}` : "New payment scheme"} description="A scheme with incomplete terms stays unavailable." submitText="Save scheme" size="lg" pending={pending} error={error} onClose={onClose} onSubmit={() => void submit()}>
       <FormGrid>
-        <TextField label="Scheme name" required value={label} onChange={setLabel} />
+        <TextField label="Scheme name" required value={label} onChange={setLabel} hint="The name sellers see when choosing a plan." />
         <TextField label="Card ID payment code" value={code} onChange={setCode} hint="For example C01 or T04." maxLength={3} />
-        <MoneyField label="Reservation fee" value={reservation} onChange={setReservation} />
-        <TextField label="Number of monthly installments" inputMode="numeric" value={count} onChange={setCount} hint="Leave blank when the count differs by tier." />
+        <MoneyField label="Reservation fee" value={reservation} onChange={setReservation} hint="Paid first and counted in the total." />
+        <TextField label="Number of installments" inputMode="numeric" value={count} onChange={setCount} hint="Leave blank when the count differs by tier." />
         <TextField label="Down payment (% of price)" inputMode="decimal" value={downPercent} onChange={setDownPercent} hint="Includes the reservation fee. Leave blank when there is none." />
       </FormGrid>
       {isMove ? (
@@ -197,16 +262,24 @@ function SchemeForm({ scheme, onClose }: { scheme: PaymentScheme | null; onClose
           </div>
         </fieldset>
       ) : null}
-      <fieldset className="tw:flex tw:flex-col tw:gap-2">
-        <legend className="tw:text-sm tw:font-medium">Applicable tiers, package price and monthly installment</legend>
-        {tierCodesList.map((tier) => (
-          <div key={tier} className="tw:grid tw:grid-cols-1 tw:gap-2 tw:sm:grid-cols-2 tw:lg:grid-cols-4 tw:sm:items-end">
-            <CheckboxField label={tier} checked={tiers.includes(tier)} onChange={(checked) => setTiers((current) => (checked ? [...current, tier] : current.filter((item) => item !== tier)))} />
-            {tiers.includes(tier) ? <MoneyField label={`${tier} package price`} hint="Leave blank to use the catalog price." value={prices[tier] ?? ""} onChange={(value) => setPrices((current) => ({ ...current, [tier]: value }))} /> : null}
-            {tiers.includes(tier) ? <MoneyField label={`${tier} monthly installment`} value={amounts[tier] ?? ""} onChange={(value) => setAmounts((current) => ({ ...current, [tier]: value }))} /> : null}
-            {tiers.includes(tier) ? <TextField label={`${tier} number of installments`} inputMode="numeric" hint="Only when it differs from the scheme count." value={tierCounts[tier] ?? ""} onChange={(value) => setTierCounts((current) => ({ ...current, [tier]: value }))} /> : null}
-          </div>
-        ))}
+      <fieldset className="tw:flex tw:flex-col tw:gap-3">
+        <legend className="tw:mb-1 tw:text-sm tw:font-medium">Tiers this scheme applies to</legend>
+        {tierCodesList.map((tier) => {
+          const selected = tiers.includes(tier);
+          const tierName = (products.data ?? []).find((item) => item.code === tier)?.name;
+          return (
+            <div key={tier} role="group" aria-label={`${tier} terms`} className={`tw:flex tw:flex-col tw:gap-3 tw:rounded-lg tw:border tw:p-3 ${selected ? "tw:border-primary/40 tw:bg-primary/5" : "tw:border-border"}`}>
+              <CheckboxField label={tierName ? `${tier} · ${tierName}` : tier} checked={selected} onChange={(checked) => setTiers((current) => (checked ? [...current, tier] : current.filter((item) => item !== tier)))} />
+              {selected ? (
+                <div className="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-3 tw:sm:items-start">
+                  <MoneyField label="Package price" hint="Leave blank to use the catalog price." value={prices[tier] ?? ""} onChange={(value) => setPrices((current) => ({ ...current, [tier]: value }))} />
+                  <MoneyField label="Monthly installment" hint="Amount paid each month." value={amounts[tier] ?? ""} onChange={(value) => setAmounts((current) => ({ ...current, [tier]: value }))} />
+                  <TextField label="Number of installments" inputMode="numeric" hint="Only when different from the scheme." value={tierCounts[tier] ?? ""} onChange={(value) => setTierCounts((current) => ({ ...current, [tier]: value }))} />
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
       </fieldset>
       {scheme ? <TextAreaField label="Reason or approval reference" required value={reason} onChange={setReason} /> : null}
     </FormDialog>

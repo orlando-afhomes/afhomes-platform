@@ -12,11 +12,11 @@ import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
-import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
+import { Percent } from "lucide-react";
 import { SelectField, TextField } from "@/shared/forms/modern";
 
 const columns: ColumnDef<CommissionRateDirectory["rates"][number], unknown>[] = [
-  { header: "Seller", accessorKey: "memberName" },
+  { header: "Seller", cell: ({ row }) => <span className="tw:font-semibold">{row.original.memberName}</span> },
   { header: "Product", accessorKey: "product" },
   { header: "Type", cell: ({ row }) => commissionRoleLabel(row.original.role) },
   { header: "Approved rate", cell: ({ row }) => formatBasisPoints(row.original.rateBp) },
@@ -59,20 +59,27 @@ export function CommissionRatesPanel({ editing, onEditingChange }: { editing: bo
       <QueryState isLoading={query.isLoading} error={query.error}>
         <DataTable data={rates} columns={columns} caption="Approved seller rates"
           emptyText={(query.data?.rates ?? []).length === 0 ? "No approved rates recorded." : "No rates match the filters."} getRowId={rateKey}
-          onRowOpen={(row) => setDetailKey(rateKey(row))} getRowLabel={(row) => `Open rate for ${row.memberName}`}
-          rowActions={(row) => <RowActionsMenu itemName={`rate for ${row.memberName}`} onView={() => setDetailKey(rateKey(row))} />} />
+          onRowOpen={(row) => setDetailKey(rateKey(row))} getRowLabel={(row) => `Open rate for ${row.memberName}`} />
       </QueryState>
       <RecordDetailsSheet open={detail !== null} onClose={() => setDetailKey(null)} title={detail ? detail.memberName : "Commission rate"}
-        sections={detail ? [{
-          title: "Rate",
-          rows: [
-            { label: "Product", value: detail.product },
-            { label: "Commission type", value: `${commissionRoleLabel(detail.role)} (${detail.role})` },
-            { label: "Approved rate", value: formatBasisPoints(detail.rateBp) },
-            { label: "Standard rate", value: detail.standardRateBp === null ? "Not recorded" : formatBasisPoints(detail.standardRateBp) },
-            { label: "Exception", value: isException(detail) ? "Yes" : "No" },
-          ],
-        }] : []} />
+        icon={<Percent />}
+        sections={detail ? [
+          {
+            title: "Commission",
+            rows: [
+              { label: "Product", value: detail.product },
+              { label: "Commission type", value: `${commissionRoleLabel(detail.role)} (${detail.role})` },
+            ],
+          },
+          {
+            title: "Rate",
+            rows: [
+              { label: "Approved rate", value: formatBasisPoints(detail.rateBp) },
+              { label: "Standard rate", value: detail.standardRateBp === null ? null : formatBasisPoints(detail.standardRateBp) },
+              { label: "Exception", value: isException(detail) ? "Yes" : "No" },
+            ],
+          },
+        ] : []} />
       {editing && query.data ? <RateDialog directory={query.data} onClose={() => onEditingChange(false)} /> : null}
     </>
   );

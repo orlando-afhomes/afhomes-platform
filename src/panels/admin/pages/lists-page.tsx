@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useOperation } from "@/data/business-queries";
 import {
@@ -23,12 +22,12 @@ import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { SelectField, TextField } from "@/shared/forms/modern";
-import { Button } from "@/shared/ui/button";
 import { humanize } from "@/shared/lib/humanize";
 
-type TabId = "program-category" | "gov-id-type" | "bank" | "outlet";
+export type ListTabId = "program-category" | "gov-id-type" | "bank" | "outlet";
+type TabId = ListTabId;
 
-const TABS: Array<{ value: TabId; label: string; singular: string }> = [
+export const LIST_TABS: Array<{ value: TabId; label: string; singular: string }> = [
   ...REFERENCE_LISTS.map((list) => ({ value: list.id as TabId, label: list.label, singular: list.singular })),
   { value: "outlet", label: "Outlets", singular: "outlet" },
 ];
@@ -44,7 +43,24 @@ type ListRow = { id: string; name: string; detail: string; status: ListEntryStat
 
 const typeLabel = (type: OutletType) => OUTLET_TYPES.find((item) => item.value === type)?.label ?? humanize(type);
 
-export function ListsPage({ embedded = false }: { embedded?: boolean } = {}) {
+/**
+ * The area page owns the "Add" button in the page header, so it also owns which
+ * list is shown (the button label names it) and whether the add dialog is open.
+ * Rendered without them, the page keeps that state itself.
+ */
+export function ListsPage({
+  embedded = false,
+  list,
+  onListChange,
+  adding = false,
+  onAddingChange,
+}: {
+  embedded?: boolean;
+  list?: TabId;
+  onListChange?: (list: TabId) => void;
+  adding?: boolean;
+  onAddingChange?: (adding: boolean) => void;
+} = {}) {
   const canManage = useOperation("settings.lists.manage");
   const entriesQuery = useReferenceEntries();
   const outletsQuery = useOutlets();
@@ -56,14 +72,17 @@ export function ListsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const deleteOutlet = useDeleteOutlet();
   const { confirmRun, dialog: confirmDialog } = useConfirmRun();
 
-  const [tab, setTab] = useState<TabId>("program-category");
+  const [localTab, setLocalTab] = useState<TabId>("program-category");
+  const tab = list ?? localTab;
+  const setTab = onListChange ?? setLocalTab;
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [formOpen, setFormOpen] = useState(false);
+  const [editFormOpen, setEditFormOpen] = useState(false);
   const [editing, setEditing] = useState<ListRow | null>(null);
+  const formOpen = editFormOpen || adding;
 
   const isOutlet = tab === "outlet";
-  const current = TABS.find((item) => item.value === tab) ?? TABS[0];
+  const current = LIST_TABS.find((item) => item.value === tab) ?? LIST_TABS[0];
 
   const rowsByTab = useMemo(() => {
     const entries = entriesQuery.data ?? [];
@@ -99,6 +118,7 @@ export function ListsPage({ embedded = false }: { embedded?: boolean } = {}) {
         ? "It will no longer be offered in new forms. Records that already use it keep showing it."
         : "It will be offered in forms again.",
       confirmText: verb,
+      tone: status === "inactive" ? "destructive" : "success",
       action: () => (isOutlet ? changeOutlet({ id: row.id, status }) : changeEntry({ id: row.id, status })),
       successTitle: `${row.name} ${status === "inactive" ? "deactivated" : "activated"}.`,
       errorTitle: `${verb} failed.`,
@@ -111,9 +131,7 @@ export function ListsPage({ embedded = false }: { embedded?: boolean } = {}) {
         id: "name",
         header: "Name",
         cell: ({ row }) => (
-          <span className="tw:font-medium">
-            {row.original.name}
-          </span>
+          <span className="tw:font-semibold">{row.original.name}</span>
         ),
       },
       ...(!isOutlet ? [] : [{ id: "detail", header: "Type", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }: { row: { original: ListRow } }) => row.original.detail } as ColumnDef<ListRow, unknown>]),
@@ -130,12 +148,12 @@ export function ListsPage({ embedded = false }: { embedded?: boolean } = {}) {
               itemName={item.name}
               onEdit={() => {
                 setEditing(item);
-                setFormOpen(true);
+                setEditFormOpen(true);
               }}
               extraItems={[
                 item.status === "active"
-                  ? { key: "deactivate", label: "Deactivate", onClick: () => setStatus(item, "inactive") }
-                  : { key: "activate", label: "Activate", onClick: () => setStatus(item, "active") },
+                  ? { key: "deactivate", label: "Deactivate", tone: "warning" as const, onClick: () => setStatus(item, "inactive") }
+                  : { key: "activate", label: "Activate", tone: "success" as const, onClick: () => setStatus(item, "active") },
               ]}
               onDelete={item.inUse ? undefined : () => (isOutlet ? removeOutlet(item.id) : removeEntry(item.id))}
               deleteDisabledReason={item.inUse ? "Existing records use this entry. Deactivate it instead." : null}
@@ -158,17 +176,6 @@ export function ListsPage({ embedded = false }: { embedded?: boolean } = {}) {
       allowed={canManage}
       title="Lists"
       crumbs={[{ label: "Organization" }, { label: "Lists" }]}
-      actions={
-        <Button
-          className="tw:min-h-11 tw:sm:min-h-8"
-          onClick={() => {
-            setEditing(null);
-            setFormOpen(true);
-          }}
-        >
-          <Plus aria-hidden="true" /> Add {current.singular}
-        </Button>
-      }
     >
       <FilterBar
         search={search}
@@ -183,7 +190,7 @@ export function ListsPage({ embedded = false }: { embedded?: boolean } = {}) {
               setSearch("");
               setStatusFilter("all");
             },
-            options: TABS.map((item) => ({ value: item.value, label: item.label })),
+            options: LIST_TABS.map((item) => ({ value: item.value, label: item.label })),
           },
           { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_FILTER_ITEMS },
         ]}
@@ -198,12 +205,13 @@ export function ListsPage({ embedded = false }: { embedded?: boolean } = {}) {
       />
       {formOpen ? (
         <ListEntryDialog
-          key={`${tab}-${editing?.id ?? "new"}`}
+          key={`${tab}-${adding ? "new" : (editing?.id ?? "new")}`}
           tab={tab}
           singular={current.singular}
-          editing={editing}
+          editing={adding ? null : editing}
           onClose={() => {
-            setFormOpen(false);
+            setEditFormOpen(false);
+            onAddingChange?.(false);
             setEditing(null);
           }}
           saveEntry={async (name, type) => {

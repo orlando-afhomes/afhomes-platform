@@ -153,6 +153,18 @@ describe("AreaPage", () => {
     expect(screen.queryByText("Panel two")).toBeNull();
   });
 
+  it("places the actions in the page header beside the title, above the tab bar", () => {
+    render(
+      <Wrapper>
+        <AreaPage anyOf={["reports"]} title="Finance" tabs={tabs} actions={<button type="button">Add receipt</button>} />
+      </Wrapper>,
+    );
+    const header = screen.getByRole("heading", { level: 1, name: "Finance" }).parentElement?.parentElement as HTMLElement;
+    expect(within(header).getByRole("button", { name: "Add receipt" })).toBeInTheDocument();
+    expect(within(header).queryByRole("tablist")).toBeNull();
+    expect(header).toHaveClass("tw:justify-between", "tw:flex-wrap");
+  });
+
   it("never opens a tab that is not allowed from the URL", () => {
     search = "tab=two";
     render(

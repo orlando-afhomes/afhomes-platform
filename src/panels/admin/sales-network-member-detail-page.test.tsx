@@ -44,6 +44,19 @@ describe("sales network member detail page", () => {
     expect(within(overview).getByRole("heading", { name: "Accreditation" })).toBeInTheDocument();
   });
 
+  it("shows the member actions once, as header buttons, with no row menu", async () => {
+    render(
+      <Wrapper identityId="dev-super-admin">
+        <SalesNetworkMemberDetailPage />
+      </Wrapper>,
+    );
+    await screen.findByRole("region", { name: "Member summary for Jose Reyes Jr." }, { timeout: 5000 });
+    expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Deactivate" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Actions for/ })).toBeNull();
+  });
+
   it("switches to the grouped Profile tab", async () => {
     const user = userEvent.setup();
     render(

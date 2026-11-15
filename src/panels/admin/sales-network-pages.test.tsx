@@ -8,6 +8,7 @@ import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { SalesNetworkMembersPage } from "./pages/sales-network-members-page";
 import { SalesNetworkGenealogyPage } from "./pages/sales-network-genealogy-page";
+import { SalesNetworkAreaPage } from "./pages/sales-network-area-page";
 
 vi.mock("next/navigation", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/navigation")>()),
@@ -38,15 +39,22 @@ describe("sales network members page", () => {
     const user = userEvent.setup();
     render(
       <Wrapper identityId="dev-super-admin">
-        <SalesNetworkMembersPage />
+        <SalesNetworkAreaPage />
       </Wrapper>,
     );
     await waitFor(() => expect(rows().length).toBeGreaterThan(0), { timeout: 5000 });
     expect(screen.getByRole("table", { name: "Sales Network members" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Add IST" })).toBeInTheDocument();
+    // The add buttons sit in the page header (outside the tab panel) and open the add dialog.
+    const tabPanel = screen.getByRole("tabpanel");
+    expect(within(tabPanel).queryByRole("button", { name: "Add IST" })).toBeNull();
     expect(screen.getByRole("button", { name: "Add OST" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Add IST" }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await user.click(within(rows()[0]).getByRole("button", { name: /actions for/i }));
     expect(await screen.findByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "View full details" })).toBeNull();
   });
 
   it("filters by designation and searches by name", async () => {

@@ -1,8 +1,9 @@
 "use client";
 
+import { EMPTY } from "@/shared/lib/empty-value";
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { ArrowDownAZ, ArrowUpAZ, Plus } from "lucide-react";
+import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
 import type { DepartmentRole } from "@/modules/organization/types";
 import { useDeleteDepartmentRole, useDepartments, useDepartmentRoles, useRoleOptions, useStaff } from "@/data/queries";
 import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
@@ -28,7 +29,12 @@ const RoleDialogs = dynamic(() => import("./role-dialogs").then((mod) => mod.Rol
   loading: () => null,
 });
 
-export function RolesPage({ embedded = false }: { embedded?: boolean } = {}) {
+/** The area page owns "Create role" in the page header and passes `creating` down. */
+export function RolesPage({
+  embedded = false,
+  creating = false,
+  onCreatingChange,
+}: { embedded?: boolean; creating?: boolean; onCreatingChange?: (creating: boolean) => void } = {}) {
   const rolesQuery = useDepartmentRoles();
   const roleOptionsQuery = useRoleOptions();
   const departmentsQuery = useDepartments();
@@ -39,9 +45,11 @@ export function RolesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortAsc, setSortAsc] = useState(true);
-  const [roleDialog, setRoleDialog] = useState(false);
+  const [editDialog, setEditDialog] = useState(false);
   const [editRole, setEditRole] = useState<DepartmentRole | null>(null);
   const [viewRole, setViewRole] = useState<DepartmentRole | null>(null);
+  // A stale role from an earlier edit must not leak into the create form.
+  if (creating && editRole !== null) setEditRole(null);
 
   const roles = useMemo(() => rolesQuery.data ?? [], [rolesQuery.data]);
   const departments = useMemo(() => departmentsQuery.data ?? [], [departmentsQuery.data]);
@@ -73,19 +81,13 @@ export function RolesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { mutateAsync: removeRole } = deleteRole;
   const columns = useMemo<ColumnDef<DepartmentRole, unknown>[]>(() => {
     const departmentName = (departmentId: string) =>
-      departments.find((item) => item.id === departmentId)?.name ?? "Unknown department";
+      departments.find((item) => item.id === departmentId)?.name ?? EMPTY;
     return [
       {
         id: "name",
         header: "Name",
         cell: ({ row }) => (
-          <Button
-            variant="link"
-            className="tw:h-auto tw:min-h-11 tw:p-0 tw:text-left tw:font-semibold tw:sm:min-h-0"
-            onClick={() => setViewRole(row.original)}
-          >
-            {row.original.name}
-          </Button>
+          <span className="tw:font-semibold">{row.original.name}</span>
         ),
       },
       { id: "department", header: "Department", meta: HIDE_BELOW_SM, cell: ({ row }) => departmentName(row.original.departmentId) },
@@ -120,10 +122,9 @@ export function RolesPage({ embedded = false }: { embedded?: boolean } = {}) {
           return (
             <RowActionsMenu
               itemName={record.name}
-              onView={() => setViewRole(record)}
               onEdit={() => {
                 setEditRole(record);
-                setRoleDialog(true);
+                setEditDialog(true);
               }}
               onDelete={() => removeRole(record.id)}
               deleteTitle={`Delete ${record.name}?`}
@@ -143,17 +144,6 @@ export function RolesPage({ embedded = false }: { embedded?: boolean } = {}) {
       anyOf={["roles"]}
       title="Roles & Permissions"
       crumbs={[{ label: "Organization" }, { label: "Roles & Permissions" }]}
-      actions={
-        <Button
-          className="tw:min-h-11 tw:sm:min-h-8"
-          onClick={() => {
-            setEditRole(null);
-            setRoleDialog(true);
-          }}
-        >
-          <Plus aria-hidden="true" /> Create role
-        </Button>
-      }
     >
       <FilterBar
         search={search}
@@ -179,11 +169,12 @@ export function RolesPage({ embedded = false }: { embedded?: boolean } = {}) {
         onRowOpen={(role) => setViewRole(role)}
       />
       <RoleDialogs
-        open={roleDialog}
+        open={editDialog || creating}
         editRole={editRole}
         viewRole={viewRole}
         onCloseForm={() => {
-          setRoleDialog(false);
+          setEditDialog(false);
+          onCreatingChange?.(false);
           setEditRole(null);
         }}
         onCloseView={() => setViewRole(null)}

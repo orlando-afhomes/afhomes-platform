@@ -1,5 +1,6 @@
 "use client";
 
+import { EMPTY } from "@/shared/lib/empty-value";
 import { customerRecordName } from "@/modules/customers/rules";
 import { humanize } from "@/shared/lib/humanize";
 import { recordLabel } from "@/shared/lib/record-label";
@@ -7,13 +8,12 @@ import { recordLabel } from "@/shared/lib/record-label";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Pencil, RotateCcw, X } from "lucide-react";
+import { Check, Pencil, RotateCcw, Trash2, X } from "lucide-react";
 import { useApproveCustomer, useContracts, useDiscardCustomerDraft, useMemberships, useOperation, usePaymentSchemes, useRejectCustomer, useSales, useSendBackCustomer } from "@/data/business-queries";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import { canReviewRegistration } from "@/modules/customers/review";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { ReasonDialog } from "@/shared/components/modern/form-dialog";
-import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { toast } from "sonner";
 import { useCustomers, useMembers } from "@/data/queries";
 import { useAuditEvents } from "@/data/queries";
@@ -54,6 +54,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
   const sendBack = useSendBackCustomer();
   const reject = useRejectCustomer();
   const [review, setReview] = useState<"approve" | "send_back" | "reject" | null>(null);
+  const [discarding, setDiscarding] = useState(false);
   const canPrepare = useOperation("contracts.prepare");
   const canReadAudit = useOperation("audit.read");
   const contractHref = useContractHref();
@@ -125,7 +126,8 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
     label: humanize(event.action),
     timestamp: event.timestamp,
   }));
-  const kebabMenu = buildCustomerMenuProps(
+  // Same gates as the table row menu; the header shows each action once, so only the discard slot is read from it.
+  const actionSet = buildCustomerMenuProps(
     customer,
     { canManage, canDraft, canApprove, canPrepare, ownRecord },
     {
@@ -145,30 +147,36 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
       crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: customerRecordName(customer) }]}
       actions={
         <>
-          {ownRecord && (canManage || (canDraft && customer.status === "draft")) && customer.status !== "rejected" ? (
-            <Link href={`/admin/customers/${customer.id}/edit`} className={buttonVariants({ variant: "outline", className: "tw:min-h-11 tw:sm:min-h-8" })}>
-              <Pencil aria-hidden="true" /> {customer.status === "draft" ? "Edit draft" : customer.status === "sent_back" ? "Fix and resubmit" : "Correct data"}
-            </Link>
-          ) : null}
-          {canApprove && canReviewRegistration(customer.status) ? (
-            <>
-              <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setReview("approve")}>
-                <Check aria-hidden="true" /> Approve
-              </Button>
-              <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setReview("send_back")}>
-                <RotateCcw aria-hidden="true" /> Send back
-              </Button>
-              <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setReview("reject")}>
-                <X aria-hidden="true" /> Reject
-              </Button>
-            </>
-          ) : null}
           {canPrepare && ownRecord && (customer.status === "submitted" || customer.status === "approved") ? (
             <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setPreparing(true)}>
               Prepare contract
             </Button>
           ) : null}
-          <RowActionsMenu {...kebabMenu} onView={undefined} />
+          {canApprove && canReviewRegistration(customer.status) ? (
+            <Button variant="success" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setReview("approve")}>
+              <Check aria-hidden="true" /> Approve
+            </Button>
+          ) : null}
+          {ownRecord && (canManage || (canDraft && customer.status === "draft")) && customer.status !== "rejected" ? (
+            <Link href={`/admin/customers/${customer.id}/edit`} className={buttonVariants({ variant: "warning", className: "tw:min-h-11 tw:sm:min-h-8" })}>
+              <Pencil aria-hidden="true" /> {customer.status === "draft" ? "Edit draft" : customer.status === "sent_back" ? "Fix and resubmit" : "Correct data"}
+            </Link>
+          ) : null}
+          {canApprove && canReviewRegistration(customer.status) ? (
+            <>
+              <Button variant="warning" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setReview("send_back")}>
+                <RotateCcw aria-hidden="true" /> Send back
+              </Button>
+              <Button variant="destructive" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setReview("reject")}>
+                <X aria-hidden="true" /> Reject
+              </Button>
+            </>
+          ) : null}
+          {actionSet.onDelete ? (
+            <Button variant="destructive" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setDiscarding(true)}>
+              <Trash2 aria-hidden="true" /> Discard draft
+            </Button>
+          ) : null}
         </>
       }
     >
@@ -185,17 +193,17 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
         classification={customer.contractClassification ?? null}
         schemeLabel={schemeLabel}
       />
-      {purchases.length > 1 ? <SelectField label="VIP purchase" value={contract?.id} options={purchases.map((item) => ({ value: item.id, label: `${item.vipNumber ?? item.id} · ${item.productCode} · ${humanize(item.status)}` }))} onChange={(value) => setSelectedContractId(value ?? "")} /> : null}
+      {purchases.length > 1 ? <SelectField label="VIP purchase" value={contract?.id} options={purchases.map((item) => ({ value: item.id, label: `${item.vipNumber ?? EMPTY} · ${item.productCode} · ${humanize(item.status)}` }))} onChange={(value) => setSelectedContractId(value ?? "")} /> : null}
       <CustomerDetailTabs value={tab} onChange={setTab} />
       {tab === "overview" ? (
         <div className="tw:grid tw:gap-6 tw:lg:grid-cols-5">
           <div className="tw:min-w-0 tw:lg:col-span-3 tw:flex tw:flex-col tw:gap-6">
             <CustomerInfoCard customer={viewCustomer} ownerName={ownerName} recommenderName={recommenderName} referralReference={ownRecord ? customer.referralReference : null} />
             <LinkedRecordsCard
-              contractLabel={contract ? `${contract.productCode} · ${contract.schemeLabel} · ${humanize(contract.status)}` : customer.status === "submitted" || customer.status === "approved" ? "No contract yet" : "—"}
+              contractLabel={contract ? `${contract.productCode} · ${contract.schemeLabel} · ${humanize(contract.status)}` : "—"}
               contractHref={contract ? contractHref(contract.id) : null}
-              saleLabel={sale ? recordLabel(humanize(sale.status), customer.displayName, contract?.productCode) : "No sale yet"}
-              membershipLabel={membership ? humanize(membership.status) : "No membership yet"}
+              saleLabel={sale ? recordLabel(humanize(sale.status), customer.displayName, contract?.productCode) : "—"}
+              membershipLabel={membership ? humanize(membership.status) : "—"}
               saleValueCentavos={sale?.valueCentavos ?? null}
               showSaleValue={ownRecord && sale != null}
             />
@@ -223,13 +231,13 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
             contractHref={contractHref(contract.id)}
           />
         ) : (
-          <ContractTabPanel facts={[{ label: "Contract", value: customer.status === "submitted" || customer.status === "approved" ? "No contract yet" : "—" }]} contractHref={null} />
+          <ContractTabPanel facts={[{ label: "Contract", value: "—" }]} contractHref={null} />
         )
       ) : null}
       {tab === "sales" ? (
         <SalesTabPanel
           facts={[
-            { label: "Sale", value: sale ? recordLabel(humanize(sale.status), customer.displayName, contract?.productCode) : "No sale yet" },
+            { label: "Sale", value: sale ? recordLabel(humanize(sale.status), customer.displayName, contract?.productCode) : "—" },
             { label: "Recorded", value: sale?.recordedDate ?? "—" },
             { label: "Confirmed", value: sale?.confirmedDate ?? "—" },
           ]}
@@ -247,10 +255,32 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
       {tab === "audit" ? <AuditTabPanel events={auditEvents} authorized={canReadAudit && !audit.error} /> : null}
       {preparing && canPrepare && ownRecord && (customer.status === "submitted" || customer.status === "approved") ? <PrepareContractDialog customer={customer} repeatPurchase={purchases.length > 0} open onClose={() => setPreparing(false)} /> : null}
       <ConfirmDialog
+        open={discarding}
+        title={actionSet.deleteTitle ?? "Discard this draft?"}
+        description={actionSet.deleteDescription ?? "This action cannot be undone."}
+        confirmText="Discard draft"
+        danger
+        pending={discard.isPending}
+        onClose={() => setDiscarding(false)}
+        onConfirm={() => {
+          discard.mutateAsync(customer.id).then(
+            () => {
+              setDiscarding(false);
+              toast.success(`${actionSet.itemName} deleted successfully.`);
+              router.push("/admin/customers");
+            },
+            (failure) => {
+              setDiscarding(false);
+              toast.error("Delete failed.", { description: failure instanceof Error ? failure.message : "Request failed." });
+            },
+          );
+        }}
+      />
+      <ConfirmDialog
         open={review === "approve"}
         title="Approve this registration?"
         description="The customer registration is approved. This does not activate a VIP membership."
-        confirmText="Approve"
+        confirmText="Approve" tone="success"
         pending={approve.isPending}
         onClose={() => setReview(null)}
         onConfirm={() => {
@@ -272,7 +302,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
         open={review === "send_back"}
         title="Send back to the Clerk"
         description="The Clerk sees the reason and can fix and resubmit. Nothing is deleted."
-        confirmText="Send back"
+        confirmText="Send back" tone="warning"
         successText="Sent back to the Clerk."
         onClose={() => setReview(null)}
         onSubmit={(reason) => sendBack.mutateAsync({ id: customer.id, reason })}

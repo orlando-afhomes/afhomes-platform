@@ -58,8 +58,9 @@ export class MockStayPointsRepository extends BusinessRepository implements Stay
           if (!member.cardId) throw new Error("The membership has no VIP Number.");
           if (!parseManilaDateOnly(input.date) || input.date > today()) throw new Error("Enter a valid bill date on or before today.");
           if (!this.store.outlets.some((outlet) => outlet.id === input.venueId && outlet.status === "active")) throw new Error("Select an AFhomes Direct Operation.");
-          if (input.holder !== "primary" && !(input.holder === "supplementary" && member.productCode === "G1")) {
-            throw new Error("Only a Gold membership can use supplementary holder spend.");
+          const allowsSupplementary = (this.store.products.find((item) => item.code === member.productCode)?.supplementaryHolders ?? 0) > 0;
+          if (input.holder !== "primary" && !(input.holder === "supplementary" && allowsSupplementary)) {
+            throw new Error("Only a membership whose product allows supplementary holders can use supplementary holder spend.");
           }
           const contract = this.store.contracts.find((item) => item.id === member.contractId)!;
           if (input.holder === "supplementary" && !contract.benefits.supplementaryHolders) throw new Error("The signed Grant does not allow a supplementary holder.");

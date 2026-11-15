@@ -62,10 +62,10 @@ export function PromoPointsReportPanel() {
         <AdminStatCard loading={balances.isLoading} error={balances.error} label="Outstanding" value={fmt(outstanding)} icon={Wallet} tone="info" />
       </AdminStatGrid>
       <ReportTable report="Promo Points Report" fileName="promo-points" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => row.id} getRowTitle={(row) => row.customerName} loading={ledger.isLoading} error={ledger.error} emptyText="No Promo Points entries match."
-        filters={<FilterBar search={search} onSearch={setSearch} searchLabel="Search Promo Points" filters={[
+        filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search Promo Points" filters={[
           { label: "Promo filter", value: promo, onChange: setPromo, options: optionsFrom("All promos", inPeriod.map((row) => row.promoName)) },
           { label: "Entry type filter", value: type, onChange: setType, options: optionsFrom("All entry types", inPeriod.map((row) => row.type), humanize) },
-        ]} />} />
+        ]}>{range.dateFields}{exportButton}</FilterBar>} />
     </ReportFrame>
   );
 }

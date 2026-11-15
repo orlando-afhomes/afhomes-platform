@@ -12,7 +12,7 @@ function as(store: ReturnType<typeof createMockStore>, id: string) {
 }
 
 const input = (overrides: Partial<ProductCreateInput> = {}): ProductCreateInput => ({
-  code: "B3", name: "Bronze Plus VIP", tier: "Bronze", priceCentavos: pesos(90000), validityYears: 7, earningCycles: 5,
+  code: "B3", name: "Bronze Plus VIP", tierLevelId: "tier-level-bronze", priceCentavos: pesos(90000), validityYears: 7, earningCycles: 5,
   vipDiscountPercent: 10, lifetimePoints: 50000, pointsPerCycle: 10000, weekdayPointsPerCycle: 7000, weekendPointsPerCycle: 3000,
   minSpendPerCycleCentavos: pesos(1000), supplementaryHolders: 0, ...overrides,
 });
@@ -41,8 +41,8 @@ describe("product catalog create and delete", () => {
     await expect(admin.products.create(input({ code: "BRZ" }), "Memo")).rejects.toThrow(/exactly 2 characters/);
     await expect(admin.products.create(input({ code: "33" }), "Memo")).rejects.toThrow(/exactly 2 characters/);
     await expect(admin.products.create(input({ code: "B1" }), "Memo")).rejects.toThrow(/already exists/);
-    await expect(admin.products.create(input({ code: "B2" }), "Memo")).rejects.toThrow(/historical/);
-    await expect(admin.products.create(input({ code: "G2" }), "Memo")).rejects.toThrow(/reserved/);
+    await expect(admin.products.create(input({ code: "B2" }), "Memo")).rejects.toThrow(/used before/);
+    await expect(admin.products.create(input({ code: "G2" }), "Memo")).rejects.toThrow(/held for future use/);
     await expect(admin.products.create(input({ priceCentavos: 0 }), "Memo")).rejects.toThrow(/price/);
     await expect(admin.products.create(input({ lifetimePoints: 1 }), "Memo")).rejects.toThrow(/Lifetime points/);
     await expect(admin.products.create(input({ weekdayPointsPerCycle: 1 }), "Memo")).rejects.toThrow(/add up/);
@@ -82,5 +82,17 @@ describe("product catalog create and delete", () => {
     await expect(admin.products.delete("B4", "Cleanup")).rejects.toThrow(/Retire it instead/);
     await expect(admin.products.delete("B4", "")).rejects.toThrow(/reason/);
     await expect(admin.products.delete("ZZ", "Cleanup")).rejects.toThrow(/not found/);
+  });
+});
+
+describe("supplementary holder rule follows the product", () => {
+  const bill = { action: "enter", membershipId: "memb-1", venueId: "venue-wellness-hotel", date: "2026-11-10", grossCentavos: pesos(1200), excludedCentavos: 0, reference: "SUPP-OR-1", holder: "supplementary", description: "Restaurant" } as const;
+
+  it("refuses supplementary spend on a product without supplementary holders, and allows it once the product has some", async () => {
+    const store = createMockStore();
+    await expect(as(store, "dev-clerk").stayPoints.act(bill)).rejects.toThrow(/product allows supplementary holders/);
+    store.products.find((item) => item.code === "B1")!.supplementaryHolders = 1;
+    // The product check now passes; the signed Grant of this membership still decides.
+    await expect(as(store, "dev-clerk").stayPoints.act(bill)).rejects.toThrow(/signed Grant does not allow/);
   });
 });

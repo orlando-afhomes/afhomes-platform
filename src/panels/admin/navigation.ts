@@ -100,6 +100,8 @@ export const ADMIN_AREA_TABS = {
     { value: "contracts", label: "Contracts", formerHref: "/admin/sales/contracts", rule: { grants: ["sales", "vip-products"] } },
     { value: "contract-review", label: "Contract review", formerHref: "/admin/sales/contract-review", rule: { grants: ["vip-products"] } },
     { value: "igp", label: "IGP", formerHref: "/admin/sales/igp", rule: { grants: ["sales", "finance"] } },
+    // New tab (no former page): the IGP project and unit catalog, for igp.manage holders only.
+    { value: "projects", label: "Projects", formerHref: "/admin/sales", rule: { grants: ["sales", "finance"], operation: "igp.manage" } },
   ],
   finance: [
     { value: "verification", label: "Verification", formerHref: "/admin/finance", rule: { grants: ["finance", "sales"], operation: "finance.verify" } },
@@ -140,7 +142,7 @@ export const ADMIN_AREA_TABS = {
     { value: "products", label: "Products", formerHref: "/admin/vip-products", rule: { grants: ["vip-products"] } },
     { value: "schemes", label: "Payment schemes", formerHref: "/admin/vip-products/schemes", rule: { grants: ["vip-products"] } },
     { value: "scheme-guide", label: "Scheme guide", formerHref: "/admin/vip-products/scheme-guide", rule: { grants: ["vip-products", "sales"] } },
-    { value: "tier-codes", label: "Tier codes", formerHref: "/admin/vip-products/tier-codes", rule: { grants: ["vip-products"] } },
+    { value: "tier-codes", label: "Tier levels", formerHref: "/admin/vip-products/tier-codes", rule: { grants: ["vip-products"] } },
   ],
   "sales-network": [
     { value: "members", label: "Members", formerHref: "/admin/sales-network/members", rule: { grants: ["sales-network-members"] } },

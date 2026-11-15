@@ -4,7 +4,7 @@ export type AuditModule =
 
 export type AuditEntityType =
   | "member" | "accreditation" | "registration" | "account" | "staff" | "department-role" | "department"
-  | "customer" | "customer-import" | "customer-export" | "report-export" | "product" | "payment-scheme" | "contract" | "sale" | "payment" | "membership" | "commission" | "resort-spend" | "receipt-import" | "reconciliation" | "redemption-booking" | "redemption-config" | "reference-entry" | "outlet" | "promo";
+  | "customer" | "customer-import" | "customer-export" | "report-export" | "product" | "payment-scheme" | "contract" | "sale" | "payment" | "membership" | "commission" | "resort-spend" | "receipt-import" | "reconciliation" | "redemption-booking" | "redemption-config" | "reference-entry" | "tier-level" | "outlet" | "promo" | "igp-project" | "igp-unit";
 
 /** Minimal append-only mock audit event for Sales Network / Accreditation / Organization actions. */
 export type AuditEvent = {
@@ -54,8 +54,15 @@ export const AUDIT_MODULES = [
 ] as const satisfies ReadonlyArray<AuditEvent["module"]>;
 export const AUDIT_ENTITY_TYPES = [
   "member", "accreditation", "registration", "account", "staff", "department-role", "department",
-  "customer", "report-export", "product", "payment-scheme", "contract", "sale", "payment", "membership", "commission", "resort-spend", "receipt-import", "reconciliation", "redemption-booking", "redemption-config", "reference-entry", "outlet", "promo",
+  "customer", "report-export", "product", "payment-scheme", "contract", "sale", "payment", "membership", "commission", "resort-spend", "receipt-import", "reconciliation", "redemption-booking", "redemption-config", "reference-entry", "tier-level", "outlet", "promo", "igp-project", "igp-unit",
 ] as const satisfies ReadonlyArray<AuditEvent["entityType"]>;
+
+/** Plain labels for record types whose automatic title-casing reads wrong (acronyms, sentence case). */
+export const AUDIT_ENTITY_LABELS: Partial<Record<AuditEvent["entityType"], string>> = {
+  "igp-project": "IGP project",
+  "igp-unit": "IGP unit",
+  "tier-level": "Tier level",
+};
 
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;
 export const AUDIT_MAX_PAGE_SIZE = 100;
@@ -91,6 +98,10 @@ export type AuditEventView = {
   entityId: string;
   /** Human label of the record (never an internal id). */
   entityLabel: string;
+  /** Name of the record only (customer or person name); null when the record has none. */
+  entityName?: string | null;
+  /** Extra identifier of the record, such as an amount or product code; null when there is none. */
+  entityDetail?: string | null;
   /** Human name of the actor (never an internal id). */
   actorName: string;
   outcome: "success";
@@ -101,6 +112,9 @@ export type AuditEventView = {
   reasonRecorded: boolean;
   relatedRecordIds: string[];
 };
+
+/** One person (or "System") that appears in the audit history, for the actor filter. `value` is what `AuditQuery.actorId` accepts. */
+export type AuditActorOption = { value: string; label: string };
 
 export type AuditPage = {
   items: AuditEventView[];
@@ -191,6 +205,11 @@ export const BUSINESS_AUDIT_ACTIONS = {
   REFERENCE_ENTRY_CREATED: "REFERENCE_ENTRY_CREATED",
   REFERENCE_ENTRY_UPDATED: "REFERENCE_ENTRY_UPDATED",
   REFERENCE_ENTRY_DELETED: "REFERENCE_ENTRY_DELETED",
+  TIER_LEVEL_CREATED: "TIER_LEVEL_CREATED",
+  TIER_LEVEL_UPDATED: "TIER_LEVEL_UPDATED",
+  TIER_LEVEL_DEACTIVATED: "TIER_LEVEL_DEACTIVATED",
+  TIER_LEVEL_REACTIVATED: "TIER_LEVEL_REACTIVATED",
+  TIER_LEVEL_DELETED: "TIER_LEVEL_DELETED",
   OUTLET_CREATED: "OUTLET_CREATED",
   OUTLET_UPDATED: "OUTLET_UPDATED",
   OUTLET_DELETED: "OUTLET_DELETED",

@@ -19,8 +19,11 @@ import "./app-alert.css";
 
 const BUTTON_SIZE = "tw:min-h-11 tw:sm:min-h-8";
 
+/** Color of the confirm button by purpose: Approve = success, Send back = warning, Reject/Delete = destructive. */
+export type ConfirmTone = "default" | "success" | "warning" | "destructive" | "info";
+
 /** Shared SweetAlert2 options: no default button styling, shadcn button classes, namespaced theme classes. */
-export function appAlertOptions(danger = false): SweetAlertOptions {
+export function appAlertOptions(danger = false, tone?: ConfirmTone): SweetAlertOptions {
   return {
     buttonsStyling: false,
     reverseButtons: true,
@@ -31,7 +34,7 @@ export function appAlertOptions(danger = false): SweetAlertOptions {
       title: "app-alert__title",
       htmlContainer: "app-alert__body",
       actions: "app-alert__actions",
-      confirmButton: buttonVariants({ variant: danger ? "destructive" : "default", className: BUTTON_SIZE }),
+      confirmButton: buttonVariants({ variant: tone ?? (danger ? "destructive" : "default"), className: BUTTON_SIZE }),
       denyButton: buttonVariants({ variant: "destructive", className: BUTTON_SIZE }),
       cancelButton: buttonVariants({ variant: "outline", className: BUTTON_SIZE }),
     },
@@ -48,6 +51,8 @@ export type AppAlertProps = {
   /** Provide to show a third, destructive button (for example "Discard all Changes"). */
   denyText?: string;
   danger?: boolean;
+  /** Confirm button color; overrides `danger` for the button (default keeps today's look). */
+  tone?: ConfirmTone;
   /** Shows progress on the confirm button and blocks dismissal while the caller's action runs. */
   pending?: boolean;
   onConfirm: () => void;
@@ -68,7 +73,7 @@ export function AppAlert(props: AppAlertProps) {
     const first = latest.current;
     let closedByApp = false;
     const blocked = () => latest.current.pending === true;
-    const base = appAlertOptions(first.danger);
+    const base = appAlertOptions(first.danger, first.tone);
     const result = Swal.fire({
       ...base,
       title: first.title,

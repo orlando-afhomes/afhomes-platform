@@ -24,11 +24,11 @@ const STATUSES: ReceiptImportBatchStatus[] = ["pending_signoff", "signed_off", "
 describe("buildImportBatchMenuProps", () => {
   it("names the menu after the batch", () => {
     const menu = buildImportBatchMenuProps(batchWithStatus("pending_signoff"), { canSignOff: true }, { onSignOff: () => {}, onReject: () => {} });
-    expect(menu.itemName).toBe("batch B-001");
+    expect(menu.itemName).toBe("receipts.xlsx");
   });
 
   it("exposes no edit or delete entries", () => {
-    const menu = buildImportBatchMenuProps(batchWithStatus("pending_signoff"), { canSignOff: true }, { onView: () => {}, onSignOff: () => {}, onReject: () => {} });
+    const menu = buildImportBatchMenuProps(batchWithStatus("pending_signoff"), { canSignOff: true }, { onSignOff: () => {}, onReject: () => {} });
     expect(menu.onEdit).toBeUndefined();
     expect(menu.onDelete).toBeUndefined();
     expect(menu.deleteDisabledReason).toBeUndefined();
@@ -37,10 +37,9 @@ describe("buildImportBatchMenuProps", () => {
   it.each(STATUSES)("table props and sheet footer props expose the identical action set for status %s (canSignOff true and false)", (status) => {
     for (const canSignOff of [true, false]) {
       const batch = batchWithStatus(status);
-      const table = buildImportBatchMenuProps(batch, { canSignOff }, { onView: () => {}, onSignOff: () => {}, onReject: () => {} });
+      const table = buildImportBatchMenuProps(batch, { canSignOff }, { onSignOff: () => {}, onReject: () => {} });
       const sheet = buildImportBatchMenuProps(batch, { canSignOff }, { onSignOff: () => {}, onReject: () => {} });
-      expect(sheet.onView).toBeUndefined();
-      expect(table.onView).toBeDefined();
+      expect("onView" in table).toBe(false);
       expect(sheet.extraItems.map((item) => item.key)).toEqual(table.extraItems.map((item) => item.key));
       expect(sheet.extraItems.map((item) => item.label)).toEqual(table.extraItems.map((item) => item.label));
       expect(sheet.extraItems.map((item) => item.danger ?? false)).toEqual(table.extraItems.map((item) => item.danger ?? false));
@@ -69,14 +68,11 @@ describe("buildImportBatchMenuProps", () => {
   });
 
   it("wires the menu callbacks through to the page handlers", () => {
-    const onView = vi.fn();
     const onSignOff = vi.fn();
     const onReject = vi.fn();
-    const menu = buildImportBatchMenuProps(batchWithStatus("pending_signoff"), { canSignOff: true }, { onView, onSignOff, onReject });
-    menu.onView?.();
+    const menu = buildImportBatchMenuProps(batchWithStatus("pending_signoff"), { canSignOff: true }, { onSignOff, onReject });
     menu.extraItems.find((item) => item.key === "signoff")?.onClick();
     menu.extraItems.find((item) => item.key === "reject")?.onClick();
-    expect(onView).toHaveBeenCalledTimes(1);
     expect(onSignOff).toHaveBeenCalledTimes(1);
     expect(onReject).toHaveBeenCalledTimes(1);
   });

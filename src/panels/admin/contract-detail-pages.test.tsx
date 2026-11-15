@@ -72,21 +72,17 @@ describe("contract detail pages show only their own process actions", () => {
     expect(await screen.findByText("Installment Details")).toBeInTheDocument();
     const dialog = screen.getByRole("dialog");
     expect(within(dialog).getByText("MA1")).toBeInTheDocument();
-    expect(within(dialog).getByText("Date not set")).toBeInTheDocument();
+    expect(within(dialog).getAllByText("—").length).toBeGreaterThan(0);
     await user.keyboard("{Escape}");
   });
 
-  it("Sales contract Payment Schedule kebab opens the same MA1 sheet and Payments/History tabs render", async () => {
+  it("Sales contract Payment Schedule has no row menu and the Payments/History tabs render", async () => {
     const user = userEvent.setup();
     show("dev-admin", <SalesContractDetailPage contractId="ctr-4" />);
     await screen.findByRole("tablist", { name: "Contract detail views" });
     await user.click(screen.getByRole("tab", { name: "Payment Schedule" }));
     await screen.findByRole("table", { name: "Payment schedule" });
-    await user.click(screen.getByRole("button", { name: "Actions for MA1" }));
-    await user.click(await screen.findByRole("menuitem", { name: "View full details" }));
-    expect(await screen.findByText("Installment Details")).toBeInTheDocument();
-    expect(screen.getByText("Remaining")).toBeInTheDocument();
-    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("button", { name: "Actions for MA1" })).toBeNull();
     await user.click(screen.getByRole("tab", { name: "Payments" }));
     expect(await screen.findByRole("table", { name: "Payments" })).toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: "History" }));

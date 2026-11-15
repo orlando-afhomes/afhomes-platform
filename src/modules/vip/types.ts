@@ -11,7 +11,20 @@ export function isValidTierCode(value: string): boolean {
   return TIER_CODE_PATTERN.test(value);
 }
 
-export const PRODUCT_TIER_LEVELS = ["Bronze", "Silver", "Gold"] as const;
+/** Chart and chip colors a tier level can use. They map to existing design tokens. */
+export type TierColorKey = "bronze" | "silver" | "gold" | "neutral";
+
+/**
+ * Admin-managed VIP tier level (Bronze, Silver, Gold and any later level such as Platinum).
+ * Products point to a level by id. A level used by a product is deactivated, never deleted (05 section 3.2).
+ */
+export type TierLevel = {
+  id: string;
+  name: string;
+  colorKey: TierColorKey;
+  sortOrder: number;
+  status: "active" | "inactive";
+};
 
 export type ProductChange = {
   version: number;
@@ -30,7 +43,12 @@ export type ProductChange = {
 export type VipProduct = {
   code: VipTierCode;
   name: string;
-  tier: (typeof PRODUCT_TIER_LEVELS)[number];
+  /** The tier level this product belongs to (a TierLevel id). */
+  tierLevelId: string;
+  /** Display name of the tier level. The product repository resolves it from the level whenever products are read. */
+  tier: string;
+  /** Color of the tier level, resolved with `tier`. */
+  tierColorKey?: TierColorKey;
   /** Integer centavos. */
   priceCentavos: number;
   /** "conflict" blocks contract finalization (D5). */
@@ -47,6 +65,13 @@ export type VipProduct = {
   weekendPointsPerCycle: number;
   minSpendPerCycleCentavos: number;
   supplementaryHolders: number;
+  /** Short plain-words description for staff (optional, up to 500 characters). */
+  description?: string | null;
+  /** Other benefits in plain words, beyond the discount and Stay Points fields (05 section 18). Optional, up to 500 characters. */
+  benefitsSummary?: string | null;
+  /** Product image (browser object URL while the data is in memory) and its file name. */
+  imageUrl?: string | null;
+  imageFileName?: string | null;
   status: "active" | "retired";
   configVersion: number;
   effectiveDate: string | null;

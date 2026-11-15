@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { paymentCodeFor, paymentCodeIssues, schemeHowItWorks, schemePriceCentavos, schemeTermErrors } from "./rules";
+import { paymentCodeFor, paymentCodeIssues, productCodeError, schemeHowItWorks, schemePriceCentavos, schemeTermErrors } from "./rules";
 
 const products = [
   { code: "B1" as const, priceCentavos: 7_200_000 },
@@ -71,5 +71,25 @@ describe("scheme rules", () => {
     expect(plain).toContain("equal monthly payments at 0% interest.");
     expect(plain).not.toMatch(/approval/i);
     expect(schemeHowItWorks(down)).not.toMatch(/approval/i);
+  });
+});
+
+describe("product code rules", () => {
+  it("accepts a free code of one letter and one digit, in any case", () => {
+    expect(productCodeError("b3", ["B1", "S1", "G1"])).toBeNull();
+    expect(productCodeError("P3", ["B1"])).toBeNull();
+  });
+
+  it("never allows a code longer or shorter than 2 characters", () => {
+    for (const code of ["", "B", "B33", "BRZ", "33", "1B"]) expect(productCodeError(code, [])).toMatch(/exactly 2 characters/);
+  });
+
+  it("explains held and historical codes in plain words", () => {
+    for (const code of ["G2", "P2", "R2"]) expect(productCodeError(code, [])).toBe("This code is held for future use and cannot be used yet.");
+    for (const code of ["B2", "S2", "P1", "R1"]) expect(productCodeError(code, [])).toBe("This code was used before and is kept for old records.");
+  });
+
+  it("refuses a code another product already has", () => {
+    expect(productCodeError("b1", ["B1"])).toBe("A product with this code already exists.");
   });
 });

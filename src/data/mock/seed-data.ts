@@ -293,17 +293,17 @@ const customers: Customer[] = [
 ];
 
 const products: VipProduct[] = [
-  { code: "B1", name: "Bronze VIP", tier: "Bronze", priceCentavos: peso(72000), priceStatus: "contract_stated",
+  { code: "B1", name: "Bronze VIP", tierLevelId: "tier-level-bronze", tier: "Bronze", tierColorKey: "bronze", priceCentavos: peso(72000), priceStatus: "contract_stated",
     priceNote: "Stated in the Bronze VIP Grant Contract, Standard Pricing (Section II and Annex A).",
     validityYears: 7, earningCycles: 5, vipDiscountPercent: 15, lifetimePoints: 50000, pointsPerCycle: 10000,
     weekdayPointsPerCycle: 7000, weekendPointsPerCycle: 3000, minSpendPerCycleCentavos: peso(1000), supplementaryHolders: 0,
     status: "active", configVersion: 1, effectiveDate: null, changes: [] },
-  { code: "S1", name: "Silver VIP", tier: "Silver", priceCentavos: peso(240000), priceStatus: "contract_stated",
+  { code: "S1", name: "Silver VIP", tierLevelId: "tier-level-silver", tier: "Silver", tierColorKey: "silver", priceCentavos: peso(240000), priceStatus: "contract_stated",
     priceNote: "Stated in Section II and Annex A. Section IV of the Silver contract still carries an unfinished amount placeholder (05 6.2).",
     validityYears: 12, earningCycles: 10, vipDiscountPercent: 20, lifetimePoints: 200000, pointsPerCycle: 20000,
     weekdayPointsPerCycle: 14000, weekendPointsPerCycle: 6000, minSpendPerCycleCentavos: peso(2000), supplementaryHolders: 0,
     status: "active", configVersion: 1, effectiveDate: null, changes: [] },
-  { code: "G1", name: "Gold VIP", tier: "Gold", priceCentavos: peso(390000), priceStatus: "contract_stated",
+  { code: "G1", name: "Gold VIP", tierLevelId: "tier-level-gold", tier: "Gold", tierColorKey: "gold", priceCentavos: peso(390000), priceStatus: "contract_stated",
     priceNote: "Gold VIP ₱390,000 confirmed by owner ruling effective 2026-11-10 (doc 05 amendment item 11). Section IV ₱780,000 rejected.",
     validityYears: 22, earningCycles: 20, vipDiscountPercent: 25, lifetimePoints: 500000, pointsPerCycle: 25000,
     weekdayPointsPerCycle: 17500, weekendPointsPerCycle: 7500, minSpendPerCycleCentavos: peso(3000), supplementaryHolders: 1,

@@ -67,7 +67,7 @@ describe("Staff & Access directory view from the URL", () => {
   it("shows HR employees only, with no chips or account rows, even when view=account", async () => {
     view = "account";
     render(<TestWrapper identityId="dev-hr" />);
-    await screen.findByRole("button", { name: /^HR Staff/ }, { timeout: 5000 });
+    await screen.findByRole("row", { name: /^Open HR Staff/ }, { timeout: 5000 });
     expect(screen.queryByRole("button", { name: "Account only" })).toBeNull();
     expect(screen.queryByRole("group", { name: "Directory view" })).toBeNull();
     expect(row("staff-1")).not.toBeNull();

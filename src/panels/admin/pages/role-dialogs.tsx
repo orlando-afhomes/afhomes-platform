@@ -1,5 +1,6 @@
 "use client";
 
+import { EMPTY } from "@/shared/lib/empty-value";
 import { humanize } from "@/shared/lib/humanize";
 import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -83,7 +84,7 @@ function RoleViewDialog({ viewRole, onClose }: { viewRole: DepartmentRole | null
             <dl className="tw:flex tw:flex-col">
               <DetailRow term="Role Name">{viewRole.name}</DetailRow>
               <DetailRow term="Department">
-                {departments.find((item) => item.id === viewRole.departmentId)?.name ?? "Unknown department"}
+                {departments.find((item) => item.id === viewRole.departmentId)?.name ?? EMPTY}
               </DetailRow>
               <DetailRow term="Status">
                 <StatusBadge status={viewRole.status} />

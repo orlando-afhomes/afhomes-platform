@@ -10,8 +10,7 @@ import {
   type SaleMenuSale,
 } from "./sales-contract-actions";
 
-const saleCallbacks = (): SaleMenuCallbacks & { onView: () => void; onApprove: () => void; onMarkDefaulted: () => void } => ({
-  onView: vi.fn(),
+const saleCallbacks = (): SaleMenuCallbacks & { onApprove: () => void; onMarkDefaulted: () => void } => ({
   onApprove: vi.fn(),
   onMarkDefaulted: vi.fn(),
 });
@@ -33,7 +32,6 @@ function contractFixture(overrides: Partial<ContractMenuContract> = {}): Contrac
 }
 
 const allContractCallbacks = (): Required<ContractMenuCallbacks> => ({
-  onView: vi.fn(),
   onEdit: vi.fn(),
   onSubmitPayment: vi.fn(),
   onSubmitContract: vi.fn(),
@@ -56,7 +54,7 @@ describe("buildSalesMenuProps", () => {
     const menu = buildSalesMenuProps(saleFixture(), { canApprove: true }, saleCallbacks());
     expect(keysOf(menu)).toEqual(["approve-sale"]);
     expect(menu.itemName).toBe("sale for Rosa Cruz");
-    expect(menu.onView).toBeDefined();
+    expect("onView" in menu).toBe(false);
   });
 
   it("offers Mark Defaulted for an eligible sale and hides both without the permission", () => {
@@ -71,14 +69,13 @@ describe("buildSalesMenuProps", () => {
     expect(keysOf(buildSalesMenuProps(both, { canApprove: true }, saleCallbacks()))).toEqual(["approve-sale"]);
   });
 
-  it("exposes the identical action set on rows and on detail pages (detail hides View)", () => {
+  it("exposes the identical action set on rows and on detail pages (no View entry)", () => {
     const sale = saleFixture();
     const perms: SaleMenuPerms = { canApprove: true };
     const row = buildSalesMenuProps(sale, perms, saleCallbacks());
     const detailCallbacks = saleCallbacks();
-    const detail = { ...buildSalesMenuProps(sale, perms, detailCallbacks), onView: undefined };
+    const detail = { ...buildSalesMenuProps(sale, perms, detailCallbacks) };
     expect(keysOf(detail)).toEqual(keysOf(row));
-    expect(detail.onView).toBeUndefined();
     expect(detail.itemName).toBe(row.itemName);
   });
 });
@@ -109,13 +106,12 @@ describe("buildContractMenuProps", () => {
     expect(menu.itemName).toBe("contract · Rosa Cruz · G1");
   });
 
-  it("exposes the identical action set on rows and on detail pages (detail hides View)", () => {
+  it("exposes the identical action set on rows and on detail pages (no View entry)", () => {
     const contract = contractFixture({ status: "under_review", holds: ["Missing annex"] });
     const row = buildContractMenuProps(contract, reviewerPerms, allContractCallbacks());
     const detailCallbacks = allContractCallbacks();
-    const detail = { ...buildContractMenuProps(contract, reviewerPerms, detailCallbacks), onView: undefined };
+    const detail = { ...buildContractMenuProps(contract, reviewerPerms, detailCallbacks) };
     expect(keysOf(detail)).toEqual(keysOf(row));
-    expect(detail.onView).toBeUndefined();
     expect(detail.onEdit).toBe(detailCallbacks.onEdit);
     expect(detail.itemName).toBe(row.itemName);
   });
@@ -168,7 +164,6 @@ describe("buildContractMenuProps", () => {
   it("omits every item whose handler the caller did not provide", () => {
     const menu = buildContractMenuProps(contractFixture(), reviewerPerms, {});
     expect(menu.extraItems).toEqual([]);
-    expect(menu.onView).toBeUndefined();
     expect(menu.onEdit).toBeUndefined();
   });
 });

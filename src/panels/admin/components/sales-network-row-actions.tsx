@@ -1,13 +1,12 @@
 "use client";
 
-import { Eye, MoreHorizontal, Pause, Pencil, Play, Repeat } from "lucide-react";
+import { MoreHorizontal, Pause, Pencil, Play, Repeat } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
 
 /** Row menu for Sales Network members; each entry appears only when its permission flag allows it. */
 export function SalesNetworkRowActions({
   itemName,
-  onView,
   onEdit,
   onTransfer,
   transferLabel = "Transfer",
@@ -19,7 +18,6 @@ export function SalesNetworkRowActions({
   status,
 }: {
   itemName: string;
-  onView?: () => void;
   onEdit: () => void;
   onTransfer: () => void;
   transferLabel?: string;
@@ -33,7 +31,7 @@ export function SalesNetworkRowActions({
   const showStatus = canChangeStatus && (status === "active" || canReactivate);
   const reactivate = status !== "active";
   const itemClass = "tw:min-h-11 tw:sm:min-h-8";
-  const hasItems = Boolean(onView) || canEdit || canTransfer || showStatus;
+  const hasItems = canEdit || canTransfer || showStatus;
   if (!hasItems) return <div className="tw:flex tw:justify-end" />;
 
   return (
@@ -45,11 +43,6 @@ export function SalesNetworkRowActions({
           <MoreHorizontal aria-hidden="true" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="tw:min-w-44">
-          {onView ? (
-            <DropdownMenuItem onClick={onView} className={itemClass}>
-              <Eye aria-hidden="true" /> View
-            </DropdownMenuItem>
-          ) : null}
           {canEdit ? (
             <DropdownMenuItem onClick={onEdit} className={itemClass}>
               <Pencil aria-hidden="true" /> Edit

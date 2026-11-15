@@ -1,5 +1,6 @@
 "use client";
 
+import { EMPTY } from "@/shared/lib/empty-value";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { Designation, OrgMember } from "@/modules/organization/types";
@@ -7,7 +8,7 @@ import { normalizeLandline, normalizePhilippineMobile, normalizePostalCode } fro
 import { CIVIL_STATUS_OPTIONS, GENDER_OPTIONS } from "@/modules/sales-network/accredited-seller";
 import { useVipProducts } from "@/data/business-queries";
 import { useReferenceOptions } from "@/data/settings-queries";
-import { tierOptions } from "@/modules/vip/tier-options";
+import { defaultProductCode, tierOptions } from "@/modules/vip/tier-options";
 import { isValidTierCode, type VipTierCode } from "@/modules/vip/types";
 import {
   formatPhilippineLandlineDisplay,
@@ -136,8 +137,10 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
   const [governmentIdNumber, setGovernmentIdNumber] = useState(profile?.governmentIdNumber ?? "");
   const [cardApplicationDate, setCardApplicationDate] = useState(profile?.cardApplicationDate ?? "");
   const [programCategory, setProgramCategory] = useState<string | undefined>(profile?.programCategory ?? undefined);
-  const [vipCardLevel, setVipCardLevel] = useState<VipTierCode>(profile?.vipCardLevel ?? "B1");
+  const [chosenCardLevel, setVipCardLevel] = useState<VipTierCode>(profile?.vipCardLevel ?? "");
   const products = useVipProducts();
+  // Until a card level is picked, it is the first active product.
+  const vipCardLevel = chosenCardLevel || defaultProductCode(products.data);
   const [confirmSave, setConfirmSave] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -374,7 +377,7 @@ function TransferMemberForm({ member, onDone }: { member: OrgMember; onDone: () 
   const allMembers = membersQuery.data ?? [];
   const descendantCount = getTotalDescendantCount(member.id, allMembers);
   const currentParent = member.parentId ? allMembers.find((parent) => parent.id === member.parentId) : undefined;
-  const currentParentName = currentParent ? `${currentParent.displayName} (${designationLabel(currentParent.designation)})` : "None";
+  const currentParentName = currentParent ? `${currentParent.displayName} (${designationLabel(currentParent.designation)})` : EMPTY;
 
   const [target, setTarget] = useState<"IST" | "OST">(member.designation === "OST" ? "IST" : "OST");
   const [position, setPosition] = useState<Designation>(member.designation === "OST" ? "SSM" : "OST");
@@ -523,6 +526,7 @@ function TransferMemberForm({ member, onDone }: { member: OrgMember; onDone: () 
             : "The member and their downline branch will move to the selected parent."
         }
         confirmText={`Transfer to ${target}`}
+        tone="warning"
         pending={submitting}
         onConfirm={() => void run()}
         onClose={() => setConfirmTransfer(false)}

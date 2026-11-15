@@ -14,7 +14,7 @@ import { MembershipReportPage } from "./pages/membership-report-page";
 import { SalesPerformanceReportPage } from "./pages/sales-performance-report-page";
 import { StayPointsReportPage } from "./pages/stay-points-report-page";
 import { PromoPointsReportPage } from "./pages/promo-points-report-page";
-import { ReportsSummaryPanel } from "./components/reports-summary-panel";
+import { previousPeriod, ReportsSummaryPanel } from "./components/reports-summary-panel";
 import { ReportsAreaPage } from "./pages/reports-area-page";
 import CustomerGrowthRoute from "@/app/admin/reports/customer-growth/page";
 import CollectionsRoute from "@/app/admin/reports/collections/page";
@@ -78,15 +78,18 @@ describe("report pages", () => {
     for (const [key, label] of Object.entries(TILES)) {
       if (key !== own) expect(screen.queryAllByText(label)).toHaveLength(0);
     }
-    expect(screen.getByRole("button", { name: /Excel/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /CSV/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Print/ })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Export/ })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /^(Excel|CSV|Print)$/ })).toBeNull();
+    // Each report has its own From and To fields; the old preset select is gone.
+    expect(screen.getByLabelText("From")).toBeInTheDocument();
+    expect(screen.getByLabelText("To")).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Date range" })).toBeNull();
     expect(screen.queryByText(/Role-scoped figures/)).toBeNull();
     // Each stat card is one <dl>; a report shows at most 3.
     expect(document.querySelectorAll("dl").length).toBeLessThanOrEqual(3);
   });
 
-  it("shows at most 5 columns on screen and every column in View full details", async () => {
+  it("shows at most 5 columns on screen and every column in the row details", async () => {
     show("dev-finance", <CommissionReportPage />);
     const table = await screen.findByRole("table", { name: "Commission Report" });
     const headers = within(table).getAllByRole("columnheader").map((cell) => cell.textContent);
@@ -116,6 +119,19 @@ describe("report pages", () => {
   });
 });
 
+describe("previous period", () => {
+  it("is the same number of days right before the range", () => {
+    expect(previousPeriod({ from: "2026-11-01", to: "2026-11-10" })).toMatchObject({ from: "2026-10-22", to: "2026-10-31", comparable: true });
+    expect(previousPeriod({ from: "2026-11-15", to: "2026-11-15" })).toMatchObject({ from: "2026-11-14", to: "2026-11-14", comparable: true });
+  });
+
+  it("has nothing to compare when a date is cleared or the range is reversed", () => {
+    expect(previousPeriod({ from: "1900-01-01", to: "2026-11-10" }).comparable).toBe(false);
+    expect(previousPeriod({ from: "2026-11-10", to: "2999-12-31" }).comparable).toBe(false);
+    expect(previousPeriod({ from: "2026-11-10", to: "2026-11-01" }).comparable).toBe(false);
+  });
+});
+
 describe("reports summary", () => {
   it("shows one card per report and opens a report on click", async () => {
     const onOpen = vi.fn();
@@ -123,15 +139,26 @@ describe("reports summary", () => {
     const buttons = await screen.findAllByRole("button", { name: /^Open the .* report$/ });
     expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual([
       "Open the Sales report",
-      "Open the Customers report",
       "Open the Collections report",
       "Open the Commissions report",
+      "Open the Customers report",
       "Open the Membership report",
       "Open the Stay Points report",
       "Open the Promo Points report",
     ]);
     fireEvent.click(screen.getByRole("button", { name: "Open the Collections report" }));
     expect(onOpen).toHaveBeenCalledWith("collections");
+  });
+
+  it("groups the cards under Money, People and Points and offers From and To dates", async () => {
+    show("dev-finance", <ReportsSummaryPanel onOpen={vi.fn()} />);
+    await screen.findByRole("button", { name: "Open the Sales report" });
+    expect(screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent)).toEqual(["Money", "People", "Points"]);
+    expect(screen.getByLabelText("From")).toBeInTheDocument();
+    expect(screen.getByLabelText("To")).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Date range" })).toBeNull();
+    // Every card is clickable and shows its "Open report" hint.
+    expect(screen.getAllByText(/Open report/)).toHaveLength(7);
   });
 
   it("hides the Collections card without finance.reports.view", async () => {
@@ -178,25 +205,26 @@ describe("reports area page", () => {
     const initial = rangeText();
     expect(initial).toMatch(/^Date range: .+ to .+$/);
 
-    // Choose "Today" on the Summary tab.
-    await user.click(screen.getByRole("combobox", { name: "Date range" }));
-    await user.click(await screen.findByRole("option", { name: "Today" }));
-    const today = formatDate(manilaToday());
-    await waitFor(() => expect(rangeText()).toBe(`Date range: ${today} to ${today}`));
+    // Pick a one-day range on the Summary tab.
+    const today = manilaToday();
+    fireEvent.change(screen.getByLabelText("From"), { target: { value: today } });
+    const label = formatDate(today);
+    await waitFor(() => expect(rangeText()).toBe(`Date range: ${label} to ${label}`));
     const chosen = rangeText();
     expect(chosen).not.toBe(initial);
 
-    // A report tab opened from a Summary card keeps the same range and preset.
+    // A report tab opened from a Summary card keeps the same range.
     await user.click(screen.getByRole("button", { name: "Open the Sales report" }));
     expect(screen.getByRole("tab", { name: "Sales" })).toHaveAttribute("aria-selected", "true");
     await waitFor(() => expect(rangeText()).toBe(chosen));
-    expect(screen.getByRole("combobox", { name: "Date range" })).toHaveValue("Today");
+    expect(screen.getByLabelText("From")).toHaveValue(today);
+    expect(screen.getByLabelText("To")).toHaveValue(today);
 
     // Back on Summary the chosen range is still there.
     await user.click(screen.getByRole("tab", { name: "Summary" }));
     expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute("aria-selected", "true");
     await waitFor(() => expect(rangeText()).toBe(chosen));
-    expect(screen.getByRole("combobox", { name: "Date range" })).toHaveValue("Today");
+    expect(screen.getByLabelText("From")).toHaveValue(today);
   });
 
   it("redirects the former report routes to their tab", async () => {

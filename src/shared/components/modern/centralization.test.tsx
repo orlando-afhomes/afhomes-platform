@@ -88,6 +88,28 @@ describe("centralized search and filter", () => {
     expect(search).toBe("x");
     expect(status).toBe("all");
   });
+
+  it("puts the header on its own line above a wrapping control row", () => {
+    render(
+      <FilterBar
+        header={<p>View chips</p>}
+        search=""
+        onSearch={() => undefined}
+        searchLabel="Search items"
+        filters={[{ label: "Status", value: "all", onChange: () => undefined, options: [{ value: "all", label: "All" }] }]}
+      />,
+    );
+    const header = screen.getByText("View chips").parentElement as HTMLElement;
+    const row = screen.getByLabelText("Search items").closest("div")?.parentElement as HTMLElement;
+    expect(row).toHaveClass("tw:md:flex-wrap");
+    expect(row.contains(header)).toBe(false);
+    expect(header.parentElement).toBe(row.parentElement);
+  });
+
+  it("renders no empty control row without controls", () => {
+    const { container } = render(<FilterBar header={<p>Only chips</p>} />);
+    expect(container.querySelectorAll("[data-slot=card] > div")).toHaveLength(1);
+  });
 });
 
 describe("centralized feedback", () => {
@@ -211,6 +233,6 @@ describe("centralized presentation", () => {
       </>,
     );
     expect(screen.getByRole("button", { name: "Primary" }).className).toContain("tw:bg-primary");
-    expect(screen.getByRole("button", { name: "Danger" }).className).toContain("tw:text-destructive");
+    expect(screen.getByRole("button", { name: "Danger" }).className).toContain("tw:bg-destructive");
   });
 });

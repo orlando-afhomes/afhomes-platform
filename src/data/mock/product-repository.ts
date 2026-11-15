@@ -2,8 +2,8 @@ import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { PaymentSchemeInput, ProductCreateInput, ProductRepository, ProductUpdateInput } from "@/data/contracts/product-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { DevIdentity } from "@/modules/identity/types";
-import { installmentCountFor, schemeTermErrors } from "@/modules/vip/rules";
-import { isValidTierCode, NON_ACTIVE_TIER_CODES, type PaymentScheme, type VipProduct, type VipTierCode } from "@/modules/vip/types";
+import { installmentCountFor, productCodeError, schemeTermErrors } from "@/modules/vip/rules";
+import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
 import { BusinessRepository, today } from "./business-base";
 import { nextId } from "./ids";
 import type { MockStore } from "./seed";
@@ -29,7 +29,11 @@ function termsComplete(scheme: PaymentScheme): boolean {
   return scheme.applicableTiers.every((tier) => (installmentCountFor(scheme, tier) ?? 0) > 0 && (scheme.installmentCentavosByTier[tier] ?? 0) > 0);
 }
 
+const TEXT_MAX = 500;
+
 function productTermErrors(next: VipProduct): string | null {
+  if ((next.description ?? "").length > TEXT_MAX) return `The description must be ${TEXT_MAX} characters or fewer.`;
+  if ((next.benefitsSummary ?? "").length > TEXT_MAX) return `The benefits summary must be ${TEXT_MAX} characters or fewer.`;
   if (!Number.isInteger(next.priceCentavos) || next.priceCentavos <= 0) return "The price must be a positive amount.";
   if (next.weekdayPointsPerCycle + next.weekendPointsPerCycle !== next.pointsPerCycle) return "Weekday and weekend points must add up to the points per cycle.";
   if (next.pointsPerCycle * next.earningCycles !== next.lifetimePoints) return "Lifetime points must equal points per cycle times earning cycles.";
@@ -42,8 +46,14 @@ export class MockProductRepository extends BusinessRepository implements Product
     super(store, getIdentity, asyncOptions);
   }
 
+  /** A copy of the product with its tier level's current name and color, so a renamed level shows everywhere. */
+  private resolved(product: VipProduct): VipProduct {
+    const level = this.store.tierLevels.find((item) => item.id === product.tierLevelId);
+    return { ...clone(product), tier: level?.name ?? product.tier, tierColorKey: level?.colorKey ?? product.tierColorKey };
+  }
+
   async list(options?: MockAsyncOptions): Promise<VipProduct[]> {
-    return this.run(options, () => clone(this.store.products));
+    return this.run(options, () => this.store.products.map((product) => this.resolved(product)));
   }
 
   async listSchemes(options?: MockAsyncOptions): Promise<PaymentScheme[]> {
@@ -56,6 +66,11 @@ export class MockProductRepository extends BusinessRepository implements Product
       if (!reason.trim()) throw new Error("A reason or approval reference is required for a configuration change.");
       const product = this.store.products.find((item) => item.code === code);
       if (!product) throw new Error("Product not found.");
+      if (input.tierLevelId !== undefined && input.tierLevelId !== product.tierLevelId) {
+        const level = this.store.tierLevels.find((item) => item.id === input.tierLevelId);
+        if (!level) throw new Error("Choose a tier level.");
+        if (level.status !== "active") throw new Error("This tier level is inactive. Choose an active one.");
+      }
       const next = { ...product, ...input } as VipProduct;
       const invalidTerms = productTermErrors(next);
       if (invalidTerms) throw new Error(invalidTerms);
@@ -69,7 +84,7 @@ export class MockProductRepository extends BusinessRepository implements Product
         configVersion: product.configVersion + 1,
         effectiveDate: today(),
         priceStatus: statusChanged ? next.priceStatus : product.priceStatus,
-        priceNote: priceChanged || statusChanged ? `Updated in configuration version ${product.configVersion + 1}: ${reason.trim()}` : product.priceNote,
+        priceNote: priceChanged || statusChanged ? `Updated on ${today()}: ${reason.trim()}` : product.priceNote,
       });
       product.changes.push({ version: product.configVersion, date: today(), actorId: identity.id, reason: reason.trim(), summary: changed.join(", ") });
       this.audit(identity, {
@@ -81,7 +96,7 @@ export class MockProductRepository extends BusinessRepository implements Product
         newValue: `v${product.configVersion}`,
         reason: reason.trim(),
       });
-      return clone(product);
+      return this.resolved(product);
     });
   }
 
@@ -111,10 +126,11 @@ export class MockProductRepository extends BusinessRepository implements Product
       this.require(identity, "vip-products.manage", "Managing VIP products is not allowed for this identity.");
       if (!reason.trim()) throw new Error("A reason or approval reference is required for a configuration change.");
       const code = input.code.trim().toUpperCase();
-      if (!isValidTierCode(code)) throw new Error("The product code must be exactly 2 characters: one letter and one digit, for example B3.");
-      const reserved = NON_ACTIVE_TIER_CODES.find((item) => item.code === code);
-      if (reserved) throw new Error(`${code} is a ${reserved.state} tier code and cannot be used.`);
-      if (this.store.products.some((item) => item.code === code)) throw new Error("A product with this code already exists.");
+      const codeProblem = productCodeError(code, this.store.products.map((item) => item.code));
+      if (codeProblem) throw new Error(codeProblem);
+      const level = this.store.tierLevels.find((item) => item.id === input.tierLevelId);
+      if (!level) throw new Error("Choose a tier level.");
+      if (level.status !== "active") throw new Error("This tier level is inactive. Choose an active one.");
       const name = input.name.trim();
       if (!name) throw new Error("A product name is required.");
       if (this.store.products.some((item) => item.name.toLowerCase() === name.toLowerCase())) throw new Error("A product with this name already exists.");
@@ -123,10 +139,12 @@ export class MockProductRepository extends BusinessRepository implements Product
       const product: VipProduct = {
         code,
         name,
-        tier: input.tier,
+        tierLevelId: level.id,
+        tier: level.name,
+        tierColorKey: level.colorKey,
         priceCentavos: input.priceCentavos,
         priceStatus: "contract_stated",
-        priceNote: `Created in configuration version 1: ${reason.trim()}`,
+        priceNote: `Created on ${today()}: ${reason.trim()}`,
         validityYears: input.validityYears,
         earningCycles: input.earningCycles,
         vipDiscountPercent: input.vipDiscountPercent,
@@ -136,6 +154,10 @@ export class MockProductRepository extends BusinessRepository implements Product
         weekendPointsPerCycle: input.weekendPointsPerCycle,
         minSpendPerCycleCentavos: input.minSpendPerCycleCentavos,
         supplementaryHolders: input.supplementaryHolders,
+        description: input.description?.trim() || null,
+        benefitsSummary: input.benefitsSummary?.trim() || null,
+        imageUrl: input.imageUrl ?? null,
+        imageFileName: input.imageFileName ?? null,
         status: "active",
         configVersion: 1,
         effectiveDate: today(),
@@ -145,7 +167,7 @@ export class MockProductRepository extends BusinessRepository implements Product
       if (invalid) throw new Error(invalid);
       this.store.products.push(product);
       this.audit(identity, { module: "vip-products", action: BUSINESS_AUDIT_ACTIONS.PRODUCT_CREATED, entityType: "product", entityId: code, newValue: `v1 ${name}`, reason: reason.trim() });
-      return clone(product);
+      return this.resolved(product);
     });
   }
 

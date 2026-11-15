@@ -5,7 +5,7 @@ import type { DistributionRow } from "@/shared/components/dashboard/dashboard-di
 import type { DashboardKpiTrend } from "@/shared/components/dashboard/dashboard-kpi";
 import type { DashboardTone } from "@/shared/components/dashboard/dashboard-layout";
 import { formatDate } from "@/shared/lib/format-date";
-import { DASHBOARD_TIERS, type DashboardActivityItem, type DashboardActivityKind, type DashboardTierCode, type TierDistributionRow } from "../dashboard-metrics";
+import { type DashboardActivityItem, type DashboardActivityKind, type DashboardTierCode, type TierDistributionRow, type TierProduct } from "../dashboard-metrics";
 
 /**
  * Each tier uses its own metal: warm saturated gold, cool neutral silver, and
@@ -16,6 +16,18 @@ export const TIER_COLORS: Record<string, string> = {
   S1: "var(--color-tier-silver)",
   B1: "var(--color-tier-bronze)",
 };
+
+/** Color of a managed tier level (its `colorKey`), using the same tier tokens. */
+const TIER_LEVEL_COLORS: Record<string, string> = {
+  gold: "var(--color-tier-gold)",
+  silver: "var(--color-tier-silver)",
+  bronze: "var(--color-tier-bronze)",
+  neutral: "var(--color-muted-foreground)",
+};
+
+export function tierLevelColor(colorKey: string | undefined): string | undefined {
+  return colorKey ? TIER_LEVEL_COLORS[colorKey] : undefined;
+}
 
 /** Extra tiers get a deterministic chart colour by position, from the brand series colours. */
 const FALLBACK_TIER_COLORS = ["var(--color-brand-primary)", "var(--color-accent)", "var(--color-info)", "var(--color-dashboard-violet)"];
@@ -38,7 +50,7 @@ export const SERIES_COLORS = {
 export function tierRows(rows: readonly TierDistributionRow[]): DistributionRow[] {
   return [...rows]
     .reverse()
-    .map((row) => ({ key: row.code, label: `VIP ${row.label}`, count: row.count, color: tierColor(row.code) }));
+    .map((row) => ({ key: row.code, label: `VIP ${row.label}`, count: row.count, color: tierLevelColor(row.colorKey) ?? tierColor(row.code) }));
 }
 
 const ACTIVITY_PRESENTATION: Record<DashboardActivityKind, { icon: LucideIcon; tone: DashboardTone; noun: string }> = {
@@ -50,16 +62,16 @@ const ACTIVITY_PRESENTATION: Record<DashboardActivityKind, { icon: LucideIcon; t
   commission: { icon: HandCoins, tone: "accent", noun: "Commission" },
 };
 
-function tierName(code: string | undefined) {
-  const tier = DASHBOARD_TIERS.find((item) => item.code === code);
-  return tier ? `VIP ${tier.label}` : null;
+function tierName(code: string | undefined, products: ReadonlyArray<TierProduct> | undefined) {
+  const product = products?.find((item) => item.code === code);
+  return product ? `VIP ${product.tier}` : null;
 }
 
 /** Builds each row's sentence from the record reference and tier only; no customer details. */
-export function toActivityEntries(items: readonly DashboardActivityItem[]): DashboardActivityEntry[] {
+export function toActivityEntries(items: readonly DashboardActivityItem[], products?: ReadonlyArray<TierProduct>): DashboardActivityEntry[] {
   return items.map((item) => {
     const { icon, tone, noun } = ACTIVITY_PRESENTATION[item.kind];
-    const tier = tierName(item.productCode);
+    const tier = tierName(item.productCode, products);
     return {
       id: item.id,
       label: item.label,

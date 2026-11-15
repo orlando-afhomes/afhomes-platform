@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Download, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useOperation, usePayments } from "@/data/business-queries";
 import { useReceiptImportAction, useReceiptImportBatches } from "@/data/reconciliation-queries";
@@ -17,14 +17,15 @@ import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { CheckboxField, TextAreaField } from "@/shared/forms/modern";
 import { manilaToday } from "@/shared/lib/dates";
-import { downloadCsv, readSpreadsheet, SPREADSHEET_ACCEPT } from "@/shared/lib/spreadsheet";
+import { EMPTY } from "@/shared/lib/empty-value";
+import { downloadCsv, downloadXlsx, readSpreadsheet, SPREADSHEET_ACCEPT } from "@/shared/lib/spreadsheet";
 import { formatPeso } from "@/shared/lib/money";
 import { formatDate } from "@/shared/lib/format-date";
 import { ReportExport, type ReportColumn } from "../components/report-shell";
 import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
 import { buildImportBatchMenuProps } from "../actions/history-import-actions";
-import { TemplateStep, UploadDropzone } from "../components/customer-import-steps";
+import { TemplateDownloadMenu, TemplateStep, UploadDropzone } from "../components/customer-import-steps";
 
 const SHEET_NAME = "Receipts";
 
@@ -32,17 +33,15 @@ const BATCH_BADGE: Record<ReceiptImportBatch["status"], string> = { pending_sign
 
 const ROW_COLUMNS: ColumnDef<ReceiptImportRow, unknown>[] = [
   { id: "row", header: "Row", cell: ({ row }) => row.original.rowNumber },
-  { id: "reference", header: "Receipt", cell: ({ row }) => <span className="tw:font-semibold">{row.original.receipt?.referenceNo ?? "-"}</span> },
-  { id: "amount", header: "Amount", cell: ({ row }) => (row.original.receipt ? <Money value={row.original.receipt.amountCentavos} /> : "-") },
+  { id: "reference", header: "Receipt", cell: ({ row }) => <span className="tw:font-semibold">{row.original.receipt?.referenceNo}</span> },
+  { id: "amount", header: "Amount", cell: ({ row }) => (row.original.receipt ? <Money value={row.original.receipt.amountCentavos} /> : null) },
   { id: "status", header: "Result", cell: ({ row }) => <BizBadge status={row.original.status === "ready" ? "verified" : "rejected"} label={row.original.status === "ready" ? "Ready" : "Invalid"} /> },
   {
     id: "issues",
     header: "Issues",
     // A short count only: the full messages live in the row details sheet.
     cell: ({ row }) =>
-      row.original.errors.length === 0 ? (
-        <span className="tw:text-muted-foreground">None</span>
-      ) : (
+      row.original.errors.length === 0 ? EMPTY : (
         <span className="tw:text-xs tw:font-medium tw:text-destructive">
           {row.original.errors.length} {row.original.errors.length === 1 ? "issue" : "issues"}
         </span>
@@ -119,9 +118,10 @@ function ImportPanel() {
         description="Required in every row: Receipt reference, Receipt date (YYYY-MM-DD), Amount, Payment method, Customer, Sale reference and Sale status. Sale status must be Unfinished."
         connector
         actions={
-          <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => downloadCsv("receipt-import-template.csv", [[...RECEIPT_IMPORT_COLUMNS]])}>
-            <Download aria-hidden="true" /> CSV template
-          </Button>
+          <TemplateDownloadMenu
+            onExcel={() => void downloadXlsx("receipt-import-template.xlsx", [{ name: "Receipts", rows: [[...RECEIPT_IMPORT_COLUMNS]] }]).catch(() => toast.error("The template could not be created."))}
+            onCsv={() => downloadCsv("receipt-import-template.csv", [[...RECEIPT_IMPORT_COLUMNS]])}
+          />
         }
       />
       <TemplateStep step={2} title="Upload and review" description={<Label htmlFor="receipt-import-file">Receipt file (.xlsx or .csv, up to 10 MB)</Label>} connector={preview !== null}>
@@ -156,8 +156,8 @@ function ImportPanel() {
                         title: "Row",
                         rows: [
                           { label: "Row", value: detailRow.rowNumber },
-                          { label: "Receipt", value: detailRow.receipt?.referenceNo ?? "" },
-                          { label: "Amount", value: detailRow.receipt ? <Money value={detailRow.receipt.amountCentavos} /> : "" },
+                          { label: "Receipt", value: detailRow.receipt?.referenceNo },
+                          { label: "Amount", value: detailRow.receipt ? <Money value={detailRow.receipt.amountCentavos} /> : null },
                           { label: "Result", value: detailRow.status === "ready" ? "Ready" : "Invalid" },
                         ],
                       },
@@ -166,7 +166,7 @@ function ImportPanel() {
                         rows:
                           detailRow.errors.length > 0
                             ? detailRow.errors.map((message, index) => ({ label: `Issue ${index + 1}`, value: message }))
-                            : [{ label: "Issues", value: "No issues" }],
+                            : [{ label: "Issues", value: EMPTY }],
                       },
                     ]
                   : []
@@ -222,17 +222,19 @@ function BatchesPanel({ batches, isLoading, error }: { batches: ReceiptImportBat
   );
 
   const signOffBatch = (batch: ReceiptImportBatch) =>
-    confirmRun({ title: "Sign off this batch?", description: `All ${batch.receipts.length} receipt(s) become Approved (imported) and count in reports. This cannot be undone.`, confirmText: "Sign off", action: () => action.mutateAsync({ action: "signOff", id: batch.id }), successTitle: "Batch signed off.", errorTitle: "Could not sign off" });
+    confirmRun({ title: "Sign off this batch?", description: `All ${batch.receipts.length} receipt(s) become Approved (imported) and count in reports. This cannot be undone.`, confirmText: "Sign off", tone: "success", action: () => action.mutateAsync({ action: "signOff", id: batch.id }), successTitle: "Batch signed off.", errorTitle: "Could not sign off" });
 
-  const menuPropsFor = (batch: ReceiptImportBatch, onView?: () => void) =>
-    buildImportBatchMenuProps(batch, { canSignOff }, { onView, onSignOff: () => signOffBatch(batch), onReject: () => setRejecting(batch) });
+  const menuPropsFor = (batch: ReceiptImportBatch) =>
+    buildImportBatchMenuProps(batch, { canSignOff }, { onSignOff: () => signOffBatch(batch), onReject: () => setRejecting(batch) });
 
   const detailMenu = detail ? menuPropsFor(detail) : null;
 
   return (
     <QueryState isLoading={isLoading} error={error}>
       {dialog}
-      <ReportExport report="Historical Import" fileName="historical-import" columns={exportColumns} rows={batches} range={null} printable={false} />
+      <div className="tw:flex tw:justify-end">
+        <ReportExport report="Historical Import" fileName="historical-import" columns={exportColumns} rows={batches} range={null} printable={false} />
+      </div>
       <DataTable
         data={batches}
         columns={columns}
@@ -242,8 +244,8 @@ function BatchesPanel({ batches, isLoading, error }: { batches: ReceiptImportBat
         onRowOpen={(row) => setDetailId(row.id)}
         getRowLabel={(row) => `Open import batch ${row.id}`}
         rowActions={(row) => {
-          const menu = menuPropsFor(row, () => setDetailId(row.id));
-          return <RowActionsMenu itemName={menu.itemName} onView={menu.onView} extraItems={menu.extraItems} />;
+          const menu = menuPropsFor(row);
+          return <RowActionsMenu itemName={menu.itemName} extraItems={menu.extraItems} />;
         }}
       />
       <RecordDetailsSheet
@@ -252,11 +254,11 @@ function BatchesPanel({ batches, isLoading, error }: { batches: ReceiptImportBat
         title={detail ? `Batch ${detail.id}` : "Batch"}
         subtitle={detail?.fileName}
         badge={detail ? <BizBadge status={BATCH_BADGE[detail.status]} label={detail.status === "signed_off" ? "Signed off" : detail.status === "rejected" ? "Rejected" : "Awaiting sign-off"} /> : undefined}
-        footer={detailMenu && detailMenu.extraItems.length > 0 ? detailMenu.extraItems.map((item) => <Button key={item.key} type="button" variant={item.danger ? "danger" : "outline"} onClick={item.onClick}>{item.label}</Button>) : undefined}
+        footer={detailMenu && detailMenu.extraItems.length > 0 ? detailMenu.extraItems.map((item) => <Button key={item.key} type="button" variant={item.tone === "success" ? "success" : item.danger || item.tone === "danger" ? "destructive" : "outline"} onClick={item.onClick}>{item.label}</Button>) : undefined}
         sections={
           detail
             ? [
-                { title: "Batch", rows: [{ label: "Rows in file", value: detail.totalRows }, { label: "Skipped", value: detail.skipped.length }, { label: "Prepared", value: formatDate(detail.createdAt) }, { label: "Decided", value: detail.decidedAt ? formatDate(detail.decidedAt) : "" }, { label: "Reason", value: detail.decisionReason ?? "" }, { label: "Self sign-off", value: detail.selfSignedOff ? "Yes, the signer also prepared this batch" : "No" }] },
+                { title: "Batch", rows: [{ label: "Receipts", value: detail.receipts.length }, { label: "Total", value: <Money value={detail.receipts.reduce((sum, receipt) => sum + receipt.amountCentavos, 0)} /> }, { label: "Rows in file", value: detail.totalRows }, { label: "Skipped", value: detail.skipped.length }, { label: "Prepared", value: formatDate(detail.createdAt) }, { label: "Decided", value: detail.decidedAt ? formatDate(detail.decidedAt) : null }, { label: "Reason", value: detail.decisionReason }, { label: "Self sign-off", value: detail.selfSignedOff ? "Yes, the signer also prepared this batch" : "No" }] },
                 { title: "Receipts", rows: detail.receipts.map((receipt) => ({ label: receipt.referenceNo, value: `${receipt.paidDate} · ${formatPeso(receipt.amountCentavos)} · ${importedReceiptStatusLabel(detail.status)}` })) },
                 { title: "Skipped rows", rows: detail.skipped.map((item) => ({ label: `Row ${item.rowNumber}`, value: item.reason })) },
               ]
@@ -283,7 +285,7 @@ function RejectDialog({ batch, onClose }: { batch: ReceiptImportBatch; onClose: 
     }
   };
   return (
-    <FormDialog open title={`Reject batch ${batch.id}`} description="The whole batch is rejected and none of its receipts count. Fix the file and import it again." submitText="Reject batch" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title={`Reject batch ${batch.id}`} description="The whole batch is rejected and none of its receipts count. Fix the file and import it again." submitText="Reject batch" submitVariant="destructive" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <TextAreaField label="Reason" required value={reason} onChange={setReason} />
     </FormDialog>
   );

@@ -6,7 +6,7 @@ import { validateCompletion } from "@/modules/accreditation/registration";
 import { CIVIL_STATUS_OPTIONS, GENDER_OPTIONS } from "@/modules/sales-network/accredited-seller";
 import { useVipProducts } from "@/data/business-queries";
 import { useReferenceOptions } from "@/data/settings-queries";
-import { tierOptions } from "@/modules/vip/tier-options";
+import { defaultProductCode, tierOptions } from "@/modules/vip/tier-options";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { FormGrid, FormSection } from "@/shared/components/modern/form-layout";
 import { GovernmentIdFields, ProfilePhotoUploader, SelectField, StandardDateField } from "@/shared/forms/modern";
@@ -18,7 +18,7 @@ const EMPTY: RegistrationCompletion = {
   governmentIdNumber: "",
   cardApplicationDate: "",
   programCategory: "",
-  vipCardLevel: "B1",
+  vipCardLevel: "",
   profilePhotoName: "",
 };
 
@@ -51,6 +51,8 @@ export function RegistrationCompletionDialog({
     [photoUrl],
   );
 
+  // Until the office picks one, the card level is the first active product.
+  const cardLevel = value.vipCardLevel || defaultProductCode(products.data);
   const patch = (change: Partial<RegistrationCompletion>) => setValue((previous) => ({ ...previous, ...change }));
 
   const acceptPhoto = (file: File) => {
@@ -64,14 +66,15 @@ export function RegistrationCompletionDialog({
   };
 
   const submit = async () => {
-    const problem = validateCompletion(value, { govIdTypes: govIdOptions.map((option) => option.value), programCategories: programOptions.map((option) => option.value) });
+    const completed = { ...value, vipCardLevel: cardLevel };
+    const problem = validateCompletion(completed, { govIdTypes: govIdOptions.map((option) => option.value), programCategories: programOptions.map((option) => option.value) });
     if (problem) {
       setError(problem);
       return;
     }
     setPending(true);
     try {
-      await onSubmit(value);
+      await onSubmit(completed);
       onClose();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Request failed.");
@@ -121,7 +124,7 @@ export function RegistrationCompletionDialog({
         <FormGrid>
           <StandardDateField id="registration-card-date" label="Application date" required value={value.cardApplicationDate} onChange={(cardApplicationDate) => patch({ cardApplicationDate })} />
           <SelectField id="registration-program" label="Program category" required value={value.programCategory || undefined} options={programOptions} onChange={(programCategory) => patch({ programCategory })} placeholder="Select program category" />
-          <SelectField id="registration-card-level" label="Card level" required value={value.vipCardLevel} options={tierOptions(products.data, [value.vipCardLevel])} onChange={(vipCardLevel) => patch({ vipCardLevel })} />
+          <SelectField id="registration-card-level" label="Card level" required value={cardLevel} options={tierOptions(products.data, [cardLevel])} onChange={(vipCardLevel) => patch({ vipCardLevel })} />
         </FormGrid>
       </FormSection>
     </FormDialog>

@@ -22,13 +22,6 @@ export function countUplines(uplines: readonly { id: string }[]) {
   return uplines.length;
 }
 
-/** Seeded VIP tiers (doc 05). Tiers created later come from the product catalog. */
-export const DASHBOARD_TIERS: ReadonlyArray<{ code: string; label: string }> = [
-  { code: "B1", label: "Bronze" },
-  { code: "S1", label: "Silver" },
-  { code: "G1", label: "Gold" },
-];
-
 export type DashboardTierCode = string;
 
 export type TierDistributionRow = {
@@ -37,24 +30,22 @@ export type TierDistributionRow = {
   count: number;
   /** Exact share of the counted records, 0 to 100 (display only). */
   share: number;
+  /** Color of the product's tier level, when known. */
+  colorKey?: string;
 };
 
-type TierProduct = { code: string; tier: string };
+export type TierProduct = { code: string; tier: string; tierColorKey?: string };
 
-/** Seeded tiers first, then any catalog tier not already listed. */
+/** One row per catalog product, in catalog order (tier levels are managed by an Admin, not fixed here). */
 function dashboardTiers(products: ReadonlyArray<TierProduct> | undefined) {
-  const tiers = [...DASHBOARD_TIERS];
-  for (const product of products ?? []) {
-    if (!tiers.some((tier) => tier.code === product.code)) tiers.push({ code: product.code, label: product.tier });
-  }
-  return tiers;
+  return (products ?? []).map((product) => ({ code: product.code, label: product.tier, colorKey: product.tierColorKey }));
 }
 
 function tierDistribution(records: readonly { productCode: string }[], products?: ReadonlyArray<TierProduct>): { total: number; rows: TierDistributionRow[] } {
   const total = records.length;
-  const rows = dashboardTiers(products).map(({ code, label }) => {
+  const rows = dashboardTiers(products).map(({ code, label, colorKey }) => {
     const count = records.filter((record) => record.productCode === code).length;
-    return { code, label, count, share: total === 0 ? 0 : (count * 100) / total };
+    return { code, label, colorKey, count, share: total === 0 ? 0 : (count * 100) / total };
   });
   return { total, rows };
 }

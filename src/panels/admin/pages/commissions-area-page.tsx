@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { useCommissionRates } from "@/data/business-queries";
+import { useCommissionRates, useOperation } from "@/data/business-queries";
 import { AreaPage } from "@/shared/components/admin";
 import { Button } from "@/shared/ui/button";
 import { ADMIN_AREA_TABS, type AdminAreaTabValue } from "../navigation";
@@ -14,6 +14,11 @@ import { CommissionRecoveryPanel, CommissionsPanel, useCommissionRecoveryVisible
 function SetRateButton({ onClick }: { onClick: () => void }) {
   const rates = useCommissionRates(true);
   return <Button type="button" disabled={!rates.data} onClick={onClick}>Set rate</Button>;
+}
+
+function PrepareListButton({ onClick }: { onClick: () => void }) {
+  const canPrepare = useOperation("commission.payout.prepare");
+  return canPrepare ? <Button type="button" onClick={onClick}>Prepare payout list</Button> : null;
 }
 
 export function CommissionsAreaPage() {
@@ -42,7 +47,7 @@ export function CommissionsAreaPage() {
       tabs={tabs}
       actions={(active) => {
         if (active === "rates") return <SetRateButton onClick={() => setEditing(true)} />;
-        if (active === "payouts") return <Button type="button" onClick={() => setPreparing(true)}>Prepare payout list</Button>;
+        if (active === "payouts") return <PrepareListButton onClick={() => setPreparing(true)} />;
         return null;
       }}
     />

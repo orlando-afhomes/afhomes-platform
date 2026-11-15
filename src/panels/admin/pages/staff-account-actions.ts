@@ -32,6 +32,7 @@ export function confirmLinkedAccountStatus(
         : "The account loses access immediately. It can be turned back on later by an authorized user.",
     confirmText: LINKED_ACCOUNT_ACTION_LABELS[status],
     danger: status !== "active",
+    tone: status === "active" ? "success" : "destructive",
     action: async () => {
       await run();
     },

@@ -2,6 +2,7 @@
 
 import { useCallback, useState, type ReactElement } from "react";
 import { toast } from "sonner";
+import type { ConfirmTone } from "./app-alert";
 import { ConfirmDialog } from "./confirm-dialog";
 
 export type ConfirmRunInput = {
@@ -9,6 +10,7 @@ export type ConfirmRunInput = {
   description: string;
   confirmText?: string;
   danger?: boolean;
+  tone?: ConfirmTone;
   action: () => unknown;
   successTitle: string;
   successDescription?: string;
@@ -55,6 +57,7 @@ export function useConfirmRun(): { confirmRun: (input: ConfirmRunInput) => void;
       description={shown?.description ?? ""}
       confirmText={shown?.confirmText}
       danger={shown?.danger}
+      tone={shown?.tone}
       pending={pending}
       onConfirm={() => void run()}
       onClose={() => setInput(null)}

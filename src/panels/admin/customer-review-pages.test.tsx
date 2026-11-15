@@ -53,8 +53,34 @@ describe("Customers area", () => {
     window.history.replaceState(null, "", "/admin/customers?tab=import-export");
     show("dev-admin", <CustomersRoute />);
     expect(screen.getByRole("tab", { name: "Import and export" })).toHaveAttribute("aria-selected", "true");
-    expect(await screen.findByRole("button", { name: "XLSX template" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Download template" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "New customer" })).toBeNull();
+  });
+
+  it("offers one Download template menu with Excel and CSV, and a filtered export preview", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/admin/customers?tab=import-export");
+    show("dev-admin", <CustomersRoute />);
+    await user.click(await screen.findByRole("button", { name: "Download template" }));
+    expect(await screen.findByRole("menuitem", { name: "Excel (.xlsx)" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "CSV (.csv)" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "CSV template" })).toBeNull();
+
+    const preview = await screen.findByRole("table", { name: "Customers to export" });
+    expect(within(preview).getByText("Noel Pascual")).toBeInTheDocument();
+    expect(screen.queryByText(/matching customer/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Export" })).toBeEnabled();
+    await user.type(screen.getByRole("searchbox", { name: "Search customers by name" }), "Noel");
+    expect(within(preview).queryByText("Gina Soriano")).toBeNull();
+    expect(within(preview).getByText("Noel Pascual")).toBeInTheDocument();
+  });
+
+  it("lists customers with plain names and no View full details item", async () => {
+    show("dev-admin", <CustomersRoute />);
+    expect(await screen.findByText("Noel Pascual")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Noel Pascual/ })).toBeNull();
+    expect(screen.getByRole("row", { name: "Open Noel Pascual" })).toBeInTheDocument();
+    expect(screen.queryByText("View full details")).toBeNull();
   });
 
   it("falls back to Customers for a seller with an import bookmark", async () => {
@@ -62,7 +88,7 @@ describe("Customers area", () => {
     show("dev-ost-a1", <CustomersRoute />);
     expect(await screen.findByRole("table", { name: "Customers" })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Import and export" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "XLSX template" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Download template" })).toBeNull();
   });
 });
 
@@ -80,11 +106,27 @@ describe("customer registration review pages (doc 04 sections 5 and 10)", () => 
     expect(screen.queryByRole("button", { name: /send back/i })).toBeNull();
   });
 
+  it("shows each action once in the header, with no duplicate row menu", async () => {
+    show("dev-admin", <CustomerDetailPage customerId={SUBMITTED} />);
+    await screen.findByRole("button", { name: /^approve$/i });
+    expect(screen.queryByRole("button", { name: /^actions for/i })).toBeNull();
+    expect(screen.getAllByRole("button", { name: /^reject$/i })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /^prepare contract$/i })).toHaveLength(1);
+  });
+
+  it("keeps Discard draft as a red header button for a draft", async () => {
+    const user = userEvent.setup();
+    show("dev-clerk", <CustomerDetailPage customerId="cust-a2" />);
+    await user.click(await screen.findByRole("button", { name: /discard draft/i }));
+    expect(await screen.findByRole("alertdialog", { name: /discard the draft for/i })).toBeInTheDocument();
+  });
+
   it("requires a reason to send back, then shows the sent back status", async () => {
     const user = userEvent.setup();
     show("dev-admin", <CustomerDetailPage customerId={SUBMITTED} />);
     await user.click(await screen.findByRole("button", { name: /send back/i }));
     const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("button", { name: "Send back" }).className).toContain("warning");
     await user.click(within(dialog).getByRole("button", { name: "Send back" }));
     expect(await within(dialog).findByText("Reason is required.")).toBeInTheDocument();
     await user.type(within(dialog).getByRole("textbox"), "Missing ID photo");
@@ -99,6 +141,7 @@ describe("customer registration review pages (doc 04 sections 5 and 10)", () => 
     show("dev-admin", <CustomerDetailPage customerId={SUBMITTED} />);
     await user.click(await screen.findByRole("button", { name: /^approve$/i }));
     const confirm = await screen.findByRole("alertdialog", { name: /approve this registration/i });
+    expect(within(confirm).getByRole("button", { name: "Approve" }).className).toContain("success");
     await user.click(within(confirm).getByRole("button", { name: "Approve" }));
     expect(await screen.findByText("Registration approved.")).toBeVisible();
     expect(await screen.findByText("Approved")).toBeInTheDocument();

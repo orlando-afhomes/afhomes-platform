@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useOperation } from "@/data/business-queries";
 import { useReconciliationEntries, useReconciliationTotals, useRecordReconciliation } from "@/data/reconciliation-queries";
-import { MEASURE_LABELS, latestEntry, type ReconciliationEntry, type SourceRecord, type SourceTotal } from "@/modules/reconciliation/rules";
+import { MEASURE_LABELS, latestEntry, type ReconciliationEntry, type SourceTotal } from "@/modules/reconciliation/rules";
 import { ReportExport, type ReportColumn } from "../components/report-shell";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
@@ -13,13 +13,11 @@ import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
-import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { formatDate } from "@/shared/lib/format-date";
 import { MoneyField, SelectField, TextAreaField } from "@/shared/forms/modern";
 import { manilaToday } from "@/shared/lib/dates";
 import { formatPeso, parsePesoToCentavos } from "@/shared/lib/money";
 import { Button } from "@/shared/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 
 /** The last 24 months, newest first, as YYYY-MM options. */
 function monthOptions(): Array<{ value: string; label: string }> {
@@ -31,34 +29,60 @@ function monthOptions(): Array<{ value: string; label: string }> {
   });
 }
 
-const RECORD_COLUMNS: ColumnDef<SourceRecord, unknown>[] = [
-  { id: "date", header: "Date", cell: ({ row }) => formatDate(row.original.date) },
-  { id: "label", header: "Record", cell: ({ row }) => <span className="tw:font-semibold">{row.original.label}</span> },
-  { id: "note", header: "Note", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.note ?? "" },
-  { id: "amount", header: "Amount", cell: ({ row }) => <Money value={row.original.amountCentavos} /> },
+/** How one measure stands for the chosen month. A decision made against a different live total no longer describes the records, so it is stale. */
+type MeasureStatus = "matches" | "explained" | "unchecked" | "stale";
+
+type MeasureRow = { total: SourceTotal; entry: ReconciliationEntry | undefined; status: MeasureStatus };
+
+const STATUS_BADGE: Record<MeasureStatus, { status: string; label: string }> = {
+  matches: { status: "approved", label: "Matches" },
+  explained: { status: "on_hold", label: "Difference explained" },
+  unchecked: { status: "inactive", label: "Not checked yet" },
+  stale: { status: "pending", label: "Needs a new check" },
+};
+
+function StatusBadge({ status }: { status: MeasureStatus }) {
+  return <BizBadge status={STATUS_BADGE[status].status} label={STATUS_BADGE[status].label} />;
+}
+
+function statusOf(total: SourceTotal, entry: ReconciliationEntry | undefined): MeasureStatus {
+  if (!entry) return "unchecked";
+  if (entry.liveCentavos !== total.totalCentavos) return "stale";
+  return entry.decision === "signed_off" ? "matches" : "explained";
+}
+
+/** Difference against the system total as it stands now; empty until a spreadsheet total has been entered. */
+const differenceOf = (row: MeasureRow) => (row.entry ? <Money value={row.entry.workbookCentavos - row.total.totalCentavos} /> : null);
+
+const MEASURE_COLUMNS: ColumnDef<MeasureRow, unknown>[] = [
+  { id: "measure", header: "Measure", cell: ({ row }) => <span className="tw:font-semibold">{MEASURE_LABELS[row.original.total.measure]}</span> },
+  { id: "system", header: "System total", cell: ({ row }) => <Money value={row.original.total.totalCentavos} /> },
+  { id: "spreadsheet", header: "Company spreadsheet total", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => (row.original.entry ? <Money value={row.original.entry.workbookCentavos} /> : null) },
+  { id: "difference", header: "Difference", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => differenceOf(row.original) },
+  { id: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
 ];
 
-const decisionLabel = (entry: ReconciliationEntry) => (entry.decision === "signed_off" ? "Signed off" : "Explained variance");
+const decisionLabel = (entry: ReconciliationEntry) => (entry.decision === "signed_off" ? "Matches" : "Difference explained");
 
 const ENTRY_COLUMNS: ColumnDef<ReconciliationEntry, unknown>[] = [
-  { id: "measure", header: "Measure", cell: ({ row }) => MEASURE_LABELS[row.original.measure] },
-  { id: "workbook", header: "Workbook", cell: ({ row }) => <Money value={row.original.workbookCentavos} /> },
-  { id: "platform", header: "Platform", cell: ({ row }) => <Money value={row.original.liveCentavos} /> },
-  { id: "difference", header: "Difference", cell: ({ row }) => <Money value={row.original.differenceCentavos} /> },
+  { id: "measure", header: "Measure", cell: ({ row }) => <span className="tw:font-semibold">{MEASURE_LABELS[row.original.measure]}</span> },
+  { id: "workbook", header: "Company spreadsheet total", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => <Money value={row.original.workbookCentavos} /> },
+  { id: "platform", header: "System total", cell: ({ row }) => <Money value={row.original.liveCentavos} /> },
+  { id: "difference", header: "Difference", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => <Money value={row.original.differenceCentavos} /> },
   { id: "decision", header: "Decision", cell: ({ row }) => <BizBadge status={row.original.decision === "signed_off" ? "approved" : "on_hold"} label={decisionLabel(row.original)} /> },
 ];
 
 const ENTRY_EXPORT: ReportColumn<ReconciliationEntry>[] = [
   { header: "Measure", value: (entry) => MEASURE_LABELS[entry.measure] },
-  { header: "Workbook", value: (entry) => formatPeso(entry.workbookCentavos) },
-  { header: "Platform", value: (entry) => formatPeso(entry.liveCentavos) },
+  { header: "Company spreadsheet total", value: (entry) => formatPeso(entry.workbookCentavos) },
+  { header: "System total", value: (entry) => formatPeso(entry.liveCentavos) },
   { header: "Difference", value: (entry) => formatPeso(entry.differenceCentavos) },
   { header: "Decision", value: decisionLabel },
   { header: "Reason", value: (entry) => entry.reason ?? "" },
   { header: "Recorded", value: (entry) => entry.recordedAt.slice(0, 10) },
 ];
 
-/** F11.3: compare the platform's live source totals with the workbook, month by month. Differences are signed off or explained, never hidden. */
+/** F11.3: compare the platform's live source totals with the company spreadsheet, month by month. Differences are confirmed or explained, never hidden. */
 export function ReconciliationPanel() {
   const canReconcile = useOperation("reconciliation.manage");
   const options = useMemo(() => monthOptions(), []);
@@ -66,50 +90,51 @@ export function ReconciliationPanel() {
   const totals = useReconciliationTotals(period, canReconcile);
   const entries = useReconciliationEntries(canReconcile);
   const [recording, setRecording] = useState<SourceTotal | null>(null);
-  const [drill, setDrill] = useState<SourceTotal | null>(null);
+  const [measureId, setMeasureId] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const monthEntries = (entries.data ?? []).filter((entry) => entry.period === period).reverse();
   const detail = detailId ? (entries.data ?? []).find((entry) => entry.id === detailId) ?? null : null;
+
+  const rows = useMemo<MeasureRow[]>(
+    () => (totals.data ?? []).map((total) => {
+      const entry = latestEntry(entries.data ?? [], period, total.measure);
+      return { total, entry, status: statusOf(total, entry) };
+    }),
+    [totals.data, entries.data, period],
+  );
+  const checked = rows.filter((row) => row.status === "matches" || row.status === "explained").length;
+  const differences = rows.filter((row) => row.status === "explained").length;
+  const measure = measureId ? rows.find((row) => row.total.measure === measureId) ?? null : null;
+
+  const startRecording = (total: SourceTotal) => {
+    setMeasureId(null);
+    setRecording(total);
+  };
 
   return (
     <>
       {canReconcile ? (
         <>
-          <div className="tw:max-w-xs">
-            <SelectField label="Month" value={period} options={options} onChange={setPeriod} />
-          </div>
-          <QueryState isLoading={totals.isLoading || entries.isLoading} error={totals.error ?? entries.error}>
-            <div className="tw:flex tw:flex-col tw:gap-3">
-              {(totals.data ?? []).map((total) => {
-                const entry = latestEntry(entries.data ?? [], period, total.measure);
-                // A decision made against a different live total no longer describes the records.
-                const stale = entry !== undefined && entry.liveCentavos !== total.totalCentavos;
-                return (
-                  <section key={total.measure} aria-label={MEASURE_LABELS[total.measure]} className="tw:flex tw:flex-col tw:gap-2 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-4 tw:sm:flex-row tw:sm:items-center tw:sm:justify-between">
-                    <div className="tw:min-w-0">
-                      <h2 className="tw:text-sm tw:font-semibold">{MEASURE_LABELS[total.measure]}</h2>
-                      <p className="tw:text-sm tw:text-muted-foreground">Platform: <Money value={total.totalCentavos} className="tw:font-semibold tw:text-foreground" /> from {total.records.length} record{total.records.length === 1 ? "" : "s"}</p>
-                      {entry ? (
-                        <p className="tw:mt-1 tw:flex tw:flex-wrap tw:items-center tw:gap-2 tw:text-sm">
-                          <BizBadge status={stale ? "pending" : entry.decision === "signed_off" ? "approved" : "on_hold"} label={stale ? "Platform total changed" : entry.decision === "signed_off" ? "Signed off" : "Explained variance"} />
-                          <span>Workbook <Money value={entry.workbookCentavos} />, difference <Money value={entry.differenceCentavos} /></span>
-                        </p>
-                      ) : (
-                        <p className="tw:mt-1 tw:text-sm tw:text-muted-foreground">Not reconciled yet.</p>
-                      )}
-                    </div>
-                    <div className="tw:flex tw:flex-wrap tw:gap-2">
-                      <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setDrill(total)}>View records</Button>
-                      <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setRecording(total)}>{entry ? "Record again" : "Record workbook total"}</Button>
-                    </div>
-                  </section>
-                );
-              })}
+          <section aria-label="Month to check" className="tw:flex tw:flex-col tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-4">
+            <div className="tw:flex tw:flex-wrap tw:items-end tw:justify-between tw:gap-3">
+              <SelectField label="Month" value={period} options={options} onChange={setPeriod} className="tw:w-full tw:sm:w-64" />
+              <div role="status" className="tw:flex tw:flex-wrap tw:items-center tw:gap-x-4 tw:gap-y-1 tw:text-sm">
+                <span><span className="tw:font-semibold">{checked} of {rows.length}</span> measures checked</span>
+                <span className="tw:text-muted-foreground">{differences} {differences === 1 ? "difference" : "differences"}</span>
+              </div>
             </div>
+            <div role="progressbar" aria-label="Measures checked" aria-valuemin={0} aria-valuemax={rows.length} aria-valuenow={checked} className="tw:h-1.5 tw:overflow-hidden tw:rounded-full tw:bg-muted">
+              <div className="tw:h-full tw:rounded-full tw:bg-success tw:transition-[width]" style={{ width: rows.length === 0 ? "0%" : `${(checked / rows.length) * 100}%` }} />
+            </div>
+          </section>
+          <QueryState isLoading={totals.isLoading || entries.isLoading} error={totals.error ?? entries.error}>
+            <DataTable data={rows} columns={MEASURE_COLUMNS} getRowId={(row) => row.total.measure} emptyText="Nothing to check for this month." caption="Measures to check" onRowOpen={(row) => setMeasureId(row.total.measure)} getRowLabel={(row) => `Open ${MEASURE_LABELS[row.total.measure]}`} />
             <section aria-label="Decisions for this month" className="tw:flex tw:flex-col tw:gap-2">
-              <h2 className="tw:text-base tw:font-semibold">Decisions for this month</h2>
-              <ReportExport report="Reconciliation" fileName={`reconciliation-${period}`} columns={ENTRY_EXPORT} rows={monthEntries} range={{ from: period, to: period }} printable={false} />
-              <DataTable data={monthEntries} columns={ENTRY_COLUMNS} getRowId={(row) => row.id} emptyText="No decision has been recorded for this month." caption="Reconciliation decisions" onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `View decision for ${MEASURE_LABELS[row.measure]}`} rowActions={(row) => <RowActionsMenu itemName={`decision for ${MEASURE_LABELS[row.measure]}`} onView={() => setDetailId(row.id)} />} />
+              <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
+                <h2 className="tw:text-base tw:font-semibold">Decisions for this month</h2>
+                <ReportExport report="Reconciliation" fileName={`reconciliation-${period}`} columns={ENTRY_EXPORT} rows={monthEntries} range={{ from: period, to: period }} printable={false} />
+              </div>
+              <DataTable data={monthEntries} columns={ENTRY_COLUMNS} getRowId={(row) => row.id} emptyText="No decision has been recorded for this month." caption="Reconciliation decisions" onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `View decision for ${MEASURE_LABELS[row.measure]}`} />
               <RecordDetailsSheet
                 open={detail !== null}
                 onClose={() => setDetailId(null)}
@@ -120,10 +145,10 @@ export function ReconciliationPanel() {
                     ? [
                         {
                           rows: [
-                            { label: "Workbook", value: <Money value={detail.workbookCentavos} /> },
-                            { label: "Platform", value: <Money value={detail.liveCentavos} /> },
+                            { label: "Company spreadsheet total", value: <Money value={detail.workbookCentavos} /> },
+                            { label: "System total", value: <Money value={detail.liveCentavos} /> },
                             { label: "Difference", value: <Money value={detail.differenceCentavos} /> },
-                            { label: "Reason", value: detail.reason },
+                            { label: "Reason", value: detail.reason, wide: true },
                             { label: "Recorded", value: formatDate(detail.recordedAt) },
                           ],
                         },
@@ -133,16 +158,47 @@ export function ReconciliationPanel() {
               />
             </section>
           </QueryState>
+          <RecordDetailsSheet
+            open={measure !== null}
+            onClose={() => setMeasureId(null)}
+            size="lg"
+            title={measure ? MEASURE_LABELS[measure.total.measure] : "Measure"}
+            badge={measure ? <StatusBadge status={measure.status} /> : undefined}
+            sections={
+              measure
+                ? [
+                    {
+                      title: "Totals",
+                      rows: [
+                        { label: "System total", value: <Money value={measure.total.totalCentavos} /> },
+                        { label: "Company spreadsheet total", value: measure.entry ? <Money value={measure.entry.workbookCentavos} /> : null },
+                        { label: "Difference", value: differenceOf(measure) },
+                        { label: "Records counted", value: measure.total.records.length },
+                        { label: "Last checked", value: measure.entry ? formatDate(measure.entry.recordedAt) : null },
+                        { label: "Reason", value: measure.entry?.reason, wide: true },
+                      ],
+                    },
+                    {
+                      title: "Records behind the system total",
+                      rows: measure.total.records.map((record) => ({
+                        label: `${formatDate(record.date)} · ${record.label}`,
+                        value: <><Money value={record.amountCentavos} />{record.note ? ` · ${record.note}` : ""}</>,
+                      })),
+                    },
+                  ]
+                : []
+            }
+            footer={
+              measure ? (
+                measure.entry ? (
+                  <Button type="button" variant="warning" onClick={() => startRecording(measure.total)}>Record again</Button>
+                ) : (
+                  <Button type="button" variant="info" onClick={() => startRecording(measure.total)}>Enter company spreadsheet total</Button>
+                )
+              ) : undefined
+            }
+          />
           {recording ? <RecordDialog period={period} total={recording} onClose={() => setRecording(null)} /> : null}
-          <Dialog open={drill !== null} onOpenChange={(next) => (next ? undefined : setDrill(null))}>
-            <DialogContent className="tw:max-h-[90vh] tw:overflow-y-auto tw:sm:max-w-3xl">
-              <DialogHeader>
-                <DialogTitle>{drill ? MEASURE_LABELS[drill.measure] : "Records"}</DialogTitle>
-                <DialogDescription>The records behind the platform total.</DialogDescription>
-              </DialogHeader>
-              {drill ? <DataTable data={drill.records} columns={RECORD_COLUMNS} getRowId={(row) => row.id} emptyText="No records in this month." caption="Source records" /> : null}
-            </DialogContent>
-          </Dialog>
         </>
       ) : (
         <InfoNote title="Access restricted">Reconciliation is limited to the Administrator, the Super Administrator and Finance.</InfoNote>
@@ -161,10 +217,10 @@ function RecordDialog({ period, total, onClose }: { period: string; total: Sourc
   const decision = difference === 0 ? "signed_off" : "explained_variance";
 
   const send = async () => {
-    if (workbook === null) return setError("Enter the workbook total, for example 98500.00.");
+    if (workbook === null) return setError("Enter the company spreadsheet total, for example 98500.00.");
     try {
       await record.mutateAsync({ period, measure: total.measure, workbookCentavos: workbook, decision, reason });
-      toast.success(decision === "signed_off" ? "Totals signed off." : "Difference recorded with its explanation.");
+      toast.success(decision === "signed_off" ? "Totals match." : "Difference recorded with its explanation.");
       onClose();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Could not record.");
@@ -172,11 +228,11 @@ function RecordDialog({ period, total, onClose }: { period: string; total: Sourc
   };
 
   return (
-    <FormDialog open title={MEASURE_LABELS[total.measure]} description={`Platform total for ${period}: ${formatPeso(total.totalCentavos)}`} submitText={decision === "signed_off" ? "Sign off" : "Record explained variance"} pending={record.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
-      <MoneyField label="Workbook total" required value={amount} onChange={setAmount} />
+    <FormDialog open title={MEASURE_LABELS[total.measure]} description={`System total for ${period}: ${formatPeso(total.totalCentavos)}`} submitText={decision === "signed_off" ? "Confirm match" : "Record difference"} submitVariant={decision === "signed_off" ? "success" : "warning"} pending={record.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+      <MoneyField label="Company spreadsheet total" required value={amount} onChange={setAmount} />
       {difference === null ? null : (
         <p className="tw:text-sm" role="status">
-          {difference === 0 ? "The totals match. This will be signed off." : `Difference: ${formatPeso(difference)}. A reason is required.`}
+          {difference === 0 ? "The totals match." : `Difference: ${formatPeso(difference)}. A reason is required.`}
         </p>
       )}
       {difference !== null && difference !== 0 ? <TextAreaField label="Reason for the difference" required value={reason} onChange={setReason} /> : null}

@@ -49,18 +49,23 @@ describe("redemption pages", () => {
     expect(screen.queryByRole("button", { name: /New booking/ })).toBeNull();
   });
 
-  it("shows the points table and the new-version action to the Administrator, with no sample labels", async () => {
+  it("shows the points table and the update action to the Administrator, in plain words, with no sample labels", async () => {
     show("dev-admin", "points-table");
     expect(await screen.findByRole("table", { name: "Points per night" })).toBeInTheDocument();
     expect(screen.queryByText(/Sample table|Sample values|\(sample\)/)).toBeNull();
-    expect(screen.getByRole("button", { name: /New version/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Update points table/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /New version/ })).toBeNull();
+    expect(screen.getByText(/Weekend nights: /)).toBeInTheDocument();
+    const select = screen.getByRole("combobox", { name: "Points table" });
+    expect((select as HTMLInputElement).value).toMatch(/From [A-Z][a-z]{2} \d{1,2}, \d{4} \((in use|coming up|old)\)/);
+    expect(screen.queryByText(/Version \d/)).toBeNull();
   });
 
   it("keeps both tables to five plain-word columns with no static notes", async () => {
     show("dev-admin");
     const bookings = await screen.findByRole("table", { name: "Redemption bookings" });
     const bookingHeaders = within(bookings).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter((text) => text && text !== "Actions");
-    expect(bookingHeaders).toEqual(["Booking no.", "Cardholder", "Stay dates", "Points", "Status"]);
+    expect(bookingHeaders).toEqual(["Booking no.", "Cardholder", "Venue", "Stay dates", "Status"]);
     await userEvent.click(screen.getByRole("tab", { name: "Cardholder points" }));
     expect(screen.queryByRole("table", { name: "Redemption bookings" })).toBeNull();
     const members = await screen.findByRole("table", { name: "Points by cardholder" });
@@ -88,13 +93,13 @@ describe("redemption pages", () => {
     expect(screen.queryByRole("tab", { name: "Points table" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "Holidays" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "Venues" })).toBeNull();
-    expect(screen.queryByRole("button", { name: /New version|Add holiday|Add venue/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Update points table|Add holiday|Add venue/ })).toBeNull();
   });
 
   it("renders the holiday calendar and venues read-only with no Actions column for Finance", async () => {
     const { unmount } = render(<Wrapper identityId="dev-finance"><RedemptionHolidaysPanel /></Wrapper>);
     const holidays = await screen.findByRole("table", { name: "Holiday calendar" });
-    expect(within(holidays).getAllByRole("columnheader").map((cell) => cell.textContent?.trim())).toEqual(["Date", "Name", "Status"]);
+    expect(within(holidays).getAllByRole("columnheader").map((cell) => cell.textContent?.trim())).toEqual(["Name", "Date", "Status"]);
     expect(within(holidays).queryByText("Actions")).toBeNull();
     unmount();
 
@@ -102,6 +107,17 @@ describe("redemption pages", () => {
     const venues = await screen.findByRole("table", { name: "Venues" });
     expect(within(venues).getAllByRole("columnheader").map((cell) => cell.textContent?.trim())).toEqual(["Venue", "Status", "Cancellation cut-off", "Check-in time"]);
     expect(within(venues).queryByText("Actions")).toBeNull();
+  });
+
+  it("labels a venue that is not open yet as Coming soon and opens its row for editing", async () => {
+    show("dev-admin", "venues");
+    const table = await screen.findByRole("table", { name: "Venues" });
+    expect(within(table).queryByText("Not open yet")).toBeNull();
+    expect(screen.queryByText("View full details")).toBeNull();
+    const rows = within(table).getAllByRole("row", { name: /^Open venue / });
+    expect(rows.length).toBeGreaterThan(0);
+    await userEvent.click(rows[0]);
+    expect(await screen.findByRole("heading", { name: "Edit venue" })).toBeInTheDocument();
   });
 
   it("denies sellers", async () => {

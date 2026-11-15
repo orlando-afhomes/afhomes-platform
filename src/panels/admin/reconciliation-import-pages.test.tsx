@@ -31,8 +31,24 @@ const show = (identityId: string, page: ReactElement) => render(<Wrapper identit
 describe("reconciliation and historical import pages", () => {
   it("shows Finance the measures to reconcile", async () => {
     show("dev-finance", <ReconciliationPanel />);
-    expect(await screen.findByText("Verified receipts (net)")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Record workbook total" }).length).toBeGreaterThan(0);
+    const table = await screen.findByRole("table", { name: "Measures to check" });
+    expect(within(table).getByText("Verified receipts (net)")).toBeInTheDocument();
+    expect(within(table).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter((text) => text && text !== "Actions")).toEqual(["Measure", "System total", "Company spreadsheet total", "Difference", "Status"]);
+    expect(within(table).getAllByText("Not checked yet").length).toBeGreaterThan(0);
+    expect(screen.getByRole("status")).toHaveTextContent("0 of 5 measures checked");
+    expect(screen.queryByText(/workbook/i)).toBeNull();
+  });
+
+  it("opens a measure with its source records and records the company spreadsheet total", async () => {
+    const user = userEvent.setup();
+    show("dev-finance", <ReconciliationPanel />);
+    const table = await screen.findByRole("table", { name: "Measures to check" });
+    await user.click(within(table).getByRole("row", { name: "Open Verified receipts (net)" }));
+    const sheet = await screen.findByRole("dialog", { name: "Verified receipts (net)" });
+    expect(within(sheet).getByRole("region", { name: "Records behind the system total" })).toBeInTheDocument();
+    expect(within(sheet).queryByRole("button", { name: "Record again" })).toBeNull();
+    await user.click(within(sheet).getByRole("button", { name: "Enter company spreadsheet total" }));
+    expect(await screen.findByLabelText(/Company spreadsheet total/)).toBeInTheDocument();
   });
 
   it("restricts reconciliation and the import for sellers", async () => {
@@ -45,7 +61,7 @@ describe("reconciliation and historical import pages", () => {
 
   it("gives the Administrator the import steps without an explainer note", async () => {
     show("dev-admin", <HistoryImportPanel />);
-    expect(await screen.findByRole("button", { name: /CSV template/ })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Download template/ })).toBeInTheDocument();
     expect(screen.queryByText(/does not issue VIP Numbers/)).toBeNull();
   });
 

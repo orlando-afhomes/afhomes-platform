@@ -53,10 +53,10 @@ export function MembershipReportPanel() {
         <AdminStatCard loading={memberships.isLoading} error={memberships.error} label="Pending activation" value={pending} icon={Clock} tone="warning" />
       </AdminStatGrid>
       <ReportTable report="Membership Report" fileName="memberships" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => row.id} loading={memberships.isLoading} error={memberships.error} emptyText="No memberships match."
-        filters={<FilterBar search={search} onSearch={setSearch} searchLabel="Search memberships" filters={[
+        filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search memberships" filters={[
           { label: "Membership status filter", value: status, onChange: setStatus, options: optionsFrom("All statuses", inPeriod.map((item) => item.status), humanize) },
           { label: "VIP tier filter", value: tier, onChange: setTier, options: optionsFrom("All tiers", tierCodes) },
-        ]} />} />
+        ]}>{range.dateFields}{exportButton}</FilterBar>} />
     </ReportFrame>
   );
 }

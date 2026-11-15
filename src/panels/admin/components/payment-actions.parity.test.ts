@@ -155,7 +155,7 @@ describe("payment-actions parity: row menu vs detail-sheet footer", () => {
     expect(rowMenuKeys(payment("returned"), { ...FULL_GATES, canSubmit: false }, CLERK_OWN)).toEqual([]);
   });
 
-  it("reject is the only danger action; labels match the footer button contract", () => {
+  it("reject is the only danger action; tones and labels match the footer button contract", () => {
     const source = readSource();
     // Key → label pairs pinned by itemsFor (~lines 213-228).
     for (const [key, label] of [
@@ -169,11 +169,12 @@ describe("payment-actions parity: row menu vs detail-sheet footer", () => {
       expect(source, `missing ${key} label`).toContain(`key: "${key}"`);
       expect(source, `missing ${key} label`).toContain(`label: "${label}"`);
     }
-    // Only reject carries danger: true; the footer maps it to the danger variant.
-    const dangerMarks = source.match(/danger:\s*true/g) ?? [];
+    // Only reject carries the danger tone; the footer maps each tone to a button color.
+    const dangerMarks = source.match(/tone:\s*"danger"/g) ?? [];
     expect(dangerMarks.length).toBe(1);
-    expect(source).toContain('{ key: "reject", label: "Reject", danger: true');
-    expect(source).toContain("variant={item.danger ?");
+    expect(source).toContain('{ key: "reject", label: "Reject", tone: "danger"');
+    expect(source).toContain('{ key: "verify", label: "Verify", tone: "success"');
+    expect(source).toContain('variant={TONE_VARIANT[item.tone ?? "default"]}');
   });
 
   it("both surfaces are wired to the SAME itemsFor helper (parity by construction)", () => {
@@ -187,7 +188,7 @@ describe("payment-actions parity: row menu vs detail-sheet footer", () => {
     // … preserving key, label, danger styling, and the gate outcome (onClick) with no filtering.
     expect(source).toContain("key={item.key}");
     expect(source).toContain("{item.label}");
-    expect(source).toContain("item.danger");
+    expect(source).toContain("item.tone");
     expect(source).toContain("onClick={item.onClick}");
   });
 });

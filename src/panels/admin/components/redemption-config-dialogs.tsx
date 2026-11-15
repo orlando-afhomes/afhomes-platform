@@ -15,7 +15,7 @@ const num = (value: string) => Number(value.replace(/,/g, ""));
 
 type Draft = { venueId: string; roomType: string; weekday: string; weekend: string };
 
-/** Publishes a new dated version of the points table; older versions are never edited (doc 10 section 8). */
+/** Publishes a new dated points table; older tables are never edited (doc 10 section 8). */
 export function PublishVersionDialog({ open, overview, onClose }: { open: boolean; overview: RedemptionOverview; onClose: () => void }) {
   const act = useRedemptionConfigAction();
   const latest = [...overview.tableVersions].sort((a, b) => b.version - a.version)[0];
@@ -31,15 +31,15 @@ export function PublishVersionDialog({ open, overview, onClose }: { open: boolea
     setError(undefined);
     try {
       await act.mutateAsync({ action: "publish-version", input: { effectiveDate, weekendDays, note, rows: rows.map((row) => ({ venueId: row.venueId, roomType: row.roomType, weekdayPoints: num(row.weekday), weekendPoints: num(row.weekend) })) } });
-      toast.success("New points table version published.");
+      toast.success("Points table updated.");
       close();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Request failed.");
     }
   };
   return (
-    <FormDialog open={open} title="Publish a new points table version" description="A new version applies only to cards claimed on or after its effective date. Earlier versions stay as they are." submitText="Publish version" pending={act.isPending} error={error} onClose={close} onSubmit={() => void submit()}>
-      <StandardDateField label="Effective date" required value={effectiveDate} onChange={setEffectiveDate} />
+    <FormDialog open={open} title="Update points table" description="The new points table applies only to cards claimed on or after the day it starts. Earlier tables stay as they are." submitText="Update points table" pending={act.isPending} error={error} onClose={close} onSubmit={() => void submit()}>
+      <StandardDateField label="Starts on" required value={effectiveDate} onChange={setEffectiveDate} />
       <fieldset className="tw:flex tw:flex-col tw:gap-2">
         <legend className="tw:text-sm tw:font-medium">Weekend nights</legend>
         {DAYS.map((name, day) => (
@@ -57,7 +57,7 @@ export function PublishVersionDialog({ open, overview, onClose }: { open: boolea
         </fieldset>
       ))}
       <Button type="button" variant="outline" onClick={() => setRows((current) => [...current, { venueId: overview.venues[0]?.id ?? "", roomType: "", weekday: "", weekend: "" }])}><Plus aria-hidden="true" /> Add row</Button>
-      <TextAreaField label="Note" value={note} onChange={setNote} />
+      <TextAreaField label="Reason for the change" value={note} onChange={setNote} />
     </FormDialog>
   );
 }
@@ -105,7 +105,7 @@ export function VenueDialog({ open, venue, onClose }: { open: boolean; venue: Re
   return (
     <FormDialog open={open} title={venue ? "Edit venue" : "Add venue"} description="Only open overnight venues of AFhomes Direct Operations can be booked." submitText="Save venue" pending={act.isPending} error={error} onClose={close} onSubmit={() => void submit()}>
       <TextField label="Venue name" required value={name} onChange={setName} />
-      <SelectField label="Status" required value={status} options={[{ value: "open", label: "Open" }, { value: "not_open", label: "Not open yet" }]} onChange={(value) => setStatus(value)} />
+      <SelectField label="Status" required value={status} options={[{ value: "open", label: "Open" }, { value: "not_open", label: "Coming soon" }]} onChange={(value) => setStatus(value)} />
       <PointsField label="Cancellation cut-off (hours before check-in)" required value={cutoff} onChange={setCutoff} />
       <TextField label="Check-in time (HH:MM)" required value={checkIn} onChange={setCheckIn} />
     </FormDialog>

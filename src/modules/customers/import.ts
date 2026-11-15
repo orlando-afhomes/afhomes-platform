@@ -65,7 +65,14 @@ export type CustomerImportJob = {
 
 type ImportContext = { existing: readonly Customer[]; products: readonly VipProduct[]; schemes: readonly PaymentScheme[] };
 
-const TIER_ALIASES: Record<string, VipTierCode> = { b1: "B1", bronze: "B1", s1: "S1", silver: "S1", g1: "G1", gold: "G1" };
+/** A product code, or a tier level name such as Bronze (the first active product of that level), from the catalog. */
+function productCodeForTier(tier: string, products: readonly VipProduct[]): VipTierCode | null {
+  const wanted = tier.toLowerCase();
+  const byCode = products.find((product) => product.code.toLowerCase() === wanted);
+  if (byCode) return byCode.code;
+  const byName = products.filter((product) => product.tier.toLowerCase() === wanted);
+  return (byName.find((product) => product.status === "active") ?? byName[0])?.code ?? null;
+}
 const CLASSIFICATION_ALIASES: Record<string, "S" | "N"> = { s: "S", standard: "S", n: "N", "non-standard": "N", nonstandard: "N" };
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 const CERTIFICATION_KEYS = new Set(["consentDataPrivacy", "idReceivedCertified"]);
@@ -198,9 +205,9 @@ function mapRecord(record: CustomerImportRecord, context: ImportContext) {
   input.address = street || province || city || barangay || postalCode ? { street, province, city, barangay, postalCode } : null;
 
   const tier = text("VIP tier");
-  // Seeded names (Bronze, Silver, Gold) stay as aliases; any other catalog product matches by its code.
-  input.vipPlan = tier ? TIER_ALIASES[tier.toLowerCase()] ?? context.products.find((product) => product.code.toLowerCase() === tier.toLowerCase())?.code ?? null : null;
-  if (tier && !input.vipPlan) errors.push(`VIP tier must be a product code in the catalog (${context.products.filter((product) => product.status === "active").map((product) => product.code).join(", ")}) or Bronze, Silver or Gold.`);
+  // A product code or a tier level name (Bronze, Silver, Gold or any level an Admin added) from the catalog.
+  input.vipPlan = tier ? productCodeForTier(tier, context.products) : null;
+  if (tier && !input.vipPlan) errors.push(`VIP tier must be a product code in the catalog (${context.products.filter((product) => product.status === "active").map((product) => product.code).join(", ")}) or a tier level name (${[...new Set(context.products.filter((product) => product.status === "active").map((product) => product.tier))].join(", ")}).`);
   else if (input.vipPlan && !context.products.some((product) => product.code === input.vipPlan && product.status === "active")) errors.push("The VIP tier is not available.");
 
   const warnings: string[] = [];

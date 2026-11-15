@@ -39,7 +39,6 @@ const NO_PERMS: MemberMenuPerms = {
 
 function rowCb(): MemberMenuCallbacks {
   return {
-    onView: vi.fn(),
     onEdit: vi.fn(),
     onTransfer: vi.fn(),
     onChangeStatus: vi.fn(),
@@ -87,10 +86,10 @@ describe("transferLabelFor", () => {
 });
 
 describe("buildMemberMenuProps", () => {
-  it("exposes view and edit for an active SSM with full rights", () => {
+  it("exposes edit but no View entry for an active SSM with full rights", () => {
     const menu = buildMemberMenuProps(member("SSM", "active"), FULL_PERMS, rowCb());
     expect(menu.itemName).toBe("Maria Santos");
-    expect(menu.onView).toBeDefined();
+    expect("onView" in menu).toBe(false);
     expect(menu.onEdit).toBeDefined();
     expect(keysOf(menu)).toEqual(["transfer", "deactivate"]);
     expect(menu.extraItems.map((item) => item.label)).toEqual(["Transfer to OST", "Deactivate"]);
@@ -101,6 +100,7 @@ describe("buildMemberMenuProps", () => {
     const menu = buildMemberMenuProps(member("SM", "inactive"), FULL_PERMS, rowCb());
     expect(keysOf(menu)).toEqual(["transfer", "reactivate"]);
     expect(menu.extraItems.find((item) => item.key === "reactivate")?.danger ?? false).toBe(false);
+    expect(menu.extraItems.find((item) => item.key === "reactivate")?.tone).toBe("success");
   });
 
   it("hides the status toggle for inactive members without the reactivate right", () => {
@@ -149,7 +149,6 @@ describe("buildMemberMenuProps", () => {
 
   it("omits slots whose callbacks are not wired", () => {
     const menu = buildMemberMenuProps(member("SSM", "active"), FULL_PERMS, {});
-    expect(menu.onView).toBeUndefined();
     expect(menu.onEdit).toBeUndefined();
     expect(menu.extraItems).toEqual([]);
   });
@@ -179,12 +178,11 @@ describe("buildMemberMenuProps", () => {
       for (const status of statuses) {
         for (const perms of permSets) {
           const row = buildMemberMenuProps(member(designation, status), perms, rowCb());
-          const detail = { ...buildMemberMenuProps(member(designation, status), perms, detailCb()), onView: undefined };
+          const detail = { ...buildMemberMenuProps(member(designation, status), perms, detailCb()) };
           expect(keysOf(detail)).toEqual(keysOf(row));
           expect(detail.extraItems.map((item) => item.label)).toEqual(row.extraItems.map((item) => item.label));
           expect(detail.extraItems.map((item) => item.danger ?? false)).toEqual(row.extraItems.map((item) => item.danger ?? false));
           expect(detail.onEdit === undefined).toBe(row.onEdit === undefined);
-          expect(detail.onView).toBeUndefined();
           expect(detail.itemName).toBe(row.itemName);
         }
       }

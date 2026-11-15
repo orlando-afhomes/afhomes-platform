@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import {
   DropdownMenu,
@@ -13,16 +13,31 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { ConfirmDialog, NoticeDialog } from "./confirm-dialog";
 
+export type RowActionTone = "default" | "danger" | "warning" | "success" | "info";
+
+// Item text and icon colors per tone, from the semantic tokens. `danger` uses the
+// menu item's own destructive variant. Dark mode lifts the text toward white.
+const TONE_CLASS: Record<Exclude<RowActionTone, "default" | "danger">, string> = {
+  warning:
+    "tw:text-warning tw:focus:bg-warning/10 tw:focus:text-warning tw:focus:**:text-warning tw:dark:text-[color-mix(in_oklch,var(--warning),white_45%)] tw:dark:focus:bg-warning/20",
+  success:
+    "tw:text-success tw:focus:bg-success/10 tw:focus:text-success tw:focus:**:text-success tw:dark:text-[color-mix(in_oklch,var(--success),white_45%)] tw:dark:focus:bg-success/20",
+  info: "tw:text-info tw:focus:bg-info/10 tw:focus:text-info tw:focus:**:text-info tw:dark:text-[color-mix(in_oklch,var(--info),white_45%)] tw:dark:focus:bg-info/20",
+};
+
 export type RowActionItem = {
   key: string;
   label: string;
+  /** Colors the item: danger red, warning amber, success green, info blue. */
+  tone?: RowActionTone;
+  /** Same as `tone: "danger"`; kept for existing callers. */
   danger?: boolean;
   onClick: () => void;
 };
 
 /**
  * Row action menu for migrated directory tables (Base UI Menu). Same contract
- * as the legacy menu: View full details, Edit, policy-filtered extra items,
+ * as the legacy menu: Edit, policy-filtered extra items,
  * and Delete.
  * Delete always asks for confirmation (AlertDialog), then reports through a
  * toast. When Delete is not allowed, `deleteDisabledReason` keeps it visible:
@@ -32,7 +47,6 @@ export type RowActionItem = {
  */
 export function RowActionsMenu({
   itemName,
-  onView,
   onEdit,
   extraItems = [],
   onDelete,
@@ -41,7 +55,6 @@ export function RowActionsMenu({
   deleteDescription,
 }: {
   itemName: string;
-  onView?: () => void;
   onEdit?: () => void;
   extraItems?: RowActionItem[];
   onDelete?: () => void | Promise<unknown>;
@@ -87,7 +100,7 @@ export function RowActionsMenu({
     return () => cancelAnimationFrame(frame);
   }, [dialogOpen, triggerId]);
 
-  const hasLeadingItems = Boolean(onView || onEdit || extraItems.length > 0);
+  const hasLeadingItems = Boolean(onEdit || extraItems.length > 0);
   const hasDeleteEntry = Boolean(onDelete || deleteDisabledReason);
   if (!hasLeadingItems && !hasDeleteEntry) return null;
   const itemClass = "tw:min-h-11 tw:sm:min-h-8";
@@ -124,26 +137,24 @@ export function RowActionsMenu({
           <MoreHorizontal aria-hidden="true" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="tw:min-w-44">
-          {onView ? (
-            <DropdownMenuItem onClick={onView} className={itemClass}>
-              <Eye aria-hidden="true" /> View full details
-            </DropdownMenuItem>
-          ) : null}
           {onEdit ? (
             <DropdownMenuItem onClick={onEdit} className={itemClass}>
               <Pencil aria-hidden="true" /> Edit
             </DropdownMenuItem>
           ) : null}
-          {extraItems.map((extra) => (
-            <DropdownMenuItem
-              key={extra.key}
-              variant={extra.danger ? "destructive" : "default"}
-              onClick={extra.onClick}
-              className={itemClass}
-            >
-              {extra.label}
-            </DropdownMenuItem>
-          ))}
+          {extraItems.map((extra) => {
+            const tone = extra.tone ?? (extra.danger ? "danger" : "default");
+            return (
+              <DropdownMenuItem
+                key={extra.key}
+                variant={tone === "danger" ? "destructive" : "default"}
+                onClick={extra.onClick}
+                className={tone === "default" || tone === "danger" ? itemClass : `${itemClass} ${TONE_CLASS[tone]}`}
+              >
+                {extra.label}
+              </DropdownMenuItem>
+            );
+          })}
           {hasDeleteEntry && hasLeadingItems ? <DropdownMenuSeparator /> : null}
           {onDelete ? (
             <DropdownMenuItem variant="destructive" onClick={() => setConfirmOpen(true)} className={itemClass}>
@@ -168,6 +179,7 @@ export function RowActionsMenu({
           description={deleteDescription ?? "This action cannot be undone."}
           confirmText="Delete"
           danger
+          tone="destructive"
           pending={pending}
           onConfirm={() => void runDelete()}
           onClose={() => setConfirmOpen(false)}

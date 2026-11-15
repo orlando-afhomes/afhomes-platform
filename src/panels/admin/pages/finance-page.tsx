@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { Hourglass } from "lucide-react";
 import { usePayments } from "@/data/business-queries";
 import type { PaymentView } from "@/data/contracts/payment-repository";
@@ -12,7 +11,6 @@ import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { formatDate } from "@/shared/lib/format-date";
 import { usePaymentActions } from "../components/payment-actions";
-import { useContractHref } from "../components/use-contract-href";
 import { findSuggestedMatch } from "@/modules/finance/rules";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { matchesSearch } from "@/shared/lib/search";
@@ -24,16 +22,15 @@ const SHOW_OPTIONS = [
 
 /** Payment columns shared by Payment Verification and Payment History. */
 export function usePaymentColumns() {
-  const contractHref = useContractHref();
   return useMemo<ColumnDef<PaymentView, unknown>[]>(
     () => [
-      { id: "customer", header: "Customer", cell: ({ row }) => <Link href={contractHref(row.original.contractId)} className="tw:font-semibold tw:underline-offset-4 tw:hover:underline">{row.original.customerName}</Link> },
+      { id: "customer", header: "Customer", cell: ({ row }) => <span className="tw:font-semibold">{row.original.customerName}</span> },
       { id: "amount", header: "Amount", cell: ({ row }) => <Money value={row.original.amountCentavos} /> },
       { id: "method", header: "Method", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.method },
       { id: "date", header: "Date", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => formatDate(row.original.paidDate) },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
     ],
-    [contractHref],
+    [],
   );
 }
 

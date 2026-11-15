@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { PlanFacts, PlanSummary } from "./customer-plan-summary";
+import { PlanCardImage, PlanFacts, PlanSummary } from "./customer-plan-summary";
 import type { PaymentScheme, VipProduct } from "@/modules/vip/types";
 import { formatPeso, pesos } from "@/shared/lib/money";
 
@@ -13,6 +13,7 @@ const WARNING =
 const gold: VipProduct = {
   code: "G1",
   name: "Gold VIP",
+  tierLevelId: "tier-level-gold",
   tier: "Gold",
   priceCentavos: pesos(390000),
   priceStatus: "contract_stated",
@@ -36,6 +37,7 @@ const bronze: VipProduct = {
   ...gold,
   code: "B1",
   name: "Bronze VIP",
+  tierLevelId: "tier-level-bronze",
   tier: "Bronze",
   priceCentavos: pesos(72000),
   priceStatus: "contract_stated",
@@ -55,6 +57,7 @@ const silver: VipProduct = {
   ...gold,
   code: "S1",
   name: "Silver VIP",
+  tierLevelId: "tier-level-silver",
   tier: "Silver",
   priceCentavos: pesos(240000),
   priceStatus: "contract_stated",
@@ -242,5 +245,15 @@ describe("PlanSummary scheme pass-through", () => {
     expect(within(dialog).getByText("Gold tier")).toBeInTheDocument();
     const dialogChange = within(dialog).getByRole("button", { name: "Change card" });
     expect(dialogChange.querySelector("svg")).not.toBeNull();
+  });
+});
+
+describe("PlanCardImage fallback", () => {
+  it("uses the tier color art for a new code, and a neutral card when the color has none", () => {
+    render(<PlanCardImage code="P1" colorKey="gold" />);
+    expect(screen.getByAltText("Gold VIP privilege card")).toBeInTheDocument();
+    cleanup();
+    render(<PlanCardImage code="P1" colorKey="neutral" />);
+    expect(screen.getByRole("img", { name: "VIP card P1" })).toBeInTheDocument();
   });
 });

@@ -48,7 +48,7 @@ export function AccreditationRenewAction({ record, memberName, canRenew }: { rec
         open={open}
         title="Renew accreditation?"
         description={`Renew the accreditation of ${memberName} today? A new AA number is issued for this month and is valid for one year from today. The current number ${record.aaNumber} is kept in the AA Number History, and all sales, team and referrer links carry over.`}
-        confirmText="Renew"
+        confirmText="Renew" tone="success"
         pending={renew.isPending}
         onConfirm={() => {
           void renew.mutateAsync({ recordId: record.id, expectedAaNumber: record.aaNumber ?? undefined }).then(

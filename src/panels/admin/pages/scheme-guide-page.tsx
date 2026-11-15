@@ -5,31 +5,69 @@ import { usePaymentSchemes, useVipProducts } from "@/data/business-queries";
 import { downPaymentCentavos, paymentSchemeTierTerms, schemeHowItWorks } from "@/modules/vip/rules";
 import type { PaymentScheme, VipProduct } from "@/modules/vip/types";
 import { Button } from "@/shared/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 import { AdminSection } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { CardGridSkeleton } from "@/shared/components/modern/skeletons";
-
-/** One line per tier: package price and how it is split (05 section 8). */
-function TierTerms({ scheme, product }: { scheme: PaymentScheme; product: VipProduct }) {
-  const { priceCentavos: price, reservationCentavos: reservation, installmentCount: count, installmentCentavos: each } = paymentSchemeTierTerms(product, scheme);
-  const down = downPaymentCentavos(price, scheme);
-  return (
-    <dd>
-      Total <Money value={price} />
-      {down != null ? <> · down payment <Money value={down} /></> : null}
-      {scheme.category === "cash" && reservation ? <> · balance <Money value={price - reservation} /></> : null}
-      {scheme.category !== "cash" && count && each ? <> · <Money value={each} /> × {count}</> : null}
-    </dd>
-  );
-}
+import { EMPTY } from "@/shared/lib/empty-value";
+import { TierChip } from "./tier-codes-page";
 
 export function PrintSchemeGuideButton() {
   return (
-    <Button type="button" variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => window.print()}>
+    <Button type="button" variant="info" className="tw:min-h-11 tw:sm:min-h-8 tw:print:hidden" onClick={() => window.print()}>
       <Printer aria-hidden="true" /> Print guide
     </Button>
+  );
+}
+
+/** One row of the tier comparison: package price and how it is split (05 section 8). */
+function tierRow(scheme: PaymentScheme, product: VipProduct) {
+  const { priceCentavos: total, reservationCentavos: reservation, installmentCount: months, installmentCentavos: monthly } = paymentSchemeTierTerms(product, scheme);
+  const down = downPaymentCentavos(total, scheme);
+  const isCash = scheme.category === "cash";
+  return {
+    total,
+    // A down payment already includes the reservation fee, so it replaces that column when the scheme has one.
+    upfront: down ?? (reservation || null),
+    monthly: isCash ? (reservation ? total - reservation : null) : (monthly ?? null),
+    months: isCash ? null : months,
+  };
+}
+
+const amount = (value: number | null) => (value === null ? EMPTY : <Money value={value} />);
+
+function SchemeComparison({ scheme, products }: { scheme: PaymentScheme; products: VipProduct[] }) {
+  const applicable = products.filter((item) => scheme.applicableTiers.includes(item.code));
+  const isCash = scheme.category === "cash";
+  const hasDown = Boolean(scheme.downPaymentBasisPoints);
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Tier</TableHead>
+          <TableHead>Total</TableHead>
+          <TableHead>{hasDown ? "Down payment" : "Reservation fee"}</TableHead>
+          <TableHead>{isCash ? "Balance" : "Monthly"}</TableHead>
+          {isCash ? null : <TableHead>Months</TableHead>}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {applicable.map((product) => {
+          const row = tierRow(scheme, product);
+          return (
+            <TableRow key={product.code}>
+              <TableCell><TierChip code={product.code}>{product.name}</TierChip></TableCell>
+              <TableCell>{amount(row.total)}</TableCell>
+              <TableCell>{amount(row.upfront)}</TableCell>
+              <TableCell>{amount(row.monthly)}</TableCell>
+              {isCash ? null : <TableCell className="tw:tabular-nums">{row.months ?? EMPTY}</TableCell>}
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
   );
 }
 
@@ -42,37 +80,38 @@ export function SchemeGuidePanel() {
   const schemes = usePaymentSchemes();
   const products = useVipProducts();
   return (
-      <QueryState isLoading={schemes.isLoading || products.isLoading} error={schemes.error ?? products.error} skeleton={<CardGridSkeleton cards={2} className="tw:lg:grid-cols-2" />}>
-        <div className="tw:flex tw:flex-col tw:gap-4">
-          {(schemes.data ?? []).map((scheme) => (
-            <AdminSection key={scheme.id} title={scheme.label} actions={<BizBadge status={scheme.availability} />}>
+    <QueryState isLoading={schemes.isLoading || products.isLoading} error={schemes.error ?? products.error} skeleton={<CardGridSkeleton cards={2} className="tw:lg:grid-cols-2" />}>
+      <div className="tw:flex tw:flex-col tw:gap-4">
+        {(schemes.data ?? []).map((scheme) => (
+          <div key={scheme.id} className="tw:break-inside-avoid">
+            <AdminSection title={scheme.label} actions={<BizBadge status={scheme.availability} />}>
               {scheme.commercialStatus === "configured" ? (
-                <dl className="tw:grid tw:grid-cols-1 tw:gap-3 tw:text-sm tw:sm:grid-cols-2">
-                  <div>
-                    <dt className="tw:text-muted-foreground">How it works</dt>
-                    <dd>{schemeHowItWorks(scheme)}</dd>
+                <>
+                  <div className="tw:flex tw:flex-col tw:gap-3">
+                    <p className="tw:text-sm">
+                      <span className="tw:font-semibold">How it works: </span>
+                      {schemeHowItWorks(scheme)}
+                    </p>
+                    {scheme.reservationCentavos ? (
+                      <p className="tw:inline-flex tw:w-fit tw:flex-wrap tw:items-center tw:gap-x-2 tw:rounded-lg tw:border tw:border-primary/30 tw:bg-primary/10 tw:px-3 tw:py-1.5 tw:text-sm tw:[print-color-adjust:exact]">
+                        <span>Reservation fee</span>
+                        <Money value={scheme.reservationCentavos} className="tw:font-bold" />
+                        <span className="tw:text-muted-foreground">counted in the total</span>
+                      </p>
+                    ) : null}
                   </div>
-                  {scheme.reservationCentavos ? (
-                    <div>
-                      <dt className="tw:text-muted-foreground">Reservation fee</dt>
-                      <dd><Money value={scheme.reservationCentavos} /> (counted in the total)</dd>
-                    </div>
-                  ) : null}
-                  {(products.data ?? []).filter((item) => scheme.applicableTiers.includes(item.code)).map((product) => {
-                    return product ? (
-                      <div key={product.code}>
-                        <dt className="tw:text-muted-foreground">{product.name}</dt>
-                        <TierTerms scheme={scheme} product={product} />
-                      </div>
-                    ) : null;
-                  })}
-                </dl>
+                  <SchemeComparison scheme={scheme} products={products.data ?? []} />
+                </>
               ) : (
-                <p className="tw:text-sm tw:text-muted-foreground">Terms are pending owner approval, so this scheme cannot be offered yet.{scheme.ownerHold ? ` ${scheme.ownerHold}` : null}</p>
+                <p className="tw:text-sm tw:text-muted-foreground">
+                  This scheme cannot be offered yet. Its terms are waiting for owner approval.
+                  {scheme.ownerHold ? ` ${scheme.ownerHold}` : null}
+                </p>
               )}
             </AdminSection>
-          ))}
-        </div>
-      </QueryState>
+          </div>
+        ))}
+      </div>
+    </QueryState>
   );
 }

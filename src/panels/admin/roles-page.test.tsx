@@ -1,4 +1,4 @@
-import { describe, expect, it, afterEach } from "vitest";
+import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
@@ -7,11 +7,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
-import { RolesPage } from "./pages/roles-page";
+import { OrganizationAreaPage } from "./pages/organization-area-page";
 
 // U1-A: Roles & Permissions on shadcn/ui + Base UI + TanStack Table. Behavior
 // under test is unchanged; only the DOM contract moved (Base UI dialogs, menus
 // and selects, Sonner toasts instead of SweetAlert2 modals).
+
+vi.mock("next/navigation", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/navigation")>()),
+  useSearchParams: () => new URLSearchParams(window.location.search),
+}));
+
+beforeEach(() => window.history.replaceState(null, "", "/admin?tab=roles"));
 
 function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -20,7 +27,7 @@ function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
       <MockStoreProvider>
         <DevIdentityProvider initialIdentityId={identityId}>
           <AppToaster />
-          <RolesPage />
+          <OrganizationAreaPage />
         </DevIdentityProvider>
       </MockStoreProvider>
     </QueryClientProvider>
@@ -31,13 +38,14 @@ function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
 afterEach(() => {
   cleanup();
   toast.dismiss();
+  window.history.replaceState(null, "", "/");
 });
 
 type User = ReturnType<typeof userEvent.setup>;
 
 const rowFor = (name: string) => screen.getAllByText(name)[0].closest("tr")!;
 
-async function clickRowAction(user: User, row: HTMLElement, action: "View full details" | "Edit" | "Delete") {
+async function clickRowAction(user: User, row: HTMLElement, action: "Edit" | "Delete") {
   await user.click(within(row).getByRole("button", { name: /actions for/i }));
   await user.click(await screen.findByRole("menuitem", { name: action }));
 }
@@ -76,8 +84,9 @@ describe("roles page", () => {
 
   it("requires roles module access", async () => {
     render(<TestWrapper identityId="dev-hr" />);
-    expect(await screen.findByText("Access restricted")).toBeInTheDocument();
-    expect(screen.getByText("This account does not have access to Roles & Permissions.")).toBeInTheDocument();
+    // HR keeps Staff and Departments but has no Roles tab and no Create role button.
+    expect(await screen.findByRole("button", { name: "Add staff" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Roles" })).toBeNull();
     expect(screen.queryByText("Create role")).not.toBeInTheDocument();
   });
 

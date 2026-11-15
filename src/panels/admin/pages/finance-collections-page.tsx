@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Wallet } from "lucide-react";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
@@ -54,13 +53,13 @@ export function FinanceCollectionsPanel() {
 
   const columns = useMemo<ColumnDef<CollectionRow, unknown>[]>(
     () => [
-      { id: "customer", header: "Customer", cell: ({ row }) => <Link href={contractHref(row.original.contract.id)} className="tw:font-semibold tw:underline-offset-4 tw:hover:underline">{row.original.contract.customerName}</Link> },
+      { id: "customer", header: "Customer", cell: ({ row }) => <span className="tw:font-semibold">{row.original.contract.customerName}</span> },
       { id: "balance", header: "Balance", cell: ({ row }) => <Money value={row.original.balance} /> },
       { id: "overdue", header: "Overdue", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => (row.original.overdue > 0 ? <Money value={row.original.overdue} /> : "—") },
       { id: "state", header: "Status", cell: ({ row }) => <CollectionBadge state={row.original.state} /> },
       { id: "next", header: "Next due", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => formatDate(row.original.nextDue) },
     ],
-    [contractHref],
+    [],
   );
   const detail = detailId ? allCollections.find((row) => row.contract.id === detailId) ?? null : null;
   const openContract = (row: CollectionRow) => router.push(contractHref(row.contract.id));
@@ -72,7 +71,7 @@ export function FinanceCollectionsPanel() {
       </AdminStatGrid>
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search customers" filters={[{ label: "Status filter", value: collectionState, onChange: setCollectionState, options: COLLECTION_FILTERS }]} />
       <QueryState isLoading={payments.isLoading || contracts.isLoading} error={payments.error ?? contracts.error}>
-        <DataTable data={collections} columns={columns} getRowId={(row) => row.contract.id} emptyText="No contracts match." caption="Collections" onRowOpen={(row) => setDetailId(row.contract.id)} getRowLabel={(row) => `View collection for ${row.contract.customerName}`} rowActions={(row) => <RowActionsMenu itemName={`collection for ${row.contract.customerName}`} onView={() => setDetailId(row.contract.id)} extraItems={[{ key: "contract", label: "Open contract", onClick: () => openContract(row) }]} />} />
+        <DataTable data={collections} columns={columns} getRowId={(row) => row.contract.id} emptyText="No contracts match." caption="Collections" onRowOpen={(row) => setDetailId(row.contract.id)} getRowLabel={(row) => `View collection for ${row.contract.customerName}`} rowActions={(row) => <RowActionsMenu itemName={`collection for ${row.contract.customerName}`} extraItems={[{ key: "contract", label: "Open contract", onClick: () => openContract(row) }]} />} />
       </QueryState>
       <RecordDetailsSheet
         open={detail !== null}
@@ -97,7 +96,7 @@ export function FinanceCollectionsPanel() {
               ]
             : []
         }
-        footer={detail ? <Button type="button" variant="outline" onClick={() => openContract(detail)}>Open contract</Button> : undefined}
+        footer={detail ? <Button type="button" variant="info" onClick={() => openContract(detail)}>Open contract</Button> : undefined}
       />
     </>
   );

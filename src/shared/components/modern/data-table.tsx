@@ -6,8 +6,11 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   useReactTable,
+  type Cell,
+  type CellContext,
   type ColumnDef,
 } from "@tanstack/react-table";
+import { EMPTY, displayValue } from "@/shared/lib/empty-value";
 import { Pagination } from "./pagination";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
@@ -26,11 +29,25 @@ export const TABLE_PAGE_SIZE = 10;
 /**
  * Most data columns a table may show (owner ruling 2026-11-15). The row menu
  * (the `rowActions` column, or a column with id "actions") does not count;
- * everything else belongs in "View full details".
+ * everything else belongs in the details view that opens from the row.
  */
 export const MAX_DATA_COLUMNS = 5;
 
 const columnClass = (meta: unknown) => (meta as DataTableColumnMeta | undefined)?.className;
+
+/**
+ * Renders a cell and shows the em dash when it produces nothing (null,
+ * undefined, empty or blank text). Real elements and numbers, including 0,
+ * are left alone. Function cells run inside this component, so they keep
+ * hook and state support just as with flexRender.
+ */
+function CellContent<T>({ cell }: { cell: Cell<T, unknown> }) {
+  const render = cell.column.columnDef.cell;
+  const context = cell.getContext();
+  if (typeof render !== "function") return <>{flexRender(render, context)}</>;
+  const content = (render as (props: CellContext<T, unknown>) => ReactNode)(context);
+  return <>{typeof content === "string" ? displayValue(content) : (content ?? EMPTY)}</>;
+}
 
 /**
  * Directory table for migrated screens (TanStack Table v8 + shadcn Table).
@@ -161,8 +178,9 @@ export function DataTable<T>({
                   tabIndex={onRowOpen ? 0 : undefined}
                   aria-label={onRowOpen ? getRowLabel?.(row.original) : undefined}
                   className={cn(
-                    "tw:even:bg-[var(--color-bg-subtle)]",
-                    onRowOpen ? "tw:cursor-pointer tw:outline-none tw:focus-visible:bg-muted/60 tw:focus-visible:ring-2 tw:focus-visible:ring-inset tw:focus-visible:ring-ring/50" : undefined,
+                    // Hover tint is the brand-soft green, clearly different from the even-row stripe.
+                    "tw:even:bg-(--color-bg-subtle) tw:hover:bg-(--color-brand-soft) tw:[&_a:hover]:no-underline",
+                    onRowOpen ? "tw:cursor-pointer tw:outline-none tw:focus-visible:bg-(--color-brand-soft) tw:focus-visible:ring-2 tw:focus-visible:ring-inset tw:focus-visible:ring-ring/50" : undefined,
                   )}
                   onClick={
                     onRowOpen
@@ -185,7 +203,7 @@ export function DataTable<T>({
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className={cn("tw:px-3 tw:py-2", columnClass(cell.column.columnDef.meta))}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      <CellContent cell={cell} />
                     </TableCell>
                   ))}
                   {rowActions ? <TableCell className="tw:px-3 tw:py-2 tw:text-right">{rowActions(row.original)}</TableCell> : null}

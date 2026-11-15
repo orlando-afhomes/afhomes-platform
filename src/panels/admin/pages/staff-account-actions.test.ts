@@ -12,6 +12,7 @@ describe("linked account actions for Staff holders (A4)", () => {
     confirmLinkedAccountStatus(confirmRun, "Admin User", "active", async () => {});
     const input = confirmRun.mock.calls[0][0];
     expect(input.danger).toBe(false);
+    expect(input.tone).toBe("success");
     expect(input.description).not.toMatch(/only an administrator/i);
   });
 
@@ -20,6 +21,7 @@ describe("linked account actions for Staff holders (A4)", () => {
     confirmLinkedAccountStatus(confirmRun, "Admin User", "suspended", async () => {});
     const input = confirmRun.mock.calls[0][0];
     expect(input.danger).toBe(true);
+    expect(input.tone).toBe("destructive");
     expect(input.description).not.toMatch(/only an administrator/i);
   });
 });

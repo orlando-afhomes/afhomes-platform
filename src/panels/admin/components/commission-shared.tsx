@@ -7,12 +7,14 @@ import type { CommissionView } from "@/data/contracts/commission-repository";
 import { formatBasisPoints, parsePercentToBasisPoints } from "@/shared/lib/money";
 import { manilaToday } from "@/shared/lib/dates";
 import type { ColumnDef } from "@/shared/components/modern/data-table";
-import { PercentField, SelectField, StandardDateField, TextField } from "@/shared/forms/modern";
+import { FieldShell, PercentField, SelectField, StandardDateField, TextField, describedBy, useFieldIds } from "@/shared/forms/modern";
+import { HandCoins } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
+import type { RowActionTone } from "@/shared/components/modern/row-actions-menu";
 import { Money } from "@/shared/components/modern/money";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { PAYOUT_RELEASE_THRESHOLD_BP } from "@/modules/commissions/rules";
@@ -21,7 +23,35 @@ import { formatDate } from "@/shared/lib/format-date";
 
 export const RELEASE_PERCENT = PAYOUT_RELEASE_THRESHOLD_BP / 100;
 
-export type CommissionMenuItem = { key: string; label: string; danger?: boolean; onClick: () => void };
+/** A workflow action, shown in the row menu and as a footer button; `tone` colors both (rule: success approves or pays, warning adjusts, danger cancels). */
+export type CommissionMenuItem = { key: string; label: string; tone?: RowActionTone; onClick: () => void };
+
+const TONE_VARIANT: Record<RowActionTone, "default" | "destructive" | "warning" | "success" | "info"> = {
+  default: "default",
+  danger: "destructive",
+  warning: "warning",
+  success: "success",
+  info: "info",
+};
+
+/** Footer buttons for a details sheet, one per action, colored by purpose. */
+export function menuItemButtons(items: CommissionMenuItem[]): ReactNode[] {
+  return items.map((item) => (
+    <Button key={item.key} type="button" variant={TONE_VARIANT[item.tone ?? "default"]} onClick={item.onClick}>
+      {item.label}
+    </Button>
+  ));
+}
+
+/** Month input (value stays YYYY-MM). Browsers without a month picker fall back to typing the same format. */
+export function MonthField({ label, value, onChange, required, hint }: { label: string; value: string; onChange: (value: string) => void; required?: boolean; hint?: string }) {
+  const ids = useFieldIds();
+  return (
+    <FieldShell ids={ids} label={label} required={required} hint={hint}>
+      <Input id={ids.id} type="month" value={value} placeholder="YYYY-MM" aria-required={required ? "true" : undefined} aria-describedby={describedBy(ids, undefined, hint)} className="tw:h-11" onChange={(event) => onChange(event.target.value)} />
+    </FieldShell>
+  );
+}
 
 /** Five single-value columns; designation, type, rate, payout and hold details live in CommissionDetailsSheet. */
 export const COMMISSION_COLUMNS: ColumnDef<CommissionView, unknown>[] = [
@@ -46,6 +76,7 @@ export function CommissionDetailsSheet({ detail, onClose, items }: { detail: Com
         title={detail ? detail.recipientName : "Commission"}
         subtitle={detail ? `Sale: ${detail.customerName}` : undefined}
         badge={detail ? <BizBadge status={detail.status} /> : undefined}
+        icon={<HandCoins />}
         sections={
           detail
             ? [
@@ -57,12 +88,17 @@ export function CommissionDetailsSheet({ detail, onClose, items }: { detail: Com
                     { label: "Contract value", value: <Money value={detail.basisCentavos} /> },
                     { label: "Sale number", value: detail.saleReference },
                     { label: "Rate", value: formatBasisPoints(detail.percentBp) },
-                    { label: "Release date", value: detail.payoutReleaseDate ? formatDate(detail.payoutReleaseDate) : null },
                     { label: "Amount", value: <Money value={detail.amountCentavos} /> },
+                  ],
+                },
+                {
+                  title: "Payout",
+                  rows: [
+                    { label: "Release date", value: detail.payoutReleaseDate ? formatDate(detail.payoutReleaseDate) : null },
                     { label: "Payout", value: detail.payout ? (detail.payout.confirmedAt ? "Disbursement confirmed" : "Initiated, not confirmed") : payoutNote(detail) },
                     { label: "Payout reference", value: detail.payout?.reference },
                     { label: "Proof", value: detail.payout?.evidenceFileName },
-                    { label: "On hold because", value: detail.holdReason },
+                    { label: "On hold because", value: detail.holdReason, wide: true },
                   ],
                 },
               ]
@@ -72,7 +108,7 @@ export function CommissionDetailsSheet({ detail, onClose, items }: { detail: Com
           key: `${payout.voidedAt}-${index}`, when: formatDate(payout.voidedAt),
           text: `Payout voided · ${payout.reference} · ${payout.reason}`,
         }))}
-        footer={detail && items.length > 0 ? items.map((item) => <Button key={item.key} type="button" variant={item.danger ? "danger" : "outline"} onClick={item.onClick}>{item.label}</Button>) : undefined}
+        footer={detail && items.length > 0 ? menuItemButtons(items) : undefined}
       />
   );
 }
@@ -100,7 +136,7 @@ export function AdjustDialog({ commission, onClose }: { commission: CommissionVi
     }
   };
   return (
-    <FormDialog open title="Adjust commission" description={commission.recipientName} submitText="Save" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title="Adjust commission" description={commission.recipientName} submitText="Save" submitVariant="warning" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <PercentField label="Percentage" required value={rate} onChange={setRate} />
       <TextField label="Reason" required value={reason} onChange={setReason} />
     </FormDialog>
@@ -124,7 +160,7 @@ export function PayoutDialog({ commission, onClose }: { commission: CommissionVi
     }
   };
   return (
-    <FormDialog open title="Record payout" description={commission.recipientName} submitText="Record payout" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title="Record payout" description={commission.recipientName} submitText="Record payout" submitVariant="success" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <TextField label="Payment reference" required value={reference} onChange={setReference} />
       <TextField label="Payment method" required={Boolean(commission.releaseDate)} value={method} onChange={setMethod} />
       <StandardDateField label="Payout date" required value={date} onChange={setDate} />

@@ -6,7 +6,6 @@ import type { RowActionItem } from "@/shared/components/modern/row-actions-menu"
 
 export type MemberMenuProps = {
   itemName: string;
-  onView?: () => void;
   onEdit?: () => void;
   extraItems: RowActionItem[];
   onDelete?: () => void | Promise<unknown>;
@@ -33,7 +32,6 @@ export type MemberMenuPerms = {
 
 /** Callbacks wired by the page; the bundle only plugs them into the gated slots. */
 export type MemberMenuCallbacks = {
-  onView?: () => void;
   onEdit?: () => void;
   onTransfer?: () => void;
   onChangeStatus?: () => void;
@@ -91,6 +89,7 @@ export function buildMemberMenuProps(
     extraItems.push({
       key: reactivate ? "reactivate" : "deactivate",
       label: reactivate ? "Reactivate" : "Deactivate",
+      tone: reactivate ? "success" : "danger",
       danger: !reactivate,
       onClick: cb.onChangeStatus,
     });
@@ -104,7 +103,6 @@ export function buildMemberMenuProps(
 
   return {
     itemName: member.displayName,
-    onView: cb.onView,
     onEdit: perms.canManage && cb.onEdit ? cb.onEdit : undefined,
     extraItems,
     onDelete: cb.onDelete,

@@ -1,4 +1,5 @@
 import type { IgpDocumentKey, IgpIntake, IgpSale, JadAccreditation } from "@/modules/igp/types";
+import type { Designation } from "@/modules/organization/types";
 import type { MockAsyncOptions } from "./async-options";
 import type { SubmitPaymentInput } from "./payment-repository";
 
@@ -6,13 +7,15 @@ export type IgpSaleView = IgpSale & { buyerName: string; referrerName: string | 
 export type IgpRegister = {
   sales: IgpSaleView[];
   buyers: Array<{ value: string; label: string }>;
-  sellers: Array<{ value: string; label: string }>;
+  sellers: Array<{ value: string; label: string; designation: Designation }>;
   accreditations: JadAccreditation[];
   thresholdBp: number;
 };
 
-export type RecordIgpSale = IgpIntake & { payment: Omit<SubmitPaymentInput, "contractId" | "purpose"> };
-export type ReissueIgpSale = Pick<IgpIntake, "project" | "unit" | "propertyOwner" | "priceCentavos" | "scheme" | "termMonths" | "clauses" | "date"> & { reason: string };
+/** The project, unit and owner names are copied from the catalog when the sale is saved. */
+type CatalogCopy = "project" | "unit" | "propertyOwner";
+export type RecordIgpSale = Omit<IgpIntake, CatalogCopy> & { payment: Omit<SubmitPaymentInput, "contractId" | "purpose"> };
+export type ReissueIgpSale = Pick<IgpIntake, "projectId" | "unitId" | "priceCentavos" | "scheme" | "termMonths" | "clauses" | "date"> & { reason: string };
 export type CorrectIgpSale = Pick<IgpIntake, "priceCentavos" | "referrerMemberId" | "referralReference"> & { reason: string };
 export type IgpAction =
   | { type: "record"; input: RecordIgpSale }

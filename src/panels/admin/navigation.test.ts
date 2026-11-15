@@ -93,6 +93,12 @@ describe("admin navigation", () => {
     expect(tabAccess("dev-super-admin", "reports")).toContain("collections");
   });
 
+  it("shows the Projects tab only to holders of igp.manage", () => {
+    expect(tabAccess("dev-admin", "sales")).toContain("projects");
+    expect(tabAccess("dev-super-admin", "sales")).toContain("projects");
+    for (const identityId of ["dev-finance", "dev-clerk", "dev-svd-a", "dev-ost-a1"]) expect(tabAccess(identityId, "sales")).not.toContain("projects");
+  });
+
   it("shows sellers no review, import, payout, activation or finance tabs", () => {
     for (const identityId of ["dev-svd-a", "dev-ost-a1"]) {
       expect(visibleIds(identityId)).toEqual(SELLER_AREAS);

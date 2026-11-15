@@ -1,14 +1,21 @@
 "use client";
 
-import { useId, useMemo } from "react";
+import { EMPTY } from "@/shared/lib/empty-value";
+import { useMemo } from "react";
 import { useVipProducts } from "@/data/business-queries";
+import { useMembers } from "@/data/queries";
+import { customerRecordName } from "@/modules/customers/rules";
+import type { Customer } from "@/modules/customers/types";
 import { tierOptions } from "@/modules/vip/tier-options";
 import { Download } from "lucide-react";
 import { MAX_EXPORT_ROWS, type CustomerImportJob } from "@/modules/customers/import";
 import { type ColumnDef } from "@/shared/components/modern/data-table";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
-import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
+import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { BizBadge } from "@/shared/components/business/biz-badge";
+import { formatDate } from "@/shared/lib/format-date";
+import { humanize } from "@/shared/lib/humanize";
 import { SelectField } from "@/shared/forms/modern";
 import { Button } from "@/shared/ui/button";
 import { DataTable } from "@/shared/components/modern/data-table";
@@ -42,51 +49,80 @@ export const EXPORT_FORMAT_OPTIONS: { value: "xlsx" | "csv"; label: string }[] =
 ];
 
 /**
- * Presentational export card. All data,
- * filtering, and repository work stays with the owning panel; this card only
- * renders the selects, the export button, and the matching-row count.
+ * Presentational export section. All data, filtering, and repository work stays
+ * with the owning panel; this section renders the filters, the format and
+ * Export button, and a paged preview of the same rows the export file uses.
  */
 export function ExportCustomersCard({
+  rows,
+  search,
+  setSearch,
   status,
   setStatus,
   plan,
   setPlan,
   format,
   setFormat,
-  matchingCount,
   loading,
   exporting,
   onExport,
 }: {
+  rows: Customer[];
+  search: string;
+  setSearch: (value: string) => void;
   status: string;
   setStatus: (value: string) => void;
   plan: string;
   setPlan: (value: string) => void;
   format: "xlsx" | "csv";
   setFormat: (value: "xlsx" | "csv") => void;
-  matchingCount: number;
   loading: boolean;
   exporting: boolean;
   onExport: () => void;
 }) {
   const products = useVipProducts();
+  const members = useMembers();
   const planOptions = useMemo(() => exportPlanOptions(products.data), [products.data]);
-  const titleId = useId();
+  const memberName = useMemo(() => new Map((members.data ?? []).map((member) => [member.id, member.displayName])), [members.data]);
+  const columns = useMemo<ColumnDef<Customer, unknown>[]>(
+    () => [
+      { id: "name", header: "Customer", cell: ({ row }) => <span className="tw:font-semibold">{customerRecordName(row.original)}</span> },
+      { id: "plan", header: "VIP plan", cell: ({ row }) => (row.original.vipPlan ? humanize(row.original.vipPlan) : "—") },
+      { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
+      {
+        id: "owner",
+        header: "Seller",
+        meta: { className: "tw:hidden tw:sm:table-cell" },
+        cell: ({ row }) => (row.original.ownerMemberId ? (memberName.get(row.original.ownerMemberId) ?? EMPTY) : "Company"),
+      },
+      { id: "submitted", header: "Submitted", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => formatDate(row.original.submittedAt) },
+    ],
+    [memberName],
+  );
   return (
-    <section aria-labelledby={titleId} className="customer-export-card tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-5 tw:shadow-(--shadow-soft)">
-      <h2 id={titleId} className="tw:text-base tw:font-semibold">Export customers</h2>
-      <p className="tw:mt-1 tw:text-sm tw:text-muted-foreground">{`At most ${MAX_EXPORT_ROWS.toLocaleString("en-PH")} rows per file.`}</p>
-      <div className="tw:mt-4 tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-3">
-        <SelectField label="Status" value={status} options={EXPORT_STATUS_OPTIONS} onChange={setStatus} />
-        <SelectField label="VIP tier" value={plan} options={planOptions} onChange={setPlan} />
-        <SelectField label="Format" value={format} options={EXPORT_FORMAT_OPTIONS} onChange={setFormat} />
-      </div>
-      <div className="tw:mt-4 tw:flex tw:flex-wrap tw:items-center tw:gap-3">
-        <Button className="tw:min-h-11 tw:sm:min-h-8" loading={exporting} disabled={loading || matchingCount === 0} onClick={onExport}>
-          {exporting ? null : <Download aria-hidden="true" />} Export
-        </Button>
-        <span className="tw:text-sm tw:text-muted-foreground" role="status">{matchingCount} matching customer(s)</span>
-      </div>
+    <section aria-label="Export customers" className="customer-export-card tw:flex tw:flex-col tw:gap-4">
+      <AdminSectionHeading
+        title="Export customers"
+        description={`At most ${MAX_EXPORT_ROWS.toLocaleString("en-PH")} rows per file.`}
+        actions={
+          <div className="tw:flex tw:flex-wrap tw:items-end tw:gap-3">
+            <SelectField label="Format" value={format} options={EXPORT_FORMAT_OPTIONS} onChange={setFormat} className="tw:w-full tw:sm:w-44" />
+            <Button variant="info" className="tw:min-h-11 tw:sm:min-h-8" loading={exporting} disabled={loading || rows.length === 0} onClick={onExport}>
+              {exporting ? null : <Download aria-hidden="true" />} Export
+            </Button>
+          </div>
+        }
+      />
+      <FilterBar
+        search={search}
+        onSearch={setSearch}
+        searchLabel="Search customers by name"
+        filters={[
+          { label: "Status", value: status, onChange: setStatus, options: EXPORT_STATUS_OPTIONS },
+          { label: "VIP tier", value: plan, onChange: setPlan, options: planOptions },
+        ]}
+      />
+      <DataTable data={rows} columns={columns} getRowId={(row) => row.id} loading={loading} emptyText="No customers match." caption="Customers to export" />
     </section>
   );
 }
@@ -132,7 +168,6 @@ export function HistoryCard({
           caption="Customer import jobs"
           onRowOpen={(row) => setJobId(row.id)}
           getRowLabel={(row) => `Open ${importJobLabel(row)}`}
-          rowActions={(row) => <RowActionsMenu itemName={importJobLabel(row)} onView={() => setJobId(row.id)} />}
         />
         <RecordDetailsSheet
           open={job !== null}

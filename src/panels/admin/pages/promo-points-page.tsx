@@ -1,5 +1,6 @@
 "use client";
 
+import { EMPTY } from "@/shared/lib/empty-value";
 import { useMemo, useState } from "react";
 import { Coins } from "lucide-react";
 import { toast } from "sonner";
@@ -63,14 +64,14 @@ export function PromoPointsPanel() {
 
   const columns = useMemo<ColumnDef<PromoLedgerRow, unknown>[]>(() => [
     { id: "date", header: "Date", cell: ({ row }) => formatDate(row.original.date) },
-    { id: "customer", header: "Cardholder", cell: ({ row }) => row.original.customerName },
-    { id: "points", header: "Points", cell: ({ row }) => pointsText(row.original) },
+    { id: "customer", header: "Cardholder", cell: ({ row }) => <span className="tw:font-semibold">{row.original.customerName}</span> },
+    { id: "points", header: "Points", cell: ({ row }) => <span className="tw:font-semibold">{pointsText(row.original)}</span> },
     { id: "type", header: "Type", cell: ({ row }) => entryType(row.original) },
     { id: "promo", header: "Promo", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.promoName },
     {
       id: "actions", header: () => <span className="tw:sr-only">Actions</span>,
       cell: ({ row }) => (
-        <RowActionsMenu itemName={`${row.original.customerName} ${ENTRY_TYPE_LABELS[row.original.type].toLowerCase()} entry`} onView={() => setDetailId(row.original.id)}
+        <RowActionsMenu itemName={`${row.original.customerName} ${ENTRY_TYPE_LABELS[row.original.type].toLowerCase()} entry`}
           extraItems={canUse && row.original.type === "use" && !row.original.voided ? [{ key: "void", label: "Void use", danger: true, onClick: () => setVoiding(row.original) }] : []} />
       ),
     },
@@ -154,7 +155,7 @@ function UseDialog({ onClose }: { onClose: () => void }) {
       <SelectField label="Promo" required value={promoId} placeholder="Select a promo" options={active.map((item) => ({ value: item.id, label: item.name }))}
         onChange={(value) => { setPromoId(value); setOutletId(""); setError(undefined); }} />
       <SelectField label="Outlet" required value={outletId} placeholder="Select an outlet" disabled={!promo}
-        options={(promo?.redeemOutletIds ?? []).map((id) => ({ value: id, label: outlets.get(id) ?? id }))}
+        options={(promo?.redeemOutletIds ?? []).map((id) => ({ value: id, label: outlets.get(id) ?? EMPTY }))}
         onChange={(value) => { setOutletId(value); setError(undefined); }} />
       <PointsField label="Points to use" required value={points} onChange={(value) => { setPoints(value); setError(undefined); }} />
       <TextField label="Note" value={note} maxLength={200} onChange={setNote} />

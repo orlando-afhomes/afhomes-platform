@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { BadgeCheck, CalendarCheck, Clock, Receipt } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useApproveSale, useCorrectVipCommission, useMarkSaleDefaulted, useOperation, useSales } from "@/data/business-queries";
@@ -112,17 +111,17 @@ export function SalesTab() {
   const totals = totalsFor(scoped);
   const inPeriod = confirmedValueInPeriod(scoped, from, to);
 
-  // A referrer may sit outside the sale's team, so the referred list shows no contract links.
+  // A referrer may sit outside the sale's team, so the referred list offers no contract link.
   const referredView = scope === "referred";
   const columns = useMemo<ColumnDef<SaleView, unknown>[]>(
     () => [
+      { id: "customer", header: "Customer", cell: ({ row }) => <span className="tw:font-semibold">{row.original.customerName}</span> },
       { id: "value", header: "Sale", cell: ({ row }) => <Money value={row.original.valueCentavos} /> },
-      { id: "customer", header: "Customer", cell: ({ row }) => (referredView ? <span className="tw:font-semibold">{row.original.customerName}</span> : <Link href={contractHref(row.original.contractId)} className="tw:font-semibold tw:underline-offset-4 tw:hover:underline">{row.original.customerName}</Link>) },
       { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.productCode },
       { id: "seller", header: "Seller", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.sellerName ?? "Company" },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={saleBadgeStatus(row.original)} /> },
     ],
-    [contractHref, referredView],
+    [],
   );
 
   const detail = detailId ? rows.find((row) => row.id === detailId) ?? null : null;
@@ -132,7 +131,7 @@ export function SalesTab() {
     <>
       {dialog}
       {correction ? <VipCommissionCorrectionDialog sale={correction} canApprove={canApprove} onClose={() => setCorrection(null)} /> : null}
-      <ReasonDialog open={defaultSale !== null} title="Mark sale Defaulted" description={defaultSale?.customerName ?? ""} confirmText="Mark Defaulted" successText="Sale marked Defaulted." onClose={() => setDefaultSale(null)} onSubmit={(reason) => defaultSale ? markDefaulted.mutateAsync({ id: defaultSale.id, reason }) : Promise.resolve()} />
+      <ReasonDialog open={defaultSale !== null} title="Mark sale Defaulted" description={defaultSale?.customerName ?? ""} confirmText="Mark Defaulted" tone="warning" successText="Sale marked Defaulted." onClose={() => setDefaultSale(null)} onSubmit={(reason) => defaultSale ? markDefaulted.mutateAsync({ id: defaultSale.id, reason }) : Promise.resolve()} />
       {referredView ? null : <AdminStatGrid>
         <AdminStatCard label="Confirmed" value={<Money value={totals.confirmed} />} icon={BadgeCheck} tone="brand" description={`${totals.confirmedCount} sale(s)`} />
         <AdminStatCard label="Pending" value={<Money value={totals.pending} />} icon={Clock} tone="warning" description={`${totals.pendingCount} sale(s)`} />
@@ -150,25 +149,22 @@ export function SalesTab() {
           getRowId={(row) => row.id}
           emptyText="No sales match."
           caption="Sales"
-          onRowOpen={referredView ? (row) => setDetailId(row.id) : (row) => router.push(contractHref(row.contractId))}
-          getRowLabel={(row) => (referredView ? `View full details of the sale for ${row.customerName}` : `Open the sale for ${row.customerName}`)}
-          rowActions={(row) => {
-            if (referredView) {
-              return <RowActionsMenu itemName={`sale for ${row.customerName}`} extraItems={[{ key: "details", label: "View full details", onClick: () => setDetailId(row.id) }]} />;
-            }
+          onRowOpen={(row) => setDetailId(row.id)}
+          getRowLabel={(row) => `Open the sale for ${row.customerName}`}
+          rowActions={referredView ? undefined : (row) => {
             const menu = buildSalesMenuProps(row, { canApprove }, {
-              onView: () => setDetailId(row.id),
               onApprove: () => confirmRun({
                 title: "Approve this sale?",
                 description: "This allows its receipts to be reviewed for approval.",
                 confirmText: "Approve sale",
+                tone: "success",
                 action: () => approve.mutateAsync(row.id),
                 successTitle: "Sale approved.",
                 errorTitle: "Could not approve sale",
               }),
               onMarkDefaulted: () => setDefaultSale(row),
             });
-            return <RowActionsMenu {...menu} extraItems={[...menu.extraItems, ...((canApprove || canPrepare) && (row.status === "pending" || row.status === "confirmed") ? [{ key: "correct-commission", label: "Correct commission", onClick: () => setCorrection(row) }] : [])]} />;
+            return <RowActionsMenu {...menu} extraItems={[...menu.extraItems, ...((canApprove || canPrepare) && (row.status === "pending" || row.status === "confirmed") ? [{ key: "correct-commission", label: "Correct commission", tone: "warning" as const, onClick: () => setCorrection(row) }] : [])]} />;
           }}
         />
       </QueryState>
@@ -191,7 +187,7 @@ export function SalesTab() {
           },
           ...((detail.expiryReminders ?? []).length > 0 ? [{ title: "Reminders", rows: (detail.expiryReminders ?? []).map((reminder) => ({ label: reminder.role === "seller" ? "Seller" : "Referrer", value: saleExpiryReminderText(reminder) })) }] : []),
         ] : []}
-        footer={detail && !referredView ? <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => router.push(contractHref(detail.contractId))}>Open contract</Button> : undefined}
+        footer={detail && !referredView ? <Button className="tw:min-h-11 tw:sm:min-h-8" variant="info" onClick={() => router.push(contractHref(detail.contractId))}>Open contract</Button> : undefined}
       />
     </>
   );

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { buttonVariants } from "@/shared/ui/button";
 import { ToneBadge, type BadgeTone } from "@/shared/components/modern/status-badge";
 
 export type LinkedRecordState =
@@ -51,7 +52,7 @@ export function LinkedBusinessRecords({ items }: { items: LinkedRecordItem[] }) 
           <span className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-wrap tw:items-center tw:gap-2">
             {item.content ?? "—"}
             {item.href ? (
-              <Link href={item.href} className="tw:text-primary tw:underline-offset-4 tw:hover:underline">
+              <Link href={item.href} className={buttonVariants({ variant: "info", size: "xs", className: "tw:no-underline" })}>
                 {item.linkLabel ?? "View"}
               </Link>
             ) : null}

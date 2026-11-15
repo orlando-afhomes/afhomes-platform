@@ -77,10 +77,10 @@ describe("promos page", () => {
     showStayPoints("dev-clerk", "promos");
     expect(await screen.findByText(/Teppanyaki Dining Points/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /add promo/i })).toBeNull();
-    const actions = screen.getByRole("button", { name: /actions for/i });
-    await userEvent.click(actions);
-    expect(await screen.findByRole("menuitem", { name: "View full details" })).toBeInTheDocument();
-    expect(screen.queryByRole("menuitem", { name: /Edit|Activate|Deactivate|End/ })).toBeNull();
+    // The row opens the details; there is no row menu without a management action.
+    expect(screen.queryByRole("button", { name: /actions for/i })).toBeNull();
+    fireEvent.click(screen.getByText(/Teppanyaki Dining Points/).closest("tr")!);
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 });
 
@@ -107,11 +107,10 @@ describe("promo points page", () => {
 });
 
 describe("promo points report", () => {
-  it("shows the tiles and the export buttons", async () => {
+  it("shows the tiles and one Export menu with Excel, CSV and Print", async () => {
     show("dev-finance", <PromoPointsReportPage />);
     expect((await screen.findAllByText("Points earned")).length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: /Excel/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /CSV/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Print/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Export/ }));
+    expect((await screen.findAllByRole("menuitem")).map((item) => item.textContent?.trim())).toEqual(["Excel", "CSV", "Print"]);
   });
 });

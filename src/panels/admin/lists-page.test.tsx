@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
@@ -7,7 +7,14 @@ import { useState } from "react";
 import { AppToaster } from "@/shared/components/modern/app-toaster";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
-import { ListsPage } from "./pages/lists-page";
+import { OrganizationAreaPage } from "./pages/organization-area-page";
+
+vi.mock("next/navigation", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/navigation")>()),
+  useSearchParams: () => new URLSearchParams(window.location.search),
+}));
+
+beforeEach(() => window.history.replaceState(null, "", "/admin?tab=lists"));
 
 function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -16,7 +23,7 @@ function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
       <MockStoreProvider>
         <DevIdentityProvider initialIdentityId={identityId}>
           <AppToaster />
-          <ListsPage />
+          <OrganizationAreaPage />
         </DevIdentityProvider>
       </MockStoreProvider>
     </QueryClientProvider>
@@ -26,6 +33,7 @@ function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
 afterEach(() => {
   cleanup();
   toast.dismiss();
+  window.history.replaceState(null, "", "/");
 });
 
 type User = ReturnType<typeof userEvent.setup>;
@@ -49,7 +57,7 @@ describe("lists page", () => {
     expect(await screen.findByText("VIP Privilege Card Holder")).toBeInTheDocument();
     expect(screen.queryByText(/Previllage/)).toBeNull();
     expect(screen.getByRole("combobox", { name: "List" })).toHaveValue("Program categories");
-    expect(screen.queryByRole("tablist")).toBeNull();
+    expect(within(screen.getByRole("tabpanel")).queryByRole("tablist")).toBeNull();
     await user.type(screen.getByRole("searchbox", { name: /search program categories/i }), "non-vip");
     expect(screen.queryByText("VIP Privilege Card Holder")).toBeNull();
     expect(screen.getByText("Non-VIP Client")).toBeInTheDocument();
@@ -100,6 +108,6 @@ describe("lists page", () => {
 
   it("is not available to a role without the lists operation", async () => {
     render(<TestWrapper identityId="dev-finance" />);
-    expect(await screen.findByText(/does not have access to Lists/)).toBeInTheDocument();
+    expect(await screen.findByText(/does not have access to Organization/)).toBeInTheDocument();
   });
 });

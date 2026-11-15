@@ -14,9 +14,10 @@ import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
-import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
+import { RowActionsMenu, type RowActionTone } from "@/shared/components/modern/row-actions-menu";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { TextAreaField, TextField } from "@/shared/forms/modern";
+import { EMPTY } from "@/shared/lib/empty-value";
 import { humanize } from "@/shared/lib/humanize";
 import { Input } from "@/shared/ui/input";
 import { formatDate } from "@/shared/lib/format-date";
@@ -27,7 +28,7 @@ import { RedemptionBookingDialog } from "../components/redemption-booking-dialog
 import { buildRedemptionBookingMenuProps } from "../actions/redemption-actions";
 import { ADMIN_AREA_TABS } from "../navigation";
 import { useAdminAreaTabAccess } from "../use-role-aware-navigation";
-import { RedemptionHolidaysPanel, RedemptionPointsTablePanel, RedemptionVenuesPanel } from "./redemption-points-table-page";
+import { pointsTableFrom, RedemptionHolidaysPanel, RedemptionPointsTablePanel, RedemptionVenuesPanel } from "./redemption-points-table-page";
 
 const fmt = (n: number) => n.toLocaleString("en-PH");
 
@@ -43,6 +44,14 @@ const STATUS: Record<BookingStatus, { key: string; label: string }> = {
 const statusBadge = (booking: BookingView) => booking.provisional && (booking.status === "confirmed" || booking.status === "pending_payment")
   ? <BizBadge status="pending" label={booking.status === "confirmed" ? "Provisional hold" : "Provisional · Pending Payment"} />
   : <BizBadge status={STATUS[booking.status].key} label={STATUS[booking.status].label} />;
+
+/** Button and menu color per booking action (rule: confirm and check-in green, no-show amber, cancel red). */
+const ACTION_TONE: Record<string, { tone: RowActionTone; variant: "success" | "warning" | "destructive" | "outline" }> = {
+  "approve-cash": { tone: "success", variant: "success" },
+  complete: { tone: "success", variant: "success" },
+  "no-show": { tone: "warning", variant: "warning" },
+  cancel: { tone: "danger", variant: "destructive" },
+};
 
 type Dialog = { kind: "cancel" | "no-show" | "approve-cash"; booking: BookingView } | null;
 
@@ -87,8 +96,8 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
     () => [
       { id: "ref", header: "Booking no.", cell: ({ row }) => <span className="tw:font-semibold">{row.original.reference}</span> },
       { id: "holder", header: "Cardholder", cell: ({ row }) => row.original.customerName },
+      { id: "venue", header: "Venue", cell: ({ row }) => row.original.venueName },
       { id: "stay", header: "Stay dates", cell: ({ row }) => `${formatDate(row.original.checkIn)} to ${formatDate(row.original.checkOut)}` },
-      { id: "points", header: "Points", cell: ({ row }) => `${fmt(row.original.reservedWeekday)} weekday, ${fmt(row.original.reservedWeekend)} weekend` },
       { id: "status", header: "Status", cell: ({ row }) => statusBadge(row.original) },
     ],
     [],
@@ -116,7 +125,7 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
     title: "Record check-in?", description: booking.provisional
       ? "The system checks whether the Annual Welcome Gift covers this stay before using points."
       : "The reserved points will be used for this stay.",
-    confirmText: "Record check-in", action: () => act.mutateAsync({ id: booking.id, action: "complete" }),
+    confirmText: "Record check-in", tone: "success", action: () => act.mutateAsync({ id: booking.id, action: "complete" }),
     successTitle: "Check-in recorded.", errorTitle: "Could not record check-in",
   });
 
@@ -131,7 +140,7 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
   const footer = detail ? (
     <>
       {sheetMenu?.extraItems.map((item) => (
-        <Button key={item.key} type="button" variant={item.key === "approve-cash" ? "primary" : item.key === "cancel" ? "danger" : "outline"} onClick={item.onClick}>
+        <Button key={item.key} type="button" variant={ACTION_TONE[item.key]?.variant ?? "outline"} onClick={item.onClick}>
           {item.label}
         </Button>
       ))}
@@ -148,13 +157,12 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
             <FilterBar search={bookingSearch} onSearch={setBookingSearch} searchLabel="Search bookings" filters={[{ label: "Booking status filter", value: bookingStatus, onChange: setBookingStatus, options: bookingStatusOptions }, { label: "Venue filter", value: bookingVenue, onChange: setBookingVenue, options: venueOptions }]} />
             <DataTable data={visibleBookings} columns={bookingColumns} getRowId={(row) => row.id} emptyText={overview.bookings.length === 0 ? "No bookings yet." : "No bookings match the filters."} caption="Redemption bookings" onRowOpen={(row) => setOpenId(row.id)} getRowLabel={(row) => `Open booking ${row.reference}`} rowActions={(row) => {
               const menu = buildRedemptionBookingMenuProps(row, { canBook, canApprove }, {
-                onView: () => setOpenId(row.id),
                 onApproveCash: () => open("approve-cash", row),
                 onComplete: () => recordCheckIn(row),
                 onNoShow: () => open("no-show", row),
                 onCancel: () => open("cancel", row),
               });
-              return <RowActionsMenu {...menu} />;
+              return <RowActionsMenu {...menu} extraItems={menu.extraItems.map((item) => ({ ...item, tone: ACTION_TONE[item.key]?.tone }))} />;
             }} />
             <RedemptionBookingDialog open={createOpen && canBook} overview={overview} onClose={onCreateClose} />
           </>
@@ -179,7 +187,7 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
                   { label: "Cancellation cut-off", value: deadline },
                 ] },
                 { title: "Points", rows: [
-                  { label: "Points table", value: `Version ${detail.basisVersion}` },
+                  { label: "Points table", value: pointsTableFrom(overview?.tableVersions ?? [], detail.basisVersion) },
                   { label: detail.provisional ? "Weekday points needed" : "Weekday points reserved", value: fmt(detail.reservedWeekday) },
                   { label: detail.provisional ? "Weekend points needed" : "Weekend points reserved", value: fmt(detail.reservedWeekend) },
                   ...detail.nights.map((night) => ({ label: formatDate(night.date), value: `${night.reason === "holiday" ? "Holiday" : night.reason === "weekend" ? "Weekend" : "Weekday"} night · ${night.payment === "cash" ? "money" : `${fmt(night.points)} points`}` })),
@@ -201,6 +209,7 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
         title={dialog?.kind === "cancel" ? "Cancel booking" : dialog?.kind === "no-show" ? "Record no-show" : "Approve money part"}
         description={dialog?.kind === "cancel" ? "Cancelled by the venue cut-off, the points return to the same buckets. After it, they are forfeited." : dialog?.kind === "no-show" ? "The reserved points are forfeited." : "Enter the approved receipt reference. The booking becomes Confirmed."}
         submitText={dialog?.kind === "approve-cash" ? "Approve" : "Confirm"}
+        submitVariant={dialog?.kind === "approve-cash" ? "success" : dialog?.kind === "cancel" ? "destructive" : "warning"}
         pending={act.isPending}
         error={error}
         onClose={closeDialog}
@@ -235,7 +244,7 @@ export function RedemptionCardholderPointsPanel() {
   const memberColumns = useMemo<ColumnDef<MemberPoints, unknown>[]>(
     () => [
       { id: "holder", header: "Cardholder", cell: ({ row }) => <span className="tw:font-semibold">{row.original.customerName}</span> },
-      { id: "vip", header: "VIP no.", cell: ({ row }) => row.original.vipNumber ?? "No card" },
+      { id: "vip", header: "VIP no.", cell: ({ row }) => row.original.vipNumber ?? EMPTY },
       { id: "weekday", header: "Weekday points", cell: ({ row }) => fmt(row.original.weekday.available) },
       { id: "weekend", header: "Weekend points", cell: ({ row }) => fmt(row.original.weekend.available) },
       { id: "state", header: "Can book", cell: ({ row }) => (row.original.blockedReasons.length === 0 ? <BizBadge status="active" label="Yes" /> : <span className="tw:text-xs tw:text-muted-foreground">{row.original.blockedReasons[0]}</span>) },
@@ -249,7 +258,7 @@ export function RedemptionCardholderPointsPanel() {
         {overview ? (
           <>
             <FilterBar search={memberSearch} onSearch={setMemberSearch} searchLabel="Search cardholders" />
-            <DataTable data={visibleMembers} columns={memberColumns} getRowId={(row) => row.membershipId} emptyText={overview.members.length === 0 ? "No activated memberships." : "No cardholders match the search."} caption="Points by cardholder" onRowOpen={(row) => setOpenId(row.membershipId)} getRowLabel={(row) => `Open points for ${row.customerName}`} rowActions={(row) => <RowActionsMenu itemName={row.customerName} onView={() => setOpenId(row.membershipId)} />} />
+            <DataTable data={visibleMembers} columns={memberColumns} getRowId={(row) => row.membershipId} emptyText={overview.members.length === 0 ? "No activated memberships." : "No cardholders match the search."} caption="Points by cardholder" onRowOpen={(row) => setOpenId(row.membershipId)} getRowLabel={(row) => `Open points for ${row.customerName}`} />
           </>
         ) : null}
       </QueryState>
@@ -257,15 +266,15 @@ export function RedemptionCardholderPointsPanel() {
         open={detail !== null}
         onClose={() => setOpenId(null)}
         title={detail ? detail.customerName : "Cardholder"}
-        subtitle={detail ? (detail.vipNumber ?? "No card") : undefined}
+        subtitle={detail ? (detail.vipNumber ?? EMPTY) : undefined}
         badge={detail ? (detail.blockedReasons.length === 0 ? <BizBadge status="active" label="Can book" /> : <BizBadge status="inactive" label="Cannot book" />) : undefined}
         sections={
           detail
             ? [
                 { title: "Card", rows: [
                   { label: "Product", value: detail.productCode },
-                  { label: "Points table", value: detail.tableVersion ? `Version ${detail.tableVersion}` : "None" },
-                  { label: "Activation date", value: detail.padDate ? formatDate(detail.padDate) : "Not set" },
+                  { label: "Points table", value: pointsTableFrom(overview?.tableVersions ?? [], detail.tableVersion) ?? EMPTY },
+                  { label: "Activation date", value: detail.padDate ? formatDate(detail.padDate) : EMPTY },
                 ] },
                 { title: "Points", rows: [
                   { label: "Weekday points available", value: fmt(detail.weekday.available) },
@@ -285,7 +294,7 @@ export function RedemptionCardholderPointsPanel() {
 type CreateKind = "booking" | "version" | "holiday" | "venue";
 const CREATE_BUTTONS: Partial<Record<string, { kind: CreateKind; label: string; operation: "book" | "configure" }>> = {
   bookings: { kind: "booking", label: "New booking", operation: "book" },
-  "points-table": { kind: "version", label: "New version", operation: "configure" },
+  "points-table": { kind: "version", label: "Update points table", operation: "configure" },
   holidays: { kind: "holiday", label: "Add holiday", operation: "configure" },
   venues: { kind: "venue", label: "Add venue", operation: "configure" },
 };

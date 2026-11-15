@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useVipProducts } from "@/data/business-queries";
 import { useReferenceOptions } from "@/data/settings-queries";
-import { tierOptions } from "@/modules/vip/tier-options";
+import { defaultProductCode, tierOptions } from "@/modules/vip/tier-options";
 import { isValidTierCode, type VipTierCode } from "@/modules/vip/types";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { teamDisplayName } from "@/modules/sales-network/display";
@@ -145,8 +145,10 @@ export function AccreditedSellerDialog({
   const [parentId, setParentId] = useState<string | undefined>(undefined);
   const [cardApplicationDate, setCardApplicationDate] = useState(manilaToday());
   const [programCategory, setProgramCategory] = useState<string | undefined>(undefined);
-  const [vipCardLevel, setVipCardLevel] = useState<VipTierCode>("B1");
+  const [chosenCardLevel, setVipCardLevel] = useState<VipTierCode>("");
   const products = useVipProducts();
+  // Until a card level is picked, it is the first active product.
+  const vipCardLevel = chosenCardLevel || defaultProductCode(products.data);
   const [gender, setGender] = useState<string | undefined>(undefined);
   const [civilStatus, setCivilStatus] = useState<string | undefined>(undefined);
   const [governmentIdType, setGovernmentIdType] = useState<string | undefined>(undefined);

@@ -1,4 +1,4 @@
-import { describe, expect, it, afterEach } from "vitest";
+import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
@@ -7,11 +7,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
-import { DepartmentsPage } from "./pages/departments-page";
+import { OrganizationAreaPage } from "./pages/organization-area-page";
 
 // M1-B: Departments on shadcn/ui + Base UI + TanStack Table. Behavior under
 // test is unchanged from the Ant Design version: only the DOM contract moved
 // (Base UI dialogs and menus, Sonner toasts instead of SweetAlert2 modals).
+
+vi.mock("next/navigation", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/navigation")>()),
+  useSearchParams: () => new URLSearchParams(window.location.search),
+}));
+
+beforeEach(() => window.history.replaceState(null, "", "/admin?tab=departments"));
 
 function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -20,7 +27,7 @@ function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
       <MockStoreProvider>
         <DevIdentityProvider initialIdentityId={identityId}>
           <AppToaster />
-          <DepartmentsPage />
+          <OrganizationAreaPage />
         </DevIdentityProvider>
       </MockStoreProvider>
     </QueryClientProvider>
@@ -31,6 +38,7 @@ function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
 afterEach(() => {
   cleanup();
   toast.dismiss();
+  window.history.replaceState(null, "", "/");
 });
 
 type User = ReturnType<typeof userEvent.setup>;
@@ -38,7 +46,7 @@ type User = ReturnType<typeof userEvent.setup>;
 const rowFor = (name: string) => screen.getByText(name).closest("tr")!;
 const rowKeys = () => [...document.querySelectorAll("tbody tr[data-row-key]")].map((row) => row.getAttribute("data-row-key"));
 
-async function clickRowAction(user: User, row: HTMLElement, action: "View full details" | "Edit" | "Delete") {
+async function clickRowAction(user: User, row: HTMLElement, action: "Edit" | "Delete") {
   await user.click(within(row).getByRole("button", { name: /actions for/i }));
   await user.click(await screen.findByRole("menuitem", { name: action }));
 }
@@ -161,11 +169,11 @@ describe("departments page", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 
-  it("opens details from the name button without a row-click conflict", async () => {
+  it("opens details when the row is clicked", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
     await screen.findByText("Human Resources");
-    await user.click(within(rowFor("Human Resources")).getByRole("button", { name: "Human Resources" }));
+    await user.click(within(rowFor("Human Resources")).getByText("Human Resources"));
     expect(await screen.findByRole("dialog", { name: "Department details" })).toBeInTheDocument();
   });
 

@@ -5,7 +5,6 @@ import type { RowActionItem } from "@/shared/components/modern/row-actions-menu"
 
 export type CustomerMenuProps = {
   itemName: string;
-  onView?: () => void;
   onEdit?: () => void;
   extraItems: RowActionItem[];
   onDelete?: () => void | Promise<unknown>;
@@ -28,7 +27,6 @@ export type CustomerMenuPerms = {
 
 /** Callbacks wired by the page; the bundle only plugs them into the gated slots. */
 export type CustomerMenuCallbacks = {
-  onView?: () => void;
   onEdit?: () => void;
   onDiscard?: () => void | Promise<unknown>;
   onApprove?: () => void;
@@ -41,7 +39,7 @@ const DELETE_DESCRIPTION = "Only drafts can be discarded. Submitted, approved, s
 
 /**
  * Single source for the customer action set shared by the directory table menu
- * and the detail-page kebab. Pure: no hooks, no JSX. Gates mirror the detail
+ * and the detail-page header buttons. The row opens the record, so there is no "view" item. Pure: no hooks, no JSX. Gates mirror the detail
  * page: edit needs ownership plus manage (or draft plus draft right) and never
  * applies to rejected records; review needs the approve right on a submitted
  * registration; prepare needs the prepare right on a submitted or approved
@@ -59,9 +57,9 @@ export function buildCustomerMenuProps(
 
   const extraItems: RowActionItem[] = [];
   if (perms.canApprove && canReviewRegistration(customer.status)) {
-    if (cb.onApprove) extraItems.push({ key: "approve", label: "Approve", onClick: cb.onApprove });
-    if (cb.onSendBack) extraItems.push({ key: "send-back", label: "Send back", onClick: cb.onSendBack });
-    if (cb.onReject) extraItems.push({ key: "reject", label: "Reject", danger: true, onClick: cb.onReject });
+    if (cb.onApprove) extraItems.push({ key: "approve", label: "Approve", tone: "success", onClick: cb.onApprove });
+    if (cb.onSendBack) extraItems.push({ key: "send-back", label: "Send back", tone: "warning", onClick: cb.onSendBack });
+    if (cb.onReject) extraItems.push({ key: "reject", label: "Reject", tone: "danger", onClick: cb.onReject });
   }
   if (
     perms.canPrepare &&
@@ -74,7 +72,6 @@ export function buildCustomerMenuProps(
 
   return {
     itemName,
-    onView: cb.onView,
     onEdit: canEdit && cb.onEdit ? cb.onEdit : undefined,
     extraItems,
     onDelete: canDelete && cb.onDiscard ? cb.onDiscard : undefined,

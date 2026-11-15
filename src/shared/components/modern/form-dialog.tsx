@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import type { ConfirmTone } from "./app-alert";
 import { TextAreaField } from "@/shared/forms/modern";
 import { Button } from "@/shared/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
@@ -13,6 +14,8 @@ export function FormDialog({
   title,
   description,
   submitText,
+  submitVariant = "default",
+  size = "md",
   pending,
   error,
   onClose,
@@ -23,6 +26,10 @@ export function FormDialog({
   title: string;
   description?: string;
   submitText: string;
+  /** Color of the submit button by purpose (default = main action). */
+  submitVariant?: ConfirmTone;
+  /** md = standard width, lg = wide dialog for large forms. */
+  size?: "md" | "lg";
   pending?: boolean;
   error?: string;
   onClose: () => void;
@@ -31,7 +38,7 @@ export function FormDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={(next) => (!next && !pending ? onClose() : undefined)}>
-      <DialogContent className="tw:max-h-[90vh] tw:overflow-y-auto tw:sm:max-w-xl">
+      <DialogContent className={`tw:max-h-[90vh] tw:overflow-y-auto ${size === "lg" ? "tw:sm:max-w-3xl" : "tw:sm:max-w-xl"}`}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
@@ -53,7 +60,7 @@ export function FormDialog({
             <Button type="button" variant="outline" disabled={pending} onClick={onClose} className="tw:min-h-11 tw:sm:min-h-8">
               Cancel
             </Button>
-            <Button type="submit" loading={pending} className="tw:min-h-11 tw:sm:min-h-8">
+            <Button type="submit" variant={submitVariant} loading={pending} className="tw:min-h-11 tw:sm:min-h-8">
               {submitText}
             </Button>
           </DialogFooter>
@@ -72,6 +79,7 @@ export function ReasonDialog({
   confirmText = "Confirm",
   successText,
   danger,
+  tone,
   onClose,
   onSubmit,
 }: {
@@ -82,6 +90,8 @@ export function ReasonDialog({
   confirmText?: string;
   successText: string;
   danger?: boolean;
+  /** Confirm button color by purpose; overrides `danger` for the button. */
+  tone?: ConfirmTone;
   onClose: () => void;
   onSubmit: (reason: string) => Promise<unknown>;
 }) {
@@ -118,7 +128,7 @@ export function ReasonDialog({
           <Button variant="outline" disabled={pending} onClick={onClose} className="tw:min-h-11 tw:sm:min-h-8">
             Cancel
           </Button>
-          <Button variant={danger ? "destructive" : "default"} loading={pending} onClick={() => void submit()} className="tw:min-h-11 tw:sm:min-h-8">
+          <Button variant={tone ?? (danger ? "destructive" : "default")} loading={pending} onClick={() => void submit()} className="tw:min-h-11 tw:sm:min-h-8">
             {confirmText}
           </Button>
         </DialogFooter>

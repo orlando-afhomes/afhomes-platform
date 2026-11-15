@@ -188,7 +188,7 @@ describe("audit safe projection", () => {
     expect(view).toMatchObject({ displayReference: null, previousValue: null, newValue: null, reason: null, reasonRecorded: true });
     expect(JSON.stringify(view)).not.toMatch(/secret|AA-9999|free text|passwordHash|should-never/);
     expect(Object.keys(view).sort()).toEqual(
-      ["action", "actorId", "actorName", "actorRoles", "displayReference", "entityId", "entityLabel", "entityType", "id", "module", "newValue", "outcome", "previousValue", "reason", "reasonRecorded", "relatedRecordIds", "timestamp"],
+      ["action", "actorId", "actorName", "actorRoles", "displayReference", "entityDetail", "entityId", "entityLabel", "entityName", "entityType", "id", "module", "newValue", "outcome", "previousValue", "reason", "reasonRecorded", "relatedRecordIds", "timestamp"],
     );
   });
 
@@ -237,5 +237,51 @@ describe("audit read integrity", () => {
     await auditAs(store, "dev-admin").list({ page: 1 });
     expect(JSON.stringify(store.auditEvents)).toBe(stored);
     expect(store.auditEvents).toHaveLength(1 + SEED_AUDIT_EVENT_COUNT);
+  });
+});
+
+describe("audit record parts and actors", () => {
+  it("splits a payment label into the customer name and the amount", async () => {
+    const store = createMockStore();
+    const payment = store.payments[0];
+    pushEvent(store, { action: "PAYMENT_VERIFIED", module: "finance", entityType: "payment", entityId: payment.id });
+    const view = (await auditAs(store, "dev-admin").list({ entityId: payment.id })).items[0];
+    expect(view.entityName).toBeTruthy();
+    expect(view.entityDetail).toMatch(/₱/);
+    expect(view.entityLabel).toBe(`Payment · ${view.entityName} · ${view.entityDetail}`);
+  });
+
+  it("has no name or detail when the record is not found", async () => {
+    const store = createMockStore();
+    pushEvent(store, { action: "PAYMENT_VERIFIED", module: "finance", entityType: "payment", entityId: "pay-missing" });
+    const view = (await auditAs(store, "dev-admin").list({ entityId: "pay-missing" })).items[0];
+    expect(view).toMatchObject({ entityName: null, entityDetail: null, entityLabel: "Payment" });
+  });
+
+  it("labels IGP and tier-level records in plain words", async () => {
+    const store = createMockStore();
+    for (const entityType of ["igp-project", "igp-unit", "tier-level"] as const) {
+      pushEvent(store, { action: "TEST_EVENT", module: "sales", entityType, entityId: `${entityType}-x` });
+    }
+    const labels = await Promise.all(["igp-project", "igp-unit", "tier-level"].map(async (type) => (await auditAs(store, "dev-admin").list({ entityId: `${type}-x` })).items[0].entityLabel));
+    expect(labels).toEqual(["IGP project", "IGP unit", "Tier level"]);
+  });
+
+  it("lists every actor in the history, System included, and finds events by actor id", async () => {
+    const store = createMockStore();
+    const staff = store.staff[0];
+    pushEvent(store, { action: "STAFF_UPDATED", actorId: staff.id });
+    const repo = auditAs(store, "dev-admin");
+    const actors = await repo.listActors();
+    expect(actors.find((actor) => actor.value === staff.id)?.label).toBe(staff.displayName);
+    expect(actors.some((actor) => actor.label === "System")).toBe(true);
+    expect(new Set(actors.map((actor) => actor.value)).size).toBe(actors.length);
+    const page = await repo.list({ actorId: staff.id });
+    expect(page.total).toBeGreaterThan(0);
+    expect(page.items.every((item) => item.actorId === staff.id)).toBe(true);
+  });
+
+  it("keeps the actor list to Administrators", async () => {
+    await expect(auditAs(createMockStore(), "dev-ost-a1").listActors()).rejects.toThrow(AUDIT_READ_RESTRICTION);
   });
 });

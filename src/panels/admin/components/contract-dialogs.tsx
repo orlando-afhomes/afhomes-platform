@@ -51,7 +51,7 @@ export function RequestCancellationDialog({ contract, onClose }: DialogProps) {
     }
   };
   return (
-    <FormDialog open title="Request cancellation" description="This contract has verified payments. Under the Reservation Agreement they are forfeited on cancellation. Finance must confirm the request." submitText="Request cancellation" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title="Request cancellation" description="This contract has verified payments. Under the Reservation Agreement they are forfeited on cancellation. Finance must confirm the request." submitText="Request cancellation" submitVariant="warning" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <SelectField label="Ground" required value={ground} options={CANCELLATION_GROUNDS.map((value) => ({ value, label: CANCELLATION_GROUND_LABELS[value] }))} onChange={setGround} />
       <TextAreaField label="Reason" required value={reason} onChange={setReason} />
     </FormDialog>
@@ -79,7 +79,7 @@ export function RaDialog({ contract, onClose }: DialogProps) {
 
 export function ReturnContractDialog({ contract, open, onClose }: ReasonProps) {
   const action = useContractAction();
-  return <ReasonDialog open={open} title="Return for correction" description="The preparer can correct the contract and submit it again." confirmText="Return" successText="Contract returned." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "return", reason })} />;
+  return <ReasonDialog open={open} title="Return for correction" description="The preparer can correct the contract and submit it again." confirmText="Return" tone="warning" successText="Contract returned." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "return", reason })} />;
 }
 
 export function CancelContractDialog({ contract, open, onClose }: ReasonProps) {
@@ -89,7 +89,7 @@ export function CancelContractDialog({ contract, open, onClose }: ReasonProps) {
 
 export function ApproveArrangementDialog({ contract, open, onClose }: ReasonProps) {
   const action = useContractAction();
-  return <ReasonDialog open={open} title="Approve special arrangement" description={`Record the written approval for ${contract.arrangement?.schemeLabel ?? "this arrangement"}. Enter the reference of the signed approval.`} confirmText="Approve" successText="Arrangement approved." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "approveArrangement", reference: reason })} />;
+  return <ReasonDialog open={open} title="Approve special arrangement" description={`Record the written approval for ${contract.arrangement?.schemeLabel ?? "this arrangement"}. Enter the reference of the signed approval.`} confirmText="Approve" tone="success" successText="Arrangement approved." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "approveArrangement", reference: reason })} />;
 }
 
 export function ResolvePaymentCodeDialog({ contract, open, onClose }: ReasonProps) {
@@ -104,5 +104,5 @@ export function ConfirmCancellationDialog({ contract, open, onClose }: ReasonPro
 
 export function DeclineCancellationDialog({ contract, open, onClose }: ReasonProps) {
   const action = useContractAction();
-  return <ReasonDialog open={open} title="Decline cancellation" description="The contract stays as it is. The request and your reason are recorded in the audit history." confirmText="Decline" successText="Cancellation request declined." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "decideCancel", decision: "decline", reason })} />;
+  return <ReasonDialog open={open} title="Decline cancellation" description="The contract stays as it is. The request and your reason are recorded in the audit history." confirmText="Decline" tone="warning" successText="Cancellation request declined." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "decideCancel", decision: "decline", reason })} />;
 }

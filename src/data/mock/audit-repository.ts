@@ -3,12 +3,14 @@ import { simulateAsync } from "@/data/contracts/async-options";
 import type { AuditRepository } from "@/data/contracts/audit-repository";
 import {
   AUDIT_DEFAULT_PAGE_SIZE,
+  AUDIT_ENTITY_LABELS,
   AUDIT_ENTITY_TYPES,
   AUDIT_MAX_PAGE_SIZE,
   AUDIT_MODULES,
   AuditQueryError,
   BUSINESS_AUDIT_ACTIONS,
   SYSTEM_ACTOR_ID,
+  type AuditActorOption,
   type AuditEvent,
   type AuditEventView,
   type AuditPage,
@@ -85,55 +87,61 @@ function actorNameOf(store: MockStore, actorId: string): string {
   return named?.displayName || "Unknown user";
 }
 
-function entityLabelOf(store: MockStore, type: AuditEvent["entityType"], id: string): string {
+type EntityParts = { label: string; name: string | null; detail: string | null };
+
+/** Splits a record into its name and one extra identifier; `label` joins them for titles ("Payment · Rafael Domingo · ₱10,000.00"). */
+function entityPartsOf(store: MockStore, type: AuditEvent["entityType"], id: string): EntityParts {
   const customerName = (customerId: string | undefined) => {
     const customer = store.customers.find((item) => item.id === customerId);
     return customer ? customerRecordName(customer) : null;
   };
+  const labelled = (kind: string, name: string | null, detail: string | null = null): EntityParts => ({ label: recordLabel(kind, name, detail), name, detail });
+  const named = (name: string | null | undefined): EntityParts => ({ label: name || AUDIT_ENTITY_LABELS[type] || humanize(type), name: name || null, detail: null });
   switch (type) {
     case "customer":
-      return customerName(id) ?? humanize(type);
+      return named(customerName(id));
     case "contract": {
       const contract = store.contracts.find((item) => item.id === id);
-      return contract ? recordLabel("Contract", customerName(contract.customerId), contract.productCode) : humanize(type);
+      return contract ? labelled("Contract", customerName(contract.customerId), contract.productCode) : named(null);
     }
     case "sale": {
       const sale = store.sales.find((item) => item.id === id);
-      return sale ? recordLabel("Sale", customerName(sale.customerId)) : humanize(type);
+      return sale ? labelled("Sale", customerName(sale.customerId)) : named(null);
     }
     case "payment": {
       const payment = store.payments.find((item) => item.id === id);
-      return payment ? recordLabel("Payment", customerName(payment.customerId), formatPeso(payment.amountCentavos)) : humanize(type);
+      return payment ? labelled("Payment", customerName(payment.customerId), formatPeso(payment.amountCentavos)) : named(null);
     }
     case "commission": {
       const commission = store.commissions.find((item) => item.id === id);
-      return commission ? recordLabel("Commission", commission.recipientName) : humanize(type);
+      return commission ? labelled("Commission", commission.recipientName) : named(null);
     }
     case "membership": {
       const membership = store.memberships.find((item) => item.id === id);
-      return membership ? recordLabel("Membership", customerName(membership.customerId)) : humanize(type);
+      return membership ? labelled("Membership", customerName(membership.customerId)) : named(null);
     }
     case "member":
-      return store.members.find((item) => item.id === id)?.displayName || humanize(type);
+      return named(store.members.find((item) => item.id === id)?.displayName);
     case "accreditation": {
       const record = store.accreditations.find((item) => item.id === id);
-      return store.members.find((item) => item.id === record?.memberId)?.displayName || humanize(type);
+      return named(store.members.find((item) => item.id === record?.memberId)?.displayName);
     }
     case "staff":
-      return store.staff.find((item) => item.id === id)?.displayName || humanize(type);
+      return named(store.staff.find((item) => item.id === id)?.displayName);
     case "account":
-      return store.accounts.find((item) => item.id === id)?.displayName || humanize(type);
+      return named(store.accounts.find((item) => item.id === id)?.displayName);
     case "department":
-      return store.departments.find((item) => item.id === id)?.name || humanize(type);
+      return named(store.departments.find((item) => item.id === id)?.name);
     case "department-role":
-      return store.roles.find((item) => item.id === id)?.name || humanize(type);
+      return named(store.roles.find((item) => item.id === id)?.name);
     default:
-      return humanize(type);
+      return named(null);
   }
 }
 
 /** Builds the view field by field from the allowlist; nothing else is copied. */
 export function projectAuditEvent(event: AuditEvent, store: MockStore): AuditEventView {
+  const entity = entityPartsOf(store, event.entityType, event.entityId);
   return {
     id: event.id,
     timestamp: event.timestamp,
@@ -144,7 +152,9 @@ export function projectAuditEvent(event: AuditEvent, store: MockStore): AuditEve
     action: event.action,
     entityType: event.entityType,
     entityId: event.entityId,
-    entityLabel: entityLabelOf(store, event.entityType, event.entityId),
+    entityLabel: entity.label,
+    entityName: entity.name,
+    entityDetail: entity.detail,
     outcome: event.outcome,
     displayReference: REFERENCE_ACTIONS.has(event.action) ? (event.displayReference ?? null) : null,
     previousValue: projectValue(event.action, event.previousValue),
@@ -262,5 +272,14 @@ export class MockAuditRepository implements AuditRepository {
       pageSize: q.pageSize,
       total: matches.length,
     };
+  }
+
+  async listActors(options?: MockAsyncOptions): Promise<AuditActorOption[]> {
+    await simulateAsync({ ...this.asyncOptions, ...options });
+    if (!canReadAuditHistory(this.store, this.getIdentity())) throw new Error(AUDIT_READ_RESTRICTION);
+    const ids = new Set<string>([SYSTEM_ACTOR_ID, ...this.store.auditEvents.map((event) => event.actorId)]);
+    return [...ids]
+      .map((value) => ({ value, label: actorNameOf(this.store, value) }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }
 }

@@ -18,11 +18,12 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { toast } from "sonner";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
-import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
+import { RowActionsMenu, type RowActionTone } from "@/shared/components/modern/row-actions-menu";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { formatDate } from "@/shared/lib/format-date";
 import { humanize } from "@/shared/lib/humanize";
+import { EMPTY } from "@/shared/lib/empty-value";
 
 const PURPOSE_LABELS: Record<PaymentPurpose, string> = { reservation: "Reservation", down_payment: "Down payment", installment: "Installment", full: "Full payment" };
 
@@ -130,7 +131,7 @@ function PaymentResubmitDialog({ payment, onClose }: { payment: PaymentView; onC
   };
 
   return (
-    <FormDialog open title="Fix and resend payment" description={`Finance returned this payment${payment.decisionReason ? `: ${payment.decisionReason}` : "."} Correct it and resend it for verification. The original version stays in history.`} submitText="Resend payment" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title="Fix and resend payment" description={`Finance returned this payment${payment.decisionReason ? `: ${payment.decisionReason}` : "."} Correct it and resend it for verification. The original entry stays in history.`} submitText="Resend payment" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <MoneyField label="Amount" required value={amount} onChange={setAmount} />
       <SelectField label="Method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value }))} onChange={setMethod} />
       <StandardDateField label="Date on the receipt" required value={paidDate} onChange={setPaidDate} />
@@ -173,7 +174,7 @@ function AdjustDialog({ payment, onClose }: { payment: PaymentView | null; onClo
     }
   };
   return (
-    <FormDialog open title="Reverse or refund payment" description={`The original payment stays on record. Up to ${formatPeso(adjustableCentavos(payment))} can still be adjusted.`} submitText="Record" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title="Reverse or refund payment" description={`The original payment stays on record. Up to ${formatPeso(adjustableCentavos(payment))} can still be adjusted.`} submitText="Record" submitVariant="warning" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <SelectField
         label="Type"
         required
@@ -188,7 +189,10 @@ function AdjustDialog({ payment, onClose }: { payment: PaymentView | null; onClo
 }
 
 /** A single payment-row action; the same list feeds the row menu and the details sheet footer. */
-type PaymentItem = { key: string; label: string; danger?: boolean; onClick: () => void };
+type PaymentItem = { key: string; label: string; tone?: RowActionTone; onClick: () => void };
+
+/** Footer button color for each row-menu tone: success green, warning amber, danger red, otherwise neutral. */
+const TONE_VARIANT = { success: "success", warning: "warning", danger: "destructive", info: "info", default: "outline" } as const;
 
 const PURPOSE_TEXT = (value: string) => humanize(value);
 
@@ -217,39 +221,39 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
     const open = payment.status === "submitted" || payment.status === "under_review";
     const items: PaymentItem[] = [];
     if (canSubmit && payment.status === "returned" && canCorrectPayment(identity, payment.submittedBy)) {
-      items.push({ key: "resend", label: "Fix and resend", onClick: () => setResending(payment) });
+      items.push({ key: "resend", label: "Fix and resend", tone: "warning", onClick: () => setResending(payment) });
     }
     if (canVerify && open) {
       if (payment.status === "submitted") {
         items.push({ key: "review", label: "Start review", onClick: () => void toast.promise(action.mutateAsync({ id: payment.id, action: "startReview" }), { loading: "Starting review…", success: "Review started.", error: (error: Error) => error.message }) });
       }
       if (!payment.approvalBlocked && !payment.referenceConflict) {
-        items.push({ key: "verify", label: "Verify", onClick: () => {
+        items.push({ key: "verify", label: "Verify", tone: "success", onClick: () => {
           if (findSuggestedMatch(payments.data ?? [], payment)) {
             setReasonFor({ payment, kind: "verify" });
             return;
           }
-          confirmRun({ title: "Verify this payment?", description: `${formatPeso(payment.amountCentavos)} for ${payment.customerName} will count toward the sale's approved collections.`, confirmText: "Verify", action: () => action.mutateAsync({ id: payment.id, action: "verify" }), successTitle: "Payment verified.", errorTitle: "Could not verify" });
+          confirmRun({ title: "Verify this payment?", description: `${formatPeso(payment.amountCentavos)} for ${payment.customerName} will count toward the sale's approved collections.`, confirmText: "Verify", tone: "success", action: () => action.mutateAsync({ id: payment.id, action: "verify" }), successTitle: "Payment verified.", errorTitle: "Could not verify" });
         } });
       }
       items.push(
-        { key: "return", label: "Return for correction", onClick: () => setReasonFor({ payment, kind: "return" }) },
-        { key: "reject", label: "Reject", danger: true, onClick: () => setReasonFor({ payment, kind: "reject" }) },
+        { key: "return", label: "Return for correction", tone: "warning", onClick: () => setReasonFor({ payment, kind: "return" }) },
+        { key: "reject", label: "Reject", tone: "danger", onClick: () => setReasonFor({ payment, kind: "reject" }) },
       );
     }
     if (canRefund && payment.status === "verified" && adjustableCentavos(payment) > 0) {
-      items.push({ key: "adjust", label: "Reverse or refund", onClick: () => setAdjusting(payment) });
+      items.push({ key: "adjust", label: "Reverse or refund", tone: "warning", onClick: () => setAdjusting(payment) });
     }
     return items;
   };
 
   const rowActions = (payment: PaymentView): ReactNode => (
-    <RowActionsMenu itemName={`payment for ${payment.customerName}`} onView={() => setDetailId(payment.id)} extraItems={itemsFor(payment)} />
+    <RowActionsMenu itemName={`payment for ${payment.customerName}`} extraItems={itemsFor(payment)} />
   );
 
   const detailFooter = detail
     ? itemsFor(detail).map((item) => (
-        <Button key={item.key} type="button" variant={item.danger ? "danger" : item.key === "verify" ? "primary" : "outline"} onClick={item.onClick}>
+        <Button key={item.key} type="button" variant={TONE_VARIANT[item.tone ?? "default"]} onClick={item.onClick}>
           {item.label}
         </Button>
       ))
@@ -264,6 +268,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
         description={reasonFor?.kind === "verify" ? "Explain why this is a separate payment." : reasonFor?.kind === "reject" ? "A rejected payment never counts toward the balance." : "The submitter can correct and resubmit. The original submission stays in history."}
         confirmText={reasonFor?.kind === "verify" ? "Verify" : reasonFor?.kind === "reject" ? "Reject" : "Return"}
         danger={reasonFor?.kind === "reject"}
+        tone={reasonFor?.kind === "verify" ? "success" : reasonFor?.kind === "reject" ? "destructive" : "warning"}
         successText={reasonFor?.kind === "verify" ? "Payment verified." : reasonFor?.kind === "reject" ? "Payment rejected." : "Payment returned."}
         onClose={() => setReasonFor(null)}
         onSubmit={(reason) => {
@@ -299,7 +304,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
                   rows: [
                     { label: "Verified on", value: detail.verifiedDate ? formatDate(detail.verifiedDate) : null },
                     { label: "Decision note", value: detail.decisionReason },
-                    { label: "Possible match", value: suggestedMatch ? `Another open payment on this contract has the same amount and date (${suggestedMatch.referenceNo ?? "no reference"}). Check it before verifying.` : null },
+                    { label: "Possible match", value: suggestedMatch ? `Another open payment on this contract has the same amount and date (${suggestedMatch.referenceNo ?? EMPTY}). Check it before verifying.` : null },
                     { label: "Exception", value: detail.referenceConflict ? "This reference is already in use." : detail.approvalBlocked ? "The sale is awaiting approval or closed." : null },
                     { label: "Adjusted", value: detail.adjustments.length > 0 ? `${detail.adjustments.length} adjustment(s), ${formatPeso(adjustmentTotalCentavos(detail.adjustments))}` : null },
                   ],
@@ -310,7 +315,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
         history={detail?.history.map((item, index) => {
           const prior = item.previousVersion;
           const note = prior
-            ? `Previous version · ${humanize(prior.purpose)} · ${formatPeso(prior.amountCentavos)} · ${prior.method} · ${formatDate(prior.paidDate)} · Ref. ${prior.referenceNo ?? "—"} · File: ${prior.evidenceFileName ?? "None"}`
+            ? `Earlier entry · ${humanize(prior.purpose)} · ${formatPeso(prior.amountCentavos)} · ${prior.method} · ${formatDate(prior.paidDate)} · Ref. ${prior.referenceNo ?? EMPTY} · File: ${prior.evidenceFileName ?? EMPTY}`
             : item.note;
           return { key: `${item.at}-${index}`, when: formatDate(item.at), text: `${humanize(item.event)}${note ? `: ${note}` : ""}` };
         })}

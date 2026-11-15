@@ -103,8 +103,9 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
           },
           3,
         ),
+        products.data,
       ),
-    [canSeeCustomers, customers.data, contracts.data, payments.data, memberships.data],
+    [canSeeCustomers, customers.data, contracts.data, payments.data, memberships.data, products.data],
   );
 
   const kpiCount = [canSeeCustomers, canSeeMembers, canReview, canSeeSales].filter(Boolean).length;

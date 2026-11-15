@@ -1,6 +1,7 @@
 "use client";
 
 import { humanize } from "@/shared/lib/humanize";
+import { EMPTY } from "@/shared/lib/empty-value";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getSystemRoleLabel } from "@/panels/admin/role-label";
@@ -693,13 +694,13 @@ function StaffProfileDialog({
             <ProfileSection title="Employment">
               {staffPolicy?.assignmentRestriction ? <InfoNote>{staffPolicy.assignmentRestriction}</InfoNote> : null}
               <DetailList>
-                <DetailRow term="Department">{departments.find((item) => item.id === profileStaff.departmentId)?.name ?? "No department"}</DetailRow>
-                <DetailRow term="Position">{profileStaff.position || "No position"}</DetailRow>
-                <DetailRow term="Role">{assignedRole?.name ?? "No department role"}</DetailRow>
+                <DetailRow term="Department">{departments.find((item) => item.id === profileStaff.departmentId)?.name ?? EMPTY}</DetailRow>
+                <DetailRow term="Position">{profileStaff.position || EMPTY}</DetailRow>
+                <DetailRow term="Role">{assignedRole?.name ?? EMPTY}</DetailRow>
                 {canViewRoles && profileStaff.departmentRoleId ? (
                   <DetailRow term="Authorized modules">
                     {moduleLabels(roleGrants).join(", ") ||
-                      (roleConfersAccess ? "No authorized modules" : "None while the employee, role, or department is inactive")}
+                      (roleConfersAccess ? EMPTY : "None while the employee, role, or department is inactive")}
                   </DetailRow>
                 ) : null}
                 <DetailRow term="Employment status">
@@ -720,13 +721,13 @@ function StaffProfileDialog({
                     {account ? (
                       <>
                         <DetailRow term="System roles">
-                          {account.roleIds.length > 0 ? account.roleIds.map((role) => getSystemRoleLabel(role)).join(", ") : "No system roles"}
+                          {account.roleIds.length > 0 ? account.roleIds.map((role) => getSystemRoleLabel(role)).join(", ") : EMPTY}
                         </DetailRow>
                         <DetailRow term="Effective module access">
                           {effectiveModules.length > 0
                             ? moduleLabels(effectiveModules).join(", ")
                             : account.status === "active"
-                              ? "No module access"
+                              ? EMPTY
                               : "None until the account is active"}
                         </DetailRow>
                       </>
@@ -816,7 +817,7 @@ function LinkedAccountActions({
         <Button
           key={status}
           type="button"
-          variant={status === "active" ? "default" : "destructive"}
+          variant={status === "active" ? "success" : "destructive"}
           className={BUTTON_CLASS}
           onClick={() => confirmLinkedAccountStatus(confirmRun, staffName, status, () => updateStatus.mutateAsync({ staffId, status }))}
         >

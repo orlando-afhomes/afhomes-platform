@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CircleCheck, CircleX, Download, Hourglass, ListOrdered, Upload } from "lucide-react";
+import { CircleCheck, CircleX, Hourglass, ListOrdered, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useCustomerImportJobs, useExportCustomers, useImportCustomers, useOperation, usePaymentSchemes, useVipProducts } from "@/data/business-queries";
 import { useCustomers } from "@/data/queries";
@@ -22,14 +22,16 @@ import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
-import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
 import { ExportCustomersCard, HistoryCard } from "../components/customer-export-history";
-import { TemplateStep, UploadDropzone } from "../components/customer-import-steps";
+import { TemplateDownloadMenu, TemplateStep, UploadDropzone } from "../components/customer-import-steps";
 import { humanize } from "@/shared/lib/humanize";
+import { defaultProductCode } from "@/modules/vip/tier-options";
+import { customerRecordName } from "@/modules/customers/rules";
 
 const SHEET_NAME = "Customers";
-const EXAMPLE_ROW = ["", "Maria", "Reyes", "Santos", "", "1990-05-14", "Female", "Married", "09171234567", "maria.santos@example.com", "123 Rizal Street", "Laguna", "Calauan", "Poblacion", "4012", "G1", "4-Month Installment", "Standard", "Walk-In"];
+/** One filled-in row for the template; the VIP tier is a product code from the catalog. */
+const exampleRow = (productCode: string) => ["", "Maria", "Reyes", "Santos", "", "1990-05-14", "Female", "Married", "09171234567", "maria.santos@example.com", "123 Rizal Street", "Laguna", "Calauan", "Poblacion", "4012", productCode, "4-Month Installment", "Standard", "Walk-In"];
 
 const ROW_BADGE: Record<CustomerImportRow["status"], { status: string; label: string }> = {
   ready: { status: "verified", label: "Ready" },
@@ -94,7 +96,7 @@ function ImportSteps() {
       { id: "row", header: "Row", cell: ({ row }) => row.original.rowNumber },
       { id: "name", header: "Customer", cell: ({ row }) => <span className="tw:block tw:max-w-[9rem] tw:truncate tw:font-semibold" title={row.original.displayName}>{row.original.displayName}</span> },
       { id: "status", header: "Result", cell: ({ row }) => <BizBadge {...ROW_BADGE[row.original.status]} /> },
-      { id: "issues", header: "Problems", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.errors.length + row.original.warnings.length || "None" },
+      { id: "issues", header: "Problems", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.errors.length + row.original.warnings.length || "—" },
     ],
     [],
   );
@@ -136,14 +138,10 @@ function ImportSteps() {
         description="First name and Last name are required. Dates use YYYY-MM-DD. The Example sheet shows one filled row."
         connector
         actions={
-          <>
-            <Button variant="outline" className="tw:min-h-11 tw:w-full tw:sm:min-h-8 tw:sm:w-auto" onClick={() => void downloadXlsx("customer-import-template.xlsx", [{ name: SHEET_NAME, rows: template }, { name: "Example", rows: [...template, EXAMPLE_ROW] }]).catch(() => toast.error("The template could not be created."))}>
-              <Download aria-hidden="true" /> XLSX template
-            </Button>
-            <Button variant="outline" className="tw:min-h-11 tw:w-full tw:sm:min-h-8 tw:sm:w-auto" onClick={() => downloadCsv("customer-import-template.csv", template)}>
-              <Download aria-hidden="true" /> CSV template
-            </Button>
-          </>
+          <TemplateDownloadMenu
+            onExcel={() => void downloadXlsx("customer-import-template.xlsx", [{ name: SHEET_NAME, rows: template }, { name: "Example", rows: [...template, exampleRow(defaultProductCode(products.data))] }]).catch(() => toast.error("The template could not be created."))}
+            onCsv={() => downloadCsv("customer-import-template.csv", template)}
+          />
         }
       />
       <TemplateStep
@@ -176,7 +174,6 @@ function ImportSteps() {
               caption={`Import preview for ${preview.fileName}`}
               onRowOpen={(row) => setViewRowNumber(row.rowNumber)}
               getRowLabel={(row) => `Open import row ${row.rowNumber}`}
-              rowActions={(row) => <RowActionsMenu itemName={`import row ${row.rowNumber}`} onView={() => setViewRowNumber(row.rowNumber)} />}
             />
             <RecordDetailsSheet
               open={viewRow !== null}
@@ -201,7 +198,7 @@ function ImportSteps() {
           <div className="tw:flex tw:flex-col tw:gap-3">
             <CheckboxField label="I confirm these rows come from official company records." checked={declaration} onChange={setDeclaration} />
             <div>
-              <Button className="tw:min-h-11 tw:sm:min-h-8" loading={importCustomers.isPending} disabled={!declaration || counts.ready === 0} onClick={() => void confirm()}>
+              <Button variant="success" className="tw:min-h-11 tw:sm:min-h-8" loading={importCustomers.isPending} disabled={!declaration || counts.ready === 0} onClick={() => void confirm()}>
                 {importCustomers.isPending ? null : <Upload aria-hidden="true" />} {`Confirm import (${counts.ready} row${counts.ready === 1 ? "" : "s"})`}
               </Button>
             </div>
@@ -219,11 +216,19 @@ function ExportSteps() {
   const [status, setStatus] = useState("all");
   const [plan, setPlan] = useState("all");
   const [format, setFormat] = useState<"xlsx" | "csv">("xlsx");
+  const [search, setSearch] = useState("");
 
-  const matching = useMemo(
-    () => (customers.data ?? []).filter((customer) => !customer.restricted && (status === "all" || customer.status === status) && (plan === "all" || customer.vipPlan === plan)),
-    [customers.data, status, plan],
-  );
+  // The preview table and the export file use these same rows.
+  const matching = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return (customers.data ?? []).filter(
+      (customer) =>
+        !customer.restricted &&
+        (status === "all" || customer.status === status) &&
+        (plan === "all" || customer.vipPlan === plan) &&
+        (term === "" || customerRecordName(customer).toLowerCase().includes(term)),
+    );
+  }, [customers.data, status, plan, search]);
 
   const run = async () => {
     try {
@@ -242,13 +247,15 @@ function ExportSteps() {
 
   return (
     <ExportCustomersCard
+      rows={matching}
+      search={search}
+      setSearch={setSearch}
       status={status}
       setStatus={setStatus}
       plan={plan}
       setPlan={setPlan}
       format={format}
       setFormat={setFormat}
-      matchingCount={matching.length}
       loading={customers.isLoading}
       exporting={exportCustomers.isPending}
       onExport={() => void run()}

@@ -1,5 +1,6 @@
 "use client";
 
+import { EMPTY } from "@/shared/lib/empty-value";
 import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -58,7 +59,7 @@ export function PromosPanel() {
   const [detailId, setDetailId] = useState<string | null>(null);
 
   const outletNames = useMemo(() => new Map((outlets.data ?? []).map((outlet) => [outlet.id, outlet.name])), [outlets.data]);
-  const names = (ids: string[]) => ids.map((id) => outletNames.get(id) ?? id).join(", ");
+  const names = (ids: string[]) => ids.map((id) => outletNames.get(id) ?? EMPTY).join(", ");
   const rows = useMemo(
     () => (promos.data ?? []).filter((promo) => (status === "all" || promo.status === status) && matchesSearch(search, promo.name)),
     [promos.data, status, search],
@@ -69,9 +70,10 @@ export function PromosPanel() {
   const columns = useMemo<ColumnDef<PromoView, unknown>[]>(() => [
     {
       id: "name", header: "Name",
-      cell: ({ row }) => <span className="tw:font-medium">{row.original.name}</span>,
+      cell: ({ row }) => <span className="tw:font-semibold">{row.original.name}</span>,
     },
-    { id: "dates", header: "Dates", cell: ({ row }) => promoDates(row.original) },
+    { id: "start", header: "Starts", cell: ({ row }) => formatDate(row.original.startDate) },
+    { id: "end", header: "Ends", cell: ({ row }) => formatDate(row.original.endDate) },
     { id: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
     { id: "earned", header: "Points earned", cell: ({ row }) => row.original.pointsEarned.toLocaleString("en-PH") },
     {
@@ -82,7 +84,6 @@ export function PromosPanel() {
         return (
           <RowActionsMenu
             itemName={promo.name}
-            onView={() => setDetailId(promo.id)}
             onEdit={canManagePromo ? () => setEditing(promo) : undefined}
             extraItems={canManagePromo ? [{
               key: "end", label: "End promo", danger: true,
@@ -120,7 +121,7 @@ export function PromosPanel() {
             { label: "Earn at", value: names(detail.earnOutletIds) },
             { label: "Pesos per point", value: formatPeso(detail.earnPesosPerPointCentavos) },
             { label: "Use at", value: names(detail.redeemOutletIds) },
-            { label: "Points expire", value: detail.pointsExpiryDate ? formatDate(detail.pointsExpiryDate) : "Never" },
+            { label: "Points expire", value: detail.pointsExpiryDate ? formatDate(detail.pointsExpiryDate) : null },
             { label: "Points earned", value: detail.pointsEarned.toLocaleString("en-PH") },
           ],
         }] : []}

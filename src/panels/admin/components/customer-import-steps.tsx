@@ -1,10 +1,30 @@
 "use client";
 
 import { useId, useRef, useState, type DragEvent, type ReactNode } from "react";
-import { CloudUpload, FileText } from "lucide-react";
+import { ChevronDown, CloudUpload, Download, FileText } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
 import { Input } from "@/shared/ui/input";
+
+/** One blue "Download template" button that opens a menu with the Excel and CSV files. */
+export function TemplateDownloadMenu({ onExcel, onCsv }: { onExcel: () => void; onCsv: () => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Button variant="info" className="tw:min-h-11 tw:w-full tw:sm:min-h-8 tw:sm:w-auto" />}>
+        <Download aria-hidden="true" /> Download template <ChevronDown aria-hidden="true" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="tw:min-w-44">
+        <DropdownMenuItem onClick={onExcel} className="tw:min-h-11 tw:sm:min-h-8">
+          Excel (.xlsx)
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onCsv} className="tw:min-h-11 tw:sm:min-h-8">
+          CSV (.csv)
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 /** Numbered import step card with a title, description, and right-aligned actions. */
 export function TemplateStep({
@@ -122,7 +142,7 @@ export function UploadDropzone({
         <CloudUpload aria-hidden="true" className="tw:size-10 tw:text-primary" />
         <p className="tw:m-0 tw:mt-3 tw:text-sm tw:font-semibold tw:text-foreground">Drag and drop your file here</p>
         <p className="tw:m-0 tw:text-sm tw:text-muted-foreground">or</p>
-        <Button type="button" variant="outline" disabled={busy} onClick={browse} className="tw:mt-2 tw:min-h-11 tw:sm:min-h-8">
+        <Button type="button" variant="info" disabled={busy} onClick={browse} className="tw:mt-2 tw:min-h-11 tw:sm:min-h-8">
           <FileText aria-hidden="true" /> Choose File
         </Button>
         <p className="tw:m-0 tw:mt-3 tw:text-xs tw:text-muted-foreground">

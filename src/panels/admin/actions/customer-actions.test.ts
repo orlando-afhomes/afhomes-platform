@@ -19,7 +19,6 @@ const FULL_PERMS: CustomerMenuPerms = { canManage: true, canDraft: true, canAppr
 
 function rowCb(): CustomerMenuCallbacks {
   return {
-    onView: vi.fn(),
     onEdit: vi.fn(),
     onDiscard: vi.fn(),
     onApprove: vi.fn(),
@@ -48,7 +47,6 @@ describe("buildCustomerMenuProps", () => {
   it("exposes discard and edit for an owned draft, with no review or prepare items", () => {
     const menu = buildCustomerMenuProps(customer("draft"), FULL_PERMS, rowCb());
     expect(menu.itemName).toBe("Juan Dela Cruz");
-    expect(menu.onView).toBeDefined();
     expect(menu.onEdit).toBeDefined();
     expect(menu.onDelete).toBeDefined();
     expect(menu.extraItems).toEqual([]);
@@ -84,7 +82,7 @@ describe("buildCustomerMenuProps", () => {
     expect(menu.extraItems).toEqual([]);
   });
 
-  it("offers approve, send back and reject (reject danger) on submitted with the approve right", () => {
+  it("offers approve (success), send back (warning) and reject (danger) on submitted with the approve right", () => {
     const menu = buildCustomerMenuProps(
       customer("submitted"),
       { canManage: false, canDraft: false, canApprove: true, canPrepare: false, ownRecord: true },
@@ -92,7 +90,7 @@ describe("buildCustomerMenuProps", () => {
     );
     expect(keysOf(menu)).toEqual(["approve", "send-back", "reject"]);
     expect(menu.extraItems.map((item) => item.label)).toEqual(["Approve", "Send back", "Reject"]);
-    expect(menu.extraItems.map((item) => item.danger ?? false)).toEqual([false, false, true]);
+    expect(menu.extraItems.map((item) => item.tone)).toEqual(["success", "warning", "danger"]);
     expect(menu.onEdit).toBeUndefined();
     expect(menu.onDelete).toBeUndefined();
   });
@@ -118,10 +116,13 @@ describe("buildCustomerMenuProps", () => {
 
   it("omits slots whose callbacks are not wired", () => {
     const menu = buildCustomerMenuProps(customer("submitted"), FULL_PERMS, {});
-    expect(menu.onView).toBeUndefined();
     expect(menu.onEdit).toBeUndefined();
     expect(menu.onDelete).toBeUndefined();
     expect(menu.extraItems).toEqual([]);
+  });
+
+  it("never offers a View full details slot", () => {
+    expect("onView" in buildCustomerMenuProps(customer("draft"), FULL_PERMS, rowCb())).toBe(false);
   });
 
   it("exposes an identical action set to row and detail usages across statuses, restrictions and permission combos", () => {
@@ -140,13 +141,12 @@ describe("buildCustomerMenuProps", () => {
         for (const perms of permSets) {
           const effective: CustomerMenuPerms = { ...perms, ownRecord: perms.ownRecord && !restricted };
           const row = buildCustomerMenuProps(customer(status, restricted), effective, rowCb());
-          const detail = { ...buildCustomerMenuProps(customer(status, restricted), effective, detailCb()), onView: undefined };
+          const detail = buildCustomerMenuProps(customer(status, restricted), effective, detailCb());
           expect(keysOf(detail)).toEqual(keysOf(row));
           expect(detail.extraItems.map((item) => item.label)).toEqual(row.extraItems.map((item) => item.label));
-          expect(detail.extraItems.map((item) => item.danger ?? false)).toEqual(row.extraItems.map((item) => item.danger ?? false));
+          expect(detail.extraItems.map((item) => item.tone)).toEqual(row.extraItems.map((item) => item.tone));
           expect(detail.onEdit === undefined).toBe(row.onEdit === undefined);
           expect(detail.onDelete === undefined).toBe(row.onDelete === undefined);
-          expect(detail.onView).toBeUndefined();
           expect(detail.itemName).toBe(row.itemName);
           expect(detail.deleteTitle).toBe(row.deleteTitle);
         }

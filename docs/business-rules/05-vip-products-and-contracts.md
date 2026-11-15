@@ -441,3 +441,13 @@ These rulings take precedence over earlier text in this document where they diff
 18. **Counting without finalization.** A sale counts at 25% once the Administrator has approved the sale record. Formal contract finalization is tracked separately and is not required for the count (workbook OPS §4.2; doc 13 §4). Section 13 no longer makes a finalized contract a precondition for Confirmed Sales.
 19. **Contract preparation.** Sellers do not prepare contracts. The office (Clerk) prepares and the Administrator approves (sections 11 and 20). This replaces "Authorized Staff or IST prepares the VIP contract".
 20. **Non-Standard approval (confirms §10.2).** The Administrator approves and Finance confirms. Only the Super Administrator may do both steps alone.
+
+## Owner rulings amendment (2026-11-15, VIP tier levels and product details)
+
+These rulings extend sections 3, 3.1, 3.2 and 4.1 and take precedence over earlier text in this document where they differ. They change how the catalog is managed, not any price, term or business rule. The numbering continues this document's own items.
+
+21. **Tier levels are managed records.** A VIP tier level has a name, a colour, a display order and a status. The Administrator or the Super Administrator can add, rename, recolour, reorder and retire levels. A level is never deleted while a product or record uses it; it is retired instead (§3.2).
+22. **Products reference a tier level.** Each VIP product points to one tier level. Retiring a level makes it unavailable for new products and new sales; existing products, contracts, memberships and VIP Numbers keep their original level.
+23. **Optional image and description.** Each VIP product may have an optional image and an optional description. They are presentation only and carry no contractual terms.
+24. **Product code rule.** A new product code is exactly one letter followed by one digit. It must be unique and may not be a reserved or historical code (§4: B2, S2, P1, R1, G2, P2, R2). The two-character product-code segment of the VIP Number (doc 06) is not changed.
+25. **Finalized contracts are never rewritten.** Changing or retiring a level, or changing a product's image, description or code configuration, never alters a finalized or signed contract (§3.1). Every change keeps its audit history.

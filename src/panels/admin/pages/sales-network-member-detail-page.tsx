@@ -1,5 +1,6 @@
 "use client";
 
+import { EMPTY } from "@/shared/lib/empty-value";
 import { useId, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -25,7 +26,7 @@ import { PageHeader } from "@/shared/components/modern/page-header";
 import { InfoGrid, InfoItem } from "@/shared/components/modern/info-grid";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
-import { buttonVariants } from "@/shared/ui/button";
+import { Button, buttonVariants } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { Card } from "@/shared/ui/card";
 import { AdminPage, AdminSection, AdminSectionHeading, DetailHero } from "@/shared/components/admin";
@@ -33,7 +34,6 @@ import { AdminTabs, type AdminTabItem } from "@/shared/components/admin/admin-ta
 import { DetailSkeleton } from "@/shared/components/modern/skeletons";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
-import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { buildMemberMenuProps, resolveRenewTarget } from "../actions/sales-network-actions";
@@ -108,7 +108,7 @@ export function SalesNetworkMemberDetailPage() {
   const historyDetail = historyKey ? (member?.parentHistory ?? []).find((item) => `${item.changedAt}-${item.operation}-${item.actorId}` === historyKey) ?? null : null;
   const expandedKeys = useMemo(() => collectKeys(downlineTree).filter((key) => !collapsed.includes(key)), [downlineTree, collapsed]);
   const memberNameById = useMemo(() => new Map(members.map((item) => [item.id, item.displayName])), [members]);
-  const parentLabel = (id: string | null | undefined) => (id ? (memberNameById.get(id) ?? "Unknown member") : "—");
+  const parentLabel = (id: string | null | undefined) => (id ? (memberNameById.get(id) ?? EMPTY) : EMPTY);
   const actorLabel = (id: string) => DEV_IDENTITIES.find((identity) => identity.id === id)?.displayName ?? memberNameById.get(id) ?? "System";
   const historyColumns = useMemo<ColumnDef<NonNullable<OrgMember["parentHistory"]>[number], unknown>[]>(
     () => [
@@ -164,7 +164,7 @@ export function SalesNetworkMemberDetailPage() {
       title: reactivate ? `Reactivate ${member.displayName}?` : `Deactivate ${member.displayName}?`,
       description: reactivate ? "The member will regain active access." : "The member will lose active access and move to Inactive.",
       confirmText: reactivate ? "Reactivate" : "Deactivate",
-      danger: !reactivate,
+      danger: !reactivate, tone: reactivate ? "success" : "destructive",
       action: () => changeStatus({ id: member.id, status: reactivate ? "active" : "inactive" }),
       successTitle: reactivate ? "Member reactivated." : "Member deactivated.",
       successDescription: `${member.displayName} is now ${reactivate ? "Active" : "Inactive"}.`,
@@ -191,9 +191,21 @@ export function SalesNetworkMemberDetailPage() {
     },
   );
 
+  // The menu's actions become header buttons, colored by purpose: the main action
+  // first, then success, warning, and destructive last.
+  const HEADER_BUTTON: Record<string, { variant: "success" | "warning" | "destructive" | "info"; rank: number }> = {
+    reactivate: { variant: "success", rank: 0 },
+    "set-accreditation": { variant: "success", rank: 0 },
+    transfer: { variant: "warning", rank: 1 },
+    deactivate: { variant: "destructive", rank: 3 },
+  };
+  const headerButtons = menu.extraItems
+    .map((item) => ({ ...item, ...(HEADER_BUTTON[item.key] ?? { variant: "info" as const, rank: 2 }) }))
+    .sort((a, b) => a.rank - b.rank);
+
   const accreditationBadge =
     display.kind === "none" ? (
-      <StatusBadge status="No record" />
+      <StatusBadge status={EMPTY} />
     ) : display.kind === "ambiguous" ? (
       <StatusBadge status="Review records" tone="warning" />
     ) : display.kind === "static" ? (
@@ -222,11 +234,20 @@ export function SalesNetworkMemberDetailPage() {
         { label: member.displayName },
       ]}
       actions={
-        <div className="tw:flex tw:items-center tw:gap-2">
+        <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
           <Link href="/admin/sales-network/members" className={cn(buttonVariants({ variant: "outline" }), "tw:min-h-11 tw:sm:min-h-8")}>
             Back
           </Link>
-          <RowActionsMenu {...menu} onView={undefined} />
+          {menu.onEdit ? (
+            <Button type="button" onClick={menu.onEdit}>
+              Edit
+            </Button>
+          ) : null}
+          {headerButtons.map((item) => (
+            <Button key={item.key} type="button" variant={item.variant} onClick={item.onClick}>
+              {item.label}
+            </Button>
+          ))}
         </div>
       }
     >
@@ -413,7 +434,6 @@ export function SalesNetworkMemberDetailPage() {
                 caption="Relationship history"
                 onRowOpen={(row) => setHistoryKey(`${row.changedAt}-${row.operation}-${row.actorId}`)}
                 getRowLabel={(row) => `Open ${humanize(row.operation)} change`}
-                rowActions={(row) => <RowActionsMenu itemName={`${humanize(row.operation)} change`} onView={() => setHistoryKey(`${row.changedAt}-${row.operation}-${row.actorId}`)} />}
               />
               <RecordDetailsSheet
                 open={historyDetail !== null}

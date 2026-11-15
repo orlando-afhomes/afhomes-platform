@@ -21,10 +21,10 @@ export async function readSpreadsheet(file: File, preferredSheet: string): Promi
   try {
     const sheets = await readXlsxFile(file);
     const sheet = sheets.find((item) => item.sheet.toLowerCase() === preferredSheet.toLowerCase()) ?? sheets[0];
-    if (!sheet) throw new Error("The workbook has no sheets.");
+    if (!sheet) throw new Error("The file has no sheets.");
     return sheet.data as unknown[][];
   } catch (error) {
-    throw new Error(error instanceof Error && error.message ? `The workbook could not be read: ${error.message}` : "The workbook could not be read.");
+    throw new Error(error instanceof Error && error.message ? `The file could not be read: ${error.message}` : "The file could not be read.");
   }
 }
 

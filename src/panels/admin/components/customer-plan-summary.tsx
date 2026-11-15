@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { ArrowLeftRight, Banknote, CalendarClock, CalendarDays, ChevronRight, Database, Pencil, Tag, TriangleAlert, Users } from "lucide-react";
 import { applicablePriceStatus, displayPriceFor } from "@/modules/vip/pricing";
-import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
+import type { PaymentScheme, TierColorKey, VipProduct, VipTierCode } from "@/modules/vip/types";
 import { formatPeso } from "@/shared/lib/money";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
@@ -17,14 +17,21 @@ const PLAN_IMAGES: Partial<Record<VipTierCode, { src: string; alt: string }>> = 
   G1: { src: "/images/cards/gold.webp", alt: "Gold VIP privilege card" },
 };
 
+// Any other tier code uses the card art of its tier color, so a new tier still gets a card.
+const COLOR_IMAGES: Partial<Record<TierColorKey, { src: string; alt: string }>> = {
+  bronze: PLAN_IMAGES.B1,
+  silver: PLAN_IMAGES.S1,
+  gold: PLAN_IMAGES.G1,
+};
+
 /**
  * The card art has a transparent margin of about 11%; scaling crops it so the card fills its frame.
  * Pass `priority` only for card art that is on the first screen, so it is fetched eagerly
  * instead of being reported as a lazy Largest Contentful Paint candidate.
  */
-export function PlanCardImage({ code, className, priority = false }: { code: VipTierCode; className?: string; priority?: boolean }) {
-  const image = PLAN_IMAGES[code];
-  // A product created in the catalog has no card art yet: show its code on a neutral card.
+export function PlanCardImage({ code, colorKey, className, priority = false }: { code: VipTierCode; colorKey?: TierColorKey; className?: string; priority?: boolean }) {
+  const image = PLAN_IMAGES[code] ?? (colorKey ? COLOR_IMAGES[colorKey] : undefined);
+  // A tier with a neutral color has no card art: show its code on a neutral card.
   if (!image) {
     return (
       <span className={cn("customer-plan__image tw:flex tw:aspect-[1920/1198] tw:items-center tw:justify-center tw:rounded-lg tw:bg-muted tw:text-2xl tw:font-semibold tw:text-muted-foreground", className)} role="img" aria-label={`VIP card ${code}`}>
@@ -133,7 +140,7 @@ export function PlanSummary({ product, scheme, onChange, onPlanChange }: { produ
     <>
       <aside aria-label="Selected VIP card" className="customer-plan tw:hidden tw:lg:sticky tw:lg:top-20 tw:lg:block tw:lg:self-start">
         <Card className="tw:gap-4 tw:p-4">
-          <PlanCardImage code={product.code} priority />
+          <PlanCardImage code={product.code} colorKey={product.tierColorKey} priority />
           <div className="tw:flex tw:flex-col tw:gap-0.5">
             <h2 className="tw:text-base tw:font-semibold">{product.name} ({product.code})</h2>
             <span className="tw:inline-flex tw:self-start tw:rounded-full tw:bg-secondary tw:px-2 tw:py-0.5 tw:text-xs tw:font-medium tw:text-secondary-foreground">{product.tier} tier</span>
@@ -148,7 +155,7 @@ export function PlanSummary({ product, scheme, onChange, onPlanChange }: { produ
 
       <div className="customer-plan-bar tw:sticky tw:top-16 tw:z-10 tw:-mx-4 tw:border-b tw:border-border tw:bg-background tw:px-4 tw:py-2 tw:lg:hidden">
         <div className="tw:flex tw:items-center tw:gap-3">
-          <PlanCardImage code={product.code} className="tw:w-14 tw:shrink-0" />
+          <PlanCardImage code={product.code} colorKey={product.tierColorKey} className="tw:w-14 tw:shrink-0" />
           <div className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col">
             <span className="tw:truncate tw:text-sm tw:font-semibold">{product.name} ({product.code})</span>
             <span className="tw:truncate tw:text-xs tw:text-muted-foreground">
@@ -168,7 +175,7 @@ export function PlanSummary({ product, scheme, onChange, onPlanChange }: { produ
             <DialogTitle>{product.name} ({product.code})</DialogTitle>
             <DialogDescription><span className="tw:inline-flex tw:self-start tw:rounded-full tw:bg-secondary tw:px-2 tw:py-0.5 tw:text-xs tw:font-medium tw:text-secondary-foreground">{product.tier} tier</span></DialogDescription>
           </DialogHeader>
-          <PlanCardImage code={product.code} className="tw:mx-auto tw:w-3/4 tw:max-w-xs" />
+          <PlanCardImage code={product.code} colorKey={product.tierColorKey} className="tw:mx-auto tw:w-3/4 tw:max-w-xs" />
           <PlanFacts product={product} scheme={scheme} onPlanChange={onPlanChange} />
           <Button
             type="button"

@@ -4,7 +4,7 @@ import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types
 export type ProductUpdateInput = Partial<
   Pick<
     VipProduct,
-    | "name" | "priceCentavos" | "priceStatus" | "validityYears" | "earningCycles" | "vipDiscountPercent" | "lifetimePoints"
+    | "name" | "tierLevelId" | "description" | "benefitsSummary" | "imageUrl" | "imageFileName" | "priceCentavos" | "priceStatus" | "validityYears" | "earningCycles" | "vipDiscountPercent" | "lifetimePoints"
     | "pointsPerCycle" | "weekdayPointsPerCycle" | "weekendPointsPerCycle" | "minSpendPerCycleCentavos" | "supplementaryHolders" | "status"
   >
 >;
@@ -12,9 +12,10 @@ export type ProductUpdateInput = Partial<
 /** Everything a new catalog product needs; version, status and history are set by the repository. */
 export type ProductCreateInput = Pick<
   VipProduct,
-  | "code" | "name" | "tier" | "priceCentavos" | "validityYears" | "earningCycles" | "vipDiscountPercent" | "lifetimePoints"
+  | "code" | "name" | "tierLevelId" | "priceCentavos" | "validityYears" | "earningCycles" | "vipDiscountPercent" | "lifetimePoints"
   | "pointsPerCycle" | "weekdayPointsPerCycle" | "weekendPointsPerCycle" | "minSpendPerCycleCentavos" | "supplementaryHolders"
->;
+> &
+  Partial<Pick<VipProduct, "description" | "benefitsSummary" | "imageUrl" | "imageFileName">>;
 
 export type PaymentSchemeInput = Partial<
   Pick<

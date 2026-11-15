@@ -7,6 +7,7 @@ import type { MembershipView } from "@/data/contracts/membership-repository";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { Button, buttonVariants } from "@/shared/ui/button";
+import { EMPTY } from "@/shared/lib/empty-value";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { BizBadge } from "@/shared/components/business/biz-badge";
@@ -48,30 +49,30 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
 
   const columns = useMemo<ColumnDef<MembershipView, unknown>[]>(
     () => [
-      { id: "customer", header: "Customer", cell: ({ row }) => <Link href={contractHref(row.original.contractId)} className="tw:font-semibold tw:underline-offset-4 tw:hover:underline">{row.original.customerName}</Link> },
-      { id: "card", header: "Card number", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => <span className="tw:font-mono">{row.original.cardId ?? "Not issued"}</span> },
+      { id: "customer", header: "Customer", cell: ({ row }) => <span className="tw:font-semibold">{row.original.customerName}</span> },
+      { id: "card", header: "Card number", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => <span className="tw:font-mono">{row.original.cardId ?? EMPTY}</span> },
       { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.productName },
       { id: "status", header: "Status", cell: ({ row }) => <MembershipStatusBadge item={row.original} /> },
       { id: "activation", header: "Activated", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => formatDate(row.original.activationDate) },
     ],
-    [contractHref],
+    [],
   );
 
   const activateItem = (item: MembershipView) => {
     if (canActivate && item.status === "pending" && item.eligible) {
-      return [{ key: "activate", label: "Activate", onClick: () => confirmRun({ title: "Activate this membership?", description: `${item.customerName}'s membership becomes Active using the issued VIP Number.`, confirmText: "Activate", action: () => activate.mutateAsync(item.id), successTitle: "Membership activated.", errorTitle: "Could not activate" }) }];
+      return [{ key: "activate", label: "Activate", tone: "success" as const, onClick: () => confirmRun({ title: "Activate this membership?", description: `${item.customerName}'s membership becomes Active using the issued VIP Number.`, confirmText: "Activate", tone: "success", action: () => activate.mutateAsync(item.id), successTitle: "Membership activated.", errorTitle: "Could not activate" }) }];
     }
     if (item.status !== "active") return [];
     return [
-      ...(canActivate && item.fullSettlementDate && !item.cardClaimDate ? [{ key: "claim", label: "Record card claim", onClick: () => confirmRun({ title: "Record card claim?", description: "Confirm that the cardholder collected the card today.", confirmText: "Record claim", action: () => claim.mutateAsync(item.id), successTitle: "Card claim recorded.", errorTitle: "Could not record claim" }) }] : []),
-      ...(canService && item.cardId ? [{ key: "service", label: "Service card", onClick: () => setServicing(item) }] : []),
+      ...(canService && item.cardId ? [{ key: "service", label: "Service card", tone: "default" as const, onClick: () => setServicing(item) }] : []),
+      ...(canActivate && item.fullSettlementDate && !item.cardClaimDate ? [{ key: "claim", label: "Record card claim", tone: "success" as const, onClick: () => confirmRun({ title: "Record card claim?", description: "Confirm that the cardholder collected the card today.", confirmText: "Record claim", tone: "success", action: () => claim.mutateAsync(item.id), successTitle: "Card claim recorded.", errorTitle: "Could not record claim" }) }] : []),
     ];
   };
   const detail = detailId ? all.find((item) => item.id === detailId) ?? null : null;
   const tableProps = {
     onRowOpen: (row: MembershipView) => setDetailId(row.id),
     getRowLabel: (row: MembershipView) => `Open membership of ${row.customerName}`,
-    rowActions: (row: MembershipView) => <RowActionsMenu itemName={`membership of ${row.customerName}`} onView={() => setDetailId(row.id)} extraItems={activateItem(row)} />,
+    rowActions: (row: MembershipView) => <RowActionsMenu itemName={`membership of ${row.customerName}`} extraItems={activateItem(row)} />,
   };
 
 
@@ -97,7 +98,7 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
                   title: "Membership",
                   rows: [
                     ...(detail.financialHold ? [{ label: "Membership status", value: <BizBadge status={detail.status} /> }] : []),
-                    { label: "Card number", value: detail.cardId ? <span className="tw:font-mono">{detail.cardId}</span> : "Not issued" },
+                    { label: "Card number", value: detail.cardId ? <span className="tw:font-mono">{detail.cardId}</span> : null },
                     { label: "Activated", value: detail.activationDate ? formatDate(detail.activationDate) : null },
                     { label: "Card Claim Date", value: detail.cardClaimDate ? `${formatDate(detail.cardClaimDate)}${detail.cardClaimKind === "deemed" ? " (deemed)" : ""}` : null },
                     { label: "Valid until", value: detail.validityEndDate ? formatDate(detail.validityEndDate) : null },
@@ -112,8 +113,8 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
         footer={
           detail ? (
             <>
-              {activateItem(detail).map((item) => <Button key={item.key} type="button" onClick={item.onClick}>{item.label}</Button>)}
-              <Link href={contractHref(detail.contractId)} className={buttonVariants({ variant: "outline" })}>Open contract</Link>
+              {activateItem(detail).map((item) => <Button key={item.key} type="button" variant={item.tone === "success" ? "success" : "default"} onClick={item.onClick}>{item.label}</Button>)}
+              <Link href={contractHref(detail.contractId)} className={buttonVariants({ variant: "info" })}>Open contract</Link>
             </>
           ) : undefined
         }

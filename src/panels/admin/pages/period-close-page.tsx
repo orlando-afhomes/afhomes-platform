@@ -6,15 +6,14 @@ import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
-import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { formatDate } from "@/shared/lib/format-date";
 import { addMonthsToDate, manilaToday } from "@/shared/lib/dates";
 import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
 import type { ClosedMonth } from "@/modules/finance/month-close";
 import { formatPeso } from "@/shared/lib/money";
+import { EMPTY } from "@/shared/lib/empty-value";
+import { MonthField } from "../components/commission-shared";
 import { ReportExport, type ReportColumn } from "../components/report-shell";
 
 const columns: ColumnDef<ClosedMonth>[] = [
@@ -27,7 +26,7 @@ const columns: ColumnDef<ClosedMonth>[] = [
 
 const allowanceTotal = (month: ClosedMonth) => {
   const allowance = month.allowanceReviewCentavos;
-  return allowance ? formatPeso(allowance.baCentavos + allowance.paCentavos + allowance.pbCentavos) : "No reviews";
+  return allowance ? formatPeso(allowance.baCentavos + allowance.paCentavos + allowance.pbCentavos) : EMPTY;
 };
 
 const EXPORT_COLUMNS: ReportColumn<ClosedMonth>[] = [
@@ -53,25 +52,27 @@ export function PeriodClosePanel() {
     <>
       {dialog}
       {canClose ? (
-        <div className="tw:flex tw:flex-wrap tw:items-end tw:gap-3">
-          <div className="tw:grid tw:gap-2">
-            <Label htmlFor="close-month">Month</Label>
-            <Input id="close-month" type="month" max={latest} value={month} onChange={(event) => setMonth(event.target.value)} />
-          </div>
-          <Button disabled={!month || month > latest || close.isPending || months.data?.some((item) => item.month === month)} onClick={() => confirmRun({
+        <section aria-label="Close a month" className="tw:flex tw:flex-wrap tw:items-end tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-4">
+          <MonthField label="Month" value={month} onChange={setMonth} />
+          <Button variant="destructive" disabled={!month || month > latest || close.isPending || months.data?.some((item) => item.month === month)} onClick={() => confirmRun({
             title: "Close this month?",
             description: `The totals for ${month} will be locked.`,
-            confirmText: "Close month",
+            confirmText: "Close month", tone: "destructive",
             action: () => close.mutateAsync(month),
             successTitle: "Month closed.",
             errorTitle: "Could not close month",
           })}>Close month</Button>
-        </div>
+        </section>
       ) : null}
-      <ReportExport report="Period Close" fileName="period-close" columns={EXPORT_COLUMNS} rows={months.data ?? []} range={null} printable={false} />
-      <QueryState isLoading={months.isLoading} error={months.error}>
-        <DataTable data={months.data ?? []} columns={columns} getRowId={(row) => row.month} caption="Closed months" emptyText="No months have been closed." onRowOpen={(row) => setDetailMonth(row.month)} getRowLabel={(row) => `View closed month ${row.month}`} rowActions={(row) => <RowActionsMenu itemName={`closed month ${row.month}`} onView={() => setDetailMonth(row.month)} />} />
-      </QueryState>
+      <section aria-label="Closed months" className="tw:flex tw:flex-col tw:gap-2">
+        <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
+          <h2 className="tw:text-base tw:font-semibold">Closed months</h2>
+          <ReportExport report="Period Close" fileName="period-close" columns={EXPORT_COLUMNS} rows={months.data ?? []} range={null} printable={false} />
+        </div>
+        <QueryState isLoading={months.isLoading} error={months.error}>
+          <DataTable data={months.data ?? []} columns={columns} getRowId={(row) => row.month} caption="Closed months" emptyText="No months have been closed." onRowOpen={(row) => setDetailMonth(row.month)} getRowLabel={(row) => `View closed month ${row.month}`} />
+        </QueryState>
+      </section>
       <RecordDetailsSheet
         open={detail !== null}
         onClose={() => setDetailMonth(null)}
@@ -81,6 +82,7 @@ export function PeriodClosePanel() {
             ? [
                 {
                   rows: [
+                    { label: "Month", value: detail.month },
                     { label: "Recognized sales", value: <Money value={detail.recognizedSalesCentavos} /> },
                     { label: "Net collections", value: <Money value={detail.grossCollectionsCentavos - detail.adjustedCollectionsCentavos} /> },
                     { label: "Released commission", value: <Money value={detail.releasedCommissionCentavos} /> },

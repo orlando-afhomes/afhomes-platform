@@ -19,7 +19,7 @@ const COLUMNS: ReportColumn<PointsRow>[] = [
   { header: "Customer", value: (row) => row.customerName },
   { header: "VIP Number", value: (row) => row.vipNumber },
   { header: "Type", value: (row) => humanize(row.type) },
-  { header: "Tranche", value: (row) => String(row.tranche), screen: false },
+  { header: "Year", value: (row) => String(row.tranche), screen: false },
   { header: "Bucket", value: (row) => humanize(row.bucket), screen: false },
   { header: "Points", value: (row) => row.points.toLocaleString("en-PH") },
   { header: "Reference", value: (row) => row.reference ?? "", screen: false },
@@ -57,10 +57,10 @@ export function StayPointsReportPanel() {
         <AdminStatCard loading={points.isLoading} error={points.error} label="Redeemed" value={fmt(redeemed)} icon={Gift} />
       </AdminStatGrid>
       <ReportTable report="Stay Points Report" fileName="stay-points" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => `${row.membershipId}-${row.tranche}-${row.bucket}-${row.type}-${row.date}-${row.reference ?? ""}`} getRowTitle={(row) => row.customerName} loading={points.isLoading} error={points.error} emptyText="No point entries match."
-        filters={<FilterBar search={search} onSearch={setSearch} searchLabel="Search stay points" filters={[
+        filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search stay points" filters={[
           { label: "Entry type filter", value: type, onChange: setType, options: optionsFrom("All entry types", inPeriod.map((row) => row.type), humanize) },
           { label: "Points bucket filter", value: bucket, onChange: setBucket, options: optionsFrom("All buckets", inPeriod.map((row) => row.bucket), humanize) },
-        ]} />} />
+        ]}>{range.dateFields}{exportButton}</FilterBar>} />
     </ReportFrame>
   );
 }

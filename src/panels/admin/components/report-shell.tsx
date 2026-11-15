@@ -2,62 +2,45 @@
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { flushSync } from "react-dom";
-import { FileSpreadsheet, FileText, Printer } from "lucide-react";
+import { ChevronDown, Download, FileSpreadsheet, FileText, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useRecordReportExport } from "@/data/business-queries";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
-import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { downloadCsv, downloadXlsx } from "@/shared/lib/spreadsheet";
 import { formatDate } from "@/shared/lib/format-date";
 import { Button } from "@/shared/ui/button";
-import { addMonthsToDate, manilaDateOf, manilaToday } from "@/shared/lib/dates";
-import { StandardDateField } from "@/shared/forms/modern";
-import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { cn } from "@/shared/lib/utils";
+import { manilaDateOf, manilaToday } from "@/shared/lib/dates";
+import { displayValue } from "@/shared/lib/empty-value";
+import { DateRangeFields } from "@/shared/components/modern/date-range-fields";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
 import type { BreadcrumbItem } from "@/shared/components/modern/breadcrumbs";
 import { AdminPage } from "@/shared/components/admin";
-
-const PRESETS = [
-  { value: "today", label: "Today" },
-  { value: "7d", label: "Past 7 Days" },
-  { value: "28d", label: "Past 28 Days" },
-  { value: "6m", label: "Past 6 Months" },
-  { value: "custom", label: "Custom range" },
-];
 
 function addDays(dateOnly: string, days: number): string {
   const [year, month, day] = dateOnly.split("-").map(Number);
   return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
 }
 
-/** Shared date-range state of every report. Each figure filters on its own source event date (doc 11). */
+/** Bounds used when a From or To date is cleared, so "no limit" still compares as plain text. */
+export const OPEN_FROM = "1900-01-01";
+export const OPEN_TO = "2999-12-31";
+
+/**
+ * Shared date range of every report: From and To dates (default: the last 28 days ending today in
+ * Asia/Manila). Each figure filters on its own source event date (doc 11). `from` and `to` are always
+ * YYYY-MM-DD text; a cleared field means no limit. `dateFields` is the From/To pair for a report's FilterBar.
+ */
 export function useReportRangeState() {
   const today = manilaToday();
-  const [preset, setPreset] = useState("28d");
-  const [customFrom, setCustomFrom] = useState(addDays(today, -28));
-  const [customTo, setCustomTo] = useState(today);
-
-  const { from, to } = useMemo(() => {
-    if (preset === "today") return { from: today, to: today };
-    if (preset === "7d") return { from: addDays(today, -7), to: today };
-    if (preset === "28d") return { from: addDays(today, -28), to: today };
-    if (preset === "6m") return { from: addMonthsToDate(today, -6) ?? today, to: today };
-    return { from: customFrom, to: customTo };
-  }, [preset, today, customFrom, customTo]);
+  const [dates, setDates] = useState(() => ({ from: addDays(today, -28), to: today }));
+  const from = dates.from || OPEN_FROM;
+  const to = dates.to || OPEN_TO;
   const inRange = (date: string | null | undefined) => Boolean(date) && manilaDateOf(date as string) >= from && manilaDateOf(date as string) <= to;
-
-  const filters = (
-    <FilterBar filters={[{ label: "Date range", value: preset, onChange: setPreset, options: PRESETS }]}>
-      {preset === "custom" ? (
-        <>
-          <StandardDateField label="Start date" value={customFrom} onChange={setCustomFrom} className="tw:md:min-w-0 tw:md:flex-1" />
-          <StandardDateField label="End date" value={customTo} onChange={setCustomTo} className="tw:md:min-w-0 tw:md:flex-1" />
-        </>
-      ) : null}
-    </FilterBar>
-  );
-  return { from, to, inRange, filters };
+  const dateFields = <DateRangeFields from={dates.from} to={dates.to} onChange={setDates} />;
+  return { from, to, inRange, dateFields, setDates };
 }
 
 export type ReportRange = ReturnType<typeof useReportRangeState>;
@@ -80,18 +63,22 @@ export function useReportRange(): ReportRange {
   return useContext(ReportRangeContext) ?? local;
 }
 
-/** Body of a report without the page chrome: printed date range, date filter, then the content. Report tabs mount this directly. */
+/** Printed wording of a range; a cleared From or To reads "any date". */
+export function describeRange(range: { from: string; to: string }): string {
+  return `${range.from === OPEN_FROM ? "any date" : formatDate(range.from)} to ${range.to === OPEN_TO ? "any date" : formatDate(range.to)}`;
+}
+
+/** Body of a report without the page chrome: the printed date range, then the content (each report puts the From/To fields in its own filter bar). Report tabs mount this directly. */
 export function ReportFrame({ range, children }: { range: ReportRange; children: ReactNode }) {
   return (
     <div className="report-print__page tw:flex tw:flex-col tw:gap-6">
-      <p className="report-print__range">Date range: {formatDate(range.from)} to {formatDate(range.to)}</p>
-      <div className="report-print__hide">{range.filters}</div>
+      <p className="report-print__range">Date range: {describeRange(range)}</p>
       {children}
     </div>
   );
 }
 
-/** Standard frame of a report page: module gate, breadcrumbs, and date filter. */
+/** Standard frame of a report page: module gate, breadcrumbs, and printed date range. */
 export function ReportShell({ range, title, description, crumbs, children }: { range: ReportRange; title: string; /** Optional; one short sentence at most. */ description?: string; crumbs: BreadcrumbItem[]; children: ReactNode }) {
   return (
     <AdminPage anyOf={["reports"]} title={title} description={description} crumbs={crumbs}>
@@ -103,7 +90,7 @@ export function ReportShell({ range, title, description, crumbs, children }: { r
 /**
  * One report column: the header and the exact text shown in the table and written to the export.
  * Exports always carry every column; `screen: false` keeps a column out of the on-screen table
- * (5 data columns at most) and shows it only in "View full details".
+ * (5 data columns at most) and shows it only in the row's details panel.
  */
 export type ReportColumn<T> = { header: string; value: (row: T) => string; screen?: boolean };
 
@@ -112,8 +99,11 @@ export function buildExportRows<T>(columns: ReportColumn<T>[], rows: T[]): strin
   return [columns.map((column) => column.header), ...rows.map((row) => columns.map((column) => column.value(row)))];
 }
 
-/** Excel, CSV and Print buttons. An export is audited (report, format, range and row count only) before the file is written. */
-export function ReportExport<T>({ report, fileName, columns, rows, range, printable = true }: { report: string; fileName: string; columns: ReportColumn<T>[]; rows: T[]; range: { from: string; to: string } | null; /** False on pages that have no print layout. */ printable?: boolean }) {
+/**
+ * One "Export" menu with Excel, CSV and Print. An export is audited (report, format, range and row count only)
+ * before the file is written. The button is inline, so the caller places it (for example inside a FilterBar).
+ */
+export function ReportExport<T>({ report, fileName, columns, rows, range, printable = true, className }: { report: string; fileName: string; columns: ReportColumn<T>[]; rows: T[]; range: { from: string; to: string } | null; /** False on pages that have no print layout. */ printable?: boolean; className?: string }) {
   const record = useRecordReportExport();
   const [busy, setBusy] = useState(false);
   const run = async (format: "xlsx" | "csv") => {
@@ -132,11 +122,16 @@ export function ReportExport<T>({ report, fileName, columns, rows, range, printa
     }
   };
   return (
-    <div className="report-print__hide tw:flex tw:flex-wrap tw:justify-end tw:gap-2" role="group" aria-label="Export this report">
-      <Button variant="outline" disabled={busy} onClick={() => void run("xlsx")}><FileSpreadsheet aria-hidden /> Excel</Button>
-      <Button variant="outline" disabled={busy} onClick={() => void run("csv")}><FileText aria-hidden /> CSV</Button>
-      {printable ? <Button variant="outline" onClick={() => window.print()}><Printer aria-hidden /> Print</Button> : null}
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Button variant="info" disabled={busy} className={cn("report-print__hide tw:h-11 tw:w-full tw:md:w-auto tw:md:flex-none", className)} />}>
+        <Download aria-hidden /> Export <ChevronDown aria-hidden />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="tw:min-w-40">
+        <DropdownMenuItem className="tw:min-h-11 tw:sm:min-h-8" onClick={() => void run("xlsx")}><FileSpreadsheet aria-hidden /> Excel</DropdownMenuItem>
+        <DropdownMenuItem className="tw:min-h-11 tw:sm:min-h-8" onClick={() => void run("csv")}><FileText aria-hidden /> CSV</DropdownMenuItem>
+        {printable ? <DropdownMenuItem className="tw:min-h-11 tw:sm:min-h-8" onClick={() => window.print()}><Printer aria-hidden /> Print</DropdownMenuItem> : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -157,22 +152,30 @@ function usePrinting(): boolean {
 }
 
 /**
- * Filters, export toolbar and a table of the rows behind a report's figures. Callers pass already filtered rows.
- * The table shows the `screen` columns; a row click or its "View full details" menu item opens every column,
- * and the Excel and CSV files always hold every column.
+ * Filters, the Export menu and a table of the rows behind a report's figures. Callers pass already filtered rows.
+ * The table shows the `screen` columns; opening a row shows every column, and the Excel and CSV files always hold
+ * every column. `filters` receives the Export button, so a report places it inside its own filter bar.
  */
-export function ReportTable<T>({ report, fileName, range, columns, rows, getRowId, getRowTitle, filters, loading, error, emptyText }: { report: string; fileName: string; range: { from: string; to: string } | null; columns: ReportColumn<T>[]; rows: T[]; getRowId: (row: T) => string; /** Names a row in its details panel and menu; defaults to the first column's value. */ getRowTitle?: (row: T) => string; filters?: ReactNode; loading?: boolean; error?: unknown; emptyText: string }) {
+export function ReportTable<T>({ report, fileName, range, columns, rows, getRowId, getRowTitle, filters, loading, error, emptyText }: { report: string; fileName: string; range: { from: string; to: string } | null; columns: ReportColumn<T>[]; rows: T[]; getRowId: (row: T) => string; /** Names a row in its details panel; defaults to the first column's value. */ getRowTitle?: (row: T) => string; filters?: (exportButton: ReactNode) => ReactNode; loading?: boolean; error?: unknown; emptyText: string }) {
   const printing = usePrinting();
   const [detail, setDetail] = useState<T | null>(null);
   const tableColumns = useMemo<ColumnDef<T, unknown>[]>(
-    () => columns.flatMap((column, index) => (column.screen === false ? [] : [{ id: `c${index}`, header: column.header, cell: ({ row }) => column.value(row.original) }])),
+    () => {
+      const shown = columns.filter((column) => column.screen !== false);
+      return shown.map((column, index) => ({
+        id: `c${index}`,
+        header: column.header,
+        // The first column names the row: plain bold text, and the whole row opens the details.
+        cell: ({ row }) => (index === 0 ? <span className="tw:font-semibold">{displayValue(column.value(row.original))}</span> : column.value(row.original)),
+      }));
+    },
     [columns],
   );
   const titleOf = (row: T) => getRowTitle?.(row) ?? columns[0]?.value(row) ?? report;
+  const exportButton = <ReportExport report={report} fileName={fileName} columns={columns} rows={rows} range={range} />;
   return (
     <>
-      {filters ? <div className="report-print__hide">{filters}</div> : null}
-      <ReportExport report={report} fileName={fileName} columns={columns} rows={rows} range={range} />
+      {filters ? <div className="report-print__hide">{filters(exportButton)}</div> : exportButton}
       <QueryState isLoading={Boolean(loading)} error={error}>
         <DataTable
           data={rows}
@@ -182,8 +185,7 @@ export function ReportTable<T>({ report, fileName, range, columns, rows, getRowI
           caption={report}
           showAllRows={printing}
           onRowOpen={setDetail}
-          getRowLabel={(row) => `View full details of ${titleOf(row)}`}
-          rowActions={printing ? undefined : (row) => <RowActionsMenu itemName={titleOf(row)} extraItems={[{ key: "details", label: "View full details", onClick: () => setDetail(row) }]} />}
+          getRowLabel={(row) => `Open details of ${titleOf(row)}`}
         />
       </QueryState>
       <RecordDetailsSheet
@@ -191,7 +193,7 @@ export function ReportTable<T>({ report, fileName, range, columns, rows, getRowI
         onClose={() => setDetail(null)}
         title={detail ? titleOf(detail) : report}
         subtitle={report}
-        sections={detail ? [{ rows: columns.map((column) => ({ label: column.header, value: column.value(detail) })) }] : []}
+        sections={detail ? [{ rows: columns.map((column) => ({ label: column.header, value: displayValue(column.value(detail)) })) }] : []}
       />
     </>
   );

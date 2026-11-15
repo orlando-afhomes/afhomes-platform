@@ -61,10 +61,10 @@ export function CollectionsReportPanel() {
         <AdminStatCard loading={payments.isLoading} error={payments.error} label="Net collections" value={<Money value={net} />} icon={Wallet} tone="brand" />
       </AdminStatGrid>
       <ReportTable report="Collections Report" fileName="collections" range={range} columns={columns} rows={rows} getRowId={(row) => row.id} getRowTitle={(row) => row.customerName} loading={payments.isLoading} error={payments.error} emptyText="No collections match."
-        filters={<FilterBar search={search} onSearch={setSearch} searchLabel="Search collections" filters={[
+        filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search collections" filters={[
           { label: "Payment method filter", value: method, onChange: setMethod, options: optionsFrom("All methods", inPeriod.map((payment) => payment.method)) },
           { label: "Payment purpose filter", value: purpose, onChange: setPurpose, options: optionsFrom("All purposes", inPeriod.map((payment) => payment.purpose), humanize) },
-        ]} />} />
+        ]}>{range.dateFields}{exportButton}</FilterBar>} />
     </ReportFrame>
   );
 }

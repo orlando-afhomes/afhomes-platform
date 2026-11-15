@@ -3,7 +3,6 @@ import type { RowActionItem } from "@/shared/components/modern/row-actions-menu"
 
 export type RedemptionBookingMenuProps = {
   itemName: string;
-  onView?: () => void;
   onEdit?: () => void;
   extraItems: RowActionItem[];
   onDelete?: () => void | Promise<unknown>;
@@ -20,7 +19,6 @@ export type RedemptionBookingMenuPerms = {
 
 /** Callbacks wired by the page; the bundle only plugs them into the gated slots. */
 export type RedemptionBookingMenuCallbacks = {
-  onView?: () => void;
   onApproveCash?: () => void;
   onComplete?: () => void | Promise<unknown>;
   onNoShow?: () => void;
@@ -42,21 +40,20 @@ export function buildRedemptionBookingMenuProps(
 ): RedemptionBookingMenuProps {
   const extraItems: RowActionItem[] = [];
   if (perms.canApprove && booking.status === "pending_payment" && cb.onApproveCash) {
-    extraItems.push({ key: "approve-cash", label: "Approve money part", onClick: cb.onApproveCash });
+    extraItems.push({ key: "approve-cash", label: "Approve money part", tone: "success", onClick: cb.onApproveCash });
   }
   if (perms.canBook && booking.status === "confirmed" && cb.onComplete) {
-    extraItems.push({ key: "complete", label: "Record check-in", onClick: cb.onComplete });
+    extraItems.push({ key: "complete", label: "Record check-in", tone: "success", onClick: cb.onComplete });
   }
   if (perms.canBook && booking.status === "confirmed" && cb.onNoShow) {
-    extraItems.push({ key: "no-show", label: "Record no-show", onClick: cb.onNoShow });
+    extraItems.push({ key: "no-show", label: "Record no-show", tone: "warning", onClick: cb.onNoShow });
   }
   if (perms.canBook && (booking.status === "pending_payment" || booking.status === "confirmed") && cb.onCancel) {
-    extraItems.push({ key: "cancel", label: "Cancel booking", danger: true, onClick: cb.onCancel });
+    extraItems.push({ key: "cancel", label: "Cancel booking", tone: "danger", danger: true, onClick: cb.onCancel });
   }
 
   return {
     itemName: booking.reference,
-    onView: cb.onView,
     extraItems,
   };
 }

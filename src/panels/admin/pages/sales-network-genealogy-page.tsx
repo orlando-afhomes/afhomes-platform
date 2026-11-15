@@ -223,7 +223,7 @@ function MemberSummary({ node, members }: { node: GenealogyTreeNode; members: re
       {node.restrictedParent ? <p className="tw:text-sm tw:text-muted-foreground tw:italic">Upline not shown to you</p> : null}
       <Link
         href={`/admin/sales-network/members/${node.member.aaNumber ?? node.member.id}`}
-        className={cn(buttonVariants(), "tw:min-h-11 tw:w-full tw:sm:min-h-8")}
+        className={cn(buttonVariants({ variant: "info" }), "tw:min-h-11 tw:w-full tw:sm:min-h-8")}
       >
         View profile
       </Link>

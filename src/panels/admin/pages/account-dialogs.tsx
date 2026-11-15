@@ -1,5 +1,6 @@
 "use client";
 
+import { EMPTY } from "@/shared/lib/empty-value";
 import { useState } from "react";
 import { toast } from "sonner";
 import { X } from "lucide-react";
@@ -69,7 +70,7 @@ export function AccountDialogs({
                 <DetailRow term="Name">{selected.displayName}</DetailRow>
                 <DetailRow term="Email">{selected.email}</DetailRow>
                 <DetailRow term="Status">{STATUS_LABELS[selected.status]}</DetailRow>
-                <DetailRow term="Roles">{selected.roleIds.map(getSystemRoleLabel).join(", ") || "No system roles"}</DetailRow>
+                <DetailRow term="Roles">{selected.roleIds.map(getSystemRoleLabel).join(", ") || EMPTY}</DetailRow>
                 <DetailRow term="Created">{selected.createdAt}</DetailRow>
               </DetailList>
             </div>

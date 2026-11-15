@@ -38,6 +38,7 @@ import { formatDate } from "@/shared/lib/format-date";
 import { cn } from "@/shared/lib/utils";
 import { Money } from "@/shared/components/modern/money";
 import { InfoNote } from "@/shared/components/modern/detail-list";
+import { buttonVariants } from "@/shared/ui/button";
 import { StatusBadge, ToneBadge } from "@/shared/components/modern/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 
@@ -260,6 +261,12 @@ export function CustomerProgressCard({
 /* LinkedRecordsCard                                                   */
 /* ------------------------------------------------------------------ */
 
+/** The green "Linked" badge only appears when there is a real record to point at. */
+const isMissingValue = (value: string) => value.trim() === "" || value.trim() === "—";
+function LinkedBadge({ value }: { value: string }) {
+  return isMissingValue(value) ? null : <ToneBadge tone="success">Linked</ToneBadge>;
+}
+
 export function LinkedRecordsCard({
   contractLabel,
   contractHref,
@@ -290,26 +297,26 @@ export function LinkedRecordsCard({
             <span className="tw:min-w-0 tw:flex-1 tw:truncate tw:text-sm tw:text-muted-foreground">
               {contractLabel}{" "}
               {contractHref ? (
-                <Link href={contractHref} className="tw:font-medium tw:text-primary tw:underline-offset-4 tw:hover:underline">
+                <Link href={contractHref} className={buttonVariants({ variant: "info", size: "xs", className: "tw:ml-1 tw:no-underline" })}>
                   Open contract
                 </Link>
               ) : null}
             </span>
-            <ToneBadge tone="success">Linked</ToneBadge>
+            <LinkedBadge value={contractLabel} />
             <ChevronRight aria-hidden="true" className="tw:size-4 tw:shrink-0 tw:text-muted-foreground" />
           </li>
           <li className="customer-detail__linked-row tw:flex tw:items-center tw:gap-3 tw:border-b tw:border-border tw:py-3">
             <ShoppingCart aria-hidden="true" className="tw:size-5 tw:shrink-0 tw:text-primary" />
             <span className="tw:w-32 tw:shrink-0 tw:text-sm tw:font-semibold tw:text-foreground">Sale</span>
             <span className="tw:min-w-0 tw:flex-1 tw:truncate tw:text-sm tw:text-muted-foreground">{saleLabel}</span>
-            <ToneBadge tone="success">Linked</ToneBadge>
+            <LinkedBadge value={saleLabel} />
             <ChevronRight aria-hidden="true" className="tw:size-4 tw:shrink-0 tw:text-muted-foreground" />
           </li>
           <li className="customer-detail__linked-row tw:flex tw:items-center tw:gap-3 tw:py-3">
             <Crown aria-hidden="true" className="tw:size-5 tw:shrink-0 tw:text-primary" />
             <span className="tw:w-32 tw:shrink-0 tw:text-sm tw:font-semibold tw:text-foreground">VIP Membership</span>
             <span className="tw:min-w-0 tw:flex-1 tw:truncate tw:text-sm tw:text-muted-foreground">{membershipLabel}</span>
-            <ToneBadge tone="success">Linked</ToneBadge>
+            <LinkedBadge value={membershipLabel} />
             <ChevronRight aria-hidden="true" className="tw:size-4 tw:shrink-0 tw:text-muted-foreground" />
           </li>
         </ul>

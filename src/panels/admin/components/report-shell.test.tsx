@@ -41,7 +41,8 @@ describe("report export", () => {
 
   it("writes a CSV with every row after recording the export", async () => {
     render(<Wrapper><ReportExport report="Test Report" fileName="test" columns={COLUMNS} rows={ROWS} range={{ from: "2026-11-01", to: "2026-11-13" }} /></Wrapper>);
-    fireEvent.click(screen.getByRole("button", { name: /CSV/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Export/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: /CSV/ }));
     await waitFor(() => expect(downloads.csv).toHaveBeenCalledTimes(1));
     const [fileName, rows] = downloads.csv.mock.calls[0] as [string, string[][]];
     expect(fileName).toMatch(/^test-\d{4}-\d{2}-\d{2}\.csv$/);
@@ -72,16 +73,38 @@ describe("report table", () => {
     expect(within(sheet).getByText("g")).toBeInTheDocument();
   });
 
-  it("offers View full details in the row menu", async () => {
+  it("opens the row details from the row itself, with no row menu", async () => {
     renderTable();
-    fireEvent.click(screen.getByRole("button", { name: "Actions for Maria" }));
-    fireEvent.click(await screen.findByRole("menuitem", { name: "View full details" }));
+    expect(screen.queryByRole("button", { name: "Actions for Maria" })).toBeNull();
+    fireEvent.click(screen.getByRole("row", { name: "Open details of Maria" }));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("shows the first column as plain bold text, not a link", () => {
+    render(<Wrapper><ReportTable report="Dash Report" fileName="dash" range={null} columns={COLUMNS} rows={[{ name: "Ana", amount: 5 }]} getRowId={(row) => row.name} emptyText="None" /></Wrapper>);
+    const cell = within(screen.getByRole("table", { name: "Dash Report" })).getByText("Ana");
+    expect(cell).toHaveClass("tw:font-semibold");
+    expect(cell.closest("a")).toBeNull();
+  });
+
+  it("offers one Export menu with Excel, CSV and Print", async () => {
+    renderTable();
+    expect(screen.getAllByRole("button", { name: /Export/ })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /^(Excel|CSV|Print)$/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Export/ }));
+    expect((await screen.findAllByRole("menuitem")).map((item) => item.textContent?.trim())).toEqual(["Excel", "CSV", "Print"]);
+  });
+
+  it("hides Print on a page without a print layout", async () => {
+    render(<Wrapper><ReportExport report="Test Report" fileName="test" columns={COLUMNS} rows={ROWS} range={null} printable={false} /></Wrapper>);
+    fireEvent.click(screen.getByRole("button", { name: /Export/ }));
+    expect((await screen.findAllByRole("menuitem")).map((item) => item.textContent?.trim())).toEqual(["Excel", "CSV"]);
   });
 
   it("exports every column, including those hidden on screen", async () => {
     renderTable();
-    fireEvent.click(screen.getByRole("button", { name: /CSV/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Export/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: /CSV/ }));
     await waitFor(() => expect(downloads.csv).toHaveBeenCalledTimes(1));
     const [, rows] = downloads.csv.mock.calls[0] as [string, string[][]];
     expect(rows[0]).toHaveLength(7);

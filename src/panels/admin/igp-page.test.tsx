@@ -7,7 +7,6 @@ import { getDevIdentity } from "@/data/mock/dev-identities";
 import { createMockRepositories } from "@/data/mock/repositories";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider, useMockStore } from "@/shared/providers/mock-store-provider";
-import { IgpTab } from "./pages/igp-page";
 import SalesRoute from "@/app/admin/sales/page";
 
 vi.mock("next/navigation", async (importOriginal) => ({
@@ -23,10 +22,13 @@ afterEach(() => {
 });
 
 /** Records one accredited IGP sale with its reservation receipt before the page loads. */
+const storeRef: { current: ReturnType<typeof useMockStore> | null } = { current: null };
+
 function SeededIgp({ children }: { children: ReactNode }) {
   const store = useMockStore();
   const [ready, setReady] = useState(false);
   useEffect(() => {
+    storeRef.current = store;
     const admin = createMockRepositories(store, () => getDevIdentity("dev-admin"));
     store.commissionRateSettings.push({ memberId: "mem-ost-a1", product: "IGP", role: "DSC", rateBp: 500, standardRateBp: null });
     void (async () => {
@@ -34,7 +36,7 @@ function SeededIgp({ children }: { children: ReactNode }) {
       await admin.igp.act({
         type: "record",
         input: {
-          customerId: "cust-a6", project: "Sample Project", unit: "Lot 12", propertyOwner: "Sample Owner",
+          customerId: "cust-a6", projectId: "igp-prj-1", unitId: "igp-unit-1",
           priceCentavos: 180_000_000, scheme: "T", termMonths: 12, clauses: "S", date: "2025-01-10",
           sellerMemberId: "mem-ost-a1", referrerMemberId: null, entry: "reservation",
           payment: { paidDate: "2025-01-10", method: "Cash", amountCentavos: 18_000_000, referenceNo: "IGP-0101" },
@@ -46,7 +48,7 @@ function SeededIgp({ children }: { children: ReactNode }) {
   return ready ? children : null;
 }
 
-function show(identityId = "dev-admin", page: ReactNode = <IgpTab />) {
+function show(identityId = "dev-admin", page: ReactNode = <SalesRoute />) {
   function Wrapper() {
     const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
     return (
@@ -68,15 +70,14 @@ describe("Sales area", () => {
     window.history.replaceState(null, "", "/admin/sales?tab=contracts");
     show("dev-admin", <SalesRoute />);
     const tabs = await screen.findByRole("tablist", { name: "Sales" });
-    expect(within(tabs).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Sales", "Contracts", "Contract review", "IGP"]);
+    expect(within(tabs).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Sales", "Contracts", "Contract review", "IGP", "Projects"]);
     expect(within(tabs).getByRole("tab", { name: "Contracts" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("link", { name: "New contract" })).toHaveAttribute("href", "/admin/customers/new");
     const table = await screen.findByRole("table", { name: "Contracts" });
+    // The row opens the contract: names are plain text and the row menu has no "View full details".
+    expect(within(table).queryByRole("link")).toBeNull();
     await user.click(within(table).getAllByRole("button", { name: /^Actions for/ })[0]);
-    await user.click(await screen.findByRole("menuitem", { name: "View full details" }));
-    const details = await screen.findByRole("dialog");
-    expect(within(details).getByText("Payment scheme")).toBeInTheDocument();
-    expect(within(details).getByRole("link", { name: "Open contract" })).toHaveAttribute("href", expect.stringMatching(/^\/admin\/sales\/contracts\//));
+    expect(screen.queryByRole("menuitem", { name: "View full details" })).toBeNull();
   });
 
   it("hides Contract review from sellers and falls back to the Sales tab", async () => {
@@ -100,13 +101,15 @@ describe("Sales area", () => {
 describe("IGP Sales page", () => {
   it("shows the register in 5 columns and opens the sale with its actions in a details panel", async () => {
     const user = userEvent.setup();
+    window.history.replaceState(null, "", "/admin/sales?tab=igp");
     show();
     const table = await screen.findByRole("table", { name: "IGP Sales" });
     const headers = within(table).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter((text) => text && text !== "Actions");
-    expect(headers).toEqual(["Series Number", "Buyer", "Property", "Contract price", "Status"]);
+    expect(headers).toEqual(["Series Number", "Buyer", "Project", "Contract price", "Status"]);
     expect(screen.getByRole("button", { name: "JA&D history" })).toBeInTheDocument();
-    await user.click(within(table).getByRole("button", { name: /^Actions for/ }));
-    await user.click(await screen.findByRole("menuitem", { name: "View full details" }));
+    expect(screen.getByRole("button", { name: "Sale counting rule" })).toBeInTheDocument();
+    expect(within(table).queryByRole("button", { name: /^Actions for/ })).toBeNull();
+    await user.click(within(table).getAllByRole("row", { name: /^Open IGP sale/ })[0]);
     const sheet = await screen.findByRole("dialog");
     expect(within(sheet).getByText("Approved collections")).toBeInTheDocument();
     expect(within(sheet).getByRole("button", { name: "IGP-0101" })).toBeInTheDocument();
@@ -115,5 +118,82 @@ describe("IGP Sales page", () => {
     expect(within(sheet).queryByText(/_/)).toBeNull();
     expect(within(sheet).getByRole("button", { name: "Approve sale" })).toBeInTheDocument();
     expect(within(sheet).getByRole("button", { name: "Cancel sale" })).toBeInTheDocument();
+  });
+});
+
+describe("IGP sale form and JA&D entry", () => {
+  it("picks the project, then the unit, and fills in the property owner", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/admin/sales?tab=igp");
+    show();
+    await user.click(await screen.findByRole("button", { name: "Record sale" }));
+    const dialog = await screen.findByRole("dialog");
+    const unit = within(dialog).getByRole("combobox", { name: /Unit or lot/ });
+    expect(unit).toBeDisabled();
+    expect(within(dialog).getByRole("textbox", { name: "Property owner" })).toBeDisabled();
+    const project = within(dialog).getByRole("combobox", { name: /Project/ });
+    await user.click(project);
+    await user.click(await screen.findByRole("option", { name: "Sample Gardens" }));
+    expect(unit).toBeEnabled();
+    await user.click(unit);
+    await user.click(await screen.findByRole("option", { name: "Lot 9" }));
+    expect(within(dialog).getByRole("textbox", { name: "Property owner" })).toHaveValue("Sample Land Holdings");
+  });
+
+  it("builds the JA&D number from the type, the approval date and the typed digits", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/admin/sales?tab=igp");
+    show();
+    await user.click(await screen.findByRole("button", { name: "Record JA&D accreditation" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("combobox", { name: /Seller/ }));
+    await user.click(await screen.findByRole("option", { name: "Paolo Ramos" }));
+    // Paolo Ramos is an OST seller, so the type starts as JAO.
+    expect(within(dialog).getByRole("combobox", { name: /Accreditation type/ })).toHaveValue("OST accreditation (JAO)");
+    const digits = within(dialog).getByRole("textbox", { name: /Last 4 digits/ });
+    await user.type(digits, "12ab345");
+    expect(digits).toHaveValue("1234");
+    expect(within(dialog).getByText(/^Number: JAO\d{4}1234$/)).toBeInTheDocument();
+  });
+});
+
+describe("IGP Projects tab", () => {
+  it("lists the projects, opens one with its units and adds a project from the heading button", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/admin/sales?tab=projects");
+    show();
+    const table = await screen.findByRole("table", { name: "Projects" });
+    const headers = within(table).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter(Boolean);
+    expect(headers).toEqual(["Project", "Location", "Units", "Status"]);
+    expect(within(table).queryByRole("link")).toBeNull();
+    await user.click(within(table).getByRole("row", { name: "Open project Sample Heights" }));
+    const sheet = await screen.findByRole("dialog");
+    expect(within(sheet).getByText("Unit 12A")).toBeInTheDocument();
+    expect(within(sheet).getAllByText("Sample Property Owner", { selector: "span" })).toHaveLength(2);
+    for (const name of ["Add unit", "Edit project", "Deactivate project"]) expect(within(sheet).getByRole("button", { name })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("button", { name: "Add project" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByRole("textbox", { name: /Project name/ }), "sample gardens");
+    await user.click(within(dialog).getByRole("button", { name: "Add project" }));
+    expect(await within(dialog).findByText("A project with this name already exists.")).toBeInTheDocument();
+    await user.clear(within(dialog).getByRole("textbox", { name: /Project name/ }));
+    await user.type(within(dialog).getByRole("textbox", { name: /Project name/ }), "Sample Bay");
+    await user.click(within(dialog).getByRole("button", { name: "Add project" }));
+    expect(await screen.findByRole("row", { name: "Open project Sample Bay" })).toBeInTheDocument();
+  });
+
+  it("keeps an inactive unit visible, labelled, when a sale that holds it is reissued", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/admin/sales?tab=igp");
+    show();
+    const table = await screen.findByRole("table", { name: "IGP Sales" });
+    const admin = createMockRepositories(storeRef.current!, () => getDevIdentity("dev-admin"));
+    await admin.igpCatalog.updateUnit("igp-unit-1", { status: "inactive" });
+    await user.click(within(table).getAllByRole("row", { name: /^Open IGP sale/ })[0]);
+    await user.click(await within(await screen.findByRole("dialog")).findByRole("button", { name: "Reissue number" }));
+    const dialogs = await screen.findAllByRole("dialog");
+    const form = dialogs[dialogs.length - 1];
+    expect(within(form).getByRole("combobox", { name: /Unit or lot/ })).toHaveValue("Unit 12A (inactive)");
   });
 });

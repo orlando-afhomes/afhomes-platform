@@ -9,7 +9,7 @@ function setup() {
   const as = (id: string) => createMockRepositories(store, () => getDevIdentity(id));
   store.commissionRateSettings.push({ memberId: "mem-ost-a1", product: "IGP", role: "DSC", rateBp: 500, standardRateBp: null });
   const input: RecordIgpSale = {
-    customerId: "cust-a6", project: "Sample Project", unit: "Lot 12", propertyOwner: "Sample Owner",
+    customerId: "cust-a6", projectId: "igp-prj-1", unitId: "igp-unit-1",
     priceCentavos: 180_000_000, scheme: "T", termMonths: 12, clauses: "S", date: "2025-01-10",
     sellerMemberId: "mem-ost-a1", referrerMemberId: null, entry: "reservation",
     payment: { paidDate: "2025-01-10", method: "Cash", amountCentavos: 18_000_000, referenceNo: "IGP-0101" },
@@ -20,6 +20,36 @@ function setup() {
 async function accredit({ admin, input }: ReturnType<typeof setup>) {
   await admin.igp.act({ type: "accredit", memberId: input.sellerMemberId, number: "JAI23010001", approvedDate: "2023-01-01" });
 }
+
+describe("JA&D accreditation numbers", () => {
+  it("rejects a number whose year and month do not match the approval date, and a repeated number", async () => {
+    const fixture = setup();
+    const { admin, input, store } = fixture;
+    await expect(admin.igp.act({ type: "accredit", memberId: input.sellerMemberId, number: "JAI23020001", approvedDate: "2023-01-01" })).rejects.toThrow(/match the approval date/);
+    await expect(admin.igp.act({ type: "accredit", memberId: input.sellerMemberId, number: "JAI23010000", approvedDate: "2023-01-01" })).rejects.toThrow(/JAI or JAO/);
+    await accredit(fixture);
+    expect(store.igp.accreditations).toMatchObject([{ number: "JAI23010001", approvedDate: "2023-01-01", validUntil: "2024-01-01" }]);
+    await expect(admin.igp.act({ type: "accredit", memberId: "mem-ost-b1", number: "JAI23010001", approvedDate: "2023-01-05" })).rejects.toThrow(/already on another accreditation/);
+  });
+});
+
+describe("IGP catalog on a sale", () => {
+  it("copies the names onto the sale, keeps them after a rename and refuses inactive or unrelated picks", async () => {
+    const fixture = setup();
+    const { admin, input, store } = fixture;
+    await accredit(fixture);
+    const sale = (await admin.igp.act({ type: "record", input }))!;
+    expect(sale).toMatchObject({ projectId: "igp-prj-1", unitId: "igp-unit-1", project: "Sample Heights", unit: "Unit 12A", propertyOwner: "Sample Property Owner" });
+    await admin.igpCatalog.updateProject("igp-prj-1", { name: "Renamed Heights" });
+    await admin.igpCatalog.updateUnit("igp-unit-1", { unitOrLot: "Unit 99", propertyOwner: "Another Owner" });
+    expect(store.igp.sales[0]).toMatchObject({ project: "Sample Heights", unit: "Unit 12A", propertyOwner: "Sample Property Owner" });
+    await expect(admin.igp.act({ type: "record", input: { ...input, unitId: "igp-unit-3" } })).rejects.toThrow(/active unit or lot of this project/);
+    await admin.igpCatalog.updateUnit("igp-unit-2", { status: "inactive" });
+    await expect(admin.igp.act({ type: "record", input: { ...input, unitId: "igp-unit-2" } })).rejects.toThrow(/active unit or lot/);
+    await admin.igpCatalog.updateProject("igp-prj-2", { status: "inactive" });
+    await expect(admin.igp.act({ type: "record", input: { ...input, projectId: "igp-prj-2", unitId: "igp-unit-3" } })).rejects.toThrow(/active project/);
+  });
+});
 
 describe("IGP sale and receipts", () => {
   it("rejects incorrectly formatted JA&D accreditation numbers", async () => {
@@ -62,9 +92,9 @@ describe("IGP sale and receipts", () => {
       { stage: "full", amountCentavos: 5_400_000, releaseDate: "2025-02-12" },
     ]);
     const replacement = (await admin.igp.act({ type: "reissue", id: first.id, input: {
-      ...input, unit: "Lot 18", priceCentavos: 260_000_000, date: "2025-02-15", reason: "Buyer switched lots.",
+      ...input, unitId: "igp-unit-2", priceCentavos: 260_000_000, date: "2025-02-15", reason: "Buyer switched lots.",
     } }))!;
-    await expect(admin.igp.act({ type: "reissue", id: first.id, input: { ...input, unit: "Lot 19", reason: "Retry" } })).rejects.toThrow(/closed/);
+    await expect(admin.igp.act({ type: "reissue", id: first.id, input: { ...input, unitId: "igp-unit-2", reason: "Retry" } })).rejects.toThrow(/closed/);
     expect(replacement).toMatchObject({ seriesNumber: "A25021500013T12S", replacesId: first.id });
     expect(store.igp.sales[0]).toMatchObject({ status: "replaced", replacedById: replacement.id });
     expect(store.payments.filter(({ contractId }) => contractId === first.id)).toHaveLength(0);

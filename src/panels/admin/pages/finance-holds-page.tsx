@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemberships } from "@/data/business-queries";
 import type { MembershipView } from "@/data/contracts/membership-repository";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
@@ -14,6 +14,7 @@ import { useContractHref } from "../components/use-contract-href";
 
 /** Holds tab of the Finance area ([finance]). */
 export function FinanceHoldsPanel() {
+  const router = useRouter();
   const memberships = useMemberships();
   const contractHref = useContractHref();
   const [search, setSearch] = useState("");
@@ -28,15 +29,14 @@ export function FinanceHoldsPanel() {
       { id: "customer", header: "Customer", cell: ({ row }) => <span className="tw:font-semibold">{row.original.customerName}</span> },
       { id: "plan", header: "Plan", cell: ({ row }) => row.original.productName },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
-      { id: "contract", header: "Contract", cell: ({ row }) => <Link className="tw:underline" href={contractHref(row.original.contractId)}>Open contract</Link> },
     ],
-    [contractHref],
+    [],
   );
 
   return (
     <QueryState isLoading={memberships.isLoading} error={memberships.error}>
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search financial holds" filters={[{ label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: optionsFrom("All statuses", holds.map((item) => item.status), humanize) }]} />
-      <DataTable data={visible} columns={columns} getRowId={(row) => row.id} caption="Financial holds" emptyText={holds.length === 0 ? "No memberships are on Financial Hold." : "No holds match the filters."} />
+      <DataTable data={visible} columns={columns} getRowId={(row) => row.id} caption="Financial holds" onRowOpen={(row) => router.push(contractHref(row.contractId))} getRowLabel={(row) => `Open contract of ${row.customerName}`} emptyText={holds.length === 0 ? "No memberships are on Financial Hold." : "No holds match the filters."} />
     </QueryState>
   );
 }

@@ -7,6 +7,7 @@ const peso = (amount: number) => amount * 100;
 
 function product(overrides: Partial<VipProduct> & Pick<VipProduct, "code" | "name" | "tier" | "priceCentavos" | "priceStatus">): VipProduct {
   return {
+    tierLevelId: `tier-level-${overrides.tier.toLowerCase()}`,
     priceNote: null,
     validityYears: 7,
     earningCycles: 5,

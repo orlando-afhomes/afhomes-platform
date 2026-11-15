@@ -11,9 +11,8 @@ function booking(status: BookingStatus): Pick<BookingView, "reference" | "status
   return { reference: "BK-001", status } as Pick<BookingView, "reference" | "status">;
 }
 
-function fullCb(): Required<Pick<RedemptionBookingMenuCallbacks, "onView" | "onApproveCash" | "onComplete" | "onNoShow" | "onCancel">> {
+function fullCb(): Required<Pick<RedemptionBookingMenuCallbacks, "onApproveCash" | "onComplete" | "onNoShow" | "onCancel">> {
   return {
-    onView: vi.fn(),
     onApproveCash: vi.fn(),
     onComplete: vi.fn(),
     onNoShow: vi.fn(),
@@ -21,11 +20,9 @@ function fullCb(): Required<Pick<RedemptionBookingMenuCallbacks, "onView" | "onA
   };
 }
 
-/** Sheet footer props: same bundle, detail already open so no onView. */
+/** Sheet footer props: same bundle of callbacks as the row menu. */
 function sheetCb(): RedemptionBookingMenuCallbacks {
-  const { onView, ...rest } = fullCb();
-  void onView;
-  return rest;
+  return fullCb();
 }
 
 function keysOf(props: { extraItems: { key: string }[] }): string[] {
@@ -54,6 +51,7 @@ describe("buildRedemptionBookingMenuProps", () => {
     expect(keysOf(menu)).toEqual(["complete", "no-show", "cancel"]);
     expect(menu.extraItems.find((item) => item.key === "cancel")?.danger).toBe(true);
     expect(menu.extraItems.find((item) => item.key === "complete")?.danger ?? false).toBe(false);
+    expect(menu.extraItems.map((item) => item.tone)).toEqual(["success", "warning", "danger"]);
   });
 
   it("gates approve on the finance verify right and pending_payment status", () => {
@@ -75,7 +73,7 @@ describe("buildRedemptionBookingMenuProps", () => {
 
   it("omits slots whose callbacks are not wired", () => {
     const menu = buildRedemptionBookingMenuProps(booking("confirmed"), PERMS.full, {});
-    expect(menu.onView).toBeUndefined();
+    expect("onView" in menu).toBe(false);
     expect(menu.extraItems).toEqual([]);
   });
 
@@ -84,11 +82,10 @@ describe("buildRedemptionBookingMenuProps", () => {
     for (const status of statuses) {
       for (const perms of Object.values(PERMS)) {
         const row = buildRedemptionBookingMenuProps(booking(status), perms, fullCb());
-        const sheet = { ...buildRedemptionBookingMenuProps(booking(status), perms, sheetCb()), onView: undefined };
+        const sheet = buildRedemptionBookingMenuProps(booking(status), perms, sheetCb());
         expect(keysOf(sheet)).toEqual(keysOf(row));
         expect(sheet.extraItems.map((item) => item.label)).toEqual(row.extraItems.map((item) => item.label));
         expect(sheet.extraItems.map((item) => item.danger ?? false)).toEqual(row.extraItems.map((item) => item.danger ?? false));
-        expect(sheet.onView).toBeUndefined();
         expect(sheet.itemName).toBe(row.itemName);
       }
     }

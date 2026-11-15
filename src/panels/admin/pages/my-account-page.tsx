@@ -1,5 +1,6 @@
 "use client";
 
+import { EMPTY } from "@/shared/lib/empty-value";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
@@ -75,7 +76,7 @@ function MyReferralCodeCard() {
     <CardSection title="My referral code">
       <DetailList>
         <DetailRow term="Code">{currentMember.referralCode ?? "—"}</DetailRow>
-        <DetailRow term="Status">{currentMember.referralCode ? "Existing code" : "No code assigned"}</DetailRow>
+        <DetailRow term="Status">{currentMember.referralCode ? "Existing code" : EMPTY}</DetailRow>
       </DetailList>
     </CardSection>
   );

@@ -74,3 +74,56 @@ export function igpSalesReportRows(sales: readonly IgpSale[]) {
     adjustments: sale.adjustments,
   } as const));
 }
+
+export type JadPrefix = "JAI" | "JAO";
+export const JAD_PREFIXES: ReadonlyArray<{ value: JadPrefix; label: string }> = [
+  { value: "JAI", label: "IST accreditation (JAI)" },
+  { value: "JAO", label: "OST accreditation (JAO)" },
+];
+
+/** Starting choice only: IST sellers (SVD, SSM, SM) get JAI and OST sellers get JAO. Staff can change it. */
+export function defaultJadPrefix(designation: string | undefined): JadPrefix | "" {
+  return !designation ? "" : designation === "OST" ? "JAO" : "JAI";
+}
+
+/** The YYMM part of a JA&D number comes from the approval date (date-only, no timezone shift). */
+export function jadYearMonth(approvedDate: string): string | null {
+  return approvedDate === approvedDate.trim() && parseManilaDateOnly(approvedDate) ? `${approvedDate.slice(2, 4)}${approvedDate.slice(5, 7)}` : null;
+}
+
+/** JA&D issues the last four digits; the system never invents them (doc 14 §3, §6.1). */
+export function buildJadNumber(input: { prefix: JadPrefix | ""; approvedDate: string; sequence: string }): string {
+  const { prefix, approvedDate, sequence } = input;
+  if (prefix !== "JAI" && prefix !== "JAO") throw new Error("Choose the accreditation type.");
+  const yearMonth = jadYearMonth(approvedDate);
+  if (!yearMonth) throw new Error("Enter a valid JA&D approval date.");
+  if (!/^\d{4}$/.test(sequence)) throw new Error("Type the last 4 digits from the JA&D paper (digits only).");
+  return `${prefix}${yearMonth}${sequence}`;
+}
+
+/** Plain-language reason a JA&D number is not acceptable for this approval date, or null when it is. */
+export function jadNumberProblem(number: string, approvedDate: string): string | null {
+  const yearMonth = jadYearMonth(approvedDate);
+  if (!/^JA[IO]\d{8}$/.test(number) || !/^(0[1-9]|1[0-2])$/.test(number.slice(5, 7)) || number.slice(7) === "0000") {
+    return "Enter a JA&D number in JAI or JAO format followed by YYMM and four sequence digits.";
+  }
+  if (yearMonth && number.slice(3, 7) !== yearMonth) return `The year and month in the number (${number.slice(3, 7)}) must match the approval date (${yearMonth}).`;
+  return null;
+}
+
+export function isValidJadNumber(number: string, approvedDate: string): boolean {
+  return jadYearMonth(approvedDate) !== null && jadNumberProblem(number, approvedDate) === null;
+}
+
+export const IGP_PROJECT_NAME_MAX = 80;
+export const IGP_LOCATION_MAX = 80;
+export const IGP_UNIT_MAX = 40;
+export const IGP_OWNER_MAX = 80;
+
+/** Trims and collapses spaces; throws a plain message when empty or too long. */
+export function cleanCatalogText(raw: string, label: string, max: number): string {
+  const value = raw.trim().replace(/\s+/g, " ");
+  if (!value) throw new Error(`Enter the ${label}.`);
+  if (value.length > max) throw new Error(`The ${label} must be ${max} characters or fewer.`);
+  return value;
+}

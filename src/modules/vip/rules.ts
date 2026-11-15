@@ -1,5 +1,18 @@
 import { applyBasisPoints, MoneyError } from "@/shared/lib/money";
-import type { PaymentScheme, VipProduct, VipTierCode } from "./types";
+import { isValidTierCode, NON_ACTIVE_TIER_CODES, type PaymentScheme, type VipProduct, type VipTierCode } from "./types";
+
+/**
+ * Plain-words problem with a new product code, or null when it can be used. The code has exactly
+ * one letter and one digit (05 section 4.1), is not held or historical (05 section 4), and is not taken.
+ */
+export function productCodeError(code: string, existingCodes: readonly string[]): string | null {
+  const value = code.trim().toUpperCase();
+  if (!isValidTierCode(value)) return "The product code must be exactly 2 characters: one letter and one digit, for example B3.";
+  const held = NON_ACTIVE_TIER_CODES.find((item) => item.code === value);
+  if (held) return held.state === "reserved" ? "This code is held for future use and cannot be used yet." : "This code was used before and is kept for old records.";
+  if (existingCodes.some((item) => item.toUpperCase() === value)) return "A product with this code already exists.";
+  return null;
+}
 
 /** Package price for a tier under a scheme: the scheme's own price when set, otherwise the catalog price. */
 export function schemePriceCentavos(product: Pick<VipProduct, "code" | "priceCentavos">, scheme: Pick<PaymentScheme, "priceCentavosByTier">): number {

@@ -7,8 +7,17 @@ import { Spinner } from "@/shared/ui/spinner"
 // The fill stays `bg-primary`; the gradient is an overlay, so the token still drives the color.
 const PRIMARY =
   "tw:bg-primary tw:bg-linear-to-b tw:from-white/15 tw:to-black/10 tw:text-primary-foreground tw:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.18),0_1px_2px_0_rgb(0_0_0/0.2)] tw:hover:brightness-110 tw:hover:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.22),0_4px_10px_-2px_rgb(0_0_0/0.28)]";
-const DANGER =
-  "tw:border-destructive/20 tw:bg-destructive/10 tw:text-destructive tw:hover:border-destructive/35 tw:hover:bg-destructive/20 tw:focus-visible:border-destructive/40 tw:focus-visible:ring-destructive/20 tw:dark:bg-destructive/20 tw:dark:hover:bg-destructive/30 tw:dark:focus-visible:ring-destructive/40";
+// Semantic action colors, built only from the --success/--warning/--info/--destructive
+// tokens. Success and danger are solid (the decisive actions); warning and info are
+// soft tints so they read as secondary. Dark mode lifts the tinted text toward white.
+const SOLID_SHADOW =
+  "tw:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.18),0_1px_2px_0_rgb(0_0_0/0.2)] tw:hover:brightness-110";
+const SUCCESS = `tw:border-success tw:bg-success tw:text-success-foreground tw:focus-visible:border-success tw:focus-visible:ring-success/30 ${SOLID_SHADOW}`;
+const DANGER = `tw:border-destructive tw:bg-destructive tw:text-white tw:focus-visible:border-destructive tw:focus-visible:ring-destructive/30 ${SOLID_SHADOW}`;
+const WARNING =
+  "tw:border-warning/40 tw:bg-warning/10 tw:text-warning tw:hover:border-warning/60 tw:hover:bg-warning/20 tw:focus-visible:border-warning tw:focus-visible:ring-warning/30 tw:dark:bg-warning/20 tw:dark:text-[color-mix(in_oklch,var(--warning),white_45%)] tw:dark:hover:bg-warning/30";
+const INFO =
+  "tw:border-info/40 tw:bg-info/10 tw:text-info tw:hover:border-info/60 tw:hover:bg-info/20 tw:focus-visible:border-info tw:focus-visible:ring-info/30 tw:dark:bg-info/20 tw:dark:text-[color-mix(in_oklch,var(--info),white_45%)] tw:dark:hover:bg-info/30";
 
 const buttonVariantsBase = cva(
   "tw:group/button tw:bg-transparent tw:inline-flex tw:shrink-0 tw:items-center tw:justify-center tw:rounded-lg tw:border tw:border-transparent tw:bg-clip-padding tw:text-sm tw:font-semibold tw:tracking-[0.005em] tw:whitespace-nowrap tw:transition-[background-color,border-color,box-shadow,color,transform,filter] tw:duration-150 tw:ease-out tw:motion-reduce:transition-none tw:outline-none tw:select-none tw:focus-visible:border-ring tw:focus-visible:ring-3 tw:focus-visible:ring-ring/40 tw:active:not-aria-[haspopup]:translate-y-px tw:active:not-aria-[haspopup]:shadow-none tw:disabled:pointer-events-none tw:disabled:opacity-45 tw:disabled:shadow-none tw:aria-invalid:border-destructive tw:aria-invalid:ring-3 tw:aria-invalid:ring-destructive/20 tw:dark:aria-invalid:border-destructive/50 tw:dark:aria-invalid:ring-destructive/40 tw:[&_svg]:pointer-events-none tw:[&_svg]:shrink-0 tw:[&_svg:not([class*=size-])]:size-4",
@@ -18,21 +27,23 @@ const buttonVariantsBase = cva(
         default: PRIMARY,
         // Semantic aliases: `primary` is the main action (same as `default`);
         // `secondary` in the AFHomes sense is `outline` (cancel, filter,
-        // alternate actions). `danger` is the destructive action (same as
-        // `destructive`). Prefer primary/outline/danger in new code; `default`
+        // alternate actions). `danger` is the solid red destructive action (same as
+        // `destructive`). `success`, `warning` and `info` are the other semantic colors. Prefer primary/outline/danger in new code; `default`
         // and `destructive` remain as deprecated aliases.
         primary: PRIMARY,
-        // Soft brand-tinted button: a visible resting fill, a hairline outline
-        // for definition, and a clearly perceptible hover. `--muted` is the same
-        // tone as the page background, so it is not used here.
+        // Neutral button for Cancel, Close and filters: white fill, gray border, dark text.
+        // Deliberately not brand-tinted so it never looks like `secondary`.
         outline:
-          "tw:border-border tw:bg-secondary tw:text-secondary-foreground tw:shadow-none tw:hover:border-primary/35 tw:hover:bg-[color-mix(in_oklch,var(--secondary),var(--primary)_10%)] tw:hover:text-primary tw:aria-expanded:border-primary/35 tw:aria-expanded:bg-[color-mix(in_oklch,var(--secondary),var(--primary)_10%)] tw:aria-expanded:text-primary tw:dark:border-white/15 tw:dark:bg-white/5 tw:dark:text-foreground tw:dark:hover:border-white/25 tw:dark:hover:bg-white/10",
+          "tw:border-input tw:bg-card tw:text-foreground tw:shadow-xs tw:hover:bg-muted tw:aria-expanded:bg-muted tw:dark:border-white/15 tw:dark:bg-white/5 tw:dark:hover:bg-white/10",
         secondary:
           "tw:border-primary/15 tw:bg-secondary tw:text-secondary-foreground tw:shadow-xs tw:hover:border-primary/30 tw:hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_6%)] tw:aria-expanded:bg-secondary tw:aria-expanded:text-secondary-foreground",
         ghost:
           "tw:hover:bg-muted tw:hover:text-foreground tw:aria-expanded:bg-muted tw:aria-expanded:text-foreground tw:dark:hover:bg-muted/50",
         destructive: DANGER,
         danger: DANGER,
+        success: SUCCESS,
+        warning: WARNING,
+        info: INFO,
         link: "tw:font-medium tw:text-primary tw:underline-offset-4 tw:hover:underline",
       },
       size: {

@@ -54,7 +54,7 @@ export function CustomerDetailHero({
             <BizBadge status={status} />
             <span className="customer-detail-hero__vip tw:inline-flex tw:min-h-6 tw:items-center tw:gap-1 tw:rounded-full tw:bg-[var(--color-accent-soft)] tw:px-2.5 tw:py-0.5 tw:text-xs tw:font-semibold tw:text-[var(--color-accent-strong)]">
               <Crown aria-hidden="true" className="tw:size-3.5" />
-              {vipPlan ? `VIP ${vipPlan}` : "No VIP plan"}
+              {vipPlan ? `VIP ${vipPlan}` : "VIP —"}
             </span>
           </p>
           <p className="customer-detail-hero__id tw:mt-1.5 tw:text-sm tw:text-[var(--color-text-secondary)]">

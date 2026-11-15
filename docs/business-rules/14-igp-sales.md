@@ -258,3 +258,12 @@ These rulings take precedence over earlier text in this document where they diff
 27. **IGP property details.** The sale records the project name, unit or lot number, Property Owner name, TCP and payment plan. More fields can be added later (section 5.2).
 28. **Cancel and reissue.** When a Series Number is cancelled and reissued (change of unit, TCP band or scheme), the payments already made move to the new number, commission is recalculated on the new TCP, and the old number stays in history with status Replaced, linked to the new number (section 5.3). This differs from the VIP downgrade rule (OCT R32), where the new sale starts from zero; the owner chose this deliberately for IGP re-numbering.
 29. **Buyer's VIP grant.** The benefits of the IGP buyer's Goodwill VIP Grant (after the first installment) and Formal VIP Grant (after completion), both issued by AFhomes as tenant, are not defined in any company paper; all current source texts were searched on 2026-11-12. Outstanding owner item: waiting for the company's IGP VIP grant terms (section 14). Nothing is invented.
+
+## Owner rulings amendment (2026-11-15, JA&D number entry and property catalog)
+
+These rulings extend sections 5.2 and 6 and take precedence over earlier text in this document where they differ. Item numbers continue the list above.
+
+30. **JA&D number entry.** Staff type the JA&D accreditation number in a guided form. It is `JAI` (IST) or `JAO` (OST), then YYMM from the JA&D approval date, then 4 digits taken from the JA&D paper, and must match `^JA[IO]\d{8}$` (example `JAI26070001`). The YYMM must agree with the approval date entered on the seller. A number already on another seller is refused. The platform never generates or guesses the number (section 6).
+31. **IGP property catalog.** An Administrator or the Super Administrator maintains a catalog of IGP projects, the units of each project, and the Property Owner set on each unit. The sale form picks from this catalog.
+32. **Snapshot on the sale.** An issued sale keeps its own copy of the project name, unit or lot number and Property Owner name. Later catalog edits do not change issued sales.
+33. **Unit change.** A change of unit on an issued sale is never an edit. It is a cancel and reissue under section 5.3. The statement in section 1 that property title, property-owner contracts and document generation are not handled by the platform is unchanged.

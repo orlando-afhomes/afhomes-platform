@@ -84,11 +84,11 @@ export function SalesReportPanel() {
         <AdminStatCard loading={loading} error={error} label="Pending" value={<Money value={figures.pendingValue} />} icon={Clock} tone="warning" description={`${figures.pendingCount} sale(s)`} />
       </AdminStatGrid>
       <ReportTable report="Sales Performance" fileName="sales-performance" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => `${row.kind}-${row.id}`} getRowTitle={(row) => row.customer} loading={loading} error={error} emptyText="No sales match."
-        filters={<FilterBar search={search} onSearch={setSearch} searchLabel="Search sales" filters={[
+        filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search sales" filters={[
           { label: "Sale type filter", value: kind, onChange: setKind, options: optionsFrom("All sale types", inPeriod.map((row) => row.kind)) },
           { label: "Sale status filter", value: status, onChange: setStatus, options: optionsFrom("All statuses", inPeriod.map((row) => row.status), humanize) },
           { label: "Seller filter", value: seller, onChange: setSeller, options: optionsFrom("All sellers", inPeriod.map((row) => row.seller)) },
-        ]} />} />
+        ]}>{range.dateFields}{exportButton}</FilterBar>} />
     </ReportFrame>
   );
 }

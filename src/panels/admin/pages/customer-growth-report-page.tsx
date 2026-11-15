@@ -43,10 +43,10 @@ export function CustomerGrowthReportPanel() {
         <AdminStatCard loading={customers.isLoading} error={customers.error} label="All customers" value={customerList.length} icon={Users} tone="info" />
       </AdminStatGrid>
       <ReportTable report="Customer Growth" fileName="customer-growth" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => row.id} loading={customers.isLoading} error={customers.error} emptyText="No customers match."
-        filters={<FilterBar search={search} onSearch={setSearch} searchLabel="Search customers" filters={[
+        filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search customers" filters={[
           { label: "Status filter", value: status, onChange: setStatus, options: optionsFrom("All statuses", inPeriod.map((item) => item.status), humanize) },
           { label: "VIP plan filter", value: plan, onChange: setPlan, options: optionsFrom("All VIP plans", inPeriod.map((item) => item.vipPlan)) },
-        ]} />} />
+        ]}>{range.dateFields}{exportButton}</FilterBar>} />
     </ReportFrame>
   );
 }

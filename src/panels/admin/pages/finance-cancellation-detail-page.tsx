@@ -33,7 +33,7 @@ export function FinanceCancellationDetailPage({ contractId }: { contractId: stri
         return canDecide && pending && pending.requestedBy !== identity.id ? (
           <>
             <Button variant="destructive" className={BUTTON} onClick={() => setDialogKind("confirm")}>Confirm cancellation</Button>
-            <Button variant="outline" className={BUTTON} onClick={() => setDialogKind("decline")}>Decline cancellation</Button>
+            <Button variant="warning" className={BUTTON} onClick={() => setDialogKind("decline")}>Decline cancellation</Button>
           </>
         ) : null;
       }}

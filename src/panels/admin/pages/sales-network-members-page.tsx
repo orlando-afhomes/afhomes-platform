@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
 import type { OrgMember } from "@/modules/organization/types";
 import type { AccreditationRecord } from "@/modules/accreditation/types";
@@ -54,7 +53,16 @@ const ACCREDITATION_ITEMS = withAll("All accreditation", [
   { value: "none", label: "No record" },
 ]);
 
-export function SalesNetworkMembersPage({ embedded = false }: { embedded?: boolean } = {}) {
+/** The area page owns "Add IST" and "Add OST" in the page header and passes the open dialog down. */
+export function SalesNetworkMembersPage({
+  embedded = false,
+  accreditedMode = null,
+  onAccreditedModeChange,
+}: {
+  embedded?: boolean;
+  accreditedMode?: "IST" | "OST" | null;
+  onAccreditedModeChange?: (mode: "IST" | "OST" | null) => void;
+} = {}) {
   const router = useRouter();
   const { identity } = useDevIdentity();
   const store = useMockStore();
@@ -70,7 +78,6 @@ export function SalesNetworkMembersPage({ embedded = false }: { embedded?: boole
   const [accreditationFilter, setAccreditationFilter] = useState("all");
   const [sortAsc, setSortAsc] = useState(true);
 
-  const [accreditedMode, setAccreditedMode] = useState<"IST" | "OST" | null>(null);
   const [editMember, setEditMember] = useState<OrgMember | null>(null);
   const [transferMember, setTransferMember] = useState<OrgMember | null>(null);
   const [accreditMember, setAccreditMember] = useState<OrgMember | null>(null);
@@ -135,7 +142,7 @@ export function SalesNetworkMembersPage({ embedded = false }: { embedded?: boole
         title: reactivate ? `Reactivate ${record.displayName}?` : `Deactivate ${record.displayName}?`,
         description: reactivate ? "The member will regain active access." : "The member will lose active access and move to Inactive.",
         confirmText: reactivate ? "Reactivate" : "Deactivate",
-        danger: !reactivate,
+        danger: !reactivate, tone: reactivate ? "success" : "destructive",
         action: () => changeStatus({ id: record.id, status: reactivate ? "active" : "inactive" }),
         successTitle: reactivate ? "Member reactivated." : "Member deactivated.",
         successDescription: `${record.displayName} is now ${reactivate ? "Active" : "Inactive"}.`,
@@ -156,9 +163,7 @@ export function SalesNetworkMembersPage({ embedded = false }: { embedded?: boole
         id: "displayName",
         header: "Name",
         cell: ({ row }) => (
-          <Link className="tw:inline-flex tw:min-h-11 tw:items-center tw:font-semibold tw:text-primary tw:underline-offset-4 tw:hover:underline tw:sm:min-h-0" href={`/admin/sales-network/members/${row.original.aaNumber ?? row.original.id}`}>
-            {row.original.displayName}
-          </Link>
+          <span className="tw:font-semibold">{row.original.displayName}</span>
         ),
       },
       {
@@ -177,35 +182,31 @@ export function SalesNetworkMembersPage({ embedded = false }: { embedded?: boole
           const record = row.original;
           const records = accreditationRecordsByMember.get(record.id);
           const renew = resolveRenewTarget(records);
-          return (
-            <RowActionsMenu
-              {...buildMemberMenuProps(
-                record,
-                {
-                  canManage,
-                  canTransfer,
-                  canChangeStatus,
-                  canReactivate: isAdmin,
-                  canEditAccreditation,
-                  canRenew,
-                  accreditationNone: resolveAccreditationDisplay(records).kind === "none",
-                  renewalAllowed: renew.open,
-                },
-                {
-                  onView: () => router.push(`/admin/sales-network/members/${record.aaNumber ?? record.id}`),
-                  onEdit: () => setEditMember(record),
-                  onTransfer: () => setTransferMember(record),
-                  onChangeStatus: () => toggleStatus(record),
-                  onSetAccreditation: () => setAccreditMember(record),
-                  onRenew: renew.record ? () => setRenewTarget({ record: renew.record as AccreditationRecord, memberName: record.displayName }) : undefined,
-                },
-              )}
-            />
+          const menu = buildMemberMenuProps(
+            record,
+            {
+              canManage,
+              canTransfer,
+              canChangeStatus,
+              canReactivate: isAdmin,
+              canEditAccreditation,
+              canRenew,
+              accreditationNone: resolveAccreditationDisplay(records).kind === "none",
+              renewalAllowed: renew.open,
+            },
+            {
+              onEdit: () => setEditMember(record),
+              onTransfer: () => setTransferMember(record),
+              onChangeStatus: () => toggleStatus(record),
+              onSetAccreditation: () => setAccreditMember(record),
+              onRenew: renew.record ? () => setRenewTarget({ record: renew.record as AccreditationRecord, memberName: record.displayName }) : undefined,
+            },
           );
+          return <RowActionsMenu {...menu} />;
         },
       },
     ];
-  }, [members, accreditationRecordsByMember, canEditAccreditation, canRenew, canManage, canTransfer, canChangeStatus, isAdmin, changeStatus, confirmRun, setEditMember, setTransferMember, setAccreditMember, setRenewTarget, router]);
+  }, [members, accreditationRecordsByMember, canEditAccreditation, canRenew, canManage, canTransfer, canChangeStatus, isAdmin, changeStatus, confirmRun, setEditMember, setTransferMember, setAccreditMember, setRenewTarget]);
 
   if (!granted.has("sales-network-members")) {
     return (
@@ -223,18 +224,6 @@ export function SalesNetworkMembersPage({ embedded = false }: { embedded?: boole
       anyOf={["sales-network-members"]}
       title="Sales Network Members"
       crumbs={[{ label: "Sales Network" }, { label: "Members" }]}
-      actions={
-        canManage ? (
-          <>
-            <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setAccreditedMode("IST")}>
-              Add IST
-            </Button>
-            <Button variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setAccreditedMode("OST")}>
-              Add OST
-            </Button>
-          </>
-        ) : null
-      }
     >
       <FilterBar
         search={search}
@@ -271,9 +260,9 @@ export function SalesNetworkMembersPage({ embedded = false }: { embedded?: boole
         <AccreditedSellerDialog
           mode={accreditedMode}
           open
-          onClose={() => setAccreditedMode(null)}
+          onClose={() => onAccreditedModeChange?.(null)}
           onCreated={(memberKey) => {
-            setAccreditedMode(null);
+            onAccreditedModeChange?.(null);
             router.push(`/admin/sales-network/members/${memberKey}`);
           }}
         />
@@ -307,7 +296,7 @@ export function SalesNetworkMembersPage({ embedded = false }: { embedded?: boole
         open={renewTarget !== null}
         title="Renew accreditation?"
         description={`Renew the accreditation of ${renewTarget?.memberName ?? ""} today? A new AA number is issued for this month and is valid for one year from today. The current number ${renewTarget?.record.aaNumber} is kept in the AA Number History, and all sales, team and referrer links carry over.`}
-        confirmText="Renew"
+        confirmText="Renew" tone="success"
         pending={renewAccreditation.isPending}
         onConfirm={() => {
           const target = renewTarget;

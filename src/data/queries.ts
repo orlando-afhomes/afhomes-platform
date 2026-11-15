@@ -137,6 +137,20 @@ export function useAuditEvents(query?: AuditQuery) {
   });
 }
 
+/** Everyone who appears as an actor in the audit history (System included), for the actor filter. Same access rules as `useAuditEvents`. */
+export function useAuditActors() {
+  const repositories = useMockRepositories();
+  const store = useMockStore();
+  const { identity } = useDevIdentity();
+  const access = canReadAuditHistory(store, identity) ? "read" : "denied";
+  return useQuery({
+    queryKey: [...queryKeys.audit.all, identity.id, access, "actors"] as const,
+    queryFn: ({ signal }) => repositories.audit.listActors({ signal }),
+    retry: false,
+    gcTime: 0,
+  });
+}
+
 /** Audited mutations append events, so every cached audit view is refreshed after one succeeds. */
 function invalidateAudit(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: queryKeys.audit.all });

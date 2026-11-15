@@ -181,6 +181,22 @@ Feature-based organization (see example in architecture.md). Pages compose featu
 - No dark mode: `@custom-variant dark` binds `dark:` variants to a `.dark` ancestor that the application never sets.
 - The CLI is run only with `add`; do not run `shadcn init` (it rewrites `globals.css`). Review generated files and keep imports on `@/shared/lib/utils`.
 
+### 14.0.1 Buttons, tables and page actions (owner rulings UI5 to UI7, 2026-11-15)
+
+Presentation rules only; tokens in `tokens.css` are unchanged (see `docs/implementation/decisions-and-gaps.md`).
+
+- **Button colors by purpose** (`src/shared/ui/button.tsx` variants):
+  - `default` (dark green): the main action of a page or form.
+  - `success` (green): Approve, Confirm, Verify.
+  - `destructive` (red): Reject, Cancel a record, Delete, Decline.
+  - `warning` (amber): Send back, Return, Adjust, Correct, Hold.
+  - `info` (blue): Export, Download, Print, View records.
+  - `outline` (neutral white): Cancel and Close inside pop-ups.
+- **Tables:** use `DataTable` (`src/shared/components/modern/data-table.tsx`) with `onRowOpen` so the whole row opens the record. No underlined links in cells and no "View full details" item in the row menu. Keep the row "..." menu only on table rows; a full details page shows its action buttons once, in the page header.
+- **Empty values:** render `EMPTY` or `displayValue(value)` from `src/shared/lib/empty-value.ts` (an em dash); never a blank cell. One value per column; a details view shows every value of the row.
+- **Page actions:** pass buttons through the `actions` prop of `AreaPage` (`src/shared/components/admin/area-page.tsx`), which places them at the right of the page heading, not under the tabs. `actions` may be a function of the active tab for per-tab buttons.
+- **Staff wording (UI8):** no "version" labels or technical IDs on screens; reports use a From and To date range.
+
 ### 14.1 Production UI Standards
 
 Application-facing screens must not display developer notes, debug controls, temporary design-preview links, milestone labels, mock diagnostics, or internal implementation commentary. Development-only tooling must remain isolated from normal application experiences and unavailable in production builds. Every visible control must serve a legitimate purpose, and incomplete functionality must be represented honestly without misleading production behavior.

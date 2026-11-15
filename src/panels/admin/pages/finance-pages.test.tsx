@@ -11,10 +11,10 @@ import CollectionsRoute from "@/app/admin/finance/collections/page";
 import PayoutsRoute from "@/app/admin/commissions/payouts/page";
 import HistoricalImportRoute from "@/app/admin/reports/historical-import/page";
 
-const navigation = vi.hoisted(() => ({ search: "", redirect: vi.fn() }));
+const navigation = vi.hoisted(() => ({ search: "", redirect: vi.fn(), push: vi.fn() }));
 vi.mock("next/navigation", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/navigation")>()),
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+  useRouter: () => ({ push: navigation.push, replace: vi.fn(), back: vi.fn() }),
   usePathname: () => "/admin/finance",
   useSearchParams: () => new URLSearchParams(navigation.search),
   redirect: navigation.redirect,
@@ -35,6 +35,7 @@ afterEach(() => {
   cleanup();
   navigation.search = "";
   navigation.redirect.mockClear();
+  navigation.push.mockClear();
   window.history.replaceState(null, "", "/");
 });
 
@@ -47,14 +48,26 @@ const tabNames = () => screen.getAllByRole("tab").map((tab) => tab.textContent);
 
 describe("Finance list filters", () => {
   it.each([
-    ["holds", "Search financial holds", "Open contract", "No holds match the filters."],
-    ["cancellations", "Search cancellation requests", "Open request", "No requests match the filters."],
-  ])("search narrows %s", async (tab, searchLabel, link, none) => {
+    ["holds", "Search financial holds", /^Open contract of /, "No holds match the filters."],
+    ["cancellations", "Search cancellation requests", /^Open cancellation request from /, "No requests match the filters."],
+  ])("search narrows %s", async (tab, searchLabel, rowName, none) => {
     show(<FinanceAreaPage />, tab);
-    expect(await screen.findByRole("link", { name: link })).toBeInTheDocument();
+    const [first] = await screen.findAllByRole("row", { name: rowName });
+    expect(within(first.closest("table") as HTMLElement).queryByRole("link")).toBeNull();
     await userEvent.type(screen.getByRole("searchbox", { name: searchLabel }), "zzz-no-such-record");
     expect(await screen.findByText(none)).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: link })).toBeNull();
+    expect(screen.queryByRole("row", { name: rowName })).toBeNull();
+  });
+
+  it.each([
+    ["holds", "Customer, Plan, Status", /^Open contract of /, "/admin/"],
+    ["cancellations", "Customer, Product, Ground", /^Open cancellation request from /, "/admin/finance/cancellations/"],
+  ])("opens the record when a %s row is clicked, with no link column", async (tab, columns, rowName, target) => {
+    show(<FinanceAreaPage />, tab);
+    const [row] = await screen.findAllByRole("row", { name: rowName });
+    expect(headers(row.closest("table") as HTMLElement)).toEqual(columns.split(", "));
+    await userEvent.click(row);
+    expect(navigation.push).toHaveBeenCalledWith(expect.stringContaining(target));
   });
 });
 
@@ -144,4 +157,16 @@ it("keeps Finance and Commissions bookmarks working", async () => {
   expect(navigation.redirect).toHaveBeenLastCalledWith("/admin/finance?tab=historical-import");
   await PayoutsRoute({ searchParams: Promise.resolve({}) });
   expect(navigation.redirect).toHaveBeenLastCalledWith("/admin/commissions?tab=payouts");
+});
+
+describe("Month-end close", () => {
+  it("puts the month picker, the red Close month button and the table together", async () => {
+    show(<FinanceAreaPage />, "month-end-close", "dev-admin");
+    const toolbar = await screen.findByRole("region", { name: "Close a month" });
+    expect(within(toolbar).getByLabelText("Month")).toBeInTheDocument();
+    expect(within(toolbar).getByRole("button", { name: "Close month" }).className).toContain("tw:bg-destructive");
+    const closed = screen.getByRole("region", { name: "Closed months" });
+    expect(headers(await within(closed).findByRole("table", { name: "Closed months" }))).toEqual(["Month", "Sales", "Net collections", "Commission", "Closed on"]);
+    expect(within(closed).queryByRole("link")).toBeNull();
+  });
 });

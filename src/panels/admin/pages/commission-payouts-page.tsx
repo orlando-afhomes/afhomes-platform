@@ -1,5 +1,6 @@
 "use client";
 
+import { EMPTY } from "@/shared/lib/empty-value";
 import { useMemo, useState } from "react";
 import { useCommissionAction, useCommissionPayoutListAction, useCommissionPayoutLists, useCommissions, useOperation } from "@/data/business-queries";
 import type { CommissionView } from "@/data/contracts/commission-repository";
@@ -8,12 +9,11 @@ import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { AdminStatGrid, AdminStatCard } from "@/shared/components/admin";
-import { BadgeCheck, Banknote, Clock } from "lucide-react";
+import { BadgeCheck, Banknote, Clock, ListChecks } from "lucide-react";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
-import { COMMISSION_COLUMNS, CommissionDetailsSheet, PayoutDialog, releaseOpen, type CommissionMenuItem } from "../components/commission-shared";
+import { COMMISSION_COLUMNS, CommissionDetailsSheet, MonthField, PayoutDialog, releaseOpen, type CommissionMenuItem } from "../components/commission-shared";
 import { Button } from "@/shared/ui/button";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
-import { TextField } from "@/shared/forms/modern";
 import { manilaToday } from "@/shared/lib/dates";
 import { formatDate } from "@/shared/lib/format-date";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
@@ -44,7 +44,7 @@ export function CommissionPayoutsPanel({ preparing, onPreparingChange }: { prepa
   // Memoized: TanStack renders cell functions as components, so a new columns
   // array on every render would remount every cell (and close an open row menu).
   const listColumns = useMemo<ColumnDef<CommissionPayoutList, unknown>[]>(() => [
-    { header: "Month", accessorKey: "month" },
+    { header: "Month", cell: ({ row }) => <span className="tw:font-semibold">{row.original.month}</span> },
     { header: "Commissions", cell: ({ row }) => row.original.entries.length },
     { header: "Amount", cell: ({ row }) => <Money value={row.original.entries.reduce((sum, item) => sum + item.amountCentavos, 0)} /> },
     { header: "Status", cell: ({ row }) => row.original.approvedAt ? "Approved" : "Prepared" },
@@ -57,11 +57,11 @@ export function CommissionPayoutsPanel({ preparing, onPreparingChange }: { prepa
 
   const itemsFor = (item: CommissionView): CommissionMenuItem[] => {
     if (!canPayout) return [];
-    if (!item.payout) return releaseOpen(item) ? [{ key: "payout", label: "Record payout", onClick: () => setPayoutFor(item) }] : [];
+    if (!item.payout) return releaseOpen(item) ? [{ key: "payout", label: "Record payout", tone: "success", onClick: () => setPayoutFor(item) }] : [];
     if (item.payout.confirmedAt) return [];
     return [
-      { key: "confirm", label: "Confirm disbursement", onClick: () => confirmRun({ title: "Confirm disbursement?", description: `Mark ${item.recipientName}'s commission as paid.`, confirmText: "Confirm", action: () => action.mutateAsync({ id: item.id, action: "confirm" }), successTitle: "Commission marked as Paid.", errorTitle: "Could not confirm" }) },
-      ...(item.status === "on_hold" ? [{ key: "void", label: "Void payout", danger: true, onClick: () => setVoidId(item.id) }] : []),
+      { key: "confirm", label: "Confirm disbursement", tone: "success", onClick: () => confirmRun({ title: "Confirm disbursement?", description: `Mark ${item.recipientName}'s commission as paid.`, confirmText: "Confirm", tone: "success", action: () => action.mutateAsync({ id: item.id, action: "confirm" }), successTitle: "Commission marked as Paid.", errorTitle: "Could not confirm" }) },
+      ...(item.status === "on_hold" ? [{ key: "void", label: "Void payout", tone: "danger" as const, onClick: () => setVoidId(item.id) }] : []),
     ];
   };
   const detail = detailId ? approved.find((item) => item.id === detailId) ?? null : null;
@@ -84,7 +84,7 @@ export function CommissionPayoutsPanel({ preparing, onPreparingChange }: { prepa
     setListId(null);
     confirmRun({
       title: "Approve payout list?", description: `Approve eligible commissions from ${list.month} for payment.`,
-      confirmText: "Approve", action: () => listAction.mutateAsync({ kind: "approve", id: list.id }),
+      confirmText: "Approve", tone: "success", action: () => listAction.mutateAsync({ kind: "approve", id: list.id }),
       successTitle: "Payout list approved.", errorTitle: "Could not approve",
     });
   }
@@ -99,24 +99,34 @@ export function CommissionPayoutsPanel({ preparing, onPreparingChange }: { prepa
           <QueryState isLoading={lists.isLoading} error={lists.error}>
             <DataTable data={visibleLists} caption="Monthly payout lists" emptyText={(lists.data ?? []).length === 0 ? "No payout lists prepared." : "No payout lists match the filters."} getRowId={(row) => row.id}
               onRowOpen={(row) => setListId(row.id)} getRowLabel={(row) => `Review payout list for ${row.month}`}
-              rowActions={(row) => <RowActionsMenu itemName={`payout list for ${row.month}`} onView={() => setListId(row.id)} />} columns={listColumns} />
+              columns={listColumns} />
           </QueryState>
           <RecordDetailsSheet open={Boolean(selectedList)} title={selectedList ? `Payout list for ${selectedList.month}` : "Payout list"} onClose={() => setListId(null)}
             subtitle={selectedList ? (selectedList.approvedAt ? `Approved ${formatDate(selectedList.approvedAt)}` : "Prepared") : undefined}
+            icon={<ListChecks />}
             sections={selectedList ? [{
+              title: "Payout list",
+              rows: [
+                { label: "Month", value: selectedList.month },
+                { label: "Status", value: selectedList.approvedAt ? "Approved" : "Prepared" },
+                { label: "Approved on", value: selectedList.approvedAt ? formatDate(selectedList.approvedAt) : null },
+                { label: "Commissions", value: selectedList.entries.length },
+                { label: "Total amount", value: <Money value={selectedList.entries.reduce((sum, item) => sum + item.amountCentavos, 0)} /> },
+              ],
+            }, {
               title: "Commissions",
               rows: selectedList.entries.map((entry) => {
                 const commission = commissions.data?.find(({ id }) => id === entry.commissionId);
                 const label = commission ? `${commission.recipientName} · ${commission.saleReference ?? commission.customerName}`
-                  : `${entry.recipientName ?? entry.recipientMemberId} · ${entry.saleLabel ?? entry.saleId}`;
+                  : `${entry.recipientName ?? EMPTY} · ${entry.saleLabel ?? EMPTY}`;
                 return { label, value: <><Money value={entry.amountCentavos} /> {selectedList.approvedAt && selectedList.approvedCommissionIds && !selectedList.approvedCommissionIds.includes(entry.commissionId) ? "· Excluded from approval" : ""}</> };
               }),
             }] : []}
-            footer={canApprove && selectedList && !selectedList.approvedAt ? <Button onClick={() => approve(selectedList)}>Approve list</Button> : undefined} />
+            footer={canApprove && selectedList && !selectedList.approvedAt ? <Button variant="success" onClick={() => approve(selectedList)}>Approve list</Button> : undefined} />
           {preparing ? <FormDialog open title="Prepare payout list" submitText="Prepare list" error={prepareError}
             pending={listAction.isPending} onClose={closePrepare}
             onSubmit={() => void listAction.mutateAsync({ kind: "prepare", month }).then(closePrepare).catch((failure: Error) => setPrepareError(failure.message))}>
-            <TextField label="Closed month (YYYY-MM)" required value={month} onChange={setMonth} />
+            <MonthField label="Closed month" required value={month} onChange={setMonth} />
           </FormDialog> : null}
         </section>
       ) : null}
@@ -137,7 +147,7 @@ export function CommissionPayoutsPanel({ preparing, onPreparingChange }: { prepa
               caption="Commission payouts"
               onRowOpen={(row) => setDetailId(row.id)}
               getRowLabel={(row) => `Open commission for ${row.recipientName}`}
-              rowActions={(row) => <RowActionsMenu itemName={`commission for ${row.recipientName}`} onView={() => setDetailId(row.id)} extraItems={itemsFor(row)} />}
+              rowActions={(row) => <RowActionsMenu itemName={`commission for ${row.recipientName}`} extraItems={itemsFor(row)} />}
             />
           </QueryState>
           <CommissionDetailsSheet detail={detail} onClose={() => setDetailId(null)} items={detail ? itemsFor(detail) : []} />

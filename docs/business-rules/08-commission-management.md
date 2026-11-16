@@ -173,6 +173,8 @@ Each seller record holds a DSC rate and a DRI rate for each product (VIP, IGP). 
 
 **Owner follow-up (2026-11-12).** If the closing seller's approved DSC rate or a recorded referrer's approved DRI rate is missing, keep the application and pause VIP Number issuance until an Administrator or Super Administrator records the approved rate. An explicitly approved zero is valid. Where one seller fills both roles, a separate dated referral reference verified during customer approval is required for DRI. Keep historical paid amounts intact.
 
+**Owner follow-up (2026-11-15, VIP position rates).** An Administrator or Super Administrator may record an approved VIP position rate with its approval reference. The platform copies that rate to a seller's record after an authorized Admin confirms the seller's service terms use it. An approved seller-specific rate takes precedence, including an approved zero. Changing the position rate affects later applications of that standard to seller records. VIP Number issuance uses the approved rates on the seller records and freezes them on the sale.
+
 ### 9.2 Changing a Person's Rate
 
 - An Administrator or the Super Administrator may set a rate that differs from the standard for a named person. The change applies to sales whose VIP Number is issued after it, never to existing sales.

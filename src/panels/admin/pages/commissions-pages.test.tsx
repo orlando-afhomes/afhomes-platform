@@ -54,6 +54,64 @@ describe("Commissions tables and details", () => {
   });
 });
 
+describe("Set rate", () => {
+  it("fills the approved VIP rate from the seller's position after the Admin confirms the terms", async () => {
+    const user = userEvent.setup();
+    show(<CommissionsAreaPage />, "rates");
+    await user.click(await screen.findByRole("button", { name: "Set VIP standard" }));
+    const setup = within(await screen.findByRole("dialog", { name: "Set approved VIP standard" }));
+    await user.click(setup.getByRole("combobox", { name: /^Seller position/ }));
+    await user.click(await screen.findByRole("option", { name: "OST" }));
+    await user.type(setup.getByLabelText(/^Approved standard/), "0");
+    await user.type(setup.getByLabelText(/^Approval reference/), "Demo approval 01");
+    await user.click(setup.getByRole("button", { name: "Save standard" }));
+    expect(await screen.findByText("Demo approval 01")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Set rate" }));
+    const form = within(await screen.findByRole("dialog", { name: "Set approved commission rate" }));
+    await user.click(form.getByRole("combobox", { name: "Customer" }));
+    await user.click(await screen.findByRole("option", { name: "Customer A One" }));
+    expect(form.getByRole("combobox", { name: /^Seller/ })).toHaveValue("Ana Mendoza");
+    expect(form.getByText(/Demo approval 01/)).toBeInTheDocument();
+    expect(form.queryByLabelText("Approved rate (%)")).not.toBeInTheDocument();
+    await user.type(form.getByLabelText(/^Seller's service terms reference/), "Demo seller terms 01");
+    await user.click(form.getByRole("button", { name: "Save rate" }));
+    expect(await form.findByRole("alert")).toHaveTextContent(/confirm/);
+    await user.click(form.getByRole("checkbox", { name: /I confirm/ }));
+    await user.click(form.getByRole("button", { name: "Save rate" }));
+    const rate = await screen.findByRole("row", { name: "Open rate for Ana Mendoza" });
+    expect(within(rate).getByText("0%")).toBeInTheDocument();
+  });
+
+  it("fills the closing seller from a customer and the referrer from the sale", async () => {
+    const user = userEvent.setup();
+    show(<CommissionsAreaPage />, "rates");
+    const setRate = await screen.findByRole("button", { name: "Set rate" });
+    await user.click(setRate);
+    const form = within(await screen.findByRole("dialog", { name: "Set approved commission rate" }));
+    await user.click(form.getByRole("combobox", { name: "Customer" }));
+    await user.click(await screen.findByRole("option", { name: "Customer A One" }));
+    expect(form.getByRole("combobox", { name: /^Seller/ })).toHaveValue("Ana Mendoza");
+    expect(form.getByRole("combobox", { name: /^Product/ })).toHaveValue("VIP");
+
+    await user.click(form.getByRole("combobox", { name: /^Commission type/ }));
+    await user.click(await screen.findByRole("option", { name: "Referrer" }));
+    expect(form.getByRole("combobox", { name: /^Seller/ })).toHaveValue("Paolo Ramos");
+  });
+
+  it("opens the rates dialog from an authorized sale link and removes the context on close", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/admin/commissions?tab=rates&sale=sale-1&role=DRI");
+    show(<CommissionsAreaPage />, "rates&sale=sale-1&role=DRI");
+    const form = within(await screen.findByRole("dialog", { name: "Set approved commission rate" }));
+    expect(form.getByRole("combobox", { name: "Customer" })).toHaveValue("Customer A One");
+    expect(form.getByRole("combobox", { name: /^Seller/ })).toHaveValue("Paolo Ramos");
+    await user.click(form.getByRole("button", { name: "Cancel" }));
+    expect(window.location.search).toBe("?tab=rates");
+    expect(screen.queryByRole("dialog", { name: "Set approved commission rate" })).toBeNull();
+  });
+});
+
 describe("Allowance review form", () => {
   it("shows the three steps, reveals fields only when needed, and validates the month", async () => {
     const user = userEvent.setup();

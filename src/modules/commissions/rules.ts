@@ -67,3 +67,10 @@ export function payoutReleaseDate(contract: Pick<Contract, "priceCentavos">, pay
 
 /** Verified share of the contract value in whole percent, rounded down, for messages only. */
 export const collectedPercent = collectionPercent;
+/** Convert an approved percentage to exact basis points. Blank is distinct from zero. */
+export function parseCommissionRate(value: string): number | null {
+  const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(value.trim());
+  if (!match) return null;
+  const rate = Number(match[1]) * 100 + Number(match[2]?.padEnd(2, "0") ?? "0");
+  return Number.isSafeInteger(rate) ? rate : null;
+}

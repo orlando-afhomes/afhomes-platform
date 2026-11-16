@@ -1,9 +1,14 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
-import type { Commission, CommissionClawback, CommissionPayoutList, CommissionRateSetting } from "@/modules/commissions/types";
+import type { ApplyVipPositionRateInput, Commission, CommissionClawback, CommissionPayoutList, CommissionRateSetting, VipPositionRate } from "@/modules/commissions/types";
 import type { AllowanceReview, AllowanceReviewInput } from "@/modules/commissions/allowances";
+import type { Designation } from "@/modules/organization/types";
 
 export type CommissionRateView = CommissionRateSetting & { memberName: string };
-export type CommissionRateDirectory = { members: { id: string; name: string }[]; rates: CommissionRateView[] };
+export type CommissionRateDirectory = {
+  members: { id: string; name: string; designation: Designation }[];
+  rates: CommissionRateView[];
+  positionRates: VipPositionRate[];
+};
 
 export type CommissionView = Commission & {
   customerName: string;
@@ -15,6 +20,8 @@ export type CommissionView = Commission & {
 export interface CommissionRepository {
   rateDirectory(options?: MockAsyncOptions): Promise<CommissionRateDirectory>;
   setRate(input: CommissionRateSetting & { reason: string }, options?: MockAsyncOptions): Promise<void>;
+  setPositionRate(input: VipPositionRate, options?: MockAsyncOptions): Promise<void>;
+  applyPositionRate(input: ApplyVipPositionRateInput, options?: MockAsyncOptions): Promise<void>;
   payoutLists(options?: MockAsyncOptions): Promise<CommissionPayoutList[]>;
   preparePayoutList(month: string, options?: MockAsyncOptions): Promise<CommissionPayoutList>;
   approvePayoutList(id: string, options?: MockAsyncOptions): Promise<CommissionPayoutList>;

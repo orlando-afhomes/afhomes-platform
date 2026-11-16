@@ -281,6 +281,29 @@ describe("supplementary holder and internal ids (G5)", () => {
 });
 
 describe("contract, payment, sale and membership workflow", () => {
+  it("issues a VIP Number with the approved position rate after the seller's terms are confirmed", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const standard = { designation: "OST", role: "DSC", rateBp: 500, approvalReference: "Test standard approval" } as const;
+    await admin.commissions.setPositionRate(standard);
+    await expect(admin.contracts.recordSignedAgreement("ctr-4")).rejects.toThrow(/approved DSC rate/i);
+    expect((await admin.contracts.getById("ctr-4"))?.missingCommissionRates).toMatchObject([{ role: "DSC" }]);
+
+    await admin.commissions.applyPositionRate({
+      memberId: "mem-ost-a2",
+      standard,
+      serviceTermsReference: "Test signed seller terms",
+    });
+    expect((await admin.contracts.getById("ctr-4"))?.missingCommissionRates).toEqual([]);
+    const issued = await admin.contracts.recordSignedAgreement("ctr-4");
+    expect(issued.vipNumber).toBeTruthy();
+
+    await admin.commissions.setPositionRate({ ...standard, rateBp: 600 });
+    expect(store.sales.find((sale) => sale.contractId === "ctr-4")?.commissionRates)
+      .toEqual([{ memberId: "mem-ost-a2", role: "DSC", rateBp: 500 }]);
+    expect((await admin.contracts.recordSignedAgreement("ctr-4")).vipNumber).toBe(issued.vipNumber);
+  });
+
   it("prepares a second purchase for the same customer", async () => {
     const store = createMockStore();
     const admin = as(store, "dev-admin");

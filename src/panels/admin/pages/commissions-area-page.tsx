@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 import { useCommissionRates, useOperation } from "@/data/business-queries";
 import { AreaPage } from "@/shared/components/admin";
 import { Button } from "@/shared/ui/button";
 import { ADMIN_AREA_TABS, type AdminAreaTabValue } from "../navigation";
 import { useAdminAreaTabAccess } from "../use-role-aware-navigation";
 import { AllowanceReviewPanel } from "./allowance-review-page";
-import { CommissionRatesPanel } from "./commission-assignment-page";
+import { CommissionRatesPanel, type RateSaleContext } from "./commission-assignment-page";
 import { CommissionPayoutsPanel } from "./commission-payouts-page";
 import { CommissionRecoveryPanel, CommissionsPanel, useCommissionRecoveryVisible } from "./commissions-page";
 
@@ -24,13 +25,34 @@ function PrepareListButton({ onClick }: { onClick: () => void }) {
 export function CommissionsAreaPage() {
   const access = useAdminAreaTabAccess("commissions");
   const recoveryVisible = useCommissionRecoveryVisible();
-  const [editing, setEditing] = useState(false);
+  const params = useSearchParams();
+  const saleId = access.rates && params?.get("tab") === "rates" ? params.get("sale") : null;
+  const saleRole = params?.get("role") === "DRI" ? "DRI" : "DSC";
+  const saleContext: RateSaleContext | undefined = saleId ? { saleId, role: saleRole } : undefined;
+  const saleLink = saleId ? `${saleId}:${saleRole}` : "";
+  const [seenSaleLink, setSeenSaleLink] = useState(saleLink);
+  const [editing, setEditing] = useState(Boolean(saleLink));
   const [preparing, setPreparing] = useState(false);
+  if (seenSaleLink !== saleLink) {
+    setSeenSaleLink(saleLink);
+    setEditing(Boolean(saleLink));
+  }
+
+  const onEditingChange = (open: boolean) => {
+    if (!open && saleContext) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("sale");
+      url.searchParams.delete("role");
+      // Pass null so Next synchronizes useSearchParams with the updated URL.
+      window.history.replaceState(null, "", url);
+    }
+    setEditing(open);
+  };
   const panels: Record<AdminAreaTabValue<"commissions">, () => ReactNode> = {
     commissions: () => <CommissionsPanel />,
     payouts: () => <CommissionPayoutsPanel preparing={preparing} onPreparingChange={setPreparing} />,
     recovery: () => <CommissionRecoveryPanel />,
-    rates: () => <CommissionRatesPanel editing={editing} onEditingChange={setEditing} />,
+    rates: () => <CommissionRatesPanel editing={editing} onEditingChange={onEditingChange} saleContext={saleContext} />,
     allowances: () => <AllowanceReviewPanel />,
   };
   const tabs = ADMIN_AREA_TABS.commissions.map(({ label, value }) => ({

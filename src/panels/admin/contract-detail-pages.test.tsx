@@ -43,6 +43,16 @@ describe("contract detail pages show only their own process actions", () => {
     expect(button("Edit details")).toBeNull();
   });
 
+  it("shows a missing VIP rate before issuance and links an Admin to the affected sale", async () => {
+    show("dev-admin", <ContractReviewDetailPage contractId="ctr-3" />);
+    expect(await screen.findByText("Approved commission rates needed")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Set closing seller rate" })).toHaveAttribute(
+      "href",
+      "/admin/commissions?tab=rates&sale=sale-3&role=DSC",
+    );
+    expect(button("Finalize")).toBeEnabled();
+  });
+
   it("Sales contract shows tabbed Overview with KPI and status cards and no review or finance actions", async () => {
     show("dev-admin", <SalesContractDetailPage contractId="ctr-3" />);
     const summary = await screen.findByRole("group", { name: "Contract summary" });

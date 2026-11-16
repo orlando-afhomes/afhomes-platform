@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { Award, Calendar, CalendarCheck, CalendarDays, Check, Clock, CreditCard, Diamond, FileText, Hourglass, IdCard, Layers, Receipt, Star, Tag, User, UserCheck, type LucideIcon } from "lucide-react";
 import { useContracts, useMemberships, usePayments } from "@/data/business-queries";
 import type { ContractView } from "@/data/contracts/contract-repository";
@@ -23,6 +24,7 @@ import { DetailSkeleton } from "@/shared/components/modern/skeletons";
 import { AdminPage, AdminSection, AdminSectionHeading, AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
 import { humanize } from "@/shared/lib/humanize";
 import { recordLabel } from "@/shared/lib/record-label";
+import { useAdminAreaTabAccess } from "../use-role-aware-navigation";
 
 /** Contract with its payments, membership, schedule, ledger and milestones, derived once for every detail page. */
 export function useContractRecord(contractId: string, includePaymentReference = false) {
@@ -43,6 +45,34 @@ export function useContractRecord(contractId: string, includePaymentReference = 
 }
 
 export type ContractRecord = Omit<ReturnType<typeof useContractRecord>, "contract"> & { contract: ContractView };
+
+export function ContractCommissionRateNotice({ contract, membership }: ContractRecord) {
+  const access = useAdminAreaTabAccess("commissions");
+  if (membership?.cardId || contract.missingCommissionRates.length === 0) return null;
+  return (
+    <InfoNote title="Approved commission rates needed">
+      <p>AFHomes needs these rates before it can issue the VIP Number.</p>
+      <ul className="tw:mt-2 tw:space-y-1">
+        {contract.missingCommissionRates.map(({ role, memberName }) => {
+          const recipient = role === "DSC" ? "closing seller" : "referrer";
+          return (
+            <li key={role} className="tw:flex tw:flex-wrap tw:items-baseline tw:gap-x-3">
+              <span>{memberName ? `${memberName} needs an approved VIP ${recipient} rate.` : `The ${recipient} needs an approved VIP rate.`}</span>
+              {access.rates && contract.sale ? (
+                <Link
+                  href={`/admin/commissions?tab=rates&sale=${encodeURIComponent(contract.sale.id)}&role=${role}`}
+                  className="tw:font-semibold tw:text-primary tw:underline tw:underline-offset-4"
+                >
+                  Set {recipient} rate
+                </Link>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </InfoNote>
+  );
+}
 
 /** Shared page frame: loading and not-found states, then the page body for a found contract. */
 export function ContractPageFrame({

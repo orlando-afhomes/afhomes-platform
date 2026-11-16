@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import type { CommissionRateSetting } from "@/modules/commissions/types";
+import type { ApplyVipPositionRateInput, CommissionRateSetting, VipPositionRate } from "@/modules/commissions/types";
 import type { AllowanceReviewInput } from "@/modules/commissions/allowances";
 import type { PrepareContractInput, UpdateContractInput } from "@/data/contracts/contract-repository";
 import type { PaymentSchemeInput, ProductCreateInput, ProductUpdateInput } from "@/data/contracts/product-repository";
@@ -237,6 +237,14 @@ export function useCommissionRates(enabled: boolean) {
 
 export function useSaveCommissionRate() {
   return useBusinessMutation((r, input: CommissionRateSetting & { reason: string }) => r.commissions.setRate(input));
+}
+
+export function useSaveVipPositionRate() {
+  return useBusinessMutation((r, input: VipPositionRate) => r.commissions.setPositionRate(input));
+}
+
+export function useApplyVipPositionRate() {
+  return useBusinessMutation((r, input: ApplyVipPositionRateInput) => r.commissions.applyPositionRate(input));
 }
 
 export function useCommissionPayoutLists(enabled: boolean) {

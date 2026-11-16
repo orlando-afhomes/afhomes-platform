@@ -7,7 +7,7 @@ import { totalVerifiedCentavos } from "@/modules/finance/rules";
 import type { DevIdentity } from "@/modules/identity/types";
 import { VIP_CLOSED_DEAL_THRESHOLD_BP } from "@/modules/sales/rules";
 import { buildVipNumber } from "@/modules/membership/rules";
-import { freezeCommissionRates } from "./commission-effects";
+import { findApprovedCommissionRate, freezeCommissionRates } from "./commission-effects";
 import { commissionStageAmounts } from "@/modules/commissions/rules";
 import { evaluateSaleParties, salePartyBlockMessage } from "@/modules/sales/accreditation-standing";
 import { applicablePriceStatus } from "@/modules/vip/pricing";
@@ -28,6 +28,19 @@ function snapshotPaymentCode(scheme: PaymentScheme, tier: VipTierCode): string |
 export function viewContract(store: MockStore, contract: Contract): ContractView {
   const sale = store.sales.find((item) => item.contractId === contract.id);
   const seller = contract.sellerMemberId ? store.members.find((member) => member.id === contract.sellerMemberId) : null;
+  const parties = sale ?? contract;
+  const missingCommissionRates: ContractView["missingCommissionRates"] = [];
+  if (!contract.vipNumber && contract.status !== "cancelled") {
+    const referrerMemberId = !sale && contract.referrerMemberId === undefined
+      ? store.customers.find((item) => item.id === contract.customerId)?.referrerMemberId
+      : parties.referrerMemberId;
+    const recipients = [["DSC", parties.sellerMemberId], ["DRI", referrerMemberId]] as const;
+    for (const [role, memberId] of recipients) {
+      if (memberId && !findApprovedCommissionRate(store, memberId, "VIP", role)) {
+        missingCommissionRates.push({ role, memberName: store.members.find((member) => member.id === memberId)?.displayName ?? null });
+      }
+    }
+  }
   return JSON.parse(
     JSON.stringify({
       ...contract,
@@ -35,6 +48,7 @@ export function viewContract(store: MockStore, contract: Contract): ContractView
       sellerName: seller?.displayName ?? null,
       sale: sale ? { id: sale.id, status: sale.status, confirmedDate: sale.confirmedDate } : null,
       holds: finalizationHolds(contract),
+      missingCommissionRates,
     }),
   ) as ContractView;
 }

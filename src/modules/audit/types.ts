@@ -4,7 +4,7 @@ export type AuditModule =
 
 export type AuditEntityType =
   | "member" | "accreditation" | "registration" | "account" | "staff" | "department-role" | "department"
-  | "customer" | "customer-import" | "customer-export" | "report-export" | "product" | "payment-scheme" | "contract" | "sale" | "payment" | "membership" | "commission" | "resort-spend" | "receipt-import" | "reconciliation" | "redemption-booking" | "redemption-config" | "reference-entry" | "tier-level" | "outlet" | "promo" | "igp-project" | "igp-unit";
+  | "customer" | "customer-import" | "customer-export" | "report-export" | "product" | "payment-scheme" | "contract" | "sale" | "payment" | "membership" | "commission" | "commission-position-rate" | "resort-spend" | "receipt-import" | "reconciliation" | "redemption-booking" | "redemption-config" | "reference-entry" | "tier-level" | "outlet" | "promo" | "igp-project" | "igp-unit";
 
 /** Minimal append-only mock audit event for Sales Network / Accreditation / Organization actions. */
 export type AuditEvent = {
@@ -54,7 +54,7 @@ export const AUDIT_MODULES = [
 ] as const satisfies ReadonlyArray<AuditEvent["module"]>;
 export const AUDIT_ENTITY_TYPES = [
   "member", "accreditation", "registration", "account", "staff", "department-role", "department",
-  "customer", "report-export", "product", "payment-scheme", "contract", "sale", "payment", "membership", "commission", "resort-spend", "receipt-import", "reconciliation", "redemption-booking", "redemption-config", "reference-entry", "tier-level", "outlet", "promo", "igp-project", "igp-unit",
+  "customer", "report-export", "product", "payment-scheme", "contract", "sale", "payment", "membership", "commission", "commission-position-rate", "resort-spend", "receipt-import", "reconciliation", "redemption-booking", "redemption-config", "reference-entry", "tier-level", "outlet", "promo", "igp-project", "igp-unit",
 ] as const satisfies ReadonlyArray<AuditEvent["entityType"]>;
 
 /** Plain labels for record types whose automatic title-casing reads wrong (acronyms, sentence case). */

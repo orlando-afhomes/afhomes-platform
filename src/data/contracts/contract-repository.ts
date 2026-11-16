@@ -1,6 +1,7 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { Contract, ContractCancellationGround } from "@/modules/contracts/types";
 import type { Sale } from "@/modules/sales/types";
+import type { CommissionRole } from "@/modules/commissions/types";
 
 /** Contract plus joined display values, so roles without customer access never need the customer record. */
 export type ContractView = Contract & {
@@ -9,6 +10,7 @@ export type ContractView = Contract & {
   sale: Pick<Sale, "id" | "status" | "confirmedDate"> | null;
   /** Reasons finalization is currently held; empty when the contract can be finalized. */
   holds: string[];
+  missingCommissionRates: { role: CommissionRole; memberName: string | null }[];
 };
 
 export type PrepareContractInput = {

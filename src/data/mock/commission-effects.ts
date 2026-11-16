@@ -8,6 +8,15 @@ import { activeRoles } from "./dev-identities";
 import { nextId } from "./ids";
 import type { MockStore } from "./seed";
 
+export function findApprovedCommissionRate(
+  store: Pick<MockStore, "commissionRateSettings">,
+  memberId: string,
+  product: CommissionProduct,
+  role: CommissionRole,
+) {
+  return store.commissionRateSettings.find((item) => item.memberId === memberId && item.product === product && item.role === role);
+}
+
 export function freezeCommissionRates(
   store: Pick<MockStore, "commissionRateSettings">,
   product: CommissionProduct,
@@ -19,7 +28,7 @@ export function freezeCommissionRates(
   const rateFor = (memberId: string, role: CommissionRole): FrozenCommissionRate => {
     const preserved = preservedRates.find((rate) => rate.memberId === memberId && rate.role === role);
     if (preserved) return preserved;
-    const setting = store.commissionRateSettings.find((item) => item.memberId === memberId && item.product === product && item.role === role);
+    const setting = findApprovedCommissionRate(store, memberId, product, role);
     if (!setting) throw new Error(`Record the approved ${role} rate for the ${role === "DSC" ? "closing seller" : "referrer"} before issuing the number.`);
     return { memberId, role, rateBp: setting.rateBp };
   };

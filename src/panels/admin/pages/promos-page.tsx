@@ -176,6 +176,8 @@ function PromoDialog({ editing, onClose }: { editing: PromoView | null; onClose:
     <FormDialog
       open
       title={editing ? "Edit promo" : "Add promo"}
+      size="lg"
+      scrollBody
       description={locked ? "Points were already earned, so the earning rule and dates are locked." : undefined}
       submitText={editing ? "Save" : "Add promo"}
       pending={save.isPending}
@@ -183,26 +185,32 @@ function PromoDialog({ editing, onClose }: { editing: PromoView | null; onClose:
       onClose={onClose}
       onSubmit={() => void submit()}
     >
-      <TextField label="Promo name" required value={name} maxLength={80} onChange={(value) => { setName(value); setError(undefined); }} />
-      <SelectField label="Status" required value={status} options={[{ value: "draft", label: "Draft" }, { value: "active", label: "Active" }]} onChange={(value) => setStatus(value === "active" ? "active" : "draft")} />
-      <div className="tw:grid tw:gap-3 tw:sm:grid-cols-2">
+      <div className="tw:grid tw:gap-x-4 tw:gap-y-3 tw:sm:grid-cols-2">
+        <div className="tw:min-w-0 tw:sm:col-span-2">
+          <TextField label="Promo name" required value={name} maxLength={80} onChange={(value) => { setName(value); setError(undefined); }} />
+        </div>
         <StandardDateField label="Start date" required disabled={locked} value={startDate} onChange={setStartDate} />
         <StandardDateField label="End date" required disabled={locked} value={endDate} onChange={setEndDate} />
+        <MoneyField label="Pesos spent per point" required disabled={locked} value={rate} onChange={setRate} hint="Qualifying spend divided by this amount, rounded down to whole points." />
+        <SelectField label="Status" required value={status} options={[{ value: "draft", label: "Draft" }, { value: "active", label: "Active" }]} onChange={(value) => setStatus(value === "active" ? "active" : "draft")} />
       </div>
-      <MoneyField label="Pesos spent per point" required disabled={locked} value={rate} onChange={setRate} hint="Qualifying spend divided by this amount, rounded down to whole points." />
-      <fieldset className="tw:flex tw:flex-col tw:gap-1">
-        <legend className="tw:text-sm tw:font-medium">Earn points at</legend>
-        {options.map((outlet) => (
-          <CheckboxField key={outlet.id} label={outlet.name} disabled={locked} checked={earnIds.includes(outlet.id)} onChange={(on) => setEarnIds(toggle(earnIds, outlet.id, on))} />
-        ))}
-      </fieldset>
-      <fieldset className="tw:flex tw:flex-col tw:gap-1">
-        <legend className="tw:text-sm tw:font-medium">Use points at</legend>
-        {options.map((outlet) => (
-          <CheckboxField key={outlet.id} label={outlet.name} checked={redeemIds.includes(outlet.id)} onChange={(on) => setRedeemIds(toggle(redeemIds, outlet.id, on))} />
-        ))}
-      </fieldset>
-      <StandardDateField label="Points expire on" value={expiry} onChange={setExpiry} hint="Leave empty if the points never expire. It cannot be before the end date." />
+      <div className="tw:grid tw:gap-4 tw:rounded-lg tw:border tw:border-border tw:bg-muted/40 tw:p-4 tw:sm:grid-cols-2">
+        <fieldset className="tw:min-w-0">
+          <legend className="tw:mb-3 tw:text-sm tw:font-semibold">Earn points at</legend>
+          {options.map((outlet) => (
+            <CheckboxField key={outlet.id} label={outlet.name} disabled={locked} checked={earnIds.includes(outlet.id)} onChange={(on) => setEarnIds(toggle(earnIds, outlet.id, on))} />
+          ))}
+        </fieldset>
+        <fieldset className="tw:min-w-0">
+          <legend className="tw:mb-3 tw:text-sm tw:font-semibold">Use points at</legend>
+          {options.map((outlet) => (
+            <CheckboxField key={outlet.id} label={outlet.name} checked={redeemIds.includes(outlet.id)} onChange={(on) => setRedeemIds(toggle(redeemIds, outlet.id, on))} />
+          ))}
+        </fieldset>
+      </div>
+      <div className="tw:grid tw:gap-4 tw:sm:grid-cols-2">
+        <StandardDateField label="Points expire on" value={expiry} onChange={setExpiry} hint="Leave empty if the points never expire. It cannot be before the end date." />
+      </div>
     </FormDialog>
   );
 }

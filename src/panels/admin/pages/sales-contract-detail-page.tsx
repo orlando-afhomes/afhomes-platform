@@ -16,7 +16,7 @@ import { EditContractDialog, CancelContractDialog } from "../components/contract
 import { ContractDetailTabs, type ContractDetailTab } from "../components/contract-detail-tabs";
 import { actionButtonVariant, buildContractMenuProps, orderActionItems } from "../actions/sales-contract-actions";
 import { ContractStatusCard, ContractSummaryCard } from "../components/contract-status-cards";
-import { ContractHistorySection, ContractLedgerSection, ContractMilestonesSection, ContractPageFrame, ContractPaymentsSection, ContractScheduleSection, ContractTermsSection, ContractTiles } from "../components/contract-sections";
+import { ContractCommissionRateNotice, ContractHistorySection, ContractLedgerSection, ContractMilestonesSection, ContractPageFrame, ContractPaymentsSection, ContractScheduleSection, ContractTermsSection, ContractTiles } from "../components/contract-sections";
 import { PaymentSubmitDialog, usePaymentActions } from "../components/payment-actions";
 import { humanize } from "@/shared/lib/humanize";
 
@@ -83,6 +83,7 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
             {dialog}
             <ReasonDialog open={saleDefaultOpen} title="Mark sale Defaulted" description={sale?.customerName ?? ""} confirmText="Mark Defaulted" tone="warning" successText="Sale marked Defaulted." onClose={() => setSaleDefaultOpen(false)} onSubmit={(reason) => sale ? markDefaulted.mutateAsync({ id: sale.id, reason }) : Promise.resolve()} />
           {record.contract.status === "returned" && record.contract.returnReason ? <InfoNote title="Returned for correction">{record.contract.returnReason}</InfoNote> : null}
+          <ContractCommissionRateNotice {...record} />
           <ContractTiles contract={record.contract} payments={record.payments} />
           <ContractDetailTabs value={tab} onChange={setTab} />
           {tab === "overview" ? (

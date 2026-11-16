@@ -10,7 +10,7 @@ import { ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { Button } from "@/shared/ui/button";
 import { ApproveArrangementDialog, CancelContractDialog, RaDialog, RequestCancellationDialog, ResolvePaymentCodeDialog, ReturnContractDialog } from "../components/contract-dialogs";
 import { actionButtonVariant, buildContractMenuProps, orderActionItems } from "../actions/sales-contract-actions";
-import { ContractHistorySection, ContractPageFrame, ContractTermsSection, ContractTiles } from "../components/contract-sections";
+import { ContractCommissionRateNotice, ContractHistorySection, ContractPageFrame, ContractTermsSection, ContractTiles } from "../components/contract-sections";
 
 const CRUMBS = [{ label: "Sales" }, { label: "Contract Review", href: "/admin/sales/contract-review" }];
 const BUTTON = "tw:min-h-11 tw:sm:min-h-8";
@@ -87,6 +87,7 @@ export function ContractReviewDetailPage({ contractId }: { contractId: string })
             ) : null}
             {contract.status === "returned" && contract.returnReason ? <InfoNote title="Returned for correction">{contract.returnReason}</InfoNote> : null}
             {pendingCancel ? <InfoNote title="Cancellation awaiting Finance confirmation">Finance confirms or declines this request.</InfoNote> : null}
+            <ContractCommissionRateNotice {...record} />
             <ContractTiles contract={contract} payments={record.payments} />
             <ContractTermsSection record={record} />
             <ContractHistorySection contract={contract} />

@@ -1,3 +1,5 @@
+import type { Designation } from "@/modules/organization/types";
+
 /** Logical commission states (08 section 12). Approved is not Paid; Paid needs confirmed disbursement. */
 export type CommissionStatus = "released" | "approved" | "on_hold" | "paid" | "cancelled";
 
@@ -20,6 +22,20 @@ export type FrozenCommissionRate = { memberId: string; role: CommissionRole; rat
 export type CommissionRateSetting = FrozenCommissionRate & {
   product: CommissionProduct;
   standardRateBp: number | null;
+};
+
+/** An Admin-approved VIP standard offered when confirming a seller's service terms. */
+export type VipPositionRate = {
+  designation: Designation;
+  role: CommissionRole;
+  rateBp: number;
+  approvalReference: string;
+};
+
+export type ApplyVipPositionRateInput = {
+  memberId: string;
+  standard: VipPositionRate;
+  serviceTermsReference: string;
 };
 
 export type CommissionClawbackTrigger = "cancellation" | "rescission" | "downgrade" | "default" | "returned_cheque";

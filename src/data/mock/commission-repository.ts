@@ -1,7 +1,7 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { CommissionRateDirectory, CommissionRepository, CommissionView } from "@/data/contracts/commission-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
-import type { Commission, CommissionClawback, CommissionPayoutList, CommissionRateSetting } from "@/modules/commissions/types";
+import type { ApplyVipPositionRateInput, Commission, CommissionClawback, CommissionPayoutList, CommissionRateSetting, VipPositionRate } from "@/modules/commissions/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { parseManilaDateOnly } from "@/shared/lib/dates";
 import { firstOpenDate } from "@/modules/finance/month-close";
@@ -24,10 +24,63 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
   async rateDirectory(options?: MockAsyncOptions): Promise<CommissionRateDirectory> {
     return this.run(options, (identity) => {
       this.require(identity, "commission.rates.manage", "Only an administrator can manage rates.");
-      const members = this.store.members.map(({ id, displayName }) => ({ id, name: displayName }));
-      return { members, rates: this.store.commissionRateSettings.map((item) => ({
-        ...item, memberName: members.find(({ id }) => id === item.memberId)?.name ?? item.memberId,
-      })) };
+      const members = this.store.members.map(({ id, displayName, designation }) => ({ id, name: displayName, designation }));
+      return {
+        members,
+        positionRates: this.store.vipPositionRates.map((item) => ({ ...item })),
+        rates: this.store.commissionRateSettings.map((item) => ({
+          ...item, memberName: members.find(({ id }) => id === item.memberId)?.name ?? item.memberId,
+        })),
+      };
+    });
+  }
+
+  async setPositionRate(input: VipPositionRate, options?: MockAsyncOptions): Promise<void> {
+    return this.run(options, (identity) => {
+      this.require(identity, "commission.rates.manage", "Only an administrator can change position rates.");
+      const { designation, role, rateBp } = input;
+      const approvalReference = input.approvalReference.trim();
+      if (!approvalReference) throw new Error("Enter the approval reference for this standard.");
+      if (!["SVD", "SSM", "SM", "OST"].includes(designation) || (role !== "DSC" && role !== "DRI")) {
+        throw new Error("Choose a seller position and commission type.");
+      }
+      if (!Number.isSafeInteger(rateBp) || rateBp < 0) throw new Error("Enter a valid nonnegative commission rate.");
+
+      const existing = this.store.vipPositionRates.find((item) => item.designation === designation && item.role === role);
+      const previous = existing ? `${existing.rateBp}bp, approval ${existing.approvalReference}` : undefined;
+      const next = { designation, role, rateBp, approvalReference };
+      if (existing) Object.assign(existing, next);
+      else this.store.vipPositionRates.push(next);
+      this.audit(identity, {
+        module: "commissions", action: "COMMISSION_POSITION_RATE_SET", entityType: "commission-position-rate",
+        entityId: `VIP-${designation}-${role}`, previousValue: previous, newValue: `${rateBp}bp`, reason: approvalReference,
+      });
+    });
+  }
+
+  async applyPositionRate(input: ApplyVipPositionRateInput, options?: MockAsyncOptions): Promise<void> {
+    return this.run(options, (identity) => {
+      this.require(identity, "commission.rates.manage", "Only an administrator can apply position rates.");
+      const { memberId, standard } = input;
+      const member = this.store.members.find((item) => item.id === memberId);
+      if (!member) throw new Error("Seller not found.");
+      if (member.designation !== standard.designation) throw new Error("The approved rate must be for the seller's current position.");
+      const serviceTermsReference = input.serviceTermsReference.trim();
+      if (!serviceTermsReference) throw new Error("Enter the reference for the seller's approved service terms.");
+      const { designation, role } = standard;
+      if (this.store.commissionRateSettings.some((item) => item.memberId === memberId && item.product === "VIP" && item.role === role)) {
+        throw new Error("This seller already has an approved VIP rate for this commission type.");
+      }
+      const current = this.store.vipPositionRates.find((item) => item.designation === designation && item.role === role);
+      if (!current || current.rateBp !== standard.rateBp || current.approvalReference !== standard.approvalReference) {
+        throw new Error("The approved position rate has changed. Review the current rate before applying it.");
+      }
+      this.store.commissionRateSettings.push({ memberId, product: "VIP", role, rateBp: current.rateBp, standardRateBp: current.rateBp });
+      this.audit(identity, {
+        module: "commissions", action: "COMMISSION_POSITION_RATE_APPLIED", entityType: "member", entityId: memberId,
+        newValue: `VIP ${role}: ${current.rateBp}bp`, reason: `Service terms: ${serviceTermsReference}. Standard approval: ${current.approvalReference}.`,
+        relatedRecordIds: [`VIP-${designation}-${role}`],
+      });
     });
   }
 

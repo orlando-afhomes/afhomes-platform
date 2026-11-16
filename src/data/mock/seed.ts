@@ -10,7 +10,7 @@ import type { Payment } from "@/modules/finance/types";
 import { createIgpState, type IgpState } from "@/modules/igp/types";
 import type { ClosedMonth } from "@/modules/finance/month-close";
 import type { Membership } from "@/modules/membership/types";
-import type { Commission, CommissionRateSetting, CommissionClawback, CommissionPayoutList } from "@/modules/commissions/types";
+import type { Commission, CommissionRateSetting, CommissionClawback, CommissionPayoutList, VipPositionRate } from "@/modules/commissions/types";
 import type { AllowanceReview } from "@/modules/commissions/allowances";
 import type { ResortSpend, StayPointsState } from "@/modules/stay-points/types";
 import { createStayPointsState } from "@/modules/stay-points/engine";
@@ -43,6 +43,7 @@ export type MockStore = {
   memberships: Membership[];
   commissions: Commission[];
   commissionRateSettings: CommissionRateSetting[];
+  vipPositionRates: VipPositionRate[];
   commissionClawbacks: CommissionClawback[];
   commissionPayoutLists: CommissionPayoutList[];
   allowanceReviews: AllowanceReview[];
@@ -108,6 +109,7 @@ export function createSeedStore(): MockStore {
     memberships: clone(memberships),
     commissions: clone(commissions),
     commissionRateSettings: [],
+    vipPositionRates: [],
     commissionClawbacks: [],
     commissionPayoutLists: [],
     allowanceReviews: [],
@@ -170,6 +172,7 @@ export function createMockStore(seed: MockStore = createSeedStore()): MockStore 
     memberships: clone(seed.memberships),
     commissions: clone(seed.commissions),
     commissionRateSettings: clone(seed.commissionRateSettings),
+    vipPositionRates: clone(seed.vipPositionRates ?? []),
     commissionClawbacks: clone(seed.commissionClawbacks),
     commissionPayoutLists: clone(seed.commissionPayoutLists),
     allowanceReviews: clone(seed.allowanceReviews),

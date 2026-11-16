@@ -7,6 +7,7 @@ import { Button } from "@/shared/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { useState } from "react";
 import { toast } from "sonner";
+import { cn } from "@/shared/lib/utils";
 
 /** Shared dialog frame for forms: title, body, and a submit button with progress and an inline error. */
 export function FormDialog({
@@ -16,6 +17,7 @@ export function FormDialog({
   submitText,
   submitVariant = "default",
   size = "md",
+  scrollBody = false,
   pending,
   error,
   onClose,
@@ -30,6 +32,8 @@ export function FormDialog({
   submitVariant?: ConfirmTone;
   /** md = standard width, lg = wide dialog for large forms. */
   size?: "md" | "lg";
+  /** Scroll the fields while keeping the dialog title and actions visible. */
+  scrollBody?: boolean;
   pending?: boolean;
   error?: string;
   onClose: () => void;
@@ -38,25 +42,34 @@ export function FormDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={(next) => (!next && !pending ? onClose() : undefined)}>
-      <DialogContent className={`tw:max-h-[90vh] tw:overflow-y-auto ${size === "lg" ? "tw:sm:max-w-3xl" : "tw:sm:max-w-xl"}`}>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+      <DialogContent className={cn(
+        size === "lg" ? "tw:sm:max-w-3xl" : "tw:sm:max-w-xl",
+        scrollBody
+          ? "tw:flex tw:max-h-[calc(100dvh-2rem)] tw:flex-col tw:gap-0 tw:overflow-hidden tw:p-0"
+          : "tw:max-h-[90vh] tw:overflow-y-auto",
+      )}>
+        <DialogHeader className={scrollBody ? "tw:shrink-0 tw:border-b tw:py-4 tw:pr-12 tw:pl-5 tw:sm:pl-6" : undefined}>
+          <DialogTitle className={scrollBody ? "tw:text-lg tw:leading-tight tw:font-semibold" : undefined}>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
         <form
-          className="tw:flex tw:flex-col tw:gap-3"
+          className={cn("tw:flex tw:flex-col", scrollBody ? "tw:min-h-0 tw:flex-1" : "tw:gap-3")}
           onSubmit={(event) => {
             event.preventDefault();
             onSubmit();
           }}
         >
-          {children}
+          {scrollBody ? (
+            <div className="tw:flex tw:min-h-0 tw:flex-1 tw:flex-col tw:gap-5 tw:overflow-y-auto tw:overscroll-contain tw:px-5 tw:py-5 tw:sm:px-6">
+              {children}
+            </div>
+          ) : children}
           {error ? (
-            <p role="alert" className="tw:text-sm tw:text-destructive">
+            <p role="alert" className={cn("tw:text-sm tw:text-destructive", scrollBody && "tw:px-5 tw:py-2 tw:sm:px-6")}>
               {error}
             </p>
           ) : null}
-          <DialogFooter>
+          <DialogFooter className={scrollBody ? "tw:m-0 tw:shrink-0 tw:flex-row tw:justify-end tw:px-5 tw:py-3 tw:sm:px-6" : undefined}>
             <Button type="button" variant="outline" disabled={pending} onClick={onClose} className="tw:min-h-11 tw:sm:min-h-8">
               Cancel
             </Button>

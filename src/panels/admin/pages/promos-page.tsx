@@ -38,7 +38,7 @@ export function AddPromoButton() {
   return (
     <>
       <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setOpen(true)}>
-        <Plus aria-hidden="true" /> Add promo
+        <Plus aria-hidden="true" /> Add Promo
       </Button>
       {open ? <PromoDialog editing={null} onClose={() => setOpen(false)} /> : null}
     </>
@@ -75,9 +75,9 @@ export function PromosPanel() {
     { id: "start", header: "Starts", cell: ({ row }) => formatDate(row.original.startDate) },
     { id: "end", header: "Ends", cell: ({ row }) => formatDate(row.original.endDate) },
     { id: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
-    { id: "earned", header: "Points earned", cell: ({ row }) => row.original.pointsEarned.toLocaleString("en-PH") },
+    { id: "earned", header: "Points Earned", cell: ({ row }) => row.original.pointsEarned.toLocaleString("en-PH") },
     {
-      id: "actions", header: () => <span className="tw:sr-only">Actions</span>,
+      id: "actions", header: "Actions",
       cell: ({ row }) => {
         const promo = row.original;
         const canManagePromo = canManage && promo.status !== "ended";
@@ -86,11 +86,11 @@ export function PromosPanel() {
             itemName={promo.name}
             onEdit={canManagePromo ? () => setEditing(promo) : undefined}
             extraItems={canManagePromo ? [{
-              key: "end", label: "End promo", danger: true,
+              key: "end", label: "End Promo", danger: true,
               onClick: () => confirmRun({
                 title: `End ${promo.name}?`,
                 description: "No new points are earned after today. Points already earned stay usable until they expire.",
-                confirmText: "End promo", danger: true, action: () => end(promo.id),
+                confirmText: "End Promo", danger: true, action: () => end(promo.id),
                 successTitle: `${promo.name} ended.`, errorTitle: "Could not end the promo.",
               }),
             }] : []}
@@ -175,11 +175,11 @@ function PromoDialog({ editing, onClose }: { editing: PromoView | null; onClose:
   return (
     <FormDialog
       open
-      title={editing ? "Edit promo" : "Add promo"}
+      title={editing ? "Edit Promo" : "Add Promo"}
       size="lg"
       scrollBody
       description={locked ? "Points were already earned, so the earning rule and dates are locked." : undefined}
-      submitText={editing ? "Save" : "Add promo"}
+      submitText={editing ? "Save" : "Add Promo"}
       pending={save.isPending}
       error={error}
       onClose={onClose}
@@ -191,7 +191,7 @@ function PromoDialog({ editing, onClose }: { editing: PromoView | null; onClose:
         </div>
         <StandardDateField label="Start date" required disabled={locked} value={startDate} onChange={setStartDate} />
         <StandardDateField label="End date" required disabled={locked} value={endDate} onChange={setEndDate} />
-        <MoneyField label="Pesos spent per point" required disabled={locked} value={rate} onChange={setRate} hint="Qualifying spend divided by this amount, rounded down to whole points." />
+        <MoneyField label="Pesos spent per point" required disabled={locked} value={rate} onChange={setRate} hint="Spending that counts divided by this amount, rounded down to whole points." />
         <SelectField label="Status" required value={status} options={[{ value: "draft", label: "Draft" }, { value: "active", label: "Active" }]} onChange={(value) => setStatus(value === "active" ? "active" : "draft")} />
       </div>
       <div className="tw:grid tw:gap-4 tw:rounded-lg tw:border tw:border-border tw:bg-muted/40 tw:p-4 tw:sm:grid-cols-2">

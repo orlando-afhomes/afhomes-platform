@@ -649,3 +649,7 @@ STOP — awaiting explicit authorization before beginning Phase 1 implementation
 Aligned with the business-rule documents as rewritten on 2026-11-12. No architecture decision changed.
 
 1. Section 10: Public Customer Lookup removed from the Public Panel (owner ruling R11; doc 11 §21).
+
+## Plain screen words (2026-11-16)
+
+Screens use plain words, not the official terms of the business-rule documents (owner decision UI19). The mapping lives in `docs/implementation/decisions-and-gaps.md` (UI19). New screens use the screen word; code identifiers, routes and stored values keep the official names.

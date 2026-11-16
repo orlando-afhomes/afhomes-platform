@@ -44,17 +44,24 @@ describe("admin sidebar", () => {
     expect(screen.queryByText("Accounts and Permissions")).toBeNull();
   });
 
-  it("lists one direct link per allowed area, with no groups", async () => {
+  it("groups the areas each role can open", async () => {
+    const user = userEvent.setup();
     renderSidebar(false, "dev-finance");
+    await user.click(await screen.findByRole("button", { name: "Money" }));
     expect(await screen.findByRole("link", { name: "Finance" })).toHaveAttribute("href", "/admin/finance");
-    for (const name of ["Commissions", "Membership", "Stay Points", "Redemption", "Reports"]) {
+    expect(screen.getByRole("link", { name: "Commissions" })).toBeDefined();
+    await user.click(screen.getByRole("button", { name: "Member Services" }));
+    for (const name of ["Membership", "Stay Points", "Redemption"]) {
       expect(screen.getByRole("link", { name })).toBeDefined();
     }
-    expect(screen.queryByRole("link", { name: "Settings" })).toBeNull();
-    expect(screen.queryByRole("button", { name: /Insights|Finance/ })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Reports and Audit" }));
+    expect(screen.getByRole("link", { name: "Reports" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Management" })).toBeNull();
     cleanup();
     renderSidebar(false, "dev-admin");
+    await user.click(await screen.findByRole("button", { name: "Reports and Audit" }));
     expect(await screen.findByRole("link", { name: "Audit Logs" })).toBeDefined();
+    await user.click(screen.getByRole("button", { name: "Management" }));
     expect(screen.getByRole("link", { name: "Settings" })).toBeDefined();
   });
 
@@ -71,12 +78,13 @@ describe("admin sidebar", () => {
     const { container } = renderSidebar(true);
     expect(container.querySelector("aside[data-collapsed='true']")).not.toBeNull();
     expect(screen.queryByText("AFHomes")).toBeNull();
-    expect(await screen.findByRole("link", { name: "Organization" })).toBeDefined();
+    expect(await screen.findByRole("button", { name: "Management" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Log out" })).toBeDefined();
   });
 
   it("links Organization straight to its area page", async () => {
     renderSidebar();
+    await userEvent.click(await screen.findByRole("button", { name: "Management" }));
     expect(await screen.findByRole("link", { name: "Organization" })).toHaveAttribute("href", "/admin/organization");
   });
 });

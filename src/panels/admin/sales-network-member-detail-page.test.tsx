@@ -73,7 +73,7 @@ describe("sales network member detail page", () => {
     expect(within(profile).getByText("Passport")).toBeInTheDocument();
   });
 
-  it("lists the direct downline on the Downline tab", async () => {
+  it("lists the direct team on the Team Below tab", async () => {
     const user = userEvent.setup();
     render(
       <Wrapper identityId="dev-super-admin">
@@ -81,8 +81,8 @@ describe("sales network member detail page", () => {
       </Wrapper>,
     );
     await screen.findByRole("region", { name: "Member summary for Jose Reyes Jr." }, { timeout: 5000 });
-    await user.click(screen.getByRole("tab", { name: /Downline/ }));
-    const downline = await screen.findByRole("tabpanel", { name: /Downline/ });
+    await user.click(screen.getByRole("tab", { name: /Team Below/ }));
+    const downline = await screen.findByRole("tabpanel", { name: /Team Below/ });
     await waitFor(() => expect(within(downline).getAllByText("Ana Mendoza").length).toBeGreaterThan(0), { timeout: 5000 });
   });
 });

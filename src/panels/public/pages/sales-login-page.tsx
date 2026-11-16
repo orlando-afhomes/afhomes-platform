@@ -13,7 +13,7 @@ export function SalesLoginPage() {
         description="Sign in to sales network."
         extraLinks={
           <Link href="/register/ost" className="login-form__link">
-            Register as OST
+            Register as Outsourced Seller (OST)
           </Link>
         }
       />

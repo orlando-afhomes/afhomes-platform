@@ -77,7 +77,7 @@ export type ReceiptImportRow = {
 
 export function importedReceiptStatusLabel(batchStatus: ReceiptImportBatchStatus): string {
   if (batchStatus === "signed_off") return IMPORTED_STATUS_LABEL;
-  return batchStatus === "rejected" ? "Rejected (batch)" : "Imported, awaiting sign-off";
+  return batchStatus === "rejected" ? "Rejected (batch)" : "Imported, waiting for confirmation";
 }
 
 /** Receipts that count as approved: only those of a signed-off batch. */

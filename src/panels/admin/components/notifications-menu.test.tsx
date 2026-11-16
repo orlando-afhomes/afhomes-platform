@@ -84,7 +84,7 @@ describe("notifications menu", () => {
     renderMenu({ unreadTotal: 0, events: [] });
     await openMenu();
     expect(await screen.findByText("No new notifications.")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Mark all as read" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Mark All as Read" })).toBeNull();
   });
 
   it("shows the administrators-only empty state when denied", async () => {
@@ -97,7 +97,7 @@ describe("notifications menu", () => {
     const markAllSeen = vi.fn();
     renderMenu({ unreadTotal: 2, events: [makeEvent()], markAllSeen });
     const user = await openMenu();
-    await user.click(await screen.findByRole("button", { name: "Mark all as read" }));
+    await user.click(await screen.findByRole("button", { name: "Mark All as Read" }));
     expect(markAllSeen).toHaveBeenCalledTimes(1);
   });
 

@@ -25,8 +25,8 @@ type ComparisonRow = { key: string; label: string; calculated: number; company: 
 // Module constant: TanStack renders cell functions as components, so columns must be stable.
 const comparisonColumns: ColumnDef<ComparisonRow, unknown>[] = [
   { id: "label", header: "Allowance", cell: ({ row }) => <span className="tw:font-semibold">{row.original.label}</span> },
-  { id: "calculated", header: "Calculated by the system", cell: ({ row }) => <Money value={row.original.calculated} /> },
-  { id: "company", header: "Company spreadsheet", cell: ({ row }) => <Money value={row.original.company} /> },
+  { id: "calculated", header: "Calculated by the System", cell: ({ row }) => <Money value={row.original.calculated} /> },
+  { id: "company", header: "Company Spreadsheet", cell: ({ row }) => <Money value={row.original.company} /> },
   {
     id: "difference",
     header: "Difference",
@@ -95,9 +95,9 @@ export function AllowanceReviewPanel() {
   const reviewColumns = useMemo<ColumnDef<AllowanceReview, unknown>[]>(() => [
     { header: "Month", cell: ({ row }) => <span className="tw:font-semibold">{row.original.month}</span> },
     { header: "Leader", accessorKey: "memberName" },
-    { header: "Basic allowance", cell: ({ row }) => <Money value={row.original.result.baCentavos} /> },
-    { header: "Performance allowance", cell: ({ row }) => <Money value={row.original.result.paCentavos} /> },
-    { header: "Performance bonus", cell: ({ row }) => <Money value={row.original.result.pbCentavos} /> },
+    { header: "Basic Allowance", cell: ({ row }) => <Money value={row.original.result.baCentavos} /> },
+    { header: "Performance Allowance", cell: ({ row }) => <Money value={row.original.result.paCentavos} /> },
+    { header: "Performance Bonus", cell: ({ row }) => <Money value={row.original.result.pbCentavos} /> },
   ], []);
 
   async function calculate(persist = false) {
@@ -105,7 +105,7 @@ export function AllowanceReviewPanel() {
     setError(undefined);
     const match = MONTH_PATTERN.exec(month);
     if (!match) { setError("Choose the month."); return; }
-    if (!member) { setError("Choose an IST leader."); return; }
+    if (!member) { setError("Choose an Internal Seller (IST) leader."); return; }
     if (canWithhold && withholdOn && !withholding.trim()) { setError("Enter the reason for withholding the basic allowance."); return; }
     try {
       const daysInMonth = new Date(Date.UTC(Number(match[1]), Number(match[2]), 0)).getUTCDate();
@@ -137,20 +137,20 @@ export function AllowanceReviewPanel() {
   return (
     <>
       <div className="tw:flex tw:flex-col tw:gap-6">
-        <StepBlock step={1} title="Month and leader" connector>
+        <StepBlock step={1} title="Month and Leader" connector>
           <div className="tw:grid tw:gap-4 tw:sm:grid-cols-2">
             <MonthField label="Month" required value={month} onChange={(value) => { setMonth(value); setResult(undefined); }} />
-            <SelectField label="IST leader" required value={memberId} onChange={(value) => { setMemberId(value); setResult(undefined); }}
+            <SelectField label="Internal Seller (IST) leader" required value={memberId} onChange={(value) => { setMemberId(value); setResult(undefined); }}
               options={(query.data?.members ?? []).map(({ id, name, position }) => ({ value: id, label: `${name} · ${position}` }))} />
           </div>
         </StepBlock>
-        <StepBlock step={2} title="Figures for each period" description="Fill in both periods. Leave a field empty if the amount is zero." connector>
+        <StepBlock step={2} title="Figures for Each Period" description="Fill in both periods. Leave a field empty if the amount is zero." connector>
           <div className="tw:grid tw:gap-4 tw:lg:grid-cols-2">
-            <Stretch title="Qualifying period" value={qualifying} onChange={(value) => { setQualifying(value); setResult(undefined); }} />
-            <Stretch title="Extended period" value={extended} onChange={(value) => { setExtended(value); setResult(undefined); }} />
+            <Stretch title="Qualifying Period" value={qualifying} onChange={(value) => { setQualifying(value); setResult(undefined); }} />
+            <Stretch title="Extended Period" value={extended} onChange={(value) => { setExtended(value); setResult(undefined); }} />
           </div>
         </StepBlock>
-        <StepBlock step={3} title="Company spreadsheet figures (optional)" description="Type the amounts from the company Excel file so the system can compare them.">
+        <StepBlock step={3} title="Company Spreadsheet Figures (Optional)" description="Type the amounts from the company Excel file so the system can compare them.">
           <div className="tw:grid tw:gap-4 tw:sm:grid-cols-3">
             <MoneyField label="Basic allowance" value={company.ba} onChange={(ba) => { setCompany({ ...company, ba }); setResult(undefined); }} />
             <MoneyField label="Performance allowance" value={company.pa} onChange={(pa) => { setCompany({ ...company, pa }); setResult(undefined); }} />
@@ -168,52 +168,52 @@ export function AllowanceReviewPanel() {
           </div>
         ) : null}
         <div className="tw:flex tw:flex-wrap tw:gap-2">
-          <Button type="button" disabled={save.isPending} onClick={() => void calculate(true)}>Save review</Button>
-          <Button type="button" variant="info" onClick={() => void calculate()}>Calculate allowances</Button>
+          <Button type="button" disabled={save.isPending} onClick={() => void calculate(true)}>Save Review</Button>
+          <Button type="button" variant="info" onClick={() => void calculate()}>Calculate Allowances</Button>
         </div>
       </div>
       {error ? <p role="alert" className="tw:text-destructive">{error}</p> : null}
       {result ? (
         <section aria-label="Calculated allowances" className="tw:grid tw:gap-4">
-          <h2 className="tw:text-lg tw:font-semibold">Calculated allowances</h2>
+          <h2 className="tw:text-lg tw:font-semibold">Calculated Allowances</h2>
           <AdminStatGrid columns={3}>
-            <AdminStatCard label="Basic allowance" value={<Money value={result.baCentavos} />} icon={Banknote} tone="brand" />
-            <AdminStatCard label="Performance allowance" value={<Money value={result.paCentavos} />} icon={TrendingUp} tone="info" />
-            <AdminStatCard label="Performance bonus" value={<Money value={result.pbCentavos} />} icon={Award} tone="success" />
+            <AdminStatCard label="Basic Allowance" value={<Money value={result.baCentavos} />} icon={Banknote} tone="brand" />
+            <AdminStatCard label="Performance Allowance" value={<Money value={result.paCentavos} />} icon={TrendingUp} tone="info" />
+            <AdminStatCard label="Performance Bonus" value={<Money value={result.pbCentavos} />} icon={Award} tone="success" />
           </AdminStatGrid>
           {companyTotals ? (
-            <DataTable data={comparison} columns={comparisonColumns} getRowId={(row) => row.key} caption="Comparison with the company spreadsheet" emptyText="No figures to compare." />
+            <DataTable data={comparison} columns={comparisonColumns} getRowId={(row) => row.key} caption="Comparison with the Company Spreadsheet" emptyText="No figures to compare." />
           ) : (
             <p className="tw:text-sm tw:text-muted-foreground">Enter the three company spreadsheet amounts in step 3 to see how they compare.</p>
           )}
         </section>
       ) : null}
-      <AdminSection title="Saved reviews">
+      <AdminSection title="Saved Reviews">
         <QueryState isLoading={query.isLoading} error={query.error}>
-          <DataTable data={(query.data?.reviews ?? []).slice().reverse()} caption="Allowance review history" emptyText="No reviews saved." getRowId={(row) => row.id}
+          <DataTable data={(query.data?.reviews ?? []).slice().reverse()} caption="Allowance Review History" emptyText="No reviews saved." getRowId={(row) => row.id}
             onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open allowance review for ${row.memberName}, ${row.month}`}
             columns={reviewColumns} />
         </QueryState>
       </AdminSection>
       <RecordDetailsSheet open={detail !== undefined} onClose={() => setDetailId(null)}
-        title={detail ? detail.memberName : "Allowance review"} subtitle={detail ? `${detail.month}, ${detail.position}` : undefined}
+        title={detail ? detail.memberName : "Allowance Review"} subtitle={detail ? `${detail.month}, ${detail.position}` : undefined}
         icon={<Calculator />}
         sections={detail ? [
           {
             title: "Calculated",
             rows: [
-              { label: "Basic allowance (BA)", value: <Money value={detail.result.baCentavos} /> },
-              { label: "Performance allowance (PA)", value: <Money value={detail.result.paCentavos} /> },
-              { label: "Performance bonus (PB)", value: <Money value={detail.result.pbCentavos} /> },
-              { label: "BA withholding reason", value: detail.withholdingReason, wide: true },
+              { label: "Basic allowance", value: <Money value={detail.result.baCentavos} /> },
+              { label: "Performance allowance", value: <Money value={detail.result.paCentavos} /> },
+              { label: "Performance bonus", value: <Money value={detail.result.pbCentavos} /> },
+              { label: "Basic allowance withholding reason", value: detail.withholdingReason, wide: true },
             ],
           },
           {
-            title: "Difference from the company spreadsheet",
+            title: "Difference from the Company Spreadsheet",
             rows: detail.workbook ? [
-              { label: "BA", value: <Money value={detail.result.baCentavos - detail.workbook.baCentavos} /> },
-              { label: "PA", value: <Money value={detail.result.paCentavos - detail.workbook.paCentavos} /> },
-              { label: "PB", value: <Money value={detail.result.pbCentavos - detail.workbook.pbCentavos} /> },
+              { label: "Basic allowance", value: <Money value={detail.result.baCentavos - detail.workbook.baCentavos} /> },
+              { label: "Performance allowance", value: <Money value={detail.result.paCentavos - detail.workbook.paCentavos} /> },
+              { label: "Performance bonus", value: <Money value={detail.result.pbCentavos - detail.workbook.pbCentavos} /> },
               ...(detail.workbookDifferenceReason ? [{ label: "Explanation", value: detail.workbookDifferenceReason, wide: true }] : []),
             ] : [{ label: "Company spreadsheet", value: "Awaiting company spreadsheet figures" }],
           },
@@ -228,9 +228,9 @@ function Stretch({ title, value, onChange }: { title: string; value: Inputs; onC
       <h3 className="tw:m-0 tw:text-base tw:font-semibold">{title}</h3>
       <div className="tw:grid tw:gap-4 tw:@sm:grid-cols-2">
         <TextField label="Eligible days" hint="Number of days" inputMode="numeric" maxLength={2} transform={(next) => next.replace(/\D/g, "")} value={value.days} onChange={(days) => onChange({ ...value, days })} />
-        <MoneyField label="Team Closed Deal value" hint="In pesos" value={value.team} onChange={(team) => onChange({ ...value, team })} />
+        <MoneyField label="Team confirmed sales value" hint="In pesos" value={value.team} onChange={(team) => onChange({ ...value, team })} />
         <MoneyField label="Collections" hint="In pesos" value={value.collections} onChange={(collections) => onChange({ ...value, collections })} />
-        <MoneyField label="Assumed collection credit" hint="In pesos" value={value.assumed} onChange={(assumed) => onChange({ ...value, assumed })} />
+        <MoneyField label="Collections credited to the leader" hint="In pesos" value={value.assumed} onChange={(assumed) => onChange({ ...value, assumed })} />
       </div>
     </div>
   );

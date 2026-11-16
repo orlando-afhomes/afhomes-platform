@@ -119,7 +119,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
       const product = this.store.products.find((item) => item.code === productCode && item.status === "active");
       if (!product) throw new Error("The customer has no active VIP plan.");
       const scheme = this.store.paymentSchemes.find((item) => item.id === input.schemeId);
-      if (!scheme || scheme.availability !== "available") throw new Error("The selected payment scheme is not available.");
+      if (!scheme || scheme.availability !== "available") throw new Error("The selected payment plan is not available.");
       const reservationDate = input.reservationDate ?? today();
       if (!DATE_ONLY.test(reservationDate)) throw new Error("The reservation date must be a valid date.");
       const built = buildSchedule(product, scheme, reservationDate);
@@ -245,7 +245,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
 
   async finalize(id: string, options?: MockAsyncOptions): Promise<ContractView> {
     return this.run(options, (identity) => {
-      this.require(identity, "contracts.approve", "Finalizing contracts needs Admin approval rights. An IST designation does not grant them.");
+      this.require(identity, "contracts.approve", "Finalizing contracts needs Admin approval rights. An Internal Seller (IST) position does not grant them.");
       const contract = this.find(identity, id);
       if (contract.status !== "submitted" && contract.status !== "under_review") throw new Error("Only a contract in review can be finalized.");
       const holds = finalizationHolds(contract);
@@ -300,7 +300,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
       if (!admin && !(this.isPreparer(identity, contract) && contract.status === "draft")) throw new Error("Cancelling this contract is not allowed for this identity.");
       if (!reason.trim()) throw new Error("A reason is required to cancel a contract.");
       this.assertCancellable(contract);
-      if (this.hasVerifiedMoney(contract)) throw new Error("This contract has verified payments. Request a cancellation with forfeiture; Finance confirms it.");
+      if (this.hasVerifiedMoney(contract)) throw new Error("This contract has verified payments. Request a cancellation where payments are kept; Finance confirms it.");
       const previous = contract.status;
       contract.status = "cancelled";
       contract.cancelReason = reason.trim();
@@ -329,7 +329,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
 
   async decideCancellation(id: string, decision: "confirm" | "decline", reason: string, options?: MockAsyncOptions): Promise<ContractView> {
     return this.run(options, (identity) => {
-      this.require(identity, "finance.refund", "Only Finance can confirm or decline a cancellation with forfeiture.");
+      this.require(identity, "finance.refund", "Only Finance can confirm or decline a cancellation where payments are kept.");
       if (!reason.trim()) throw new Error("A reason is required.");
       const contract = this.find(identity, id);
       const request = contract.cancellation;
@@ -381,7 +381,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
 
   async resolvePaymentCode(id: string, approvalReference: string, options?: MockAsyncOptions): Promise<ContractView> {
     return this.run(options, (identity) => {
-      this.require(identity, "contracts.approve", "Resolving the payment code needs Admin approval rights. An IST designation does not grant them.");
+      this.require(identity, "contracts.approve", "Resolving the payment code needs Admin approval rights. An Internal Seller (IST) position does not grant them.");
       const reference = approvalReference.trim();
       if (!reference) throw new Error("Enter the reference of the written approval.");
       const contract = this.find(identity, id);
@@ -390,7 +390,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
       if (contract.paymentCode != null) throw new Error("The payment code is already resolved.");
       const scheme = this.store.paymentSchemes.find((item) => item.id === contract.schemeId)!;
       const code = snapshotPaymentCode(scheme, contract.productCode);
-      if (!code) throw new Error("There is no documented payment code for this scheme and tier.");
+      if (!code) throw new Error("There is no documented payment code for this payment plan and card level.");
       contract.paymentCode = code;
       this.event(contract, identity, "CONTRACT_PAYMENT_CODE_RESOLVED", reference);
       this.audit(identity, { module: "contracts", action: "CONTRACT_PAYMENT_CODE_RESOLVED", entityType: "contract", entityId: contract.id, previousValue: "not recorded", newValue: code, reason: reference });

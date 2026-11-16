@@ -23,10 +23,10 @@ function IgpForm({ title, submitText, submitVariant, description, build, onClose
   const submit = async () => {
     try {
       await mutation.mutateAsync(build());
-      toast.success("IGP record saved.");
+      toast.success("Property sale (IGP) record saved.");
       onClose();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not save the IGP record.");
+      setError(cause instanceof Error ? cause.message : "Could not save the property sale (IGP) record.");
     }
   };
   return (
@@ -56,7 +56,7 @@ export function IgpSaleDialog({ register, sale, mode, onClose }: {
   const [method, setMethod] = useState<PaymentMethod>("Cash");
   const [reference, setReference] = useState("");
   const [reason, setReason] = useState("");
-  const title = { record: "Record IGP sale", reissue: "Reissue Series Number", correct: "Correct IGP sale" }[mode];
+  const title = { record: "Record property sale (IGP)", reissue: "Reissue Series Number", correct: "Correct property sale (IGP)" }[mode];
   const sellers = register.sellers.filter(({ value }) => register.accreditations.some(({ memberId }) => value === memberId));
   const catalog = useIgpCatalog(mode !== "correct");
   const projectOptions = useMemo(() => {
@@ -99,7 +99,7 @@ export function IgpSaleDialog({ register, sale, mode, onClose }: {
       {mode !== "correct" && <>
         <SelectField label="Payment plan" value={scheme} options={[{ value: "C", label: "Cash" }, { value: "T", label: "Terms" }]} onChange={(value) => { setScheme(value); if (value === "C") setEntry("reservation"); }} />
         {scheme === "T" && <TextField label="Term in months" value={term} inputMode="numeric" required onChange={setTerm} />}
-        <SelectField label="Clause classification" value={clauses} options={[{ value: "S", label: "Standard" }, { value: "N", label: "Non-Standard" }]} onChange={setClauses} />
+        <SelectField label="Contract type" value={clauses} options={[{ value: "S", label: "Standard" }, { value: "N", label: "Non-Standard" }]} onChange={setClauses} />
       </>}
       {mode === "record" && <SelectField label="Closing seller" value={seller} options={sellers} required onChange={setSeller} />}
       {mode !== "reissue" && <SelectField label="Referrer" value={referrer} options={sellers} allowClear onChange={setReferrer} />}
@@ -126,7 +126,7 @@ export function IgpSettingsDialog({ register, mode, onClose }: {
   const [date, setDate] = useState(manilaToday);
   const [threshold, setThreshold] = useState(String(register.thresholdBp / 100));
   const [reason, setReason] = useState("");
-  const title = mode === "accredit" ? "Record JA&D accreditation" : "When does an IGP sale count?";
+  const title = mode === "accredit" ? "Record JA&D accreditation" : "When does a property sale (IGP) count?";
   // The type starts from the seller's designation (IST: JAI, OST: JAO); staff can change it.
   const prefix = prefixChoice || defaultJadPrefix(register.sellers.find(({ value }) => value === seller)?.designation);
   const yearMonth = jadYearMonth(date);
@@ -165,14 +165,14 @@ export function IgpRecordDetailDialog({ sale, mode, documentKey, onClose }: {
   const [amount, setAmount] = useState("0");
   const [date, setDate] = useState(document?.signedDate ?? (mode === "document" ? manilaToday() : ""));
   const [signers, setSigners] = useState(document?.signers ?? "");
-  const title = mode === "document" && document ? IGP_DOCUMENT_LABELS[document.key].name : mode === "cancel" ? "Cancel IGP sale" : "Mark IGP sale defaulted";
+  const title = mode === "document" && document ? IGP_DOCUMENT_LABELS[document.key].name : mode === "cancel" ? "Cancel property sale (IGP)" : "Mark property sale (IGP) as stopped paying";
   const build = (): IgpAction => {
     if (mode === "document" && document) return { type: "document", id: sale.id, key: document.key, signedDate: date, signers };
     if (mode === "default") return { type: "default", id: sale.id, reason };
     return { type: "cancel", id: sale.id, reason, refundCentavos: parsePesoToCentavos(amount) ?? -1, refundDate: date || null };
   };
   return (
-    <IgpForm title={title} submitText={mode === "document" ? "Save document details" : title} submitVariant={mode === "cancel" ? "destructive" : mode === "default" ? "warning" : "default"} build={build} onClose={onClose}
+    <IgpForm title={title} submitText={mode === "document" ? "Save Document Details" : title} submitVariant={mode === "cancel" ? "destructive" : mode === "default" ? "warning" : "default"} build={build} onClose={onClose}
       description={mode === "cancel" ? "Enter the refund decided by JA&D or the Property Owner." : undefined}>
       {mode === "document" && document ? <>
         <StandardDateField label="Signature date" value={date} required onChange={setDate} />

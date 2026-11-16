@@ -21,9 +21,9 @@ import { CardServiceDialog } from "./card-service-dialog";
 
 /** A Financial Hold is shown as the membership's status (one badge, one filter value). */
 const statusKey = (item: MembershipView) => (item.financialHold ? "financial_hold" : item.status);
-const statusLabel = (key: string) => (key === "financial_hold" ? "Financial Hold" : humanize(key));
+const statusLabel = (key: string) => (key === "financial_hold" ? "Payment Hold" : humanize(key));
 function MembershipStatusBadge({ item }: { item: MembershipView }) {
-  return item.financialHold ? <BizBadge status="on_hold" label="Financial Hold" /> : <BizBadge status={item.status} />;
+  return item.financialHold ? <BizBadge status="on_hold" label="Payment Hold" /> : <BizBadge status={item.status} />;
 }
 
 /** Membership table with its details sheet and the Activate action (gated by membership.activate). Shared by Memberships and Activation Queue. */
@@ -51,7 +51,7 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
   const columns = useMemo<ColumnDef<MembershipView, unknown>[]>(
     () => [
       { id: "customer", header: "Customer", cell: ({ row }) => <span className="tw:font-semibold">{row.original.customerName}</span> },
-      { id: "card", header: "Card number", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => <span className="tw:font-mono">{row.original.cardId ?? EMPTY}</span> },
+      { id: "card", header: "Card Number", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => <span className="tw:font-mono">{row.original.cardId ?? EMPTY}</span> },
       { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.productName },
       { id: "status", header: "Status", cell: ({ row }) => <MembershipStatusBadge item={row.original} /> },
       { id: "activation", header: "Activated", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => formatDate(row.original.activationDate) },
@@ -65,8 +65,8 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
     }
     if (item.status !== "active") return [];
     return [
-      ...(canService && item.cardId ? [{ key: "service", label: "Service card", tone: "default" as const, onClick: () => setServicing(item) }] : []),
-      ...(canActivate && item.fullSettlementDate && !item.cardClaimDate ? [{ key: "claim", label: "Record card claim", tone: "success" as const, onClick: () => confirmRun({ title: "Record card claim?", description: "Confirm that the cardholder collected the card today.", confirmText: "Record claim", tone: "success", action: () => claim.mutateAsync(item.id), successTitle: "Card claim recorded.", errorTitle: "Could not record claim" }) }] : []),
+      ...(canService && item.cardId ? [{ key: "service", label: "Service Card", tone: "default" as const, onClick: () => setServicing(item) }] : []),
+      ...(canActivate && item.fullSettlementDate && !item.cardClaimDate ? [{ key: "claim", label: "Record Card Claim", tone: "success" as const, onClick: () => confirmRun({ title: "Record Card Claim?", description: "Confirm that the cardholder collected the card today.", confirmText: "Record Claim", tone: "success", action: () => claim.mutateAsync(item.id), successTitle: "Card claim recorded.", errorTitle: "Could not record claim" }) }] : []),
     ];
   };
   const detail = detailId ? all.find((item) => item.id === detailId) ?? null : null;
@@ -115,7 +115,7 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
           detail ? (
             <>
               {activateItem(detail).map((item) => <Button key={item.key} type="button" variant={item.tone === "success" ? "success" : "default"} onClick={item.onClick}>{item.label}</Button>)}
-              <Link href={contractHref(detail.contractId)} className={buttonVariants({ variant: "info" })}>Open contract</Link>
+              <Link href={contractHref(detail.contractId)} className={buttonVariants({ variant: "info" })}>Open Contract</Link>
             </>
           ) : undefined
         }

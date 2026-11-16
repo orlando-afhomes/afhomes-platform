@@ -95,9 +95,9 @@ export function buildSchedule(product: VipProduct, scheme: PaymentScheme, reserv
 export function finalizationHolds(contract: Contract): string[] {
   const holds: string[] = [];
   if (contract.priceStatus === "conflict") holds.push("The contract price is in conflict between contract sections (D5). Management must correct it first.");
-  if (contract.schemeStatus !== "configured") holds.push("The payment scheme has no approved commercial terms (D7).");
+  if (contract.schemeStatus !== "configured") holds.push("The payment plan has no approved commercial terms.");
   if (contract.arrangement && contract.arrangement.status !== "approved") holds.push(`The ${contract.arrangement.schemeLabel} arrangement needs Super Admin written approval.`);
-  if (contract.classification === "N") holds.push("Non-Standard terms need Administrator approval and Finance confirmation (doc 05 §10.2). This step is not available yet.");
+  if (contract.classification === "N") holds.push("Non-Standard terms need Administrator approval and Finance confirmation. This step is not available yet.");
   if (contract.schedule.length === 0) holds.push("The payment schedule is empty.");
   if (!contract.customerAccepted) holds.push("Customer acceptance has not been recorded.");
   return holds;

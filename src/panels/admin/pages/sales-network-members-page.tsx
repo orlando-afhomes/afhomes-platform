@@ -9,7 +9,7 @@ import type { AccreditationRecord } from "@/modules/accreditation/types";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { useAccreditations, useChangeSalesNetworkMemberStatus, useIssuePendingAccreditation, useMembers, useRenewAccreditation } from "@/data/queries";
-import { resolveAccreditationDisplay, teamDisplayName } from "@/modules/sales-network/display";
+import { designationLabel, resolveAccreditationDisplay, teamDisplayName } from "@/modules/sales-network/display";
 import { resolveRenewTarget, buildMemberMenuProps } from "../actions/sales-network-actions";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { formatDate } from "@/shared/lib/format-date";
@@ -40,7 +40,7 @@ const FROM_MD: DataTableColumnMeta = { className: "tw:hidden tw:md:table-cell" }
 const FROM_LG: DataTableColumnMeta = { className: "tw:hidden tw:lg:table-cell" };
 
 const withAll = (label: string, items: Array<{ value: string; label: string }>) => [{ value: "all", label }, ...items];
-const DESIGNATION_ITEMS = withAll("All designations", ["SVD", "SSM", "SM", "OST"].map((value) => ({ value, label: value })));
+const DESIGNATION_ITEMS = withAll("All positions", ["SVD", "SSM", "SM", "OST"].map((value) => ({ value, label: designationLabel(value) })));
 const STATUS_ITEMS = withAll("All statuses", [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
@@ -168,7 +168,7 @@ export function SalesNetworkMembersPage({
       },
       {
         id: "designation",
-        header: "Designation",
+        header: "Position",
         meta: FROM_MD,
         cell: ({ row }) => <DesignationBadge designation={row.original.designation} full />,
       },
@@ -177,7 +177,7 @@ export function SalesNetworkMembersPage({
       { id: "status", header: "Status", meta: FROM_SM, cell: ({ row }) => <StatusBadge status={row.original.status} /> },
       {
         id: "actions",
-        header: () => <span className="tw:sr-only">Actions</span>,
+        header: "Actions",
         cell: ({ row }) => {
           const record = row.original;
           const records = accreditationRecordsByMember.get(record.id);
@@ -211,7 +211,7 @@ export function SalesNetworkMembersPage({
   if (!granted.has("sales-network-members")) {
     return (
       <PageContainer>
-        <PageHeader title="Access restricted" description="This account does not have access to Sales Network." />
+        <PageHeader title="Access Restricted" description="This account does not have access to Sales Network." />
       </PageContainer>
     );
   }
@@ -230,7 +230,7 @@ export function SalesNetworkMembersPage({
         onSearch={setSearch}
         searchLabel="Search members"
         filters={[
-          { label: "Designation filter", value: designationFilter, onChange: setDesignationFilter, options: DESIGNATION_ITEMS },
+          { label: "Position filter", value: designationFilter, onChange: setDesignationFilter, options: DESIGNATION_ITEMS },
           { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_ITEMS },
           { label: "Team filter", value: teamFilter, onChange: setTeamFilter, options: teamItems },
           { label: "Accreditation status filter", value: accreditationFilter, onChange: setAccreditationFilter, options: ACCREDITATION_ITEMS },
@@ -242,7 +242,7 @@ export function SalesNetworkMembersPage({
         </Button>
       </FilterBar>
       <DataTable<OrgMember>
-        caption="Sales Network members"
+        caption="Sales Network Members"
         data={filtered}
         columns={columns}
         getRowId={(member) => member.id}
@@ -271,7 +271,7 @@ export function SalesNetworkMembersPage({
       <ConfirmDialog
         open={accreditMember !== null}
         title="Create Pending Accreditation"
-        description={`Create a pending accreditation with automatic AA issuance for seller ${accreditMember?.displayName ?? ""}?`}
+        description={`Create a pending accreditation with automatic accreditation number issuance for seller ${accreditMember?.displayName ?? ""}?`}
         confirmText="Create"
         pending={issuePending.isPending}
         onConfirm={() => {
@@ -281,7 +281,7 @@ export function SalesNetworkMembersPage({
             (created) => {
               setAccreditMember(null);
               toast.success("Pending accreditation created.", {
-                description: `Issued ${created.aaNumber ?? "AA number"}. Accreditation stays Pending until approval.`,
+                description: `Issued ${created.aaNumber ?? "accreditation number"}. Accreditation stays Pending until approval.`,
               });
             },
             (err: unknown) => {
@@ -294,8 +294,8 @@ export function SalesNetworkMembersPage({
       />
       <ConfirmDialog
         open={renewTarget !== null}
-        title="Renew accreditation?"
-        description={`Renew the accreditation of ${renewTarget?.memberName ?? ""} today? A new AA number is issued for this month and is valid for one year from today. The current number ${renewTarget?.record.aaNumber} is kept in the AA Number History, and all sales, team and referrer links carry over.`}
+        title="Renew Accreditation?"
+        description={`Renew the accreditation of ${renewTarget?.memberName ?? ""} today? A new accreditation number is issued for this month and is valid for one year from today. The current number ${renewTarget?.record.aaNumber} is kept in the Accreditation Number History, and all sales, team and referrer links carry over.`}
         confirmText="Renew" tone="success"
         pending={renewAccreditation.isPending}
         onConfirm={() => {
@@ -304,7 +304,7 @@ export function SalesNetworkMembersPage({
           void renewAccreditation.mutateAsync({ recordId: target.record.id, expectedAaNumber: target.record.aaNumber ?? undefined }).then(
             (renewed) => {
               setRenewTarget(null);
-              toast.success("Accreditation renewed.", { description: `New AA number ${renewed.aaNumber ?? ""}, valid until ${formatDate(renewed.expiryDate)}.` });
+              toast.success("Accreditation renewed.", { description: `New accreditation number ${renewed.aaNumber ?? ""}, valid until ${formatDate(renewed.expiryDate)}.` });
             },
             (err: unknown) => {
               setRenewTarget(null);

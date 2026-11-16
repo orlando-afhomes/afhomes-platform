@@ -65,7 +65,7 @@ describe("my account page", () => {
     render(<TestWrapper identityId="dev-hr" />);
     const emailInput = await screen.findByDisplayValue("hrstaff@afhomes.local", {}, { timeout: 5000 });
     fireEvent.change(emailInput, { target: { value: "hr.updated@afhomes.local" } });
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(screen.getByRole("button", { name: "Save Changes" }));
     await confirmSave(user);
     expect(await screen.findByText("Account updated successfully.")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("hr.updated@afhomes.local", { selector: "dd" })).toBeInTheDocument());
@@ -76,7 +76,7 @@ describe("my account page", () => {
     render(<TestWrapper />);
     const nameInput = await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 });
     fireEvent.change(nameInput, { target: { value: "Admin User Updated" } });
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(screen.getByRole("button", { name: "Save Changes" }));
     await confirmSave(user);
     expect(await screen.findByText("Account updated successfully.")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Admin User Updated")).toBeInTheDocument();
@@ -87,7 +87,7 @@ describe("my account page", () => {
     render(<TestWrapper />);
     const nameInput = await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 });
     fireEvent.change(nameInput, { target: { value: "" } });
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(screen.getByRole("button", { name: "Save Changes" }));
     expect(await screen.findByText("Full name is required.")).toBeInTheDocument();
     expect(screen.queryByRole("alertdialog")).toBeNull();
   });
@@ -119,18 +119,18 @@ describe("my account page", () => {
 
   it("restricts inactive identities", async () => {
     render(<TestWrapper identityId="dev-inactive" />);
-    expect(await screen.findByText("Access restricted")).toBeInTheDocument();
+    expect(await screen.findByText("Access Restricted")).toBeInTheDocument();
   });
 
   it("shows the read-only referral code card for a sales member identity", async () => {
     render(<TestWrapper identityId="dev-svd-a" />);
-    expect(await screen.findByText("My referral code", {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(await screen.findByText("My Referral Code", {}, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByText("Status")).toBeInTheDocument();
   });
 
   it("hides the referral code card for an identity without a member record", async () => {
     render(<TestWrapper identityId="dev-super-admin" />);
-    await screen.findByText("Profile information", {}, { timeout: 5000 });
-    expect(screen.queryByText("My referral code")).toBeNull();
+    await screen.findByText("Profile Information", {}, { timeout: 5000 });
+    expect(screen.queryByText("My Referral Code")).toBeNull();
   });
 });

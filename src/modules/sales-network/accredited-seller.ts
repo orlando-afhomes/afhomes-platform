@@ -171,10 +171,10 @@ export function validateAccreditedSellerFields(
   allowedProgramCategories: readonly string[] = PROGRAM_CATEGORY_OPTIONS.map((option) => option.value),
 ): string | null {
   if (input.mode === "IST" && !["SVD", "SSM", "SM"].includes(input.designation)) {
-    return "IST needs SVD, SSM, SM.";
+    return "An Internal Seller needs a Sales Vice Director, Senior Sales Manager or Sales Manager position.";
   }
   if (input.mode === "OST" && input.designation !== "OST") {
-    return "OST position is locked.";
+    return "The Outsourced Seller position is fixed.";
   }
   if (input.sellerIdentity === "existing" && !input.existingAccountId) {
     return "Select an employee account.";
@@ -264,7 +264,7 @@ function validateAccreditationSelection(input: CreateAccreditedSellerInput): str
 
 function validateManualAa(input: CreateAccreditedSellerInput): string | null {
   if (input.aaMethod !== "manual") return null;
-  if (!(input.manualAaSuffix ?? "").trim()) return "AA number required in Manual.";
+  if (!(input.manualAaSuffix ?? "").trim()) return "Accreditation number required in Manual.";
   return null;
 }
 

@@ -51,7 +51,7 @@ export function MyAccountPage() {
   if (identity.status !== "active") {
     return (
       <PageContainer>
-        <PageHeader title="Access restricted" description="This account does not have access to My Account." />
+        <PageHeader title="Access Restricted" description="This account does not have access to My Account." />
       </PageContainer>
     );
   }
@@ -73,7 +73,7 @@ function MyReferralCodeCard() {
   const currentMember = (membersQuery.data ?? []).find((member) => member.id === identity.memberId) ?? null;
   if (!identity.memberId || !currentMember) return null;
   return (
-    <CardSection title="My referral code">
+    <CardSection title="My Referral Code">
       <DetailList>
         <DetailRow term="Code">{currentMember.referralCode ?? "—"}</DetailRow>
         <DetailRow term="Status">{currentMember.referralCode ? "Existing code" : EMPTY}</DetailRow>
@@ -177,7 +177,7 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
 
   return (
     <form onSubmit={handleSubmit} noValidate className="tw:mt-3 tw:flex tw:max-w-2xl tw:flex-col tw:gap-4">
-      <CardSection title="Profile information">
+      <CardSection title="Profile Information">
         <div className="tw:flex tw:flex-col tw:gap-1.5">
           <span className="tw:text-sm tw:font-medium">Profile picture</span>
           <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-4">
@@ -202,7 +202,7 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
                     }}
                   />
                   <Button type="button" variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => fileInputRef.current?.click()}>
-                    <Upload aria-hidden="true" /> Select image
+                    <Upload aria-hidden="true" /> Select Image
                   </Button>
                   {avatarUrl ? (
                     <Button type="button" variant="destructive" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setAvatarUrl(null)}>
@@ -252,11 +252,11 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
         </DetailList>
       </CardSection>
 
-      <CardSection title="Change password">
+      <CardSection title="Change Password">
         <p className="tw:text-sm tw:text-muted-foreground">To change your password, ask an Administrator to reset it for you.</p>
       </CardSection>
 
-      <CardSection title="Employment and access">
+      <CardSection title="Employment and Access">
         <DetailList>
           <DetailRow term="Department">{departments.find((item) => item.id === staff.departmentId)?.name ?? "—"}</DetailRow>
           <DetailRow term="Role">{roles.find((item) => item.id === staff.departmentRoleId)?.name ?? "—"}</DetailRow>
@@ -266,12 +266,12 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
 
       <div className="tw:flex tw:justify-end">
         <Button type="submit" loading={submitting} disabled={!canEditProfile} className="tw:min-h-11 tw:w-full tw:sm:min-h-8 tw:sm:w-auto">
-          Save changes
+          Save Changes
         </Button>
       </div>
       <ConfirmDialog
         open={confirmSave}
-        title="Save changes to your account?"
+        title="Save Changes to Your Account?"
         description="Your profile information will be updated."
         confirmText="Save"
         pending={submitting}

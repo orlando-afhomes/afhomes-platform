@@ -134,11 +134,11 @@ describe("Clerk dashboard", () => {
   it("shows a to-do list that links to the pages where the work is done", async () => {
     show("dev-clerk");
 
-    expect(await screen.findByRole("heading", { name: "My to-do list" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "My To-Do List" })).toBeInTheDocument();
     expect(await screen.findByRole("link", { name: /^Returned receipts to correct: \d+ pending$/ })).toHaveAttribute("href", "/admin/sales?tab=contracts");
     expect(screen.getByRole("link", { name: /^Contracts to finish or fix: \d+ pending$/ })).toHaveAttribute("href", "/admin/sales?tab=contracts");
     expect(screen.getByRole("link", { name: /^Customers to finish or fix: \d+ pending$/ })).toHaveAttribute("href", "/admin/customers");
-    expect(screen.queryByText("No dashboard metrics")).toBeNull();
+    expect(screen.queryByText("No Dashboard Metrics")).toBeNull();
   });
 });
 
@@ -163,9 +163,9 @@ describe("Finance dashboard with loaded records", () => {
 
     const chart = screen.getByRole("region", { name: "Collections Performance" });
     await waitFor(() =>
-      expect(chart.querySelector("figcaption")?.textContent).toContain("Verified ₱129,500.00; Reversals & refunds ₱0.00; Net ₱129,500.00"),
+      expect(chart.querySelector("figcaption")?.textContent).toContain("Verified ₱129,500.00; Undone payments & refunds ₱0.00; Net ₱129,500.00"),
     );
-    expect(within(chart).getAllByRole("radio").map((radio) => radio.textContent)).toEqual(["Verified", "Reversals & refunds", "Net"]);
+    expect(within(chart).getAllByRole("radio").map((radio) => radio.textContent)).toEqual(["Verified", "Undone payments & refunds", "Net"]);
 
     const receivables = screen.getByRole("region", { name: "Receivables Overview" });
     expect(within(receivables).getByText("Settled")).toBeInTheDocument();
@@ -175,7 +175,7 @@ describe("Finance dashboard with loaded records", () => {
       ["Payment Verification: 1 pending", "/admin/finance?tab=verification"],
       ["Commission Payouts: 1 pending", "/admin/commissions?tab=commissions"],
       ["Cancellation Requests: 1 pending", "/admin/finance?tab=cancellations"],
-      ["Financial Holds: 1 pending", "/admin/finance?tab=collections"],
+      ["Payment Holds: 1 pending", "/admin/finance?tab=collections"],
       ["Membership Activation: 1 pending", "/admin/membership?tab=activation"],
     ]) {
       expect(await screen.findByRole("link", { name })).toHaveAttribute("href", href);
@@ -224,7 +224,7 @@ describe("Sales dashboard with loaded records", () => {
     const chart = screen.getByRole("region", { name: "Sales Performance" });
     expect(within(chart).getAllByRole("radio").map((radio) => radio.textContent)).toEqual(["My sales", "Team sales"]);
 
-    const overview = screen.getByRole("region", { name: "Team overview" });
+    const overview = screen.getByRole("region", { name: "Team Overview" });
     expect(await within(overview).findByText("Maria Santos")).toBeInTheDocument();
     expect(within(overview).getByText("₱240,000.00")).toBeInTheDocument();
     expect(within(overview).getByRole("link", { name: /Members/ })).toHaveAttribute("href", "/admin/sales-network/members");
@@ -239,8 +239,8 @@ describe("Sales dashboard with loaded records", () => {
     expect(await kpi("Pending sales")).toBe("0");
     expect(screen.queryByText("Team confirmed sales value")).toBeNull();
     expect(screen.queryByText("Team sales")).toBeNull();
-    expect(screen.queryByRole("region", { name: "Team overview" })).toBeNull();
-    const overview = screen.getByRole("region", { name: "Account overview" });
+    expect(screen.queryByRole("region", { name: "Team Overview" })).toBeNull();
+    const overview = screen.getByRole("region", { name: "Account Overview" });
     expect(within(overview).queryByText(/Direct downline/)).toBeNull();
     expect(screen.queryByRole("region", { name: "Needs your attention" })).toBeNull();
   });

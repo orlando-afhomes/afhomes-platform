@@ -88,7 +88,7 @@ describe("accredited seller wizard", () => {
   it("blocks Next with inline errors until the personal step is complete", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    const dialog = await screen.findByRole("dialog", { name: "Add OST" });
+    const dialog = await screen.findByRole("dialog", { name: "Add Outsourced Seller" });
     await user.click(within(dialog).getByRole("button", { name: /next/i }));
     expect(await within(dialog).findByText("Profile photo is required.")).toBeInTheDocument();
     expect(within(dialog).getByText("First name is required.")).toBeInTheDocument();
@@ -98,7 +98,7 @@ describe("accredited seller wizard", () => {
   it("selects a sponsor on the assignment step without throwing", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    const dialog = await screen.findByRole("dialog", { name: "Add OST" });
+    const dialog = await screen.findByRole("dialog", { name: "Add Outsourced Seller" });
 
     await fillPersonalStep(user, dialog);
     await user.click(within(dialog).getByRole("button", { name: /next/i }));
@@ -114,13 +114,13 @@ describe("accredited seller wizard", () => {
     await user.click(option[0]);
 
     // The sponsor list is searchable, so the chosen option shows as the input value.
-    await waitFor(() => expect((within(dialog).getByRole("combobox", { name: "Sponsor" }) as HTMLInputElement).value).toMatch(/\((SVD|SSM|SM)\)/));
+    await waitFor(() => expect((within(dialog).getByRole("combobox", { name: "Sponsor" }) as HTMLInputElement).value).toMatch(/\((Sales Vice Director|Senior Sales Manager|Sales Manager)\)/));
     expect(screen.queryByText(/Sponsor is required/i)).toBeNull();
   });
 
   it("restricts completion to a Super Administrator", async () => {
     render(<TestWrapper identityId="dev-admin" />);
-    const dialog = await screen.findByRole("dialog", { name: "Add OST" });
-    expect(within(dialog).getByText("Super Administrator completion required")).toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog", { name: "Add Outsourced Seller" });
+    expect(within(dialog).getByText("Super Administrator Completion Required")).toBeInTheDocument();
   });
 });

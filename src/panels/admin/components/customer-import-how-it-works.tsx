@@ -24,7 +24,7 @@ export function CustomerImportHowItWorks() {
         <span aria-hidden="true" className="tw:hidden tw:w-px tw:self-stretch tw:bg-border tw:sm:block" />
         <div className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:gap-2 tw:lg:flex-row tw:lg:items-start tw:lg:gap-6">
           <h2 id={titleId} className="tw:shrink-0 tw:text-base tw:font-semibold tw:whitespace-nowrap">
-            How import works
+            How Import Works
           </h2>
           <p className="tw:m-0 tw:text-sm tw:text-muted-foreground">{BODY_COPY}</p>
         </div>

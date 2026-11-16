@@ -49,24 +49,24 @@ afterEach(() => {
 const SUBMITTED = "cust-a3";
 
 describe("Customers area", () => {
-  it("opens the Import and export tab for an Administrator from the URL", async () => {
+  it("opens the Import and Export tab for an Administrator from the URL", async () => {
     window.history.replaceState(null, "", "/admin/customers?tab=import-export");
     show("dev-admin", <CustomersRoute />);
-    expect(screen.getByRole("tab", { name: "Import and export" })).toHaveAttribute("aria-selected", "true");
-    expect(await screen.findByRole("button", { name: "Download template" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "New customer" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "Import and Export" })).toHaveAttribute("aria-selected", "true");
+    expect(await screen.findByRole("button", { name: "Download Template" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "New Customer" })).toBeNull();
   });
 
   it("offers one Download template menu with Excel and CSV, and a filtered export preview", async () => {
     const user = userEvent.setup();
     window.history.replaceState(null, "", "/admin/customers?tab=import-export");
     show("dev-admin", <CustomersRoute />);
-    await user.click(await screen.findByRole("button", { name: "Download template" }));
+    await user.click(await screen.findByRole("button", { name: "Download Template" }));
     expect(await screen.findByRole("menuitem", { name: "Excel (.xlsx)" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "CSV (.csv)" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "CSV template" })).toBeNull();
 
-    const preview = await screen.findByRole("table", { name: "Customers to export" });
+    const preview = await screen.findByRole("table", { name: "Customers to Export" });
     expect(within(preview).getByText("Noel Pascual")).toBeInTheDocument();
     expect(screen.queryByText(/matching customer/)).toBeNull();
     expect(screen.getByRole("button", { name: "Export" })).toBeEnabled();
@@ -87,8 +87,8 @@ describe("Customers area", () => {
     window.history.replaceState(null, "", "/admin/customers?tab=import-export");
     show("dev-ost-a1", <CustomersRoute />);
     expect(await screen.findByRole("table", { name: "Customers" })).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "Import and export" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Download template" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Import and Export" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Download Template" })).toBeNull();
   });
 });
 
@@ -111,7 +111,7 @@ describe("customer registration review pages (doc 04 sections 5 and 10)", () => 
     await screen.findByRole("button", { name: /^approve$/i });
     expect(screen.queryByRole("button", { name: /^actions for/i })).toBeNull();
     expect(screen.getAllByRole("button", { name: /^reject$/i })).toHaveLength(1);
-    expect(screen.getAllByRole("button", { name: /^prepare contract$/i })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /^new vip purchase$/i })).toHaveLength(1);
   });
 
   it("keeps Discard draft as a red header button for a draft", async () => {
@@ -126,11 +126,11 @@ describe("customer registration review pages (doc 04 sections 5 and 10)", () => 
     show("dev-admin", <CustomerDetailPage customerId={SUBMITTED} />);
     await user.click(await screen.findByRole("button", { name: /send back/i }));
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByRole("button", { name: "Send back" }).className).toContain("warning");
-    await user.click(within(dialog).getByRole("button", { name: "Send back" }));
+    expect(within(dialog).getByRole("button", { name: "Send Back" }).className).toContain("warning");
+    await user.click(within(dialog).getByRole("button", { name: "Send Back" }));
     expect(await within(dialog).findByText("Reason is required.")).toBeInTheDocument();
     await user.type(within(dialog).getByRole("textbox"), "Missing ID photo");
-    await user.click(within(dialog).getByRole("button", { name: "Send back" }));
+    await user.click(within(dialog).getByRole("button", { name: "Send Back" }));
     expect(await screen.findByText("Sent back to the Clerk.")).toBeVisible();
     expect(await screen.findByText("Missing ID photo")).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole("button", { name: /^approve$/i })).toBeNull());

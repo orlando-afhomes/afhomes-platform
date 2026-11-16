@@ -8,6 +8,7 @@ import { firstOpenDate } from "@/modules/finance/month-close";
 import { PAYMENT_METHODS, PAYMENT_PURPOSES, type Payment, type PaymentEvent } from "@/modules/finance/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import type { IgpSale } from "@/modules/igp/types";
+import { tierDisplayName } from "@/modules/vip/tier-options";
 import { cleanReferenceNumber, referencePolicyFor, validateReferenceNumber } from "@/shared/forms/validation/reference-number";
 import { DEV_IDENTITIES } from "./dev-identities";
 import { BusinessRepository, DATE_ONLY, canSeeContract, customerName, nowIso, today } from "./business-base";
@@ -86,7 +87,7 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
         ...payment,
         customerName: customerName(this.store, payment.customerId),
         contractLabel: !contract ? "Unknown contract" : "seriesNumber" in contract
-          ? `IGP · ${contract.seriesNumber}` : `${contract.productCode} · ${contract.schemeLabel}`,
+          ? `Property (IGP) · ${contract.seriesNumber}` : `${tierDisplayName(contract.productCode, this.store.products) ?? "VIP"} · ${contract.schemeLabel}`,
         ...(contract && "seriesNumber" in contract ? { isIgp: true, approvalBlocked: !contract.approvedBy || isClosedPaymentTarget(contract) } : {
           approvalBlocked: !contract || contract.status === "cancelled" || !this.store.sales.some((sale) => sale.contractId === contract.id && sale.approval),
         }),
@@ -147,7 +148,7 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
       if (!canCorrectPayment(identity, payment.submittedBy)) throw new Error("Only the submitter or an administrator can correct this payment.");
       if (payment.status !== "returned") throw new Error("Only a payment returned for correction can be resubmitted.");
       const contract = this.contractFor(identity, payment.contractId);
-      if ("seriesNumber" in contract && isClosedPaymentTarget(contract)) throw new Error("Payments cannot be resubmitted for this IGP sale.");
+      if ("seriesNumber" in contract && isClosedPaymentTarget(contract)) throw new Error("Payments cannot be resubmitted for this property (IGP) sale.");
       const next = {
         purpose: input.purpose ?? payment.purpose,
         amountCentavos: input.amountCentavos ?? payment.amountCentavos,
@@ -243,9 +244,9 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
       if (!input.reason.trim()) throw new Error("A reason is required.");
       const payment = this.paymentFor(identity, id);
       const igpSale = findIgpPaymentTarget(this.store, payment.contractId);
-      if (payment.status !== "verified") throw new Error("Only a verified payment can be reversed or refunded.");
+      if (payment.status !== "verified") throw new Error("Only a verified payment can be undone or refunded.");
       // The Reservation Fee is non-refundable (Reservation Agreement; owner decision OD-12). A reversal still corrects errors.
-      if (!igpSale && input.kind === "refund" && payment.purpose === "reservation") throw new Error("The Reservation Fee is non-refundable. Record a reversal only to correct an error.");
+      if (!igpSale && input.kind === "refund" && payment.purpose === "reservation") throw new Error("The Reservation Fee is non-refundable. Record an undo only to correct an error.");
       if (!Number.isInteger(input.amountCentavos) || input.amountCentavos <= 0) throw new Error("Enter an amount greater than zero.");
       if (input.amountCentavos > adjustableCentavos(payment)) throw new Error("The amount exceeds the remaining verified amount of this payment.");
       const date = firstOpenDate(this.store.closedMonths, today());

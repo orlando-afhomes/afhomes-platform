@@ -158,7 +158,7 @@ describe("roles page", () => {
     const nameInput = await screen.findByDisplayValue("Finance Staff");
     fireEvent.change(nameInput, { target: { value: "Finance Staff Updated" } });
     await user.click(screen.getByRole("button", { name: /^save$/i }));
-    expect(await screen.findByText("Save changes to Finance Staff Updated?")).toBeInTheDocument();
+    expect(await screen.findByText("Save Changes to Finance Staff Updated?")).toBeInTheDocument();
     await confirmInAlertDialog(user, "Save");
     expect(await screen.findByText("Role updated successfully.")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Finance Staff Updated")).toBeInTheDocument());
@@ -182,9 +182,9 @@ describe("roles page", () => {
     render(<TestWrapper />);
     await screen.findByText("HR Staff", {}, { timeout: 5000 });
     await user.click(rowFor("HR Staff"));
-    const dialog = await screen.findByRole("dialog", { name: "Role details" });
+    const dialog = await screen.findByRole("dialog", { name: "Role Details" });
     expect(within(dialog).getByText("Departments")).toBeInTheDocument();
-    expect(within(dialog).getByText(/Assigned staff \(/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Assigned Staff \(/)).toBeInTheDocument();
   });
 
   it("blocks deleting an assigned role", async () => {

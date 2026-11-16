@@ -20,6 +20,7 @@ import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sh
 import { PAYOUT_RELEASE_THRESHOLD_BP } from "@/modules/commissions/rules";
 import { commissionRoleLabel } from "@/modules/commissions/types";
 import { formatDate } from "@/shared/lib/format-date";
+import { designationLabel } from "@/modules/sales-network/display";
 
 export const RELEASE_PERCENT = PAYOUT_RELEASE_THRESHOLD_BP / 100;
 
@@ -59,7 +60,7 @@ export const COMMISSION_COLUMNS: ColumnDef<CommissionView, unknown>[] = [
     { id: "customer", header: "Sale", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.customerName },
     { id: "amount", header: "Amount", cell: ({ row }) => <Money value={row.original.amountCentavos} /> },
     { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
-    { id: "release", header: "Release date", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => (row.original.payoutReleaseDate ? formatDate(row.original.payoutReleaseDate) : "—") },
+    { id: "release", header: "Ready-to-Pay Date", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => (row.original.payoutReleaseDate ? formatDate(row.original.payoutReleaseDate) : "—") },
 ];
 
 
@@ -83,7 +84,7 @@ export function CommissionDetailsSheet({ detail, onClose, items }: { detail: Com
                 {
                   title: "Commission",
                   rows: [
-                    { label: "Designation", value: detail.recipientDesignation },
+                    { label: "Position", value: designationLabel(detail.recipientDesignation) },
                     { label: "Commission type", value: detail.role ? `${commissionRoleLabel(detail.role)} (${detail.role})` : null },
                     { label: "Contract value", value: <Money value={detail.basisCentavos} /> },
                     { label: "Sale number", value: detail.saleReference },
@@ -94,8 +95,8 @@ export function CommissionDetailsSheet({ detail, onClose, items }: { detail: Com
                 {
                   title: "Payout",
                   rows: [
-                    { label: "Release date", value: detail.payoutReleaseDate ? formatDate(detail.payoutReleaseDate) : null },
-                    { label: "Payout", value: detail.payout ? (detail.payout.confirmedAt ? "Disbursement confirmed" : "Initiated, not confirmed") : payoutNote(detail) },
+                    { label: "Ready-to-pay date", value: detail.payoutReleaseDate ? formatDate(detail.payoutReleaseDate) : null },
+                    { label: "Payout", value: detail.payout ? (detail.payout.confirmedAt ? "Payment sent" : "Initiated, not confirmed") : payoutNote(detail) },
                     { label: "Payout reference", value: detail.payout?.reference },
                     { label: "Proof", value: detail.payout?.evidenceFileName },
                     { label: "On hold because", value: detail.holdReason, wide: true },
@@ -136,7 +137,7 @@ export function AdjustDialog({ commission, onClose }: { commission: CommissionVi
     }
   };
   return (
-    <FormDialog open title="Adjust commission" description={commission.recipientName} submitText="Save" submitVariant="warning" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title="Adjust Commission" description={commission.recipientName} submitText="Save" submitVariant="warning" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <PercentField label="Percentage" required value={rate} onChange={setRate} />
       <TextField label="Reason" required value={reason} onChange={setReason} />
     </FormDialog>
@@ -179,9 +180,9 @@ export function PayoutDialog({ commissions, onClose }: { commissions: Commission
       const result = await bulk.mutateAsync({ kind: "payout", ids: commissions.map(({ id }) => id), reference, method: method || null, payoutDate: date, evidenceFileName: file });
       // Nothing recorded: keep the form open with the reason so it can be corrected.
       if (result.done === 0) return setError([...new Set(result.failed.map(({ reason }) => reason))].join(" "));
-      if (single) toast.success("Payout recorded. Confirm disbursement to mark it Paid.");
+      if (single) toast.success("Payout recorded. Confirm paid out to mark it Paid.");
       else if (result.failed.length) toast.warning(bulkSummary(result, "recorded"));
-      else toast.success(bulkSummary(result, "recorded"), { description: "Confirm disbursement to mark them Paid." });
+      else toast.success(bulkSummary(result, "recorded"), { description: "Confirm paid out to mark them Paid." });
       onClose();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Could not record.");
@@ -189,9 +190,9 @@ export function PayoutDialog({ commissions, onClose }: { commissions: Commission
   };
   const total = commissions.reduce((sum, item) => sum + item.amountCentavos, 0);
   return (
-    <FormDialog open title={single ? "Record payout" : `Record payout for ${commissions.length} commissions`}
+    <FormDialog open title={single ? "Record Payout" : `Record Payout for ${commissions.length} commissions`}
       description={single ? commissions[0].recipientName : `Total ${formatPeso(total)}. To leave a commission out, close this and use Record payout on each row you want to pay.`}
-      submitText="Record payout" pending={bulk.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+      submitText="Record Payout" pending={bulk.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <TextField label="Payment reference" required value={reference} onChange={setReference} />
       <TextField label="Payment method" required={proofRequired} value={method} onChange={setMethod} />
       <StandardDateField label="Payout date" required value={date} onChange={setDate} />
@@ -219,7 +220,7 @@ export function HoldDialog({ commission, onClose }: { commission: CommissionView
     }
   };
   return (
-    <FormDialog open title="Resolve hold" description={commission.holdReason ?? "This commission is on hold."} submitText="Save decision" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title="Resolve Hold" description={commission.holdReason ?? "This commission is on hold."} submitText="Save Decision" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <SelectField label="Decision" required value={decision} options={[{ value: "keep", label: "Keep on hold" }, { value: "restore", label: "Restore to Approved" }, { value: "cancel", label: "Cancel commission" }]} onChange={setDecision} />
       <TextField label="Reason" required value={reason} onChange={setReason} />
     </FormDialog>

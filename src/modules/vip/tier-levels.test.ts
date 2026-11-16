@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { productsInLevel, seedTierLevels, tierLevelNameError, tierLevelOptions } from "./tier-levels";
-import { defaultProductCode, tierOptions } from "./tier-options";
+import { defaultProductCode, tierDisplayName, tierOptions } from "./tier-options";
 import type { VipProduct } from "./types";
 
 describe("tier levels", () => {
@@ -25,10 +25,18 @@ describe("tier levels", () => {
       { code: "P3", tier: "Platinum", tierLevelId: "p", status: "active" },
     ] as VipProduct[];
     expect(productsInLevel(products, "a")).toBe(2);
-    expect(tierOptions(products).map((item) => item.label)).toEqual(["Bronze (B1)", "Platinum (P3)"]);
+    expect(tierOptions(products)).toEqual([{ value: "B1", label: "Bronze" }, { value: "P3", label: "Platinum" }]);
     expect(tierOptions(products, ["B3"]).map((item) => item.value)).toEqual(["B1", "B3", "P3"]);
     expect(tierOptions(undefined)).toEqual([]);
     expect(defaultProductCode(products)).toBe("B1");
     expect(defaultProductCode([])).toBe("");
+  });
+
+  it("shows the configured tier and resolves documented historical products without exposing raw codes", () => {
+    expect(tierDisplayName("P3", [{ code: "P3", tier: "Platinum" }])).toBe("Platinum");
+    expect(tierDisplayName("B1", undefined)).toBe("Bronze");
+    expect(tierDisplayName("B2", undefined)).toBe("Super Bronze");
+    expect(tierDisplayName("Z9", undefined)).toBeNull();
+    expect(tierDisplayName(null, undefined)).toBeNull();
   });
 });

@@ -64,12 +64,15 @@ const STATUS_MAP: Record<string, { tone: BadgeTone; icon?: LucideIcon }> = {
   inactive: { tone: "neutral", icon: Minus },
 };
 
+/** Plain screen words for stored statuses whose default capitalised form is hard to understand. */
+const PLAIN_LABELS: Record<string, string> = { defaulted: "Stopped Paying" };
+
 /** Status pill driven by a record status string. Unknown statuses render neutral text without an icon. */
 export function StatusPillForStatus({ status, label }: { status: string; label?: string }) {
   const mapped = STATUS_MAP[status];
   return (
     <StatusPill tone={mapped?.tone ?? "neutral"} icon={mapped?.icon}>
-      {label ?? humanize(status)}
+      {label ?? PLAIN_LABELS[status] ?? humanize(status)}
     </StatusPill>
   );
 }

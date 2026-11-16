@@ -68,14 +68,14 @@ export function RedemptionBookingDialog({ open, overview, onClose }: { open: boo
 
   const eligible = overview.members.filter((item) => item.blockedReasons.length === 0 && item.vipNumber);
   return (
-    <FormDialog open={open} title="New booking with points" description="Points never convert between weekday and weekend. Each night is paid fully in points or fully in money." submitText="Record booking" pending={create.isPending} error={error} onClose={close} onSubmit={() => void submit()}>
+    <FormDialog open={open} title="New Booking with Points" description="Points never convert between weekday and weekend. Each night is paid fully in points or fully in money." submitText="Record Booking" pending={create.isPending} error={error} onClose={close} onSubmit={() => void submit()}>
       <SelectField label="Cardholder" required value={membershipId} placeholder="Choose a card" options={eligible.map((item) => ({ value: item.membershipId, label: `${item.customerName} · ${item.vipNumber}` }))} onChange={(value) => { setMembershipId(value); setVenueId(""); setRoomType(""); setCash([]); }} hint={member ? `Available: ${fmt(member.weekday.available)} weekday, ${fmt(member.weekend.available)} weekend points.` : undefined} />
       <SelectField label="Venue" required value={venueId} options={venues.map((item) => ({ value: item.id, label: item.name }))} onChange={(value) => { setVenueId(value); setRoomType(""); setCash([]); }} hint="Only open overnight venues of AFhomes Direct Operations are listed." />
       <SelectField label="Room type" required value={roomType} options={rooms.map((item) => ({ value: item, label: item }))} onChange={(value) => { setRoomType(value); setCash([]); }} disabled={!venueId} />
       <StandardDateField label="Check-in" required value={checkIn} onChange={(value) => { setCheckIn(value); setCash([]); }} />
       <StandardDateField label="Departure" required value={checkOut} onChange={(value) => { setCheckOut(value); setCash([]); }} />
       <PointsField label="Guests" required value={guests} onChange={setGuests} />
-      <SelectField label="Staying cardholder" required value={holder} options={[{ value: "Primary cardholder", label: "Primary cardholder" }, ...(allowsSupplementary ? [{ value: "Gold supplementary cardholder", label: "Gold supplementary cardholder" }] : [])]} onChange={setHolder} hint="A Gold supplementary cardholder uses the same points balance." />
+      <SelectField label="Staying cardholder" required value={holder} options={[{ value: "Primary cardholder", label: "Primary cardholder" }, ...(allowsSupplementary ? [{ value: "Gold extra cardholder", label: "Gold extra cardholder" }] : [])]} onChange={setHolder} hint="A Gold extra cardholder uses the same points balance." />
       {nights.length > 0 ? (
         <fieldset className="tw:flex tw:flex-col tw:gap-2">
           <legend className="tw:text-sm tw:font-medium">Nights paid in money instead of points (optional)</legend>

@@ -52,7 +52,7 @@ export function RoleDialogs({
       <Dialog open={open} onOpenChange={(next) => (!next ? onCloseForm() : undefined)}>
         <DialogContent className={DIALOG_CLASS}>
           <DialogHeader>
-            <DialogTitle>{editRole ? "Edit role" : "Create role"}</DialogTitle>
+            <DialogTitle>{editRole ? "Edit Role" : "Create Role"}</DialogTitle>
             <DialogDescription>
               {editRole ? "Update the role name, department, modules, or status." : "Add a department role and choose the modules it may access."}
             </DialogDescription>
@@ -76,7 +76,7 @@ function RoleViewDialog({ viewRole, onClose }: { viewRole: DepartmentRole | null
     <Dialog open={viewRole !== null} onOpenChange={(next) => (!next ? onClose() : undefined)}>
       <DialogContent className={DIALOG_CLASS}>
         <DialogHeader>
-          <DialogTitle>Role details</DialogTitle>
+          <DialogTitle>Role Details</DialogTitle>
           <DialogDescription>Read-only summary of the role.</DialogDescription>
         </DialogHeader>
         {viewRole ? (
@@ -92,7 +92,7 @@ function RoleViewDialog({ viewRole, onClose }: { viewRole: DepartmentRole | null
               <DetailRow term="Created">{viewRole.createdAt}</DetailRow>
             </dl>
             <section className="tw:flex tw:flex-col tw:gap-2">
-              <h3 className="tw:font-semibold">Authorized modules</h3>
+              <h3 className="tw:font-semibold">Authorized Modules</h3>
               <div className="tw:flex tw:flex-wrap tw:gap-1">
                 {viewRole.moduleIds.map((moduleId: string) => (
                   <Badge key={moduleId} variant="outline">
@@ -102,7 +102,7 @@ function RoleViewDialog({ viewRole, onClose }: { viewRole: DepartmentRole | null
               </div>
             </section>
             <section className="tw:flex tw:flex-col tw:gap-2">
-              <h3 className="tw:font-semibold">Assigned staff ({assigned.length})</h3>
+              <h3 className="tw:font-semibold">Assigned Staff ({assigned.length})</h3>
               {assigned.length === 0 ? (
                 <p className="tw:text-muted-foreground">No staff assigned to this role.</p>
               ) : (
@@ -321,7 +321,7 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
       {editRole ? (
         <ConfirmDialog
           open={confirmSave}
-          title={`Save changes to ${name.trim()}?`}
+          title={`Save Changes to ${name.trim()}?`}
           description="The role record will be updated."
           confirmText="Save"
           pending={submitting}

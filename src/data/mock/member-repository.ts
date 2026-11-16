@@ -6,6 +6,7 @@ import type { AccreditationRecord } from "@/modules/accreditation/types";
 import type { OrgMember } from "@/modules/organization/types";
 import type { CreateAccreditedSellerInput, AccreditedSellerResult, CreateSalesNetworkMemberInput, ReferralSponsorVerificationResult, TransferSalesNetworkMemberTarget, UpdateSalesNetworkMemberInput } from "@/modules/sales-network/types";
 import { validateSalesParent, getDirectChildren, isValidParentEdge } from "@/modules/sales-network/genealogy";
+import { designationLabel } from "@/modules/sales-network/display";
 import { calculateApprovedExpiry, validateAccreditedSellerFields } from "@/modules/sales-network/accredited-seller";
 import { allowedValues } from "@/modules/settings/lists";
 import { allocateSharedAaNumber, collectReservedAaNumbers, toAaYearMonth } from "@/modules/accreditation/issuance";
@@ -77,7 +78,7 @@ export class MockMemberRepository implements MemberRepository {
     if (!isActiveIdentity(identity) || !this.isAdmin(identity)) throw new Error("Recording a vacant seat requires Administrator or Super Administrator authorization.");
     const seat = this.store.members.find((item) => item.id === seatMemberId);
     if (!seat) throw new Error("Member not found.");
-    if (seat.designation === "OST") throw new Error("Only a leader seat (SVD, SSM or SM) can be vacant.");
+    if (seat.designation === "OST") throw new Error("Only a leader seat (Sales Vice Director, Senior Sales Manager or Sales Manager) can be vacant.");
     if (!parseManilaDateOnly(holderEndDate)) throw new Error("The holder's end date must be a valid date.");
     if (findOpenVacancy(this.store.seatVacancies, seatMemberId)) throw new Error("This seat is already vacant.");
     const record = getCurrentAccreditationRecord(this.store.accreditations.filter((item) => item.memberId === seatMemberId));
@@ -177,10 +178,10 @@ export class MockMemberRepository implements MemberRepository {
     const name = input.displayName.trim();
     if (!name) throw new Error("Member name is required.");
     if (input.designation === "OST") {
-      throw new Error("OST creation is deferred to the Phase 06 referral registration workflow.");
+      throw new Error("Outsourced Seller creation is deferred to the Phase 06 referral registration workflow.");
     }
     if (input.designation === "SVD" && input.parentId !== null) {
-      throw new Error("SVD cannot have parent.");
+      throw new Error("A Sales Vice Director cannot have a parent.");
     }
     const parent = input.parentId ? this.store.members.find((member) => member.id === input.parentId) ?? null : null;
     if (input.designation !== "SVD" && !parent) throw new Error("Parent member does not exist.");
@@ -399,10 +400,10 @@ export class MockMemberRepository implements MemberRepository {
 
     const newDesignation = options?.designation ?? member.designation;
     if (member.designation === "SVD" && newDesignation === "SVD") {
-      throw new Error("SVD root members cannot be transferred.");
+      throw new Error("A Sales Vice Director at the top of a team cannot be transferred.");
     }
     if (newDesignation === "SVD" && newParentId !== null) {
-      throw new Error("SVD cannot have parent.");
+      throw new Error("A Sales Vice Director cannot have a parent.");
     }
     if (member.parentId === newParentId && newDesignation === member.designation) {
       throw new Error("Member already belongs to the selected parent.");
@@ -420,7 +421,7 @@ export class MockMemberRepository implements MemberRepository {
     if (newDesignation !== member.designation) {
       for (const child of getDirectChildren(member.id, this.store.members)) {
         if (!isValidParentEdge(child.designation, newDesignation)) {
-          throw new Error(`Transfer blocked: ${child.displayName} (${child.designation}) would lose an eligible sponsor.`);
+          throw new Error(`Transfer blocked: ${child.displayName} (${designationLabel(child.designation)}) would lose an eligible sponsor.`);
         }
       }
     }
@@ -429,7 +430,7 @@ export class MockMemberRepository implements MemberRepository {
     let newTeamName: string | null;
     if (newDesignation === "SVD") {
       const teamName = (options?.teamName ?? "").trim();
-      if (!teamName) throw new Error("Team name is required for SVD.");
+      if (!teamName) throw new Error("Team name is required for a Sales Vice Director.");
       newBranchId = `branch-${this.store.memberSequence}`;
       this.store.memberSequence += 1;
       newTeamName = teamName;
@@ -681,14 +682,14 @@ export class MockMemberRepository implements MemberRepository {
       const validation = validateSalesParent(input.designation, parent, this.store.members, undefined, this.store.accreditations);
       if (!validation.ok) throw new Error(validation.message);
     } else if (input.parentId !== null) {
-      throw new Error("SVD cannot have parent.");
+      throw new Error("A Sales Vice Director cannot have a parent.");
     }
 
     const yymm = toAaYearMonth(input.approvedStart);
     if (!yymm) throw new Error("Start date must be valid.");
     const prefix = input.mode === "IST" ? "AAI" : "AAO";
     const reserved = collectReservedAaNumbers(this.store.accreditations, this.store.members);
-    if (input.aaMethod === "manual") throw new Error("AA numbers are issued automatically.");
+    if (input.aaMethod === "manual") throw new Error("Accreditation numbers are issued automatically.");
     const { aaNumber } = allocateSharedAaNumber(prefix, yymm, reserved);
 
     const expiryDate = calculateApprovedExpiry(input.approvedStart);
@@ -815,7 +816,7 @@ export class MockMemberRepository implements MemberRepository {
       displayReference: aaNumber,
       newValue: `${input.designation} (${input.accreditationStatus})`,
       outcome: "success",
-      reason: `AA issued via ${input.aaMethod}; accreditation ${input.accreditationStatus}`,
+      reason: `Accreditation number issued via ${input.aaMethod}; accreditation ${input.accreditationStatus}`,
       relatedRecordIds: [account.id, accreditationId],
     });
 

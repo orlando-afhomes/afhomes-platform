@@ -109,7 +109,7 @@ describe("promo points page", () => {
 describe("promo points report", () => {
   it("shows the tiles and one Export menu with Excel, CSV and Print", async () => {
     show("dev-finance", <PromoPointsReportPage />);
-    expect((await screen.findAllByText("Points earned")).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Points Earned")).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /Export/ }));
     expect((await screen.findAllByRole("menuitem")).map((item) => item.textContent?.trim())).toEqual(["Excel", "CSV", "Print"]);
   });

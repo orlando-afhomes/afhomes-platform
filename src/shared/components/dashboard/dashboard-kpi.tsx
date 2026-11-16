@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
-import { ArrowDownRight, ArrowUpRight, type LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { formatChange, type KpiComparison } from "@/modules/reports/kpi-comparison";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 import { DASHBOARD_TONE_CLASSES, DASHBOARD_TONE_COLORS, type DashboardTone } from "./dashboard-layout";
+import { KpiDelta } from "./kpi-delta";
 
 /** KPI row: one column on mobile, two on tablet, and up to four on wide screens. */
 export function DashboardKpiGrid({ children, columns = 4 }: { children: ReactNode; columns?: number }) {
@@ -36,24 +37,10 @@ function TrendPill({ trend, scope }: { trend: DashboardKpiTrend; scope: string }
       </span>
     );
   } else {
-    // Higher is better for every compared KPI, so up is green and down is red; no change stays neutral.
-    // Diagonal arrows match the dashboard reference (north-east for growth, south-east for decline).
-    const Arrow = result.direction === "up" ? ArrowUpRight : result.direction === "down" ? ArrowDownRight : null;
-    const tone =
-      result.direction === "up"
-        ? "tw:bg-success/10 tw:text-[var(--color-success-strong)]"
-        : result.direction === "down"
-          ? "tw:bg-destructive/10 tw:text-destructive"
-          : NEUTRAL_PILL;
     const word = result.direction === "up" ? "Up" : result.direction === "down" ? "Down" : "No change";
     pill = (
-      <span className={cn(PILL, tone)}>
-        {Arrow ? <Arrow aria-hidden="true" className="tw:size-3.5" strokeWidth={2.5} /> : null}
-        <span aria-hidden="true">{formatChange(result.percentTenths)}</span>
-        <span className="tw:sr-only">
-          {word} {formatChange(Math.abs(result.percentTenths))} {compared}
-        </span>
-      </span>
+      <KpiDelta direction={result.direction === "up" || result.direction === "down" ? result.direction : "flat"}
+        value={formatChange(result.percentTenths)} label={`${word} ${formatChange(Math.abs(result.percentTenths))} ${compared}`} />
     );
   }
   return (

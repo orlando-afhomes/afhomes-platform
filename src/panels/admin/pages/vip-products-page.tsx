@@ -29,8 +29,8 @@ import { TierLevelsPanel } from "./tier-codes-page";
 /** Header button per tab: the label and the operation that allows it. */
 const ADD_BUTTONS: Partial<Record<string, { label: string; operation: "vip-products.manage" | "redemption.configure" | "igp.manage" }>> = {
   products: { label: "New product", operation: "vip-products.manage" },
-  schemes: { label: "New scheme", operation: "vip-products.manage" },
-  "tier-codes": { label: "Add tier level", operation: "vip-products.manage" },
+  schemes: { label: "New payment plan", operation: "vip-products.manage" },
+  "tier-codes": { label: "Add card level", operation: "vip-products.manage" },
   "points-table": { label: "Update points table", operation: "redemption.configure" },
   holidays: { label: "Add holiday", operation: "redemption.configure" },
   venues: { label: "Add venue", operation: "redemption.configure" },
@@ -121,10 +121,10 @@ export function VipProductsTab({ creating, onCloseCreate }: { creating: boolean;
   const productColumns = useMemo<ColumnDef<VipProduct, unknown>[]>(
     () => [
       { id: "name", header: "Product", cell: ({ row }) => <span className="tw:font-semibold">{row.original.name}</span> },
-      { id: "code", header: "Code", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.code },
+      { id: "tier", header: "Card Level", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.tier },
       { id: "price", header: "Price", cell: ({ row }) => <Money value={row.original.priceCentavos} /> },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
-      { id: "updated", header: "Last updated", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => lastChangeDate(row.original) },
+      { id: "updated", header: "Last Updated", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => lastChangeDate(row.original) },
     ],
     [],
   );
@@ -135,15 +135,15 @@ export function VipProductsTab({ creating, onCloseCreate }: { creating: boolean;
         <QueryState isLoading={products.isLoading} error={products.error}>
           <FilterBar search={search} onSearch={setSearch} searchLabel="Search products" filters={[
             { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: [{ value: "all", label: "All statuses" }, { value: "active", label: "Active" }, { value: "retired", label: "Retired" }] },
-            { label: "Tier filter", value: tierFilter, onChange: setTierFilter, options: [{ value: "all", label: "All tiers" }, ...tierNameOptions] },
+            { label: "Card level filter", value: tierFilter, onChange: setTierFilter, options: [{ value: "all", label: "All card levels" }, ...tierNameOptions] },
           ]} />
-          <DataTable data={visibleProducts} columns={productColumns} getRowId={(row) => row.code} emptyText={(products.data ?? []).length === 0 ? "No products." : "No products match the filters."} caption="VIP product catalog" onRowOpen={(row) => setProductCode(row.code)} getRowLabel={(row) => `Open ${row.name}`} rowActions={(row) => <RowActionsMenu itemName={row.name} onEdit={canManage ? () => setEditing(row) : undefined} onDelete={canManage && blockers.data && blockers.data[row.code] === null ? () => deleteProduct.mutateAsync({ code: row.code, reason: "Unused product removed from the catalog." }) : undefined} deleteDisabledReason={canManage ? blockers.data?.[row.code] : undefined} deleteDescription="This removes the product from the catalog. It has not been used, and the removal is recorded in the audit log." />} />
+          <DataTable data={visibleProducts} columns={productColumns} getRowId={(row) => row.code} emptyText={(products.data ?? []).length === 0 ? "No products." : "No products match the filters."} caption="VIP Product Catalog" onRowOpen={(row) => setProductCode(row.code)} getRowLabel={(row) => `Open ${row.name}`} rowActions={(row) => <RowActionsMenu itemName={row.name} onEdit={canManage ? () => setEditing(row) : undefined} onDelete={canManage && blockers.data && blockers.data[row.code] === null ? () => deleteProduct.mutateAsync({ code: row.code, reason: "Unused product removed from the catalog." }) : undefined} deleteDisabledReason={canManage ? blockers.data?.[row.code] : undefined} deleteDescription="This removes the product from the catalog. It has not been used, and the removal is recorded in the audit log." />} />
         </QueryState>
       <RecordDetailsSheet
         open={productDetail !== null}
         onClose={() => setProductCode(null)}
         title={productDetail?.name ?? "Product"}
-        subtitle={productDetail ? `${productDetail.tier} tier` : undefined}
+        subtitle={productDetail ? `${productDetail.tier} level` : undefined}
         badge={productDetail ? <BizBadge status={productDetail.status} /> : undefined}
         sections={
           productDetail
@@ -157,8 +157,7 @@ export function VipProductsTab({ creating, onCloseCreate }: { creating: boolean;
                           <img src={productDetail.imageUrl} alt={`${productDetail.name} product`} className="tw:h-32 tw:w-48 tw:rounded-md tw:bg-muted tw:object-cover" />
                         ) }]
                       : []),
-                    { label: "Code", value: productDetail.code },
-                    { label: "Tier level", value: productDetail.tier },
+                    { label: "Card Level", value: productDetail.tier },
                     { label: "Description", value: productDetail.description ?? null, wide: true },
                     { label: "Other benefits", value: productDetail.benefitsSummary ?? null, wide: true },
                     { label: "Price", value: <Money value={productDetail.priceCentavos} /> },
@@ -166,7 +165,7 @@ export function VipProductsTab({ creating, onCloseCreate }: { creating: boolean;
                     { label: "Price note", value: productDetail.priceNote ? plainNote(productDetail.priceNote) : null, wide: true },
                     { label: "Validity", value: `${productDetail.validityYears} years (${productDetail.earningCycles} earning cycles)` },
                     { label: "VIP discount", value: `${productDetail.vipDiscountPercent}%` },
-                    { label: "Supplementary holders", value: String(productDetail.supplementaryHolders) },
+                    { label: "Extra cardholders", value: String(productDetail.supplementaryHolders) },
                   ],
                 },
                 {
@@ -185,11 +184,11 @@ export function VipProductsTab({ creating, onCloseCreate }: { creating: boolean;
           productDetail && canManage ? (
             <>
               {productDetail.status === "retired" ? (
-                <Button type="button" variant="success" onClick={() => setStatusTarget(productDetail)}><CircleCheck aria-hidden="true" /> Make available</Button>
+                <Button type="button" variant="success" onClick={() => setStatusTarget(productDetail)}><CircleCheck aria-hidden="true" /> Make Available</Button>
               ) : null}
-              <Button type="button" variant="warning" onClick={() => { setEditing(productDetail); setProductCode(null); }}><Pencil aria-hidden="true" /> Edit product</Button>
+              <Button type="button" variant="warning" onClick={() => { setEditing(productDetail); setProductCode(null); }}><Pencil aria-hidden="true" /> Edit Product</Button>
               {productDetail.status === "active" ? (
-                <Button type="button" variant="destructive" onClick={() => setStatusTarget(productDetail)}><CircleOff aria-hidden="true" /> Make unavailable</Button>
+                <Button type="button" variant="destructive" onClick={() => setStatusTarget(productDetail)}><CircleOff aria-hidden="true" /> Make Unavailable</Button>
               ) : null}
             </>
           ) : undefined
@@ -199,7 +198,7 @@ export function VipProductsTab({ creating, onCloseCreate }: { creating: boolean;
         open={statusTarget !== null}
         title={statusTarget?.status === "active" ? `Make ${statusTarget.name} unavailable` : `Make ${statusTarget?.name ?? "product"} available`}
         description={statusTarget?.status === "active" ? "New sales can no longer choose this product. Contracts already signed are not changed." : "New sales can choose this product again."}
-        confirmText={statusTarget?.status === "active" ? "Make unavailable" : "Make available"}
+        confirmText={statusTarget?.status === "active" ? "Make Unavailable" : "Make Available"}
         successText={statusTarget?.status === "active" ? `${statusTarget.name} is now unavailable.` : `${statusTarget?.name ?? "Product"} is now available.`}
         danger={statusTarget?.status === "active"}
         tone={statusTarget?.status === "active" ? "destructive" : "success"}

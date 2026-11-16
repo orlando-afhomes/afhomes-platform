@@ -96,8 +96,8 @@ describe("OST correction link", () => {
     render(<Wrapper />);
     expect(await screen.findByText("Birth date is wrong.")).toBeInTheDocument();
     fireEvent.change(document.getElementById("applicant-birth-date") as HTMLElement, { target: { value: "1991-01-15" } });
-    await user.click(screen.getByRole("button", { name: "Send corrected application" }));
-    expect(await screen.findByText("Corrected application received")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Send Corrected Application" }));
+    expect(await screen.findByText("Corrected Application Received")).toBeInTheDocument();
     expect(screen.getAllByText("OSTA-11111111").length).toBeGreaterThan(0);
     const stored = currentStore.registrationApplications[0];
     expect(stored).toMatchObject({ status: "submitted", version: 2, correctionToken: null });

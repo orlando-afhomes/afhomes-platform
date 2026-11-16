@@ -21,13 +21,13 @@ export function FinanceCollectionDetailPage({ contractId }: { contractId: string
           <>
             {paymentActions.dialogs}
             {pendingCancel ? (
-              <InfoNote title="Cancellation awaiting Finance confirmation">
+              <InfoNote title="Cancellation Awaiting Finance Confirmation">
                 {CANCELLATION_GROUND_LABELS[pendingCancel.ground]} · requested {formatDate(pendingCancel.requestedAt)} — {pendingCancel.reason}. Decide it in Cancellations.
               </InfoNote>
             ) : null}
             {contract.cancellation?.status === "confirmed" ? (
-              <InfoNote title="Cancelled with forfeiture">
-                {CANCELLATION_GROUND_LABELS[contract.cancellation.ground]} · <Money value={contract.cancellation.forfeitedCentavos ?? 0} /> forfeited and kept on record.
+              <InfoNote title="Cancelled, Payments Kept">
+                {CANCELLATION_GROUND_LABELS[contract.cancellation.ground]} · <Money value={contract.cancellation.forfeitedCentavos ?? 0} /> kept by the company and recorded.
               </InfoNote>
             ) : null}
             <ContractTiles contract={contract} payments={record.payments} />

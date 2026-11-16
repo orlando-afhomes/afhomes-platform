@@ -18,7 +18,7 @@ export function ContractsActions() {
   const canPrepare = useOperation("contracts.prepare");
   return canPrepare ? (
     <Link href="/admin/customers?tab=customers" className={buttonVariants({ className: "tw:min-h-11 tw:sm:min-h-8" })}>
-      <Plus aria-hidden="true" /> New contract
+      <Plus aria-hidden="true" /> New Contract
     </Link>
   ) : null;
 }

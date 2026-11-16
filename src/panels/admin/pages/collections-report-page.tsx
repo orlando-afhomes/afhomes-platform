@@ -16,15 +16,15 @@ import { AdminPage, AdminStatCard, AdminStatGrid } from "@/shared/components/adm
 import { ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
 
 const collectionColumns = (from: string, to: string): ReportColumn<PaymentView>[] => [
-  { header: "Counted date", value: (payment) => formatDate(paymentCountedDate(payment)) },
-  { header: "Receipt date", value: (payment) => formatDate(payment.paidDate), screen: false },
+  { header: "Counted Date", value: (payment) => formatDate(paymentCountedDate(payment)) },
+  { header: "Receipt Date", value: (payment) => formatDate(payment.paidDate), screen: false },
   { header: "Customer", value: (payment) => payment.customerName },
   { header: "Contract", value: (payment) => payment.contractLabel },
   { header: "Purpose", value: (payment) => humanize(payment.purpose), screen: false },
   { header: "Method", value: (payment) => payment.method },
   { header: "Reference", value: (payment) => payment.referenceNo ?? "", screen: false },
   { header: "Amount", value: (payment) => formatPeso(paymentCountedDate(payment) ? payment.amountCentavos : 0) },
-  { header: "Reversed or refunded", value: (payment) => formatPeso(adjustmentTotalCentavos(payment.adjustments.filter((item) => item.date >= from && item.date <= to))), screen: false },
+  { header: "Undone or Refunded", value: (payment) => formatPeso(adjustmentTotalCentavos(payment.adjustments.filter((item) => item.date >= from && item.date <= to))), screen: false },
 ];
 
 /**
@@ -56,9 +56,9 @@ export function CollectionsReportPanel() {
   return (
     <ReportFrame range={range}>
       <AdminStatGrid columns={3}>
-        <AdminStatCard loading={payments.isLoading} error={payments.error} label="Verified collections" value={<Money value={collected} />} icon={BadgeCheck} tone="success" />
-        <AdminStatCard loading={payments.isLoading} error={payments.error} label="Reversals" value={<Money value={adjusted} />} icon={RotateCcw} tone="danger" />
-        <AdminStatCard loading={payments.isLoading} error={payments.error} label="Net collections" value={<Money value={net} />} icon={Wallet} tone="brand" />
+        <AdminStatCard loading={payments.isLoading} error={payments.error} label="Verified Collections" value={<Money value={collected} />} icon={BadgeCheck} tone="success" />
+        <AdminStatCard loading={payments.isLoading} error={payments.error} label="Undone payments" value={<Money value={adjusted} />} icon={RotateCcw} tone="danger" />
+        <AdminStatCard loading={payments.isLoading} error={payments.error} label="Net Collections" value={<Money value={net} />} icon={Wallet} tone="brand" />
       </AdminStatGrid>
       <ReportTable report="Collections Report" fileName="collections" range={range} columns={columns} rows={rows} getRowId={(row) => row.id} getRowTitle={(row) => row.customerName} loading={payments.isLoading} error={payments.error} emptyText="No collections match."
         filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search collections" filters={[

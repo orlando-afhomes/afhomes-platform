@@ -93,9 +93,9 @@ describe("sales attribution section", () => {
     expect(sellerCombos()[0]).toBeDisabled();
     expect(sellerCombos()[1]).toBeDisabled();
     expect(sellerCombos()[1]).toHaveAccessibleDescription(/could not be checked/i);
-    await user.click(screen.getByRole("button", { name: "Clear seller selections" }));
+    await user.click(screen.getByRole("button", { name: "Clear Seller Selections" }));
     expect(sellerCombos()[1]).not.toHaveAttribute("aria-invalid", "true");
-    expect(screen.queryByRole("button", { name: "Clear seller selections" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Clear Seller Selections" })).toBeNull();
   });
 
   it("labels the pair Closing seller and Referrer / VIP Recommender", () => {
@@ -112,9 +112,9 @@ describe("sales attribution section", () => {
     await pickSeller(user, "Closing seller", "Ana", /Ana Mendoza/);
     expect(sellerCombos()[0]).toHaveValue("Ana Mendoza · AAO26100004 (OST)");
     expect(sellerCombos()[1]).toHaveValue("");
-    expect(screen.getByLabelText("SM")).toHaveValue("Jose Reyes Jr. · AAI26100003");
-    expect(screen.getByLabelText("SSM")).toHaveValue("Maria Santos · AAI26100002");
-    expect(screen.getByLabelText("SVD")).toHaveValue("Ramon Del Rosario · AAI26100001");
+    expect(screen.getByLabelText("Sales Manager")).toHaveValue("Jose Reyes Jr. · AAI26100003");
+    expect(screen.getByLabelText("Senior Sales Manager")).toHaveValue("Maria Santos · AAI26100002");
+    expect(screen.getByLabelText("Sales Vice Director")).toHaveValue("Ramon Del Rosario · AAI26100001");
 
     // A referrer from another team is allowed and does not change the closing seller.
     await pickSeller(user, "Referrer / VIP Recommender", "Paolo", /Paolo Ramos/);
@@ -127,9 +127,9 @@ describe("sales attribution section", () => {
     const user = userEvent.setup();
     render(<Harness />);
     await pickSeller(user, "Closing seller", "Mark", /Mark Villanueva/);
-    expect(screen.getByLabelText("SM")).toHaveValue("—");
-    expect(screen.getByLabelText("SSM")).toHaveValue("—");
-    expect(screen.getByLabelText("SVD")).toHaveValue("Ramon Del Rosario · AAI26100001");
+    expect(screen.getByLabelText("Sales Manager")).toHaveValue("—");
+    expect(screen.getByLabelText("Senior Sales Manager")).toHaveValue("—");
+    expect(screen.getByLabelText("Sales Vice Director")).toHaveValue("Ramon Del Rosario · AAI26100001");
   });
 
   it("asks the office for a dated referral reference when the closing seller is also the referrer", async () => {

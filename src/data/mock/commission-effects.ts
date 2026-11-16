@@ -96,7 +96,7 @@ export function releaseSaleCommissions(store: MockStore, actor: DevIdentity, sal
  * (doc 08 §11.1(4), §11.5: the system prepares it at month close). Returns null when none are waiting.
  */
 export function buildPayoutList(store: MockStore, month: string, actor: DevIdentity | "system"): CommissionPayoutList | null {
-  if (!store.closedMonths.some((item) => item.month === month)) throw new Error("Close the release month before preparing its payout list.");
+  if (!store.closedMonths.some((item) => item.month === month)) throw new Error("Close the ready-to-pay month before preparing its payout list.");
   const listed = new Set(store.commissionPayoutLists.flatMap((list) => list.approvedAt
     ? list.approvedCommissionIds ?? list.entries.map(({ commissionId }) => commissionId)
     : list.month === month ? list.entries.map(({ commissionId }) => commissionId) : []));

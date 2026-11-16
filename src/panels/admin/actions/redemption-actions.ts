@@ -40,16 +40,16 @@ export function buildRedemptionBookingMenuProps(
 ): RedemptionBookingMenuProps {
   const extraItems: RowActionItem[] = [];
   if (perms.canApprove && booking.status === "pending_payment" && cb.onApproveCash) {
-    extraItems.push({ key: "approve-cash", label: "Approve money part", tone: "success", onClick: cb.onApproveCash });
+    extraItems.push({ key: "approve-cash", label: "Approve Money Part", tone: "success", onClick: cb.onApproveCash });
   }
   if (perms.canBook && booking.status === "confirmed" && cb.onComplete) {
-    extraItems.push({ key: "complete", label: "Record check-in", tone: "success", onClick: cb.onComplete });
+    extraItems.push({ key: "complete", label: "Record Check-In", tone: "success", onClick: cb.onComplete });
   }
   if (perms.canBook && booking.status === "confirmed" && cb.onNoShow) {
-    extraItems.push({ key: "no-show", label: "Record no-show", tone: "warning", onClick: cb.onNoShow });
+    extraItems.push({ key: "no-show", label: "Record No-Show", tone: "warning", onClick: cb.onNoShow });
   }
   if (perms.canBook && (booking.status === "pending_payment" || booking.status === "confirmed") && cb.onCancel) {
-    extraItems.push({ key: "cancel", label: "Cancel booking", tone: "danger", danger: true, onClick: cb.onCancel });
+    extraItems.push({ key: "cancel", label: "Cancel Booking", tone: "danger", danger: true, onClick: cb.onCancel });
   }
 
   return {

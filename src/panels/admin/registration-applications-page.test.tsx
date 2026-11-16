@@ -125,7 +125,7 @@ describe("OST applications queue", () => {
           <RegistrationApplicationsPage />
         </Wrapper>,
       );
-      expect(await screen.findByText(/does not have access to OST Applications/i)).toBeInTheDocument();
+      expect(await screen.findByText(/does not have access to Seller Applications/i)).toBeInTheDocument();
       expect(rows()).toHaveLength(0);
       cleanup();
     }
@@ -139,8 +139,8 @@ describe("OST applications queue", () => {
       </Wrapper>,
     );
     await openActions(user, "OSTA-11111111");
-    expect(await screen.findByRole("menuitem", { name: "Check and complete" })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "Return for correction" })).toBeInTheDocument();
+    expect(await screen.findByRole("menuitem", { name: "Check and Complete" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Return for Correction" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Reject" })).toBeInTheDocument();
     // Approve waits for the check.
     expect(screen.queryByRole("menuitem", { name: "Approve" })).not.toBeInTheDocument();
@@ -155,12 +155,12 @@ describe("OST applications queue", () => {
     );
     await openActions(user, "OSTA-11111111");
     await user.click(await screen.findByRole("menuitem", { name: "Reject" }));
-    const dialog = await screen.findByRole("dialog", { name: "Reject this application?" });
-    await user.click(within(dialog).getByRole("button", { name: "Reject application" }));
-    expect(await within(dialog).findByText("Reason for rejecting is required.")).toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog", { name: "Reject This Application?" });
+    await user.click(within(dialog).getByRole("button", { name: "Reject Application" }));
+    expect(await within(dialog).findByText("Reason for Rejecting is required.")).toBeInTheDocument();
     expect(currentStore.registrationApplications[0].status).toBe("submitted");
-    fireEvent.change(within(dialog).getByRole("textbox", { name: /Reason for rejecting/ }), { target: { value: "Not eligible." } });
-    await user.click(within(dialog).getByRole("button", { name: "Reject application" }));
+    fireEvent.change(within(dialog).getByRole("textbox", { name: /Reason for Rejecting/ }), { target: { value: "Not eligible." } });
+    await user.click(within(dialog).getByRole("button", { name: "Reject Application" }));
     await waitFor(() => expect(currentStore.registrationApplications[0].status).toBe("rejected"));
     expect(currentStore.auditEvents.at(-1)).toMatchObject({ action: "REGISTRATION_REJECTED", entityType: "registration" });
   });
@@ -173,10 +173,10 @@ describe("OST applications queue", () => {
       </Wrapper>,
     );
     await openActions(user, "OSTA-11111111");
-    await user.click(await screen.findByRole("menuitem", { name: "Return for correction" }));
-    const dialog = await screen.findByRole("dialog", { name: "Return for correction" });
-    fireEvent.change(within(dialog).getByRole("textbox", { name: /What the applicant should fix/ }), { target: { value: "Birth date is wrong." } });
-    await user.click(within(dialog).getByRole("button", { name: "Return application" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Return for Correction" }));
+    const dialog = await screen.findByRole("dialog", { name: "Return for Correction" });
+    fireEvent.change(within(dialog).getByRole("textbox", { name: /What the Applicant Should Fix/ }), { target: { value: "Birth date is wrong." } });
+    await user.click(within(dialog).getByRole("button", { name: "Return Application" }));
     await waitFor(() => expect(currentStore.registrationApplications[0].status).toBe("needs_info"));
     const token = currentStore.registrationApplications[0].correctionToken;
     expect(token).toMatch(/^[0-9a-f]{32}$/);
@@ -185,10 +185,10 @@ describe("OST applications queue", () => {
     await user.click(row);
     expect(await screen.findByText(`/register/ost/correct/${token}`)).toBeInTheDocument();
     expect(screen.getByText(/Email and text delivery is not available yet/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Copy correction link" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copy Correction Link" })).toBeInTheDocument();
   });
 
-  it("approves a checked application into an OST seller record with an AA number", async () => {
+  it("approves a checked application into an Outsourced Seller record with an accreditation number", async () => {
     const user = userEvent.setup();
     const prepare = (store: MockStore) => {
       for (const record of store.accreditations) {
@@ -209,8 +209,8 @@ describe("OST applications queue", () => {
     const members = currentStore.members.length;
     await openActions(user, "OSTA-11111111");
     await user.click(await screen.findByRole("menuitem", { name: "Approve" }));
-    const dialog = await screen.findByRole("dialog", { name: "Approve this application?" });
-    await user.click(within(dialog).getByRole("button", { name: "Approve and issue AA number" }));
+    const dialog = await screen.findByRole("dialog", { name: "Approve This Application?" });
+    await user.click(within(dialog).getByRole("button", { name: "Approve and Issue Accreditation Number" }));
     await waitFor(() => expect(currentStore.registrationApplications[0].status).toBe("approved"), { timeout: 5000 });
     expect(currentStore.members).toHaveLength(members + 1);
     expect(currentStore.members.at(-1)).toMatchObject({ designation: "OST", parentId: "mem-sm-a" });

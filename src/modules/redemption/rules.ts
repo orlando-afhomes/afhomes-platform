@@ -99,7 +99,7 @@ export type EligibilityMembership = {
 export function checkMembershipEligibility(membership: EligibilityMembership, checkIn: string, checkOut: string): string[] {
   const reasons: string[] = [];
   if (membership.status !== "active") reasons.push("The membership is not Active.");
-  if (membership.financialHold) reasons.push("The membership is on Financial Hold.");
+  if (membership.financialHold) reasons.push("The membership is on Payment Hold.");
   const claimDate = membership.cardClaimDate === undefined ? membership.activationDate : membership.cardClaimDate;
   if (!membership.cardId || !claimDate) reasons.push("The card has not been claimed.");
   else if (checkIn < claimDate) reasons.push("The stay starts before the card was claimed.");
@@ -116,7 +116,7 @@ export function checkMembershipEligibility(membership: EligibilityMembership, ch
 export function evaluateFirstRedemption(input: { padSet: boolean; claimDate: string; checkIn: string; yearOneConditionMet: boolean }): { ok: boolean; setsPad: boolean; message?: string } {
   if (input.padSet) return { ok: true, setsPad: false };
   if (!input.yearOneConditionMet) {
-    return { ok: false, setsPad: false, message: "The Year 1 condition is not met, so tranche 1 is not released and points are not available." };
+    return { ok: false, setsPad: false, message: "The Year 1 condition is not met, so the year 1 gift is not given and points are not available." };
   }
   const secondAnniversary = addYearsToDate(input.claimDate, 2);
   return { ok: true, setsPad: Boolean(secondAnniversary && input.checkIn < secondAnniversary) };

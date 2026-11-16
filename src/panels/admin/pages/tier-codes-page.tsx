@@ -74,8 +74,8 @@ export function TierLevelsPanel({ adding, onCloseAdd }: { adding: boolean; onClo
     confirmRun({
       title: `${verb} ${level.name}?`,
       description: status === "inactive"
-        ? "New products can no longer choose this tier level. Products that already use it keep showing it."
-        : "New products can choose this tier level again.",
+        ? "New products can no longer choose this card level. Products that already use it keep showing it."
+        : "New products can choose this card level again.",
       confirmText: verb,
       danger: status === "inactive",
       tone: status === "inactive" ? "destructive" : "success",
@@ -102,8 +102,8 @@ export function TierLevelsPanel({ adding, onCloseAdd }: { adding: boolean; onClo
           data={levels.data ?? []}
           columns={columns}
           getRowId={(row) => row.id}
-          emptyText="No tier levels."
-          caption="VIP tier levels"
+          emptyText="No card levels."
+          caption="VIP Card Levels"
           showAllRows
           onRowOpen={(row) => setDetailId(row.id)}
           getRowLabel={(row) => `Open ${row.name}`}
@@ -117,28 +117,28 @@ export function TierLevelsPanel({ adding, onCloseAdd }: { adding: boolean; onClo
                   : { key: "activate", label: "Activate", tone: "success", onClick: () => setStatus(row, "active") },
               ]}
               onDelete={row.inUse ? undefined : () => deleteLevel.mutateAsync(row.id)}
-              deleteDisabledReason={row.inUse ? "Products use this tier level. Deactivate it instead." : null}
+              deleteDisabledReason={row.inUse ? "Products use this card level. Deactivate it instead." : null}
               deleteTitle={`Delete ${row.name}?`}
-              deleteDescription="This removes the tier level. Only a level that no product uses can be deleted."
+              deleteDescription="This removes the card level. Only a level that no product uses can be deleted."
             />
           ) : undefined}
         />
       </QueryState>
-      <AdminSection title="Not available">
+      <AdminSection title="Not Available">
         <p role="note" className="tw:flex tw:items-start tw:gap-2 tw:rounded-lg tw:bg-info/10 tw:px-3 tw:py-2 tw:text-sm tw:text-foreground">
           <Info aria-hidden="true" className="tw:mt-0.5 tw:size-4 tw:shrink-0 tw:text-info" />
           These codes cannot be used for new products.
         </p>
-        <DataTable data={[...NON_ACTIVE_TIER_CODES]} columns={NON_ACTIVE_COLUMNS} getRowId={(row) => row.code} emptyText="No codes." caption="Tier codes that are not available" showAllRows />
+        <DataTable data={[...NON_ACTIVE_TIER_CODES]} columns={NON_ACTIVE_COLUMNS} getRowId={(row) => row.code} emptyText="No codes." caption="Card Level Codes That Are Not Available" showAllRows />
       </AdminSection>
       <RecordDetailsSheet
         open={detail !== null}
         onClose={() => setDetailId(null)}
-        title={detail?.name ?? "Tier level"}
+        title={detail?.name ?? "Card level"}
         icon={<Layers />}
         badge={detail ? <StatusBadge status={detail.status} /> : undefined}
         sections={detail ? [{
-          title: "Tier level",
+          title: "Card Level",
           rows: [
             { label: "Name", value: detail.name },
             { label: "Color", value: <TierChip color={colorOf(detail.colorKey)}>{colorLabel(detail.colorKey)}</TierChip> },
@@ -149,7 +149,7 @@ export function TierLevelsPanel({ adding, onCloseAdd }: { adding: boolean; onClo
         footer={detail && canManage ? (
           <>
             {detail.status === "inactive" ? <Button type="button" variant="success" onClick={() => setStatus(detail, "active")}>Activate</Button> : null}
-            <Button type="button" variant="warning" onClick={() => { setEditing(detail); setDetailId(null); }}><Pencil aria-hidden="true" /> Edit tier level</Button>
+            <Button type="button" variant="warning" onClick={() => { setEditing(detail); setDetailId(null); }}><Pencil aria-hidden="true" /> Edit Card Level</Button>
             {detail.status === "active" ? <Button type="button" variant="destructive" onClick={() => setStatus(detail, "inactive")}>Deactivate</Button> : null}
           </>
         ) : undefined}
@@ -194,8 +194,8 @@ function TierLevelDialog({ level, onClose }: { level: TierLevelView | null; onCl
   return (
     <FormDialog
       open
-      title={level ? "Edit tier level" : "Add tier level"}
-      description="Products choose one tier level, such as Bronze or Platinum."
+      title={level ? "Edit Card Level" : "Add Card Level"}
+      description="Products choose one card level, such as Bronze or Platinum."
       submitText={level ? "Save" : "Add"}
       pending={create.isPending || update.isPending}
       error={error}
@@ -205,7 +205,7 @@ function TierLevelDialog({ level, onClose }: { level: TierLevelView | null; onCl
       <TextField label="Name" required value={name} maxLength={40} onChange={(value) => { setName(value); setError(undefined); }} />
       <SelectField label="Color" required value={colorKey} options={TIER_COLOR_OPTIONS.map((item) => ({ value: item.value, label: item.label }))} onChange={(value) => setColorKey((value || "neutral") as TierColorKey)} />
       <p className="tw:flex tw:items-center tw:gap-2 tw:text-sm tw:text-muted-foreground">
-        Preview <TierChip color={colorOf(colorKey)}>{name.trim() || "Tier level"}</TierChip>
+        Preview <TierChip color={colorOf(colorKey)}>{name.trim() || "Card level"}</TierChip>
       </p>
       <TextField label="Sort order" inputMode="numeric" value={sortOrder} onChange={(value) => { setSortOrder(value); setError(undefined); }} hint={level ? "Lower numbers come first." : "Leave blank to put it last."} />
     </FormDialog>

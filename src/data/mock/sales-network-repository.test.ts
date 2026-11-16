@@ -180,7 +180,7 @@ describe("sales network repository", () => {
   it("rejects transfer of an SVD root", async () => {
     const store = createMockStore();
     const repo = createMockRepositories(store, () => getDevIdentity("dev-super-admin")).members;
-    await expect(repo.transfer("mem-svd-a", "mem-svd-b")).rejects.toThrow(/SVD root/i);
+    await expect(repo.transfer("mem-svd-a", "mem-svd-b")).rejects.toThrow(/Sales Vice Director at the top of a team/i);
   });
 
   it("lists eligible parents for a designation", async () => {

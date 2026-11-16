@@ -136,7 +136,7 @@ export function StaffDialogs({
       <Dialog open={open} onOpenChange={(next) => (!next ? onCloseForm() : undefined)}>
         <DialogContent className="tw:max-h-[calc(100dvh-2rem)] tw:overflow-y-auto tw:sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>{editStaff ? "Edit staff" : "Add staff"}</DialogTitle>
+            <DialogTitle>{editStaff ? "Edit Staff" : "Add Staff"}</DialogTitle>
             <DialogDescription>
               {editStaff ? "Update the employee's profile and assignment." : "Add an employee. A linked Pending account is created with the record."}
             </DialogDescription>
@@ -583,7 +583,7 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
       {editStaff ? (
         <ConfirmDialog
           open={confirmSave}
-          title={`Save changes to ${displayName}?`}
+          title={`Save Changes to ${displayName}?`}
           description="The staff record will be updated."
           confirmText="Save"
           pending={submitting}
@@ -647,7 +647,7 @@ function StaffProfileDialog({
     <Dialog open={profileStaff !== null} onOpenChange={(next) => (!next ? onClose() : undefined)}>
       <DialogContent className="tw:max-h-[calc(100dvh-2rem)] tw:overflow-y-auto tw:sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Employee profile</DialogTitle>
+          <DialogTitle>Employee Profile</DialogTitle>
           <DialogDescription>Read-only profile, employment, and account access.</DialogDescription>
         </DialogHeader>
         {profileStaff ? (
@@ -737,12 +737,12 @@ function StaffProfileDialog({
                     <div className="tw:flex tw:flex-wrap tw:gap-2">
                       {accountActions.onManageRoles ? (
                         <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={accountActions.onManageRoles}>
-                          System roles
+                          System Roles
                         </Button>
                       ) : null}
                       {accountActions.onChangeStatus ? (
                         <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={accountActions.onChangeStatus}>
-                          Change status
+                          Change Status
                         </Button>
                       ) : null}
                     </div>
@@ -759,7 +759,7 @@ function StaffProfileDialog({
                   ) : null}
                 </>
               ) : (
-                <InfoNote title="No linked account">This employee has no linked account, so there is no system access to manage.</InfoNote>
+                <InfoNote title="No Linked Account">This employee has no linked account, so there is no system access to manage.</InfoNote>
               )}
             </ProfileSection>
 

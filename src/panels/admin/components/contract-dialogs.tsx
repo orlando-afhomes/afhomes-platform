@@ -26,7 +26,7 @@ export function EditContractDialog({ contract, onClose }: DialogProps) {
     }
   };
   return (
-    <FormDialog open title="Edit contract details" description="Due dates come from Annex A of the signed contract." submitText="Save" pending={update.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title="Edit Contract Details" description="Due dates come from Annex A of the signed contract." submitText="Save" pending={update.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       {contract.schedule.map((line) => (
         <StandardDateField key={line.seq} label={`${line.label} due date`} value={dates[line.seq] ?? ""} onChange={(value) => setDates((current) => ({ ...current, [line.seq]: value }))} />
       ))}
@@ -51,7 +51,7 @@ export function RequestCancellationDialog({ contract, onClose }: DialogProps) {
     }
   };
   return (
-    <FormDialog open title="Request cancellation" description="This contract has verified payments. Under the Reservation Agreement they are forfeited on cancellation. Finance must confirm the request." submitText="Request cancellation" submitVariant="warning" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title="Request Cancellation" description="This contract has verified payments. Under the Reservation Agreement the company keeps them on cancellation. Finance must confirm the request." submitText="Request Cancellation" submitVariant="warning" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <SelectField label="Ground" required value={ground} options={CANCELLATION_GROUNDS.map((value) => ({ value, label: CANCELLATION_GROUND_LABELS[value] }))} onChange={setGround} />
       <TextAreaField label="Reason" required value={reason} onChange={setReason} />
     </FormDialog>
@@ -60,30 +60,30 @@ export function RequestCancellationDialog({ contract, onClose }: DialogProps) {
 
 export function ReturnContractDialog({ contract, open, onClose }: ReasonProps) {
   const action = useContractAction();
-  return <ReasonDialog open={open} title="Return for correction" description="The preparer can correct the contract and submit it again." confirmText="Return" tone="warning" successText="Contract returned." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "return", reason })} />;
+  return <ReasonDialog open={open} title="Return for Correction" description="The preparer can correct the contract and submit it again." confirmText="Return" tone="warning" successText="Contract returned." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "return", reason })} />;
 }
 
 export function CancelContractDialog({ contract, open, onClose }: ReasonProps) {
   const action = useContractAction();
-  return <ReasonDialog open={open} title="Cancel contract" description="The linked sale and membership are cancelled. This is recorded in the audit history." confirmText="Cancel contract" danger successText="Contract cancelled." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "cancel", reason })} />;
+  return <ReasonDialog open={open} title="Cancel Contract" description="The linked sale and membership are cancelled. This is recorded in the audit history." confirmText="Cancel Contract" danger successText="Contract cancelled." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "cancel", reason })} />;
 }
 
 export function ApproveArrangementDialog({ contract, open, onClose }: ReasonProps) {
   const action = useContractAction();
-  return <ReasonDialog open={open} title="Approve special arrangement" description={`Record the written approval for ${contract.arrangement?.schemeLabel ?? "this arrangement"}. Enter the reference of the signed approval.`} confirmText="Approve" tone="success" successText="Arrangement approved." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "approveArrangement", reference: reason })} />;
+  return <ReasonDialog open={open} title="Approve Special Arrangement" description={`Record the written approval for ${contract.arrangement?.schemeLabel ?? "this arrangement"}. Enter the reference of the signed approval.`} confirmText="Approve" tone="success" successText="Arrangement approved." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "approveArrangement", reference: reason })} />;
 }
 
 export function ResolvePaymentCodeDialog({ contract, open, onClose }: ReasonProps) {
   const action = useContractAction();
-  return <ReasonDialog open={open} title="Record payment code" description="Resolves the Card ID payment segment from the approved mapping for this scheme and tier. Enter the reference of the approval." confirmText="Record payment code" successText="Payment code recorded." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "resolvePaymentCode", reference: reason })} />;
+  return <ReasonDialog open={open} title="Record Payment Code" description="Finds the payment code (part of the VIP Number) from the approved mapping for this payment plan and card level. Enter the reference of the approval." confirmText="Record Payment Code" successText="Payment code recorded." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "resolvePaymentCode", reference: reason })} />;
 }
 
 export function ConfirmCancellationDialog({ contract, open, onClose }: ReasonProps) {
   const action = useContractAction();
-  return <ReasonDialog open={open} title="Confirm cancellation with forfeiture" description="The contract, sale and pending membership are cancelled. Verified payments stay on record as forfeited, a Confirmed sale is reversed this month, and unpaid commissions go on hold." confirmText="Confirm cancellation" danger successText="Contract cancelled with forfeiture." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "decideCancel", decision: "confirm", reason })} />;
+  return <ReasonDialog open={open} title="Confirm Cancellation, Payments Kept" description="The contract, sale and pending membership are cancelled. Verified payments stay on record as kept by the company, a Confirmed Sale is undone this month, and unpaid commissions go on hold." confirmText="Confirm Cancellation" danger successText="Contract cancelled, payments kept." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "decideCancel", decision: "confirm", reason })} />;
 }
 
 export function DeclineCancellationDialog({ contract, open, onClose }: ReasonProps) {
   const action = useContractAction();
-  return <ReasonDialog open={open} title="Decline cancellation" description="The contract stays as it is. The request and your reason are recorded in the audit history." confirmText="Decline" tone="warning" successText="Cancellation request declined." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "decideCancel", decision: "decline", reason })} />;
+  return <ReasonDialog open={open} title="Decline Cancellation" description="The contract stays as it is. The request and your reason are recorded in the audit history." confirmText="Decline" tone="warning" successText="Cancellation request declined." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "decideCancel", decision: "decline", reason })} />;
 }

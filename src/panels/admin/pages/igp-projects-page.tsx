@@ -37,7 +37,7 @@ const COLUMNS: ColumnDef<IgpProjectView, unknown>[] = [
 /** Heading button of the Projects tab (Sales area). The area page owns the dialog's open state. */
 export function IgpProjectsActions({ onAdd }: { onAdd: () => void }) {
   const canManage = useOperation("igp.manage");
-  return canManage ? <Button onClick={onAdd}>Add project</Button> : null;
+  return canManage ? <Button onClick={onAdd}>Add Project</Button> : null;
 }
 
 export function IgpProjectsTab({ adding, onAddingClose }: { adding: boolean; onAddingClose: () => void }) {
@@ -124,19 +124,19 @@ export function IgpProjectsTab({ adding, onAddingClose }: { adding: boolean; onA
                 { label: "Units", value: project.unitCount },
                 { label: "Used by sales", value: project.inUse ? "Yes" : "No" },
               ] },
-              { title: "Units and lots", rows: unitRows },
+              { title: "Units and Lots", rows: unitRows },
             ] : []}
             footer={project ? <div className="tw:flex tw:flex-wrap tw:gap-2">
-              <Button onClick={() => setUnitDialog({ unit: null })}>Add unit</Button>
-              <Button variant="warning" onClick={() => setEditingProject(true)}>Edit project</Button>
+              <Button onClick={() => setUnitDialog({ unit: null })}>Add Unit</Button>
+              <Button variant="warning" onClick={() => setEditingProject(true)}>Edit Project</Button>
               {project.status === "active"
-                ? <Button variant="warning" onClick={() => setProjectStatus(project, "inactive")}>Deactivate project</Button>
+                ? <Button variant="warning" onClick={() => setProjectStatus(project, "inactive")}>Deactivate Project</Button>
                 : <Button variant="success" onClick={() => setProjectStatus(project, "active")}>Reactivate</Button>}
               {!project.inUse && <Button variant="destructive" onClick={() => confirmRun({
                 title: `Delete ${project.name}?`, description: "This removes the project and its units. Only projects that no sale uses can be deleted.",
-                confirmText: "Delete project", danger: true, action: async () => { await deleteProject.mutateAsync(project.id); setSelectedId(null); },
+                confirmText: "Delete Project", danger: true, action: async () => { await deleteProject.mutateAsync(project.id); setSelectedId(null); },
                 successTitle: `${project.name} deleted.`, errorTitle: "Could not delete the project.",
-              })}>Delete project</Button>}
+              })}>Delete Project</Button>}
             </div> : undefined} />
           {(adding || (editingProject && project)) && (
             <IgpProjectDialog key={adding ? "new" : project?.id} project={adding ? null : project ?? null}
@@ -167,7 +167,7 @@ function IgpProjectDialog({ project, onClose }: { project: IgpProjectView | null
     }
   };
   return (
-    <FormDialog open title={project ? "Edit project" : "Add project"} submitText={project ? "Save" : "Add project"}
+    <FormDialog open title={project ? "Edit Project" : "Add Project"} submitText={project ? "Save" : "Add Project"}
       pending={create.isPending || update.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
       <TextField label="Project name" required value={name} maxLength={IGP_PROJECT_NAME_MAX} onChange={(value) => { setName(value); setError(undefined); }} />
       <TextField label="Location" value={location} maxLength={IGP_LOCATION_MAX} onChange={setLocation} />
@@ -192,7 +192,7 @@ function IgpUnitDialog({ project, unit, onClose }: { project: IgpProjectView; un
     }
   };
   return (
-    <FormDialog open title={unit ? "Edit unit or lot" : "Add unit or lot"} description={`In ${project.name}.`} submitText={unit ? "Save" : "Add"}
+    <FormDialog open title={unit ? "Edit Unit or Lot" : "Add Unit or Lot"} description={`In ${project.name}.`} submitText={unit ? "Save" : "Add"}
       pending={create.isPending || update.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
       <TextField label="Unit or lot" required value={unitOrLot} maxLength={IGP_UNIT_MAX} onChange={(value) => { setUnitOrLot(value); setError(undefined); }} />
       <TextField label="Property owner" required value={propertyOwner} maxLength={IGP_OWNER_MAX} onChange={setPropertyOwner} />

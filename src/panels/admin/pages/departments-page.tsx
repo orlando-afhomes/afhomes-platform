@@ -81,7 +81,7 @@ export function DepartmentsPage({
     { id: "staff", header: "Staff", meta: HIDE_ON_MOBILE, cell: ({ row }) => staffCountByDept(row.original.id) },
     {
       id: "actions",
-      header: () => <span className="tw:sr-only">Actions</span>,
+      header: "Actions",
       cell: ({ row }) => (
         <RowActionsMenu
           itemName={row.original.name}

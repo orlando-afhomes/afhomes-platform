@@ -108,7 +108,7 @@ describe("departments page", () => {
     expect(message).toHaveAttribute("role", "alert");
     expect(input).toHaveAttribute("aria-invalid", "true");
     expect(input.getAttribute("aria-describedby")).toBe(message.id);
-    expect(screen.getByRole("dialog", { name: "Create department" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Create Department" })).toBeInTheDocument();
   });
 
   it("rejects duplicate department names and keeps the dialog open", async () => {
@@ -116,7 +116,7 @@ describe("departments page", () => {
     render(<TestWrapper />);
     await create(user, "Finance");
     expect(await screen.findByText("Department already exists.")).toBeInTheDocument();
-    expect(screen.getByRole("dialog", { name: "Create department" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Create Department" })).toBeInTheDocument();
   });
 
   it("edits a department after a save confirmation", async () => {
@@ -127,7 +127,7 @@ describe("departments page", () => {
     const nameInput = await screen.findByDisplayValue("Human Resources");
     fireEvent.change(nameInput, { target: { value: "People Operations" } });
     await user.click(screen.getByRole("button", { name: /^save$/i }));
-    const confirm = await screen.findByRole("alertdialog", { name: "Save changes to People Operations?" });
+    const confirm = await screen.findByRole("alertdialog", { name: "Save Changes to People Operations?" });
     await user.click(within(confirm).getByRole("button", { name: "Save" }));
     expect(await screen.findByText("Department updated successfully.")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("People Operations")).toBeInTheDocument());
@@ -162,7 +162,7 @@ describe("departments page", () => {
     render(<TestWrapper />);
     await screen.findByText("Human Resources");
     await user.click(rowFor("Human Resources"));
-    const dialog = await screen.findByRole("dialog", { name: "Department details" });
+    const dialog = await screen.findByRole("dialog", { name: "Department Details" });
     expect(within(dialog).getByText("Roles")).toBeInTheDocument();
     expect(within(dialog).getByText("Staff")).toBeInTheDocument();
     await user.keyboard("{Escape}");
@@ -174,7 +174,7 @@ describe("departments page", () => {
     render(<TestWrapper />);
     await screen.findByText("Human Resources");
     await user.click(within(rowFor("Human Resources")).getByText("Human Resources"));
-    expect(await screen.findByRole("dialog", { name: "Department details" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Department Details" })).toBeInTheDocument();
   });
 
   it("blocks deleting a department with roles or staff and reports why", async () => {

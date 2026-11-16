@@ -77,7 +77,7 @@ export function AccreditationStatusAction({
         <ConfirmDialog
           open={createOpen}
           title="Create Pending Accreditation"
-          description={`Create a pending accreditation with automatic AA issuance for seller ${memberName}?`}
+          description={`Create a pending accreditation with automatic accreditation number issuance for seller ${memberName}?`}
           confirmText="Create"
           pending={issuePending.isPending}
           onConfirm={() => {
@@ -85,7 +85,7 @@ export function AccreditationStatusAction({
               (record) => {
                 setCreateOpen(false);
                 toast.success("Pending accreditation created.", {
-                  description: `Issued ${record.aaNumber ?? "AA number"}. Accreditation stays Pending until approval.`,
+                  description: `Issued ${record.aaNumber ?? "accreditation number"}. Accreditation stays Pending until approval.`,
                 });
               },
               (err: unknown) => {
@@ -109,7 +109,7 @@ export function AccreditationStatusAction({
   }
 
   const current = state.value;
-  const sellerRef = aaNumber ?? "No AA issued";
+  const sellerRef = aaNumber ?? "No accreditation number issued";
 
   const requestUpdate = (requested: AccreditationStatusRequest) => {
     if (requested === current || busy) return;
@@ -118,7 +118,7 @@ export function AccreditationStatusAction({
       requested === "cancel"
         ? {
             title: current === "pending" ? "Cancel Pending Accreditation?" : "Cancel Accreditation?",
-            intro: `This will cancel the ${current === "pending" ? "pending " : ""}accreditation for seller ${memberName} (${sellerRef}). The seller's account, member record, Team, Parent, and existing AA number will remain unchanged.`,
+            intro: `This will cancel the ${current === "pending" ? "pending " : ""}accreditation for seller ${memberName} (${sellerRef}). The seller's account, member record, Team, Parent, and existing accreditation number will remain unchanged.`,
             okText: "Confirm Cancellation",
             cancelText: current === "pending" ? "Keep Pending" : "Keep Accredited",
             successTitle: "Accreditation cancelled.",
@@ -128,7 +128,7 @@ export function AccreditationStatusAction({
         : requested === "pending"
           ? {
               title: "Revert Accreditation to Pending?",
-              intro: `Change accreditation status from Accredited to Pending for seller ${memberName} (${sellerRef})? The seller will no longer qualify for accreditation-dependent activities. Historical records, Team, Parent, and AA number remain unchanged.`,
+              intro: `Change accreditation status from Accredited to Pending for seller ${memberName} (${sellerRef})? The seller will no longer qualify for accreditation-dependent activities. Historical records, Team, Parent, and accreditation number remain unchanged.`,
               okText: "Confirm Reversal",
               cancelText: "Keep Accredited",
               successTitle: "Accreditation reverted.",

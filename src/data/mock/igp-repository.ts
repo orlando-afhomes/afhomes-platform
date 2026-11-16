@@ -163,14 +163,14 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
     const payments = igpPayments(this.store, sale.id);
     sale.status = "replaced";
     sale.replacedById = next.id;
-    adjustIgpSalesValue(this.store, sale, identity, "IGP Series Number replaced.");
+    adjustIgpSalesValue(this.store, sale, identity, "Property sale (IGP) Series Number replaced.");
     this.store.igp.sales.push(next);
     for (const payment of payments) {
       payment.contractId = next.id;
       payment.saleId = next.id;
       payment.history.push({ at: nowIso(), actorId: identity.id, event: "IGP_PAYMENT_MOVED", note: `${sale.seriesNumber} → ${next.seriesNumber}` });
     }
-    holdUnpaidCommissionForReview(this.store, identity, sale.id, "IGP Series Number replaced. Use the replacement sale.");
+    holdUnpaidCommissionForReview(this.store, identity, sale.id, "Property sale (IGP) Series Number replaced. Use the replacement sale.");
     this.log(identity, sale, "IGP_SERIES_REPLACED", { previousValue: sale.seriesNumber, newValue: next.seriesNumber, reason, relatedRecordIds: [next.id, ...payments.map(({ id }) => id)] });
     this.log(identity, next, "IGP_SERIES_ISSUED", { previousValue: sale.seriesNumber, newValue: next.seriesNumber, reason, relatedRecordIds: [sale.id] });
     return next;
@@ -178,7 +178,7 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
 
   act(action: IgpAction, options?: Parameters<IgpRepository["act"]>[1]) {
     return this.run(options, (identity) => {
-      this.require(identity, "igp.enter", "This account can view IGP sales only.");
+      this.require(identity, "igp.enter", "This account can view property sales (IGP) only.");
       if (action.type === "record") return structuredClone(this.record(identity, action.input));
       if (action.type === "accredit") {
         this.accreditation(identity, action.memberId, action.number, action.approvedDate);
@@ -195,23 +195,23 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
         return null;
       }
       const sale = findIgpPaymentTarget(this.store, action.id);
-      if (!sale || !canSeeIgpSale(identity, sale)) throw new Error("IGP sale not found.");
+      if (!sale || !canSeeIgpSale(identity, sale)) throw new Error("Property sale (IGP) not found.");
       if (sale.status === "cancelled" || sale.status === "replaced" || sale.status === "pending_review") throw new Error("This Series Number is closed.");
       const payments = igpPayments(this.store, sale.id);
       if (action.type === "reissue") return structuredClone(this.reissue(identity, sale, action.input));
       if (action.type === "approve") {
         this.requireManagement(identity);
-        if (sale.status !== "pending") throw new Error("Only a pending IGP sale can be approved.");
+        if (sale.status !== "pending") throw new Error("Only a pending property sale (IGP) can be approved.");
         sale.status = "approved";
         sale.approvedBy = identity.id;
         this.log(identity, sale, "IGP_SALE_APPROVED", { previousValue: "pending", newValue: "approved", reason: sale.createdBy === identity.id ? "Self-approved." : undefined });
         reconcileIgpCollections(this.store, sale, identity);
       } else if (action.type === "default") {
         this.requireManagement(identity);
-        if (!isIgpDefaultReviewDue(sale, payments, today())) throw new Error("This sale is not due for default review.");
+        if (!isIgpDefaultReviewDue(sale, payments, today())) throw new Error("This sale is not due for a stopped-paying review.");
         const reason = required(action.reason, "the reason");
         sale.status = "defaulted";
-        adjustIgpSalesValue(this.store, sale, identity, "IGP sale defaulted.");
+        adjustIgpSalesValue(this.store, sale, identity, "Property sale (IGP) stopped paying.");
         applyCommissionTrigger(this.store, identity, sale.id, "default", firstOpenDate(this.store.closedMonths, today()));
         this.log(identity, sale, "IGP_SALE_DEFAULTED", { previousValue: "approved", newValue: "defaulted", reason });
       } else if (action.type === "cancel") {
@@ -222,7 +222,7 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
         if (action.refundCentavos > 0 && !date) throw new Error("Enter the refund date.");
         const previousValue = sale.status;
         sale.status = "cancelled";
-        adjustIgpSalesValue(this.store, sale, identity, "IGP sale cancelled.");
+        adjustIgpSalesValue(this.store, sale, identity, "Property sale (IGP) cancelled.");
         sale.refund = { amountCentavos: action.refundCentavos, date, reason };
         applyCommissionTrigger(this.store, identity, sale.id, "cancellation", firstOpenDate(this.store.closedMonths, today()));
         this.log(identity, sale, "IGP_SALE_CANCELLED", { previousValue, newValue: "cancelled", reason });
@@ -230,7 +230,7 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
       } else if (action.type === "correct") {
         const reason = required(action.input.reason, "the correction reason");
         if (payments.some((item) => item.status === "verified")) this.requireManagement(identity);
-        if (sale.stage1Date || this.store.commissions.some((item) => item.saleId === sale.id)) throw new Error("A sale cannot be corrected after commission release.");
+        if (sale.stage1Date || this.store.commissions.some((item) => item.saleId === sale.id)) throw new Error("A sale cannot be corrected after its commission is ready to pay.");
         if (igpPriceBand(action.input.priceCentavos) !== igpPriceBand(sale.priceCentavos)) throw new Error("A different price band requires reissue.");
         if (action.input.priceCentavos < totalVerifiedCentavos(payments)) throw new Error("The corrected price is below approved collections.");
         const referrerId = action.input.referrerMemberId;

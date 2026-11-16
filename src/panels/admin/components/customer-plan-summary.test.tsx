@@ -138,7 +138,7 @@ describe("PlanFacts scheme-aware headline and conflict note", () => {
     expect(screen.queryByText(WARNING)).toBeNull();
   });
 
-  it("renders the icon fact grid with validity, points, discount and supplementary labels", () => {
+  it("renders the icon fact grid with validity, points, discount and extra cardholder labels", () => {
     render(<PlanFacts product={gold} />);
     expect(screen.getByText("22 years")).toBeInTheDocument();
     expect(screen.getByText("Validity")).toBeInTheDocument();
@@ -147,16 +147,16 @@ describe("PlanFacts scheme-aware headline and conflict note", () => {
     expect(screen.getByText("25%")).toBeInTheDocument();
     expect(screen.getByText("VIP discount")).toBeInTheDocument();
     expect(screen.getByText("1")).toBeInTheDocument();
-    expect(screen.getByText("Supplementary")).toBeInTheDocument();
+    expect(screen.getByText("Extra cardholder")).toBeInTheDocument();
   });
 
-  it("shows the Payment scheme caption above the selected scheme row, and none without a scheme", () => {
+  it("shows the Payment plan caption above the selected scheme row, and none without a scheme", () => {
     render(<PlanFacts product={gold} scheme={spotCash()} />);
-    expect(screen.getByText("Payment scheme")).toBeInTheDocument();
+    expect(screen.getByText("Payment plan")).toBeInTheDocument();
     expect(screen.getByText("Spot Cash")).toBeInTheDocument();
     cleanup();
     render(<PlanFacts product={gold} />);
-    expect(screen.queryByText("Payment scheme")).toBeNull();
+    expect(screen.queryByText("Payment plan")).toBeNull();
   });
 
   it("still warns for a synthetic catalog conflict, even on a scheme without its own price", () => {
@@ -230,20 +230,20 @@ describe("PlanSummary scheme pass-through", () => {
     render(<PlanSummary product={gold} scheme={spotCash()} onChange={() => {}} />);
 
     const aside = screen.getByRole("complementary", { name: "Selected VIP card" });
-    expect(within(aside).getByText("Gold tier")).toBeInTheDocument();
+    expect(within(aside).getByText("Gold level")).toBeInTheDocument();
     expect(within(aside).getByText("Validity")).toBeInTheDocument();
     expect(within(aside).getByText("Stay points")).toBeInTheDocument();
     expect(within(aside).getByText("VIP discount")).toBeInTheDocument();
-    expect(within(aside).getByText("Supplementary")).toBeInTheDocument();
-    expect(within(aside).getByText("Payment scheme")).toBeInTheDocument();
+    expect(within(aside).getByText("Extra cardholder")).toBeInTheDocument();
+    expect(within(aside).getByText("Payment plan")).toBeInTheDocument();
     expect(within(aside).getByText("Spot Cash")).toBeInTheDocument();
-    const change = within(aside).getByRole("button", { name: "Change card" });
+    const change = within(aside).getByRole("button", { name: "Change Card" });
     expect(change.querySelector("svg")).not.toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Details" }));
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByText("Gold tier")).toBeInTheDocument();
-    const dialogChange = within(dialog).getByRole("button", { name: "Change card" });
+    expect(within(dialog).getByText("Gold level")).toBeInTheDocument();
+    const dialogChange = within(dialog).getByRole("button", { name: "Change Card" });
     expect(dialogChange.querySelector("svg")).not.toBeNull();
   });
 });

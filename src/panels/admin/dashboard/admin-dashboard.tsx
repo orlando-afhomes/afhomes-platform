@@ -116,7 +116,7 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
   return (
     <>
       <DashboardHeader
-        title={`Welcome back, ${getRoleDisplayLabel(roles)}`}
+        title={`Welcome Back, ${getRoleDisplayLabel(roles)}`}
         actions={series.length > 0 ? <DashboardDateFilter range={range} /> : undefined}
       />
 
@@ -170,7 +170,7 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
             ) : null}
           </DashboardKpiGrid>
         ) : (
-          <InfoNote title="No dashboard metrics">
+          <InfoNote title="No Dashboard Metrics">
             No operational dashboard metrics are available for this role. Authorized modules remain available in the navigation.
           </InfoNote>
         )}

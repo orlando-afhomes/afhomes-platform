@@ -174,17 +174,17 @@ export function StaffPage({
       const policy = account ? accountPolicyFor(account.id) : null;
       if (!account || !policy) return [];
       const items: RowActionItem[] = [];
-      if (policy.canManageRoles) items.push({ key: "roles", label: "System roles", onClick: () => openAccount("role", account.id) });
-      if (policy.allowedStatuses.length > 0) items.push({ key: "status", label: "Change status", onClick: () => openAccount("status", account.id) });
-      if (policy.canResetPassword) items.push({ key: "password", label: "Set temporary password", onClick: () => resetPassword(account) });
+      if (policy.canManageRoles) items.push({ key: "roles", label: "System Roles", onClick: () => openAccount("role", account.id) });
+      if (policy.allowedStatuses.length > 0) items.push({ key: "status", label: "Change Status", onClick: () => openAccount("status", account.id) });
+      if (policy.canResetPassword) items.push({ key: "password", label: "Set Temporary Password", onClick: () => resetPassword(account) });
       return items;
     };
 
     const resetPassword = (account: Account) =>
       confirmRun({
-        title: `Set a temporary password for ${account.displayName}?`,
+        title: `Set a Temporary Password for ${account.displayName}?`,
         description: "The current password stops working. The new password is shown once, so give it to the user in person or by phone.",
-        confirmText: "Set password",
+        confirmText: "Set Password",
         action: async () => {
           const { temporaryPassword } = await setTemporaryPassword.mutateAsync(account.id);
           setIssuedPassword({ name: account.displayName, value: temporaryPassword });
@@ -322,7 +322,7 @@ export function StaffPage({
       },
       {
         id: "actions",
-        header: () => <span className="tw:sr-only">Actions</span>,
+        header: "Actions",
         cell: ({ row }) => renderActions(row.original),
       },
     );
@@ -421,7 +421,7 @@ export function StaffPage({
           </Button>
         </FilterBar>
       <DataTable<AccessRow>
-        caption="Staff and access"
+        caption="Staff and Access"
         data={filtered}
         columns={columns}
         getRowId={(row) => row.id}

@@ -6,6 +6,7 @@ import { useCreatePaymentScheme, useCreateProduct, useUpdatePaymentScheme, useUp
 import { useTierLevels } from "@/data/tier-level-queries";
 import { productCodeError } from "@/modules/vip/rules";
 import { tierLevelOptions } from "@/modules/vip/tier-levels";
+import { tierOptions } from "@/modules/vip/tier-options";
 import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
 import { manilaToday } from "@/modules/accreditation/dates";
 import { formatDate } from "@/shared/lib/format-date";
@@ -91,7 +92,7 @@ function ProductForm({ product, onClose }: { product: VipProduct | null; onClose
       const problem = productCodeError(code, existingCodes);
       if (problem) return setError(problem);
     }
-    if (!tierLevelId) return setError("Choose a tier level. Add one in the Tier levels tab if the list is empty.");
+    if (!tierLevelId) return setError("Choose a card level. Add one in the Card Levels tab if the list is empty.");
     if (priceCentavos === null || minCentavos === null || Object.values(numbers).some((value) => value === null)) {
       setError("Enter valid numbers in every field.");
       return;
@@ -124,7 +125,7 @@ function ProductForm({ product, onClose }: { product: VipProduct | null; onClose
   };
 
   return (
-    <FormDialog open title={product ? `Edit ${product.name}` : "New product"} description={product ? "Signed contracts keep their original terms." : undefined} submitText={product ? "Save changes" : "Create product"} size="lg" pending={update.isPending || create.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
+    <FormDialog open title={product ? `Edit ${product.name}` : "New Product"} description={product ? "Signed contracts keep their original terms." : undefined} submitText={product ? "Save Changes" : "Create Product"} size="lg" pending={update.isPending || create.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
       <ProfilePhotoUploader
         label="Product image"
         document
@@ -149,7 +150,7 @@ function ProductForm({ product, onClose }: { product: VipProduct | null; onClose
             <TextField label="Product name" required value={name} onChange={setName} />
           </>
         )}
-        <SelectField label="Tier level" required value={tierLevelId || undefined} options={levelOptions} onChange={setChosenLevelId} placeholder="Choose a tier level" hint="Tier levels are managed in the Tier levels tab." />
+        <SelectField label="Card level" required value={tierLevelId || undefined} options={levelOptions} onChange={setChosenLevelId} placeholder="Choose a card level" hint="Card levels are managed in the Card Levels tab." />
         <MoneyField label="Price" required value={price} onChange={setPrice} hint={product?.priceStatus === "conflict" ? "Source conflict: correcting the price needs management approval." : undefined} />
         <TextField label="Validity (years)" required inputMode="numeric" value={validity} onChange={setValidity} />
         <TextField label="Earning cycles" required inputMode="numeric" value={cycles} onChange={setCycles} />
@@ -159,7 +160,7 @@ function ProductForm({ product, onClose }: { product: VipProduct | null; onClose
         <PointsField label="Weekend points per cycle" required value={weekend} onChange={setWeekend} />
         <PointsField label="Lifetime points" required value={lifetime} onChange={setLifetime} />
         <MoneyField label="Minimum spend per cycle" required value={minSpend} onChange={setMinSpend} />
-        <TextField label="Supplementary holders" required inputMode="numeric" value={holders} onChange={setHolders} />
+        <TextField label="Extra cardholders" required inputMode="numeric" value={holders} onChange={setHolders} />
         {product ? <SelectField label="Availability" value={status} options={[{ value: "active", label: "Active" }, { value: "retired", label: "Retired" }]} onChange={(value) => setStatus(value)} hint="A product that has been used can only be retired." /> : null}
       </FormGrid>
       <TextAreaField label="Description" value={description} onChange={setDescription} hint="Optional. Up to 500 characters." />
@@ -192,7 +193,7 @@ function SchemeForm({ scheme, onClose }: { scheme: PaymentScheme | null; onClose
   const [error, setError] = useState<string | undefined>();
   const products = useVipProducts();
   // Active catalog products, plus any tier this scheme already carries (a retired one stays editable).
-  const tierCodesList = (products.data ?? []).filter((item) => item.status === "active" || scheme?.applicableTiers.includes(item.code)).map((item) => item.code);
+  const planOptions = tierOptions(products.data, scheme?.applicableTiers);
   const pending = create.isPending || update.isPending;
   /** The form has no category control: new schemes default to non-move (hidden), edits mirror the stored category. */
   const isMove = scheme?.category === "move";
@@ -236,7 +237,7 @@ function SchemeForm({ scheme, onClose }: { scheme: PaymentScheme | null; onClose
       } else {
         await create.mutateAsync(input);
       }
-      toast.success(scheme ? "Scheme updated." : "Scheme created.");
+      toast.success(scheme ? "Payment plan updated." : "Payment plan created.");
       onClose();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Could not save.");
@@ -244,37 +245,36 @@ function SchemeForm({ scheme, onClose }: { scheme: PaymentScheme | null; onClose
   };
 
   return (
-    <FormDialog open title={scheme ? `Edit ${scheme.label}` : "New payment scheme"} description="A scheme with incomplete terms stays unavailable." submitText="Save scheme" size="lg" pending={pending} error={error} onClose={onClose} onSubmit={() => void submit()}>
+    <FormDialog open title={scheme ? `Edit ${scheme.label}` : "New Payment Plan"} description="A payment plan with incomplete terms stays unavailable." submitText="Save Payment Plan" size="lg" pending={pending} error={error} onClose={onClose} onSubmit={() => void submit()}>
       <FormGrid>
-        <TextField label="Scheme name" required value={label} onChange={setLabel} hint="The name sellers see when choosing a plan." />
-        <TextField label="Card ID payment code" value={code} onChange={setCode} hint="For example C01 or T04." maxLength={3} />
+        <TextField label="Payment plan name" required value={label} onChange={setLabel} hint="The name sellers see when choosing a plan." />
+        <TextField label="Payment code (part of the VIP Number)" value={code} onChange={setCode} hint="For example C01 or T04." maxLength={3} />
         <MoneyField label="Reservation fee" value={reservation} onChange={setReservation} hint="Paid first and counted in the total." />
-        <TextField label="Number of installments" inputMode="numeric" value={count} onChange={setCount} hint="Leave blank when the count differs by tier." />
+        <TextField label="Number of installments" inputMode="numeric" value={count} onChange={setCount} hint="Leave blank when the count differs by card level." />
         <TextField label="Down payment (% of price)" inputMode="decimal" value={downPercent} onChange={setDownPercent} hint="Includes the reservation fee. Leave blank when there is none." />
       </FormGrid>
       {isMove ? (
         <fieldset className="tw:flex tw:flex-col tw:gap-2">
-          <legend className="tw:text-sm tw:font-medium">Per-tier Card ID codes</legend>
+          <legend className="tw:text-sm tw:font-medium">Payment codes per card level</legend>
           <div className="tw:grid tw:grid-cols-1 tw:gap-2 tw:sm:grid-cols-3">
-            {tierCodesList.map((tier) => (
-              <TextField key={tier} label={`${tier} Card ID code`} value={tierCodes[tier] ?? ""} onChange={(value) => setTierCodes((current) => ({ ...current, [tier]: value }))} hint="For example T04." maxLength={3} />
+            {planOptions.map(({ value: tier, label: name }) => (
+              <TextField key={tier} label={`${name} payment code`} value={tierCodes[tier] ?? ""} onChange={(value) => setTierCodes((current) => ({ ...current, [tier]: value }))} hint="For example T04." maxLength={3} />
             ))}
           </div>
         </fieldset>
       ) : null}
       <fieldset className="tw:flex tw:flex-col tw:gap-3">
-        <legend className="tw:mb-1 tw:text-sm tw:font-medium">Tiers this scheme applies to</legend>
-        {tierCodesList.map((tier) => {
+        <legend className="tw:mb-1 tw:text-sm tw:font-medium">Card levels this payment plan applies to</legend>
+        {planOptions.map(({ value: tier, label: name }) => {
           const selected = tiers.includes(tier);
-          const tierName = (products.data ?? []).find((item) => item.code === tier)?.name;
           return (
-            <div key={tier} role="group" aria-label={`${tier} terms`} className={`tw:flex tw:flex-col tw:gap-3 tw:rounded-lg tw:border tw:p-3 ${selected ? "tw:border-primary/40 tw:bg-primary/5" : "tw:border-border"}`}>
-              <CheckboxField label={tierName ? `${tier} · ${tierName}` : tier} checked={selected} onChange={(checked) => setTiers((current) => (checked ? [...current, tier] : current.filter((item) => item !== tier)))} />
+            <div key={tier} role="group" aria-label={`${name} terms`} className={`tw:flex tw:flex-col tw:gap-3 tw:rounded-lg tw:border tw:p-3 ${selected ? "tw:border-primary/40 tw:bg-primary/5" : "tw:border-border"}`}>
+              <CheckboxField label={name} checked={selected} onChange={(checked) => setTiers((current) => (checked ? [...current, tier] : current.filter((item) => item !== tier)))} />
               {selected ? (
                 <div className="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-3 tw:sm:items-start">
                   <MoneyField label="Package price" hint="Leave blank to use the catalog price." value={prices[tier] ?? ""} onChange={(value) => setPrices((current) => ({ ...current, [tier]: value }))} />
                   <MoneyField label="Monthly installment" hint="Amount paid each month." value={amounts[tier] ?? ""} onChange={(value) => setAmounts((current) => ({ ...current, [tier]: value }))} />
-                  <TextField label="Number of installments" inputMode="numeric" hint="Only when different from the scheme." value={tierCounts[tier] ?? ""} onChange={(value) => setTierCounts((current) => ({ ...current, [tier]: value }))} />
+                  <TextField label="Number of installments" inputMode="numeric" hint="Only when different from the payment plan." value={tierCounts[tier] ?? ""} onChange={(value) => setTierCounts((current) => ({ ...current, [tier]: value }))} />
                 </div>
               ) : null}
             </div>

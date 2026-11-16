@@ -59,7 +59,7 @@ export function AccountDialogs({
       <Dialog open={mode === "view" && !!selected} onOpenChange={onOpenChange}>
         <DialogContent className={DIALOG_CLASS}>
           <DialogHeader>
-            <DialogTitle>Account details</DialogTitle>
+            <DialogTitle>Account Details</DialogTitle>
             <DialogDescription>Read-only summary of the account.</DialogDescription>
           </DialogHeader>
           {selected ? (
@@ -81,7 +81,7 @@ export function AccountDialogs({
       <Dialog open={mode === "edit" && !!selected} onOpenChange={onOpenChange}>
         <DialogContent className={DIALOG_CLASS}>
           <DialogHeader>
-            <DialogTitle>Edit account</DialogTitle>
+            <DialogTitle>Edit Account</DialogTitle>
             <DialogDescription>Update the account display name and email.</DialogDescription>
           </DialogHeader>
           {selected ? (
@@ -102,7 +102,7 @@ export function AccountDialogs({
       <Dialog open={mode === "role" && !!selected} onOpenChange={onOpenChange}>
         <DialogContent className={DIALOG_CLASS}>
           <DialogHeader>
-            <DialogTitle>Role assignments</DialogTitle>
+            <DialogTitle>Role Assignments</DialogTitle>
             <DialogDescription>Assign or revoke system roles for this account.</DialogDescription>
           </DialogHeader>
           {selected ? (
@@ -121,7 +121,7 @@ export function AccountDialogs({
       <Dialog open={mode === "status" && !!selected} onOpenChange={onOpenChange}>
         <DialogContent className={DIALOG_CLASS}>
           <DialogHeader>
-            <DialogTitle>Account status</DialogTitle>
+            <DialogTitle>Account Status</DialogTitle>
             <DialogDescription>Change whether this account can sign in.</DialogDescription>
           </DialogHeader>
           {selected ? (

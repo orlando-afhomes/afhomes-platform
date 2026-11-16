@@ -65,7 +65,7 @@ export function SalesTeamOverview({
   return (
     <DashboardCard
       icon={Network}
-      title={showTeam ? "Team overview" : "Account overview"}
+      title={showTeam ? "Team Overview" : "Account Overview"}
       actions={actions}
     >
       {loading ? (
@@ -79,11 +79,11 @@ export function SalesTeamOverview({
             {currentMember ? (
               <DetailList>
                 <DetailRow term="Name">{currentMember.displayName}</DetailRow>
-                <DetailRow term="Designation">
+                <DetailRow term="Position">
                   <DesignationBadge designation={currentMember.designation} full />
                 </DetailRow>
                 <DetailRow term="Team">{teamDisplayName(currentMember, members)}</DetailRow>
-                <DetailRow term="AA Number">{aaDisplay(currentMember)}</DetailRow>
+                <DetailRow term="Accreditation Number">{aaDisplay(currentMember)}</DetailRow>
               </DetailList>
             ) : (
               <DashboardEmptyState>No account context is available.</DashboardEmptyState>
@@ -91,15 +91,15 @@ export function SalesTeamOverview({
           </div>
 
           <div className="tw:min-w-0">
-            <SubHeading>Authorized upline</SubHeading>
+            <SubHeading>Authorized leaders above</SubHeading>
             {uplines.length === 0 ? (
-              <DashboardEmptyState>No upline members.</DashboardEmptyState>
+              <DashboardEmptyState>No leaders above.</DashboardEmptyState>
             ) : (
               <ul className="tw:m-0 tw:flex tw:list-none tw:flex-col tw:divide-y tw:divide-border tw:p-0">
                 {uplines.map((upline) => (
                   <li key={upline.id} className="tw:flex tw:items-center tw:justify-between tw:gap-2 tw:py-2 tw:text-sm">
                     <span className="tw:min-w-0 tw:truncate">{upline.displayName}</span>
-                    <DesignationBadge designation={upline.designation} />
+                    <DesignationBadge designation={upline.designation} full />
                   </li>
                 ))}
               </ul>
@@ -108,16 +108,16 @@ export function SalesTeamOverview({
 
           {showTeam ? (
             <div className="tw:min-w-0 tw:md:col-span-2">
-              <SubHeading>{`Direct downline · confirmed sales, ${periodLabel}`}</SubHeading>
+              <SubHeading>{`Direct team · confirmed sales, ${periodLabel}`}</SubHeading>
               {contributions.length === 0 ? (
-                <DashboardEmptyState>No direct downline members.</DashboardEmptyState>
+                <DashboardEmptyState>No direct team members.</DashboardEmptyState>
               ) : (
                 <ul className="tw:m-0 tw:flex tw:list-none tw:flex-col tw:divide-y tw:divide-border tw:p-0">
                   {contributions.map((row) => (
                     <li key={row.member.id} className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2 tw:py-2 tw:text-sm">
                       <span className="tw:flex tw:min-w-0 tw:items-center tw:gap-2">
                         <span className="tw:truncate">{row.member.displayName}</span>
-                        <DesignationBadge designation={row.member.designation} />
+                        <DesignationBadge designation={row.member.designation} full />
                       </span>
                       <Money value={row.confirmedCentavos} className="tw:font-semibold tw:tabular-nums" />
                     </li>
@@ -125,7 +125,7 @@ export function SalesTeamOverview({
                 </ul>
               )}
               <p className="tw:mt-2 tw:text-xs tw:text-muted-foreground">
-                Each figure includes the member&apos;s own and downline sales, credited to the team recorded on each sale.
+                Each figure includes the member&apos;s own and team-below sales, credited to the team recorded on each sale.
               </p>
             </div>
           ) : null}

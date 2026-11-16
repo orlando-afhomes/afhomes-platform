@@ -80,10 +80,10 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
       throw new Error("The selected VIP plan is not available.");
     }
     if (input.paymentSchemeId && !this.store.paymentSchemes.some((item) => item.id === input.paymentSchemeId)) {
-      throw new Error("The selected payment scheme does not exist.");
+      throw new Error("The selected payment plan does not exist.");
     }
     if (input.supplementaryHolder && !this.supplementaryAllowed(input.vipPlan)) {
-      throw new Error("The selected VIP plan does not allow a supplementary holder.");
+      throw new Error("The selected VIP plan does not allow an extra cardholder.");
     }
   }
 

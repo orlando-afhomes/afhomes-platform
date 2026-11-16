@@ -23,7 +23,7 @@ import { IgpRecordDetailDialog, IgpSaleDialog, IgpSettingsDialog } from "../comp
 import { PaymentSubmitDialog, usePaymentActions } from "../components/payment-actions";
 
 const STATUS_LABELS: Record<IgpStatus, string> = {
-  pending: "Pending approval", approved: "Approved", defaulted: "Defaulted",
+  pending: "Pending approval", approved: "Approved", defaulted: "Stopped Paying",
   cancelled: "Cancelled", replaced: "Replaced", pending_review: "Pending review",
 };
 
@@ -33,14 +33,14 @@ type IgpDialog = "reissue" | "correct" | "cancel" | "default" | "document" | "re
 export type IgpHeaderDialog = "record" | "accredit" | "threshold";
 
 function statusLabel(sale: IgpSaleView): string {
-  return sale.defaultReviewDue ? "Due for default review" : sale.status === "approved" && sale.closedDealDate ? "Closed Deal" : STATUS_LABELS[sale.status];
+  return sale.defaultReviewDue ? "Due for stopped-paying review" : sale.status === "approved" && sale.closedDealDate ? "Confirmed Sale" : STATUS_LABELS[sale.status];
 }
 
 const REGISTER_COLUMNS: ColumnDef<IgpSaleView, unknown>[] = [
   { id: "seriesNumber", header: "Series Number", cell: ({ row }) => <span className="tw:font-semibold">{row.original.seriesNumber}</span> },
   { accessorKey: "buyerName", header: "Buyer" },
   { id: "project", header: "Project", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => displayValue(row.original.project) },
-  { id: "price", header: "Contract price", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => <Money value={row.original.priceCentavos} /> },
+  { id: "price", header: "Contract Price", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => <Money value={row.original.priceCentavos} /> },
   { id: "status", header: "Status", cell: ({ row }) => statusLabel(row.original) },
 ];
 
@@ -52,10 +52,10 @@ export function IgpActions({ onOpen, onOpenHistory }: { onOpen: (dialog: IgpHead
   const register = useIgpRegister(modules.has("sales") || modules.has("finance")).data;
   if (!register) return null;
   return <>
-    {canEnter && <Button onClick={() => onOpen("record")}>Record sale</Button>}
-    {canManage && <Button variant="info" onClick={() => onOpen("accredit")}>Record JA&D accreditation</Button>}
-    {canManage && <Button variant="warning" onClick={() => onOpen("threshold")}>Sale counting rule</Button>}
-    {canManage && register.accreditations.length > 0 && <Button variant="outline" onClick={onOpenHistory}>JA&D history</Button>}
+    {canEnter && <Button onClick={() => onOpen("record")}>Record Sale</Button>}
+    {canManage && <Button variant="info" onClick={() => onOpen("accredit")}>Record JA&D Accreditation</Button>}
+    {canManage && <Button variant="warning" onClick={() => onOpen("threshold")}>When a Sale Counts</Button>}
+    {canManage && register.accreditations.length > 0 && <Button variant="outline" onClick={onOpenHistory}>JA&D Approval History</Button>}
   </>;
 }
 
@@ -91,30 +91,30 @@ export function IgpTab({ headerDialog, onHeaderDialogClose, historyOpen, onHisto
 
   const saleActions = sale && !closed ? <>
     {canManage && sale.status === "pending" && <Button variant="success" onClick={() => confirmRun({
-      title: "Approve IGP sale?", description: "Finance can approve receipts after the sale is approved.", confirmText: "Approve sale", tone: "success",
-      action: () => action.mutateAsync({ type: "approve", id: sale.id }), successTitle: "IGP sale approved.", errorTitle: "Could not approve the IGP sale.",
-    })}>Approve sale</Button>}
-    {canSubmit && <Button onClick={() => setDialog("receipt")}>Enter receipt</Button>}
-    {canEnter && !sale.stage1Date && (canManage || sale.collectedCentavos === 0) && <Button variant="warning" onClick={() => setDialog("correct")}>Correct sale</Button>}
-    {canManage && <Button variant="warning" onClick={() => setDialog("reissue")}>Reissue number</Button>}
-    {canManage && sale.defaultReviewDue && <Button variant="destructive" onClick={() => setDialog("default")}>Mark defaulted</Button>}
-    {canManage && <Button variant="destructive" onClick={() => setDialog("cancel")}>Cancel sale</Button>}
+      title: "Approve Property Sale (IGP)?", description: "Finance can approve receipts after the sale is approved.", confirmText: "Approve Sale", tone: "success",
+      action: () => action.mutateAsync({ type: "approve", id: sale.id }), successTitle: "Property sale (IGP) approved.", errorTitle: "Could not approve the property sale (IGP).",
+    })}>Approve Sale</Button>}
+    {canSubmit && <Button onClick={() => setDialog("receipt")}>Enter Receipt</Button>}
+    {canEnter && !sale.stage1Date && (canManage || sale.collectedCentavos === 0) && <Button variant="warning" onClick={() => setDialog("correct")}>Correct Sale</Button>}
+    {canManage && <Button variant="warning" onClick={() => setDialog("reissue")}>Reissue Number</Button>}
+    {canManage && sale.defaultReviewDue && <Button variant="destructive" onClick={() => setDialog("default")}>Mark as Stopped Paying</Button>}
+    {canManage && <Button variant="destructive" onClick={() => setDialog("cancel")}>Cancel Sale</Button>}
   </> : null;
   const linkActions = sale && (sale.replacesId || sale.replacedById) ? <>
-    {sale.replacesId && <Button variant="info" onClick={() => setSelected(sale.replacesId)}>View previous number</Button>}
-    {sale.replacedById && <Button variant="info" onClick={() => setSelected(sale.replacedById)}>View replacement number</Button>}
+    {sale.replacesId && <Button variant="info" onClick={() => setSelected(sale.replacesId)}>View Previous Number</Button>}
+    {sale.replacedById && <Button variant="info" onClick={() => setSelected(sale.replacedById)}>View Replacement Number</Button>}
   </> : null;
 
   return (
-    <AdminPage anyOf={["sales", "finance"]} title="IGP Sales" crumbs={[{ label: "Sales" }, { label: "IGP Sales" }]} embedded>
+    <AdminPage anyOf={["sales", "finance"]} title="Property Sales (IGP)" crumbs={[{ label: "Sales" }, { label: "Property Sales (IGP)" }]} embedded>
       <QueryState isLoading={registerQuery.isLoading} error={registerQuery.error}>
         {register && <>
-          <FilterBar search={search} onSearch={setSearch} searchLabel="Search IGP sales" filters={[{ label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: statusOptions }]} />
-          <DataTable data={visibleSales} columns={REGISTER_COLUMNS} getRowId={({ id }) => id} caption="IGP Sales"
-            emptyText={register.sales.length === 0 ? "No IGP sales are available." : "No IGP sales match the filters."}
+          <FilterBar search={search} onSearch={setSearch} searchLabel="Search property sales (IGP)" filters={[{ label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: statusOptions }]} />
+          <DataTable data={visibleSales} columns={REGISTER_COLUMNS} getRowId={({ id }) => id} caption="Property Sales (IGP)"
+            emptyText={register.sales.length === 0 ? "No property sales (IGP) are available." : "No property sales (IGP) match the filters."}
             onRowOpen={(row) => setSelected(row.id)}
-            getRowLabel={(row) => `Open IGP sale ${row.seriesNumber}`} />
-          {canManage && <RecordDetailsSheet open={historyOpen} onClose={onHistoryClose} title="JA&D accreditation history"
+            getRowLabel={(row) => `Open property sale (IGP) ${row.seriesNumber}`} />
+          {canManage && <RecordDetailsSheet open={historyOpen} onClose={onHistoryClose} title="JA&D Accreditation History"
             sections={register.accreditations.map((item) => ({
               title: item.number,
               rows: [
@@ -125,7 +125,7 @@ export function IgpTab({ headerDialog, onHeaderDialogClose, historyOpen, onHisto
               ],
             }))} />}
           <RecordDetailsSheet open={sale !== undefined} onClose={() => setSelected(null)} size="lg"
-            title={sale?.seriesNumber ?? "IGP sale"}
+            title={sale?.seriesNumber ?? "Property sale (IGP)"}
             subtitle={sale?.buyerName}
             badge={sale ? statusLabel(sale) : undefined}
             sections={sale ? [
@@ -139,21 +139,21 @@ export function IgpTab({ headerDialog, onHeaderDialogClose, historyOpen, onHisto
                   { label: "Approved collections", value: <Money value={sale.collectedCentavos} /> },
                   { label: "Closing seller reference", value: `${sale.seriesNumber} - ${sale.sellerJadNumber}` },
                   { label: "Referrer", value: sale.referrerName ?? (sale.referrerMemberId ? "Recorded" : EMPTY) },
-                  { label: "Closed Deal", value: sale.closedDealDate ? formatDate(sale.closedDealDate) : `At ${sale.thresholdBp / 100}% approved` },
+                  { label: "Confirmed Sale", value: sale.closedDealDate ? formatDate(sale.closedDealDate) : `At ${sale.thresholdBp / 100}% approved` },
                   { label: "Stage 1", value: sale.stage1Date ? formatDate(sale.stage1Date) : "At 40% approved" },
                   { label: "Full payment", value: sale.fullPaymentDate ? formatDate(sale.fullPaymentDate) : "At 100% approved" },
                   ...(sale.refund ? [{ label: "Refund", value: <><Money value={sale.refund.amountCentavos} />{sale.refund.date ? ` on ${formatDate(sale.refund.date)}` : ""}</> }] : []),
                 ],
               },
               ...(sale.expiryReminders.length > 0 || sale.commissionReviewReason ? [{
-                title: "Needs attention",
+                title: "Needs Attention",
                 rows: [
                   ...sale.expiryReminders.map(({ party, validUntil }) => ({ label: `${party} JA&D accreditation`, value: `Expired ${formatDate(validUntil)}. Remind the seller to renew with JA&D.` })),
                   ...(sale.commissionReviewReason ? [{ label: "Commission needs review", value: sale.commissionReviewReason }] : []),
                 ],
               }] : []),
               ...(sellerAccreditations.length > 0 ? [{
-                title: "JA&D accreditation history",
+                title: "JA&D Accreditation History",
                 rows: sellerAccreditations.map((item) => ({
                   label: item.number,
                   value: `Approved ${formatDate(item.approvedDate)} · Valid until ${formatDate(item.validUntil)}${item.replaces ? ` · Replaces ${item.replaces}` : ""}`,
@@ -175,14 +175,14 @@ export function IgpTab({ headerDialog, onHeaderDialogClose, historyOpen, onHisto
                   })),
               },
               {
-                title: "Document checklist",
+                title: "Document Checklist",
                 rows: sale.documents.map(({ key, signedDate, signers }) => {
                   const { name, signedBy } = IGP_DOCUMENT_LABELS[key];
                   return {
                     label: name,
                     value: <span className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
                       <span>{signedDate ? `Signed ${formatDate(signedDate)} by ${signers}` : `Waiting for ${signedBy}`}</span>
-                      {canEnter && !closed && <Button variant="outline" size="sm" onClick={() => { setDocument(key); setDialog("document"); }}>{signedDate ? "Edit signature" : "Record signature"}</Button>}
+                      {canEnter && !closed && <Button variant="outline" size="sm" onClick={() => { setDocument(key); setDialog("document"); }}>{signedDate ? "Edit Signature" : "Record Signature"}</Button>}
                     </span>,
                   };
                 }),

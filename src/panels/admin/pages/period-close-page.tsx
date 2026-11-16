@@ -19,7 +19,7 @@ import { ReportExport, type ReportColumn } from "../components/report-shell";
 const columns: ColumnDef<ClosedMonth>[] = [
   { accessorKey: "month", header: "Month" },
   { id: "sales", header: "Sales", cell: ({ row }) => <Money value={row.original.recognizedSalesCentavos} /> },
-  { id: "collections", header: "Net collections", cell: ({ row }) => <Money value={row.original.grossCollectionsCentavos - row.original.adjustedCollectionsCentavos} /> },
+  { id: "collections", header: "Net Collections", cell: ({ row }) => <Money value={row.original.grossCollectionsCentavos - row.original.adjustedCollectionsCentavos} /> },
   { id: "commissions", header: "Commission", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => <Money value={row.original.releasedCommissionCentavos} /> },
   { id: "closedAt", header: "Closed on", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => formatDate(row.original.closedAt) },
 ];
@@ -31,10 +31,10 @@ const allowanceTotal = (month: ClosedMonth) => {
 
 const EXPORT_COLUMNS: ReportColumn<ClosedMonth>[] = [
   { header: "Month", value: (month) => month.month },
-  { header: "Recognized sales", value: (month) => formatPeso(month.recognizedSalesCentavos) },
-  { header: "Net collections", value: (month) => formatPeso(month.grossCollectionsCentavos - month.adjustedCollectionsCentavos) },
-  { header: "Released commission", value: (month) => formatPeso(month.releasedCommissionCentavos) },
-  { header: "Reviewed allowances", value: allowanceTotal },
+  { header: "Recognized Sales", value: (month) => formatPeso(month.recognizedSalesCentavos) },
+  { header: "Net Collections", value: (month) => formatPeso(month.grossCollectionsCentavos - month.adjustedCollectionsCentavos) },
+  { header: "Commission Ready to Pay", value: (month) => formatPeso(month.releasedCommissionCentavos) },
+  { header: "Reviewed Allowances", value: allowanceTotal },
   { header: "Closed on", value: (month) => formatDate(month.closedAt) },
 ];
 
@@ -55,28 +55,28 @@ export function PeriodClosePanel() {
         <section aria-label="Close a month" className="tw:flex tw:flex-wrap tw:items-end tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-4">
           <MonthField label="Month" value={month} onChange={setMonth} />
           <Button variant="destructive" disabled={!month || month > latest || close.isPending || months.data?.some((item) => item.month === month)} onClick={() => confirmRun({
-            title: "Close this month?",
+            title: "Close This Month?",
             description: `The totals for ${month} will be locked.`,
-            confirmText: "Close month", tone: "destructive",
+            confirmText: "Close Month", tone: "destructive",
             action: () => close.mutateAsync(month),
             successTitle: "Month closed.",
             errorTitle: "Could not close month",
-          })}>Close month</Button>
+          })}>Close Month</Button>
         </section>
       ) : null}
       <section aria-label="Closed months" className="tw:flex tw:flex-col tw:gap-2">
         <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
-          <h2 className="tw:text-base tw:font-semibold">Closed months</h2>
-          <ReportExport report="Period Close" fileName="period-close" columns={EXPORT_COLUMNS} rows={months.data ?? []} range={null} printable={false} />
+          <h2 className="tw:text-base tw:font-semibold">Closed Months</h2>
+          <ReportExport report="Close the Month" fileName="period-close" columns={EXPORT_COLUMNS} rows={months.data ?? []} range={null} printable={false} />
         </div>
         <QueryState isLoading={months.isLoading} error={months.error}>
-          <DataTable data={months.data ?? []} columns={columns} getRowId={(row) => row.month} caption="Closed months" emptyText="No months have been closed." onRowOpen={(row) => setDetailMonth(row.month)} getRowLabel={(row) => `View closed month ${row.month}`} />
+          <DataTable data={months.data ?? []} columns={columns} getRowId={(row) => row.month} caption="Closed Months" emptyText="No months have been closed." onRowOpen={(row) => setDetailMonth(row.month)} getRowLabel={(row) => `View closed month ${row.month}`} />
         </QueryState>
       </section>
       <RecordDetailsSheet
         open={detail !== null}
         onClose={() => setDetailMonth(null)}
-        title={detail ? `Closed month ${detail.month}` : "Closed month"}
+        title={detail ? `Closed Month ${detail.month}` : "Closed Month"}
         sections={
           detail
             ? [
@@ -85,7 +85,7 @@ export function PeriodClosePanel() {
                     { label: "Month", value: detail.month },
                     { label: "Recognized sales", value: <Money value={detail.recognizedSalesCentavos} /> },
                     { label: "Net collections", value: <Money value={detail.grossCollectionsCentavos - detail.adjustedCollectionsCentavos} /> },
-                    { label: "Released commission", value: <Money value={detail.releasedCommissionCentavos} /> },
+                    { label: "Commission ready to pay", value: <Money value={detail.releasedCommissionCentavos} /> },
                     { label: "Reviewed allowances", value: allowanceTotal(detail) },
                     { label: "Closed on", value: formatDate(detail.closedAt) },
                   ],

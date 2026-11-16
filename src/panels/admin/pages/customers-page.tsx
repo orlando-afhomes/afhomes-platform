@@ -26,7 +26,7 @@ import { AdminFilterBar, AdminStatCard, AdminStatGrid } from "@/shared/component
 import { QueryState } from "@/shared/components/modern/query-state";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { DataTable } from "@/shared/components/modern/data-table";
-import { humanize } from "@/shared/lib/humanize";
+import { useTierDisplayName } from "../components/use-tier-display-name";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
@@ -43,7 +43,7 @@ export function CustomersActions() {
   const canDraft = useOperation("customers.draft");
   return canDraft ? (
     <Link href="/admin/customers/new" className={buttonVariants({ className: "tw:min-h-11 tw:sm:min-h-8" })}>
-      <Plus aria-hidden="true" /> New customer
+      <Plus aria-hidden="true" /> New Customer
     </Link>
   ) : null;
 }
@@ -52,6 +52,7 @@ export function CustomersTab() {
   const router = useRouter();
   const contractHref = useContractHref();
   const customers = useCustomers();
+  const tierName = useTierDisplayName();
   const members = useMembers();
   const discard = useDiscardCustomerDraft();
   const approve = useApproveCustomer();
@@ -94,7 +95,7 @@ export function CustomersTab() {
         header: "Customer",
         cell: ({ row }) => <span className="tw:font-semibold">{customerRecordName(row.original)}</span>,
       },
-      { id: "plan", header: "VIP plan", cell: ({ row }) => (row.original.vipPlan ? humanize(row.original.vipPlan) : "—") },
+      { id: "plan", header: "VIP Plan", cell: ({ row }) => tierName(row.original.vipPlan) },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
       {
         id: "owner",
@@ -103,22 +104,22 @@ export function CustomersTab() {
         cell: ({ row }) => (row.original.ownerMemberId ? (memberName.get(row.original.ownerMemberId) ?? EMPTY) : "Company"),
       },
     ],
-    [memberName],
+    [memberName, tierName],
   );
 
   return (
     <>
       <AdminStatGrid columns={3}>
-        <AdminStatCard label="Total customers" value={totalCustomers.toLocaleString()} icon={Users} tone="brand" loading={customers.isLoading} error={customers.error} />
+        <AdminStatCard label="Total Customers" value={totalCustomers.toLocaleString()} icon={Users} tone="brand" loading={customers.isLoading} error={customers.error} />
         <AdminStatCard
-          label="Submitted applications"
+          label="Submitted Applications"
           value={submittedCount.toLocaleString()}
           icon={FileCheck}
           tone="info"
           loading={customers.isLoading}
           error={customers.error}
         />
-        <AdminStatCard label="Draft records" value={draftCount.toLocaleString()} icon={FileText} tone="accent" loading={customers.isLoading} error={customers.error} />
+        <AdminStatCard label="Draft Records" value={draftCount.toLocaleString()} icon={FileText} tone="accent" loading={customers.isLoading} error={customers.error} />
       </AdminStatGrid>
       <AdminFilterBar search={search} onSearch={setSearch} searchLabel="Search customers" filters={[{ label: "Customer status filter", value: status, onChange: setStatus, options: STATUS_OPTIONS }]} />
       <QueryState isLoading={customers.isLoading} error={customers.error}>
@@ -151,7 +152,7 @@ export function CustomersTab() {
       </QueryState>
       <ConfirmDialog
         open={reviewTarget?.action === "approve"}
-        title="Approve this registration?"
+        title="Approve This Registration?"
         description="The customer registration is approved. This does not activate a VIP membership."
         confirmText="Approve" tone="success"
         pending={approve.isPending}
@@ -175,16 +176,16 @@ export function CustomersTab() {
       />
       <ReasonDialog
         open={reviewTarget?.action === "send_back"}
-        title="Send back to the Clerk"
+        title="Send Back to the Clerk"
         description="The Clerk sees the reason and can fix and resubmit. Nothing is deleted."
-        confirmText="Send back" tone="warning"
+        confirmText="Send Back" tone="warning"
         successText="Sent back to the Clerk."
         onClose={() => setReviewTarget(null)}
         onSubmit={(reason) => (reviewTarget ? sendBack.mutateAsync({ id: reviewTarget.customer.id, reason }) : Promise.reject(new Error("No customer selected.")))}
       />
       <ReasonDialog
         open={reviewTarget?.action === "reject"}
-        title="Reject this registration"
+        title="Reject This Registration"
         description="Rejecting keeps the record and its history. Nothing is deleted."
         confirmText="Reject"
         successText="Registration rejected."

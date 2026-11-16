@@ -36,7 +36,7 @@ export function CardServiceDialog({ membership, onClose }: { membership: Members
     }
   };
   return (
-    <FormDialog open title="Service VIP card" description={membership.customerName} submitText="Record service" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
+    <FormDialog open title="Service VIP Card" description={membership.customerName} submitText="Record Service" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
       <SelectField label="Service" value={kind} onChange={setKind} options={[{ value: "replacement", label: "Replace card" }, { value: "transfer", label: "Transfer to another holder" }, { value: "inheritance", label: "Transfer to an heir" }]} />
       <TextField label="Written request reference" required value={requestReference} onChange={setRequest} />
       <TextField label="Management approval reference" required value={approvalReference} onChange={setApproval} />

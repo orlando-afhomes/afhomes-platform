@@ -296,13 +296,13 @@ describe("validateSupplementaryHolder contact checks", () => {
 
   it("keeps the name and birth-date rules intact", () => {
     expect(validateSupplementaryHolder(validHolder({ firstName: "" }), true)).toMatchObject({
-      supplementaryHolder: "Enter the supplementary holder's first and last name.",
+      supplementaryHolder: "Enter the extra cardholder's first and last name.",
     });
     expect(validateSupplementaryHolder(validHolder({ dateOfBirth: "2999-01-01" }), true)).toMatchObject({
-      supplementaryHolder: "The supplementary holder's birth date must be in the past.",
+      supplementaryHolder: "The extra cardholder's birth date must be in the past.",
     });
     expect(validateSupplementaryHolder(validHolder(), false)).toMatchObject({
-      supplementaryHolder: "The selected VIP plan does not allow a supplementary holder.",
+      supplementaryHolder: "The selected VIP plan does not allow an extra cardholder.",
     });
   });
 });

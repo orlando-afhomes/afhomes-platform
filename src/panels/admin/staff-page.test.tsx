@@ -52,7 +52,7 @@ async function clickRowAction(user: ReturnType<typeof userEvent.setup>, row: HTM
 
 
 /** The profile dialog's Account Access section. */
-const accessSection = () => within(screen.getByRole("dialog", { name: "Employee profile" })).getByRole("region", { name: "Account Access" });
+const accessSection = () => within(screen.getByRole("dialog", { name: "Employee Profile" })).getByRole("region", { name: "Account Access" });
 
 async function openAdd(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "Add staff" }));
@@ -227,7 +227,7 @@ describe("staff page", () => {
     await screen.findByRole("row", { name: /^Open HR Staff/ }, { timeout: 5000 });
     const row = screen.getByRole("row", { name: /^Open HR Staff/ }).closest("tr")!;
     await user.click(row);
-    const dialog = await screen.findByRole("dialog", { name: "Employee profile" });
+    const dialog = await screen.findByRole("dialog", { name: "Employee Profile" });
     expect(within(dialog).getAllByText("Human Resources").length).toBeGreaterThan(0);
     expect(within(dialog).queryByPlaceholderText("Temporary Password")).not.toBeInTheDocument();
   });
@@ -271,7 +271,7 @@ describe("staff page S3-B permissions", () => {
 
   async function openProfile(user: ReturnType<typeof userEvent.setup>, staffId: string) {
     await user.click(row(staffId));
-    await screen.findByRole("dialog", { name: "Employee profile" });
+    await screen.findByRole("dialog", { name: "Employee Profile" });
   }
 
   it("shows HR the assigned role names without Roles management", async () => {
@@ -303,7 +303,7 @@ describe("staff page S3-B permissions", () => {
     await waitFor(() => expect(screen.getByText("New Hire")).toBeInTheDocument());
     const newRow = screen.getByText("New Hire").closest("tr") as HTMLElement;
     await user.click(newRow);
-    await screen.findByRole("dialog", { name: "Employee profile" });
+    await screen.findByRole("dialog", { name: "Employee Profile" });
     await waitFor(() => expect(within(accessSection()).getByText("newhire@afhomes.local")).toBeInTheDocument());
     expect(within(accessSection()).getByText("Pending")).toBeInTheDocument();
   });
@@ -333,11 +333,11 @@ describe("staff page S3-B permissions", () => {
     await waitFor(() => expect(screen.queryByRole("button", { name: "Suspend account" })).toBeNull());
     expect(screen.getByRole("button", { name: "Deactivate account" })).toBeInTheDocument();
     expect(within(accessSection()).getByText("Suspended")).toBeInTheDocument();
-    await closeDialog(user, "Employee profile");
+    await closeDialog(user, "Employee Profile");
     await openProfile(user, "staff-1");
     await waitFor(() => expect(accessSection().querySelector("dl")).not.toBeNull());
     expect(screen.queryByRole("button", { name: "Suspend account" })).toBeNull();
-    await closeDialog(user, "Employee profile");
+    await closeDialog(user, "Employee Profile");
     await openProfile(user, "staff-super");
     expect(await screen.findByText("Protected Super Administrator account. Only a Super Administrator can change its status.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Suspend account" })).toBeNull();
@@ -376,7 +376,7 @@ describe("add staff system access", () => {
     expect(within(newRow).getByText("Pending")).toBeInTheDocument();
     // System roles live in the employee profile, not the table.
     await user.click(newRow);
-    const profile = await screen.findByRole("dialog", { name: "Employee profile" });
+    const profile = await screen.findByRole("dialog", { name: "Employee Profile" });
     expect(within(within(profile).getByRole("region", { name: "Account Access" })).getByText("Human Resources")).toBeInTheDocument();
   });
 

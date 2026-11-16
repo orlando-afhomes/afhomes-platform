@@ -22,12 +22,12 @@ export function ForgotPasswordPanel({ onBack }: { onBack: () => void }) {
   if (submitted) {
     return (
       <div className="login-form__view tw:flex tw:flex-col tw:gap-5">
-        <h1 className="tw:text-3xl tw:font-semibold">Forgot password</h1>
+        <h1 className="tw:text-3xl tw:font-semibold">Forgot Password</h1>
         <p role="status" className="tw:text-sm tw:text-(--color-on-dark-muted)">
           If the email belongs to an account, an Administrator can set a temporary password for it. Contact your Administrator to reset your password.
         </p>
         <Button type="button" className="login-form__submit" onClick={onBack}>
-          Back to sign in
+          Back to Sign In
         </Button>
       </div>
     );
@@ -36,7 +36,7 @@ export function ForgotPasswordPanel({ onBack }: { onBack: () => void }) {
   return (
     <form noValidate onSubmit={handleSubmit} className="login-form__view tw:flex tw:flex-col tw:gap-5">
       <div className="tw:flex tw:flex-col tw:gap-2">
-        <h1 className="tw:text-3xl tw:font-semibold">Forgot password</h1>
+        <h1 className="tw:text-3xl tw:font-semibold">Forgot Password</h1>
         <p className="tw:text-sm tw:text-(--color-on-dark-muted)">Enter your registered email. Password resets are done by an Administrator.</p>
       </div>
       <div className="tw:flex tw:flex-col tw:gap-2">
@@ -61,7 +61,7 @@ export function ForgotPasswordPanel({ onBack }: { onBack: () => void }) {
         Continue
       </Button>
       <button type="button" className="login-form__link tw:self-center" onClick={onBack}>
-        Back to sign in
+        Back to Sign In
       </button>
     </form>
   );

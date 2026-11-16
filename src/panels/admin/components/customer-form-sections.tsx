@@ -304,7 +304,7 @@ export function IdentitySection({ draft, set, errors }: SectionProps) {
   const age = computeAge(draft.dateOfBirth);
   const { markTouched, localError } = useTouchedFields();
   return (
-    <SectionBlock title="Personal details" description="Name, gender, civil status, and birth date as shown on the customer's government ID." icon={<UserRound className="tw:size-4" />}>
+    <SectionBlock title="Personal Details" description="Name, gender, civil status, and birth date as shown on the customer's government ID." icon={<UserRound className="tw:size-4" />}>
       <FormGrid>
         <PersonNameField
           label="First name"
@@ -499,7 +499,7 @@ export function EmploymentSection({ draft, set, errors }: SectionProps) {
 export function SecondaryHolderToggle({ visible, enabled, onChange }: { visible: boolean; enabled: boolean; onChange: (enabled: boolean) => void }) {
   if (!visible) return null;
   return (
-    <SectionBlock title="Secondary card holder" description="Gold VIP allows one supplementary holder." icon={<Users className="tw:size-4" />}>
+    <SectionBlock title="Secondary Card Holder" description="Gold VIP allows one extra cardholder." icon={<Users className="tw:size-4" />}>
       <div className="tw:flex tw:items-center tw:gap-3">
         <Switch checked={enabled} onCheckedChange={onChange} aria-label="Add a secondary card holder" />
         <p className="tw:text-sm tw:font-medium">Add a secondary card holder</p>
@@ -519,18 +519,18 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
   const govIdOptions = useReferenceOptions("gov-id-type", [draft.secGovernmentIdType]);
   return (
     <>
-      <SectionBlock title="Personal details (Secondary holder)" description="Name, gender, civil status, and birth date of the secondary card holder as shown on their government ID." icon={<UserRound className="tw:size-4" />}>
+      <SectionBlock title="Personal Details (Extra Cardholder)" description="Name, gender, civil status, and birth date of the secondary card holder as shown on their government ID." icon={<UserRound className="tw:size-4" />}>
         <FormGrid>
           <PersonNameField
-            label="First name (Secondary holder)"
+            label="First name (Extra cardholder)"
             value={draft.secFirstName}
             onChange={(value) => set("secFirstName", value)}
             onBlur={() => markTouched("firstName")}
             error={errors.supplementaryHolder ?? localSecondaryError("firstName", draft.secFirstName)}
           />
-          <MiddleNameField label="Middle name (Secondary holder)" value={draft.secMiddleName} onChange={(value) => set("secMiddleName", value)} noMiddleName={draft.secNoMiddleName} onNoMiddleNameChange={(value) => set("secNoMiddleName", value)} />
+          <MiddleNameField label="Middle name (Extra cardholder)" value={draft.secMiddleName} onChange={(value) => set("secMiddleName", value)} noMiddleName={draft.secNoMiddleName} onNoMiddleNameChange={(value) => set("secNoMiddleName", value)} />
           <PersonNameField
-            label="Last name (Secondary holder)"
+            label="Last name (Extra cardholder)"
             value={draft.secLastName}
             onChange={(value) => set("secLastName", value)}
             onBlur={() => markTouched("lastName")}
@@ -538,7 +538,7 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
           />
           <SuffixField value={draft.secSuffix} onChange={(value) => set("secSuffix", value)} />
           <TextField
-            label="Citizenship (Secondary holder)"
+            label="Citizenship (Extra cardholder)"
             value={draft.secCitizenship}
             onChange={(value) => set("secCitizenship", cleanTitleInput(value))}
             onBlur={() => {
@@ -551,7 +551,7 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
           />
           <div onBlur={() => markTouched("dateOfBirth")}>
             <StandardDateField
-              label="Date of birth (Secondary holder)"
+              label="Date of birth (Extra cardholder)"
               value={draft.secDateOfBirth}
               onChange={(value) => set("secDateOfBirth", value)}
               error={localSecondaryError("dateOfBirth", draft.secDateOfBirth)}
@@ -559,10 +559,10 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
           </div>
           <TextField label="Age" value={secAge === null ? "" : String(secAge)} onChange={() => {}} disabled hint="Derived from date of birth." />
         </FormGrid>
-        <RadioCardField label="Gender (Secondary holder)" value={draft.secGender || undefined} options={GENDER_CARDS} onChange={(value) => set("secGender", value)} />
-        <RadioCardField label="Civil status (Secondary holder)" value={draft.secCivilStatus || undefined} options={CIVIL_CARDS} onChange={(value) => set("secCivilStatus", value)} />
+        <RadioCardField label="Gender (Extra cardholder)" value={draft.secGender || undefined} options={GENDER_CARDS} onChange={(value) => set("secGender", value)} />
+        <RadioCardField label="Civil status (Extra cardholder)" value={draft.secCivilStatus || undefined} options={CIVIL_CARDS} onChange={(value) => set("secCivilStatus", value)} />
       </SectionBlock>
-      <SectionBlock title="Address (Secondary holder)" icon={<MapPin className="tw:size-4" />}>
+      <SectionBlock title="Address (Extra Cardholder)" icon={<MapPin className="tw:size-4" />}>
         <div onBlur={(event) => markBlurredField(event, "afhomes-street", "street", markTouched)}>
           <PhilippineAddressFields
             value={draft.secAddress}
@@ -571,10 +571,10 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
           />
         </div>
       </SectionBlock>
-      <SectionBlock title="Contact (Secondary holder)" icon={<Phone className="tw:size-4" />}>
+      <SectionBlock title="Contact (Extra Cardholder)" icon={<Phone className="tw:size-4" />}>
         <FormGrid>
           <PhilippineMobileField
-            label="Mobile number (Secondary holder)"
+            label="Mobile number (Extra cardholder)"
             fixedPrefix={newApplication}
             value={draft.secMobileNumber}
             onChange={(value) => set("secMobileNumber", value)}
@@ -582,14 +582,14 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
             error={localSecondaryError("mobileNumber", draft.secMobileNumber)}
           />
           <EmailField
-            label="Email (Secondary holder)"
+            label="Email (Extra cardholder)"
             value={draft.secEmail}
             onChange={(value) => set("secEmail", value)}
             onBlur={() => markTouched("email")}
             error={localSecondaryError("email", draft.secEmail)}
           />
           <PhilippineLandlineField
-            label="Landline (Secondary holder)"
+            label="Landline (Extra cardholder)"
             localDigitsOnly={newApplication}
             value={draft.secLandline}
             onChange={(value) => set("secLandline", value)}
@@ -602,7 +602,7 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
           />
         </FormGrid>
       </SectionBlock>
-      <SectionBlock title="Government ID (Secondary holder)" icon={<IdCard className="tw:size-4" />}>
+      <SectionBlock title="Government ID (Extra Cardholder)" icon={<IdCard className="tw:size-4" />}>
         <FormGrid>
           {/* display:contents keeps both ID fields as direct grid cells while the wrapper catches their blur. */}
           <div className="tw:contents" onBlur={(event) => markBlurredField(event, "sec-gov-id-number", "governmentIdNumber", markTouched)}>
@@ -621,7 +621,7 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
             />
           </div>
           <TinField
-            label="TIN number (Secondary holder)"
+            label="TIN number (Extra cardholder)"
             maxLength={TIN_DISPLAY_LENGTH}
             value={draft.secTinNumber}
             onChange={(value) => set("secTinNumber", value)}
@@ -631,10 +631,10 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
           {idPreview ? <CustomerIdImagePreview preview={idPreview} secondary /> : null}
         </FormGrid>
       </SectionBlock>
-      <SectionBlock title="Employment (Secondary holder)" description="Optional" icon={<Briefcase className="tw:size-4" />}>
+      <SectionBlock title="Employment (Extra Cardholder)" description="Optional" icon={<Briefcase className="tw:size-4" />}>
         <FormGrid>
           <TextField
-            label="Occupation/Business Name (Secondary holder)"
+            label="Occupation/Business Name (Extra cardholder)"
             value={draft.secOccupation}
             onChange={(value) => set("secOccupation", cleanBusinessLiveInput(value))}
             onBlur={() => {
@@ -646,7 +646,7 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
             error={localSecondaryError("occupation", draft.secOccupation)}
           />
           <TextField
-            label="Type of Business/Industry (Secondary holder)"
+            label="Type of Business/Industry (Extra cardholder)"
             value={draft.secBusinessIndustry}
             onChange={(value) => set("secBusinessIndustry", cleanOccupationLiveInput(value))}
             onBlur={() => {
@@ -658,7 +658,7 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
             error={localSecondaryError("businessIndustry", draft.secBusinessIndustry)}
           />
           <TextField
-            label="Employed Position (Secondary holder)"
+            label="Employed Position (Extra cardholder)"
             value={draft.secEmployedPosition}
             onChange={(value) => set("secEmployedPosition", cleanOccupationLiveInput(value))}
             onBlur={() => {
@@ -742,7 +742,7 @@ export function AttributionSection({ draft, set, errors, members, existing, pend
   }, [existing]);
 
   return (
-    <SectionBlock title="Sales attribution" icon={<Handshake className="tw:size-4" />}>
+    <SectionBlock title="Sales Attribution" icon={<Handshake className="tw:size-4" />}>
       <FormGrid>
         {office ? (
           <SelectField
@@ -755,7 +755,7 @@ export function AttributionSection({ draft, set, errors, members, existing, pend
             allowClear
             clearLabel="No closing seller yet"
             placeholder="Type to search sellers"
-            hint={accreditationHint ?? "IST or OST who closed the sale. Required before approval."}
+            hint={accreditationHint ?? "Internal Seller (IST) or Outsourced Seller (OST) who closed the sale. Required before approval."}
           />
         ) : (
           <TextField label="Closing seller" value={closingSeller ? attributionPartyLabel(closingSeller) : "You (the seller starting this draft)"} onChange={() => {}} disabled hint="The office confirms the closing seller before approval." />
@@ -773,7 +773,7 @@ export function AttributionSection({ draft, set, errors, members, existing, pend
           allowClear
           clearLabel="No referrer"
           placeholder="Type to search sellers"
-          hint={accreditationHint ?? "Optional. IST or OST, who may be a different person from the closing seller."}
+          hint={accreditationHint ?? "Optional. Internal Seller (IST) or Outsourced Seller (OST), who may be a different person from the closing seller."}
         />
         {office && sameSeller ? (
           <TextField
@@ -785,9 +785,9 @@ export function AttributionSection({ draft, set, errors, members, existing, pend
             hint="The closing seller is also the referrer. Note the existing dated referral; the approver verifies it."
           />
         ) : null}
-        <TextField label="SM" value={derivedAttributionValue(upline.sm)} onChange={() => {}} disabled />
-        <TextField label="SSM" value={derivedAttributionValue(upline.ssm)} onChange={() => {}} disabled />
-        <TextField label="SVD" value={derivedAttributionValue(upline.svd)} onChange={() => {}} disabled />
+        <TextField label="Sales Manager" value={derivedAttributionValue(upline.sm)} onChange={() => {}} disabled />
+        <TextField label="Senior Sales Manager" value={derivedAttributionValue(upline.ssm)} onChange={() => {}} disabled />
+        <TextField label="Sales Vice Director" value={derivedAttributionValue(upline.svd)} onChange={() => {}} disabled />
       </FormGrid>
       {pendingOstIds === null && (draft.recommenderMemberId || draft.referrerMemberId || (office && draft.ownerMemberId)) ? (
         <div>
@@ -796,7 +796,7 @@ export function AttributionSection({ draft, set, errors, members, existing, pend
             set("referrerMemberId", "");
             if (office) set("ownerMemberId", "");
           }}>
-            Clear seller selections
+            Clear Seller Selections
           </Button>
         </div>
       ) : null}
@@ -829,7 +829,7 @@ export function AttributionSection({ draft, set, errors, members, existing, pend
 export function CertificationsSection({ draft, set, errors }: SectionProps) {
   return (
     <SectionBlock title="Certifications" description="Both are required before the application can be submitted.">
-      <CheckboxField variant="card" label="The customer consented to the processing of personal data under RA 10173." checked={draft.consentDataPrivacy} onChange={(value) => set("consentDataPrivacy", value)} error={errors.consentDataPrivacy} />
+      <CheckboxField variant="card" label="The customer consented to the processing of personal data under the Data Privacy Act (RA 10173)." checked={draft.consentDataPrivacy} onChange={(value) => set("consentDataPrivacy", value)} error={errors.consentDataPrivacy} />
       <CheckboxField variant="card" label="A valid government ID with specimen signatures was received." checked={draft.idReceivedCertified} onChange={(value) => set("idReceivedCertified", value)} error={errors.idReceivedCertified} />
     </SectionBlock>
   );

@@ -28,7 +28,7 @@ export function tierLevelNameError(raw: string, others: readonly Pick<TierLevel,
   const name = raw.trim().replace(/\s+/g, " ");
   if (!name) return "A name is required.";
   if (name.length > TIER_LEVEL_NAME_MAX) return `The name must be ${TIER_LEVEL_NAME_MAX} characters or fewer.`;
-  if (others.some((item) => item.name.toLowerCase() === name.toLowerCase())) return "A tier level with this name already exists.";
+  if (others.some((item) => item.name.toLowerCase() === name.toLowerCase())) return "A card level with this name already exists.";
   return null;
 }
 

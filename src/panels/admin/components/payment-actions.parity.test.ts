@@ -158,11 +158,11 @@ describe("payment-actions parity: row menu vs detail-sheet footer", () => {
     const source = readSource();
     // Key → label pairs pinned by itemsFor (~lines 213-228).
     for (const [key, label] of [
-      ["resend", "Fix and resend"],
+      ["resend", "Fix and Resend"],
       ["verify", "Verify"],
-      ["return", "Return for correction"],
+      ["return", "Return for Correction"],
       ["reject", "Reject"],
-      ["adjust", "Reverse or refund"],
+      ["adjust", "Undo or Refund"],
     ]) {
       expect(source, `missing ${key} label`).toContain(`key: "${key}"`);
       expect(source, `missing ${key} label`).toContain(`label: "${label}"`);

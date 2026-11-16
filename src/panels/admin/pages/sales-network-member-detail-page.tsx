@@ -113,8 +113,8 @@ export function SalesNetworkMemberDetailPage() {
   const historyColumns = useMemo<ColumnDef<NonNullable<OrgMember["parentHistory"]>[number], unknown>[]>(
     () => [
       { id: "operation", header: "Operation", cell: ({ row }) => humanize(row.original.operation) },
-      { id: "previousParent", header: "Previous parent", cell: ({ row }) => parentLabel(row.original.previousParentId) },
-      { id: "newParent", header: "New parent", cell: ({ row }) => parentLabel(row.original.newParentId) },
+      { id: "previousParent", header: "Previous Parent", cell: ({ row }) => parentLabel(row.original.previousParentId) },
+      { id: "newParent", header: "New Parent", cell: ({ row }) => parentLabel(row.original.newParentId) },
       { id: "actor", header: "Actor", cell: ({ row }) => actorLabel(row.original.actorId) },
       { id: "timestamp", header: "Timestamp", cell: ({ row }) => row.original.changedAt },
     ],
@@ -125,7 +125,7 @@ export function SalesNetworkMemberDetailPage() {
   if (!granted.has("sales-network")) {
     return (
       <PageContainer>
-        <PageHeader title="Access restricted" description="This account does not have access to Sales Network." />
+        <PageHeader title="Access Restricted" description="This account does not have access to Sales Network." />
       </PageContainer>
     );
   }
@@ -144,14 +144,14 @@ export function SalesNetworkMemberDetailPage() {
         <Card className="tw:p-8 tw:text-center tw:text-muted-foreground">Member not found or restricted.</Card>
         <div className="tw:mt-3 tw:flex tw:justify-center">
           <Link href="/admin/sales-network/members" className={cn(buttonVariants({ variant: "outline" }), "tw:min-h-11 tw:sm:min-h-8")}>
-            Back to members
+            Back to Members
           </Link>
         </div>
       </PageContainer>
     );
   }
 
-  const classification = member.designation === "OST" ? "OST" : "IST";
+  const classification = designationLabel(member.designation === "OST" ? "OST" : "IST");
   const profile = member.sellerProfile;
   const display = resolveAccreditationDisplay(accreditations);
   const downlineTotal = Math.max(0, collectKeys(downlineTree).length - 1);
@@ -219,7 +219,7 @@ export function SalesNetworkMemberDetailPage() {
   const tabItems: AdminTabItem[] = [
     { value: "overview", label: "Overview", Icon: Home },
     ...(profile ? [{ value: "profile", label: "Profile", Icon: User }] : []),
-    { value: "downline", label: "Downline", Icon: Users, count: downlineTotal },
+    { value: "downline", label: "Team Below", Icon: Users, count: downlineTotal },
     ...(hasHistory ? [{ value: "history", label: "History", Icon: History }] : []),
   ];
   const activeTab = tabItems.some((item) => item.value === tab) ? tab : "overview";
@@ -275,9 +275,9 @@ export function SalesNetworkMemberDetailPage() {
           meta={[
             { label: "Team", value: teamDisplayName(member, members), Icon: Layers },
             { label: "Parent", value: parentDisplay, Icon: Network },
-            { label: "Downline", value: `${directDownline.length} direct · ${downlineTotal} total`, Icon: Users },
+            { label: "Team Below", value: `${directDownline.length} direct · ${downlineTotal} whole team`, Icon: Users },
             { label: "Validity", value: validityNode, Icon: BadgeCheck },
-            { label: "Approved expiry", value: formatDate(currentAccreditation?.expiryDate), Icon: CalendarDays },
+            { label: "Approved Expiry", value: formatDate(currentAccreditation?.expiryDate), Icon: CalendarDays },
           ]}
         />
 
@@ -287,8 +287,8 @@ export function SalesNetworkMemberDetailPage() {
           <div role="tabpanel" id={`${tabPrefix}-panel-overview`} aria-labelledby={`${tabPrefix}-tab-overview`} className="tw:grid tw:gap-5 tw:lg:grid-cols-2">
             <AdminSection title="Membership" icon={User}>
               <InfoGrid label="Membership details" columns={2}>
-                <InfoItem term="AA Number">{aaDisplay(member)}</InfoItem>
-                <InfoItem term="Designation">
+                <InfoItem term="Accreditation Number">{aaDisplay(member)}</InfoItem>
+                <InfoItem term="Position">
                   <DesignationBadge designation={member.designation} full />
                 </InfoItem>
                 <InfoItem term="Member Status">
@@ -303,8 +303,8 @@ export function SalesNetworkMemberDetailPage() {
             </AdminSection>
             <AdminSection title="Accreditation" icon={BadgeCheck}>
               <InfoGrid label="Accreditation details" columns={2}>
-                <InfoItem term="AA Number">{currentAccreditation?.aaNumber ?? member.aaNumber ?? "Pending AA Issuance"}</InfoItem>
-                <InfoItem term="Classification">{currentAccreditation?.classification ?? classification}</InfoItem>
+                <InfoItem term="Accreditation Number">{currentAccreditation?.aaNumber ?? member.aaNumber ?? "Pending Accreditation Number"}</InfoItem>
+                <InfoItem term="Seller Type">{currentAccreditation?.classification ?? classification}</InfoItem>
                 <InfoItem term="Accreditation Status">{accreditationBadge}</InfoItem>
                 <InfoItem term="Validity">{validityNode}</InfoItem>
                 <InfoItem term="Original Accreditation Date">{formatDate(currentAccreditation?.originalAccreditationDate)}</InfoItem>
@@ -320,8 +320,8 @@ export function SalesNetworkMemberDetailPage() {
               ) : null}
             </AdminSection>
             {aaNumberHistory.length > 0 ? (
-              <AdminSection title="AA Number History" icon={History} className="tw:lg:col-span-2">
-                <ul aria-label="AA Number History" className="tw:flex tw:flex-col tw:gap-1 tw:text-sm">
+              <AdminSection title="Accreditation Number History" icon={History} className="tw:lg:col-span-2">
+                <ul aria-label="Accreditation Number History" className="tw:flex tw:flex-col tw:gap-1 tw:text-sm">
                   {aaNumberHistory.map((entry) => (
                     <li key={entry.aaNumber}>
                       <span className="tw:font-medium">{entry.aaNumber}</span> replaced by {entry.replacedBy} on {formatDate(entry.replacedOn)}
@@ -400,10 +400,10 @@ export function SalesNetworkMemberDetailPage() {
 
         {activeTab === "downline" ? (
           <div role="tabpanel" id={`${tabPrefix}-panel-downline`} aria-labelledby={`${tabPrefix}-tab-downline`}>
-            <section aria-label="Team downline" className="tw:flex tw:flex-col tw:gap-3">
-              <AdminSectionHeading title="Team downline" icon={Network} />
+            <section aria-label="Team below" className="tw:flex tw:flex-col tw:gap-3">
+              <AdminSectionHeading title="Team Below" icon={Network} />
               {directDownline.length === 0 ? (
-                <p className="tw:p-4 tw:text-center tw:text-muted-foreground">No direct downline members.</p>
+                <p className="tw:p-4 tw:text-center tw:text-muted-foreground">No direct team members.</p>
               ) : (
                 <div className="tw:overflow-x-auto">
                   <GenealogyTree
@@ -425,20 +425,20 @@ export function SalesNetworkMemberDetailPage() {
         {activeTab === "history" && hasHistory ? (
           <div role="tabpanel" id={`${tabPrefix}-panel-history`} aria-labelledby={`${tabPrefix}-tab-history`}>
             <section aria-label="Relationship history" className="tw:flex tw:flex-col tw:gap-3">
-              <AdminSectionHeading title="Relationship history" icon={History} />
+              <AdminSectionHeading title="Relationship History" icon={History} />
               <DataTable
                 data={member.parentHistory ?? []}
                 columns={historyColumns}
                 getRowId={(row) => `${row.changedAt}-${row.operation}-${row.actorId}`}
                 emptyText="No relationship history."
-                caption="Relationship history"
+                caption="Relationship History"
                 onRowOpen={(row) => setHistoryKey(`${row.changedAt}-${row.operation}-${row.actorId}`)}
                 getRowLabel={(row) => `Open ${humanize(row.operation)} change`}
               />
               <RecordDetailsSheet
                 open={historyDetail !== null}
                 onClose={() => setHistoryKey(null)}
-                title={historyDetail ? humanize(historyDetail.operation) : "Relationship change"}
+                title={historyDetail ? humanize(historyDetail.operation) : "Relationship Change"}
                 subtitle={historyDetail?.changedAt}
                 sections={
                   historyDetail
@@ -468,7 +468,7 @@ export function SalesNetworkMemberDetailPage() {
       <ConfirmDialog
         open={accreditOpen}
         title="Create Pending Accreditation"
-        description={`Create a pending accreditation with automatic AA issuance for seller ${member.displayName}?`}
+        description={`Create a pending accreditation with automatic accreditation number issuance for seller ${member.displayName}?`}
         confirmText="Create"
         pending={issuePending.isPending}
         onConfirm={() => {
@@ -476,7 +476,7 @@ export function SalesNetworkMemberDetailPage() {
             (created) => {
               setAccreditOpen(false);
               toast.success("Pending accreditation created.", {
-                description: `Issued ${created.aaNumber ?? "AA number"}. Accreditation stays Pending until approval.`,
+                description: `Issued ${created.aaNumber ?? "accreditation number"}. Accreditation stays Pending until approval.`,
               });
             },
             (err: unknown) => {

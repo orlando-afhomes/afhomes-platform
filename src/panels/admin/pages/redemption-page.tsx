@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useOperation } from "@/data/business-queries";
+import { useTierDisplayName } from "../components/use-tier-display-name";
 import type { BookingView, MemberPoints } from "@/data/contracts/redemption-repository";
 import { useRedemption, useRedemptionBookingAction } from "@/data/redemption-queries";
 import type { BookingStatus } from "@/modules/redemption/types";
@@ -37,8 +38,8 @@ const STATUS: Record<BookingStatus, { key: string; label: string }> = {
   confirmed: { key: "confirmed", label: "Confirmed" },
   completed: { key: "finalized", label: "Completed" },
   cancelled: { key: "cancelled", label: "Cancelled, points returned" },
-  late_cancelled: { key: "overdue", label: "Late cancellation, points forfeited" },
-  no_show: { key: "rejected", label: "No-show, points forfeited" },
+  late_cancelled: { key: "overdue", label: "Late cancellation, points lost" },
+  no_show: { key: "rejected", label: "No-show, points lost" },
   transfer_cancelled: { key: "cancelled", label: "Cancelled for card transfer" },
 };
 const statusBadge = (booking: BookingView) => booking.provisional && (booking.status === "confirmed" || booking.status === "pending_payment")
@@ -97,7 +98,7 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
       { id: "ref", header: "Booking no.", cell: ({ row }) => <span className="tw:font-semibold">{row.original.reference}</span> },
       { id: "holder", header: "Cardholder", cell: ({ row }) => row.original.customerName },
       { id: "venue", header: "Venue", cell: ({ row }) => row.original.venueName },
-      { id: "stay", header: "Stay dates", cell: ({ row }) => `${formatDate(row.original.checkIn)} to ${formatDate(row.original.checkOut)}` },
+      { id: "stay", header: "Stay Dates", cell: ({ row }) => `${formatDate(row.original.checkIn)} to ${formatDate(row.original.checkOut)}` },
       { id: "status", header: "Status", cell: ({ row }) => statusBadge(row.original) },
     ],
     [],
@@ -122,10 +123,10 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
   };
 
   const recordCheckIn = (booking: BookingView) => confirmRun({
-    title: "Record check-in?", description: booking.provisional
+    title: "Record Check-In?", description: booking.provisional
       ? "The system checks whether the Annual Welcome Gift covers this stay before using points."
       : "The reserved points will be used for this stay.",
-    confirmText: "Record check-in", tone: "success", action: () => act.mutateAsync({ id: booking.id, action: "complete" }),
+    confirmText: "Record Check-In", tone: "success", action: () => act.mutateAsync({ id: booking.id, action: "complete" }),
     successTitle: "Check-in recorded.", errorTitle: "Could not record check-in",
   });
 
@@ -155,7 +156,7 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
         {overview ? (
           <>
             <FilterBar search={bookingSearch} onSearch={setBookingSearch} searchLabel="Search bookings" filters={[{ label: "Booking status filter", value: bookingStatus, onChange: setBookingStatus, options: bookingStatusOptions }, { label: "Venue filter", value: bookingVenue, onChange: setBookingVenue, options: venueOptions }]} />
-            <DataTable data={visibleBookings} columns={bookingColumns} getRowId={(row) => row.id} emptyText={overview.bookings.length === 0 ? "No bookings yet." : "No bookings match the filters."} caption="Redemption bookings" onRowOpen={(row) => setOpenId(row.id)} getRowLabel={(row) => `Open booking ${row.reference}`} rowActions={(row) => {
+            <DataTable data={visibleBookings} columns={bookingColumns} getRowId={(row) => row.id} emptyText={overview.bookings.length === 0 ? "No bookings yet." : "No bookings match the filters."} caption="Redemption Bookings" onRowOpen={(row) => setOpenId(row.id)} getRowLabel={(row) => `Open booking ${row.reference}`} rowActions={(row) => {
               const menu = buildRedemptionBookingMenuProps(row, { canBook, canApprove }, {
                 onApproveCash: () => open("approve-cash", row),
                 onComplete: () => recordCheckIn(row),
@@ -192,12 +193,12 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
                   { label: detail.provisional ? "Weekend points needed" : "Weekend points reserved", value: fmt(detail.reservedWeekend) },
                   ...detail.nights.map((night) => ({ label: formatDate(night.date), value: `${night.reason === "holiday" ? "Holiday" : night.reason === "weekend" ? "Weekend" : "Weekday"} night · ${night.payment === "cash" ? "money" : `${fmt(night.points)} points`}` })),
                 ] },
-                ...(detail.cashNights > 0 ? [{ title: "Money part", rows: [
+                ...(detail.cashNights > 0 ? [{ title: "Money Part", rows: [
                   { label: "Nights in money", value: String(detail.cashNights) },
                   { label: "Amount", value: <Money value={detail.cashAmountCentavos} /> },
                   { label: "Receipt reference", value: detail.cashReference ?? "Awaiting Finance approval" },
                 ] }] : []),
-                ...(ledger.length > 0 ? [{ title: "Points movements", rows: ledger.map((entry) => ({ label: `${humanize(entry.type)} · ${humanize(entry.bucket)}`, value: fmt(entry.points) })) }] : []),
+                ...(ledger.length > 0 ? [{ title: "Points Movements", rows: ledger.map((entry) => ({ label: `${humanize(entry.type)} · ${humanize(entry.bucket)}`, value: fmt(entry.points) })) }] : []),
               ]
             : []
         }
@@ -206,8 +207,8 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
       />
       <FormDialog
         open={dialog !== null}
-        title={dialog?.kind === "cancel" ? "Cancel booking" : dialog?.kind === "no-show" ? "Record no-show" : "Approve money part"}
-        description={dialog?.kind === "cancel" ? "Cancelled by the venue cut-off, the points return to the same buckets. After it, they are forfeited." : dialog?.kind === "no-show" ? "The reserved points are forfeited." : "Enter the approved receipt reference. The booking becomes Confirmed."}
+        title={dialog?.kind === "cancel" ? "Cancel Booking" : dialog?.kind === "no-show" ? "Record No-Show" : "Approve Money Part"}
+        description={dialog?.kind === "cancel" ? "Cancelled by the venue cut-off, the points return to the same buckets. After it, they are lost." : dialog?.kind === "no-show" ? "The reserved points are lost." : "Enter the approved receipt reference. The booking becomes Confirmed."}
         submitText={dialog?.kind === "approve-cash" ? "Approve" : "Confirm"}
         submitVariant={dialog?.kind === "approve-cash" ? "success" : dialog?.kind === "cancel" ? "destructive" : "warning"}
         pending={act.isPending}
@@ -235,6 +236,7 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
 /** Cardholder points tab: read-only balances for anyone with the redemption grant. */
 export function RedemptionCardholderPointsPanel() {
   const data = useRedemption();
+  const tierName = useTierDisplayName();
   const [memberSearch, setMemberSearch] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
   const overview = data.data;
@@ -245,9 +247,9 @@ export function RedemptionCardholderPointsPanel() {
     () => [
       { id: "holder", header: "Cardholder", cell: ({ row }) => <span className="tw:font-semibold">{row.original.customerName}</span> },
       { id: "vip", header: "VIP no.", cell: ({ row }) => row.original.vipNumber ?? EMPTY },
-      { id: "weekday", header: "Weekday points", cell: ({ row }) => fmt(row.original.weekday.available) },
-      { id: "weekend", header: "Weekend points", cell: ({ row }) => fmt(row.original.weekend.available) },
-      { id: "state", header: "Can book", cell: ({ row }) => (row.original.blockedReasons.length === 0 ? <BizBadge status="active" label="Yes" /> : <span className="tw:text-xs tw:text-muted-foreground">{row.original.blockedReasons[0]}</span>) },
+      { id: "weekday", header: "Weekday Points", cell: ({ row }) => fmt(row.original.weekday.available) },
+      { id: "weekend", header: "Weekend Points", cell: ({ row }) => fmt(row.original.weekend.available) },
+      { id: "state", header: "Can Book", cell: ({ row }) => (row.original.blockedReasons.length === 0 ? <BizBadge status="active" label="Yes" /> : <span className="tw:text-xs tw:text-muted-foreground">{row.original.blockedReasons[0]}</span>) },
     ],
     [],
   );
@@ -258,7 +260,7 @@ export function RedemptionCardholderPointsPanel() {
         {overview ? (
           <>
             <FilterBar search={memberSearch} onSearch={setMemberSearch} searchLabel="Search cardholders" />
-            <DataTable data={visibleMembers} columns={memberColumns} getRowId={(row) => row.membershipId} emptyText={overview.members.length === 0 ? "No activated memberships." : "No cardholders match the search."} caption="Points by cardholder" onRowOpen={(row) => setOpenId(row.membershipId)} getRowLabel={(row) => `Open points for ${row.customerName}`} />
+            <DataTable data={visibleMembers} columns={memberColumns} getRowId={(row) => row.membershipId} emptyText={overview.members.length === 0 ? "No activated memberships." : "No cardholders match the search."} caption="Points by Cardholder" onRowOpen={(row) => setOpenId(row.membershipId)} getRowLabel={(row) => `Open points for ${row.customerName}`} />
           </>
         ) : null}
       </QueryState>
@@ -272,7 +274,7 @@ export function RedemptionCardholderPointsPanel() {
           detail
             ? [
                 { title: "Card", rows: [
-                  { label: "Product", value: detail.productCode },
+                  { label: "Product", value: tierName(detail.productCode) },
                   { label: "Points table", value: pointsTableFrom(overview?.tableVersions ?? [], detail.tableVersion) ?? EMPTY },
                   { label: "Activation date", value: detail.padDate ? formatDate(detail.padDate) : EMPTY },
                 ] },
@@ -282,7 +284,7 @@ export function RedemptionCardholderPointsPanel() {
                   { label: "Weekend points available", value: fmt(detail.weekend.available) },
                   { label: "Weekend points reserved", value: fmt(detail.weekend.reserved) },
                 ] },
-                ...(detail.blockedReasons.length > 0 ? [{ title: "Why booking is blocked", rows: detail.blockedReasons.map((reason, index) => ({ label: `Reason ${index + 1}`, value: reason })) }] : []),
+                ...(detail.blockedReasons.length > 0 ? [{ title: "Why Booking Is Blocked", rows: detail.blockedReasons.map((reason, index) => ({ label: `Reason ${index + 1}`, value: reason })) }] : []),
               ]
             : []
         }
@@ -303,7 +305,7 @@ export function RedemptionAreaPage() {
       anyOf={["redemption"]}
       title="Redemption"
       actions={(tab) => tab === "bookings" && canBook
-        ? <Button type="button" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setCreating(true)}><Plus aria-hidden="true" /> New booking</Button>
+        ? <Button type="button" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setCreating(true)}><Plus aria-hidden="true" /> New Booking</Button>
         : null}
       tabs={ADMIN_AREA_TABS.redemption.map(({ value, label }) => ({
         value,

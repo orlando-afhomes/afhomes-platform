@@ -25,8 +25,7 @@ import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sh
 import { AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
 import { ExportCustomersCard, HistoryCard } from "../components/customer-export-history";
 import { TemplateDownloadMenu, TemplateStep, UploadDropzone } from "../components/customer-import-steps";
-import { humanize } from "@/shared/lib/humanize";
-import { defaultProductCode } from "@/modules/vip/tier-options";
+import { defaultProductCode, tierDisplayName } from "@/modules/vip/tier-options";
 import { customerRecordName } from "@/modules/customers/rules";
 
 const SHEET_NAME = "Customers";
@@ -50,7 +49,7 @@ export function CustomerImportExportTab() {
   );
 }
 
-const NOT_AVAILABLE = <InfoNote title="Not available">Customer import and export are limited to Administrators.</InfoNote>;
+const NOT_AVAILABLE = <InfoNote title="Not Available">Customer import and export are limited to Administrators.</InfoNote>;
 
 /** Import steps and the import job history. Needs `customers.import`; anyone else sees a "Not available" note. */
 export function CustomerImportPanel() {
@@ -134,7 +133,7 @@ function ImportSteps() {
     <>
       <TemplateStep
         step={1}
-        title="Get the template"
+        title="Get the Template"
         description="First name and Last name are required. Dates use YYYY-MM-DD. The Example sheet shows one filled row."
         connector
         actions={
@@ -146,7 +145,7 @@ function ImportSteps() {
       />
       <TemplateStep
         step={2}
-        title="Upload and review"
+        title="Upload and Review"
         description={<Label htmlFor="customer-import-file">Customer file (.xlsx or .csv, up to 10 MB)</Label>}
         connector={preview !== null}
       >
@@ -163,7 +162,7 @@ function ImportSteps() {
             <AdminStatGrid>
               <AdminStatCard label="Rows" value={rows.length} icon={ListOrdered} tone="info" />
               <AdminStatCard label="Ready" value={counts.ready} icon={CircleCheck} tone="success" />
-              <AdminStatCard label="Needs review" value={counts.review} icon={Hourglass} tone="warning" />
+              <AdminStatCard label="Needs Review" value={counts.review} icon={Hourglass} tone="warning" />
               <AdminStatCard label="Invalid" value={counts.invalid} icon={CircleX} tone="danger" />
             </AdminStatGrid>
             <DataTable
@@ -171,20 +170,20 @@ function ImportSteps() {
               columns={columns}
               getRowId={(row) => String(row.rowNumber)}
               emptyText="The file has no data rows."
-              caption={`Import preview for ${preview.fileName}`}
+              caption={`Import Preview for ${preview.fileName}`}
               onRowOpen={(row) => setViewRowNumber(row.rowNumber)}
               getRowLabel={(row) => `Open import row ${row.rowNumber}`}
             />
             <RecordDetailsSheet
               open={viewRow !== null}
               onClose={() => setViewRowNumber(null)}
-              title={viewRow ? `Row ${viewRow.rowNumber}: ${viewRow.displayName}` : "Import row"}
+              title={viewRow ? `Row ${viewRow.rowNumber}: ${viewRow.displayName}` : "Import Row"}
               subtitle={preview.fileName}
               badge={viewRow ? <BizBadge {...ROW_BADGE[viewRow.status]} /> : undefined}
               sections={
                 viewRow
                   ? [
-                      { title: "Parsed values", rows: [{ label: "VIP card", value: humanize(viewRow.input.vipPlan) }, { label: "Payment scheme", value: schemes.data?.find((item) => item.id === viewRow.input.paymentSchemeId)?.label ?? null }, { label: "Classification", value: viewRow.input.contractClassification === "N" ? "Non-Standard" : viewRow.input.contractClassification === "S" ? "Standard" : null }] },
+                      { title: "Parsed Values", rows: [{ label: "VIP Card", value: tierDisplayName(viewRow.input.vipPlan, products.data) }, { label: "Payment plan", value: schemes.data?.find((item) => item.id === viewRow.input.paymentSchemeId)?.label ?? null }, { label: "Contract type", value: viewRow.input.contractClassification === "N" ? "Non-Standard" : viewRow.input.contractClassification === "S" ? "Standard" : null }] },
                       { title: "Problems", rows: [...viewRow.errors.map((message, index) => ({ label: index === 0 ? "Errors" : "", value: <span className="tw:text-destructive">{message}</span> })), ...viewRow.warnings.map((message, index) => ({ label: index === 0 ? "Warnings" : "", value: message }))] },
                     ]
                   : []
@@ -199,7 +198,7 @@ function ImportSteps() {
             <CheckboxField label="I confirm these rows come from official company records." checked={declaration} onChange={setDeclaration} />
             <div>
               <Button variant="success" className="tw:min-h-11 tw:sm:min-h-8" loading={importCustomers.isPending} disabled={!declaration || counts.ready === 0} onClick={() => void confirm()}>
-                {importCustomers.isPending ? null : <Upload aria-hidden="true" />} {`Confirm import (${counts.ready} row${counts.ready === 1 ? "" : "s"})`}
+                {importCustomers.isPending ? null : <Upload aria-hidden="true" />} {`Confirm Import (${counts.ready} row${counts.ready === 1 ? "" : "s"})`}
               </Button>
             </div>
           </div>

@@ -75,18 +75,18 @@ describe("Finance area", () => {
     const user = userEvent.setup();
     show(<FinanceAreaPage />);
     expect(await screen.findByRole("heading", { name: "Finance", level: 1 })).toBeInTheDocument();
-    expect(tabNames()).toEqual(["Receipts", "Collections", "Cancellations", "Month-end close", "Reconciliation"]);
-    expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
+    expect(tabNames()).toEqual(["Receipts", "Collections", "Cancellations", "Close the Month", "Compare with Spreadsheet"]);
+    expect(await screen.findByRole("table", { name: "All payments" })).toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: "Collections" }));
     expect(await screen.findByRole("table", { name: "Collections" })).toBeInTheDocument();
-    expect(screen.queryByRole("table", { name: "Verification queue" })).toBeNull();
+    expect(screen.queryByRole("table", { name: "All payments" })).toBeNull();
     expect(window.location.search).toBe("?tab=collections");
     expect(screen.getAllByRole("tablist")).toHaveLength(1);
   });
 
   it("falls back from a removed tab for Finance", async () => {
     show(<FinanceAreaPage />, "holds");
-    expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "All payments" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Receipts" })).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByRole("tab", { name: "Holds" })).toBeNull();
   });
@@ -110,31 +110,40 @@ describe("Finance tables stay short", () => {
   it("filters the verification queue to exceptions with the Show filter", async () => {
     const user = userEvent.setup();
     show(<FinanceAreaPage />);
-    expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "All payments" })).toBeInTheDocument();
     await user.click(screen.getByRole("combobox", { name: "Show" }));
     await user.click(await screen.findByRole("option", { name: "Exceptions" }));
     expect(await screen.findByRole("table", { name: "Receipt exceptions" })).toBeInTheDocument();
+  });
+
+  it("opens the waiting queue from an explicit link", async () => {
+    const page = () => <Wrapper identityId="dev-finance"><FinanceAreaPage /></Wrapper>;
+    const { rerender } = render(page());
+    expect(await screen.findByRole("table", { name: "All payments" })).toBeInTheDocument();
+    navigation.search = "tab=verification&show=waiting";
+    rerender(page());
+    expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
   });
 
   it("shows collections as Customer, Balance, Overdue, Status, Next due and opens full details", async () => {
     const user = userEvent.setup();
     show(<FinanceAreaPage />, "collections");
     const table = await screen.findByRole("table", { name: "Collections" });
-    expect(headers(table)).toEqual(["Customer", "Balance", "Overdue", "Status", "Next due"]);
+    expect(headers(table)).toEqual(["Customer", "Balance", "Overdue", "Status", "Next Due"]);
     await user.click(within(table).getAllByRole("row")[1]);
     expect(await screen.findByRole("region", { name: "Collection" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Open contract" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open Contract" })).toBeInTheDocument();
   });
 });
 
-describe("Collections on financial hold", () => {
-  it("keeps only memberships on hold with the On financial hold option", async () => {
+describe("Collections on payment hold", () => {
+  it("keeps only memberships on hold with the On payment hold option", async () => {
     const user = userEvent.setup();
     show(<FinanceAreaPage />, "collections");
     const table = await screen.findByRole("table", { name: "Collections" });
     const rows = within(table).getAllByRole("row").length;
     await user.click(screen.getByRole("combobox", { name: "Status filter" }));
-    await user.click(await screen.findByRole("option", { name: "On financial hold" }));
+    await user.click(await screen.findByRole("option", { name: "On payment hold" }));
     const held = within(await screen.findByRole("table", { name: "Collections" })).queryAllByRole("row").length;
     expect(held).toBeLessThan(rows);
   });
@@ -146,7 +155,7 @@ describe("Commissions area", () => {
     expect(await screen.findByRole("table", { name: "Commissions" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Commissions" })).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByRole("button", { name: "Prepare payout list" })).toBeNull();
-    expect(tabNames()).toEqual(["Commissions", "Recovery", "Allowances"]);
+    expect(tabNames()).toEqual(["Commissions", "Commission Paybacks", "Leader Allowances"]);
   });
 
   it("gives a Clerk no Commissions area now that month close prepares the payout list", async () => {
@@ -158,8 +167,8 @@ describe("Commissions area", () => {
 
   it("keeps administrator controls out of a seller's view", async () => {
     show(<CommissionsAreaPage />, "rates", "dev-ost-b1");
-    await screen.findByRole("tab", { name: "Recovery" });
-    expect(tabNames()).toEqual(["Commissions", "Recovery"]);
+    await screen.findByRole("tab", { name: "Commission Paybacks" });
+    expect(tabNames()).toEqual(["Commissions", "Commission Paybacks"]);
     expect(screen.getByRole("tab", { name: "Commissions" })).toHaveAttribute("aria-selected", "true");
   });
 });
@@ -175,14 +184,14 @@ it("keeps Finance and Commissions bookmarks working", async () => {
   expect(navigation.redirect).toHaveBeenLastCalledWith("/admin/commissions?tab=commissions");
 });
 
-describe("Month-end close", () => {
+describe("Month-End Close", () => {
   it("puts the month picker, the red Close month button and the table together", async () => {
     show(<FinanceAreaPage />, "month-end-close", "dev-admin");
     const toolbar = await screen.findByRole("region", { name: "Close a month" });
     expect(within(toolbar).getByLabelText("Month")).toBeInTheDocument();
-    expect(within(toolbar).getByRole("button", { name: "Close month" }).className).toContain("tw:bg-destructive");
+    expect(within(toolbar).getByRole("button", { name: "Close Month" }).className).toContain("tw:bg-destructive");
     const closed = screen.getByRole("region", { name: "Closed months" });
-    expect(headers(await within(closed).findByRole("table", { name: "Closed months" }))).toEqual(["Month", "Sales", "Net collections", "Commission", "Closed on"]);
+    expect(headers(await within(closed).findByRole("table", { name: "Closed Months" }))).toEqual(["Month", "Sales", "Net Collections", "Commission", "Closed on"]);
     expect(within(closed).queryByRole("link")).toBeNull();
   });
 });

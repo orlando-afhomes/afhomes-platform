@@ -244,7 +244,7 @@ function ageVerifications(store: ReturnType<typeof createMockStore>, contractId:
 describe("card id rules", () => {
   it("builds the VIP Number from the signed agreement recording date and monthly sequence", () => {
     expect(buildVipNumber("2026-02-03", 1, "B1", "C01", "S")).toBe("26020300001B1C01S");
-    expect(() => buildVipNumber("2026-02-03", 1, "B1", null, "S")).toThrow(/approved tier and payment code/);
+    expect(() => buildVipNumber("2026-02-03", 1, "B1", null, "S")).toThrow(/approved card level and payment code/);
   });
 
 });
@@ -1127,11 +1127,11 @@ describe("owner-decided restrictions (C2)", () => {
     await finance.payments.verify(ma2.id);
     const view = (await finance.commissions.list()).find((c) => c.id === commission.id)!;
     expect(view.payoutReleaseDate).toBe(startOfNextMonthDate(manilaToday()));
-    await expect(finance.commissions.recordPayout(commission.id, { reference: "P1", payoutDate: manilaToday() })).rejects.toThrow(/release opens on/);
+    await expect(finance.commissions.recordPayout(commission.id, { reference: "P1", payoutDate: manilaToday() })).rejects.toThrow(/payout opens on/);
     ageVerifications(store, "ctr-1");
     const releaseDate = (await finance.commissions.list()).find((item) => item.id === commission.id)!.payoutReleaseDate!;
     const earlyPayoutDate = addDaysToDate(releaseDate, -1)!;
-    await expect(finance.commissions.recordPayout(commission.id, { reference: "P1", payoutDate: earlyPayoutDate })).rejects.toThrow(/payout date.*release/i);
+    await expect(finance.commissions.recordPayout(commission.id, { reference: "P1", payoutDate: earlyPayoutDate })).rejects.toThrow(/payout date.*ready-to-pay/i);
     expect((await finance.commissions.recordPayout(commission.id, { reference: "P1", payoutDate: manilaToday() })).payout?.reference).toBe("P1");
   });
 

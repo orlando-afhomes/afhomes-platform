@@ -9,10 +9,10 @@ export function PublicHomePage() {
       </p>
       <nav className="public-home__links" aria-label="Get started">
         <Link href="/login/sales" className="public-home__link">
-          Sales sign-in
+          Sales Sign-In
         </Link>
         <Link href="/verify" className="public-home__link">
-          Verify accreditation
+          Verify Accreditation
         </Link>
       </nav>
     </section>

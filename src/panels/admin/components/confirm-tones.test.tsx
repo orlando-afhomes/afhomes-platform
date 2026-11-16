@@ -37,15 +37,15 @@ describe("Confirmation pop-up colors", () => {
   it("shows the Close month confirmation with a red button", async () => {
     const user = userEvent.setup();
     render(<Wrapper><PeriodClosePanel /></Wrapper>);
-    await user.click(await screen.findByRole("button", { name: "Close month" }));
-    const alert = await screen.findByRole("alertdialog", { name: "Close this month?" });
-    expect(within(alert).getByRole("button", { name: "Close month" }).className).toContain("destructive");
+    await user.click(await screen.findByRole("button", { name: "Close Month" }));
+    const alert = await screen.findByRole("alertdialog", { name: "Close This Month?" });
+    expect(within(alert).getByRole("button", { name: "Close Month" }).className).toContain("destructive");
   });
 
   it("colors the payment pop-ups by purpose: Reject red, Return amber", async () => {
     const user = userEvent.setup();
     render(<Wrapper><OpenPayment /></Wrapper>);
-    for (const [item, name, tone] of [["Reject", "Reject", "destructive"], ["Return for correction", "Return", "warning"]] as const) {
+    for (const [item, name, tone] of [["Reject", "Reject", "destructive"], ["Return for Correction", "Return", "warning"]] as const) {
       await user.click(await screen.findByRole("button", { name: /actions/i }));
       await user.click(await screen.findByRole("menuitem", { name: item }));
       const dialog = await screen.findByRole("dialog");

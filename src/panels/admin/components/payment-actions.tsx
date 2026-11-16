@@ -17,7 +17,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { toast } from "sonner";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
-import { RowActionsMenu, type RowActionTone } from "@/shared/components/modern/row-actions-menu";
+import { RowActionButton, RowActionsMenu, type RowActionTone } from "@/shared/components/modern/row-actions-menu";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { formatDate } from "@/shared/lib/format-date";
@@ -94,7 +94,7 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
   };
 
   return (
-    <FormDialog open={open} title="Submit payment" description="Finance verifies every payment. A submitted payment is not yet counted as paid." submitText="Submit payment" pending={submit.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open={open} title="Submit Payment" description="Finance verifies every payment. A submitted payment is not yet counted as paid." submitText="Submit Payment" pending={submit.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <SelectField label="Purpose" required value={purpose} options={PAYMENT_PURPOSES.map((value) => ({ value, label: PURPOSE_LABELS[value] }))} onChange={setPurpose} />
       <MoneyField label="Amount" required value={amount} onChange={setAmount} />
       <SelectField label="Method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value }))} onChange={(value) => { setMethod(value); setReference(cleanReferenceNumber(reference, referencePolicyFor(value))); }} />
@@ -147,7 +147,7 @@ function PaymentResubmitDialog({ payment, onClose }: { payment: PaymentView; onC
   };
 
   return (
-    <FormDialog open title="Fix and resend payment" description={`Finance returned this payment${payment.decisionReason ? `: ${payment.decisionReason}` : "."} Correct it and resend it for verification. The original entry stays in history.`} submitText="Resend payment" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title="Fix and Resend Payment" description={`Finance returned this payment${payment.decisionReason ? `: ${payment.decisionReason}` : "."} Correct it and resend it for verification. The original entry stays in history.`} submitText="Resend Payment" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <MoneyField label="Amount" required value={amount} onChange={setAmount} />
       <SelectField label="Method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value }))} onChange={setMethod} />
       <StandardDateField label="Date on the receipt" required value={paidDate} onChange={setPaidDate} />
@@ -180,7 +180,7 @@ function AdjustDialog({ payment, onClose }: { payment: PaymentView | null; onClo
     if (!reason.trim()) return setError("A reason is required.");
     try {
       await action.mutateAsync({ id: payment.id, action: "adjust", kind: effectiveKind, amountCentavos, reason: reason.trim() });
-      toast.success(effectiveKind === "reversal" ? "Payment reversal recorded." : "Refund recorded.");
+      toast.success(effectiveKind === "reversal" ? "Payment undone." : "Refund recorded.");
       setAmount("");
       setReason("");
       setError(undefined);
@@ -190,12 +190,12 @@ function AdjustDialog({ payment, onClose }: { payment: PaymentView | null; onClo
     }
   };
   return (
-    <FormDialog open title="Reverse or refund payment" description={`The original payment stays on record. Up to ${formatPeso(adjustableCentavos(payment))} can still be adjusted.`} submitText="Record" submitVariant="warning" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title="Undo or Refund Payment" description={`The original payment stays on record. Up to ${formatPeso(adjustableCentavos(payment))} can still be adjusted.`} submitText="Record" submitVariant="warning" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <SelectField
         label="Type"
         required
         value={effectiveKind}
-        options={refundAllowed ? [{ value: "reversal", label: "Reversal" }, { value: "refund", label: "Refund" }] : [{ value: "reversal", label: "Reversal (the Reservation Fee is non-refundable)" }]}
+        options={refundAllowed ? [{ value: "reversal", label: "Undo" }, { value: "refund", label: "Refund" }] : [{ value: "reversal", label: "Undo (the Reservation Fee is non-refundable)" }]}
         onChange={setKind}
       />
       <MoneyField label="Amount" required value={amount} onChange={setAmount} />
@@ -236,7 +236,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
     const open = payment.status === "submitted" || payment.status === "under_review";
     const items: PaymentItem[] = [];
     if (canSubmit && payment.status === "returned" && canCorrectPayment(identity, payment.submittedBy)) {
-      items.push({ key: "resend", label: "Fix and resend", tone: "warning", onClick: () => setResending(payment) });
+      items.push({ key: "resend", label: "Fix and Resend", tone: "warning", onClick: () => setResending(payment) });
     }
     if (canVerify && open) {
       if (!payment.approvalBlocked && !payment.referenceConflict) {
@@ -250,12 +250,12 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
         } });
       }
       items.push(
-        { key: "return", label: "Return for correction", tone: "warning", onClick: () => setReasonFor({ payment, kind: "return" }) },
+        { key: "return", label: "Return for Correction", tone: "warning", onClick: () => setReasonFor({ payment, kind: "return" }) },
         { key: "reject", label: "Reject", tone: "danger", onClick: () => setReasonFor({ payment, kind: "reject" }) },
       );
     }
     if (canRefund && payment.status === "verified" && adjustableCentavos(payment) > 0) {
-      items.push({ key: "adjust", label: "Reverse or refund", tone: "warning", onClick: () => setAdjusting(payment) });
+      items.push({ key: "adjust", label: "Undo or Refund", tone: "warning", onClick: () => setAdjusting(payment) });
     }
     return items;
   };
@@ -266,7 +266,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
     const verify = items.find((item) => item.key === "verify");
     return (
       <div className="tw:flex tw:items-center tw:justify-end tw:gap-1">
-        {verify ? <Button type="button" size="sm" variant="success" aria-label={`Verify payment for ${payment.customerName}`} onClick={verify.onClick}>Verify</Button> : null}
+        {verify ? <RowActionButton tone="success" aria-label={`Verify payment for ${payment.customerName}`} onClick={verify.onClick}>Verify</RowActionButton> : null}
         <RowActionsMenu itemName={`payment for ${payment.customerName}`} extraItems={items.filter((item) => item !== verify)} />
       </div>
     );
@@ -284,7 +284,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
     <>
       <ReasonDialog
         open={reasonFor !== null}
-        title={reasonFor?.kind === "verify" ? "Verify possible matching receipt" : reasonFor?.kind === "reject" ? "Reject payment" : "Return payment for correction"}
+        title={reasonFor?.kind === "verify" ? "Verify Possible Matching Receipt" : reasonFor?.kind === "reject" ? "Reject Payment" : "Return Payment for Correction"}
         description={reasonFor?.kind === "verify" ? "Explain why this is a separate payment." : reasonFor?.kind === "reject" ? "A rejected payment never counts toward the balance." : "The submitter can correct and resubmit. The original submission stays in history."}
         confirmText={reasonFor?.kind === "verify" ? "Verify" : reasonFor?.kind === "reject" ? "Reject" : "Return"}
         danger={reasonFor?.kind === "reject"}
@@ -320,7 +320,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
                   ],
                 },
                 {
-                  title: "Finance review",
+                  title: "Finance Review",
                   rows: [
                     { label: "Verified on", value: detail.verifiedDate ? formatDate(detail.verifiedDate) : null },
                     { label: "Decision note", value: detail.decisionReason },

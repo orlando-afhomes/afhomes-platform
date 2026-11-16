@@ -45,20 +45,20 @@ afterEach(() => {
 describe("redemption pages", () => {
   it("shows the booking action to the Administrator and no sample notice", async () => {
     show("dev-admin");
-    expect(await screen.findByRole("button", { name: /New booking/ })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /New Booking/ })).toBeInTheDocument();
     expect(screen.queryByText(/Sample table/)).toBeNull();
-    expect(screen.getByRole("button", { name: /New booking/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /New Booking/ })).toBeInTheDocument();
   });
 
   it("lets Finance view bookings but not create one", async () => {
     show("dev-finance");
-    expect(await screen.findByRole("table", { name: "Redemption bookings" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /New booking/ })).toBeNull();
+    expect(await screen.findByRole("table", { name: "Redemption Bookings" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /New Booking/ })).toBeNull();
   });
 
   it("shows the points table and the update action to the Administrator, in plain words, with no sample labels", async () => {
     showSettings("dev-admin", "points-table");
-    expect(await screen.findByRole("table", { name: "Points per night" })).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "Points per Night" })).toBeInTheDocument();
     expect(screen.queryByText(/Sample table|Sample values|\(sample\)/)).toBeNull();
     expect(screen.getByRole("button", { name: /Update points table/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /New version/ })).toBeNull();
@@ -70,21 +70,21 @@ describe("redemption pages", () => {
 
   it("keeps both tables to five plain-word columns with no static notes", async () => {
     show("dev-admin");
-    const bookings = await screen.findByRole("table", { name: "Redemption bookings" });
+    const bookings = await screen.findByRole("table", { name: "Redemption Bookings" });
     const bookingHeaders = within(bookings).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter((text) => text && text !== "Actions");
-    expect(bookingHeaders).toEqual(["Booking no.", "Cardholder", "Venue", "Stay dates", "Status"]);
-    await userEvent.click(screen.getByRole("tab", { name: "Cardholder points" }));
-    expect(screen.queryByRole("table", { name: "Redemption bookings" })).toBeNull();
-    const members = await screen.findByRole("table", { name: "Points by cardholder" });
+    expect(bookingHeaders).toEqual(["Booking no.", "Cardholder", "Venue", "Stay Dates", "Status"]);
+    await userEvent.click(screen.getByRole("tab", { name: "Card Points" }));
+    expect(screen.queryByRole("table", { name: "Redemption Bookings" })).toBeNull();
+    const members = await screen.findByRole("table", { name: "Points by Cardholder" });
     const memberHeaders = within(members).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter((text) => text && text !== "Actions");
-    expect(memberHeaders).toEqual(["Cardholder", "VIP no.", "Weekday points", "Weekend points", "Can book"]);
+    expect(memberHeaders).toEqual(["Cardholder", "VIP no.", "Weekday Points", "Weekend Points", "Can Book"]);
     expect(screen.queryByText(/no cash value/)).toBeNull();
     expect(screen.queryByText(/wd|we/)).toBeNull();
   });
 
   it("moves reserved points to the cardholder details", async () => {
     show("dev-admin", "cardholder-points");
-    const table = await screen.findByRole("table", { name: "Points by cardholder" });
+    const table = await screen.findByRole("table", { name: "Points by Cardholder" });
     expect(within(table).queryByText(/reserved/)).toBeNull();
     const [firstRow] = within(table).getAllByRole("row", { name: /^Open points for / });
     await userEvent.click(firstRow);
@@ -94,9 +94,9 @@ describe("redemption pages", () => {
 
   it("hides the points table, holidays and venues tabs from Finance", async () => {
     show("dev-finance", "venues");
-    expect(await screen.findByRole("table", { name: "Redemption bookings" })).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "Redemption Bookings" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Bookings" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Cardholder points" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Card Points" })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Points table" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "Holidays" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "Venues" })).toBeNull();
@@ -105,14 +105,14 @@ describe("redemption pages", () => {
 
   it("renders the holiday calendar and venues read-only with no Actions column for Finance", async () => {
     const { unmount } = render(<Wrapper identityId="dev-finance"><RedemptionHolidaysPanel /></Wrapper>);
-    const holidays = await screen.findByRole("table", { name: "Holiday calendar" });
+    const holidays = await screen.findByRole("table", { name: "Holiday Calendar" });
     expect(within(holidays).getAllByRole("columnheader").map((cell) => cell.textContent?.trim())).toEqual(["Name", "Date", "Status"]);
     expect(within(holidays).queryByText("Actions")).toBeNull();
     unmount();
 
     render(<Wrapper identityId="dev-finance"><RedemptionVenuesPanel /></Wrapper>);
     const venues = await screen.findByRole("table", { name: "Venues" });
-    expect(within(venues).getAllByRole("columnheader").map((cell) => cell.textContent?.trim())).toEqual(["Venue", "Status", "Cancellation cut-off", "Check-in time"]);
+    expect(within(venues).getAllByRole("columnheader").map((cell) => cell.textContent?.trim())).toEqual(["Venue", "Status", "Cancellation Cut-Off", "Check-In Time"]);
     expect(within(venues).queryByText("Actions")).toBeNull();
   });
 
@@ -124,7 +124,7 @@ describe("redemption pages", () => {
     const rows = within(table).getAllByRole("row", { name: /^Open venue / });
     expect(rows.length).toBeGreaterThan(0);
     await userEvent.click(rows[0]);
-    expect(await screen.findByRole("heading", { name: "Edit venue" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Edit Venue" })).toBeInTheDocument();
   });
 
   it("denies sellers", async () => {

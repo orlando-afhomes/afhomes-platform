@@ -90,13 +90,13 @@ export function PlanFacts({ product, scheme, onPlanChange }: { product: VipProdu
             <span className="tw:text-sm tw:font-semibold tw:text-foreground">
               {product.supplementaryHolders > 0 ? product.supplementaryHolders : "—"}
             </span>
-            <span className="tw:text-xs tw:text-muted-foreground">Supplementary</span>
+            <span className="tw:text-xs tw:text-muted-foreground">Extra cardholder</span>
           </span>
         </span>
       </span>
       {scheme && SchemeIcon ? (
         <span className="tw:flex tw:flex-col tw:gap-1">
-          <span className="tw:text-xs tw:text-muted-foreground">Payment scheme</span>
+          <span className="tw:text-xs tw:text-muted-foreground">Payment plan</span>
           <span className="tw:flex tw:items-center tw:gap-2 tw:rounded-lg tw:bg-muted tw:px-3 tw:py-2 tw:text-sm">
           <span aria-hidden="true" className="tw:flex tw:text-muted-foreground">
             <SchemeIcon aria-hidden="true" className="tw:size-4" />
@@ -106,7 +106,7 @@ export function PlanFacts({ product, scheme, onPlanChange }: { product: VipProdu
             <button
               type="button"
               onClick={onPlanChange}
-              aria-label="Change payment scheme"
+              aria-label="Change payment plan"
               className="tw:flex tw:text-muted-foreground tw:transition-colors hover:tw:text-foreground"
             >
               <ChevronRight aria-hidden="true" className="tw:size-4" />
@@ -142,13 +142,13 @@ export function PlanSummary({ product, scheme, onChange, onPlanChange }: { produ
         <Card className="tw:gap-4 tw:p-4">
           <PlanCardImage code={product.code} colorKey={product.tierColorKey} priority />
           <div className="tw:flex tw:flex-col tw:gap-0.5">
-            <h2 className="tw:text-base tw:font-semibold">{product.name} ({product.code})</h2>
-            <span className="tw:inline-flex tw:self-start tw:rounded-full tw:bg-secondary tw:px-2 tw:py-0.5 tw:text-xs tw:font-medium tw:text-secondary-foreground">{product.tier} tier</span>
+            <h2 className="tw:text-base tw:font-semibold">{product.name}</h2>
+            <span className="tw:inline-flex tw:self-start tw:rounded-full tw:bg-secondary tw:px-2 tw:py-0.5 tw:text-xs tw:font-medium tw:text-secondary-foreground">{product.tier} level</span>
           </div>
           <PlanFacts product={product} scheme={scheme} onPlanChange={onPlanChange} />
           <Button type="button" variant="outline" size="sm" onClick={onChange}>
             <Pencil aria-hidden="true" className="tw:size-3.5" />
-            Change card
+            Change Card
           </Button>
         </Card>
       </aside>
@@ -157,7 +157,7 @@ export function PlanSummary({ product, scheme, onChange, onPlanChange }: { produ
         <div className="tw:flex tw:items-center tw:gap-3">
           <PlanCardImage code={product.code} colorKey={product.tierColorKey} className="tw:w-14 tw:shrink-0" />
           <div className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col">
-            <span className="tw:truncate tw:text-sm tw:font-semibold">{product.name} ({product.code})</span>
+            <span className="tw:truncate tw:text-sm tw:font-semibold">{product.name}</span>
             <span className="tw:truncate tw:text-xs tw:text-muted-foreground">
               {formatPeso(displayPriceFor(product, scheme))}
               {scheme ? ` · ${scheme.label}` : ""}
@@ -172,8 +172,8 @@ export function PlanSummary({ product, scheme, onChange, onPlanChange }: { produ
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="tw:top-auto tw:bottom-0 tw:left-0 tw:max-w-full tw:translate-x-0 tw:translate-y-0 tw:rounded-b-none tw:sm:max-w-full">
           <DialogHeader>
-            <DialogTitle>{product.name} ({product.code})</DialogTitle>
-            <DialogDescription><span className="tw:inline-flex tw:self-start tw:rounded-full tw:bg-secondary tw:px-2 tw:py-0.5 tw:text-xs tw:font-medium tw:text-secondary-foreground">{product.tier} tier</span></DialogDescription>
+            <DialogTitle>{product.name}</DialogTitle>
+            <DialogDescription><span className="tw:inline-flex tw:self-start tw:rounded-full tw:bg-secondary tw:px-2 tw:py-0.5 tw:text-xs tw:font-medium tw:text-secondary-foreground">{product.tier} level</span></DialogDescription>
           </DialogHeader>
           <PlanCardImage code={product.code} colorKey={product.tierColorKey} className="tw:mx-auto tw:w-3/4 tw:max-w-xs" />
           <PlanFacts product={product} scheme={scheme} onPlanChange={onPlanChange} />
@@ -186,7 +186,7 @@ export function PlanSummary({ product, scheme, onChange, onPlanChange }: { produ
             }}
           >
             <Pencil aria-hidden="true" className="tw:size-3.5" />
-            Change card
+            Change Card
           </Button>
         </DialogContent>
       </Dialog>

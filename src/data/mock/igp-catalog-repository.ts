@@ -5,7 +5,7 @@ import { cleanCatalogText, IGP_LOCATION_MAX, IGP_OWNER_MAX, IGP_PROJECT_NAME_MAX
 import type { IgpCatalogStatus, IgpProject, IgpUnit } from "@/modules/igp/types";
 import { BusinessRepository } from "./business-base";
 
-const DENIED = "Only an Administrator or Super Administrator can manage the IGP projects.";
+const DENIED = "Only an Administrator or Super Administrator can manage the property projects (IGP).";
 
 function assertStatus(status: IgpCatalogStatus): void {
   if (status !== "active" && status !== "inactive") throw new Error("The status must be active or inactive.");

@@ -32,8 +32,8 @@ export function FinanceCancellationDetailPage({ contractId }: { contractId: stri
         const pending = contract.cancellation?.status === "requested" ? contract.cancellation : null;
         return canDecide && pending && pending.requestedBy !== identity.id ? (
           <>
-            <Button variant="destructive" className={BUTTON} onClick={() => setDialogKind("confirm")}>Confirm cancellation</Button>
-            <Button variant="warning" className={BUTTON} onClick={() => setDialogKind("decline")}>Decline cancellation</Button>
+            <Button variant="destructive" className={BUTTON} onClick={() => setDialogKind("confirm")}>Confirm Cancellation</Button>
+            <Button variant="warning" className={BUTTON} onClick={() => setDialogKind("decline")}>Decline Cancellation</Button>
           </>
         ) : null;
       }}
@@ -44,18 +44,18 @@ export function FinanceCancellationDetailPage({ contractId }: { contractId: stri
         return (
           <>
             {request ? (
-              <AdminSection title="Cancellation request">
+              <AdminSection title="Cancellation Request">
                 <DetailList>
                   <DetailRow term="Status">{request.status === "requested" ? "Awaiting Finance decision" : "Confirmed"}</DetailRow>
                   <DetailRow term="Ground">{CANCELLATION_GROUND_LABELS[request.ground]}</DetailRow>
                   <DetailRow term="Reason">{request.reason}</DetailRow>
                   <DetailRow term="Requested by">{request.requestedBy}</DetailRow>
                   <DetailRow term="Requested on">{formatDate(request.requestedAt)}</DetailRow>
-                  <DetailRow term="Amount to forfeit"><Money value={request.status === "confirmed" ? (request.forfeitedCentavos ?? 0) : totalVerifiedCentavos(record.payments)} /></DetailRow>
+                  <DetailRow term="Amount the company keeps"><Money value={request.status === "confirmed" ? (request.forfeitedCentavos ?? 0) : totalVerifiedCentavos(record.payments)} /></DetailRow>
                 </DetailList>
               </AdminSection>
             ) : (
-              <InfoNote title="No cancellation request">This contract has no cancellation request.</InfoNote>
+              <InfoNote title="No Cancellation Request">This contract has no cancellation request.</InfoNote>
             )}
             <ContractLedgerSection record={record} />
             <ConfirmCancellationDialog contract={contract} open={dialogKind === "confirm"} onClose={close} />

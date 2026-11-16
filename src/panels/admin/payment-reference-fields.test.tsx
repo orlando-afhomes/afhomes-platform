@@ -74,7 +74,7 @@ async function reachReservationStep(user: ReturnType<typeof userEvent.setup>) {
   show("dev-clerk", <CustomerFormPage />);
   await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
   await user.click(screen.getByRole("button", { name: /continue/i }));
-  const schemes = await screen.findByRole("radiogroup", { name: "Payment scheme" });
+  const schemes = await screen.findByRole("radiogroup", { name: "Payment plan" });
   const scheme = within(schemes).getAllByRole("radio").find((item) => item.getAttribute("aria-disabled") !== "true" && !item.hasAttribute("data-disabled"))!;
   await user.click(scheme);
   await user.click(screen.getByRole("radio", { name: /standard \(s\)/i }));
@@ -90,11 +90,11 @@ async function reachReservationStep(user: ReturnType<typeof userEvent.setup>) {
   await fillResidentialAddress(user, addressCard, "Cebu", "Lapu-Lapu City", "Pajo");
   await user.click(screen.getByRole("button", { name: /continue/i }));
 
-  await screen.findByText("Sales attribution");
+  await screen.findByText("Sales Attribution");
   await user.click(screen.getByRole("checkbox", { name: /processing of personal data/i }));
   await user.click(screen.getByRole("checkbox", { name: /specimen signatures/i }));
   await user.click(screen.getByRole("button", { name: /continue/i }));
-  await screen.findByRole("heading", { name: "Application form" });
+  await screen.findByRole("heading", { name: "Application Form" });
 }
 
 function referenceInput() {
@@ -168,14 +168,14 @@ describe("customer application wizard reservation reference field", () => {
     const proof = screen.getByLabelText(/proof of payment/i) as HTMLInputElement;
     fireEvent.change(proof, { target: { files: [new File(["proof"], "receipt.png", { type: "image/png" })] } });
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    await screen.findByRole("heading", { name: "Review the application" });
+    await screen.findByRole("heading", { name: "Review the Application" });
 
     await user.click(screen.getByRole("checkbox", { name: /customer reviewed and accepted/i }));
     await user.click(screen.getByRole("button", { name: /submit application/i }));
 
     // The wizard returns to the step that owns the invalid field.
-    expect(await screen.findByRole("heading", { name: "Application form" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Review the application" })).toBeNull();
+    expect(await screen.findByRole("heading", { name: "Application Form" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Review the Application" })).toBeNull();
     expect(screen.queryByText(/waiting for Finance verification/i)).toBeNull();
     expect(screen.queryByText(/application submitted/i)).toBeNull();
 

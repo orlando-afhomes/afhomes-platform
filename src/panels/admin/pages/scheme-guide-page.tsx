@@ -17,7 +17,7 @@ import { TierChip } from "./tier-codes-page";
 export function PrintSchemeGuideButton() {
   return (
     <Button type="button" variant="info" className="tw:min-h-11 tw:sm:min-h-8 tw:print:hidden" onClick={() => window.print()}>
-      <Printer aria-hidden="true" /> Print guide
+      <Printer aria-hidden="true" /> Print Guide
     </Button>
   );
 }
@@ -46,7 +46,7 @@ function SchemeComparison({ scheme, products }: { scheme: PaymentScheme; product
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Tier</TableHead>
+          <TableHead>Card Level</TableHead>
           <TableHead>Total</TableHead>
           <TableHead>{hasDown ? "Down payment" : "Reservation fee"}</TableHead>
           <TableHead>{isCash ? "Balance" : "Monthly"}</TableHead>
@@ -104,7 +104,7 @@ export function SchemeGuidePanel() {
                 </>
               ) : (
                 <p className="tw:text-sm tw:text-muted-foreground">
-                  This scheme cannot be offered yet. Its terms are waiting for owner approval.
+                  This payment plan cannot be offered yet. Its terms are waiting for owner approval.
                   {scheme.ownerHold ? ` ${scheme.ownerHold}` : null}
                 </p>
               )}

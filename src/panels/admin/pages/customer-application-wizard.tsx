@@ -264,7 +264,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const steps = canManage ? STEPS : STEPS.slice(0, STEP_SALES + 1);
   const lastStep = canManage ? STEP_REVIEW : STEP_SALES;
 
-  if (!canDraft) return <InfoNote title="View only">This account cannot create or edit customers.</InfoNote>;
+  if (!canDraft) return <InfoNote title="View Only">This account cannot create or edit customers.</InfoNote>;
 
   const attributionErrors = customerAttributionErrors(draft, pendingOstIds);
   const allErrors = (): CustomerErrors => ({
@@ -550,7 +550,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
               <span aria-hidden="true" className="tw:flex tw:size-7 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-full tw:bg-primary tw:text-sm tw:font-semibold tw:text-primary-foreground">
                 1
               </span>
-              <h2 className="tw:shrink-0 tw:text-lg tw:font-semibold tw:text-primary">Choose a VIP card</h2>
+              <h2 className="tw:shrink-0 tw:text-lg tw:font-semibold tw:text-primary">Choose a VIP Card</h2>
               <span aria-hidden="true" className="tw:h-px tw:flex-1 tw:bg-border" />
             </div>
           </div>
@@ -569,14 +569,14 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
       {step === STEP_PLAN ? (
         <div className="tw:flex tw:flex-col tw:gap-4">
-          <SectionBlock title="Payment plan" icon={<Banknote className="tw:size-4" />}>
-            <FieldShell ids={schemeIds} label="Payment scheme" required error={errors.paymentSchemeId} labelFor={false}>
-              <PaymentOptionGrid label="Payment scheme" value={draft.paymentSchemeId || undefined} onChange={(value: string) => set("paymentSchemeId", value)} options={schemeOptions} columns="three" describedBy={describedBy(schemeIds, errors.paymentSchemeId)} invalid={Boolean(errors.paymentSchemeId)} />
+          <SectionBlock title="Payment Plan" icon={<Banknote className="tw:size-4" />}>
+            <FieldShell ids={schemeIds} label="Payment plan" required error={errors.paymentSchemeId} labelFor={false}>
+              <PaymentOptionGrid label="Payment plan" value={draft.paymentSchemeId || undefined} onChange={(value: string) => set("paymentSchemeId", value)} options={schemeOptions} columns="three" describedBy={describedBy(schemeIds, errors.paymentSchemeId)} invalid={Boolean(errors.paymentSchemeId)} />
             </FieldShell>
           </SectionBlock>
-          <SectionBlock title="Contract terms" icon={<FileText className="tw:size-4" />}>
-            <FieldShell ids={classificationIds} label="Contract classification" required error={errors.contractClassification} labelFor={false}>
-              <PaymentOptionGrid label="Contract classification" value={(draft.contractClassification || undefined) as "S" | "N" | undefined} onChange={(value: "S" | "N") => set("contractClassification", value)} options={CLASSIFICATION_OPTIONS.map((option) => ({ value: option.value, label: option.label, icon: option.icon }))} columns="two" describedBy={describedBy(classificationIds, errors.contractClassification)} invalid={Boolean(errors.contractClassification)} />
+          <SectionBlock title="Contract Terms" icon={<FileText className="tw:size-4" />}>
+            <FieldShell ids={classificationIds} label="Contract type" required error={errors.contractClassification} labelFor={false}>
+              <PaymentOptionGrid label="Contract type" value={(draft.contractClassification || undefined) as "S" | "N" | undefined} onChange={(value: "S" | "N") => set("contractClassification", value)} options={CLASSIFICATION_OPTIONS.map((option) => ({ value: option.value, label: option.label, icon: option.icon }))} columns="two" describedBy={describedBy(classificationIds, errors.contractClassification)} invalid={Boolean(errors.contractClassification)} />
             </FieldShell>
           </SectionBlock>
           {priceConflict ? <PriceConflictNote /> : null}
@@ -619,19 +619,19 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
       {step === STEP_REVIEW ? (
         <div className="tw:flex tw:flex-col tw:gap-4">
           <div>
-            <h2 className="tw:text-lg tw:font-semibold">Review the application</h2>
+            <h2 className="tw:text-lg tw:font-semibold">Review the Application</h2>
             <p className="tw:text-sm tw:text-muted-foreground">Check every detail before continuing. Use Edit to change a section.</p>
           </div>
           {reviewErrorList.length > 0 ? (
-            <InfoNote title="Fix these before continuing">
+            <InfoNote title="Fix These Before Continuing">
               <ul className="tw:list-disc tw:pl-5">{reviewErrorList.map((message) => <li key={message}>{message}</li>)}</ul>
             </InfoNote>
           ) : null}
-          <ReviewBlock title="VIP card and payment plan" onEdit={() => setStep(STEP_CARD)}>
-            <Row label="VIP card" value={product ? `${product.name} (${product.code})` : ""} />
+          <ReviewBlock title="VIP Card and Payment Plan" onEdit={() => setStep(STEP_CARD)}>
+            <Row label="VIP card" value={product?.name ?? ""} />
             <Row label="Price" value={product ? formatPeso(displayPriceFor(product, scheme)) : ""} />
-            <Row label="Payment scheme" value={scheme?.label} />
-            <Row label="Contract classification" value={draft.contractClassification === "N" ? "Non-Standard (N) — held at finalization until the rules are approved" : draft.contractClassification === "S" ? "Standard (S)" : ""} />
+            <Row label="Payment plan" value={scheme?.label} />
+            <Row label="Contract type" value={draft.contractClassification === "N" ? "Non-Standard (N) — held at finalization until the rules are approved" : draft.contractClassification === "S" ? "Standard (S)" : ""} />
           </ReviewBlock>
           {priceConflict ? <PriceConflictNote /> : null}
           <ReviewBlock title="Customer" onEdit={() => setStep(STEP_CUSTOMER)}>
@@ -644,8 +644,8 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             <Row label="Address" value={addressLine(draft)} />
             <Row label="Government ID" value={[draft.governmentIdType, draft.governmentIdNumber].filter(Boolean).join(" · ")} />
           </ReviewBlock>
-          <ReviewBlock title="Sales and consent" onEdit={() => setStep(STEP_SALES)}>
-            {supplementaryAllowed ? <Row label="Supplementary holder" value={[draft.secFirstName, draft.secNoMiddleName ? "" : draft.secMiddleName, draft.secLastName, draft.secSuffix].filter(Boolean).join(" ")} /> : null}
+          <ReviewBlock title="Sales and Consent" onEdit={() => setStep(STEP_SALES)}>
+            {supplementaryAllowed ? <Row label="Extra cardholder" value={[draft.secFirstName, draft.secNoMiddleName ? "" : draft.secMiddleName, draft.secLastName, draft.secSuffix].filter(Boolean).join(" ")} /> : null}
             <Row label="Closing seller" value={sellers.find((item) => item.value === draft.ownerMemberId)?.label} />
             <Row label="Referrer / VIP Recommender" value={sellers.find((item) => item.value === (draft.referrerMemberId || draft.recommenderMemberId))?.label} />
             {draft.referralReference ? <Row label="Dated referral reference" value={draft.referralReference} /> : null}
@@ -654,9 +654,9 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             <Row label="Data privacy consent" value={draft.consentDataPrivacy ? "Certified" : "Not certified"} />
             <Row label="Government ID received" value={draft.idReceivedCertified ? "Certified" : "Not certified"} />
           </ReviewBlock>
-          <ReviewBlock title="Reservation and acceptance" onEdit={() => setStep(STEP_RESERVATION)}>
-            <Row label="Payment scheme" value={scheme?.label} />
-            <Row label="Reservation fee" value={reservationCentavos ? formatPeso(reservationCentavos) : "None for this scheme"} />
+          <ReviewBlock title="Reservation and Acceptance" onEdit={() => setStep(STEP_RESERVATION)}>
+            <Row label="Payment plan" value={scheme?.label} />
+            <Row label="Reservation fee" value={reservationCentavos ? formatPeso(reservationCentavos) : "None for this payment plan"} />
             <Row label="Payment method" value={reservationCentavos && canPay ? method : "—"} />
             <Row label="Date on receipt" value={paidDate || "—"} />
             <Row label="Receipt/reference" value={reference || "—"} />
@@ -670,7 +670,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
       {step === STEP_RESERVATION ? (
         <div className="tw:flex tw:flex-col tw:gap-4">
-          <SectionBlock title="Application form" description="Generated from the details you entered. Print it for the customer to sign, and keep it with the proof of payment." icon={<Receipt className="tw:size-4" />}>
+          <SectionBlock title="Application Form" description="Generated from the details you entered. Print it for the customer to sign, and keep it with the proof of payment." icon={<Receipt className="tw:size-4" />}>
             <div className="customer-application__sheet tw:flex tw:flex-col tw:gap-4 tw:rounded-xl tw:border tw:border-dashed tw:border-input tw:bg-muted/40 tw:p-5">
               <div className="tw:flex tw:items-baseline tw:justify-between tw:gap-3 tw:border-b tw:border-border tw:pb-3">
                 <span className="tw:text-sm tw:font-semibold tw:tracking-tight">AFhomes VIP Application Form</span>
@@ -680,9 +680,9 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
                 <Row label="Customer ID" value={draft.customerNumber || EMPTY} />
                 <Row label="Applicant" value={[draft.firstName, draft.noMiddleName ? "" : draft.middleName, draft.lastName, draft.suffix].filter(Boolean).join(" ")} />
                 <Row label="Mobile number" value={draft.mobileNumber} />
-                <Row label="VIP card" value={product ? `${product.name} (${product.code}) · ${formatPeso(displayPriceFor(product, scheme))}` : ""} />
-                <Row label="Payment scheme" value={scheme?.label} />
-                <Row label="Reservation fee" value={reservationCentavos ? formatPeso(reservationCentavos) : "None for this scheme"} />
+                <Row label="VIP card" value={product ? `${product.name} · ${formatPeso(displayPriceFor(product, scheme))}` : ""} />
+                <Row label="Payment plan" value={scheme?.label} />
+                <Row label="Reservation fee" value={reservationCentavos ? formatPeso(reservationCentavos) : "None for this payment plan"} />
                 <div className="tw:sm:col-span-2">
                   <Row label="Address" value={addressLine(draft)} />
                 </div>
@@ -690,17 +690,17 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             </div>
             <div>
               <Button type="button" variant="outline" size="sm" onClick={() => window.print()}>
-                <Printer aria-hidden="true" className="tw:size-4" /> Print application form
+                <Printer aria-hidden="true" className="tw:size-4" /> Print Application Form
               </Button>
             </div>
           </SectionBlock>
 
           {resubmitting ? (
-            <InfoNote title="Resubmitting the customer">The reservation and contract from the first submission stay as they are. Open the customer page to review them.</InfoNote>
+            <InfoNote title="Resubmitting the Customer">The reservation and contract from the first submission stay as they are. Open the customer page to review them.</InfoNote>
           ) : !canPrepare ? (
-            <InfoNote title="Submitting the customer only">This account cannot prepare contracts. The application is submitted for a seller or staff member to continue.</InfoNote>
+            <InfoNote title="Submitting the Customer Only">This account cannot prepare contracts. The application is submitted for a seller or staff member to continue.</InfoNote>
           ) : (
-            <SectionBlock title="Reservation fee and proof" description={reservationCentavos ? `Submit the ${formatPeso(reservationCentavos)} reservation fee with its proof. Finance verifies it before the sale moves on.` : "This payment scheme has no reservation fee. The contract is drafted without a payment."} icon={<Banknote className="tw:size-4" />}>
+            <SectionBlock title="Reservation Fee and Proof" description={reservationCentavos ? `Submit the ${formatPeso(reservationCentavos)} reservation fee with its proof. Finance verifies it before the sale moves on.` : "This payment plan has no reservation fee. The contract is drafted without a payment."} icon={<Banknote className="tw:size-4" />}>
               {reservationCentavos && canPay ? (
                 <>
                   <RadioCardField label="Payment method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value, icon: METHOD_ICONS[value] }))} onChange={(value) => { setMethod(value); setReference(cleanReferenceNumber(reference, referencePolicyFor(value))); }} />
@@ -753,7 +753,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
                   </FieldShell>
                 </>
               ) : reservationCentavos ? (
-                <InfoNote title="Payment not available">This account cannot submit payments. Submit the reservation fee from the contract page after the application.</InfoNote>
+                <InfoNote title="Payment Not Available">This account cannot submit payments. Submit the reservation fee from the contract page after the application.</InfoNote>
               ) : null}
             </SectionBlock>
           )}
@@ -767,7 +767,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
           </Button>
           {!isSubmitted ? (
             <Button type="button" variant="outline" loading={saving && action === "draft"} disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => void saveDraft()}>
-              Save as draft
+              Save as Draft
             </Button>
           ) : null}
         </div>
@@ -777,11 +777,11 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
           </Button>
         ) : !canManage ? (
           <Button type="button" loading={saving && action === "draft"} disabled={busy} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => void saveDraft()}>
-            Save draft for the office
+            Save Draft for the Office
           </Button>
         ) : (
           <Button type="button" loading={saving && action === "submit"} disabled={busy} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => void submitApplication()}>
-            {isSubmitted ? "Save correction" : "Submit application"}
+            {isSubmitted ? "Save Correction" : "Submit Application"}
           </Button>
         )}
       </Card>
@@ -808,9 +808,9 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
       {isSubmitted ? (
         <ReasonDialog
           open={correcting}
-          title="Save data correction"
+          title="Save Data Correction"
           description="Corrections to a submitted customer are audited. Explain what changed and why."
-          confirmText="Save correction"
+          confirmText="Save Correction"
           successText="Correction saved."
           onClose={() => setCorrecting(false)}
           onSubmit={async (reason) => {

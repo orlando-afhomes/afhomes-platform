@@ -50,8 +50,8 @@ describe("process pages are separated", () => {
     await user.click(within(table).getAllByRole("row", { name: /^Open the sale for/ })[0]);
     const sheet = await screen.findByRole("dialog");
     expect(within(sheet).getByText("Recorded")).toBeInTheDocument();
-    expect(within(sheet).getByText("Payment scheme")).toBeInTheDocument();
-    expect(within(sheet).getByRole("button", { name: "Open contract" })).toBeInTheDocument();
+    expect(within(sheet).getByText("Payment plan")).toBeInTheDocument();
+    expect(within(sheet).getByRole("button", { name: "Open Contract" })).toBeInTheDocument();
   });
 
   it("Contracts shows the contracts list with a New contract action and a count footer", async () => {
@@ -72,14 +72,14 @@ describe("process pages are separated", () => {
     expect(within(table).queryByText("Finalized")).not.toBeInTheDocument();
   });
 
-  it("Memberships and Activation Queue show different records", async () => {
+  it("Memberships and Ready to Activate show different records", async () => {
     const all = show("dev-admin", <MembershipAreaPage />, "memberships");
     expect(await screen.findByRole("table", { name: "Memberships" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Activation queue" })).toBeInTheDocument();
-    expect(screen.queryByRole("table", { name: "Activation queue" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "Ready to Activate" })).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "Ready to Activate" })).toBeNull();
     all.unmount();
     show("dev-admin", <MembershipAreaPage />, "activation");
-    expect(await screen.findByRole("table", { name: "Activation queue" })).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "Ready to Activate" })).toBeInTheDocument();
   });
 
   it("keeps payouts on the Commissions tab, with no separate Payouts tab", async () => {

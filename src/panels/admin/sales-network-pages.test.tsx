@@ -43,12 +43,12 @@ describe("sales network members page", () => {
       </Wrapper>,
     );
     await waitFor(() => expect(rows().length).toBeGreaterThan(0), { timeout: 5000 });
-    expect(screen.getByRole("table", { name: "Sales Network members" })).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "Sales Network Members" })).toBeInTheDocument();
     // The add buttons sit in the page header (outside the tab panel) and open the add dialog.
     const tabPanel = screen.getByRole("tabpanel");
-    expect(within(tabPanel).queryByRole("button", { name: "Add IST" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Add OST" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Add IST" }));
+    expect(within(tabPanel).queryByRole("button", { name: "Add Internal Seller" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Add Outsourced Seller" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Add Internal Seller" }));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     await user.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
@@ -66,12 +66,12 @@ describe("sales network members page", () => {
     );
     await waitFor(() => expect(rows().length).toBeGreaterThan(1), { timeout: 5000 });
     const all = rows().length;
-    await user.click(screen.getByRole("combobox", { name: "Designation filter" }));
-    await user.click(await screen.findByRole("option", { name: "SVD" }));
+    await user.click(screen.getByRole("combobox", { name: "Position filter" }));
+    await user.click(await screen.findByRole("option", { name: "Sales Vice Director" }));
     await waitFor(() => expect(rows().length).toBeLessThan(all));
     for (const row of rows()) expect(row).toHaveTextContent("Sales Vice Director");
-    await user.click(screen.getByRole("combobox", { name: "Designation filter" }));
-    await user.click(await screen.findByRole("option", { name: "All designations" }));
+    await user.click(screen.getByRole("combobox", { name: "Position filter" }));
+    await user.click(await screen.findByRole("option", { name: "All positions" }));
     fireEvent.change(screen.getByRole("searchbox", { name: "Search members" }), { target: { value: "zzzz-no-such-member" } });
     expect(await screen.findByText("No members found.")).toBeInTheDocument();
   });
@@ -86,7 +86,7 @@ describe("sales network members page", () => {
     await waitFor(() => expect(rows().length).toBeGreaterThan(0), { timeout: 5000 });
     await user.click(within(rows()[0]).getByRole("button", { name: /actions for/i }));
     await user.click(await screen.findByRole("menuitem", { name: "Edit" }));
-    const dialog = await screen.findByRole("dialog", { name: "Edit member" });
+    const dialog = await screen.findByRole("dialog", { name: "Edit Member" });
     expect(within(dialog).getByLabelText(/First Name/)).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
@@ -97,7 +97,7 @@ describe("sales network members page", () => {
         <SalesNetworkMembersPage />
       </Wrapper>,
     );
-    expect(await screen.findByText("Access restricted")).toBeInTheDocument();
+    expect(await screen.findByText("Access Restricted")).toBeInTheDocument();
   });
 });
 
@@ -109,13 +109,13 @@ describe("sales network genealogy page", () => {
         <SalesNetworkGenealogyPage />
       </Wrapper>,
     );
-    const tree = await screen.findByRole("region", { name: "Genealogy tree" });
+    const tree = await screen.findByRole("region", { name: "Team tree" });
     const select = await within(tree).findAllByRole("button", { pressed: false }, { timeout: 5000 });
     expect(select.length).toBeGreaterThan(0);
     await user.click(select[0]);
     const summary = screen.getByRole("complementary", { name: "Member summary" });
-    expect(within(summary).getByText("Member summary")).toBeInTheDocument();
-    expect(within(summary).getByRole("link", { name: "View profile" })).toHaveAttribute("href", expect.stringContaining("/admin/sales-network/members/"));
+    expect(within(summary).getByText("Member Summary")).toBeInTheDocument();
+    expect(within(summary).getByRole("link", { name: "View Profile" })).toHaveAttribute("href", expect.stringContaining("/admin/sales-network/members/"));
   });
 
   it("expands and collapses branches", async () => {
@@ -125,10 +125,10 @@ describe("sales network genealogy page", () => {
         <SalesNetworkGenealogyPage />
       </Wrapper>,
     );
-    await user.click(await screen.findByRole("button", { name: "Collapse all" }));
-    const toggles = await screen.findAllByRole("button", { name: /^Expand (?!all)/ });
+    await user.click(await screen.findByRole("button", { name: "Collapse All" }));
+    const toggles = await screen.findAllByRole("button", { name: /^Expand (?!All)/ });
     expect(toggles[0]).toHaveAttribute("aria-expanded", "false");
-    await user.click(screen.getByRole("button", { name: "Expand all" }));
-    await waitFor(() => expect(screen.getAllByRole("button", { name: /^Collapse (?!all)/ }).length).toBeGreaterThan(0));
+    await user.click(screen.getByRole("button", { name: "Expand All" }));
+    await waitFor(() => expect(screen.getAllByRole("button", { name: /^Collapse (?!All)/ }).length).toBeGreaterThan(0));
   });
 });

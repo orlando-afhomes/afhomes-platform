@@ -166,7 +166,7 @@ describe("validateSecondaryField", () => {
   it("requires both first and last name once the secondary name is started", () => {
     expect(validateSecondaryField("name", "")).toBeNull();
     expect(validateSecondaryField("name", "   ")).toBeNull();
-    expect(validateSecondaryField("name", "Ben")).toBe("Enter the supplementary holder's first and last name.");
+    expect(validateSecondaryField("name", "Ben")).toBe("Enter the extra cardholder's first and last name.");
     expect(validateSecondaryField("name", "Ben Cruz")).toBeNull();
     expect(validateSecondaryField("name", "Ben Santos Cruz")).toBeNull();
     expect(validateSecondaryField("name", "Ben1 Cruz")).toBe("First name required, letters only.");

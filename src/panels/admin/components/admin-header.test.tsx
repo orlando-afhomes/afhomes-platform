@@ -41,7 +41,7 @@ describe("admin header", () => {
     await user.click(screen.getByRole("button", { name: "Account options for Administrator (Dev)" }));
     const accountLink = await screen.findByRole("menuitem", { name: "My Account" });
     expect(accountLink.getAttribute("href")).toBe("/admin/account");
-    expect(screen.getByRole("menuitem", { name: "Log out" })).toBeDefined();
+    expect(screen.getByRole("menuitem", { name: "Log Out" })).toBeDefined();
   });
 
   it("names the sidebar toggle by its state", () => {
@@ -53,7 +53,7 @@ describe("admin header", () => {
     const user = userEvent.setup();
     renderHeader();
     await user.click(screen.getByRole("button", { name: "Account options for Administrator (Dev)" }));
-    await user.click(await screen.findByRole("menuitem", { name: "Log out" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Log Out" }));
     const dialog = await screen.findByRole("alertdialog", { name: "Log out?" });
     await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());

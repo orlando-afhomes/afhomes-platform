@@ -135,14 +135,14 @@ export function DataTable<T>({
                 {group.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className={cn("tw:h-11 tw:px-3 tw:font-semibold tw:text-foreground", columnClass(header.column.columnDef.meta))}
+                    className={cn("tw:h-11 tw:px-3 tw:font-semibold tw:text-foreground", header.column.id === "actions" && "tw:text-right", columnClass(header.column.columnDef.meta))}
                   >
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.isPlaceholder ? null : header.column.id === "actions" ? "Actions" : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
                 {rowActions ? (
                   <TableHead className="tw:h-11 tw:w-16 tw:px-3 tw:text-right tw:font-semibold tw:text-foreground">
-                    <span className="tw:sr-only">Actions</span>
+                    Actions
                   </TableHead>
                 ) : null}
               </TableRow>

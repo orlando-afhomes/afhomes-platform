@@ -30,8 +30,8 @@ export function CustomerDetailHero({
 
   const meta = [
     { label: "Submitted", value: formatDate(submittedAt), Icon: CalendarDays },
-    { label: "Classification", value: classificationLabel, Icon: Tag },
-    { label: "Scheme", value: schemeLabel ?? "—", Icon: Layers },
+    { label: "Contract type", value: classificationLabel, Icon: Tag },
+    { label: "Payment plan", value: schemeLabel ?? "—", Icon: Layers },
   ] as const;
 
   return (

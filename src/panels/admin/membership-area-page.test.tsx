@@ -33,18 +33,18 @@ function openActivationLink(identityId: string) {
 describe("Membership area", () => {
   it("opens the activation queue from a direct link for Finance", async () => {
     openActivationLink("dev-finance");
-    const table = await screen.findByRole("table", { name: "Activation queue" });
-    expect(screen.getByRole("tab", { name: "Activation queue", selected: true })).toBeInTheDocument();
+    const table = await screen.findByRole("table", { name: "Ready to Activate" });
+    expect(screen.getByRole("tab", { name: "Ready to Activate", selected: true })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Memberships" })).toBeInTheDocument();
     expect(within(table).getAllByRole("columnheader").map((cell) => cell.textContent?.trim())).toEqual([
-      "Customer", "Card number", "Plan", "Status", "Activated", "Actions",
+      "Customer", "Card Number", "Plan", "Status", "Activated", "Actions",
     ]);
   });
 
   it("shows sellers only the membership list when they follow the activation link", async () => {
     openActivationLink("dev-ost-a1");
     expect(await screen.findByRole("table", { name: "Memberships" })).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "Activation queue" })).toBeNull();
-    expect(screen.queryByRole("table", { name: "Activation queue" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Ready to Activate" })).toBeNull();
+    expect(screen.queryByRole("table", { name: "Ready to Activate" })).toBeNull();
   });
 });

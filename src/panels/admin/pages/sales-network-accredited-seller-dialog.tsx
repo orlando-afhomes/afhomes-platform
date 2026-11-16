@@ -7,7 +7,7 @@ import { useReferenceOptions } from "@/data/settings-queries";
 import { defaultProductCode, tierOptions } from "@/modules/vip/tier-options";
 import { isValidTierCode, type VipTierCode } from "@/modules/vip/types";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
-import { teamDisplayName } from "@/modules/sales-network/display";
+import { designationLabel, teamDisplayName } from "@/modules/sales-network/display";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { manilaToday } from "@/modules/accreditation/dates";
 import {
@@ -308,7 +308,7 @@ export function AccreditedSellerDialog({
     businessEmployer: orUndefined(validateBusinessName(businessEmployer)),
     businessAddress: orUndefined(validateBusinessAddress(businessAddress)),
     jobPosition: orUndefined(validateJobPosition(jobPosition)),
-    position: mode === "IST" && !["SVD", "SSM", "SM"].includes(designation) ? "IST needs SVD, SSM, SM." : undefined,
+    position: mode === "IST" && !["SVD", "SSM", "SM"].includes(designation) ? "An Internal Seller needs a Sales Vice Director, Senior Sales Manager or Sales Manager position." : undefined,
     sponsor: effectiveDesignation !== "SVD" && !parentId ? "Sponsor is required." : undefined,
     teamName: effectiveDesignation === "SVD" ? orUndefined(validateTeamName(teamName, true)) : undefined,
     cardApplicationDate: orUndefined(validateDateString(cardApplicationDate, "Application date")),
@@ -412,11 +412,11 @@ export function AccreditedSellerDialog({
     <Dialog open={open} onOpenChange={(next) => (!next ? onClose() : undefined)}>
       <DialogContent className="tw:max-h-[calc(100dvh-2rem)] tw:overflow-y-auto tw:sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{mode === "IST" ? "Add IST" : "Add OST"}</DialogTitle>
-          <DialogDescription>{mode === "IST" ? "Create an IST member." : "Create an OST member."}</DialogDescription>
+          <DialogTitle>{mode === "IST" ? "Add Internal Seller" : "Add Outsourced Seller"}</DialogTitle>
+          <DialogDescription>{mode === "IST" ? "Create an Internal Seller (IST) member." : "Create an Outsourced Seller (OST) member."}</DialogDescription>
         </DialogHeader>
         <div ref={bodyRef} className="tw:flex tw:flex-col tw:gap-4">
-          {!isSuperAdmin ? <InfoNote title="Super Administrator completion required">Preview only. Super Administrator required.</InfoNote> : null}
+          {!isSuperAdmin ? <InfoNote title="Super Administrator Completion Required">Preview only. Super Administrator required.</InfoNote> : null}
 
           <StepIndicator steps={STEPS} current={step} />
 
@@ -542,11 +542,11 @@ export function AccreditedSellerDialog({
                     disabled={mode === "OST"}
                     options={
                       mode === "OST"
-                        ? [{ value: "OST", label: "OST" }]
+                        ? [{ value: "OST", label: designationLabel("OST") }]
                         : [
-                            { value: "SVD", label: "SVD — Sales Vice Director" },
-                            { value: "SSM", label: "SSM — Senior Sales Manager" },
-                            { value: "SM", label: "SM — Sales Manager" },
+                            { value: "SVD", label: "Sales Vice Director" },
+                            { value: "SSM", label: "Senior Sales Manager" },
+                            { value: "SM", label: "Sales Manager" },
                           ]
                     }
                     error={visible("position")}
@@ -556,7 +556,7 @@ export function AccreditedSellerDialog({
                     label="Sponsor"
                     required
                     value={effectiveDesignation === "SVD" ? undefined : parentId}
-                    options={(eligibleQuery.data ?? []).map((member) => ({ value: member.id, label: `${member.displayName} (${member.designation})` }))}
+                    options={(eligibleQuery.data ?? []).map((member) => ({ value: member.id, label: `${member.displayName} (${designationLabel(member.designation)})` }))}
                     onChange={setParentId}
                     placeholder={effectiveDesignation === "SVD" ? "Root — no sponsor" : (eligibleQuery.data ?? []).length === 0 ? "No eligible sponsor available" : "Select eligible sponsor"}
                     loading={eligibleQuery.isLoading}
@@ -614,14 +614,14 @@ export function AccreditedSellerDialog({
                     error={visible("accreditationStatus")}
                   />
                 </FormGrid>
-                <p className="tw:text-xs tw:text-muted-foreground">The monthly AA number is assigned automatically.</p>
+                <p className="tw:text-xs tw:text-muted-foreground">The monthly accreditation number is assigned automatically.</p>
                 <FormGrid>
                   <StandardDateField id="approved-start" label="Start Date" required value={approvedStart} onChange={setApprovedStart} error={visible("approvedStart")} />
                   <TextField id="approved-expiry" label="Expiry Date" value={expiryPreview ?? "—"} onChange={() => undefined} disabled />
                 </FormGrid>
-                {leapDay ? <InfoNote title="February 29 start">Leap-day rule provisional. Completion blocked.</InfoNote> : null}
+                {leapDay ? <InfoNote title="February 29 Start">Leap-day rule provisional. Completion blocked.</InfoNote> : null}
                 {accreditationStatus === "cancel" || accreditationStatus === "expired" ? (
-                  <InfoNote title="Status preview only">Pending or Accredited only.</InfoNote>
+                  <InfoNote title="Status Preview Only">Pending or Accredited only.</InfoNote>
                 ) : null}
               </FormSection>
 
@@ -629,8 +629,8 @@ export function AccreditedSellerDialog({
                 <dl className="tw:m-0 tw:flex tw:flex-col tw:gap-1 tw:text-sm">
                   <ReviewLine term="Name" value={fullName || "—"} />
                   <ReviewLine term="Identity" value={sellerIdentity === "new" ? "New Individual" : "Existing Employee"} />
-                  <ReviewLine term="Position" value={effectiveDesignation} />
-                  <ReviewLine term="Sponsor" value={effectiveDesignation === "SVD" ? "Root — no sponsor" : sponsorName ? `${sponsorName.displayName} (${sponsorName.designation})` : "—"} />
+                  <ReviewLine term="Position" value={designationLabel(effectiveDesignation)} />
+                  <ReviewLine term="Sponsor" value={effectiveDesignation === "SVD" ? "Root — no sponsor" : sponsorName ? `${sponsorName.displayName} (${designationLabel(sponsorName.designation)})` : "—"} />
                   <ReviewLine term="Team" value={effectiveDesignation === "SVD" ? teamName.trim() || "—" : (inheritedTeam ?? "—")} />
                   <ReviewLine term="Program Category" value={programCategory ? programCategoryLabel(programCategory, programOptions) : "—"} />
                   <ReviewLine term="Accreditation Status" value={accreditationStatus ? (ACCREDITATION_STATUS_OPTIONS.find((option) => option.value === accreditationStatus)?.label ?? "—") : "—"} />
@@ -670,11 +670,11 @@ export function AccreditedSellerDialog({
         </div>
         <ConfirmDialog
           open={confirmCreate}
-          title={accreditationStatus === "accredited" ? `Create and accredit ${mode} seller?` : `Create ${mode} seller as Pending?`}
+          title={accreditationStatus === "accredited" ? `Create and Accredit ${designationLabel(mode)}?` : `Create ${designationLabel(mode)} as Pending?`}
           description={
             accreditationStatus === "accredited"
-              ? `Confirm automatic AA issuance for ${fullName}.`
-              : `Confirm automatic AA issuance for ${fullName}. Accreditation stays Pending.`
+              ? `Confirm automatic accreditation number issuance for ${fullName}.`
+              : `Confirm automatic accreditation number issuance for ${fullName}. Accreditation stays Pending.`
           }
           confirmText={accreditationStatus === "accredited" ? "Create & Accredit" : "Create Seller"}
           pending={submitting}

@@ -106,7 +106,7 @@ export function RolesPage({
       { id: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
       {
         id: "actions",
-        header: () => <span className="tw:sr-only">Actions</span>,
+        header: "Actions",
         cell: ({ row }) => {
           const record = row.original;
           // Protected or out-of-scope roles show no actions; the repository rejects them too.

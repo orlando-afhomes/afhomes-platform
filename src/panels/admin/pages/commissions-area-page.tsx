@@ -13,7 +13,7 @@ import { CommissionRecoveryPanel, CommissionsPanel, useCommissionRecoveryVisible
 
 function SetRateButton({ onClick }: { onClick: () => void }) {
   const rates = useCommissionRates(true);
-  return <Button type="button" disabled={!rates.data} onClick={onClick}>Set rate</Button>;
+  return <Button type="button" disabled={!rates.data} onClick={onClick}>Set Rate</Button>;
 }
 
 export function CommissionsAreaPage() {

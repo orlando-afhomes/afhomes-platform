@@ -52,7 +52,7 @@ describe("/admin/accounts compatibility route", () => {
   for (const identityId of ["dev-hr", "dev-finance", "dev-ost-a1"]) {
     it(`shows a restriction and does not forward ${identityId}`, async () => {
       render(<TestWrapper identityId={identityId} />);
-      expect(await screen.findByText("Access restricted")).toBeInTheDocument();
+      expect(await screen.findByText("Access Restricted")).toBeInTheDocument();
       expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("Accounts and Permissions");
       expect(replace).not.toHaveBeenCalled();
       expect(screen.queryByRole("table")).toBeNull();

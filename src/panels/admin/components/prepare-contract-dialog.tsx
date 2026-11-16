@@ -66,18 +66,18 @@ export function PrepareContractDialog({ customer, open, onClose, repeatPurchase 
   };
 
   return (
-    <FormDialog open={open} title={repeatPurchase ? "New VIP purchase" : "Prepare contract"} description={`${customer.displayName} · ${product?.name ?? "No plan selected"}${!askScheme && scheme ? ` · ${scheme.label}` : ""}`} submitText={repeatPurchase ? "Create purchase contract" : "Prepare contract"} pending={prepare.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
+    <FormDialog open={open} title={repeatPurchase ? "New VIP Purchase" : "Prepare Contract"} description={`${customer.displayName} · ${product?.name ?? "No plan selected"}${!askScheme && scheme ? ` · ${scheme.label}` : ""}`} submitText={repeatPurchase ? "Create Purchase Contract" : "Prepare Contract"} pending={prepare.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
       {repeatPurchase ? <SelectField label="VIP plan" required value={productCode} options={(products.data ?? []).filter((item) => item.status === "active").map((item) => ({ value: item.code, label: item.name }))} onChange={(value) => { setProductCode((products.data ?? []).find((item) => item.code === value)?.code); }} /> : null}
       {repeatPurchase ? <>
         <SelectField label="Closing seller" required value={seller} options={sellerOptions} onChange={setSeller} />
         <SelectField label="Referrer" value={referrer} options={[{ value: "none", label: "No referrer" }, ...sellerOptions]} onChange={setReferrer} />
-        <SelectField label="Contract classification" required value={classification} options={[{ value: "S", label: "Standard" }, { value: "N", label: "Non-Standard" }]} onChange={(value) => setClassification(value === "N" ? "N" : "S")} />
+        <SelectField label="Contract type" required value={classification} options={[{ value: "S", label: "Standard" }, { value: "N", label: "Non-Standard" }]} onChange={(value) => setClassification(value === "N" ? "N" : "S")} />
       </> : null}
-      {askScheme ? <SelectField label="Payment scheme" required value={schemeId || undefined} options={options} onChange={setSchemeId} placeholder="Select a scheme" /> : null}
-      {built && built.errors.length > 0 ? <InfoNote title="This scheme cannot be used yet">{built.errors[0]}</InfoNote> : null}
+      {askScheme ? <SelectField label="Payment plan" required value={schemeId || undefined} options={options} onChange={setSchemeId} placeholder="Select a payment plan" /> : null}
+      {built && built.errors.length > 0 ? <InfoNote title="This Payment Plan Cannot Be Used Yet">{built.errors[0]}</InfoNote> : null}
       {built && built.schedule.length > 0 ? (
         <div className="tw:flex tw:flex-col tw:gap-2">
-          <h3 className="tw:text-sm tw:font-semibold">Payment schedule</h3>
+          <h3 className="tw:text-sm tw:font-semibold">Payment Schedule</h3>
           <p className="tw:text-sm tw:text-muted-foreground">Due dates are set from the reservation date. They can be changed on the contract while it is a Draft or Returned.</p>
           {built.schedule.map((line) => (
             <div key={line.seq} className="tw:flex tw:items-center tw:justify-between tw:gap-2">

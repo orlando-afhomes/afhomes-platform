@@ -7,7 +7,7 @@ import type { TierLevel } from "@/modules/vip/types";
 import { BusinessRepository } from "./business-base";
 import type { MockStore } from "./seed";
 
-const DENIED = "Managing VIP tier levels is not allowed for this identity.";
+const DENIED = "Managing VIP card levels is not allowed for this identity.";
 
 export class MockTierLevelRepository extends BusinessRepository implements TierLevelRepository {
   constructor(store: MockStore, getIdentity: () => DevIdentity, asyncOptions: MockAsyncOptions = {}) {
@@ -21,7 +21,7 @@ export class MockTierLevelRepository extends BusinessRepository implements TierL
 
   private find(id: string): TierLevel {
     const level = this.store.tierLevels.find((item) => item.id === id);
-    if (!level) throw new Error("Tier level not found.");
+    if (!level) throw new Error("Card level not found.");
     return level;
   }
 

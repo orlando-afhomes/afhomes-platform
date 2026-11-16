@@ -101,7 +101,7 @@ export function FinanceDashboard() {
   return (
     <>
       <DashboardHeader
-        title="Finance overview"
+        title="Finance Overview"
         actions={canViewCollections ? <DashboardDateFilter range={range} /> : undefined}
       />
 
@@ -127,7 +127,7 @@ export function FinanceDashboard() {
                 tone="brand"
                 scope={periodScope(range)}
                 trend={collectionsTrend}
-                description={collections && collections.adjusted !== 0 ? `Net ${formatPeso(collections.net)} after reversals and refunds` : undefined}
+                description={collections && collections.adjusted !== 0 ? `Net ${formatPeso(collections.net)} after undone payments and refunds` : undefined}
                 loading={payments.isLoading}
                 error={payments.error}
               />
@@ -151,14 +151,14 @@ export function FinanceDashboard() {
                 icon={Coins}
                 tone="violet"
                 scope={CURRENT_SCOPE}
-                description={`${payouts.approvedCount} approved, ${payouts.awaitingConfirmation} awaiting disbursement confirmation`}
+                description={`${payouts.approvedCount} approved, ${payouts.awaitingConfirmation} waiting to be paid out`}
                 loading={commissions.isLoading}
                 error={commissions.error}
               />
             ) : null}
           </DashboardKpiGrid>
         ) : (
-          <InfoNote title="No dashboard metrics">
+          <InfoNote title="No Dashboard Metrics">
             No Finance dashboard metrics are available for this account. Authorized modules remain available in the navigation.
           </InfoNote>
         )}
@@ -173,13 +173,13 @@ export function FinanceDashboard() {
                 dates={dates}
                 series={[
                   { key: "gross", label: "Verified", color: SERIES_COLORS.primary, values: daily.gross, emptyText: "No verified collections in this period." },
-                  { key: "adjustments", label: "Reversals & refunds", color: SERIES_COLORS.secondary, values: daily.adjustments, emptyText: "No reversals or refunds in this period." },
+                  { key: "adjustments", label: "Undone payments & refunds", color: SERIES_COLORS.secondary, values: daily.adjustments, emptyText: "No undone payments or refunds in this period." },
                   { key: "net", label: "Net", color: SERIES_COLORS.tertiary, values: daily.net, emptyText: "No net collections in this period." },
                 ]}
                 loading={payments.isLoading}
                 error={payments.error}
                 invalidRange={!valid}
-                emptyText="No verified collections, reversals, or refunds in this period."
+                emptyText="No verified collections, undone payments, or refunds in this period."
               />
             ) : undefined
           }
@@ -253,7 +253,7 @@ export function FinanceDashboard() {
                 {queues.holds ? (
                   <DashboardPendingItem
                     href="/admin/finance?tab=collections"
-                    label="Financial Holds"
+                    label="Payment Holds"
                     count={countFinancialHolds(memberships.data ?? [])}
                     icon={ShieldAlert}
                     tone="accent"

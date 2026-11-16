@@ -62,7 +62,7 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
           hasCard: membership?.cardId != null,
         }, {
           onSubmitPayment: () => setDialogKind("payment"),
-          onSubmitContract: () => confirmRun({ title: "Submit this contract?", description: "It will be sent to Admin review and a Pending sale will be recorded.", confirmText: "Submit this contract", action: () => action.mutateAsync({ id: contract.id, action: "submit" }), successTitle: "Contract submitted.", errorTitle: "Action failed" }),
+          onSubmitContract: () => confirmRun({ title: "Submit This Contract?", description: "It will be sent to Admin review and a Pending sale will be recorded.", confirmText: "Submit This Contract", action: () => action.mutateAsync({ id: contract.id, action: "submit" }), successTitle: "Contract submitted.", errorTitle: "Action failed" }),
           onApproveDeal: () => confirmRun(approveDealConfirm(() => approveDeal.mutateAsync(contract.id))),
           onReturn: () => setDialogKind("return"),
           onRecordPaymentCode: () => setDialogKind("resolvePaymentCode"),
@@ -73,7 +73,7 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
         });
         const items = orderActionItems([
           ...menu.extraItems,
-          ...(canPrepare && editable ? [{ key: "edit-details", label: "Edit details", tone: "warning" as const, onClick: () => setDialogKind("edit") }] : []),
+          ...(canPrepare && editable ? [{ key: "edit-details", label: "Edit Details", tone: "warning" as const, onClick: () => setDialogKind("edit") }] : []),
         ]);
         return (
           <>
@@ -89,14 +89,14 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
         return (
           <>
             {dialog}
-            <ReasonDialog open={saleDefaultOpen} title="Mark sale Defaulted" description={sale?.customerName ?? ""} confirmText="Mark Defaulted" tone="warning" successText="Sale marked Defaulted." onClose={() => setSaleDefaultOpen(false)} onSubmit={(reason) => sale ? markDefaulted.mutateAsync({ id: sale.id, reason }) : Promise.resolve()} />
-          {record.contract.status === "returned" && record.contract.returnReason ? <InfoNote title="Returned for correction">{record.contract.returnReason}</InfoNote> : null}
+            <ReasonDialog open={saleDefaultOpen} title="Mark Sale as Stopped Paying" description={sale?.customerName ?? ""} confirmText="Mark as Stopped Paying" tone="warning" successText="Sale marked as Stopped Paying." onClose={() => setSaleDefaultOpen(false)} onSubmit={(reason) => sale ? markDefaulted.mutateAsync({ id: sale.id, reason }) : Promise.resolve()} />
+          {record.contract.status === "returned" && record.contract.returnReason ? <InfoNote title="Returned for Correction">{record.contract.returnReason}</InfoNote> : null}
           {canApprove && inReview && contract.holds.length > 0 ? (
-            <InfoNote title="Finalization is on hold">
+            <InfoNote title="Finalization Is on Hold">
               <ul className="tw:list-disc tw:pl-5">{contract.holds.map((hold) => <li key={hold}>{hold}</li>)}</ul>
             </InfoNote>
           ) : null}
-          {canApprove && contract.cancellation?.status === "requested" ? <InfoNote title="Cancellation awaiting Finance confirmation">Finance confirms or declines this request.</InfoNote> : null}
+          {canApprove && contract.cancellation?.status === "requested" ? <InfoNote title="Cancellation Awaiting Finance Confirmation">Finance confirms or declines this request.</InfoNote> : null}
           <ContractCommissionRateNotice {...record} />
           <ContractTiles contract={record.contract} payments={record.payments} />
           <ContractDetailTabs value={tab} onChange={setTab} />
@@ -114,7 +114,7 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
                       <span>
                         {humanize(record.membership.status)}
                         {record.membership.cardId ? ` · Card ${record.membership.cardId}` : ""}
-                        {record.membership.financialHold ? " · Financial Hold" : ""}
+                        {record.membership.financialHold ? " · Payment Hold" : ""}
                       </span>
                     ) : (
                       EMPTY

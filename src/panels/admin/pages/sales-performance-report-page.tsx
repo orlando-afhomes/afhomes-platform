@@ -14,6 +14,7 @@ import { humanize } from "@/shared/lib/humanize";
 import { formatPeso } from "@/shared/lib/money";
 import { matchesSearch, optionsFrom } from "@/shared/lib/search";
 import { ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
+import { useTierDisplayName } from "../components/use-tier-display-name";
 
 type SalesRow = { id: string; kind: "VIP" | "IGP"; customer: string; product: string; seller: string; recorded: string; status: string; valueCentavos: number; periodCentavos: number };
 
@@ -25,7 +26,7 @@ const COLUMNS: ReportColumn<SalesRow>[] = [
   { header: "Recorded", value: (row) => formatDate(row.recorded) },
   { header: "Status", value: (row) => humanize(row.status) },
   { header: "Value", value: (row) => formatPeso(row.valueCentavos) },
-  { header: "Period confirmed", value: (row) => formatPeso(row.periodCentavos), screen: false },
+  { header: "Period Confirmed", value: (row) => formatPeso(row.periodCentavos), screen: false },
 ];
 
 /**
@@ -58,17 +59,18 @@ export function useSalesFigures(range: { from: string; to: string }) {
 /** Sales Performance report body without page chrome, for the Reports area tab. */
 export function SalesReportPanel() {
   const range = useReportRange();
+  const tierName = useTierDisplayName();
   const figures = useSalesFigures(range);
   const { saleList, igpSales, loading, error } = figures;
   const allRows = useMemo<SalesRow[]>(
     () => {
       const periodNet = (adjustments: { date: string; amountCentavos: number }[]) => adjustments.filter((item) => item.date >= range.from && item.date <= range.to).reduce((sum, item) => sum + item.amountCentavos, 0);
       return [
-      ...saleList.map((sale) => ({ id: sale.id, kind: "VIP" as const, customer: sale.customerName, product: sale.productCode, seller: sale.sellerName ?? "Company", recorded: sale.recordedDate, status: sale.status, valueCentavos: sale.valueCentavos, periodCentavos: periodNet(sale.adjustments) })),
+      ...saleList.map((sale) => ({ id: sale.id, kind: "VIP" as const, customer: sale.customerName, product: tierName(sale.productCode) ?? "", seller: sale.sellerName ?? "Company", recorded: sale.recordedDate, status: sale.status, valueCentavos: sale.valueCentavos, periodCentavos: periodNet(sale.adjustments) })),
       ...igpSales.map((sale) => ({ id: sale.id, kind: "IGP" as const, customer: sale.buyerName, product: sale.seriesNumber, seller: sale.genealogy[0]?.displayName ?? "", recorded: sale.date, status: sale.status, valueCentavos: sale.priceCentavos, periodCentavos: periodNet(sale.adjustments) })),
       ];
     },
-    [saleList, igpSales, range.from, range.to],
+    [saleList, igpSales, range.from, range.to, tierName],
   );
   const inPeriod = useMemo(() => allRows.filter((row) => row.periodCentavos !== 0 || (row.recorded >= range.from && row.recorded <= range.to)), [allRows, range.from, range.to]);
   const [search, setSearch] = useState("");
@@ -79,8 +81,8 @@ export function SalesReportPanel() {
   return (
     <ReportFrame range={range}>
       <AdminStatGrid columns={3}>
-        <AdminStatCard loading={loading} error={error} label="Period sales" value={<Money value={figures.confirmedInPeriod} />} icon={TrendingUp} tone="brand" description={`${figures.periodCount} closed deal(s) in period`} />
-        <AdminStatCard loading={loading} error={error} label="All-time confirmed" value={<Money value={figures.confirmedValue} />} icon={BadgeCheck} tone="brand" description={`${figures.confirmedCount} sale(s)`} />
+        <AdminStatCard loading={loading} error={error} label="Period Sales" value={<Money value={figures.confirmedInPeriod} />} icon={TrendingUp} tone="brand" description={`${figures.periodCount} closed deal(s) in period`} />
+        <AdminStatCard loading={loading} error={error} label="All-Time Confirmed" value={<Money value={figures.confirmedValue} />} icon={BadgeCheck} tone="brand" description={`${figures.confirmedCount} sale(s)`} />
         <AdminStatCard loading={loading} error={error} label="Pending" value={<Money value={figures.pendingValue} />} icon={Clock} tone="warning" description={`${figures.pendingCount} sale(s)`} />
       </AdminStatGrid>
       <ReportTable report="Sales Performance" fileName="sales-performance" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => `${row.kind}-${row.id}`} getRowTitle={(row) => row.customer} loading={loading} error={error} emptyText="No sales match."

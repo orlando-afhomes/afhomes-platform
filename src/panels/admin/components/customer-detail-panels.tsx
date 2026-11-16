@@ -108,11 +108,13 @@ function FactList({ label, children }: { label: string; children: React.ReactNod
 
 export function CustomerInfoCard({
   customer,
+  vipPlanName,
   ownerName,
   recommenderName,
   referralReference,
 }: {
   customer: Customer;
+  vipPlanName: string | null;
   /** Pre-resolved closing seller display name (parent substitutes "—" when withheld). */
   ownerName: string;
   /** Pre-resolved referrer display name (parent substitutes "—" when withheld). */
@@ -133,7 +135,7 @@ export function CustomerInfoCard({
         <div className="customer-detail__facts tw:grid tw:gap-x-8 tw:md:grid-cols-2">
           <FactList label="Contact details">
             <Fact icon={BadgeCheck} term="VIP Plan">
-              {customer.vipPlan ? <ToneBadge tone="success">{customer.vipPlan}</ToneBadge> : "—"}
+              {vipPlanName ? <ToneBadge tone="success">{vipPlanName}</ToneBadge> : "—"}
             </Fact>
             <Fact icon={Phone} term="Mobile">
               {customer.mobileNumber ?? "—"}
@@ -298,7 +300,7 @@ export function LinkedRecordsCard({
               {contractLabel}{" "}
               {contractHref ? (
                 <Link href={contractHref} className={buttonVariants({ variant: "info", size: "xs", className: "tw:ml-1 tw:no-underline" })}>
-                  Open contract
+                  Open Contract
                 </Link>
               ) : null}
             </span>
@@ -358,7 +360,7 @@ export function RecentActivityCard({
       onClick={onViewAll}
       className="tw:inline-flex tw:min-h-8 tw:items-center tw:gap-0.5 tw:text-sm tw:font-semibold tw:text-primary tw:underline-offset-4 tw:hover:underline"
     >
-      View all
+      View All
       <ChevronRight aria-hidden="true" className="tw:size-4" />
     </button>
   ) : viewAllHref ? (
@@ -366,7 +368,7 @@ export function RecentActivityCard({
       href={viewAllHref}
       className="tw:inline-flex tw:min-h-8 tw:items-center tw:gap-0.5 tw:text-sm tw:font-semibold tw:text-primary tw:underline-offset-4 tw:hover:underline"
     >
-      View all
+      View All
       <ChevronRight aria-hidden="true" className="tw:size-4" />
     </Link>
   ) : undefined;
@@ -450,7 +452,7 @@ export function ContractTabPanel({ facts, contractHref }: { facts: readonly Cust
       {contractHref ? (
         <p className="tw:m-0 tw:mt-3">
           <Link href={contractHref} className="tw:text-sm tw:font-semibold tw:text-primary tw:underline-offset-4 tw:hover:underline">
-            Open contract
+            Open Contract
             <ChevronRight aria-hidden="true" className="tw:inline tw:size-4" />
           </Link>
         </p>

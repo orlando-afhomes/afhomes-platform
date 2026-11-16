@@ -72,7 +72,7 @@ export class MockHistoryImportRepository extends BusinessRepository implements H
     return this.run(options, (identity) => {
       this.require(identity, "history-import.signoff", "Only an Administrator can sign off an import batch.");
       const batch = this.batchFor(id);
-      if (batch.status !== "pending_signoff") throw new Error("Only a batch awaiting sign-off can be signed off.");
+      if (batch.status !== "pending_signoff") throw new Error("Only a batch waiting for confirmation can be confirmed.");
       if (batch.receipts.some(({ referenceNo }) => findReferenceConflict(this.store.payments, referenceNo) ||
         hasResortReceiptReference(this.store, referenceNo) || hasRedemptionReceiptReference(this.store, referenceNo))) {
         throw new Error("A receipt reference is already on record. Reject this batch and prepare a corrected copy.");
@@ -88,7 +88,7 @@ export class MockHistoryImportRepository extends BusinessRepository implements H
         entityId: batch.id,
         previousValue: "pending_signoff",
         newValue: `signed_off;receipts:${batch.receipts.length}`,
-        reason: batch.selfSignedOff ? "Self-signed: the signer also prepared this batch." : undefined,
+        reason: batch.selfSignedOff ? "Self-confirmed: the person who confirmed also prepared this batch." : undefined,
       });
       return copy(batch);
     });
@@ -99,7 +99,7 @@ export class MockHistoryImportRepository extends BusinessRepository implements H
       this.require(identity, "history-import.manage", "Historical import is not allowed for this identity.");
       if (!reason.trim()) throw new Error("A reason is required.");
       const batch = this.batchFor(id);
-      if (batch.status !== "pending_signoff") throw new Error("Only a batch awaiting sign-off can be rejected.");
+      if (batch.status !== "pending_signoff") throw new Error("Only a batch waiting for confirmation can be rejected.");
       batch.status = "rejected";
       batch.decidedBy = identity.id;
       batch.decidedAt = nowIso();

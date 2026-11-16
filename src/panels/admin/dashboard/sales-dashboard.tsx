@@ -113,7 +113,7 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
   return (
     <>
       <DashboardHeader
-        title={`Welcome back, ${role ? getSystemRoleLabel(role) : "Sales Network"}`}
+        title={`Welcome Back, ${role ? getSystemRoleLabel(role) : "Sales Network"}`}
         actions={canSeeSales ? <DashboardDateFilter range={range} /> : undefined}
       />
 
@@ -176,7 +176,7 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
             />
           </DashboardKpiGrid>
         ) : (
-          <InfoNote title="No sales metrics">Sales figures are not available for this account.</InfoNote>
+          <InfoNote title="No Sales Metrics">Sales figures are not available for this account.</InfoNote>
         )}
 
         {canSeeSales ? (

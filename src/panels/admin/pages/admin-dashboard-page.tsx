@@ -26,7 +26,7 @@ export function AdminDashboardPage() {
     <PageContainer className="tw:max-w-[88rem] tw:lg:px-8">
       <Breadcrumbs items={getRoleAwareAdminBreadcrumbs(identity, pathname ?? "/admin")} />
       {kind === "restricted" ? (
-        <PageHeader title="Access restricted" description="This account does not have access to administration functions." />
+        <PageHeader title="Access Restricted" description="This account does not have access to administration functions." />
       ) : kind === "admin" ? (
         <AdminDashboard roles={roles} />
       ) : kind === "finance" ? (
@@ -38,11 +38,11 @@ export function AdminDashboardPage() {
       ) : (
         <>
           <PageHeader
-            title={`Welcome back, ${getRoleDisplayLabel(roles)}`}
+            title={`Welcome Back, ${getRoleDisplayLabel(roles)}`}
             description="Your authorized administration modules are available in the navigation."
           />
           <div className="tw:mt-5">
-            <InfoNote title="No dashboard metrics">
+            <InfoNote title="No Dashboard Metrics">
               No operational dashboard metrics are available for this role. Authorized modules remain available in the navigation.
             </InfoNote>
           </div>

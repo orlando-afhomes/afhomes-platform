@@ -77,7 +77,7 @@ describe("admin navigation", () => {
     expect(visibleIds("dev-admin")).toEqual(ALL_AREAS);
   });
 
-  it("shows Finance its own areas, IGP sales and reports", () => {
+  it("shows Finance its own areas, property sales (IGP) and reports", () => {
     expect(visibleIds("dev-finance")).toEqual(["dashboard", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "reports"]);
     expect(tabAccess("dev-finance", "sales")).toEqual(["igp"]);
     expect(tabAccess("dev-finance", "finance")).toEqual(["verification", "collections", "cancellations", "month-end-close", "reconciliation"]);
@@ -94,13 +94,13 @@ describe("admin navigation", () => {
     expect(tabAccess("dev-super-admin", "reports")).toContain("collections");
   });
 
-  it("shows the IGP projects setup tab only to holders of igp.manage", () => {
+  it("shows the property projects (IGP) setup tab only to holders of igp.manage", () => {
     expect(tabAccess("dev-admin", "vip-products")).toContain("igp-projects");
     expect(tabAccess("dev-super-admin", "vip-products")).toContain("igp-projects");
     for (const identityId of ["dev-finance", "dev-clerk", "dev-svd-a", "dev-ost-a1"]) expect(tabAccess(identityId, "vip-products")).not.toContain("igp-projects");
   });
 
-  it("shows Settings only to roles with a setup tab and keeps Scheme guide in Sales for sellers and the Clerk", () => {
+  it("shows Settings only to roles with a setup tab and keeps the Payment Plan Guide in Sales for sellers and the Clerk", () => {
     const SETTINGS_TABS = ["products", "schemes", "tier-codes", "points-table", "holidays", "venues", "lists", "historical-import", "igp-projects"];
     expect(tabAccess("dev-admin", "vip-products")).toEqual(SETTINGS_TABS);
     expect(tabAccess("dev-super-admin", "vip-products")).toEqual(SETTINGS_TABS);
@@ -150,7 +150,7 @@ describe("admin navigation", () => {
     expect(access(["redemption.configure"])).toMatchObject({ "points-table": true, holidays: true, venues: true });
   });
 
-  it("grants Contracts to sales or vip-products holders and Scheme Guide to either", () => {
+  it("grants Contracts to sales or vip-products holders and the Payment Plan Guide to either", () => {
     expect(getAdminAreaTabAccess("sales", new Set(["vip-products"] as const), new Set())).toMatchObject({ contracts: true, sales: false });
     expect(getAdminAreaTabAccess("sales", new Set(["sales"] as const), new Set())).toMatchObject({ contracts: true, sales: true });
     expect(getAdminAreaTabAccess("sales", new Set(["vip-products"] as const), new Set())).toMatchObject({ "scheme-guide": true });

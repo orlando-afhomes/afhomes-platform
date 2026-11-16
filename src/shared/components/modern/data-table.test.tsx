@@ -40,11 +40,14 @@ describe("DataTable column limit", () => {
   it("renders up to 5 data columns plus the row menu", () => {
     render(<DataTable caption="Fine" data={data} columns={columnsOf(MAX_DATA_COLUMNS)} getRowId={(row) => row.id} emptyText="None" rowActions={() => "menu"} />);
     expect(screen.getAllByRole("columnheader")).toHaveLength(MAX_DATA_COLUMNS + 1);
+    expect(screen.getByRole("columnheader", { name: "Actions" })).toHaveTextContent("Actions");
+    expect(screen.getByRole("columnheader", { name: "Actions" }).querySelector(".tw\\:sr-only")).toBeNull();
   });
 
   it("does not count a column with id actions", () => {
     render(<DataTable caption="Fine" data={data} columns={columnsOf(MAX_DATA_COLUMNS, [{ id: "actions", header: "", cell: () => "menu" }])} getRowId={(row) => row.id} emptyText="None" />);
     expect(screen.getAllByRole("columnheader")).toHaveLength(MAX_DATA_COLUMNS + 1);
+    expect(screen.getByRole("columnheader", { name: "Actions" })).toHaveTextContent("Actions");
   });
 
   it("throws in tests, naming the table, when more than 5 data columns are passed", () => {

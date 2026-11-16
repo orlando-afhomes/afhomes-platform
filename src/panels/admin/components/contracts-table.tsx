@@ -19,6 +19,7 @@ import { recordLabel } from "@/shared/lib/record-label";
 import { approveDealConfirm, buildContractMenuProps } from "../actions/sales-contract-actions";
 import { ApproveArrangementDialog, CancelContractDialog, RequestCancellationDialog, ResolvePaymentCodeDialog, ReturnContractDialog } from "./contract-dialogs";
 import { useContractHref } from "./use-contract-href";
+import { useTierDisplayName } from "./use-tier-display-name";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
@@ -35,6 +36,7 @@ const STATUS_OPTIONS = [
 export function ContractsTable({ initialStatus = "all" }: { initialStatus?: string }) {
   const router = useRouter();
   const contracts = useContracts();
+  const tierName = useTierDisplayName();
   const canPrepare = useOperation("contracts.prepare");
   const canApprove = useOperation("contracts.approve");
   const canApproveCustomer = useOperation("customers.approve");
@@ -65,12 +67,12 @@ export function ContractsTable({ initialStatus = "all" }: { initialStatus?: stri
   const columns = useMemo<ColumnDef<ContractView, unknown>[]>(
     () => [
       { id: "customer", header: "Customer", cell: ({ row }) => <span className="tw:font-semibold">{row.original.customerName}</span> },
-      { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.productCode },
+      { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => tierName(row.original.productCode) },
       { id: "price", header: "Price", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => <Money value={row.original.priceCentavos} /> },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
       { id: "holds", header: "Holds", meta: { className: "tw:hidden tw:lg:table-cell" }, cell: ({ row }) => (["submitted", "under_review"].includes(row.original.status) && row.original.holds.length > 0 ? <StatusPill tone="warning" icon={Hourglass}>{`${row.original.holds.length} hold${row.original.holds.length > 1 ? "s" : ""}`}</StatusPill> : "—") },
     ],
-    [],
+    [tierName],
   );
 
   return (
@@ -84,7 +86,7 @@ export function ContractsTable({ initialStatus = "all" }: { initialStatus?: stri
           emptyText="No contracts match."
           caption="Contracts"
           onRowOpen={(row) => router.push(contractHref(row.id))}
-          getRowLabel={(row) => recordLabel("Open contract", row.customerName, row.productCode)}
+          getRowLabel={(row) => recordLabel("Open contract", row.customerName, tierName(row.productCode))}
           rowActions={(row) => {
             const contractPayments = (payments.data ?? []).filter((payment) => payment.contractId === row.id);
             const membership = (memberships.data ?? []).find((item) => item.contractId === row.id);
@@ -106,7 +108,7 @@ export function ContractsTable({ initialStatus = "all" }: { initialStatus?: stri
               onCancel: () => setTarget({ contract: row, kind: "cancel" }),
               onRequestCancellation: () => setTarget({ contract: row, kind: "requestCancel" }),
             });
-            return <RowActionsMenu {...menu} />;
+            return <RowActionsMenu {...menu} itemName={recordLabel("contract", row.customerName, tierName(row.productCode))} />;
           }}
         />
       </QueryState>

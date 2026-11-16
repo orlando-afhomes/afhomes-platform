@@ -33,6 +33,7 @@ import { normalizePhilippineMobile } from "@/shared/utils/input-sanitizers";
 import { simulateAsync } from "@/data/contracts/async-options";
 import { appendAuditEvent } from "./audit";
 import { activeRoles } from "./dev-identities";
+import { designationLabel } from "@/modules/sales-network/display";
 import { randomNumericId } from "./ids";
 import { MockMemberRepository } from "./member-repository";
 import type { MockStore } from "./seed";
@@ -158,7 +159,7 @@ export class MockRegistrationRepository implements RegistrationRepository {
       memberId: null,
       accountId: null,
       sponsorMemberId: sponsor.sponsor.memberId,
-      sponsorLabel: `${sponsor.sponsor.displayName} (${sponsor.sponsor.designation})`,
+      sponsorLabel: `${sponsor.sponsor.displayName} (${designationLabel(sponsor.sponsor.designation)})`,
       status: "submitted",
       createdAt: now,
       updatedAt: now,

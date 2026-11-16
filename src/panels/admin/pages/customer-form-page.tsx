@@ -16,11 +16,11 @@ export function CustomerFormPage({ customerId }: { customerId?: string }) {
   const existing = customerId ? customers.data?.find((item) => item.id === customerId) : undefined;
   const loading = Boolean(customerId) && customers.isLoading;
   return (
-    <AdminPage anyOf={["customers"]} title={customerId ? "Edit customer" : "New customer"} crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: customerId ? "Edit" : "New" }]}>
+    <AdminPage anyOf={["customers"]} title={customerId ? "Edit Customer" : "New Customer"} crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: customerId ? "Edit" : "New" }]}>
       {loading ? (
         <FormSkeleton fields={5} />
       ) : customerId && !existing ? (
-        <InfoNote title="Customer not found">This customer does not exist or is not visible to this account.</InfoNote>
+        <InfoNote title="Customer Not Found">This customer does not exist or is not visible to this account.</InfoNote>
       ) : (
         <CustomerApplicationWizard key={existing?.id ?? "new"} existing={existing} />
       )}

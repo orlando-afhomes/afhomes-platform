@@ -61,9 +61,9 @@ export function RedemptionPointsTablePanel({ createOpen = false, onCreateClose =
   const rowColumns = useMemo<ColumnDef<PointsRow, unknown>[]>(
     () => [
       { id: "venue", header: "Venue", cell: ({ row }) => <span className="tw:font-semibold">{venueName(row.original.venueId)}</span> },
-      { id: "room", header: "Room type", cell: ({ row }) => row.original.roomType },
-      { id: "weekday", header: "Weekday points", cell: ({ row }) => fmt(row.original.weekdayPoints) },
-      { id: "weekend", header: "Weekend and holiday points", cell: ({ row }) => fmt(row.original.weekendPoints) },
+      { id: "room", header: "Room Type", cell: ({ row }) => row.original.roomType },
+      { id: "weekday", header: "Weekday Points", cell: ({ row }) => fmt(row.original.weekdayPoints) },
+      { id: "weekend", header: "Weekend and Holiday Points", cell: ({ row }) => fmt(row.original.weekendPoints) },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps -- venueName reads the current overview
     [overview],
@@ -81,7 +81,7 @@ export function RedemptionPointsTablePanel({ createOpen = false, onCreateClose =
                 {shown.note ? <p className="tw:text-muted-foreground">{shown.note}</p> : null}
               </Card>
               <FilterBar search={rowSearch} onSearch={setRowSearch} searchLabel="Search room types" filters={[{ label: "Venue filter", value: rowVenue, onChange: setRowVenue, options: [{ value: "all", label: "All venues" }, ...overview.venues.map((item) => ({ value: item.id, label: item.name }))] }]} />
-              <DataTable data={shown.rows.filter((row) => (rowVenue === "all" || row.venueId === rowVenue) && matchesSearch(rowSearch, row.roomType))} columns={rowColumns} getRowId={(row) => `${row.venueId}-${row.roomType}`} emptyText={shown.rows.length === 0 ? "No rows." : "No rows match the filters."} caption="Points per night" />
+              <DataTable data={shown.rows.filter((row) => (rowVenue === "all" || row.venueId === rowVenue) && matchesSearch(rowSearch, row.roomType))} columns={rowColumns} getRowId={(row) => `${row.venueId}-${row.roomType}`} emptyText={shown.rows.length === 0 ? "No rows." : "No rows match the filters."} caption="Points per Night" />
             </>
           ) : (
             <p className="tw:text-sm tw:text-muted-foreground">No points tables yet.</p>
@@ -120,7 +120,7 @@ export function RedemptionHolidaysPanel({ createOpen = false, onCreateClose = ()
         {overview ? (
           <>
             <FilterBar search={holidaySearch} onSearch={setHolidaySearch} searchLabel="Search holidays" filters={[{ label: "Holiday status filter", value: holidayStatus, onChange: setHolidayStatus, options: [{ value: "all", label: "All statuses" }, { value: "calendar", label: "In calendar" }, { value: "removed", label: "Removed" }] }]} />
-            <DataTable data={overview.holidays.filter((row) => (holidayStatus === "all" || (holidayStatus === "removed") === Boolean(row.removed)) && matchesSearch(holidaySearch, row.name))} columns={holidayColumns} getRowId={(row) => row.id} emptyText={overview.holidays.length === 0 ? "No holidays." : "No holidays match the filters."} caption="Holiday calendar" onRowOpen={(row) => setOpenId(row.id)} getRowLabel={(row) => `Open holiday ${row.name}`} rowActions={canConfigure ? (row) => (!row.removed ? <RowActionsMenu itemName={row.name} extraItems={[{ key: "remove", label: "Remove from calendar", tone: "danger", onClick: () => setRemoving(row) }]} /> : null) : undefined} />
+            <DataTable data={overview.holidays.filter((row) => (holidayStatus === "all" || (holidayStatus === "removed") === Boolean(row.removed)) && matchesSearch(holidaySearch, row.name))} columns={holidayColumns} getRowId={(row) => row.id} emptyText={overview.holidays.length === 0 ? "No holidays." : "No holidays match the filters."} caption="Holiday Calendar" onRowOpen={(row) => setOpenId(row.id)} getRowLabel={(row) => `Open holiday ${row.name}`} rowActions={canConfigure ? (row) => (!row.removed ? <RowActionsMenu itemName={row.name} extraItems={[{ key: "remove", label: "Remove from Calendar", tone: "danger", onClick: () => setRemoving(row) }]} /> : null) : undefined} />
             {createOpen && canConfigure ? <HolidayDialog open onClose={onCreateClose} /> : null}
           </>
         ) : null}
@@ -132,9 +132,9 @@ export function RedemptionHolidaysPanel({ createOpen = false, onCreateClose = ()
         subtitle={detail ? formatDate(detail.date) : undefined}
         badge={detail ? <BizBadge status={detail.removed ? "retired" : "active"} label={detail.removed ? "Removed" : "In calendar"} /> : undefined}
         sections={detail ? [{ title: "Holiday", rows: [{ label: "Name", value: detail.name }, { label: "Date", value: formatDate(detail.date) }, { label: "Status", value: detail.removed ? "Removed" : "In calendar" }] }] : []}
-        footer={detail && !detail.removed && canConfigure ? <Button type="button" variant="destructive" onClick={() => { setRemoving(detail); setOpenId(null); }}>Remove from calendar</Button> : undefined}
+        footer={detail && !detail.removed && canConfigure ? <Button type="button" variant="destructive" onClick={() => { setRemoving(detail); setOpenId(null); }}>Remove from Calendar</Button> : undefined}
       />
-      <ReasonDialog open={removing !== null} title="Remove holiday" description="The date stops being a holiday for new bookings. Confirmed bookings keep their points." confirmText="Remove" danger successText="Holiday removed." onClose={() => setRemoving(null)} onSubmit={(reason) => (removing ? act.mutateAsync({ action: "remove-holiday", id: removing.id, reason }) : Promise.resolve())} />
+      <ReasonDialog open={removing !== null} title="Remove Holiday" description="The date stops being a holiday for new bookings. Confirmed bookings keep their points." confirmText="Remove" danger successText="Holiday removed." onClose={() => setRemoving(null)} onSubmit={(reason) => (removing ? act.mutateAsync({ action: "remove-holiday", id: removing.id, reason }) : Promise.resolve())} />
     </>
   );
 }
@@ -152,8 +152,8 @@ export function RedemptionVenuesPanel({ createOpen = false, onCreateClose = () =
     () => [
       { id: "name", header: "Venue", cell: ({ row }) => <span className="tw:font-semibold">{row.original.name}</span> },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status === "open" ? "active" : "pending"} label={row.original.status === "open" ? "Open" : "Coming soon"} /> },
-      { id: "cutoff", header: "Cancellation cut-off", cell: ({ row }) => `${row.original.cutoffHours} hours before check-in` },
-      { id: "checkin", header: "Check-in time", cell: ({ row }) => row.original.checkInTime },
+      { id: "cutoff", header: "Cancellation Cut-Off", cell: ({ row }) => `${row.original.cutoffHours} hours before check-in` },
+      { id: "checkin", header: "Check-In Time", cell: ({ row }) => row.original.checkInTime },
     ],
     [],
   );

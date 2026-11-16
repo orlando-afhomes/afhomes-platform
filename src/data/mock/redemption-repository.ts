@@ -298,7 +298,7 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
       this.moveReserved(booking, outcome, identity.id, reason.trim());
       booking.status = outcome === "return" ? "cancelled" : "late_cancelled";
       const note = booking.provisional ? "Provisional booking cancelled without moving points."
-        : outcome === "return" ? "Cancelled by the cut-off; points returned to the same buckets." : "Cancelled after the cut-off; points forfeited.";
+        : outcome === "return" ? "Cancelled by the cut-off; points returned to the same buckets." : "Cancelled after the cut-off; points lost.";
       this.event(booking, identity.id, outcome === "return" ? ACTIONS.BOOKING_CANCELLED : ACTIONS.BOOKING_LATE_CANCELLED, `${note} Recorded ${at}. ${reason.trim()}`);
       this.auditBooking(identity, booking, outcome === "return" ? ACTIONS.BOOKING_CANCELLED : ACTIONS.BOOKING_LATE_CANCELLED, previous, reason.trim());
       return this.view(booking);
@@ -315,7 +315,7 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
       if (!reason.trim()) throw new Error("A reason is required.");
       this.moveReserved(booking, "forfeit", identity.id, reason.trim());
       booking.status = "no_show";
-      this.event(booking, identity.id, ACTIONS.BOOKING_NO_SHOW, booking.provisional ? `No points were reserved. ${reason.trim()}` : `Points forfeited. ${reason.trim()}`);
+      this.event(booking, identity.id, ACTIONS.BOOKING_NO_SHOW, booking.provisional ? `No points were reserved. ${reason.trim()}` : `Points lost. ${reason.trim()}`);
       this.auditBooking(identity, booking, ACTIONS.BOOKING_NO_SHOW, "confirmed", reason.trim());
       return this.view(booking);
     });
@@ -382,7 +382,7 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
       const previous = booking.status;
       this.moveReserved(booking, "forfeit", identity.id, "Card transfer: unused points not transferred");
       booking.status = "transfer_cancelled";
-      this.event(booking, identity.id, ACTIONS.BOOKING_TRANSFER_CANCELLED, `Cancelled for a card transfer effective ${effectiveDate}; the former holder's points are forfeited.`);
+      this.event(booking, identity.id, ACTIONS.BOOKING_TRANSFER_CANCELLED, `Cancelled for a card transfer effective ${effectiveDate}; the former holder's points are lost.`);
       this.auditBooking(identity, booking, ACTIONS.BOOKING_TRANSFER_CANCELLED, previous, `Card transfer effective ${effectiveDate}`);
       cancelled.push(this.view(booking));
     }

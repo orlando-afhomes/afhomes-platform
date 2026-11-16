@@ -89,7 +89,7 @@ describe("buildCustomerMenuProps", () => {
       rowCb(),
     );
     expect(keysOf(menu)).toEqual(["approve", "send-back", "reject"]);
-    expect(menu.extraItems.map((item) => item.label)).toEqual(["Approve", "Send back", "Reject"]);
+    expect(menu.extraItems.map((item) => item.label)).toEqual(["Approve", "Send Back", "Reject"]);
     expect(menu.extraItems.map((item) => item.tone)).toEqual(["success", "warning", "danger"]);
     expect(menu.onEdit).toBeUndefined();
     expect(menu.onDelete).toBeUndefined();
@@ -117,7 +117,7 @@ describe("buildCustomerMenuProps", () => {
   it("opens the existing contract instead of offering to prepare a duplicate", () => {
     const onOpenContract = vi.fn();
     const menu = buildCustomerMenuProps(customer("approved"), FULL_PERMS, { ...rowCb(), onOpenContract });
-    expect(menu.extraItems).toMatchObject([{ key: "open-contract", label: "Open contract", onClick: onOpenContract }]);
+    expect(menu.extraItems).toMatchObject([{ key: "open-contract", label: "Open Contract", onClick: onOpenContract }]);
   });
 
   it("omits slots whose callbacks are not wired", () => {

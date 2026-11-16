@@ -17,7 +17,7 @@ export function formatIgpSeriesNumber(input: {
 }): string {
   const { date, sequence, priceCentavos, scheme, termMonths, clauses } = input;
   if (date !== date.trim() || !parseManilaDateOnly(date)) throw new Error("Enter a valid issue date.");
-  if (!Number.isInteger(sequence) || sequence < 1 || sequence > 9999) throw new Error("The monthly IGP sequence is exhausted.");
+  if (!Number.isInteger(sequence) || sequence < 1 || sequence > 9999) throw new Error("The monthly property sale (IGP) sequence is exhausted.");
   if (scheme !== "C" && scheme !== "T") throw new Error("Choose Cash or Terms.");
   if (clauses !== "S" && clauses !== "N") throw new Error("Choose Standard or Non-Standard clauses.");
   if (!Number.isInteger(termMonths) || termMonths < 1 || termMonths > 36 || (scheme === "C" && termMonths !== 1)) {
@@ -77,8 +77,8 @@ export function igpSalesReportRows(sales: readonly IgpSale[]) {
 
 export type JadPrefix = "JAI" | "JAO";
 export const JAD_PREFIXES: ReadonlyArray<{ value: JadPrefix; label: string }> = [
-  { value: "JAI", label: "IST accreditation (JAI)" },
-  { value: "JAO", label: "OST accreditation (JAO)" },
+  { value: "JAI", label: "Internal Seller (IST) accreditation (JAI)" },
+  { value: "JAO", label: "Outsourced Seller (OST) accreditation (JAO)" },
 ];
 
 /** Starting choice only: IST sellers (SVD, SSM, SM) get JAI and OST sellers get JAO. Staff can change it. */

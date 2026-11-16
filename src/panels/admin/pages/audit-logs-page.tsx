@@ -1,4 +1,5 @@
 "use client";
+import { formatNotificationAction } from "@/modules/notifications/format-action";
 
 import { useMemo, useState } from "react";
 import { humanize } from "@/shared/lib/humanize";
@@ -17,10 +18,7 @@ const MODULE_OPTIONS = [{ value: ALL, label: "All modules" }, ...AUDIT_MODULES.m
 const ENTITY_OPTIONS = [{ value: ALL, label: "All record types" }, ...AUDIT_ENTITY_TYPES.map((value) => ({ value, label: AUDIT_ENTITY_LABELS[value] ?? humanize(value) }))];
 
 /** Plain-English action: "PAYMENT_VERIFIED" becomes "Payment verified". The stored code is never changed. */
-function actionLabel(action: string): string {
-  const text = action.toLowerCase().replace(/[_-]+/g, " ").trim();
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
+const actionLabel = formatNotificationAction;
 
 const whenText = (timestamp: string) => new Date(timestamp).toLocaleString("en-PH", { timeZone: "Asia/Manila" });
 
@@ -56,7 +54,7 @@ export function AuditLogsPage() {
     () => [
       { id: "time", header: "When", cell: ({ row }) => <span className="tw:font-semibold">{whenText(row.original.timestamp)}</span> },
       { id: "action", header: "Action", cell: ({ row }) => actionLabel(row.original.action) },
-      { id: "entity-type", header: "Record type", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => humanize(row.original.entityType) },
+      { id: "entity-type", header: "Record Type", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => humanize(row.original.entityType) },
       { id: "entity", header: "Record", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.entityName },
       { id: "actor", header: "Actor", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.actorName },
     ],
@@ -72,7 +70,7 @@ export function AuditLogsPage() {
   return (
     <AdminPage anyOf={["audit-logs"]} title="Audit Logs" crumbs={[{ label: "Audit Logs" }]}>
       <AdminStatGrid>
-        <AdminStatCard label="Matching events" value={total} icon={ScrollText} tone="info" loading={result.isLoading} error={result.error} />
+        <AdminStatCard label="Matching Events" value={total} icon={ScrollText} tone="info" loading={result.isLoading} error={result.error} />
       </AdminStatGrid>
       <FilterBar search={action} onSearch={reset(setAction)} searchLabel="Search by action" filters={[{ label: "Module filter", value: moduleFilter, onChange: reset(setModuleFilter), options: MODULE_OPTIONS }, { label: "Record type filter", value: entityFilter, onChange: reset(setEntityFilter), options: ENTITY_OPTIONS }, { label: "Actor filter", value: actor, onChange: reset(setActor), options: actorOptions }]}>
         <DateRangeFields from={from} to={to} onChange={(range) => { setFrom(range.from); setTo(range.to); setPage(1); }} />
@@ -83,7 +81,7 @@ export function AuditLogsPage() {
           columns={columns}
           getRowId={(row) => row.id}
           emptyText="No audit events match."
-          caption="Audit events"
+          caption="Audit Events"
           serverPagination={{
             page,
             pageSize: TABLE_PAGE_SIZE,
@@ -97,7 +95,7 @@ export function AuditLogsPage() {
       <RecordDetailsSheet
         open={detail !== null}
         onClose={() => setDetailId(null)}
-        title={detail ? actionLabel(detail.action) : "Audit event"}
+        title={detail ? actionLabel(detail.action) : "Audit Event"}
         subtitle={detail?.entityLabel}
         sections={
           detail
@@ -114,7 +112,7 @@ export function AuditLogsPage() {
                 {
                   title: "Record",
                   rows: [
-                    { label: "Record type", value: humanize(detail.entityType) },
+                    { label: "Record Type", value: humanize(detail.entityType) },
                     { label: "Record", value: detail.entityName },
                     { label: "Details", value: detail.entityDetail },
                     { label: "Reference", value: detail.displayReference },

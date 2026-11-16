@@ -151,7 +151,7 @@ describe("business pages render for the intended roles", () => {
     show("dev-ssm-a", <CustomersAreaPage />, "customers");
     expect(await screen.findByRole("table", { name: "Customers" })).toBeInTheDocument();
     expect(await screen.findByText("Customer A One")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "New customer" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "New Customer" })).toBeInTheDocument();
   });
 
   it("lets an OST start a customer draft but not open another seller's customer", async () => {
@@ -163,7 +163,7 @@ describe("business pages render for the intended roles", () => {
 
   it("shows a summary-only customer detail for downline records", async () => {
     show("dev-ssm-a", <CustomerDetailPage customerId="cust-a1" />);
-    expect(await screen.findByText(/belongs to your downline/i)).toBeInTheDocument();
+    expect(await screen.findByText(/belongs to someone in your team/i)).toBeInTheDocument();
     expect(screen.queryByText("09171110001")).toBeNull();
   });
 
@@ -176,8 +176,8 @@ describe("business pages render for the intended roles", () => {
     expect(continueButton).toBeDisabled();
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
     await user.click(continueButton);
-    expect(await screen.findByRole("radiogroup", { name: "Payment scheme" })).toBeInTheDocument();
-    expect(screen.getByRole("radiogroup", { name: "Contract classification" })).toBeInTheDocument();
+    expect(await screen.findByRole("radiogroup", { name: "Payment plan" })).toBeInTheDocument();
+    expect(screen.getByRole("radiogroup", { name: "Contract type" })).toBeInTheDocument();
   });
 
   it("shows card images, then keeps the chosen card pinned and collapses then restores the sidebar", async () => {
@@ -188,9 +188,9 @@ describe("business pages render for the intended roles", () => {
     expect(await screen.findByAltText("Gold VIP privilege card")).toBeInTheDocument();
     await user.click(await screen.findByRole("radio", { name: /gold vip/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    expect(await screen.findByRole("complementary", { name: "Selected VIP card" })).toHaveTextContent("Gold VIP (G1)");
+    expect(await screen.findByRole("complementary", { name: "Selected VIP card" })).toHaveTextContent("Gold VIP");
     expect(calls).toEqual([true]);
-    await user.click(screen.getByRole("button", { name: "Change card" }));
+    await user.click(screen.getByRole("button", { name: "Change Card" }));
     expect(await screen.findByRole("radiogroup", { name: "VIP card" })).toBeInTheDocument();
     view.unmount();
     expect(calls).toEqual([true, false]);
@@ -215,9 +215,9 @@ describe("business pages render for the intended roles", () => {
     await user.click(screen.getByRole("button", { name: /continue/i }));
     const progress = await screen.findByRole("list", { name: "Progress" });
     await user.click(within(progress).getByText(/reservation/i));
-    expect(await screen.findByText(/select a payment scheme/i)).toBeInTheDocument();
-    expect(screen.getByRole("radiogroup", { name: "Payment scheme" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Application form" })).toBeNull();
+    expect(await screen.findByText(/select a payment plan/i)).toBeInTheDocument();
+    expect(screen.getByRole("radiogroup", { name: "Payment plan" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Application Form" })).toBeNull();
   });
 
   it("blocks Continue until the payment plan is chosen, then shows customer detail blocks", async () => {
@@ -226,12 +226,12 @@ describe("business pages render for the intended roles", () => {
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await user.click(await screen.findByRole("button", { name: /continue/i }));
-    expect(await screen.findByText(/select a payment scheme/i)).toBeInTheDocument();
-    const schemes = await screen.findByRole("radiogroup", { name: "Payment scheme" });
+    expect(await screen.findByText(/select a payment plan/i)).toBeInTheDocument();
+    const schemes = await screen.findByRole("radiogroup", { name: "Payment plan" });
     await user.click(within(schemes).getAllByRole("radio").find((item) => item.getAttribute("aria-disabled") !== "true" && !item.hasAttribute("data-disabled"))!);
     await user.click(screen.getByRole("radio", { name: /standard \(s\)/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    expect(await screen.findByRole("heading", { name: "Personal details" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Personal Details" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Address" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /continue/i }));
     expect(await screen.findByText(/first name is required/i)).toBeInTheDocument();
@@ -239,7 +239,7 @@ describe("business pages render for the intended roles", () => {
 
   it("renders the catalog with Gold resolved to Contract-stated", async () => {
     show("dev-admin", <VipProductsAreaPage />, "products");
-    expect(await screen.findByRole("table", { name: "VIP product catalog" })).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "VIP Product Catalog" })).toBeInTheDocument();
     expect(await screen.findByText("Gold VIP")).toBeInTheDocument();
     expect(screen.queryByText("Source conflict")).toBeNull();
     // The price source lives in the product details, not the table.
@@ -251,7 +251,7 @@ describe("business pages render for the intended roles", () => {
 
   it("renders the payment schemes as configured, Move ones flagged for Super Admin approval", async () => {
     show("dev-admin", <VipProductsAreaPage />, "schemes");
-    const table = await screen.findByRole("table", { name: "Payment schemes" });
+    const table = await screen.findByRole("table", { name: "Payment Plans" });
     // One status badge per row: configured schemes show their availability.
     expect(within(table).queryAllByText("Terms pending")).toHaveLength(0);
     expect(within(table).getAllByText("Available")).toHaveLength(4);
@@ -259,22 +259,22 @@ describe("business pages render for the intended roles", () => {
 
   it("shows Approve deal available to Admin for the resolved Gold contract", async () => {
     show("dev-admin", <SalesContractDetailPage contractId="ctr-3" />);
-    await screen.findByRole("button", { name: "Approve deal" });
-    expect(screen.queryByText("Finalization is on hold")).toBeNull();
-    expect(screen.getByRole("button", { name: "Approve deal" })).toBeEnabled();
+    await screen.findByRole("button", { name: "Approve Deal" });
+    expect(screen.queryByText("Finalization Is on Hold")).toBeNull();
+    expect(screen.getByRole("button", { name: "Approve Deal" })).toBeEnabled();
   });
 
   it("asks Admin to request a cancellation with forfeiture when the contract has verified money", async () => {
     const user = userEvent.setup();
     show("dev-admin", <SalesContractDetailPage contractId="ctr-1" />);
-    await user.click(await screen.findByRole("button", { name: "Request cancellation" }));
-    expect(screen.queryByRole("button", { name: "Cancel contract" })).toBeNull();
+    await user.click(await screen.findByRole("button", { name: "Request Cancellation" }));
+    expect(screen.queryByRole("button", { name: "Cancel Contract" })).toBeNull();
     const dialog = await screen.findByRole("dialog");
     await user.type(within(dialog).getByLabelText(/reason/i), "Customer withdrew in writing");
-    await user.click(within(dialog).getByRole("button", { name: "Request cancellation" }));
-    expect(await screen.findByText("Cancellation awaiting Finance confirmation")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Confirm cancellation" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Request cancellation" })).toBeNull();
+    await user.click(within(dialog).getByRole("button", { name: "Request Cancellation" }));
+    expect(await screen.findByText("Cancellation Awaiting Finance Confirmation")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Confirm Cancellation" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Request Cancellation" })).toBeNull();
   });
 
   it("lists contracts for review with a New contract action and a count footer", async () => {
@@ -295,15 +295,15 @@ describe("business pages render for the intended roles", () => {
   });
 
   it("gives Finance a verification queue with the pending reservation", async () => {
-    show("dev-finance", <FinanceAreaPage />, "verification");
+    show("dev-finance", <FinanceAreaPage />, "verification&show=waiting");
     expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
     expect((await screen.findAllByRole("button", { name: /^Verify payment/ })).length).toBeGreaterThan(0);
-    await openMenuWith("Actions for payment", "Return for correction");
+    await openMenuWith("Actions for payment", "Return for Correction");
     expect(screen.queryByRole("menuitem", { name: "Start review" })).toBeNull();
   });
 
   it("lets the Administrator open the receipt verification queue", async () => {
-    show("dev-admin", <FinanceAreaPage />, "verification");
+    show("dev-admin", <FinanceAreaPage />, "verification&show=waiting");
     expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
     expect((await screen.findAllByRole("button", { name: /^Verify payment/ })).length).toBeGreaterThan(0);
   });
@@ -323,18 +323,18 @@ describe("business pages render for the intended roles", () => {
     await user.click(await screen.findByRole("tab", { name: "Payments" }));
     // A single row action is shown as a direct button, not inside the "..." menu.
     expect(screen.queryByRole("button", { name: /^Verify payment/ })).toBeNull();
-    await user.click(await screen.findByRole("button", { name: /^Fix and resend payment/ }));
+    await user.click(await screen.findByRole("button", { name: /^Fix and Resend/ }));
     expect(await screen.findByRole("textbox", { name: "Receipt or reference number" })).toHaveAttribute("readonly");
     expect(screen.getByText(/Check receipt amount/)).toBeInTheDocument();
   });
 
   it("opens a payment details sheet when anywhere on a Finance row is clicked", async () => {
     const user = userEvent.setup();
-    show("dev-finance", <FinanceAreaPage />, "verification");
+    show("dev-finance", <FinanceAreaPage />, "verification&show=waiting");
     const table = await screen.findByRole("table", { name: "Verification queue" });
     await user.click(within(table).getAllByRole("row")[1]);
     expect(await screen.findByRole("heading", { name: /payment/i })).toBeInTheDocument();
-    expect(await screen.findByText("Finance review")).toBeInTheDocument();
+    expect(await screen.findByText("Finance Review")).toBeInTheDocument();
   });
   it("shows sellers only their own sales scope", async () => {
     show("dev-ost-a1", <SalesAreaPage />, "sales");
@@ -354,7 +354,7 @@ describe("business pages render for the intended roles", () => {
     show("dev-admin", <CustomersAreaPage />, "import-export");
     expect(await screen.findByRole("region", { name: "Import customers" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Export customers" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Download template" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Download Template" })).toBeInTheDocument();
     expect(screen.getByLabelText(/Customer file/)).toHaveAttribute("accept", ".xlsx,.csv");
   });
 
@@ -370,7 +370,7 @@ describe("business pages render for the intended roles", () => {
     show("dev-ost-a1", <CommissionsAreaPage />, "rates");
     expect(await screen.findByRole("tab", { name: "Commissions" })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Rates" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Set rate" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Set Rate" })).toBeNull();
   });
 
   it("lists every official scheme in the guide and gives pending ones no figures", async () => {
@@ -381,7 +381,7 @@ describe("business pages render for the intended roles", () => {
     expect(screen.queryAllByText(/Terms are pending owner approval/)).toHaveLength(0);
     expect(screen.getByText("A non-refundable reservation fee, then the balance within 7 days.")).toBeInTheDocument();
     expect(screen.queryAllByText(/Super Admin written approval/)).toHaveLength(0);
-    expect(screen.getByRole("button", { name: "Print guide" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Print Guide" })).toBeInTheDocument();
   });
 
   it("shows Administrators the Rates tab", async () => {
@@ -391,7 +391,7 @@ describe("business pages render for the intended roles", () => {
 
   it("shows the activation queue to Admin", async () => {
     show("dev-admin", <MembershipAreaPage />, "activation");
-    expect(await screen.findByRole("table", { name: "Activation queue" })).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "Ready to Activate" })).toBeInTheDocument();
   });
 
   it("asks staff to pick a cardholder, then shows yearly gifts and resort bill actions to Finance", async () => {
@@ -400,36 +400,36 @@ describe("business pages render for the intended roles", () => {
     const search = await screen.findByRole("combobox", { name: /find a cardholder/i });
     expect(search).toHaveAttribute("placeholder", "Search by name or card number");
     expect(screen.getByText("Pick a cardholder to see their yearly gifts and points.")).toBeInTheDocument();
-    expect(screen.queryByRole("table", { name: "Yearly gifts" })).toBeNull();
+    expect(screen.queryByRole("table", { name: "Yearly Gifts" })).toBeNull();
     await pickFilteredOption(user, search, "Customer B", /Customer B One/);
-    expect(await screen.findByRole("table", { name: "Yearly gifts" })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("tab", { name: "Resort bills" }));
-    const bills = await screen.findByRole("table", { name: "Resort bills" });
-    expect(screen.getByRole("button", { name: "Enter resort bill" })).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "Yearly Gifts" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "Resort Bills" }));
+    const bills = await screen.findByRole("table", { name: "Resort Bills" });
+    expect(screen.getByRole("button", { name: "Enter Resort Bill" })).toBeInTheDocument();
     expect(screen.queryByText(/Awaiting first redemption/)).toBeNull();
     // Refunds are recorded from a verified bill's details.
     fireEvent.click(within(bills).getAllByText("Verified")[0].closest("tr")!);
-    expect(await screen.findByRole("button", { name: "Record refund" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Record Refund" })).toBeInTheDocument();
   });
 
   it("shows the cardholder summary, the payment hold alert and plain balance cards without a details button", async () => {
     const user = userEvent.setup();
     show("dev-finance", <StayPointsAreaPage />, "welcome-gift");
     await pickFilteredOption(user, await screen.findByRole("combobox", { name: /find a cardholder/i }), "Customer B", /Customer B One/);
-    const tranches = await screen.findByRole("table", { name: "Yearly gifts" });
+    const tranches = await screen.findByRole("table", { name: "Yearly Gifts" });
     expect(within(tranches).getAllByRole("columnheader").length).toBeLessThanOrEqual(5);
     const summary = screen.getByLabelText("Cardholder summary");
     expect(within(summary).getByText("Customer B One")).toBeInTheDocument();
     expect(within(summary).getByText("Card claim date")).toBeInTheDocument();
     expect(within(summary).getByText("Points start date")).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent("Points are paused: this account has a payment hold. New gifts and stays resume when the hold is cleared.");
-    for (const label of ["Weekday points available", "Weekend points available", "Gifts released", "Points used"]) expect(screen.getByText(label)).toBeInTheDocument();
+    for (const label of ["Weekday Points Available", "Weekend Points Available", "Gifts Given", "Points Used"]) expect(screen.getByText(label)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "View full details" })).toBeNull();
   });
 
   it("renders role-scoped reports", async () => {
     show("dev-finance", <CollectionsReportPage />);
-    expect(await screen.findByText("Verified collections")).toBeInTheDocument();
+    expect(await screen.findByText("Verified Collections")).toBeInTheDocument();
   });
 
   it("denies the audit viewer to non-administrators", async () => {
@@ -439,7 +439,7 @@ describe("business pages render for the intended roles", () => {
 
   it("shows audit history to Admin", async () => {
     show("dev-admin", <AuditLogsPage />);
-    expect(await screen.findByText("Matching events")).toBeInTheDocument();
+    expect(await screen.findByText("Matching Events")).toBeInTheDocument();
     expect(screen.queryByText("Restricted view")).toBeNull();
   });
 });
@@ -455,7 +455,7 @@ describe("customer application wizard scheme pricing", () => {
     show("dev-clerk", <CustomerFormPage />);
     await user.click(await screen.findByRole("radio", { name: card }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    await screen.findByRole("radiogroup", { name: "Payment scheme" });
+    await screen.findByRole("radiogroup", { name: "Payment plan" });
   }
 
   async function fillCustomerStep(user: ReturnType<typeof userEvent.setup>) {
@@ -473,7 +473,7 @@ describe("customer application wizard scheme pricing", () => {
   }
 
   async function certifySalesStep(user: ReturnType<typeof userEvent.setup>) {
-    await screen.findByText("Sales attribution");
+    await screen.findByText("Sales Attribution");
     await user.click(screen.getByRole("checkbox", { name: /processing of personal data/i }));
     await user.click(screen.getByRole("checkbox", { name: /specimen signatures/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
@@ -483,7 +483,7 @@ describe("customer application wizard scheme pricing", () => {
     const user = userEvent.setup();
     await startApplication(user, /gold vip/i);
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
-    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    const schemes = screen.getByRole("radiogroup", { name: "Payment plan" });
     const spotCash = within(schemes).getByRole("radio", { name: /spot cash/i });
     expect(within(spotCash).getByText(/₱312,000\.00 total/)).toBeInTheDocument();
     expect(within(spotCash).getByText(/pay in 7 days/i)).toBeInTheDocument();
@@ -499,20 +499,20 @@ describe("customer application wizard scheme pricing", () => {
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await fillCustomerStep(user);
     await certifySalesStep(user);
-    expect(await screen.findByRole("heading", { name: "Application form" })).toBeInTheDocument();
-    expect(within(wizardMain()).getByText(/Gold VIP \(G1\) · ₱312,000/)).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Application Form" })).toBeInTheDocument();
+    expect(within(wizardMain()).getByText(/Gold VIP · ₱312,000/)).toBeInTheDocument();
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    expect(await screen.findByRole("heading", { name: "Review the application" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Review the Application" })).toBeInTheDocument();
     expect(within(wizardMain()).getByText("₱312,000.00")).toBeInTheDocument();
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
-    expect(within(wizardMain()).getByText("Reservation and acceptance")).toBeInTheDocument();
+    expect(within(wizardMain()).getByText("Reservation and Acceptance")).toBeInTheDocument();
   });
 
   it("shows the catalog price for Gold installments with no conflict notice", async () => {
     const user = userEvent.setup();
     await startApplication(user, /gold vip/i);
-    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    const schemes = screen.getByRole("radiogroup", { name: "Payment plan" });
     const installment = within(schemes).getByRole("radio", { name: /4-month installment/i });
     expect(within(installment).getByText(/₱390,000\.00 total/)).toBeInTheDocument();
     expect(within(installment).getByText(/4 monthly payments/i)).toBeInTheDocument();
@@ -528,20 +528,20 @@ describe("customer application wizard scheme pricing", () => {
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await fillCustomerStep(user);
     await certifySalesStep(user);
-    expect(await screen.findByRole("heading", { name: "Application form" })).toBeInTheDocument();
-    expect(within(wizardMain()).getByText(/Gold VIP \(G1\) · ₱390,000/)).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Application Form" })).toBeInTheDocument();
+    expect(within(wizardMain()).getByText(/Gold VIP · ₱390,000/)).toBeInTheDocument();
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    expect(await screen.findByRole("heading", { name: "Review the application" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Review the Application" })).toBeInTheDocument();
     expect(within(wizardMain()).getByText("₱390,000.00")).toBeInTheDocument();
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
-    expect(within(wizardMain()).getByText("Reservation and acceptance")).toBeInTheDocument();
+    expect(within(wizardMain()).getByText("Reservation and Acceptance")).toBeInTheDocument();
   });
 
   it("clears the conflict notice for Gold under Move A with no approval note", async () => {
     const user = userEvent.setup();
     await startApplication(user, /gold vip/i);
-    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    const schemes = screen.getByRole("radiogroup", { name: "Payment plan" });
     const moveA = within(schemes).getByRole("radio", { name: /move a/i });
     expect(within(moveA).getByText(/₱312,000\.00 total/)).toBeInTheDocument();
     expect(within(moveA).getByText(/4 monthly payments/i)).toBeInTheDocument();
@@ -560,7 +560,7 @@ describe("customer application wizard scheme pricing", () => {
     const user = userEvent.setup();
     await startApplication(user, /bronze vip/i);
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
-    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    const schemes = screen.getByRole("radiogroup", { name: "Payment plan" });
     const installment = within(schemes).getByRole("radio", { name: /4-month installment/i });
     expect(within(installment).getByText(/₱72,000\.00 total/)).toBeInTheDocument();
     expect(within(installment).getByText(/4 monthly payments/i)).toBeInTheDocument();
@@ -577,17 +577,17 @@ describe("customer application wizard scheme pricing", () => {
     await fillCustomerStep(user);
     await certifySalesStep(user);
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    expect(await screen.findByRole("heading", { name: "Review the application" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Review the Application" })).toBeInTheDocument();
     expect(within(wizardMain()).getByText("₱72,000.00")).toBeInTheDocument();
     expect(screen.queryByText(/Price under review/)).toBeNull();
-    expect(within(wizardMain()).getByText("Reservation and acceptance")).toBeInTheDocument();
+    expect(within(wizardMain()).getByText("Reservation and Acceptance")).toBeInTheDocument();
   });
 
   it("keeps the exact Spot Cash price for Silver with no conflict notice", async () => {
     const user = userEvent.setup();
     await startApplication(user, /silver vip/i);
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
-    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    const schemes = screen.getByRole("radiogroup", { name: "Payment plan" });
     const spotCash = within(schemes).getByRole("radio", { name: /spot cash/i });
     expect(within(spotCash).getByText(/₱192,000\.00 total/)).toBeInTheDocument();
     expect(within(spotCash).getByText(/pay in 7 days/i)).toBeInTheDocument();
@@ -604,16 +604,16 @@ describe("customer application wizard scheme pricing", () => {
     await fillCustomerStep(user);
     await certifySalesStep(user);
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    expect(await screen.findByRole("heading", { name: "Review the application" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Review the Application" })).toBeInTheDocument();
     expect(within(wizardMain()).getByText("₱192,000.00")).toBeInTheDocument();
     expect(screen.queryByText(/Price under review/)).toBeNull();
-    expect(within(wizardMain()).getByText("Reservation and acceptance")).toBeInTheDocument();
+    expect(within(wizardMain()).getByText("Reservation and Acceptance")).toBeInTheDocument();
   });
 
   it("shows Move B with a 12-month pill and no approval notice once selected", async () => {
     const user = userEvent.setup();
     await startApplication(user, /gold vip/i);
-    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    const schemes = screen.getByRole("radiogroup", { name: "Payment plan" });
     const moveB = within(schemes).getByRole("radio", { name: /move b/i });
     expect(within(moveB).getByText(/₱390,000\.00 total/)).toBeInTheDocument();
     expect(within(moveB).getByText(/12 monthly payments/i)).toBeInTheDocument();
@@ -632,22 +632,22 @@ describe("customer application wizard scheme pricing", () => {
     const user = userEvent.setup();
     await startApplication(user, /silver vip/i);
     const main = wizardMain();
-    expect(within(main).getByRole("heading", { name: "Payment plan" })).toBeInTheDocument();
-    expect(within(main).getByRole("heading", { name: "Contract terms" })).toBeInTheDocument();
+    expect(within(main).getByRole("heading", { name: "Payment Plan" })).toBeInTheDocument();
+    expect(within(main).getByRole("heading", { name: "Contract Terms" })).toBeInTheDocument();
   });
 
   it("keeps the Standard and Non-Standard classification cards selectable", async () => {
     const user = userEvent.setup();
     await startApplication(user, /gold vip/i);
-    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    const schemes = screen.getByRole("radiogroup", { name: "Payment plan" });
     await user.click(within(schemes).getByRole("radio", { name: /spot cash/i }));
-    const classification = screen.getByRole("radiogroup", { name: "Contract classification" });
+    const classification = screen.getByRole("radiogroup", { name: "Contract type" });
     const standard = within(classification).getByRole("radio", { name: "Standard (S)" });
     const nonStandard = within(classification).getByRole("radio", { name: "Non-Standard (N)" });
     await user.click(nonStandard);
     await user.click(standard);
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    expect(await screen.findByRole("heading", { name: "Personal details" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Personal Details" })).toBeInTheDocument();
   });
 
   it("shows the chosen scheme in the plan summary once a scheme is picked", async () => {
@@ -655,10 +655,10 @@ describe("customer application wizard scheme pricing", () => {
     await startApplication(user, /gold vip/i);
     const aside = screen.getByRole("complementary", { name: "Selected VIP card" });
     expect(within(aside).queryByText("Spot Cash")).toBeNull();
-    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    const schemes = screen.getByRole("radiogroup", { name: "Payment plan" });
     await user.click(within(schemes).getByRole("radio", { name: /spot cash/i }));
     // The aside renders one scheme row under a "Payment scheme" caption.
-    expect(within(aside).getByText("Payment scheme")).toBeInTheDocument();
+    expect(within(aside).getByText("Payment plan")).toBeInTheDocument();
     expect(within(aside).getByText("Spot Cash")).toBeInTheDocument();
   });
 });
@@ -674,12 +674,12 @@ describe("customer application new fields and secondary holder", () => {
     const view = show("dev-clerk", <CustomerFormPage />);
     await user.click(await screen.findByRole("radio", { name: card }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    await screen.findByRole("radiogroup", { name: "Payment scheme" });
+    await screen.findByRole("radiogroup", { name: "Payment plan" });
     return view;
   }
 
   async function choosePlanAndContinue(user: ReturnType<typeof userEvent.setup>) {
-    const schemes = screen.getByRole("radiogroup", { name: "Payment scheme" });
+    const schemes = screen.getByRole("radiogroup", { name: "Payment plan" });
     const target = within(schemes).getAllByRole("radio").find((item) => item.getAttribute("aria-disabled") !== "true" && !item.hasAttribute("data-disabled"))!;
     await user.click(target);
     await user.click(screen.getByRole("radio", { name: /standard \(s\)/i }));
@@ -689,7 +689,7 @@ describe("customer application new fields and secondary holder", () => {
   async function reachCustomerStep(user: ReturnType<typeof userEvent.setup>, card: RegExp) {
     const view = await startApplication(user, card);
     await choosePlanAndContinue(user);
-    await screen.findByRole("heading", { name: "Personal details" });
+    await screen.findByRole("heading", { name: "Personal Details" });
     return view;
   }
 
@@ -717,7 +717,7 @@ describe("customer application new fields and secondary holder", () => {
     selectIdImage("invalid.pdf", false, "application/pdf");
     expect(screen.getByRole("alert")).toHaveTextContent(/jpeg, png, or webp/i);
     expect(screen.getByRole("img", { name: "Government ID image preview" })).toHaveAttribute("src", "blob:primary.png");
-    expect(screen.getByRole("img", { name: "Secondary holder Government ID image preview" })).toHaveAttribute("src", "blob:secondary.png");
+    expect(screen.getByRole("img", { name: "Extra cardholder Government ID image preview" })).toHaveAttribute("src", "blob:secondary.png");
     await user.click(screen.getByRole("button", { name: "Back" }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
     expect(screen.getByText("primary.png")).toBeVisible();
@@ -736,7 +736,7 @@ describe("customer application new fields and secondary holder", () => {
     cleanup();
     expect(revoke).toHaveBeenCalledWith("blob:exit.png");
     show("dev-clerk", <CustomerFormPage />);
-    expect(await screen.findByRole("heading", { name: "Choose a VIP card" })).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Choose a VIP Card" })).toBeVisible();
     expect(screen.queryByText("exit.png")).toBeNull();
   });
 
@@ -780,17 +780,17 @@ describe("customer application new fields and secondary holder", () => {
 
   async function attachProofAndReachReview(user: ReturnType<typeof userEvent.setup>) {
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    await screen.findByText("Sales attribution");
+    await screen.findByText("Sales Attribution");
     await user.click(screen.getByRole("checkbox", { name: /processing of personal data/i }));
     await user.click(screen.getByRole("checkbox", { name: /specimen signatures/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    await screen.findByRole("heading", { name: "Application form" });
+    await screen.findByRole("heading", { name: "Application Form" });
     const proof = screen.getByLabelText(/proof of payment/i) as HTMLInputElement;
     fireEvent.change(proof, { target: { files: [new File(["proof"], "receipt.png", { type: "image/png" })] } });
     // The Clerk enters the receipt reference with the reservation fee (bank transfer: 6-20 letters or digits).
     await user.type(screen.getByLabelText(/receipt or reference number/i), "BT1234567");
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    await screen.findByRole("heading", { name: "Review the application" });
+    await screen.findByRole("heading", { name: "Review the Application" });
   }
 
   async function acceptAndSubmit(user: ReturnType<typeof userEvent.setup>) {
@@ -814,39 +814,39 @@ describe("customer application new fields and secondary holder", () => {
     await reachCustomerStep(user, /gold vip/i);
     expect(await screen.findByRole("switch", { name: /secondary card holder/i })).toBeInTheDocument();
     expect(screen.getByText("Add a secondary card holder")).toBeInTheDocument();
-    expect(screen.queryByLabelText("First name (Secondary holder)")).toBeNull();
+    expect(screen.queryByLabelText("First name (Extra cardholder)")).toBeNull();
   });
 
   it("reveals the full secondary mirror when the toggle is on", async () => {
     const user = userEvent.setup();
     await reachCustomerStep(user, /gold vip/i);
     await user.click(await screen.findByRole("switch", { name: /secondary card holder/i }));
-    expect(await screen.findByLabelText("First name (Secondary holder)")).toBeInTheDocument();
+    expect(await screen.findByLabelText("First name (Extra cardholder)")).toBeInTheDocument();
     for (const name of [
-      "Last name (Secondary holder)",
-      "Citizenship (Secondary holder)",
-      "Date of birth (Secondary holder)",
-      "Mobile number (Secondary holder)",
-      "Email (Secondary holder)",
-      "Landline (Secondary holder)",
-      "TIN number (Secondary holder)",
-      "Occupation/Business Name (Secondary holder)",
-      "Type of Business/Industry (Secondary holder)",
-      "Employed Position (Secondary holder)",
+      "Last name (Extra cardholder)",
+      "Citizenship (Extra cardholder)",
+      "Date of birth (Extra cardholder)",
+      "Mobile number (Extra cardholder)",
+      "Email (Extra cardholder)",
+      "Landline (Extra cardholder)",
+      "TIN number (Extra cardholder)",
+      "Occupation/Business Name (Extra cardholder)",
+      "Type of Business/Industry (Extra cardholder)",
+      "Employed Position (Extra cardholder)",
     ]) {
       expect(screen.getByLabelText(name)).toBeInTheDocument();
     }
     for (const heading of [
-      "Personal details (Secondary holder)",
-      "Contact (Secondary holder)",
-      "Address (Secondary holder)",
-      "Government ID (Secondary holder)",
-      "Employment (Secondary holder)",
+      "Personal Details (Extra Cardholder)",
+      "Contact (Extra Cardholder)",
+      "Address (Extra Cardholder)",
+      "Government ID (Extra Cardholder)",
+      "Employment (Extra Cardholder)",
     ]) {
       expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument();
     }
-    expect(screen.getByRole("radiogroup", { name: "Gender (Secondary holder)" })).toBeInTheDocument();
-    expect(screen.getByRole("radiogroup", { name: "Civil status (Secondary holder)" })).toBeInTheDocument();
+    expect(screen.getByRole("radiogroup", { name: "Gender (Extra cardholder)" })).toBeInTheDocument();
+    expect(screen.getByRole("radiogroup", { name: "Civil status (Extra cardholder)" })).toBeInTheDocument();
   });
 
   it("renders the new primary fields with exact labels", async () => {
@@ -868,7 +868,7 @@ describe("customer application new fields and secondary holder", () => {
   it("shows Age as a disabled derived field next to Date of birth", async () => {
     const user = userEvent.setup();
     await reachCustomerStep(user, /silver vip/i);
-    const personalCard = screen.getByRole("heading", { name: "Personal details" }).closest(".customer-application__block") as HTMLElement;
+    const personalCard = screen.getByRole("heading", { name: "Personal Details" }).closest(".customer-application__block") as HTMLElement;
     const dob = within(personalCard).getByLabelText(/date of birth/i) as HTMLInputElement;
     const age = within(personalCard).getByLabelText("Age") as HTMLInputElement;
     expect(age).toBeDisabled();
@@ -884,7 +884,7 @@ describe("customer application new fields and secondary holder", () => {
     const user = userEvent.setup();
     await reachCustomerStep(user, /gold vip/i);
     await user.click(await screen.findByRole("switch", { name: /secondary card holder/i }));
-    const secHeading = await screen.findByRole("heading", { name: "Personal details (Secondary holder)" });
+    const secHeading = await screen.findByRole("heading", { name: "Personal Details (Extra Cardholder)" });
     const secCard = secHeading.closest(".customer-application__block") as HTMLElement;
     const secDob = within(secCard).getByLabelText(/date of birth/i) as HTMLInputElement;
     const secAge = within(secCard).getByLabelText("Age") as HTMLInputElement;
@@ -893,7 +893,7 @@ describe("customer application new fields and secondary holder", () => {
     expect(secAge.value).toBe("");
     fireEvent.change(secDob, { target: { value: "2000-01-01" } });
     await waitFor(() => expect(secAge.value).toBe(String(computeAge("2000-01-01", manilaToday()))));
-    const secLandline = screen.getByLabelText("Landline (Secondary holder)") as HTMLInputElement;
+    const secLandline = screen.getByLabelText("Landline (Extra cardholder)") as HTMLInputElement;
     expect(secLandline.parentElement?.querySelector('[aria-hidden="true"]')).toBeNull();
     fireEvent.change(secDob, { target: { value: "" } });
     await waitFor(() => expect(secAge.value).toBe(""));
@@ -916,7 +916,7 @@ describe("customer application new fields and secondary holder", () => {
     // Still true on the next step.
     await fillValidPrimary(user);
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    await screen.findByText("Sales attribution");
+    await screen.findByText("Sales Attribution");
     expect(screen.queryByText(/step \d+ of \d+/i)).toBeNull();
     const nextBar = await screen.findByRole("progressbar", { name: "Application progress" });
     expect(within(nextBar.parentElement as HTMLElement).getByText("Sales and consent")).toBeInTheDocument();
@@ -1109,10 +1109,10 @@ describe("customer application new fields and secondary holder", () => {
     await reachCustomerStep(user, /gold vip/i);
     await fillValidPrimary(user);
     await user.click(screen.getByRole("switch", { name: /secondary card holder/i }));
-    await user.type(await screen.findByLabelText("First name (Secondary holder)"), "Ana");
+    await user.type(await screen.findByLabelText("First name (Extra cardholder)"), "Ana");
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    expect(await screen.findByText("Enter the supplementary holder's first and last name.")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Personal details" })).toBeInTheDocument();
+    expect(await screen.findByText("Enter the extra cardholder's first and last name.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Personal Details" })).toBeInTheDocument();
   });
 
   it("blocks submit-path progress when landline and TIN are invalid", async () => {
@@ -1125,8 +1125,8 @@ describe("customer application new fields and secondary holder", () => {
     // Continue now returns to the step that owns the first failing field and
     // highlights it, instead of silently stalling on a later step.
     expect(await screen.findByText("Landline must be 7 digits for this area code.")).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: "Personal details" })).toBeInTheDocument();
-    expect(screen.queryByText("Sales attribution")).toBeNull();
+    expect(await screen.findByRole("heading", { name: "Personal Details" })).toBeInTheDocument();
+    expect(screen.queryByText("Sales Attribution")).toBeNull();
   });
 
   it("returns from Reservation to the owning step with the specific Customer ID message", { timeout: 30_000 }, async () => {
@@ -1142,12 +1142,12 @@ describe("customer application new fields and secondary holder", () => {
 
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    await screen.findByRole("radiogroup", { name: "Payment scheme" });
+    await screen.findByRole("radiogroup", { name: "Payment plan" });
     await choosePlanAndContinue(user);
-    await screen.findByRole("heading", { name: "Personal details" });
+    await screen.findByRole("heading", { name: "Personal Details" });
     await fillValidPrimary(user);
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    await screen.findByText("Sales attribution");
+    await screen.findByText("Sales Attribution");
 
     // Another staff session claims the manual ID after the wizard has passed Sales.
     await user.click(screen.getByRole("radio", { name: "Manual" }));
@@ -1155,7 +1155,7 @@ describe("customer application new fields and secondary holder", () => {
     await user.click(screen.getByRole("checkbox", { name: /processing of personal data/i }));
     await user.click(screen.getByRole("checkbox", { name: /specimen signatures/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    await screen.findByRole("heading", { name: "Application form" });
+    await screen.findByRole("heading", { name: "Application Form" });
 
     await user.click(screen.getByRole("button", { name: "Save another application" }));
     await waitFor(() => expect(screen.getByTestId("draft-probe")).toHaveTextContent("saved"));
@@ -1170,12 +1170,12 @@ describe("customer application new fields and secondary holder", () => {
 
     // The wizard returns to the Sales and consent step that owns the field and
     // highlights it there.
-    expect(await screen.findByText("Sales attribution")).toBeInTheDocument();
+    expect(await screen.findByText("Sales Attribution")).toBeInTheDocument();
     const customerId = screen.getByLabelText("Customer ID");
     expect(customerId).toHaveValue(manualId);
     expect(customerId).toHaveAttribute("aria-invalid", "true");
     expect(customerId).toHaveAccessibleDescription(/This Customer ID is already in use/);
-    expect(screen.queryByRole("heading", { name: "Review the application" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Review the Application" })).toBeNull();
   });
 
   // Full submit path with combobox address picks; needs headroom over the 15s project default under load.
@@ -1183,16 +1183,16 @@ describe("customer application new fields and secondary holder", () => {
     const user = userEvent.setup();
     await reachCustomerStep(user, /gold vip/i);
     await user.click(screen.getByRole("switch", { name: /secondary card holder/i }));
-    await user.type(await screen.findByLabelText("First name (Secondary holder)"), "Ana");
-    await user.type(screen.getByLabelText("Last name (Secondary holder)"), "Santos");
+    await user.type(await screen.findByLabelText("First name (Extra cardholder)"), "Ana");
+    await user.type(screen.getByLabelText("Last name (Extra cardholder)"), "Santos");
     await user.click(screen.getByRole("switch", { name: /secondary card holder/i }));
     expect(secondaryToggle()).toHaveAttribute("aria-checked", "false");
-    expect(screen.queryByLabelText("First name (Secondary holder)")).toBeNull();
+    expect(screen.queryByLabelText("First name (Extra cardholder)")).toBeNull();
     await fillValidPrimary(user);
     await attachProofAndReachReview(user);
     await acceptAndSubmit(user);
     expect(await screen.findByText(/waiting for Finance verification|submitted|drafted/i)).toBeInTheDocument();
-    expect(screen.queryByText("Enter the supplementary holder's first and last name.")).toBeNull();
+    expect(screen.queryByText("Enter the extra cardholder's first and last name.")).toBeNull();
   });
 
   it("clears the secondary profile on plan change", async () => {
@@ -1200,7 +1200,7 @@ describe("customer application new fields and secondary holder", () => {
     const user = userEvent.setup();
     await reachCustomerStep(user, /gold vip/i);
     await user.click(screen.getByRole("switch", { name: /secondary card holder/i }));
-    await user.type(await screen.findByLabelText("First name (Secondary holder)"), "Ana");
+    await user.type(await screen.findByLabelText("First name (Extra cardholder)"), "Ana");
     selectIdImage("gold-only.png", true);
     const progress = screen.getByRole("list", { name: "Progress" });
     await user.click(within(progress).getByText(/vip card/i));
@@ -1208,18 +1208,18 @@ describe("customer application new fields and secondary holder", () => {
     expect(revoke).toHaveBeenCalledWith("blob:gold-only.png");
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await choosePlanAndContinue(user);
-    await screen.findByRole("heading", { name: "Personal details" });
+    await screen.findByRole("heading", { name: "Personal Details" });
     expect(secondaryToggle()).toBeNull();
     const progressAgain = screen.getByRole("list", { name: "Progress" });
     await user.click(within(progressAgain).getByText(/vip card/i));
     await user.click(await screen.findByRole("radio", { name: /gold vip/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await choosePlanAndContinue(user);
-    await screen.findByRole("heading", { name: "Personal details" });
+    await screen.findByRole("heading", { name: "Personal Details" });
     const toggle = secondaryToggle();
     expect(toggle).toHaveAttribute("aria-checked", "false");
     await user.click(toggle!);
-    expect((await screen.findByLabelText("First name (Secondary holder)") as HTMLInputElement).value).toBe("");
+    expect((await screen.findByLabelText("First name (Extra cardholder)") as HTMLInputElement).value).toBe("");
   });
 
   // Full submit path with combobox address picks; needs headroom over the 15s project default under load.
@@ -1230,16 +1230,16 @@ describe("customer application new fields and secondary holder", () => {
     await reachCustomerStep(user, /gold vip/i);
     await fillValidPrimary(user);
     await user.click(screen.getByRole("switch", { name: /secondary card holder/i }));
-    await user.type(await screen.findByLabelText("First name (Secondary holder)"), "Ana");
-    await user.type(screen.getByLabelText("Last name (Secondary holder)"), "Santos");
-    await user.type(screen.getByLabelText("Citizenship (Secondary holder)"), "Filipino");
-    await user.type(screen.getByLabelText("Mobile number (Secondary holder)"), "171110002");
-    await user.type(screen.getByLabelText("Landline (Secondary holder)"), "028123456");
-    await user.type(screen.getByLabelText("TIN number (Secondary holder)"), "123456789");
+    await user.type(await screen.findByLabelText("First name (Extra cardholder)"), "Ana");
+    await user.type(screen.getByLabelText("Last name (Extra cardholder)"), "Santos");
+    await user.type(screen.getByLabelText("Citizenship (Extra cardholder)"), "Filipino");
+    await user.type(screen.getByLabelText("Mobile number (Extra cardholder)"), "171110002");
+    await user.type(screen.getByLabelText("Landline (Extra cardholder)"), "028123456");
+    await user.type(screen.getByLabelText("TIN number (Extra cardholder)"), "123456789");
     selectIdImage("submitted-id.png");
     await attachProofAndReachReview(user);
-    expect(screen.queryByText("Fix these before continuing")).toBeNull();
-    const holderRow = screen.getByText("Supplementary holder", { selector: "dt" });
+    expect(screen.queryByText("Fix These Before Continuing")).toBeNull();
+    const holderRow = screen.getByText("Extra cardholder", { selector: "dt" });
     expect(holderRow.parentElement).toHaveTextContent("Ana Santos");
     await acceptAndSubmit(user);
     expect(await screen.findByText(/waiting for Finance verification|submitted|drafted/i)).toBeInTheDocument();
@@ -1263,7 +1263,7 @@ describe("customer application new fields and secondary holder", () => {
 
     // The acceptance checkbox lives on Review, so Submit stays there and names the
     // missing confirmation instead of navigating to a step without that control.
-    expect(await screen.findByRole("heading", { name: "Review the application" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Review the Application" })).toBeInTheDocument();
     const notifications = await screen.findByLabelText(/notifications/i);
     expect(within(notifications).getByText("Confirm that the customer accepted the payment schedule.")).toBeInTheDocument();
   });
@@ -1350,13 +1350,13 @@ describe("customer application new fields and secondary holder", () => {
     await user.click(screen.getByRole("button", { name: /continue/i }));
     const recommender = await screen.findByRole("combobox", { name: "Referrer / VIP Recommender" });
     await waitFor(() => expect(recommender).toHaveAccessibleDescription(/pending accreditation/i));
-    await user.click(screen.getByRole("button", { name: "Save as draft" }));
+    await user.click(screen.getByRole("button", { name: "Save as Draft" }));
     expect(update).not.toHaveBeenCalled();
     await user.click(recommender);
     expect(screen.queryByRole("option", { name: /Ana Mendoza/ })).toBeNull();
     expect(screen.getByRole("option", { name: /Paolo Ramos/ })).toBeInTheDocument();
     await user.click(screen.getByRole("option", { name: "No referrer" }));
-    await user.click(screen.getByRole("button", { name: "Save as draft" }));
+    await user.click(screen.getByRole("button", { name: "Save as Draft" }));
     expect(await screen.findByText("Draft saved.")).toBeVisible();
     expect(update.mock.calls[0]?.[1].recommenderMemberId).toBeNull();
   });
@@ -1376,14 +1376,14 @@ describe("new customer unsaved changes", () => {
     const before = show("dev-clerk", <CustomerFormPage />);
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    expect(await screen.findByRole("heading", { name: "Payment plan" })).toBeInTheDocument();
-    expect(await screen.findByRole("complementary", { name: "Selected VIP card" })).toHaveTextContent("Silver VIP (S1)");
+    expect(await screen.findByRole("heading", { name: "Payment Plan" })).toBeInTheDocument();
+    expect(await screen.findByRole("complementary", { name: "Selected VIP card" })).toHaveTextContent("Silver VIP");
 
     before.unmount();
     sessionStorage.setItem("afhomes.customer-wizard.v1", JSON.stringify({ step: 1, draft: { vipPlan: "S1" } }));
     show("dev-clerk", <CustomerFormPage />);
 
-    expect(await screen.findByRole("heading", { name: "Choose a VIP card" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Choose a VIP Card" })).toBeInTheDocument();
     expect(await screen.findByRole("radio", { name: /silver vip/i })).toHaveAttribute("aria-checked", "false");
     expect(sessionStorage.getItem("afhomes.customer-wizard.v1")).toBeNull();
   });
@@ -1574,7 +1574,7 @@ describe("customer application realtime field validation", () => {
     primary.unmount();
 
     render(<ValidationHarness secondary />);
-    const secondaryTin = screen.getByLabelText("TIN number (Secondary holder)") as HTMLInputElement;
+    const secondaryTin = screen.getByLabelText("TIN number (Extra cardholder)") as HTMLInputElement;
     expect(secondaryTin).toHaveAttribute("maxlength", "15");
     await user.type(secondaryTin, "091235467860");
     expect(secondaryTin.value).toBe("091-235-467-860");
@@ -1638,28 +1638,28 @@ describe("customer application realtime field validation", () => {
     const user = userEvent.setup();
     render(<ValidationHarness secondary />);
 
-    const mobile = screen.getByLabelText("Mobile number (Secondary holder)") as HTMLInputElement;
+    const mobile = screen.getByLabelText("Mobile number (Extra cardholder)") as HTMLInputElement;
     await user.type(mobile, "0917");
     fireEvent.blur(mobile);
     expect(await screen.findByText("Mobile number required.")).toBeInTheDocument();
     await user.type(mobile, "1110009");
     expect(screen.queryByText("Mobile number required.")).toBeNull();
 
-    const landline = screen.getByLabelText("Landline (Secondary holder)") as HTMLInputElement;
+    const landline = screen.getByLabelText("Landline (Extra cardholder)") as HTMLInputElement;
     await user.type(landline, "123");
     fireEvent.blur(landline);
     expect(await screen.findByText("Landline must be 7 to 10 digits.")).toBeInTheDocument();
     await user.type(landline, "4567");
     expect(screen.queryByText("Landline must be 7 to 10 digits.")).toBeNull();
 
-    const tin = screen.getByLabelText("TIN number (Secondary holder)") as HTMLInputElement;
+    const tin = screen.getByLabelText("TIN number (Extra cardholder)") as HTMLInputElement;
     await user.type(tin, "12345");
     fireEvent.blur(tin);
     expect(await screen.findByText("TIN must be 9 or 12 digits.")).toBeInTheDocument();
     await user.type(tin, "6789");
     expect(screen.queryByText("TIN must be 9 or 12 digits.")).toBeNull();
 
-    const email = screen.getByLabelText("Email (Secondary holder)") as HTMLInputElement;
+    const email = screen.getByLabelText("Email (Extra cardholder)") as HTMLInputElement;
     await user.type(email, "not-an-email");
     fireEvent.blur(email);
     expect(await screen.findByText("Enter a valid email address.")).toBeInTheDocument();
@@ -1667,7 +1667,7 @@ describe("customer application realtime field validation", () => {
     await user.type(email, "ana@example.com");
     expect(screen.queryByText("Enter a valid email address.")).toBeNull();
 
-    const citizenship = screen.getByLabelText("Citizenship (Secondary holder)") as HTMLInputElement;
+    const citizenship = screen.getByLabelText("Citizenship (Extra cardholder)") as HTMLInputElement;
     fireEvent.change(citizenship, { target: { value: "A".repeat(81) } });
     fireEvent.blur(citizenship);
     expect(await screen.findByText("Citizenship must be 80 characters or less.")).toBeInTheDocument();
@@ -1736,7 +1736,7 @@ describe("customer application realtime field validation", () => {
     const user = userEvent.setup();
     render(<ValidationHarness secondary errors={{ supplementaryHolder: "The supplementary holder's birth date must be in the past." }} />);
 
-    const firstName = screen.getByLabelText("First name (Secondary holder)") as HTMLInputElement;
+    const firstName = screen.getByLabelText("First name (Extra cardholder)") as HTMLInputElement;
     // maxLength blocks typing past 80, so set the over-length value directly,
     // then blur: the local name error is derived but the submit error wins.
     fireEvent.change(firstName, { target: { value: "A".repeat(81) } });
@@ -1745,7 +1745,7 @@ describe("customer application realtime field validation", () => {
     expect(screen.queryByText("First name must be 80 characters or fewer.")).toBeNull();
 
     // A local format error on another secondary field still appears beside it.
-    const mobile = screen.getByLabelText("Mobile number (Secondary holder)") as HTMLInputElement;
+    const mobile = screen.getByLabelText("Mobile number (Extra cardholder)") as HTMLInputElement;
     await user.type(mobile, "0917");
     fireEvent.blur(mobile);
     expect(screen.getByText("Mobile number required.")).toBeInTheDocument();
@@ -1768,7 +1768,7 @@ describe("secondary holder submit payload", () => {
   it("reports the secondary name rule exactly as Review renders it", () => {
     const started = { ...toDraft(), vipPlan: "G1", secEnabled: true, secFirstName: "Ana", secLastName: "" };
     const errors = validateCustomerForSubmit(toInput(started), [], undefined, true);
-    expect(errors.supplementaryHolder).toBe("Enter the supplementary holder's first and last name.");
+    expect(errors.supplementaryHolder).toBe("Enter the extra cardholder's first and last name.");
   });
 
   it("reports the exact landline and TIN messages rendered at Review", () => {
@@ -1796,7 +1796,7 @@ describe("gold contract preview and tiles", () => {
 
   it("previews the exact Spot Cash schedule lines from buildSchedule in the prepare dialog", async () => {
     show("dev-admin", <PrepareContractDialog customer={goldCustomer("scheme-spot-cash")} open onClose={() => {}} />);
-    expect(await screen.findByRole("heading", { name: "Payment schedule" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Payment Schedule" })).toBeInTheDocument();
     expect(screen.getByText("Reservation fee")).toBeInTheDocument();
     expect(screen.getByText("₱10,000.00")).toBeInTheDocument();
     expect(screen.getByText("Balance")).toBeInTheDocument();
@@ -1805,7 +1805,7 @@ describe("gold contract preview and tiles", () => {
 
   it("previews the exact installment schedule lines from buildSchedule in the prepare dialog", async () => {
     show("dev-admin", <PrepareContractDialog customer={goldCustomer("scheme-installment-4m")} open onClose={() => {}} />);
-    expect(await screen.findByRole("heading", { name: "Payment schedule" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Payment Schedule" })).toBeInTheDocument();
     expect(screen.getByText("Reservation fee")).toBeInTheDocument();
     expect(screen.getByText("MA1")).toBeInTheDocument();
     expect(screen.getAllByText("₱95,000.00")).toHaveLength(4);
@@ -1834,10 +1834,10 @@ describe("public accreditation verification", () => {
 describe("customer edit reuses the application wizard", () => {
   it("renders the wizard for an existing draft instead of the old single-page form", async () => {
     show("dev-clerk", <CustomerFormPage customerId="cust-a2" />);
-    expect(await screen.findByRole("heading", { name: "Choose a VIP card" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Choose a VIP Card" })).toBeInTheDocument();
     expect(await screen.findByRole("radiogroup", { name: "VIP card" })).toBeInTheDocument();
     // The old single-page CustomerForm opened with this SectionBlock heading.
-    expect(screen.queryByRole("heading", { name: "VIP card and payment plan" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "VIP Card and Payment Plan" })).toBeNull();
   });
 
   it("pre-fills the saved VIP card on edit", async () => {
@@ -1856,7 +1856,7 @@ describe("customer edit reuses the application wizard", () => {
         <CustomerFormPage customerId="cust-a2" />
       </>,
     );
-    await screen.findByRole("heading", { name: "Choose a VIP card" });
+    await screen.findByRole("heading", { name: "Choose a VIP Card" });
     const probe = () => screen.getByTestId("customer-record-probe");
     await waitFor(() => expect(probe().getAttribute("data-count")).not.toBe("0"));
     const initialCount = probe().getAttribute("data-count");
@@ -1865,13 +1865,13 @@ describe("customer edit reuses the application wizard", () => {
 
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    const schemes = await screen.findByRole("radiogroup", { name: "Payment scheme" });
+    const schemes = await screen.findByRole("radiogroup", { name: "Payment plan" });
     await user.click(
       within(schemes).getAllByRole("radio").find((item) => item.getAttribute("aria-disabled") !== "true" && !item.hasAttribute("data-disabled"))!,
     );
     await user.click(screen.getByRole("radio", { name: /standard \(s\)/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    await screen.findByRole("heading", { name: "Personal details" });
+    await screen.findByRole("heading", { name: "Personal Details" });
 
     await user.type(screen.getByLabelText(/first name/i), "Maria");
     await user.type(screen.getByLabelText(/last name/i), "Santos");
@@ -1889,15 +1889,15 @@ describe("customer edit reuses the application wizard", () => {
     show("dev-admin", <CustomerFormPage customerId="cust-a1" />);
     expect(await screen.findByRole("radio", { name: /silver vip/i })).toHaveAttribute("aria-checked", "true");
     await user.click(screen.getByRole("button", { name: /continue/i }));
-    await screen.findByRole("radiogroup", { name: "Payment scheme" });
+    await screen.findByRole("radiogroup", { name: "Payment plan" });
     // A submitted customer is never saved as a draft.
     expect(screen.queryByRole("button", { name: /save as draft/i })).toBeNull();
 
     for (let step = 0; step < 4; step += 1) {
       await user.click(screen.getByRole("button", { name: /continue/i }));
     }
-    expect(await screen.findByRole("heading", { name: "Review the application" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Save correction" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Review the Application" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save Correction" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /submit application/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /save as draft/i })).toBeNull();
   });

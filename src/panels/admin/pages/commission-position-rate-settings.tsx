@@ -11,14 +11,15 @@ import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { SelectField, TextField } from "@/shared/forms/modern";
 import { formatBasisPoints } from "@/shared/lib/money";
 import { Button } from "@/shared/ui/button";
+import { designationLabel } from "@/modules/sales-network/display";
 
 const POSITIONS: Designation[] = ["SVD", "SSM", "SM", "OST"];
 const COMMISSION_TYPES = Object.entries(COMMISSION_ROLE_LABELS).map(([value, label]) => ({ value, label }));
 const columns: ColumnDef<VipPositionRate, unknown>[] = [
-  { header: "Position", accessorKey: "designation" },
-  { header: "Commission type", cell: ({ row }) => COMMISSION_ROLE_LABELS[row.original.role] },
-  { header: "Approved standard", cell: ({ row }) => formatBasisPoints(row.original.rateBp) },
-  { header: "Approval reference", accessorKey: "approvalReference" },
+  { header: "Position", cell: ({ row }) => designationLabel(row.original.designation) },
+  { header: "Commission Type", cell: ({ row }) => COMMISSION_ROLE_LABELS[row.original.role] },
+  { header: "Approved Standard", cell: ({ row }) => formatBasisPoints(row.original.rateBp) },
+  { header: "Approval Reference", accessorKey: "approvalReference" },
 ];
 
 export function CommissionPositionRateSettings({ rates }: { rates: VipPositionRate[] }) {
@@ -28,13 +29,13 @@ export function CommissionPositionRateSettings({ rates }: { rates: VipPositionRa
     <section className="tw:space-y-3" aria-labelledby="commission-position-rates-heading">
       <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
         <div>
-          <h2 id="commission-position-rates-heading" className="tw:text-lg tw:font-semibold">VIP position rates</h2>
+          <h2 id="commission-position-rates-heading" className="tw:text-lg tw:font-semibold">VIP Position Rates</h2>
           <p className="tw:text-sm tw:text-muted-foreground">Save a company-approved standard, then apply it to sellers whose service terms use it.</p>
         </div>
 
-        <Button type="button" variant="outline" onClick={() => setEditing(true)}>Set VIP standard</Button>
+        <Button type="button" variant="outline" onClick={() => setEditing(true)}>Set VIP Standard</Button>
       </div>
-      <DataTable data={rates} columns={columns} caption="Approved VIP position rates"
+      <DataTable data={rates} columns={columns} caption="Approved VIP Position Rates"
         emptyText="No approved VIP position rates recorded." getRowId={(row) => `${row.designation}-${row.role}`} showAllRows />
       {editing ? <SetPositionRateDialog rates={rates} onClose={() => setEditing(false)} /> : null}
     </section>
@@ -51,7 +52,7 @@ function SetPositionRateDialog({ rates, onClose }: { rates: VipPositionRate[]; o
   const current = rates.find((item) => item.designation === designation && item.role === role);
 
   return (
-    <FormDialog open title="Set approved VIP standard" submitText="Save standard" pending={save.isPending} error={error} onClose={onClose}
+    <FormDialog open title="Set Approved VIP Standard" submitText="Save Standard" pending={save.isPending} error={error} onClose={onClose}
       onSubmit={() => {
         const rateBp = parseCommissionRate(rate);
         if (!designation || rateBp === null || !approvalReference.trim()) {
@@ -64,7 +65,7 @@ function SetPositionRateDialog({ rates, onClose }: { rates: VipPositionRate[]; o
         }).catch((failure: Error) => setError(failure.message));
       }}>
       <SelectField label="Seller position" required value={designation} onChange={(value) => setDesignation(value as Designation)}
-        options={POSITIONS.map((position) => ({ value: position, label: position }))} />
+        options={POSITIONS.map((position) => ({ value: position, label: designationLabel(position) }))} />
       <SelectField label="Commission type" required value={role} onChange={(value) => setRole(value as CommissionRole)} options={COMMISSION_TYPES} />
       {current ? <p className="tw:text-sm tw:text-muted-foreground">Current standard {formatBasisPoints(current.rateBp)}. Changes apply to later adoptions.</p> : null}
       <TextField label="Approved standard (%)" required inputMode="decimal" value={rate} onChange={setRate} />

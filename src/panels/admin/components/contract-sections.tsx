@@ -25,13 +25,16 @@ import { AdminPage, AdminSection, AdminSectionHeading, AdminStatCard, AdminStatG
 import { humanize } from "@/shared/lib/humanize";
 import { recordLabel } from "@/shared/lib/record-label";
 import { useAdminAreaTabAccess } from "../use-role-aware-navigation";
+import { useTierDisplayName } from "./use-tier-display-name";
 
 /** Contract with its payments, membership, schedule, ledger and milestones, derived once for every detail page. */
 export function useContractRecord(contractId: string, includePaymentReference = false) {
   const contracts = useContracts();
   const payments = usePayments();
   const memberships = useMemberships();
+  const tierName = useTierDisplayName();
   const contract = contracts.data?.find((item) => item.id === contractId);
+  const planName = tierName(contract?.productCode);
   const contractPayments = useMemo(() => (payments.data ?? []).filter((item) => item.contractId === contractId), [payments.data, contractId]);
   const membership = memberships.data?.find((item) => item.contractId === contractId);
   const today = manilaToday();
@@ -41,7 +44,7 @@ export function useContractRecord(contractId: string, includePaymentReference = 
     () => (contract ? deriveMilestones({ contract, payments: contractPayments, saleConfirmedDate: contract.sale?.confirmedDate ?? null, activationDate: membership?.activationDate ?? null, cardId: membership?.cardId ?? null, vipNumber: contract.vipNumber, signedAgreementRecordedDate: contract.signedAgreementRecordedDate, includePaymentReference }) : []),
     [contract, contractPayments, membership?.activationDate, membership?.cardId, includePaymentReference],
   );
-  return { isLoading: contracts.isLoading, contract, payments: contractPayments, membership, schedule, ledger, milestones };
+  return { isLoading: contracts.isLoading, contract, planName, payments: contractPayments, membership, schedule, ledger, milestones };
 }
 
 export type ContractRecord = Omit<ReturnType<typeof useContractRecord>, "contract"> & { contract: ContractView };
@@ -50,7 +53,7 @@ export function ContractCommissionRateNotice({ contract, membership }: ContractR
   const access = useAdminAreaTabAccess("commissions");
   if (membership?.cardId || contract.missingCommissionRates.length === 0) return null;
   return (
-    <InfoNote title="Approved commission rates needed">
+    <InfoNote title="Approved Commission Rates Needed">
       <p>AFHomes needs these rates before it can issue the VIP Number.</p>
       <ul className="tw:mt-2 tw:space-y-1">
         {contract.missingCommissionRates.map(({ role, memberName }) => {
@@ -63,7 +66,7 @@ export function ContractCommissionRateNotice({ contract, membership }: ContractR
                   href={`/admin/commissions?tab=rates&sale=${encodeURIComponent(contract.sale.id)}&role=${role}`}
                   className="tw:font-semibold tw:text-primary tw:underline tw:underline-offset-4"
                 >
-                  Set {recipient} rate
+                  Set {role === "DSC" ? "Closing Seller" : "Referrer"} Rate
                 </Link>
               ) : null}
             </li>
@@ -101,14 +104,15 @@ export function ContractPageFrame({
   const { contract } = record;
   if (!contract) {
     return (
-      <AdminPage anyOf={anyOf} title="Contract not found" crumbs={parentCrumbs}>
+      <AdminPage anyOf={anyOf} title="Contract Not Found" crumbs={parentCrumbs}>
         <InfoNote>This contract does not exist or is not visible to this account.</InfoNote>
       </AdminPage>
     );
   }
   const full: ContractRecord = { ...record, contract };
+  const title = recordLabel("Contract", contract.customerName, record.planName);
   return (
-    <AdminPage anyOf={anyOf} title={recordLabel("Contract", contract.customerName, contract.productCode)} crumbs={[...parentCrumbs, { label: recordLabel("Contract", contract.customerName, contract.productCode) }]} actions={actions?.(full)}>
+    <AdminPage anyOf={anyOf} title={title} crumbs={[...parentCrumbs, { label: title }]} actions={actions?.(full)}>
       {children(full)}
     </AdminPage>
   );
@@ -149,9 +153,9 @@ export function ContractTiles({ contract, payments }: { contract: ContractView; 
   return (
     <div role="group" aria-label="Contract summary">
       <AdminStatGrid columns={4}>
-        <AdminStatCard label="Contract price" value={<Money value={contract.priceCentavos} />} icon={Layers} tone="brand" description={contract.priceStatus === "conflict" ? "Source conflict" : "Snapshot"} />
-        <AdminStatCard label="Verified payments" value={<Money value={totalVerifiedCentavos(payments)} />} icon={CreditCard} tone="success" />
-        <AdminStatCard label="Outstanding balance" value={<Money value={outstandingBalanceCentavos(contract, payments)} />} icon={Clock} tone="warning" />
+        <AdminStatCard label="Contract Price" value={<Money value={contract.priceCentavos} />} icon={Layers} tone="brand" description={contract.priceStatus === "conflict" ? "Source conflict" : "Snapshot"} />
+        <AdminStatCard label="Verified Payments" value={<Money value={totalVerifiedCentavos(payments)} />} icon={CreditCard} tone="success" />
+        <AdminStatCard label="Outstanding Balance" value={<Money value={outstandingBalanceCentavos(contract, payments)} />} icon={Clock} tone="warning" />
         <AdminStatCard label="Status" value={<BizBadge status={contract.status} />} icon={Tag} tone="neutral" />
       </AdminStatGrid>
     </div>
@@ -163,8 +167,8 @@ export function ContractTermsSection({ record }: { record: ContractRecord }) {
   const rows: Array<{ icon: LucideIcon; term: string; value: ReactNode }> = [
     { icon: User, term: "Customer", value: contract.customerName },
     { icon: UserCheck, term: "Seller", value: contract.sellerName ?? "Company" },
-    { icon: Layers, term: "Plan", value: `${contract.productCode} · ${contract.validityYears} years` },
-    { icon: CalendarDays, term: "Scheme", value: `${contract.schemeLabel}${contract.paymentCode ? ` (${contract.paymentCode})` : ""}` },
+    { icon: Layers, term: "Plan", value: recordLabel(record.planName ?? "—", `${contract.validityYears} years`) },
+    { icon: CalendarDays, term: "Payment plan", value: `${contract.schemeLabel}${contract.paymentCode ? ` (${contract.paymentCode})` : ""}` },
     ...(contract.arrangement
       ? [
           {
@@ -177,18 +181,18 @@ export function ContractTermsSection({ record }: { record: ContractRecord }) {
           },
         ]
       : []),
-    { icon: Diamond, term: "Classification", value: contract.classification === "S" ? "Standard (S)" : "Non-Standard (N)" },
+    { icon: Diamond, term: "Contract type", value: contract.classification === "S" ? "Standard (S)" : "Non-Standard (N)" },
     { icon: Star, term: "Benefits", value: `${contract.benefits.vipDiscountPercent}% VIP discount · ${contract.benefits.lifetimePoints.toLocaleString("en-PH")} lifetime points · ${contract.benefits.pointsPerCycle.toLocaleString("en-PH")} per cycle` },
     { icon: IdCard, term: "VIP Number", value: contract.vipNumber ?? EMPTY },
-    ...(contract.raNumber && contract.raNumber !== contract.vipNumber ? [{ icon: IdCard, term: "Historical RA number", value: contract.raNumber }] : []),
+    ...(contract.raNumber && contract.raNumber !== contract.vipNumber ? [{ icon: IdCard, term: "Historical Reservation Agreement number", value: contract.raNumber }] : []),
     { icon: Check, term: "Customer accepted", value: contract.customerAccepted ? "Yes" : "No" },
     { icon: CalendarCheck, term: "Finalized", value: formatDate(contract.finalizedAt) },
     { icon: Receipt, term: "Sale", value: contract.sale ? <BizBadge status={contract.sale.status} /> : EMPTY },
     { icon: Hourglass, term: "Holds", value: contract.holds.length > 0 ? <ul className="tw:m-0 tw:list-disc tw:ps-5">{contract.holds.map((hold) => <li key={hold}>{hold}</li>)}</ul> : EMPTY },
-    { icon: Award, term: "Membership", value: membership ? <span>{humanize(membership.status)}{membership.cardId ? ` · Card ${membership.cardId}` : ""}{membership.financialHold ? " · Financial Hold" : ""}</span> : EMPTY },
+    { icon: Award, term: "Membership", value: membership ? <span>{humanize(membership.status)}{membership.cardId ? ` · Card ${membership.cardId}` : ""}{membership.financialHold ? " · Payment Hold" : ""}</span> : EMPTY },
   ];
   return (
-    <ContractCard icon={FileText} title="Contract terms">
+    <ContractCard icon={FileText} title="Contract Terms">
       <dl className="contract-detail__terms tw:m-0 tw:flex tw:flex-col">
         {rows.map((row) => {
           const Icon = row.icon;
@@ -234,7 +238,7 @@ export function ContractScheduleSection({ record }: { record: ContractRecord }) 
         <SheetContent className="contract-detail__sheet tw:overflow-y-auto tw:data-[side=right]:w-full tw:sm:data-[side=right]:max-w-md">
           <SheetHeader className="tw:gap-2 tw:border-b tw:border-border tw:pr-12">
             <SheetTitle className="tw:text-lg tw:font-semibold tw:tracking-tight">{line?.label ?? "Installment"}</SheetTitle>
-            <SheetDescription>{`${contract.customerName} · ${contract.productCode}`}</SheetDescription>
+            <SheetDescription>{recordLabel(contract.customerName, record.planName)}</SheetDescription>
             {line ? <div><BizBadge status={line.status} /></div> : null}
           </SheetHeader>
           <div className="tw:flex tw:flex-col tw:gap-5 tw:px-4">
@@ -266,8 +270,8 @@ export function ContractScheduleSection({ record }: { record: ContractRecord }) 
         </SheetContent>
       </Sheet>
       <section className="tw:flex tw:flex-col tw:gap-4">
-        <AdminSectionHeading title="Payment schedule" icon={CalendarDays} />
-        <DataTable data={schedule} columns={columns} getRowId={(row) => String(row.seq)} emptyText="No schedule." caption="Payment schedule" onRowOpen={setLine} getRowLabel={(row) => `Open ${row.label}`} />
+        <AdminSectionHeading title="Payment Schedule" icon={CalendarDays} />
+        <DataTable data={schedule} columns={columns} getRowId={(row) => String(row.seq)} emptyText="No schedule." caption="Payment Schedule" onRowOpen={setLine} getRowLabel={(row) => `Open ${row.label}`} />
       </section>
     </>
   );
@@ -275,7 +279,7 @@ export function ContractScheduleSection({ record }: { record: ContractRecord }) 
 
 export function ContractMilestonesSection({ record }: { record: ContractRecord }) {
   return (
-    <AdminSection title="Collection milestones">
+    <AdminSection title="Collection Milestones">
       <DetailList>
         {record.milestones.map((milestone) => (
           <DetailRow key={milestone.key} term={milestone.label}>
@@ -290,7 +294,7 @@ export function ContractMilestonesSection({ record }: { record: ContractRecord }
 
 /** Readable name for a ledger entry kind, shared by the table column, row label and details sheet. */
 function ledgerEntryLabel(kind: LedgerEntry["kind"]): string {
-  return kind === "payment" ? "Payment" : kind === "reversal" ? "Reversal" : "Refund";
+  return kind === "payment" ? "Payment" : kind === "reversal" ? "Undo" : "Refund";
 }
 
 export function ContractLedgerSection({ record }: { record: ContractRecord }) {
@@ -313,14 +317,14 @@ export function ContractLedgerSection({ record }: { record: ContractRecord }) {
       <RecordDetailsSheet
         open={entry !== null}
         onClose={() => setEntry(null)}
-        title={entry ? `${ledgerEntryLabel(entry.kind)} · ${entry.label}` : "Ledger entry"}
-        subtitle={`${contract.customerName} · ${contract.productCode}`}
+        title={entry ? `${ledgerEntryLabel(entry.kind)} · ${entry.label}` : "Ledger Entry"}
+        subtitle={recordLabel(contract.customerName, record.planName)}
         badge={entry ? <BizBadge status={entry.kind} label={ledgerEntryLabel(entry.kind)} /> : undefined}
         sections={
           entry
             ? [
                 {
-                  title: "Ledger entry",
+                  title: "Ledger Entry",
                   rows: [
                     { label: "Date", value: formatDate(entry.date) },
                     { label: "Entry", value: ledgerEntryLabel(entry.kind) },
@@ -342,13 +346,13 @@ export function ContractLedgerSection({ record }: { record: ContractRecord }) {
         }
       />
       <section className="tw:flex tw:flex-col tw:gap-4">
-        <AdminSectionHeading title="Payment ledger" />
+        <AdminSectionHeading title="Payment Ledger" />
         <DataTable
           data={ledger}
           columns={columns}
           getRowId={(row) => `${row.paymentId}-${row.kind}-${row.date}-${row.netCentavos}`}
           emptyText="No verified payments yet."
-          caption="Payment ledger"
+          caption="Payment Ledger"
           onRowOpen={setEntry}
           getRowLabel={(row) => `Open ${ledgerEntryLabel(row.kind).toLowerCase()} entry of ${formatDate(row.date)}`}
         />
@@ -361,7 +365,7 @@ export function ContractLedgerSection({ record }: { record: ContractRecord }) {
 export function ContractPaymentsSection({ record, actions }: { record: ContractRecord; actions?: { rowActions: (payment: PaymentView) => ReactNode; open?: (payment: PaymentView) => void } }) {
   const columns = useMemo<ColumnDef<PaymentView, unknown>[]>(
     () => [
-      { id: "date", header: "Receipt date", cell: ({ row }) => formatDate(row.original.paidDate) },
+      { id: "date", header: "Receipt Date", cell: ({ row }) => formatDate(row.original.paidDate) },
       { id: "purpose", header: "Purpose", cell: ({ row }) => humanize(row.original.purpose) },
       { id: "amount", header: "Amount", cell: ({ row }) => <Money value={row.original.amountCentavos} /> },
       { id: "net", header: "Counted", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => <Money value={netVerifiedCentavos(row.original)} /> },

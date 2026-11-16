@@ -18,7 +18,7 @@ export function MembershipAreaPage() {
       title="Membership"
       tabs={[
         { value: "memberships", label: "Memberships", allowed: access.memberships, render: () => <MembershipsPanel /> },
-        { value: "activation", label: "Activation queue", allowed: access.activation, render: () => <ActivationQueuePanel /> },
+        { value: "activation", label: "Ready to Activate", allowed: access.activation, render: () => <ActivationQueuePanel /> },
       ]}
     />
   );
@@ -34,9 +34,9 @@ export function MembershipsPanel() {
     <>
       <AdminStatGrid>
         <AdminStatCard label="Active" value={all.filter((item) => item.status === "active").length} icon={BadgeCheck} tone="success" />
-        <AdminStatCard label="Pending activation" value={pending.length} icon={Clock} tone="warning" />
+        <AdminStatCard label="Pending Activation" value={pending.length} icon={Clock} tone="warning" />
         <AdminStatCard label="Ready" value={pending.filter((item) => item.eligible).length} icon={CircleCheck} tone="info" />
-        <AdminStatCard label="Financial holds" value={all.filter((item) => item.financialHold).length} icon={Hourglass} tone="warning" />
+        <AdminStatCard label="Payment Holds" value={all.filter((item) => item.financialHold).length} icon={Hourglass} tone="warning" />
       </AdminStatGrid>
       <QueryState isLoading={memberships.isLoading} error={memberships.error}>
         <MembershipTable data={all} caption="Memberships" emptyText="No memberships are available." />

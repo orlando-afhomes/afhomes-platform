@@ -52,7 +52,7 @@ export function AdminSidebar({ collapsed }: { collapsed: boolean; onCollapse?: (
           )}
         >
           <LogOut aria-hidden="true" />
-          {collapsed ? null : "Log out"}
+          {collapsed ? null : "Log Out"}
         </Button>
       </div>
       {dialog}

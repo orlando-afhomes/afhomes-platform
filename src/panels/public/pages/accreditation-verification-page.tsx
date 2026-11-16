@@ -37,7 +37,7 @@ export function AccreditationVerificationPage() {
 
   return (
     <div className="tw:mx-auto tw:flex tw:w-full tw:max-w-xl tw:flex-col tw:gap-4 tw:px-4 tw:py-10">
-      <h1 className="tw:text-2xl tw:font-semibold">Verify an accreditation</h1>
+      <h1 className="tw:text-2xl tw:font-semibold">Verify an Accreditation</h1>
       <p className="tw:text-sm tw:text-muted-foreground">Enter the full accreditation number exactly as issued. Searching by name is not available.</p>
       <Card><form onSubmit={(event) => void submit(event)} className="tw:flex tw:flex-col tw:gap-3">
         <TextField label="Accreditation number" required value={value} onChange={(next) => setValue(next.toUpperCase())} maxLength={16} autoComplete="off" />
@@ -50,7 +50,7 @@ export function AccreditationVerificationPage() {
         {failed ? <InfoNote>{GENERIC_FAILURE}</InfoNote> : null}
         {result ? (
           <Card><section aria-label="Verification result">
-            <h2 className="tw:text-lg tw:font-semibold">{result.status === "expired" ? "Accreditation has expired" : "Accreditation is active"}</h2>
+            <h2 className="tw:text-lg tw:font-semibold">{result.status === "expired" ? "Accreditation Has Expired" : "Accreditation Is Active"}</h2>
             <dl className="tw:mt-2 tw:flex tw:flex-col tw:gap-1 tw:text-sm">
               <div><dt className="tw:inline tw:text-muted-foreground">Number: </dt><dd className="tw:inline">{result.aaNumber}</dd></div>
               <div><dt className="tw:inline tw:text-muted-foreground">Status: </dt><dd className="tw:inline">{result.status === "expired" ? "Expired" : "Valid"}</dd></div>

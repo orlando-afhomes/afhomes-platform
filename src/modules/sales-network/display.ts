@@ -22,8 +22,10 @@ export function designationLabel(designation: string): string {
       return "Senior Sales Manager";
     case "SM":
       return "Sales Manager";
+    case "IST":
+      return "Internal Seller (IST)";
     case "OST":
-      return "OST";
+      return "Outsourced Seller (OST)";
     default:
       return designation;
   }
@@ -41,9 +43,9 @@ export function teamDisplayName(member: OrgMember, members: readonly OrgMember[]
   return resolveTeamName(member, members) ?? UNASSIGNED_TEAM;
 }
 
-/** Visible seller ID: official AA number or an honest pending placeholder. */
+/** Visible seller ID: official accreditation number or an honest pending placeholder. */
 export function aaDisplay(member: Pick<OrgMember, "aaNumber">): string {
-  return member.aaNumber ?? "Pending AA Issuance";
+  return member.aaNumber ?? "Pending Accreditation Number";
 }
 
 export type AccreditationDisplay =

@@ -12,7 +12,7 @@ export function TemplateDownloadMenu({ onExcel, onCsv }: { onExcel: () => void; 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="info" className="tw:min-h-11 tw:w-full tw:sm:min-h-8 tw:sm:w-auto" />}>
-        <Download aria-hidden="true" /> Download template <ChevronDown aria-hidden="true" />
+        <Download aria-hidden="true" /> Download Template <ChevronDown aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="tw:min-w-44">
         <DropdownMenuItem onClick={onExcel} className="tw:min-h-11 tw:sm:min-h-8">

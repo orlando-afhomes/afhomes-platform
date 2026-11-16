@@ -32,7 +32,7 @@ export function AccountsCompatibilityPage() {
       {allowed ? (
         <PageHeader title="Opening Staff & Access" />
       ) : (
-        <PageHeader title="Access restricted" description="This account does not have access to account administration." />
+        <PageHeader title="Access Restricted" description="This account does not have access to account administration." />
       )}
     </PageContainer>
   );

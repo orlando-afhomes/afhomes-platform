@@ -60,10 +60,10 @@ export class MockStayPointsRepository extends BusinessRepository implements Stay
           if (!this.store.outlets.some((outlet) => outlet.id === input.venueId && outlet.status === "active")) throw new Error("Select an AFhomes Direct Operation.");
           const allowsSupplementary = (this.store.products.find((item) => item.code === member.productCode)?.supplementaryHolders ?? 0) > 0;
           if (input.holder !== "primary" && !(input.holder === "supplementary" && allowsSupplementary)) {
-            throw new Error("Only a membership whose product allows supplementary holders can use supplementary holder spend.");
+            throw new Error("Only a membership whose product allows an extra cardholder can use extra cardholder spend.");
           }
           const contract = this.store.contracts.find((item) => item.id === member.contractId)!;
-          if (input.holder === "supplementary" && !contract.benefits.supplementaryHolders) throw new Error("The signed Grant does not allow a supplementary holder.");
+          if (input.holder === "supplementary" && !contract.benefits.supplementaryHolders) throw new Error("The signed Grant does not allow an extra cardholder.");
           if (![input.grossCentavos, input.excludedCentavos].every(Number.isSafeInteger) || input.grossCentavos <= 0
             || input.excludedCentavos < 0 || input.excludedCentavos >= input.grossCentavos) {
             throw new Error("Enter a positive gross amount and exclusions below the gross amount.");
@@ -118,16 +118,16 @@ export class MockStayPointsRepository extends BusinessRepository implements Stay
           return this.build(member);
         }
         case "request-waiver": {
-          this.require(identity, "stay-points.waiver", "Only an Administrator can record a waiver request.");
+          this.require(identity, "stay-points.waiver", "Only an Administrator can record an exception request.");
           const member = this.member(input.membershipId, identity);
           const tranche = this.build(member).ledger?.tranches.find((item) => item.number === input.tranche);
-          if (!tranche || tranche.releaseDate || tranche.status === "forfeited") throw new Error("Select a tranche that is still eligible for a waiver.");
+          if (!tranche || tranche.releaseDate || tranche.status === "forfeited") throw new Error("Select a yearly gift that is still eligible for an exception.");
           if (!parseManilaDateOnly(input.date) || input.date <= tranche.dueDate || input.date > addDaysToDate(tranche.dueDate, 60)! || input.date > today()) {
-            throw new Error("Record the written request received within 60 days after the affected tranche year ended.");
+            throw new Error("Record the written request received within 60 days after the affected gift year ended.");
           }
           if (!WAIVER_GROUNDS.includes(input.ground) || !input.supportingReference.trim()) throw new Error("Select a valid ground and enter the supporting document reference.");
           if (state.waivers.some((item) => item.membershipId === member.id && item.tranche === input.tranche && item.decision?.granted !== false)) {
-            throw new Error("A waiver request for this tranche already exists.");
+            throw new Error("An exception request for this yearly gift already exists.");
           }
           const id = `waiver-${this.store.counters.resortSpend++}`;
           state.waivers.push({ id, membershipId: member.id, tranche: input.tranche, date: input.date,
@@ -137,13 +137,13 @@ export class MockStayPointsRepository extends BusinessRepository implements Stay
           return this.build(member);
         }
         case "decide-waiver": {
-          this.require(identity, "stay-points.waiver", "Only an Administrator can grant or refuse a waiver.");
+          this.require(identity, "stay-points.waiver", "Only an Administrator can approve or decline an exception.");
           const waiver = state.waivers.find((item) => item.id === input.waiverId);
-          if (!waiver || waiver.decision) throw new Error("Select a pending waiver.");
+          if (!waiver || waiver.decision) throw new Error("Select a pending exception request.");
           const member = this.member(waiver.membershipId, identity);
           const tranche = this.build(member).ledger?.tranches.find((item) => item.number === waiver.tranche);
           if (input.granted && (!tranche || tranche.releaseDate || tranche.status === "forfeited" || !member.validityEndDate)) {
-            throw new Error("This tranche can no longer be released by waiver.");
+            throw new Error("This yearly gift can no longer be given by exception.");
           }
           if (input.granted && (!input.releaseDate || !parseManilaDateOnly(input.releaseDate) || input.releaseDate <= today() || input.releaseDate >= member.validityEndDate!)) {
             throw new Error("Enter the next administrative cycle date before expiry.");

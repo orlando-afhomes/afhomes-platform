@@ -57,8 +57,8 @@ export function PromoPointsReportPanel() {
   return (
     <ReportFrame range={range}>
       <AdminStatGrid columns={3}>
-        <AdminStatCard loading={ledger.isLoading} error={ledger.error} label="Points earned" value={fmt(earned)} icon={Gift} tone="success" />
-        <AdminStatCard loading={ledger.isLoading} error={ledger.error} label="Points used" value={fmt(used)} icon={Coins} />
+        <AdminStatCard loading={ledger.isLoading} error={ledger.error} label="Points Earned" value={fmt(earned)} icon={Gift} tone="success" />
+        <AdminStatCard loading={ledger.isLoading} error={ledger.error} label="Points Used" value={fmt(used)} icon={Coins} />
         <AdminStatCard loading={balances.isLoading} error={balances.error} label="Outstanding" value={fmt(outstanding)} icon={Wallet} tone="info" />
       </AdminStatGrid>
       <ReportTable report="Promo Points Report" fileName="promo-points" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => row.id} getRowTitle={(row) => row.customerName} loading={ledger.isLoading} error={ledger.error} emptyText="No Promo Points entries match."

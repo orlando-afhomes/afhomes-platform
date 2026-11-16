@@ -139,7 +139,7 @@ export function ListsPage({
       { id: "used", header: "Used", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => (row.original.inUse ? "Yes" : "No") },
       {
         id: "actions",
-        header: () => <span className="tw:sr-only">Actions</span>,
+        header: "Actions",
         cell: ({ row }) => {
           const item = row.original;
           if (!canManage) return null;

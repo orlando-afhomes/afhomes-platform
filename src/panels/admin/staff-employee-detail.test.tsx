@@ -55,7 +55,7 @@ type User = ReturnType<typeof userEvent.setup>;
 const row = (key: string) => document.querySelector(`tr[data-row-key="${key}"]`) as HTMLElement | null;
 const SECTION_NAMES = { profile: "Profile", employment: "Employment", access: "Account Access" } as const;
 const section = (name: "profile" | "employment" | "access") =>
-  within(screen.getByRole("dialog", { name: "Employee profile" })).getByRole("region", { name: SECTION_NAMES[name] });
+  within(screen.getByRole("dialog", { name: "Employee Profile" })).getByRole("region", { name: SECTION_NAMES[name] });
 
 async function ready(identityId: string) {
   render(<TestWrapper identityId={identityId} />);
@@ -66,7 +66,7 @@ async function ready(identityId: string) {
 
 async function openProfile(user: User, key: string) {
   await user.click(row(key)!);
-  await screen.findByRole("dialog", { name: "Employee profile" });
+  await screen.findByRole("dialog", { name: "Employee Profile" });
 }
 
 async function confirmInAlertDialog(user: User, name: string | RegExp) {
@@ -97,8 +97,8 @@ describe("employee detail sections", () => {
     const effective = within(access).getByText("Effective module access").nextElementSibling as HTMLElement;
     expect(effective.textContent).toContain("Accounts and Permissions");
     expect(effective.textContent).toContain("Roles");
-    expect(within(access).getByRole("button", { name: "System roles" })).toBeInTheDocument();
-    expect(within(access).getByRole("button", { name: "Change status" })).toBeInTheDocument();
+    expect(within(access).getByRole("button", { name: "System Roles" })).toBeInTheDocument();
+    expect(within(access).getByRole("button", { name: "Change Status" })).toBeInTheDocument();
   });
 
   it("shows an empty Account Access state for an employee without a linked account", async () => {
@@ -106,7 +106,7 @@ describe("employee detail sections", () => {
     await ready("dev-super-admin");
     await openProfile(user, "staff-2");
     const access = section("access");
-    expect(within(access).getByText("No linked account")).toBeInTheDocument();
+    expect(within(access).getByText("No Linked Account")).toBeInTheDocument();
     expect(within(access).queryByRole("button")).toBeNull();
     expect(within(access).queryByText("Effective module access")).toBeNull();
   });
@@ -117,15 +117,15 @@ describe("employee detail sections", () => {
     await openProfile(user, "staff-super");
     let access = section("access");
     expect(within(access).getByText(PROTECTED_ACCOUNT_RESTRICTION)).toBeInTheDocument();
-    expect(within(access).queryByRole("button", { name: "System roles" })).toBeNull();
-    expect(within(access).queryByRole("button", { name: "Change status" })).toBeNull();
+    expect(within(access).queryByRole("button", { name: "System Roles" })).toBeNull();
+    expect(within(access).queryByRole("button", { name: "Change Status" })).toBeNull();
     await user.keyboard("{Escape}");
-    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Employee profile" })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Employee Profile" })).toBeNull());
     await openProfile(user, "staff-admin");
     access = section("access");
     expect(within(access).getByText(OWN_ACCOUNT_RESTRICTION)).toBeInTheDocument();
-    expect(within(access).queryByRole("button", { name: "System roles" })).toBeNull();
-    expect(within(access).queryByRole("button", { name: "Change status" })).toBeNull();
+    expect(within(access).queryByRole("button", { name: "System Roles" })).toBeNull();
+    expect(within(access).queryByRole("button", { name: "Change Status" })).toBeNull();
     // The Employment section explains why the actor's own assignment is locked.
     expect(within(section("employment")).getByText("You cannot change your own department or role.")).toBeInTheDocument();
   });
@@ -141,10 +141,10 @@ describe("employee detail sections", () => {
     expect(within(access).queryByText("Effective module access")).toBeNull();
     expect(within(access).getByRole("button", { name: "Suspend account" })).toBeInTheDocument();
     expect(within(access).getByRole("button", { name: "Deactivate account" })).toBeInTheDocument();
-    expect(within(access).queryByRole("button", { name: "System roles" })).toBeNull();
-    expect(within(access).queryByRole("button", { name: "Change status" })).toBeNull();
+    expect(within(access).queryByRole("button", { name: "System Roles" })).toBeNull();
+    expect(within(access).queryByRole("button", { name: "Change Status" })).toBeNull();
     await user.keyboard("{Escape}");
-    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Employee profile" })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Employee Profile" })).toBeNull());
     await openProfile(user, "staff-super");
     expect(within(section("access")).getByText(/Protected Super Administrator account/)).toBeInTheDocument();
     expect(within(section("access")).queryByRole("button", { name: "Suspend account" })).toBeNull();
@@ -158,7 +158,7 @@ describe("employee detail audit integrity", () => {
     const before = getStore().auditEvents.length;
     await openProfile(user, "staff-1");
     await user.keyboard("{Escape}");
-    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Employee profile" })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Employee Profile" })).toBeNull());
     await openProfile(user, "staff-admin");
     expect(getStore().auditEvents).toHaveLength(before);
   });
@@ -168,8 +168,8 @@ describe("employee detail audit integrity", () => {
     await ready("dev-super-admin");
     const before = getStore().auditEvents.length;
     await openProfile(user, "staff-1");
-    await user.click(within(section("access")).getByRole("button", { name: "Change status" }));
-    await screen.findByRole("dialog", { name: "Account status" });
+    await user.click(within(section("access")).getByRole("button", { name: "Change Status" }));
+    await screen.findByRole("dialog", { name: "Account Status" });
     await user.click(screen.getByRole("combobox", { name: "Account status" }));
     await user.click(await screen.findByRole("option", { name: "Suspended" }));
     await user.click(screen.getByRole("button", { name: /^save$/i }));

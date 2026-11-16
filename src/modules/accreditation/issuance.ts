@@ -51,5 +51,5 @@ export function allocateSharedAaNumber(
   for (let sequence = 1; sequence <= 9999; sequence += 1) {
     if (!used.has(sequence)) return { aaNumber: buildAaNumber(prefix, yymm, sequence), sequence };
   }
-  throw new Error("Shared AA sequence exhausted.");
+  throw new Error("Shared accreditation number sequence exhausted.");
 }

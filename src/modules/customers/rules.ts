@@ -39,8 +39,8 @@ export function validateCustomerForSubmit(input: CustomerDraftInput, existing: r
   need("mobileNumber", input.mobileNumber, "Mobile number is required.");
   need("address", input.address?.province && input.address?.city && input.address?.barangay ? "ok" : "", "Province, city or municipality, and barangay are required.");
   need("vipPlan", input.vipPlan, "Select a VIP plan.");
-  need("paymentSchemeId", input.paymentSchemeId, "Select a payment scheme.");
-  need("contractClassification", input.contractClassification, "Select a contract classification.");
+  need("paymentSchemeId", input.paymentSchemeId, "Select a payment plan.");
+  need("contractClassification", input.contractClassification, "Select a contract type.");
   if (input.gender && !(CUSTOMER_GENDERS as readonly string[]).includes(input.gender)) errors.gender = "Select Male or Female.";
   if (input.civilStatus && !(CUSTOMER_CIVIL_STATUSES as readonly string[]).includes(input.civilStatus)) errors.civilStatus = "Select a valid civil status.";
   if (input.email && !EMAIL_PATTERN.test(input.email)) errors.email = "Enter a valid email address.";
@@ -74,7 +74,7 @@ export function validateCustomerForSubmit(input: CustomerDraftInput, existing: r
     if (customerNumberError) errors.customerNumber = customerNumberError;
   }
   Object.assign(errors, validateSupplementaryHolder(input.supplementaryHolder, supplementaryAllowed));
-  if (!input.consentDataPrivacy) errors.consentDataPrivacy = "The RA 10173 data privacy consent must be certified.";
+  if (!input.consentDataPrivacy) errors.consentDataPrivacy = "The Data Privacy Act (RA 10173) consent must be certified.";
   if (!input.idReceivedCertified) errors.idReceivedCertified = "Certify that a valid government ID with specimen signatures was received.";
   return errors;
 }
@@ -96,9 +96,9 @@ export function restrictCustomer(customer: Customer): Customer {
 export function validateSupplementaryHolder(holder: CustomerDraftInput["supplementaryHolder"], allowed: boolean): CustomerErrors {
   const errors: CustomerErrors = {};
   if (!holder) return errors;
-  if (!allowed) errors.supplementaryHolder = "The selected VIP plan does not allow a supplementary holder.";
-  else if (!holder.firstName?.trim() || !holder.lastName?.trim()) errors.supplementaryHolder = "Enter the supplementary holder's first and last name.";
-  else if (holder.dateOfBirth && !(holder.dateOfBirth < new Date().toISOString().slice(0, 10))) errors.supplementaryHolder = "The supplementary holder's birth date must be in the past.";
+  if (!allowed) errors.supplementaryHolder = "The selected VIP plan does not allow an extra cardholder.";
+  else if (!holder.firstName?.trim() || !holder.lastName?.trim()) errors.supplementaryHolder = "Enter the extra cardholder's first and last name.";
+  else if (holder.dateOfBirth && !(holder.dateOfBirth < new Date().toISOString().slice(0, 10))) errors.supplementaryHolder = "The extra cardholder's birth date must be in the past.";
   if (!errors.supplementaryHolder) {
     // Email, government ID type/number are not typed holder fields; read them
     // tolerantly so a future caller passing them still gets the format check.

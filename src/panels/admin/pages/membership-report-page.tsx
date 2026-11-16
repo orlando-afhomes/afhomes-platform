@@ -9,16 +9,18 @@ import { humanize } from "@/shared/lib/humanize";
 import { matchesSearch, optionsFrom } from "@/shared/lib/search";
 import { AdminPage, AdminStatGrid, AdminStatCard } from "@/shared/components/admin";
 import { Clock, Medal, UserCheck } from "lucide-react";
+import { tierDisplayName } from "@/modules/vip/tier-options";
+import type { VipProduct } from "@/modules/vip/types";
 import { ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
 
-const COLUMNS: ReportColumn<MembershipView>[] = [
+const reportColumns = (products: VipProduct[] | undefined): ReportColumn<MembershipView>[] => [
   { header: "Customer", value: (item) => item.customerName },
-  { header: "Tier", value: (item) => item.productCode },
+  { header: "Tier", value: (item) => tierDisplayName(item.productCode, products) ?? "" },
   { header: "Scheme", value: (item) => item.schemeLabel, screen: false },
   { header: "VIP Number", value: (item) => item.cardId ?? "" },
   { header: "Status", value: (item) => humanize(item.status) },
   { header: "Activated", value: (item) => formatDate(item.activationDate) },
-  { header: "Valid until", value: (item) => formatDate(item.validityEndDate), screen: false },
+  { header: "Valid Until", value: (item) => formatDate(item.validityEndDate), screen: false },
 ];
 
 /** Membership figures. Memberships count from official activation (doc 09). */
@@ -39,7 +41,8 @@ export function MembershipReportPanel() {
   const range = useReportRange();
   const { memberships, membershipList, activatedInPeriod, active, pending } = useMembershipFigures(range);
   const products = useVipProducts();
-  const tierCodes = (products.data ?? []).map((product) => product.code);
+  const tierCodes = [...new Set([...membershipList.map((item) => item.productCode), ...(products.data ?? []).map((item) => item.code)])];
+  const columns = useMemo(() => reportColumns(products.data), [products.data]);
   const inPeriod = useMemo(() => membershipList.filter((item) => range.inRange(item.activationDate) || range.inRange(item.createdAt)), [membershipList, range]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -49,13 +52,13 @@ export function MembershipReportPanel() {
     <ReportFrame range={range}>
       <AdminStatGrid columns={3}>
         <AdminStatCard loading={memberships.isLoading} error={memberships.error} label="Activated" value={activatedInPeriod} icon={UserCheck} tone="success" />
-        <AdminStatCard loading={memberships.isLoading} error={memberships.error} label="Active members" value={active} icon={Medal} tone="info" />
-        <AdminStatCard loading={memberships.isLoading} error={memberships.error} label="Pending activation" value={pending} icon={Clock} tone="warning" />
+        <AdminStatCard loading={memberships.isLoading} error={memberships.error} label="Active Members" value={active} icon={Medal} tone="info" />
+        <AdminStatCard loading={memberships.isLoading} error={memberships.error} label="Pending Activation" value={pending} icon={Clock} tone="warning" />
       </AdminStatGrid>
-      <ReportTable report="Membership Report" fileName="memberships" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => row.id} loading={memberships.isLoading} error={memberships.error} emptyText="No memberships match."
+      <ReportTable report="Membership Report" fileName="memberships" range={range} columns={columns} rows={rows} getRowId={(row) => row.id} loading={memberships.isLoading} error={memberships.error} emptyText="No memberships match."
         filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search memberships" filters={[
           { label: "Membership status filter", value: status, onChange: setStatus, options: optionsFrom("All statuses", inPeriod.map((item) => item.status), humanize) },
-          { label: "VIP tier filter", value: tier, onChange: setTier, options: optionsFrom("All tiers", tierCodes) },
+          { label: "VIP tier filter", value: tier, onChange: setTier, options: optionsFrom("All tiers", tierCodes.filter((code) => tierDisplayName(code, products.data) !== null), (code) => tierDisplayName(code, products.data) ?? "") },
         ]}>{range.dateFields}{exportButton}</FilterBar>} />
     </ReportFrame>
   );

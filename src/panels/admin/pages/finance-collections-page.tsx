@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Wallet } from "lucide-react";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { useContracts, useMemberships, usePayments } from "@/data/business-queries";
+import { useTierDisplayName } from "../components/use-tier-display-name";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import { collectionStateFor, type CollectionState } from "@/modules/finance/rules";
 import { manilaToday } from "@/shared/lib/dates";
@@ -27,7 +28,7 @@ const COLLECTION_FILTERS = [
   { value: "overdue", label: "Overdue" },
   { value: "outstanding", label: "Outstanding" },
   { value: "settled", label: "Fully Settled" },
-  { value: "on-hold", label: "On financial hold" },
+  { value: "on-hold", label: "On payment hold" },
 ];
 
 /** Collections tab of the Finance area ([finance]). */
@@ -35,6 +36,7 @@ export function FinanceCollectionsPanel() {
   const router = useRouter();
   const payments = usePayments();
   const contracts = useContracts();
+  const tierName = useTierDisplayName();
   const memberships = useMemberships();
   const contractHref = useContractHref();
   const today = manilaToday();
@@ -61,7 +63,7 @@ export function FinanceCollectionsPanel() {
       { id: "balance", header: "Balance", cell: ({ row }) => <Money value={row.original.balance} /> },
       { id: "overdue", header: "Overdue", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => (row.original.overdue > 0 ? <Money value={row.original.overdue} /> : "—") },
       { id: "state", header: "Status", cell: ({ row }) => <CollectionBadge state={row.original.state} /> },
-      { id: "next", header: "Next due", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => formatDate(row.original.nextDue) },
+      { id: "next", header: "Next Due", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => formatDate(row.original.nextDue) },
     ],
     [],
   );
@@ -75,7 +77,7 @@ export function FinanceCollectionsPanel() {
       </AdminStatGrid>
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search customers" filters={[{ label: "Status filter", value: collectionState, onChange: setCollectionState, options: COLLECTION_FILTERS }]} />
       <QueryState isLoading={payments.isLoading || contracts.isLoading} error={payments.error ?? contracts.error}>
-        <DataTable data={collections} columns={columns} getRowId={(row) => row.contract.id} emptyText="No contracts match." caption="Collections" onRowOpen={(row) => setDetailId(row.contract.id)} getRowLabel={(row) => `View collection for ${row.contract.customerName}`} rowActions={(row) => <RowActionsMenu itemName={`collection for ${row.contract.customerName}`} extraItems={[{ key: "contract", label: "Open contract", onClick: () => openContract(row) }]} />} />
+        <DataTable data={collections} columns={columns} getRowId={(row) => row.contract.id} emptyText="No contracts match." caption="Collections" onRowOpen={(row) => setDetailId(row.contract.id)} getRowLabel={(row) => `View collection for ${row.contract.customerName}`} rowActions={(row) => <RowActionsMenu itemName={`collection for ${row.contract.customerName}`} extraItems={[{ key: "contract", label: "Open Contract", onClick: () => openContract(row) }]} />} />
       </QueryState>
       <RecordDetailsSheet
         open={detail !== null}
@@ -85,7 +87,7 @@ export function FinanceCollectionsPanel() {
         sections={
           detail
             ? [
-                { title: "Plan", rows: [{ label: "VIP Number", value: detail.contract.vipNumber }, { label: "Product", value: detail.contract.productCode }, { label: "Payment scheme", value: detail.contract.schemeLabel }] },
+                { title: "Plan", rows: [{ label: "VIP Number", value: detail.contract.vipNumber }, { label: "Product", value: tierName(detail.contract.productCode) }, { label: "Payment plan", value: detail.contract.schemeLabel }] },
                 {
                   title: "Collection",
                   rows: [
@@ -100,7 +102,7 @@ export function FinanceCollectionsPanel() {
               ]
             : []
         }
-        footer={detail ? <Button type="button" variant="info" onClick={() => openContract(detail)}>Open contract</Button> : undefined}
+        footer={detail ? <Button type="button" variant="info" onClick={() => openContract(detail)}>Open Contract</Button> : undefined}
       />
     </>
   );

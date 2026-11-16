@@ -40,8 +40,8 @@ export function PaymentSchemesTab({ creating, onCloseCreate }: { creating: boole
 
   const schemeColumns = useMemo<ColumnDef<PaymentScheme, unknown>[]>(
     () => [
-      { id: "label", header: "Scheme", cell: ({ row }) => <span className="tw:font-semibold">{row.original.label}</span> },
-      { id: "code", header: "Card ID code", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.paymentCode ?? (Object.values(row.original.paymentCodeByTier ?? {}).some(Boolean) ? "Per tier" : null) },
+      { id: "label", header: "Payment plan", cell: ({ row }) => <span className="tw:font-semibold">{row.original.label}</span> },
+      { id: "code", header: "Payment Code", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.paymentCode ?? (Object.values(row.original.paymentCodeByTier ?? {}).some(Boolean) ? "Per card level" : null) },
       { id: "terms", header: "Terms", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => (row.original.commercialStatus === "configured" ? termsSummary(row.original) : null) },
       { id: "state", header: "Status", cell: ({ row }) => <SchemeStatusBadge scheme={row.original} /> },
     ],
@@ -57,16 +57,16 @@ export function PaymentSchemesTab({ creating, onCloseCreate }: { creating: boole
   return (
     <>
         <QueryState isLoading={schemes.isLoading} error={schemes.error}>
-          <FilterBar search={search} onSearch={setSearch} searchLabel="Search schemes" filters={[
+          <FilterBar search={search} onSearch={setSearch} searchLabel="Search payment plans" filters={[
             { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: [{ value: "all", label: "All statuses" }, { value: "available", label: "Available" }, { value: "unavailable", label: "Unavailable" }] },
-            { label: "Tier filter", value: tierFilter, onChange: setTierFilter, options: [{ value: "all", label: "All tiers" }, ...tierOptions(products.data, schemes.data?.flatMap((item) => item.applicableTiers))] },
+            { label: "Card level filter", value: tierFilter, onChange: setTierFilter, options: [{ value: "all", label: "All card levels" }, ...tierOptions(products.data, schemes.data?.flatMap((item) => item.applicableTiers))] },
           ]} />
-          <DataTable data={visibleSchemes} columns={schemeColumns} getRowId={(row) => row.id} emptyText={(schemes.data ?? []).length === 0 ? "No schemes." : "No schemes match the filters."} caption="Payment schemes" onRowOpen={(row) => setSchemeId(row.id)} getRowLabel={(row) => `Open ${row.label}`} rowActions={(row) => <RowActionsMenu itemName={row.label} onEdit={canManage ? () => openSchemeEditor(row) : undefined} />} />
+          <DataTable data={visibleSchemes} columns={schemeColumns} getRowId={(row) => row.id} emptyText={(schemes.data ?? []).length === 0 ? "No payment plans." : "No payment plans match the filters."} caption="Payment Plans" onRowOpen={(row) => setSchemeId(row.id)} getRowLabel={(row) => `Open ${row.label}`} rowActions={(row) => <RowActionsMenu itemName={row.label} onEdit={canManage ? () => openSchemeEditor(row) : undefined} />} />
         </QueryState>
       <RecordDetailsSheet
         open={schemeDetail !== null}
         onClose={() => setSchemeId(null)}
-        title={schemeDetail?.label ?? "Payment scheme"}
+        title={schemeDetail?.label ?? "Payment plan"}
         subtitle={schemeDetail?.historicalLabel ? `Also known as ${schemeDetail.historicalLabel}` : undefined}
         badge={schemeDetail ? <SchemeStatusBadge scheme={schemeDetail} /> : undefined}
         sections={
@@ -76,8 +76,8 @@ export function PaymentSchemesTab({ creating, onCloseCreate }: { creating: boole
                   title: "Terms",
                   rows: [
                     { label: "Category", value: humanize(schemeDetail.category) },
-                    { label: "Card ID code", value: schemeDetail.paymentCode },
-                    ...tierEntries(schemeDetail.paymentCodeByTier).map(([tier, value]) => ({ label: `${tierName(tier)} Card ID code`, value })),
+                    { label: "Payment code", value: schemeDetail.paymentCode },
+                    ...tierEntries(schemeDetail.paymentCodeByTier).map(([tier, value]) => ({ label: `${tierName(tier)} payment code`, value })),
                     { label: "Availability", value: humanize(schemeDetail.availability) },
                     { label: "Terms status", value: schemeDetail.commercialStatus === "configured" ? "Ready" : "Waiting for owner approval" },
                     { label: "Applies to", value: schemeDetail.applicableTiers.map(tierName).join(", ") },
@@ -94,7 +94,7 @@ export function PaymentSchemesTab({ creating, onCloseCreate }: { creating: boole
             : []
         }
         history={schemeDetail ? schemeDetail.changes.map((item) => ({ key: `${item.date}-${item.version}`, when: `Changed on ${formatDate(item.date)}`, text: item.reason })) : []}
-        footer={schemeDetail && canManage ? <Button type="button" variant="warning" onClick={() => { openSchemeEditor(schemeDetail); setSchemeId(null); }}><Pencil aria-hidden="true" /> Edit scheme</Button> : undefined}
+        footer={schemeDetail && canManage ? <Button type="button" variant="warning" onClick={() => { openSchemeEditor(schemeDetail); setSchemeId(null); }}><Pencil aria-hidden="true" /> Edit Payment Plan</Button> : undefined}
       />
       <SchemeDialog open={creating || schemeOpen} scheme={creating ? null : editingScheme} onClose={() => { setSchemeOpen(false); onCloseCreate(); }} />
     </>

@@ -78,10 +78,10 @@ function record(overrides: Partial<AccreditationRecord> = {}): AccreditationReco
 
 describe("transferLabelFor", () => {
   it("sends OST to IST and everything else to OST", () => {
-    expect(transferLabelFor("OST")).toBe("Transfer to IST");
-    expect(transferLabelFor("SSM")).toBe("Transfer to OST");
-    expect(transferLabelFor("SM")).toBe("Transfer to OST");
-    expect(transferLabelFor("SVD")).toBe("Transfer to OST");
+    expect(transferLabelFor("OST")).toBe("Transfer to Internal Seller (IST)");
+    expect(transferLabelFor("SSM")).toBe("Transfer to Outsourced Seller (OST)");
+    expect(transferLabelFor("SM")).toBe("Transfer to Outsourced Seller (OST)");
+    expect(transferLabelFor("SVD")).toBe("Transfer to Outsourced Seller (OST)");
   });
 });
 
@@ -92,7 +92,7 @@ describe("buildMemberMenuProps", () => {
     expect("onView" in menu).toBe(false);
     expect(menu.onEdit).toBeDefined();
     expect(keysOf(menu)).toEqual(["transfer", "deactivate"]);
-    expect(menu.extraItems.map((item) => item.label)).toEqual(["Transfer to OST", "Deactivate"]);
+    expect(menu.extraItems.map((item) => item.label)).toEqual(["Transfer to Outsourced Seller (OST)", "Deactivate"]);
     expect(menu.extraItems.find((item) => item.key === "deactivate")?.danger).toBe(true);
   });
 
@@ -122,7 +122,7 @@ describe("buildMemberMenuProps", () => {
     const noRight = buildMemberMenuProps(member("OST", "active"), { ...FULL_PERMS, canTransfer: false }, rowCb());
     expect(keysOf(noRight)).not.toContain("transfer");
     const ost = buildMemberMenuProps(member("OST", "active"), FULL_PERMS, rowCb());
-    expect(ost.extraItems.find((item) => item.key === "transfer")?.label).toBe("Transfer to IST");
+    expect(ost.extraItems.find((item) => item.key === "transfer")?.label).toBe("Transfer to Internal Seller (IST)");
   });
 
   it("gates edit on the manage right", () => {

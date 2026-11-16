@@ -59,7 +59,7 @@ it("requires a closed month for a payout list and flags preparer self-approval",
   const clerkRepository = new MockCommissionRepository(store, () => clerk, { delayMs: 0 });
   releaseSaleCommissions(store, finance, { saleId: "sale-1", contractId: "ctr-1", product: "VIP", valueCentavos: 1_000_000,
     rates: [{ memberId: "mem-ost-a1", role: "DSC", rateBp: 500 }], stage1Date: "2026-09-25", fullPaymentDate: null });
-  await expect(repository.preparePayoutList("2026-09")).rejects.toThrow(/close the release month/i);
+  await expect(repository.preparePayoutList("2026-09")).rejects.toThrow(/close the ready-to-pay month/i);
   store.closedMonths.push({
     month: "2026-09", closedAt: "2026-10-01", closedBy: "dev-admin",
     recognizedSalesCentavos: 0, grossCollectionsCentavos: 0, adjustedCollectionsCentavos: 0,
@@ -68,7 +68,7 @@ it("requires a closed month for a payout list and flags preparer self-approval",
   });
   const list = await repository.preparePayoutList("2026-09");
   await expect(clerkRepository.approvePayoutList(list.id)).rejects.toThrow(/cannot approve/i);
-  await expect(repository.preparePayoutList("2026-09")).rejects.toThrow(/no released/i);
+  await expect(repository.preparePayoutList("2026-09")).rejects.toThrow(/no commissions ready to pay/i);
   await repository.approvePayoutList(list.id);
   expect(store.commissions.find(({ id }) => id === list.entries[0].commissionId)?.status).toBe("approved");
   expect(store.auditEvents.at(-1)?.reason).toMatch(/self-approved/i);
@@ -92,7 +92,7 @@ describe("month-end payouts", () => {
     expect(store.auditEvents.find(({ action, entityId }) => action === "COMMISSION_PAYOUT_LIST_PREPARED" && entityId === list.id)?.actorId).toBe(SYSTEM_ACTOR_ID);
     await admin.sales.closeMonth("2026-09");
     expect(store.commissionPayoutLists.filter(({ month }) => month === "2026-09")).toHaveLength(1);
-    await expect(admin.commissions.preparePayoutList("2026-09")).rejects.toThrow(/no released/i);
+    await expect(admin.commissions.preparePayoutList("2026-09")).rejects.toThrow(/no commissions ready to pay/i);
     await admin.commissions.approvePayoutList(list.id);
     // The system prepared it, so the approver is not flagged as self-approving.
     expect(store.auditEvents.at(-1)).toMatchObject({ action: "COMMISSION_PAYOUT_LIST_APPROVED", reason: undefined });

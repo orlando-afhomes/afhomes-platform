@@ -16,7 +16,7 @@ export type ReconciliationMeasure = (typeof RECONCILIATION_MEASURES)[number];
 
 export const MEASURE_LABELS: Record<ReconciliationMeasure, string> = {
   verified_receipts: "Verified receipts (net)",
-  imported_receipts: "Imported receipts (signed-off batches)",
+  imported_receipts: "Imported receipts (confirmed batches)",
   sales_value: "Confirmed sales value (net)",
   commissions_payable: "Commissions payable (approved, unpaid)",
   commissions_paid: "Commissions paid",
@@ -78,7 +78,7 @@ export function computeSourceTotals(data: SourceData, period: string): SourceTot
     }
     for (const adjustment of payment.adjustments) {
       if (inRange(manilaDateOf(adjustment.date), from, to)) {
-        verifiedRecords.push({ id: `${payment.id}/${adjustment.id}`, label: `Receipt ${payment.referenceNo ?? payment.id}`, date: manilaDateOf(adjustment.date), amountCentavos: -adjustment.amountCentavos, note: adjustment.kind === "reversal" ? "Reversal" : "Refund" });
+        verifiedRecords.push({ id: `${payment.id}/${adjustment.id}`, label: `Receipt ${payment.referenceNo ?? payment.id}`, date: manilaDateOf(adjustment.date), amountCentavos: -adjustment.amountCentavos, note: adjustment.kind === "reversal" ? "Undone" : "Refund" });
       }
     }
   }
@@ -133,12 +133,12 @@ export type ReconciliationDecisionInput = {
 export function validateReconciliationDecision(input: ReconciliationDecisionInput, liveCentavos: number): string | null {
   if (!periodRange(input.period)) return "Choose a valid month.";
   if (!(RECONCILIATION_MEASURES as readonly string[]).includes(input.measure)) return "Choose a valid measure.";
-  if (!Number.isInteger(input.workbookCentavos) || input.workbookCentavos < 0) return "Enter the workbook total as an amount of zero or more.";
+  if (!Number.isInteger(input.workbookCentavos) || input.workbookCentavos < 0) return "Enter the company spreadsheet total as an amount of zero or more.";
   const difference = input.workbookCentavos - liveCentavos;
   const reason = input.reason?.trim() ?? "";
-  if (input.decision === "signed_off") return difference === 0 ? null : "Only matching totals can be signed off. Record an explained variance instead.";
-  if (input.decision !== "explained_variance") return "Choose sign-off or explained variance.";
-  if (difference === 0) return "The totals match. Sign them off instead.";
+  if (input.decision === "signed_off") return difference === 0 ? null : "Only matching totals can be confirmed. Record an explained difference instead.";
+  if (input.decision !== "explained_variance") return "Choose confirm or explained difference.";
+  if (difference === 0) return "The totals match. Confirm them instead.";
   if (reason.length < 5) return "Explain the difference. A reason is required.";
   if (reason.length > 500) return "The reason must be 500 characters or fewer.";
   return null;

@@ -86,15 +86,15 @@ export function RegistrationCompletionDialog({
   return (
     <FormDialog
       open
-      title="Check and complete"
+      title="Check and Complete"
       description="Check the applicant's details, then add the seller details below. The Administrator decides after this step."
-      submitText="Save as checked"
+      submitText="Save as Checked"
       pending={pending}
       error={error}
       onClose={onClose}
       onSubmit={() => void submit()}
     >
-      <FormSection title="Profile photo">
+      <FormSection title="Profile Photo">
         <ProfilePhotoUploader
           value={photoUrl}
           fileName={value.profilePhotoName || null}
@@ -105,7 +105,7 @@ export function RegistrationCompletionDialog({
           }}
         />
       </FormSection>
-      <FormSection title="Personal details">
+      <FormSection title="Personal Details">
         <FormGrid>
           <SelectField id="registration-gender" label="Gender" required value={value.gender || undefined} options={GENDER_OPTIONS} onChange={(gender) => patch({ gender })} placeholder="Select gender" />
           <SelectField id="registration-civil-status" label="Civil status" required value={value.civilStatus || undefined} options={CIVIL_STATUS_OPTIONS} onChange={(civilStatus) => patch({ civilStatus })} placeholder="Select civil status" />
@@ -120,7 +120,7 @@ export function RegistrationCompletionDialog({
           />
         </FormGrid>
       </FormSection>
-      <FormSection title="Program details">
+      <FormSection title="Program Details">
         <FormGrid>
           <StandardDateField id="registration-card-date" label="Application date" required value={value.cardApplicationDate} onChange={(cardApplicationDate) => patch({ cardApplicationDate })} />
           <SelectField id="registration-program" label="Program category" required value={value.programCategory || undefined} options={programOptions} onChange={(programCategory) => patch({ programCategory })} placeholder="Select program category" />

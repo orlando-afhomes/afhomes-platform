@@ -191,12 +191,47 @@ The owner asked for fewer steps and clicks (keep it simple). Every business even
 - **UI11, one row action shows as a button.** When a table row has exactly one action, that action is a direct button in the row instead of a "..." menu. Rows with two or more actions keep the menu.
 - **UI12, confirmations only for risky actions.** An "Are you sure?" pop-up stays for one-way, money-out, cancel, delete, reject and close-month actions. Routine actions run at once: Verify receipt and Activate membership have no pop-up (a mistaken verification is fixed with the audited Reverse).
 - **UI13, customer to contract in one pass.** Submitting a new customer also submits the contract; staff do not reopen the contract to submit it. Due dates are not typed; they follow the reservation date. Customer acceptance is asked once. New applications default to Standard (S). The success pop-up is replaced by a short message (doc 05 items 26 to 29).
-- **UI14, receipts.** Finance "Payment history" and "Verification" are one "Receipts" tab with a Show filter (Waiting, Exceptions, All). "Start review" is no longer offered. The receipt form pre-fills the purpose and amount of the next unpaid line and today's date (doc 07 follow-up items 4 and 5). The Administrator dashboard shows the receipts waiting for approval.
+- **UI14, receipts.** Finance "Payment history" and "Verification" are one "Receipts" tab with a Show filter (All, Waiting, Exceptions). The tab opens on All unless its link specifies a filter. "Start review" is no longer offered. The receipt form pre-fills the purpose and amount of the next unpaid line and today's date (doc 07 follow-up items 4 and 5). The Administrator dashboard shows the receipts waiting for approval.
 - **UI15, fewer daily tabs.** The "VIP Products" menu is renamed "Settings" and also holds the setup tabs Points table, Holidays, Venues, Lists, Historical import and IGP projects. The Scheme guide moves to Sales. Finance "Holds" becomes the "On financial hold" option of the Collections filter. Permissions of every moved tab are unchanged, and old links redirect.
 - **UI16, Clerk to-do dashboard.** The Clerk sees a small to-do list (returned receipts, contracts and customers to finish or fix) instead of an empty dashboard.
 - **UI17, Approve deal.** One "Approve deal" Administrator action replaces four approvals: customer, sale, signed Reservation Agreement (VIP Number) and finalization. Each step is still recorded and audited on its own, and a held contract is finalized by running it again (doc 05 items 30 and 31; doc 04 item 24; doc 06 item 10; doc 12, 2026-11-16).
 - **UI18, month-end payouts in bulk.** Closing a month prepares the payout list automatically. After the list is approved, payouts are recorded and confirmed for all ready commissions at once, each still audited (doc 08, 2026-11-16). The Payouts tab joins the Commissions tab.
 - **Open for the owner:** the Clerk no longer sees the Commissions area (its only task there, preparing the list, is now automatic); there is no Hold action to leave one commission out of a bulk payout.
+
+### Plain screen words (2026-11-16)
+
+- **UI19, plain words on every screen.** The owner asked that no screen use hard words. Screens now use plain words; the business-rule documents keep their official terms. Company words stay in brackets where staff know them, for example "Property Sales (IGP)". Only labels changed: routes, `?tab=` keys, stored values, audit codes and rules are the same.
+
+| Screen word now | Official term in the documents |
+|---|---|
+| Property Sales (IGP), Property Projects (IGP) | IGP sales, IGP projects (doc 14) |
+| Payment Plan Guide, Payment Plans, Payment plan | Scheme Guide, Payment Schemes (docs 05, 07) |
+| Card Levels, Card level | Tier levels (doc 05 item 21) |
+| Points per Night | Points table (doc 10) |
+| Dropdown Choices | Lists |
+| Import Old Records | Historical import (doc 11 §26) |
+| Close the Month | Month-end close (doc 13) |
+| Compare with Spreadsheet, difference, Confirm | Reconciliation, variance, sign-off |
+| Commission Paybacks, Payback, Not collected | Clawback recovery, clawback, written off (doc 08) |
+| Leader Allowances; Basic Allowance, Performance Allowance, Performance Bonus | Allowances; BA, PA, PB (doc 08) |
+| Confirm Paid Out, Payment sent | Disbursement (doc 08) |
+| Ready-to-Pay Date | Release date (doc 08) |
+| Confirmed Sale; When a Sale Counts; minimum paid | Closed Deal; Sale Counting Rule; threshold (docs 07, 13, 14) |
+| Ready to Activate | Activation queue (doc 09) |
+| Gift Exceptions, Gift Exception | Compassionate Waiver (doc 09 §14) |
+| yearly gift, Given, Lost, Spending that counts | Tranche, released, forfeited, Qualifying Spend (doc 09) |
+| Card Points | Cardholder points (doc 10) |
+| Team Tree, Team below, Leaders above, Position | Genealogy, downline, upline, designation (doc 02) |
+| Internal Seller (IST), Outsourced Seller (OST), Seller Applications | IST, OST, OST registrations (doc 03) |
+| Accreditation Number | AA number (doc 03) |
+| Stopped Paying | Defaulted (doc 13) |
+| Undo, Undo or Refund Payment | Reversal (doc 07) |
+| Payment Hold | Financial Hold (docs 07, 09) |
+| Cancelled, Payments Kept; Amount the company keeps | Cancelled with forfeiture (doc 07) |
+| Contract type | Contract classification (doc 05) |
+| Extra cardholder | Supplementary cardholder (doc 09) |
+
+Kept as official names: VIP Number, Reservation Agreement, Grant, Series Number, OR number, Accreditation, JA&D, Standard / Non-Standard, Welcome Gift, Resort Bills, Promo Points, Payout List, Collections, Cardholder, Special Arrangement.
 
 ### Still open
 

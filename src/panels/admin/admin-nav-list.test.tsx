@@ -29,16 +29,21 @@ describe("admin nav groups", () => {
   it("opens the current group and lets users switch to another group", async () => {
     const user = userEvent.setup();
     const items = getRoleAwareAdminNavigation(getDevIdentity("dev-super-admin"));
-    render(<TestWrapper items={items} pathname="/admin/finance/collections" />);
+    const { rerender } = render(<TestWrapper items={items} pathname="/admin/finance/collections" />);
     expect(screen.getByRole("button", { name: "Money" })).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("link", { name: "Finance" })).toHaveAttribute("href", "/admin/finance");
     expect(screen.getByRole("link", { name: "Finance" })).toHaveAttribute("aria-current", "page");
-    const memberServices = screen.getByRole("button", { name: "Member services" });
+    const memberServices = screen.getByRole("button", { name: "Member Services" });
     expect(memberServices).toHaveAttribute("aria-expanded", "false");
     await user.click(memberServices);
     expect(memberServices).toHaveAttribute("aria-expanded", "true");
+    expect(memberServices).toHaveClass("tw:aria-expanded:bg-white/10");
     expect(screen.getByRole("link", { name: "Stay Points" })).toHaveAttribute("href", "/admin/stay-points");
     expect(screen.getByRole("button", { name: "Money" })).toHaveAttribute("aria-expanded", "false");
+    rerender(<TestWrapper items={items} pathname="/admin/stay-points" />);
+    expect(memberServices).toHaveAttribute("aria-expanded", "true");
+    expect(memberServices).toHaveClass("tw:aria-expanded:bg-transparent");
+    expect(screen.getByRole("link", { name: "Stay Points" })).toHaveAttribute("aria-current", "page");
   });
 });
 
@@ -87,7 +92,7 @@ describe("admin nav list rendering", () => {
     expect(finance).toContain("Commissions");
     expect(finance).not.toContain("Settings");
     const ost = renderNav("dev-ost-a1");
-    // Scheme Guide moved to Sales, so a seller holds no Settings tab.
+    // Payment Plan Guide moved to Sales, so a seller holds no Settings tab.
     expect(ost).not.toContain("Settings");
     expect(renderNav("dev-admin")).toContain("Settings");
     expect(ost).not.toContain("Finance");

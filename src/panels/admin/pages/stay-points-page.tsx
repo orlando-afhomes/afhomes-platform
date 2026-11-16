@@ -4,6 +4,7 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from "re
 import { Clock, Coins, Gift, Search, TriangleAlert, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useMemberships, useOperation, useStayPoints, useStayPointsAction, useStayPointsVenues, useVipProducts } from "@/data/business-queries";
+import { useTierDisplayName } from "../components/use-tier-display-name";
 import type { MembershipPoints, StayPointsAction } from "@/data/contracts/stay-points-repository";
 import { manilaToday } from "@/modules/accreditation/dates";
 import { WAIVER_GROUNDS } from "@/modules/stay-points/types";
@@ -36,14 +37,14 @@ import { useAdminAreaTabAccess } from "../use-role-aware-navigation";
 import { PromoPointsPanel, RecordPromoUseButton } from "./promo-points-page";
 import { AddPromoButton, PromosPanel } from "./promos-page";
 
-const GIFT_ACTIONS: Record<GiftLedgerEntry["type"], string> = {
-  release: "Released", waiver_release: "Released by waiver", expiry: "Expired", transfer: "Forfeited on transfer",
+export const GIFT_ACTIONS: Record<GiftLedgerEntry["type"], string> = {
+  release: "Given", waiver_release: "Given by exception", expiry: "Expired", transfer: "Lost on transfer",
 };
 
 const dayType = (entry: GiftLedgerEntry) => (entry.bucket === "weekday" ? "Weekday" : "Weekend");
 const entryKey = (entry: GiftLedgerEntry) => `${entry.tranche}:${entry.bucket}:${entry.type}`;
 const count = (value: number | undefined) => (value ?? 0).toLocaleString("en-PH");
-const decisionLabel = (waiver: WaiverRequest) => (waiver.decision ? (waiver.decision.granted ? "Granted" : "Refused") : "Pending");
+const decisionLabel = (waiver: WaiverRequest) => (waiver.decision ? (waiver.decision.granted ? "Approved" : "Declined") : "Pending");
 const decisionTone = (waiver: WaiverRequest): BadgeTone => (waiver.decision ? (waiver.decision.granted ? "success" : "danger") : "warning");
 
 /**
@@ -52,9 +53,9 @@ const decisionTone = (waiver: WaiverRequest): BadgeTone => (waiver.decision ? (w
  */
 function giftStatus(tranche: PointsTranche, financialHold: boolean, today: string): { label: string; tone: BadgeTone } {
   switch (tranche.status) {
-    case "released": return { label: "Released", tone: "success" };
-    case "released_by_waiver": return { label: "Waived", tone: "info" };
-    case "forfeited": return { label: "Forfeited", tone: "neutral" };
+    case "released": return { label: "Given", tone: "success" };
+    case "released_by_waiver": return { label: "Given by exception", tone: "info" };
+    case "forfeited": return { label: "Lost", tone: "neutral" };
     case "non_activated": return { label: "Not earned", tone: "neutral" };
     default: return financialHold && tranche.dueDate <= today ? { label: "Paused", tone: "danger" } : { label: "Waiting", tone: "warning" };
   }
@@ -65,7 +66,7 @@ function SpendProgress({ spent, minimum }: { spent: number; minimum: number }) {
   const percent = minimum > 0 ? Math.min(100, Math.round((spent * 100) / minimum)) : 0;
   return (
     <div className="tw:flex tw:min-w-40 tw:flex-col tw:gap-1">
-      <div role="progressbar" aria-label="Qualifying spend" aria-valuemin={0} aria-valuemax={minimum} aria-valuenow={Math.min(spent, minimum)} className="tw:h-2 tw:overflow-hidden tw:rounded-full tw:bg-muted">
+      <div role="progressbar" aria-label="Spending that counts" aria-valuemin={0} aria-valuemax={minimum} aria-valuenow={Math.min(spent, minimum)} className="tw:h-2 tw:overflow-hidden tw:rounded-full tw:bg-muted">
         <div className={cn("tw:h-full tw:rounded-full", spent >= minimum ? "tw:bg-success" : "tw:bg-primary")} style={{ width: `${percent}%` }} />
       </div>
       <span className="tw:text-xs tw:whitespace-nowrap tw:text-muted-foreground"><Money value={spent} /> of <Money value={minimum} /></span>
@@ -75,13 +76,13 @@ function SpendProgress({ spent, minimum }: { spent: number; minimum: number }) {
 
 const trancheColumns = (financialHold: boolean, today: string): ColumnDef<PointsTranche, unknown>[] => [
   { id: "year", header: "Year", cell: ({ row }) => <span className="tw:font-semibold">{`Year ${row.original.number}`}</span> },
-  { id: "due", header: "Due date", cell: ({ row }) => formatDate(row.original.dueDate) },
+  { id: "due", header: "Due Date", cell: ({ row }) => formatDate(row.original.dueDate) },
   { id: "spend", header: "Spend", cell: ({ row }) => <SpendProgress spent={row.original.qualifyingCentavos} minimum={row.original.minimumCentavos} /> },
   {
     id: "status", header: "Status",
     cell: ({ row }) => { const status = giftStatus(row.original, financialHold, today); return <ToneBadge tone={status.tone}>{status.label}</ToneBadge>; },
   },
-  { id: "released", header: "Released on", cell: ({ row }) => formatDate(row.original.releaseDate) },
+  { id: "released", header: "Given on", cell: ({ row }) => formatDate(row.original.releaseDate) },
 ];
 
 const giftColumns: ColumnDef<GiftLedgerEntry, unknown>[] = [
@@ -93,18 +94,18 @@ const giftColumns: ColumnDef<GiftLedgerEntry, unknown>[] = [
 ];
 
 const billColumns: ColumnDef<ResortSpend, unknown>[] = [
-  { id: "or", header: "Official receipt", cell: ({ row }) => <span className="tw:font-semibold">{row.original.verificationRef ?? EMPTY}</span> },
-  { id: "date", header: "Bill date", cell: ({ row }) => formatDate(row.original.date) },
+  { id: "or", header: "Official Receipt", cell: ({ row }) => <span className="tw:font-semibold">{row.original.verificationRef ?? EMPTY}</span> },
+  { id: "date", header: "Bill Date", cell: ({ row }) => formatDate(row.original.date) },
   { id: "spend", header: "Amount", cell: ({ row }) => <Money value={row.original.amountCentavos} /> },
   { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
 ];
 
 const waiverColumns: ColumnDef<WaiverRequest, unknown>[] = [
   { id: "year", header: "Year", cell: ({ row }) => <span className="tw:font-semibold">{`Year ${row.original.tranche}`}</span> },
-  { id: "date", header: "Request received", cell: ({ row }) => formatDate(row.original.date) },
+  { id: "date", header: "Request Received", cell: ({ row }) => formatDate(row.original.date) },
   { id: "ground", header: "Ground", cell: ({ row }) => row.original.ground },
   { id: "status", header: "Decision", cell: ({ row }) => <ToneBadge tone={decisionTone(row.original)}>{decisionLabel(row.original)}</ToneBadge> },
-  { id: "release", header: "Release date", cell: ({ row }) => formatDate(row.original.decision?.releaseDate ?? null) },
+  { id: "release", header: "Given on", cell: ({ row }) => formatDate(row.original.decision?.releaseDate ?? null) },
 ];
 
 type Dialog = { kind: "bill" } | { kind: "refund"; id: string } | { kind: "request" }
@@ -137,6 +138,7 @@ function useSelectedMembership() {
 /** Name, tier, card number and dates of the chosen cardholder, plus the payment-hold alert when one applies. */
 function CardholderSummary({ current }: { current: MembershipPoints }) {
   const memberships = useMemberships();
+  const tierName = useTierDisplayName();
   const membership = memberships.data?.find((item) => item.id === current.membershipId);
   const claimDate = membership?.cardClaimDate ?? null;
   const secondAnniversary = claimDate ? addYearsToDate(claimDate, 2) : null;
@@ -152,8 +154,8 @@ function CardholderSummary({ current }: { current: MembershipPoints }) {
           <div className="tw:min-w-0">
             <p className="tw:m-0 tw:truncate tw:text-lg tw:font-semibold">{current.customerName}</p>
             <div className="tw:mt-1 tw:flex tw:flex-wrap tw:items-center tw:gap-2">
-              <ToneBadge tone="info">{membership?.productName ?? current.productCode}</ToneBadge>
-              {current.financialHold ? <BizBadge status="on_hold" label="Financial Hold" /> : <BizBadge status={current.status} />}
+              <ToneBadge tone="info">{tierName(current.productCode) ?? EMPTY}</ToneBadge>
+              {current.financialHold ? <BizBadge status="on_hold" label="Payment Hold" /> : <BizBadge status={current.status} />}
             </div>
           </div>
         </div>
@@ -221,10 +223,10 @@ export function WelcomeGiftPanel() {
       rows: [
         { label: "Spend period", value: `${formatDate(tranche.startDate)} to ${formatDate(tranche.endDate)}` },
         { label: "Due date", value: formatDate(tranche.dueDate) },
-        { label: "Qualifying spend", value: <Money value={tranche.qualifyingCentavos} /> },
+        { label: "Spending that counts", value: <Money value={tranche.qualifyingCentavos} /> },
         { label: "Minimum spend", value: <Money value={tranche.minimumCentavos} /> },
         { label: "Status", value: status.label },
-        { label: "Released on", value: tranche.releaseDate ? formatDate(tranche.releaseDate) : null },
+        { label: "Given on", value: tranche.releaseDate ? formatDate(tranche.releaseDate) : null },
         { label: "Points start date", value: padDate },
       ],
     }];
@@ -245,26 +247,26 @@ export function WelcomeGiftPanel() {
   return (
     <>
       <AdminStatGrid columns={4}>
-        <AdminStatCard label="Weekday points available" value={count(balances?.spendableWeekday)} icon={Wallet} tone="success" />
-        <AdminStatCard label="Weekend points available" value={count(balances?.spendableWeekend)} icon={Coins} tone="success" />
-        <AdminStatCard label="Gifts released" value={count(balances?.released)} icon={Gift} />
-        <AdminStatCard label="Points used" value={count(balances?.redeemed)} icon={Clock} />
+        <AdminStatCard label="Weekday Points Available" value={count(balances?.spendableWeekday)} icon={Wallet} tone="success" />
+        <AdminStatCard label="Weekend Points Available" value={count(balances?.spendableWeekend)} icon={Coins} tone="success" />
+        <AdminStatCard label="Gifts Given" value={count(balances?.released)} icon={Gift} />
+        <AdminStatCard label="Points Used" value={count(balances?.redeemed)} icon={Clock} />
       </AdminStatGrid>
       <Card aria-label="Other points">
         <InfoGrid label="Other points" columns={3}>
           <InfoItem term="Reserved for upcoming stays">{count(balances?.reserved)}</InfoItem>
-          <InfoItem term="Forfeited">{count(balances?.forfeited)}</InfoItem>
+          <InfoItem term="Lost">{count(balances?.forfeited)}</InfoItem>
           {promoSection.rows.map((row) => <InfoItem key={row.label} term={`Promo points ${row.label.toLowerCase()}`}>{row.value}</InfoItem>)}
         </InfoGrid>
       </Card>
       <section aria-label="Yearly gifts" className="tw:flex tw:flex-col tw:gap-3">
-        <h2 className="tw:m-0 tw:text-lg tw:font-semibold">Yearly gifts</h2>
-        <DataTable data={ledger?.tranches ?? []} columns={columns} getRowId={(row) => String(row.number)} emptyText="Yearly gift dates appear once the points start date is set." caption="Yearly gifts"
+        <h2 className="tw:m-0 tw:text-lg tw:font-semibold">Yearly Gifts</h2>
+        <DataTable data={ledger?.tranches ?? []} columns={columns} getRowId={(row) => String(row.number)} emptyText="Yearly gift dates appear once the points start date is set." caption="Yearly Gifts"
           onRowOpen={(row) => setDetail({ kind: "tranche", number: row.number })} getRowLabel={(row) => `Open year ${row.number} gift`} />
       </section>
       <section aria-label="Gift history" className="tw:flex tw:flex-col tw:gap-3">
-        <h2 className="tw:m-0 tw:text-lg tw:font-semibold">Gift history</h2>
-        <DataTable data={ledger?.entries ?? []} columns={giftColumns} getRowId={entryKey} emptyText="No gift movements recorded." caption="Gift history"
+        <h2 className="tw:m-0 tw:text-lg tw:font-semibold">Gift History</h2>
+        <DataTable data={ledger?.entries ?? []} columns={giftColumns} getRowId={entryKey} emptyText="No gift movements recorded." caption="Gift History"
           onRowOpen={(row) => setDetail({ kind: "entry", key: entryKey(row) })} getRowLabel={(row) => `Open ${GIFT_ACTIONS[row.type].toLowerCase()} entry for year ${row.tranche}`} />
       </section>
       <RecordDetailsSheet open={detail !== null && sections.length > 0} onClose={() => setDetail(null)} title={sheetTitle} subtitle={current.customerName} badge={sheetBadge} sections={sections} />
@@ -286,8 +288,8 @@ export function ResortBillsPanel() {
   if (!current) return null;
 
   const approve = (bill: ResortSpend) => confirmRun({
-    title: "Approve this resort bill?", description: "Its qualifying spend will count in the period of its bill date.",
-    confirmText: "Approve bill", tone: "success", successTitle: "Resort bill approved.", errorTitle: "Could not approve the bill",
+    title: "Approve This Resort Bill?", description: "Its amount will count toward the spending that counts in the period of its bill date.",
+    confirmText: "Approve Bill", tone: "success", successTitle: "Resort bill approved.", errorTitle: "Could not approve the bill",
     action: () => action.mutateAsync({ action: "approve", spendId: bill.id }),
   });
   const mayApprove = (bill: ResortSpend) => canApprove && bill.status === "submitted";
@@ -299,10 +301,10 @@ export function ResortBillsPanel() {
 
   return (
     <>
-      <DataTable data={current.spends} columns={billColumns} getRowId={(row) => row.id} emptyText="No resort bills recorded." caption="Resort bills"
+      <DataTable data={current.spends} columns={billColumns} getRowId={(row) => row.id} emptyText="No resort bills recorded." caption="Resort Bills"
         onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open ${billName(row)}`}
         rowActions={(row) => <RowActionsMenu itemName={billName(row)}
-          extraItems={mayApprove(row) ? [{ key: "approve", label: "Approve bill", tone: "success", onClick: () => approve(row) }] : []} />} />
+          extraItems={mayApprove(row) ? [{ key: "approve", label: "Approve Bill", tone: "success", onClick: () => approve(row) }] : []} />} />
       <RecordDetailsSheet
         open={bill !== undefined}
         onClose={() => setDetailId(null)}
@@ -316,7 +318,7 @@ export function ResortBillsPanel() {
               { label: "Official receipt", value: bill.verificationRef },
               { label: "Bill date", value: formatDate(bill.date) },
               ...(venueName ? [{ label: "AFhomes Direct Operation", value: venueName }] : []),
-              ...(bill.holder ? [{ label: "Cardholder", value: bill.holder === "supplementary" ? "Supplementary" : "Primary" }] : []),
+              ...(bill.holder ? [{ label: "Cardholder", value: bill.holder === "supplementary" ? "Extra cardholder" : "Primary" }] : []),
               ...(bill.grossCentavos !== undefined ? [{ label: "Gross amount", value: <Money value={bill.grossCentavos} /> }] : []),
               ...(bill.excludedCentavos !== undefined ? [{ label: "Excluded amount", value: <Money value={bill.excludedCentavos} /> }] : []),
               { label: "Qualifying amount", value: <Money value={bill.amountCentavos} /> },
@@ -335,8 +337,8 @@ export function ResortBillsPanel() {
         ] : []}
         footer={bill && (mayApprove(bill) || mayRefund(bill)) ? (
           <>
-            {mayApprove(bill) ? <Button type="button" variant="success" onClick={() => approve(bill)}>Approve bill</Button> : null}
-            {mayRefund(bill) ? <Button type="button" variant="warning" onClick={() => { setDetailId(null); setDialog({ kind: "refund", id: bill.id }); }}>Record refund</Button> : null}
+            {mayApprove(bill) ? <Button type="button" variant="success" onClick={() => approve(bill)}>Approve Bill</Button> : null}
+            {mayRefund(bill) ? <Button type="button" variant="warning" onClick={() => { setDetailId(null); setDialog({ kind: "refund", id: bill.id }); }}>Record Refund</Button> : null}
           </>
         ) : undefined}
       />
@@ -360,17 +362,17 @@ export function WaiversPanel() {
 
   return (
     <>
-      <DataTable data={current.waivers} columns={waiverColumns} getRowId={(row) => row.id} caption="Compassionate Waivers" emptyText="No waiver requests."
-        onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open waiver request for year ${row.tranche}`}
-        rowActions={(row) => <RowActionsMenu itemName={`waiver request for year ${row.tranche}`}
+      <DataTable data={current.waivers} columns={waiverColumns} getRowId={(row) => row.id} caption="Gift Exceptions" emptyText="No exception requests."
+        onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open exception request for year ${row.tranche}`}
+        rowActions={(row) => <RowActionsMenu itemName={`exception request for year ${row.tranche}`}
           extraItems={canWaive && !row.decision ? [
-            { key: "grant", label: "Grant waiver", tone: "success", onClick: () => setDialog({ kind: "grant", id: row.id }) },
-            { key: "refuse", label: "Refuse waiver", tone: "danger", onClick: () => setDialog({ kind: "refuse", id: row.id }) },
+            { key: "grant", label: "Approve Exception", tone: "success", onClick: () => setDialog({ kind: "grant", id: row.id }) },
+            { key: "refuse", label: "Decline Exception", tone: "danger", onClick: () => setDialog({ kind: "refuse", id: row.id }) },
           ] : []} />} />
       <RecordDetailsSheet
         open={waiver !== undefined}
         onClose={() => setDetailId(null)}
-        title={waiver ? `Waiver request · Year ${waiver.tranche}` : "Waiver request"}
+        title={waiver ? `Exception Request · Year ${waiver.tranche}` : "Exception Request"}
         subtitle={current.customerName}
         badge={waiver ? <ToneBadge tone={decisionTone(waiver)}>{decisionLabel(waiver)}</ToneBadge> : undefined}
         sections={waiver ? [
@@ -389,7 +391,7 @@ export function WaiversPanel() {
               { label: "Decision", value: decisionLabel(waiver) },
               ...(waiver.decision ? [
                 { label: "Decided on", value: formatDate(waiver.decision.date) },
-                { label: "Release date", value: waiver.decision.releaseDate ? formatDate(waiver.decision.releaseDate) : null },
+                { label: "Given on", value: waiver.decision.releaseDate ? formatDate(waiver.decision.releaseDate) : null },
                 { label: "Written reason", value: waiver.decision.reason },
               ] : []),
             ],
@@ -397,8 +399,8 @@ export function WaiversPanel() {
         ] : []}
         footer={waiver && canWaive && !waiver.decision ? (
           <>
-            <Button type="button" variant="success" onClick={() => { setDetailId(null); setDialog({ kind: "grant", id: waiver.id }); }}>Grant waiver</Button>
-            <Button type="button" variant="destructive" onClick={() => { setDetailId(null); setDialog({ kind: "refuse", id: waiver.id }); }}>Refuse waiver</Button>
+            <Button type="button" variant="success" onClick={() => { setDetailId(null); setDialog({ kind: "grant", id: waiver.id }); }}>Approve Exception</Button>
+            <Button type="button" variant="destructive" onClick={() => { setDetailId(null); setDialog({ kind: "refuse", id: waiver.id }); }}>Decline Exception</Button>
           </>
         ) : undefined}
       />
@@ -422,7 +424,7 @@ export function EnterResortBillButton() {
   if (!canEnter || !current) return null;
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)}>Enter resort bill</Button>
+      <Button type="button" onClick={() => setOpen(true)}>Enter Resort Bill</Button>
       {open ? <StayPointsDialog dialog={{ kind: "bill" }} membershipId={current.membershipId} gold={supplementary} venues={venues.data ?? []}
         tranches={[]} pending={action.isPending} submit={action.mutateAsync} onClose={() => setOpen(false)} /> : null}
     </>
@@ -439,7 +441,7 @@ export function RecordWaiverRequestButton() {
   if (!canWaive || !current || (!tranches.length && !open)) return null;
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)}>Record waiver request</Button>
+      <Button type="button" onClick={() => setOpen(true)}>Record Exception Request</Button>
       {open ? <StayPointsDialog dialog={{ kind: "request" }} membershipId={current.membershipId} gold={supplementary} venues={[]}
         tranches={tranches} pending={action.isPending} submit={action.mutateAsync} onClose={() => setOpen(false)} /> : null}
     </>
@@ -468,8 +470,8 @@ export function StayPointsAreaPage() {
         actions={(tab) => STAY_TAB_ACTIONS[tab]?.() ?? null}
         tabs={[
           { value: "welcome-gift", label: "Welcome Gift", allowed: access["welcome-gift"], render: () => withPicker(<WelcomeGiftPanel />) },
-          { value: "resort-bills", label: "Resort bills", allowed: access["resort-bills"], render: () => withPicker(<ResortBillsPanel />) },
-          { value: "waivers", label: "Waivers", allowed: access.waivers, render: () => withPicker(<WaiversPanel />) },
+          { value: "resort-bills", label: "Resort Bills", allowed: access["resort-bills"], render: () => withPicker(<ResortBillsPanel />) },
+          { value: "waivers", label: "Gift Exceptions", allowed: access.waivers, render: () => withPicker(<WaiversPanel />) },
           { value: "promos", label: "Promos", allowed: access.promos, render: () => <PromosPanel /> },
           { value: "promo-points", label: "Promo Points", allowed: access["promo-points"], render: () => <PromoPointsPanel /> },
         ]}
@@ -493,7 +495,7 @@ function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pendin
   const [ground, setGround] = useState<WaiverRequest["ground"]>();
   const [error, setError] = useState<string>();
 
-  const titles = { bill: "Enter resort bill", refund: "Record resort bill refund", request: "Record waiver request", grant: "Grant Compassionate Waiver", refuse: "Refuse Compassionate Waiver" };
+  const titles = { bill: "Enter resort bill", refund: "Record resort bill refund", request: "Record exception request", grant: "Approve Gift Exception", refuse: "Decline Gift Exception" };
   const save = async () => {
     try {
       if (dialog.kind === "bill" || dialog.kind === "refund") {
@@ -506,7 +508,7 @@ function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pendin
           await submit({ action: "enter", membershipId, venueId: venue, date, reference, grossCentavos: amountCentavos, excludedCentavos, holder, description: reason });
         }
       } else if (dialog.kind === "request") {
-        if (!ground) throw new Error("Choose a waiver ground.");
+        if (!ground) throw new Error("Choose a ground for the exception.");
         await submit({ action: "request-waiver", membershipId, tranche: Number(tranche), date, ground, supportingReference: reference });
       } else {
         await submit({ action: "decide-waiver", waiverId: dialog.id, granted: dialog.kind === "grant", releaseDate: date || null, reason });
@@ -522,7 +524,7 @@ function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pendin
     {dialog.kind !== "refuse" ? <StandardDateField required label={dialog.kind === "bill" ? "Bill date" : dialog.kind === "refund" ? "Refund date" : dialog.kind === "grant" ? "Next administrative cycle date" : "Date written request received"} value={date} onChange={setDate} /> : null}
     {dialog.kind === "bill" ? <>
       <SelectField label="AFhomes Direct Operation" required value={venue} options={venues.map((item) => ({ value: item.id, label: item.name }))} onChange={setVenue} />
-      {gold ? <SelectField label="Cardholder" value={holder} options={[{ value: "primary", label: "Primary" }, { value: "supplementary", label: "Supplementary" }]} onChange={(value) => setHolder(value === "supplementary" ? value : "primary")} /> : null}
+      {gold ? <SelectField label="Cardholder" value={holder} options={[{ value: "primary", label: "Primary" }, { value: "supplementary", label: "Extra cardholder" }]} onChange={(value) => setHolder(value === "supplementary" ? value : "primary")} /> : null}
       <TextField label="Official receipt number" required value={reference} onChange={setReference} />
       <MoneyField label="Gross pre-discount amount" required value={amount} onChange={setAmount} />
       <MoneyField label="Excluded amount" value={excluded} onChange={setExcluded} hint="Exclude taxes, government fees, gratuities, points, and other amounts that do not qualify." />

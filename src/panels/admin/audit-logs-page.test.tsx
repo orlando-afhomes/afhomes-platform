@@ -30,21 +30,21 @@ afterEach(cleanup);
 describe("audit logs page", () => {
   it("shows five columns, one value each, and no row menu", async () => {
     render(<Wrapper><AuditLogsPage /></Wrapper>);
-    const table = await screen.findByRole("table", { name: "Audit events" });
+    const table = await screen.findByRole("table", { name: "Audit Events" });
     const headers = within(table).getAllByRole("columnheader").map((cell) => cell.textContent);
-    expect(headers).toEqual(["When", "Action", "Record type", "Record", "Actor"]);
+    expect(headers).toEqual(["When", "Action", "Record Type", "Record", "Actor"]);
     expect(screen.queryByRole("button", { name: /^Actions for/ })).toBeNull();
   });
 
   it("opens every value of an event from the row, with plain-English action text", async () => {
     render(<Wrapper><AuditLogsPage /></Wrapper>);
-    const table = await screen.findByRole("table", { name: "Audit events" });
+    const table = await screen.findByRole("table", { name: "Audit Events" });
     const row = within(table).getAllByRole("row")[1];
     expect(within(row).queryByText(/[A-Z]+_[A-Z]+/)).toBeNull();
     fireEvent.click(row);
     const sheet = await screen.findByRole("dialog");
     const labels = Array.from(sheet.querySelectorAll("dt")).map((term) => term.textContent);
-    expect(labels).toEqual(expect.arrayContaining(["When", "Action", "Module", "Record type", "Record", "Details", "Actor", "Actor roles", "Previous value", "New value", "Reason"]));
+    expect(labels).toEqual(expect.arrayContaining(["When", "Action", "Module", "Record Type", "Record", "Details", "Actor", "Actor roles", "Previous value", "New value", "Reason"]));
   });
 
   it("filters by an actor picked from a searchable list that includes System", async () => {
@@ -56,7 +56,7 @@ describe("audit logs page", () => {
     await user.clear(box);
     await user.type(box, "Sys");
     await user.click(await screen.findByRole("option", { name: "System" }));
-    const table = await screen.findByRole("table", { name: "Audit events" });
+    const table = await screen.findByRole("table", { name: "Audit Events" });
     const rows = within(table).getAllByRole("row").slice(1);
     for (const row of rows) {
       if (row.textContent?.includes("No audit events match")) continue;

@@ -14,9 +14,9 @@ import { ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../
 
 const COLUMNS: ReportColumn<Customer>[] = [
   { header: "Customer", value: (customer) => customerRecordName(customer) },
-  { header: "Customer number", value: (customer) => customer.customerNumber ?? "" },
+  { header: "Customer Number", value: (customer) => customer.customerNumber ?? "" },
   { header: "Status", value: (customer) => humanize(customer.status) },
-  { header: "VIP plan", value: (customer) => customer.vipPlan ?? "" },
+  { header: "VIP Plan", value: (customer) => customer.vipPlan ?? "" },
   { header: "Created", value: (customer) => formatDate(customer.createdAt) },
 ];
 
@@ -39,8 +39,8 @@ export function CustomerGrowthReportPanel() {
   return (
     <ReportFrame range={range}>
       <AdminStatGrid columns={2}>
-        <AdminStatCard loading={customers.isLoading} error={customers.error} label="New customers" value={newCustomers} icon={UserPlus} tone="success" />
-        <AdminStatCard loading={customers.isLoading} error={customers.error} label="All customers" value={customerList.length} icon={Users} tone="info" />
+        <AdminStatCard loading={customers.isLoading} error={customers.error} label="New Customers" value={newCustomers} icon={UserPlus} tone="success" />
+        <AdminStatCard loading={customers.isLoading} error={customers.error} label="All Customers" value={customerList.length} icon={Users} tone="info" />
       </AdminStatGrid>
       <ReportTable report="Customer Growth" fileName="customer-growth" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => row.id} loading={customers.isLoading} error={customers.error} emptyText="No customers match."
         filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search customers" filters={[

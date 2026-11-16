@@ -51,13 +51,13 @@ function show(identityId: string, page: ReactElement) {
 }
 
 const TILES = {
-  sales: "Period sales",
-  growth: "New customers",
-  collections: "Verified collections",
+  sales: "Period Sales",
+  growth: "New Customers",
+  collections: "Verified Collections",
   commissions: "Approved",
   membership: "Activated",
-  points: "Points released",
-  promo: "Points earned",
+  points: "Points Given",
+  promo: "Points Earned",
 };
 
 describe("report pages", () => {
@@ -104,7 +104,7 @@ describe("report pages", () => {
 
   it("filters the customer growth table by search text", async () => {
     show("dev-finance", <CustomerGrowthReportPage />);
-    await screen.findAllByText("New customers");
+    await screen.findAllByText("New Customers");
     const table = await screen.findByRole("table", { name: "Customer Growth" });
     const before = within(table).queryAllByRole("row").length;
     fireEvent.change(screen.getByLabelText("Search customers"), { target: { value: "zzzz-no-such-customer" } });
@@ -157,8 +157,8 @@ describe("reports summary", () => {
     expect(screen.getByLabelText("From")).toBeInTheDocument();
     expect(screen.getByLabelText("To")).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Date range" })).toBeNull();
-    // Every card is clickable and shows its "Open report" hint.
-    expect(screen.getAllByText(/Open report/)).toHaveLength(7);
+    // Every card is clickable through one overlay button named "Open the ... report".
+    expect(screen.getAllByRole("button", { name: /^Open the .+ report$/ })).toHaveLength(7);
   });
 
   it("hides the Collections card without finance.reports.view", async () => {
@@ -190,7 +190,7 @@ describe("reports area page", () => {
     show("dev-finance", <ReportsAreaPage />);
     fireEvent.click(await screen.findByRole("button", { name: "Open the Sales report" }));
     expect(screen.getByRole("tab", { name: "Sales" })).toHaveAttribute("aria-selected", "true");
-    expect((await screen.findAllByText("Period sales")).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Period Sales")).length).toBeGreaterThan(0);
     expect(window.location.search).toBe("?tab=sales");
     expect(document.querySelector(".report-print__page")).not.toBeNull();
   });

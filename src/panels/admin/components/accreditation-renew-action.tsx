@@ -36,7 +36,7 @@ export function AccreditationRenewAction({ record, memberName, canRenew }: { rec
       <div className="tw:mt-4 tw:flex tw:flex-wrap tw:items-center tw:gap-3">
         <Button type="button" size="sm" variant="outline" disabled={!allowed || renew.isPending} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setOpen(true)}>
           <RefreshCw aria-hidden="true" />
-          Renew accreditation
+          Renew Accreditation
         </Button>
         {allowed ? null : (
           <p role="note" className="tw:text-sm tw:text-muted-foreground">
@@ -46,15 +46,15 @@ export function AccreditationRenewAction({ record, memberName, canRenew }: { rec
       </div>
       <ConfirmDialog
         open={open}
-        title="Renew accreditation?"
-        description={`Renew the accreditation of ${memberName} today? A new AA number is issued for this month and is valid for one year from today. The current number ${record.aaNumber} is kept in the AA Number History, and all sales, team and referrer links carry over.`}
+        title="Renew Accreditation?"
+        description={`Renew the accreditation of ${memberName} today? A new accreditation number is issued for this month and is valid for one year from today. The current number ${record.aaNumber} is kept in the Accreditation Number History, and all sales, team and referrer links carry over.`}
         confirmText="Renew" tone="success"
         pending={renew.isPending}
         onConfirm={() => {
           void renew.mutateAsync({ recordId: record.id, expectedAaNumber: record.aaNumber ?? undefined }).then(
             (renewed) => {
               setOpen(false);
-              toast.success("Accreditation renewed.", { description: `New AA number ${renewed.aaNumber ?? ""}, valid until ${formatDate(renewed.expiryDate)}.` });
+              toast.success("Accreditation renewed.", { description: `New accreditation number ${renewed.aaNumber ?? ""}, valid until ${formatDate(renewed.expiryDate)}.` });
             },
             (err: unknown) => {
               setOpen(false);

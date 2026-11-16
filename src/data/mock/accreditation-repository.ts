@@ -232,7 +232,7 @@ export class MockAccreditationRepository implements AccreditationRepository {
       throw new Error("A reason is required for this status change.");
     }
     if (requested === "active") {
-      if (!record.aaNumber) throw new Error("Accreditation cannot be approved without an issued AA number.");
+      if (!record.aaNumber) throw new Error("Accreditation cannot be approved without an issued accreditation number.");
       if (!record.effectiveDate || !record.expiryDate) {
         throw new Error("Accreditation cannot be approved without complete original and expiry dates.");
       }
@@ -315,7 +315,7 @@ export class MockAccreditationRepository implements AccreditationRepository {
       displayReference: allocation.aaNumber,
       newValue: "pending",
       outcome: "success",
-      reason: "Pending accreditation issued with automatic AA allocation",
+      reason: "Pending accreditation issued with automatic accreditation number allocation",
       relatedRecordIds: [memberId],
     });
     return this.copy(record);

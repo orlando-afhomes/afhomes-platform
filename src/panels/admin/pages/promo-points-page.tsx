@@ -36,7 +36,7 @@ export function RecordPromoUseButton() {
   return (
     <>
       <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setOpen(true)}>
-        <Coins aria-hidden="true" /> Record points use
+        <Coins aria-hidden="true" /> Record Points Use
       </Button>
       {open ? <UseDialog onClose={() => setOpen(false)} /> : null}
     </>
@@ -69,10 +69,10 @@ export function PromoPointsPanel() {
     { id: "type", header: "Type", cell: ({ row }) => entryType(row.original) },
     { id: "promo", header: "Promo", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.promoName },
     {
-      id: "actions", header: () => <span className="tw:sr-only">Actions</span>,
+      id: "actions", header: "Actions",
       cell: ({ row }) => (
         <RowActionsMenu itemName={`${row.original.customerName} ${ENTRY_TYPE_LABELS[row.original.type].toLowerCase()} entry`}
-          extraItems={canUse && row.original.type === "use" && !row.original.voided ? [{ key: "void", label: "Void use", danger: true, onClick: () => setVoiding(row.original) }] : []} />
+          extraItems={canUse && row.original.type === "use" && !row.original.voided ? [{ key: "void", label: "Void Use", danger: true, onClick: () => setVoiding(row.original) }] : []} />
       ),
     },
   ], [canUse]);
@@ -84,7 +84,7 @@ export function PromoPointsPanel() {
         { label: "Promo filter", value: promoId, onChange: setPromoId, options: promoOptions },
         { label: "Entry type filter", value: type, onChange: setType, options: optionsFrom("All entry types", data.map((row) => row.type), (value) => ENTRY_TYPE_LABELS[value as PromoLedgerRow["type"]] ?? value) },
       ]} />
-      <DataTable<PromoLedgerRow> caption="Promo Points ledger" data={rows} columns={columns} getRowId={(row) => row.id} emptyText="No Promo Points entries yet." loading={ledger.isLoading}
+      <DataTable<PromoLedgerRow> caption="Promo Points Ledger" data={rows} columns={columns} getRowId={(row) => row.id} emptyText="No Promo Points entries yet." loading={ledger.isLoading}
         onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open ${row.customerName} ${ENTRY_TYPE_LABELS[row.type].toLowerCase()} entry`} />
       <RecordDetailsSheet
         open={detail !== null}
@@ -105,10 +105,10 @@ export function PromoPointsPanel() {
       />
       <ReasonDialog
         open={voiding !== null}
-        title="Void this points use?"
+        title="Void This Points Use?"
         description={voiding ? `${voiding.points.toLocaleString("en-PH")} points used by ${voiding.customerName} go back to their Promo Points balance.` : ""}
-        label="Reason for the void"
-        confirmText="Void use"
+        label="Reason for the Void"
+        confirmText="Void Use"
         danger
         successText="Points use voided."
         onClose={() => setVoiding(null)}
@@ -148,7 +148,7 @@ function UseDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <FormDialog open title="Record points use" submitText="Record use" pending={record.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
+    <FormDialog open title="Record Points Use" submitText="Record Use" pending={record.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
       <SelectField label="Member" required value={membershipId} placeholder="Select a member"
         options={(memberships.data ?? []).filter((item) => item.cardId).map((item) => ({ value: item.membershipId, label: `${item.customerName} · ${item.cardId}` }))}
         onChange={(value) => { setMembershipId(value); setError(undefined); }} />

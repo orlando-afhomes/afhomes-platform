@@ -17,6 +17,7 @@ const ROW =
 // The current page is marked by a highlighted background and aria-current.
 const ROW_SELECTED =
   "tw:bg-white/10 tw:text-sidebar-foreground";
+const GROUP_TRIGGER = "tw:aria-expanded:text-sidebar-foreground tw:dark:hover:bg-sidebar-accent";
 
 // Badge counts are capped at render: the provider keeps exact counts, the nav
 // shows "99+" past 99.
@@ -29,9 +30,9 @@ const BADGE_PILL =
 
 const NAV_GROUPS: { label: string; icon: LucideIcon; members: readonly AdminNavItem["id"][] }[] = [
   { label: "Money", icon: Landmark, members: ["finance", "commissions"] },
-  { label: "Member services", icon: IdCard, members: ["membership", "stay-points", "redemption"] },
+  { label: "Member Services", icon: IdCard, members: ["membership", "stay-points", "redemption"] },
   { label: "Management", icon: Building2, members: ["vip-products", "sales-network", "organization"] },
-  { label: "Reports and audit", icon: BarChart3, members: ["reports", "audit-logs"] },
+  { label: "Reports and Audit", icon: BarChart3, members: ["reports", "audit-logs"] },
 ];
 
 /** Groups are applied after filtering so they only contain destinations the user can open. */
@@ -71,7 +72,7 @@ export function AdminNavList({
           return (
             <li key={label}>
               <DropdownMenu>
-                <DropdownMenuTrigger render={<Button variant="ghost" className={cn(ROW, "tw:relative tw:justify-center tw:px-0", selectedChild && ROW_SELECTED)} />}
+                <DropdownMenuTrigger render={<Button variant="ghost" className={cn(ROW, GROUP_TRIGGER, "tw:relative tw:justify-center tw:px-0 tw:aria-expanded:bg-white/10")} />}
                   aria-label={badge ? `${label}, ${badge} new` : label} title={label}>
                   <Icon aria-hidden="true" className="tw:size-4" />
                   {badge ? <span aria-hidden="true" className="tw:absolute tw:top-1.5 tw:right-1.5 tw:size-2 tw:rounded-full tw:bg-destructive" /> : null}
@@ -175,7 +176,9 @@ function NavGroup({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={onToggle}
-        className={cn(ROW, open && "tw:bg-sidebar-accent/60", selectedChild && "tw:text-sidebar-foreground")}
+        className={cn(ROW, GROUP_TRIGGER, selectedChild
+          ? "tw:aria-expanded:bg-transparent tw:aria-expanded:hover:bg-sidebar-accent"
+          : "tw:aria-expanded:bg-white/10")}
       >
         <Icon aria-hidden="true" className="tw:size-4 tw:shrink-0" />
         <span className="tw:min-w-0 tw:flex-1">{label}</span>

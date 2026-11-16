@@ -2,6 +2,7 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import { useSubmitRegistration, useVerifyReferralSponsor } from "@/data/queries";
+import { designationLabel } from "@/modules/sales-network/display";
 import type { ReferralSponsorSummary } from "@/modules/sales-network/types";
 import type { RegistrationApplicant } from "@/modules/accreditation/types";
 import {
@@ -159,8 +160,8 @@ export function OstRegistrationPage() {
 
   const heading = (
     <div>
-      <h1 className="tw:text-3xl tw:font-semibold">OST Registration</h1>
-      <p className="tw:mt-2 tw:text-muted-foreground">Apply to become an Outsourcing Sales Team (OST) seller. You need the referral code from the person who invited you.</p>
+      <h1 className="tw:text-3xl tw:font-semibold">Outsourced Seller (OST) Registration</h1>
+      <p className="tw:mt-2 tw:text-muted-foreground">Apply to become an Outsourced Seller (OST). You need the referral code from the person who invited you.</p>
     </div>
   );
 
@@ -179,7 +180,7 @@ export function OstRegistrationPage() {
       <StepIndicator steps={STEPS} current={step} />
       <div>
         {step === 0 ? (
-          <StepCard title="Step 1 — Referral verification">
+          <StepCard title="Step 1 — Referral Verification">
             <form
               noValidate
               className="tw:flex tw:flex-col tw:gap-4"
@@ -193,18 +194,18 @@ export function OstRegistrationPage() {
                 <div role="status" className="tw:rounded-md tw:border tw:border-border tw:bg-background tw:p-3">
                   <p className="tw:font-semibold">{sponsor.displayName}</p>
                   <p className="tw:my-1">
-                    <Badge variant="outline">{sponsor.designation}</Badge>
+                    <Badge variant="outline">{designationLabel(sponsor.designation)}</Badge>
                   </p>
                   <p className="tw:text-success">Verified eligible sponsor</p>
                 </div>
               ) : null}
               <Actions>
                 <Button type="submit" loading={verifying} className={BUTTON_CLASS}>
-                  Verify referral code
+                  Verify Referral Code
                 </Button>
                 {sponsor && !confirmed ? (
                   <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={handleConfirmSponsor}>
-                    Confirm sponsor
+                    Confirm Sponsor
                   </Button>
                 ) : null}
               </Actions>
@@ -212,7 +213,7 @@ export function OstRegistrationPage() {
           </StepCard>
         ) : null}
         {step === 1 ? (
-          <StepCard title="Step 2 — Applicant information">
+          <StepCard title="Step 2 — Applicant Information">
             <form noValidate className="tw:flex tw:flex-col tw:gap-4" onSubmit={goNext(PERSONAL_FIELDS, 2)}>
               <ApplicantPersonalFields value={applicant} onChange={patchApplicant} errors={errors} />
               <Actions>
@@ -229,7 +230,7 @@ export function OstRegistrationPage() {
         {step === 2 ? (
           <StepCard title="Step 3 — Address">
             <form noValidate className="tw:flex tw:flex-col tw:gap-4" onSubmit={goNext(ADDRESS_FIELDS, 3)}>
-              <FormSection title="Home address">
+              <FormSection title="Home Address">
                 <ApplicantAddressFields value={applicant} onChange={patchApplicant} errors={errors} />
               </FormSection>
               <Actions>
@@ -244,11 +245,11 @@ export function OstRegistrationPage() {
           </StepCard>
         ) : null}
         {step === 3 ? (
-          <StepCard title="Step 4 — Review and submit">
+          <StepCard title="Step 4 — Review and Submit">
             <section aria-label="Sponsor" className="tw:flex tw:flex-col tw:gap-1">
               <h3 className="tw:text-sm tw:font-semibold">Sponsor</h3>
               <p>
-                {sponsor?.displayName} ({sponsor?.designation})
+                {sponsor?.displayName} ({sponsor ? designationLabel(sponsor.designation) : ""})
               </p>
             </section>
             <ApplicantSummary applicant={normalizeApplicant(applicant)} />
@@ -260,13 +261,13 @@ export function OstRegistrationPage() {
             ) : null}
             <Actions>
               <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={() => setStep(1)}>
-                Back to applicant information
+                Back to Applicant Information
               </Button>
               <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={handleChangeCode}>
-                Change referral code
+                Change Referral Code
               </Button>
               <Button type="button" loading={submitApplication.isPending} className={BUTTON_CLASS} onClick={() => void handleSubmit()}>
-                Submit application
+                Submit Application
               </Button>
             </Actions>
           </StepCard>

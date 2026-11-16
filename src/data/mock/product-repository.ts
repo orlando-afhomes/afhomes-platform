@@ -68,8 +68,8 @@ export class MockProductRepository extends BusinessRepository implements Product
       if (!product) throw new Error("Product not found.");
       if (input.tierLevelId !== undefined && input.tierLevelId !== product.tierLevelId) {
         const level = this.store.tierLevels.find((item) => item.id === input.tierLevelId);
-        if (!level) throw new Error("Choose a tier level.");
-        if (level.status !== "active") throw new Error("This tier level is inactive. Choose an active one.");
+        if (!level) throw new Error("Choose a card level.");
+        if (level.status !== "active") throw new Error("This card level is inactive. Choose an active one.");
       }
       const next = { ...product, ...input } as VipProduct;
       const invalidTerms = productTermErrors(next);
@@ -108,7 +108,7 @@ export class MockProductRepository extends BusinessRepository implements Product
       [store.sales.filter((item) => item.productCode === code).length, "sale"],
       [store.memberships.filter((item) => item.productCode === code).length, "membership"],
       [store.customers.filter((item) => item.vipPlan === code).length, "customer plan"],
-      [store.paymentSchemes.filter((item) => item.applicableTiers.includes(code) || code in item.priceCentavosByTier || code in item.installmentCentavosByTier).length, "payment scheme"],
+      [store.paymentSchemes.filter((item) => item.applicableTiers.includes(code) || code in item.priceCentavosByTier || code in item.installmentCentavosByTier).length, "payment plan"],
       [store.members.filter((item) => item.sellerProfile?.vipCardLevel === code).length, "seller profile"],
       [store.registrationApplications.filter((item) => item.completion?.vipCardLevel === code).length, "seller registration"],
     ];
@@ -129,13 +129,13 @@ export class MockProductRepository extends BusinessRepository implements Product
       const codeProblem = productCodeError(code, this.store.products.map((item) => item.code));
       if (codeProblem) throw new Error(codeProblem);
       const level = this.store.tierLevels.find((item) => item.id === input.tierLevelId);
-      if (!level) throw new Error("Choose a tier level.");
-      if (level.status !== "active") throw new Error("This tier level is inactive. Choose an active one.");
+      if (!level) throw new Error("Choose a card level.");
+      if (level.status !== "active") throw new Error("This card level is inactive. Choose an active one.");
       const name = input.name.trim();
       if (!name) throw new Error("A product name is required.");
       if (this.store.products.some((item) => item.name.toLowerCase() === name.toLowerCase())) throw new Error("A product with this name already exists.");
       if (!Number.isInteger(input.vipDiscountPercent) || input.vipDiscountPercent < 0 || input.vipDiscountPercent > 100) throw new Error("The VIP discount must be between 0 and 100 percent.");
-      if (!Number.isInteger(input.supplementaryHolders) || input.supplementaryHolders < 0) throw new Error("Supplementary holders cannot be negative.");
+      if (!Number.isInteger(input.supplementaryHolders) || input.supplementaryHolders < 0) throw new Error("Extra cardholders cannot be negative.");
       const product: VipProduct = {
         code,
         name,
@@ -186,10 +186,10 @@ export class MockProductRepository extends BusinessRepository implements Product
 
   async createScheme(input: PaymentSchemeInput & { label: string }, options?: MockAsyncOptions): Promise<PaymentScheme> {
     return this.run(options, (identity) => {
-      this.require(identity, "vip-products.manage", "Managing payment schemes is not allowed for this identity.");
+      this.require(identity, "vip-products.manage", "Managing payment plans is not allowed for this identity.");
       const label = input.label.trim();
-      if (!label) throw new Error("A scheme name is required.");
-      if (this.store.paymentSchemes.some((item) => item.label.toLowerCase() === label.toLowerCase())) throw new Error("A scheme with this name already exists.");
+      if (!label) throw new Error("A payment plan name is required.");
+      if (this.store.paymentSchemes.some((item) => item.label.toLowerCase() === label.toLowerCase())) throw new Error("A payment plan with this name already exists.");
       const scheme: PaymentScheme = {
         id: nextId(this.store, "scheme", "scheme"),
         label,
@@ -221,10 +221,10 @@ export class MockProductRepository extends BusinessRepository implements Product
 
   async updateScheme(id: string, input: PaymentSchemeInput, reason: string, options?: MockAsyncOptions): Promise<PaymentScheme> {
     return this.run(options, (identity) => {
-      this.require(identity, "vip-products.manage", "Managing payment schemes is not allowed for this identity.");
+      this.require(identity, "vip-products.manage", "Managing payment plans is not allowed for this identity.");
       if (!reason.trim()) throw new Error("A reason or approval reference is required for a configuration change.");
       const scheme = this.store.paymentSchemes.find((item) => item.id === id);
-      if (!scheme) throw new Error("Payment scheme not found.");
+      if (!scheme) throw new Error("Payment plan not found.");
       const before = scheme.commercialStatus;
       const changed = (Object.keys(input) as Array<keyof PaymentSchemeInput>).filter((key) => input[key] !== undefined && JSON.stringify(input[key]) !== JSON.stringify(scheme[key]));
       if (changed.length === 0) throw new Error("Nothing was changed.");

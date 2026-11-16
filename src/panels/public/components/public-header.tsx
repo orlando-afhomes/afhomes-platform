@@ -13,10 +13,10 @@ export function PublicHeader() {
             Login
           </Link>
           <Link href="/login/sales" className="public-header__nav-link">
-            Sales sign-in
+            Sales Sign-In
           </Link>
           <Link href="/verify" className="public-header__nav-link">
-            Verify accreditation
+            Verify Accreditation
           </Link>
         </nav>
       </div>

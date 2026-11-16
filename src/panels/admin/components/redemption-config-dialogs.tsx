@@ -38,7 +38,7 @@ export function PublishVersionDialog({ open, overview, onClose }: { open: boolea
     }
   };
   return (
-    <FormDialog open={open} title="Update points table" description="The new points table applies only to cards claimed on or after the day it starts. Earlier tables stay as they are." submitText="Update points table" pending={act.isPending} error={error} onClose={close} onSubmit={() => void submit()}>
+    <FormDialog open={open} title="Update Points Table" description="The new points table applies only to cards claimed on or after the day it starts. Earlier tables stay as they are." submitText="Update Points Table" pending={act.isPending} error={error} onClose={close} onSubmit={() => void submit()}>
       <StandardDateField label="Starts on" required value={effectiveDate} onChange={setEffectiveDate} />
       <fieldset className="tw:flex tw:flex-col tw:gap-2">
         <legend className="tw:text-sm tw:font-medium">Weekend nights</legend>
@@ -53,10 +53,10 @@ export function PublishVersionDialog({ open, overview, onClose }: { open: boolea
           <TextField label="Room type" required value={row.roomType} onChange={(value) => update(index, { roomType: value })} />
           <PointsField label="Weekday points per night" required value={row.weekday} onChange={(value) => update(index, { weekday: value })} />
           <PointsField label="Weekend points per night" required value={row.weekend} onChange={(value) => update(index, { weekend: value })} />
-          <Button type="button" variant="outline" onClick={() => setRows((current) => current.filter((_, i) => i !== index))}><Trash2 aria-hidden="true" /> Remove row</Button>
+          <Button type="button" variant="outline" onClick={() => setRows((current) => current.filter((_, i) => i !== index))}><Trash2 aria-hidden="true" /> Remove Row</Button>
         </fieldset>
       ))}
-      <Button type="button" variant="outline" onClick={() => setRows((current) => [...current, { venueId: overview.venues[0]?.id ?? "", roomType: "", weekday: "", weekend: "" }])}><Plus aria-hidden="true" /> Add row</Button>
+      <Button type="button" variant="outline" onClick={() => setRows((current) => [...current, { venueId: overview.venues[0]?.id ?? "", roomType: "", weekday: "", weekend: "" }])}><Plus aria-hidden="true" /> Add Row</Button>
       <TextAreaField label="Reason for the change" value={note} onChange={setNote} />
     </FormDialog>
   );
@@ -78,7 +78,7 @@ export function HolidayDialog({ open, onClose }: { open: boolean; onClose: () =>
     }
   };
   return (
-    <FormDialog open={open} title="Add holiday" description="A holiday night uses weekend points. Confirmed bookings are not repriced." submitText="Add holiday" pending={act.isPending} error={error} onClose={close} onSubmit={() => void submit()}>
+    <FormDialog open={open} title="Add Holiday" description="A holiday night uses weekend points. Confirmed bookings are not repriced." submitText="Add Holiday" pending={act.isPending} error={error} onClose={close} onSubmit={() => void submit()}>
       <StandardDateField label="Date" required value={date} onChange={setDate} />
       <TextField label="Name" required value={name} onChange={setName} />
     </FormDialog>
@@ -103,7 +103,7 @@ export function VenueDialog({ open, venue, onClose }: { open: boolean; venue: Re
     }
   };
   return (
-    <FormDialog open={open} title={venue ? "Edit venue" : "Add venue"} description="Only open overnight venues of AFhomes Direct Operations can be booked." submitText="Save venue" pending={act.isPending} error={error} onClose={close} onSubmit={() => void submit()}>
+    <FormDialog open={open} title={venue ? "Edit Venue" : "Add Venue"} description="Only open overnight venues of AFhomes Direct Operations can be booked." submitText="Save Venue" pending={act.isPending} error={error} onClose={close} onSubmit={() => void submit()}>
       <TextField label="Venue name" required value={name} onChange={setName} />
       <SelectField label="Status" required value={status} options={[{ value: "open", label: "Open" }, { value: "not_open", label: "Coming soon" }]} onChange={(value) => setStatus(value)} />
       <PointsField label="Cancellation cut-off (hours before check-in)" required value={cutoff} onChange={setCutoff} />

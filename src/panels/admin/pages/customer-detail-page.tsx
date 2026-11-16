@@ -27,6 +27,7 @@ import { AdminPage } from "@/shared/components/admin";
 import { PrepareContractDialog } from "../components/prepare-contract-dialog";
 import { buildCustomerMenuProps } from "../actions/customer-actions";
 import { useContractHref } from "../components/use-contract-href";
+import { useTierDisplayName } from "../components/use-tier-display-name";
 import { CustomerDetailHero } from "../components/customer-detail-hero";
 import { CustomerDetailTabs, type CustomerDetailTab } from "../components/customer-detail-tabs";
 import {
@@ -43,6 +44,7 @@ import {
 export function CustomerDetailPage({ customerId }: { customerId: string }) {
   const router = useRouter();
   const customers = useCustomers();
+  const tierName = useTierDisplayName();
   const members = useMembers();
   const contracts = useContracts();
   const sales = useSales();
@@ -86,7 +88,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
       items.push({ id: `${contract?.id}-${event.at}-${event.event}`, label: humanize(event.event), timestamp: event.at });
     }
     if (sale?.confirmedDate) {
-      items.push({ id: `${sale.id}-confirmed`, label: recordLabel("Sale confirmed", customer?.displayName, contract?.productCode), timestamp: sale.confirmedDate });
+      items.push({ id: `${sale.id}-confirmed`, label: recordLabel("Sale confirmed", customer?.displayName, tierName(contract?.productCode)), timestamp: sale.confirmedDate });
     }
     for (const event of membership?.history ?? []) {
       items.push({ id: `${membership?.id}-${event.at}-${event.event}`, label: humanize(event.event), timestamp: event.at });
@@ -105,7 +107,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
   }
   if (!customer) {
     return (
-      <AdminPage anyOf={["customers"]} title="Customer not found" crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: "Detail" }]}>
+      <AdminPage anyOf={["customers"]} title="Customer Not Found" crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: "Detail" }]}>
         <InfoNote>This customer does not exist or is not visible to this account.</InfoNote>
       </AdminPage>
     );
@@ -153,12 +155,12 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
         <>
           {canPrepare && ownRecord && currentPurchase && isEditableContractStatus(currentPurchase.status) ? (
             <Link href={contractHref(currentPurchase.id)} className={buttonVariants({ className: "tw:min-h-11 tw:sm:min-h-8" })}>
-              Continue contract
+              Continue Contract
             </Link>
           ) : null}
           {canStartPurchase ? (
             <Button variant={currentPurchase ? "outline" : "default"} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setPreparing(hasPurchaseHistory ? "separate" : "initial")}>
-              {hasPurchaseHistory ? "New VIP purchase" : "Prepare contract"}
+              {hasPurchaseHistory ? "New VIP Purchase" : "Prepare Contract"}
             </Button>
           ) : null}
           {canApprove && canReviewRegistration(customer.status) ? (
@@ -168,13 +170,13 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
           ) : null}
           {ownRecord && (canManage || (canDraft && customer.status === "draft")) && customer.status !== "rejected" ? (
             <Link href={`/admin/customers/${customer.id}/edit`} className={buttonVariants({ variant: "warning", className: "tw:min-h-11 tw:sm:min-h-8" })}>
-              <Pencil aria-hidden="true" /> {customer.status === "draft" ? "Edit draft" : customer.status === "sent_back" ? "Fix and resubmit" : "Correct data"}
+              <Pencil aria-hidden="true" /> {customer.status === "draft" ? "Edit Draft" : customer.status === "sent_back" ? "Fix and Resubmit" : "Correct Data"}
             </Link>
           ) : null}
           {canApprove && canReviewRegistration(customer.status) ? (
             <>
               <Button variant="warning" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setReview("send_back")}>
-                <RotateCcw aria-hidden="true" /> Send back
+                <RotateCcw aria-hidden="true" /> Send Back
               </Button>
               <Button variant="destructive" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setReview("reject")}>
                 <X aria-hidden="true" /> Reject
@@ -183,35 +185,35 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
           ) : null}
           {actionSet.onDelete ? (
             <Button variant="destructive" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setDiscarding(true)}>
-              <Trash2 aria-hidden="true" /> Discard draft
+              <Trash2 aria-hidden="true" /> Discard Draft
             </Button>
           ) : null}
         </>
       }
     >
-      {customer.status === "draft" && ownRecord && !canManage ? <InfoNote title="Draft with the office">The office Clerk completes and submits this draft. You can keep editing it until then.</InfoNote> : null}
-      {customer.status === "sent_back" && customer.reviewReason ? <InfoNote title="Sent back to the Clerk">{customer.reviewReason}</InfoNote> : null}
+      {customer.status === "draft" && ownRecord && !canManage ? <InfoNote title="Draft with the Office">The office Clerk completes and submits this draft. You can keep editing it until then.</InfoNote> : null}
+      {customer.status === "sent_back" && customer.reviewReason ? <InfoNote title="Sent Back to the Clerk">{customer.reviewReason}</InfoNote> : null}
       {customer.status === "rejected" && customer.reviewReason ? <InfoNote title="Rejected">{customer.reviewReason}</InfoNote> : null}
-      {customer.restricted ? <InfoNote title="Summary view">This customer belongs to your downline. Contact details, address, government ID and payment details are not shown.</InfoNote> : null}
+      {customer.restricted ? <InfoNote title="Summary View">This customer belongs to someone in your team. Contact details, address, government ID and payment details are not shown.</InfoNote> : null}
       <CustomerDetailHero
         displayName={customerRecordName(customer)}
         status={customer.status}
-        vipPlan={customer.vipPlan ?? null}
+        vipPlan={tierName(customer.vipPlan)}
         customerNumber={ownRecord ? (customer.customerNumber ?? null) : null}
         submittedAt={customer.submittedAt ?? null}
         classification={customer.contractClassification ?? null}
         schemeLabel={schemeLabel}
       />
-      {purchases.length > 1 ? <SelectField label="VIP purchase" value={contract?.id} options={purchases.map((item) => ({ value: item.id, label: `${item.vipNumber ?? EMPTY} · ${item.productCode} · ${humanize(item.status)}` }))} onChange={(value) => setSelectedContractId(value ?? "")} /> : null}
+      {purchases.length > 1 ? <SelectField label="VIP purchase" value={contract?.id} options={purchases.map((item) => ({ value: item.id, label: recordLabel(item.vipNumber ?? EMPTY, tierName(item.productCode), humanize(item.status)) }))} onChange={(value) => setSelectedContractId(value ?? "")} /> : null}
       <CustomerDetailTabs value={tab} onChange={setTab} />
       {tab === "overview" ? (
         <div className="tw:grid tw:gap-6 tw:lg:grid-cols-5">
           <div className="tw:min-w-0 tw:lg:col-span-3 tw:flex tw:flex-col tw:gap-6">
-            <CustomerInfoCard customer={viewCustomer} ownerName={ownerName} recommenderName={recommenderName} referralReference={ownRecord ? customer.referralReference : null} />
+            <CustomerInfoCard customer={viewCustomer} vipPlanName={tierName(viewCustomer.vipPlan)} ownerName={ownerName} recommenderName={recommenderName} referralReference={ownRecord ? customer.referralReference : null} />
             <LinkedRecordsCard
-              contractLabel={contract ? `${contract.productCode} · ${contract.schemeLabel} · ${humanize(contract.status)}` : "—"}
+              contractLabel={contract ? recordLabel(tierName(contract.productCode) ?? EMPTY, contract.schemeLabel, humanize(contract.status)) : "—"}
               contractHref={contract ? contractHref(contract.id) : null}
-              saleLabel={sale ? recordLabel(humanize(sale.status), customer.displayName, contract?.productCode) : "—"}
+              saleLabel={sale ? recordLabel(humanize(sale.status), customer.displayName, tierName(contract?.productCode)) : "—"}
               membershipLabel={membership ? humanize(membership.status) : "—"}
               saleValueCentavos={sale?.valueCentavos ?? null}
               showSaleValue={ownRecord && sale != null}
@@ -231,11 +233,11 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
         contract ? (
           <ContractTabPanel
             facts={[
-              { label: "Contract", value: recordLabel("Contract", customer.displayName, contract.productCode) },
-              { label: "VIP plan", value: contract.productCode },
-              { label: "Scheme", value: contract.schemeLabel },
+              { label: "Contract", value: recordLabel("Contract", customer.displayName, tierName(contract.productCode)) },
+              { label: "VIP plan", value: tierName(contract.productCode) ?? EMPTY },
+              { label: "Payment plan", value: contract.schemeLabel },
               { label: "Status", value: humanize(contract.status) },
-              { label: "Classification", value: contract.classification === "N" ? "Non-Standard (N)" : "Standard (S)" },
+              { label: "Contract type", value: contract.classification === "N" ? "Non-Standard (N)" : "Standard (S)" },
             ]}
             contractHref={contractHref(contract.id)}
           />
@@ -246,7 +248,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
       {tab === "sales" ? (
         <SalesTabPanel
           facts={[
-            { label: "Sale", value: sale ? recordLabel(humanize(sale.status), customer.displayName, contract?.productCode) : "—" },
+            { label: "Sale", value: sale ? recordLabel(humanize(sale.status), customer.displayName, tierName(contract?.productCode)) : "—" },
             { label: "Recorded", value: sale?.recordedDate ?? "—" },
             { label: "Confirmed", value: sale?.confirmedDate ?? "—" },
           ]}
@@ -267,7 +269,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
         open={discarding}
         title={actionSet.deleteTitle ?? "Discard this draft?"}
         description={actionSet.deleteDescription ?? "This action cannot be undone."}
-        confirmText="Discard draft"
+        confirmText="Discard Draft"
         danger
         pending={discard.isPending}
         onClose={() => setDiscarding(false)}
@@ -287,7 +289,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
       />
       <ConfirmDialog
         open={review === "approve"}
-        title="Approve this registration?"
+        title="Approve This Registration?"
         description="The customer registration is approved. This does not activate a VIP membership."
         confirmText="Approve" tone="success"
         pending={approve.isPending}
@@ -309,16 +311,16 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
       />
       <ReasonDialog
         open={review === "send_back"}
-        title="Send back to the Clerk"
+        title="Send Back to the Clerk"
         description="The Clerk sees the reason and can fix and resubmit. Nothing is deleted."
-        confirmText="Send back" tone="warning"
+        confirmText="Send Back" tone="warning"
         successText="Sent back to the Clerk."
         onClose={() => setReview(null)}
         onSubmit={(reason) => sendBack.mutateAsync({ id: customer.id, reason })}
       />
       <ReasonDialog
         open={review === "reject"}
-        title="Reject this registration"
+        title="Reject This Registration"
         description="Rejecting keeps the record and its history. Nothing is deleted."
         confirmText="Reject"
         successText="Registration rejected."

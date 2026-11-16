@@ -23,8 +23,8 @@ export function buildImportBatchMenuProps(batch: ReceiptImportBatch, perms: Impo
     batch.status !== "pending_signoff"
       ? []
       : [
-          ...(perms.canSignOff ? [{ key: "signoff", label: "Sign off batch", tone: "success" as const, onClick: cb.onSignOff }] : []),
-          { key: "reject", label: "Reject batch", tone: "danger" as const, danger: true, onClick: cb.onReject },
+          ...(perms.canSignOff ? [{ key: "signoff", label: "Confirm Batch", tone: "success" as const, onClick: cb.onSignOff }] : []),
+          { key: "reject", label: "Reject Batch", tone: "danger" as const, danger: true, onClick: cb.onReject },
         ];
   return { itemName: batch.fileName || "this batch", extraItems };
 }

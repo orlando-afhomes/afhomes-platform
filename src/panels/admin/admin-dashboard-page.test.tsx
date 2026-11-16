@@ -32,23 +32,23 @@ function expectNone(html: string, texts: string[]) {
 
 describe("dashboard page role gating (initial render)", () => {
   it.each([
-    ["dev-super-admin", "Welcome back, Super Admin"],
-    ["dev-admin", "Welcome back, Administrator"],
-    ["dev-hr", "Welcome back, Human Resources"],
-    ["dev-finance", "Finance overview"],
-    ["dev-svd-a", "Welcome back, Sales Vice Director"],
-    ["dev-ssm-a", "Welcome back, Senior Sales Manager"],
-    ["dev-sm-a", "Welcome back, Sales Manager"],
-    ["dev-ost-a1", "Welcome back, OST"],
-    ["dev-multi-role", "Welcome back, Sales Manager"],
+    ["dev-super-admin", "Welcome Back, Super Admin"],
+    ["dev-admin", "Welcome Back, Administrator"],
+    ["dev-hr", "Welcome Back, Human Resources"],
+    ["dev-finance", "Finance Overview"],
+    ["dev-svd-a", "Welcome Back, Sales Vice Director"],
+    ["dev-ssm-a", "Welcome Back, Senior Sales Manager"],
+    ["dev-sm-a", "Welcome Back, Sales Manager"],
+    ["dev-ost-a1", "Welcome Back, OST"],
+    ["dev-multi-role", "Welcome Back, Sales Manager"],
   ])("%s sees its dashboard heading", (identityId, heading) => {
     expect(renderPage(identityId)).toContain(heading);
   });
 
   it("shows the restricted state for an inactive account", () => {
     const html = renderPage("dev-inactive");
-    expect(html).toContain("Access restricted");
-    expectNone(html, ["Welcome back", "Dashboard date range", "My confirmed sales value"]);
+    expect(html).toContain("Access Restricted");
+    expectNone(html, ["Welcome Back", "Dashboard date range", "My confirmed sales value"]);
   });
 
   it("renders the full Admin dashboard for the Super Administrator", () => {
@@ -68,7 +68,7 @@ describe("dashboard page role gating (initial render)", () => {
       "Membership Activation",
       "Dashboard date range",
     ]);
-    expectNone(html, ["Account Approvals", "Finance overview", "Team overview"]);
+    expectNone(html, ["Account Approvals", "Finance Overview", "Team Overview"]);
   });
 
   it("keeps Finance reporting off the Administrator dashboard but shows the receipts queue", () => {
@@ -90,11 +90,11 @@ describe("dashboard page role gating (initial render)", () => {
       "Payment Verification",
       "Commission Payouts",
       "Cancellation Requests",
-      "Financial Holds",
+      "Payment Holds",
       "Membership Activation",
       "Dashboard date range",
     ]);
-    expectNone(html, ["Sales network members", "Contracts by VIP Product", "Contract Review", "Team overview"]);
+    expectNone(html, ["Sales network members", "Contracts by VIP Product", "Contract Review", "Team Overview"]);
   });
 
   it("gives sales managers team figures and the team overview", () => {
@@ -108,7 +108,7 @@ describe("dashboard page role gating (initial render)", () => {
         "Sales Performance",
         "Sales by VIP Product",
         "Recent Activities",
-        "Team overview",
+        "Team Overview",
         "My customer drafts",
       ]);
       // Sellers no longer prepare contracts (doc 04 section 5), so no returned-contracts shortcut.
@@ -118,13 +118,13 @@ describe("dashboard page role gating (initial render)", () => {
 
   it("gives an OST only individual figures", () => {
     const html = renderPage("dev-ost-a1");
-    expectAll(html, ["My confirmed sales value", "My customers", "Pending sales", "Account overview", "My customer drafts"]);
-    expectNone(html, ["Team confirmed sales value", "Team overview", "My returned contracts", "Outstanding receivables"]);
+    expectAll(html, ["My confirmed sales value", "My customers", "Pending sales", "Account Overview", "My customer drafts"]);
+    expectNone(html, ["Team confirmed sales value", "Team Overview", "My returned contracts", "Outstanding receivables"]);
   });
 
   it("shows an honest empty dashboard for HR", () => {
     const html = renderPage("dev-hr");
-    expect(html).toContain("No dashboard metrics");
+    expect(html).toContain("No Dashboard Metrics");
     expectNone(html, ["Customers", "Pending Approvals", "Recent Activities", "Dashboard date range"]);
   });
 });

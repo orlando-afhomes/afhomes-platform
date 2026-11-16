@@ -6,14 +6,14 @@ import { PublicHeader } from "./components/public-header";
 import { PublicHomePage } from "./pages/public-home-page";
 
 describe("public sign-in and verification links", () => {
-  it("shows Sales sign-in and Verify accreditation in the header and on the home page", () => {
+  it("shows Sales Sign-In and Verify Accreditation in the header and on the home page", () => {
     render(
       <>
         <PublicHeader />
         <PublicHomePage />
       </>,
     );
-    for (const [name, href] of [["Sales sign-in", "/login/sales"], ["Verify accreditation", "/verify"]]) {
+    for (const [name, href] of [["Sales Sign-In", "/login/sales"], ["Verify Accreditation", "/verify"]]) {
       const links = screen.getAllByRole("link", { name });
       expect(links).toHaveLength(2);
       for (const link of links) expect(link).toHaveAttribute("href", href);

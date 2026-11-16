@@ -56,8 +56,8 @@ const differenceOf = (row: MeasureRow) => (row.entry ? <Money value={row.entry.w
 
 const MEASURE_COLUMNS: ColumnDef<MeasureRow, unknown>[] = [
   { id: "measure", header: "Measure", cell: ({ row }) => <span className="tw:font-semibold">{MEASURE_LABELS[row.original.total.measure]}</span> },
-  { id: "system", header: "System total", cell: ({ row }) => <Money value={row.original.total.totalCentavos} /> },
-  { id: "spreadsheet", header: "Company spreadsheet total", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => (row.original.entry ? <Money value={row.original.entry.workbookCentavos} /> : null) },
+  { id: "system", header: "System Total", cell: ({ row }) => <Money value={row.original.total.totalCentavos} /> },
+  { id: "spreadsheet", header: "Company Spreadsheet Total", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => (row.original.entry ? <Money value={row.original.entry.workbookCentavos} /> : null) },
   { id: "difference", header: "Difference", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => differenceOf(row.original) },
   { id: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
 ];
@@ -66,16 +66,16 @@ const decisionLabel = (entry: ReconciliationEntry) => (entry.decision === "signe
 
 const ENTRY_COLUMNS: ColumnDef<ReconciliationEntry, unknown>[] = [
   { id: "measure", header: "Measure", cell: ({ row }) => <span className="tw:font-semibold">{MEASURE_LABELS[row.original.measure]}</span> },
-  { id: "workbook", header: "Company spreadsheet total", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => <Money value={row.original.workbookCentavos} /> },
-  { id: "platform", header: "System total", cell: ({ row }) => <Money value={row.original.liveCentavos} /> },
+  { id: "workbook", header: "Company Spreadsheet Total", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => <Money value={row.original.workbookCentavos} /> },
+  { id: "platform", header: "System Total", cell: ({ row }) => <Money value={row.original.liveCentavos} /> },
   { id: "difference", header: "Difference", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => <Money value={row.original.differenceCentavos} /> },
   { id: "decision", header: "Decision", cell: ({ row }) => <BizBadge status={row.original.decision === "signed_off" ? "approved" : "on_hold"} label={decisionLabel(row.original)} /> },
 ];
 
 const ENTRY_EXPORT: ReportColumn<ReconciliationEntry>[] = [
   { header: "Measure", value: (entry) => MEASURE_LABELS[entry.measure] },
-  { header: "Company spreadsheet total", value: (entry) => formatPeso(entry.workbookCentavos) },
-  { header: "System total", value: (entry) => formatPeso(entry.liveCentavos) },
+  { header: "Company Spreadsheet Total", value: (entry) => formatPeso(entry.workbookCentavos) },
+  { header: "System Total", value: (entry) => formatPeso(entry.liveCentavos) },
   { header: "Difference", value: (entry) => formatPeso(entry.differenceCentavos) },
   { header: "Decision", value: decisionLabel },
   { header: "Reason", value: (entry) => entry.reason ?? "" },
@@ -128,13 +128,13 @@ export function ReconciliationPanel() {
             </div>
           </section>
           <QueryState isLoading={totals.isLoading || entries.isLoading} error={totals.error ?? entries.error}>
-            <DataTable data={rows} columns={MEASURE_COLUMNS} getRowId={(row) => row.total.measure} emptyText="Nothing to check for this month." caption="Measures to check" onRowOpen={(row) => setMeasureId(row.total.measure)} getRowLabel={(row) => `Open ${MEASURE_LABELS[row.total.measure]}`} />
+            <DataTable data={rows} columns={MEASURE_COLUMNS} getRowId={(row) => row.total.measure} emptyText="Nothing to check for this month." caption="Measures to Check" onRowOpen={(row) => setMeasureId(row.total.measure)} getRowLabel={(row) => `Open ${MEASURE_LABELS[row.total.measure]}`} />
             <section aria-label="Decisions for this month" className="tw:flex tw:flex-col tw:gap-2">
               <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
-                <h2 className="tw:text-base tw:font-semibold">Decisions for this month</h2>
-                <ReportExport report="Reconciliation" fileName={`reconciliation-${period}`} columns={ENTRY_EXPORT} rows={monthEntries} range={{ from: period, to: period }} printable={false} />
+                <h2 className="tw:text-base tw:font-semibold">Decisions for This Month</h2>
+                <ReportExport report="Spreadsheet Comparison" fileName={`reconciliation-${period}`} columns={ENTRY_EXPORT} rows={monthEntries} range={{ from: period, to: period }} printable={false} />
               </div>
-              <DataTable data={monthEntries} columns={ENTRY_COLUMNS} getRowId={(row) => row.id} emptyText="No decision has been recorded for this month." caption="Reconciliation decisions" onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `View decision for ${MEASURE_LABELS[row.measure]}`} />
+              <DataTable data={monthEntries} columns={ENTRY_COLUMNS} getRowId={(row) => row.id} emptyText="No decision has been recorded for this month." caption="Spreadsheet Comparison Decisions" onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `View decision for ${MEASURE_LABELS[row.measure]}`} />
               <RecordDetailsSheet
                 open={detail !== null}
                 onClose={() => setDetailId(null)}
@@ -179,7 +179,7 @@ export function ReconciliationPanel() {
                       ],
                     },
                     {
-                      title: "Records behind the system total",
+                      title: "Records Behind the System Total",
                       rows: measure.total.records.map((record) => ({
                         label: `${formatDate(record.date)} · ${record.label}`,
                         value: <><Money value={record.amountCentavos} />{record.note ? ` · ${record.note}` : ""}</>,
@@ -191,9 +191,9 @@ export function ReconciliationPanel() {
             footer={
               measure ? (
                 measure.entry ? (
-                  <Button type="button" variant="warning" onClick={() => startRecording(measure.total)}>Record again</Button>
+                  <Button type="button" variant="warning" onClick={() => startRecording(measure.total)}>Record Again</Button>
                 ) : (
-                  <Button type="button" variant="info" onClick={() => startRecording(measure.total)}>Enter company spreadsheet total</Button>
+                  <Button type="button" variant="info" onClick={() => startRecording(measure.total)}>Enter Company Spreadsheet Total</Button>
                 )
               ) : undefined
             }
@@ -201,7 +201,7 @@ export function ReconciliationPanel() {
           {recording ? <RecordDialog period={period} total={recording} onClose={() => setRecording(null)} /> : null}
         </>
       ) : (
-        <InfoNote title="Access restricted">Reconciliation is limited to the Administrator, the Super Administrator and Finance.</InfoNote>
+        <InfoNote title="Access Restricted">Comparing with the spreadsheet is limited to the Administrator, the Super Administrator and Finance.</InfoNote>
       )}
     </>
   );
@@ -228,7 +228,7 @@ function RecordDialog({ period, total, onClose }: { period: string; total: Sourc
   };
 
   return (
-    <FormDialog open title={MEASURE_LABELS[total.measure]} description={`System total for ${period}: ${formatPeso(total.totalCentavos)}`} submitText={decision === "signed_off" ? "Confirm match" : "Record difference"} submitVariant={decision === "signed_off" ? "success" : "warning"} pending={record.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title={MEASURE_LABELS[total.measure]} description={`System total for ${period}: ${formatPeso(total.totalCentavos)}`} submitText={decision === "signed_off" ? "Confirm Match" : "Record Difference"} submitVariant={decision === "signed_off" ? "success" : "warning"} pending={record.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <MoneyField label="Company spreadsheet total" required value={amount} onChange={setAmount} />
       {difference === null ? null : (
         <p className="tw:text-sm" role="status">

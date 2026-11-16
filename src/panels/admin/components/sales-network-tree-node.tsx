@@ -28,16 +28,16 @@ export function SalesNetworkTreeNodeTitle({
     <span className="tw:flex tw:flex-wrap tw:items-center tw:gap-x-2 tw:gap-y-1">
       <span className="tw:font-medium">{node.member.displayName}</span>
       {compact ? null : <span className="tw:text-xs tw:text-muted-foreground">{aaDisplay(node.member)}</span>}
-      <DesignationBadge designation={node.member.designation} />
+      <DesignationBadge designation={node.member.designation} full />
       {showTeam ? <span className="tw:text-xs tw:text-muted-foreground">{teamDisplayName(node.member, members)}</span> : null}
       {compact ? null : <StatusBadge status={node.member.status} />}
       {compact ? null : (
         <span className="tw:text-xs tw:text-muted-foreground">
-          {node.directCount} direct / {node.totalDescendantCount} total
+          {node.directCount} direct team / {node.totalDescendantCount} whole team
         </span>
       )}
       {vacantSince ? <ToneBadge tone="warning">Vacant since {formatDate(vacantSince)}</ToneBadge> : null}
-      {node.restrictedParent ? <span className="tw:text-xs tw:text-muted-foreground tw:italic">Restricted upline</span> : null}
+      {node.restrictedParent ? <span className="tw:text-xs tw:text-muted-foreground tw:italic">Leaders above restricted</span> : null}
     </span>
   );
 }

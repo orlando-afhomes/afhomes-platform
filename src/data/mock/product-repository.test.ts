@@ -78,7 +78,7 @@ describe("product catalog create and delete", () => {
 
     await admin.products.create(input({ code: "B4", name: "Bronze Two" }), "Memo");
     await admin.products.updateScheme("scheme-spot-cash", { applicableTiers: ["B1", "S1", "G1", "B4"] }, "Offer B4");
-    expect((await admin.products.deleteBlockers()).B4).toMatch(/payment scheme/);
+    expect((await admin.products.deleteBlockers()).B4).toMatch(/payment plan/);
     await expect(admin.products.delete("B4", "Cleanup")).rejects.toThrow(/Retire it instead/);
     await expect(admin.products.delete("B4", "")).rejects.toThrow(/reason/);
     await expect(admin.products.delete("ZZ", "Cleanup")).rejects.toThrow(/not found/);
@@ -90,7 +90,7 @@ describe("supplementary holder rule follows the product", () => {
 
   it("refuses supplementary spend on a product without supplementary holders, and allows it once the product has some", async () => {
     const store = createMockStore();
-    await expect(as(store, "dev-clerk").stayPoints.act(bill)).rejects.toThrow(/product allows supplementary holders/);
+    await expect(as(store, "dev-clerk").stayPoints.act(bill)).rejects.toThrow(/product allows an extra cardholder/);
     store.products.find((item) => item.code === "B1")!.supplementaryHolders = 1;
     // The product check now passes; the signed Grant of this membership still decides.
     await expect(as(store, "dev-clerk").stayPoints.act(bill)).rejects.toThrow(/signed Grant does not allow/);

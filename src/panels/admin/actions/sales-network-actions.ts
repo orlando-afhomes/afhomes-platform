@@ -45,7 +45,7 @@ export type MemberMenuCallbacks = {
 
 /** Transfer target label mirrors the members table: an OST moves to IST, anything else moves to OST. */
 export function transferLabelFor(designation: Designation): string {
-  return designation === "OST" ? "Transfer to IST" : "Transfer to OST";
+  return designation === "OST" ? "Transfer to Internal Seller (IST)" : "Transfer to Outsourced Seller (OST)";
 }
 
 /**
@@ -95,10 +95,10 @@ export function buildMemberMenuProps(
     });
   }
   if (perms.canEditAccreditation && perms.accreditationNone && cb.onSetAccreditation) {
-    extraItems.push({ key: "set-accreditation", label: "Set accreditation", onClick: cb.onSetAccreditation });
+    extraItems.push({ key: "set-accreditation", label: "Set Accreditation", onClick: cb.onSetAccreditation });
   }
   if (perms.canRenew && perms.renewalAllowed && cb.onRenew) {
-    extraItems.push({ key: "renew-accreditation", label: "Renew accreditation", onClick: cb.onRenew });
+    extraItems.push({ key: "renew-accreditation", label: "Renew Accreditation", onClick: cb.onRenew });
   }
 
   return {

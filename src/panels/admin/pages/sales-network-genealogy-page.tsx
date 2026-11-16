@@ -106,7 +106,7 @@ export function SalesNetworkGenealogyPage({ embedded = false }: { embedded?: boo
   if (!granted.has("sales-network-genealogy")) {
     return (
       <PageContainer>
-        <PageHeader title="Access restricted" description="This account does not have access to Sales Network." />
+        <PageHeader title="Access Restricted" description="This account does not have access to Sales Network." />
       </PageContainer>
     );
   }
@@ -115,8 +115,8 @@ export function SalesNetworkGenealogyPage({ embedded = false }: { embedded?: boo
     <AdminPage
       embedded={embedded}
       anyOf={["sales-network-genealogy"]}
-      title="Sales Network Genealogy"
-      crumbs={[{ label: "Sales Network" }, { label: "Genealogy" }]}
+      title="Team Tree"
+      crumbs={[{ label: "Sales Network" }, { label: "Team Tree" }]}
     >
       <Card className="tw:flex-col tw:lg:flex-row tw:lg:items-start">
         <div className="tw:relative tw:w-full tw:lg:max-w-sm">
@@ -139,7 +139,7 @@ export function SalesNetworkGenealogyPage({ embedded = false }: { embedded?: boo
                     className="tw:flex tw:min-h-11 tw:w-full tw:items-center tw:rounded-md tw:px-2 tw:text-left tw:text-sm tw:hover:bg-accent tw:focus-visible:bg-accent tw:focus-visible:outline-none tw:sm:min-h-8"
                     onClick={() => handleSelectSearch(member.id)}
                   >
-                    {member.displayName} ({member.designation})
+                    {member.displayName} ({designationLabel(member.designation)})
                   </button>
                 </li>
               ))}
@@ -153,16 +153,16 @@ export function SalesNetworkGenealogyPage({ embedded = false }: { embedded?: boo
         ) : null}
         <div className="tw:flex tw:gap-2">
           <Button type="button" variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setExpandedKeys(collectKeys(tree))}>
-            Expand all
+            Expand All
           </Button>
           <Button type="button" variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setExpandedKeys([])}>
-            Collapse all
+            Collapse All
           </Button>
         </div>
       </Card>
       <div className="tw:grid tw:gap-3 tw:lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Card className="tw:min-w-0 tw:p-3">
-          <section aria-label="Genealogy tree" className="tw:min-w-0">
+          <section aria-label="Team tree" className="tw:min-w-0">
           {membersQuery.isLoading ? (
             <TextLinesSkeleton lines={6} className="tw:p-3" />
           ) : tree.length === 0 ? (
@@ -201,7 +201,7 @@ function MemberSummary({ node, members }: { node: GenealogyTreeNode; members: re
     .toUpperCase();
   return (
     <Card className="tw:gap-4">
-      <h2 className="tw:text-base tw:font-semibold">Member summary</h2>
+      <h2 className="tw:text-base tw:font-semibold">Member Summary</h2>
       <div className="tw:flex tw:items-center tw:gap-3">
         <Avatar className="tw:size-12">
           {node.member.sellerProfile?.profilePhotoUrl ? <AvatarImage src={node.member.sellerProfile.profilePhotoUrl} alt="" /> : null}
@@ -215,17 +215,17 @@ function MemberSummary({ node, members }: { node: GenealogyTreeNode; members: re
         </div>
       </div>
       <DetailList>
-        <DetailRow term="AA Number">{aaDisplay(node.member)}</DetailRow>
+        <DetailRow term="Accreditation Number">{aaDisplay(node.member)}</DetailRow>
         <DetailRow term="Team">{teamDisplayName(node.member, members)}</DetailRow>
       </DetailList>
-      <NameChips title={`Direct downline (${node.directCount})`} names={directNames} empty="No direct downline" />
-      <NameChips title={`Total downline (${node.totalDescendantCount})`} names={allNames} empty="No downline members" />
-      {node.restrictedParent ? <p className="tw:text-sm tw:text-muted-foreground tw:italic">Upline not shown to you</p> : null}
+      <NameChips title={`Direct team (${node.directCount})`} names={directNames} empty="No direct team" />
+      <NameChips title={`Whole team (${node.totalDescendantCount})`} names={allNames} empty="No team members below" />
+      {node.restrictedParent ? <p className="tw:text-sm tw:text-muted-foreground tw:italic">Leaders above not shown to you</p> : null}
       <Link
         href={`/admin/sales-network/members/${node.member.aaNumber ?? node.member.id}`}
         className={cn(buttonVariants({ variant: "info" }), "tw:min-h-11 tw:w-full tw:sm:min-h-8")}
       >
-        View profile
+        View Profile
       </Link>
     </Card>
   );

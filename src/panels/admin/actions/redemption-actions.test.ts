@@ -41,7 +41,7 @@ describe("buildRedemptionBookingMenuProps", () => {
     const menu = buildRedemptionBookingMenuProps(booking("pending_payment"), PERMS.full, fullCb());
     expect(menu.itemName).toBe("BK-001");
     expect(keysOf(menu)).toEqual(["approve-cash", "cancel"]);
-    expect(menu.extraItems.map((item) => item.label)).toEqual(["Approve money part", "Cancel booking"]);
+    expect(menu.extraItems.map((item) => item.label)).toEqual(["Approve Money Part", "Cancel Booking"]);
     expect(menu.onEdit).toBeUndefined();
     expect(menu.onDelete).toBeUndefined();
   });

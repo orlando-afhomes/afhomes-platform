@@ -46,7 +46,7 @@ export function DepartmentDialogs({
       <Dialog open={open} onOpenChange={(next) => (!next ? onCloseForm() : undefined)}>
         <DialogContent className="tw:sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editDept ? "Edit department" : "Create department"}</DialogTitle>
+            <DialogTitle>{editDept ? "Edit Department" : "Create Department"}</DialogTitle>
             <DialogDescription>
               {editDept ? "Update the department name or status." : "Add a department to the directory."}
             </DialogDescription>
@@ -73,7 +73,7 @@ function DepartmentViewDialog({
     <Dialog open={viewDept !== null} onOpenChange={(next) => (!next ? onClose() : undefined)}>
       <DialogContent className="tw:sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Department details</DialogTitle>
+          <DialogTitle>Department Details</DialogTitle>
           <DialogDescription>Read-only summary of the department.</DialogDescription>
         </DialogHeader>
         {viewDept ? (
@@ -222,7 +222,7 @@ function DepartmentForm({ editDept, onDone }: { editDept: Department | null; onD
       {editDept ? (
         <ConfirmDialog
           open={confirmSave}
-          title={`Save changes to ${name.trim()}?`}
+          title={`Save Changes to ${name.trim()}?`}
           description="The department record will be updated."
           confirmText="Save"
           pending={submitting}

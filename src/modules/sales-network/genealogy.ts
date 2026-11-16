@@ -7,6 +7,9 @@ import { getVisibleMemberIds, getUplineSummaries } from "@/data/mock/scope";
 import { getDescendantIds } from "@/data/mock/scope";
 import type { MockStore } from "@/data/mock/seed";
 
+/** Plain position names for messages (display.ts imports this file, so it cannot be imported here). */
+const POSITION_NAME: Record<Designation, string> = { SVD: "Sales Vice Director", SSM: "Senior Sales Manager", SM: "Sales Manager", OST: "Outsourced Seller (OST)" };
+
 export type SalesParentValidationResult =
   | { ok: true }
   | { ok: false; code: string; message: string };
@@ -50,20 +53,20 @@ export function validateSalesParent(
 ): SalesParentValidationResult {
   if (childDesignation === "SVD") {
     if (parent !== null) {
-      return { ok: false, code: "SVD_ROOT", message: "SVD is a root designation and cannot have a Sales Network parent." };
+      return { ok: false, code: "SVD_ROOT", message: "A Sales Vice Director is at the top of a team and cannot have a parent." };
     }
     return { ok: true };
   }
 
   if (!parent) {
-    return { ok: false, code: "PARENT_REQUIRED", message: "A parent is required for this designation." };
+    return { ok: false, code: "PARENT_REQUIRED", message: "A parent is required for this position." };
   }
 
   if (!VALID_EDGES[childDesignation].includes(parent.designation)) {
     return {
       ok: false,
       code: "INVALID_EDGE",
-      message: `${parent.designation} cannot be the parent of ${childDesignation}.`,
+      message: `${POSITION_NAME[parent.designation]} cannot be the parent of ${POSITION_NAME[childDesignation]}.`,
     };
   }
 
@@ -76,7 +79,7 @@ export function validateSalesParent(
   }
 
   if (childId && (childId === parent.id || getDescendantIds(childId, members).has(parent.id))) {
-    return { ok: false, code: "CYCLE", message: "This assignment would create a genealogy cycle." };
+    return { ok: false, code: "CYCLE", message: "This assignment would put a leader under their own team." };
   }
 
   return { ok: true };

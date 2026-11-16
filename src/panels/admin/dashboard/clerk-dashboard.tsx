@@ -20,9 +20,9 @@ export function ClerkDashboard() {
 
   return (
     <>
-      <DashboardHeader title="My to-do list" description="Work waiting for you." />
+      <DashboardHeader title="My To-Do List" description="Work waiting for you." />
       <div className="tw:mt-6 tw:max-w-2xl">
-        <DashboardPendingActions title="To do" description="Open an item to finish it">
+        <DashboardPendingActions title="To Do" description="Open an item to finish it">
           <DashboardPendingItem
             href="/admin/sales?tab=contracts"
             label="Returned receipts to correct"

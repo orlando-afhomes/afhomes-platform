@@ -38,8 +38,8 @@ function VipCardFact({ icon, label, value }: { icon: React.ReactNode; label: str
 export function VipCardChoiceCard({ product, fromPrice, invalid }: { product: VipProduct; fromPrice?: number | null; invalid?: boolean }) {
   const supplementary =
     product.supplementaryHolders > 0
-      ? `${product.supplementaryHolders} supplementary holder${product.supplementaryHolders === 1 ? "" : "s"}`
-      : "No supplementary holder";
+      ? `${product.supplementaryHolders} extra cardholder${product.supplementaryHolders === 1 ? "" : "s"}`
+      : "No extra cardholder";
   return (
     <RadioPrimitive.Root
       value={product.code}
@@ -58,9 +58,9 @@ export function VipCardChoiceCard({ product, fromPrice, invalid }: { product: Vi
       <span className="vip-card-choice__title-row tw:flex tw:items-start tw:gap-3">
         <span className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:gap-0.5">
           <span className="tw:text-base tw:font-semibold tw:leading-tight">
-            {product.name} ({product.code})
+            {product.name}
           </span>
-          <span className="tw:text-sm tw:leading-snug tw:text-muted-foreground">{product.tier} tier</span>
+          <span className="tw:text-sm tw:leading-snug tw:text-muted-foreground">{product.tier} level</span>
         </span>
         <VipCardRadioMark />
       </span>
@@ -71,7 +71,7 @@ export function VipCardChoiceCard({ product, fromPrice, invalid }: { product: Vi
         <VipCardFact icon={<CalendarDays className="tw:size-4" />} label="Validity" value={`${product.validityYears} ${product.validityYears === 1 ? "year" : "years"}`} />
         <VipCardFact icon={<Database className="tw:size-4" />} label="Stay Points" value={product.lifetimePoints.toLocaleString("en-PH")} />
         <VipCardFact icon={<Tag className="tw:size-4" />} label="VIP Discount" value={`${product.vipDiscountPercent}%`} />
-        <VipCardFact icon={<Users className="tw:size-4" />} label="Supplementary Holder" value={supplementary} />
+        <VipCardFact icon={<Users className="tw:size-4" />} label="Extra Cardholder" value={supplementary} />
       </span>
     </RadioPrimitive.Root>
   );

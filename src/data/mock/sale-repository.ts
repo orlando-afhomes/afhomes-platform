@@ -133,8 +133,8 @@ export class MockSaleRepository extends BusinessRepository implements SaleReposi
 
   async markDefaulted(id: string, reason: string, options?: MockAsyncOptions): Promise<SaleView> {
     return this.run(options, (identity) => {
-      this.require(identity, "contracts.approve", "Only an Administrator or Super Administrator can mark a sale Defaulted.");
-      if (!reason.trim()) throw new Error("Enter a reason for marking the sale Defaulted.");
+      this.require(identity, "contracts.approve", "Only an Administrator or Super Administrator can mark a sale as Stopped Paying.");
+      if (!reason.trim()) throw new Error("Enter a reason for marking the sale as Stopped Paying.");
       const sale = this.store.sales.find((item) => item.id === id);
       if (!sale || !this.defaultEligible(sale)) throw new Error("The sale is not on the 90-day no-payment list.");
       const previous = sale.status;

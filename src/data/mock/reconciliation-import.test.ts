@@ -69,7 +69,7 @@ describe("history import repository", () => {
     expect(batch.status).toBe("pending_signoff");
     expect(batch.receipts).toHaveLength(2);
     expect(batch.skipped).toEqual([{ rowNumber: 4, reason: expect.stringMatching(/finished sales/i) }]);
-    expect(importedReceiptStatusLabel(batch.status)).toBe("Imported, awaiting sign-off");
+    expect(importedReceiptStatusLabel(batch.status)).toBe("Imported, waiting for confirmation");
     const totals = await repos.reconciliation.sourceTotals("2026-08");
     expect(totals.find((item) => item.measure === "imported_receipts")?.totalCentavos).toBe(0);
 

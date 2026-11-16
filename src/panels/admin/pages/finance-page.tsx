@@ -19,9 +19,9 @@ import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { matchesSearch } from "@/shared/lib/search";
 
 const SHOW_OPTIONS = [
+  { value: "all", label: "All" },
   { value: "waiting", label: "Waiting" },
   { value: "exceptions", label: "Exceptions" },
-  { value: "all", label: "All" },
 ];
 
 /** Payment columns for the Receipts tab. */
@@ -40,12 +40,17 @@ export function usePaymentColumns() {
 
 /** Receipts tab of the Finance area (waiting, exceptions, or every receipt). The area page gates it on [finance, sales] + finance.verify. */
 export function FinanceVerificationPanel() {
+  const requested = useSearchParams().get("show");
+  const initialShow = SHOW_OPTIONS.find((option) => option.value === requested)?.value ?? "all";
+  return <ReceiptsPanel key={initialShow} initialShow={initialShow} />;
+}
+
+function ReceiptsPanel({ initialShow }: { initialShow: string }) {
   const payments = usePayments();
   const paymentActions = usePaymentActions();
   const columns = usePaymentColumns();
   const today = manilaToday();
-  const requested = useSearchParams().get("show");
-  const [show, setShow] = useState(SHOW_OPTIONS.some((option) => option.value === requested) ? (requested as string) : "waiting");
+  const [show, setShow] = useState(initialShow);
   const [from, setFrom] = useState(addMonthsToDate(today, -1) ?? today);
   const [to, setTo] = useState(today);
   const allPayments = useMemo(() => payments.data ?? [], [payments.data]);
@@ -65,11 +70,11 @@ export function FinanceVerificationPanel() {
         {show === "all" ? (
           <>
             <AdminStatCard label="Verified" value={<Money value={verifiedInPeriod} />} icon={BadgeCheck} tone="success" />
-            <AdminStatCard label="Reversals" value={<Money value={adjustedInPeriod} />} icon={Undo2} tone="danger" />
-            <AdminStatCard label="Net collections" value={<Money value={verifiedInPeriod - adjustedInPeriod} />} icon={Scale} tone="brand" />
+            <AdminStatCard label="Reversals and Refunds" value={<Money value={adjustedInPeriod} />} icon={Undo2} tone="danger" />
+            <AdminStatCard label="Net Collections" value={<Money value={verifiedInPeriod - adjustedInPeriod} />} icon={Scale} tone="brand" />
           </>
         ) : (
-          <AdminStatCard label="Awaiting verification" value={queue.length} icon={Hourglass} tone="warning" />
+          <AdminStatCard label="Awaiting Verification" value={queue.length} icon={Hourglass} tone="warning" />
         )}
       </AdminStatGrid>
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search receipts" filters={[{ label: "Show", value: show, onChange: setShow, options: SHOW_OPTIONS }]}>

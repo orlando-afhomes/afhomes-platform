@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ComponentProps } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ChevronRight, MoreHorizontal, Pencil, Trash2, type LucideIcon } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import {
   DropdownMenu,
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { ConfirmDialog, NoticeDialog } from "./confirm-dialog";
+import { cn } from "@/shared/lib/utils";
 
 export type RowActionTone = "default" | "danger" | "warning" | "success" | "info";
 
@@ -28,6 +29,26 @@ const TONE_CLASS: Record<Exclude<RowActionTone, "default" | "danger">, string> =
 /** Button color for a tone (same meaning as the menu item colors). */
 export function toneButtonVariant(tone: RowActionTone | undefined): "outline" | "success" | "warning" | "info" | "destructive" {
   return tone === "danger" ? "destructive" : tone && tone !== "default" ? tone : "outline";
+}
+
+type RowActionButtonProps = Omit<ComponentProps<typeof Button>, "size" | "variant"> & {
+  tone?: RowActionTone;
+  icon?: LucideIcon;
+};
+
+export function RowActionButton({ tone, icon: Icon = ChevronRight, children, className, ...props }: RowActionButtonProps) {
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant={toneButtonVariant(tone)}
+      className={cn("tw:min-h-11 tw:gap-2 tw:rounded-lg tw:px-2.5 tw:sm:min-h-8", (!tone || tone === "default") && "tw:border-primary/20 tw:bg-card tw:text-primary tw:hover:border-primary/40 tw:hover:bg-(--color-brand-soft)", className)}
+      {...props}
+    >
+      {children}
+      <Icon aria-hidden="true" className="tw:size-3.5" />
+    </Button>
+  );
 }
 
 export type RowActionItem = {
@@ -132,26 +153,25 @@ export function RowActionsMenu({
     <div className="tw:flex tw:justify-end">
       {entryCount === 1 ? (
         // One action only: show it directly instead of hiding it behind "...".
-        <Button
+        <RowActionButton
           id={triggerId}
-          size="sm"
-          variant={onEdit ? "outline" : single ? toneButtonVariant(singleTone) : "destructive"}
+          tone={onEdit ? "default" : single ? singleTone : "danger"}
+          icon={onEdit ? Pencil : single ? undefined : Trash2}
           aria-label={`${onEdit ? "Edit" : single ? single.label : "Delete"} ${itemName}`}
-          className={itemClass}
           onClick={onEdit ?? single?.onClick ?? (() => (onDelete ? setConfirmOpen(true) : setNoticeOpen(true)))}
         >
           {onEdit ? "Edit" : single ? single.label : "Delete"}
-        </Button>
+        </RowActionButton>
       ) : (
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
             <Button
               id={triggerId}
-              variant="ghost"
-              size="icon"
+              variant="outline"
+              size="icon-sm"
               aria-label={`Actions for ${itemName}`}
-              className="tw:size-11 tw:sm:size-8"
+              className="tw:size-11 tw:rounded-lg tw:border-transparent tw:bg-transparent tw:shadow-none tw:hover:border-primary/20 tw:hover:bg-(--color-brand-soft) tw:aria-expanded:border-primary/20 tw:aria-expanded:bg-(--color-brand-soft) tw:sm:size-8"
             />
           }
         >

@@ -52,7 +52,7 @@ describe("buildSalesMenuProps", () => {
 
   it("offers Approve deal for a pending unapproved sale when the viewer may approve", () => {
     const menu = buildSalesMenuProps(saleFixture(), approver, saleCallbacks());
-    expect(menu.extraItems).toMatchObject([{ key: "approve-deal", label: "Approve deal", tone: "success" }]);
+    expect(menu.extraItems).toMatchObject([{ key: "approve-deal", label: "Approve Deal", tone: "success" }]);
     expect(menu.itemName).toBe("sale for Rosa Cruz");
     expect("onView" in menu).toBe(false);
   });
@@ -61,7 +61,7 @@ describe("buildSalesMenuProps", () => {
     expect(keysOf(buildSalesMenuProps(saleFixture(), { canApprove: true, canApproveCustomer: false }, saleCallbacks()))).toEqual([]);
   });
 
-  it("offers Mark Defaulted for an eligible sale and hides both without the permission", () => {
+  it("offers Mark as Stopped Paying for an eligible sale and hides both without the permission", () => {
     const eligible = saleFixture({ status: "confirmed", approval: { approvedAt: "2026-01-01", approvedBy: "dev-admin" }, defaultEligible: true });
     expect(keysOf(buildSalesMenuProps(eligible, approver, saleCallbacks()))).toEqual(["mark-defaulted"]);
     expect(keysOf(buildSalesMenuProps(eligible, viewer, saleCallbacks()))).toEqual([]);
@@ -106,7 +106,7 @@ describe("buildContractMenuProps", () => {
       "return",
       "cancel-contract",
     ]);
-    expect(menu.extraItems.find((item) => item.key === "approve-deal")).toMatchObject({ label: "Approve deal", tone: "success" });
+    expect(menu.extraItems.find((item) => item.key === "approve-deal")).toMatchObject({ label: "Approve Deal", tone: "success" });
     expect(menu.itemName).toBe("contract · Rosa Cruz · G1");
   });
 

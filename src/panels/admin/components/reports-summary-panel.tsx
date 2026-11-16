@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { ArrowRight, BadgeCheck, Gift, TrendingUp, UserCheck, UserPlus, Wallet, type LucideIcon } from "lucide-react";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { KpiDelta } from "@/shared/components/dashboard/kpi-delta";
 import { Money } from "@/shared/components/modern/money";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
@@ -21,10 +22,10 @@ export type ReportKey = "sales" | "customers" | "collections" | "commissions" | 
 
 type CardTone = "brand" | "success" | "info";
 
-const TONE_CHIP: Record<CardTone, string> = {
-  brand: "tw:bg-[var(--color-brand-soft)] tw:text-primary",
-  success: "tw:bg-success/10 tw:text-[var(--color-success-strong)]",
-  info: "tw:bg-info/10 tw:text-info",
+const ICON_TONE: Record<CardTone, string> = {
+  brand: "tw:text-primary",
+  success: "tw:text-(--color-success-strong)",
+  info: "tw:text-info",
 };
 
 type SummaryCard = {
@@ -62,18 +63,21 @@ export function previousPeriod(range: Pick<ReportRange, "from" | "to">) {
   return { from, to, inRange, comparable };
 }
 
-/** Comparison with the previous period: green up, red down, muted dash when there is nothing to compare. */
+/** Compare the selected period with the immediately preceding period of the same length. */
 function Comparison({ current, previous, comparable }: { current: number; previous: number; comparable: boolean }) {
   if (!comparable || previous <= 0) {
-    return <p className="tw:m-0 tw:text-xs tw:text-muted-foreground">— <span className="tw:sr-only">No previous period to compare with</span></p>;
+    return <p className="tw:m-0 tw:text-xs tw:text-muted-foreground">No comparison available</p>;
   }
   const percent = Math.round((Math.abs(current - previous) / previous) * 100);
-  if (current === previous) return <p className="tw:m-0 tw:text-xs tw:text-muted-foreground">No change vs previous period</p>;
+  const formattedPercent = percent.toLocaleString("en-PH");
+  const unchanged = current === previous;
   const up = current > previous;
   return (
-    <p className={cn("tw:m-0 tw:text-xs tw:font-medium", up ? "tw:text-(--color-success-strong)" : "tw:text-destructive")}>
-      <span aria-hidden="true">{up ? "▲" : "▼"} {percent}% vs previous period</span>
-      <span className="tw:sr-only">{up ? "Up" : "Down"} {percent}% vs previous period</span>
+    <p className="tw:m-0 tw:flex tw:flex-wrap tw:items-center tw:gap-x-2 tw:gap-y-1 tw:text-xs tw:text-muted-foreground">
+      <KpiDelta direction={unchanged ? "flat" : up ? "up" : "down"}
+        value={unchanged ? "No Change" : `${up ? "+" : "−"}${formattedPercent}%`}
+        label={unchanged ? "No change" : `${up ? "Up" : "Down"} ${formattedPercent}%`} />
+      <span>vs. previous period</span>
     </p>
   );
 }
@@ -81,32 +85,32 @@ function Comparison({ current, previous, comparable }: { current: number; previo
 function SummaryStatCard({ card, comparable, onOpen }: { card: SummaryCard; comparable: boolean; onOpen: (reportKey: ReportKey) => void }) {
   const Icon = card.icon;
   return (
-    <div className="reports-summary__card tw:group tw:relative tw:flex tw:min-w-0 tw:flex-col tw:gap-3 tw:rounded-2xl tw:border tw:border-border tw:bg-card tw:p-4 tw:text-card-foreground tw:shadow-(--shadow-soft) tw:transition-transform tw:hover:-translate-y-0.5 tw:sm:p-5 tw:motion-reduce:transition-none tw:motion-reduce:hover:translate-y-0">
-      <div className="tw:flex tw:items-center tw:gap-3">
-        <span aria-hidden="true" className={cn("tw:flex tw:size-10 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-xl", TONE_CHIP[card.tone])}>
-          <Icon className="tw:size-5" strokeWidth={1.75} />
-        </span>
-        <span className="tw:min-w-0 tw:flex-1 tw:truncate tw:text-sm tw:font-medium tw:text-muted-foreground">{card.label}</span>
-        <span aria-hidden="true" className="report-print__hide tw:flex tw:shrink-0 tw:items-center tw:gap-1 tw:text-xs tw:font-medium tw:text-muted-foreground tw:transition-colors tw:group-hover:text-primary">
-          Open report <ArrowRight className="tw:size-3.5" />
+    <div className="reports-summary__card tw:group tw:relative tw:flex tw:min-w-0 tw:flex-col tw:overflow-hidden tw:rounded-2xl tw:border tw:border-border tw:bg-card tw:text-card-foreground tw:transition-colors tw:hover:border-primary/40 tw:focus-within:border-ring tw:motion-reduce:transition-none">
+      <div className="tw:flex tw:items-center tw:gap-2.5 tw:px-4 tw:pt-4 tw:sm:px-5 tw:sm:pt-5">
+        <Icon aria-hidden="true" className={cn("tw:size-4.5 tw:shrink-0", ICON_TONE[card.tone])} strokeWidth={1.75} />
+        <span className="tw:min-w-0 tw:flex-1 tw:text-sm tw:font-semibold">{card.label}</span>
+        <span aria-hidden="true" className="report-print__hide tw:flex tw:size-8 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-lg tw:border tw:border-border tw:bg-(--color-bg-subtle) tw:text-muted-foreground tw:transition-colors tw:group-hover:border-primary/25 tw:group-hover:text-primary">
+          <ArrowRight className="tw:size-4" />
         </span>
       </div>
-      <div className="tw:flex tw:flex-col tw:gap-1">
+      <div className="tw:flex tw:flex-1 tw:flex-col tw:gap-1.5 tw:px-4 tw:pt-3 tw:pb-4 tw:sm:px-5">
         {card.loading ? (
           <Skeleton className="tw:h-8 tw:w-28 tw:max-w-full" />
         ) : card.error ? (
           <p className="tw:m-0 tw:text-base tw:font-medium tw:text-muted-foreground">Unavailable</p>
         ) : (
-          <p className="tw:m-0 tw:truncate tw:text-3xl tw:leading-none tw:font-bold tw:tracking-tight tw:tabular-nums">{card.value}</p>
+          <p className="tw:m-0 tw:text-3xl tw:leading-tight tw:font-bold tw:tracking-tight tw:tabular-nums tw:wrap-anywhere">{card.value}</p>
         )}
-        <p className="tw:m-0 tw:truncate tw:text-xs tw:text-muted-foreground">{card.caption}</p>
+        <p className="tw:m-0 tw:text-xs tw:text-muted-foreground">{card.caption}</p>
       </div>
-      {card.loading || card.error ? null : <Comparison current={card.current} previous={card.previous} comparable={comparable} />}
+      <div className="tw:flex tw:min-h-11 tw:items-center tw:border-t tw:border-border tw:bg-(--color-bg-subtle) tw:px-4 tw:py-2 tw:sm:px-5">
+        {card.loading ? <Skeleton className="tw:h-5 tw:w-36" /> : card.error ? null : <Comparison current={card.current} previous={card.previous} comparable={comparable} />}
+      </div>
       <button
         type="button"
         aria-label={`Open the ${card.report} report`}
         onClick={() => onOpen(card.key)}
-        className="tw:absolute tw:inset-0 tw:cursor-pointer tw:rounded-2xl tw:outline-none tw:focus-visible:ring-3 tw:focus-visible:ring-ring/50"
+        className="tw:absolute tw:inset-0 tw:cursor-pointer tw:rounded-2xl tw:outline-none tw:focus-visible:ring-2 tw:focus-visible:ring-ring tw:focus-visible:ring-inset"
       />
     </div>
   );
@@ -150,15 +154,15 @@ export function ReportsSummaryPanel({ onOpen }: { onOpen: (reportKey: ReportKey)
     {
       title: "People",
       cards: [
-        { key: "customers", report: "Customers", label: "New customers", caption: "Customers added", value: fmt(customers.newCustomers), current: customers.newCustomers, previous: customersBefore.newCustomers, icon: UserPlus, tone: "success", loading: customers.customers.isLoading, error: customers.customers.error },
-        { key: "membership", report: "Membership", label: "Memberships activated", caption: "Memberships started", value: fmt(membership.activatedInPeriod), current: membership.activatedInPeriod, previous: membershipBefore.activatedInPeriod, icon: UserCheck, tone: "success", loading: membership.memberships.isLoading, error: membership.memberships.error },
+        { key: "customers", report: "Customers", label: "New Customers", caption: "Customers added", value: fmt(customers.newCustomers), current: customers.newCustomers, previous: customersBefore.newCustomers, icon: UserPlus, tone: "success", loading: customers.customers.isLoading, error: customers.customers.error },
+        { key: "membership", report: "Membership", label: "Memberships Activated", caption: "Memberships started", value: fmt(membership.activatedInPeriod), current: membership.activatedInPeriod, previous: membershipBefore.activatedInPeriod, icon: UserCheck, tone: "success", loading: membership.memberships.isLoading, error: membership.memberships.error },
       ],
     },
     {
       title: "Points",
       cards: [
-        { key: "stay-points", report: "Stay Points", label: "Stay points released", caption: "Points given to members", value: fmt(stayPoints.released), current: stayPoints.released, previous: stayPointsBefore.released, icon: TrendingUp, tone: "info", loading: stayPoints.points.isLoading, error: stayPoints.points.error },
-        { key: "promo-points", report: "Promo Points", label: "Promo points earned", caption: "Points earned from promos", value: fmt(promoPoints.earned), current: promoPoints.earned, previous: promoPointsBefore.earned, icon: Gift, tone: "info", loading: promoPoints.ledger.isLoading, error: promoPoints.ledger.error },
+        { key: "stay-points", report: "Stay Points", label: "Stay Points Released", caption: "Points given to members", value: fmt(stayPoints.released), current: stayPoints.released, previous: stayPointsBefore.released, icon: TrendingUp, tone: "info", loading: stayPoints.points.isLoading, error: stayPoints.points.error },
+        { key: "promo-points", report: "Promo Points", label: "Promo Points Earned", caption: "Points earned from promos", value: fmt(promoPoints.earned), current: promoPoints.earned, previous: promoPointsBefore.earned, icon: Gift, tone: "info", loading: promoPoints.ledger.isLoading, error: promoPoints.ledger.error },
       ],
     },
   ];
@@ -170,7 +174,7 @@ export function ReportsSummaryPanel({ onOpen }: { onOpen: (reportKey: ReportKey)
       </div>
       {groups.map((group) => (
         <section key={group.title} aria-labelledby={`reports-summary-${group.title.toLowerCase()}`} className="tw:flex tw:flex-col tw:gap-3">
-          <h2 id={`reports-summary-${group.title.toLowerCase()}`} className="tw:m-0 tw:text-sm tw:font-semibold tw:tracking-wide tw:text-muted-foreground tw:uppercase">{group.title}</h2>
+          <h2 id={`reports-summary-${group.title.toLowerCase()}`} className="tw:m-0 tw:text-sm tw:font-semibold tw:text-muted-foreground">{group.title}</h2>
           <div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:sm:grid-cols-2 tw:lg:grid-cols-3">
             {group.cards.map((card) => (
               <SummaryStatCard key={card.key} card={card} comparable={previous.comparable} onOpen={onOpen} />

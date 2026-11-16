@@ -123,7 +123,7 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
       this.require(identity, "commission.payout.prepare", "You cannot prepare a payout list.");
       // Month close builds the list automatically; this stays for a list the close could not build.
       const list = buildPayoutList(this.store, month.trim(), identity);
-      if (!list) throw new Error("No released commissions are waiting for a payout list in this month.");
+      if (!list) throw new Error("No commissions ready to pay are waiting for a payout list in this month.");
       return structuredClone(list);
     });
   }
@@ -165,10 +165,10 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
     return this.run(options, (identity) => {
       this.require(identity, "commission.clawback.collect", "You cannot record a clawback collection.");
       const item = this.store.commissionClawbacks.find((entry) => entry.id === id);
-      if (!item) throw new Error("Clawback not found.");
+      if (!item) throw new Error("Payback not found.");
       const reference = input.reference.trim();
-      if (!reference) throw new Error("Enter the collection reference.");
-      if (item.recoveries.some((entry) => entry.reference.toLowerCase() === reference.toLowerCase())) throw new Error("This collection was already recorded.");
+      if (!reference) throw new Error("Enter the payback reference.");
+      if (item.recoveries.some((entry) => entry.reference.toLowerCase() === reference.toLowerCase())) throw new Error("This payback was already recorded.");
       if (!Number.isSafeInteger(input.amountCentavos) || input.amountCentavos <= 0 || input.amountCentavos > clawbackBalance(item)) {
         throw new Error("Enter an amount above zero and within the remaining balance.");
       }
@@ -181,10 +181,10 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
     return this.run(options, (identity) => {
       this.require(identity, "commission.clawback.writeOff", "Only an administrator can write off clawbacks.");
       const item = this.store.commissionClawbacks.find((entry) => entry.id === id);
-      if (!item) throw new Error("Clawback not found.");
-      if (!reason.trim()) throw new Error("Enter the reason for writing this off.");
+      if (!item) throw new Error("Payback not found.");
+      if (!reason.trim()) throw new Error("Enter the reason for not collecting this balance.");
       const balance = clawbackBalance(item);
-      if (balance <= 0) throw new Error("This clawback has no open balance.");
+      if (balance <= 0) throw new Error("This payback has no open balance.");
       item.writeOff = { date: today(), actorId: identity.id, reason: reason.trim() };
       this.audit(identity, { module: "commissions", action: "COMMISSION_CLAWBACK_WRITTEN_OFF", entityType: "commission", entityId: item.commissionId, previousValue: String(balance), newValue: "written_off", reason: reason.trim(), relatedRecordIds: [item.saleId, item.id] });
     });
@@ -210,8 +210,8 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
       if (!monthDate) throw new Error("Enter a valid month.");
       if (this.store.closedMonths.some((item) => item.month === month)) throw new Error("This month is closed. Its figures are locked.");
       const member = this.store.members.find((item) => item.id === memberId);
-      if (!member || member.designation === "OST") throw new Error("Choose an IST leader.");
-      if (workbook && Object.values(workbook).some((value) => !Number.isSafeInteger(value) || value < 0)) throw new Error("Enter valid workbook figures.");
+      if (!member || member.designation === "OST") throw new Error("Choose an Internal Seller (IST) leader.");
+      if (workbook && Object.values(workbook).some((value) => !Number.isSafeInteger(value) || value < 0)) throw new Error("Enter valid company spreadsheet figures.");
       const previous = this.store.allowanceReviews.findLast((item) => item.month === month && item.memberId === memberId);
       const withholdingReason = input.withholdingReason === undefined ? previous?.withholdingReason ?? "" : input.withholdingReason.trim();
       if (withholdingReason !== (previous?.withholdingReason ?? "")) this.require(identity, "commission.rates.manage", "Only an administrator can change BA withholding.");
@@ -261,8 +261,8 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
   private requireConfirmedSale(commission: Commission): void {
     if (commission.product === "IGP") {
       const sale = this.store.igp.sales.find((item) => item.id === commission.saleId);
-      if (!sale || sale.status !== "approved" || !sale.closedDealDate) throw new Error("The IGP sale is no longer Confirmed.");
-      if (!(commission.stage === "full" ? sale.fullPaymentDate : sale.stage1Date)) throw new Error("The IGP sale no longer meets the release threshold.");
+      if (!sale || sale.status !== "approved" || !sale.closedDealDate) throw new Error("The property (IGP) sale is no longer Confirmed.");
+      if (!(commission.stage === "full" ? sale.fullPaymentDate : sale.stage1Date)) throw new Error("The property (IGP) sale no longer meets the minimum paid.");
       return;
     }
     const sale = this.store.sales.find((item) => item.id === commission.saleId);
@@ -303,7 +303,7 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
       this.require(identity, "commission.approve", "Only Finance can adjust commissions.");
       if (!reason.trim()) throw new Error("A reason is required.");
       const commission = this.find(id);
-      if (commission.releaseDate) throw new Error("A released commission cannot change its frozen rate.");
+      if (commission.releaseDate) throw new Error("A commission that is ready to pay cannot change its frozen rate.");
       if (commission.status === "paid" || commission.status === "cancelled") throw new Error("A paid or cancelled commission cannot be adjusted here.");
       if (commission.payout) throw new Error("A commission with a recorded payout cannot be adjusted.");
       const previous = `${commission.percentBp}bp/${commission.amountCentavos}`;
@@ -327,7 +327,7 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
         if (reissueReview || (commission.releaseDate && !commission.holdTrigger && !commission.releaseRestorable)) throw new Error("This commission requires a separate financial review.");
         const contract = this.store.contracts.find((item) => item.id === commission.contractId);
         if (commission.product !== "IGP" && commission.releaseDate && contract && !meetsPayoutRelease(contract, paymentsOfContract(this.store, contract.id))) {
-          throw new Error("The sale must meet the release threshold before the hold can be restored.");
+          throw new Error("The sale must meet the minimum paid before the hold can be restored.");
         }
         commission.status = commission.approvedAt ? "approved" : "released";
         commission.holdReason = null;
@@ -371,16 +371,16 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
         throw new Error(`Commission pays out once 40% of the contract value is Finance-verified (currently ${collectedPercent(contract, payments)}%).`);
       }
       const releaseDate = commission.releaseDate ? payoutReleaseDateFor(commission.releaseDate) : contract ? payoutReleaseDate(contract, payments) : null;
-      if (!releaseDate) throw new Error("Finance must reconcile the receipt and verification dates before recording this payout.");
+      if (!releaseDate) throw new Error("Finance must check the receipt and verification dates before recording this payout.");
       if (today() < releaseDate) {
-        throw new Error(`Commission release opens on ${releaseDate}, after its release month.`);
+        throw new Error(`Commission payout opens on ${releaseDate}, after the month it became ready to pay.`);
       }
       if (!input.reference.trim()) throw new Error("Enter the payment reference.");
       if (!parseManilaDateOnly(input.payoutDate)) throw new Error("Enter a valid payout date.");
-      if (input.payoutDate < releaseDate) throw new Error("The payout date must be on or after the release date.");
+      if (input.payoutDate < releaseDate) throw new Error("The payout date must be on or after the ready-to-pay date.");
       if (input.payoutDate > today()) throw new Error("The payout date cannot be in the future.");
       if (commission.releaseDate && (!input.method?.trim() || !input.evidenceFileName?.trim())) {
-        throw new Error("Enter the payment method and attach proof of disbursement.");
+        throw new Error("Enter the payment method and attach proof of payment.");
       }
       commission.payout = { reference: input.reference.trim(), method: input.method?.trim() || null, payoutDate: input.payoutDate, processedBy: identity.id, initiatedAt: nowIso(), confirmedAt: null, evidenceFileName: input.evidenceFileName?.trim() || null };
       this.event(commission, identity, BUSINESS_AUDIT_ACTIONS.COMMISSION_PAYOUT_RECORDED);
@@ -393,8 +393,8 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
     return this.run(options, (identity) => {
       this.require(identity, "commission.payout", "Only Finance can confirm disbursement.");
       const commission = this.find(id);
-      if (!commission.payout) throw new Error("Record a payout before confirming disbursement.");
-      if (commission.payout.confirmedAt) throw new Error("Disbursement was already confirmed.");
+      if (!commission.payout) throw new Error("Record a payout before confirming it was paid out.");
+      if (commission.payout.confirmedAt) throw new Error("This payout was already confirmed as paid out.");
       const previous = commission.status;
       if (previous !== "approved" && previous !== "on_hold") throw new Error("Only an approved or held commission with an initiated payout can be confirmed.");
       if (previous === "approved") this.requireConfirmedSale(commission);

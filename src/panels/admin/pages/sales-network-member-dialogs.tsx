@@ -74,7 +74,7 @@ export function SalesNetworkMemberDialogs({
       <Dialog open={editMember !== null} onOpenChange={(next) => (!next ? onCloseEdit() : undefined)}>
         <DialogContent className="tw:max-h-[calc(100dvh-2rem)] tw:overflow-y-auto tw:sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Edit member</DialogTitle>
+            <DialogTitle>Edit Member</DialogTitle>
             <DialogDescription>Update the seller profile for this member.</DialogDescription>
           </DialogHeader>
           {editMember ? <EditMemberForm key={editMember.id} member={editMember} onDone={onCloseEdit} /> : null}
@@ -83,8 +83,8 @@ export function SalesNetworkMemberDialogs({
       <Dialog open={transferMember !== null} onOpenChange={(next) => (!next ? onCloseTransfer() : undefined)}>
         <DialogContent className="tw:max-h-[calc(100dvh-2rem)] tw:overflow-y-auto tw:sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Transfer member</DialogTitle>
-            <DialogDescription>Move the member and their downline to a new classification and sponsor.</DialogDescription>
+            <DialogTitle>Transfer Member</DialogTitle>
+            <DialogDescription>Move the member and their team below to a new seller type and sponsor.</DialogDescription>
           </DialogHeader>
           {transferMember ? <TransferMemberForm key={transferMember.id} member={transferMember} onDone={onCloseTransfer} /> : null}
         </DialogContent>
@@ -359,7 +359,7 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
       </DialogFooter>
       <ConfirmDialog
         open={confirmSave}
-        title={`Save changes to ${displayName}?`}
+        title={`Save Changes to ${displayName}?`}
         description="The member record will be updated."
         confirmText="Save"
         pending={submitting}
@@ -406,19 +406,19 @@ function TransferMemberForm({ member, onDone }: { member: OrgMember; onDone: () 
   const positionLocked = target === "OST" || member.designation !== "OST";
   const positionOptions =
     target === "OST"
-      ? [{ value: "OST" as const, label: "OST" }]
+      ? [{ value: "OST" as const, label: designationLabel("OST") }]
       : member.designation === "OST"
         ? [
-            { value: "SVD" as const, label: "SVD — Sales Vice Director" },
-            { value: "SSM" as const, label: "SSM — Senior Sales Manager" },
-            { value: "SM" as const, label: "SM — Sales Manager" },
+            { value: "SVD" as const, label: "Sales Vice Director" },
+            { value: "SSM" as const, label: "Senior Sales Manager" },
+            { value: "SM" as const, label: "Sales Manager" },
           ]
         : [{ value: member.designation, label: designationLabel(member.designation) }];
 
   const { visible, reveal } = useFormErrors(
     {
       parent: position === "SVD" || newParentId ? undefined : "A receiving parent is required.",
-      teamName: position === "SVD" && !teamName.trim() ? "Team name is required for SVD." : undefined,
+      teamName: position === "SVD" && !teamName.trim() ? "Team name is required for a Sales Vice Director." : undefined,
     },
     {},
     formRef,
@@ -435,7 +435,7 @@ function TransferMemberForm({ member, onDone }: { member: OrgMember; onDone: () 
       });
       setConfirmTransfer(false);
       onDone();
-      toast.success("Transfer completed.", { description: `${member.displayName} is now ${target}.` });
+      toast.success("Transfer completed.", { description: `${member.displayName} is now ${designationLabel(target)}.` });
     } catch (err) {
       setConfirmTransfer(false);
       toast.error("Transfer failed.", { description: err instanceof Error ? err.message : "Failed to transfer member." });
@@ -455,16 +455,16 @@ function TransferMemberForm({ member, onDone }: { member: OrgMember; onDone: () 
         {/* Read-only summary; the new assignment is chosen below. */}
         <TextField id="transfer-member" label="Member" value={member.displayName} onChange={() => undefined} disabled />
         <TextField id="transfer-current-parent" label="Current parent" value={currentParentName} onChange={() => undefined} disabled />
-        <TextField id="transfer-descendants" label="Affected descendants" value={String(descendantCount)} onChange={() => undefined} disabled inputMode="numeric" />
+        <TextField id="transfer-descendants" label="Affected team members" value={String(descendantCount)} onChange={() => undefined} disabled inputMode="numeric" />
       </FormSection>
       <FormSection title="New Assignment">
         <fieldset className="tw:m-0 tw:flex tw:min-w-0 tw:flex-col tw:gap-1.5 tw:border-0 tw:p-0">
-          <legend className="tw:mb-1.5 tw:p-0 tw:text-sm tw:font-medium">Target Classification</legend>
-          <RadioGroup value={target} onValueChange={(value) => switchTarget(value as "IST" | "OST")} className="tw:flex tw:gap-4" aria-label="Target Classification">
+          <legend className="tw:mb-1.5 tw:p-0 tw:text-sm tw:font-medium">Target Seller Type</legend>
+          <RadioGroup value={target} onValueChange={(value) => switchTarget(value as "IST" | "OST")} className="tw:flex tw:gap-4" aria-label="Target Seller Type">
             {(["IST", "OST"] as const).map((option) => (
               <Label key={option} className="tw:flex tw:min-h-11 tw:cursor-pointer tw:items-center tw:gap-2 tw:sm:min-h-8">
                 <RadioGroupItem value={option} />
-                {option}
+                {designationLabel(option)}
               </Label>
             ))}
           </RadioGroup>
@@ -519,13 +519,13 @@ function TransferMemberForm({ member, onDone }: { member: OrgMember; onDone: () 
       </DialogFooter>
       <ConfirmDialog
         open={confirmTransfer}
-        title={`Transfer ${member.displayName} to ${target}?`}
+        title={`Transfer ${member.displayName} to ${designationLabel(target)}?`}
         description={
           position === "SVD"
-            ? `The member will become an SVD root of new team ${teamName.trim()}.`
-            : "The member and their downline branch will move to the selected parent."
+            ? `The member will become a Sales Vice Director at the top of new team ${teamName.trim()}.`
+            : "The member and their team below will move to the selected parent."
         }
-        confirmText={`Transfer to ${target}`}
+        confirmText={`Transfer to ${designationLabel(target)}`}
         tone="warning"
         pending={submitting}
         onConfirm={() => void run()}

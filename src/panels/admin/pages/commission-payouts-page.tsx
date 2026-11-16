@@ -47,8 +47,8 @@ export function CommissionPayoutBar({ commissions }: { commissions: CommissionVi
   function approve(list: CommissionPayoutList) {
     setListId(null);
     confirmRun({
-      title: "Approve payout list?", description: `Approve ${plural(list.entries.length, "commission")} from ${monthLabel(list.month)} (${formatPeso(listTotal(list))}) for payment.`,
-      confirmText: "Approve list", tone: "success", action: () => listAction.mutateAsync({ kind: "approve", id: list.id }),
+      title: "Approve Payout List?", description: `Approve ${plural(list.entries.length, "commission")} from ${monthLabel(list.month)} (${formatPeso(listTotal(list))}) for payment.`,
+      confirmText: "Approve List", tone: "success", action: () => listAction.mutateAsync({ kind: "approve", id: list.id }),
       successTitle: "Payout list approved.", errorTitle: "Could not approve",
     });
   }
@@ -56,13 +56,13 @@ export function CommissionPayoutBar({ commissions }: { commissions: CommissionVi
   function confirmAll() {
     const ids = toConfirm.map(({ id }) => id);
     confirmRun({
-      title: "Confirm all disbursed?", description: `Mark ${plural(ids.length, "commission")} as Paid. Do this only after the money has reached each seller.`,
-      confirmText: "Confirm all", tone: "success",
+      title: "Confirm All Paid Out?", description: `Mark ${plural(ids.length, "commission")} as Paid. Do this only after the money has reached each seller.`,
+      confirmText: "Confirm All", tone: "success",
       action: async () => {
         const result = await bulk.mutateAsync({ kind: "confirm", ids });
         if (result.failed.length) throw new Error(bulkSummary(result, "confirmed"));
       },
-      successTitle: `${ids.length} confirmed. They are now Paid.`, errorTitle: "Not all disbursements were confirmed",
+      successTitle: `${ids.length} confirmed. They are now Paid.`, errorTitle: "Not all payments were confirmed",
     });
   }
 
@@ -77,23 +77,23 @@ export function CommissionPayoutBar({ commissions }: { commissions: CommissionVi
                 List for {monthLabel(list.month)}: {plural(list.entries.length, "commission")}, <Money value={listTotal(list)} />
               </p>
               <div className="tw:flex tw:flex-wrap tw:gap-2">
-                <Button type="button" variant="outline" onClick={() => setListId(list.id)}>Review list</Button>
-                {canApprove ? <Button type="button" variant="success" onClick={() => approve(list)}>Approve list</Button> : null}
+                <Button type="button" variant="outline" onClick={() => setListId(list.id)}>Review List</Button>
+                {canApprove ? <Button type="button" variant="success" onClick={() => approve(list)}>Approve List</Button> : null}
               </div>
             </div>
           ))}
           {ready.length || toConfirm.length ? (
             <div className="tw:flex tw:flex-wrap tw:gap-2">
-              {ready.length ? <Button type="button" onClick={() => setRecording(true)}>Record payout for all ready ({ready.length})</Button> : null}
-              {toConfirm.length ? <Button type="button" variant="success" onClick={confirmAll}>Confirm all disbursed ({toConfirm.length})</Button> : null}
+              {ready.length ? <Button type="button" onClick={() => setRecording(true)}>Record Payout for All Ready ({ready.length})</Button> : null}
+              {toConfirm.length ? <Button type="button" variant="success" onClick={confirmAll}>Confirm All Paid Out ({toConfirm.length})</Button> : null}
             </div>
           ) : null}
         </section>
       ) : null}
-      <RecordDetailsSheet open={Boolean(selectedList)} title={selectedList ? `List for ${monthLabel(selectedList.month)}` : "Payout list"} onClose={() => setListId(null)}
+      <RecordDetailsSheet open={Boolean(selectedList)} title={selectedList ? `List for ${monthLabel(selectedList.month)}` : "Payout List"} onClose={() => setListId(null)}
         subtitle="Waiting for approval" icon={<ListChecks />}
         sections={selectedList ? [{
-          title: "Payout list",
+          title: "Payout List",
           rows: [
             { label: "Month", value: monthLabel(selectedList.month) },
             { label: "Commissions", value: selectedList.entries.length },
@@ -108,7 +108,7 @@ export function CommissionPayoutBar({ commissions }: { commissions: CommissionVi
             return { label, value: <Money value={entry.amountCentavos} /> };
           }),
         }] : []}
-        footer={canApprove && selectedList ? <Button type="button" variant="success" onClick={() => approve(selectedList)}>Approve list</Button> : undefined} />
+        footer={canApprove && selectedList ? <Button type="button" variant="success" onClick={() => approve(selectedList)}>Approve List</Button> : undefined} />
       {recording ? <PayoutDialog commissions={ready} onClose={() => setRecording(false)} /> : null}
     </>
   );

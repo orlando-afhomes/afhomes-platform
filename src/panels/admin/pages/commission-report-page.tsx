@@ -52,7 +52,7 @@ export function CommissionReportPanel() {
       <AdminStatGrid columns={3}>
         <AdminStatCard loading={commissions.isLoading} error={commissions.error} label="Approved" value={<Money value={approvedInPeriod} />} icon={BadgeCheck} tone="brand" />
         <AdminStatCard loading={commissions.isLoading} error={commissions.error} label="Paid" value={<Money value={paidInPeriod} />} icon={Banknote} tone="success" />
-        <AdminStatCard loading={commissions.isLoading} error={commissions.error} label="Approved, unpaid" value={<Money value={approvedUnpaid} />} icon={Clock} tone="accent" />
+        <AdminStatCard loading={commissions.isLoading} error={commissions.error} label="Approved, Unpaid" value={<Money value={approvedUnpaid} />} icon={Clock} tone="accent" />
       </AdminStatGrid>
       <ReportTable report="Commission Report" fileName="commissions" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => row.id} loading={commissions.isLoading} error={commissions.error} emptyText="No commissions match."
         filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search commissions" filters={[

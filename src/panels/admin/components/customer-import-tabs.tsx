@@ -20,7 +20,7 @@ export function CustomerImportTabs({
   const tabs = [
     { value: "import", label: "Import", Icon: Upload },
     { value: "export", label: "Export", Icon: Download },
-    { value: "history", label: "Job history", Icon: Clock, count: jobCount },
+    { value: "history", label: "Job History", Icon: Clock, count: jobCount },
   ] as const;
 
   const focusTab = (index: number) => {
@@ -32,7 +32,7 @@ export function CustomerImportTabs({
   return (
     <div
       role="tablist"
-      aria-label="Import and export views"
+      aria-label="Import and Export Views"
       className="customer-import-tabs tw:flex tw:flex-wrap tw:gap-2 tw:border-b tw:border-border tw:pb-3"
     >
       {tabs.map((tab, index) => {

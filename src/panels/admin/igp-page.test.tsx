@@ -71,9 +71,9 @@ describe("Sales area", () => {
     window.history.replaceState(null, "", "/admin/sales?tab=contracts");
     show("dev-admin", <SalesAreaPage />);
     const tabs = await screen.findByRole("tablist", { name: "Sales" });
-    expect(within(tabs).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Sales", "Contracts", "IGP", "Scheme guide"]);
+    expect(within(tabs).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Sales", "Contracts", "Property Sales (IGP)", "Payment Plan Guide"]);
     expect(within(tabs).getByRole("tab", { name: "Contracts" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("link", { name: "New contract" })).toHaveAttribute("href", "/admin/customers?tab=customers");
+    expect(screen.getByRole("link", { name: "New Contract" })).toHaveAttribute("href", "/admin/customers?tab=customers");
     const table = await screen.findByRole("table", { name: "Contracts" });
     // The row opens the contract: names are plain text and the row menu has no "View full details".
     expect(within(table).queryByRole("link")).toBeNull();
@@ -87,38 +87,38 @@ describe("Sales area", () => {
     const tabs = await screen.findByRole("tablist", { name: "Sales" });
     expect(within(tabs).queryByRole("tab", { name: "Contract review" })).toBeNull();
     expect(within(tabs).getByRole("tab", { name: "Contracts" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.queryByRole("link", { name: "New contract" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "New Contract" })).toBeNull();
   });
 
-  it("opens IGP for Finance even when the URL points at a restricted tab", async () => {
+  it("opens Property Sales (IGP) for Finance even when the URL points at a restricted tab", async () => {
     window.history.replaceState(null, "", "/admin/sales?tab=contracts");
     show("dev-finance", <SalesAreaPage />);
-    expect(await screen.findByRole("table", { name: "IGP Sales" })).toBeInTheDocument();
-    expect(within(screen.getByRole("tablist", { name: "Sales" })).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["IGP"]);
-    expect(screen.queryByRole("button", { name: "Record sale" })).toBeNull();
+    expect(await screen.findByRole("table", { name: "Property Sales (IGP)" })).toBeInTheDocument();
+    expect(within(screen.getByRole("tablist", { name: "Sales" })).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Property Sales (IGP)"]);
+    expect(screen.queryByRole("button", { name: "Record Sale" })).toBeNull();
   });
 });
 
-describe("IGP Sales page", () => {
+describe("Property Sales (IGP) page", () => {
   it("shows the register in 5 columns and opens the sale with its actions in a details panel", async () => {
     const user = userEvent.setup();
     window.history.replaceState(null, "", "/admin/sales?tab=igp");
     show();
-    const table = await screen.findByRole("table", { name: "IGP Sales" });
+    const table = await screen.findByRole("table", { name: "Property Sales (IGP)" });
     const headers = within(table).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter((text) => text && text !== "Actions");
-    expect(headers).toEqual(["Series Number", "Buyer", "Project", "Contract price", "Status"]);
-    expect(screen.getByRole("button", { name: "JA&D history" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sale counting rule" })).toBeInTheDocument();
+    expect(headers).toEqual(["Series Number", "Buyer", "Project", "Contract Price", "Status"]);
+    expect(screen.getByRole("button", { name: "JA&D Approval History" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "When a Sale Counts" })).toBeInTheDocument();
     expect(within(table).queryByRole("button", { name: /^Actions for/ })).toBeNull();
-    await user.click(within(table).getAllByRole("row", { name: /^Open IGP sale/ })[0]);
+    await user.click(within(table).getAllByRole("row", { name: /^Open property sale \(IGP\)/ })[0]);
     const sheet = await screen.findByRole("dialog");
     expect(within(sheet).getByText("Approved collections")).toBeInTheDocument();
     expect(within(sheet).getByRole("button", { name: "IGP-0101" })).toBeInTheDocument();
-    expect(within(sheet).getByRole("heading", { name: "JA&D accreditation history" })).toBeInTheDocument();
+    expect(within(sheet).getByRole("heading", { name: "JA&D Accreditation History" })).toBeInTheDocument();
     // Receipt status is a plain word, never a raw code such as "under_review".
     expect(within(sheet).queryByText(/_/)).toBeNull();
-    expect(within(sheet).getByRole("button", { name: "Approve sale" })).toBeInTheDocument();
-    expect(within(sheet).getByRole("button", { name: "Cancel sale" })).toBeInTheDocument();
+    expect(within(sheet).getByRole("button", { name: "Approve Sale" })).toBeInTheDocument();
+    expect(within(sheet).getByRole("button", { name: "Cancel Sale" })).toBeInTheDocument();
   });
 });
 
@@ -127,7 +127,7 @@ describe("IGP sale form and JA&D entry", () => {
     const user = userEvent.setup();
     window.history.replaceState(null, "", "/admin/sales?tab=igp");
     show();
-    await user.click(await screen.findByRole("button", { name: "Record sale" }));
+    await user.click(await screen.findByRole("button", { name: "Record Sale" }));
     const dialog = await screen.findByRole("dialog");
     const unit = within(dialog).getByRole("combobox", { name: /Unit or lot/ });
     expect(unit).toBeDisabled();
@@ -145,12 +145,12 @@ describe("IGP sale form and JA&D entry", () => {
     const user = userEvent.setup();
     window.history.replaceState(null, "", "/admin/sales?tab=igp");
     show();
-    await user.click(await screen.findByRole("button", { name: "Record JA&D accreditation" }));
+    await user.click(await screen.findByRole("button", { name: "Record JA&D Accreditation" }));
     const dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("combobox", { name: /Seller/ }));
     await user.click(await screen.findByRole("option", { name: "Paolo Ramos" }));
     // Paolo Ramos is an OST seller, so the type starts as JAO.
-    expect(within(dialog).getByRole("combobox", { name: /Accreditation type/ })).toHaveValue("OST accreditation (JAO)");
+    expect(within(dialog).getByRole("combobox", { name: /Accreditation type/ })).toHaveValue("Outsourced Seller (OST) accreditation (JAO)");
     const digits = within(dialog).getByRole("textbox", { name: /Last 4 digits/ });
     await user.type(digits, "12ab345");
     expect(digits).toHaveValue("1234");
@@ -171,16 +171,16 @@ describe("IGP Projects tab (Settings)", () => {
     const sheet = await screen.findByRole("dialog");
     expect(within(sheet).getByText("Unit 12A")).toBeInTheDocument();
     expect(within(sheet).getAllByText("Sample Property Owner", { selector: "span" })).toHaveLength(2);
-    for (const name of ["Add unit", "Edit project", "Deactivate project"]) expect(within(sheet).getByRole("button", { name })).toBeInTheDocument();
+    for (const name of ["Add Unit", "Edit Project", "Deactivate Project"]) expect(within(sheet).getByRole("button", { name })).toBeInTheDocument();
     await user.keyboard("{Escape}");
     await user.click(screen.getByRole("button", { name: "Add project" }));
     const dialog = await screen.findByRole("dialog");
     await user.type(within(dialog).getByRole("textbox", { name: /Project name/ }), "sample gardens");
-    await user.click(within(dialog).getByRole("button", { name: "Add project" }));
+    await user.click(within(dialog).getByRole("button", { name: "Add Project" }));
     expect(await within(dialog).findByText("A project with this name already exists.")).toBeInTheDocument();
     await user.clear(within(dialog).getByRole("textbox", { name: /Project name/ }));
     await user.type(within(dialog).getByRole("textbox", { name: /Project name/ }), "Sample Bay");
-    await user.click(within(dialog).getByRole("button", { name: "Add project" }));
+    await user.click(within(dialog).getByRole("button", { name: "Add Project" }));
     expect(await screen.findByRole("row", { name: "Open project Sample Bay" })).toBeInTheDocument();
   });
 
@@ -188,11 +188,11 @@ describe("IGP Projects tab (Settings)", () => {
     const user = userEvent.setup();
     window.history.replaceState(null, "", "/admin/sales?tab=igp");
     show();
-    const table = await screen.findByRole("table", { name: "IGP Sales" });
+    const table = await screen.findByRole("table", { name: "Property Sales (IGP)" });
     const admin = createMockRepositories(storeRef.current!, () => getDevIdentity("dev-admin"));
     await admin.igpCatalog.updateUnit("igp-unit-1", { status: "inactive" });
-    await user.click(within(table).getAllByRole("row", { name: /^Open IGP sale/ })[0]);
-    await user.click(await within(await screen.findByRole("dialog")).findByRole("button", { name: "Reissue number" }));
+    await user.click(within(table).getAllByRole("row", { name: /^Open property sale \(IGP\)/ })[0]);
+    await user.click(await within(await screen.findByRole("dialog")).findByRole("button", { name: "Reissue Number" }));
     const dialogs = await screen.findAllByRole("dialog");
     const form = dialogs[dialogs.length - 1];
     expect(within(form).getByRole("combobox", { name: /Unit or lot/ })).toHaveValue("Unit 12A (inactive)");

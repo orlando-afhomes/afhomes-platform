@@ -86,8 +86,8 @@ describe("staff & access directory", () => {
     await openMenu(user, "staff-admin");
     expect(await screen.findByRole("menuitem", { name: "Suspend account" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Deactivate account" })).toBeInTheDocument();
-    expect(screen.queryByRole("menuitem", { name: "System roles" })).toBeNull();
-    expect(screen.queryByRole("menuitem", { name: "Change status" })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: "System Roles" })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: "Change Status" })).toBeNull();
   });
 
   it("shows Admin the four chips with the pending count and a single Add staff entry point", async () => {
@@ -143,8 +143,8 @@ describe("staff & access directory", () => {
   it("assigns and revokes a system role from an employee row", async () => {
     const user = userEvent.setup();
     await ready();
-    await rowAction(user, "staff-1", "System roles");
-    await screen.findByRole("dialog", { name: "Role assignments" });
+    await rowAction(user, "staff-1", "System Roles");
+    await screen.findByRole("dialog", { name: "Role Assignments" });
     await user.click(screen.getByRole("combobox", { name: "Role to assign" }));
     // S3-02: Admin may assign only roles within its own module scope.
     expect(await screen.findByRole("option", { name: "Sales Vice Director" })).toBeInTheDocument();
@@ -153,19 +153,19 @@ describe("staff & access directory", () => {
     }
     await user.click(screen.getByRole("option", { name: "Sales Vice Director" }));
     await user.click(screen.getByRole("button", { name: "Assign" }));
-    await waitFor(() => expect(within(dialog("Role assignments")).getByRole("button", { name: "Revoke Sales Vice Director" })).toBeInTheDocument());
-    await closeDialog(user, "Role assignments");
-    await rowAction(user, "staff-1", "System roles");
-    await user.click(await within(dialog("Role assignments")).findByRole("button", { name: "Revoke Sales Vice Director" }));
-    await waitFor(() => expect(within(dialog("Role assignments")).queryByRole("button", { name: "Revoke Sales Vice Director" })).toBeNull());
-    await closeDialog(user, "Role assignments");
+    await waitFor(() => expect(within(dialog("Role Assignments")).getByRole("button", { name: "Revoke Sales Vice Director" })).toBeInTheDocument());
+    await closeDialog(user, "Role Assignments");
+    await rowAction(user, "staff-1", "System Roles");
+    await user.click(await within(dialog("Role Assignments")).findByRole("button", { name: "Revoke Sales Vice Director" }));
+    await waitFor(() => expect(within(dialog("Role Assignments")).queryByRole("button", { name: "Revoke Sales Vice Director" })).toBeNull());
+    await closeDialog(user, "Role Assignments");
   });
 
   it("offers Super Admin the Finance and Administrator system roles", async () => {
     const user = userEvent.setup();
     await ready("dev-super-admin");
-    await rowAction(user, "staff-1", "System roles");
-    await screen.findByRole("dialog", { name: "Role assignments" });
+    await rowAction(user, "staff-1", "System Roles");
+    await screen.findByRole("dialog", { name: "Role Assignments" });
     await user.click(screen.getByRole("combobox", { name: "Role to assign" }));
     expect(await screen.findByRole("option", { name: "Finance" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Administrator" })).toBeInTheDocument();
@@ -174,8 +174,8 @@ describe("staff & access directory", () => {
   it("suspends and then reactivates an employee's account from the row", async () => {
     const user = userEvent.setup();
     await ready();
-    await rowAction(user, "staff-1", "Change status");
-    await screen.findByRole("dialog", { name: "Account status" });
+    await rowAction(user, "staff-1", "Change Status");
+    await screen.findByRole("dialog", { name: "Account Status" });
     await user.click(screen.getByRole("combobox", { name: "Account status" }));
     expect(await screen.findByRole("option", { name: "Deactivated" })).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "Pending" })).toBeNull();
@@ -184,8 +184,8 @@ describe("staff & access directory", () => {
     await user.click(screen.getByRole("button", { name: /^save$/i }));
     await waitFor(() => expect(within(row("staff-1")!).getByText("Suspended")).toBeInTheDocument());
     // Reactivation, previously only on the Accounts page.
-    await rowAction(user, "staff-1", "Change status");
-    await screen.findByRole("dialog", { name: "Account status" });
+    await rowAction(user, "staff-1", "Change Status");
+    await screen.findByRole("dialog", { name: "Account Status" });
     await user.click(screen.getByRole("combobox", { name: "Account status" }));
     await user.click(await screen.findByRole("option", { name: "Active" }));
     await user.click(screen.getByRole("button", { name: /^save$/i }));
@@ -200,8 +200,8 @@ describe("staff & access directory", () => {
     for (const key of ["staff-super", "staff-admin"]) {
       await openMenu(user, key);
       expect(await screen.findAllByRole("menuitem", { name: "Edit" })).not.toHaveLength(0);
-      expect(screen.queryByRole("menuitem", { name: "System roles" })).toBeNull();
-      expect(screen.queryByRole("menuitem", { name: "Change status" })).toBeNull();
+      expect(screen.queryByRole("menuitem", { name: "System Roles" })).toBeNull();
+      expect(screen.queryByRole("menuitem", { name: "Change Status" })).toBeNull();
       await user.keyboard("{Escape}");
     }
   });
@@ -210,11 +210,11 @@ describe("staff & access directory", () => {
     const user = userEvent.setup();
     await ready();
     await user.click(row("staff-1")!);
-    await screen.findByRole("dialog", { name: "Employee profile" });
+    await screen.findByRole("dialog", { name: "Employee Profile" });
     expect(screen.queryByRole("button", { name: "Suspend account" })).toBeNull();
-    await user.click(await screen.findByRole("button", { name: "System roles" }));
-    expect(await screen.findByRole("dialog", { name: "Role assignments" })).toBeInTheDocument();
-    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Employee profile" })).toBeNull());
+    await user.click(await screen.findByRole("button", { name: "System Roles" }));
+    expect(await screen.findByRole("dialog", { name: "Role Assignments" })).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Employee Profile" })).toBeNull());
   });
 
   async function expectDisabledDelete(user: User, key: string, reason: string) {
@@ -246,8 +246,8 @@ describe("staff & access directory", () => {
     const user = userEvent.setup();
     await ready();
     await user.click(row("acct-pending")!);
-    await screen.findByRole("dialog", { name: "Account details" });
-    await closeDialog(user, "Account details");
+    await screen.findByRole("dialog", { name: "Account Details" });
+    await closeDialog(user, "Account Details");
     await rowAction(user, "acct-pending", "Edit");
     const nameInput = await screen.findByDisplayValue("Pending User");
     expect(nameInput).not.toBeDisabled();

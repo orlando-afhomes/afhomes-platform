@@ -141,22 +141,22 @@ describe("Staff login page", () => {
   it("shows the recovery notice and returns to sign in", async () => {
     const user = userEvent.setup();
     renderWithQuery(<StaffLoginPage />);
-    await user.click(screen.getByRole("button", { name: "Forgot password?" }));
+    await user.click(screen.getByRole("button", { name: "Forgot Password?" }));
     await user.click(screen.getByRole("button", { name: "Continue" }));
     expect(screen.getByText("Enter your email.")).toBeInTheDocument();
     await user.type(screen.getByLabelText("Registered email"), admin.email);
     await user.click(screen.getByRole("button", { name: "Continue" }));
     expect(screen.getByText(/Contact your Administrator to reset your password/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Back to sign in" }));
+    await user.click(screen.getByRole("button", { name: "Back to Sign In" }));
     expect(screen.getByRole("heading", { name: "Login" })).toBeInTheDocument();
   });
 });
 
 describe("Sales login page", () => {
-  it("has no portal toggle and links to OST registration and the website", () => {
+  it("has no portal toggle and links to Outsourced Seller registration and the website", () => {
     renderWithQuery(<SalesLoginPage />);
     expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Register as OST" })).toHaveAttribute("href", "/register/ost");
-    expect(screen.getByRole("link", { name: "Back to website" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Register as Outsourced Seller (OST)" })).toHaveAttribute("href", "/register/ost");
+    expect(screen.getByRole("link", { name: "Back to Website" })).toHaveAttribute("href", "/");
   });
 });

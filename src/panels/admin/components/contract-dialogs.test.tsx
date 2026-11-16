@@ -32,11 +32,11 @@ describe("Approve deal", () => {
   it("confirms the signed agreement without a field for a manually assigned number, and stops on a missing rate", async () => {
     const user = userEvent.setup();
     render(<Wrapper><SalesContractDetailPage contractId="ctr-4" /></Wrapper>);
-    await user.click(await screen.findByRole("button", { name: "Approve deal" }));
-    const confirm = await screen.findByRole("alertdialog", { name: "Approve this deal?" });
+    await user.click(await screen.findByRole("button", { name: "Approve Deal" }));
+    const confirm = await screen.findByRole("alertdialog", { name: "Approve This Deal?" });
     expect(within(confirm).getByText(/signed Reservation Agreement is on file/)).toBeInTheDocument();
     expect(within(confirm).queryByRole("textbox")).toBeNull();
-    await user.click(within(confirm).getByRole("button", { name: "Approve deal" }));
+    await user.click(within(confirm).getByRole("button", { name: "Approve Deal" }));
     expect(await screen.findByText(/record the approved DSC rate/i)).toBeInTheDocument();
   });
 });

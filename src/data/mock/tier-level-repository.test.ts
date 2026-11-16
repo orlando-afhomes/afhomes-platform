@@ -65,7 +65,7 @@ describe("VIP tier levels", () => {
     expect(product).toMatchObject({ tierLevelId: platinum.id, tier: "Platinum", tierColorKey: "neutral" });
     await admin.tierLevels.deactivate(platinum.id);
     await expect(admin.products.create(productInput(platinum.id, { code: "P4", name: "Platinum Two" }), "Memo")).rejects.toThrow(/inactive/);
-    await expect(admin.products.create(productInput("tier-level-unknown", { code: "P4", name: "Platinum Two" }), "Memo")).rejects.toThrow(/Choose a tier level/);
+    await expect(admin.products.create(productInput("tier-level-unknown", { code: "P4", name: "Platinum Two" }), "Memo")).rejects.toThrow(/Choose a card level/);
     // The product keeps its inactive level, and a rename shows on the product.
     await admin.tierLevels.update(platinum.id, { name: "Platinum Plus" });
     expect((await admin.products.list()).find((item) => item.code === "P3")).toMatchObject({ tier: "Platinum Plus", tierLevelId: platinum.id });

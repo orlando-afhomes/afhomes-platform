@@ -5,6 +5,7 @@ import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { matchesSearch } from "@/shared/lib/search";
 import { toast } from "sonner";
 import { useApplyVipPositionRate, useCommissionRates, useOperation, useSales, useSaveCommissionRate } from "@/data/business-queries";
+import { useTierDisplayName } from "../components/use-tier-display-name";
 import type { CommissionRateDirectory } from "@/data/contracts/commission-repository";
 import { useIgpRegister } from "@/data/igp-queries";
 import { parseCommissionRate } from "@/modules/commissions/rules";
@@ -24,7 +25,7 @@ const columns: ColumnDef<CommissionRateDirectory["rates"][number], unknown>[] = 
   { header: "Seller", cell: ({ row }) => <span className="tw:font-semibold">{row.original.memberName}</span> },
   { header: "Product", accessorKey: "product" },
   { header: "Type", cell: ({ row }) => commissionRoleLabel(row.original.role) },
-  { header: "Approved rate", cell: ({ row }) => formatBasisPoints(row.original.rateBp) },
+  { header: "Approved Rate", cell: ({ row }) => formatBasisPoints(row.original.rateBp) },
   { header: "Exception", cell: ({ row }) => isException(row.original) ? "Yes" : "—" },
 ];
 
@@ -65,16 +66,16 @@ export function CommissionRatesPanel({ editing, onEditingChange, saleContext }: 
   return (
     <>
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search sellers" filters={[
-        { label: "Product filter", value: product, onChange: setProduct, options: [{ value: "all", label: "All products" }, { value: "VIP", label: "VIP" }, { value: "IGP", label: "IGP" }] },
+        { label: "Product filter", value: product, onChange: setProduct, options: [{ value: "all", label: "All products" }, { value: "VIP", label: "VIP" }, { value: "IGP", label: "Property (IGP)" }] },
         { label: "Commission type filter", value: role, onChange: setRole, options: [{ value: "all", label: "All types" }, { value: "DSC", label: COMMISSION_ROLE_LABELS.DSC }, { value: "DRI", label: COMMISSION_ROLE_LABELS.DRI }] },
       ]} />
       <QueryState isLoading={query.isLoading} error={query.error}>
-        <DataTable data={rates} columns={columns} caption="Approved seller rates"
+        <DataTable data={rates} columns={columns} caption="Approved Seller Rates"
           emptyText={(query.data?.rates ?? []).length === 0 ? "No approved rates recorded." : "No rates match the filters."} getRowId={rateKey}
           onRowOpen={(row) => setDetailKey(rateKey(row))} getRowLabel={(row) => `Open rate for ${row.memberName}`} />
       </QueryState>
       {allowed && query.data ? <CommissionPositionRateSettings rates={query.data.positionRates} /> : null}
-      <RecordDetailsSheet open={detail !== null} onClose={() => setDetailKey(null)} title={detail ? detail.memberName : "Commission rate"}
+      <RecordDetailsSheet open={detail !== null} onClose={() => setDetailKey(null)} title={detail ? detail.memberName : "Commission Rate"}
         icon={<Percent />}
         sections={detail ? [
           {
@@ -107,6 +108,7 @@ function RateDialog({ directory, onClose, saleContext }: {
   saleContext?: RateSaleContext;
 }) {
   const vip = useSales();
+  const tierName = useTierDisplayName();
   const igp = useIgpRegister(true);
   const [customerChoice, setCustomerChoice] = useState<string>();
   const [saleChoice, setSaleChoice] = useState<string>();
@@ -126,7 +128,7 @@ function RateDialog({ directory, onClose, saleContext }: {
       id: sale.id,
       customerId: sale.customerId,
       customerName: sale.customerName,
-      label: `VIP ${sale.productCode} · ${sale.schemeLabel} · ${formatDate(sale.recordedDate)} · Contract ${sale.contractId}`,
+      label: `${tierName(sale.productCode) ?? "VIP"} · ${sale.schemeLabel} · ${formatDate(sale.recordedDate)} · Contract ${sale.contractId}`,
       product: "VIP" as const,
       sellerMemberId: sale.sellerMemberId,
       referrerMemberId: sale.referrerMemberId,
@@ -135,12 +137,12 @@ function RateDialog({ directory, onClose, saleContext }: {
       id: sale.id,
       customerId: sale.customerId,
       customerName: sale.buyerName,
-      label: `IGP · ${sale.seriesNumber} · ${formatDate(sale.date)}`,
+      label: `Property (IGP) · ${sale.seriesNumber} · ${formatDate(sale.date)}`,
       product: "IGP" as const,
       sellerMemberId: sale.sellerMemberId,
       referrerMemberId: sale.referrerMemberId,
     })),
-  ], [vip.data, igp.data]);
+  ], [vip.data, igp.data, tierName]);
   const customers = [...new Map(sales.map((sale) => [sale.customerId, sale.customerName]))]
     .map(([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label));
   const readingLink = Boolean(saleContext) && customerChoice === undefined;
@@ -177,9 +179,9 @@ function RateDialog({ directory, onClose, saleContext }: {
     standard: current?.standardRateBp != null ? String(current.standardRateBp / 100) : "",
   };
   return (
-    <FormDialog open title="Set approved commission rate"
+    <FormDialog open title="Set Approved Commission Rate"
       description="Saving updates this seller’s rate for future number issuances."
-      submitText="Save rate" error={error} pending={save.isPending || apply.isPending}
+      submitText="Save Rate" error={error} pending={save.isPending || apply.isPending}
       onClose={onClose} onSubmit={() => {
         if (fromSale && !selectedSale) {
           setError("Choose a sale for this customer, or set the rate directly for a seller.");
@@ -240,7 +242,7 @@ function RateDialog({ directory, onClose, saleContext }: {
       <SelectField label="Product" required value={product} disabled={fromSale} onChange={(value) => {
         setDirectProduct(value);
         resetRateFields();
-      }} options={[{ value: "VIP", label: "VIP" }, { value: "IGP", label: "IGP" }]} />
+      }} options={[{ value: "VIP", label: "VIP" }, { value: "IGP", label: "Property (IGP)" }]} />
       <SelectField label="Commission type" required value={role} onChange={(value) => {
         setRole(value);
         resetRateFields();
@@ -265,7 +267,7 @@ function RateDialog({ directory, onClose, saleContext }: {
       {positionRate ? <div><Button type="button" variant="outline" onClick={() => {
         resetRateFields();
         setManual(useStandard);
-      }}>{useStandard ? "Enter a seller-specific rate" : "Use the approved VIP standard"}</Button></div> : null}
+      }}>{useStandard ? "Enter a Seller-Specific Rate" : "Use the Approved VIP Standard"}</Button></div> : null}
     </FormDialog>
   );
 }

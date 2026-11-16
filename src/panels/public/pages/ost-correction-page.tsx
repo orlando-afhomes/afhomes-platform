@@ -44,16 +44,16 @@ function CorrectionForm({ token, initial, returnReason }: { token: string; initi
     }
   };
 
-  if (reference) return <SubmissionReceipt reference={reference} heading="Corrected application received" />;
+  if (reference) return <SubmissionReceipt reference={reference} heading="Corrected Application Received" />;
 
   return (
-    <CardSection title="Correct your application" className="tw:gap-4">
-      <InfoNote title="What the office asked you to fix">{returnReason}</InfoNote>
+    <CardSection title="Correct Your Application" className="tw:gap-4">
+      <InfoNote title="What the Office Asked You to Fix">{returnReason}</InfoNote>
       <form noValidate className="tw:flex tw:flex-col tw:gap-4" onSubmit={(event) => void submit(event)}>
-        <FormSection title="Applicant information">
+        <FormSection title="Applicant Information">
           <ApplicantPersonalFields value={applicant} onChange={patch} errors={errors} />
         </FormSection>
-        <FormSection title="Home address">
+        <FormSection title="Home Address">
           <ApplicantAddressFields value={applicant} onChange={patch} errors={errors} />
         </FormSection>
         {submitError ? (
@@ -63,7 +63,7 @@ function CorrectionForm({ token, initial, returnReason }: { token: string; initi
         ) : null}
         <div className="tw:flex tw:flex-wrap tw:gap-2">
           <Button type="submit" loading={resubmit.isPending} className="tw:min-h-11 tw:sm:min-h-8">
-            Send corrected application
+            Send Corrected Application
           </Button>
         </div>
       </form>
@@ -79,7 +79,7 @@ export function OstCorrectionPage() {
   return (
     <div className="tw:mx-auto tw:flex tw:w-full tw:max-w-3xl tw:flex-col tw:gap-6 tw:px-4 tw:py-8">
       <div>
-        <h1 className="tw:text-3xl tw:font-semibold">OST Registration</h1>
+        <h1 className="tw:text-3xl tw:font-semibold">Outsourced Seller (OST) Registration</h1>
         <p className="tw:mt-2 tw:text-muted-foreground">Update the application you sent to the office.</p>
       </div>
       {correction.isLoading ? (
@@ -92,7 +92,7 @@ export function OstCorrectionPage() {
           <CorrectionForm token={token} initial={correction.data.applicant} returnReason={correction.data.returnReason} />
         </>
       ) : (
-        <InfoNote title="Link not valid">{INVALID_LINK}</InfoNote>
+        <InfoNote title="Link Not Valid">{INVALID_LINK}</InfoNote>
       )}
     </div>
   );

@@ -18,7 +18,7 @@ export type CustomerFieldContext = { idType?: string | null; today?: string; are
 
 const EMAIL_MESSAGE = "Enter a valid email address.";
 const BIRTH_DATE_MESSAGE = "Enter a valid date of birth.";
-const SECONDARY_NAME_MESSAGE = "Enter the supplementary holder's first and last name.";
+const SECONDARY_NAME_MESSAGE = "Enter the extra cardholder's first and last name.";
 const MAX_AGE = 120;
 
 /**

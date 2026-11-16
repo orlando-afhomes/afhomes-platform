@@ -84,7 +84,7 @@ export function AdminHeader({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onClick={logout} className="tw:min-h-11 tw:sm:min-h-8">
-              <LogOut aria-hidden="true" /> Log out
+              <LogOut aria-hidden="true" /> Log Out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

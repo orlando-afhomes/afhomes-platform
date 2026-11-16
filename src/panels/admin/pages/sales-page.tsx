@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { BadgeCheck, CalendarCheck, Clock, Receipt } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useApproveDeal, useCorrectVipCommission, useMarkSaleDefaulted, useOperation, useSales } from "@/data/business-queries";
+import { useTierDisplayName } from "../components/use-tier-display-name";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { useMembers } from "@/data/queries";
 import { parsePesoToCentavos } from "@/shared/lib/money";
@@ -37,7 +38,7 @@ function VipCommissionCorrectionDialog({ sale, canApprove, onClose }: { sale: Sa
   const [error, setError] = useState<string>();
 
   return (
-    <FormDialog open title="Correct VIP commission" description={sale.customerName} submitText="Save correction" pending={save.isPending} error={error} onClose={onClose} onSubmit={() => {
+    <FormDialog open title="Correct VIP Commission" description={sale.customerName} submitText="Save Correction" pending={save.isPending} error={error} onClose={onClose} onSubmit={() => {
       const dscRateBp = dsc.trim() ? parsePesoToCentavos(dsc) : undefined;
       const driRateBp = referrer !== "none" && dri.trim() ? parsePesoToCentavos(dri) : undefined;
       if (dscRateBp === null || driRateBp === null) {
@@ -63,7 +64,7 @@ const STATUS_OPTIONS = [
   { value: "pending", label: "Pending" },
   { value: "cancelled", label: "Cancelled" },
   { value: "rejected", label: "Rejected" },
-  { value: "defaulted", label: "Defaulted" },
+  { value: "defaulted", label: "Stopped Paying" },
 ];
 
 /** Pending sales show "Awaiting approval" until an approver approves them. */
@@ -77,6 +78,7 @@ type SalesScope = "mine" | "team" | "referred" | "all";
 export function SalesTab() {
   const router = useRouter();
   const sales = useSales();
+  const tierName = useTierDisplayName();
   const approveDeal = useApproveDeal();
   const markDefaulted = useMarkSaleDefaulted();
   const [defaultSale, setDefaultSale] = useState<SaleView | null>(null);
@@ -118,11 +120,11 @@ export function SalesTab() {
     () => [
       { id: "customer", header: "Customer", cell: ({ row }) => <span className="tw:font-semibold">{row.original.customerName}</span> },
       { id: "value", header: "Sale", cell: ({ row }) => <Money value={row.original.valueCentavos} /> },
-      { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.productCode },
+      { id: "plan", header: "Plan", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => tierName(row.original.productCode) },
       { id: "seller", header: "Seller", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => row.original.sellerName ?? "Company" },
       { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={saleBadgeStatus(row.original)} /> },
     ],
-    [],
+    [tierName],
   );
 
   const detail = detailId ? rows.find((row) => row.id === detailId) ?? null : null;
@@ -132,12 +134,12 @@ export function SalesTab() {
     <>
       {dialog}
       {correction ? <VipCommissionCorrectionDialog sale={correction} canApprove={canApprove} onClose={() => setCorrection(null)} /> : null}
-      <ReasonDialog open={defaultSale !== null} title="Mark sale Defaulted" description={defaultSale?.customerName ?? ""} confirmText="Mark Defaulted" tone="warning" successText="Sale marked Defaulted." onClose={() => setDefaultSale(null)} onSubmit={(reason) => defaultSale ? markDefaulted.mutateAsync({ id: defaultSale.id, reason }) : Promise.resolve()} />
+      <ReasonDialog open={defaultSale !== null} title="Mark Sale as Stopped Paying" description={defaultSale?.customerName ?? ""} confirmText="Mark as Stopped Paying" tone="warning" successText="Sale marked as Stopped Paying." onClose={() => setDefaultSale(null)} onSubmit={(reason) => defaultSale ? markDefaulted.mutateAsync({ id: defaultSale.id, reason }) : Promise.resolve()} />
       {referredView ? null : <AdminStatGrid>
         <AdminStatCard label="Confirmed" value={<Money value={totals.confirmed} />} icon={BadgeCheck} tone="brand" description={`${totals.confirmedCount} sale(s)`} />
         <AdminStatCard label="Pending" value={<Money value={totals.pending} />} icon={Clock} tone="warning" description={`${totals.pendingCount} sale(s)`} />
-        <AdminStatCard label="Overall recorded" value={<Money value={totals.overall} />} icon={Receipt} tone="info" />
-        <AdminStatCard label="Period confirmed" value={<Money value={inPeriod} />} icon={CalendarCheck} tone="violet" description="After reversals" />
+        <AdminStatCard label="Overall Recorded" value={<Money value={totals.overall} />} icon={Receipt} tone="info" />
+        <AdminStatCard label="Period Confirmed" value={<Money value={inPeriod} />} icon={CalendarCheck} tone="violet" description="After undone payments" />
       </AdminStatGrid>}
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search sales" filters={[...(scopes.length > 1 ? [{ label: "Show", value: scope, onChange: (value: string) => setScope(value as SalesScope), options: scopes }] : []), { label: "Sale status filter", value: status, onChange: setStatus, options: canApprove ? [...STATUS_OPTIONS, { value: "no-payment", label: "No approved receipt for 90 days" }] : STATUS_OPTIONS }]}>
         <StandardDateField label="Period from" value={from} onChange={setFrom} className="tw:md:min-w-0 tw:md:flex-1" />
@@ -157,7 +159,7 @@ export function SalesTab() {
               onApproveDeal: () => confirmRun(approveDealConfirm(() => approveDeal.mutateAsync(row.contractId))),
               onMarkDefaulted: () => setDefaultSale(row),
             });
-            return <RowActionsMenu {...menu} extraItems={[...menu.extraItems, ...((canApprove || canPrepare) && (row.status === "pending" || row.status === "confirmed") ? [{ key: "correct-commission", label: "Correct commission", tone: "warning" as const, onClick: () => setCorrection(row) }] : [])]} />;
+            return <RowActionsMenu {...menu} extraItems={[...menu.extraItems, ...((canApprove || canPrepare) && (row.status === "pending" || row.status === "confirmed") ? [{ key: "correct-commission", label: "Correct Commission", tone: "warning" as const, onClick: () => setCorrection(row) }] : [])]} />;
           }}
         />
       </QueryState>
@@ -170,8 +172,8 @@ export function SalesTab() {
           {
             rows: [
               { label: "Customer", value: detail.customerName },
-              { label: "Plan", value: detail.productCode },
-              { label: "Payment scheme", value: detail.schemeLabel },
+              { label: "Plan", value: tierName(detail.productCode) },
+              { label: "Payment plan", value: detail.schemeLabel },
               { label: "Sale value", value: <Money value={detail.valueCentavos} /> },
               { label: "Seller", value: detail.sellerName ?? "Company" },
               { label: "Recorded", value: formatDate(detail.recordedDate) },
@@ -180,7 +182,7 @@ export function SalesTab() {
           },
           ...((detail.expiryReminders ?? []).length > 0 ? [{ title: "Reminders", rows: (detail.expiryReminders ?? []).map((reminder) => ({ label: reminder.role === "seller" ? "Seller" : "Referrer", value: saleExpiryReminderText(reminder) })) }] : []),
         ] : []}
-        footer={detail && !referredView ? <Button className="tw:min-h-11 tw:sm:min-h-8" variant="info" onClick={() => router.push(contractHref(detail.contractId))}>Open contract</Button> : undefined}
+        footer={detail && !referredView ? <Button className="tw:min-h-11 tw:sm:min-h-8" variant="info" onClick={() => router.push(contractHref(detail.contractId))}>Open Contract</Button> : undefined}
       />
     </>
   );

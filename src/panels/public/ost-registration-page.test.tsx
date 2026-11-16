@@ -49,10 +49,10 @@ type User = ReturnType<typeof userEvent.setup>;
 
 async function verifyAndConfirm(user: User) {
   fireEvent.change(screen.getByLabelText(/Referral code/), { target: { value: SPONSOR_CODE } });
-  await user.click(screen.getByRole("button", { name: "Verify referral code" }));
+  await user.click(screen.getByRole("button", { name: "Verify Referral Code" }));
   const summary = await screen.findByRole("status");
   expect(within(summary).getByText("Verified eligible sponsor")).toBeInTheDocument();
-  await user.click(screen.getByRole("button", { name: "Confirm sponsor" }));
+  await user.click(screen.getByRole("button", { name: "Confirm Sponsor" }));
 }
 
 function field(id: string): HTMLElement {
@@ -83,7 +83,7 @@ describe("OST registration", () => {
     const user = userEvent.setup();
     render(<Wrapper />);
     expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Referral");
-    await user.click(screen.getByRole("button", { name: "Verify referral code" }));
+    await user.click(screen.getByRole("button", { name: "Verify Referral Code" }));
     expect(await screen.findByText("Enter a referral code.")).toBeInTheDocument();
     expect(screen.getByLabelText(/Referral code/)).toHaveAttribute("aria-invalid", "true");
   });
@@ -92,7 +92,7 @@ describe("OST registration", () => {
     const user = userEvent.setup();
     render(<Wrapper />);
     fireEvent.change(screen.getByLabelText(/Referral code/), { target: { value: "NOPE" } });
-    await user.click(screen.getByRole("button", { name: "Verify referral code" }));
+    await user.click(screen.getByRole("button", { name: "Verify Referral Code" }));
     expect(await screen.findByText("Referral code is invalid or currently unavailable.")).toBeInTheDocument();
   });
 
@@ -124,7 +124,7 @@ describe("OST registration", () => {
     await user.click(screen.getByRole("button", { name: "Review" }));
 
     expect(await screen.findByText("Ana Cruz")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Submit application" }));
+    await user.click(screen.getByRole("button", { name: "Submit Application" }));
 
     expect(await screen.findByText("Application received")).toBeInTheDocument();
     expect(screen.getByText(/office will review your application and contact you/i)).toBeInTheDocument();

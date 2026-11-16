@@ -10,6 +10,7 @@ import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { formatDate } from "@/shared/lib/format-date";
 import { humanize } from "@/shared/lib/humanize";
 import { matchesSearch, optionsFrom } from "@/shared/lib/search";
+import { GIFT_ACTIONS } from "./stay-points-page";
 import { ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
 
 type PointsRow = GiftLedgerEntry & { customerName: string };
@@ -18,7 +19,7 @@ const COLUMNS: ReportColumn<PointsRow>[] = [
   { header: "Date", value: (row) => formatDate(row.date) },
   { header: "Customer", value: (row) => row.customerName },
   { header: "VIP Number", value: (row) => row.vipNumber },
-  { header: "Type", value: (row) => humanize(row.type) },
+  { header: "Type", value: (row) => GIFT_ACTIONS[row.type] },
   { header: "Year", value: (row) => String(row.tranche), screen: false },
   { header: "Bucket", value: (row) => humanize(row.bucket), screen: false },
   { header: "Points", value: (row) => row.points.toLocaleString("en-PH") },
@@ -52,13 +53,13 @@ export function StayPointsReportPanel() {
   return (
     <ReportFrame range={range}>
       <AdminStatGrid columns={3}>
-        <AdminStatCard loading={points.isLoading} error={points.error} label="Points released" value={fmt(released)} icon={TrendingUp} tone="success" />
+        <AdminStatCard loading={points.isLoading} error={points.error} label="Points Given" value={fmt(released)} icon={TrendingUp} tone="success" />
         <AdminStatCard loading={points.isLoading} error={points.error} label="Available" value={fmt(available)} icon={Wallet} tone="success" />
         <AdminStatCard loading={points.isLoading} error={points.error} label="Redeemed" value={fmt(redeemed)} icon={Gift} />
       </AdminStatGrid>
       <ReportTable report="Stay Points Report" fileName="stay-points" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => `${row.membershipId}-${row.tranche}-${row.bucket}-${row.type}-${row.date}-${row.reference ?? ""}`} getRowTitle={(row) => row.customerName} loading={points.isLoading} error={points.error} emptyText="No point entries match."
         filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search stay points" filters={[
-          { label: "Entry type filter", value: type, onChange: setType, options: optionsFrom("All entry types", inPeriod.map((row) => row.type), humanize) },
+          { label: "Entry type filter", value: type, onChange: setType, options: optionsFrom("All entry types", inPeriod.map((row) => row.type), (type) => GIFT_ACTIONS[type as GiftLedgerEntry["type"]] ?? humanize(type)) },
           { label: "Points bucket filter", value: bucket, onChange: setBucket, options: optionsFrom("All buckets", inPeriod.map((row) => row.bucket), humanize) },
         ]}>{range.dateFields}{exportButton}</FilterBar>} />
     </ReportFrame>

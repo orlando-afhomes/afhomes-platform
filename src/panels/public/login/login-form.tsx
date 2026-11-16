@@ -188,7 +188,7 @@ export function LoginForm({ portals, defaultPortal, description, extraLinks }: P
           </p>
         ) : null}
         <button type="button" className="login-form__link tw:self-end" onClick={() => setView("forgot")}>
-          Forgot password?
+          Forgot Password?
         </button>
       </div>
 
@@ -205,7 +205,7 @@ export function LoginForm({ portals, defaultPortal, description, extraLinks }: P
 
       <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-center tw:gap-x-5 tw:gap-y-2">
         <Link href="/" className="login-form__link">
-          Back to website
+          Back to Website
         </Link>
         {extraLinks}
       </div>

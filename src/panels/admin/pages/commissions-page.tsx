@@ -54,15 +54,15 @@ export function CommissionsPanel() {
   /** Workflow actions for a commission, in the row menu and the details sheet footer. */
   const itemsFor = (item: CommissionView): CommissionMenuItem[] => {
     const items: CommissionMenuItem[] = [];
-    if (canPayout && readyToPay(item)) items.push({ key: "payout", label: "Record payout", onClick: () => setState({ kind: "payout", commission: item }) });
+    if (canPayout && readyToPay(item)) items.push({ key: "payout", label: "Record Payout", onClick: () => setState({ kind: "payout", commission: item }) });
     if (canPayout && awaitingConfirmation(item)) {
-      items.push({ key: "confirm", label: "Confirm disbursement", tone: "success", onClick: () => confirmRun({ title: "Confirm disbursement?", description: `Mark ${item.recipientName}'s commission as paid.`, confirmText: "Confirm", tone: "success", action: () => action.mutateAsync({ id: item.id, action: "confirm" }), successTitle: "Commission marked as Paid.", errorTitle: "Could not confirm" }) });
-      if (item.status === "on_hold") items.push({ key: "void", label: "Void payout", tone: "danger", onClick: () => setState({ kind: "void", commission: item }) });
+      items.push({ key: "confirm", label: "Confirm Paid Out", tone: "success", onClick: () => confirmRun({ title: "Confirm Paid Out?", description: `Mark ${item.recipientName}'s commission as paid.`, confirmText: "Confirm", tone: "success", action: () => action.mutateAsync({ id: item.id, action: "confirm" }), successTitle: "Commission marked as Paid.", errorTitle: "Could not confirm" }) });
+      if (item.status === "on_hold") items.push({ key: "void", label: "Void Payout", tone: "danger", onClick: () => setState({ kind: "void", commission: item }) });
     }
     if (!canApprove) return items;
     if (item.status === "approved" && !item.payout && !item.releaseDate) items.push({ key: "adjust", label: "Adjust", tone: "warning", onClick: () => setState({ kind: "adjust", commission: item }) });
-    if (item.status === "on_hold") items.push({ key: "hold", label: "Resolve hold", tone: "warning", onClick: () => setState({ kind: "hold", commission: item }) });
-    if ((item.status === "approved" || item.status === "on_hold") && !(item.payout && !item.payout.confirmedAt)) items.push({ key: "cancel", label: "Cancel commission", tone: "danger", onClick: () => setState({ kind: "cancel", commission: item }) });
+    if (item.status === "on_hold") items.push({ key: "hold", label: "Resolve Hold", tone: "warning", onClick: () => setState({ kind: "hold", commission: item }) });
+    if ((item.status === "approved" || item.status === "on_hold") && !(item.payout && !item.payout.confirmedAt)) items.push({ key: "cancel", label: "Cancel Commission", tone: "danger", onClick: () => setState({ kind: "cancel", commission: item }) });
     return items;
   };
   const detail = detailId ? all.find((item) => item.id === detailId) ?? null : null;
@@ -89,8 +89,8 @@ export function CommissionsPanel() {
       {dialog}
       <CommissionPayoutBar commissions={all} />
       <AdminStatGrid>
-        <AdminStatCard label="Approved, unpaid" value={<Money value={totals.approved} />} icon={BadgeCheck} tone="brand" />
-        <AdminStatCard label="On hold" value={<Money value={totals.held} />} icon={Clock} tone="warning" />
+        <AdminStatCard label="Approved, Unpaid" value={<Money value={totals.approved} />} icon={BadgeCheck} tone="brand" />
+        <AdminStatCard label="On Hold" value={<Money value={totals.held} />} icon={Clock} tone="warning" />
         <AdminStatCard label="Paid" value={<Money value={totals.paid} />} icon={CircleCheck} tone="success" />
         <AdminStatCard label="Records" value={all.length} icon={ReceiptText} tone="neutral" />
       </AdminStatGrid>
@@ -117,10 +117,10 @@ export function CommissionsPanel() {
       </QueryState>
       <CommissionDetailsSheet detail={detail} onClose={() => setDetailId(null)} items={detail ? itemsFor(detail) : []} />
       {state?.kind === "adjust" ? <AdjustDialog commission={state.commission} onClose={() => setState(null)} /> : null}
-      <ReasonDialog open={state?.kind === "cancel"} title="Cancel commission" description="A cancelled commission can no longer be paid. This is recorded in the audit history." confirmText="Cancel commission" danger successText="Commission cancelled." onClose={() => setState(null)} onSubmit={(reason) => (state?.kind === "cancel" ? action.mutateAsync({ id: state.commission.id, action: "cancel", reason }) : Promise.resolve())} />
+      <ReasonDialog open={state?.kind === "cancel"} title="Cancel Commission" description="A cancelled commission can no longer be paid. This is recorded in the audit history." confirmText="Cancel Commission" danger successText="Commission cancelled." onClose={() => setState(null)} onSubmit={(reason) => (state?.kind === "cancel" ? action.mutateAsync({ id: state.commission.id, action: "cancel", reason }) : Promise.resolve())} />
       {state?.kind === "hold" ? <HoldDialog commission={state.commission} onClose={() => setState(null)} /> : null}
       {state?.kind === "payout" ? <PayoutDialog commissions={[state.commission]} onClose={() => setState(null)} /> : null}
-      <ReasonDialog open={state?.kind === "void"} title="Void initiated payout" description="The voided payout stays in the record." confirmText="Void payout" danger successText="Payout voided."
+      <ReasonDialog open={state?.kind === "void"} title="Void Initiated Payout" description="The voided payout stays in the record." confirmText="Void Payout" danger successText="Payout voided."
         onClose={() => setState(null)} onSubmit={(reason) => (state?.kind === "void" ? action.mutateAsync({ id: state.commission.id, action: "void", reason }) : Promise.resolve())} />
     </>
   );
@@ -131,7 +131,7 @@ function recoveredOf(row: CommissionClawback): number {
 }
 
 function recoveryStatus(row: CommissionClawback): string {
-  return row.refundDueCentavos ? "Refund due" : row.writeOff ? "Written off" : clawbackBalance(row) === 0 ? "Recovered" : "Owed";
+  return row.refundDueCentavos ? "Refund due" : row.writeOff ? "Not collected" : clawbackBalance(row) === 0 ? "Paid back" : "Owed";
 }
 
 /** Recovery is shown to people who approve commissions or who have commission records of their own. */
@@ -164,7 +164,7 @@ export function CommissionRecoveryPanel() {
   const recoveryColumns = useMemo<ColumnDef<CommissionClawback, unknown>[]>(() => [
     { header: "Seller", cell: ({ row }) => <span className="tw:font-semibold">{commissions.find((item) => item.id === row.original.commissionId)?.recipientName ?? EMPTY}</span> },
     { header: "Reason", cell: ({ row }) => humanize(row.original.trigger) },
-    { header: "Original amount", cell: ({ row }) => <Money value={row.original.amountCentavos} /> },
+    { header: "Original Amount", cell: ({ row }) => <Money value={row.original.amountCentavos} /> },
     { header: "Balance", cell: ({ row }) => <Money value={clawbackBalance(row.original)} /> },
     { header: "Status", cell: ({ row }) => recoveryStatus(row.original) },
   ], [commissions]);
@@ -173,28 +173,28 @@ export function CommissionRecoveryPanel() {
   const itemsFor = (row: CommissionClawback): CommissionMenuItem[] => {
     if (clawbackBalance(row) <= 0) return [];
     const items: CommissionMenuItem[] = [];
-    if (canCollect) items.push({ key: "collect", label: "Record collection", tone: "success", onClick: () => { setDetailId(null); setError(undefined); setAmount(""); setReference(""); setCollecting(row); } });
-    if (canWriteOff) items.push({ key: "writeOff", label: "Write off", tone: "danger", onClick: () => { setDetailId(null); setWriteOff(row); } });
+    if (canCollect) items.push({ key: "collect", label: "Record Payback Received", tone: "success", onClick: () => { setDetailId(null); setError(undefined); setAmount(""); setReference(""); setCollecting(row); } });
+    if (canWriteOff) items.push({ key: "writeOff", label: "Mark Not Collected", tone: "danger", onClick: () => { setDetailId(null); setWriteOff(row); } });
     return items;
   };
   const detail = detailId ? (query.data ?? []).find((row) => row.id === detailId) ?? null : null;
   return (
-    <section className="tw:grid tw:gap-3" aria-label="Commission recovery">
+    <section className="tw:grid tw:gap-3" aria-label="Commission paybacks">
       <QueryState isLoading={query.isLoading} error={query.error}>
-        <DataTable data={query.data ?? []} caption="Commission recovery" emptyText="No recovery records." getRowId={(row) => row.id}
-          onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open recovery for ${sellerOf(row)}`}
-          rowActions={(row) => <RowActionsMenu itemName={`recovery for ${sellerOf(row)}`} extraItems={itemsFor(row)} />}
+        <DataTable data={query.data ?? []} caption="Commission Paybacks" emptyText="No payback records." getRowId={(row) => row.id}
+          onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open payback for ${sellerOf(row)}`}
+          rowActions={(row) => <RowActionsMenu itemName={`payback for ${sellerOf(row)}`} extraItems={itemsFor(row)} />}
           columns={recoveryColumns} />
       </QueryState>
       <RecordDetailsSheet
         open={detail !== null}
         onClose={() => setDetailId(null)}
-        title={detail ? sellerOf(detail) : "Commission recovery"}
+        title={detail ? sellerOf(detail) : "Commission Paybacks"}
         subtitle={detail ? humanize(detail.trigger) : undefined}
         icon={<RotateCcw />}
         sections={detail ? [
           {
-            title: "Recovery",
+            title: "Payback",
             rows: [
               { label: "Reason", value: humanize(detail.trigger) },
               { label: "Status", value: recoveryStatus(detail) },
@@ -206,27 +206,27 @@ export function CommissionRecoveryPanel() {
             title: "Amounts",
             rows: [
               { label: "Original amount", value: <Money value={detail.amountCentavos} /> },
-              { label: "Recovered", value: <Money value={recoveredOf(detail)} /> },
+              { label: "Paid back", value: <Money value={recoveredOf(detail)} /> },
               { label: "Balance", value: <Money value={clawbackBalance(detail)} /> },
-              { label: "Write-off reason", value: detail.writeOff?.reason, wide: true },
+              { label: "Reason for not collecting", value: detail.writeOff?.reason, wide: true },
             ],
           },
         ] : []}
-        history={detail?.recoveries.map((item, index) => ({ key: `${item.date}-${index}`, when: formatDate(item.date), text: `Collected ${formatPeso(item.amountCentavos)}, reference ${item.reference}` }))}
+        history={detail?.recoveries.map((item, index) => ({ key: `${item.date}-${index}`, when: formatDate(item.date), text: `Received ${formatPeso(item.amountCentavos)}, reference ${item.reference}` }))}
         footer={detail && itemsFor(detail).length > 0 ? menuItemButtons(itemsFor(detail)) : undefined}
       />
-      {collecting ? <FormDialog open title="Record direct collection" submitText="Record collection" pending={action.isPending} error={error}
+      {collecting ? <FormDialog open title="Record Payback Received" submitText="Record Payback" pending={action.isPending} error={error}
         onClose={() => setCollecting(null)} onSubmit={() => {
           const amountCentavos = parsePesoToCentavos(amount);
-          if (!amountCentavos) { setError("Enter the amount collected."); return; }
+          if (!amountCentavos) { setError("Enter the amount received."); return; }
           void action.mutateAsync({ kind: "collect", id: collecting.id, amountCentavos, reference })
             .then(() => setCollecting(null)).catch((failure: Error) => setError(failure.message));
         }}>
-        <MoneyField label="Amount collected" required value={amount} onChange={setAmount} />
-        <TextField label="Collection reference" required value={reference} onChange={setReference} />
+        <MoneyField label="Amount received" required value={amount} onChange={setAmount} />
+        <TextField label="Payback reference" required value={reference} onChange={setReference} />
       </FormDialog> : null}
-      <ReasonDialog open={writeOff !== null} title="Write off this balance" description="The original amount and collections stay in history." confirmText="Write off" danger
-        successText="Balance written off." onClose={() => setWriteOff(null)}
+      <ReasonDialog open={writeOff !== null} title="Mark Balance as Not Collected" description="The original amount and collections stay in history." confirmText="Mark Not Collected" danger
+        successText="Marked as not collected." onClose={() => setWriteOff(null)}
         onSubmit={(reason) => writeOff ? action.mutateAsync({ kind: "writeOff", id: writeOff.id, reason }) : Promise.resolve()} />
     </section>
   );

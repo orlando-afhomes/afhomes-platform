@@ -295,6 +295,11 @@ Sales Network team transfers must not rewrite customer identity.
 
 There is no public VIP lookup (owner ruling R11, 2026-11-12): only authorized staff check customers and cards. Internal search may show complete records only to appropriately authorized users within permitted scope. Internal customer search does not extend to the public website. The public website exposes no customer or card information. Do not expose customer contact information, government ID images, sensitive personal information, or complete customer profiles anywhere on the public website.
 
+**Staff Customer Look Up (owner decision UI21, 2026-11-16).** Inside the staff application only, the Super Administrator, Administrator, Clerk and Finance can look up an active VIP card. Sellers cannot.
+- **Search:** at least 2 characters. It is a partial match on the name, Customer ID, VIP Number or email. Only active, unexpired memberships are returned, up to 50.
+- **Card shown:** the tier card, the full name, the VIP Number, Valid Until, and the total, weekday and weekend points.
+- This does not change the rule above: there is still no public customer or card lookup.
+
 ---
 
 ## 14. Duplicate Customer Prevention

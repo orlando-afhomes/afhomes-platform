@@ -1,5 +1,6 @@
 import type { AaNumberResolution, AccreditationRepository, AccreditationStatusRequest, PublicAccreditationResult, RenewAccreditationInput } from "@/data/contracts/accreditation-repository";
 import { validateExistingAaIdentifier } from "@/modules/accreditation/identifiers";
+import { maskPublicName } from "@/modules/accreditation/public-name";
 import type { AccreditationAdminStatus } from "@/modules/accreditation/types";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { DevIdentity } from "@/modules/identity/types";
@@ -105,12 +106,16 @@ export class MockAccreditationRepository implements AccreditationRepository {
     const standing = getSellerStanding(record, manilaToday());
     if (standing.state === "blocked") return null;
     // Both IST and OST accreditation expire (doc 03); IST only hides its "Valid Until" date, OST shows it (project 22).
+    // Only the masked name leaves the repository, never the full name (UI21).
+    const member = this.store.members.find((item) => item.id === record.memberId);
     return {
       aaNumber: record.aaNumber,
       status: standing.state === "expired" ? "expired" : "valid",
       classification: record.classification,
       validUntil: record.classification === "OST" ? record.expiryDate : null,
       quotedNumberSuperseded: !resolved.quotedNumberIsCurrent,
+      maskedName: maskPublicName(member?.displayName),
+      photoUrl: member?.sellerProfile?.profilePhotoUrl ?? null,
     };
   }
 

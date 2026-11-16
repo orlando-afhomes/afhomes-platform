@@ -16,14 +16,16 @@ import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { recordLabel } from "@/shared/lib/record-label";
-import { approveDealConfirm, buildContractMenuProps } from "../actions/sales-contract-actions";
-import { ApproveArrangementDialog, CancelContractDialog, RequestCancellationDialog, ResolvePaymentCodeDialog, ReturnContractDialog } from "./contract-dialogs";
+import { approveDealConfirm, buildContractMenuProps, needsNonStandardApproval } from "../actions/sales-contract-actions";
+import { nonStandardStage } from "@/modules/contracts/rules";
+import { ApproveArrangementDialog, ApproveNonStandardDealDialog, CancelContractDialog, RequestCancellationDialog, ResolvePaymentCodeDialog, ReturnContractDialog } from "./contract-dialogs";
 import { useContractHref } from "./use-contract-href";
 import { useTierDisplayName } from "./use-tier-display-name";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
   { value: "needs-review", label: "Needs review" },
+  { value: "waiting-finance", label: "Non-Standard, waiting for Finance" },
   { value: "draft", label: "Draft" },
   { value: "submitted", label: "Submitted" },
   { value: "under_review", label: "Under Review" },
@@ -47,7 +49,7 @@ export function ContractsTable({ initialStatus = "all" }: { initialStatus?: stri
   const { identity } = useDevIdentity();
   // Owner decision 2026-11-09: only Super Admin approves a Move arrangement (the repository enforces it too).
   const isSuperAdmin = identity.status === "active" && identity.roles.includes("super_admin");
-  const [target, setTarget] = useState<{ contract: ContractView; kind: "return" | "cancel" | "requestCancel" | "approveArrangement" | "resolvePaymentCode" } | null>(null);
+  const [target, setTarget] = useState<{ contract: ContractView; kind: "return" | "cancel" | "requestCancel" | "approveArrangement" | "resolvePaymentCode" | "approveNonStandard" } | null>(null);
   const closeTarget = () => setTarget(null);
   const contractHref = useContractHref();
   const [search, setSearch] = useState("");
@@ -58,7 +60,8 @@ export function ContractsTable({ initialStatus = "all" }: { initialStatus?: stri
     return (contracts.data ?? [])
       .filter((item) => {
         const matchesStatus = status === "all" || item.status === status ||
-          (status === "needs-review" && (item.status === "submitted" || item.status === "under_review"));
+          (status === "needs-review" && (item.status === "submitted" || item.status === "under_review")) ||
+          (status === "waiting-finance" && (item.status === "submitted" || item.status === "under_review") && nonStandardStage(item) === "finance");
         return matchesStatus && (term === "" || item.customerName.toLowerCase().includes(term));
       })
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -101,7 +104,7 @@ export function ContractsTable({ initialStatus = "all" }: { initialStatus?: stri
               hasCard: membership?.cardId != null,
             }, {
               onEdit: canPrepare && ["draft", "returned"].includes(row.status) ? () => router.push(contractHref(row.id)) : undefined,
-              onApproveDeal: () => confirmRun(approveDealConfirm(() => approveDeal.mutateAsync(row.id))),
+              onApproveDeal: () => needsNonStandardApproval(row) ? setTarget({ contract: row, kind: "approveNonStandard" }) : confirmRun(approveDealConfirm(() => approveDeal.mutateAsync({ contractId: row.id }))),
               onReturn: () => setTarget({ contract: row, kind: "return" }),
               onRecordPaymentCode: () => setTarget({ contract: row, kind: "resolvePaymentCode" }),
               onApproveArrangement: () => setTarget({ contract: row, kind: "approveArrangement" }),
@@ -114,6 +117,7 @@ export function ContractsTable({ initialStatus = "all" }: { initialStatus?: stri
       </QueryState>
       {confirmDialog}
       {target?.kind === "requestCancel" ? <RequestCancellationDialog contract={target.contract} onClose={closeTarget} /> : null}
+      {target?.kind === "approveNonStandard" ? <ApproveNonStandardDealDialog contract={target.contract} onClose={closeTarget} /> : null}
       {target ? (
         <>
           <ReturnContractDialog contract={target.contract} open={target.kind === "return"} onClose={closeTarget} />

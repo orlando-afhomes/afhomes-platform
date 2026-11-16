@@ -228,7 +228,31 @@ The public OST application form is kept. A person who wants to become an OST sel
 
 ### 9.3 Public Website Links (owner ruling R5, 2026-11-12)
 
-The public homepage links to **Seller login** and **Check a seller** (the public seller check in section 9).
+The public homepage links to **Seller login** and **Check a seller** (the public seller check in section 9). Since UI22 the homepage is part of the full public website (decisions-and-gaps.md), and both links stay in the header and on the home page.
+
+### 9.4 Public Seller Check: Steps and Result (owner decision UI21, 2026-11-16)
+
+The check copies the process and the result of the earlier public sales-team search, while keeping the status rules in section 9.
+
+1. **Search.** The visitor enters one full AA number. Matching is exact; there is no name search.
+2. **Privacy notice.** The visitor must tick the acknowledgement under the Data Privacy Act of 2012 notice before going on.
+3. **Visitor contact details.** The visitor enters their own name, email and mobile number. They are accepted for 24 hours, so later checks in the same session skip this step. They are never shown to the seller.
+4. **Daily limit.** Up to 3 successful checks per visitor in 24 hours.
+5. **Result.** The result shows:
+   - the seller's **masked name**: every word except the last is shown in full; the last keeps its first letter and the rest become `*`, for example "Juan D*****"
+   - the profile photo, if there is one
+   - the AA number, with a Copy ID button
+   - the status, Accredited or Expired
+   - the type, IST or OST
+   - Valid Until, for OST only
+   - the company support and official bank account details.
+
+   The full name, contact details and internal ids are never shown.
+6. **Not found.** A number that is unknown, pending, suspended, departed or cancelled gets one general message.
+
+Open for go-live:
+- The privacy notice wording and the privacy contact need legal review.
+- The daily limit and a robot check must move to the server.
 
 ---
 

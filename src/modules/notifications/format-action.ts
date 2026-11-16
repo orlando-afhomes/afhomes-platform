@@ -29,6 +29,7 @@ const PLAIN_WORDS: [RegExp, string][] = [
   [/\bpb\b/g, "performance bonus"],
   [/\bpad\b/g, "points start date"],
   [/\bvip number\b/g, "VIP Number"],
+  [/\bnonstandard\b/g, "Non-Standard terms"],
 ];
 
 /**

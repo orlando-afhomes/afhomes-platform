@@ -5,7 +5,7 @@ import type { SaleRepository } from "@/data/contracts/sale-repository";
 type DealRepositories = {
   customers: Pick<CustomerRepository, "getById" | "approve">;
   sales: Pick<SaleRepository, "list" | "approve">;
-  contracts: Pick<ContractRepository, "getById" | "recordSignedAgreement" | "finalize">;
+  contracts: Pick<ContractRepository, "getById" | "recordSignedAgreement" | "finalize" | "approveNonStandard">;
 };
 
 export type ApproveDealOutcome = {
@@ -13,6 +13,8 @@ export type ApproveDealOutcome = {
   customerApproved: boolean;
   saleApproved: boolean;
   vipNumberIssued: boolean;
+  /** Step 1 of the Non-Standard approval was recorded in this run (doc 05 §10.2). */
+  nonStandardApproved: boolean;
   finalized: boolean;
   /** Reasons finalization is still held; the VIP Number is issued but the contract stays in review. */
   finalizeHeld: string[];
@@ -27,8 +29,10 @@ const ALREADY_APPROVED_CUSTOMER = new Set(["approved", "active_member"]);
  * the sale, record the signed agreement which issues the VIP Number (doc 06), and
  * finalize the contract when nothing holds it (doc 05). Every step is skipped when
  * already done, so after a failure partway, running it again resumes where it stopped.
+ * For a Non-Standard contract not yet approved, it first records step 1 of doc 05 §10.2
+ * with the signed approval reference, which is then required.
  */
-export async function approveDeal(repositories: DealRepositories, contractId: string): Promise<ApproveDealOutcome> {
+export async function approveDeal(repositories: DealRepositories, contractId: string, approvalReference?: string): Promise<ApproveDealOutcome> {
   const contract = await repositories.contracts.getById(contractId);
   if (!contract) throw new Error("Contract not found.");
 
@@ -45,6 +49,11 @@ export async function approveDeal(repositories: DealRepositories, contractId: st
   const sale = (await repositories.sales.list()).find((item) => item.contractId === contract.id);
   if (!sale) throw new Error("This contract has no recorded sale.");
   if (sale.status === "cancelled" || sale.status === "rejected") throw new Error("This sale cannot be approved.");
+  const needsNonStandardApproval = contract.classification === "N" && !contract.nonStandard?.approvedBy && contract.status !== "finalized";
+  if (needsNonStandardApproval && !approvalReference?.trim()) throw new Error("Enter the signed approval reference for the Non-Standard terms on the contract page.");
+
+  let current = contract;
+  if (needsNonStandardApproval) current = await repositories.contracts.approveNonStandard(contract.id, approvalReference ?? "");
 
   const customerApproved = customer.status === "submitted";
   if (customerApproved) await repositories.customers.approve(customer.id);
@@ -52,7 +61,6 @@ export async function approveDeal(repositories: DealRepositories, contractId: st
   const saleApproved = !sale.approval;
   if (saleApproved) await repositories.sales.approve(sale.id);
 
-  let current = contract;
   const vipNumberIssued = !current.vipNumber;
   if (vipNumberIssued) current = await repositories.contracts.recordSignedAgreement(current.id);
 
@@ -67,5 +75,5 @@ export async function approveDeal(repositories: DealRepositories, contractId: st
     }
   }
 
-  return { contract: current, customerApproved, saleApproved, vipNumberIssued, finalized, finalizeHeld };
+  return { contract: current, customerApproved, saleApproved, vipNumberIssued, nonStandardApproved: needsNonStandardApproval, finalized, finalizeHeld };
 }

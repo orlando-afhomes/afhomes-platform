@@ -319,3 +319,7 @@ These rulings take precedence over earlier text in this document where they diff
 3. **Contracts.** Sellers do not prepare contracts. The office (Clerk) prepares the contract and the Administrator approves it (section 3.8; doc 05).
 24. **HR.** HR can create, activate and reactivate office staff accounts (reactivation confirmed by owner answer A4, 2026-11-12), but cannot give the Administrator or Super Administrator role and cannot manage seller accounts (sections 3.8 and 6.2).
 25. **Finance reports.** Finance can view all reports (sales, collections, pay), view only (section 3.8).
+
+## Owner decision amendment (2026-11-16, UI21)
+
+1. **Customer Look Up (staff only).** The Super Administrator, Administrator, Clerk and Finance may look up an active VIP card in the staff application (operation `customers.lookup`). Sellers do not hold it. There is still no public customer or card lookup (doc 04 section 13).

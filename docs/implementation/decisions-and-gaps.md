@@ -233,6 +233,11 @@ The owner asked for fewer steps and clicks (keep it simple). Every business even
 
 Kept as official names: VIP Number, Reservation Agreement, Grant, Series Number, OR number, Accreditation, JA&D, Standard / Non-Standard, Welcome Gift, Resort Bills, Promo Points, Payout List, Collections, Cardholder, Special Arrangement.
 
+### Non-Standard approval (2026-11-16)
+
+- **UI20, Non-Standard terms and approval.** Staff choosing Contract type Non-Standard enter the total price, the number of monthly payments (1 to 36) and a reason, next to the normal terms. The schedule is the plan's reservation fee and then equal monthly payments (the last takes the leftover centavos); the payment code is `T` plus the months. The Administrator approves inside "Approve deal" with the signed-approval reference; Finance then confirms or sends back from the contract page ("Confirm Non-Standard Terms", "Send Back"). The Finance dashboard lists "Non-Standard Terms to Confirm", linking to Collections filtered to them. A send-back clears both approvals (doc 05 item 32).
+- **Known limit:** commission amounts must be exact centavos (no approved rounding, D14), so a Non-Standard price whose commission does not divide exactly is refused when the VIP Number is issued. A rounding rule from the owner would remove this limit.
+
 ### Still open
 
 - **AFHomes and JA&D:** Supply the signed Goodwill and Formal VIP Grant terms, a band code above ₱9M, and a written definition of `SUPERSEDED`. Until then, track grant paperwork only, block sales above ₱9M, and refer that status for review.
@@ -298,3 +303,36 @@ U01 to U13 descriptions are in the atlas `COVERAGE.md` section "Incomplete and u
 - ~~Doc 07 amendment item 7 (per-contract Move approval wording) is stale against doc 05 item 12.~~ Fixed in R1 (2026-11-12): item 7 is marked superseded, and the Move effective date is 2026-11-09.
 - ~~The atlas baseline `a0bdcef` predates `fc060bb`.~~ Refreshed on 2026-11-12 (atlas `2026-11-12.3`, baseline `b784e30`).
 - ~~Code and rule disagree on the commission release wait: R8 removes the 7-day wait, but `src/modules/commissions/rules.ts` still defines `PAYOUT_RELEASE_WAIT_DAYS` and the payout milestone shows "Payout opens <date>". The atlas records this under G08 (Conflicting). It is for the owner to authorize a code change.~~ Fixed 2026-11-12: the wait was removed; payout opens on the first day of the month after 40% (owner decision D-A).
+
+### Public seller check and staff Customer Look Up (2026-11-16)
+
+- **UI21, pages copied from the earlier project.** The process and the shown data are copied from the earlier project; the screens are new.
+  - **Customer Look Up is a staff tab under Customers.**
+    - It is open to the Super Administrator, Administrator, Clerk and Finance, through the new `customers.lookup` operation. Sellers do not get it.
+    - The search needs at least 2 characters and is a partial match on the name, Customer ID, VIP Number or email. Only active, unexpired memberships are returned, up to 50.
+    - Up to 6 suggestions are shown. The card shows the tier card, the name, the VIP Number, Valid Until, and total, weekday and weekend points.
+  - **The public seller check (`/verify`)** adds the v2 output and steps. The output is the masked name, the photo, Copy ID, and the support and bank block. The steps are the privacy tick, the visitor's contact details (kept for 24 hours) and 3 successful checks per 24 hours. It keeps the doc 03 rules: Expired is shown, and Valid Until is shown for OST only (doc 03 §9.4).
+  - **The public header, footer and home have a new look**, with the same links.
+  - **The support and bank values are copied from the v2 settings.**
+- **Known limits:**
+  - The daily limit and the visitor receipt live in browser memory and reset on reload. The v2 robot check is not built; both need the server.
+  - The privacy notice is a draft and needs legal review. Its privacy contact is the company email; the earlier personal address was not reused.
+  - The v2 government-ID side of the card is not built, because v3 stores no ID images.
+  - Valid Until uses the provisional membership end date (D12).
+
+### New public website (2026-11-16)
+
+- **UI22, public website rebuilt from the old WordPress site.** The content of afhomes.com.ph is carried over; the design and layout are new.
+  - **Pages:** Home, About, three Experiences (Hotspring & Ecofarm Resort, Smart Wellness Hotel, ALM Japanese Restaurant), VIP Privilege, Compliance, FAQ, Blog (9 posts with a category filter) and Contact. The seller check (`/verify`), Sales Sign-In and the OST application stay where they were. Content lives as typed data in `src/modules/public-site/content/`.
+  - **Pictures:** 64 pictures were downloaded from the old site and shrunk (max 1600 px, WebP) into `public/images/site/`. The three VIP card pictures already in `public/images/cards` are reused.
+  - **Contact form:** it checks the fields and opens the visitor's email app addressed to info@afhomes.com.ph. Nothing is stored or sent by AFhomes.
+  - **VIP page:** the old numbers (15/20/25 percent; 10,000/20,000/25,000 points a year) match docs 05 and 09. The old wording "upon activation" is replaced by the doc 09 rule: each year's points are released when that year's qualifying spend is met.
+  - **Not added:** room rates, booking, a public customer or card lookup (R11), and the old site's comment forms and blog search.
+- **Open items (not blocking):**
+  - The old site gives two hot-spring counts ("over 10 eyes" on About, "over 5" in the FAQ), so no number is shown until the owner confirms it.
+  - The old blog posts are copied as written. The REBAP post (Nov 2024) mentions a 50% VIP discount promotion and "potential investors", and the Expo post (Oct 2024) gives "over 20 hectares of hot springs and resort areas" and "more than 600 staycation units". Confirm whether to keep, edit or archive them.
+  - The old "Teppanyaki Lounge" post says four lounges in the text and two in a caption.
+  - Whether the HR email (hrconnect@afhomes.com.ph) should be shown publicly. It is not shown now.
+  - The old Smart Wellness Hotel grand opening is "November 2026": update the status once it opens.
+  - A legal review of the disclaimer and the compliance statements, and a privacy policy page (the old site has none).
+  - The old rooms-and-amenities and "what is a homestyle resort" pages were not carried over as separate pages. Their content is in the resort page and the FAQ.

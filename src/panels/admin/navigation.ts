@@ -94,6 +94,8 @@ export const ADMIN_AREA_TABS = {
   customers: [
     { value: "customers", label: "Customers", formerHref: "/admin/customers", rule: { grants: ["customers"] } },
     { value: "import-export", label: "Import and Export", formerHref: "/admin/customers/import-export", rule: { grants: ["customers"], operation: "customers.import" } },
+    // Staff-only card check copied from v2 (UI21); Finance reaches it through the membership grant.
+    { value: "lookup", label: "Customer Look Up", formerHref: "/admin/customers", rule: { grants: ["customers", "membership"], operation: "customers.lookup" } },
   ],
   sales: [
     { value: "sales", label: "Sales", formerHref: "/admin/sales", rule: { grants: ["sales"] } },

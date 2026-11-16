@@ -13,11 +13,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { Button } from "@/shared/ui/button";
 
 const ROW =
-  "tw:flex tw:w-full tw:min-h-11 tw:items-center tw:gap-3 tw:rounded-lg tw:px-3 tw:py-2 tw:text-left tw:text-sm tw:font-medium tw:text-sidebar-foreground/90 tw:transition-colors tw:hover:bg-sidebar-accent tw:hover:text-sidebar-foreground tw:focus-visible:ring-2 tw:focus-visible:ring-sidebar-ring tw:focus-visible:outline-none tw:motion-reduce:transition-none";
-// The current page is marked by a highlighted background and aria-current.
+  "tw:group/nav tw:relative tw:flex tw:w-full tw:min-h-11 tw:items-center tw:gap-3 tw:rounded-xl tw:px-2 tw:py-1.5 tw:text-left tw:text-sm tw:font-medium tw:text-sidebar-foreground/80 tw:transition-colors tw:hover:bg-white/[0.07] tw:hover:text-sidebar-foreground tw:focus-visible:ring-2 tw:focus-visible:ring-sidebar-ring tw:focus-visible:outline-none tw:motion-reduce:transition-none";
+// The current page: soft tint, bolder text, a white icon and aria-current (no side bar, no white block).
 const ROW_SELECTED =
-  "tw:bg-white/10 tw:text-sidebar-foreground";
-const GROUP_TRIGGER = "tw:aria-expanded:text-sidebar-foreground tw:dark:hover:bg-sidebar-accent";
+  "tw:bg-white/10 tw:font-semibold tw:text-sidebar-foreground";
+const CHIP =
+  "tw:inline-flex tw:size-8 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-lg tw:bg-white/[0.07] tw:text-sidebar-foreground/85 tw:transition-colors tw:group-hover/nav:bg-white/15 tw:motion-reduce:transition-none";
+const CHIP_SELECTED = "tw:bg-white/15 tw:text-white tw:group-hover/nav:bg-white/20";
+const GROUP_TRIGGER = "tw:aria-expanded:text-sidebar-foreground";
 
 // Badge counts are capped at render: the provider keeps exact counts, the nav
 // shows "99+" past 99.
@@ -26,7 +29,7 @@ function formatBadgeCount(count: number): string {
 }
 
 const BADGE_PILL =
-  "tw:ml-auto tw:inline-flex tw:h-5 tw:min-w-5 tw:items-center tw:justify-center tw:rounded-full tw:bg-destructive tw:px-1 tw:text-[11px] tw:font-semibold tw:text-white";
+  "tw:ml-auto tw:inline-flex tw:h-5 tw:min-w-5 tw:items-center tw:justify-center tw:rounded-full tw:bg-destructive tw:px-1 tw:text-[11px] tw:font-semibold tw:text-white tw:ring-2 tw:ring-(--color-brand-deep)";
 
 const NAV_GROUPS: { label: string; icon: LucideIcon; members: readonly AdminNavItem["id"][] }[] = [
   { label: "Money", icon: Landmark, members: ["finance", "commissions"] },
@@ -72,9 +75,9 @@ export function AdminNavList({
           return (
             <li key={label}>
               <DropdownMenu>
-                <DropdownMenuTrigger render={<Button variant="ghost" className={cn(ROW, GROUP_TRIGGER, "tw:relative tw:justify-center tw:px-0 tw:aria-expanded:bg-white/10")} />}
+                <DropdownMenuTrigger render={<Button variant="ghost" className={cn(ROW, GROUP_TRIGGER, "tw:relative tw:justify-center tw:px-0 tw:aria-expanded:bg-white/10", selectedChild && ROW_SELECTED)} />}
                   aria-label={badge ? `${label}, ${badge} new` : label} title={label}>
-                  <Icon aria-hidden="true" className="tw:size-4" />
+                  <span className={cn(CHIP, selectedChild && CHIP_SELECTED)}><Icon aria-hidden="true" className="tw:size-4" /></span>
                   {badge ? <span aria-hidden="true" className="tw:absolute tw:top-1.5 tw:right-1.5 tw:size-2 tw:rounded-full tw:bg-destructive" /> : null}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="right" className="tw:w-48">
@@ -129,9 +132,15 @@ function NavLink({
         aria-current={selected ? "page" : undefined}
         aria-label={collapsed ? item.label : undefined}
         title={collapsed ? item.label : undefined}
-        className={cn(ROW, nested && "tw:min-h-10 tw:leading-snug", collapsed && "tw:relative tw:justify-center tw:px-0", selected && ROW_SELECTED)}
+        className={cn(ROW, nested && "tw:min-h-10 tw:px-3 tw:leading-snug", collapsed && "tw:relative tw:justify-center tw:px-0", selected && ROW_SELECTED)}
       >
-        {Icon ? <Icon aria-hidden="true" className="tw:size-4 tw:shrink-0" /> : null}
+        {Icon ? (
+          nested ? (
+            <Icon aria-hidden="true" className="tw:size-4 tw:shrink-0" />
+          ) : (
+            <span className={cn(CHIP, selected && CHIP_SELECTED)}><Icon aria-hidden="true" className="tw:size-4" /></span>
+          )
+        ) : null}
         {collapsed ? null : <span className="tw:min-w-0">{item.label}</span>}
         {badge > 0 ? (
           collapsed ? (
@@ -177,10 +186,10 @@ function NavGroup({
         aria-controls={panelId}
         onClick={onToggle}
         className={cn(ROW, GROUP_TRIGGER, selectedChild
-          ? "tw:aria-expanded:bg-transparent tw:aria-expanded:hover:bg-sidebar-accent"
+          ? "tw:font-semibold tw:text-sidebar-foreground tw:aria-expanded:bg-transparent tw:aria-expanded:hover:bg-white/[0.07]"
           : "tw:aria-expanded:bg-white/10")}
       >
-        <Icon aria-hidden="true" className="tw:size-4 tw:shrink-0" />
+        <span className={cn(CHIP, selectedChild && CHIP_SELECTED)}><Icon aria-hidden="true" className="tw:size-4" /></span>
         <span className="tw:min-w-0 tw:flex-1">{label}</span>
         {badge > 0 && !open ? <NavBadge count={badge} /> : null}
         <ChevronDown
@@ -192,7 +201,7 @@ function NavGroup({
         className={cn("tw:grid tw:transition-[grid-template-rows] tw:duration-200 tw:ease-out", open ? "tw:grid-rows-[1fr]" : "tw:grid-rows-[0fr]")}
         inert={!open}
       >
-        <ul id={panelId} className="tw:m-0 tw:mt-0.5 tw:ml-4 tw:flex tw:min-h-0 tw:list-none tw:flex-col tw:gap-0.5 tw:overflow-hidden tw:border-l tw:border-sidebar-border tw:p-0 tw:pl-2">
+        <ul id={panelId} className="tw:m-0 tw:mt-0.5 tw:ml-6 tw:flex tw:min-h-0 tw:list-none tw:flex-col tw:gap-0.5 tw:overflow-hidden tw:border-l tw:border-white/15 tw:p-0 tw:pl-2">
           {children}
         </ul>
       </div>

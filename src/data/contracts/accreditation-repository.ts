@@ -4,9 +4,10 @@ import type { AccreditationAdminStatus, AccreditationRecord } from "@/modules/ac
 export type AccreditationStatusRequest = "pending" | "active" | "cancel" | "expired";
 
 /**
- * Restricted public projection: no holder name, contact or internal ids. "Valid until" only for OST.
- * An expired seller is shown as Expired (doc 03 section 9). A number replaced by a renewal resolves
- * to the holder's current number, with `quotedNumberSuperseded` set (doc 03 section 5.2.1).
+ * Restricted public projection: masked holder name and photo only, no full name, contact or internal
+ * ids (UI21). "Valid until" only for OST. An expired seller is shown as Expired (doc 03 section 9).
+ * A number replaced by a renewal resolves to the holder's current number, with
+ * `quotedNumberSuperseded` set (doc 03 section 5.2.1).
  */
 export type PublicAccreditationResult = {
   aaNumber: string;
@@ -14,6 +15,9 @@ export type PublicAccreditationResult = {
   classification: "IST" | "OST";
   validUntil: string | null;
   quotedNumberSuperseded: boolean;
+  /** Masked name such as "Juan D*****"; null when no name is on file. */
+  maskedName: string | null;
+  photoUrl: string | null;
 };
 
 /** Admin lookup of any AA number, current or from the AA Number History. */

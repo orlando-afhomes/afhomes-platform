@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useMembers } from "@/data/queries";
 import { usePaymentSchemes, usePrepareContract, useVipProducts } from "@/data/business-queries";
-import { buildSchedule } from "@/modules/contracts/rules";
+import { buildNonStandardSchedule, buildSchedule } from "@/modules/contracts/rules";
 import type { Customer } from "@/modules/customers/types";
 import { CheckboxField, SelectField } from "@/shared/forms/modern";
+import { parsePesoToCentavos } from "@/shared/lib/money";
+import { NonStandardTermsFields, nonStandardTermsFromText, type NonStandardTermsText } from "./non-standard-terms-fields";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { Money } from "@/shared/components/modern/money";
@@ -30,10 +32,21 @@ export function PrepareContractDialog({ customer, open, onClose, repeatPurchase 
   const [isSeparatePurchase, setIsSeparatePurchase] = useState(false);
   const [newPurchaseRequestId] = useState(() => repeatPurchase ? crypto.randomUUID() : undefined);
   const [error, setError] = useState<string | undefined>();
+  const [nonStandardText, setNonStandardText] = useState<NonStandardTermsText>({ price: "", months: "", reason: "" });
 
   const product = products.data?.find((item) => item.code === productCode);
   const scheme = schemes.data?.find((item) => item.id === schemeId);
-  const built = useMemo(() => (product && scheme ? buildSchedule(product, scheme) : null), [product, scheme]);
+  const standard = useMemo(() => (product && scheme ? buildSchedule(product, scheme) : null), [product, scheme]);
+  const nonStandard = classification === "N";
+  const nonStandardTerms = nonStandardTermsFromText(nonStandardText);
+  // A Non-Standard contract shows its own schedule once its price and months are valid (doc 05 §10.2).
+  const built = useMemo(() => {
+    if (!standard || !nonStandard || standard.errors.length > 0 || !scheme) return standard;
+    const price = parsePesoToCentavos(nonStandardText.price);
+    const months = Number(nonStandardText.months);
+    const custom = price != null ? buildNonStandardSchedule(price, scheme.reservationCentavos ?? 0, months) : null;
+    return custom && custom.errors.length === 0 ? { ...custom, priceCentavos: price ?? 0 } : { ...standard, schedule: [] };
+  }, [standard, nonStandard, scheme, nonStandardText.price, nonStandardText.months]);
 
   const askScheme = repeatPurchase || !customer.paymentSchemeId;
   const sellerOptions = (members.data ?? []).map((item) => ({ value: item.id, label: item.displayName }));
@@ -55,6 +68,7 @@ export function PrepareContractDialog({ customer, open, onClose, repeatPurchase 
         productCode,
         schemeId,
         customerAccepted: accepted,
+        ...(nonStandard ? { nonStandardTerms } : {}),
         ...(repeatPurchase ? { newPurchaseRequestId, sellerMemberId: seller, referrerMemberId: referrer === "none" ? null : referrer, classification } : {}),
       });
       toast.success("Contract prepared as a draft.");
@@ -74,6 +88,7 @@ export function PrepareContractDialog({ customer, open, onClose, repeatPurchase 
         <SelectField label="Contract type" required value={classification} options={[{ value: "S", label: "Standard" }, { value: "N", label: "Non-Standard" }]} onChange={(value) => setClassification(value === "N" ? "N" : "S")} />
       </> : null}
       {askScheme ? <SelectField label="Payment plan" required value={schemeId || undefined} options={options} onChange={setSchemeId} placeholder="Select a payment plan" /> : null}
+      {nonStandard && standard && standard.errors.length === 0 && scheme ? <NonStandardTermsFields value={nonStandardText} onChange={setNonStandardText} standard={standard} reservationCentavos={scheme.reservationCentavos ?? 0} /> : null}
       {built && built.errors.length > 0 ? <InfoNote title="This Payment Plan Cannot Be Used Yet">{built.errors[0]}</InfoNote> : null}
       {built && built.schedule.length > 0 ? (
         <div className="tw:flex tw:flex-col tw:gap-2">

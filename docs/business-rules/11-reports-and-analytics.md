@@ -333,7 +333,7 @@ Use `docs/business-rules/04-customer-management.md`. Document authorized interna
 
 Customer identity: do not treat each VIP purchase as a separate customer identity. Do not merge unrelated people merely because they appear in multiple sales.
 
-Privacy: there is no public VIP card or customer check (owner ruling R11 item 1, 2026-11-12). The former Public Customer Lookup (U08) is removed from scope; only authorized staff check cards, inside the staff application. Customer Management Analytics are internal only. Do not expose government IDs, private addresses, confidential contact information, payment proofs, internal financial details, or audit records. Public seller verification (doc 03) is a separate feature and is not affected.
+Privacy: there is no public VIP card or customer check (owner ruling R11 item 1, 2026-11-12). The former Public Customer Lookup (U08) is removed from scope; only authorized staff check cards, inside the staff application (the staff Customer Look Up, doc 04 section 13, UI21). Customer Management Analytics are internal only. Do not expose government IDs, private addresses, confidential contact information, payment proofs, internal financial details, or audit records. Public seller verification (doc 03) is a separate feature and is not affected.
 
 Acquisition channels: use source-documented acquisition channel options where supported. Do not invent extra labels or silently merge distinct source categories.
 

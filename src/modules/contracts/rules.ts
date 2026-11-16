@@ -88,16 +88,70 @@ export function buildSchedule(product: VipProduct, scheme: PaymentScheme, reserv
   return { schedule, priceCentavos: price, requiredInitialCentavos: first, errors };
 }
 
+/** Most monthly payments a Non-Standard contract may have (doc 05 §10.2: 1 to 36 months). */
+export const NON_STANDARD_MAX_MONTHS = 36;
+
+export type NonStandardTermsDraft = { priceCentavos: number | null; months: number | null; justification: string };
+
+/** Field problems in Non-Standard terms (doc 05 §10.2). No minimum price is enforced (item 15, rule 4). */
+export function nonStandardTermErrors(terms: NonStandardTermsDraft, reservationCentavos: number): { price?: string; months?: string; reason?: string } {
+  const errors: { price?: string; months?: string; reason?: string } = {};
+  const { priceCentavos: price, months } = terms;
+  if (price == null || !Number.isSafeInteger(price) || price <= reservationCentavos) errors.price = "Enter a total price above the reservation fee.";
+  if (months == null || !Number.isInteger(months) || months < 1 || months > NON_STANDARD_MAX_MONTHS) errors.months = `Enter a whole number of monthly payments from 1 to ${NON_STANDARD_MAX_MONTHS}.`;
+  if (!terms.justification.trim()) errors.reason = "Enter the reason for the Non-Standard terms.";
+  return errors;
+}
+
+/** Card ID payment segment for a Non-Standard schedule: T plus the months in two digits (T01 to T36). */
+export function nonStandardPaymentCode(months: number): string {
+  return `T${String(months).padStart(2, "0")}`;
+}
+
+/**
+ * Non-Standard schedule (doc 05 §10.2, item 32): the plan's reservation fee, then
+ * the rest of the price in equal monthly payments; the last payment takes the
+ * leftover centavos so the total is exact. Due dates follow the reservation date.
+ */
+export function buildNonStandardSchedule(priceCentavos: number, reservationCentavos: number, months: number, reservationDate: string | null = null): Omit<BuiltSchedule, "priceCentavos"> {
+  const invalid = nonStandardTermErrors({ priceCentavos, months, justification: "-" }, reservationCentavos);
+  const firstError = invalid.price ?? invalid.months;
+  if (firstError || !Number.isSafeInteger(reservationCentavos) || reservationCentavos < 0) {
+    return { schedule: [], requiredInitialCentavos: null, errors: [firstError ?? "The reservation fee is not valid."] };
+  }
+  const schedule: ScheduleItem[] = [];
+  let seq = 1;
+  if (reservationCentavos > 0) schedule.push({ seq: seq++, label: "Reservation fee", purpose: "reservation", amountCentavos: reservationCentavos, dueDate: reservationDate });
+  const rest = priceCentavos - reservationCentavos;
+  const each = Math.floor(rest / months);
+  for (let index = 1; index <= months; index += 1) {
+    const amount = index === months ? rest - each * (months - 1) : each;
+    schedule.push({ seq: seq++, label: `MA${index}`, purpose: "installment", amountCentavos: amount, dueDate: reservationDate ? addMonthsToDate(reservationDate, index) : null });
+  }
+  // Interim rule D25, as for Standard schedules: the reservation plus the first monthly payment.
+  const first = schedule.slice(0, reservationCentavos > 0 ? 2 : 1).reduce((sum, item) => sum + item.amountCentavos, 0);
+  return { schedule, requiredInitialCentavos: first, errors: [] };
+}
+
+/** Where a Non-Standard contract stands in its two approvals; null for Standard contracts. */
+export function nonStandardStage(contract: Pick<Contract, "classification" | "nonStandard">): "admin" | "finance" | "approved" | null {
+  if (contract.classification !== "N") return null;
+  if (!contract.nonStandard?.approvedBy) return "admin";
+  return contract.nonStandard.confirmedBy ? "approved" : "finance";
+}
+
 /**
  * Reasons a contract cannot be finalized yet. Finalization is held, never
- * silently fixed, while source conflicts or undecided rules remain (05 sections 6, 10.1, 11).
+ * silently fixed, while source conflicts or undecided rules remain (05 sections 6, 10.2, 11).
  */
 export function finalizationHolds(contract: Contract): string[] {
   const holds: string[] = [];
   if (contract.priceStatus === "conflict") holds.push("The contract price is in conflict between contract sections (D5). Management must correct it first.");
   if (contract.schemeStatus !== "configured") holds.push("The payment plan has no approved commercial terms.");
   if (contract.arrangement && contract.arrangement.status !== "approved") holds.push(`The ${contract.arrangement.schemeLabel} arrangement needs Super Admin written approval.`);
-  if (contract.classification === "N") holds.push("Non-Standard terms need Administrator approval and Finance confirmation. This step is not available yet.");
+  const stage = nonStandardStage(contract);
+  if (stage === "admin") holds.push("Non-Standard terms need Administrator approval.");
+  if (stage === "finance") holds.push("Non-Standard terms need Finance confirmation.");
   if (contract.schedule.length === 0) holds.push("The payment schedule is empty.");
   if (!contract.customerAccepted) holds.push("Customer acceptance has not been recorded.");
   return holds;

@@ -1,5 +1,12 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
-import type { MembershipRepository, MembershipView } from "@/data/contracts/membership-repository";
+import {
+  CUSTOMER_LOOKUP_MAX_RESULTS,
+  CUSTOMER_LOOKUP_MIN_LENGTH,
+  type CustomerLookupResult,
+  type MembershipRepository,
+  type MembershipView,
+} from "@/data/contracts/membership-repository";
+import { availableByBucket } from "@/modules/stay-points/engine";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { checkActivationEligibility, computeValidityEnd } from "@/modules/membership/rules";
@@ -10,7 +17,7 @@ import { BusinessRepository, canSeeContract, customerName, nowIso, today } from 
 import { paymentsOfContract } from "./business-effects";
 import type { MockStore } from "./seed";
 import { MockRedemptionRepository } from "./redemption-repository";
-import { closeStayPointsForTransfer } from "./redemption-points-source";
+import { closeStayPointsForTransfer, membershipPointsLedger } from "./redemption-points-source";
 import { recordDueDeemedClaim } from "./card-claim";
 
 export class MockMembershipRepository extends BusinessRepository implements MembershipRepository {
@@ -44,6 +51,41 @@ export class MockMembershipRepository extends BusinessRepository implements Memb
         })
         .map((membership) => this.view(membership)),
     );
+  }
+
+  async lookupActiveVip(term: string, options?: MockAsyncOptions): Promise<CustomerLookupResult[]> {
+    return this.run(options, (identity) => {
+      this.require(identity, "customers.lookup", "Your account cannot look up customers.");
+      const needle = term.trim().toLowerCase();
+      if (needle.length < CUSTOMER_LOOKUP_MIN_LENGTH) return [];
+      const asOf = today();
+      const found: CustomerLookupResult[] = [];
+      for (const membership of this.store.memberships) {
+        if (membership.status !== "active") continue;
+        if (membership.validityEndDate && membership.validityEndDate < asOf) continue;
+        const customer = this.store.customers.find((item) => item.id === membership.customerId);
+        if (!customer || customer.status === "inactive" || customer.status === "rejected") continue;
+        const haystack = [customer.displayName, customer.customerNumber, membership.cardId, membership.raNumber, customer.email];
+        if (!haystack.some((value) => value?.toLowerCase().includes(needle))) continue;
+        const ledger = membershipPointsLedger(membership, this.store, asOf);
+        const points = ledger ? availableByBucket(ledger) : { weekday: 0, weekend: 0 };
+        found.push({
+          membershipId: membership.id,
+          customerName: customer.displayName,
+          customerNumber: customer.customerNumber ?? null,
+          productCode: membership.productCode,
+          vipNumber: membership.cardId,
+          validUntil: membership.validityEndDate,
+          weekdayPoints: points.weekday,
+          weekendPoints: points.weekend,
+          totalPoints: points.weekday + points.weekend,
+        });
+      }
+      const startsWith = (item: CustomerLookupResult) => (item.customerName.toLowerCase().startsWith(needle) ? 0 : 1);
+      return found
+        .sort((a, b) => startsWith(a) - startsWith(b) || a.customerName.localeCompare(b.customerName))
+        .slice(0, CUSTOMER_LOOKUP_MAX_RESULTS);
+    });
   }
 
   async activate(id: string, options?: MockAsyncOptions): Promise<MembershipView> {

@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Wallet } from "lucide-react";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { useContracts, useMemberships, usePayments } from "@/data/business-queries";
 import { useTierDisplayName } from "../components/use-tier-display-name";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import { collectionStateFor, type CollectionState } from "@/modules/finance/rules";
+import { nonStandardStage } from "@/modules/contracts/rules";
 import { manilaToday } from "@/shared/lib/dates";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
@@ -29,6 +30,8 @@ const COLLECTION_FILTERS = [
   { value: "outstanding", label: "Outstanding" },
   { value: "settled", label: "Fully Settled" },
   { value: "on-hold", label: "On payment hold" },
+  // Doc 05 §10.2: Non-Standard contracts the Administrator approved, waiting for Finance to confirm.
+  { value: "nonstandard", label: "Non-Standard terms to confirm" },
 ];
 
 /** Collections tab of the Finance area ([finance]). */
@@ -41,7 +44,8 @@ export function FinanceCollectionsPanel() {
   const contractHref = useContractHref();
   const today = manilaToday();
   const [search, setSearch] = useState("");
-  const [collectionState, setCollectionState] = useState("all");
+  const requestedState = useSearchParams()?.get("state");
+  const [collectionState, setCollectionState] = useState(() => COLLECTION_FILTERS.find((option) => option.value === requestedState)?.value ?? "all");
   const [detailId, setDetailId] = useState<string | null>(null);
 
   const allPayments = useMemo(() => payments.data ?? [], [payments.data]);
@@ -49,13 +53,18 @@ export function FinanceCollectionsPanel() {
     () => (contracts.data ?? []).filter((contract) => contract.status === "finalized").map((contract) => ({ contract, ...collectionStateFor(contract, allPayments.filter((item) => item.contractId === contract.id), today) })),
     [contracts.data, allPayments, today],
   );
+  const nonStandardRows = useMemo<CollectionRow[]>(
+    () => (contracts.data ?? []).filter((contract) => (contract.status === "submitted" || contract.status === "under_review") && nonStandardStage(contract) === "finance").map((contract) => ({ contract, ...collectionStateFor(contract, allPayments.filter((item) => item.contractId === contract.id), today) })),
+    [contracts.data, allPayments, today],
+  );
   const receivables = allCollections.reduce((sum, row) => sum + row.balance, 0);
   const heldContractIds = useMemo(() => new Set((memberships.data ?? []).filter((item) => item.financialHold).map((item) => item.contractId)), [memberships.data]);
   const collections = useMemo<CollectionRow[]>(() => {
     const term = search.trim().toLowerCase();
+    if (collectionState === "nonstandard") return nonStandardRows.filter((row) => term === "" || row.contract.customerName.toLowerCase().includes(term));
     const matchesState = (row: CollectionRow) => collectionState === "all" || (collectionState === "on-hold" ? heldContractIds.has(row.contract.id) : row.state === collectionState);
     return allCollections.filter((row) => (term === "" || row.contract.customerName.toLowerCase().includes(term)) && matchesState(row));
-  }, [allCollections, search, collectionState, heldContractIds]);
+  }, [allCollections, nonStandardRows, search, collectionState, heldContractIds]);
 
   const columns = useMemo<ColumnDef<CollectionRow, unknown>[]>(
     () => [
@@ -67,7 +76,7 @@ export function FinanceCollectionsPanel() {
     ],
     [],
   );
-  const detail = detailId ? allCollections.find((row) => row.contract.id === detailId) ?? null : null;
+  const detail = detailId ? [...allCollections, ...nonStandardRows].find((row) => row.contract.id === detailId) ?? null : null;
   const openContract = (row: CollectionRow) => router.push(contractHref(row.contract.id));
 
   return (

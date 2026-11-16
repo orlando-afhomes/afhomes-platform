@@ -14,6 +14,7 @@ import { validateCustomerForSubmit } from "@/modules/customers/rules";
 import { isEditableRegistration } from "@/modules/customers/review";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/modules/finance/types";
 import { applicablePriceStatus, displayPriceFor } from "@/modules/vip/pricing";
+import { buildSchedule } from "@/modules/contracts/rules";
 import type { VipTierCode } from "@/modules/vip/types";
 import { manilaToday } from "@/shared/lib/dates";
 import { formatPeso } from "@/shared/lib/money";
@@ -46,6 +47,7 @@ import {
   type SetDraft,
 } from "../components/customer-form-sections";
 import { PlanSummary } from "../components/customer-plan-summary";
+import { NonStandardTermsFields, nonStandardTermsFromText, nonStandardTextErrors, type NonStandardTermsText } from "../components/non-standard-terms-fields";
 import { useCustomerIdImagePreview } from "../components/customer-id-image-preview";
 import { useNewCustomerExit } from "../components/use-new-customer-exit";
 import { useWizardStepHistory } from "../components/use-wizard-step-history";
@@ -80,7 +82,7 @@ const SUBMISSION_FEEDBACK = {
 /** Validation keys that belong to each step, so Next only blocks on what the step shows. */
 const STEP_KEYS: Record<number, string[]> = {
   [STEP_CARD]: ["vipPlan"],
-  [STEP_PLAN]: ["paymentSchemeId", "contractClassification"],
+  [STEP_PLAN]: ["paymentSchemeId", "contractClassification", "nonStandardPrice", "nonStandardMonths", "nonStandardReason"],
   [STEP_CUSTOMER]: ["firstName", "lastName", "dateOfBirth", "gender", "civilStatus", "mobileNumber", "address", "email", "citizenship", "tinNumber", "landline", "governmentIdNumber", "supplementaryHolder"],
   [STEP_SALES]: ["recommenderMemberId", "referrerMemberId", "customerNumber", "consentDataPrivacy", "idReceivedCertified"],
 };
@@ -108,7 +110,7 @@ function referenceHint(policy: ReferencePolicy): string {
 
 const CLASSIFICATION_OPTIONS: RadioCardOption<"S" | "N">[] = [
   { value: "S", label: "Standard (S)", description: "Standard contract terms.", icon: <Layers className="tw:size-4" /> },
-  { value: "N", label: "Non-Standard (N)", description: "Held at finalization until the rules are approved.", icon: <ShieldCheck className="tw:size-4" /> },
+  { value: "N", label: "Non-Standard (N)", description: "Own price and monthly payments. The Administrator approves and Finance confirms.", icon: <ShieldCheck className="tw:size-4" /> },
 ];
 
 function pick(errors: CustomerErrors, keys: string[]): CustomerErrors {
@@ -198,6 +200,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const [referenceTouched, setReferenceTouched] = useState(false);
   const [proofName, setProofName] = useState("");
   const [accepted, setAccepted] = useState(false);
+  const [nonStandardText, setNonStandardText] = useState<NonStandardTermsText>({ price: "", months: "", reason: "" });
   const [reservationErrors, setReservationErrors] = useState<Record<string, string | undefined>>({});
   const proofIds = useFieldIds();
   const schemeIds = useFieldIds();
@@ -218,7 +221,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
     }
   }, [existing]);
 
-  const hasReservationChanges = method !== DEFAULT_PAYMENT_METHOD || paidDate !== initialPaidDate || Boolean(reference || proofName || accepted);
+  const hasReservationChanges = method !== DEFAULT_PAYMENT_METHOD || paidDate !== initialPaidDate || Boolean(reference || proofName || accepted || nonStandardText.price || nonStandardText.months || nonStandardText.reason);
   const hasIdPreview = Boolean(primaryIdPreview.value || secondaryIdPreview.value);
   const dirty = JSON.stringify(draft) !== EMPTY_DRAFT || hasReservationChanges || hasIdPreview;
   const exit = useNewCustomerExit({
@@ -259,6 +262,9 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const scheme = (schemes.data ?? []).find((item) => item.id === draft.paymentSchemeId);
   const supplementaryAllowed = Boolean(product && product.supplementaryHolders > 0);
   const reservationCentavos = scheme?.reservationCentavos ?? null;
+  // Doc 05 §10.2: staff who prepare the contract enter the Non-Standard price, monthly payments and reason here.
+  const standardSchedule = product && scheme ? buildSchedule(product, scheme) : null;
+  const asksNonStandard = canPrepare && !resubmitting && draft.contractClassification === "N" && standardSchedule != null && standardSchedule.errors.length === 0;
   const refPolicy = referencePolicyFor(method);
   const sellers = (members.data ?? []).map((member) => ({ value: member.id, label: member.displayName }));
   const steps = canManage ? STEPS : STEPS.slice(0, STEP_SALES + 1);
@@ -267,9 +273,20 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   if (!canDraft) return <InfoNote title="View Only">This account cannot create or edit customers.</InfoNote>;
 
   const attributionErrors = customerAttributionErrors(draft, pendingOstIds);
+  const nonStandardErrors = (): CustomerErrors => {
+    if (!asksNonStandard) return {};
+    const found = nonStandardTextErrors(nonStandardText, reservationCentavos ?? 0);
+    // Only real messages become keys: the step check blocks on any key, even an undefined one.
+    const errors: CustomerErrors = {};
+    if (found.price) errors.nonStandardPrice = found.price;
+    if (found.months) errors.nonStandardMonths = found.months;
+    if (found.reason) errors.nonStandardReason = found.reason;
+    return errors;
+  };
   const allErrors = (): CustomerErrors => ({
     ...validateCustomerForSubmit(toInput(draft), customers.data ?? [], undefined, supplementaryAllowed),
     ...attributionErrors,
+    ...nonStandardErrors(),
   });
 
   const reportAttributionErrors = (fieldErrors: CustomerErrors) => {
@@ -374,6 +391,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
     setProofName("");
     setProofKey((key) => key + 1);
     setAccepted(false);
+    setNonStandardText({ price: "", months: "", reason: "" });
     setReservationErrors({});
     primaryIdPreview.onClear();
     secondaryIdPreview.onClear();
@@ -449,6 +467,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
         contract: canPrepare && scheme && !resubmitting ? {
           schemeId: scheme.id,
           customerAccepted: accepted,
+          ...(asksNonStandard ? { nonStandardTerms: nonStandardTermsFromText(nonStandardText) } : {}),
           reservation: canPay && reservationCentavos
             ? { amountCentavos: reservationCentavos, method, paidDate, referenceNo: reference || null, evidenceFileName: proofName || null }
             : undefined,
@@ -578,6 +597,9 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             <FieldShell ids={classificationIds} label="Contract type" required error={errors.contractClassification} labelFor={false}>
               <PaymentOptionGrid label="Contract type" value={(draft.contractClassification || undefined) as "S" | "N" | undefined} onChange={(value: "S" | "N") => set("contractClassification", value)} options={CLASSIFICATION_OPTIONS.map((option) => ({ value: option.value, label: option.label, icon: option.icon }))} columns="two" describedBy={describedBy(classificationIds, errors.contractClassification)} invalid={Boolean(errors.contractClassification)} />
             </FieldShell>
+            {asksNonStandard && standardSchedule ? (
+              <NonStandardTermsFields value={nonStandardText} onChange={setNonStandardText} standard={standardSchedule} reservationCentavos={reservationCentavos ?? 0} errors={{ price: errors.nonStandardPrice, months: errors.nonStandardMonths, reason: errors.nonStandardReason }} />
+            ) : null}
           </SectionBlock>
           {priceConflict ? <PriceConflictNote /> : null}
         </div>
@@ -631,7 +653,10 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             <Row label="VIP card" value={product?.name ?? ""} />
             <Row label="Price" value={product ? formatPeso(displayPriceFor(product, scheme)) : ""} />
             <Row label="Payment plan" value={scheme?.label} />
-            <Row label="Contract type" value={draft.contractClassification === "N" ? "Non-Standard (N) — held at finalization until the rules are approved" : draft.contractClassification === "S" ? "Standard (S)" : ""} />
+            <Row label="Contract type" value={draft.contractClassification === "N" ? "Non-Standard (N), needs Administrator approval and Finance confirmation" : draft.contractClassification === "S" ? "Standard (S)" : ""} />
+            {asksNonStandard ? <Row label="Non-Standard price" value={nonStandardText.price ? `₱${nonStandardText.price}` : ""} /> : null}
+            {asksNonStandard ? <Row label="Monthly payments" value={nonStandardText.months} /> : null}
+            {asksNonStandard ? <Row label="Reason" value={nonStandardText.reason} /> : null}
           </ReviewBlock>
           {priceConflict ? <PriceConflictNote /> : null}
           <ReviewBlock title="Customer" onEdit={() => setStep(STEP_CUSTOMER)}>

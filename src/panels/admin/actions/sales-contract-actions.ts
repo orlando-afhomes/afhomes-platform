@@ -3,6 +3,7 @@ import type { ContractView } from "@/data/contracts/contract-repository";
 import type { SaleView } from "@/data/contracts/sale-repository";
 import type { ConfirmRunInput } from "@/shared/components/modern/use-confirm-run";
 import type { ApproveDealOutcome } from "@/modules/contracts/application/approve-deal";
+import { nonStandardStage } from "@/modules/contracts/rules";
 import { recordLabel } from "@/shared/lib/record-label";
 import { toast } from "sonner";
 
@@ -35,13 +36,46 @@ export function approveDealConfirm(approve: () => Promise<ApproveDealOutcome>): 
     description: "This confirms the signed Reservation Agreement is on file. It approves the customer and the sale, issues the VIP Number, and finalizes the contract when nothing is on hold.",
     confirmText: "Approve Deal",
     tone: "success",
-    action: async () => {
-      const outcome = await approve();
-      if (outcome.finalizeHeld.length > 0) toast.warning("The contract is not finalized yet.", { description: outcome.finalizeHeld.join(" ") });
-    },
+    action: async () => reportHeldDeal(await approve()),
     successTitle: "Deal approved.",
     errorTitle: "Could not approve the deal",
   };
+}
+
+/** Finance confirmation of Non-Standard terms (doc 05 §10.2 step 2). */
+export function confirmNonStandardConfirm(confirm: () => Promise<unknown>): ConfirmRunInput {
+  return {
+    title: "Confirm Non-Standard Terms?",
+    description: "This confirms the Non-Standard price and monthly payments the Administrator approved. The Administrator can then finalize the contract with Approve Deal.",
+    confirmText: "Confirm Non-Standard Terms",
+    tone: "success",
+    action: confirm,
+    successTitle: "Non-Standard terms confirmed.",
+    errorTitle: "Could not confirm the Non-Standard terms",
+  };
+}
+
+/** After "Approve deal": a held finalization is reported as a warning. */
+export function reportHeldDeal(outcome: ApproveDealOutcome): void {
+  if (outcome.finalizeHeld.length > 0) toast.warning("The contract is not finalized yet.", { description: outcome.finalizeHeld.join(" ") });
+}
+
+/** "Approve deal" needs the signed approval reference first: a Non-Standard contract in review without step 1 (doc 05 §10.2). */
+export function needsNonStandardApproval(contract: Pick<ContractView, "status" | "classification" | "nonStandard">): boolean {
+  return (contract.status === "submitted" || contract.status === "under_review") && nonStandardStage(contract) === "admin";
+}
+
+/**
+ * Finance step of doc 05 §10.2: a `finance.verify` user may confirm or send back
+ * Non-Standard terms the Administrator approved. Whoever approved may confirm only
+ * as Super Administrator (the repository enforces it too).
+ */
+export function canConfirmNonStandard(
+  contract: Pick<ContractView, "status" | "classification" | "nonStandard">,
+  viewer: { id: string; canVerify: boolean; isSuperAdmin: boolean },
+): boolean {
+  const inReview = contract.status === "submitted" || contract.status === "under_review";
+  return viewer.canVerify && inReview && nonStandardStage(contract) === "finance" && (contract.nonStandard?.approvedBy !== viewer.id || viewer.isSuperAdmin);
 }
 
 export type SaleMenuPerms = {
@@ -85,6 +119,8 @@ export type ContractMenuPerms = {
   hasActiveMembership: boolean;
   /** A membership card already exists (blocks issuing a VIP Number twice). */
   hasCard: boolean;
+  /** `canConfirmNonStandard` for this viewer and contract (doc 05 §10.2 Finance step). */
+  canConfirmNonStandard?: boolean;
 };
 
 export type ContractMenuCallbacks = {
@@ -95,6 +131,8 @@ export type ContractMenuCallbacks = {
   onReturn?: () => void;
   onRecordPaymentCode?: () => void;
   onApproveArrangement?: () => void;
+  onConfirmNonStandard?: () => void;
+  onSendBackNonStandard?: () => void;
   onCancel?: () => void;
   onRequestCancellation?: () => void;
   onMarkDefaulted?: () => void;
@@ -102,7 +140,7 @@ export type ContractMenuCallbacks = {
 
 export type ContractMenuContract = Pick<
   ContractView,
-  "status" | "customerName" | "productCode" | "paymentCode" | "vipNumber" | "cancellation" | "arrangement" | "holds" | "sale"
+  "status" | "customerName" | "productCode" | "paymentCode" | "vipNumber" | "cancellation" | "arrangement" | "holds" | "sale" | "classification" | "nonStandard"
 > & {
   /** Full sale record when the caller can see it; drives the sale-level dispositions on detail pages. */
   saleView?: Pick<SaleView, "status" | "approval" | "defaultEligible"> | null;
@@ -131,7 +169,7 @@ export function buildContractMenuProps(contract: ContractMenuContract, perms: Co
   // "Approve deal" stays while a step can still run: the sale approval, the VIP Number, or a finalization nothing holds.
   const saleUnapproved = sale?.status === "pending" && !sale.approval;
   const vipPending = !contract.vipNumber && !perms.hasCard;
-  const dealOpen = (inReview || contract.status === "finalized") && (vipPending || saleUnapproved || (inReview && contract.holds.length === 0));
+  const dealOpen = (inReview || contract.status === "finalized") && (vipPending || saleUnapproved || (inReview && contract.holds.length === 0) || needsNonStandardApproval(contract));
 
   if (perms.canSubmitPayment && contract.status !== "cancelled" && contract.status !== "returned" && cb.onSubmitPayment) {
     add(extraItems, { key: "submit-payment", label: "Submit Payment", tone: "info", onClick: cb.onSubmitPayment });
@@ -148,6 +186,13 @@ export function buildContractMenuProps(contract: ContractMenuContract, perms: Co
   }
   if (perms.canApprove && perms.canApproveCustomer && dealOpen && !pendingCancel && cb.onApproveDeal) {
     add(extraItems, { key: "approve-deal", label: "Approve Deal", tone: "success", onClick: cb.onApproveDeal });
+  }
+  if (perms.canConfirmNonStandard && cb.onConfirmNonStandard) {
+    add(extraItems, { key: "confirm-nonstandard", label: "Confirm Non-Standard Terms", tone: "success", onClick: cb.onConfirmNonStandard });
+  }
+  // An Administrator already has Return for Correction, which does the same.
+  if (perms.canConfirmNonStandard && !perms.canApprove && cb.onSendBackNonStandard) {
+    add(extraItems, { key: "send-back-nonstandard", label: "Send Back", tone: "warning", onClick: cb.onSendBackNonStandard });
   }
   if (perms.canApprove && inReview && cb.onReturn) {
     add(extraItems, { key: "return", label: "Return for Correction", tone: "warning", onClick: cb.onReturn });

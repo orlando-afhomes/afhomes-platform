@@ -12,11 +12,11 @@ import { outstandingBalanceCentavos, totalVerifiedCentavos } from "@/modules/fin
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { EMPTY } from "@/shared/lib/empty-value";
 import { formatDate } from "@/shared/lib/format-date";
-import { ApproveArrangementDialog, CancelContractDialog, EditContractDialog, RequestCancellationDialog, ResolvePaymentCodeDialog, ReturnContractDialog } from "../components/contract-dialogs";
+import { ApproveArrangementDialog, ApproveNonStandardDealDialog, CancelContractDialog, EditContractDialog, RequestCancellationDialog, ResolvePaymentCodeDialog, ReturnContractDialog, SendBackNonStandardDialog } from "../components/contract-dialogs";
 import { ContractDetailTabs, type ContractDetailTab } from "../components/contract-detail-tabs";
-import { actionButtonVariant, approveDealConfirm, buildContractMenuProps, orderActionItems } from "../actions/sales-contract-actions";
+import { actionButtonVariant, approveDealConfirm, buildContractMenuProps, canConfirmNonStandard, confirmNonStandardConfirm, needsNonStandardApproval, orderActionItems } from "../actions/sales-contract-actions";
 import { ContractStatusCard, ContractSummaryCard } from "../components/contract-status-cards";
-import { ContractCommissionRateNotice, ContractHistorySection, ContractLedgerSection, ContractMilestonesSection, ContractPageFrame, ContractPaymentsSection, ContractScheduleSection, ContractTermsSection, ContractTiles } from "../components/contract-sections";
+import { ContractCommissionRateNotice, ContractHistorySection, ContractLedgerSection, ContractMilestonesSection, ContractNonStandardSection, ContractPageFrame, ContractPaymentsSection, ContractScheduleSection, ContractTermsSection, ContractTiles } from "../components/contract-sections";
 import { PaymentSubmitDialog, usePaymentActions } from "../components/payment-actions";
 import { humanize } from "@/shared/lib/humanize";
 
@@ -33,11 +33,12 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
   const canSubmitPayment = useOperation("payments.submit");
   const canApprove = useOperation("contracts.approve");
   const canApproveCustomer = useOperation("customers.approve");
+  const canVerify = useOperation("finance.verify");
   const sales = useSales();
   const approveDeal = useApproveDeal();
   const markDefaulted = useMarkSaleDefaulted();
   const isSuperAdmin = identity.status === "active" && identity.roles.includes("super_admin");
-  const [dialogKind, setDialogKind] = useState<"payment" | "edit" | "cancel" | "return" | "requestCancel" | "approveArrangement" | "resolvePaymentCode" | null>(null);
+  const [dialogKind, setDialogKind] = useState<"payment" | "edit" | "cancel" | "return" | "requestCancel" | "approveArrangement" | "resolvePaymentCode" | "approveNonStandard" | "sendBack" | null>(null);
   const [saleDefaultOpen, setSaleDefaultOpen] = useState(false);
   const [tab, setTab] = useState<ContractDetailTab>("overview");
   const close = () => setDialogKind(null);
@@ -60,10 +61,13 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
           hasVerifiedMoney: moneyLocked,
           hasActiveMembership: membership?.status === "active",
           hasCard: membership?.cardId != null,
+          canConfirmNonStandard: canConfirmNonStandard(contract, { id: identity.id, canVerify, isSuperAdmin }),
         }, {
           onSubmitPayment: () => setDialogKind("payment"),
           onSubmitContract: () => confirmRun({ title: "Submit This Contract?", description: "It will be sent to Admin review and a Pending sale will be recorded.", confirmText: "Submit This Contract", action: () => action.mutateAsync({ id: contract.id, action: "submit" }), successTitle: "Contract submitted.", errorTitle: "Action failed" }),
-          onApproveDeal: () => confirmRun(approveDealConfirm(() => approveDeal.mutateAsync(contract.id))),
+          onApproveDeal: () => needsNonStandardApproval(contract) ? setDialogKind("approveNonStandard") : confirmRun(approveDealConfirm(() => approveDeal.mutateAsync({ contractId: contract.id }))),
+          onConfirmNonStandard: () => confirmRun(confirmNonStandardConfirm(() => action.mutateAsync({ id: contract.id, action: "confirmNonStandard" }))),
+          onSendBackNonStandard: () => setDialogKind("sendBack"),
           onReturn: () => setDialogKind("return"),
           onRecordPaymentCode: () => setDialogKind("resolvePaymentCode"),
           onApproveArrangement: () => setDialogKind("approveArrangement"),
@@ -129,6 +133,7 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
               </div>
             </div>
           ) : null}
+          {tab === "overview" ? <ContractNonStandardSection contract={contract} /> : null}
           {tab === "schedule" ? <ContractScheduleSection record={record} /> : null}
           {tab === "payments" ? (
             <>
@@ -152,6 +157,8 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
           <ReturnContractDialog contract={contract} open={dialogKind === "return"} onClose={close} />
           <ApproveArrangementDialog contract={contract} open={dialogKind === "approveArrangement"} onClose={close} />
           <ResolvePaymentCodeDialog contract={contract} open={dialogKind === "resolvePaymentCode"} onClose={close} />
+          <SendBackNonStandardDialog contract={contract} open={dialogKind === "sendBack"} onClose={close} />
+          {dialogKind === "approveNonStandard" ? <ApproveNonStandardDealDialog contract={contract} onClose={close} /> : null}
           </>
         );
       }}

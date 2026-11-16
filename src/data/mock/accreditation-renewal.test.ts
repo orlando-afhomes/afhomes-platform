@@ -3,6 +3,7 @@ import { MockAccreditationRepository } from "./accreditation-repository";
 import { createMockStore } from "./seed";
 import { createMockRepositories } from "./repositories";
 import { getDevIdentity } from "./dev-identities";
+import { maskPublicName } from "@/modules/accreditation/public-name";
 
 function as(store: ReturnType<typeof createMockStore>, id: string) {
   return createMockRepositories(store, () => getDevIdentity(id));
@@ -107,7 +108,10 @@ describe("AA Number History lookup and public verification", () => {
     expect(await admin.resolveAaNumber("AAO99990001")).toBeNull();
 
     const publicRepo = as(store, "dev-inactive").accreditations;
-    expect(await publicRepo.verifyPublic("AAO24020001")).toEqual({ aaNumber: oldNumber, status: "valid", classification: "OST", validUntil: "2099-12-31", quotedNumberSuperseded: true });
+    const verified = await publicRepo.verifyPublic("AAO24020001");
+    expect(verified).toEqual({ aaNumber: oldNumber, status: "valid", classification: "OST", validUntil: "2099-12-31", quotedNumberSuperseded: true, maskedName: maskPublicName(member.displayName), photoUrl: member.sellerProfile?.profilePhotoUrl ?? null });
+    // The full holder name never leaves the repository (UI21).
+    expect(JSON.stringify(verified)).not.toContain(member.displayName);
     expect(await publicRepo.verifyPublic(oldNumber)).toMatchObject({ quotedNumberSuperseded: false });
   });
 
@@ -117,7 +121,7 @@ describe("AA Number History lookup and public verification", () => {
     const ost = store.accreditations.find((item) => item.id === "accr-seed-4")!;
     Object.assign(ist, { adminStatus: "active", expiryDate: "2020-01-01" });
     const publicRepo = as(store, "dev-inactive").accreditations;
-    expect(await publicRepo.verifyPublic(ist.aaNumber!)).toEqual({ aaNumber: ist.aaNumber, status: "expired", classification: "IST", validUntil: null, quotedNumberSuperseded: false });
+    expect(await publicRepo.verifyPublic(ist.aaNumber!)).toMatchObject({ aaNumber: ist.aaNumber, status: "expired", classification: "IST", validUntil: null, quotedNumberSuperseded: false });
     expect(await publicRepo.verifyPublic(ost.aaNumber!)).toMatchObject({ status: "expired", classification: "OST", validUntil: "2025-02-10" });
   });
 

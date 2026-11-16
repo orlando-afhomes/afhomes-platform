@@ -12,6 +12,7 @@ describe("formatNotificationAction", () => {
     expect(formatNotificationAction("IGP_SERIES_ISSUED")).toBe("Property (IGP) series issued");
     expect(formatNotificationAction("CONTRACT_RA_RECORDED")).toBe("Reservation agreement recorded");
     expect(formatNotificationAction("VIP_NUMBER_ISSUED")).toBe("VIP Number issued");
+    expect(formatNotificationAction("CONTRACT_NONSTANDARD_APPROVED")).toBe("Contract Non-Standard terms approved");
     expect(formatNotificationAction("COMMISSION_CLAWBACK_WRITTEN_OFF")).toBe("Commission payback not collected");
     expect(formatNotificationAction("COMPASSIONATE_WAIVER_GRANTED")).toBe("Gift exception granted");
     expect(formatNotificationAction("JAD_ACCREDITATION_RECORDED")).toBe("JA&D accreditation recorded");

@@ -78,13 +78,20 @@ describe("admin navigation", () => {
   });
 
   it("shows Finance its own areas, property sales (IGP) and reports", () => {
-    expect(visibleIds("dev-finance")).toEqual(["dashboard", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "reports"]);
+    expect(visibleIds("dev-finance")).toEqual(["dashboard", "customers", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "reports"]);
+    // Finance reaches Customers only for the staff Customer Look Up (UI21).
+    expect(tabAccess("dev-finance", "customers")).toEqual(["lookup"]);
     expect(tabAccess("dev-finance", "sales")).toEqual(["igp"]);
     expect(tabAccess("dev-finance", "finance")).toEqual(["verification", "collections", "cancellations", "month-end-close", "reconciliation"]);
     // Payouts joined the Commissions tab as its month-end payout bar.
     expect(tabAccess("dev-finance", "commissions")).toEqual(["commissions", "recovery", "allowances"]);
     expect(tabAccess("dev-finance", "redemption")).toEqual(["bookings", "cardholder-points"]);
     expect(tabAccess("dev-finance", "reports")).toContain("collections");
+  });
+
+  it("shows the staff Customer Look Up to office roles only, never to sellers", () => {
+    for (const identityId of ["dev-super-admin", "dev-admin", "dev-clerk"]) expect(tabAccess(identityId, "customers"), identityId).toContain("lookup");
+    for (const identityId of ["dev-svd-a", "dev-ost-a1", "dev-hr"]) expect(tabAccess(identityId, "customers"), identityId).not.toContain("lookup");
   });
 
   it("keeps the former per-page rules for the Administrator", () => {

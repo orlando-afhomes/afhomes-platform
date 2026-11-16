@@ -7,6 +7,7 @@ import type { PrepareContractInput, UpdateContractInput } from "@/data/contracts
 import type { PaymentSchemeInput, ProductCreateInput, ProductUpdateInput } from "@/data/contracts/product-repository";
 import type { ReportExportInput } from "@/data/contracts/report-repository";
 import type { SubmitPaymentInput } from "@/data/contracts/payment-repository";
+import { CUSTOMER_LOOKUP_MIN_LENGTH } from "@/data/contracts/membership-repository";
 import type { StayPointsAction } from "@/data/contracts/stay-points-repository";
 import type { MockRepositories } from "@/data/mock/repositories";
 import { useMockRepositories } from "@/data/queries";
@@ -134,7 +135,7 @@ export function useUpdateContract() {
   return useBusinessMutation((r, v: { id: string; input: UpdateContractInput }) => r.contracts.update(v.id, v.input));
 }
 export type ContractAction =
-  | { id: string; action: "submit" }
+  | { id: string; action: "submit" | "confirmNonStandard" }
   | { id: string; action: "return" | "cancel"; reason: string }
   | { id: string; action: "requestCancel"; ground: ContractCancellationGround; reason: string }
   | { id: string; action: "decideCancel"; decision: "confirm" | "decline"; reason: string }
@@ -144,6 +145,7 @@ export function useContractAction() {
   return useBusinessMutation((r, v: ContractAction) => {
     switch (v.action) {
       case "submit": return r.contracts.submit(v.id);
+      case "confirmNonStandard": return r.contracts.confirmNonStandard(v.id);
       case "return": return r.contracts.returnForCorrection(v.id, v.reason);
       case "cancel": return r.contracts.cancel(v.id, v.reason);
       case "requestCancel": return r.contracts.requestCancellation(v.id, v.ground, v.reason);
@@ -158,7 +160,7 @@ export function useApproveDeal() {
   const repositories = useMockRepositories();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (contractId: string) => approveDeal(repositories, contractId),
+    mutationFn: (input: { contractId: string; approvalReference?: string }) => approveDeal(repositories, input.contractId, input.approvalReference),
     // A step that fails partway still leaves the earlier steps done.
     onSettled: () => invalidateBusiness(queryClient),
   });
@@ -208,6 +210,17 @@ export function usePaymentAction() {
 // Memberships
 export function useMemberships() {
   return useBusinessQuery("memberships", (r, signal) => r.memberships.list({ signal }));
+}
+/** Staff Customer Look Up (UI21): runs only from the minimum search length. */
+export function useCustomerLookup(term: string) {
+  const repositories = useMockRepositories();
+  const { identity } = useDevIdentity();
+  const trimmed = term.trim();
+  return useQuery({
+    queryKey: [...queryKeys.business.list("customer-lookup", identity.id), trimmed.toLowerCase()],
+    queryFn: ({ signal }) => repositories.memberships.lookupActiveVip(trimmed, { signal }),
+    enabled: trimmed.length >= CUSTOMER_LOOKUP_MIN_LENGTH,
+  });
 }
 export function useActivateMembership() {
   return useBusinessMutation((r, id: string) => r.memberships.activate(id));

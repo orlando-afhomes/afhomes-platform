@@ -74,7 +74,8 @@ describe("admin navigation matching", () => {
     const finance = getRoleAwareAdminNavigation(getDevIdentity("dev-finance"));
     expect(findSelectedKeys(finance, "/admin/organization")).toEqual([]);
     expect(findSelectedKeys(finance, "/admin")).toEqual(["dashboard"]);
-    expect(findSelectedKeys(finance, "/admin/customers")).toEqual([]);
+    // Finance now reaches Customers for the staff Customer Look Up (UI21); Settings stays closed.
+    expect(findSelectedKeys(finance, "/admin/vip-products")).toEqual([]);
     const inactive = getRoleAwareAdminNavigation(getDevIdentity("dev-inactive"));
     expect(findSelectedKeys(inactive, "/admin")).toEqual([]);
     expect(findSelectedKeys(finance, "/admin/finance")).toEqual(["finance"]);

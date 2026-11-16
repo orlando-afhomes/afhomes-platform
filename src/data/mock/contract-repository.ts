@@ -1,7 +1,7 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
-import type { ContractRepository, ContractView, PrepareContractInput, UpdateContractInput } from "@/data/contracts/contract-repository";
+import type { ContractRepository, ContractView, NonStandardTermsInput, PrepareContractInput, UpdateContractInput } from "@/data/contracts/contract-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
-import { buildSchedule, canPrepareVipContract, finalizationHolds, snapshotBenefits } from "@/modules/contracts/rules";
+import { buildNonStandardSchedule, buildSchedule, canPrepareVipContract, finalizationHolds, nonStandardPaymentCode, nonStandardStage, nonStandardTermErrors, snapshotBenefits } from "@/modules/contracts/rules";
 import { CANCELLATION_GROUNDS, CANCELLATION_GROUND_LABELS, type Contract, type ContractCancellationGround } from "@/modules/contracts/types";
 import { totalVerifiedCentavos } from "@/modules/finance/rules";
 import type { DevIdentity } from "@/modules/identity/types";
@@ -23,6 +23,22 @@ import { BROAD_ROLES, activeIdentityRoles } from "./scope";
 // once the sibling workstream lands it; this fallback is identical.
 function snapshotPaymentCode(scheme: PaymentScheme, tier: VipTierCode): string | null {
   return scheme.paymentCode ?? (scheme as { paymentCodeByTier?: Partial<Record<VipTierCode, string | null>> }).paymentCodeByTier?.[tier] ?? null;
+}
+
+/** Builds the Non-Standard schedule and payment code (doc 05 §10.2, item 32); refuses invalid terms. */
+function nonStandardBuild(terms: NonStandardTermsInput, reservationCentavos: number, reservationDate: string | null) {
+  const invalid = nonStandardTermErrors(terms, reservationCentavos);
+  const firstError = invalid.price ?? invalid.months ?? invalid.reason;
+  if (firstError) throw new Error(firstError);
+  const built = buildNonStandardSchedule(terms.priceCentavos, reservationCentavos, terms.months, reservationDate);
+  if (built.errors.length > 0) throw new Error(built.errors[0]);
+  return { ...built, paymentCode: nonStandardPaymentCode(terms.months) };
+}
+
+/** Clears both Non-Standard approvals, so a returned or changed contract is approved again (doc 05 §10.2 step 3). */
+function clearNonStandardApprovals(contract: Contract) {
+  if (!contract.nonStandard) return;
+  contract.nonStandard = { ...contract.nonStandard, approvedBy: null, approvedAt: null, approvalReference: null, selfApproved: false, confirmedBy: null, confirmedAt: null };
 }
 
 export function viewContract(store: MockStore, contract: Contract): ContractView {
@@ -124,23 +140,45 @@ export class MockContractRepository extends BusinessRepository implements Contra
       if (!DATE_ONLY.test(reservationDate)) throw new Error("The reservation date must be a valid date.");
       const built = buildSchedule(product, scheme, reservationDate);
       if (built.errors.length > 0) throw new Error(built.errors[0]);
+      // Doc 05 §10.2: a Non-Standard contract has its own price and monthly payments; the normal terms are kept as a snapshot.
+      let terms = { schedule: built.schedule, priceCentavos: built.priceCentavos, requiredInitialCentavos: built.requiredInitialCentavos, paymentCode: snapshotPaymentCode(scheme, product.code) };
+      let nonStandard: Contract["nonStandard"] = null;
+      if (classification === "N") {
+        if (!input.nonStandardTerms) throw new Error("Enter the Non-Standard total price, number of monthly payments and reason.");
+        const custom = nonStandardBuild(input.nonStandardTerms, scheme.reservationCentavos ?? 0, reservationDate);
+        terms = { schedule: custom.schedule, priceCentavos: input.nonStandardTerms.priceCentavos, requiredInitialCentavos: custom.requiredInitialCentavos, paymentCode: custom.paymentCode };
+        nonStandard = {
+          justification: input.nonStandardTerms.justification.trim(),
+          standardPriceCentavos: built.priceCentavos,
+          standardInstallments: built.schedule.filter((line) => line.purpose === "installment").length,
+          approvedBy: null,
+          approvedAt: null,
+          approvalReference: null,
+          selfApproved: false,
+          confirmedBy: null,
+          confirmedAt: null,
+        };
+      } else if (input.nonStandardTerms) {
+        throw new Error("Only a Non-Standard contract can have its own price and monthly payments.");
+      }
       const contract: Contract = {
         id: nextId(this.store, "contract", "ctr"),
         customerId: customer.id,
         ...(requestId ? { newPurchaseRequestId: requestId } : {}),
         productCode: product.code,
         productConfigVersion: product.configVersion,
-        priceCentavos: built.priceCentavos,
-        priceStatus: applicablePriceStatus(product, scheme),
+        priceCentavos: terms.priceCentavos,
+        // A Non-Standard price is stated by the approvers, so a catalog price conflict does not apply to it.
+        priceStatus: nonStandard ? "contract_stated" : applicablePriceStatus(product, scheme),
         schemeId: scheme.id,
         schemeLabel: scheme.label,
         schemeStatus: scheme.commercialStatus,
-        paymentCode: snapshotPaymentCode(scheme, product.code),
+        paymentCode: terms.paymentCode,
         classification,
         validityYears: product.validityYears,
         benefits: snapshotBenefits(product),
-        schedule: built.schedule,
-        requiredInitialCentavos: built.requiredInitialCentavos,
+        schedule: terms.schedule,
+        requiredInitialCentavos: terms.requiredInitialCentavos,
         raNumber: null,
         sellerMemberId,
         ...(input.referrerMemberId !== undefined ? { referrerMemberId: input.referrerMemberId } : {}),
@@ -157,6 +195,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
         // Standard Move A/B need no arrangement since the owner ruling; the field is
         // retained (null for new contracts) for historical contracts.
         arrangement: null,
+        ...(nonStandard ? { nonStandard } : {}),
         history: [],
       };
       this.applyDueDates(contract, input.dueDates);
@@ -172,11 +211,34 @@ export class MockContractRepository extends BusinessRepository implements Contra
       const contract = this.find(identity, id);
       if (!this.isPreparer(identity, contract)) throw new Error("Editing this contract is not allowed for this identity.");
       if (contract.status !== "draft" && contract.status !== "returned") throw new Error("Only a Draft or Returned contract can be edited.");
+      if (input.nonStandardTerms) this.changeNonStandardTerms(identity, contract, input.nonStandardTerms);
       this.applyDueDates(contract, input.dueDates);
       if (input.customerAccepted !== undefined) contract.customerAccepted = input.customerAccepted;
       this.event(contract, identity, "CONTRACT_EDITED");
       return viewContract(this.store, contract);
     });
+  }
+
+  /** New Non-Standard terms on a Draft or Returned contract: rebuild the schedule and clear both approvals (doc 05 §10.2 step 3). */
+  private changeNonStandardTerms(identity: DevIdentity, contract: Contract, input: NonStandardTermsInput) {
+    if (contract.classification !== "N" || !contract.nonStandard) throw new Error("Only a Non-Standard contract can have its own price and monthly payments.");
+    const sale = this.store.sales.find((item) => item.contractId === contract.id);
+    if (sale && sale.status !== "pending") throw new Error("The sale is no longer pending, so the Non-Standard price and payments can no longer change.");
+    // The payment code is part of an issued VIP Number, which is never renumbered (doc 06).
+    if (contract.vipNumber && nonStandardPaymentCode(input.months) !== contract.paymentCode) throw new Error("The VIP Number is already issued, so the number of monthly payments can no longer change.");
+    const reservationLine = contract.schedule.find((line) => line.purpose === "reservation");
+    const built = nonStandardBuild(input, reservationLine?.amountCentavos ?? 0, reservationLine?.dueDate ?? contract.createdAt);
+    const previous = contract.priceCentavos;
+    contract.priceCentavos = input.priceCentavos;
+    contract.schedule = built.schedule;
+    contract.requiredInitialCentavos = built.requiredInitialCentavos;
+    contract.paymentCode = built.paymentCode;
+    contract.nonStandard = { ...contract.nonStandard, justification: input.justification.trim() };
+    clearNonStandardApprovals(contract);
+    // Commission and sale measures use the Non-Standard price (doc 05 §10.2 rule 5).
+    if (sale) sale.valueCentavos = input.priceCentavos;
+    this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_NONSTANDARD_CHANGED, `${input.months} monthly payments`);
+    this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_NONSTANDARD_CHANGED, entityType: "contract", entityId: contract.id, previousValue: String(previous), newValue: String(input.priceCentavos), reason: input.justification.trim() });
   }
 
   async submit(id: string, options?: MockAsyncOptions): Promise<ContractView> {
@@ -230,13 +292,17 @@ export class MockContractRepository extends BusinessRepository implements Contra
 
   async returnForCorrection(id: string, reason: string, options?: MockAsyncOptions): Promise<ContractView> {
     return this.run(options, (identity) => {
-      this.require(identity, "contracts.approve", "Returning contracts is not allowed for this identity.");
+      // Finance may send back a Non-Standard contract waiting for its confirmation (doc 05 §10.2 step 3).
+      const admin = this.can(identity, "contracts.approve");
+      if (!admin && !this.can(identity, "finance.verify")) throw new Error("Returning contracts is not allowed for this identity.");
       if (!reason.trim()) throw new Error("A reason is required to return a contract.");
       const contract = this.find(identity, id);
+      if (!admin && nonStandardStage(contract) !== "finance") throw new Error("Returning contracts is not allowed for this identity.");
       if (contract.status !== "submitted" && contract.status !== "under_review") throw new Error("Only a contract in review can be returned.");
       const previous = contract.status;
       contract.status = "returned";
       contract.returnReason = reason.trim();
+      clearNonStandardApprovals(contract);
       this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_RETURNED, reason.trim());
       this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_RETURNED, entityType: "contract", entityId: contract.id, previousValue: previous, newValue: "returned", reason: reason.trim() });
       return viewContract(this.store, contract);
@@ -375,6 +441,46 @@ export class MockContractRepository extends BusinessRepository implements Contra
       contract.arrangement = { ...contract.arrangement, status: "approved", approvedBy: identity.id, approvedAt: nowIso(), approvalReference: reference };
       this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_ARRANGEMENT_APPROVED, reference);
       this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_ARRANGEMENT_APPROVED, entityType: "contract", entityId: contract.id, previousValue: "pending", newValue: "approved", reason: reference });
+      return viewContract(this.store, contract);
+    });
+  }
+
+  async approveNonStandard(id: string, approvalReference: string, options?: MockAsyncOptions): Promise<ContractView> {
+    return this.run(options, (identity) => {
+      this.require(identity, "contracts.approve", "Approving Non-Standard terms needs Administrator rights.");
+      const reference = approvalReference.trim();
+      if (!reference) throw new Error("Enter the signed approval reference.");
+      const contract = this.find(identity, id);
+      const terms = contract.nonStandard;
+      if (contract.classification !== "N" || !terms) throw new Error("This contract has no Non-Standard terms.");
+      if (contract.status !== "submitted" && contract.status !== "under_review") throw new Error("Only a submitted contract's Non-Standard terms can be approved.");
+      if (terms.approvedBy) throw new Error("The Non-Standard terms are already approved.");
+      // Owner authority rule (doc 05 item 17): the preparer may approve; the history shows it.
+      const selfApproved = contract.preparedBy === identity.id;
+      contract.nonStandard = { ...terms, approvedBy: identity.id, approvedAt: nowIso(), approvalReference: reference, selfApproved };
+      const note = [reference, selfApproved ? "Same person prepared and approved." : null].filter(Boolean).join(" · ");
+      this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_NONSTANDARD_APPROVED, note);
+      this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_NONSTANDARD_APPROVED, entityType: "contract", entityId: contract.id, previousValue: "waiting for Administrator", newValue: "waiting for Finance", reason: note });
+      return viewContract(this.store, contract);
+    });
+  }
+
+  async confirmNonStandard(id: string, options?: MockAsyncOptions): Promise<ContractView> {
+    return this.run(options, (identity) => {
+      this.require(identity, "finance.verify", "Only Finance can confirm Non-Standard terms.");
+      const contract = this.find(identity, id);
+      const terms = contract.nonStandard;
+      if (contract.classification !== "N" || !terms) throw new Error("This contract has no Non-Standard terms.");
+      if (contract.status !== "submitted" && contract.status !== "under_review") throw new Error("Only a submitted contract's Non-Standard terms can be confirmed.");
+      if (!terms.approvedBy) throw new Error("The Administrator must approve the Non-Standard terms first.");
+      if (terms.confirmedBy) throw new Error("The Non-Standard terms are already confirmed.");
+      // Doc 05 §10.2: only the Super Administrator may do both steps alone.
+      const sameApprover = terms.approvedBy === identity.id;
+      if (sameApprover && !activeIdentityRoles(identity).includes("super_admin")) throw new Error("Someone else must confirm terms you approved. Only the Super Administrator may do both steps.");
+      contract.nonStandard = { ...terms, confirmedBy: identity.id, confirmedAt: nowIso() };
+      const note = sameApprover ? "Same person approved and confirmed (Super Administrator)." : null;
+      this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_NONSTANDARD_CONFIRMED, note);
+      this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_NONSTANDARD_CONFIRMED, entityType: "contract", entityId: contract.id, previousValue: "waiting for Finance", newValue: "approved", ...(note ? { reason: note } : {}) });
       return viewContract(this.store, contract);
     });
   }

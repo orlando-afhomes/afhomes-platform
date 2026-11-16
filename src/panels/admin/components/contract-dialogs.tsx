@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { useContractAction, useUpdateContract } from "@/data/business-queries";
+import { useApproveDeal, useContractAction, useUpdateContract } from "@/data/business-queries";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import { CANCELLATION_GROUNDS, CANCELLATION_GROUND_LABELS, type ContractCancellationGround } from "@/modules/contracts/types";
-import { CheckboxField, SelectField, StandardDateField, TextAreaField } from "@/shared/forms/modern";
+import { CheckboxField, SelectField, StandardDateField, TextAreaField, TextField } from "@/shared/forms/modern";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
+import { reportHeldDeal } from "../actions/sales-contract-actions";
+import { NonStandardTermsList } from "./contract-sections";
 
 type DialogProps = { contract: ContractView; onClose: () => void };
 type ReasonProps = DialogProps & { open: boolean };
@@ -61,6 +63,36 @@ export function RequestCancellationDialog({ contract, onClose }: DialogProps) {
 export function ReturnContractDialog({ contract, open, onClose }: ReasonProps) {
   const action = useContractAction();
   return <ReasonDialog open={open} title="Return for Correction" description="The preparer can correct the contract and submit it again." confirmText="Return" tone="warning" successText="Contract returned." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "return", reason })} />;
+}
+
+/** Finance sends back Non-Standard terms; both approvals are cleared (doc 05 §10.2 step 3). */
+export function SendBackNonStandardDialog({ contract, open, onClose }: ReasonProps) {
+  const action = useContractAction();
+  return <ReasonDialog open={open} title="Send Back Non-Standard Terms" description="The contract goes back to the preparer to fix the price, payments or reason. The Administrator and Finance then approve it again." confirmText="Send Back" tone="warning" successText="Contract sent back." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "return", reason })} />;
+}
+
+/** "Approve deal" for Non-Standard terms not yet approved: shows the difference and asks for the signed approval reference (doc 05 §10.2 step 1). */
+export function ApproveNonStandardDealDialog({ contract, onClose }: DialogProps) {
+  const approveDeal = useApproveDeal();
+  const [reference, setReference] = useState("");
+  const [error, setError] = useState<string | undefined>();
+  const send = async () => {
+    if (!reference.trim()) return setError("Enter the signed approval reference.");
+    setError(undefined);
+    try {
+      reportHeldDeal(await approveDeal.mutateAsync({ contractId: contract.id, approvalReference: reference.trim() }));
+      toast.success("Deal approved.");
+      onClose();
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Could not approve the deal.");
+    }
+  };
+  return (
+    <FormDialog open title="Approve This Deal?" description="This contract has Non-Standard terms. Approving records your approval of them, approves the customer and the sale, and issues the VIP Number. Finance then confirms the terms before the contract is finalized." submitText="Approve Deal" submitVariant="success" pending={approveDeal.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+      <NonStandardTermsList contract={contract} />
+      <TextField label="Signed approval reference" required value={reference} onChange={setReference} maxLength={120} />
+    </FormDialog>
+  );
 }
 
 export function CancelContractDialog({ contract, open, onClose }: ReasonProps) {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PaymentScheme, VipProduct } from "@/modules/vip/types";
-import { buildSchedule, preferOpenContract } from "./rules";
+import { buildNonStandardSchedule, buildSchedule, finalizationHolds, nonStandardPaymentCode, nonStandardTermErrors, preferOpenContract } from "./rules";
+import type { Contract } from "./types";
 import { paymentSchemeTierTerms } from "@/modules/vip/rules";
 
 const product = (code: "B1" | "S1" | "G1", priceCentavos: number) => ({ code, name: code, priceCentavos }) as VipProduct;
@@ -95,5 +96,54 @@ describe("buildSchedule", () => {
   it("produces no schedule for a scheme without approved terms or tier", () => {
     expect(buildSchedule(product("B1", 7_200_000), { ...t04, commercialStatus: "pending_owner_decision" }).schedule).toEqual([]);
     expect(buildSchedule(product("B1", 7_200_000), { ...t04, applicableTiers: ["S1"] }).errors).toHaveLength(1);
+  });
+});
+
+describe("buildNonStandardSchedule (doc 05 section 10.2)", () => {
+  const total = (lines: { amountCentavos: number }[]) => lines.reduce((sum, line) => sum + line.amountCentavos, 0);
+
+  it("splits the price after the reservation fee into equal monthly payments and puts leftover centavos on the last", () => {
+    const built = buildNonStandardSchedule(20_000_001, 1_000_000, 3, "2026-01-31");
+    expect(built.errors).toEqual([]);
+    expect(built.schedule.map((line) => [line.label, line.amountCentavos, line.dueDate])).toEqual([
+      ["Reservation fee", 1_000_000, "2026-01-31"],
+      ["MA1", 6_333_333, "2026-02-28"],
+      ["MA2", 6_333_333, "2026-03-31"],
+      ["MA3", 6_333_335, "2026-04-30"],
+    ]);
+    expect(total(built.schedule)).toBe(20_000_001);
+    expect(built.requiredInitialCentavos).toBe(7_333_333);
+  });
+
+  it("supports 1 and 36 months with an exact total", () => {
+    const one = buildNonStandardSchedule(15_000_000, 1_000_000, 1);
+    expect(one.schedule.map((line) => line.amountCentavos)).toEqual([1_000_000, 14_000_000]);
+    const many = buildNonStandardSchedule(39_000_000, 0, 36);
+    expect(many.schedule).toHaveLength(36);
+    expect(total(many.schedule)).toBe(39_000_000);
+    expect(many.schedule[0]).toMatchObject({ label: "MA1", purpose: "installment", dueDate: null });
+    expect(nonStandardPaymentCode(1)).toBe("T01");
+    expect(nonStandardPaymentCode(36)).toBe("T36");
+  });
+
+  it("refuses a price at or below the reservation fee, fractional centavos and months outside 1 to 36", () => {
+    expect(buildNonStandardSchedule(1_000_000, 1_000_000, 4).errors).toHaveLength(1);
+    expect(buildNonStandardSchedule(10_000_000.5, 0, 4).errors).toHaveLength(1);
+    expect(buildNonStandardSchedule(10_000_000, 0, 0).errors).toHaveLength(1);
+    expect(buildNonStandardSchedule(10_000_000, 0, 37).errors).toHaveLength(1);
+    expect(buildNonStandardSchedule(10_000_000, 0, 2.5).errors).toHaveLength(1);
+    expect(nonStandardTermErrors({ priceCentavos: 10_000_000, months: 4, justification: "  " }, 0)).toEqual({ reason: expect.any(String) });
+  });
+});
+
+describe("finalizationHolds for Non-Standard contracts", () => {
+  const base = { priceStatus: "contract_stated", schemeStatus: "configured", arrangement: null, schedule: [{ seq: 1 }], customerAccepted: true, classification: "N" } as unknown as Contract;
+  const terms = { justification: "Reason", standardPriceCentavos: 1, standardInstallments: 4, approvedBy: null, approvedAt: null, approvalReference: null, selfApproved: false, confirmedBy: null, confirmedAt: null };
+
+  it("names the missing step and clears once Finance confirms", () => {
+    expect(finalizationHolds({ ...base, nonStandard: terms })).toEqual(["Non-Standard terms need Administrator approval."]);
+    expect(finalizationHolds({ ...base, nonStandard: { ...terms, approvedBy: "dev-admin" } })).toEqual(["Non-Standard terms need Finance confirmation."]);
+    expect(finalizationHolds({ ...base, nonStandard: { ...terms, approvedBy: "dev-admin", confirmedBy: "dev-finance" } })).toEqual([]);
+    expect(finalizationHolds({ ...base, classification: "S" })).toEqual([]);
   });
 });

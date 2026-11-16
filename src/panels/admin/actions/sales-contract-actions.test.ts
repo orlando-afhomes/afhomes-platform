@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   buildContractMenuProps,
   buildSalesMenuProps,
+  canConfirmNonStandard,
+  needsNonStandardApproval,
   type ContractMenuCallbacks,
   type ContractMenuContract,
   type ContractMenuPerms,
@@ -24,6 +26,7 @@ function contractFixture(overrides: Partial<ContractMenuContract> = {}): Contrac
     status: "submitted",
     customerName: "Rosa Cruz",
     productCode: "G1",
+    classification: "S",
     paymentCode: null,
     holds: [],
     sale: null,
@@ -39,6 +42,8 @@ const allContractCallbacks = (): Required<ContractMenuCallbacks> => ({
   onReturn: vi.fn(),
   onRecordPaymentCode: vi.fn(),
   onApproveArrangement: vi.fn(),
+  onConfirmNonStandard: vi.fn(),
+  onSendBackNonStandard: vi.fn(),
   onCancel: vi.fn(),
   onRequestCancellation: vi.fn(),
   onMarkDefaulted: vi.fn(),
@@ -185,5 +190,38 @@ describe("buildContractMenuProps", () => {
     const menu = buildContractMenuProps(contractFixture(), reviewerPerms, {});
     expect(menu.extraItems).toEqual([]);
     expect(menu.onEdit).toBeUndefined();
+  });
+});
+
+describe("Non-Standard approval actions (doc 05 section 10.2)", () => {
+  const terms = { justification: "Long-time partner", standardPriceCentavos: 24_000_000, standardInstallments: 4, approvalReference: null, selfApproved: false, confirmedBy: null, confirmedAt: null };
+  const waitingAdmin = contractFixture({ classification: "N", nonStandard: { ...terms, approvedBy: null, approvedAt: null }, holds: ["Non-Standard terms need Administrator approval."] });
+  const waitingFinance = contractFixture({ classification: "N", nonStandard: { ...terms, approvedBy: "dev-admin", approvedAt: "2026-11-16T01:00:00Z", approvalReference: "MEMO-1" }, holds: ["Non-Standard terms need Finance confirmation."] });
+  const financePerms: ContractMenuPerms = { canPrepare: false, canApprove: false, canApproveCustomer: false, canSubmitPayment: false, isSuperAdmin: false, hasVerifiedMoney: false, hasActiveMembership: false, hasCard: false };
+
+  it("asks for the signed approval reference only while the Administrator step is open", () => {
+    expect(needsNonStandardApproval(waitingAdmin)).toBe(true);
+    expect(needsNonStandardApproval(waitingFinance)).toBe(false);
+    expect(needsNonStandardApproval(contractFixture())).toBe(false);
+  });
+
+  it("shows Confirm and Send Back only to a finance.verify user on a contract waiting for Finance", () => {
+    const finance = { id: "dev-finance", canVerify: true, isSuperAdmin: false };
+    expect(canConfirmNonStandard(waitingFinance, finance)).toBe(true);
+    expect(canConfirmNonStandard(waitingAdmin, finance)).toBe(false);
+    expect(canConfirmNonStandard(waitingFinance, { ...finance, canVerify: false })).toBe(false);
+    // Whoever approved step 1 may confirm only as Super Administrator.
+    expect(canConfirmNonStandard(waitingFinance, { id: "dev-admin", canVerify: true, isSuperAdmin: false })).toBe(false);
+    expect(canConfirmNonStandard(waitingFinance, { id: "dev-admin", canVerify: true, isSuperAdmin: true })).toBe(true);
+
+    const keys = (contract: ContractMenuContract, allowed: boolean) => keysOf(buildContractMenuProps(contract, { ...financePerms, canConfirmNonStandard: allowed }, allContractCallbacks()));
+    expect(keys(waitingFinance, true)).toEqual(["confirm-nonstandard", "send-back-nonstandard"]);
+    expect(keys(waitingFinance, false)).toEqual([]);
+  });
+
+  it("keeps Approve deal open for a Non-Standard contract whose VIP Number is already issued", () => {
+    const approved = { status: "pending" as const, approval: { approvedAt: "2026-01-01", approvedBy: "dev-admin" }, defaultEligible: false };
+    const reviewer: ContractMenuPerms = { ...financePerms, canApprove: true, canApproveCustomer: true };
+    expect(keysOf(buildContractMenuProps({ ...waitingAdmin, vipNumber: "26111600001S1T12N", saleView: approved }, reviewer, allContractCallbacks()))).toContain("approve-deal");
   });
 });

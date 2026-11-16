@@ -2,8 +2,10 @@
 
 import { useId, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Award, Calendar, CalendarCheck, CalendarDays, Check, Clock, CreditCard, Diamond, FileText, Hourglass, IdCard, Layers, Receipt, Star, Tag, User, UserCheck, type LucideIcon } from "lucide-react";
+import { Award, Calendar, CalendarCheck, CalendarDays, Check, Clock, CreditCard, Diamond, FileText, Hourglass, IdCard, Layers, Receipt, Scale, Star, Tag, User, UserCheck, type LucideIcon } from "lucide-react";
 import { useContracts, useMemberships, usePayments } from "@/data/business-queries";
+import { DEV_IDENTITIES } from "@/data/mock/dev-identities";
+import { nonStandardStage } from "@/modules/contracts/rules";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import type { PaymentView } from "@/data/contracts/payment-repository";
 import { deriveMilestones } from "@/modules/finance/milestones";
@@ -207,6 +209,47 @@ export function ContractTermsSection({ record }: { record: ContractRecord }) {
           );
         })}
       </dl>
+    </ContractCard>
+  );
+}
+
+function actorName(id: string | null): string {
+  return DEV_IDENTITIES.find((identity) => identity.id === id)?.displayName ?? id ?? EMPTY;
+}
+
+function paymentsText(count: number): string {
+  return count === 0 ? "Full payment" : `${count} monthly payment${count === 1 ? "" : "s"}`;
+}
+
+/** Normal vs Non-Standard price and payments, the reason, and where the two approvals stand (doc 05 §10.2). */
+export function NonStandardTermsList({ contract }: { contract: ContractView }) {
+  const terms = contract.nonStandard;
+  if (!terms) return null;
+  const stage = nonStandardStage(contract);
+  const months = contract.schedule.filter((line) => line.purpose === "installment").length;
+  const approved = terms.approvedBy ? `Approved by ${actorName(terms.approvedBy)} on ${formatDate(terms.approvedAt)} · ${terms.approvalReference ?? EMPTY}${terms.selfApproved ? " · same person prepared and approved" : ""}` : null;
+  const confirmed = terms.confirmedBy ? `Confirmed by ${actorName(terms.confirmedBy)} on ${formatDate(terms.confirmedAt)}${terms.confirmedBy === terms.approvedBy ? " · same person approved and confirmed" : ""}` : null;
+  return (
+    <DetailList>
+      <DetailRow term="Normal price"><Money value={terms.standardPriceCentavos} /></DetailRow>
+      <DetailRow term="This price"><Money value={contract.priceCentavos} /></DetailRow>
+      <DetailRow term="Normal payments">{paymentsText(terms.standardInstallments)}</DetailRow>
+      <DetailRow term="These payments">{paymentsText(months)}</DetailRow>
+      <DetailRow term="Reason">{terms.justification}</DetailRow>
+      <DetailRow term="Status">
+        <span className="tw:font-medium">{stage === "admin" ? "Waiting for Administrator" : stage === "finance" ? "Waiting for Finance" : "Approved"}</span>
+        {approved ? <span className="tw:block tw:text-sm tw:text-muted-foreground">{approved}</span> : null}
+        {confirmed ? <span className="tw:block tw:text-sm tw:text-muted-foreground">{confirmed}</span> : null}
+      </DetailRow>
+    </DetailList>
+  );
+}
+
+export function ContractNonStandardSection({ contract }: { contract: ContractView }) {
+  if (!contract.nonStandard) return null;
+  return (
+    <ContractCard icon={Scale} title="Non-Standard Terms">
+      <NonStandardTermsList contract={contract} />
     </ContractCard>
   );
 }

@@ -77,7 +77,28 @@ export type Contract = {
    * retained (null for new contracts) for historical contracts only.
    */
   arrangement?: SpecialArrangement | null;
+  /** Non-Standard terms and their two approvals (doc 05 §10.2); absent or null for Standard contracts. */
+  nonStandard?: NonStandardTerms | null;
   history: ContractEvent[];
+};
+
+/**
+ * Non-Standard (N) terms (doc 05 §10.2, item 32). The normal price and number of
+ * payments are a snapshot of the chosen card level and payment plan. Step 1: the
+ * Administrator or Super Administrator approves with the signed-approval
+ * reference. Step 2: Finance confirms. A return clears both steps.
+ */
+export type NonStandardTerms = {
+  justification: string;
+  standardPriceCentavos: number;
+  standardInstallments: number;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  approvalReference: string | null;
+  /** The approver also prepared the contract (allowed; the history shows it). */
+  selfApproved: boolean;
+  confirmedBy: string | null;
+  confirmedAt: string | null;
 };
 
 /** Written approval of a Move arrangement by Super Admin (deck slide 16; owner decision 2026-11-09). Legacy: retained for historical contracts; new contracts carry no arrangement. */

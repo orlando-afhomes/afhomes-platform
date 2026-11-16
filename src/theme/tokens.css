@@ -18,6 +18,9 @@
   --color-accent-subtle: #f7f0df;
   --color-accent-light: #dcc06a;
 
+  /* Logo colours (coral, pink, teal, green) for thin brand accents such as the top bar line. */
+  --gradient-brand-logo: linear-gradient(90deg, #f7a25f 0%, #ec4a8a 36%, #29a9c7 68%, #3bb15a 100%);
+
   --color-on-dark: #ffffff;
   --color-on-dark-muted: rgba(255, 255, 255, 0.84);
   --color-on-dark-faint: rgba(255, 255, 255, 0.64);

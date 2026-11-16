@@ -27,11 +27,18 @@ export type PrepareContractInput = {
   /** Optional due dates per schedule sequence (YYYY-MM-DD); they override the derived dates. */
   dueDates?: Record<number, string>;
   customerAccepted: boolean;
+  /** Required for a Non-Standard (N) contract and refused for Standard (doc 05 §10.2). */
+  nonStandardTerms?: NonStandardTermsInput;
 };
+
+/** Non-Standard price, number of monthly payments and reason (doc 05 §10.2). */
+export type NonStandardTermsInput = { priceCentavos: number; months: number; justification: string };
 
 export type UpdateContractInput = {
   dueDates?: Record<number, string>;
   customerAccepted?: boolean;
+  /** New Non-Standard terms; allowed only while Draft or Returned, and they clear both approvals. */
+  nonStandardTerms?: NonStandardTermsInput;
 };
 
 export interface ContractRepository {
@@ -53,6 +60,10 @@ export interface ContractRepository {
   recordSignedAgreement(id: string, options?: MockAsyncOptions): Promise<ContractView>;
   /** Super Admin records the written approval of a Move arrangement (owner decision 2026-11-09). */
   approveArrangement(id: string, approvalReference: string, options?: MockAsyncOptions): Promise<ContractView>;
+  /** Step 1 of doc 05 §10.2: the Administrator or Super Administrator approves Non-Standard terms with the signed-approval reference. */
+  approveNonStandard(id: string, approvalReference: string, options?: MockAsyncOptions): Promise<ContractView>;
+  /** Step 2 of doc 05 §10.2: Finance confirms the Non-Standard price and payments. */
+  confirmNonStandard(id: string, options?: MockAsyncOptions): Promise<ContractView>;
   /** Auditable recode of the Card ID payment segment for pre-resolution Move contracts; new contracts snapshot it at prepare. */
   resolvePaymentCode(id: string, approvalReference: string, options?: MockAsyncOptions): Promise<ContractView>;
 }

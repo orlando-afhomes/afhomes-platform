@@ -650,6 +650,23 @@ describe("customer application wizard scheme pricing", () => {
     expect(await screen.findByRole("heading", { name: "Personal Details" })).toBeInTheDocument();
   });
 
+  it("asks for the Non-Standard price, monthly payments and reason only for a Non-Standard contract", async () => {
+    const user = userEvent.setup();
+    await startApplication(user, /gold vip/i);
+    await user.click(within(screen.getByRole("radiogroup", { name: "Payment plan" })).getByRole("radio", { name: /4-month/i }));
+    const classification = screen.getByRole("radiogroup", { name: "Contract type" });
+    expect(screen.queryByLabelText(/total price/i)).toBeNull();
+    await user.click(within(classification).getByRole("radio", { name: "Non-Standard (N)" }));
+    expect(screen.getByLabelText(/total price/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/number of monthly payments/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^reason/i)).toBeInTheDocument();
+    // Continue stays on the step until the terms are filled in.
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    expect(await screen.findByText("Enter a total price above the reservation fee.")).toBeInTheDocument();
+    await user.click(within(classification).getByRole("radio", { name: "Standard (S)" }));
+    expect(screen.queryByLabelText(/total price/i)).toBeNull();
+  });
+
   it("shows the chosen scheme in the plan summary once a scheme is picked", async () => {
     const user = userEvent.setup();
     await startApplication(user, /gold vip/i);
@@ -1803,6 +1820,18 @@ describe("gold contract preview and tiles", () => {
     expect(screen.getByText("₱302,000.00")).toBeInTheDocument();
   });
 
+  it("shows the Non-Standard fields in the prepare dialog only for a Non-Standard customer", async () => {
+    const { unmount } = show("dev-admin", <PrepareContractDialog customer={goldCustomer("scheme-installment-4m")} open onClose={() => {}} />);
+    expect(await screen.findByRole("heading", { name: "Payment Schedule" })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/total price/i)).toBeNull();
+    unmount();
+    show("dev-admin", <PrepareContractDialog customer={{ ...goldCustomer("scheme-installment-4m"), contractClassification: "N" }} open onClose={() => {}} />);
+    expect(await screen.findByLabelText(/total price/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/number of monthly payments/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^reason/i)).toBeInTheDocument();
+    expect(screen.getByText(/Normal price: ₱390,000\.00/)).toBeInTheDocument();
+  });
+
   it("previews the exact installment schedule lines from buildSchedule in the prepare dialog", async () => {
     show("dev-admin", <PrepareContractDialog customer={goldCustomer("scheme-installment-4m")} open onClose={() => {}} />);
     expect(await screen.findByRole("heading", { name: "Payment Schedule" })).toBeInTheDocument();
@@ -1825,8 +1854,20 @@ describe("public accreditation verification", () => {
   it("returns one generic failure and never discovers by name", async () => {
     const user = userEvent.setup();
     show("dev-ost-a1", <AccreditationVerificationPage />);
-    await user.type(screen.getByLabelText(/accreditation number/i), "AAI26100001");
-    await user.click(screen.getByRole("button", { name: "Verify" }));
+    // A name is not an AA number: refused before any step (UI21).
+    await user.type(screen.getByRole("textbox", { name: /AA number/ }), "Juan Cruz");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+    expect(screen.getByText("Enter a valid AA number.")).toBeInTheDocument();
+    await user.clear(screen.getByRole("textbox", { name: /AA number/ }));
+    await user.type(screen.getByRole("textbox", { name: /AA number/ }), "AAI26100001");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+    await user.click(await screen.findByRole("checkbox"));
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    await screen.findByRole("dialog", { name: "Your contact details" });
+    await user.type(screen.getByLabelText(/^Name/), "Pedro Reyes");
+    await user.type(screen.getByLabelText(/^Email/), "pedro@example.com");
+    await user.type(screen.getByLabelText(/^Mobile/), "09171234567");
+    await user.click(screen.getByRole("button", { name: "Verify accreditation" }));
     await waitFor(() => expect(screen.getByText(/no active accreditation was found/i)).toBeInTheDocument());
   });
 });

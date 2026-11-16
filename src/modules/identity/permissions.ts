@@ -71,6 +71,8 @@ export type AdminOperation =
   | "customers.approve"
   /** Customer import and export (personal data in bulk): Admin and Super Administrator only. */
   | "customers.import"
+  /** Staff Customer Look Up of active VIP cards (Super Administrator, Administrator, Clerk, Finance; UI21). Never public (R11). */
+  | "customers.lookup"
   | "contracts.prepare"
   | "payments.submit"
   | "igp.enter"
@@ -240,6 +242,7 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "customers.draft",
     "customers.approve",
     "customers.import",
+    "customers.lookup",
     "contracts.prepare",
     "payments.submit",
     "igp.enter",
@@ -280,6 +283,7 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "customers.draft",
     "customers.approve",
     "customers.import",
+    "customers.lookup",
     "contracts.prepare",
     "payments.submit",
     "igp.enter",
@@ -295,8 +299,9 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
   ],
   hr: ["organization.departments.manage", "organization.staff.manage"],
   // Doc 01 §3.7/§3.8: the Clerk enters and completes; never approves (no finance.verify, contracts.approve, membership.activate).
-  clerk: ["customers.manage", "customers.draft", "contracts.prepare", "payments.submit", "stay-points.enter", "commission.payout.prepare", "igp.enter", "promo-points.use"],
+  clerk: ["customers.manage", "customers.draft", "customers.lookup", "contracts.prepare", "payments.submit", "stay-points.enter", "commission.payout.prepare", "igp.enter", "promo-points.use"],
   finance: [
+    "customers.lookup",
     "finance.verify",
     "finance.refund",
     "finance.reconcile",

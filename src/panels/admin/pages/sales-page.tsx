@@ -156,7 +156,7 @@ export function SalesTab() {
           getRowLabel={(row) => `Open the sale for ${row.customerName}`}
           rowActions={referredView ? undefined : (row) => {
             const menu = buildSalesMenuProps(row, { canApprove, canApproveCustomer }, {
-              onApproveDeal: () => confirmRun(approveDealConfirm(() => approveDeal.mutateAsync(row.contractId))),
+              onApproveDeal: () => confirmRun(approveDealConfirm(() => approveDeal.mutateAsync({ contractId: row.contractId }))),
               onMarkDefaulted: () => setDefaultSale(row),
             });
             return <RowActionsMenu {...menu} extraItems={[...menu.extraItems, ...((canApprove || canPrepare) && (row.status === "pending" || row.status === "confirmed") ? [{ key: "correct-commission", label: "Correct Commission", tone: "warning" as const, onClick: () => setCorrection(row) }] : [])]} />;

@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import { Ban, ChartColumn, Coins, HandCoins, Landmark, ListChecks, PieChart, ReceiptText, ShieldAlert, Wallet } from "lucide-react";
+import { Ban, ChartColumn, Coins, HandCoins, Landmark, ListChecks, PieChart, ReceiptText, Scale, ShieldAlert, Wallet } from "lucide-react";
 import { useEffectiveModuleIds } from "@/data/queries";
 import { useCommissions, useContracts, useMemberships, useOperation, usePayments } from "@/data/business-queries";
 import { periodCollections } from "@/modules/finance/rules";
+import { nonStandardStage } from "@/modules/contracts/rules";
 import { Money } from "@/shared/components/modern/money";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { DashboardActivityList } from "@/shared/components/dashboard/dashboard-activity-list";
@@ -237,6 +238,17 @@ export function FinanceDashboard() {
                     tone="violet"
                     loading={commissions.isLoading}
                     error={commissions.error}
+                  />
+                ) : null}
+                {queues.payments ? (
+                  <DashboardPendingItem
+                    href="/admin/finance?tab=collections&state=nonstandard"
+                    label="Non-Standard Terms to Confirm"
+                    count={(contracts.data ?? []).filter((item) => (item.status === "submitted" || item.status === "under_review") && nonStandardStage(item) === "finance").length}
+                    icon={Scale}
+                    tone="info"
+                    loading={contracts.isLoading}
+                    error={contracts.error}
                   />
                 ) : null}
                 {queues.cancellations ? (

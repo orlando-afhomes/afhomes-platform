@@ -21,7 +21,6 @@ export interface PaymentRepository {
   submit(input: SubmitPaymentInput, options?: MockAsyncOptions): Promise<PaymentView>;
   /** Corrects a Returned payment; the original submission stays in history. */
   resubmit(id: string, input: Partial<Omit<SubmitPaymentInput, "contractId">>, options?: MockAsyncOptions): Promise<PaymentView>;
-  startReview(id: string, options?: MockAsyncOptions): Promise<PaymentView>;
   verify(id: string, options?: PaymentVerificationOptions): Promise<PaymentView>;
   reject(id: string, reason: string, options?: MockAsyncOptions): Promise<PaymentView>;
   returnForCorrection(id: string, reason: string, options?: MockAsyncOptions): Promise<PaymentView>;

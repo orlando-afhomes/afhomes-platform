@@ -4,5 +4,5 @@ import { redirectToAreaTab, type AreaRedirectPageProps } from "@/panels/admin/ar
 export const instant = false;
 
 export default function Page({ searchParams }: AreaRedirectPageProps) {
-  return redirectToAreaTab("organization", "lists", searchParams);
+  return redirectToAreaTab("vip-products", "lists", searchParams);
 }

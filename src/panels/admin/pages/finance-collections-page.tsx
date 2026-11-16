@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Wallet } from "lucide-react";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
-import { useContracts, usePayments } from "@/data/business-queries";
+import { useContracts, useMemberships, usePayments } from "@/data/business-queries";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import { collectionStateFor, type CollectionState } from "@/modules/finance/rules";
 import { manilaToday } from "@/shared/lib/dates";
@@ -27,6 +27,7 @@ const COLLECTION_FILTERS = [
   { value: "overdue", label: "Overdue" },
   { value: "outstanding", label: "Outstanding" },
   { value: "settled", label: "Fully Settled" },
+  { value: "on-hold", label: "On financial hold" },
 ];
 
 /** Collections tab of the Finance area ([finance]). */
@@ -34,6 +35,7 @@ export function FinanceCollectionsPanel() {
   const router = useRouter();
   const payments = usePayments();
   const contracts = useContracts();
+  const memberships = useMemberships();
   const contractHref = useContractHref();
   const today = manilaToday();
   const [search, setSearch] = useState("");
@@ -46,10 +48,12 @@ export function FinanceCollectionsPanel() {
     [contracts.data, allPayments, today],
   );
   const receivables = allCollections.reduce((sum, row) => sum + row.balance, 0);
+  const heldContractIds = useMemo(() => new Set((memberships.data ?? []).filter((item) => item.financialHold).map((item) => item.contractId)), [memberships.data]);
   const collections = useMemo<CollectionRow[]>(() => {
     const term = search.trim().toLowerCase();
-    return allCollections.filter((row) => (term === "" || row.contract.customerName.toLowerCase().includes(term)) && (collectionState === "all" || row.state === collectionState));
-  }, [allCollections, search, collectionState]);
+    const matchesState = (row: CollectionRow) => collectionState === "all" || (collectionState === "on-hold" ? heldContractIds.has(row.contract.id) : row.state === collectionState);
+    return allCollections.filter((row) => (term === "" || row.contract.customerName.toLowerCase().includes(term)) && matchesState(row));
+  }, [allCollections, search, collectionState, heldContractIds]);
 
   const columns = useMemo<ColumnDef<CollectionRow, unknown>[]>(
     () => [

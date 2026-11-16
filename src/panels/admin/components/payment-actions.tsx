@@ -1,16 +1,15 @@
 "use client";
 
 import { useState, type ReactElement, type ReactNode } from "react";
-import { useOperation, usePaymentAction, usePayments, useSubmitPayment } from "@/data/business-queries";
+import { useContracts, useOperation, usePaymentAction, usePayments, useSubmitPayment } from "@/data/business-queries";
 import type { PaymentView } from "@/data/contracts/payment-repository";
 import { canCorrectPayment } from "@/data/mock/scope";
 import { useReferenceEntries } from "@/data/settings-queries";
-import { adjustableCentavos, adjustmentTotalCentavos, findSuggestedMatch } from "@/modules/finance/rules";
+import { adjustableCentavos, adjustmentTotalCentavos, buildScheduleState, findSuggestedMatch } from "@/modules/finance/rules";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { PAYMENT_METHODS, PAYMENT_PURPOSES, type PaymentMethod, type PaymentPurpose } from "@/modules/finance/types";
 import { manilaToday } from "@/shared/lib/dates";
 import { centavosToInputText, formatPeso, parsePesoToCentavos } from "@/shared/lib/money";
-import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { MoneyField, SelectField, StandardDateField, TextAreaField, TextField } from "@/shared/forms/modern";
 import { REFERENCE_LIMITS, cleanReferenceNumber, referencePolicyFor, validateReferenceNumber, type ReferencePolicy } from "@/shared/forms/validation/reference-number";
 import { Button } from "@/shared/ui/button";
@@ -34,11 +33,27 @@ function referenceHint(policy: ReferencePolicy): string {
   return "Letters, digits, spaces, and , . / - only.";
 }
 
+/** The next unpaid schedule line of a contract (purpose and remaining amount), or null when it cannot be derived. */
+function useNextUnpaidLine(contractId: string): { purpose: PaymentPurpose; amountCentavos: number } | null {
+  const contracts = useContracts();
+  const payments = usePayments();
+  const contract = contracts.data?.find((item) => item.id === contractId);
+  if (!contract || !payments.data) return null;
+  const state = buildScheduleState(contract, payments.data.filter((item) => item.contractId === contractId), manilaToday());
+  const line = state.find((item) => item.status !== "paid");
+  const purpose = line ? contract.schedule.find((item) => item.seq === line.seq)?.purpose : undefined;
+  return line && purpose ? { purpose, amountCentavos: line.amountCentavos - line.allocatedCentavos } : null;
+}
+
 /** Submit a payment for a contract (Staff, IST and OST for their own scope). Only the receipt file name is kept. */
 export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId: string; open: boolean; onClose: () => void }) {
   const submit = useSubmitPayment();
-  const [purpose, setPurpose] = useState<PaymentPurpose>("installment");
-  const [amount, setAmount] = useState("");
+  const suggestion = useNextUnpaidLine(contractId);
+  // Purpose and amount follow the next unpaid schedule line until the user edits them.
+  const [purposeEdit, setPurpose] = useState<PaymentPurpose | null>(null);
+  const [amountEdit, setAmount] = useState<string | null>(null);
+  const purpose = purposeEdit ?? suggestion?.purpose ?? "installment";
+  const amount = amountEdit ?? (suggestion ? centavosToInputText(suggestion.amountCentavos) : "");
   const [method, setMethod] = useState<PaymentMethod>("Bank Transfer");
   const [paidDate, setPaidDate] = useState(manilaToday());
   const [reference, setReference] = useState("");
@@ -66,7 +81,8 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
       await submit.mutateAsync({ contractId, purpose, amountCentavos, method, paidDate, referenceNo: reference, evidenceFileName: file || null, bankId: usesBank && bankId ? bankId : null });
       toast.success("Payment submitted for Finance verification.");
       setBankId("");
-      setAmount("");
+      setAmount(null);
+      setPurpose(null);
       setReference("");
       setReferenceTouched(false);
       setFile("");
@@ -197,7 +213,7 @@ const TONE_VARIANT = { success: "success", warning: "warning", danger: "destruct
 const PURPOSE_TEXT = (value: string) => humanize(value);
 
 /**
- * Finance row actions for payments (start review, verify, return, reject, reverse
+ * Finance row actions for payments (verify, return, reject, reverse
  * or refund) with one shared set of dialogs and a details sheet. Render `dialogs`
  * once in the parent. `rowActions` is the trailing Actions column menu and `open`
  * opens the details sheet, which is what a row click does.
@@ -205,7 +221,6 @@ const PURPOSE_TEXT = (value: string) => humanize(value);
 export function usePaymentActions(): { rowActions: (payment: PaymentView) => ReactNode; open: (payment: PaymentView) => void; dialogs: ReactElement } {
   const action = usePaymentAction();
   const payments = usePayments();
-  const { confirmRun, dialog } = useConfirmRun();
   const canVerify = useOperation("finance.verify");
   const canRefund = useOperation("finance.refund");
   const [reasonFor, setReasonFor] = useState<{ payment: PaymentView; kind: "reject" | "return" | "verify" } | null>(null);
@@ -224,16 +239,14 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
       items.push({ key: "resend", label: "Fix and resend", tone: "warning", onClick: () => setResending(payment) });
     }
     if (canVerify && open) {
-      if (payment.status === "submitted") {
-        items.push({ key: "review", label: "Start review", onClick: () => void toast.promise(action.mutateAsync({ id: payment.id, action: "startReview" }), { loading: "Starting review…", success: "Review started.", error: (error: Error) => error.message }) });
-      }
       if (!payment.approvalBlocked && !payment.referenceConflict) {
         items.push({ key: "verify", label: "Verify", tone: "success", onClick: () => {
           if (findSuggestedMatch(payments.data ?? [], payment)) {
             setReasonFor({ payment, kind: "verify" });
             return;
           }
-          confirmRun({ title: "Verify this payment?", description: `${formatPeso(payment.amountCentavos)} for ${payment.customerName} will count toward the sale's approved collections.`, confirmText: "Verify", tone: "success", action: () => action.mutateAsync({ id: payment.id, action: "verify" }), successTitle: "Payment verified.", errorTitle: "Could not verify" });
+          // No confirmation: a mistaken verification is fixed with the audited Reverse.
+          void toast.promise(action.mutateAsync({ id: payment.id, action: "verify" }), { loading: "Verifying…", success: "Payment verified.", error: (error: Error) => error.message });
         } });
       }
       items.push(
@@ -247,9 +260,17 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
     return items;
   };
 
-  const rowActions = (payment: PaymentView): ReactNode => (
-    <RowActionsMenu itemName={`payment for ${payment.customerName}`} extraItems={itemsFor(payment)} />
-  );
+  // Verify stays visible on the row; the other actions share the menu.
+  const rowActions = (payment: PaymentView): ReactNode => {
+    const items = itemsFor(payment);
+    const verify = items.find((item) => item.key === "verify");
+    return (
+      <div className="tw:flex tw:items-center tw:justify-end tw:gap-1">
+        {verify ? <Button type="button" size="sm" variant="success" aria-label={`Verify payment for ${payment.customerName}`} onClick={verify.onClick}>Verify</Button> : null}
+        <RowActionsMenu itemName={`payment for ${payment.customerName}`} extraItems={items.filter((item) => item !== verify)} />
+      </div>
+    );
+  };
 
   const detailFooter = detail
     ? itemsFor(detail).map((item) => (
@@ -261,7 +282,6 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
 
   const dialogs = (
     <>
-      {dialog}
       <ReasonDialog
         open={reasonFor !== null}
         title={reasonFor?.kind === "verify" ? "Verify possible matching receipt" : reasonFor?.kind === "reject" ? "Reject payment" : "Return payment for correction"}

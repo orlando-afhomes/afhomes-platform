@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Hourglass } from "lucide-react";
-import { useContractAction, useContracts, useMemberships, useOperation, usePayments } from "@/data/business-queries";
+import { useApproveDeal, useContracts, useMemberships, useOperation, usePayments } from "@/data/business-queries";
 import { totalVerifiedCentavos } from "@/modules/finance/rules";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
@@ -16,12 +16,13 @@ import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { recordLabel } from "@/shared/lib/record-label";
-import { buildContractMenuProps } from "../actions/sales-contract-actions";
-import { ApproveArrangementDialog, CancelContractDialog, RaDialog, RequestCancellationDialog, ResolvePaymentCodeDialog, ReturnContractDialog } from "./contract-dialogs";
+import { approveDealConfirm, buildContractMenuProps } from "../actions/sales-contract-actions";
+import { ApproveArrangementDialog, CancelContractDialog, RequestCancellationDialog, ResolvePaymentCodeDialog, ReturnContractDialog } from "./contract-dialogs";
 import { useContractHref } from "./use-contract-href";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
+  { value: "needs-review", label: "Needs review" },
   { value: "draft", label: "Draft" },
   { value: "submitted", label: "Submitted" },
   { value: "under_review", label: "Under Review" },
@@ -31,29 +32,33 @@ const STATUS_OPTIONS = [
 ];
 
 /** Contract list with search and status filter, scoped by the repository to what the viewer may see. */
-export function ContractsTable({ initialStatus = "all", contractHref: hrefOverride }: { initialStatus?: string; contractHref?: (id: string) => string }) {
+export function ContractsTable({ initialStatus = "all" }: { initialStatus?: string }) {
   const router = useRouter();
   const contracts = useContracts();
   const canPrepare = useOperation("contracts.prepare");
   const canApprove = useOperation("contracts.approve");
-  const action = useContractAction();
+  const canApproveCustomer = useOperation("customers.approve");
+  const approveDeal = useApproveDeal();
   const { confirmRun, dialog: confirmDialog } = useConfirmRun();
   const payments = usePayments();
   const memberships = useMemberships();
   const { identity } = useDevIdentity();
   // Owner decision 2026-11-09: only Super Admin approves a Move arrangement (the repository enforces it too).
   const isSuperAdmin = identity.status === "active" && identity.roles.includes("super_admin");
-  const [target, setTarget] = useState<{ contract: ContractView; kind: "return" | "cancel" | "ra" | "requestCancel" | "approveArrangement" | "resolvePaymentCode" } | null>(null);
+  const [target, setTarget] = useState<{ contract: ContractView; kind: "return" | "cancel" | "requestCancel" | "approveArrangement" | "resolvePaymentCode" } | null>(null);
   const closeTarget = () => setTarget(null);
-  const defaultHref = useContractHref();
-  const contractHref = hrefOverride ?? defaultHref;
+  const contractHref = useContractHref();
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState(initialStatus);
+  const [status, setStatus] = useState(() => STATUS_OPTIONS.find((option) => option.value === initialStatus)?.value ?? "all");
 
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
     return (contracts.data ?? [])
-      .filter((item) => (status === "all" || item.status === status) && (term === "" || item.customerName.toLowerCase().includes(term)))
+      .filter((item) => {
+        const matchesStatus = status === "all" || item.status === status ||
+          (status === "needs-review" && (item.status === "submitted" || item.status === "under_review"));
+        return matchesStatus && (term === "" || item.customerName.toLowerCase().includes(term));
+      })
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }, [contracts.data, search, status]);
 
@@ -83,11 +88,10 @@ export function ContractsTable({ initialStatus = "all", contractHref: hrefOverri
           rowActions={(row) => {
             const contractPayments = (payments.data ?? []).filter((payment) => payment.contractId === row.id);
             const membership = (memberships.data ?? []).find((item) => item.contractId === row.id);
-            const run = (kind: "startReview" | "finalize", title: string, description: string, success: string) =>
-              confirmRun({ title, description, confirmText: title.replace("?", ""), tone: kind === "finalize" ? "success" : "default", action: () => action.mutateAsync({ id: row.id, action: kind }), successTitle: success, errorTitle: "Action failed" });
             const menu = buildContractMenuProps(row, {
               canPrepare,
               canApprove,
+              canApproveCustomer,
               canSubmitPayment: false,
               isSuperAdmin,
               hasVerifiedMoney: totalVerifiedCentavos(contractPayments) > 0 || row.sale?.status === "confirmed",
@@ -95,10 +99,8 @@ export function ContractsTable({ initialStatus = "all", contractHref: hrefOverri
               hasCard: membership?.cardId != null,
             }, {
               onEdit: canPrepare && ["draft", "returned"].includes(row.status) ? () => router.push(contractHref(row.id)) : undefined,
-              onStartReview: () => run("startReview", "Start review?", "The contract moves to Under Admin Review.", "Review started."),
-              onFinalize: () => run("finalize", "Finalize this contract?", "The contract terms become fixed and a pending membership is created.", "Contract finalized."),
+              onApproveDeal: () => confirmRun(approveDealConfirm(() => approveDeal.mutateAsync(row.id))),
               onReturn: () => setTarget({ contract: row, kind: "return" }),
-              onRecordSignedAgreement: () => setTarget({ contract: row, kind: "ra" }),
               onRecordPaymentCode: () => setTarget({ contract: row, kind: "resolvePaymentCode" }),
               onApproveArrangement: () => setTarget({ contract: row, kind: "approveArrangement" }),
               onCancel: () => setTarget({ contract: row, kind: "cancel" }),
@@ -109,7 +111,6 @@ export function ContractsTable({ initialStatus = "all", contractHref: hrefOverri
         />
       </QueryState>
       {confirmDialog}
-      {target?.kind === "ra" ? <RaDialog contract={target.contract} onClose={closeTarget} /> : null}
       {target?.kind === "requestCancel" ? <RequestCancellationDialog contract={target.contract} onClose={closeTarget} /> : null}
       {target ? (
         <>

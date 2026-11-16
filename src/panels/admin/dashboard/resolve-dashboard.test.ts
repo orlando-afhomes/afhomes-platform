@@ -8,6 +8,7 @@ describe("resolveDashboard", () => {
     ["dev-admin", "admin"],
     ["dev-finance", "finance"],
     ["dev-hr", "none"],
+    ["dev-clerk", "clerk"],
     ["dev-svd-a", "sales"],
     ["dev-ssm-a", "sales"],
     ["dev-sm-a", "sales"],

@@ -11,8 +11,3 @@ export function useContractHref() {
     [granted],
   );
 }
-
-/** Admin review of a contract. */
-export function useContractReviewHref() {
-  return useCallback((id: string) => `/admin/sales/contract-review/${id}`, []);
-}

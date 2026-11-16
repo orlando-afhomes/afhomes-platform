@@ -22,12 +22,12 @@ describe("admin navigation matching", () => {
     expect(findSelectedKeys(items, "/admin/stay-points")).toEqual(["stay-points"]);
     expect(findSelectedKeys(items, "/admin/promos")).toEqual(["stay-points"]);
     expect(findSelectedKeys(items, "/admin/promos/points")).toEqual(["stay-points"]);
-    expect(findSelectedKeys(items, "/admin/settings/lists")).toEqual(["organization"]);
+    expect(findSelectedKeys(items, "/admin/settings/lists")).toEqual(["vip-products"]);
     expect(findSelectedKeys(items, "/admin/reports/stay-points")).toEqual(["reports"]);
-    // Former Reports pages that moved to Finance highlight Finance, not Reports.
+    // Former Reports pages that moved to Finance (or Settings) highlight their new area, not Reports.
     expect(findSelectedKeys(items, "/admin/reports/period-close")).toEqual(["finance"]);
     expect(findSelectedKeys(items, "/admin/reports/reconciliation")).toEqual(["finance"]);
-    expect(findSelectedKeys(items, "/admin/reports/historical-import")).toEqual(["finance"]);
+    expect(findSelectedKeys(items, "/admin/reports/historical-import")).toEqual(["vip-products"]);
     expect(findSelectedKeys(items, "/admin/sales-network/members/m1")).toEqual(["sales-network"]);
     expect(findSelectedKeys(items, "/admin/audit-logs")).toEqual(["audit-logs"]);
     expect(findOpenKeys(items, "/admin/customers")).toEqual([]);

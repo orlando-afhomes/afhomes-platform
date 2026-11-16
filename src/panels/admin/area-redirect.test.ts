@@ -5,7 +5,7 @@ describe("area redirects", () => {
   it("builds the area tab URL and keeps the former route's query", () => {
     expect(areaTabHref("stay-points", "promos")).toBe("/admin/stay-points?tab=promos");
     expect(areaTabHref("organization", "staff", { view: "account", tab: "old", empty: undefined })).toBe("/admin/organization?tab=staff&view=account");
-    expect(areaTabHref("finance", "payments", { status: ["a", "b"] })).toBe("/admin/finance?tab=payments&status=a&status=b");
+    expect(areaTabHref("finance", "verification", { status: ["a", "b"] })).toBe("/admin/finance?tab=verification&status=a&status=b");
   });
 
   it("redirects a former route to its tab", async () => {

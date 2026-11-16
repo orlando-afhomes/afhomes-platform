@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { applyCommissionTrigger, freezeCommissionRates, releaseSaleCommissions, restoreDefaultedCommission } from "./commission-effects";
 import { createMockStore } from "./seed";
-import { DEV_IDENTITIES } from "./dev-identities";
+import { DEV_IDENTITIES, getDevIdentity } from "./dev-identities";
 import { MockCommissionRepository } from "./commission-repository";
+import { createMockRepositories } from "./repositories";
 import { clawbackBalance } from "@/modules/commissions/rules";
+import { SYSTEM_ACTOR_ID } from "@/modules/audit/types";
+import { manilaToday } from "@/shared/lib/dates";
+import { runBulkCommissionPayout } from "@/data/business-queries";
 
 describe("commission rates at issuance", () => {
   const store = {
@@ -68,6 +72,53 @@ it("requires a closed month for a payout list and flags preparer self-approval",
   await repository.approvePayoutList(list.id);
   expect(store.commissions.find(({ id }) => id === list.entries[0].commissionId)?.status).toBe("approved");
   expect(store.auditEvents.at(-1)?.reason).toMatch(/self-approved/i);
+});
+
+describe("month-end payouts", () => {
+  const finance = DEV_IDENTITIES.find(({ id }) => id === "dev-finance")!;
+  const releaseSeptember = (store: ReturnType<typeof createMockStore>) => releaseSaleCommissions(store, finance, {
+    saleId: "sale-2", contractId: "ctr-2", product: "VIP", valueCentavos: 1_000_000, stage1Date: "2026-09-25", fullPaymentDate: null,
+    rates: [{ memberId: "mem-ost-a1", role: "DSC", rateBp: 500 }, { memberId: "mem-svd-b", role: "DRI", rateBp: 100 }],
+  });
+
+  it("prepares the payout list automatically when the month closes", async () => {
+    const store = createMockStore();
+    const admin = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    releaseSeptember(store);
+    await admin.sales.closeMonth("2026-09");
+    const list = store.commissionPayoutLists.find(({ month }) => month === "2026-09")!;
+    expect(list).toMatchObject({ preparedBy: SYSTEM_ACTOR_ID, approvedAt: null });
+    expect(list.entries).toHaveLength(2);
+    expect(store.auditEvents.find(({ action, entityId }) => action === "COMMISSION_PAYOUT_LIST_PREPARED" && entityId === list.id)?.actorId).toBe(SYSTEM_ACTOR_ID);
+    await admin.sales.closeMonth("2026-09");
+    expect(store.commissionPayoutLists.filter(({ month }) => month === "2026-09")).toHaveLength(1);
+    await expect(admin.commissions.preparePayoutList("2026-09")).rejects.toThrow(/no released/i);
+    await admin.commissions.approvePayoutList(list.id);
+    // The system prepared it, so the approver is not flagged as self-approving.
+    expect(store.auditEvents.at(-1)).toMatchObject({ action: "COMMISSION_PAYOUT_LIST_APPROVED", reason: undefined });
+  });
+
+  it("records and confirms payouts in bulk, each with its own guard and audit entry", async () => {
+    const store = createMockStore();
+    const repositories = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    releaseSeptember(store);
+    await repositories.sales.closeMonth("2026-09");
+    await repositories.commissions.approvePayoutList(store.commissionPayoutLists.at(-1)!.id);
+    const ids = store.commissionPayoutLists.at(-1)!.entries.map(({ commissionId }) => commissionId);
+    const payout = { kind: "payout" as const, reference: "BATCH-NOV", method: "Bank Transfer", payoutDate: manilaToday(), evidenceFileName: "batch.pdf" };
+
+    const recorded = await runBulkCommissionPayout(repositories, { ...payout, ids: [...ids, "comm-3"] });
+    expect(recorded.done).toBe(2);
+    expect(recorded.failed).toEqual([{ id: "comm-3", reason: expect.stringMatching(/approved commission/) }]);
+    for (const id of ids) {
+      expect(store.auditEvents.filter((event) => event.entityId === id && event.action === "COMMISSION_PAYOUT_RECORDED")).toHaveLength(1);
+    }
+    const again = await runBulkCommissionPayout(repositories, { ...payout, ids });
+    expect(again).toMatchObject({ done: 0, failed: [{ reason: expect.stringMatching(/duplicate/i) }, { reason: expect.stringMatching(/duplicate/i) }] });
+
+    expect(await runBulkCommissionPayout(repositories, { kind: "confirm", ids })).toEqual({ done: 2, failed: [] });
+    expect(ids.map((id) => store.commissions.find((item) => item.id === id)?.status)).toEqual(["paid", "paid"]);
+  });
 });
 
 it("recovers a paid default directly and keeps the collected amount visible for refund on reinstatement", async () => {

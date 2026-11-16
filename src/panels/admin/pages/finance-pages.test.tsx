@@ -8,6 +8,7 @@ import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { FinanceAreaPage } from "./finance-area-page";
 import { CommissionsAreaPage } from "./commissions-area-page";
 import CollectionsRoute from "@/app/admin/finance/collections/page";
+import HoldsRoute from "@/app/admin/finance/holds/page";
 import PayoutsRoute from "@/app/admin/commissions/payouts/page";
 import HistoricalImportRoute from "@/app/admin/reports/historical-import/page";
 
@@ -48,7 +49,6 @@ const tabNames = () => screen.getAllByRole("tab").map((tab) => tab.textContent);
 
 describe("Finance list filters", () => {
   it.each([
-    ["holds", "Search financial holds", /^Open contract of /, "No holds match the filters."],
     ["cancellations", "Search cancellation requests", /^Open cancellation request from /, "No requests match the filters."],
   ])("search narrows %s", async (tab, searchLabel, rowName, none) => {
     show(<FinanceAreaPage />, tab);
@@ -60,7 +60,6 @@ describe("Finance list filters", () => {
   });
 
   it.each([
-    ["holds", "Customer, Plan, Status", /^Open contract of /, "/admin/"],
     ["cancellations", "Customer, Product, Ground", /^Open cancellation request from /, "/admin/finance/cancellations/"],
   ])("opens the record when a %s row is clicked, with no link column", async (tab, columns, rowName, target) => {
     show(<FinanceAreaPage />, tab);
@@ -76,24 +75,24 @@ describe("Finance area", () => {
     const user = userEvent.setup();
     show(<FinanceAreaPage />);
     expect(await screen.findByRole("heading", { name: "Finance", level: 1 })).toBeInTheDocument();
-    expect(tabNames()).toEqual(["Verification", "Collections", "Payment history", "Holds", "Cancellations", "Month-end close", "Reconciliation"]);
+    expect(tabNames()).toEqual(["Receipts", "Collections", "Cancellations", "Month-end close", "Reconciliation"]);
     expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
-    await user.click(screen.getByRole("tab", { name: "Payment history" }));
-    expect(await screen.findByRole("table", { name: "All payments" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Collections" }));
+    expect(await screen.findByRole("table", { name: "Collections" })).toBeInTheDocument();
     expect(screen.queryByRole("table", { name: "Verification queue" })).toBeNull();
-    expect(window.location.search).toBe("?tab=payments");
+    expect(window.location.search).toBe("?tab=collections");
     expect(screen.getAllByRole("tablist")).toHaveLength(1);
   });
 
-  it("falls back from a restricted tab for Finance", async () => {
-    show(<FinanceAreaPage />, "historical-import");
+  it("falls back from a removed tab for Finance", async () => {
+    show(<FinanceAreaPage />, "holds");
     expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Verification" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.queryByRole("tab", { name: "Historical import" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "Receipts" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("tab", { name: "Holds" })).toBeNull();
   });
 
   it.each(["dev-hr", "dev-ost-a1", "dev-clerk"])("denies Finance to %s", async (identityId) => {
-    show(<FinanceAreaPage />, "payments", identityId);
+    show(<FinanceAreaPage />, "verification", identityId);
     expect(await screen.findByRole("heading", { name: "Access restricted" })).toBeInTheDocument();
     expect(screen.queryByRole("tabpanel")).toBeNull();
   });
@@ -103,7 +102,8 @@ const headers = (table: HTMLElement) => within(table).getAllByRole("columnheader
 
 describe("Finance tables stay short", () => {
   it("shows payments as Customer, Amount, Method, Date, Status", async () => {
-    show(<FinanceAreaPage />, "payments");
+    navigation.search = "tab=verification&show=all";
+    render(<Wrapper identityId="dev-finance"><FinanceAreaPage /></Wrapper>);
     expect(headers(await screen.findByRole("table", { name: "All payments" }))).toEqual(["Customer", "Amount", "Method", "Date", "Status"]);
   });
 
@@ -112,7 +112,7 @@ describe("Finance tables stay short", () => {
     show(<FinanceAreaPage />);
     expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
     await user.click(screen.getByRole("combobox", { name: "Show" }));
-    await user.click(await screen.findByRole("option", { name: "Exceptions only" }));
+    await user.click(await screen.findByRole("option", { name: "Exceptions" }));
     expect(await screen.findByRole("table", { name: "Receipt exceptions" })).toBeInTheDocument();
   });
 
@@ -127,17 +127,31 @@ describe("Finance tables stay short", () => {
   });
 });
 
+describe("Collections on financial hold", () => {
+  it("keeps only memberships on hold with the On financial hold option", async () => {
+    const user = userEvent.setup();
+    show(<FinanceAreaPage />, "collections");
+    const table = await screen.findByRole("table", { name: "Collections" });
+    const rows = within(table).getAllByRole("row").length;
+    await user.click(screen.getByRole("combobox", { name: "Status filter" }));
+    await user.click(await screen.findByRole("option", { name: "On financial hold" }));
+    const held = within(await screen.findByRole("table", { name: "Collections" })).queryAllByRole("row").length;
+    expect(held).toBeLessThan(rows);
+  });
+});
+
 describe("Commissions area", () => {
-  it("offers Finance the payout action and hides Rates", async () => {
+  it("opens a former Payouts link on Commissions, with no Prepare button, and hides Rates", async () => {
     show(<CommissionsAreaPage />, "payouts");
-    expect(await screen.findByRole("button", { name: "Prepare payout list" })).toBeInTheDocument();
-    expect(tabNames()).toEqual(["Commissions", "Payouts", "Recovery", "Allowances"]);
+    expect(await screen.findByRole("table", { name: "Commissions" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Commissions" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("button", { name: "Prepare payout list" })).toBeNull();
+    expect(tabNames()).toEqual(["Commissions", "Recovery", "Allowances"]);
   });
 
-  it("gives a Clerk only the payout list workflow", async () => {
+  it("gives a Clerk no Commissions area now that month close prepares the payout list", async () => {
     show(<CommissionsAreaPage />, "rates", "dev-clerk");
-    expect(await screen.findByRole("table", { name: "Monthly payout lists" })).toBeInTheDocument();
-    expect(tabNames()).toEqual(["Payouts"]);
+    expect(await screen.findByRole("heading", { name: "Access restricted" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Set rate" })).toBeNull();
     expect(screen.queryByText("Approved, unpaid")).toBeNull();
   });
@@ -154,9 +168,11 @@ it("keeps Finance and Commissions bookmarks working", async () => {
   await CollectionsRoute({ searchParams: Promise.resolve({ q: "sample" }) });
   expect(navigation.redirect).toHaveBeenLastCalledWith("/admin/finance?tab=collections&q=sample");
   await HistoricalImportRoute({ searchParams: Promise.resolve({}) });
-  expect(navigation.redirect).toHaveBeenLastCalledWith("/admin/finance?tab=historical-import");
+  expect(navigation.redirect).toHaveBeenLastCalledWith("/admin/vip-products?tab=historical-import");
+  await HoldsRoute({ searchParams: Promise.resolve({}) });
+  expect(navigation.redirect).toHaveBeenLastCalledWith("/admin/finance?tab=collections");
   await PayoutsRoute({ searchParams: Promise.resolve({}) });
-  expect(navigation.redirect).toHaveBeenLastCalledWith("/admin/commissions?tab=payouts");
+  expect(navigation.redirect).toHaveBeenLastCalledWith("/admin/commissions?tab=commissions");
 });
 
 describe("Month-end close", () => {

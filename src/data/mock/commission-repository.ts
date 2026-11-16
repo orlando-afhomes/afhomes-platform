@@ -11,7 +11,7 @@ import { BusinessRepository, customerName, nowIso, today } from "./business-base
 import { paymentsOfContract } from "./business-effects";
 import type { MockStore } from "./seed";
 import { getDescendantIds } from "./scope";
-import { applyCommissionTrigger } from "./commission-effects";
+import { applyCommissionTrigger, buildPayoutList } from "./commission-effects";
 import { nextId } from "./ids";
 import { calculateAllowances, SHIPPED_ALLOWANCE_TERMS, type AllowanceReview, type AllowanceReviewInput } from "@/modules/commissions/allowances";
 
@@ -84,12 +84,11 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
     });
   }
 
-  async setRate(input: CommissionRateSetting & { reason: string }, options?: MockAsyncOptions): Promise<void> {
+  async setRate(input: CommissionRateSetting & { reason?: string }, options?: MockAsyncOptions): Promise<void> {
     return this.run(options, (identity) => {
       this.require(identity, "commission.rates.manage", "Only an administrator can change rates.");
       const { memberId, product, role, rateBp, standardRateBp } = input;
-      const reason = input.reason.trim();
-      if (!reason) throw new Error("Enter the reason for this approved rate.");
+      const reason = input.reason?.trim() || undefined;
       if (!this.store.members.some((item) => item.id === memberId)) throw new Error("Seller not found.");
       if ((product !== "VIP" && product !== "IGP") || (role !== "DSC" && role !== "DRI")) throw new Error("Choose a product and commission type.");
       if (!Number.isSafeInteger(rateBp) || rateBp < 0 || (standardRateBp !== null && (!Number.isSafeInteger(standardRateBp) || standardRateBp < 0))) {
@@ -122,20 +121,9 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
   async preparePayoutList(month: string, options?: MockAsyncOptions): Promise<CommissionPayoutList> {
     return this.run(options, (identity) => {
       this.require(identity, "commission.payout.prepare", "You cannot prepare a payout list.");
-      month = month.trim();
-      if (!this.store.closedMonths.some((item) => item.month === month)) throw new Error("Close the release month before preparing its payout list.");
-      const listed = new Set(this.store.commissionPayoutLists.flatMap((list) => list.approvedAt
-        ? list.approvedCommissionIds ?? list.entries.map(({ commissionId }) => commissionId)
-        : list.month === month ? list.entries.map(({ commissionId }) => commissionId) : []));
-      const eligible = this.store.commissions.filter((item) => item.status === "released" && item.releaseDate?.slice(0, 7) === month && !listed.has(item.id));
-      if (!eligible.length) throw new Error("No released commissions are waiting for a payout list in this month.");
-      const list: CommissionPayoutList = {
-        id: nextId(this.store, "commissionPayoutList", "commission-list"), month,
-        entries: eligible.map(({ id, saleId, recipientMemberId, amountCentavos }) => ({ commissionId: id, saleId, recipientMemberId, amountCentavos })),
-        preparedBy: identity.id, preparedAt: nowIso(), approvedBy: null, approvedAt: null,
-      };
-      this.store.commissionPayoutLists.push(list);
-      this.audit(identity, { module: "commissions", action: "COMMISSION_PAYOUT_LIST_PREPARED", entityType: "commission", entityId: list.id, newValue: month, relatedRecordIds: list.entries.map((item) => item.commissionId) });
+      // Month close builds the list automatically; this stays for a list the close could not build.
+      const list = buildPayoutList(this.store, month.trim(), identity);
+      if (!list) throw new Error("No released commissions are waiting for a payout list in this month.");
       return structuredClone(list);
     });
   }

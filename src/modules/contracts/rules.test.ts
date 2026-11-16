@@ -1,9 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { PaymentScheme, VipProduct } from "@/modules/vip/types";
-import { buildSchedule } from "./rules";
+import { buildSchedule, preferOpenContract } from "./rules";
 import { paymentSchemeTierTerms } from "@/modules/vip/rules";
 
 const product = (code: "B1" | "S1" | "G1", priceCentavos: number) => ({ code, name: code, priceCentavos }) as VipProduct;
+
+it("opens the purchase still being prepared even when the customer has a newer finalized purchase", () => {
+  const finalized = { status: "finalized", createdAt: "2026-11-16" } as const;
+  const draft = { status: "draft", createdAt: "2026-11-15" } as const;
+  const cancelled = { status: "cancelled", createdAt: "2026-11-17" } as const;
+  expect([finalized, cancelled, draft].reduce<typeof finalized | typeof draft | typeof cancelled | undefined>(preferOpenContract, undefined)).toBe(draft);
+});
 
 const t04: PaymentScheme = {
   id: "scheme-t04",

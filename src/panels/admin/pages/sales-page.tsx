@@ -3,12 +3,12 @@
 import { useMemo, useState } from "react";
 import { BadgeCheck, CalendarCheck, Clock, Receipt } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useApproveSale, useCorrectVipCommission, useMarkSaleDefaulted, useOperation, useSales } from "@/data/business-queries";
+import { useApproveDeal, useCorrectVipCommission, useMarkSaleDefaulted, useOperation, useSales } from "@/data/business-queries";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { useMembers } from "@/data/queries";
 import { parsePesoToCentavos } from "@/shared/lib/money";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
-import { buildSalesMenuProps } from "../actions/sales-contract-actions";
+import { approveDealConfirm, buildSalesMenuProps } from "../actions/sales-contract-actions";
 import type { SaleView } from "@/data/contracts/sale-repository";
 import { confirmedValueInPeriod, mySales, referredSales, teamSales, totalsFor } from "@/modules/sales/rules";
 import { manilaToday } from "@/shared/lib/dates";
@@ -77,13 +77,14 @@ type SalesScope = "mine" | "team" | "referred" | "all";
 export function SalesTab() {
   const router = useRouter();
   const sales = useSales();
-  const approve = useApproveSale();
+  const approveDeal = useApproveDeal();
   const markDefaulted = useMarkSaleDefaulted();
   const [defaultSale, setDefaultSale] = useState<SaleView | null>(null);
   const { confirmRun, dialog } = useConfirmRun();
   const [correction, setCorrection] = useState<SaleView | null>(null);
   const canPrepare = useOperation("contracts.prepare");
   const canApprove = useOperation("contracts.approve");
+  const canApproveCustomer = useOperation("customers.approve");
   const { identity } = useDevIdentity();
   const viewTeam = useOperation("sales.viewTeam");
   const contractHref = useContractHref();
@@ -152,16 +153,8 @@ export function SalesTab() {
           onRowOpen={(row) => setDetailId(row.id)}
           getRowLabel={(row) => `Open the sale for ${row.customerName}`}
           rowActions={referredView ? undefined : (row) => {
-            const menu = buildSalesMenuProps(row, { canApprove }, {
-              onApprove: () => confirmRun({
-                title: "Approve this sale?",
-                description: "This allows its receipts to be reviewed for approval.",
-                confirmText: "Approve sale",
-                tone: "success",
-                action: () => approve.mutateAsync(row.id),
-                successTitle: "Sale approved.",
-                errorTitle: "Could not approve sale",
-              }),
+            const menu = buildSalesMenuProps(row, { canApprove, canApproveCustomer }, {
+              onApproveDeal: () => confirmRun(approveDealConfirm(() => approveDeal.mutateAsync(row.contractId))),
               onMarkDefaulted: () => setDefaultSale(row),
             });
             return <RowActionsMenu {...menu} extraItems={[...menu.extraItems, ...((canApprove || canPrepare) && (row.status === "pending" || row.status === "confirmed") ? [{ key: "correct-commission", label: "Correct commission", tone: "warning" as const, onClick: () => setCorrection(row) }] : [])]} />;

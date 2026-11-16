@@ -1,4 +1,5 @@
 import { customerRecordName } from "@/modules/customers/rules";
+import { canPrepareVipContract } from "@/modules/contracts/rules";
 import { canReviewRegistration } from "@/modules/customers/review";
 import type { Customer } from "@/modules/customers/types";
 import type { RowActionItem } from "@/shared/components/modern/row-actions-menu";
@@ -32,6 +33,7 @@ export type CustomerMenuCallbacks = {
   onApprove?: () => void;
   onSendBack?: () => void;
   onReject?: () => void;
+  onOpenContract?: () => void;
   onPrepare?: () => void;
 };
 
@@ -42,8 +44,8 @@ const DELETE_DESCRIPTION = "Only drafts can be discarded. Submitted, approved, s
  * and the detail-page header buttons. The row opens the record, so there is no "view" item. Pure: no hooks, no JSX. Gates mirror the detail
  * page: edit needs ownership plus manage (or draft plus draft right) and never
  * applies to rejected records; review needs the approve right on a submitted
- * registration; prepare needs the prepare right on a submitted or approved
- * record with no contract yet; discard needs ownership of a draft.
+ * registration; the contract action needs the prepare right and opens the existing
+ * purchase if present; discard needs ownership of a draft.
  */
 export function buildCustomerMenuProps(
   customer: Pick<Customer, "displayName" | "status">,
@@ -61,13 +63,12 @@ export function buildCustomerMenuProps(
     if (cb.onSendBack) extraItems.push({ key: "send-back", label: "Send back", tone: "warning", onClick: cb.onSendBack });
     if (cb.onReject) extraItems.push({ key: "reject", label: "Reject", tone: "danger", onClick: cb.onReject });
   }
-  if (
-    perms.canPrepare &&
-    perms.ownRecord &&
-    (customer.status === "submitted" || customer.status === "approved") &&
-    cb.onPrepare
-  ) {
-    extraItems.push({ key: "prepare-contract", label: "Prepare contract", onClick: cb.onPrepare });
+  if (perms.canPrepare && perms.ownRecord) {
+    if (cb.onOpenContract) {
+      extraItems.push({ key: "open-contract", label: "Open contract", onClick: cb.onOpenContract });
+    } else if (cb.onPrepare && canPrepareVipContract(customer.status)) {
+      extraItems.push({ key: "prepare-contract", label: "Prepare contract", onClick: cb.onPrepare });
+    }
   }
 
   return {

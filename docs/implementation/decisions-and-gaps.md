@@ -184,6 +184,20 @@ These rulings change presentation and navigation only. Business rules, permissio
 - **UI9, VIP tier levels and product details.** An Administrator manages the VIP tier levels (add, rename, set the colour, retire); a level is never deleted while it is used. Each VIP product has an optional image and description. A new product code must be one letter and one digit and may not be a reserved or historical code. The code segment of the VIP Number is not changed (doc 05 §3 and §4.1).
 - **UI10, IGP JA&D number and property catalog.** Staff type the JA&D number in a guided form: JAI or JAO, then YYMM from the approval date, then 4 digits from the JA&D paper. The platform never invents it. An Administrator manages the IGP projects and units, and the property owner is set on the unit. A sale keeps a copy of the project, unit and owner names. A unit change on an issued sale still means cancel and reissue (doc 14 §5.3).
 
+### Simpler staff workflows (2026-11-16)
+
+The owner asked for fewer steps and clicks (keep it simple). Every business event is still recorded and audited; only the clicks change.
+
+- **UI11, one row action shows as a button.** When a table row has exactly one action, that action is a direct button in the row instead of a "..." menu. Rows with two or more actions keep the menu.
+- **UI12, confirmations only for risky actions.** An "Are you sure?" pop-up stays for one-way, money-out, cancel, delete, reject and close-month actions. Routine actions run at once: Verify receipt and Activate membership have no pop-up (a mistaken verification is fixed with the audited Reverse).
+- **UI13, customer to contract in one pass.** Submitting a new customer also submits the contract; staff do not reopen the contract to submit it. Due dates are not typed; they follow the reservation date. Customer acceptance is asked once. New applications default to Standard (S). The success pop-up is replaced by a short message (doc 05 items 26 to 29).
+- **UI14, receipts.** Finance "Payment history" and "Verification" are one "Receipts" tab with a Show filter (Waiting, Exceptions, All). "Start review" is no longer offered. The receipt form pre-fills the purpose and amount of the next unpaid line and today's date (doc 07 follow-up items 4 and 5). The Administrator dashboard shows the receipts waiting for approval.
+- **UI15, fewer daily tabs.** The "VIP Products" menu is renamed "Settings" and also holds the setup tabs Points table, Holidays, Venues, Lists, Historical import and IGP projects. The Scheme guide moves to Sales. Finance "Holds" becomes the "On financial hold" option of the Collections filter. Permissions of every moved tab are unchanged, and old links redirect.
+- **UI16, Clerk to-do dashboard.** The Clerk sees a small to-do list (returned receipts, contracts and customers to finish or fix) instead of an empty dashboard.
+- **UI17, Approve deal.** One "Approve deal" Administrator action replaces four approvals: customer, sale, signed Reservation Agreement (VIP Number) and finalization. Each step is still recorded and audited on its own, and a held contract is finalized by running it again (doc 05 items 30 and 31; doc 04 item 24; doc 06 item 10; doc 12, 2026-11-16).
+- **UI18, month-end payouts in bulk.** Closing a month prepares the payout list automatically. After the list is approved, payouts are recorded and confirmed for all ready commissions at once, each still audited (doc 08, 2026-11-16). The Payouts tab joins the Commissions tab.
+- **Open for the owner:** the Clerk no longer sees the Commissions area (its only task there, preparing the list, is now automatic); there is no Hold action to leave one commission out of a bulk payout.
+
 ### Still open
 
 - **AFHomes and JA&D:** Supply the signed Goodwill and Formal VIP Grant terms, a band code above ₱9M, and a written definition of `SUPERSEDED`. Until then, track grant paperwork only, block sales above ₱9M, and refer that status for review.

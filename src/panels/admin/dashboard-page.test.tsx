@@ -92,7 +92,7 @@ describe("Admin dashboard with loaded records", () => {
     expect(await within(distribution).findByText("50%")).toBeInTheDocument();
     expect(within(distribution).getAllByText("25%")).toHaveLength(2);
 
-    expect(await screen.findByRole("link", { name: "Contract Review: 2 pending" })).toHaveAttribute("href", "/admin/sales?tab=contract-review");
+    expect(await screen.findByRole("link", { name: "Contract Review: 2 pending" })).toHaveAttribute("href", "/admin/sales?tab=contracts&status=needs-review");
     expect(await screen.findByRole("link", { name: "Payment Verification: 1 pending" })).toHaveAttribute("href", "/admin/finance?tab=verification");
     expect(screen.getByRole("link", { name: "Membership Activation: 1 pending" })).toHaveAttribute("href", "/admin/membership?tab=activation");
     expect(screen.queryByText(/Account Approvals/)).toBeNull();
@@ -101,7 +101,7 @@ describe("Admin dashboard with loaded records", () => {
     expect(screen.getByRole("link", { name: "View All" })).toHaveAttribute("href", "/admin/audit-logs");
   });
 
-  it("keeps collections away from the Administrator", async () => {
+  it("keeps collections away from the Administrator but shows the receipts queue", async () => {
     show("dev-admin");
 
     await waitFor(async () => expect(await kpi("Confirmed sales value")).toBe("₱312,000.00"));
@@ -109,7 +109,7 @@ describe("Admin dashboard with loaded records", () => {
     await waitFor(() => expect(chart.querySelector("figcaption")?.textContent).toContain("Sales ₱312,000.00 from"));
     expect(within(chart).queryByRole("radiogroup")).toBeNull();
     expect(chart.textContent).not.toContain("Collections");
-    expect(screen.queryByRole("link", { name: /Payment Verification/ })).toBeNull();
+    expect(await screen.findByRole("link", { name: /^Payment Verification/ })).toHaveAttribute("href", "/admin/finance?tab=verification");
   });
 
   it("refreshes the review queue after a contract transition", async () => {
@@ -127,6 +127,18 @@ describe("Admin dashboard with loaded records", () => {
     fireEvent.click(screen.getByRole("button", { name: "Return contract" }));
     expect(await screen.findByRole("link", { name: "Contract Review: 1 pending" })).toBeInTheDocument();
     await waitFor(async () => expect(await kpi("Contracts requiring review")).toBe("1"));
+  });
+});
+
+describe("Clerk dashboard", () => {
+  it("shows a to-do list that links to the pages where the work is done", async () => {
+    show("dev-clerk");
+
+    expect(await screen.findByRole("heading", { name: "My to-do list" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: /^Returned receipts to correct: \d+ pending$/ })).toHaveAttribute("href", "/admin/sales?tab=contracts");
+    expect(screen.getByRole("link", { name: /^Contracts to finish or fix: \d+ pending$/ })).toHaveAttribute("href", "/admin/sales?tab=contracts");
+    expect(screen.getByRole("link", { name: /^Customers to finish or fix: \d+ pending$/ })).toHaveAttribute("href", "/admin/customers");
+    expect(screen.queryByText("No dashboard metrics")).toBeNull();
   });
 });
 
@@ -161,9 +173,9 @@ describe("Finance dashboard with loaded records", () => {
 
     for (const [name, href] of [
       ["Payment Verification: 1 pending", "/admin/finance?tab=verification"],
-      ["Commission Payouts: 1 pending", "/admin/commissions?tab=payouts"],
+      ["Commission Payouts: 1 pending", "/admin/commissions?tab=commissions"],
       ["Cancellation Requests: 1 pending", "/admin/finance?tab=cancellations"],
-      ["Financial Holds: 1 pending", "/admin/finance?tab=holds"],
+      ["Financial Holds: 1 pending", "/admin/finance?tab=collections"],
       ["Membership Activation: 1 pending", "/admin/membership?tab=activation"],
     ]) {
       expect(await screen.findByRole("link", { name })).toHaveAttribute("href", href);

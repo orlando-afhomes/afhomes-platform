@@ -1,7 +1,25 @@
 import { downPaymentCentavos, paymentSchemeTierTerms } from "@/modules/vip/rules";
+import type { CustomerStatus } from "@/modules/customers/types";
 import type { PaymentScheme, VipProduct } from "@/modules/vip/types";
 import { addDaysToDate, addMonthsToDate } from "@/shared/lib/dates";
 import type { BenefitsSnapshot, Contract, ScheduleItem } from "./types";
+
+export function canPrepareVipContract(status: CustomerStatus): boolean {
+  return status === "submitted" || status === "approved" || status === "active_member";
+}
+
+export function isEditableContractStatus(status: Contract["status"]): boolean {
+  return status === "draft" || status === "returned";
+}
+
+/** Resume editable purchases first, otherwise show the latest non-cancelled purchase. */
+export function preferOpenContract<T extends Pick<Contract, "status" | "createdAt">>(current: T | undefined, candidate: T): T | undefined {
+  if (candidate.status === "cancelled") return current;
+  if (!current) return candidate;
+  const editable = isEditableContractStatus(candidate.status);
+  if (editable !== isEditableContractStatus(current.status)) return editable ? candidate : current;
+  return candidate.createdAt >= current.createdAt ? candidate : current;
+}
 
 export function snapshotBenefits(product: VipProduct): BenefitsSnapshot {
   return {
@@ -79,7 +97,7 @@ export function finalizationHolds(contract: Contract): string[] {
   if (contract.priceStatus === "conflict") holds.push("The contract price is in conflict between contract sections (D5). Management must correct it first.");
   if (contract.schemeStatus !== "configured") holds.push("The payment scheme has no approved commercial terms (D7).");
   if (contract.arrangement && contract.arrangement.status !== "approved") holds.push(`The ${contract.arrangement.schemeLabel} arrangement needs Super Admin written approval.`);
-  if (contract.classification === "N") holds.push("Non-Standard contract authorization rules are not approved (D8).");
+  if (contract.classification === "N") holds.push("Non-Standard terms need Administrator approval and Finance confirmation (doc 05 §10.2). This step is not available yet.");
   if (contract.schedule.length === 0) holds.push("The payment schedule is empty.");
   if (!contract.customerAccepted) holds.push("Customer acceptance has not been recorded.");
   return holds;

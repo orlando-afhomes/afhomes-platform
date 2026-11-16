@@ -71,10 +71,10 @@ describe("dashboard page role gating (initial render)", () => {
     expectNone(html, ["Account Approvals", "Finance overview", "Team overview"]);
   });
 
-  it("keeps Finance reporting off the Administrator dashboard", () => {
+  it("keeps Finance reporting off the Administrator dashboard but shows the receipts queue", () => {
     const html = renderPage("dev-admin");
-    expectAll(html, ["Contracts requiring review", "Contract Review", "Sales Performance"]);
-    expectNone(html, ["verified collections", "Payment Verification"]);
+    expectAll(html, ["Contracts requiring review", "Contract Review", "Sales Performance", "Payment Verification"]);
+    expectNone(html, ["verified collections"]);
   });
 
   it("gives Finance its own dashboard without customer, network, or contract-review widgets", () => {

@@ -343,3 +343,9 @@ These rulings take precedence over earlier text in this document where they diff
 7. **Upgrades.** The NUM §5 upgrade rule is adopted (new number, old number UPGRADED, "Replaces" link, old card voided). Building the flow is a later feature card.
 8. **Numbers are never reused.** A CANCELLED or UPGRADED number is kept and never issued again.
 9. **Missing-rate pause (follow-up, 2026-11-12).** Issuance pauses while the closing seller's approved DSC rate or a recorded referrer's approved DRI rate is missing; an explicitly approved zero is a rate (section 3; doc 08 §9.1).
+
+## Owner rulings amendment (2026-11-16, Approve deal)
+
+This ruling refines section 8 and takes precedence over earlier text in this document where it differs.
+
+10. **Issued inside Approve deal.** The Administrator's "Approve deal" action confirms that the signed Reservation Agreement is on file and issues the VIP Number after the sale approval and before finalization. Steps 1 to 4 of section 8 may be recorded by this one action; each is still audited on its own. Issuance stays once only and permanent, and still pauses while a commission rate is missing (item 9).

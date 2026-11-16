@@ -5,7 +5,6 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, ArrowLeftRight, Banknote, CalendarClock, CreditCard, FileText, FileUp, Landmark, Layers, Pencil, Printer, Receipt, ShieldCheck, Smartphone, TriangleAlert, WalletCards, X } from "lucide-react";
-import Swal from "sweetalert2";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import { useAccreditations, useCreateCustomerDraft, useCustomers, useMembers } from "@/data/queries";
 import type { Customer } from "@/modules/customers/types";
@@ -27,7 +26,8 @@ import { CheckboxField, FieldShell, RadioCardField, StandardDateField, TextField
 import { REFERENCE_LIMITS, cleanReferenceNumber, referencePolicyFor, validateReferenceNumber, type ReferencePolicy } from "@/shared/forms/validation/reference-number";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
-import { AppAlert, appAlertOptions } from "@/shared/components/modern/app-alert";
+import { AppAlert } from "@/shared/components/modern/app-alert";
+import { notify } from "@/shared/components/modern/app-toaster";
 import {
   AddressSection,
   AttributionSection,
@@ -62,7 +62,6 @@ const STEP_CUSTOMER = 2;
 const STEP_SALES = 3;
 const STEP_RESERVATION = 4;
 const STEP_REVIEW = 5;
-const SUBMISSION_SUCCESS_DURATION_MS = 3_000;
 const SUBMISSION_FEEDBACK = {
   "customer-submitted": {
     toast: "Customer submitted.",
@@ -189,42 +188,8 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const [errors, setErrors] = useState<CustomerErrors>({});
   const [saving, setBusy] = useState(false);
   const [action, setAction] = useState<"draft" | "submit">("submit");
-  const [submissionSuccess, setSubmissionSuccess] = useState<string | null>(null);
-  const busy = saving || submissionSuccess !== null;
-
-  useEffect(() => {
-    if (!submissionSuccess) return;
-    let active = true;
-    const returnToCustomers = () => {
-      if (!active) return;
-      active = false;
-      router.replace("/admin/customers");
-    };
-    const alert = Swal.fire({
-      icon: "success",
-      title: "Application submitted",
-      text: submissionSuccess,
-      timer: SUBMISSION_SUCCESS_DURATION_MS,
-      timerProgressBar: true,
-      confirmButtonText: "Go to Customers",
-      ...appAlertOptions(),
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      returnFocus: false,
-      willClose: () => { Swal.stopTimer(); },
-      didClose: returnToCustomers,
-    });
-    const popup = Swal.getPopup();
-    void alert.then(() => undefined).catch(() => {
-      if (!active) return;
-      toast.success(`Application submitted. ${submissionSuccess}`);
-      returnToCustomers();
-    });
-    return () => {
-      active = false;
-      if (popup && Swal.getPopup() === popup) Swal.close();
-    };
-  }, [submissionSuccess, router]);
+  const [submitted, setSubmitted] = useState(false);
+  const busy = saving || submitted;
 
   const [method, setMethod] = useState<PaymentMethod>(DEFAULT_PAYMENT_METHOD);
   const [initialPaidDate] = useState(manilaToday);
@@ -257,13 +222,13 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const hasIdPreview = Boolean(primaryIdPreview.value || secondaryIdPreview.value);
   const dirty = JSON.stringify(draft) !== EMPTY_DRAFT || hasReservationChanges || hasIdPreview;
   const exit = useNewCustomerExit({
-    enabled: !existing && !submissionSuccess,
+    enabled: !existing && !submitted,
     dirty,
     busy,
     navigate: router.push,
   });
   // The step is in the address, so browser Back and Forward move between steps; Back out of the wizard raises the same prompt.
-  const { allowExit } = useWizardStepHistory({ step, onStep: setStep, guarded: !existing && !submissionSuccess && dirty, requestExit: exit.requestExit });
+  const { allowExit } = useWizardStepHistory({ step, onStep: setStep, guarded: !existing && !submitted && dirty, requestExit: exit.requestExit });
 
   // Each new step starts at the top of the form, below the sticky header.
   useEffect(() => {
@@ -507,6 +472,10 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
         case "customer-submitted":
         case "contract-prepared":
         case "reservation-submitted":
+          if ("submitError" in result && result.submitError) {
+            toast.error(`The application was saved, but the contract was not submitted: ${result.submitError} Open the contract to submit it.`);
+            break;
+          }
           if (existing) toast.success(SUBMISSION_FEEDBACK[result.status].toast);
           else successMessage = SUBMISSION_FEEDBACK[result.status].description;
           break;
@@ -518,7 +487,9 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
       if (successMessage) {
         allowExit();
         resetNewApplication();
-        setSubmissionSuccess(successMessage);
+        setSubmitted(true);
+        notify.success("Application submitted.", successMessage);
+        router.replace("/admin/customers");
         return;
       }
       router.push(`/admin/customers/${result.customerId}`);
@@ -660,7 +631,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             <Row label="VIP card" value={product ? `${product.name} (${product.code})` : ""} />
             <Row label="Price" value={product ? formatPeso(displayPriceFor(product, scheme)) : ""} />
             <Row label="Payment scheme" value={scheme?.label} />
-            <Row label="Contract classification" value={draft.contractClassification === "N" ? "Non-Standard (N) — held at finalization until rules are approved" : draft.contractClassification === "S" ? "Standard (S)" : ""} />
+            <Row label="Contract classification" value={draft.contractClassification === "N" ? "Non-Standard (N) — held at finalization until the rules are approved" : draft.contractClassification === "S" ? "Standard (S)" : ""} />
           </ReviewBlock>
           {priceConflict ? <PriceConflictNote /> : null}
           <ReviewBlock title="Customer" onEdit={() => setStep(STEP_CUSTOMER)}>

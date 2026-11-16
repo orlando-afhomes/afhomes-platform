@@ -6,6 +6,7 @@ import { useState, type ReactElement } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { NON_ACTIVE_TIER_CODES } from "@/modules/vip/types";
+import { SalesAreaPage } from "./sales-area-page";
 import { VipProductsAreaPage } from "./vip-products-page";
 
 vi.mock("next/navigation", async (importOriginal) => ({
@@ -146,7 +147,7 @@ describe("VIP products pages split by process", () => {
   });
 
   it("scheme guide shows a comparison table by tier for each configured scheme", async () => {
-    show(<VipProductsAreaPage />, "scheme-guide");
+    show(<SalesAreaPage />, "scheme-guide");
     expect(await screen.findByText("Spot Cash")).toBeInTheDocument();
     const [first] = screen.getAllByRole("table");
     expect(within(first).getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual(["Tier", "Total", "Reservation fee", "Balance"]);
@@ -164,11 +165,14 @@ describe("VIP products pages split by process", () => {
     for (const label of ["Package price", "Monthly installment", "Number of installments"]) expect(within(card).getByLabelText(label)).toBeInTheDocument();
   });
 
-  it("opens the scheme guide when a seller follows the product catalog link", async () => {
-    show(<VipProductsAreaPage />, "products", "dev-ost-a1");
+  it("gives a seller the scheme guide in Sales and no Settings catalog", async () => {
+    show(<SalesAreaPage />, "scheme-guide", "dev-ost-a1");
     expect(await screen.findByText("Spot Cash")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Print guide" })).toBeInTheDocument();
-    expect(within(screen.getByRole("tablist", { name: "VIP Products" })).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Scheme guide"]);
+    expect(within(screen.getByRole("tablist")).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Sales", "Contracts", "IGP", "Scheme guide"]);
+    cleanup();
+    show(<VipProductsAreaPage />, "products", "dev-ost-a1");
+    expect(await screen.findByRole("heading", { name: "Access restricted" })).toBeInTheDocument();
     expect(screen.queryByRole("table", { name: "VIP product catalog" })).toBeNull();
   });
 });

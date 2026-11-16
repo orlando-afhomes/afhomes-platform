@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { ContractReviewDetailPage } from "./contract-review-detail-page";
 import { CustomerDetailPage } from "./customer-detail-page";
 import { CustomerFormPage } from "./customer-form-page";
 import { FinanceCancellationDetailPage } from "./finance-cancellation-detail-page";
@@ -22,11 +21,6 @@ export function CustomerEditRoute() {
 export function SalesContractDetailRoute() {
   const { id } = useParams<{ id: string }>();
   return <SalesContractDetailPage contractId={id} />;
-}
-
-export function ContractReviewDetailRoute() {
-  const { id } = useParams<{ id: string }>();
-  return <ContractReviewDetailPage contractId={id} />;
 }
 
 export function FinanceCollectionDetailRoute() {

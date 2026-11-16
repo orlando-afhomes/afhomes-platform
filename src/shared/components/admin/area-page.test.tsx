@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { NotificationsContext } from "@/shared/providers/notifications-provider";
 import { TabBar } from "@/shared/components/modern/tab-bar";
 import { useTabParam } from "@/shared/components/modern/use-tab-param";
 import { AreaPage } from "./area-page";
@@ -133,6 +134,26 @@ describe("AreaPage", () => {
     { value: "two", label: "Two", allowed: false, render: () => <p>Panel two</p> },
     { value: "three", label: "Three", allowed: true, count: 4, render: () => <p>Panel three</p> },
   ];
+
+  it("shows unread activity for permitted views and lets mobile users select one", async () => {
+    const user = userEvent.setup();
+    render(
+      <Wrapper>
+        <NotificationsContext.Provider value={{ unreadTotal: 9, unreadByNavKey: {}, unreadByTab: { two: 7, three: 2 }, events: [], denied: false, markAllSeen: () => {} }}>
+          <AreaPage anyOf={["reports"]} title="Finance" tabs={tabs} />
+        </NotificationsContext.Provider>
+      </Wrapper>,
+    );
+    expect(screen.getByRole("tab", { name: /^Three/ })).toHaveAccessibleDescription("2 unread notifications");
+    const mobileSelect = screen.getByRole("combobox", { name: "Finance views" });
+    expect(mobileSelect).toHaveAccessibleDescription("2 unread notifications");
+    await user.click(mobileSelect);
+    expect(screen.queryByRole("option", { name: "Two" })).toBeNull();
+    const option = await screen.findByRole("option", { name: /^Three/ });
+    expect(option).toHaveAccessibleDescription("2 unread notifications");
+    await user.click(option);
+    expect(screen.getByRole("tabpanel")).toHaveTextContent("Panel three");
+  });
 
   it("shows only allowed tabs and links the active panel to its tab", async () => {
     const user = userEvent.setup();

@@ -2,9 +2,9 @@
 
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { useCommissionAction } from "@/data/business-queries";
+import { useBulkCommissionPayout, useCommissionAction, type BulkCommissionResult } from "@/data/business-queries";
 import type { CommissionView } from "@/data/contracts/commission-repository";
-import { formatBasisPoints, parsePercentToBasisPoints } from "@/shared/lib/money";
+import { formatBasisPoints, formatPeso, parsePercentToBasisPoints } from "@/shared/lib/money";
 import { manilaToday } from "@/shared/lib/dates";
 import type { ColumnDef } from "@/shared/components/modern/data-table";
 import { FieldShell, PercentField, SelectField, StandardDateField, TextField, describedBy, useFieldIds } from "@/shared/forms/modern";
@@ -143,30 +143,61 @@ export function AdjustDialog({ commission, onClose }: { commission: CommissionVi
   );
 }
 
-export function PayoutDialog({ commission, onClose }: { commission: CommissionView; onClose: () => void }) {
-  const action = useCommissionAction();
+/** Approved, no payout yet, and the payout day has come. */
+export function readyToPay(item: CommissionView): boolean {
+  return item.status === "approved" && !item.payout && releaseOpen(item);
+}
+
+/** A payout was recorded but its disbursement is not confirmed yet (approved or held). */
+export function awaitingConfirmation(item: CommissionView): boolean {
+  return Boolean(item.payout && !item.payout.confirmedAt) && (item.status === "approved" || item.status === "on_hold");
+}
+
+/** "3 recorded" or "2 recorded, 1 not recorded: <reason>". */
+export function bulkSummary(result: BulkCommissionResult, verb: string): string {
+  const done = `${result.done} ${verb}`;
+  if (!result.failed.length) return done;
+  const reasons = [...new Set(result.failed.map(({ reason }) => reason))].join(" ");
+  return `${done}, ${result.failed.length} not ${verb}: ${reasons}`;
+}
+
+/**
+ * Records one payout for each commission with the same date, method, reference and proof
+ * (doc 08 §11.3). Each commission is recorded on its own, with its own checks and audit entry.
+ */
+export function PayoutDialog({ commissions, onClose }: { commissions: CommissionView[]; onClose: () => void }) {
+  const bulk = useBulkCommissionPayout();
   const [reference, setReference] = useState("");
   const [method, setMethod] = useState("");
   const [date, setDate] = useState(manilaToday());
   const [file, setFile] = useState("");
   const [error, setError] = useState<string | undefined>();
+  const single = commissions.length === 1;
+  const proofRequired = commissions.some((item) => Boolean(item.releaseDate));
   const send = async () => {
     try {
-      await action.mutateAsync({ id: commission.id, action: "payout", reference, method: method || null, payoutDate: date, evidenceFileName: file });
-      toast.success("Payout recorded. Confirm disbursement to mark it Paid.");
+      const result = await bulk.mutateAsync({ kind: "payout", ids: commissions.map(({ id }) => id), reference, method: method || null, payoutDate: date, evidenceFileName: file });
+      // Nothing recorded: keep the form open with the reason so it can be corrected.
+      if (result.done === 0) return setError([...new Set(result.failed.map(({ reason }) => reason))].join(" "));
+      if (single) toast.success("Payout recorded. Confirm disbursement to mark it Paid.");
+      else if (result.failed.length) toast.warning(bulkSummary(result, "recorded"));
+      else toast.success(bulkSummary(result, "recorded"), { description: "Confirm disbursement to mark them Paid." });
       onClose();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Could not record.");
     }
   };
+  const total = commissions.reduce((sum, item) => sum + item.amountCentavos, 0);
   return (
-    <FormDialog open title="Record payout" description={commission.recipientName} submitText="Record payout" submitVariant="success" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title={single ? "Record payout" : `Record payout for ${commissions.length} commissions`}
+      description={single ? commissions[0].recipientName : `Total ${formatPeso(total)}. To leave a commission out, close this and use Record payout on each row you want to pay.`}
+      submitText="Record payout" pending={bulk.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <TextField label="Payment reference" required value={reference} onChange={setReference} />
-      <TextField label="Payment method" required={Boolean(commission.releaseDate)} value={method} onChange={setMethod} />
+      <TextField label="Payment method" required={proofRequired} value={method} onChange={setMethod} />
       <StandardDateField label="Payout date" required value={date} onChange={setDate} />
       <div className="tw:grid tw:gap-2">
         <Label htmlFor="commission-payout-evidence">Payment proof</Label>
-        <Input id="commission-payout-evidence" type="file" required={Boolean(commission.releaseDate)} accept="image/*,application/pdf" onChange={(event) => setFile(event.target.files?.[0]?.name ?? "")} />
+        <Input id="commission-payout-evidence" type="file" required={proofRequired} accept="image/*,application/pdf" onChange={(event) => setFile(event.target.files?.[0]?.name ?? "")} />
       </div>
     </FormDialog>
   );

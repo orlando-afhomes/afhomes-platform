@@ -18,7 +18,6 @@ import { AuditLogsPage } from "./pages/audit-logs-page";
 import { CommissionsAreaPage } from "./pages/commissions-area-page";
 import { VipProductsAreaPage } from "./pages/vip-products-page";
 import { CustomersAreaPage } from "./pages/customers-area-page";
-import { ContractReviewDetailPage } from "./pages/contract-review-detail-page";
 import { SalesAreaPage } from "./pages/sales-area-page";
 import { CustomerDetailPage } from "./pages/customer-detail-page";
 import { CustomerFormPage } from "./pages/customer-form-page";
@@ -258,16 +257,16 @@ describe("business pages render for the intended roles", () => {
     expect(within(table).getAllByText("Available")).toHaveLength(4);
   });
 
-  it("shows finalization available to Admin for the resolved Gold contract", async () => {
-    show("dev-admin", <ContractReviewDetailPage contractId="ctr-3" />);
-    await screen.findByRole("button", { name: "Finalize" });
+  it("shows Approve deal available to Admin for the resolved Gold contract", async () => {
+    show("dev-admin", <SalesContractDetailPage contractId="ctr-3" />);
+    await screen.findByRole("button", { name: "Approve deal" });
     expect(screen.queryByText("Finalization is on hold")).toBeNull();
-    expect(screen.getByRole("button", { name: "Finalize" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Approve deal" })).toBeEnabled();
   });
 
   it("asks Admin to request a cancellation with forfeiture when the contract has verified money", async () => {
     const user = userEvent.setup();
-    show("dev-admin", <ContractReviewDetailPage contractId="ctr-1" />);
+    show("dev-admin", <SalesContractDetailPage contractId="ctr-1" />);
     await user.click(await screen.findByRole("button", { name: "Request cancellation" }));
     expect(screen.queryByRole("button", { name: "Cancel contract" })).toBeNull();
     const dialog = await screen.findByRole("dialog");
@@ -283,7 +282,7 @@ describe("business pages render for the intended roles", () => {
     expect(await screen.findByRole("table", { name: "Contracts" })).toBeInTheDocument();
     expect(await screen.findByText("Rafael Domingo")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Rafael Domingo" })).toBeNull();
-    expect(screen.getByRole("link", { name: /new contract/i })).toHaveAttribute("href", "/admin/customers/new");
+    expect(screen.getByRole("link", { name: /new contract/i })).toHaveAttribute("href", "/admin/customers?tab=customers");
     expect(document.querySelectorAll("tbody tr[data-row-key]")).toHaveLength(4);
     expect(screen.getByText("1–4", { selector: "span" }).parentElement).toHaveTextContent("Showing 1–4 of 4");
   });
@@ -298,13 +297,15 @@ describe("business pages render for the intended roles", () => {
   it("gives Finance a verification queue with the pending reservation", async () => {
     show("dev-finance", <FinanceAreaPage />, "verification");
     expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
-    await openMenuWith("Actions for payment", "Verify");
+    expect((await screen.findAllByRole("button", { name: /^Verify payment/ })).length).toBeGreaterThan(0);
+    await openMenuWith("Actions for payment", "Return for correction");
+    expect(screen.queryByRole("menuitem", { name: "Start review" })).toBeNull();
   });
 
   it("lets the Administrator open the receipt verification queue", async () => {
     show("dev-admin", <FinanceAreaPage />, "verification");
     expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
-    await openMenuWith("Actions for payment", "Verify");
+    expect((await screen.findAllByRole("button", { name: /^Verify payment/ })).length).toBeGreaterThan(0);
   });
 
   it("lets the Clerk fix their returned receipt on the contract with its original reference", async () => {
@@ -320,9 +321,9 @@ describe("business pages render for the intended roles", () => {
     show("dev-clerk", <ReturnedReceiptFixture />);
     const user = userEvent.setup();
     await user.click(await screen.findByRole("tab", { name: "Payments" }));
-    await openMenuWith("Actions for payment", "Fix and resend");
-    expect(screen.queryByRole("menuitem", { name: "Verify" })).toBeNull();
-    await user.click(screen.getByRole("menuitem", { name: "Fix and resend" }));
+    // A single row action is shown as a direct button, not inside the "..." menu.
+    expect(screen.queryByRole("button", { name: /^Verify payment/ })).toBeNull();
+    await user.click(await screen.findByRole("button", { name: /^Fix and resend payment/ }));
     expect(await screen.findByRole("textbox", { name: "Receipt or reference number" })).toHaveAttribute("readonly");
     expect(screen.getByText(/Check receipt amount/)).toBeInTheDocument();
   });
@@ -373,7 +374,7 @@ describe("business pages render for the intended roles", () => {
   });
 
   it("lists every official scheme in the guide and gives pending ones no figures", async () => {
-    show("dev-admin", <VipProductsAreaPage />, "scheme-guide");
+    show("dev-admin", <SalesAreaPage />, "scheme-guide");
     expect(await screen.findByRole("heading", { name: "4-Month Installment" })).toBeInTheDocument();
     for (const name of ["Spot Cash", "Move A", "Move B"]) expect(screen.getByRole("heading", { name })).toBeInTheDocument();
     // Spot Cash (OD-11) and the Move schemes are configured by owner decision (2026-11-09); none is pending.
@@ -1283,38 +1284,29 @@ describe("customer application new fields and secondary holder", () => {
       return view;
     }
 
-    it("shows SweetAlert2 success, resets the wizard, and automatically returns to Customers", { timeout: 30_000 }, async () => {
+    it("shows a short toast, resets the wizard, and returns to Customers", { timeout: 30_000 }, async () => {
       await submit({ status: "reservation-submitted", customerId, contractId });
-      const alert = await screen.findByRole("dialog", { name: "Application submitted" });
-      expect(alert).toBe(Swal.getPopup());
-      expect(within(alert).getByText(/awaiting Finance verification/i)).toBeVisible();
+      await waitFor(() => expect(navigation.replace.mock.calls).toEqual([["/admin/customers"]]));
+      expect(await screen.findByText("Application submitted.")).toBeVisible();
+      expect(screen.getByText(/awaiting Finance verification/i)).toBeVisible();
       expect(sessionStorage.getItem(storageKey)).toBeNull();
-      expect(Swal.getTimerLeft()).toBeGreaterThan(0);
-      expect(navigation.replace).not.toHaveBeenCalled();
       expect(navigation.push).not.toHaveBeenCalled();
-      await waitFor(() => expect(navigation.replace.mock.calls).toEqual([["/admin/customers"]]), { timeout: 4_500 });
-      await waitFor(() => expect(screen.queryByRole("dialog", { name: "Application submitted" })).toBeNull());
+      expect(Swal.getPopup()).toBeNull();
       expect(screen.getByRole("radio", { name: /silver vip/i })).toHaveAttribute("aria-checked", "false");
     });
 
     it.each([
       { status: "customer-submitted", customerId },
       { status: "contract-prepared", customerId, contractId },
-    ] satisfies Outcome[])("lets users return early after $status and cancels the timer", { timeout: 30_000 }, async (outcome) => {
+    ] satisfies Outcome[])("returns to Customers once after $status", { timeout: 30_000 }, async (outcome) => {
       await submit(outcome);
-      const alert = await screen.findByRole("dialog", { name: "Application submitted" });
-      expect(Swal.getTimerLeft()).toBeGreaterThan(0);
-      fireEvent.click(within(alert).getByRole("button", { name: "Go to Customers" }));
       await waitFor(() => expect(navigation.replace.mock.calls).toEqual([["/admin/customers"]]));
-      expect(Swal.isTimerRunning()).toBeFalsy();
+      expect(Swal.getPopup()).toBeNull();
     });
 
-    it("cancels the pending redirect when the wizard unmounts", { timeout: 30_000 }, async () => {
-      const view = await submit({ status: "customer-submitted", customerId });
-      await screen.findByRole("dialog", { name: "Application submitted" });
-      view.unmount();
-      await waitFor(() => expect(Swal.getPopup()).toBeNull());
-      expect(Swal.isTimerRunning()).toBeFalsy();
+    it("tells the Clerk when the contract could not be submitted and opens the customer", { timeout: 30_000 }, async () => {
+      await submit({ status: "contract-prepared", customerId, contractId, submitError: "Seller is suspended." });
+      await waitFor(() => expect(navigation.push.mock.calls).toEqual([[`/admin/customers/${customerId}`]]));
       expect(navigation.replace).not.toHaveBeenCalled();
     });
 
@@ -1820,7 +1812,7 @@ describe("gold contract preview and tiles", () => {
   });
 
   it("snapshots the resolved Gold price on the contract tiles", async () => {
-    show("dev-admin", <ContractReviewDetailPage contractId="ctr-3" />);
+    show("dev-admin", <SalesContractDetailPage contractId="ctr-3" />);
     const tiles = await screen.findByRole("group", { name: "Contract summary" });
     // Contract price and outstanding balance (nothing verified yet on ctr-3).
     expect(within(tiles).getAllByText("₱390,000.00")).toHaveLength(2);

@@ -26,7 +26,7 @@ function tabAccess(identityId: string, area: keyof typeof ADMIN_AREA_TABS) {
 }
 
 const ALL_AREAS = ["dashboard", "customers", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "vip-products", "sales-network", "organization", "reports", "audit-logs"];
-const SELLER_AREAS = ["dashboard", "customers", "sales", "commissions", "membership", "stay-points", "vip-products", "sales-network", "reports"];
+const SELLER_AREAS = ["dashboard", "customers", "sales", "commissions", "membership", "stay-points", "sales-network", "reports"];
 
 describe("admin navigation", () => {
   it("is a flat list of 13 area pages with no groups", () => {
@@ -80,31 +80,42 @@ describe("admin navigation", () => {
   it("shows Finance its own areas, IGP sales and reports", () => {
     expect(visibleIds("dev-finance")).toEqual(["dashboard", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "reports"]);
     expect(tabAccess("dev-finance", "sales")).toEqual(["igp"]);
-    expect(tabAccess("dev-finance", "finance")).toEqual(["verification", "collections", "payments", "holds", "cancellations", "month-end-close", "reconciliation"]);
-    expect(tabAccess("dev-finance", "commissions")).toEqual(["commissions", "payouts", "recovery", "allowances"]);
+    expect(tabAccess("dev-finance", "finance")).toEqual(["verification", "collections", "cancellations", "month-end-close", "reconciliation"]);
+    // Payouts joined the Commissions tab as its month-end payout bar.
+    expect(tabAccess("dev-finance", "commissions")).toEqual(["commissions", "recovery", "allowances"]);
     expect(tabAccess("dev-finance", "redemption")).toEqual(["bookings", "cardholder-points"]);
     expect(tabAccess("dev-finance", "reports")).toContain("collections");
   });
 
   it("keeps the former per-page rules for the Administrator", () => {
-    expect(tabAccess("dev-admin", "finance")).toEqual(["verification", "month-end-close", "reconciliation", "historical-import"]);
-    expect(tabAccess("dev-admin", "organization")).toEqual(["staff", "departments", "roles", "lists"]);
+    expect(tabAccess("dev-admin", "finance")).toEqual(["verification", "month-end-close", "reconciliation"]);
+    expect(tabAccess("dev-admin", "organization")).toEqual(["staff", "departments", "roles"]);
     expect(tabAccess("dev-admin", "reports")).not.toContain("collections");
     expect(tabAccess("dev-super-admin", "reports")).toContain("collections");
   });
 
-  it("shows the Projects tab only to holders of igp.manage", () => {
-    expect(tabAccess("dev-admin", "sales")).toContain("projects");
-    expect(tabAccess("dev-super-admin", "sales")).toContain("projects");
-    for (const identityId of ["dev-finance", "dev-clerk", "dev-svd-a", "dev-ost-a1"]) expect(tabAccess(identityId, "sales")).not.toContain("projects");
+  it("shows the IGP projects setup tab only to holders of igp.manage", () => {
+    expect(tabAccess("dev-admin", "vip-products")).toContain("igp-projects");
+    expect(tabAccess("dev-super-admin", "vip-products")).toContain("igp-projects");
+    for (const identityId of ["dev-finance", "dev-clerk", "dev-svd-a", "dev-ost-a1"]) expect(tabAccess(identityId, "vip-products")).not.toContain("igp-projects");
+  });
+
+  it("shows Settings only to roles with a setup tab and keeps Scheme guide in Sales for sellers and the Clerk", () => {
+    const SETTINGS_TABS = ["products", "schemes", "tier-codes", "points-table", "holidays", "venues", "lists", "historical-import", "igp-projects"];
+    expect(tabAccess("dev-admin", "vip-products")).toEqual(SETTINGS_TABS);
+    expect(tabAccess("dev-super-admin", "vip-products")).toEqual(SETTINGS_TABS);
+    for (const identityId of ["dev-svd-a", "dev-ost-a1", "dev-clerk", "dev-finance", "dev-hr"]) {
+      expect(visibleIds(identityId), identityId).not.toContain("vip-products");
+    }
+    for (const identityId of ["dev-svd-a", "dev-ost-a1", "dev-clerk"]) expect(tabAccess(identityId, "sales")).toContain("scheme-guide");
+    expect(adminNavigation.find((item) => item.id === "vip-products")?.label).toBe("Settings");
   });
 
   it("shows sellers no review, import, payout, activation or finance tabs", () => {
     for (const identityId of ["dev-svd-a", "dev-ost-a1"]) {
       expect(visibleIds(identityId)).toEqual(SELLER_AREAS);
       expect(tabAccess(identityId, "customers")).toEqual(["customers"]);
-      expect(tabAccess(identityId, "sales")).toEqual(["sales", "contracts", "igp"]);
-      expect(tabAccess(identityId, "vip-products")).toEqual(["scheme-guide"]);
+      expect(tabAccess(identityId, "sales")).toEqual(["sales", "contracts", "igp", "scheme-guide"]);
       expect(tabAccess(identityId, "commissions")).toEqual(["commissions", "recovery"]);
       expect(tabAccess(identityId, "membership")).toEqual(["memberships"]);
       expect(tabAccess(identityId, "sales-network")).toEqual(["members", "genealogy"]);
@@ -120,28 +131,30 @@ describe("admin navigation", () => {
   it("requires the operation grant as well as the module grant", () => {
     const modules = new Set(["customers", "commissions", "membership", "reports"] as const);
     const access = (ops: string[]) => getAdminAreaTabAccess("commissions", modules, new Set(ops as never[]));
-    expect(access([]).payouts).toBe(false);
-    expect(access(["commission.payout.prepare"]).payouts).toBe(true);
+    expect(access([]).allowances).toBe(false);
+    expect(access(["commission.approve"]).allowances).toBe(true);
+    expect(Object.keys(access(["commission.payout.prepare"]))).not.toContain("payouts");
     // Finance is shown only through its operation-gated tabs for a reports holder.
     const ids = (ops: string[]) => filterNavForAccess(getAvailableAdminNavigation(), modules, new Set(ops as never[])).map((item) => item.id);
     expect(ids([])).not.toContain("finance");
     expect(ids(["reconciliation.manage"])).toContain("finance");
   });
 
-  it("shows the Redemption table tabs only with redemption.configure", () => {
+  it("shows the Settings table tabs (moved from Redemption) only with redemption.configure", () => {
     // Finance holds the redemption module but not the configure operation (owner ruling: permissions unchanged).
     expect(tabAccess("dev-finance", "redemption")).toEqual(["bookings", "cardholder-points"]);
-    expect(tabAccess("dev-admin", "redemption")).toEqual(["bookings", "cardholder-points", "points-table", "holidays", "venues"]);
+    expect(tabAccess("dev-admin", "redemption")).toEqual(["bookings", "cardholder-points"]);
     const modules = new Set(["redemption"] as const);
-    const access = (ops: string[]) => getAdminAreaTabAccess("redemption", modules, new Set(ops as never[]));
-    expect(access([])).toEqual({ bookings: true, "cardholder-points": true, "points-table": false, holidays: false, venues: false });
-    expect(access(["redemption.configure"])).toEqual({ bookings: true, "cardholder-points": true, "points-table": true, holidays: true, venues: true });
+    const access = (ops: string[]) => getAdminAreaTabAccess("vip-products", modules, new Set(ops as never[]));
+    expect(access([])).toMatchObject({ "points-table": false, holidays: false, venues: false });
+    expect(access(["redemption.configure"])).toMatchObject({ "points-table": true, holidays: true, venues: true });
   });
 
   it("grants Contracts to sales or vip-products holders and Scheme Guide to either", () => {
-    expect(getAdminAreaTabAccess("sales", new Set(["vip-products"] as const), new Set())).toMatchObject({ contracts: true, "contract-review": true, sales: false });
-    expect(getAdminAreaTabAccess("sales", new Set(["sales"] as const), new Set())).toMatchObject({ contracts: true, "contract-review": false });
-    expect(getAdminAreaTabAccess("vip-products", new Set(["sales"] as const), new Set())).toEqual({ products: false, schemes: false, "scheme-guide": true, "tier-codes": false });
+    expect(getAdminAreaTabAccess("sales", new Set(["vip-products"] as const), new Set())).toMatchObject({ contracts: true, sales: false });
+    expect(getAdminAreaTabAccess("sales", new Set(["sales"] as const), new Set())).toMatchObject({ contracts: true, sales: true });
+    expect(getAdminAreaTabAccess("sales", new Set(["vip-products"] as const), new Set())).toMatchObject({ "scheme-guide": true });
+    expect(getAdminAreaTabAccess("sales", new Set(["sales"] as const), new Set())).toMatchObject({ "scheme-guide": true });
   });
 
   it("normalizes trailing slashes", () => {
@@ -158,7 +171,7 @@ describe("admin navigation", () => {
     const stayPoints = adminNavigation.find((entry) => entry.id === "stay-points")!;
     expect(isAdminNavItemActive(stayPoints, "/admin/promos/points")).toBe(true);
     const finance = adminNavigation.find((entry) => entry.id === "finance")!;
-    expect(finance.matchPaths).toEqual(["/admin/reports/period-close", "/admin/reports/reconciliation", "/admin/reports/historical-import"]);
+    expect(finance.matchPaths).toEqual(["/admin/reports/period-close", "/admin/reports/reconciliation"]);
   });
 
   it("returns dashboard breadcrumbs for the dashboard", () => {
@@ -167,7 +180,7 @@ describe("admin navigation", () => {
 
   it("returns area breadcrumbs for area and former routes", () => {
     expect(getAdminBreadcrumbs("/admin/organization")).toEqual([{ label: "Dashboard", href: "/admin" }, { label: "Organization" }]);
-    expect(getAdminBreadcrumbs("/admin/settings/lists")).toEqual([{ label: "Dashboard", href: "/admin" }, { label: "Organization" }]);
+    expect(getAdminBreadcrumbs("/admin/settings/lists")).toEqual([{ label: "Dashboard", href: "/admin" }, { label: "Settings" }]);
   });
 
   it("keeps /admin/accounts as a hidden compatibility route", () => {

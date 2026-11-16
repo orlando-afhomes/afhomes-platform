@@ -6,6 +6,7 @@ import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { RedemptionAreaPage } from "./pages/redemption-page";
+import { VipProductsAreaPage } from "./pages/vip-products-page";
 import { RedemptionHolidaysPanel, RedemptionVenuesPanel } from "./pages/redemption-points-table-page";
 
 vi.mock("next/navigation", async (importOriginal) => ({
@@ -30,6 +31,12 @@ function show(identityId: string, tab = "bookings") {
   return render(<Wrapper identityId={identityId}><RedemptionAreaPage /></Wrapper>);
 }
 
+/** The points table, holidays and venues tabs now live in the Settings area. */
+function showSettings(identityId: string, tab: string) {
+  window.history.replaceState(null, "", `/admin/vip-products?tab=${tab}`);
+  return render(<Wrapper identityId={identityId}><VipProductsAreaPage /></Wrapper>);
+}
+
 afterEach(() => {
   cleanup();
   window.history.replaceState(null, "", "/");
@@ -50,7 +57,7 @@ describe("redemption pages", () => {
   });
 
   it("shows the points table and the update action to the Administrator, in plain words, with no sample labels", async () => {
-    show("dev-admin", "points-table");
+    showSettings("dev-admin", "points-table");
     expect(await screen.findByRole("table", { name: "Points per night" })).toBeInTheDocument();
     expect(screen.queryByText(/Sample table|Sample values|\(sample\)/)).toBeNull();
     expect(screen.getByRole("button", { name: /Update points table/ })).toBeInTheDocument();
@@ -110,7 +117,7 @@ describe("redemption pages", () => {
   });
 
   it("labels a venue that is not open yet as Coming soon and opens its row for editing", async () => {
-    show("dev-admin", "venues");
+    showSettings("dev-admin", "venues");
     const table = await screen.findByRole("table", { name: "Venues" });
     expect(within(table).queryByText("Not open yet")).toBeNull();
     expect(screen.queryByText("View full details")).toBeNull();

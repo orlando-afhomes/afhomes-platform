@@ -44,7 +44,7 @@ export function useTabParam<T extends string>(
       url.searchParams.set(param, value);
       // `view` is the Staff directory sub-view; it must not survive a tab change.
       if (value !== active) url.searchParams.delete("view");
-      window.history.replaceState(window.history.state, "", url);
+      window.history.replaceState(null, "", url);
     },
     [active, param],
   );
@@ -56,7 +56,7 @@ export function useTabParam<T extends string>(
     // fix, so a stale `useSearchParams` value cannot re-run this forever.
     if (url.searchParams.get(param) === active) return;
     url.searchParams.set(param, active);
-    window.history.replaceState(window.history.state, "", url);
+    window.history.replaceState(null, "", url);
   }, [active, fromUrl, param]);
 
   return [active, select] as const;

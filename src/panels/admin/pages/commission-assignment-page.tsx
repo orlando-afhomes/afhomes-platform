@@ -259,7 +259,7 @@ function RateDialog({ directory, onClose, saleContext }: {
         <>
           <TextField label="Approved rate (%)" hint="Leave blank to use the approved standard rate." inputMode="decimal" value={values.rate} onChange={(rate) => setDraft({ ...values, rate })} />
           <TextField label="Standard rate (%)" inputMode="decimal" value={values.standard} onChange={(standard) => setDraft({ ...values, standard })} />
-          <TextField label="Reason" required value={reason} onChange={setReason} />
+          <TextField label="Reason" value={reason} onChange={setReason} />
         </>
       )}
       {positionRate ? <div><Button type="button" variant="outline" onClick={() => {

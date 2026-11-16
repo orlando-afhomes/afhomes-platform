@@ -47,7 +47,7 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
   const canSeeSales = granted.has("sales");
   const canSeeContracts = granted.has("vip-products") || canSeeSales;
   const canReview = granted.has("vip-products") && canApproveContracts;
-  const canSeePaymentQueue = granted.has("finance") && canVerifyPayments;
+  const canSeePaymentQueue = (granted.has("finance") || granted.has("sales")) && canVerifyPayments;
   const canSeeActivation = granted.has("membership") && canActivate;
   const canSeeActivity = canSeeContracts || granted.has("finance");
 
@@ -231,7 +231,7 @@ export function AdminDashboard({ roles }: { roles: string[] }) {
               <DashboardPendingActions>
                 {canReview ? (
                   <DashboardPendingItem
-                    href="/admin/sales?tab=contract-review"
+                    href="/admin/sales?tab=contracts&status=needs-review"
                     label="Contract Review"
                     count={countPendingContractReviews(contracts.data ?? [])}
                     icon={ClipboardCheck}

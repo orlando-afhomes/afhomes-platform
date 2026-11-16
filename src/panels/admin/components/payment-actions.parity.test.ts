@@ -73,7 +73,6 @@ function expectedKeysFor(target: PaymentView, gates: Gates, who: DevIdentity): s
     keys.push("resend");
   }
   if (gates.canVerify && open) {
-    if (target.status === "submitted") keys.push("review");
     keys.push("verify", "return", "reject");
   }
   if (gates.canRefund && target.status === "verified" && adjustableCentavos(target) > 0) {
@@ -122,8 +121,8 @@ describe("payment-actions parity: row menu vs detail-sheet footer", () => {
     }
   });
 
-  it("submitted opens review+verify+return+reject; under_review skips Start review", () => {
-    expect(rowMenuKeys(payment("submitted"), FULL_GATES, ADMIN)).toEqual(["review", "verify", "return", "reject"]);
+  it("submitted and under_review both offer verify+return+reject (no Start review)", () => {
+    expect(rowMenuKeys(payment("submitted"), FULL_GATES, ADMIN)).toEqual(["verify", "return", "reject"]);
     expect(rowMenuKeys(payment("under_review"), FULL_GATES, ADMIN)).toEqual(["verify", "return", "reject"]);
   });
 
@@ -160,7 +159,6 @@ describe("payment-actions parity: row menu vs detail-sheet footer", () => {
     // Key → label pairs pinned by itemsFor (~lines 213-228).
     for (const [key, label] of [
       ["resend", "Fix and resend"],
-      ["review", "Start review"],
       ["verify", "Verify"],
       ["return", "Return for correction"],
       ["reject", "Reject"],
@@ -182,7 +180,9 @@ describe("payment-actions parity: row menu vs detail-sheet footer", () => {
     // Exactly one shared helper definition.
     expect(source.match(/const itemsFor = /g)?.length ?? 0).toBe(1);
     // Row menu consumes it …
-    expect(source).toContain("extraItems={itemsFor(payment)}");
+    expect(source).toContain("const items = itemsFor(payment);");
+    expect(source).toContain("extraItems={items.filter((item) => item !== verify)}");
+    expect(source).not.toContain("Start review");
     // … and the detail footer maps the same helper over the open detail record …
     expect(source).toContain("itemsFor(detail).map(");
     // … preserving key, label, danger styling, and the gate outcome (onClick) with no filtering.

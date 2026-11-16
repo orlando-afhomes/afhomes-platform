@@ -3,12 +3,14 @@
 import { useId, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown } from "lucide-react";
+import { BarChart3, Building2, ChevronDown, IdCard, Landmark, type LucideIcon } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useNotifications } from "@/shared/providers/notifications-provider";
 import type { AdminNavItem } from "../navigation";
 import { ADMIN_NAV_ICONS } from "./admin-nav-icons";
-import { findOpenKeys, findSelectedKeys } from "./admin-nav-match";
+import { findSelectedKeys } from "./admin-nav-match";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
+import { Button } from "@/shared/ui/button";
 
 const ROW =
   "tw:flex tw:w-full tw:min-h-11 tw:items-center tw:gap-3 tw:rounded-lg tw:px-3 tw:py-2 tw:text-left tw:text-sm tw:font-medium tw:text-sidebar-foreground/90 tw:transition-colors tw:hover:bg-sidebar-accent tw:hover:text-sidebar-foreground tw:focus-visible:ring-2 tw:focus-visible:ring-sidebar-ring tw:focus-visible:outline-none tw:motion-reduce:transition-none";
@@ -23,14 +25,16 @@ function formatBadgeCount(count: number): string {
 }
 
 const BADGE_PILL =
-  "tw:ml-auto tw:inline-flex tw:h-5 tw:min-w-5 tw:items-center tw:justify-center tw:rounded-full tw:bg-destructive tw:px-1 tw:text-[11px] tw:font-semibold tw:text-destructive-foreground";
+  "tw:ml-auto tw:inline-flex tw:h-5 tw:min-w-5 tw:items-center tw:justify-center tw:rounded-full tw:bg-destructive tw:px-1 tw:text-[11px] tw:font-semibold tw:text-white";
 
-/**
- * Authorized navigation as a landmark list: links for pages, disclosure buttons
- * for groups. Permission filtering happens upstream
- * (useRoleAwareAdminNavigation); this component never grants, only renders.
- * When `collapsed`, groups flatten to icon-only links named by their label.
- */
+const NAV_GROUPS: { label: string; icon: LucideIcon; members: readonly AdminNavItem["id"][] }[] = [
+  { label: "Money", icon: Landmark, members: ["finance", "commissions"] },
+  { label: "Member services", icon: IdCard, members: ["membership", "stay-points", "redemption"] },
+  { label: "Management", icon: Building2, members: ["vip-products", "sales-network", "organization"] },
+  { label: "Reports and audit", icon: BarChart3, members: ["reports", "audit-logs"] },
+];
+
+/** Groups are applied after filtering so they only contain destinations the user can open. */
 export function AdminNavList({
   items,
   onNavigate,
@@ -46,39 +50,56 @@ export function AdminNavList({
   const pathname = pathnameProp ?? hookPathname ?? "/";
   const list = items ?? [];
   const selected = new Set(findSelectedKeys(list, pathname));
-  const [openKeys, setOpenKeys] = useState<string[]>(() => findOpenKeys(list, pathname));
+  const activeGroup = NAV_GROUPS.find((group) => group.members.some((id) => selected.has(id)))?.label ?? null;
+  const [disclosure, setDisclosure] = useState<{ activeGroup: string | null; open: string | null }>();
+  const openGroup = disclosure?.activeGroup === activeGroup ? disclosure.open : activeGroup;
   const { unreadByNavKey } = useNotifications();
   const badgeFor = (id: string) => unreadByNavKey[id] ?? 0;
-
-  // Accordion: opening one group closes the others.
-  const toggle = (id: string) => setOpenKeys((current) => (current.includes(id) ? [] : [id]));
+  const direct = list.filter((item) => !NAV_GROUPS.some((group) => group.members.includes(item.id)));
 
   return (
     <ul className="tw:m-0 tw:flex tw:list-none tw:flex-col tw:gap-0.5 tw:p-0">
-      {list.map((item) =>
-        item.children?.length ? (
-          collapsed ? (
-            item.children.map((child) => (
-              <NavLink key={child.id} item={child} selected={selected.has(child.id)} collapsed badge={badgeFor(child.id)} onNavigate={onNavigate} />
-            ))
-          ) : (
-            <NavGroup
-              key={item.id}
-              item={item}
-              open={openKeys.includes(item.id)}
-              selectedChild={item.children.some((child) => selected.has(child.id))}
-              badge={item.children.reduce((sum, child) => sum + badgeFor(child.id), 0)}
-              onToggle={() => toggle(item.id)}
-            >
-              {item.children.map((child) => (
-                <NavLink key={child.id} item={child} selected={selected.has(child.id)} nested badge={badgeFor(child.id)} onNavigate={onNavigate} />
-              ))}
-            </NavGroup>
-          )
-        ) : (
-          <NavLink key={item.id} item={item} selected={selected.has(item.id)} collapsed={collapsed} badge={badgeFor(item.id)} onNavigate={onNavigate} />
-        ),
-      )}
+      {direct.map((item) => (
+        <NavLink key={item.id} item={item} selected={selected.has(item.id)} collapsed={collapsed} badge={badgeFor(item.id)} onNavigate={onNavigate} />
+      ))}
+      {NAV_GROUPS.map(({ label, icon: Icon, members }) => {
+        const children = list.filter((item) => members.includes(item.id));
+        if (children.length === 0) return null;
+        const badge = children.reduce((sum, child) => sum + badgeFor(child.id), 0);
+        const selectedChild = activeGroup === label;
+        if (collapsed) {
+          return (
+            <li key={label}>
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<Button variant="ghost" className={cn(ROW, "tw:relative tw:justify-center tw:px-0", selectedChild && ROW_SELECTED)} />}
+                  aria-label={badge ? `${label}, ${badge} new` : label} title={label}>
+                  <Icon aria-hidden="true" className="tw:size-4" />
+                  {badge ? <span aria-hidden="true" className="tw:absolute tw:top-1.5 tw:right-1.5 tw:size-2 tw:rounded-full tw:bg-destructive" /> : null}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="right" className="tw:w-48">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>{label}</DropdownMenuLabel>
+                    {children.map((child) => (
+                      <DropdownMenuItem key={child.id} render={<Link href={child.href} onClick={onNavigate} aria-current={selected.has(child.id) ? "page" : undefined} />}>
+                        {child.label}
+                        {badgeFor(child.id) > 0 ? <NavBadge count={badgeFor(child.id)} /> : null}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </li>
+          );
+        }
+        return (
+          <NavGroup key={label} label={label} icon={Icon} open={openGroup === label} selectedChild={selectedChild} badge={badge}
+            onToggle={() => setDisclosure({ activeGroup, open: openGroup === label ? null : label })}>
+            {children.map((child) => (
+              <NavLink key={child.id} item={child} selected={selected.has(child.id)} nested badge={badgeFor(child.id)} onNavigate={onNavigate} />
+            ))}
+          </NavGroup>
+        );
+      })}
     </ul>
   );
 }
@@ -120,9 +141,7 @@ function NavLink({
               className="tw:absolute tw:top-1.5 tw:right-1.5 tw:size-2 tw:rounded-full tw:bg-destructive"
             />
           ) : (
-            <span aria-label={`${badge} new`} className={BADGE_PILL}>
-              {formatBadgeCount(badge)}
-            </span>
+            <NavBadge count={badge} />
           )
         ) : null}
       </Link>
@@ -131,44 +150,41 @@ function NavLink({
 }
 
 function NavGroup({
-  item,
+  label,
+  icon: Icon,
   open,
   selectedChild,
   badge = 0,
   onToggle,
   children,
 }: {
-  item: AdminNavItem;
+  label: string;
+  icon: LucideIcon;
   open: boolean;
   selectedChild: boolean;
   badge?: number;
   onToggle: () => void;
   children: React.ReactNode;
 }) {
-  const Icon = ADMIN_NAV_ICONS[item.id];
   const panelId = useId();
   return (
     <li>
-      {/* Raw button exception: navigation disclosure, not an action button. */}
-      <button
+      <Button
         type="button"
+        variant="ghost"
         aria-expanded={open}
         aria-controls={panelId}
         onClick={onToggle}
         className={cn(ROW, open && "tw:bg-sidebar-accent/60", selectedChild && "tw:text-sidebar-foreground")}
       >
-        {Icon ? <Icon aria-hidden="true" className="tw:size-4 tw:shrink-0" /> : null}
-        <span className="tw:min-w-0 tw:flex-1">{item.label}</span>
-        {badge > 0 ? (
-          <span aria-label={`${badge} new`} className={BADGE_PILL}>
-            {formatBadgeCount(badge)}
-          </span>
-        ) : null}
+        <Icon aria-hidden="true" className="tw:size-4 tw:shrink-0" />
+        <span className="tw:min-w-0 tw:flex-1">{label}</span>
+        {badge > 0 && !open ? <NavBadge count={badge} /> : null}
         <ChevronDown
           aria-hidden="true"
           className={cn("tw:size-4 tw:shrink-0 tw:transition-transform tw:motion-reduce:transition-none", open && "tw:rotate-180")}
         />
-      </button>
+      </Button>
       <div
         className={cn("tw:grid tw:transition-[grid-template-rows] tw:duration-200 tw:ease-out", open ? "tw:grid-rows-[1fr]" : "tw:grid-rows-[0fr]")}
         inert={!open}
@@ -179,4 +195,8 @@ function NavGroup({
       </div>
     </li>
   );
+}
+
+function NavBadge({ count }: { count: number }) {
+  return <span aria-label={`${count} new`} className={BADGE_PILL}>{formatBadgeCount(count)}</span>;
 }

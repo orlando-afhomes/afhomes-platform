@@ -451,3 +451,14 @@ These rulings extend sections 3, 3.1, 3.2 and 4.1 and take precedence over earli
 23. **Optional image and description.** Each VIP product may have an optional image and an optional description. They are presentation only and carry no contractual terms.
 24. **Product code rule.** A new product code is exactly one letter followed by one digit. It must be unique and may not be a reserved or historical code (§4: B2, S2, P1, R1, G2, P2, R2). The two-character product-code segment of the VIP Number (doc 06) is not changed.
 25. **Finalized contracts are never rewritten.** Changing or retiring a level, or changing a product's image, description or code configuration, never alters a finalized or signed contract (§3.1). Every change keeps its audit history.
+
+## Owner rulings amendment (2026-11-16, simpler customer-to-contract flow)
+
+These rulings refine section 11 and items 9 and 12 and take precedence over earlier text in this document where they differ. They remove repeated steps; no price, term or approval is removed.
+
+26. **Contract submitted with the customer.** Registering a customer with a contract submits the contract in the same action, and the submit event is recorded as before (§11 step 4). Staff do not reopen the contract to submit it. If that submit is refused, the contract stays a Draft and staff submit it from the contract page.
+27. **Due dates are not typed at preparation.** Due dates always follow the reservation date (item 9). They can be changed only while the contract is Draft or Returned.
+28. **Customer acceptance is captured once,** in the application Review step or in the Prepare contract dialog. The edit dialog asks for it only while it is still missing.
+29. **Standard is the default.** New applications default to Standard (S). Non-Standard (N) remains selectable and is handled under §10.2.
+30. **Approve deal (§11, §12).** The Administrator's review is one "Approve deal" action. It approves the customer and the sale, records the signed Reservation Agreement (issuing the VIP Number) and finalizes the contract when no hold remains. Each step is recorded and audited on its own. A held contract keeps its VIP Number and is finalized by running Approve deal again once the hold clears. Approve deal is refused, with nothing changed, while a commission rate is missing or a cancellation is open.
+31. **No separate review step.** The "Start review" step is removed. Submitted means waiting for the Administrator. The Under Review status stays readable for older records. Non-Standard (N) contracts stay held at finalization until the §10.2 approval (Administrator, then Finance) is built.

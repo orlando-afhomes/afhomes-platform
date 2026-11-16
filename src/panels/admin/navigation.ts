@@ -62,33 +62,33 @@ export type AdminAreaTabRule = {
  * Each rule is copied unchanged from the sidebar item the tab replaces, so hub
  * pages must gate every tab with its rule (use `useAdminAreaTabAccess` from
  * `use-role-aware-navigation.ts`) to keep today's visibility. The page body may
- * still apply its own `allowed` checks (for example Commission Payouts also
- * opens for `commission.payout` holders); keep those inside the tab panel.
+ * still apply its own `allowed` checks (for example the Commissions tab shows
+ * its payout bar only to payout staff); keep those inside the tab panel.
  *
  * Former sidebar rules (grants default to the item id):
  * - Customers: customers [customers]; Customer Import [customers] + customers.import (was hidden).
- * - Sales: Sales Records [sales]; Contracts [sales, vip-products]; Contract Review [vip-products];
- *   IGP Sales [sales, finance].
- * - Finance: Payment Verification [finance, sales] + finance.verify; Collections, Payment History,
- *   Financial Holds, Cancellation Requests [finance]; Period Close [reports] + finance.verify;
- *   Reconciliation [reports] + reconciliation.manage; Historical Import [reports] + history-import.manage.
- * - Commissions: Commissions [commissions] (also hosts the clawback ledger, now Recovery);
- *   Commission Payouts [commissions, sales] + commission.payout.prepare; Commission Rates
+ * - Sales: Sales Records [sales]; Contracts (including review) [sales, vip-products];
+ *   IGP Sales [sales, finance]; Scheme Guide [vip-products, sales] (moved from VIP Products).
+ * - Finance: Payment Verification [finance, sales] + finance.verify; Collections (Financial Holds is
+ *   now its "On financial hold" filter), Payment History, Cancellation Requests [finance]; Period Close
+ *   [reports] + finance.verify; Reconciliation [reports] + reconciliation.manage.
+ * - Commissions: Commissions [commissions] (also hosts the clawback ledger, now Recovery, and
+ *   the month-end payout bar; the former Payouts tab and its route
+ *   /admin/commissions/payouts now open this tab); Commission Rates
  *   [commissions] + commission.rates.manage; Allowance Review [commissions] + commission.approve.
  * - Membership: VIP Memberships [membership]; Activation Queue [membership] + membership.activate.
  * - Stay Points: Stay Points, Promos, Promo Points [stay-points].
- * - Redemption: Bookings [redemption] (also cardholder points); Points Table, Holidays and Venues
- *   [redemption] + redemption.configure (the former Points Table page required the operation, so
- *   the three tabs stay hidden from Finance and other read-only holders).
- * - VIP Products: Product Catalog, Payment Schemes, Tier Codes [vip-products]; Scheme Guide
- *   [vip-products, sales].
+ * - Redemption: Bookings [redemption] (also cardholder points).
+ * - Settings (key "vip-products"): Product Catalog, Payment Schemes, Tier Codes [vip-products]; Points
+ *   Table, Holidays and Venues [redemption] + redemption.configure (hidden from Finance and other
+ *   read-only holders); Lists [departments] + settings.lists.manage; Historical Import [reports] +
+ *   history-import.manage; IGP Projects [sales, finance] + igp.manage.
  * - Sales Network: the group itself [sales-network]; Members [sales-network-members]; Genealogy
  *   [sales-network-genealogy]; OST Applications [accreditation-registrations]. Every role holding
  *   "sales-network" also holds the Members grant, so the union is unchanged.
- * - Organization: Departments [departments]; Roles [roles]; Staff [staff]; Lists [departments] +
- *   settings.lists.manage.
+ * - Organization: Departments [departments]; Roles [roles]; Staff [staff].
  * - Reports: every report [reports]; Collections Report also + finance.reports.view. Period
- *   Close, Reconciliation and Historical Import moved to Finance with their rules.
+ *   Close and Reconciliation moved to Finance with their rules.
  */
 export const ADMIN_AREA_TABS = {
   customers: [
@@ -98,24 +98,19 @@ export const ADMIN_AREA_TABS = {
   sales: [
     { value: "sales", label: "Sales", formerHref: "/admin/sales", rule: { grants: ["sales"] } },
     { value: "contracts", label: "Contracts", formerHref: "/admin/sales/contracts", rule: { grants: ["sales", "vip-products"] } },
-    { value: "contract-review", label: "Contract review", formerHref: "/admin/sales/contract-review", rule: { grants: ["vip-products"] } },
     { value: "igp", label: "IGP", formerHref: "/admin/sales/igp", rule: { grants: ["sales", "finance"] } },
-    // New tab (no former page): the IGP project and unit catalog, for igp.manage holders only.
-    { value: "projects", label: "Projects", formerHref: "/admin/sales", rule: { grants: ["sales", "finance"], operation: "igp.manage" } },
+    // Moved from VIP Products so sellers and the Clerk reach it without the Settings area.
+    { value: "scheme-guide", label: "Scheme guide", formerHref: "/admin/sales", rule: { grants: ["vip-products", "sales"] } },
   ],
   finance: [
-    { value: "verification", label: "Verification", formerHref: "/admin/finance", rule: { grants: ["finance", "sales"], operation: "finance.verify" } },
+    { value: "verification", label: "Receipts", formerHref: "/admin/finance", rule: { grants: ["finance", "sales"], operation: "finance.verify" } },
     { value: "collections", label: "Collections", formerHref: "/admin/finance/collections", rule: { grants: ["finance"] } },
-    { value: "payments", label: "Payment history", formerHref: "/admin/finance/payments", rule: { grants: ["finance"] } },
-    { value: "holds", label: "Holds", formerHref: "/admin/finance/holds", rule: { grants: ["finance"] } },
     { value: "cancellations", label: "Cancellations", formerHref: "/admin/finance/cancellations", rule: { grants: ["finance"] } },
     { value: "month-end-close", label: "Month-end close", formerHref: "/admin/reports/period-close", rule: { grants: ["reports"], operation: "finance.verify" } },
     { value: "reconciliation", label: "Reconciliation", formerHref: "/admin/reports/reconciliation", rule: { grants: ["reports"], operation: "reconciliation.manage" } },
-    { value: "historical-import", label: "Historical import", formerHref: "/admin/reports/historical-import", rule: { grants: ["reports"], operation: "history-import.manage" } },
   ],
   commissions: [
     { value: "commissions", label: "Commissions", formerHref: "/admin/commissions", rule: { grants: ["commissions"] } },
-    { value: "payouts", label: "Payouts", formerHref: "/admin/commissions/payouts", rule: { grants: ["commissions", "sales"], operation: "commission.payout.prepare" } },
     { value: "recovery", label: "Recovery", formerHref: "/admin/commissions", rule: { grants: ["commissions"] } },
     { value: "rates", label: "Rates", formerHref: "/admin/commissions/assignment", rule: { grants: ["commissions"], operation: "commission.rates.manage" } },
     { value: "allowances", label: "Allowances", formerHref: "/admin/commissions/allowances", rule: { grants: ["commissions"], operation: "commission.approve" } },
@@ -134,15 +129,18 @@ export const ADMIN_AREA_TABS = {
   redemption: [
     { value: "bookings", label: "Bookings", formerHref: "/admin/redemption", rule: { grants: ["redemption"] } },
     { value: "cardholder-points", label: "Cardholder points", formerHref: "/admin/redemption", rule: { grants: ["redemption"] } },
-    { value: "points-table", label: "Points table", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
-    { value: "holidays", label: "Holidays", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
-    { value: "venues", label: "Venues", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
   ],
+  // Settings: product setup plus the setup tabs moved from Redemption, Organization, Finance and Sales.
   "vip-products": [
     { value: "products", label: "Products", formerHref: "/admin/vip-products", rule: { grants: ["vip-products"] } },
     { value: "schemes", label: "Payment schemes", formerHref: "/admin/vip-products/schemes", rule: { grants: ["vip-products"] } },
-    { value: "scheme-guide", label: "Scheme guide", formerHref: "/admin/vip-products/scheme-guide", rule: { grants: ["vip-products", "sales"] } },
     { value: "tier-codes", label: "Tier levels", formerHref: "/admin/vip-products/tier-codes", rule: { grants: ["vip-products"] } },
+    { value: "points-table", label: "Points table", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
+    { value: "holidays", label: "Holidays", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
+    { value: "venues", label: "Venues", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
+    { value: "lists", label: "Lists", formerHref: "/admin/settings/lists", rule: { grants: ["departments"], operation: "settings.lists.manage" } },
+    { value: "historical-import", label: "Historical import", formerHref: "/admin/reports/historical-import", rule: { grants: ["reports"], operation: "history-import.manage" } },
+    { value: "igp-projects", label: "IGP projects", formerHref: "/admin/vip-products", rule: { grants: ["sales", "finance"], operation: "igp.manage" } },
   ],
   "sales-network": [
     { value: "members", label: "Members", formerHref: "/admin/sales-network/members", rule: { grants: ["sales-network-members"] } },
@@ -153,7 +151,6 @@ export const ADMIN_AREA_TABS = {
     { value: "staff", label: "Staff", formerHref: "/admin/organization/staff", rule: { grants: ["staff"] } },
     { value: "departments", label: "Departments", formerHref: "/admin/organization/departments", rule: { grants: ["departments"] } },
     { value: "roles", label: "Roles", formerHref: "/admin/organization/roles", rule: { grants: ["roles"] } },
-    { value: "lists", label: "Lists", formerHref: "/admin/settings/lists", rule: { grants: ["departments"], operation: "settings.lists.manage" } },
   ],
   reports: [
     { value: "summary", label: "Summary", formerHref: "/admin/reports", rule: { grants: ["reports"] } },
@@ -194,9 +191,8 @@ function areaItem(id: AdminAreaKey, label: string): AdminNavItem {
   };
 }
 
-// Flat sidebar (owner ruling 2026-11-15). Order follows the business process:
-// customers and sales, money, membership and points, setup, then reports and
-// the audit log last. Each area shows while any of its tabs is allowed.
+// Keep the area registry flat for access checks and breadcrumbs. AdminNavList
+// groups the visible links for display. Each area shows while any of its tabs is allowed.
 export const adminNavigation: AdminNavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/admin", available: true },
   areaItem("customers", "Customers"),
@@ -206,7 +202,7 @@ export const adminNavigation: AdminNavItem[] = [
   areaItem("membership", "Membership"),
   areaItem("stay-points", "Stay Points"),
   areaItem("redemption", "Redemption"),
-  areaItem("vip-products", "VIP Products"),
+  areaItem("vip-products", "Settings"),
   areaItem("sales-network", "Sales Network"),
   areaItem("organization", "Organization"),
   // Compatibility entry point only: /admin/accounts forwards authorized users to

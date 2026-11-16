@@ -3,14 +3,14 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
-import { MODULE_PRIMARY_NAV, MODULE_PRIMARY_TAB, isAreaNavKey } from "@/modules/notifications/module-nav";
-import { isCreationEvent } from "@/modules/notifications/creation-actions";
+import { notificationDestination } from "@/modules/notifications/module-nav";
+import { isNotificationBadgeEvent } from "@/modules/notifications/creation-actions";
 import { formatNotificationTime } from "@/modules/notifications/format-time";
-import type { AuditModule } from "@/modules/audit/types";
-import type { AdminModuleId } from "@/modules/identity/permissions";
+import { getGrantedOperations } from "@/modules/identity/permissions";
 import { useEffectiveModuleIds } from "@/data/queries";
-import { ADMIN_AREA_TABS, adminNavigation, type AdminAreaTabRule, type AdminNavItem, type AdminNavKey } from "@/panels/admin/navigation";
+import { ADMIN_AREA_TABS, adminAreaHref, isNavRuleAllowed, type AdminAreaTabRule } from "@/panels/admin/navigation";
 import { useNotifications } from "@/shared/providers/notifications-provider";
+import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { humanize } from "@/shared/lib/humanize";
 import { formatNotificationAction } from "@/modules/notifications/format-action";
 import { Button } from "@/shared/ui/button";
@@ -24,74 +24,23 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 
-function findNavItem(items: readonly AdminNavItem[], navKey: AdminNavKey): AdminNavItem | null {
-  for (const item of items) {
-    if (item.id === navKey) return item;
-    if (item.children) {
-      const found = findNavItem(item.children, navKey);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
-/** The area tab a module's events open on, with the former page's access rule. */
-function primaryTab(module: AuditModule) {
-  const navKey = MODULE_PRIMARY_NAV[module];
-  if (!navKey || !isAreaNavKey(navKey)) return null;
-  const tabs: readonly AdminAreaTabRule[] = ADMIN_AREA_TABS[navKey];
-  const index = tabs.findIndex((tab) => tab.value === MODULE_PRIMARY_TAB[module]);
-  return index < 0 ? null : { tab: tabs[index], first: index === 0 };
-}
-
-/** Primary page href for an audit module (area plus tab); falls back to /admin when unmapped. */
-function hrefForModule(module: AuditModule): string {
-  const navKey = MODULE_PRIMARY_NAV[module];
-  if (!navKey) return "/admin";
-  const href = findNavItem(adminNavigation, navKey)?.href;
-  if (!href) return "/admin";
-  const primary = primaryTab(module);
-  // The first tab is the area's default, so its link stays the plain area route.
-  return primary && !primary.first ? `${href}?tab=${primary.tab.value}` : href;
-}
-
-/**
- * Module grants of the active identity, or null when the identity/store
- * providers are unavailable (e.g. an isolated render). Null means the
- * permission filter is skipped and every event is shown.
- */
-function useGrantedModules(): Set<AdminModuleId> | null {
-  try {
-    return useEffectiveModuleIds();
-  } catch {
-    return null;
-  }
-}
-
-/**
- * True when the module's primary tab is visible to the identity. Mirrors the
- * sidebar grant check (the tab's module grants; item grants default to its own
- * id); operation-level requirements are not evaluated here, so access is
- * fail-open on those. Missing nav items and unavailable grants also fail open.
- */
-function isModuleVisible(module: AuditModule, granted: Set<AdminModuleId> | null): boolean {
-  if (!granted) return true;
-  const navKey = MODULE_PRIMARY_NAV[module];
-  if (!navKey) return true;
-  const item = findNavItem(adminNavigation, navKey);
-  if (!item) return true;
-  const grants = primaryTab(module)?.tab.rule.grants ?? item.grants ?? [item.id as AdminModuleId];
-  return grants.some((grant) => granted.has(grant));
-}
-
 const MAX_ROWS = 30;
 
 export function NotificationsMenu() {
   const { unreadTotal, events, denied, markAllSeen } = useNotifications();
-  const granted = useGrantedModules();
+  const { identity } = useDevIdentity();
+  const modules = useEffectiveModuleIds();
+  const operations = useMemo(() => getGrantedOperations(identity), [identity]);
   const visible = useMemo(
-    () => events.filter((event) => isModuleVisible(event.module, granted)).slice(0, MAX_ROWS),
-    [events, granted],
+    () => events.flatMap((event) => {
+      const { area, tab } = notificationDestination(event);
+      const tabs: readonly AdminAreaTabRule[] = ADMIN_AREA_TABS[area];
+      const index = tabs.findIndex(({ value }) => value === tab);
+      if (index < 0 || !isNavRuleAllowed(tabs[index].rule, modules, operations)) return [];
+      const href = adminAreaHref(area);
+      return [{ event, href: index === 0 ? href : `${href}?tab=${tab}` }];
+    }).slice(0, MAX_ROWS),
+    [events, modules, operations],
   );
   const badge = unreadTotal > 99 ? "99+" : String(unreadTotal);
   const triggerLabel = unreadTotal > 0 ? `Notifications, ${unreadTotal} unread` : "Notifications, none unread";
@@ -105,7 +54,7 @@ export function NotificationsMenu() {
         {unreadTotal > 0 ? (
           <span
             aria-hidden="true"
-            className="tw:absolute tw:-top-0.5 tw:-right-0.5 tw:flex tw:h-5 tw:min-w-5 tw:items-center tw:justify-center tw:rounded-full tw:bg-destructive tw:px-1 tw:text-[11px] tw:font-bold tw:text-destructive-foreground"
+            className="tw:absolute tw:-top-0.5 tw:-right-0.5 tw:flex tw:h-5 tw:min-w-5 tw:items-center tw:justify-center tw:rounded-full tw:bg-destructive tw:px-1 tw:text-[11px] tw:font-bold tw:text-white"
           >
             {badge}
           </span>
@@ -125,15 +74,15 @@ export function NotificationsMenu() {
         ) : (
           <>
             <div className="tw:max-h-80 tw:overflow-y-auto">
-              {visible.map((event) => {
+              {visible.map(({ event, href }) => {
                 // Row-level seen state is not exposed by the provider, so the
                 // unread treatment follows the badge semantics: brand-new
                 // record creation events read as unread.
-                const unread = isCreationEvent(event.module, event.action);
+                const unread = isNotificationBadgeEvent(event);
                 return (
                   <DropdownMenuItem
                     key={event.id}
-                    render={<Link href={hrefForModule(event.module)} />}
+                    render={<Link href={href} />}
                     className={
                       unread
                         ? "tw:min-h-11 tw:items-start tw:bg-accent/60 tw:py-2"

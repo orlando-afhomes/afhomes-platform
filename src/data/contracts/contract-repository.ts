@@ -15,6 +15,8 @@ export type ContractView = Contract & {
 
 export type PrepareContractInput = {
   customerId: string;
+  /** A stable request ID for an explicitly separate purchase. Retrying it reopens the same contract. */
+  newPurchaseRequestId?: string;
   schemeId: string;
   productCode?: Sale["productCode"];
   classification?: Contract["classification"];
@@ -39,7 +41,6 @@ export interface ContractRepository {
   /** Edits a Draft or Returned contract. */
   update(id: string, input: UpdateContractInput, options?: MockAsyncOptions): Promise<ContractView>;
   submit(id: string, options?: MockAsyncOptions): Promise<ContractView>;
-  startReview(id: string, options?: MockAsyncOptions): Promise<ContractView>;
   returnForCorrection(id: string, reason: string, options?: MockAsyncOptions): Promise<ContractView>;
   finalize(id: string, options?: MockAsyncOptions): Promise<ContractView>;
   /** Direct cancellation; refused once the contract has verified payments or a Confirmed sale. */

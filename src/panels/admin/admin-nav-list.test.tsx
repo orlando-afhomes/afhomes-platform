@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { AdminNavList } from "./components/admin-nav-list";
 import { getDevIdentity } from "@/data/mock/dev-identities";
@@ -24,14 +25,20 @@ function renderNav(identityId: string, pathname = "/admin") {
   return renderToStaticMarkup(createElement(TestWrapper, { items, pathname }));
 }
 
-describe("admin nav flat list", () => {
-  it("renders every area as a direct link, with no group buttons", () => {
+describe("admin nav groups", () => {
+  it("opens the current group and lets users switch to another group", async () => {
+    const user = userEvent.setup();
     const items = getRoleAwareAdminNavigation(getDevIdentity("dev-super-admin"));
     render(<TestWrapper items={items} pathname="/admin/finance/collections" />);
-    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    expect(screen.getByRole("button", { name: "Money" })).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("link", { name: "Finance" })).toHaveAttribute("href", "/admin/finance");
     expect(screen.getByRole("link", { name: "Finance" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getAllByRole("link")).toHaveLength(13);
+    const memberServices = screen.getByRole("button", { name: "Member services" });
+    expect(memberServices).toHaveAttribute("aria-expanded", "false");
+    await user.click(memberServices);
+    expect(memberServices).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("link", { name: "Stay Points" })).toHaveAttribute("href", "/admin/stay-points");
+    expect(screen.getByRole("button", { name: "Money" })).toHaveAttribute("aria-expanded", "false");
   });
 });
 
@@ -78,10 +85,11 @@ describe("admin nav list rendering", () => {
     const finance = renderNav("dev-finance");
     expect(finance).toContain("Finance");
     expect(finance).toContain("Commissions");
-    expect(finance).not.toContain("VIP Products");
+    expect(finance).not.toContain("Settings");
     const ost = renderNav("dev-ost-a1");
-    // Scheme Guide is the only VIP Products tab a seller holds.
-    expect(ost).toContain("VIP Products");
+    // Scheme Guide moved to Sales, so a seller holds no Settings tab.
+    expect(ost).not.toContain("Settings");
+    expect(renderNav("dev-admin")).toContain("Settings");
     expect(ost).not.toContain("Finance");
     expect(ost).not.toContain("Redemption");
   });

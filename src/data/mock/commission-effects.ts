@@ -1,5 +1,6 @@
-import type { CommissionClawbackTrigger, CommissionProduct, CommissionRole, CommissionStage, FrozenCommissionRate } from "@/modules/commissions/types";
+import type { CommissionClawbackTrigger, CommissionPayoutList, CommissionProduct, CommissionRole, CommissionStage, FrozenCommissionRate } from "@/modules/commissions/types";
 import { clawbackBalance, commissionStageAmounts } from "@/modules/commissions/rules";
+import { SYSTEM_ACTOR_ID } from "@/modules/audit/types";
 import { firstOpenDate } from "@/modules/finance/month-close";
 import type { DevIdentity } from "@/modules/identity/types";
 import { appendAuditEvent } from "./audit";
@@ -88,6 +89,31 @@ export function releaseSaleCommissions(store: MockStore, actor: DevIdentity, sal
       relatedRecordIds: [sale.saleId], outcome: "success",
     });
   }
+}
+
+/**
+ * Builds the payout list of a closed month from its released commissions not yet listed
+ * (doc 08 §11.1(4), §11.5: the system prepares it at month close). Returns null when none are waiting.
+ */
+export function buildPayoutList(store: MockStore, month: string, actor: DevIdentity | "system"): CommissionPayoutList | null {
+  if (!store.closedMonths.some((item) => item.month === month)) throw new Error("Close the release month before preparing its payout list.");
+  const listed = new Set(store.commissionPayoutLists.flatMap((list) => list.approvedAt
+    ? list.approvedCommissionIds ?? list.entries.map(({ commissionId }) => commissionId)
+    : list.month === month ? list.entries.map(({ commissionId }) => commissionId) : []));
+  const eligible = store.commissions.filter((item) => item.status === "released" && item.releaseDate?.slice(0, 7) === month && !listed.has(item.id));
+  if (!eligible.length) return null;
+  const actorId = actor === "system" ? SYSTEM_ACTOR_ID : actor.id;
+  const list: CommissionPayoutList = {
+    id: nextId(store, "commissionPayoutList", "commission-list"), month,
+    entries: eligible.map(({ id, saleId, recipientMemberId, amountCentavos }) => ({ commissionId: id, saleId, recipientMemberId, amountCentavos })),
+    preparedBy: actorId, preparedAt: nowIso(), approvedBy: null, approvedAt: null,
+  };
+  store.commissionPayoutLists.push(list);
+  appendAuditEvent(store, {
+    actorId, actorRoles: actor === "system" ? ["system"] : activeRoles(actor), module: "commissions", action: "COMMISSION_PAYOUT_LIST_PREPARED",
+    entityType: "commission", entityId: list.id, newValue: month, relatedRecordIds: list.entries.map((item) => item.commissionId), outcome: "success",
+  });
+  return list;
 }
 
 export function restoreDefaultedCommission(store: MockStore, actor: DevIdentity, saleId: string, businessDate: string): void {

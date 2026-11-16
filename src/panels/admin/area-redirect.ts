@@ -46,3 +46,9 @@ export async function redirectToAreaTab<A extends AdminAreaKey>(
 ): Promise<never> {
   redirect(areaTabHref(area, tab, (await searchParams) ?? {}));
 }
+
+/** Earlier contract-review links open the same Contracts list with the review filter. */
+export async function redirectToContractsReview(searchParams: AreaRedirectPageProps["searchParams"] | RouteSearchParams): Promise<never> {
+  const query = await searchParams;
+  return redirectToAreaTab("sales", "contracts", { ...query, status: query.status ?? "needs-review" });
+}

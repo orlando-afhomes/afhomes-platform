@@ -19,7 +19,7 @@ export type CommissionView = Commission & {
 
 export interface CommissionRepository {
   rateDirectory(options?: MockAsyncOptions): Promise<CommissionRateDirectory>;
-  setRate(input: CommissionRateSetting & { reason: string }, options?: MockAsyncOptions): Promise<void>;
+  setRate(input: CommissionRateSetting & { reason?: string }, options?: MockAsyncOptions): Promise<void>;
   setPositionRate(input: VipPositionRate, options?: MockAsyncOptions): Promise<void>;
   applyPositionRate(input: ApplyVipPositionRateInput, options?: MockAsyncOptions): Promise<void>;
   payoutLists(options?: MockAsyncOptions): Promise<CommissionPayoutList[]>;

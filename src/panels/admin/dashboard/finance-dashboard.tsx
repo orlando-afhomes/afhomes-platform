@@ -210,7 +210,7 @@ export function FinanceDashboard() {
                 loading={payments.isLoading || commissions.isLoading}
                 error={payments.error ?? commissions.error}
                 emptyText="No recent Finance activity."
-                viewAllHref="/admin/finance?tab=payments"
+                viewAllHref="/admin/finance?tab=verification&show=all"
               />
             ) : undefined
           }
@@ -230,7 +230,7 @@ export function FinanceDashboard() {
                 ) : null}
                 {queues.payouts ? (
                   <DashboardPendingItem
-                    href="/admin/commissions?tab=payouts"
+                    href="/admin/commissions?tab=commissions"
                     label="Commission Payouts"
                     count={payouts.ready + payouts.awaitingConfirmation}
                     icon={HandCoins}
@@ -252,7 +252,7 @@ export function FinanceDashboard() {
                 ) : null}
                 {queues.holds ? (
                   <DashboardPendingItem
-                    href="/admin/finance?tab=holds"
+                    href="/admin/finance?tab=collections"
                     label="Financial Holds"
                     count={countFinancialHolds(memberships.data ?? [])}
                     icon={ShieldAlert}

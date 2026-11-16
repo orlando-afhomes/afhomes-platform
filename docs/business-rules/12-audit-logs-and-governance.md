@@ -174,7 +174,7 @@ Finance timestamps: distinguish submitted date, verification date, reversal date
 
 Use `docs/business-rules/08-commission-management.md` (owner rulings R8 and R9, 2026-11-12) and, for IGP, `docs/business-rules/14-igp-sales.md` §8. The system computes DSC and DRI from per-person rates frozen on the sale; approving and paying are explicit actions by Finance, the Administrator or the Super Administrator. Document audit requirements for:
 
-- per-person DSC and DRI rate changes by the Administrator or the Super Administrator (old value, new value, actor, date, reason; future sales only);
+- per-person DSC and DRI rate changes by the Administrator or the Super Administrator (old value, new value, actor, date, and reason if provided in Set rate; future sales only);
 - freezing of the seller's DSC rate, the referrer's DRI rate and the Closed Deal threshold when the VIP Number (IGP: Series Number) is issued;
 - referrer or rate corrections under doc 08 §9.3;
 - release of each stage and the month it falls in;
@@ -530,3 +530,11 @@ These rulings take precedence over earlier text in this document where they diff
 - **Self-approval for all approvals (owner answer A3, 2026-11-12).** The self-approval flag covers every approval (receipts, payout lists, cancellations, adjustments), not only receipts and payouts (sections 14, 15 and 25). Actors now include Clerk and HR; Customer is a future actor (section 8). IGP events: doc 14 §12 and section 23.1.
 
 Numbering note: item numbers in this amendment follow the master follow-up list in `docs/implementation/decisions-and-gaps.md`; existing numbers are not renumbered.
+
+## Owner rulings amendment (2026-11-16, fewer clicks, same history)
+
+These rulings take precedence over earlier text in this document where they differ. Fewer clicks never means fewer audit events.
+
+1. **Approve deal.** One Administrator action records separate audit events, each only when that step runs: `CUSTOMER_APPROVED`, `SALE_APPROVED`, `CONTRACT_RA_RECORDED`, `VIP_NUMBER_ISSUED` and `CONTRACT_FINALIZED` (doc 05 items 30 and 31).
+2. **Bulk payouts.** Recording or confirming payouts for many commissions at once records one audit event per commission (doc 08, 2026-11-16 amendment).
+3. **Start review removed.** Staff no longer start a review on a contract or a receipt. Older `*_REVIEW_STARTED` events stay readable in the history.

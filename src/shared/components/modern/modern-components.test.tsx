@@ -60,7 +60,7 @@ describe("modern RowActionsMenu", () => {
     render(
       <>
         <Toaster />
-        <RowActionsMenu itemName="Row One" onDelete={onDelete} />
+        <RowActionsMenu itemName="Row One" onEdit={() => {}} onDelete={onDelete} />
       </>,
     );
     await openByKeyboard(user);
@@ -79,7 +79,7 @@ describe("modern RowActionsMenu", () => {
     render(
       <>
         <Toaster />
-        <RowActionsMenu itemName="Row One" onDelete={onDelete} />
+        <RowActionsMenu itemName="Row One" onEdit={() => {}} onDelete={onDelete} />
       </>,
     );
     await openByKeyboard(user);
@@ -100,7 +100,7 @@ describe("modern RowActionsMenu", () => {
   it("renders nothing when no action is allowed and gives the trigger a 44px mobile target", () => {
     const { container, rerender } = render(<RowActionsMenu itemName="Row One" />);
     expect(container.textContent).toBe("");
-    rerender(<RowActionsMenu itemName="Row One" onEdit={() => {}} />);
+    rerender(<RowActionsMenu itemName="Row One" onEdit={() => {}} onDelete={() => {}} />);
     expect(screen.getByRole("button", { name: "Actions for Row One" }).className).toContain("tw:size-11");
   });
 });

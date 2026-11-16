@@ -2,6 +2,7 @@
 
 import { EMPTY } from "@/shared/lib/empty-value";
 import { customerRecordName } from "@/modules/customers/rules";
+import { preferOpenContract } from "@/modules/contracts/rules";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
@@ -9,11 +10,13 @@ import { FileCheck, FileText, Plus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useApproveCustomer, useContracts, useDiscardCustomerDraft, useOperation, useRejectCustomer, useSendBackCustomer } from "@/data/business-queries";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
+import type { ContractView } from "@/data/contracts/contract-repository";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { toast } from "sonner";
 import { PrepareContractDialog } from "../components/prepare-contract-dialog";
+import { useContractHref } from "../components/use-contract-href";
 import { buildCustomerMenuProps } from "../actions/customer-actions";
 import { useCustomers, useMembers } from "@/data/queries";
 import type { Customer } from "@/modules/customers/types";
@@ -47,6 +50,7 @@ export function CustomersActions() {
 
 export function CustomersTab() {
   const router = useRouter();
+  const contractHref = useContractHref();
   const customers = useCustomers();
   const members = useMembers();
   const discard = useDiscardCustomerDraft();
@@ -64,6 +68,13 @@ export function CustomersTab() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
 
+  const openContractByCustomer = useMemo(() => {
+    const lookup = new Map<string, ContractView | undefined>();
+    for (const contract of contracts.data ?? []) {
+      lookup.set(contract.customerId, preferOpenContract(lookup.get(contract.customerId), contract));
+    }
+    return lookup;
+  }, [contracts.data]);
   const memberName = useMemo(() => new Map((members.data ?? []).map((member) => [member.id, member.displayName])), [members.data]);
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -120,6 +131,7 @@ export function CustomersTab() {
           onRowOpen={(row) => router.push(`/admin/customers/${row.id}`)}
           getRowLabel={(row) => `Open ${customerRecordName(row)}`}
           rowActions={(row) => {
+            const existingContractId = openContractByCustomer.get(row.id)?.id;
             const menu = buildCustomerMenuProps(
               row,
               { canManage, canDraft, canApprove, canPrepare, ownRecord: !row.restricted },
@@ -129,7 +141,8 @@ export function CustomersTab() {
                 onApprove: () => setReviewTarget({ customer: row, action: "approve" }),
                 onSendBack: () => setReviewTarget({ customer: row, action: "send_back" }),
                 onReject: () => setReviewTarget({ customer: row, action: "reject" }),
-                onPrepare: () => setPreparingCustomer(row),
+                onOpenContract: existingContractId ? () => router.push(contractHref(existingContractId)) : undefined,
+                onPrepare: contracts.isSuccess ? () => setPreparingCustomer(row) : undefined,
               },
             );
             return <RowActionsMenu {...menu} />;
@@ -179,7 +192,7 @@ export function CustomersTab() {
         onClose={() => setReviewTarget(null)}
         onSubmit={(reason) => (reviewTarget ? reject.mutateAsync({ id: reviewTarget.customer.id, reason }) : Promise.reject(new Error("No customer selected.")))}
       />
-      {preparingCustomer ? <PrepareContractDialog customer={preparingCustomer} repeatPurchase={contracts.data?.some((contract) => contract.customerId === preparingCustomer.id)} open onClose={() => setPreparingCustomer(null)} /> : null}
+      {preparingCustomer ? <PrepareContractDialog customer={preparingCustomer} repeatPurchase={openContractByCustomer.has(preparingCustomer.id)} open onClose={() => setPreparingCustomer(null)} /> : null}
     </>
   );
 }

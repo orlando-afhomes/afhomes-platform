@@ -7,14 +7,14 @@ import { useState } from "react";
 import { AppToaster } from "@/shared/components/modern/app-toaster";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
-import { OrganizationAreaPage } from "./pages/organization-area-page";
+import { VipProductsAreaPage } from "./pages/vip-products-page";
 
 vi.mock("next/navigation", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/navigation")>()),
   useSearchParams: () => new URLSearchParams(window.location.search),
 }));
 
-beforeEach(() => window.history.replaceState(null, "", "/admin?tab=lists"));
+beforeEach(() => window.history.replaceState(null, "", "/admin/vip-products?tab=lists"));
 
 function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -23,7 +23,7 @@ function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
       <MockStoreProvider>
         <DevIdentityProvider initialIdentityId={identityId}>
           <AppToaster />
-          <OrganizationAreaPage />
+          <VipProductsAreaPage />
         </DevIdentityProvider>
       </MockStoreProvider>
     </QueryClientProvider>
@@ -108,6 +108,6 @@ describe("lists page", () => {
 
   it("is not available to a role without the lists operation", async () => {
     render(<TestWrapper identityId="dev-finance" />);
-    expect(await screen.findByText(/does not have access to Organization/)).toBeInTheDocument();
+    expect(await screen.findByText(/does not have access to Settings/)).toBeInTheDocument();
   });
 });

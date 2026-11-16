@@ -30,7 +30,7 @@ export function EditContractDialog({ contract, onClose }: DialogProps) {
       {contract.schedule.map((line) => (
         <StandardDateField key={line.seq} label={`${line.label} due date`} value={dates[line.seq] ?? ""} onChange={(value) => setDates((current) => ({ ...current, [line.seq]: value }))} />
       ))}
-      <CheckboxField label="The customer has read and accepted the contract terms." checked={accepted} onChange={setAccepted} />
+      {contract.customerAccepted ? null : <CheckboxField label="The customer has read and accepted the contract terms." checked={accepted} onChange={setAccepted} />}
     </FormDialog>
   );
 }
@@ -54,25 +54,6 @@ export function RequestCancellationDialog({ contract, onClose }: DialogProps) {
     <FormDialog open title="Request cancellation" description="This contract has verified payments. Under the Reservation Agreement they are forfeited on cancellation. Finance must confirm the request." submitText="Request cancellation" submitVariant="warning" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <SelectField label="Ground" required value={ground} options={CANCELLATION_GROUNDS.map((value) => ({ value, label: CANCELLATION_GROUND_LABELS[value] }))} onChange={setGround} />
       <TextAreaField label="Reason" required value={reason} onChange={setReason} />
-    </FormDialog>
-  );
-}
-
-export function RaDialog({ contract, onClose }: DialogProps) {
-  const action = useContractAction();
-  const [error, setError] = useState<string | undefined>();
-  const send = async () => {
-    try {
-      const issued = await action.mutateAsync({ id: contract.id, action: "ra" });
-      toast.success(`VIP Number issued: ${issued.vipNumber}`);
-      onClose();
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Could not save.");
-    }
-  };
-  return (
-    <FormDialog open title="Record signed Reservation Agreement" description="Confirm that the agreement has been signed. The system will assign one VIP Number for the agreement, Grant, and card." submitText="Record and issue number" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
-      {null}
     </FormDialog>
   );
 }

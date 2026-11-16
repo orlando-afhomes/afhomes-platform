@@ -25,6 +25,11 @@ const TONE_CLASS: Record<Exclude<RowActionTone, "default" | "danger">, string> =
   info: "tw:text-info tw:focus:bg-info/10 tw:focus:text-info tw:focus:**:text-info tw:dark:text-[color-mix(in_oklch,var(--info),white_45%)] tw:dark:focus:bg-info/20",
 };
 
+/** Button color for a tone (same meaning as the menu item colors). */
+export function toneButtonVariant(tone: RowActionTone | undefined): "outline" | "success" | "warning" | "info" | "destructive" {
+  return tone === "danger" ? "destructive" : tone && tone !== "default" ? tone : "outline";
+}
+
 export type RowActionItem = {
   key: string;
   label: string;
@@ -104,6 +109,9 @@ export function RowActionsMenu({
   const hasDeleteEntry = Boolean(onDelete || deleteDisabledReason);
   if (!hasLeadingItems && !hasDeleteEntry) return null;
   const itemClass = "tw:min-h-11 tw:sm:min-h-8";
+  const entryCount = (onEdit ? 1 : 0) + extraItems.length + (hasDeleteEntry ? 1 : 0);
+  const single = extraItems[0];
+  const singleTone = single ? (single.tone ?? (single.danger ? "danger" : "default")) : "default";
 
   const runDelete = async () => {
     if (!onDelete) return;
@@ -122,6 +130,19 @@ export function RowActionsMenu({
 
   return (
     <div className="tw:flex tw:justify-end">
+      {entryCount === 1 ? (
+        // One action only: show it directly instead of hiding it behind "...".
+        <Button
+          id={triggerId}
+          size="sm"
+          variant={onEdit ? "outline" : single ? toneButtonVariant(singleTone) : "destructive"}
+          aria-label={`${onEdit ? "Edit" : single ? single.label : "Delete"} ${itemName}`}
+          className={itemClass}
+          onClick={onEdit ?? single?.onClick ?? (() => (onDelete ? setConfirmOpen(true) : setNoticeOpen(true)))}
+        >
+          {onEdit ? "Edit" : single ? single.label : "Delete"}
+        </Button>
+      ) : (
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
@@ -172,6 +193,7 @@ export function RowActionsMenu({
           ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
+      )}
       {onDelete ? (
         <ConfirmDialog
           open={confirmOpen}

@@ -178,7 +178,7 @@ Each seller record holds a DSC rate and a DRI rate for each product (VIP, IGP). 
 ### 9.2 Changing a Person's Rate
 
 - An Administrator or the Super Administrator may set a rate that differs from the standard for a named person. The change applies to sales whose VIP Number is issued after it, never to existing sales.
-- Every change is logged with the old value, new value, actor, date and reason.
+- Every change is logged with the old value, new value, actor and date. A reason is optional in Set rate and is logged when provided.
 - The system lists every person whose rate differs from the standard, so the month-end review sees the exceptions together (AUG R17).
 - Sellers, clerks and other users cannot change rates.
 
@@ -482,7 +482,7 @@ Imported history (section 16) keeps the verified facts as recorded. Do not fabri
 
 Audit events include: rate set or changed, sale referrer or rate corrected, rates frozen at VIP Number issuance, release, hold and restoration, payout list approval (including self-approval by Finance, an Administrator or the Super Administrator, flagged), payout initiation, void, recording and confirmation, clawback raised, recovered, offset and written off, Defaulted marking and reinstatement, month close, BA withholding, allowance figure change, and every financial correction.
 
-Audit details keep the actor, timestamp, sale, contract, recipient, previous and new values, reason, and supporting reference. Where Finance, an Administrator or the Super Administrator approves their own entry (receipt or payout list), the audit flags the self-approval and shows the roles held by the same person.
+Audit details keep the actor, timestamp, sale, contract, recipient, previous and new values, reason, and supporting reference as applicable. For Set rate, the reason is optional (§9.2). Where Finance, an Administrator or the Super Administrator approves their own entry (receipt or payout list), the audit flags the self-approval and shows the roles held by the same person.
 
 Ordinary record editing must never erase the decision trail. Payout evidence and recipient financial data stay protected and are never exposed through public pages or unrelated Sales Network views.
 
@@ -647,3 +647,10 @@ These rulings were given directly by the owner on 2026-11-12. They take preceden
 
 4. **Payout day (D-A).** A VIP commission payout may be recorded from the first day of the month after the month in which net verified collections first reached 40%. This is the month-end payout of Decision 5, sections 8.2 and 11, and R8 item 4, made after that month is closed. Until a month-close feature exists, the start of the next calendar month stands in for month close. This replaces any reading of "at month-end" as the last calendar day of the release month. There is no waiting period.
 5. **Which date sets the release month (D-B).** The interim approval-date implementation has been aligned with the counted receipt date in doc 13 §4.3. Receipts posted to the first open month follow doc 13 §4.5.
+
+## Owner rulings amendment (2026-11-16, month-end payouts in bulk)
+
+These rulings refine section 11 and take precedence over earlier text in this document where they differ. They remove clicks; every required event is still recorded.
+
+1. **Automatic list (§11.1 item 4, §11.5).** Closing a month makes the system prepare that month's DSC and DRI payout list from the released commissions not yet listed. Because the system prepared it, the approver is not treated as approving their own list (§11.2). Approving the list is still required.
+2. **Bulk record and confirm (§11.3, §11.6).** After the list is approved, Finance, the Administrator or the Super Administrator may record the payout for all ready commissions at once, with one payout date, method, reference and proof, and confirm disbursement for all at once. Each commission is still recorded, checked for duplicates (§11.7) and audited on its own; one that fails is skipped and reported. Held commissions are never confirmed in bulk. To leave one out, staff record payouts one by one.

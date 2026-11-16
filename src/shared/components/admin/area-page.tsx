@@ -5,6 +5,7 @@ import type { AdminModuleId } from "@/modules/identity/permissions";
 import type { BreadcrumbItem } from "@/shared/components/modern/breadcrumbs";
 import { TabBar, tabId, tabPanelId } from "@/shared/components/modern/tab-bar";
 import { useTabParam } from "@/shared/components/modern/use-tab-param";
+import { useNotifications } from "@/shared/providers/notifications-provider";
 import { AdminPage } from "./admin-page";
 
 export type AreaPageTab = {
@@ -72,6 +73,7 @@ export function AreaPage({
   param?: string;
 }) {
   const idPrefix = useId();
+  const { unreadByTab } = useNotifications();
   const visible = tabs.filter((tab) => tab.allowed === true);
   const [activeValue, select] = useTabParam(
     visible.map((tab) => tab.value),
@@ -96,7 +98,7 @@ export function AreaPage({
             <TabBar
               label={title}
               idPrefix={idPrefix}
-              tabs={visible.map(({ value, label, count }) => ({ value, label, count }))}
+              tabs={visible.map(({ value, label, count }) => ({ value, label, count, unreadCount: unreadByTab[value] }))}
               value={active.value}
               onChange={select}
             />

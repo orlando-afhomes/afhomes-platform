@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { useActivateMembership, useMemberships, useOperation, useRecordCardClaim } from "@/data/business-queries";
 import type { MembershipView } from "@/data/contracts/membership-repository";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
@@ -60,7 +61,7 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
 
   const activateItem = (item: MembershipView) => {
     if (canActivate && item.status === "pending" && item.eligible) {
-      return [{ key: "activate", label: "Activate", tone: "success" as const, onClick: () => confirmRun({ title: "Activate this membership?", description: `${item.customerName}'s membership becomes Active using the issued VIP Number.`, confirmText: "Activate", tone: "success", action: () => activate.mutateAsync(item.id), successTitle: "Membership activated.", errorTitle: "Could not activate" }) }];
+      return [{ key: "activate", label: "Activate", tone: "success" as const, onClick: () => activate.mutateAsync(item.id).then(() => toast.success("Membership activated."), (error: unknown) => toast.error("Could not activate", { description: error instanceof Error ? error.message : "Request failed." })) }];
     }
     if (item.status !== "active") return [];
     return [

@@ -175,18 +175,6 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
     });
   }
 
-  async startReview(id: string, options?: MockAsyncOptions): Promise<PaymentView> {
-    return this.run(options, (identity) => {
-      this.require(identity, "finance.verify", "Only Finance can review payments.");
-      const payment = this.paymentFor(identity, id);
-      if (payment.status !== "submitted") throw new Error("Only a submitted payment can enter review.");
-      payment.status = "under_review";
-      this.event(payment, identity, BUSINESS_AUDIT_ACTIONS.PAYMENT_REVIEW_STARTED);
-      this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.PAYMENT_REVIEW_STARTED, entityType: "payment", entityId: payment.id, previousValue: "submitted", newValue: "under_review", relatedRecordIds: [payment.contractId] });
-      return this.view(payment);
-    });
-  }
-
   async verify(id: string, options?: PaymentVerificationOptions): Promise<PaymentView> {
     return this.run(options, (identity) => {
       this.require(identity, "finance.verify", "Only Finance can verify payments.");

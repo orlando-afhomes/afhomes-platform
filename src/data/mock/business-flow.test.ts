@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import { meetsPayoutRelease } from "@/modules/commissions/rules";
 import type { Commission } from "@/modules/commissions/types";
@@ -153,6 +153,31 @@ describe("Customer Registration workflow", () => {
     });
   });
 
+  it("keeps the registration contract and its receipt when the same purchase is prepared again", async () => {
+    const store = createMockStore();
+    const repositories = as(store, "dev-super-admin");
+    const result = await registerCustomer(repositories, {
+      customer: validCustomerInput({ ownerMemberId: "mem-ost-a1" }),
+      contract: {
+        ...contract,
+        reservation: { amountCentavos: pesos(10_000), method: "Cash", paidDate: manilaToday(), referenceNo: "RES-DUPLICATE-TEST" },
+      },
+    });
+    if (result.status !== "reservation-submitted") throw new Error(`Unexpected registration outcome: ${result.status}`);
+
+    await repositories.customers.approve(result.customerId);
+    await expect(repositories.contracts.prepare({ ...contract, customerId: result.customerId })).rejects.toThrow(/existing contract/i);
+
+    // Registration already submitted the contract.
+    expect(store.contracts.find((record) => record.id === result.contractId)).toMatchObject({ status: "submitted" });
+    await repositories.contracts.finalize(result.contractId);
+    const sales = store.sales.filter((record) => record.customerId === result.customerId);
+    expect(sales).toMatchObject([{ contractId: result.contractId }]);
+    expect(store.contracts.filter((record) => record.customerId === result.customerId)).toMatchObject([{ id: result.contractId }]);
+    expect(store.memberships.filter((record) => record.customerId === result.customerId)).toMatchObject([{ contractId: result.contractId }]);
+    expect(store.payments.find((record) => record.referenceNo === "RES-DUPLICATE-TEST")).toMatchObject({ contractId: result.contractId, saleId: sales[0].id });
+  });
+
   it("keeps the saved draft when submission validation fails", async () => {
     const store = createMockStore();
     const repositories = as(store, "dev-admin");
@@ -186,8 +211,19 @@ describe("Customer Registration workflow", () => {
 
     expect(result).toMatchObject({ status: "reservation-failed", error: expect.any(Error) });
     const prepared = store.contracts.find((record) => record.customerId === result.customerId);
-    expect(prepared).toMatchObject({ status: "draft" });
+    expect(prepared).toMatchObject({ status: "submitted" });
     expect(store.payments.some((record) => record.contractId === prepared?.id)).toBe(false);
+  });
+
+  it("keeps the contract as a draft and reports it when submitting the contract fails", async () => {
+    const store = createMockStore();
+    const repositories = as(store, "dev-super-admin");
+    const submit = vi.spyOn(repositories.contracts, "submit").mockRejectedValue(new Error("Seller is suspended."));
+    const result = await registerCustomer(repositories, { customer: validCustomerInput(), contract });
+
+    expect(result).toMatchObject({ status: "contract-prepared", submitError: "Seller is suspended." });
+    expect(submit).toHaveBeenCalledOnce();
+    expect(store.contracts.find((record) => record.customerId === result.customerId)).toMatchObject({ status: "draft" });
   });
 });
 
@@ -308,8 +344,13 @@ describe("contract, payment, sale and membership workflow", () => {
     const store = createMockStore();
     const admin = as(store, "dev-admin");
     const input = { customerId: "cust-a3", schemeId: "scheme-spot-cash", customerAccepted: true };
-    const first = await admin.contracts.prepare(input);
-    const second = await admin.contracts.prepare(input);
+    const first = await admin.contracts.prepare({ ...input, newPurchaseRequestId: "first-test-purchase" });
+    const separatePurchase = { ...input, newPurchaseRequestId: "second-test-purchase" };
+    const [second, retry] = await Promise.all([
+      admin.contracts.prepare(separatePurchase),
+      admin.contracts.prepare(separatePurchase),
+    ]);
+    expect(retry.id).toBe(second.id);
     expect(second.customerId).toBe(first.customerId);
     expect(second.id).not.toBe(first.id);
     store.commissionRateSettings.push({ memberId: first.sellerMemberId!, product: "VIP", role: "DSC", rateBp: 500, standardRateBp: null });
@@ -818,7 +859,6 @@ describe("Move schemes with an authorized Card ID payment code (06 section 6.3, 
     expect(prepared).toMatchObject({ paymentCode: "T04", priceCentavos: price, arrangement: null });
     expect(prepared.holds.filter((hold) => /arrangement/.test(hold))).toHaveLength(0);
     await superAdmin.contracts.submit(prepared.id);
-    await superAdmin.contracts.startReview(prepared.id);
     const finalized = await superAdmin.contracts.finalize(prepared.id);
     expect(finalized.status).toBe("finalized");
     await superAdmin.sales.approve(store.sales.find((item) => item.contractId === prepared.id)!.id);
@@ -1002,7 +1042,6 @@ describe("owner-decided restrictions (C2)", () => {
     expect(prepared).toMatchObject({ priceCentavos: pesos(390000), paymentCode: "T12", arrangement: null });
     expect(prepared.holds.some((hold) => /arrangement/.test(hold))).toBe(false);
     await admin.contracts.submit(prepared.id);
-    await admin.contracts.startReview(prepared.id);
     const finalized = await admin.contracts.finalize(prepared.id);
     expect(finalized.status).toBe("finalized");
     expect(finalized.paymentCode).toBe("T12");

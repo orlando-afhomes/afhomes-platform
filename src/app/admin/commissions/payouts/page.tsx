@@ -4,5 +4,6 @@ import { redirectToAreaTab, type AreaRedirectPageProps } from "@/panels/admin/ar
 export const instant = false;
 
 export default async function Page({ searchParams }: AreaRedirectPageProps) {
-  return redirectToAreaTab("commissions", "payouts", searchParams);
+  // The Payouts tab joined the Commissions tab (month-end payout bar).
+  return redirectToAreaTab("commissions", "commissions", searchParams);
 }

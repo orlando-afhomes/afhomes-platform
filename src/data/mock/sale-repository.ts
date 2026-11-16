@@ -12,7 +12,7 @@ import type { Sale } from "@/modules/sales/types";
 import { activeRoles } from "./dev-identities";
 import { BROAD_BUSINESS_ROLES, BusinessRepository, canSeeContract, customerName, nowIso, today } from "./business-base";
 import { paymentsOfContract, reconcileContract } from "./business-effects";
-import { applyCommissionTrigger, freezeCommissionRates } from "./commission-effects";
+import { applyCommissionTrigger, buildPayoutList, freezeCommissionRates } from "./commission-effects";
 import { nextId } from "./ids";
 import type { MockStore } from "./seed";
 import { isActiveIdentity } from "./scope";
@@ -184,6 +184,8 @@ export class MockSaleRepository extends BusinessRepository implements SaleReposi
         calculationPolicy: "approved-receipt-date-v1" as const };
       this.store.closedMonths.push(snapshot);
       this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.MONTH_CLOSED, entityType: "sale", entityId: month, newValue: "closed" });
+      // Doc 08 §11.1(4), §11.5: the system prepares the month's payout list; people approve and pay it.
+      buildPayoutList(this.store, month, "system");
       return structuredClone(snapshot);
     });
   }

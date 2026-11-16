@@ -20,25 +20,56 @@ import { ProductDialog } from "../components/vip-product-dialogs";
 import { ADMIN_AREA_TABS } from "../navigation";
 import { useAdminAreaTabAccess } from "../use-role-aware-navigation";
 import { PaymentSchemesTab } from "./payment-schemes-page";
-import { PrintSchemeGuideButton, SchemeGuidePanel } from "./scheme-guide-page";
+import { HistoryImportPanel } from "./history-import-page";
+import { IgpProjectsTab } from "./igp-projects-page";
+import { LIST_TABS, ListsPage, type ListTabId } from "./lists-page";
+import { RedemptionHolidaysPanel, RedemptionPointsTablePanel, RedemptionVenuesPanel } from "./redemption-points-table-page";
 import { TierLevelsPanel } from "./tier-codes-page";
 
+/** Header button per tab: the label and the operation that allows it. */
+const ADD_BUTTONS: Partial<Record<string, { label: string; operation: "vip-products.manage" | "redemption.configure" | "igp.manage" }>> = {
+  products: { label: "New product", operation: "vip-products.manage" },
+  schemes: { label: "New scheme", operation: "vip-products.manage" },
+  "tier-codes": { label: "Add tier level", operation: "vip-products.manage" },
+  "points-table": { label: "Update points table", operation: "redemption.configure" },
+  holidays: { label: "Add holiday", operation: "redemption.configure" },
+  venues: { label: "Add venue", operation: "redemption.configure" },
+  "igp-projects": { label: "Add project", operation: "igp.manage" },
+};
+
+/**
+ * Settings area (key "vip-products"): product setup plus the setup tabs moved
+ * from Redemption, Organization, Finance and Sales. Each tab keeps the access
+ * rule of the page it came from.
+ */
 export function VipProductsAreaPage() {
   const access = useAdminAreaTabAccess("vip-products");
-  const canManage = useOperation("vip-products.manage");
-  const [creating, setCreating] = useState<"products" | "schemes" | "tier-codes" | null>(null);
+  const operations = {
+    "vip-products.manage": useOperation("vip-products.manage"),
+    "redemption.configure": useOperation("redemption.configure"),
+    "igp.manage": useOperation("igp.manage"),
+  };
+  const canManageLists = useOperation("settings.lists.manage");
+  const [creating, setCreating] = useState<string | null>(null);
+  const [list, setList] = useState<ListTabId>("program-category");
+  const [addingListItem, setAddingListItem] = useState(false);
   const close = () => setCreating(null);
+  const open = (tab: string) => creating === tab;
+  const singular = (LIST_TABS.find((item) => item.value === list) ?? LIST_TABS[0]).singular;
 
   return (
     <AreaPage
-      anyOf={["vip-products", "sales"]}
-      title="VIP Products"
+      anyOf={["vip-products", "redemption", "departments", "reports", "sales", "finance"]}
+      title="Settings"
       actions={(tab) => {
-        if (tab === "scheme-guide") return <PrintSchemeGuideButton />;
-        if (!canManage || (tab !== "products" && tab !== "schemes" && tab !== "tier-codes")) return null;
+        if (tab === "lists" && canManageLists) {
+          return <Button type="button" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setAddingListItem(true)}><Plus aria-hidden="true" /> Add {singular}</Button>;
+        }
+        const button = ADD_BUTTONS[tab];
+        if (!button || !operations[button.operation]) return null;
         return (
           <Button type="button" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setCreating(tab)}>
-            <Plus aria-hidden="true" /> {tab === "products" ? "New product" : tab === "schemes" ? "New scheme" : "Add tier level"}
+            <Plus aria-hidden="true" /> {button.label}
           </Button>
         );
       }}
@@ -47,11 +78,17 @@ export function VipProductsAreaPage() {
         label,
         allowed: access[value],
         render: () => {
+          const createProps = { createOpen: open(value), onCreateClose: close };
           switch (value) {
-            case "products": return <VipProductsTab creating={canManage && creating === value} onCloseCreate={close} />;
-            case "schemes": return <PaymentSchemesTab creating={canManage && creating === value} onCloseCreate={close} />;
-            case "scheme-guide": return <SchemeGuidePanel />;
-            case "tier-codes": return <TierLevelsPanel adding={canManage && creating === value} onCloseAdd={close} />;
+            case "products": return <VipProductsTab creating={operations["vip-products.manage"] && open(value)} onCloseCreate={close} />;
+            case "schemes": return <PaymentSchemesTab creating={operations["vip-products.manage"] && open(value)} onCloseCreate={close} />;
+            case "tier-codes": return <TierLevelsPanel adding={operations["vip-products.manage"] && open(value)} onCloseAdd={close} />;
+            case "points-table": return <RedemptionPointsTablePanel {...createProps} />;
+            case "holidays": return <RedemptionHolidaysPanel {...createProps} />;
+            case "venues": return <RedemptionVenuesPanel {...createProps} />;
+            case "lists": return <ListsPage embedded list={list} onListChange={setList} adding={addingListItem} onAddingChange={setAddingListItem} />;
+            case "historical-import": return <HistoryImportPanel />;
+            case "igp-projects": return <IgpProjectsTab adding={open(value)} onAddingClose={close} />;
           }
         },
       }))}

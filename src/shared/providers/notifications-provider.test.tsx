@@ -6,14 +6,21 @@ import { DevIdentityProvider, useDevIdentity } from "@/shared/providers/dev-iden
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { NotificationsProvider, useNotifications } from "./notifications-provider";
 import { useCreateDepartment } from "@/data/queries";
+import type { AuditPage } from "@/modules/audit/types";
+import { queryKeys } from "@/data/query-keys";
 
 // Mutable route for the mocked hook; renderHook's rerender picks up the change.
 let currentPath = "/admin";
+let currentSearch = "";
 
-vi.mock("next/navigation", () => ({ usePathname: () => currentPath }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => currentPath,
+  useSearchParams: () => new URLSearchParams(currentSearch),
+}));
 
 function setup(initialIdentityId: string, initialPath = "/admin") {
   currentPath = initialPath;
+  currentSearch = "";
   const queryClient = new QueryClient();
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
@@ -28,11 +35,11 @@ function setup(initialIdentityId: string, initialPath = "/admin") {
     () => ({ notifications: useNotifications(), departments: useCreateDepartment(), identity: useDevIdentity() }),
     { wrapper },
   );
-  const setPath = (nextPath: string) => {
-    currentPath = nextPath;
+  const setPath = (nextUrl: string) => {
+    [currentPath, currentSearch = ""] = nextUrl.split("?");
     hook.rerender();
   };
-  return { ...hook, setPath };
+  return { ...hook, setPath, queryClient };
 }
 
 describe("NotificationsProvider", () => {
@@ -70,8 +77,14 @@ describe("NotificationsProvider", () => {
     expect(result.current.notifications.unreadByNavKey["organization"]).toBe(1);
     expect(result.current.notifications.unreadTotal).toBe(1);
 
-    // Visiting Organization clears only its own modules.
+    // Opening Staff leaves the unread Departments tab visible.
     setPath("/admin/organization");
+    expect(result.current.notifications.unreadByTab.departments).toBe(1);
+    expect(result.current.notifications.unreadByTab.staff ?? 0).toBe(0);
+    expect(result.current.notifications.unreadTotal).toBe(1);
+
+    // Switching tabs without changing areas clears the newly visited tab.
+    setPath("/admin/organization?tab=departments");
     await waitFor(() => expect(result.current.notifications.unreadByNavKey["organization"]).toBe(0));
     expect(result.current.notifications.unreadTotal).toBe(0);
   });
@@ -93,6 +106,20 @@ describe("NotificationsProvider", () => {
     await waitFor(() => expect(result.current.notifications.events.length).toBeGreaterThan(0));
     expect(result.current.notifications.unreadTotal).toBe(0);
     expect(result.current.notifications.unreadByNavKey["organization"]).toBe(0);
+  });
+
+  it("does not carry a badge into a different area with the same tab value", async () => {
+    const { result, setPath, queryClient } = setup("dev-super-admin");
+    await waitFor(() => expect(result.current.notifications.events.length).toBeGreaterThan(0));
+    act(() => queryClient.setQueriesData<AuditPage>({ queryKey: queryKeys.audit.all }, (page) => {
+      if (!page?.items[0]) return page;
+      const event = { ...page.items[0], id: "audit-999999", module: "customers" as const, action: "CUSTOMER_DRAFT_CREATED" };
+      return { ...page, items: [event, ...page.items] };
+    }));
+    await waitFor(() => expect(result.current.notifications.unreadByNavKey.customers).toBe(1));
+    setPath("/admin/reports?tab=customers");
+    expect(result.current.notifications.unreadByTab.customers).toBe(0);
+    expect(result.current.notifications.unreadByNavKey.customers).toBe(1);
   });
 
   it("denies non-admin identities with empty events and zero counts", async () => {

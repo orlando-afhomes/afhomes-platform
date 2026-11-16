@@ -4,7 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
-import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { MockStoreProvider, useMockStore } from "@/shared/providers/mock-store-provider";
+import { AppToaster } from "@/shared/components/modern/app-toaster";
+import { buildPayoutList, releaseSaleCommissions } from "@/data/mock/commission-effects";
+import { getDevIdentity } from "@/data/mock/dev-identities";
+import type { MockStore } from "@/data/mock/seed";
 import { CommissionsAreaPage } from "./commissions-area-page";
 
 const navigation = vi.hoisted(() => ({ search: "" }));
@@ -54,7 +58,80 @@ describe("Commissions tables and details", () => {
   });
 });
 
+describe("Month-end payout bar", () => {
+  let store: MockStore | undefined;
+  /** Releases two September commissions and closes September, as month close would. */
+  function ClosedSeptember() {
+    const current = useMockStore();
+    useState(() => {
+      store = current;
+      releaseSaleCommissions(current, getDevIdentity("dev-finance"), {
+        saleId: "sale-2", contractId: "ctr-2", product: "VIP", valueCentavos: 1_000_000, stage1Date: "2026-09-25", fullPaymentDate: null,
+        rates: [{ memberId: "mem-ost-a1", role: "DSC", rateBp: 500 }, { memberId: "mem-svd-b", role: "DRI", rateBp: 100 }],
+      });
+      current.closedMonths.push({ month: "2026-09", closedAt: "2026-10-01", closedBy: "dev-admin", recognizedSalesCentavos: 0, grossCollectionsCentavos: 0,
+        adjustedCollectionsCentavos: 0, releasedCommissionCentavos: 60_000, paidCommissionCentavos: 0, calculationPolicy: "approved-receipt-date-v1",
+        allowanceReviewCentavos: null, allowanceReviewCount: 0 });
+      buildPayoutList(current, "2026-09", "system");
+    });
+    return null;
+  }
+
+  it("approves the list, records every ready payout with one form, then confirms them all", async () => {
+    const user = userEvent.setup();
+    show(<><ClosedSeptember /><CommissionsAreaPage /><AppToaster /></>, "commissions");
+    const bar = await screen.findByRole("region", { name: "Month-end payout" });
+    expect(await within(bar).findByText(/List for September 2026: 2 commissions/)).toBeInTheDocument();
+    await user.click(within(bar).getByRole("button", { name: "Approve list" }));
+    await user.click(within(await screen.findByRole("alertdialog", { name: "Approve payout list?" })).getByRole("button", { name: "Approve list" }));
+
+    const recordAll = await screen.findByRole("button", { name: /^Record payout for all ready \(\d+\)$/ });
+    const count = Number(/\((\d+)\)/.exec(recordAll.textContent ?? "")![1]);
+    expect(count).toBeGreaterThanOrEqual(2);
+    await user.click(recordAll);
+    const form = within(await screen.findByRole("dialog", { name: `Record payout for ${count} commissions` }));
+    expect(form.getByText(/To leave a commission out/)).toBeInTheDocument();
+    await user.type(form.getByLabelText(/^Payment reference/), "BATCH-SEP");
+    await user.type(form.getByLabelText(/^Payment method/), "Bank Transfer");
+    await user.upload(form.getByLabelText(/^Payment proof/), new File(["proof"], "batch.pdf", { type: "application/pdf" }));
+    // jsdom keeps a required file input invalid after upload, so submit the form directly.
+    fireEvent.submit(form.getByRole("button", { name: "Record payout" }).closest("form")!);
+    expect(await screen.findByText(`${count} recorded`)).toBeInTheDocument();
+
+    await user.click(await screen.findByRole("button", { name: `Confirm all disbursed (${count})` }));
+    await user.click(within(await screen.findByRole("alertdialog", { name: "Confirm all disbursed?" })).getByRole("button", { name: "Confirm all" }));
+    expect(await screen.findByText(`${count} confirmed. They are now Paid.`)).toBeInTheDocument();
+    expect(store!.commissions.filter((item) => item.payout?.reference === "BATCH-SEP").map(({ status }) => status)).toEqual(Array(count).fill("paid"));
+    expect(screen.queryByRole("region", { name: "Month-end payout" })).toBeNull();
+  });
+
+  it("adds Ready to pay and Waiting for confirmation to the status filter for payout staff only", async () => {
+    const user = userEvent.setup();
+    const admin = show(<CommissionsAreaPage />, "commissions");
+    await user.click(await screen.findByRole("combobox", { name: "Status filter" }));
+    expect(await screen.findByRole("option", { name: "Ready to pay" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Waiting for confirmation" })).toBeInTheDocument();
+    admin.unmount();
+    show(<CommissionsAreaPage />, "commissions", "dev-ost-b1");
+    await user.click(await screen.findByRole("combobox", { name: "Status filter" }));
+    await screen.findAllByRole("option");
+    expect(screen.queryByRole("option", { name: "Ready to pay" })).toBeNull();
+  });
+});
+
 describe("Set rate", () => {
+  it("saves a manually approved rate when the optional reason is blank", async () => {
+    const user = userEvent.setup();
+    show(<CommissionsAreaPage />, "rates&sale=sale-1");
+    const form = within(await screen.findByRole("dialog", { name: "Set approved commission rate" }));
+    expect(form.getByLabelText(/^Reason/)).toHaveValue("");
+    await user.type(form.getByLabelText("Approved rate (%)"), "15");
+    await user.type(form.getByLabelText("Standard rate (%)"), "0");
+    await user.click(form.getByRole("button", { name: "Save rate" }));
+    const rate = await screen.findByRole("row", { name: "Open rate for Ana Mendoza" });
+    expect(within(rate).getByText("15%")).toBeInTheDocument();
+  });
+
   it("fills the approved VIP rate from the seller's position after the Admin confirms the terms", async () => {
     const user = userEvent.setup();
     show(<CommissionsAreaPage />, "rates");

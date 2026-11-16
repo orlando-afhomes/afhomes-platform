@@ -10,6 +10,7 @@ import { getRoleAwareAdminBreadcrumbs } from "@/panels/admin/navigation";
 import { getEffectiveRoles } from "@/modules/identity/permissions";
 import { getRoleDisplayLabel } from "../role-label";
 import { AdminDashboard } from "../dashboard/admin-dashboard";
+import { ClerkDashboard } from "../dashboard/clerk-dashboard";
 import { FinanceDashboard } from "../dashboard/finance-dashboard";
 import { SalesDashboard } from "../dashboard/sales-dashboard";
 import { resolveDashboard } from "../dashboard/resolve-dashboard";
@@ -32,6 +33,8 @@ export function AdminDashboardPage() {
         <FinanceDashboard />
       ) : kind === "sales" ? (
         <SalesDashboard identity={identity} />
+      ) : kind === "clerk" ? (
+        <ClerkDashboard />
       ) : (
         <>
           <PageHeader

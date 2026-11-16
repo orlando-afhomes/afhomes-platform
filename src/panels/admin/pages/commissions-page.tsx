@@ -12,7 +12,8 @@ import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { AdminStatGrid, AdminStatCard } from "@/shared/components/admin";
 import { BadgeCheck, Clock, CircleCheck, ReceiptText, RotateCcw } from "lucide-react";
-import { AdjustDialog, COMMISSION_COLUMNS, CommissionDetailsSheet, HoldDialog, menuItemButtons, type CommissionMenuItem } from "../components/commission-shared";
+import { AdjustDialog, awaitingConfirmation, COMMISSION_COLUMNS, CommissionDetailsSheet, HoldDialog, menuItemButtons, PayoutDialog, readyToPay, type CommissionMenuItem } from "../components/commission-shared";
+import { CommissionPayoutBar } from "./commission-payouts-page";
 import { clawbackBalance } from "@/modules/commissions/rules";
 import type { CommissionClawback } from "@/modules/commissions/types";
 import { MoneyField, TextField } from "@/shared/forms/modern";
@@ -23,14 +24,24 @@ import { humanize } from "@/shared/lib/humanize";
 import { matchesSearch, optionsFrom } from "@/shared/lib/search";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 
-type DialogState = { kind: "adjust" | "cancel" | "hold"; commission: CommissionView } | null;
+type DialogState = { kind: "adjust" | "cancel" | "hold" | "payout" | "void"; commission: CommissionView } | null;
 
-/** Commissions tab of the Commissions area: everyone with the commissions grant sees the records their scope allows; workflow actions need commission.approve. */
+/** Payout filter options added to the status filter for payout staff. */
+const PAYOUT_FILTERS: Record<string, { label: string; matches: (item: CommissionView) => boolean }> = {
+  ready: { label: "Ready to pay", matches: readyToPay },
+  awaiting: { label: "Waiting for confirmation", matches: awaitingConfirmation },
+};
+
+/**
+ * Commissions tab of the Commissions area: everyone with the commissions grant sees the records their scope allows;
+ * workflow actions need commission.approve, and payout staff also get the month-end payout bar and per-row payout fixes.
+ */
 export function CommissionsPanel() {
   const canApprove = useOperation("commission.approve");
+  const canPayout = useOperation("commission.payout");
   const commissions = useCommissions();
   const action = useCommissionAction();
-  const { dialog } = useConfirmRun();
+  const { confirmRun, dialog } = useConfirmRun();
   const [state, setState] = useState<DialogState>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
 
@@ -42,8 +53,13 @@ export function CommissionsPanel() {
 
   /** Workflow actions for a commission, in the row menu and the details sheet footer. */
   const itemsFor = (item: CommissionView): CommissionMenuItem[] => {
-    if (!canApprove) return [];
     const items: CommissionMenuItem[] = [];
+    if (canPayout && readyToPay(item)) items.push({ key: "payout", label: "Record payout", onClick: () => setState({ kind: "payout", commission: item }) });
+    if (canPayout && awaitingConfirmation(item)) {
+      items.push({ key: "confirm", label: "Confirm disbursement", tone: "success", onClick: () => confirmRun({ title: "Confirm disbursement?", description: `Mark ${item.recipientName}'s commission as paid.`, confirmText: "Confirm", tone: "success", action: () => action.mutateAsync({ id: item.id, action: "confirm" }), successTitle: "Commission marked as Paid.", errorTitle: "Could not confirm" }) });
+      if (item.status === "on_hold") items.push({ key: "void", label: "Void payout", tone: "danger", onClick: () => setState({ kind: "void", commission: item }) });
+    }
+    if (!canApprove) return items;
     if (item.status === "approved" && !item.payout && !item.releaseDate) items.push({ key: "adjust", label: "Adjust", tone: "warning", onClick: () => setState({ kind: "adjust", commission: item }) });
     if (item.status === "on_hold") items.push({ key: "hold", label: "Resolve hold", tone: "warning", onClick: () => setState({ kind: "hold", commission: item }) });
     if ((item.status === "approved" || item.status === "on_hold") && !(item.payout && !item.payout.confirmedAt)) items.push({ key: "cancel", label: "Cancel commission", tone: "danger", onClick: () => setState({ kind: "cancel", commission: item }) });
@@ -53,13 +69,16 @@ export function CommissionsPanel() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [productFilter, setProductFilter] = useState("all");
-  const statusOptions = useMemo(() => optionsFrom("All statuses", all.map((item) => item.status), humanize), [all]);
+  const statusOptions = useMemo(() => [
+    ...optionsFrom("All statuses", all.map((item) => item.status), humanize),
+    ...(canPayout ? Object.entries(PAYOUT_FILTERS).map(([value, { label }]) => ({ value, label })) : []),
+  ], [all, canPayout]);
   const productOptions = useMemo(() => optionsFrom("All products", all.map((item) => item.product), humanize), [all]);
   const visible = useMemo(
     () =>
       all.filter(
         (item) =>
-          (statusFilter === "all" || item.status === statusFilter) &&
+          (statusFilter === "all" || (PAYOUT_FILTERS[statusFilter]?.matches(item) ?? item.status === statusFilter)) &&
           (productFilter === "all" || item.product === productFilter) &&
           matchesSearch(search, item.recipientName, item.customerName, item.saleReference),
       ),
@@ -68,6 +87,7 @@ export function CommissionsPanel() {
   return (
     <>
       {dialog}
+      <CommissionPayoutBar commissions={all} />
       <AdminStatGrid>
         <AdminStatCard label="Approved, unpaid" value={<Money value={totals.approved} />} icon={BadgeCheck} tone="brand" />
         <AdminStatCard label="On hold" value={<Money value={totals.held} />} icon={Clock} tone="warning" />
@@ -99,6 +119,9 @@ export function CommissionsPanel() {
       {state?.kind === "adjust" ? <AdjustDialog commission={state.commission} onClose={() => setState(null)} /> : null}
       <ReasonDialog open={state?.kind === "cancel"} title="Cancel commission" description="A cancelled commission can no longer be paid. This is recorded in the audit history." confirmText="Cancel commission" danger successText="Commission cancelled." onClose={() => setState(null)} onSubmit={(reason) => (state?.kind === "cancel" ? action.mutateAsync({ id: state.commission.id, action: "cancel", reason }) : Promise.resolve())} />
       {state?.kind === "hold" ? <HoldDialog commission={state.commission} onClose={() => setState(null)} /> : null}
+      {state?.kind === "payout" ? <PayoutDialog commissions={[state.commission]} onClose={() => setState(null)} /> : null}
+      <ReasonDialog open={state?.kind === "void"} title="Void initiated payout" description="The voided payout stays in the record." confirmText="Void payout" danger successText="Payout voided."
+        onClose={() => setState(null)} onSubmit={(reason) => (state?.kind === "void" ? action.mutateAsync({ id: state.commission.id, action: "void", reason }) : Promise.resolve())} />
     </>
   );
 }

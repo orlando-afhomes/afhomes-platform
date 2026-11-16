@@ -58,14 +58,18 @@ describe("process pages are separated", () => {
     show("dev-admin", <SalesAreaPage />, "contracts");
     expect(await screen.findByRole("table", { name: "Contracts" })).toBeInTheDocument();
     expect(screen.queryByRole("table", { name: "Sales" })).toBeNull();
-    expect(screen.getByRole("link", { name: /new contract/i })).toHaveAttribute("href", "/admin/customers/new");
+    expect(screen.getByRole("link", { name: /new contract/i })).toHaveAttribute("href", "/admin/customers?tab=customers");
     expect(document.querySelectorAll("tbody tr[data-row-key]")).toHaveLength(4);
   });
 
-  it("Contract Review defaults to the Submitted filter", async () => {
-    show("dev-admin", <SalesAreaPage />, "contract-review");
-    expect(await screen.findByRole("table", { name: "Contracts" })).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Contract status filter" })).toHaveValue("Submitted");
+  it("opens the Contracts tab prefiltered to contracts needing review", async () => {
+    show("dev-admin", <SalesAreaPage />, "contracts&status=needs-review");
+    const table = await screen.findByRole("table", { name: "Contracts" });
+    expect(screen.getByRole("tab", { name: "Contracts" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("tab", { name: "Contract review" })).not.toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Contract status filter" })).toHaveValue("Needs review");
+    expect(within(table).getAllByText("Under Review")).toHaveLength(2);
+    expect(within(table).queryByText("Finalized")).not.toBeInTheDocument();
   });
 
   it("Memberships and Activation Queue show different records", async () => {
@@ -78,12 +82,11 @@ describe("process pages are separated", () => {
     expect(await screen.findByRole("table", { name: "Activation queue" })).toBeInTheDocument();
   });
 
-  it("keeps payouts off Commissions and on Commission Payouts", async () => {
-    const records = show("dev-finance", <CommissionsAreaPage />, "commissions");
+  it("keeps payouts on the Commissions tab, with no separate Payouts tab", async () => {
+    show("dev-finance", <CommissionsAreaPage />, "commissions");
     expect(await screen.findByRole("table", { name: "Commissions" })).toBeInTheDocument();
     expect(screen.queryByText("Payout release")).toBeNull();
-    records.unmount();
-    show("dev-finance", <CommissionsAreaPage />, "payouts");
-    expect(await screen.findByRole("table", { name: "Commission payouts" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Payouts" })).toBeNull();
+    expect(screen.queryByRole("table", { name: "Commission payouts" })).toBeNull();
   });
 });

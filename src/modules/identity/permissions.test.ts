@@ -84,8 +84,9 @@ describe("role-aware permissions", () => {
       staff: true,
       departments: true,
       roles: false,
-      lists: false,
     });
+    // Lists moved to the Settings area (UI15); HR still cannot manage it.
+    expect(getAdminAreaTabAccess("vip-products", getGrantedModuleIds(identity), getGrantedOperations(identity)).lists).toBe(false);
   });
 
   it("grants admin departments, roles, accounts and vip products", () => {

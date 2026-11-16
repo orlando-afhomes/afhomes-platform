@@ -1,7 +1,10 @@
 import type { RowActionItem, RowActionTone } from "@/shared/components/modern/row-actions-menu";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import type { SaleView } from "@/data/contracts/sale-repository";
+import type { ConfirmRunInput } from "@/shared/components/modern/use-confirm-run";
+import type { ApproveDealOutcome } from "@/modules/contracts/application/approve-deal";
 import { recordLabel } from "@/shared/lib/record-label";
+import { toast } from "sonner";
 
 /** Button color for a menu item's tone, so a detail page header shows each action once with the row menu's meaning. */
 export function actionButtonVariant(tone: RowActionTone | undefined): "default" | "success" | "warning" | "info" | "destructive" {
@@ -25,12 +28,30 @@ export type SalesMenuProps = {
   deleteDisabledReason?: string | null;
 };
 
+/** "Approve deal" confirmation (owner decision 2026-11-16); a held finalization is reported as a warning after the steps run. */
+export function approveDealConfirm(approve: () => Promise<ApproveDealOutcome>): ConfirmRunInput {
+  return {
+    title: "Approve this deal?",
+    description: "This confirms the signed Reservation Agreement is on file. It approves the customer and the sale, issues the VIP Number, and finalizes the contract when nothing is on hold.",
+    confirmText: "Approve deal",
+    tone: "success",
+    action: async () => {
+      const outcome = await approve();
+      if (outcome.finalizeHeld.length > 0) toast.warning("The contract is not finalized yet.", { description: outcome.finalizeHeld.join(" ") });
+    },
+    successTitle: "Deal approved.",
+    errorTitle: "Could not approve the deal",
+  };
+}
+
 export type SaleMenuPerms = {
   canApprove: boolean;
+  /** `customers.approve`; "Approve deal" also approves the customer. */
+  canApproveCustomer: boolean;
 };
 
 export type SaleMenuCallbacks = {
-  onApprove?: () => void;
+  onApproveDeal?: () => void;
   onMarkDefaulted?: () => void;
 };
 
@@ -39,12 +60,12 @@ export type SaleMenuSale = Pick<SaleView, "status" | "approval" | "defaultEligib
 /**
  * Sale row/detail menu. Pure: same sale + perms + callbacks always produce the
  * same action set. Gates mirror the Sales list (`contracts.approve` plus the
- * pending/default-eligible conditions); approve takes precedence exactly as there.
+ * pending/default-eligible conditions); approval takes precedence exactly as there.
  */
 export function buildSalesMenuProps(sale: SaleMenuSale, perms: SaleMenuPerms, cb: SaleMenuCallbacks): SalesMenuProps {
   const extraItems: RowActionItem[] = [];
   if (perms.canApprove && sale.status === "pending" && !sale.approval) {
-    if (cb.onApprove) extraItems.push({ key: "approve-sale", label: "Approve sale", tone: "success", onClick: cb.onApprove });
+    if (perms.canApproveCustomer && cb.onApproveDeal) extraItems.push({ key: "approve-deal", label: "Approve deal", tone: "success", onClick: cb.onApproveDeal });
   } else if (perms.canApprove && sale.defaultEligible) {
     if (cb.onMarkDefaulted) extraItems.push({ key: "mark-defaulted", label: "Mark Defaulted", tone: "danger", onClick: cb.onMarkDefaulted });
   }
@@ -54,13 +75,15 @@ export function buildSalesMenuProps(sale: SaleMenuSale, perms: SaleMenuPerms, cb
 export type ContractMenuPerms = {
   canPrepare: boolean;
   canApprove: boolean;
+  /** `customers.approve`; "Approve deal" also approves the customer. */
+  canApproveCustomer: boolean;
   canSubmitPayment: boolean;
   isSuperAdmin: boolean;
   /** Verified money exists on the contract or its sale is confirmed (locks direct cancellation). */
   hasVerifiedMoney: boolean;
   /** A membership exists and is active (blocks cancellation). */
   hasActiveMembership: boolean;
-  /** A membership card already exists (blocks recording the signed agreement twice). */
+  /** A membership card already exists (blocks issuing a VIP Number twice). */
   hasCard: boolean;
 };
 
@@ -68,15 +91,12 @@ export type ContractMenuCallbacks = {
   onEdit?: () => void;
   onSubmitPayment?: () => void;
   onSubmitContract?: () => void;
-  onStartReview?: () => void;
-  onFinalize?: () => void;
+  onApproveDeal?: () => void;
   onReturn?: () => void;
-  onRecordSignedAgreement?: () => void;
   onRecordPaymentCode?: () => void;
   onApproveArrangement?: () => void;
   onCancel?: () => void;
   onRequestCancellation?: () => void;
-  onApproveSale?: () => void;
   onMarkDefaulted?: () => void;
 };
 
@@ -95,10 +115,9 @@ function add(items: RowActionItem[], item: RowActionItem): void {
 /**
  * Contract row/detail menu. Pure: same contract + perms + callbacks always
  * produce the same action set, so a list row and its detail kebab expose
- * identical items. Every gate below mirrors its detail page verbatim:
- * preparer actions mirror the sales contract detail page, reviewer actions
- * mirror the contract review detail page, and sale dispositions mirror the
- * sales list. Callbacks the caller cannot handle are omitted, which only
+ * identical items. These checks guard preparation and review on the contract
+ * detail page and match sale dispositions on the sales list. Callbacks the
+ * caller cannot handle are omitted, which only
  * narrows the set; it never re-gates an included item.
  */
 export function buildContractMenuProps(contract: ContractMenuContract, perms: ContractMenuPerms, cb: ContractMenuCallbacks): SalesMenuProps {
@@ -108,6 +127,11 @@ export function buildContractMenuProps(contract: ContractMenuContract, perms: Co
   const cancellable = contract.status !== "cancelled" && !perms.hasActiveMembership;
   const pendingCancel = contract.cancellation?.status === "requested";
   const moneyLocked = perms.hasVerifiedMoney;
+  const sale = contract.saleView ?? null;
+  // "Approve deal" stays while a step can still run: the sale approval, the VIP Number, or a finalization nothing holds.
+  const saleUnapproved = sale?.status === "pending" && !sale.approval;
+  const vipPending = !contract.vipNumber && !perms.hasCard;
+  const dealOpen = (inReview || contract.status === "finalized") && (vipPending || saleUnapproved || (inReview && contract.holds.length === 0));
 
   if (perms.canSubmitPayment && contract.status !== "cancelled" && contract.status !== "returned" && cb.onSubmitPayment) {
     add(extraItems, { key: "submit-payment", label: "Submit payment", tone: "info", onClick: cb.onSubmitPayment });
@@ -116,23 +140,17 @@ export function buildContractMenuProps(contract: ContractMenuContract, perms: Co
     add(extraItems, { key: "submit-contract", label: "Submit contract", onClick: cb.onSubmitContract });
   }
 
-  if (perms.canApprove && contract.status === "submitted" && cb.onStartReview) {
-    add(extraItems, { key: "start-review", label: "Start review", onClick: cb.onStartReview });
-  }
   if (perms.isSuperAdmin && contract.arrangement?.status === "pending" && contract.status !== "cancelled" && cb.onApproveArrangement) {
     add(extraItems, { key: "approve-arrangement", label: "Approve arrangement", tone: "success", onClick: cb.onApproveArrangement });
   }
   if (perms.canApprove && contract.paymentCode == null && contract.status !== "cancelled" && cb.onRecordPaymentCode) {
     add(extraItems, { key: "record-payment-code", label: "Record payment code", tone: "info", onClick: cb.onRecordPaymentCode });
   }
-  if (perms.canApprove && inReview && cb.onFinalize) {
-    add(extraItems, { key: "finalize", label: "Finalize", tone: "success", onClick: cb.onFinalize });
+  if (perms.canApprove && perms.canApproveCustomer && dealOpen && !pendingCancel && cb.onApproveDeal) {
+    add(extraItems, { key: "approve-deal", label: "Approve deal", tone: "success", onClick: cb.onApproveDeal });
   }
   if (perms.canApprove && inReview && cb.onReturn) {
     add(extraItems, { key: "return", label: "Return for correction", tone: "warning", onClick: cb.onReturn });
-  }
-  if (perms.canApprove && (inReview || contract.status === "finalized") && !contract.vipNumber && !perms.hasCard && cb.onRecordSignedAgreement) {
-    add(extraItems, { key: "record-signed-agreement", label: "Record signed agreement", tone: "info", onClick: cb.onRecordSignedAgreement });
   }
   if (perms.canPrepare && contract.status === "draft" && cancellable && !moneyLocked && cb.onCancel) {
     add(extraItems, { key: "cancel-contract", label: "Cancel contract", tone: "danger", onClick: cb.onCancel });
@@ -144,11 +162,8 @@ export function buildContractMenuProps(contract: ContractMenuContract, perms: Co
     add(extraItems, { key: "request-cancellation", label: "Request cancellation", tone: "warning", onClick: cb.onRequestCancellation });
   }
 
-  const sale = contract.saleView ?? null;
-  if (sale && perms.canApprove && sale.status === "pending" && !sale.approval) {
-    if (cb.onApproveSale) add(extraItems, { key: "approve-sale", label: "Approve sale", tone: "success", onClick: cb.onApproveSale });
-  } else if (sale && perms.canApprove && sale.defaultEligible) {
-    if (cb.onMarkDefaulted) add(extraItems, { key: "mark-defaulted", label: "Mark Defaulted", tone: "danger", onClick: cb.onMarkDefaulted });
+  if (sale && perms.canApprove && !saleUnapproved && sale.defaultEligible && cb.onMarkDefaulted) {
+    add(extraItems, { key: "mark-defaulted", label: "Mark Defaulted", tone: "danger", onClick: cb.onMarkDefaulted });
   }
 
   return {

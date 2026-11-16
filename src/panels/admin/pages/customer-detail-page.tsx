@@ -11,6 +11,8 @@ import { useRouter } from "next/navigation";
 import { Check, Pencil, RotateCcw, Trash2, X } from "lucide-react";
 import { useApproveCustomer, useContracts, useDiscardCustomerDraft, useMemberships, useOperation, usePaymentSchemes, useRejectCustomer, useSales, useSendBackCustomer } from "@/data/business-queries";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
+import { canPrepareVipContract, isEditableContractStatus, preferOpenContract } from "@/modules/contracts/rules";
+import type { ContractView } from "@/data/contracts/contract-repository";
 import { canReviewRegistration } from "@/modules/customers/review";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { ReasonDialog } from "@/shared/components/modern/form-dialog";
@@ -58,13 +60,15 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
   const canPrepare = useOperation("contracts.prepare");
   const canReadAudit = useOperation("audit.read");
   const contractHref = useContractHref();
-  const [preparing, setPreparing] = useState(false);
+  const [preparing, setPreparing] = useState<"initial" | "separate" | null>(null);
   const [tab, setTab] = useState<CustomerDetailTab>("overview");
 
   const customer = customers.data?.find((item) => item.id === customerId);
   const [selectedContractId, setSelectedContractId] = useState("");
   const purchases = (contracts.data ?? []).filter((item) => item.customerId === customerId);
-  const contract = purchases.find((item) => item.id === selectedContractId) ?? purchases.find((item) => item.status !== "cancelled") ?? purchases[0];
+  const currentPurchase = purchases.reduce<ContractView | undefined>(preferOpenContract, undefined);
+  const hasPurchaseHistory = purchases.length > 0;
+  const contract = purchases.find((item) => item.id === selectedContractId) ?? currentPurchase ?? purchases[0];
   const sale = sales.data?.find((item) => item.contractId === contract?.id);
   const membership = memberships.data?.find((item) => item.contractId === contract?.id);
   const owner = members.data?.find((item) => item.id === customer?.ownerMemberId);
@@ -108,6 +112,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
   }
 
   const ownRecord = !customer.restricted;
+  const canStartPurchase = canPrepare && ownRecord && contracts.isSuccess && canPrepareVipContract(customer.status);
   const viewCustomer = ownRecord
     ? customer
     : {
@@ -136,7 +141,6 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
       onApprove: () => setReview("approve"),
       onSendBack: () => setReview("send_back"),
       onReject: () => setReview("reject"),
-      onPrepare: () => setPreparing(true),
     },
   );
 
@@ -147,9 +151,14 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
       crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: customerRecordName(customer) }]}
       actions={
         <>
-          {canPrepare && ownRecord && (customer.status === "submitted" || customer.status === "approved") ? (
-            <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setPreparing(true)}>
-              Prepare contract
+          {canPrepare && ownRecord && currentPurchase && isEditableContractStatus(currentPurchase.status) ? (
+            <Link href={contractHref(currentPurchase.id)} className={buttonVariants({ className: "tw:min-h-11 tw:sm:min-h-8" })}>
+              Continue contract
+            </Link>
+          ) : null}
+          {canStartPurchase ? (
+            <Button variant={currentPurchase ? "outline" : "default"} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setPreparing(hasPurchaseHistory ? "separate" : "initial")}>
+              {hasPurchaseHistory ? "New VIP purchase" : "Prepare contract"}
             </Button>
           ) : null}
           {canApprove && canReviewRegistration(customer.status) ? (
@@ -253,7 +262,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
         />
       ) : null}
       {tab === "audit" ? <AuditTabPanel events={auditEvents} authorized={canReadAudit && !audit.error} /> : null}
-      {preparing && canPrepare && ownRecord && (customer.status === "submitted" || customer.status === "approved") ? <PrepareContractDialog customer={customer} repeatPurchase={purchases.length > 0} open onClose={() => setPreparing(false)} /> : null}
+      {preparing && canStartPurchase ? <PrepareContractDialog customer={customer} repeatPurchase={preparing === "separate"} open onClose={() => setPreparing(null)} /> : null}
       <ConfirmDialog
         open={discarding}
         title={actionSet.deleteTitle ?? "Discard this draft?"}

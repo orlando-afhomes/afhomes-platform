@@ -475,3 +475,9 @@ These rulings take precedence over earlier text in this document where they diff
 6. **Contracts.** Sellers do not prepare contracts. The office (Clerk) prepares the contract and the Administrator approves it (section 5; doc 05 §11).
 7. **Seller payment slip (master follow-up item 5).** A seller may upload a payment slip photo for their own customer. It is proof only and counts only after a Clerk enters the receipt and Finance, an Administrator or the Super Administrator approves it (section 5; doc 07).
 23. **Review of a seller-started customer.** The Administrator can approve it, send it back to the Clerk with a reason, or reject it with a reason. Nothing is deleted (sections 5 and 10).
+
+## Owner rulings amendment (2026-11-16, Approve deal)
+
+This ruling refines section 5 and takes precedence over earlier text in this document where it differs.
+
+24. **Approve deal.** When a customer registration is attached to a submitted contract, the Administrator approves it through one "Approve deal" action on the contract. That action records the separate customer approval event (`CUSTOMER_APPROVED`) before any other step. A registration with no contract is still approved on the customer page. Send back and Reject are unchanged.

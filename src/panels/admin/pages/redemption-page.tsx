@@ -28,7 +28,7 @@ import { RedemptionBookingDialog } from "../components/redemption-booking-dialog
 import { buildRedemptionBookingMenuProps } from "../actions/redemption-actions";
 import { ADMIN_AREA_TABS } from "../navigation";
 import { useAdminAreaTabAccess } from "../use-role-aware-navigation";
-import { pointsTableFrom, RedemptionHolidaysPanel, RedemptionPointsTablePanel, RedemptionVenuesPanel } from "./redemption-points-table-page";
+import { pointsTableFrom } from "./redemption-points-table-page";
 
 const fmt = (n: number) => n.toLocaleString("en-PH");
 
@@ -291,43 +291,28 @@ export function RedemptionCardholderPointsPanel() {
   );
 }
 
-type CreateKind = "booking" | "version" | "holiday" | "venue";
-const CREATE_BUTTONS: Partial<Record<string, { kind: CreateKind; label: string; operation: "book" | "configure" }>> = {
-  bookings: { kind: "booking", label: "New booking", operation: "book" },
-  "points-table": { kind: "version", label: "Update points table", operation: "configure" },
-  holidays: { kind: "holiday", label: "Add holiday", operation: "configure" },
-  venues: { kind: "venue", label: "Add venue", operation: "configure" },
-};
-
-/** Redemption area: one page with the tabs of `ADMIN_AREA_TABS.redemption`; tab visibility follows `useAdminAreaTabAccess`. */
+/** Redemption area: one page with the tabs of `ADMIN_AREA_TABS.redemption`; tab visibility follows `useAdminAreaTabAccess`. The setup tabs live in Settings. */
 export function RedemptionAreaPage() {
   const access = useAdminAreaTabAccess("redemption");
   const canBook = useOperation("redemption.book");
-  const canConfigure = useOperation("redemption.configure");
-  const [creating, setCreating] = useState<CreateKind | null>(null);
-  const close = () => setCreating(null);
-  const createProps = (kind: CreateKind) => ({ createOpen: creating === kind, onCreateClose: close });
+  const [creating, setCreating] = useState(false);
+  const close = () => setCreating(false);
 
   return (
     <AreaPage
       anyOf={["redemption"]}
       title="Redemption"
-      actions={(tab) => {
-        const button = CREATE_BUTTONS[tab];
-        if (!button || !(button.operation === "book" ? canBook : canConfigure)) return null;
-        return <Button type="button" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setCreating(button.kind)}><Plus aria-hidden="true" /> {button.label}</Button>;
-      }}
+      actions={(tab) => tab === "bookings" && canBook
+        ? <Button type="button" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setCreating(true)}><Plus aria-hidden="true" /> New booking</Button>
+        : null}
       tabs={ADMIN_AREA_TABS.redemption.map(({ value, label }) => ({
         value,
         label,
         allowed: access[value],
         render: () => {
           switch (value) {
-            case "bookings": return <RedemptionBookingsPanel {...createProps("booking")} />;
+            case "bookings": return <RedemptionBookingsPanel createOpen={creating} onCreateClose={close} />;
             case "cardholder-points": return <RedemptionCardholderPointsPanel />;
-            case "points-table": return <RedemptionPointsTablePanel {...createProps("version")} />;
-            case "holidays": return <RedemptionHolidaysPanel {...createProps("holiday")} />;
-            case "venues": return <RedemptionVenuesPanel {...createProps("venue")} />;
           }
         },
       }))}

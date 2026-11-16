@@ -1,7 +1,7 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { ContractRepository, ContractView, PrepareContractInput, UpdateContractInput } from "@/data/contracts/contract-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
-import { buildSchedule, finalizationHolds, snapshotBenefits } from "@/modules/contracts/rules";
+import { buildSchedule, canPrepareVipContract, finalizationHolds, snapshotBenefits } from "@/modules/contracts/rules";
 import { CANCELLATION_GROUNDS, CANCELLATION_GROUND_LABELS, type Contract, type ContractCancellationGround } from "@/modules/contracts/types";
 import { totalVerifiedCentavos } from "@/modules/finance/rules";
 import type { DevIdentity } from "@/modules/identity/types";
@@ -101,7 +101,15 @@ export class MockContractRepository extends BusinessRepository implements Contra
       const customer = this.store.customers.find((item) => item.id === input.customerId);
       const broad = activeIdentityRoles(identity).some((role) => BROAD_ROLES.has(role));
       if (!customer || (!broad && customer.ownerMemberId !== identity.memberId)) throw new Error("Customer not found.");
-      if (customer.status !== "submitted" && customer.status !== "approved") throw new Error("Only a submitted or approved customer can have a contract prepared.");
+      if (!canPrepareVipContract(customer.status)) throw new Error("Only a submitted or approved customer or an active member can have a contract prepared.");
+      const requestId = input.newPurchaseRequestId?.trim();
+      const customerContracts = this.store.contracts.filter((item) => item.customerId === customer.id);
+      if (requestId) {
+        const previous = customerContracts.find((item) => item.newPurchaseRequestId === requestId);
+        if (previous) return viewContract(this.store, this.find(identity, previous.id));
+      } else if (customerContracts.some((item) => item.status !== "cancelled")) {
+        throw new Error("Open the existing contract to continue this purchase. Start a new VIP purchase for a separate transaction.");
+      }
       const productCode = input.productCode ?? customer.vipPlan;
       const classification = input.classification ?? customer.contractClassification ?? "S";
       if (classification !== "S" && classification !== "N") throw new Error("Choose Standard or Non-Standard terms.");
@@ -119,6 +127,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
       const contract: Contract = {
         id: nextId(this.store, "contract", "ctr"),
         customerId: customer.id,
+        ...(requestId ? { newPurchaseRequestId: requestId } : {}),
         productCode: product.code,
         productConfigVersion: product.configVersion,
         priceCentavos: built.priceCentavos,
@@ -215,18 +224,6 @@ export class MockContractRepository extends BusinessRepository implements Contra
       // A reservation can be submitted while the contract is still a draft, before any sale exists: link it now.
       const recorded = this.store.sales.find((item) => item.contractId === contract.id);
       if (recorded) for (const payment of this.store.payments) if (payment.contractId === contract.id && !payment.saleId) payment.saleId = recorded.id;
-      return viewContract(this.store, contract);
-    });
-  }
-
-  async startReview(id: string, options?: MockAsyncOptions): Promise<ContractView> {
-    return this.run(options, (identity) => {
-      this.require(identity, "contracts.approve", "Reviewing contracts is not allowed for this identity.");
-      const contract = this.find(identity, id);
-      if (contract.status !== "submitted") throw new Error("Only a Submitted contract can enter review.");
-      contract.status = "under_review";
-      this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_REVIEW_STARTED);
-      this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_REVIEW_STARTED, entityType: "contract", entityId: contract.id, previousValue: "submitted", newValue: "under_review" });
       return viewContract(this.store, contract);
     });
   }

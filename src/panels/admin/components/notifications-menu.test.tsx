@@ -37,6 +37,7 @@ function renderMenu(value: Partial<NotificationsValue>) {
   const full: NotificationsValue = {
     unreadTotal: 0,
     unreadByNavKey: {},
+    unreadByTab: {},
     events: [],
     denied: false,
     markAllSeen: () => {},
@@ -65,7 +66,7 @@ describe("notifications menu", () => {
   it("renders the unread count badge and names the count on the trigger", () => {
     renderMenu({ unreadTotal: 3, events: [makeEvent()] });
     expect(screen.getByRole("button", { name: "Notifications, 3 unread" })).toBeInTheDocument();
-    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText("3")).toHaveClass("tw:text-white");
   });
 
   it("caps the badge display at 99+ while the label keeps the true count", () => {

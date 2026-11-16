@@ -153,7 +153,8 @@ export function toDraft(customer?: Customer): CustomerDraft {
     secEmployedPosition: holder?.employedPosition ?? "",
     secOfficeAddress: holder?.officeAddress ? { ...holder.officeAddress } : { ...EMPTY_OFFICE },
     paymentSchemeId: customer?.paymentSchemeId ?? "",
-    contractClassification: customer?.contractClassification ?? "",
+    // A new application starts as Standard; Non-Standard stays selectable.
+    contractClassification: customer ? customer.contractClassification ?? "" : "S",
     recommenderMemberId: customer?.referrerMemberId ?? customer?.recommenderMemberId ?? "",
     referrerMemberId: customer?.referrerMemberId ?? customer?.recommenderMemberId ?? "",
     referralReference: customer?.referralReference ?? "",

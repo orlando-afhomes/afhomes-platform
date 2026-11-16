@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Swal from "sweetalert2";
-import { RowActionsMenu } from "./row-actions-menu";
+import { RowActionsMenu, toneButtonVariant } from "./row-actions-menu";
 
 afterEach(() => {
   Swal.close();
@@ -45,10 +45,56 @@ describe("RowActionsMenu with nothing to offer", () => {
 describe("RowActionsMenu delete confirmation", () => {
   it("shows the Delete button in red", async () => {
     const user = userEvent.setup();
-    render(<RowActionsMenu itemName="Row Three" onDelete={() => {}} />);
+    render(<RowActionsMenu itemName="Row Three" onDelete={() => {}} onEdit={() => {}} />);
     await user.click(screen.getByRole("button", { name: "Actions for Row Three" }));
     await user.click(await screen.findByRole("menuitem", { name: "Delete" }));
     const alert = await screen.findByRole("alertdialog", { name: "Delete Row Three?" });
     expect(within(alert).getByRole("button", { name: "Delete" }).className).toContain("destructive");
+  });
+});
+
+describe("RowActionsMenu with a single action", () => {
+  it("shows Edit alone as a direct button", async () => {
+    const user = userEvent.setup();
+    const onEdit = vi.fn();
+    render(<RowActionsMenu itemName="Row A" onEdit={onEdit} />);
+    expect(screen.queryByRole("button", { name: "Actions for Row A" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Edit Row A" }));
+    expect(onEdit).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows one extra item as a button colored by its tone", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    render(<RowActionsMenu itemName="Row B" extraItems={[{ key: "a", label: "Approve", tone: "success", onClick }]} />);
+    const button = screen.getByRole("button", { name: "Approve Row B" });
+    expect(button.className).toContain("success");
+    await user.click(button);
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(toneButtonVariant(undefined)).toBe("outline");
+    expect(toneButtonVariant("danger")).toBe("destructive");
+  });
+
+  it("opens the delete confirmation from a lone Delete button", async () => {
+    const user = userEvent.setup();
+    const onDelete = vi.fn();
+    render(<RowActionsMenu itemName="Row C" onDelete={onDelete} />);
+    await user.click(screen.getByRole("button", { name: "Delete Row C" }));
+    const alert = await screen.findByRole("alertdialog", { name: "Delete Row C?" });
+    await user.click(within(alert).getByRole("button", { name: "Delete" }));
+    await vi.waitFor(() => expect(onDelete).toHaveBeenCalledTimes(1));
+  });
+
+  it("explains a lone unavailable Delete in a notice", async () => {
+    const user = userEvent.setup();
+    render(<RowActionsMenu itemName="Row D" deleteDisabledReason="Linked to a sale." />);
+    await user.click(screen.getByRole("button", { name: "Delete Row D" }));
+    const alert = await screen.findByRole("alertdialog", { name: "Deletion unavailable" });
+    expect(within(alert).getByText("Linked to a sale.")).toBeTruthy();
+  });
+
+  it("keeps the menu for two or more actions", () => {
+    render(<RowActionsMenu itemName="Row E" onEdit={() => {}} onDelete={() => {}} />);
+    expect(screen.getByRole("button", { name: "Actions for Row E" })).toBeTruthy();
   });
 });

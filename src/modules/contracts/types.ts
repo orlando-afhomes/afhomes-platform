@@ -36,6 +36,7 @@ export type ContractEvent = { at: string; actorId: string; event: string; note: 
 export type Contract = {
   id: string;
   customerId: string;
+  newPurchaseRequestId?: string;
   productCode: VipTierCode;
   productConfigVersion: number;
   priceCentavos: number;

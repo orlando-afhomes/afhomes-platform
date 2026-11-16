@@ -7,7 +7,8 @@ import { getDevIdentity } from "@/data/mock/dev-identities";
 import { createMockRepositories } from "@/data/mock/repositories";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider, useMockStore } from "@/shared/providers/mock-store-provider";
-import SalesRoute from "@/app/admin/sales/page";
+import { SalesAreaPage } from "./pages/sales-area-page";
+import { VipProductsAreaPage } from "./pages/vip-products-page";
 
 vi.mock("next/navigation", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/navigation")>()),
@@ -48,7 +49,7 @@ function SeededIgp({ children }: { children: ReactNode }) {
   return ready ? children : null;
 }
 
-function show(identityId = "dev-admin", page: ReactNode = <SalesRoute />) {
+function show(identityId = "dev-admin", page: ReactNode = <SalesAreaPage />) {
   function Wrapper() {
     const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
     return (
@@ -68,11 +69,11 @@ describe("Sales area", () => {
   it("offers an Administrator all sales tabs and opens contract actions from the URL", async () => {
     const user = userEvent.setup();
     window.history.replaceState(null, "", "/admin/sales?tab=contracts");
-    show("dev-admin", <SalesRoute />);
+    show("dev-admin", <SalesAreaPage />);
     const tabs = await screen.findByRole("tablist", { name: "Sales" });
-    expect(within(tabs).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Sales", "Contracts", "Contract review", "IGP", "Projects"]);
+    expect(within(tabs).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Sales", "Contracts", "IGP", "Scheme guide"]);
     expect(within(tabs).getByRole("tab", { name: "Contracts" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("link", { name: "New contract" })).toHaveAttribute("href", "/admin/customers/new");
+    expect(screen.getByRole("link", { name: "New contract" })).toHaveAttribute("href", "/admin/customers?tab=customers");
     const table = await screen.findByRole("table", { name: "Contracts" });
     // The row opens the contract: names are plain text and the row menu has no "View full details".
     expect(within(table).queryByRole("link")).toBeNull();
@@ -80,18 +81,18 @@ describe("Sales area", () => {
     expect(screen.queryByRole("menuitem", { name: "View full details" })).toBeNull();
   });
 
-  it("hides Contract review from sellers and falls back to the Sales tab", async () => {
-    window.history.replaceState(null, "", "/admin/sales?tab=contract-review");
-    show("dev-ost-a1", <SalesRoute />);
+  it("lets sellers open Contracts with their existing access", async () => {
+    window.history.replaceState(null, "", "/admin/sales?tab=contracts");
+    show("dev-ost-a1", <SalesAreaPage />);
     const tabs = await screen.findByRole("tablist", { name: "Sales" });
     expect(within(tabs).queryByRole("tab", { name: "Contract review" })).toBeNull();
-    expect(within(tabs).getByRole("tab", { name: "Sales" })).toHaveAttribute("aria-selected", "true");
+    expect(within(tabs).getByRole("tab", { name: "Contracts" })).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByRole("link", { name: "New contract" })).toBeNull();
   });
 
   it("opens IGP for Finance even when the URL points at a restricted tab", async () => {
-    window.history.replaceState(null, "", "/admin/sales?tab=contract-review");
-    show("dev-finance", <SalesRoute />);
+    window.history.replaceState(null, "", "/admin/sales?tab=contracts");
+    show("dev-finance", <SalesAreaPage />);
     expect(await screen.findByRole("table", { name: "IGP Sales" })).toBeInTheDocument();
     expect(within(screen.getByRole("tablist", { name: "Sales" })).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["IGP"]);
     expect(screen.queryByRole("button", { name: "Record sale" })).toBeNull();
@@ -157,11 +158,11 @@ describe("IGP sale form and JA&D entry", () => {
   });
 });
 
-describe("IGP Projects tab", () => {
+describe("IGP Projects tab (Settings)", () => {
   it("lists the projects, opens one with its units and adds a project from the heading button", async () => {
     const user = userEvent.setup();
-    window.history.replaceState(null, "", "/admin/sales?tab=projects");
-    show();
+    window.history.replaceState(null, "", "/admin/vip-products?tab=igp-projects");
+    show("dev-admin", <VipProductsAreaPage />);
     const table = await screen.findByRole("table", { name: "Projects" });
     const headers = within(table).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter(Boolean);
     expect(headers).toEqual(["Project", "Location", "Units", "Status"]);

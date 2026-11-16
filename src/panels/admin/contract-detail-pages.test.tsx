@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
-import { ContractReviewDetailPage } from "./pages/contract-review-detail-page";
 import { FinanceCancellationDetailPage } from "./pages/finance-cancellation-detail-page";
 import { FinanceCollectionDetailPage } from "./pages/finance-collection-detail-page";
 import { SalesContractDetailPage } from "./pages/sales-contract-detail-page";
@@ -35,25 +34,25 @@ afterEach(cleanup);
 
 const button = (name: string) => screen.queryByRole("button", { name });
 
-describe("contract detail pages show only their own process actions", () => {
-  it("Review lets an authorized reviewer finalize the approved Gold terms", async () => {
-    show("dev-admin", <ContractReviewDetailPage contractId="ctr-3" />);
-    expect(await screen.findByRole("button", { name: "Finalize" })).toBeEnabled();
-    expect(button("Submit payment")).toBeNull();
+describe("contract details show actions allowed for each viewer", () => {
+  it("lets an authorized reviewer approve the deal on the approved Gold terms from Contracts", async () => {
+    show("dev-admin", <SalesContractDetailPage contractId="ctr-3" />);
+    expect(await screen.findByRole("button", { name: "Approve deal" })).toBeEnabled();
+    for (const name of ["Start review", "Finalize", "Record signed agreement", "Approve sale"]) expect(button(name)).toBeNull();
     expect(button("Edit details")).toBeNull();
   });
 
   it("shows a missing VIP rate before issuance and links an Admin to the affected sale", async () => {
-    show("dev-admin", <ContractReviewDetailPage contractId="ctr-3" />);
+    show("dev-admin", <SalesContractDetailPage contractId="ctr-3" />);
     expect(await screen.findByText("Approved commission rates needed")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Set closing seller rate" })).toHaveAttribute(
       "href",
       "/admin/commissions?tab=rates&sale=sale-3&role=DSC",
     );
-    expect(button("Finalize")).toBeEnabled();
+    expect(button("Approve deal")).toBeEnabled();
   });
 
-  it("Sales contract shows tabbed Overview with KPI and status cards and no review or finance actions", async () => {
+  it("Sales contract keeps its overview and gives Admin the review actions in the same detail", async () => {
     show("dev-admin", <SalesContractDetailPage contractId="ctr-3" />);
     const summary = await screen.findByRole("group", { name: "Contract summary" });
     expect(within(summary).getByText("Contract price")).toBeInTheDocument();
@@ -68,7 +67,15 @@ describe("contract detail pages show only their own process actions", () => {
     expect(screen.getByRole("heading", { name: "Contract terms" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Contract Status" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Contract Summary" })).toBeInTheDocument();
-    for (const name of ["Finalize", "Start review", "Return for correction", "Record RA number", "Request cancellation", "Confirm cancellation"]) expect(button(name)).toBeNull();
+    expect(button("Approve deal")).toBeEnabled();
+    expect(button("Return for correction")).toBeEnabled();
+    expect(button("Confirm cancellation")).toBeNull();
+  });
+
+  it("keeps review actions hidden from the seller on a contract assigned to them", async () => {
+    show("dev-ost-a2", <SalesContractDetailPage contractId="ctr-4" />);
+    await screen.findByRole("group", { name: "Contract summary" });
+    for (const name of ["Approve deal", "Return for correction"]) expect(button(name)).toBeNull();
   });
 
   it("Sales contract Payment Schedule tab shows the schedule and opens the MA1 sheet on row click", async () => {
@@ -104,7 +111,7 @@ describe("contract detail pages show only their own process actions", () => {
     show("dev-finance", <FinanceCollectionDetailPage contractId="ctr-1" />);
     expect(await screen.findByRole("table", { name: "Payment ledger" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Payments" })).toBeInTheDocument();
-    for (const name of ["Finalize", "Edit details", "Submit contract", "Submit payment", "Cancel contract", "Confirm cancellation"]) expect(button(name)).toBeNull();
+    for (const name of ["Approve deal", "Edit details", "Submit contract", "Submit payment", "Cancel contract", "Confirm cancellation"]) expect(button(name)).toBeNull();
   });
 
   it("Finance collection ledger rows keep 5 columns and open details with the running Net verified value", async () => {

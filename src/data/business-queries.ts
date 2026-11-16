@@ -12,6 +12,7 @@ import type { MockRepositories } from "@/data/mock/repositories";
 import { useMockRepositories } from "@/data/queries";
 import { queryKeys } from "@/data/query-keys";
 import type { ContractCancellationGround } from "@/modules/contracts/types";
+import { approveDeal } from "@/modules/contracts/application/approve-deal";
 import { registerCustomer, type CustomerRegistrationInput } from "@/modules/customers/application/register-customer";
 import type { CustomerImportRecord } from "@/modules/customers/import";
 import type { CustomerDraftInput } from "@/modules/customers/types";
@@ -133,9 +134,8 @@ export function useUpdateContract() {
   return useBusinessMutation((r, v: { id: string; input: UpdateContractInput }) => r.contracts.update(v.id, v.input));
 }
 export type ContractAction =
-  | { id: string; action: "submit" | "startReview" | "finalize" }
+  | { id: string; action: "submit" }
   | { id: string; action: "return" | "cancel"; reason: string }
-  | { id: string; action: "ra" }
   | { id: string; action: "requestCancel"; ground: ContractCancellationGround; reason: string }
   | { id: string; action: "decideCancel"; decision: "confirm" | "decline"; reason: string }
   | { id: string; action: "approveArrangement"; reference: string }
@@ -144,16 +144,23 @@ export function useContractAction() {
   return useBusinessMutation((r, v: ContractAction) => {
     switch (v.action) {
       case "submit": return r.contracts.submit(v.id);
-      case "startReview": return r.contracts.startReview(v.id);
-      case "finalize": return r.contracts.finalize(v.id);
       case "return": return r.contracts.returnForCorrection(v.id, v.reason);
       case "cancel": return r.contracts.cancel(v.id, v.reason);
-      case "ra": return r.contracts.recordSignedAgreement(v.id);
       case "requestCancel": return r.contracts.requestCancellation(v.id, v.ground, v.reason);
       case "decideCancel": return r.contracts.decideCancellation(v.id, v.decision, v.reason);
       case "approveArrangement": return r.contracts.approveArrangement(v.id, v.reference);
       case "resolvePaymentCode": return r.contracts.resolvePaymentCode(v.id, v.reference);
     }
+  });
+}
+/** One Administrator action: approve the customer and sale, issue the VIP Number, and finalize when nothing is held. */
+export function useApproveDeal() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (contractId: string) => approveDeal(repositories, contractId),
+    // A step that fails partway still leaves the earlier steps done.
+    onSettled: () => invalidateBusiness(queryClient),
   });
 }
 
@@ -163,9 +170,6 @@ export function useSales() {
 }
 export function useCorrectVipCommission() {
   return useBusinessMutation((r, { id, ...input }: import("@/data/contracts/sale-repository").VipCommissionCorrection & { id: string }) => r.sales.correctCommission(id, input));
-}
-export function useApproveSale() {
-  return useBusinessMutation((r, id: string) => r.sales.approve(id));
 }
 export function useMarkSaleDefaulted() {
   return useBusinessMutation((r, input: { id: string; reason: string }) => r.sales.markDefaulted(input.id, input.reason));
@@ -185,7 +189,6 @@ export function useSubmitPayment() {
   return useBusinessMutation((r, input: SubmitPaymentInput) => r.payments.submit(input));
 }
 export type PaymentAction =
-  | { id: string; action: "startReview" }
   | { id: string; action: "verify"; exceptionReason?: string }
   | { id: string; action: "reject" | "return"; reason: string }
   | { id: string; action: "adjust"; kind: "reversal" | "refund"; amountCentavos: number; reason: string }
@@ -193,7 +196,6 @@ export type PaymentAction =
 export function usePaymentAction() {
   return useBusinessMutation((r, v: PaymentAction) => {
     switch (v.action) {
-      case "startReview": return r.payments.startReview(v.id);
       case "verify": return r.payments.verify(v.id, { exceptionReason: v.exceptionReason });
       case "reject": return r.payments.reject(v.id, v.reason);
       case "return": return r.payments.returnForCorrection(v.id, v.reason);
@@ -236,7 +238,7 @@ export function useCommissionRates(enabled: boolean) {
 }
 
 export function useSaveCommissionRate() {
-  return useBusinessMutation((r, input: CommissionRateSetting & { reason: string }) => r.commissions.setRate(input));
+  return useBusinessMutation((r, input: CommissionRateSetting & { reason?: string }) => r.commissions.setRate(input));
 }
 
 export function useSaveVipPositionRate() {
@@ -309,4 +311,33 @@ export function useStayPointsAction() {
 export function useOperation(operation: AdminOperation): boolean {
   const { identity } = useDevIdentity();
   return identity.status === "active" && hasOperationPermission(identity, operation);
+}
+
+// Month-end payouts in bulk
+export type BulkCommissionPayout =
+  | { kind: "payout"; ids: string[]; reference: string; method: string | null; payoutDate: string; evidenceFileName?: string }
+  | { kind: "confirm"; ids: string[] };
+export type BulkCommissionResult = { done: number; failed: { id: string; reason: string }[] };
+
+/**
+ * Records or confirms each commission's payout one by one through the same repository
+ * call as a single payout, so each keeps its own checks, duplicate guard and audit entry
+ * (doc 08 §11.3, §11.6, §11.7). A failure skips that commission and is reported.
+ */
+export async function runBulkCommissionPayout(r: Pick<MockRepositories, "commissions">, input: BulkCommissionPayout): Promise<BulkCommissionResult> {
+  const result: BulkCommissionResult = { done: 0, failed: [] };
+  for (const id of input.ids) {
+    try {
+      if (input.kind === "payout") await r.commissions.recordPayout(id, input);
+      else await r.commissions.confirmPayout(id);
+      result.done += 1;
+    } catch (error) {
+      result.failed.push({ id, reason: error instanceof Error ? error.message : "Request failed." });
+    }
+  }
+  return result;
+}
+
+export function useBulkCommissionPayout() {
+  return useBusinessMutation(runBulkCommissionPayout);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useApproveSale, useContractAction, useMarkSaleDefaulted, useOperation, useSales } from "@/data/business-queries";
+import { useApproveDeal, useContractAction, useMarkSaleDefaulted, useOperation, useSales } from "@/data/business-queries";
 import { canCorrectPayment } from "@/data/mock/scope";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { InfoNote } from "@/shared/components/modern/detail-list";
@@ -12,9 +12,9 @@ import { outstandingBalanceCentavos, totalVerifiedCentavos } from "@/modules/fin
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { EMPTY } from "@/shared/lib/empty-value";
 import { formatDate } from "@/shared/lib/format-date";
-import { EditContractDialog, CancelContractDialog } from "../components/contract-dialogs";
+import { ApproveArrangementDialog, CancelContractDialog, EditContractDialog, RequestCancellationDialog, ResolvePaymentCodeDialog, ReturnContractDialog } from "../components/contract-dialogs";
 import { ContractDetailTabs, type ContractDetailTab } from "../components/contract-detail-tabs";
-import { actionButtonVariant, buildContractMenuProps, orderActionItems } from "../actions/sales-contract-actions";
+import { actionButtonVariant, approveDealConfirm, buildContractMenuProps, orderActionItems } from "../actions/sales-contract-actions";
 import { ContractStatusCard, ContractSummaryCard } from "../components/contract-status-cards";
 import { ContractCommissionRateNotice, ContractHistorySection, ContractLedgerSection, ContractMilestonesSection, ContractPageFrame, ContractPaymentsSection, ContractScheduleSection, ContractTermsSection, ContractTiles } from "../components/contract-sections";
 import { PaymentSubmitDialog, usePaymentActions } from "../components/payment-actions";
@@ -23,7 +23,7 @@ import { humanize } from "@/shared/lib/humanize";
 const CRUMBS = [{ label: "Sales" }, { label: "Contracts", href: "/admin/sales?tab=contracts" }];
 const BUTTON = "tw:min-h-11 tw:sm:min-h-8";
 
-/** Sales view of a contract: terms, schedule, submitted payments and the preparer's actions. */
+/** Contract terms, schedule, submitted payments, and actions allowed for the viewer. */
 export function SalesContractDetailPage({ contractId }: { contractId: string }) {
   const action = useContractAction();
   const paymentActions = usePaymentActions();
@@ -32,11 +32,12 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
   const canPrepare = useOperation("contracts.prepare");
   const canSubmitPayment = useOperation("payments.submit");
   const canApprove = useOperation("contracts.approve");
+  const canApproveCustomer = useOperation("customers.approve");
   const sales = useSales();
-  const approveSale = useApproveSale();
+  const approveDeal = useApproveDeal();
   const markDefaulted = useMarkSaleDefaulted();
   const isSuperAdmin = identity.status === "active" && identity.roles.includes("super_admin");
-  const [dialogKind, setDialogKind] = useState<"payment" | "edit" | "cancel" | null>(null);
+  const [dialogKind, setDialogKind] = useState<"payment" | "edit" | "cancel" | "return" | "requestCancel" | "approveArrangement" | "resolvePaymentCode" | null>(null);
   const [saleDefaultOpen, setSaleDefaultOpen] = useState(false);
   const [tab, setTab] = useState<ContractDetailTab>("overview");
   const close = () => setDialogKind(null);
@@ -53,6 +54,7 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
         const menu = buildContractMenuProps({ ...contract, saleView: sale }, {
           canPrepare,
           canApprove,
+          canApproveCustomer,
           canSubmitPayment,
           isSuperAdmin,
           hasVerifiedMoney: moneyLocked,
@@ -61,8 +63,12 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
         }, {
           onSubmitPayment: () => setDialogKind("payment"),
           onSubmitContract: () => confirmRun({ title: "Submit this contract?", description: "It will be sent to Admin review and a Pending sale will be recorded.", confirmText: "Submit this contract", action: () => action.mutateAsync({ id: contract.id, action: "submit" }), successTitle: "Contract submitted.", errorTitle: "Action failed" }),
+          onApproveDeal: () => confirmRun(approveDealConfirm(() => approveDeal.mutateAsync(contract.id))),
+          onReturn: () => setDialogKind("return"),
+          onRecordPaymentCode: () => setDialogKind("resolvePaymentCode"),
+          onApproveArrangement: () => setDialogKind("approveArrangement"),
           onCancel: () => setDialogKind("cancel"),
-          onApproveSale: sale ? () => confirmRun({ title: "Approve this sale?", description: "This allows its receipts to be reviewed for approval.", confirmText: "Approve sale", tone: "success", action: () => approveSale.mutateAsync(sale.id), successTitle: "Sale approved.", errorTitle: "Could not approve sale" }) : undefined,
+          onRequestCancellation: () => setDialogKind("requestCancel"),
           onMarkDefaulted: sale ? () => setSaleDefaultOpen(true) : undefined,
         });
         const items = orderActionItems([
@@ -77,12 +83,20 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
       }}
     >
       {(record) => {
-        const sale = (sales.data ?? []).find((item) => item.contractId === record.contract.id) ?? null;
+        const { contract } = record;
+        const sale = (sales.data ?? []).find((item) => item.contractId === contract.id) ?? null;
+        const inReview = contract.status === "submitted" || contract.status === "under_review";
         return (
           <>
             {dialog}
             <ReasonDialog open={saleDefaultOpen} title="Mark sale Defaulted" description={sale?.customerName ?? ""} confirmText="Mark Defaulted" tone="warning" successText="Sale marked Defaulted." onClose={() => setSaleDefaultOpen(false)} onSubmit={(reason) => sale ? markDefaulted.mutateAsync({ id: sale.id, reason }) : Promise.resolve()} />
           {record.contract.status === "returned" && record.contract.returnReason ? <InfoNote title="Returned for correction">{record.contract.returnReason}</InfoNote> : null}
+          {canApprove && inReview && contract.holds.length > 0 ? (
+            <InfoNote title="Finalization is on hold">
+              <ul className="tw:list-disc tw:pl-5">{contract.holds.map((hold) => <li key={hold}>{hold}</li>)}</ul>
+            </InfoNote>
+          ) : null}
+          {canApprove && contract.cancellation?.status === "requested" ? <InfoNote title="Cancellation awaiting Finance confirmation">Finance confirms or declines this request.</InfoNote> : null}
           <ContractCommissionRateNotice {...record} />
           <ContractTiles contract={record.contract} payments={record.payments} />
           <ContractDetailTabs value={tab} onChange={setTab} />
@@ -134,6 +148,10 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
           <PaymentSubmitDialog contractId={record.contract.id} open={dialogKind === "payment"} onClose={close} />
           {dialogKind === "edit" ? <EditContractDialog contract={record.contract} onClose={close} /> : null}
           <CancelContractDialog contract={record.contract} open={dialogKind === "cancel"} onClose={close} />
+          {dialogKind === "requestCancel" ? <RequestCancellationDialog contract={contract} onClose={close} /> : null}
+          <ReturnContractDialog contract={contract} open={dialogKind === "return"} onClose={close} />
+          <ApproveArrangementDialog contract={contract} open={dialogKind === "approveArrangement"} onClose={close} />
+          <ResolvePaymentCodeDialog contract={contract} open={dialogKind === "resolvePaymentCode"} onClose={close} />
           </>
         );
       }}

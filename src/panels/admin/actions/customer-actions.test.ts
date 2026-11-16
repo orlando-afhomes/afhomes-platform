@@ -114,6 +114,12 @@ describe("buildCustomerMenuProps", () => {
     expect(keysOf(noRight)).not.toContain("prepare-contract");
   });
 
+  it("opens the existing contract instead of offering to prepare a duplicate", () => {
+    const onOpenContract = vi.fn();
+    const menu = buildCustomerMenuProps(customer("approved"), FULL_PERMS, { ...rowCb(), onOpenContract });
+    expect(menu.extraItems).toMatchObject([{ key: "open-contract", label: "Open contract", onClick: onOpenContract }]);
+  });
+
   it("omits slots whose callbacks are not wired", () => {
     const menu = buildCustomerMenuProps(customer("submitted"), FULL_PERMS, {});
     expect(menu.onEdit).toBeUndefined();

@@ -50,12 +50,12 @@ describe("admin sidebar", () => {
     for (const name of ["Commissions", "Membership", "Stay Points", "Redemption", "Reports"]) {
       expect(screen.getByRole("link", { name })).toBeDefined();
     }
-    expect(screen.queryByRole("link", { name: "VIP Products" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Settings" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Insights|Finance/ })).toBeNull();
     cleanup();
     renderSidebar(false, "dev-admin");
     expect(await screen.findByRole("link", { name: "Audit Logs" })).toBeDefined();
-    expect(screen.getByRole("link", { name: "VIP Products" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Settings" })).toBeDefined();
   });
 
   it("asks for confirmation before logging out", async () => {

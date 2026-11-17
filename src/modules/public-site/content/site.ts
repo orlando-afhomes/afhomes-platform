@@ -41,12 +41,12 @@ export const PAYMENT_DISCLAIMER =
 
 export const RENDERINGS_NOTE = "All images are architectural renderings.";
 
-export type NavLink = { href: string; label: string; description?: string };
+export type NavLink = { href: string; label: string; description?: string; imageSrc?: string };
 
 export const EXPERIENCE_LINKS: NavLink[] = [
-  { href: "/experiences/hotspring-ecofarm-resort", label: "Hotspring & Ecofarm Resort", description: "Our flagship 60-hectare destination" },
-  { href: "/experiences/smart-wellness-hotel", label: "Smart Wellness Hotel", description: "Your sleep health expert" },
-  { href: "/experiences/alm-japanese-restaurant", label: "ALM Japanese Restaurant", description: "Teppanyaki and refined dining" },
+  { href: "/experiences/hotspring-ecofarm-resort", label: "Hotspring & Ecofarm Resort", description: "Our flagship 60-hectare destination", imageSrc: "/images/site/resort/1-masterplan-new.webp" },
+  { href: "/experiences/smart-wellness-hotel", label: "Smart Wellness Hotel", description: "Your sleep health expert", imageSrc: "/images/site/hotel/smart-wellness-pod-1024x797.webp" },
+  { href: "/experiences/alm-japanese-restaurant", label: "ALM Japanese Restaurant", description: "Teppanyaki and refined dining", imageSrc: "/images/site/restaurant/afhomes-resto-v4-1024x683.webp" },
 ];
 
 export const MAIN_NAV: NavLink[] = [
@@ -65,9 +65,16 @@ export const ACTION_LINKS: NavLink[] = [
   { href: "/login/sales", label: "Sales Sign-In" },
 ];
 
-export const FOOTER_LINKS: NavLink[] = [
-  ...MAIN_NAV.filter((link) => link.href !== "/"),
-  { href: "/verify", label: "Verify Accreditation" },
-  { href: "/login", label: "Staff Login" },
-  { href: "/login/sales", label: "Sales Sign-In" },
+/** Footer link columns. Every target is an existing route (checked by public-links.test.tsx). */
+export const FOOTER_COLUMNS: { heading: string; links: NavLink[] }[] = [
+  { heading: "Explore", links: MAIN_NAV.filter((link) => link.href !== "/") },
+  { heading: "Experiences", links: EXPERIENCE_LINKS },
+  {
+    heading: "Access",
+    links: [
+      { href: "/verify", label: "Verify Accreditation" },
+      { href: "/login", label: "Staff Login" },
+      { href: "/login/sales", label: "Sales Sign-In" },
+    ],
+  },
 ];

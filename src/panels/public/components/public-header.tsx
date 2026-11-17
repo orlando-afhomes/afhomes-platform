@@ -1,50 +1,26 @@
-import Image from "next/image";
-import Link from "next/link";
-import { ChevronDown } from "lucide-react";
-import { ACTION_LINKS, EXPERIENCE_LINKS, MAIN_NAV } from "@/modules/public-site/content/site";
-import { PublicMobileMenu } from "./public-mobile-menu";
+import { LogIn, ShieldCheck } from "lucide-react";
+import { SiteHeader, type SiteHeaderAction, type SiteNavItem } from "@/shared/components/site";
+import { EXPERIENCE_LINKS, MAIN_NAV, SITE } from "@/modules/public-site/content/site";
 
-/** Public site header: one bar with the logo, the main menu and the account actions. */
+/** AFhomes public header. The shared SiteHeader does the layout; this file only supplies AFhomes content. */
+const NAV_ITEMS: SiteNavItem[] = [
+  ...MAIN_NAV.slice(0, 2),
+  { label: "Experiences", children: EXPERIENCE_LINKS },
+  ...MAIN_NAV.slice(2),
+];
+
+const ACTIONS: SiteHeaderAction[] = [
+  { href: "/verify", label: "Verify Accreditation", variant: "primary", icon: <ShieldCheck aria-hidden="true" /> },
+  { href: "/login/sales", label: "Sales Sign-In", variant: "outline", icon: <LogIn aria-hidden="true" /> },
+];
+
 export function PublicHeader() {
   return (
-    <header className="site-header">
-      <div className="site-header__bar">
-        <Link href="/" className="site-header__brand" aria-label="AFhomes home">
-          <span className="site-header__logo" aria-hidden="true">
-            <Image src="/images/logo.png" alt="" width={28} height={32} priority className="site-header__logo-image" />
-          </span>
-          <span className="site-header__name">AFhomes</span>
-        </Link>
-
-        <nav className="site-header__nav" aria-label="Public">
-          {MAIN_NAV.slice(0, 2).map((link) => (
-            <Link key={link.href} href={link.href} className="site-header__link">{link.label}</Link>
-          ))}
-          <div className="site-header__dropdown">
-            <button type="button" className="site-header__link site-header__dropdown-button" aria-haspopup="true">
-              Experiences <ChevronDown aria-hidden="true" className="site-header__chevron" />
-            </button>
-            <div className="site-header__panel">
-              {EXPERIENCE_LINKS.map((link) => (
-                <Link key={link.href} href={link.href} className="site-header__panel-link">
-                  <span className="site-header__panel-title">{link.label}</span>
-                  <span className="site-header__panel-text">{link.description}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-          {MAIN_NAV.slice(2).map((link) => (
-            <Link key={link.href} href={link.href} className="site-header__link">{link.label}</Link>
-          ))}
-        </nav>
-
-        <div className="site-header__actions">
-          {ACTION_LINKS.map((link, index) => (
-            <Link key={link.href} href={link.href} className={index === 0 ? "site-button site-button--primary site-button--small" : "site-button site-button--outline site-button--small"}>{link.label}</Link>
-          ))}
-        </div>
-        <PublicMobileMenu />
-      </div>
-    </header>
+    <SiteHeader
+      brand={{ name: SITE.name, href: "/", logoSrc: "/images/logo.png" }}
+      items={NAV_ITEMS}
+      actions={ACTIONS}
+      mobileExtraLinks={[{ href: "/login", label: "Staff Login" }]}
+    />
   );
 }

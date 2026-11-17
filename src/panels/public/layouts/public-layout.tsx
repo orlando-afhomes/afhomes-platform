@@ -1,6 +1,7 @@
 import { PublicFooter } from "../components/public-footer";
 import { PublicHeader } from "../components/public-header";
 import "../site.css";
+import "@/shared/components/site/site-chrome.css";
 
 export function PublicLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -6,7 +6,7 @@ import { ABOUT } from "@/modules/public-site/content/about";
 import { BLOG_POSTS } from "@/modules/public-site/content/blog";
 import { COMPLIANCE_DOCUMENT_IMAGES } from "@/modules/public-site/content/compliance";
 import { EXPERIENCE_CARDS, HOTEL, KEY_OFFERINGS, RESORT, RESORT_AMENITIES, RESTAURANT, ROOMS } from "@/modules/public-site/content/experiences";
-import { FOOTER_LINKS, MAIN_NAV, EXPERIENCE_LINKS, ACTION_LINKS } from "@/modules/public-site/content/site";
+import { FOOTER_COLUMNS, MAIN_NAV, EXPERIENCE_LINKS, ACTION_LINKS } from "@/modules/public-site/content/site";
 import { VIP_TIERS } from "@/modules/public-site/content/vip";
 import { PublicFooter } from "./components/public-footer";
 import { PublicHeader } from "./components/public-header";
@@ -46,7 +46,8 @@ describe("public sign-in and verification links", () => {
   });
 
   it("keeps every menu and footer target on an existing route", () => {
-    for (const link of [...MAIN_NAV, ...EXPERIENCE_LINKS, ...ACTION_LINKS, ...FOOTER_LINKS]) expect(routeExists(link.href), link.href).toBe(true);
+    const footerLinks = FOOTER_COLUMNS.flatMap((column) => column.links);
+    for (const link of [...MAIN_NAV, ...EXPERIENCE_LINKS, ...ACTION_LINKS, ...footerLinks]) expect(routeExists(link.href), link.href).toBe(true);
     for (const post of BLOG_POSTS) expect(routeExists("/blog"), post.slug).toBe(true);
   });
 });

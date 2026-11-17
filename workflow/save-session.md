@@ -111,60 +111,58 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-16
-- Repository: afhomes-platform (remote not re-checked)
+- Saved at: 2026-11-17
+- Repository: afhomes-platform (remote not re-checked; no fetch run)
 - Branch: develop
-- HEAD: ca75d77 "feat: refine IGP, promos, reports, accreditation, membership, and navigation" (verified this run; unchanged since the last snapshot). Push state not verified; no fetch run.
-- Session objective: (1) build the staff Customer Look Up; (2) rebuild the public Verify page with the v2 steps and output; (3) rebuild the whole public website from the old WordPress site (https://afhomes.com.ph) with new content-faithful pages and a new design. Dos wants every reply in plain "explain like I am 5" language, with the nickname Dos first.
-- Development phase: frontend prototype with mock data, QA stage. Only the owner declares frontend completion. Backend, database, API and hosting are skipped until then (owner, 2026-11-16).
-- Context note: the context was compacted at least once. Models used: Sonnet 5.5 and Opus 5.5 (switched with /model; the last switch was to Sonnet 5.5). Plan file for this work: `C:\Users\SSD-ORLANDO\.claude\plans\create-a-customer-look-purring-chipmunk.md` (holds the latest public-website plan). Scratch files live in the session scratchpad and may be gone (picture download script and the originals).
+- HEAD: 9cb9d43 "chore: public site implementation" (verified this run). The previous snapshot's HEAD ca75d77 is now its parent (verified by `git log`), so the large uncommitted tree was committed by the owner in 9cb9d43. Commit contents were not re-inspected this session; push state not verified.
+- Tool and model: OpenCode, DeepSeek V4.1 Flash 1017.
+- Session objective: run `/save` only. No implementation, code change, or verification was requested or performed this session.
+- Development phase: frontend prototype with mock data, QA stage. Only the owner declares frontend completion. Backend, database, API and hosting are skipped until then (owner, 2026-11-16, carried forward).
+- Context note: this session started fresh with no prior conversation. Everything here comes from the repository and the previous snapshot, not from work done in this session.
 
 ## 2. Current Project State
-- Committed by the owner in ca75d77 (earlier work, not re-inspected): UI19 plain words, Title Case test fixes, IGP, promos, reports, membership.
-- Built this session and NOT committed (verified in the working tree):
-  - **Staff Customer Look Up (UI21):** new tab "Customer Look Up" under Customers (`src/panels/admin/pages/customer-lookup-panel.tsx`, route tab `lookup` in `src/panels/admin/navigation.ts`). New operation `customers.lookup` (Super Admin, Admin, Clerk, Finance; not sellers) in `src/modules/identity/permissions.ts`. New `lookupActiveVip(term)` on the membership repository (contract and mock), hook `useCustomerLookup` in `src/data/business-queries.ts`. Search from 2 characters, partial match on name, Customer ID, VIP Number and email, active unexpired memberships only, up to 50, 6 suggestions, then the real tier card image with name, VIP Number, Valid Until, Customer ID and total, weekday and weekend points. The v2 ID-picture side is not built.
-  - **Public Verify page (UI21)** `/verify`: AA number, privacy notice tick, visitor name/email/mobile (receipt kept 24 hours in memory), 3 successful checks a day (memory only), then a result with masked name (`src/modules/accreditation/public-name.ts`), photo, Copy ID, Accredited or Expired, type, Valid until (OST only) and the support and bank block. Files: `src/panels/public/pages/accreditation-verification-page.tsx`, `components/verify-dialogs.tsx`, `components/verify-result-card.tsx`, `verify-session.ts`, `src/modules/public-site/support-info.ts` (v2 bank and support values), `privacy-notice.ts` (draft wording). The contract `PublicAccreditationResult` gained `maskedName` and `photoUrl`.
-  - **New public website (UI22):** routes `/about`, `/vip-privilege`, `/compliance`, `/faq`, `/contact`, `/blog`, `/blog/[slug]` (9 posts), `/experiences/hotspring-ecofarm-resort`, `/experiences/smart-wellness-hotel`, `/experiences/alm-japanese-restaurant`, plus a new home. Content is typed data in `src/modules/public-site/content/{site,about,experiences,faq,compliance,vip,blog}.ts`. UI in `src/panels/public/pages/` and `src/panels/public/site/` (`blocks.tsx`, `gallery.tsx`, `faq-list.tsx`, `contact-form.tsx`, `blog-index.tsx`), header with Experiences dropdown and phone menu (`components/public-header.tsx`, `public-mobile-menu.tsx`), footer, and `src/panels/public/site.css` (namespace `site-*`, imported by `PublicLayout`). `public.css` now holds only the layout and the Verify page. 64 pictures (shrunk WebP, 13 MB) are in `public/images/site/`. Contact form validates, then opens the visitor's email app to info@afhomes.com.ph (`src/modules/public-site/contact-message.ts`).
-  - **Earlier uncommitted work still in the tree** (from the previous session, see its snapshot facts): the Non-Standard contract approval (doc 05 items 31 and 32, UI20), the wizard fix, the notification word swap, and the admin sidebar and topbar redesign (`admin-brand.tsx`, `use-admin-user.ts`, shell components, `--gradient-brand-logo` in `tokens.css`).
+- Verified this run: on `develop`, HEAD 9cb9d43, working tree has only `package.json` and `package-lock.json` modified; nothing staged, no untracked files.
+- The UI21 and UI22 work (staff Customer Look Up, rebuilt public Verify, new public website with 64 pictures) and the earlier Non-Standard contract approval and admin shell redesign are now committed in 9cb9d43 (verified that HEAD advanced; file contents not re-inspected this session).
+- The only uncommitted change is the Next.js update: `next` and `eslint-config-next` 16.4.3 → 16.4.5 in `package.json`, with the matching lockfile update (+50/−50 lines). Author and verification state are unknown; it was not produced by this session.
+- Current focus: QA stage, owner content decisions and review. No feature work is authorized or in progress.
 
 ## 3. Important Decisions
-- Owner, 2026-11-16 (UI21): Customer Look Up is a STAFF page, not public (keeps R11: no public customer or card lookup). Verify copies the v2 output and steps, with the v3 rules kept (Expired is shown, OST shows Valid until, IST does not). v2 bank and support values were copied. Visitor details are never stored or shown back.
-- Owner, 2026-11-16 (UI22): download a chosen set of pictures (done, 64); the contact form opens the email app; all 9 blog posts in full with a category filter; the VIP page keeps the old numbers but uses the doc 09 wording (points released each year when the qualifying spend is met, not "upon activation"). The owner chose to KEEP the old villa pictures that have room rates printed inside them (King Villa picture and floor plans show rates such as 25,000 and 35,000). The UI22 note in `docs/implementation/decisions-and-gaps.md` does not yet record this "keep" answer (offered to add it; not done).
-- Earlier decisions still binding: UI5 to UI20, A1 to A8; only the owner commits or pushes; SweetAlert2 only through `AppAlert` and `useConfirmRun`; mock data in browser memory only; no new dependencies; max 5 table columns; namespaced kebab-case classes; no gold in the shell; a public header must not use `usePathname` (it broke the production build); dynamic route params must be read inside a `Suspense` boundary.
-- Hot-spring count: shown nowhere (old site says "over 10" on About and "over 5" in the FAQ); owner has not answered.
+- Only the project owner stages, commits and pushes (AGENTS.md). Every delivery stops and reports.
+- Still binding from earlier sessions: UI5 to UI22 and A1 to A8; SweetAlert2 only through `AppAlert`/`useConfirmRun`; mock business data in browser memory only; no new dependencies without approval; max 5 table columns; namespaced kebab-case classes; no gold in the shell; a public header must not use `usePathname`; dynamic route params must be read inside a `Suspense` boundary.
+- Owner, 2026-11-16 (UI21 and UI22, now committed): Customer Look Up is staff-only (no public lookup); Verify copies the v2 steps and output while keeping the v3 rules (Expired shown, OST shows Valid until, IST does not); all 9 blog posts in full with a category filter; contact form opens the visitor's email app; VIP page keeps the old numbers with doc 09 point wording; keep the old villa pictures with printed room rates.
+- Hot-spring count (5 or 10) is still unanswered by the owner (carried forward).
 
 ## 4. Completed Work
-- Verified this session: all three features above built; typecheck, lint, build and tests pass (section 7). Browser checks: Verify flow (desktop and phone), Customer Look Up as Super Admin, every new public page loads with no sideways scroll and no broken pictures, phone menu, villa photo viewer.
-- Docs updated: docs 01, 03 (section 9.3 note and new 9.4), 04, 11, and decision entries UI21 and UI22 in `docs/implementation/decisions-and-gaps.md`.
-- Tests added: public-name, verify-session, verify page, customer-lookup, contact-message, site pages (FAQ, VIP, contact, blog post), links and picture-path checks; navigation tests updated.
+- This session: wrote this snapshot only. No product, test, doc, or configuration change.
+- Repository: the owner committed the UI21/UI22 work plus the earlier Non-Standard and shell redesign as 9cb9d43 (verified only via `git log`; commit contents not re-inspected).
+- Carried from the previous snapshot (historical, not re-run): typecheck, lint and build clean; tests mostly passing with two slow files that pass alone; browser checks of Verify, Customer Look Up as Super Admin, and all new public pages. Treat these as prior results, not current proof.
 
 ## 5. Git Working Tree
 - Staged: none (verified).
-- Unstaged: 53 tracked files changed, 1662 insertions, 316 deletions (verified). Includes the earlier Non-Standard and shell redesign work plus this session's edits (public pages, repositories, permissions, navigation, docs, tests).
-- Untracked (verified): 47 source and test files outside pictures (new public pages, content, components, tests, routes under `src/app/{about,blog,compliance,contact,experiences,faq,vip-privilege}`, `public-name`, `customer-lookup-panel.tsx`, `admin-brand.tsx`, `non-standard-terms-fields.tsx`, `use-admin-user.ts`) and 64 pictures under `public/images/site/`.
-- Deleted or renamed: none. Stash `stash@{0}` "local: sales-network cleanup + member detail redesign" is still kept.
-- Origin: this session's work plus the previous session's uncommitted work; not separated. Git only warns about LF to CRLF.
+- Unstaged (verified): `package.json` and `package-lock.json` only — `next` and `eslint-config-next` 16.4.3 → 16.4.5; lockfile +50/−50. Origin: unknown, pre-existing before this session, not authored here.
+- Untracked: none (verified; `git ls-files --others --exclude-standard` empty).
+- Deleted or renamed: none.
+- Stash `stash@{0}` "local: sales-network cleanup + member detail redesign" was recorded in the previous snapshot as still kept; not re-checked this run. Git warns only about LF to CRLF.
 
 ## 6. Pending Tasks
-- Owner: review and commit the working tree (owner only).
-- Owner answers needed (not blocking): hot-spring count (5 or 10); keep, edit or archive the old blog posts with dated claims (REBAP 50% VIP promotion and "potential investors"; Expo post "over 20 hectares" and "600 staycation units"); the Teppanyaki Lounge count (four in the text, two in a caption); whether to show the HR email; legal review of the disclaimer, compliance statements and the verify privacy notice; update the Smart Wellness Hotel status once it opens (grand opening November 2026); a privacy policy page.
-- Add the "keep the rate pictures" answer to UI22 (small docs edit, not done).
-- Not yet checked: tablet width and dark mode for the new public site and the shell; Finance, Clerk and OST logins for Customer Look Up in the browser (only Super Admin was checked); a real contact-form hand-off to an email app; a visual pass of every desktop page.
+- Verify the Next 16.4.5 bump before the owner commits it: `npm install` state, typecheck, lint, tests, build, and a smoke run of the app. Not performed this session; whether `node_modules` matches the lockfile is unknown.
+- Owner answers still needed (not blocking): hot-spring count (5 or 10); keep, edit or archive the old blog posts with dated claims (REBAP 50% VIP promotion and "potential investors"; Expo post "over 20 hectares" and "600 staycation units"); the Teppanyaki Lounge count (four in the text, two in a caption); whether to show the HR email; legal review of the disclaimer, compliance statements and the Verify privacy notice; update the Smart Wellness Hotel status once it opens (grand opening November 2026); a privacy policy page.
+- Add the UI22 "keep the rate pictures" answer to `docs/implementation/decisions-and-gaps.md` (small docs edit, not done).
+- Not yet checked: tablet width and dark mode for the public site and the shell; Customer Look Up as Finance, Clerk and OST in the browser (only Super Admin was checked); a real contact-form hand-off to an email app; a visual pass of every desktop page.
 - From earlier snapshots, still open: priority sorting for every table; B1 permission fixes (`sales-network.*` for svd, ssm, sm; Admin adds IST and OST; `finance.refund` for admin; remove the `requestedBy` check in `finance-cancellation-detail-page.tsx`; delete the customer-status copy in `membership-repository.ts`); the Redemption decision (docs say disabled, mock UI live); small word items ("DSC" in the approve-deal error, mixed capital letters, some hard words); the commission rounding rule (D14); the Clerk Commissions visibility question. Outside the team: signed IST Clawback Addendum, real points-per-night table, legal retention period, real login, database and hosting.
 
 ## 7. Verification State
-- Typecheck: `npx tsc --noEmit` clean (verified after the last code change).
-- Lint: `npm run lint` clean (verified).
-- Tests: full run without `business-pages`: 161 files passed; 2 files (`staff-page.test.tsx`, `payment-reference-fields.test.tsx`, 9 tests) timed out under full-run load and passed when run alone (24 tests). `business-pages.test.tsx` run alone: 103 passed.
-- Build: `npm run build` passed after the final change (all 9 blog posts prerendered). The first build failed because the public header used `usePathname`; fixed.
-- Browser QA: see section 4. Not done: tablet, dark mode, non-Super-Admin logins, real email hand-off.
-- Known failures: none known beyond the slow-test timeouts under full-run load. The dev server was stopped by the user during the session, so a possible dev-only warning about `/blog/[slug]` params was not rechecked; the production build is clean.
+- This session: no typecheck, lint, test, build, or browser QA was run (not performed). `/save` is documentation only.
+- Prior snapshot results (historical): `npx tsc --noEmit` clean; `npm run lint` clean; full test run 161 files passed with 2 slow files (9 tests) timing out under load but passing alone; `business-pages.test.tsx` alone 103 passed; `npm run build` passed with all 9 blog posts prerendered.
+- These results predate the Next 16.4.5 bump, so they do not prove the current tree. Re-run before the owner commits.
+- Known failures: none beyond the slow-test timeouts under full-run load. Dev-only `/blog/[slug]` params warning was not rechecked; the earlier production build was clean.
 
 ## 8. Next Session Instructions
-- Recommended first action: `/load`, ask Dos to commit the working tree (it is large), then ask which to do next: record UI22 "keep" answer, a tablet and dark-mode pass of the public site, the content questions in section 6, table priority sorting, or the B1 permission fixes.
-- Relevant files: `docs/implementation/decisions-and-gaps.md` (UI19 to UI22), `src/modules/public-site/content/`, `src/panels/public/`, `src/panels/admin/pages/customer-lookup-panel.tsx`, `src/modules/identity/permissions.ts`, `src/panels/admin/navigation.ts`.
-- Required approvals: any commit or push (owner only); each plan before building; permission changes; backend, database, API or hosting work; `AGENTS.md` edits; downloads (the pictures were approved once, per file list).
-- Warnings: mock data resets on any full page load, so do browser walkthroughs without reloading; do not run the build and the tests together; run `business-pages` alone; the full test run shows slow-test timeouts that pass alone; do not delete `.next`; keep room-rate pictures as the owner chose; never claim visual verification without a browser run.
+- Recommended first action: `/load`, then ask Dos whether the Next 16.4.5 bump is intended and whether `npm install` already ran. If yes, verify it (typecheck, lint, one full test run, build, quick browser smoke) before the owner commits; if not, ask whether to revert `package.json` and the lockfile (owner action).
+- After that, offer the next small items: record the UI22 "keep the rate pictures" answer, a tablet and dark-mode pass of the public site, the content questions in section 6, table priority sorting, or the B1 permission fixes. Plan each one and get approval before building.
+- Relevant files: `package.json`, `package-lock.json`, `workflow/save-session.md`, `docs/implementation/decisions-and-gaps.md` (UI19 to UI22), `src/modules/public-site/content/`, `src/panels/public/`, `src/panels/admin/pages/customer-lookup-panel.tsx`, `src/modules/identity/permissions.ts`, `src/panels/admin/navigation.ts`.
+- Required approvals: any commit or push (owner only); each plan before building; permission changes; backend, database, API or hosting work; `AGENTS.md` edits; dependency changes or downloads beyond the existing bump.
+- Warnings: mock data resets on any full page load, so do browser walkthroughs without reloading; do not run the build and the tests at the same time; run `business-pages` alone; the full test run shows slow-test timeouts that pass alone; do not delete `.next`; keep the room-rate pictures as the owner chose; never claim visual verification without a browser run; the Next update may change build output, so trust a fresh build only.
 
 ## 9. Execution Recommendation
 - Phase: QA
@@ -172,6 +170,6 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 - Recommended model: Sonnet 5.5
 - Effort: medium
 - Ultracode: OFF
-- Token optimization: after Dos commits, do one tablet and dark-mode pass of the public site, then plan one item at a time; run targeted tests first and one full run plus one build at the end.
-- Reason: the features are built and checked; what remains is review, owner content decisions and approved plans.
+- Token optimization: verify the dependency bump with targeted commands first (typecheck and lint), then one full test run and one build; after that plan one content or QA item at a time.
+- Reason: the repository is committed and nearly clean; the only change is a small framework bump whose verification is unknown, and the remaining work is owner content decisions and approved QA passes.
 <!-- SESSION_SNAPSHOT_END -->

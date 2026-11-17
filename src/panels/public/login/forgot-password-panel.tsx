@@ -27,7 +27,7 @@ export function ForgotPasswordPanel({ onBack }: { onBack: () => void }) {
           If the email belongs to an account, an Administrator can set a temporary password for it. Contact your Administrator to reset your password.
         </p>
         <Button type="button" className="login-form__submit" onClick={onBack}>
-          Back to Sign In
+          Back
         </Button>
       </div>
     );
@@ -61,7 +61,7 @@ export function ForgotPasswordPanel({ onBack }: { onBack: () => void }) {
         Continue
       </Button>
       <button type="button" className="login-form__link tw:self-center" onClick={onBack}>
-        Back to Sign In
+        Back
       </button>
     </form>
   );

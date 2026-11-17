@@ -4,6 +4,7 @@ import {
   Users,
   Network,
   Contact,
+  Search,
   Settings,
   ShoppingCart,
   Landmark,
@@ -20,6 +21,7 @@ import type { AdminNavKey } from "../navigation";
 export const ADMIN_NAV_ICONS: Partial<Record<AdminNavKey, LucideIcon>> = {
   dashboard: LayoutDashboard,
   customers: Contact,
+  "customer-lookup": Search,
   sales: ShoppingCart,
   finance: Landmark,
   commissions: Percent,

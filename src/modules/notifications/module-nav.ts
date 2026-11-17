@@ -95,7 +95,7 @@ export function notificationDestination({ module, action }: Pick<AuditEventView,
 
 /** Type guard: the nav key is an area with tabs. */
 export function isAreaNavKey(navKey: AdminNavKey): navKey is AdminAreaKey {
-  return navKey !== "dashboard" && navKey !== "audit-logs" && navKey !== "accounts";
+  return Object.hasOwn(ADMIN_AREA_TABS, navKey);
 }
 
 /** Reverse map: every audit module whose badge renders on the given nav key. */

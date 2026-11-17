@@ -82,3 +82,26 @@ export const COMPLIANCE_DOCUMENT_IMAGES = [
   { src: "/images/site/compliance/ecc-upscayl-3x-realesrgan-x4plus-scaled.webp", alt: "Environmental Compliance Certificate (ECC) from DENR-EMB", caption: "Environmental Compliance Certificate: ECC" },
   { src: "/images/site/compliance/llda-1024x522.webp", alt: "LLDA Clearance from the Laguna Lake Development Authority", caption: "Laguna Lake Development Authority: LLDA Clearance" },
 ];
+
+/** Section copy and photos for the Compliance page (owner's reference design, 2026-11-17). */
+export const COMPLIANCE_PAGE = {
+  hero: {
+    eyebrow: "AFhomes Hotspring & Ecofarm Resort",
+    title: "Compliance",
+    image: { src: "/images/site/resort/amenities-w-glamping-pool1.webp", alt: "The resort glamping pool" },
+  },
+  milestones: { eyebrow: "Compliance milestones", title: "Five permits, all completed" },
+  journey: {
+    eyebrow: "Our compliance journey",
+    title: "Step-by-step regulatory milestones",
+    text: "Ensuring 100% compliance with Philippine environmental, safety, and land-use regulations",
+  },
+  documents: { eyebrow: "Supporting documents", title: "Permits for public reference" },
+  closing: {
+    title: "Want to verify a document?",
+    text: "Supporting documents can be verified through a scheduled meeting with our Compliance Department.",
+    href: "/contact",
+    cta: "Contact us",
+    image: { src: "/images/site/resort/amenities-w-entrance1.webp", alt: "The resort entrance" },
+  },
+};

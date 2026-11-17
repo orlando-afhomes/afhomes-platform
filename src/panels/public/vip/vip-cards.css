@@ -1,0 +1,130 @@
+/* VIP Privilege page: "Choose your card" section (owner's reference design, 2026-11-17). */
+
+.site-vip .vip-cards .site-heading { margin-bottom: 24px; }
+
+.vip-cards__grid {
+  display: grid;
+  gap: 18px;
+  max-width: 30rem;
+  margin: 0 auto;
+  list-style: none;
+  padding: 0;
+}
+@media (min-width: 900px) {
+  .vip-cards__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: none; gap: 14px; }
+}
+
+.vip-cards__card {
+  --vip-cards-tier: var(--color-tier-gold);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 16px;
+  border-radius: 22px;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-bg-surface-raised);
+  box-shadow: 0 14px 32px -16px rgb(28 43 58 / 0.22), 0 2px 6px rgb(28 43 58 / 0.05);
+}
+.vip-cards__card--silver { --vip-cards-tier: var(--color-tier-silver); }
+.vip-cards__card--bronze { --vip-cards-tier: var(--color-tier-bronze); }
+
+/* The card files carry about 11% transparent margin on every side: scale them so the rounded box hugs the card */
+.vip-cards__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 1.6 / 1;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 10px 22px -10px rgb(28 43 58 / 0.45), 0 2px 4px rgb(28 43 58 / 0.08);
+}
+.vip-cards__image { object-fit: contain; transform: scale(1.276); }
+
+.vip-cards__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  font-family: var(--site-home-display, var(--font-playfair)), Georgia, serif;
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--color-brand-deep);
+}
+.vip-cards__name-icon { width: 20px; height: 20px; flex-shrink: 0; color: var(--vip-cards-tier); fill: color-mix(in srgb, var(--vip-cards-tier) 35%, transparent); }
+
+.vip-cards__discount {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-top: 10px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--vip-cards-tier) 12%, white);
+  color: var(--color-brand-deep);
+}
+.vip-cards__discount-value { font-size: 26px; line-height: 1.1; font-weight: 700; letter-spacing: -0.01em; }
+.vip-cards__discount-text { font-size: 12px; font-weight: 500; color: var(--color-text-primary); }
+
+.vip-cards__perks { display: grid; gap: 10px; margin: 16px 0 18px; padding: 0 4px; list-style: none; }
+.vip-cards__perk { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.45; color: var(--color-text-primary); }
+.vip-cards__perk-icon { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; color: var(--color-brand-primary); stroke-width: 3; }
+
+.vip-cards__points {
+  margin-top: auto;
+  padding: 14px 16px 12px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--vip-cards-tier) 6%, var(--color-bg-subtle));
+  border: 1px solid color-mix(in srgb, var(--vip-cards-tier) 10%, var(--color-border-subtle));
+}
+.vip-cards__points-label { font-size: 12px; line-height: 1.35; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-brand-deep); }
+.vip-cards__points-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.vip-cards__points-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--vip-cards-tier) 16%, white);
+  color: var(--vip-cards-tier);
+}
+.vip-cards__points-icon svg { width: 24px; height: 24px; }
+.vip-cards__points-value { display: flex; flex-direction: column; color: var(--color-brand-deep); }
+.vip-cards__points-value strong { font-size: 26px; line-height: 1.1; font-weight: 700; letter-spacing: -0.01em; }
+.vip-cards__points-value span { font-size: 12px; color: var(--color-text-secondary); }
+.vip-cards__points-total {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--vip-cards-tier) 18%, var(--color-border-default));
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+.vip-cards__points-total strong { font-weight: 700; color: var(--color-brand-deep); }
+
+.vip-cards__note {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+  max-width: 60rem;
+  margin: 24px auto 0;
+  font-size: 12px;
+  line-height: 1.5;
+  font-style: italic;
+  color: var(--color-text-secondary);
+}
+@media (min-width: 640px) { .vip-cards__note { align-items: center; text-align: center; } }
+.vip-cards__note-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-tier-gold) 16%, white);
+  color: var(--color-tier-gold);
+}
+.vip-cards__note-icon svg { width: 13px; height: 13px; }

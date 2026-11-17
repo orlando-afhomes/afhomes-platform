@@ -9,23 +9,26 @@ export type Highlight = { title: string; text: string; image?: SiteImage };
 export const EXPERIENCE_CARDS = [
   {
     href: "/experiences/hotspring-ecofarm-resort",
-    title: "AFhomes Hotspring & Ecofarm Resort",
+    title: "Hotspring & Ecofarm Resort",
     status: "In development",
-    text: "Our flagship 60-hectare master-planned destination is our most ambitious project to date. Due to the massive scale of this development and our commitment to rigorous environmental and governmental compliance, this project is being built phase by phase.",
+    statusTone: "progress" as const,
+    text: "Our flagship 60-hectare destination. Built phase by phase.",
     image: img("resort/1-masterplan-new", "Masterplan of the AFhomes Hotspring & Ecofarm Resort"),
   },
   {
     href: "/experiences/smart-wellness-hotel",
-    title: "AFhomes Smart Wellness Hotel",
+    title: "Smart Wellness Hotel",
     status: "Grand opening November 2026",
-    text: "An upscale sanctuary designed to bridge the gap between luxury lodging and wellness science. 18 rooms: 1 signature suite and 17 smart wellness equipped rooms. Every accommodation is an adaptive ecosystem optimized for restorative stays.",
+    statusTone: "upcoming" as const,
+    text: "An upscale sanctuary for wellness. It offers 18 rooms.",
     image: img("hotel/smart-wellness-pod-1024x797", "A smart wellness room"),
   },
   {
     href: "/experiences/alm-japanese-restaurant",
-    title: "AFhomes ALM Japanese Restaurant",
+    title: "ALM Japanese Restaurant",
     status: "Now open",
-    text: "A 600sqm culinary landmark operating as an independent subsidiary with its own dedicated industrial-scale kitchen.",
+    statusTone: "live" as const,
+    text: "A 600sqm culinary landmark. It has an industrial-scale kitchen.",
     image: img("restaurant/afhomes-resto-v4-1024x683", "The AFhomes ALM Japanese Restaurant"),
   },
 ];
@@ -83,6 +86,9 @@ export const ROOM_FILTERS: { value: "all" | RoomCategory; label: string }[] = [
   { value: "a-frame", label: "A-Frames" },
   { value: "glamping", label: "Glamping" },
 ];
+
+/** Singular room type shown on a single room card. */
+export const ROOM_CATEGORY_LABELS: Record<RoomCategory, string> = { villa: "Villa", "a-frame": "A-Frame", glamping: "Glamping" };
 
 export const ROOMS: Room[] = [
   { id: "king-villa", name: "King Villa", category: "villa", photos: [img("rooms/king-villa", "King Villa"), img("rooms/king-villa-top-1", "King Villa seen from above"), img("rooms/king-villa-side-1", "King Villa seen from the side")], floorPlan: img("rooms/1-king-villa", "King Villa floor plan") },

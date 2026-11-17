@@ -1,0 +1,188 @@
+/* Compliance page: "Our compliance journey" vertical timeline of phase cards. */
+
+.compliance-journey {
+  --compliance-journey-marker: 36px;
+  --compliance-journey-marker-top: 22px;
+  --compliance-journey-gap: 16px;
+  --compliance-journey-rail: 60px;
+  --compliance-journey-gold: color-mix(in oklab, var(--color-accent) 80%, var(--color-brand-deep));
+}
+
+.compliance-journey__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--compliance-journey-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.compliance-journey__item {
+  position: relative;
+  padding-left: var(--compliance-journey-rail);
+}
+
+/* Rail segment: from this marker's centre to the next marker's centre */
+.compliance-journey__item:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--compliance-journey-marker) / 2 - 1px);
+  top: calc(var(--compliance-journey-marker-top) + var(--compliance-journey-marker) / 2);
+  height: calc(100% + var(--compliance-journey-gap));
+  width: 2px;
+  background: var(--color-brand-primary);
+}
+
+.compliance-journey__marker {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  top: var(--compliance-journey-marker-top);
+  display: grid;
+  place-items: center;
+  width: var(--compliance-journey-marker);
+  height: var(--compliance-journey-marker);
+  border-radius: 999px;
+  background: var(--color-brand-deep);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-brand-soft) 60%, #fff);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.compliance-journey__card {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 22px 26px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(14 43 32 / 0.05), 0 16px 32px -26px rgb(14 43 32 / 0.45);
+}
+
+.compliance-journey__icon {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+  margin-top: 8px;
+  border-radius: 18px;
+  background: color-mix(in oklab, var(--color-accent) 9%, #fff);
+  color: var(--compliance-journey-gold);
+}
+
+.compliance-journey__icon-glyph {
+  width: 44px;
+  height: 44px;
+}
+
+/* Phase 4: droplet centred inside the cycle arrows */
+.compliance-journey__icon-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+}
+
+.compliance-journey__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.compliance-journey__title {
+  font-size: 18px;
+  line-height: 1.35;
+  font-weight: 700;
+  color: var(--color-brand-deep);
+}
+
+.compliance-journey__subtitle {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: 600;
+  color: var(--color-brand-primary);
+}
+
+.compliance-journey__text {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+.compliance-journey__subtitle + .compliance-journey__text {
+  margin-top: 6px;
+}
+
+.compliance-journey__bullets {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.compliance-journey__bullets li {
+  position: relative;
+  padding-left: 18px;
+}
+
+.compliance-journey__bullets li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0.6em;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-brand-primary);
+}
+
+/* Phones: slimmer rail, icon tile above the text */
+@media (max-width: 767px) {
+  .compliance-journey {
+    --compliance-journey-marker: 30px;
+    --compliance-journey-marker-top: 18px;
+    --compliance-journey-rail: 42px;
+  }
+
+  .compliance-journey__marker {
+    font-size: 13px;
+  }
+
+  .compliance-journey__card {
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .compliance-journey__icon {
+    width: 56px;
+    height: 56px;
+    margin-top: 0;
+    border-radius: 14px;
+  }
+
+  .compliance-journey__icon-glyph {
+    width: 30px;
+    height: 30px;
+  }
+
+  .compliance-journey__icon-inner {
+    width: 12px;
+    height: 12px;
+  }
+
+  .compliance-journey__title {
+    font-size: 17px;
+  }
+}

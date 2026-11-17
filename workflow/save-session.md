@@ -114,62 +114,66 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 - Saved at: 2026-11-17
 - Repository: afhomes-platform (remote not re-checked; no fetch run)
 - Branch: develop
-- HEAD: 9cb9d43 "chore: public site implementation" (verified this run). The previous snapshot's HEAD ca75d77 is now its parent (verified by `git log`), so the large uncommitted tree was committed by the owner in 9cb9d43. Commit contents were not re-inspected this session; push state not verified.
-- Tool and model: OpenCode, DeepSeek V4.1 Flash 1017.
-- Session objective: run `/save` only. No implementation, code change, or verification was requested or performed this session.
+- HEAD: 0527933 "feat: upgrade Next.js and refactor public site chrome" (verified this run via `git rev-parse`). Previous snapshot HEAD 9cb9d43 is its parent.
+- Tool and model: OpenCode (Beam Free). Model ID not independently verified this run.
+- Session objective: run `/load` then `/save`. No implementation, code change, or verification was requested or performed this session.
 - Development phase: frontend prototype with mock data, QA stage. Only the owner declares frontend completion. Backend, database, API and hosting are skipped until then (owner, 2026-11-16, carried forward).
-- Context note: this session started fresh with no prior conversation. Everything here comes from the repository and the previous snapshot, not from work done in this session.
+- Context note: this session started fresh with no prior conversation. The snapshot and repository state are the sources. Between `/load` and `/save` no edits were made by this session, yet the working tree is now very large and dirty (see sections 2 and 5); origin of those changes is unknown to this session and must be reconciled by the owner.
 
 ## 2. Current Project State
-- Verified this run: on `develop`, HEAD 9cb9d43, working tree has only `package.json` and `package-lock.json` modified; nothing staged, no untracked files.
-- The UI21 and UI22 work (staff Customer Look Up, rebuilt public Verify, new public website with 64 pictures) and the earlier Non-Standard contract approval and admin shell redesign are now committed in 9cb9d43 (verified that HEAD advanced; file contents not re-inspected this session).
-- The only uncommitted change is the Next.js update: `next` and `eslint-config-next` 16.4.3 → 16.4.5 in `package.json`, with the matching lockfile update (+50/−50 lines). Author and verification state are unknown; it was not produced by this session.
-- Current focus: QA stage, owner content decisions and review. No feature work is authorized or in progress.
+- Verified this run: on `develop`, HEAD 0527933. Working tree is NOT clean: many modified tracked files plus many untracked files (see section 5). Nothing staged.
+- `package.json` / `package-lock.json`: `next` and `eslint-config-next` at 16.4.5 (verified). Lockfile shows further churn this run (+318/-... lines vs the prior +50/-50), i.e. the tree has moved beyond the documented bump; not verified against `node_modules`.
+- New/expanded areas visible in the uncommitted tree: `src/app/admin/customer-lookup/`, `src/data/contracts/member-qr-repository.ts` + mock + tests, `src/panels/admin/components/member-qr.*`, `src/panels/admin/pages/customer-lookup.css`, a large public-site page/component split under `src/panels/public/{about,blog,compliance,contact,faq,post,vip}/`, `src/panels/public/site/vip-tier-list.tsx`, and new shared site components (`site-badge`, `site-callout`, `site-components.css`, `site-feature-card`, `site-header-scroll`, `site-room-card`, `site-tier-card`). Business intent of these not verified this session.
+- Docs touched in the working tree: `docs/business-rules/09-vip-membership-and-stay-points.md`, `docs/business-rules/10-redemption.md`, `docs/implementation/decisions-and-gaps.md`.
+- Current focus per prior snapshot: QA stage, owner content decisions and review. That assumption may no longer hold given the large dirty tree; owner confirmation required before any work continues.
 
 ## 3. Important Decisions
 - Only the project owner stages, commits and pushes (AGENTS.md). Every delivery stops and reports.
 - Still binding from earlier sessions: UI5 to UI22 and A1 to A8; SweetAlert2 only through `AppAlert`/`useConfirmRun`; mock business data in browser memory only; no new dependencies without approval; max 5 table columns; namespaced kebab-case classes; no gold in the shell; a public header must not use `usePathname`; dynamic route params must be read inside a `Suspense` boundary.
-- Owner, 2026-11-16 (UI21 and UI22, now committed): Customer Look Up is staff-only (no public lookup); Verify copies the v2 steps and output while keeping the v3 rules (Expired shown, OST shows Valid until, IST does not); all 9 blog posts in full with a category filter; contact form opens the visitor's email app; VIP page keeps the old numbers with doc 09 point wording; keep the old villa pictures with printed room rates.
-- Hot-spring count (5 or 10) is still unanswered by the owner (carried forward).
+- Owner, 2026-11-16 (UI21 and UI22): Customer Look Up is staff-only (no public lookup); Verify copies the v2 steps and output while keeping the v3 rules (Expired shown, OST shows Valid until, IST does not); all 9 blog posts in full with a category filter; contact form opens the visitor's email app; VIP page keeps the old numbers with doc 09 point wording; keep the old villa pictures with printed room rates.
+- Hot-spring count (5 or 10) still unanswered by the owner (carried forward).
+- Redemption remains disabled per docs; mock UI may be live — do not activate routes/APIs without authorization.
 
 ## 4. Completed Work
-- This session: wrote this snapshot only. No product, test, doc, or configuration change.
-- Repository: the owner committed the UI21/UI22 work plus the earlier Non-Standard and shell redesign as 9cb9d43 (verified only via `git log`; commit contents not re-inspected).
-- Carried from the previous snapshot (historical, not re-run): typecheck, lint and build clean; tests mostly passing with two slow files that pass alone; browser checks of Verify, Customer Look Up as Super Admin, and all new public pages. Treat these as prior results, not current proof.
+- This session: `/load` then `/save`. No product, test, doc, or configuration change authored by this session. The working tree is dirty, but none of it was produced here.
+- Repository: HEAD 0527933 contains the Next.js bump + public-site chrome refactor (verified via `git show --stat` earlier this session).
+- Historical verification (carried, not re-run): `npx tsc --noEmit` clean; `npm run lint` clean; full test run 161 files passed with 2 slow files (9 tests) timing out under load but passing alone; `business-pages.test.tsx` alone 103 passed; `npm run build` passed with all 9 blog posts prerendered. These predate the current dirty tree and the 16.4.5 bump, so they do not prove the current state.
 
 ## 5. Git Working Tree
 - Staged: none (verified).
-- Unstaged (verified): `package.json` and `package-lock.json` only — `next` and `eslint-config-next` 16.4.3 → 16.4.5; lockfile +50/−50. Origin: unknown, pre-existing before this session, not authored here.
-- Untracked: none (verified; `git ls-files --others --exclude-standard` empty).
-- Deleted or renamed: none.
-- Stash `stash@{0}` "local: sales-network cleanup + member detail redesign" was recorded in the previous snapshot as still kept; not re-checked this run. Git warns only about LF to CRLF.
+- Unstaged modified (verified, count ~74 tracked files): docs (09, 10, decisions-and-gaps), package.json/package-lock.json, many src files across admin/customer-lookup/member-qr, public site pages, content modules, data contracts/mocks/repositories/seed, redemption, stay points, promos, notifications, shared components, theme tokens. Full list recorded by `git diff --name-status` this run (not reproduced here).
+- Untracked (verified, ~70+ files): `public/images/member-qr-logo.jpg`, `src/app/admin/customer-lookup/page.tsx`, member-qr contract/mock/tests, `src/modules/public-site/content/blog.test.ts`, `member-qr.tsx` + test + css, large public-site page/component split (about, blog, compliance, contact, faq, post, vip), `src/panels/public/site/vip-tier-list.tsx`, new shared site components (site-badge, site-callout, site-components.css, site-feature-card, site-header-scroll, site-room-card, site-tier-card).
+- Deleted (tracked): `src/panels/public/site/blog-index.tsx`, `src/panels/public/site/faq-list.tsx`.
+- Stash `stash@{0}` "local: sales-network cleanup + member detail redesign" still present (verified earlier this session).
+- Origin of all working-tree changes: unknown to this session (not authored here). Git warns LF→CRLF on checkout. The dirty tree is large enough that it should be treated as in-progress work of unknown owner/agent provenance until reconciled.
 
 ## 6. Pending Tasks
-- Verify the Next 16.4.5 bump before the owner commits it: `npm install` state, typecheck, lint, tests, build, and a smoke run of the app. Not performed this session; whether `node_modules` matches the lockfile is unknown.
-- Owner answers still needed (not blocking): hot-spring count (5 or 10); keep, edit or archive the old blog posts with dated claims (REBAP 50% VIP promotion and "potential investors"; Expo post "over 20 hectares" and "600 staycation units"); the Teppanyaki Lounge count (four in the text, two in a caption); whether to show the HR email; legal review of the disclaimer, compliance statements and the Verify privacy notice; update the Smart Wellness Hotel status once it opens (grand opening November 2026); a privacy policy page.
+- Reconcile the large dirty working tree with the owner: determine whether it is intended in-progress work, a leftover from another session/agent, or accidental. Do not commit, discard, or stash without owner direction.
+- Verify the Next 16.4.5 bump and the dirty tree together: `npm install` state, typecheck, lint, tests, build, browser smoke. Not performed this session.
+- Owner answers still needed: hot-spring count (5 or 10); keep/edit/archive old blog posts with dated claims (REBAP 50% VIP promotion, "potential investors"; Expo post "over 20 hectares" and "600 staycation units"); Teppanyaki Lounge count (four in text, two in caption); whether to show HR email; legal review of disclaimer, compliance statements, Verify privacy notice; update Smart Wellness Hotel status once open (grand opening November 2026); privacy policy page.
 - Add the UI22 "keep the rate pictures" answer to `docs/implementation/decisions-and-gaps.md` (small docs edit, not done).
-- Not yet checked: tablet width and dark mode for the public site and the shell; Customer Look Up as Finance, Clerk and OST in the browser (only Super Admin was checked); a real contact-form hand-off to an email app; a visual pass of every desktop page.
-- From earlier snapshots, still open: priority sorting for every table; B1 permission fixes (`sales-network.*` for svd, ssm, sm; Admin adds IST and OST; `finance.refund` for admin; remove the `requestedBy` check in `finance-cancellation-detail-page.tsx`; delete the customer-status copy in `membership-repository.ts`); the Redemption decision (docs say disabled, mock UI live); small word items ("DSC" in the approve-deal error, mixed capital letters, some hard words); the commission rounding rule (D14); the Clerk Commissions visibility question. Outside the team: signed IST Clawback Addendum, real points-per-night table, legal retention period, real login, database and hosting.
+- Not yet checked: tablet width and dark mode for public site and shell; Customer Look Up as Finance, Clerk and OST in browser (only Super Admin checked); real contact-form hand-off to email app; visual pass of every desktop page.
+- From earlier snapshots, still open: priority sorting for every table; B1 permission fixes (`sales-network.*` for svd/ssm/sm; Admin adds IST and OST; `finance.refund` for admin; remove `requestedBy` check in `finance-cancellation-detail-page.tsx`; delete customer-status copy in `membership-repository.ts`); Redemption decision (docs disabled, mock UI live); small word items; commission rounding rule (D14); Clerk Commissions visibility. Outside the team: signed IST Clawback Addendum, real points-per-night table, legal retention period, real login, database and hosting.
 
 ## 7. Verification State
 - This session: no typecheck, lint, test, build, or browser QA was run (not performed). `/save` is documentation only.
-- Prior snapshot results (historical): `npx tsc --noEmit` clean; `npm run lint` clean; full test run 161 files passed with 2 slow files (9 tests) timing out under load but passing alone; `business-pages.test.tsx` alone 103 passed; `npm run build` passed with all 9 blog posts prerendered.
-- These results predate the Next 16.4.5 bump, so they do not prove the current tree. Re-run before the owner commits.
-- Known failures: none beyond the slow-test timeouts under full-run load. Dev-only `/blog/[slug]` params warning was not rechecked; the earlier production build was clean.
+- Historical verification (carried): typecheck/lint clean; full test run 161 files passed with 2 slow files (9 tests) timing out under load but passing alone; `business-pages.test.tsx` alone 103 passed; build passed with all 9 blog posts prerendered. Predates the current dirty tree and the 16.4.5 bump.
+- Known failures: none beyond slow-test timeouts under full-run load. Dev-only `/blog/[slug]` params warning not rechecked.
+- Checks not performed this session: everything (typecheck, lint, tests, build, browser, `npm install` state, `node_modules` vs lockfile).
 
 ## 8. Next Session Instructions
-- Recommended first action: `/load`, then ask Dos whether the Next 16.4.5 bump is intended and whether `npm install` already ran. If yes, verify it (typecheck, lint, one full test run, build, quick browser smoke) before the owner commits; if not, ask whether to revert `package.json` and the lockfile (owner action).
-- After that, offer the next small items: record the UI22 "keep the rate pictures" answer, a tablet and dark-mode pass of the public site, the content questions in section 6, table priority sorting, or the B1 permission fixes. Plan each one and get approval before building.
-- Relevant files: `package.json`, `package-lock.json`, `workflow/save-session.md`, `docs/implementation/decisions-and-gaps.md` (UI19 to UI22), `src/modules/public-site/content/`, `src/panels/public/`, `src/panels/admin/pages/customer-lookup-panel.tsx`, `src/modules/identity/permissions.ts`, `src/panels/admin/navigation.ts`.
-- Required approvals: any commit or push (owner only); each plan before building; permission changes; backend, database, API or hosting work; `AGENTS.md` edits; dependency changes or downloads beyond the existing bump.
-- Warnings: mock data resets on any full page load, so do browser walkthroughs without reloading; do not run the build and the tests at the same time; run `business-pages` alone; the full test run shows slow-test timeouts that pass alone; do not delete `.next`; keep the room-rate pictures as the owner chose; never claim visual verification without a browser run; the Next update may change build output, so trust a fresh build only.
+- Recommended first action: `/load`, then ask the owner to reconcile the large dirty working tree (see section 5) before any implementation or verification. Confirm whether it is intended in-progress work. Only after that, verify the tree (typecheck → lint → targeted tests → full test run → build → browser smoke).
+- If the dirty tree is not intended, the owner must decide how to handle it (stash/keep/discard) — agent must not perform Git write operations.
+- Relevant files: `workflow/save-session.md`, `package.json`, `package-lock.json`, the modified/untracked groups in section 5, `docs/implementation/decisions-and-gaps.md`, `src/modules/identity/permissions.ts`, `src/panels/admin/navigation.ts`.
+- Required approvals: any commit/push (owner only); each plan before building; permission changes; backend/database/API/hosting work; `AGENTS.md` edits; dependency changes or downloads; handling of the dirty working tree.
+- Warnings: mock data resets on full page load; do not run build and tests simultaneously; run `business-pages` alone; full test run has slow-test timeouts that pass alone; do not delete `.next`; never claim visual verification without a browser run; the dirty tree may break typecheck/tests until reconciled; do not stage or commit anything.
 
 ## 9. Execution Recommendation
-- Phase: QA
+- Phase: QA / reconciliation (owner must clarify scope before feature work)
 - Recommended next mode: default (ask before edits)
 - Recommended model: Sonnet 5.5
 - Effort: medium
 - Ultracode: OFF
-- Token optimization: verify the dependency bump with targeted commands first (typecheck and lint), then one full test run and one build; after that plan one content or QA item at a time.
-- Reason: the repository is committed and nearly clean; the only change is a small framework bump whose verification is unknown, and the remaining work is owner content decisions and approved QA passes.
+- Token optimization: first reconcile the dirty tree with the owner (cheap, no code), then targeted typecheck+lint, then one full test run and one build, then one item at a time.
+- Reason: HEAD is committed at 0527933, but the working tree now contains a large, unverified set of changes of unknown origin; verification and scope clarification must precede any feature or QA work.
 <!-- SESSION_SNAPSHOT_END -->

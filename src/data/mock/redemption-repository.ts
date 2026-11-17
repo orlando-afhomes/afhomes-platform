@@ -1,3 +1,5 @@
+import type { HolderVerification } from "@/data/contracts/member-qr-repository";
+import { currentCardHolders, requireCurrentScan } from "./member-qr-repository";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type {
   BookingInput,
@@ -123,7 +125,7 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
   private claimDate(membership: Membership): string | null {
     const contract = this.store.contracts.find((item) => item.id === membership.contractId);
     if (contract) recordDueDeemedClaim(this.store, membership, contract);
-    return this.points.ledger ? membership.cardClaimDate ?? null : membership.cardClaimDate ?? membership.activationDate;
+    return membership.cardClaimDate ?? null;
   }
 
   private requireBalance(available: Record<PointsBucket, number>, weekday: number, weekend: number): void {
@@ -192,14 +194,27 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
       this.require(identity, "redemption.book", "Only office staff with the Bookings permission can book with points.");
       if (!input.requestId.trim()) throw new Error("A request key is required.");
       const known = this.state.requests[input.requestId];
-      if (known) return this.view(this.find(known));
+      if (known) {
+        const previous = this.find(known);
+        const cashDates = previous.nights.filter((night) => night.payment === "cash").map((night) => night.date);
+        if (previous.createdBy !== identity.id || previous.membershipId !== input.membershipId || previous.venueId !== input.venueId
+          || previous.roomType !== input.roomType || previous.checkIn !== input.checkIn || previous.checkOut !== input.checkOut
+          || previous.guests !== input.guests || previous.stayingHolder !== input.stayingHolder.trim()
+          || previous.cashAmountCentavos !== input.cashAmountCentavos
+          || cashDates.join(",") !== [...input.cashNightDates].sort().join(",")) {
+          throw new Error("This request key was already used with different details.");
+        }
+        return this.view(previous);
+      }
 
       if (!Number.isInteger(input.guests) || input.guests < 1) throw new Error("Guests must be a whole number of at least 1.");
       if (!isDate(input.checkIn) || !isDate(input.checkOut)) throw new Error("Enter valid check-in and departure dates.");
       if (input.checkOut <= input.checkIn) throw new Error("The departure date must be after the check-in date.");
       if (input.checkIn < today()) throw new Error("The check-in date cannot be in the past.");
       if (!Number.isInteger(input.cashAmountCentavos) || input.cashAmountCentavos < 0) throw new Error("The money part must be a whole number of centavos.");
-      if (!input.stayingHolder.trim()) throw new Error("Choose who is staying.");
+      const stayingHolder = input.stayingHolder.trim();
+      const holder = stayingHolder === "Gold extra cardholder" ? "supplementary" : "primary";
+      if (stayingHolder !== "Primary cardholder" && stayingHolder !== "Gold extra cardholder") throw new Error("Choose who is staying.");
 
       const membership = this.store.memberships.find((item) => item.id === input.membershipId);
       if (!membership) throw new Error("Membership not found.");
@@ -207,6 +222,8 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
       const blocked = checkMembershipEligibility({ ...membership, cardClaimDate: claimDate }, input.checkIn, input.checkOut);
       if (blocked.length > 0) throw new Error(blocked[0]);
       if (!claimDate) throw new Error("The card has not been claimed.");
+      requireCurrentScan(this.store, input.scannedCode, membership.id, holder);
+      if (!currentCardHolders(this.store, membership.id).some(({ info }) => info.holder === holder)) throw new Error("Select a registered cardholder.");
 
       const venue = this.state.venues.find((item) => item.id === input.venueId);
       if (!venue) throw new Error("Venue not found.");
@@ -240,7 +257,7 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
         checkIn: input.checkIn,
         checkOut: input.checkOut,
         guests: input.guests,
-        stayingHolder: input.stayingHolder.trim(),
+        stayingHolder,
         nights: pricing.nights,
         basisVersionId: version.id,
         basisVersion: version.version,
@@ -287,7 +304,7 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
       this.require(identity, "redemption.book", "Only office staff with the Bookings permission can cancel a booking.");
       const booking = this.find(bookingId);
       if (booking.status === "cancelled" || booking.status === "late_cancelled") return this.view(booking);
-      if (!OPEN_STATUSES.includes(booking.status)) throw new Error("This booking can no longer be cancelled.");
+      if (booking.checkedIn || !OPEN_STATUSES.includes(booking.status)) throw new Error("This booking can no longer be cancelled.");
       if (!reason.trim()) throw new Error("A reason is required.");
       const at = cancelledAt ?? nowIso();
       if (Number.isNaN(Date.parse(at))) throw new Error("Enter a valid cancellation date and time.");
@@ -310,7 +327,7 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
       this.require(identity, "redemption.book", "Only office staff with the Bookings permission can record a no-show.");
       const booking = this.find(bookingId);
       if (booking.status === "no_show") return this.view(booking);
-      if (booking.status !== "confirmed") throw new Error("Only a confirmed booking can be a no-show.");
+      if (booking.checkedIn || booking.status !== "confirmed") throw new Error("Only confirmed bookings awaiting arrival can be marked as no-show.");
       if (today() < booking.checkIn) throw new Error("A no-show can be recorded from the check-in date.");
       if (!reason.trim()) throw new Error("A reason is required.");
       this.moveReserved(booking, "forfeit", identity.id, reason.trim());
@@ -321,23 +338,26 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
     });
   }
 
-  async completeBooking(bookingId: string, options?: MockAsyncOptions): Promise<BookingView> {
+  async checkInBooking(bookingId: string, verification: HolderVerification, options?: MockAsyncOptions): Promise<BookingView> {
     return this.run(options, (identity) => {
-      this.require(identity, "redemption.book", "Only office staff with the Bookings permission can complete a booking.");
+      this.require(identity, "redemption.book", "Only office staff with the Bookings permission can check in a booking.");
       const booking = this.find(bookingId);
-      if (booking.status === "completed") return this.view(booking);
-      if (booking.status !== "confirmed") throw new Error("Only a confirmed booking can be completed.");
+      const expectedHolder = booking.stayingHolder === "Gold extra cardholder" ? "supplementary" : "primary";
+      if (verification?.identityChecked !== true || verification.holder !== expectedHolder) throw new Error("Confirm the staying cardholder's ID.");
+      if (booking.checkedIn) return this.view(booking);
+      if (booking.status !== "confirmed") throw new Error("Only a confirmed booking can be checked in.");
       const membership = this.store.memberships.find((item) => item.id === booking.membershipId);
       if (!membership) throw new Error("Membership not found.");
       const claimDate = this.claimDate(membership);
       if (!claimDate) throw new Error("The card has not been claimed.");
-      const actual = this.points.ledger ? today() : booking.checkIn;
+      const actual = today();
+      requireCurrentScan(this.store, verification.scannedCode, membership.id, expectedHolder);
+      if (!currentCardHolders(this.store, membership.id).some(({ info }) => info.holder === expectedHolder)) {
+        throw new Error("The staying cardholder is no longer registered.");
+      }
       const padSet = Boolean(this.state.pads[membership.id] || this.store.stayPoints.deemedPads[membership.id]);
       const setsPad = !padSet && actual < addYearsToDate(claimDate, 2)!;
-      if (!this.points.ledger) {
-        if (today() < booking.checkOut) throw new Error("A booking can be completed once the stay has ended.");
-        if (!padSet && !this.points.yearOneConditionMet(membership, this.store, actual)) throw new Error("The Year 1 condition is not met.");
-      } else {
+      {
         if (actual < booking.checkIn || actual >= booking.checkOut) throw new Error("Check-in is available between arrival and departure.");
         const blocked = checkMembershipEligibility({ ...membership, cardClaimDate: claimDate }, actual, booking.checkOut);
         if (blocked.length > 0) throw new Error(blocked[0]);
@@ -359,9 +379,23 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
         this.reserve(booking, membership, identity.id);
         booking.provisional = false;
       }
+      booking.checkedIn = { date: actual, actorId: identity.id, holder: expectedHolder, identityChecked: true };
+      this.event(booking, identity.id, "BOOKING_CHECKED_IN", expectedHolder);
+      this.auditBooking(identity, booking, "BOOKING_CHECKED_IN", booking.status, `ID checked for ${expectedHolder} holder.`);
+      return this.view(booking);
+    });
+  }
+
+  async completeBooking(bookingId: string, options?: MockAsyncOptions): Promise<BookingView> {
+    return this.run(options, (identity) => {
+      this.require(identity, "redemption.book", "Only office staff with the Bookings permission can complete a booking.");
+      const booking = this.find(bookingId);
+      if (booking.status === "completed") return this.view(booking);
+      if (today() < booking.checkOut) throw new Error("A booking can be completed once the stay has ended.");
+      if (booking.status !== "confirmed" || !booking.checkedIn) throw new Error("Record check-in before completing the stay.");
       this.moveReserved(booking, "consume", identity.id, "Stay completed");
       booking.status = "completed";
-      this.event(booking, identity.id, ACTIONS.BOOKING_COMPLETED, setsPad ? `Points Activation Date set to ${actual}.` : null);
+      this.event(booking, identity.id, ACTIONS.BOOKING_COMPLETED, null);
       this.auditBooking(identity, booking, ACTIONS.BOOKING_COMPLETED, "confirmed", null);
       return this.view(booking);
     });
@@ -378,7 +412,7 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
   cancelForTransfer(identity: DevIdentity, membershipId: string, effectiveDate: string): BookingView[] {
     const cancelled: BookingView[] = [];
     for (const booking of this.state.bookings) {
-      if (booking.membershipId !== membershipId || !OPEN_STATUSES.includes(booking.status) || booking.checkIn < effectiveDate) continue;
+      if (booking.membershipId !== membershipId || booking.checkedIn || !OPEN_STATUSES.includes(booking.status) || booking.checkIn < effectiveDate) continue;
       const previous = booking.status;
       this.moveReserved(booking, "forfeit", identity.id, "Card transfer: unused points not transferred");
       booking.status = "transfer_cancelled";

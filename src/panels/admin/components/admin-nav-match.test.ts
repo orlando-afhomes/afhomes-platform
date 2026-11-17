@@ -6,7 +6,7 @@ import { getDevIdentity } from "@/data/mock/dev-identities";
 describe("admin navigation matching", () => {
   it("lists the authorized areas as a flat list without a separate Accounts entry", () => {
     const items = getRoleAwareAdminNavigation(getDevIdentity("dev-admin"));
-    expect(items.map((item) => item.id)).toEqual(["dashboard", "customers", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "vip-products", "sales-network", "organization", "reports", "audit-logs"]);
+    expect(items.map((item) => item.id)).toEqual(["dashboard", "customers", "customer-lookup", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "vip-products", "sales-network", "organization", "reports", "audit-logs"]);
     expect(items.some((item) => item.id === ("accreditation" as string))).toBe(false);
     expect(items.some((item) => item.id === ("insights-group" as string))).toBe(false);
   });
@@ -74,7 +74,8 @@ describe("admin navigation matching", () => {
     const finance = getRoleAwareAdminNavigation(getDevIdentity("dev-finance"));
     expect(findSelectedKeys(finance, "/admin/organization")).toEqual([]);
     expect(findSelectedKeys(finance, "/admin")).toEqual(["dashboard"]);
-    // Finance now reaches Customers for the staff Customer Look Up (UI21); Settings stays closed.
+    expect(findSelectedKeys(finance, "/admin/customers")).toEqual([]);
+    expect(findSelectedKeys(finance, "/admin/customer-lookup")).toEqual(["customer-lookup"]);
     expect(findSelectedKeys(finance, "/admin/vip-products")).toEqual([]);
     const inactive = getRoleAwareAdminNavigation(getDevIdentity("dev-inactive"));
     expect(findSelectedKeys(inactive, "/admin")).toEqual([]);

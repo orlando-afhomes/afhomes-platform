@@ -49,7 +49,7 @@ type User = ReturnType<typeof userEvent.setup>;
 
 async function verifyAndConfirm(user: User) {
   fireEvent.change(screen.getByLabelText(/Referral code/), { target: { value: SPONSOR_CODE } });
-  await user.click(screen.getByRole("button", { name: "Verify Referral Code" }));
+  await user.click(screen.getByRole("button", { name: "Verify code" }));
   const summary = await screen.findByRole("status");
   expect(within(summary).getByText("Verified eligible sponsor")).toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Confirm Sponsor" }));
@@ -83,7 +83,7 @@ describe("OST registration", () => {
     const user = userEvent.setup();
     render(<Wrapper />);
     expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Referral");
-    await user.click(screen.getByRole("button", { name: "Verify Referral Code" }));
+    await user.click(screen.getByRole("button", { name: "Verify code" }));
     expect(await screen.findByText("Enter a referral code.")).toBeInTheDocument();
     expect(screen.getByLabelText(/Referral code/)).toHaveAttribute("aria-invalid", "true");
   });
@@ -92,7 +92,7 @@ describe("OST registration", () => {
     const user = userEvent.setup();
     render(<Wrapper />);
     fireEvent.change(screen.getByLabelText(/Referral code/), { target: { value: "NOPE" } });
-    await user.click(screen.getByRole("button", { name: "Verify Referral Code" }));
+    await user.click(screen.getByRole("button", { name: "Verify code" }));
     expect(await screen.findByText("Referral code is invalid or currently unavailable.")).toBeInTheDocument();
   });
 

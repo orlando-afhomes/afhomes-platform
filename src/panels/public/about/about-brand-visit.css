@@ -1,0 +1,37 @@
+/* About page: brand, visit and closing sections (scoped by about-* classes) */
+
+/* Brand: logo meaning */
+.about-brand__layout { display: grid; gap: 32px; align-items: center; }
+.site-home .about-brand .site-heading { margin-bottom: 22px; }
+.about-brand__parts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.about-brand__part { min-width: 0; padding: 14px 16px; border-radius: 14px; background: #fff; box-shadow: 0 1px 2px rgb(14 43 32 / 0.05), 0 12px 26px -22px rgb(14 43 32 / 0.45); }
+.about-brand__part-title { font-size: 14px; line-height: 1.3; font-weight: 700; color: var(--color-text-primary); }
+.about-brand__part-text { margin-top: 6px; font-size: 12.5px; line-height: 1.45; color: var(--color-text-secondary); }
+.about-brand .about-brand__logo { width: 100%; max-width: 280px; margin: 0 auto; background: transparent; border-radius: 0; }
+@media (min-width: 900px) {
+  .about-brand__layout { grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: 56px; }
+  .about-brand__parts { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .about-brand .about-brand__logo { max-width: 360px; }
+}
+
+/* Visit: card with directions and map */
+.about-visit__card { display: grid; overflow: hidden; border-radius: 24px; background: #fff; box-shadow: 0 1px 2px rgb(14 43 32 / 0.05), 0 22px 44px -30px rgb(14 43 32 / 0.45); }
+.about-visit__copy { display: flex; flex-direction: column; justify-content: center; min-width: 0; padding: 28px 22px; }
+.site-home .about-visit .site-heading { margin-bottom: 16px; }
+.about-visit__address { display: flex; align-items: flex-start; gap: 8px; font-size: 13.5px; line-height: 1.5; color: var(--color-text-secondary); }
+.about-visit__address-icon { width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; color: var(--color-brand-primary); }
+.about-visit__actions { margin-top: 22px; display: flex; }
+.about-visit .about-visit__map { width: 100%; border-radius: 0; }
+@media (min-width: 900px) {
+  .about-visit__card { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .about-visit__copy { padding: 40px; }
+  .about-visit .about-visit__map { height: 100%; min-height: 320px; aspect-ratio: auto !important; }
+}
+
+/* Closing band: title and text left, button right on desktop */
+.site-home-cta.about-closing .site-cta { gap: 18px; }
+.about-closing__copy { display: flex; flex-direction: column; gap: 10px; }
+@media (min-width: 900px) {
+  .site-home-cta.about-closing .site-cta { max-width: none; flex-direction: row; align-items: center; justify-content: space-between; gap: 32px; }
+  .site-home-cta.about-closing .site-cta__actions { margin-top: 0; flex-shrink: 0; }
+}

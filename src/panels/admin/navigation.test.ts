@@ -25,15 +25,16 @@ function tabAccess(identityId: string, area: keyof typeof ADMIN_AREA_TABS) {
   return Object.keys(access).filter((tab) => access[tab]);
 }
 
-const ALL_AREAS = ["dashboard", "customers", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "vip-products", "sales-network", "organization", "reports", "audit-logs"];
+const ALL_AREAS = ["dashboard", "customers", "customer-lookup", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "vip-products", "sales-network", "organization", "reports", "audit-logs"];
 const SELLER_AREAS = ["dashboard", "customers", "sales", "commissions", "membership", "stay-points", "sales-network", "reports"];
 
 describe("admin navigation", () => {
-  it("is a flat list of 13 area pages with no groups", () => {
+  it("is a flat list of 14 pages with no groups", () => {
     const items = getAvailableAdminNavigation();
     expect(items.map((item) => item.href)).toEqual([
       "/admin",
       "/admin/customers",
+      "/admin/customer-lookup",
       "/admin/sales",
       "/admin/finance",
       "/admin/commissions",
@@ -78,9 +79,8 @@ describe("admin navigation", () => {
   });
 
   it("shows Finance its own areas, property sales (IGP) and reports", () => {
-    expect(visibleIds("dev-finance")).toEqual(["dashboard", "customers", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "reports"]);
-    // Finance reaches Customers only for the staff Customer Look Up (UI21).
-    expect(tabAccess("dev-finance", "customers")).toEqual(["lookup"]);
+    expect(visibleIds("dev-finance")).toEqual(["dashboard", "customer-lookup", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "reports"]);
+    expect(tabAccess("dev-finance", "customers")).toEqual([]);
     expect(tabAccess("dev-finance", "sales")).toEqual(["igp"]);
     expect(tabAccess("dev-finance", "finance")).toEqual(["verification", "collections", "cancellations", "month-end-close", "reconciliation"]);
     // Payouts joined the Commissions tab as its month-end payout bar.
@@ -90,8 +90,9 @@ describe("admin navigation", () => {
   });
 
   it("shows the staff Customer Look Up to office roles only, never to sellers", () => {
-    for (const identityId of ["dev-super-admin", "dev-admin", "dev-clerk"]) expect(tabAccess(identityId, "customers"), identityId).toContain("lookup");
-    for (const identityId of ["dev-svd-a", "dev-ost-a1", "dev-hr"]) expect(tabAccess(identityId, "customers"), identityId).not.toContain("lookup");
+    for (const identityId of ["dev-super-admin", "dev-admin", "dev-clerk", "dev-finance"]) expect(visibleIds(identityId), identityId).toContain("customer-lookup");
+    for (const identityId of ["dev-svd-a", "dev-ost-a1", "dev-hr"]) expect(visibleIds(identityId), identityId).not.toContain("customer-lookup");
+    expect(tabAccess("dev-super-admin", "customers")).toEqual(["customers", "import-export"]);
   });
 
   it("keeps the former per-page rules for the Administrator", () => {

@@ -182,3 +182,38 @@ export const FAQ_HELP = {
   text: "We're here to help. Reach out to us through any of the following channels.",
   email: SITE.infoEmail,
 };
+
+/** Section copy and photos for the FAQ page (owner's reference design, 2026-11-17). */
+export const FAQ_PAGE = {
+  hero: {
+    titleStart: "Frequently Asked",
+    titleAccent: "Questions",
+    image: { src: "/images/site/resort/amenities-w-pool-with-slides1.webp", alt: "A resort pool with slides" },
+    searchLabel: "Search the questions",
+    searchPlaceholder: "Search a question (e.g., amenities, VIP program, payments)",
+    quickHelpLabel: "Quick help:",
+    /** Each chip jumps to (and opens) one question by its id. */
+    quickHelp: [
+      { label: "About AFhomes", target: "who", icon: "building" },
+      { label: "Amenities", target: "amenities", icon: "amenities" },
+      { label: "VIP Privilege", target: "vip-purpose", icon: "crown" },
+      { label: "Location", target: "location", icon: "pin" },
+    ] as const,
+  },
+  questions: {
+    eyebrow: "Common questions",
+    title: "Your AFhomes FAQs",
+    text: "Browse through the most frequently asked questions about AFhomes Hotspring & Ecofarm Resort, our offerings, and the VIP Privilege Loyalty Program.",
+    empty: "No questions match your search. Try another word, or contact us below.",
+  },
+  help: { eyebrow: "Still curious?" },
+  closing: {
+    titleStart: "Discover your perfect",
+    titleAccent: "VIP Privilege Loyalty Program",
+    titleEnd: "level",
+    text: "Learn more about the exclusive benefits of our VIP Privilege Loyalty Program and how to become a valued Primary Cardholder.",
+    href: "/vip-privilege",
+    cta: "VIP Privilege",
+    image: { src: "/images/site/resort/amenities-w-park1.webp", alt: "The resort park" },
+  },
+};

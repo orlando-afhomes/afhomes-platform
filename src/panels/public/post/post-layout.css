@@ -1,0 +1,8 @@
+/* Blog post page: the article column and the sidebar, then the full-width blocks below them. */
+
+.site-post-page .post-layout.site-section { padding-top: 48px; }
+.post-layout__grid { display: grid; gap: 32px; }
+@media (min-width: 1024px) {
+  .post-layout__grid { grid-template-columns: minmax(0, 1fr) 320px; gap: 48px; align-items: start; }
+}
+.post-layout__grid > * { min-width: 0; }

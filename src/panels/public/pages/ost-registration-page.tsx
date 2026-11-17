@@ -201,7 +201,7 @@ export function OstRegistrationPage() {
               ) : null}
               <Actions>
                 <Button type="submit" loading={verifying} className={BUTTON_CLASS}>
-                  Verify Referral Code
+                  Verify code
                 </Button>
                 {sponsor && !confirmed ? (
                   <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={handleConfirmSponsor}>
@@ -261,10 +261,10 @@ export function OstRegistrationPage() {
             ) : null}
             <Actions>
               <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={() => setStep(1)}>
-                Back to Applicant Information
+                Previous step
               </Button>
               <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={handleChangeCode}>
-                Change Referral Code
+                Change code
               </Button>
               <Button type="button" loading={submitApplication.isPending} className={BUTTON_CLASS} onClick={() => void handleSubmit()}>
                 Submit Application

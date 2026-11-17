@@ -1,0 +1,38 @@
+/* VIP Privilege page: Benefits (list and tall photo) and Disclaimer (numbered card). Scoped under .site-vip. */
+
+/* Benefits */
+.site-vip .vip-benefits { display: grid; gap: 32px; }
+.site-vip .vip-benefits__text { min-width: 0; }
+.site-vip .vip-benefits .site-heading { margin-bottom: 16px; }
+/* Wraps the title onto two lines, as in the reference */
+.site-vip .vip-benefits .site-heading__title { max-width: 11.5em; }
+.site-vip .vip-benefits__list { margin: 0; padding: 0; list-style: none; }
+.site-vip .vip-benefits__item { display: flex; align-items: center; gap: 20px; padding: 18px 0; border-top: 1px solid var(--color-border-subtle); }
+.site-vip .vip-benefits__item:first-child { border-top: 0; }
+.site-vip .vip-benefits__icon { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 14px; background: color-mix(in oklab, var(--color-accent) 10%, #fff); color: var(--color-brand-primary); }
+.site-vip .vip-benefits__icon svg { width: 26px; height: 26px; }
+.site-vip .vip-benefits__copy { margin: 0; min-width: 0; font-size: 14.5px; line-height: 1.55; color: var(--color-text-secondary); }
+.site-vip .vip-benefits__strong { font-weight: 600; color: var(--color-brand-deep); }
+.site-vip .vip-benefits__photo { border-radius: 24px; box-shadow: var(--shadow-raised); }
+
+@media (min-width: 900px) {
+  .site-vip .vip-benefits { grid-template-columns: minmax(0, 58fr) minmax(0, 42fr); gap: 48px; align-items: center; }
+  .site-vip .vip-benefits__copy { padding-right: 16px; }
+}
+
+/* Disclaimer */
+.site-vip .vip-disclaimer { border-radius: 20px; background: #fff; box-shadow: var(--shadow-raised); padding: 20px 20px; }
+@media (min-width: 768px) { .site-vip .vip-disclaimer { padding: 28px 32px; } }
+.site-vip .vip-disclaimer__list { margin: 0; padding: 0; list-style: none; }
+.site-vip .vip-disclaimer__item { display: flex; align-items: center; gap: 20px; padding: 18px 0; }
+.site-vip .vip-disclaimer__item:first-child { padding-top: 4px; }
+.site-vip .vip-disclaimer__item:last-child { padding-bottom: 4px; }
+.site-vip .vip-disclaimer__item + .vip-disclaimer__item { border-top: 1px solid var(--color-border-subtle); }
+@media (min-width: 768px) {
+  .site-vip .vip-disclaimer__item { gap: 32px; padding-left: 12px; }
+  /* Divider starts under the text, as in the reference */
+  .site-vip .vip-disclaimer__item + .vip-disclaimer__item { border-top: 0; background: linear-gradient(var(--color-border-subtle), var(--color-border-subtle)) 84px 0 / calc(100% - 84px) 1px no-repeat; }
+}
+.site-vip .vip-disclaimer__number { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 999px; background: var(--color-brand-deep); color: #fff; font-size: 15px; font-weight: 600; }
+.site-vip .vip-disclaimer__text { margin: 0; min-width: 0; font-size: 15px; line-height: 1.6; color: var(--color-text-secondary); }
+@media (max-width: 479px) { .site-vip .vip-disclaimer__item { align-items: flex-start; gap: 14px; } .site-vip .vip-disclaimer__text { font-size: 14.5px; } }

@@ -77,6 +77,10 @@ describe("NotificationsProvider", () => {
     expect(result.current.notifications.unreadByNavKey["organization"]).toBe(1);
     expect(result.current.notifications.unreadTotal).toBe(1);
 
+    setPath("/admin/customer-lookup");
+    expect(result.current.notifications.unreadByTab).toEqual({});
+    expect(result.current.notifications.unreadByNavKey.organization).toBe(1);
+
     // Opening Staff leaves the unread Departments tab visible.
     setPath("/admin/organization");
     expect(result.current.notifications.unreadByTab.departments).toBe(1);

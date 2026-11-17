@@ -1,6 +1,6 @@
 /* Shared public site chrome: header, dropdown, phone menu and footer. Namespaces: site-header__*, site-mobile-menu__*, site-footer__*. Imported by the public layout. */
 
-/* Header actions (Verify Accreditation, Sales Sign-In) */
+/* Header actions: one gold primary (the main call to action) and an outline secondary */
 
 .site-header__action {
   display: inline-flex;
@@ -10,25 +10,29 @@
   gap: 8px;
   border: 1px solid transparent;
   border-radius: 999px;
-  padding: 0 16px;
+  padding: 0 18px;
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
-  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  transition: background-color 400ms cubic-bezier(0.22, 0.8, 0.2, 1), border-color 400ms cubic-bezier(0.22, 0.8, 0.2, 1), color 400ms cubic-bezier(0.22, 0.8, 0.2, 1), box-shadow 400ms cubic-bezier(0.22, 0.8, 0.2, 1), transform 400ms cubic-bezier(0.22, 0.8, 0.2, 1), filter 400ms cubic-bezier(0.22, 0.8, 0.2, 1);
 }
 .site-header__action svg { width: 16px; height: 16px; flex-shrink: 0; }
 .site-header__action--primary {
-  background: var(--color-brand-primary);
-  color: var(--color-text-on-brand);
-  box-shadow: var(--shadow-selected);
+  background: var(--gradient-gold);
+  color: var(--color-brand-deep);
+  box-shadow: 0 10px 22px -12px rgb(176 131 40 / 0.85);
 }
-.site-header__action--primary:hover { background: var(--color-brand-primary-hover); transform: translateY(-1px); }
+.site-header__action--primary:hover { filter: brightness(1.06); transform: translateY(-1px); box-shadow: 0 14px 26px -12px rgb(176 131 40 / 0.95); }
 .site-header__action--outline {
-  border-color: color-mix(in oklab, var(--color-brand-primary) 40%, transparent);
-  background: rgb(255 255 255 / 0.7);
+  border-color: color-mix(in oklab, var(--color-brand-primary) 35%, transparent);
+  background-color: rgb(255 255 255 / 0.7);
   color: var(--color-brand-primary);
 }
-.site-header__action--outline:hover { border-color: var(--color-brand-primary); background: var(--color-brand-soft); }
+.site-header__action--outline:hover { border-color: var(--color-brand-primary); background-color: var(--color-brand-soft); }
+@media (prefers-reduced-motion: reduce) {
+  .site-header__action { transition: none; }
+  .site-header__action--primary:hover { transform: none; }
+}
 .site-header__action--block { width: 100%; min-height: 48px; font-size: 15px; }
 
 /* Header */
@@ -42,7 +46,6 @@
   -webkit-backdrop-filter: blur(16px) saturate(1.4);
   backdrop-filter: blur(16px) saturate(1.4);
 }
-.site-header::before { content: ""; display: block; height: 3px; background: var(--gradient-brand-logo); }
 .site-header__bar {
   margin: 0 auto;
   display: flex;
@@ -68,29 +71,45 @@
 .site-header__name { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-brand-deep); }
 .site-header__nav, .site-header__actions { display: none; }
 
-/* Desktop nav sits in a soft rail */
+/* Desktop nav: text links with a gold underline that grows from the centre on hover */
 .site-header__link {
+  position: relative;
   display: inline-flex;
   min-height: 40px;
   align-items: center;
   gap: 4px;
-  border-radius: 999px;
   padding: 0 12px;
   font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
   color: var(--color-text-secondary);
-  transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+  transition: color 400ms cubic-bezier(0.22, 0.8, 0.2, 1);
 }
-.site-header__link:hover {
-  background: var(--color-bg-canvas);
-  color: var(--color-brand-primary);
-  box-shadow: var(--shadow-soft);
+.site-header__link::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  bottom: 4px;
+  left: 12px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-accent);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 450ms cubic-bezier(0.22, 0.8, 0.2, 1);
 }
-.site-header__dropdown-button { cursor: pointer; border: 0; background: transparent; font: inherit; }
-.site-header__chevron { width: 15px; height: 15px; transition: transform 180ms ease; }
-.site-header__dropdown-button[aria-expanded="true"] { background: var(--color-bg-canvas); color: var(--color-brand-primary); box-shadow: var(--shadow-soft); }
+.site-header__link:hover { color: var(--color-brand-primary); }
+.site-header__link:hover::after { transform: scaleX(1); }
+.site-header__dropdown-button { cursor: pointer; border: 0; background: transparent; font-family: inherit; }
+/* Keep the underline under the label only, not under the chevron */
+.site-header__dropdown-button::after { right: 31px; }
+.site-header__chevron { width: 15px; height: 15px; transition: transform 400ms cubic-bezier(0.22, 0.8, 0.2, 1); }
+.site-header__dropdown-button[aria-expanded="true"] { color: var(--color-brand-primary); }
+.site-header__dropdown-button[aria-expanded="true"]::after { transform: scaleX(1); }
 .site-header__dropdown-button[aria-expanded="true"] .site-header__chevron { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .site-header__link, .site-header__link::after, .site-header__chevron { transition: none; }
+}
 
 /* Experiences panel: wide card with thumbnails */
 .site-header__panel {
@@ -127,7 +146,7 @@
 .site-header__menu-button { width: 44px; height: 44px; }
 
 @media (min-width: 1100px) {
-  .site-header__nav { display: flex; align-items: center; gap: 4px; border-radius: 999px; padding: 4px; background: color-mix(in oklab, var(--color-brand-soft) 60%, transparent); }
+  .site-header__nav { display: flex; align-items: center; gap: 2px; }
   .site-header__actions { display: flex; align-items: center; gap: 8px; }
   .site-header__menu-button { display: none; }
   .site-header__brand { margin-right: 8px; }
@@ -311,19 +330,164 @@
   display: flex;
   max-width: 76rem;
   flex-direction: column;
-  gap: 10px;
+  gap: 18px;
   border-top: 1px solid rgb(255 255 255 / 0.1);
-  padding: 24px 16px 32px;
+  padding: 28px 16px 32px;
   font-size: 12px;
   color: var(--color-on-dark-faint);
 }
+/* Disclaimer: gold shield, small gold label, readable text in a softly lit panel */
 .site-footer__disclaimer {
-  max-width: 60rem;
-  border: 1px solid rgb(255 255 255 / 0.1);
-  border-radius: 12px;
-  background: rgb(255 255 255 / 0.04);
-  padding: 12px 14px;
-  line-height: 1.6;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 16px;
+  border: 1px solid rgb(220 192 106 / 0.18);
+  border-radius: 16px;
+  padding: 18px 22px 18px 18px;
+  background:
+    radial-gradient(40rem 8rem at 0% 0%, rgb(220 192 106 / 0.08), transparent 70%),
+    rgb(255 255 255 / 0.03);
+}
+.site-footer__disclaimer-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  color: var(--color-accent-light);
+  background: rgb(220 192 106 / 0.12);
+  box-shadow: inset 0 0 0 1px rgb(220 192 106 / 0.3);
+}
+.site-footer__disclaimer-icon svg { width: 19px; height: 19px; stroke-width: 1.75; }
+.site-footer__disclaimer-title { margin-bottom: 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent-light); }
+.site-footer__disclaimer-text { max-width: 62rem; font-size: 13px; line-height: 1.65; color: var(--color-on-dark-muted); }
+.site-footer__copyright { font-size: 12px; color: var(--color-on-dark-faint); }
+
+/* Home page: the header floats over the hero, transparent, and eases into a rounded bar once the page scrolls.
+   SiteHeaderScroll sets data-scrolled on the header. Needs :has(); without it the normal solid header stays. */
+@supports (selector(:has(*))) {
+  .public-layout:has(.site-home) > .site-header {
+    --site-header-ease: cubic-bezier(0.22, 0.8, 0.2, 1);
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    background: transparent;
+    border-bottom-color: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    animation: none;
+  }
+  .public-layout:has(.site-home) > .site-header .site-header__bar {
+    max-width: min(82rem, calc(100% - 32px));
+    margin-top: 0;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    border-radius: 0;
+    background-color: rgb(255 255 255 / 0);
+    box-shadow: 0 16px 40px -18px rgb(14 43 32 / 0);
+    animation: none;
+    transition:
+      margin-top 650ms var(--site-header-ease),
+      padding 650ms var(--site-header-ease),
+      border-radius 650ms var(--site-header-ease),
+      background-color 650ms var(--site-header-ease),
+      box-shadow 650ms var(--site-header-ease);
+  }
+  .public-layout:has(.site-home) > .site-header[data-scrolled] .site-header__bar {
+    margin-top: 10px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+    border-radius: 22px;
+    background-color: rgb(255 255 255 / 0.94);
+    box-shadow: 0 16px 40px -18px rgb(14 43 32 / 0.5);
+  }
+  .public-layout:has(.site-home) > .site-header .site-header__name,
+  .public-layout:has(.site-home) > .site-header .site-header__link {
+    animation: none;
+    transition: color 550ms var(--site-header-ease);
+  }
+  /* Top of the page: white text on the photo; hover brightens it to full white and draws the gold underline. */
+  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__name { color: #fff; }
+  /* On the photo the secondary action is frosted glass with white text */
+  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__action--outline { border-color: rgb(255 255 255 / 0.45); color: #fff; background-color: rgb(255 255 255 / 0.12); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__action--outline:hover { border-color: #fff; color: var(--color-brand-deep); background-color: #fff; }
+  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__link { color: rgb(255 255 255 / 0.92); }
+  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__link:hover,
+  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__dropdown-button[aria-expanded="true"] { color: #fff; }
+  /* The current page keeps its gold underline drawn over the hero. */
+  .public-layout:has(.site-home:not(.site-about):not(.site-vip):not(.site-compliance):not(.site-faq-page):not(.site-blog-page):not(.site-post-page):not(.site-contact-page)) .site-header__link[href="/"]::after,
+  .public-layout:has(.site-blog-page) .site-header__link[href="/blog"]::after,
+  .public-layout:has(.site-post-page) .site-header__link[href="/blog"]::after,
+  .public-layout:has(.site-faq-page) .site-header__link[href="/faq"]::after,
+  .public-layout:has(.site-compliance) .site-header__link[href="/compliance"]::after,
+  .public-layout:has(.site-about) .site-header__link[href="/about"]::after,
+  .public-layout:has(.site-contact-page) .site-header__link[href="/contact"]::after,
+  .public-layout:has(.site-vip) .site-header__link[href="/vip-privilege"]::after { transform: scaleX(1); }
+
+  .public-layout:has(.site-contact-page) > .site-header:not([data-scrolled]) .site-header__action--outline:not(:hover) {
+    border-color: color-mix(in oklab, var(--color-accent-light) 42%, transparent);
+  }
+
+  /* Keep the full Contact navigation in the reference's narrower desktop viewport. */
+  @media (900px <= width < 1200px) {
+    .public-layout:has(.site-contact-page) > .site-header .site-header__bar {
+      max-width: 96%;
+      padding-inline-start: min(5.6vw, 52px);
+    }
+    .public-layout:has(.site-contact-page) > .site-header:not([data-scrolled]) .site-header__bar { padding-block: 6px; }
+    .public-layout:has(.site-contact-page) .site-header__brand { gap: 8px; }
+    .public-layout:has(.site-contact-page) .site-header__logo { width: 33px; height: 33px; padding: 3px; border-radius: 10px; }
+    .public-layout:has(.site-contact-page) .site-header__name { font-size: 16px; }
+    .public-layout:has(.site-contact-page) .site-header__nav { display: flex; align-items: center; gap: 4px; }
+    .public-layout:has(.site-contact-page) .site-header__actions { display: flex; align-items: center; gap: 8px; }
+    .public-layout:has(.site-contact-page) .site-header__link { min-height: 33px; padding-inline: 5px; font-size: 11px; }
+    .public-layout:has(.site-contact-page) .site-header__link::after { inset-inline: 5px; bottom: 0; }
+    .public-layout:has(.site-contact-page) .site-header__dropdown-button::after { right: 18px; }
+    .public-layout:has(.site-contact-page) .site-header__chevron { width: 10px; height: 10px; }
+    .public-layout:has(.site-contact-page) .site-header__action { min-height: 32px; padding-inline: 10px; font-size: 11px; }
+    .public-layout:has(.site-contact-page) .site-header__menu-button { display: none; }
+  }
+
+  /* The Contact footer keeps five columns and scales up with the desktop viewport. */
+  @media (min-width: 900px) {
+    .public-layout:has(.site-contact-page) > .site-footer .site-footer__grid {
+      width: 87%;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1.06fr) minmax(0, 0.96fr) minmax(0, 1.55fr);
+      gap: clamp(20px, 2.14vw, 32px);
+      padding: clamp(32px, 3.42vw, 56px) clamp(10px, 1.07vw, 16px) clamp(18px, 1.93vw, 28px);
+      font-size: clamp(11px, 1.18vw, 14px);
+      line-height: 1.3;
+    }
+    .public-layout:has(.site-contact-page) .site-footer__brand-block { grid-column: auto; gap: clamp(7px, 0.75vw, 10px); }
+    .public-layout:has(.site-contact-page) .site-footer__logo { inline-size: clamp(38px, 4.07vw, 56px); block-size: auto; aspect-ratio: 1; border-radius: 11px; padding: 4px; }
+    .public-layout:has(.site-contact-page) .site-footer__name { max-width: 17ch; font-size: clamp(13px, 1.39vw, 18px); }
+    .public-layout:has(.site-contact-page) .site-footer__contacts { margin-top: 1px; }
+    .public-layout:has(.site-contact-page) .site-footer__block { gap: 1px; }
+    .public-layout:has(.site-contact-page) .site-footer__block--offices { gap: 6px; }
+    .public-layout:has(.site-contact-page) .site-footer__heading { font-size: clamp(9px, 0.97vw, 12px); }
+    .public-layout:has(.site-contact-page) .site-footer__contact,
+    .public-layout:has(.site-contact-page) .site-footer__link { min-height: clamp(24px, 2.57vw, 32px); min-width: 24px; }
+    .public-layout:has(.site-contact-page) .site-footer__office { gap: 7px; padding: clamp(7px, 0.75vw, 12px) clamp(9px, 0.96vw, 14px); border-radius: 10px; line-height: 1.25; }
+    .public-layout:has(.site-contact-page) .site-footer__office-icon,
+    .public-layout:has(.site-contact-page) .site-footer__contact-icon { width: 21px; height: 21px; border-radius: 6px; }
+    .public-layout:has(.site-contact-page) .site-footer__office-icon svg,
+    .public-layout:has(.site-contact-page) .site-footer__contact-icon svg { width: 12px; height: 12px; }
+    .public-layout:has(.site-contact-page) .site-footer__office-note { margin-top: 2px; font-size: clamp(10px, 1.07vw, 13px); font-style: italic; }
+    .public-layout:has(.site-contact-page) .site-footer__legal { width: 87%; gap: clamp(12px, 1.29vw, 18px); padding: clamp(15px, 1.61vw, 28px) 8px clamp(24px, 2.57vw, 32px); }
+    .public-layout:has(.site-contact-page) .site-footer__disclaimer { align-items: center; gap: 13px; padding: 8px 12px; border-radius: 11px; }
+    .public-layout:has(.site-contact-page) .site-footer__disclaimer-title,
+    .public-layout:has(.site-contact-page) .site-footer__copyright { font-size: clamp(9px, 0.97vw, 12px); }
+    .public-layout:has(.site-contact-page) .site-footer__disclaimer-title { margin-bottom: 1px; }
+    .public-layout:has(.site-contact-page) .site-footer__disclaimer-text { font-size: clamp(11px, 1.18vw, 13px); line-height: 1.4; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .public-layout:has(.site-home) > .site-header .site-header__bar,
+    .public-layout:has(.site-home) > .site-header .site-header__name,
+    .public-layout:has(.site-home) > .site-header .site-header__link { transition: none; }
+  }
 }
 
 /* Focus rings */

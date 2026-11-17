@@ -1,12 +1,24 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AdminMobileNav } from "./admin-mobile-nav";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { readSession, writeSession } from "@/shared/providers/mock-session";
 
-afterEach(() => cleanup());
+const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));
+
+vi.mock("next/navigation", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/navigation")>()),
+  useRouter: () => ({ replace }),
+}));
+
+afterEach(() => {
+  cleanup();
+  replace.mockClear();
+  localStorage.clear();
+});
 
 function renderNav(identityId = "dev-admin") {
   return render(
@@ -35,6 +47,29 @@ describe("admin mobile nav", () => {
     await user.click(screen.getByRole("button", { name: "Open navigation" }));
     await user.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("confirms logout from the drawer footer before clearing the session", async () => {
+    const user = userEvent.setup();
+    writeSession("dev-admin");
+    renderNav();
+    const trigger = screen.getByRole("button", { name: "Open navigation" });
+    await user.click(trigger);
+    const drawer = screen.getByRole("dialog", { name: "Navigation" });
+    await user.click(within(drawer).getByRole("button", { name: "Log out" }));
+
+    const confirmation = await screen.findByRole("alertdialog", { name: "Log out?" });
+    expect(screen.queryByRole("dialog", { name: "Navigation" })).toBeNull();
+    await user.click(within(confirmation).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(readSession()?.identityId).toBe("dev-admin");
+    expect(replace).not.toHaveBeenCalled();
+
+    await user.click(trigger);
+    await user.click(within(screen.getByRole("dialog", { name: "Navigation" })).getByRole("button", { name: "Log out" }));
+    await user.click(within(await screen.findByRole("alertdialog", { name: "Log out?" })).getByRole("button", { name: "Log out" }));
+    expect(readSession()).toBeNull();
+    expect(replace).toHaveBeenCalledWith("/login");
   });
 
   it("closes after navigation", async () => {

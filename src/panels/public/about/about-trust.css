@@ -1,0 +1,22 @@
+/* About page: "Commitment to Transparency" and "Exclusive Member Benefits" sections. */
+
+.about-transparency__layout { display: grid; gap: 32px; align-items: center; }
+@media (min-width: 900px) {
+  .about-transparency__layout { grid-template-columns: 1.05fr 1fr; gap: 56px; }
+}
+
+.about-transparency__frame { padding: 10px; border-radius: 20px; background: #fff; box-shadow: 0 18px 40px -20px rgb(14 43 32 / 0.35), 0 2px 6px rgb(14 43 32 / 0.06); border: 1px solid var(--color-border-subtle); }
+.site-about .about-transparency__photo { display: block; border-radius: 14px; overflow: hidden; }
+
+.about-transparency .site-heading { margin-bottom: 18px; }
+.about-transparency__points { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.about-transparency__point { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.5; color: var(--color-text-primary); }
+.about-transparency__check { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 20px; height: 20px; margin-top: 1px; border-radius: 999px; background: var(--color-brand-soft); color: var(--color-brand-primary); }
+.about-transparency__check svg { width: 12px; height: 12px; stroke-width: 3; }
+
+/* Registrations stay small and quiet (kept on purpose by the owner). */
+.about-transparency__registrations { display: flex; flex-wrap: wrap; gap: 10px 24px; margin: 20px 0 0; padding: 0; list-style: none; }
+.about-transparency__registration { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12px; line-height: 1.4; color: var(--color-text-secondary); overflow-wrap: anywhere; }
+.site-about .about-transparency__logo { width: 38px; flex-shrink: 0; border-radius: 6px; background: transparent; }
+
+.about-transparency__actions { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 12px; }

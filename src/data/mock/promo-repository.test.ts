@@ -78,10 +78,17 @@ describe("Promo Points", () => {
     const promo = await admin.promos.create(promoInput({ redeemOutletIds: [TEPPAN] }));
     const spend = await bill(TEPPAN);
     await finance.stayPoints.act({ action: "approve", spendId: spend.id });
-    const use = { membershipId: "memb-1", promoId: promo.id, outletId: TEPPAN, points: 4, note: "Dinner" };
+    const use = { requestId: "test-use", holder: "primary" as const, identityChecked: true, membershipId: "memb-1", promoId: promo.id, outletId: TEPPAN, points: 4, note: "Dinner" };
     await expect(clerk.promos.recordUse({ ...use, points: 12 })).rejects.toThrow(/Not enough/);
     await expect(clerk.promos.recordUse({ ...use, outletId: SPA })).rejects.toThrow(/cannot be used at this outlet/);
+    await expect(clerk.promos.recordUse({ ...use, identityChecked: false })).rejects.toThrow(/checked the cardholder/);
+    const [issued] = await admin.memberQr.holders("memb-1");
+    await admin.memberQr.replace("memb-1", "primary");
+    await expect(clerk.promos.recordUse({ ...use, scannedCode: issued.code })).rejects.toThrow(/no longer valid/);
     const entry = await clerk.promos.recordUse(use);
+    expect(entry).toMatchObject({ holder: "primary", identityChecked: true, actorId: "dev-clerk" });
+    expect((await clerk.promos.recordUse(use)).id).toBe(entry.id);
+    await expect(clerk.promos.recordUse({ ...use, points: 5 })).rejects.toThrow(/different details/);
     expect((await balanceOf(admin))?.available).toBe(7);
     await expect(clerk.promos.voidUse(entry.id, " ")).rejects.toThrow(/reason/i);
     await clerk.promos.voidUse(entry.id, "Entered by mistake");
@@ -96,7 +103,7 @@ describe("Promo Points", () => {
     const promo = await admin.promos.create(promoInput());
     for (const id of ["dev-clerk", "dev-finance", "dev-ost-a1"]) await expect(as(id).promos.create(promoInput({ name: "X" }))).rejects.toThrow(/not allowed/);
     await expect(as("dev-clerk").promos.end(promo.id)).rejects.toThrow(/not allowed/);
-    await expect(as("dev-finance").promos.recordUse({ membershipId: "memb-1", promoId: promo.id, outletId: TEPPAN, points: 1, note: "" })).rejects.toThrow(/not allowed/);
+    await expect(as("dev-finance").promos.recordUse({ requestId: "denied", holder: "primary", identityChecked: true, membershipId: "memb-1", promoId: promo.id, outletId: TEPPAN, points: 1, note: "" })).rejects.toThrow(/not allowed/);
   });
 
   it("validates promos, deletes only without activity, and ends early otherwise", async () => {

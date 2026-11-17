@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import { Clock, Coins, Gift, Search, TriangleAlert, Wallet } from "lucide-react";
+import { Clock, Coins, Gift, ReceiptText, Search, TriangleAlert, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useMemberships, useOperation, useStayPoints, useStayPointsAction, useStayPointsVenues, useVipProducts } from "@/data/business-queries";
 import { useTierDisplayName } from "../components/use-tier-display-name";
@@ -415,17 +415,18 @@ const waiverTranches = (current: MembershipPoints) => current.ledger?.tranches.f
   !current.waivers.some((waiver) => waiver.tranche === item.number && waiver.decision?.granted !== false)) ?? [];
 
 /** "Enter resort bill" for the chosen membership (stay-points.enter). Owns its form dialog. */
-export function EnterResortBillButton() {
+export function EnterResortBillButton({ selected }: { selected?: import("@/data/contracts/member-qr-repository").MemberQrHolder } = {}) {
   const { current, supplementary } = useSelectedMembership();
   const action = useStayPointsAction();
   const canEnter = useOperation("stay-points.enter");
   const venues = useStayPointsVenues(canEnter);
   const [open, setOpen] = useState(false);
-  if (!canEnter || !current) return null;
+  const membershipId = selected?.membershipId ?? current?.membershipId;
+  if (!canEnter || !membershipId) return null;
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)}>Enter Resort Bill</Button>
-      {open ? <StayPointsDialog dialog={{ kind: "bill" }} membershipId={current.membershipId} gold={supplementary} venues={venues.data ?? []}
+      <Button type="button" onClick={() => setOpen(true)}>{selected ? <ReceiptText aria-hidden="true" /> : null}Enter Resort Bill</Button>
+      {open ? <StayPointsDialog dialog={{ kind: "bill" }} membershipId={membershipId} selectedHolder={selected} gold={supplementary} venues={venues.data ?? []}
         tranches={[]} pending={action.isPending} submit={action.mutateAsync} onClose={() => setOpen(false)} /> : null}
     </>
   );
@@ -480,7 +481,8 @@ export function StayPointsAreaPage() {
   );
 }
 
-function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pending, submit, onClose }: {
+function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pending, submit, onClose, selectedHolder }: {
+  selectedHolder?: import("@/data/contracts/member-qr-repository").MemberQrHolder;
   dialog: Dialog; membershipId: string; gold: boolean; venues: { id: string; name: string }[]; tranches: PointsTranche[];
   pending: boolean; submit: (input: StayPointsAction) => Promise<unknown>; onClose: () => void;
 }) {
@@ -489,7 +491,7 @@ function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pendin
   const [amount, setAmount] = useState("");
   const [excluded, setExcluded] = useState("");
   const [venue, setVenue] = useState("");
-  const [holder, setHolder] = useState<"primary" | "supplementary">("primary");
+  const [holder, setHolder] = useState<"primary" | "supplementary">(selectedHolder?.holder ?? "primary");
   const [reason, setReason] = useState("");
   const [tranche, setTranche] = useState("");
   const [ground, setGround] = useState<WaiverRequest["ground"]>();
@@ -505,7 +507,7 @@ function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pendin
         else {
           const excludedCentavos = excluded ? parsePesoToCentavos(excluded) : 0;
           if (excludedCentavos === null) throw new Error("Enter exclusions in pesos.");
-          await submit({ action: "enter", membershipId, venueId: venue, date, reference, grossCentavos: amountCentavos, excludedCentavos, holder, description: reason });
+          await submit({ action: "enter", membershipId, venueId: venue, date, reference, grossCentavos: amountCentavos, excludedCentavos, holder, scannedCode: selectedHolder?.scannedCode, description: reason });
         }
       } else if (dialog.kind === "request") {
         if (!ground) throw new Error("Choose a ground for the exception.");
@@ -513,7 +515,7 @@ function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pendin
       } else {
         await submit({ action: "decide-waiver", waiverId: dialog.id, granted: dialog.kind === "grant", releaseDate: date || null, reason });
       }
-      toast.success("Saved.");
+      toast.success(dialog.kind === "bill" ? `Bill ${reference} saved for approval.` : "Saved.");
       onClose();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Could not save.");
@@ -524,7 +526,7 @@ function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pendin
     {dialog.kind !== "refuse" ? <StandardDateField required label={dialog.kind === "bill" ? "Bill date" : dialog.kind === "refund" ? "Refund date" : dialog.kind === "grant" ? "Next administrative cycle date" : "Date written request received"} value={date} onChange={setDate} /> : null}
     {dialog.kind === "bill" ? <>
       <SelectField label="AFhomes Direct Operation" required value={venue} options={venues.map((item) => ({ value: item.id, label: item.name }))} onChange={setVenue} />
-      {gold ? <SelectField label="Cardholder" value={holder} options={[{ value: "primary", label: "Primary" }, { value: "supplementary", label: "Extra cardholder" }]} onChange={(value) => setHolder(value === "supplementary" ? value : "primary")} /> : null}
+      {selectedHolder ? <p>{selectedHolder.holderName} · {selectedHolder.vipNumber}</p> : gold ? <SelectField label="Cardholder" value={holder} options={[{ value: "primary", label: "Primary" }, { value: "supplementary", label: "Extra cardholder" }]} onChange={(value) => setHolder(value === "supplementary" ? value : "primary")} /> : null}
       <TextField label="Official receipt number" required value={reference} onChange={setReference} />
       <MoneyField label="Gross pre-discount amount" required value={amount} onChange={setAmount} />
       <MoneyField label="Excluded amount" value={excluded} onChange={setExcluded} hint="Exclude taxes, government fees, gratuities, points, and other amounts that do not qualify." />

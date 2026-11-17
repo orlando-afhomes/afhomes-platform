@@ -21,6 +21,10 @@ export type BlogPost = {
   cover: { src: string; alt: string };
   /** What the shared closing block shows after the text. */
   closing?: "experience" | "vip" | "contact";
+  /** Optional sidebar card: short highlights taken from the post's own text. */
+  highlights?: string[];
+  /** Optional sidebar card: one-paragraph summary of the event, taken from the post's own text. */
+  about?: string;
   blocks: BlogBlock[];
 };
 
@@ -35,6 +39,8 @@ export const BLOG_POSTS: BlogPost[] = [
     excerpt: "AFhomes joined the AI Business Summit 2026 in Tagaytay City as one of its Diamond Sponsors.",
     cover: cover("ai-business-summit", "AFhomes at the AI Business Summit 2026"),
     closing: "experience",
+    highlights: ["AI for Business Growth, Leadership & Innovation", "Industry experts and distinguished speakers", "Practical AI applications for businesses", "Networking and collaboration opportunities"],
+    about: "The AI Business Summit 2026 brought together business leaders, entrepreneurs, and technology enthusiasts to explore the growing role of Artificial Intelligence in transforming businesses and shaping the future of industries.",
     blocks: [
       { type: "lead", text: "Supporting Innovation, Business Growth, and the Future of Artificial Intelligence" },
       { type: "p", text: "AFhomes Hotspring & Ecofarm Resort Corp. proudly participated as one of the Diamond Sponsors of the AI Business Summit 2026, held in Tagaytay City on October 26, 2026." },
@@ -312,4 +318,86 @@ export function getBlogPost(slug: string): BlogPost | undefined {
 
 export function formatBlogDate(iso: string): string {
   return new Intl.DateTimeFormat("en-PH", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }).format(new Date(`${iso}T00:00:00Z`));
+}
+
+/** Section copy for the Blog index page (owner's reference design, 2026-11-17). */
+export const BLOG_PAGE = {
+  hero: {
+    eyebrow: "AFhomes Lifestyle Blog",
+    titleStart: "AFhomes",
+    titleAccent: "Lifestyle Blog",
+    lede: "News from our team, our events and our resort, in one place.",
+    image: { src: "/images/site/resort/18.webp", alt: "A natural hot spring pool at the resort" },
+    highlights: [
+      { title: "Resort Updates", text: "Latest news and developments", icon: "leaf" },
+      { title: "Events & Activities", text: "Seminars, trainings, and highlights", icon: "calendar" },
+      { title: "Lifestyle & Wellness", text: "Tips for a healthier, more relaxing life", icon: "sparkles" },
+    ] as const,
+  },
+  /** Filter chips, in the reference order. "Blog" is left out on purpose; every post also has another category. */
+  filters: ["Events & Activities", "Behind the Scenes", "Resort Highlights", "News & Promos", "Eco-Friendly Living", "Wellness & Relaxation"] as BlogCategory[],
+  latest: { eyebrow: "Latest articles", title: "More Stories from AFhomes" },
+  featuredCta: "Read full article",
+  cardCta: "Read more",
+  pageSize: 6,
+  empty: "No posts in this category yet.",
+};
+
+
+/** Copy and photos for a single blog post page (owner's reference design, 2026-11-17). */
+export const BLOG_POST_PAGE = {
+  backLabel: "All posts",
+  author: "By AFhomes",
+  shareLabel: "Share:",
+  tocTitle: "In this article",
+  highlightsTitle: "Event Highlights",
+  highlightsImage: { src: "/images/site/resort/18.webp", alt: "A natural hot spring pool at the resort" },
+  aboutTitle: "About the Event",
+  closing: {
+    image: { src: "/images/site/resort/amenities-w-pool1.webp", alt: "A resort pool with loungers" },
+    experience: { title: "Experience AFhomes", text: "Discover the beauty, comfort, and hospitality that make AFhomes truly special." },
+    vip: { title: "Ready to begin your VIP journey?", text: "Get in touch with us through any of these convenient channels." },
+    contact: { title: "Visit or contact us today", text: "We would love to hear from you." },
+  },
+  olderLabel: "Older post",
+  newerLabel: "Newer post",
+  allArticles: "All articles",
+  relatedTitle: "Related Stories",
+  cta: {
+    title: "Discover more resort stories",
+    text: "Stay updated on our latest events, innovations, and experiences at AFhomes Hotspring & Ecofarm Resort.",
+    href: "/blog",
+    label: "Explore blog",
+    image: { src: "/images/site/resort/amenities-w-terraces-pool1.webp", alt: "The resort terrace pool" },
+  },
+};
+
+/** Anchor id for a section heading inside a post, e.g. "Empowering Businesses" -> "empowering-businesses". */
+export function blogHeadingId(text: string): string {
+  return text.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+/** The post's sections for "In this article": the lead line and every h2, in order. */
+export function getBlogSections(post: BlogPost): { id: string; title: string }[] {
+  return post.blocks
+    .filter((block): block is Extract<BlogBlock, { type: "lead" | "h2" }> => block.type === "lead" || block.type === "h2")
+    .map((block) => ({ id: blogHeadingId(block.text), title: block.text }));
+}
+
+/** Reading time in whole minutes at about 200 words a minute, never less than 1. */
+export function blogReadingMinutes(post: BlogPost): number {
+  const words = post.blocks
+    .flatMap((block) => (block.type === "list" ? block.items : [block.text]))
+    .join(" ")
+    .split(/\s+/)
+    .filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
+}
+
+/** Up to `count` other posts: same first category first, then the newest of the rest. */
+export function getRelatedPosts(post: BlogPost, count = 3): BlogPost[] {
+  const others = BLOG_POSTS.filter((item) => item.slug !== post.slug);
+  const same = others.filter((item) => item.categories.includes(post.categories[0]));
+  const rest = others.filter((item) => !same.includes(item));
+  return [...same, ...rest].slice(0, count);
 }

@@ -59,10 +59,10 @@ export const MAIN_NAV: NavLink[] = [
   { href: "/contact", label: "Contact" },
 ];
 
-/** Account actions shown at the right of the header and in the phone menu. */
+/** Public actions shown at the right of the header and in the phone menu. Sales Sign-In is deliberately not linked anywhere public (owner decision, 2026-11-17); sellers type /login/sales. */
 export const ACTION_LINKS: NavLink[] = [
   { href: "/verify", label: "Verify Accreditation" },
-  { href: "/login/sales", label: "Sales Sign-In" },
+  { href: "/vip-privilege#cards", label: "Join VIP" },
 ];
 
 /** Footer link columns. Every target is an existing route (checked by public-links.test.tsx). */
@@ -74,7 +74,6 @@ export const FOOTER_COLUMNS: { heading: string; links: NavLink[] }[] = [
     links: [
       { href: "/verify", label: "Verify Accreditation" },
       { href: "/login", label: "Staff Login" },
-      { href: "/login/sales", label: "Sales Sign-In" },
     ],
   },
 ];

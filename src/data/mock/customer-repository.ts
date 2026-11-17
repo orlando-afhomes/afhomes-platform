@@ -1,4 +1,5 @@
 import { CustomerValidationError, type CustomerRepository } from "@/data/contracts/customer-repository";
+import { invalidateChangedHolderCodes } from "./member-qr-repository";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import { customerAttributionErrors, pendingAttributionMemberIds } from "@/modules/customers/attribution";
@@ -332,6 +333,7 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
       const previousNumber = customer.customerNumber ?? null;
       this.assignClosingSeller(identity, customer, input);
       this.apply(customer, input);
+      invalidateChangedHolderCodes(this.store, customer.id);
       // A change to the official Customer ID keeps its previous and new value; other corrected fields stay out of the audit payload.
       const nextNumber = customer.customerNumber ?? null;
       const numberChange = nextNumber !== previousNumber

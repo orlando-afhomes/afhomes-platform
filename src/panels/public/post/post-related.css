@@ -1,0 +1,115 @@
+/* Related stories: gold bar above, title with a gold line after, then three compact cards */
+.post-related { margin-top: 56px; }
+.post-related__title {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 20px;
+  padding-top: 14px;
+  font-family: var(--site-home-display);
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-brand-deep);
+}
+.post-related__title::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--color-accent);
+}
+.post-related__title::after {
+  content: "";
+  width: 40px;
+  height: 2px;
+  flex-shrink: 0;
+  border-radius: 2px;
+  background: var(--color-accent);
+}
+
+.post-related__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; margin: 0; padding: 0; list-style: none; }
+@media (min-width: 600px) { .post-related__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 900px) { .post-related__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.post-related__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--color-bg-surface-raised);
+  box-shadow: var(--shadow-soft);
+  transition: transform 300ms ease, box-shadow 300ms ease;
+}
+.site-post-page .post-related__photo { border-radius: 0; }
+.site-post-page .post-related__photo .site-photo__image { object-position: top; transition: transform 300ms ease; }
+.post-related__body { display: flex; flex: 1; flex-direction: column; gap: 6px; padding: 14px 16px; }
+.post-related__category { margin: 0; font-size: 11.5px; color: var(--color-text-muted); }
+.post-related__heading {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.35;
+  font-weight: 700;
+  color: var(--color-brand-deep);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: break-word;
+}
+.post-related__link { color: inherit; text-decoration: none; }
+.post-related__link::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: 16px; }
+.post-related__link:focus-visible { outline: none; }
+.post-related__link:focus-visible::after { outline: 2px solid var(--color-state-focus); outline-offset: 2px; }
+.post-related__meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 6px; }
+.post-related__date { font-size: 12px; color: var(--color-text-muted); }
+.post-related__arrow {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--color-brand-soft);
+  color: var(--color-brand-primary);
+  transition: background-color 300ms ease, color 300ms ease;
+}
+.post-related__arrow svg { width: 14px; height: 14px; }
+
+.post-related__card:hover,
+.post-related__card:focus-within { transform: translateY(-4px); box-shadow: var(--shadow-raised); }
+.site-post-page .post-related__card:hover .post-related__photo .site-photo__image,
+.site-post-page .post-related__card:focus-within .post-related__photo .site-photo__image { transform: scale(1.04); }
+.post-related__card:hover .post-related__arrow,
+.post-related__card:focus-within .post-related__arrow { background: var(--color-brand-primary); color: var(--color-text-on-brand); }
+
+@media (prefers-reduced-motion: reduce) {
+  .post-related__card,
+  .site-post-page .post-related__photo .site-photo__image,
+  .post-related__arrow { transition: none; }
+  .post-related__card:hover,
+  .post-related__card:focus-within { transform: none; }
+  .site-post-page .post-related__card:hover .post-related__photo .site-photo__image,
+  .site-post-page .post-related__card:focus-within .post-related__photo .site-photo__image { transform: none; }
+}
+
+/* Closing band: the Home closing band, left-aligned, strong dark green on the left fading to the photo */
+.site-home-cta.post-cta { padding: 72px 0; }
+.site-home-cta.post-cta .site-home-cta__shade {
+  background: linear-gradient(90deg, rgb(14 43 32 / 0.95) 0%, rgb(14 43 32 / 0.82) 40%, rgb(14 43 32 / 0.2) 100%);
+}
+.site-home-cta.post-cta .site-cta { align-items: flex-start; text-align: left; }
+.site-home-cta.post-cta .site-cta__title { max-width: 32rem; color: #fff; overflow-wrap: break-word; }
+.site-home-cta.post-cta .site-cta__text { max-width: 34rem; }
+@media (max-width: 600px) {
+  .site-home-cta.post-cta { padding: 56px 0; }
+  .site-home-cta.post-cta .site-home-cta__shade { background: linear-gradient(90deg, rgb(14 43 32 / 0.95) 0%, rgb(14 43 32 / 0.75) 100%); }
+}

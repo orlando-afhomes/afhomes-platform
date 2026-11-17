@@ -63,7 +63,7 @@ function CorrectionForm({ token, initial, returnReason }: { token: string; initi
         ) : null}
         <div className="tw:flex tw:flex-wrap tw:gap-2">
           <Button type="submit" loading={resubmit.isPending} className="tw:min-h-11 tw:sm:min-h-8">
-            Send Corrected Application
+            Resend application
           </Button>
         </div>
       </form>

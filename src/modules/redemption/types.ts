@@ -62,6 +62,7 @@ export type RedemptionBooking = {
   guests: number;
   /** Who stays: the primary holder or the Gold supplementary cardholder share one balance (doc 10 section 14). */
   stayingHolder: string;
+  checkedIn?: { date: string; actorId: string; holder: "primary" | "supplementary"; identityChecked: true };
   nights: BookingNight[];
   basisVersionId: string;
   basisVersion: number;

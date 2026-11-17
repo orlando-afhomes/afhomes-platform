@@ -8,8 +8,8 @@ export function ResortPage() {
   return (
     <>
       <PageHero eyebrow={RESORT.banner} title={RESORT.title} lede={RESORT.tagline} status="In development" image={RESORT.masterplan}>
-        <SiteButton href="/compliance">See our compliance milestones</SiteButton>
-        <SiteButton href="/faq#homestyle" variant="outline">What is a homestyle resort?</SiteButton>
+        <SiteButton href="/compliance">View milestones</SiteButton>
+        <SiteButton href="/faq#homestyle" variant="outline">Homestyle FAQ</SiteButton>
       </PageHero>
 
       <Section>
@@ -52,7 +52,7 @@ export function ResortPage() {
       </Section>
 
       <CtaBand title="Experience your home away from home" text="Imagine a place where comfort meets excitement, and every moment feels like a dream come true. Your home away from home awaits!">
-        <SiteButton href="/vip-privilege" variant="light">VIP Privilege Card</SiteButton>
+        <SiteButton href="/vip-privilege" variant="light">VIP Privilege</SiteButton>
         <SiteButton href="/contact" variant="outline-light">Contact us</SiteButton>
       </CtaBand>
     </>

@@ -1,3 +1,4 @@
+import { requireCurrentScan } from "./member-qr-repository";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { MembershipPoints, StayPointsAction, StayPointsRepository } from "@/data/contracts/stay-points-repository";
 import { findReferenceConflict } from "@/modules/finance/rules";
@@ -56,6 +57,7 @@ export class MockStayPointsRepository extends BusinessRepository implements Stay
           this.require(identity, "stay-points.enter", "Only authorized office staff can enter resort bills.");
           const member = this.member(input.membershipId, identity);
           if (!member.cardId) throw new Error("The membership has no VIP Number.");
+          requireCurrentScan(this.store, input.scannedCode, member.id, input.holder);
           if (!parseManilaDateOnly(input.date) || input.date > today()) throw new Error("Enter a valid bill date on or before today.");
           if (!this.store.outlets.some((outlet) => outlet.id === input.venueId && outlet.status === "active")) throw new Error("Select an AFhomes Direct Operation.");
           const allowsSupplementary = (this.store.products.find((item) => item.code === member.productCode)?.supplementaryHolders ?? 0) > 0;

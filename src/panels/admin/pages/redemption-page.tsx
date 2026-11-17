@@ -1,5 +1,7 @@
 "use client";
 
+import type { MemberQrHolder } from "@/data/contracts/member-qr-repository";
+import { useMockRepositories } from "@/data/queries";
 import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -44,11 +46,12 @@ const STATUS: Record<BookingStatus, { key: string; label: string }> = {
 };
 const statusBadge = (booking: BookingView) => booking.provisional && (booking.status === "confirmed" || booking.status === "pending_payment")
   ? <BizBadge status="pending" label={booking.status === "confirmed" ? "Provisional hold" : "Provisional · Pending Payment"} />
-  : <BizBadge status={STATUS[booking.status].key} label={STATUS[booking.status].label} />;
+  : <BizBadge status={STATUS[booking.status].key} label={booking.status === "confirmed" && booking.checkedIn ? "Checked In" : STATUS[booking.status].label} />;
 
 /** Button and menu color per booking action (rule: confirm and check-in green, no-show amber, cancel red). */
 const ACTION_TONE: Record<string, { tone: RowActionTone; variant: "success" | "warning" | "destructive" | "outline" }> = {
   "approve-cash": { tone: "success", variant: "success" },
+  "check-in": { tone: "success", variant: "success" },
   complete: { tone: "success", variant: "success" },
   "no-show": { tone: "warning", variant: "warning" },
   cancel: { tone: "danger", variant: "destructive" },
@@ -63,12 +66,13 @@ function nowManilaInput(): string {
 }
 
 /** Create dialogs are opened from the area header; each panel renders its own dialog. */
-export type RedemptionPanelCreateProps = { createOpen?: boolean; onCreateClose?: () => void };
+export type RedemptionPanelCreateProps = { createOpen?: boolean; onCreateClose?: () => void; selected?: MemberQrHolder };
 
 /** Bookings tab: New booking (redemption.book), booking actions (redemption.book; money part needs finance.verify). */
-export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = () => {} }: RedemptionPanelCreateProps) {
+export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = () => {}, selected }: RedemptionPanelCreateProps) {
   const data = useRedemption();
   const act = useRedemptionBookingAction();
+  const { memberQr } = useMockRepositories();
   const canBook = useOperation("redemption.book");
   const canApprove = useOperation("finance.verify");
   const { confirmRun, dialog: confirmDialog } = useConfirmRun();
@@ -87,8 +91,8 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
   const [bookingStatus, setBookingStatus] = useState("all");
   const [bookingVenue, setBookingVenue] = useState("all");
   const visibleBookings = useMemo(
-    () => (overview?.bookings ?? []).filter((item) => (bookingStatus === "all" || item.status === bookingStatus) && (bookingVenue === "all" || item.venueId === bookingVenue) && matchesSearch(bookingSearch, item.reference, item.customerName, item.venueName)),
-    [overview, bookingSearch, bookingStatus, bookingVenue],
+    () => (overview?.bookings ?? []).filter((item) => (!selected || (item.membershipId === selected.membershipId && (item.stayingHolder === "Gold extra cardholder" ? "supplementary" : "primary") === selected.holder)) && (bookingStatus === "all" || item.status === bookingStatus) && (bookingVenue === "all" || item.venueId === bookingVenue) && matchesSearch(bookingSearch, item.reference, item.customerName, item.venueName)),
+    [overview, bookingSearch, bookingStatus, bookingVenue, selected],
   );
   const bookingStatusOptions = [{ value: "all", label: "All statuses" }, ...(Object.keys(STATUS) as BookingStatus[]).map((value) => ({ value, label: STATUS[value].label }))];
   const venueOptions = [{ value: "all", label: "All venues" }, ...(overview?.venues ?? []).map((item) => ({ value: item.id, label: item.name }))];
@@ -122,18 +126,34 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
     }
   };
 
-  const recordCheckIn = (booking: BookingView) => confirmRun({
-    title: "Record Check-In?", description: booking.provisional
-      ? "The system checks whether the Annual Welcome Gift covers this stay before using points."
-      : "The reserved points will be used for this stay.",
-    confirmText: "Record Check-In", tone: "success", action: () => act.mutateAsync({ id: booking.id, action: "complete" }),
-    successTitle: "Check-in recorded.", errorTitle: "Could not record check-in",
+  const recordCheckIn = async (booking: BookingView) => {
+    const holder = booking.stayingHolder === "Gold extra cardholder" ? "supplementary" : "primary";
+    try {
+      const cardholder = selected ?? (await memberQr.identify(booking.membershipId)).find((item) => item.holder === holder);
+      if (!cardholder) throw new Error("The staying cardholder is no longer registered.");
+      confirmRun({
+        title: "Record Check-In?",
+        description: `Check ${cardholder.holderName}’s ID. The booking needs ${fmt(booking.reservedWeekday)} weekday and ${fmt(booking.reservedWeekend)} weekend points. These stay reserved until the stay ends.`,
+        confirmText: "ID Checked · Record Check-In", tone: "success",
+        action: () => act.mutateAsync({ id: booking.id, action: "check-in", verification: { holder, identityChecked: true, scannedCode: selected?.scannedCode } }),
+        successTitle: `Check-in recorded for ${booking.reference}.`, errorTitle: "Could not record check-in",
+      });
+    } catch (failure) {
+      toast.error(failure instanceof Error ? failure.message : "Could not verify the staying cardholder.");
+    }
+  };
+  const completeStay = (booking: BookingView) => confirmRun({
+    title: "Complete Stay?",
+    description: `Deduct ${fmt(booking.reservedWeekday)} weekday and ${fmt(booking.reservedWeekend)} weekend points for ${booking.reference}.`,
+    confirmText: "Complete Stay", tone: "success", action: () => act.mutateAsync({ id: booking.id, action: "complete" }),
+    successTitle: `Stay ${booking.reference} completed.`, errorTitle: "Could not complete stay",
   });
 
   const sheetMenu = detail
     ? buildRedemptionBookingMenuProps(detail, { canBook, canApprove }, {
         onApproveCash: () => open("approve-cash", detail),
-        onComplete: () => recordCheckIn(detail),
+        onCheckIn: () => recordCheckIn(detail),
+        onComplete: () => completeStay(detail),
         onNoShow: () => open("no-show", detail),
         onCancel: () => open("cancel", detail),
       })
@@ -159,13 +179,14 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
             <DataTable data={visibleBookings} columns={bookingColumns} getRowId={(row) => row.id} emptyText={overview.bookings.length === 0 ? "No bookings yet." : "No bookings match the filters."} caption="Redemption Bookings" onRowOpen={(row) => setOpenId(row.id)} getRowLabel={(row) => `Open booking ${row.reference}`} rowActions={(row) => {
               const menu = buildRedemptionBookingMenuProps(row, { canBook, canApprove }, {
                 onApproveCash: () => open("approve-cash", row),
-                onComplete: () => recordCheckIn(row),
+                onCheckIn: () => recordCheckIn(row),
+                onComplete: () => completeStay(row),
                 onNoShow: () => open("no-show", row),
                 onCancel: () => open("cancel", row),
               });
               return <RowActionsMenu {...menu} extraItems={menu.extraItems.map((item) => ({ ...item, tone: ACTION_TONE[item.key]?.tone }))} />;
             }} />
-            <RedemptionBookingDialog open={createOpen && canBook} overview={overview} onClose={onCreateClose} />
+            {createOpen && canBook ? <RedemptionBookingDialog open overview={overview} selected={selected} onClose={onCreateClose} /> : null}
           </>
         ) : null}
       </QueryState>

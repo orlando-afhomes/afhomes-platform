@@ -9,6 +9,7 @@ import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { EMPTY } from "@/shared/lib/empty-value";
+import { MemberQrButton } from "./member-qr";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { BizBadge } from "@/shared/components/business/biz-badge";
@@ -115,6 +116,7 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
           detail ? (
             <>
               {activateItem(detail).map((item) => <Button key={item.key} type="button" variant={item.tone === "success" ? "success" : "default"} onClick={item.onClick}>{item.label}</Button>)}
+              {detail.status === "active" && detail.cardId ? <MemberQrButton membershipId={detail.id} /> : null}
               <Link href={contractHref(detail.contractId)} className={buttonVariants({ variant: "info" })}>Open Contract</Link>
             </>
           ) : undefined

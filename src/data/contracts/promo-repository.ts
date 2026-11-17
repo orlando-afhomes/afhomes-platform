@@ -35,7 +35,7 @@ export type PromoMembershipBalance = {
   byPromo: Array<{ promoId: string; promoName: string; balance: PromoBalance }>;
 };
 
-export type RecordPromoUseInput = { membershipId: string; promoId: string; outletId: string; points: number; note: string };
+export type RecordPromoUseInput = import("./member-qr-repository").HolderVerification & { requestId: string; membershipId: string; promoId: string; outletId: string; points: number; note: string };
 
 export interface PromoRepository {
   list(options?: MockAsyncOptions): Promise<PromoView[]>;

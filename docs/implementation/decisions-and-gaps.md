@@ -307,7 +307,7 @@ U01 to U13 descriptions are in the atlas `COVERAGE.md` section "Incomplete and u
 ### Public seller check and staff Customer Look Up (2026-11-16)
 
 - **UI21, pages copied from the earlier project.** The process and the shown data are copied from the earlier project; the screens are new.
-  - **Customer Look Up is a staff tab under Customers.**
+  - **Customer Look Up is a standalone staff page at `/admin/customer-lookup`.** Earlier bookmarks for the Customers tab redirect to this page.
     - It is open to the Super Administrator, Administrator, Clerk and Finance, through the new `customers.lookup` operation. Sellers do not get it.
     - The search needs at least 2 characters and is a partial match on the name, Customer ID, VIP Number or email. Only active, unexpired memberships are returned, up to 50.
     - Up to 6 suggestions are shown. The card shows the tier card, the name, the VIP Number, Valid Until, and total, weekday and weekend points.

@@ -147,7 +147,7 @@ describe("Staff login page", () => {
     await user.type(screen.getByLabelText("Registered email"), admin.email);
     await user.click(screen.getByRole("button", { name: "Continue" }));
     expect(screen.getByText(/Contact your Administrator to reset your password/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Back to Sign In" }));
+    await user.click(screen.getByRole("button", { name: "Back" }));
     expect(screen.getByRole("heading", { name: "Login" })).toBeInTheDocument();
   });
 });

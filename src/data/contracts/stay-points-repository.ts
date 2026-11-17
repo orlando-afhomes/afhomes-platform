@@ -15,7 +15,7 @@ export type MembershipPoints = {
 };
 
 export type StayPointsAction =
-  | { action: "enter"; membershipId: string; venueId: string; date: string; reference: string; grossCentavos: number; excludedCentavos: number; holder: "primary" | "supplementary"; description: string }
+  | { action: "enter"; membershipId: string; venueId: string; date: string; reference: string; grossCentavos: number; excludedCentavos: number; holder: "primary" | "supplementary"; scannedCode?: string; description: string }
   | { action: "approve"; spendId: string }
   | { action: "refund"; spendId: string; date: string; amountCentavos: number; reason: string }
   | { action: "request-waiver"; membershipId: string; tranche: number; date: string; ground: WaiverRequest["ground"]; supportingReference: string }

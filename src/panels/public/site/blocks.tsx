@@ -86,9 +86,10 @@ export function PaymentWarning() {
   return <p className="site-callout">{PAYMENT_DISCLAIMER}</p>;
 }
 
-export function SiteButton({ href, children, variant = "primary", external = false }: { href: string; children: ReactNode; variant?: "primary" | "outline" | "light" | "outline-light"; external?: boolean }) {
+export function SiteButton({ href, children, variant = "primary", external = false }: { href: string; children: ReactNode; variant?: "primary" | "outline" | "light" | "outline-light" | "gold"; external?: boolean }) {
   const className = `site-button site-button--${variant}`;
-  if (external || href.startsWith("mailto:") || href.startsWith("tel:")) {
+  // Same-page section links ("#...") use a plain anchor so the browser's smooth scrolling applies.
+  if (external || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) {
     return <a href={href} className={className} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{children}</a>;
   }
   return <Link href={href} className={className}>{children}</Link>;
@@ -111,26 +112,28 @@ export function CtaBand({ title, text, children }: { title: string; text: string
 export function ContactCards() {
   const info = PUBLIC_SUPPORT_INFO;
   return (
-    <ul className="site-grid site-grid--3">
+    <ul className="site-grid contact-details">
       <li className="site-card site-card--contact">
         <Mail aria-hidden="true" className="site-card__icon" />
-        <h3 className="site-card__title">Email</h3>
+        <h2 className="site-card__title">Email</h2>
         <a href={`mailto:${info.email}`} className="site-link">{info.email}</a>
-        <Link href="/contact" className="site-link site-link--muted">Use the contact form</Link>
+        <a href="#contact-form" className="site-link site-link--muted">Use the contact form</a>
       </li>
       <li className="site-card site-card--contact">
         <Phone aria-hidden="true" className="site-card__icon" />
-        <h3 className="site-card__title">Phone</h3>
+        <h2 className="site-card__title">Phone</h2>
         <a href={info.phoneHref} className="site-link">{info.phone}</a>
         <a href={SITE.facebookUrl} className="site-link site-link--muted" target="_blank" rel="noopener noreferrer">Send us a message on Facebook</a>
       </li>
       {OFFICES.map((office) => (
         <li key={office.id} className="site-card site-card--contact">
           <MapPin aria-hidden="true" className="site-card__icon" />
-          <h3 className="site-card__title">{office.label}</h3>
-          <p className="site-card__text">{office.name}</p>
-          <p className="site-card__text">{office.lines.join(", ")}</p>
-          {office.landmark ? <p className="site-card__text">{office.landmark}</p> : null}
+          <h2 className="site-card__title">{office.label}</h2>
+          <address className="contact-details__address">
+            <p className="site-card__text">{office.name}</p>
+            <p className="site-card__text">{office.lines.join(", ")}</p>
+            {office.landmark ? <p className="site-card__text contact-details__landmark">{office.landmark}</p> : null}
+          </address>
         </li>
       ))}
     </ul>

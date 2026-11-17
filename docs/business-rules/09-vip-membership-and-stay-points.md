@@ -277,7 +277,7 @@ Required: preserve verified historical balances and dates; do not fabricate miss
 
 This module decides membership eligibility, the PAD, tranche release, balances per bucket, forfeiture and transfer effects. The Redemption module (`10-redemption.md`) decides how released points are used: venues, points per night (Terms of Use), weekday/weekend and holiday classification, bookings, cancellation (with forfeit after the cut-off) and no-shows.
 
-Points cannot be redeemed before the card is claimed (owner follow-up ruling, 2026-11-12). A first redemption before the second anniversary of the Card Claim Date sets the PAD (section 8). Redemption stays disabled in the application until the owner authorizes its build (AGENTS.md section 5). Points have no cash value and are never cashed out.
+Points cannot be redeemed before the card is claimed (owner follow-up ruling, 2026-11-12). A first redemption before the second anniversary of the Card Claim Date sets the PAD (section 8). The owner approved staff-only QR redemption in the sample-data prototype on 2026-11-17. Live redemption requires separate authorization. Points have no cash value and are never cashed out.
 
 ---
 
@@ -321,7 +321,7 @@ Each record keeps the actor, timestamp, membership and VIP Number, tranche and b
 | VIP Products and Contracts | Finalized contractual entitlements and tier benefits |
 | VIP Card Issuance | VIP Number, Full Settlement, Card Claim Date, validity |
 | Finance and Payments | Verified payment, receipt references, reversals, Financial Hold |
-| Redemption | Use of released points; first redemption sets the PAD; disabled until authorized |
+| Redemption | Staff-only sample-data prototype; first use at check-in sets the PAD under doc 10 |
 | Roles and Permissions | Access control and action permissions |
 | Sales Performance Reporting | Reporting conventions |
 | Audit Logs | Traceability |

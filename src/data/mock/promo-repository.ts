@@ -2,6 +2,7 @@ import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type {
   PromoInput, PromoLedgerRow, PromoMembershipBalance, PromoRepository, PromoView, RecordPromoUseInput,
 } from "@/data/contracts/promo-repository";
+import { currentCardHolders, requireCurrentScan } from "./member-qr-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { canUsePoints, isUseVoided, promoBalance, promoBalanceByPromo } from "@/modules/promos/rules";
@@ -183,6 +184,19 @@ export class MockPromoRepository extends BusinessRepository implements PromoRepo
       const promo = this.find(input.promoId);
       const note = input.note.trim();
       if (note.length > NOTE_MAX) throw new Error(`The note must be ${NOTE_MAX} characters or fewer.`);
+      if (input.identityChecked !== true) throw new Error("Confirm you checked the cardholder's ID.");
+      if (!input.requestId?.trim()) throw new Error("A request key is required.");
+      const previous = this.store.promoPoints.find((entry) => entry.type === "use" && entry.actorId === identity.id && entry.requestId === input.requestId);
+      if (previous) {
+        if (previous.membershipId !== input.membershipId || previous.promoId !== input.promoId || previous.outletId !== input.outletId
+          || previous.points !== input.points || (previous.note ?? "") !== note || previous.holder !== input.holder) {
+          throw new Error("This request key was already used with different details.");
+        }
+        return this.row(previous);
+      }
+      requireCurrentScan(this.store, input.scannedCode, membership.id, input.holder);
+      const holder = currentCardHolders(this.store, membership.id).find((item) => item.info.holder === input.holder);
+      if (holder?.info.status !== "active") throw new Error("Select an active cardholder.");
       const entries = this.store.promoPoints.filter((entry) => entry.membershipId === membership.id);
       const available = promoBalance(entries, today(), this.store.promos, promo.id).available;
       const check = canUsePoints(available, input.points, promo, input.outletId, today());
@@ -190,6 +204,7 @@ export class MockPromoRepository extends BusinessRepository implements PromoRepo
       const entry: PromoPointsEntry = {
         id: nextId(this.store, "promoPoints", "pp"), promoId: promo.id, membershipId: membership.id, type: "use",
         points: input.points, outletId: input.outletId, note: note || undefined, date: today(), actorId: identity.id,
+        requestId: input.requestId, holder: input.holder, identityChecked: true,
       };
       this.store.promoPoints.push(entry);
       this.record(identity, BUSINESS_AUDIT_ACTIONS.PROMO_POINTS_USED, promo.id, String(available), String(available - input.points), { related: [membership.id, entry.id] });

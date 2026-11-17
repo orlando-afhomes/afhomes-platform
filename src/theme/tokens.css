@@ -20,6 +20,7 @@
 
   /* Logo colours (coral, pink, teal, green) for thin brand accents such as the top bar line. */
   --gradient-brand-logo: linear-gradient(90deg, #f7a25f 0%, #ec4a8a 36%, #29a9c7 68%, #3bb15a 100%);
+  --gradient-gold: linear-gradient(135deg, #f3e2a4 0%, #dcc06a 45%, #b08328 100%);
 
   --color-on-dark: #ffffff;
   --color-on-dark-muted: rgba(255, 255, 255, 0.84);
@@ -47,6 +48,7 @@
   --color-warning-strong: #805719;
   --color-danger: #a63a32;
   --color-info: #1f6b8f;
+  --color-active-badge: #1877f2;
   /* Dashboard KPI accent (fourth card tone in the dashboard design). */
   --color-dashboard-violet: #6d4fc2;
   --color-dashboard-violet-soft: #f0ebfa;

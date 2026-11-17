@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/shared/lib/utils";
+import { SiteHeaderScroll } from "./site-header-scroll";
 import { SiteMobileMenu } from "./site-mobile-menu";
 import { SiteNavDropdown } from "./site-nav-dropdown";
 import { isNavGroup, type SiteHeaderAction, type SiteNavItem, type SiteNavLink } from "./site-nav-types";
@@ -18,6 +19,7 @@ export type SiteHeaderProps = {
 export function SiteHeader({ brand, items, actions, mobileExtraLinks = [], className }: SiteHeaderProps) {
   return (
     <header className={cn("site-header", className)}>
+      <SiteHeaderScroll />
       <div className="site-header__bar">
         <Link href={brand.href} className="site-header__brand" aria-label={`${brand.name} home`}>
           <span className="site-header__logo" aria-hidden="true">

@@ -15,17 +15,17 @@ const newKey = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? 
 const fmt = (n: number) => n.toLocaleString("en-PH");
 
 /** Records a points booking for a cardholder (office staff entry, doc 10 section 9). */
-export function RedemptionBookingDialog({ open, overview, onClose }: { open: boolean; overview: RedemptionOverview; onClose: () => void }) {
+export function RedemptionBookingDialog({ open, overview, onClose, selected }: { open: boolean; overview: RedemptionOverview; onClose: () => void; selected?: import("@/data/contracts/member-qr-repository").MemberQrHolder }) {
   const create = useCreateRedemptionBooking();
   const products = useVipProducts();
   const [requestId, setRequestId] = useState(newKey);
-  const [membershipId, setMembershipId] = useState("");
+  const [membershipId, setMembershipId] = useState(selected?.membershipId ?? "");
   const [venueId, setVenueId] = useState("");
   const [roomType, setRoomType] = useState("");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState("2");
-  const [holder, setHolder] = useState("Primary cardholder");
+  const [holder, setHolder] = useState(selected?.holder === "supplementary" ? "Gold extra cardholder" : "Primary cardholder");
   const [cash, setCash] = useState<string[]>([]);
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | undefined>();
@@ -58,8 +58,8 @@ export function RedemptionBookingDialog({ open, overview, onClose }: { open: boo
     try {
       const centavos = cash.length > 0 ? parsePesoToCentavos(amount) : 0;
       if (centavos === null) throw new Error("Enter the money part as an amount in pesos.");
-      const booking = await create.mutateAsync({ requestId, membershipId, venueId, roomType, checkIn, checkOut, guests: Number(guests.replace(/,/g, "")), stayingHolder: holder, cashNightDates: cash, cashAmountCentavos: centavos });
-      toast.success(booking.provisional ? "Provisional room hold recorded. No points were reserved." : "Booking recorded.");
+      const booking = await create.mutateAsync({ requestId, membershipId, venueId, roomType, checkIn, checkOut, guests: Number(guests.replace(/,/g, "")), stayingHolder: holder, scannedCode: selected?.scannedCode, cashNightDates: cash, cashAmountCentavos: centavos });
+      toast.success(booking.provisional ? `Provisional hold ${booking.reference} recorded. No points were reserved.` : `Booking ${booking.reference} recorded.`);
       close();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Request failed.");
@@ -68,14 +68,14 @@ export function RedemptionBookingDialog({ open, overview, onClose }: { open: boo
 
   const eligible = overview.members.filter((item) => item.blockedReasons.length === 0 && item.vipNumber);
   return (
-    <FormDialog open={open} title="New Booking with Points" description="Points never convert between weekday and weekend. Each night is paid fully in points or fully in money." submitText="Record Booking" pending={create.isPending} error={error} onClose={close} onSubmit={() => void submit()}>
-      <SelectField label="Cardholder" required value={membershipId} placeholder="Choose a card" options={eligible.map((item) => ({ value: item.membershipId, label: `${item.customerName} · ${item.vipNumber}` }))} onChange={(value) => { setMembershipId(value); setVenueId(""); setRoomType(""); setCash([]); }} hint={member ? `Available: ${fmt(member.weekday.available)} weekday, ${fmt(member.weekend.available)} weekend points.` : undefined} />
+    <FormDialog open={open} title="New Booking with Points" description="Each night: points or cash." submitText="Record Booking" pending={create.isPending} error={error} onClose={close} onSubmit={() => void submit()}>
+      {selected ? <p>{selected.holderName} · {selected.vipNumber}</p> : <SelectField label="Cardholder" required value={membershipId} placeholder="Choose a card" options={eligible.map((item) => ({ value: item.membershipId, label: `${item.customerName} · ${item.vipNumber}` }))} onChange={(value) => { setMembershipId(value); setVenueId(""); setRoomType(""); setCash([]); }} hint={member ? `Available: ${fmt(member.weekday.available)} weekday, ${fmt(member.weekend.available)} weekend points.` : undefined} />}
       <SelectField label="Venue" required value={venueId} options={venues.map((item) => ({ value: item.id, label: item.name }))} onChange={(value) => { setVenueId(value); setRoomType(""); setCash([]); }} hint="Only open overnight venues of AFhomes Direct Operations are listed." />
       <SelectField label="Room type" required value={roomType} options={rooms.map((item) => ({ value: item, label: item }))} onChange={(value) => { setRoomType(value); setCash([]); }} disabled={!venueId} />
       <StandardDateField label="Check-in" required value={checkIn} onChange={(value) => { setCheckIn(value); setCash([]); }} />
       <StandardDateField label="Departure" required value={checkOut} onChange={(value) => { setCheckOut(value); setCash([]); }} />
       <PointsField label="Guests" required value={guests} onChange={setGuests} />
-      <SelectField label="Staying cardholder" required value={holder} options={[{ value: "Primary cardholder", label: "Primary cardholder" }, ...(allowsSupplementary ? [{ value: "Gold extra cardholder", label: "Gold extra cardholder" }] : [])]} onChange={setHolder} hint="A Gold extra cardholder uses the same points balance." />
+      {!selected ? <SelectField label="Staying cardholder" required value={holder} options={[{ value: "Primary cardholder", label: "Primary cardholder" }, ...(allowsSupplementary ? [{ value: "Gold extra cardholder", label: "Gold extra cardholder" }] : [])]} onChange={setHolder} hint="A Gold extra cardholder uses the same points balance." /> : null}
       {nights.length > 0 ? (
         <fieldset className="tw:flex tw:flex-col tw:gap-2">
           <legend className="tw:text-sm tw:font-medium">Nights paid in money instead of points (optional)</legend>
@@ -87,7 +87,7 @@ export function RedemptionBookingDialog({ open, overview, onClose }: { open: boo
       {cash.length > 0 ? <MoneyField label="Money part" required value={amount} onChange={setAmount} hint="Held as Pending Payment until Finance approves the receipt." /> : null}
       {pricing?.value ? (
         <p className="tw:rounded-md tw:bg-muted tw:p-3 tw:text-sm" aria-live="polite">
-          Points needed: {fmt(pricing.value.weekdayPoints)} weekday and {fmt(pricing.value.weekendPoints)} weekend{pricing.value.cashNights > 0 ? `; ${pricing.value.cashNights} night${pricing.value.cashNights === 1 ? "" : "s"} in money` : ""}. Points table {version ? `from ${formatDate(version.effectiveDate)}` : ""}.
+          Points needed: {fmt(pricing.value.weekdayPoints)} weekday and {fmt(pricing.value.weekendPoints)} weekend{pricing.value.cashNights > 0 ? `; ${pricing.value.cashNights} night${pricing.value.cashNights === 1 ? "" : "s"} in money` : ""}. Sample points table {version ? `from ${formatDate(version.effectiveDate)}` : ""}.
         </p>
       ) : pricing?.message ? (
         <p className="tw:text-sm tw:text-muted-foreground" aria-live="polite">{pricing.message}</p>

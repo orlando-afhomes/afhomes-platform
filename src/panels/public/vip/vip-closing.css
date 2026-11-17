@@ -1,0 +1,21 @@
+/* VIP closing band: the Home closing band, centered, with an even dark-green shade */
+.site-home-cta.vip-closing { padding: 88px 0; }
+.site-home-cta.vip-closing .site-home-cta__shade {
+  background: radial-gradient(ellipse at center, rgb(14 43 32 / 0.66) 0%, rgb(14 43 32 / 0.84) 60%, rgb(14 43 32 / 0.92) 100%);
+}
+.site-home-cta.vip-closing .site-cta { align-items: center; max-width: 48rem; margin: 0 auto; text-align: center; }
+.site-home-cta.vip-closing .site-cta__text { max-width: 38rem; }
+.site-home-cta.vip-closing .site-cta__actions { justify-content: center; }
+.vip-closing__accent {
+  font-style: italic;
+  font-weight: 500;
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-right: 0.06em;
+  overflow-wrap: break-word;
+}
+@media (max-width: 600px) {
+  .site-home-cta.vip-closing { padding: 64px 0; }
+}

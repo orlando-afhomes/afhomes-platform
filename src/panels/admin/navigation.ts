@@ -6,6 +6,7 @@ import { getGrantedModuleIds, getGrantedOperations } from "@/modules/identity/pe
 export type AdminNavKey =
   | "dashboard"
   | "customers"
+  | "customer-lookup"
   | "sales"
   | "finance"
   | "commissions"
@@ -94,8 +95,6 @@ export const ADMIN_AREA_TABS = {
   customers: [
     { value: "customers", label: "Customers", formerHref: "/admin/customers", rule: { grants: ["customers"] } },
     { value: "import-export", label: "Import and Export", formerHref: "/admin/customers/import-export", rule: { grants: ["customers"], operation: "customers.import" } },
-    // Staff-only card check copied from v2 (UI21); Finance reaches it through the membership grant.
-    { value: "lookup", label: "Customer Look Up", formerHref: "/admin/customers", rule: { grants: ["customers", "membership"], operation: "customers.lookup" } },
   ],
   sales: [
     { value: "sales", label: "Sales", formerHref: "/admin/sales", rule: { grants: ["sales"] } },
@@ -195,9 +194,13 @@ function areaItem(id: AdminAreaKey, label: string): AdminNavItem {
 
 // Keep the area registry flat for access checks and breadcrumbs. AdminNavList
 // groups the visible links for display. Each area shows while any of its tabs is allowed.
+export const CUSTOMER_LOOKUP_HREF = "/admin/customer-lookup";
+export const CUSTOMER_LOOKUP_GRANTS: AdminModuleId[] = ["customers", "membership"];
+
 export const adminNavigation: AdminNavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/admin", available: true },
   areaItem("customers", "Customers"),
+  { id: "customer-lookup", label: "Customer Look Up", href: CUSTOMER_LOOKUP_HREF, available: true, grants: CUSTOMER_LOOKUP_GRANTS, operation: "customers.lookup" },
   areaItem("sales", "Sales"),
   areaItem("finance", "Finance"),
   areaItem("commissions", "Commissions"),

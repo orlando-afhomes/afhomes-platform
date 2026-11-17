@@ -1,0 +1,55 @@
+/* Compliance page: hero and milestones table (scoped under .site-compliance). */
+
+/* Hero: the Home hero, shorter, with a strong dark-green shade on the left */
+.site-compliance .compliance-hero { min-height: clamp(26rem, 28vw, 30rem); }
+.site-compliance .compliance-hero .site-home-hero__photo { position: absolute; inset: 0; }
+.site-compliance .compliance-hero .site-home-hero__photo .site-photo__image { object-position: 60% 50%; }
+.site-compliance .compliance-hero .site-home-hero__shade {
+  background:
+    linear-gradient(90deg, rgb(14 43 32 / 0.9) 0%, rgb(14 43 32 / 0.72) 34%, rgb(14 43 32 / 0.2) 64%, rgb(14 43 32 / 0.04) 100%),
+    linear-gradient(180deg, rgb(14 43 32 / 0.6) 0%, transparent 34%);
+}
+@media (max-width: 767px) {
+  .site-compliance .compliance-hero .site-home-hero__shade { background: linear-gradient(180deg, rgb(14 43 32 / 0.6) 0%, rgb(14 43 32 / 0.66) 55%, rgb(14 43 32 / 0.9) 100%); }
+}
+.site-compliance .compliance-hero .site-home-hero__inner { padding-top: 96px; padding-bottom: 44px; }
+.site-compliance .compliance-hero .site-home-hero__title { margin-top: 12px; }
+.site-compliance .compliance-hero .site-home-hero__lede { margin-top: 14px; max-width: 30rem; font-size: 15px; }
+
+/* Milestones: one white rounded card holding the permits table */
+.compliance-milestones__card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgb(14 43 32 / 0.05), 0 18px 36px -28px rgb(14 43 32 / 0.5);
+  overflow: hidden;
+}
+.compliance-milestones__scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.compliance-milestones__scroll:focus-visible { outline: 2px solid var(--color-state-focus); outline-offset: -2px; border-radius: 18px; }
+.compliance-milestones__table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 14px; line-height: 1.4; color: var(--color-text-primary); text-align: left; }
+.compliance-milestones__table thead th {
+  padding: 12px 18px;
+  background: color-mix(in oklab, var(--color-accent) 8%, #fff);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.compliance-milestones__table tbody th,
+.compliance-milestones__table tbody td { padding: 14px 18px; border-top: 1px solid var(--color-border-subtle); white-space: nowrap; vertical-align: middle; }
+.compliance-milestones__table tbody tr:first-child th,
+.compliance-milestones__table tbody tr:first-child td { border-top: 0; }
+.compliance-milestones__phase { font-weight: 700; color: var(--color-brand-deep); }
+.compliance-milestones__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--color-brand-soft);
+  color: var(--color-brand-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+.compliance-milestones__status svg { width: 14px; height: 14px; flex-shrink: 0; }

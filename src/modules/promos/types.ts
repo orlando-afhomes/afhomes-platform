@@ -37,6 +37,9 @@ export interface PromoPointsEntry {
   note?: string;
   date: PromoDate;
   actorId: string;
+  requestId?: string;
+  holder?: "primary" | "supplementary";
+  identityChecked?: boolean;
   /** For `use_void`: the `use` entry being voided. */
   voidsEntryId?: string;
 }

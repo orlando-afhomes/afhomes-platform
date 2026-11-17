@@ -40,6 +40,7 @@ export type MockStore = {
   igp: IgpState;
   payments: Payment[];
   closedMonths: ClosedMonth[];
+  memberQr: Record<string, { holderKey: string; token: string }>;
   memberships: Membership[];
   commissions: Commission[];
   commissionRateSettings: CommissionRateSetting[];
@@ -106,6 +107,12 @@ export function createSeedStore(): MockStore {
     igp: createIgpState(),
     payments: clone(payments),
     closedMonths: [],
+    memberQr: {
+      [JSON.stringify(["memb-1", "primary"])]: {
+        holderKey: JSON.stringify(["cust-b1", "26110200001B1T04S", 0]),
+        token: "c149175c37eb4eaabe092abefce8f47d",
+      },
+    },
     memberships: clone(memberships),
     commissions: clone(commissions),
     commissionRateSettings: [],
@@ -169,6 +176,7 @@ export function createMockStore(seed: MockStore = createSeedStore()): MockStore 
     igp: clone(seed.igp),
     payments: clone(seed.payments),
     closedMonths: clone(seed.closedMonths),
+    memberQr: clone(seed.memberQr),
     memberships: clone(seed.memberships),
     commissions: clone(seed.commissions),
     commissionRateSettings: clone(seed.commissionRateSettings),

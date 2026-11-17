@@ -1,0 +1,21 @@
+/* About page: hero and "Our story" sections. */
+
+/* Hero: same markup as Home, slightly shorter. */
+.site-about .about-hero { min-height: clamp(28rem, 30vw, 38rem); }
+.site-about .about-hero .site-home-hero__inner { padding-top: 104px; padding-bottom: 48px; }
+
+/* Story: text left, photo right; stacks below 900px. */
+.about-story__intro { display: grid; gap: 28px; align-items: center; }
+@media (min-width: 900px) { .about-story__intro { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 56px; } }
+.about-story__text .site-heading { margin-bottom: 16px; }
+.about-story__paragraph { max-width: 34rem; font-size: 15px; line-height: 1.6; color: var(--color-text-secondary); }
+.about-story__paragraph + .about-story__paragraph { margin-top: 14px; }
+.site-about .about-story__media { width: 100%; border-radius: 20px; box-shadow: 0 2px 4px rgb(14 43 32 / 0.06), 0 24px 48px -28px rgb(14 43 32 / 0.55); }
+
+/* Value cards: white, soft shadow, gold line icon on the left. */
+.about-story__values { margin-top: 36px; display: grid; gap: 16px; list-style: none; padding: 0; }
+@media (min-width: 768px) { .about-story__values { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; } }
+.about-story__value { display: flex; align-items: center; gap: 18px; padding: 20px 22px; border-radius: 16px; background: #fff; box-shadow: 0 1px 2px rgb(14 43 32 / 0.05), 0 16px 32px -26px rgb(14 43 32 / 0.45); }
+.about-story__value-icon { flex: none; width: 40px; height: 40px; color: color-mix(in oklab, var(--color-accent) 80%, var(--color-brand-deep)); }
+.about-story__value-title { font-size: 15px; font-weight: 700; color: var(--color-brand-deep); }
+.about-story__value-text { margin-top: 4px; font-size: 13px; line-height: 1.5; color: var(--color-text-secondary); }

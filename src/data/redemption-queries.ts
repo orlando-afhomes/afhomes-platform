@@ -31,6 +31,7 @@ function useRedemptionMutation<V, R>(run: (repositories: MockRepositories, varia
 export type BookingAction =
   | { id: string; action: "cancel"; reason: string; cancelledAt?: string }
   | { id: string; action: "no-show"; reason: string }
+  | { id: string; action: "check-in"; verification: import("./contracts/member-qr-repository").HolderVerification }
   | { id: string; action: "complete" }
   | { id: string; action: "approve-cash"; reference: string };
 
@@ -43,6 +44,7 @@ export function useRedemptionBookingAction() {
     switch (v.action) {
       case "cancel": return r.redemption.cancelBooking(v.id, v.reason, v.cancelledAt);
       case "no-show": return r.redemption.recordNoShow(v.id, v.reason);
+      case "check-in": return r.redemption.checkInBooking(v.id, v.verification);
       case "complete": return r.redemption.completeBooking(v.id);
       case "approve-cash": return r.redemption.approveCashPayment(v.id, v.reference);
     }

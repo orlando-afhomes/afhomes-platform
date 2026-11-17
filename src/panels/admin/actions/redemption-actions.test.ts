@@ -11,9 +11,10 @@ function booking(status: BookingStatus): Pick<BookingView, "reference" | "status
   return { reference: "BK-001", status } as Pick<BookingView, "reference" | "status">;
 }
 
-function fullCb(): Required<Pick<RedemptionBookingMenuCallbacks, "onApproveCash" | "onComplete" | "onNoShow" | "onCancel">> {
+function fullCb(): Required<Pick<RedemptionBookingMenuCallbacks, "onApproveCash" | "onCheckIn" | "onComplete" | "onNoShow" | "onCancel">> {
   return {
     onApproveCash: vi.fn(),
+    onCheckIn: vi.fn(),
     onComplete: vi.fn(),
     onNoShow: vi.fn(),
     onCancel: vi.fn(),
@@ -46,12 +47,17 @@ describe("buildRedemptionBookingMenuProps", () => {
     expect(menu.onDelete).toBeUndefined();
   });
 
-  it("offers complete, no-show and cancel on confirmed with the book right", () => {
+  it("offers check-in, no-show and cancel on confirmed with the book right", () => {
     const menu = buildRedemptionBookingMenuProps(booking("confirmed"), PERMS.bookOnly, fullCb());
-    expect(keysOf(menu)).toEqual(["complete", "no-show", "cancel"]);
+    expect(keysOf(menu)).toEqual(["check-in", "no-show", "cancel"]);
     expect(menu.extraItems.find((item) => item.key === "cancel")?.danger).toBe(true);
-    expect(menu.extraItems.find((item) => item.key === "complete")?.danger ?? false).toBe(false);
+    expect(menu.extraItems.find((item) => item.key === "check-in")?.danger ?? false).toBe(false);
     expect(menu.extraItems.map((item) => item.tone)).toEqual(["success", "warning", "danger"]);
+  });
+
+  it("offers only completion once the holder checks in", () => {
+    const stay = { ...booking("confirmed"), checkedIn: { date: "2026-11-17", actorId: "staff", holder: "primary", identityChecked: true } } as const;
+    expect(keysOf(buildRedemptionBookingMenuProps(stay, PERMS.full, fullCb()))).toEqual(["complete"]);
   });
 
   it("gates approve on the finance verify right and pending_payment status", () => {

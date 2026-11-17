@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { MapPin, ShieldCheck } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import type { SiteNavLink } from "./site-nav-types";
 
@@ -67,9 +67,15 @@ export function SiteFooter({ brand, contacts, columns, locations, legal, classNa
 
       <div className="site-footer__legal">
         {legal.disclaimer ? (
-          <p className="site-footer__disclaimer"><strong>Disclaimer:</strong> {legal.disclaimer}</p>
+          <div className="site-footer__disclaimer" role="note" aria-label="Disclaimer">
+            <span className="site-footer__disclaimer-icon" aria-hidden="true"><ShieldCheck /></span>
+            <div>
+              <p className="site-footer__disclaimer-title">Disclaimer</p>
+              <p className="site-footer__disclaimer-text">{legal.disclaimer}</p>
+            </div>
+          </div>
         ) : null}
-        <p>{legal.copyright}</p>
+        <p className="site-footer__copyright">{legal.copyright}</p>
       </div>
     </footer>
   );

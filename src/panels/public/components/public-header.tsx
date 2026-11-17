@@ -1,4 +1,3 @@
-import { LogIn, ShieldCheck } from "lucide-react";
 import { SiteHeader, type SiteHeaderAction, type SiteNavItem } from "@/shared/components/site";
 import { EXPERIENCE_LINKS, MAIN_NAV, SITE } from "@/modules/public-site/content/site";
 
@@ -9,9 +8,10 @@ const NAV_ITEMS: SiteNavItem[] = [
   ...MAIN_NAV.slice(2),
 ];
 
+/** Verify Accreditation is the secondary action; Join VIP is the main call to action. */
 const ACTIONS: SiteHeaderAction[] = [
-  { href: "/verify", label: "Verify Accreditation", variant: "primary", icon: <ShieldCheck aria-hidden="true" /> },
-  { href: "/login/sales", label: "Sales Sign-In", variant: "outline", icon: <LogIn aria-hidden="true" /> },
+  { href: "/verify", label: "Verify Accreditation", variant: "outline" },
+  { href: "/vip-privilege#cards", label: "Join VIP", variant: "primary" },
 ];
 
 export function PublicHeader() {

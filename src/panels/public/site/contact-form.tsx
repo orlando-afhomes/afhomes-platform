@@ -40,7 +40,7 @@ export function ContactForm() {
         <Textarea id="contact-message" rows={5} value={value.message} maxLength={2000} onChange={(event) => set("message")(event.target.value)} aria-invalid={errors.message ? true : undefined} />
         {errors.message ? <p role="alert" className="site-form__error">{errors.message}</p> : null}
       </div>
-      <Button type="submit" className="tw:min-h-11 tw:sm:min-h-9">Open email to send</Button>
+      <Button type="submit" className="tw:min-h-11 tw:sm:min-h-9">Open email</Button>
       <p className="site-note" role="status">
         {opened ? "Your email app should now be open with your message. If it did not open, email us at info@afhomes.com.ph." : "This opens your email app with your message ready to send. We do not store what you type here."}
       </p>

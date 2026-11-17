@@ -1,19 +1,24 @@
 "use client";
 
 import { EMPTY } from "@/shared/lib/empty-value";
+import { useQuery } from "@tanstack/react-query";
+import type { CardHolder, MemberQrHolder } from "@/data/contracts/member-qr-repository";
+import { useMockRepositories } from "@/data/queries";
+import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMemo, useState } from "react";
-import { Coins } from "lucide-react";
+import { Coins, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { useOperation, useStayPoints } from "@/data/business-queries";
 import type { PromoLedgerRow } from "@/data/contracts/promo-repository";
-import { usePromoLedger, usePromos, useRecordPromoUse, useVoidPromoUse } from "@/data/promo-queries";
+import { usePromoBalances, usePromoLedger, usePromos, useRecordPromoUse, useVoidPromoUse } from "@/data/promo-queries";
 import { useOutlets } from "@/data/settings-queries";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
-import { PointsField, SelectField, TextField } from "@/shared/forms/modern";
+import { CheckboxField, PointsField, SelectField, TextField } from "@/shared/forms/modern";
 import { formatDate } from "@/shared/lib/format-date";
 import { matchesSearch, optionsFrom } from "@/shared/lib/search";
 import { Button } from "@/shared/ui/button";
@@ -29,16 +34,16 @@ const ENTRY_TYPE_LABELS: Record<PromoLedgerRow["type"], string> = {
 const entryType = (row: PromoLedgerRow) => `${ENTRY_TYPE_LABELS[row.type]}${row.voided ? " (voided)" : ""}`;
 
 /** "Record points use" (promo-points.use). Owns its form dialog. */
-export function RecordPromoUseButton() {
+export function RecordPromoUseButton({ selected }: { selected?: MemberQrHolder } = {}) {
   const canUse = useOperation("promo-points.use");
   const [open, setOpen] = useState(false);
   if (!canUse) return null;
   return (
     <>
       <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setOpen(true)}>
-        <Coins aria-hidden="true" /> Record Points Use
+        {selected ? <Link2 aria-hidden="true" /> : <Coins aria-hidden="true" />} Record Points Use
       </Button>
-      {open ? <UseDialog onClose={() => setOpen(false)} /> : null}
+      {open ? <UseDialog selected={selected} onClose={() => setOpen(false)} /> : null}
     </>
   );
 }
@@ -118,19 +123,32 @@ export function PromoPointsPanel() {
   );
 }
 
-function UseDialog({ onClose }: { onClose: () => void }) {
+function UseDialog({ onClose, selected }: { onClose: () => void; selected?: MemberQrHolder }) {
   const record = useRecordPromoUse();
   const memberships = useStayPoints();
   const promos = usePromos();
-  const [membershipId, setMembershipId] = useState("");
+  const [membershipId, setMembershipId] = useState(selected?.membershipId ?? "");
+  const [holder, setHolder] = useState<CardHolder>(selected?.holder ?? "primary");
+  const [identityChecked, setIdentityChecked] = useState(false);
+  const [requestId] = useState(() => crypto.getRandomValues(new Uint32Array(4)).join("-"));
+  const { confirmRun, dialog: confirmation } = useConfirmRun();
+  const balances = usePromoBalances();
+  const { memberQr } = useMockRepositories();
+  const { identity } = useDevIdentity();
+  const holders = useQuery({
+    queryKey: ["bill-cardholders", identity.id, membershipId],
+    queryFn: () => memberQr.identify(membershipId),
+    enabled: Boolean(membershipId) && !selected,
+  });
   const [promoId, setPromoId] = useState("");
   const [outletId, setOutletId] = useState("");
   const [points, setPoints] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | undefined>();
 
-  const active = (promos.data ?? []).filter((promo) => promo.status === "active");
+  const active = (promos.data ?? []).filter((promo) => promo.status !== "draft");
   const promo = active.find((item) => item.id === promoId);
+  const available = balances.data?.find((item) => item.membershipId === membershipId)?.byPromo.find((item) => item.promoId === promoId)?.balance.available ?? 0;
   const outletList = useOutlets();
   const outlets = useMemo(() => new Map((outletList.data ?? []).map((outlet) => [outlet.id, outlet.name])), [outletList.data]);
 
@@ -138,20 +156,31 @@ function UseDialog({ onClose }: { onClose: () => void }) {
     const amount = Number(points.replace(/,/g, ""));
     if (!membershipId || !promoId || !outletId) return setError("Select the member, the promo and the outlet.");
     if (!Number.isSafeInteger(amount) || amount <= 0) return setError("Points to use must be a whole number above zero.");
-    try {
-      await record.mutateAsync({ membershipId, promoId, outletId, points: amount, note });
-      toast.success("Points use recorded.");
-      onClose();
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Could not record the use.");
-    }
+    if (!identityChecked) return setError("Confirm you checked the cardholder's ID.");
+    if (balances.isPending) return setError("Wait for the current balance to load.");
+    if (balances.isError) return setError("Could not load the current balance.");
+    if (amount > available) return setError(`Only ${available.toLocaleString("en-PH")} Promo Points are available.`);
+    confirmRun({
+      title: "Use Promo Points?",
+      description: `Use ${amount.toLocaleString("en-PH")} points from ${promo?.name} at ${outlets.get(outletId) ?? "the selected outlet"}. Expected balance: ${(available - amount).toLocaleString("en-PH")} points.`,
+      confirmText: "Use Points",
+      action: async () => {
+        const entry = await record.mutateAsync({ membershipId, promoId, outletId, points: amount, note, requestId, holder, identityChecked, scannedCode: selected?.scannedCode });
+        toast.success(`Reference ${entry.id}`);
+        onClose();
+      },
+      successTitle: "Points use recorded.",
+      errorTitle: "Could not record the use.",
+    });
   };
 
   return (
-    <FormDialog open title="Record Points Use" submitText="Record Use" pending={record.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
-      <SelectField label="Member" required value={membershipId} placeholder="Select a member"
+    <><FormDialog open title="Record Points Use" submitText="Record Use" pending={record.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
+      {selected ? <p>{selected.holderName} · {selected.vipNumber}</p> : <SelectField label="Member" required value={membershipId} placeholder="Select a member"
         options={(memberships.data ?? []).filter((item) => item.cardId).map((item) => ({ value: item.membershipId, label: `${item.customerName} · ${item.cardId}` }))}
-        onChange={(value) => { setMembershipId(value); setError(undefined); }} />
+        onChange={(value) => { setMembershipId(value); setHolder("primary"); setIdentityChecked(false); setError(undefined); }} />}
+      {!selected && Boolean(holders.data?.length) ? <SelectField label="Cardholder" required value={holder} options={holders.data!.map((item) => ({ value: item.holder, label: item.holderName }))} onChange={(value) => { setHolder(value === "supplementary" ? value : "primary"); setIdentityChecked(false); }} /> : null}
+      <CheckboxField label="I checked the cardholder’s ID" checked={identityChecked} onChange={setIdentityChecked} />
       <SelectField label="Promo" required value={promoId} placeholder="Select a promo" options={active.map((item) => ({ value: item.id, label: item.name }))}
         onChange={(value) => { setPromoId(value); setOutletId(""); setError(undefined); }} />
       <SelectField label="Outlet" required value={outletId} placeholder="Select an outlet" disabled={!promo}
@@ -159,6 +188,6 @@ function UseDialog({ onClose }: { onClose: () => void }) {
         onChange={(value) => { setOutletId(value); setError(undefined); }} />
       <PointsField label="Points to use" required value={points} onChange={(value) => { setPoints(value); setError(undefined); }} />
       <TextField label="Note" value={note} maxLength={200} onChange={setNote} />
-    </FormDialog>
+    </FormDialog>{confirmation}</>
   );
 }

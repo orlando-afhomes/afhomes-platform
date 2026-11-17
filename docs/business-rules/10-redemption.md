@@ -1,6 +1,6 @@
 # AFHomes Platform — Redemption Management Business Rules
 
-> **STATUS: DISABLED.** Redemption is planned but stays disabled in the application until the owner authorizes its build (AGENTS.md section 5; owner rulings R11 and R12, 2026-11-12). This document defines how Redemption must behave once authorized. It does not authorize enabling routes, APIs, navigation, feature flags, or customer submissions.
+> **STATUS: STAFF PROTOTYPE AUTHORIZED, 2026-11-17.** The owner approved the QR loyalty prototype, including Stay Points bookings, with synthetic browser-memory data and sample points-per-night values. Live Redemption and customer submissions require separate authorization. Services remain disabled.
 >
 > Single source of truth for the **Redemption Management** module (use of Stay Points).
 >
@@ -153,7 +153,7 @@ Points plus cash for a stay is allowed (owner follow-up ruling, 2026-11-12). Whe
 
 ---
 
-4. **Provisional first-stay hold (owner follow-up ruling, 2026-11-12).** Before the first gift is available, staff may hold a room provisionally under the venue's normal booking rules. This hold reserves no points, so it is the one exception to section 9.1 step 4. At check-in, confirm points use only when the gift qualifies and covers the requested points nights. Record the first actual use and its Points Activation Date together. Cancellation or unsuccessful check-in does not set that date or forfeit points from a provisional request. Redemption remains disabled until separately authorized.
+4. **Provisional first-stay hold (owner follow-up ruling, 2026-11-12).** Before the first gift is available, staff may hold a room provisionally under the venue's normal booking rules. This hold reserves no points, so it is the one exception to section 9.1 step 4. At check-in, confirm points use only when the gift qualifies and covers the requested points nights. Record the first actual use and its Points Activation Date together. Cancellation or unsuccessful check-in does not set that date or forfeit points from a provisional request. Live Redemption requires separate authorization.
 
 ## 12. Card Transfer (R12 item 7; Grant §V)
 
@@ -200,7 +200,7 @@ A visible page is never authorization; enforcement must be server-side once buil
 
 ## 17. Current Feature Status
 
-Redemption and Services code is preserved but hidden and disabled. Do not make Redemption visible, enable routes, APIs, feature flags or customer submissions, or reactivate Services through documentation work. Reactivation needs separate explicit owner authorization and verification of eligibility, balances, basis versions, permissions, Finance integration and existing records.
+Staff can use the authorized prototype to scan a membership QR, select the holder’s booking, verify the holder’s ID, record check-in, and complete the stay. Check-in keeps the points reserved. Completion after departure deducts the reserved points. Live use requires separate owner authorization and verification of eligibility, balances, basis versions, permissions, Finance integration and existing records. Services remain disabled.
 
 ---
 
@@ -359,6 +359,12 @@ These rulings take precedence over earlier text in this document where they diff
 19. **First redemption.** The redemption that can set the Points Activation Date is the first stay where points are actually used at check-in. A booking cancelled in time does not count (section 11).
 20. **Card transfer.** After an approved card transfer, the old holder's unused points are forfeited and cannot be used; the new holder gets only future tranches (section 12).
 21. **Death of the cardholder.** The heirs request a written transfer, which management approves; the same transfer rules apply (section 12).
+
+## Staff QR prototype (2026-11-17)
+
+A reusable QR identifies one membership and one cardholder. Gold primary and supplementary holders have separate codes and share the membership balance. Staff scan through Customer Look Up and follow their existing operation permissions. Manual lookup follows the same transaction rules. Scan and lookup only select the record. Staff confirm the holder’s ID before Promo Points use or Stay Points check-in. Record the staff actor and holder with the transaction. An Administrator or Super Administrator can replace a code. Replaced codes and codes for former holders cannot start transactions.
+
+Purchases continue through the resort bill entry and approval process. Eligible approved bills count toward qualifying spend and earn Promo Points under the configured promotion rules. Stay Points and Promo Points use separate balances.
 
 ## Owner ruling amendment (2026-11-13, Promo Points)
 

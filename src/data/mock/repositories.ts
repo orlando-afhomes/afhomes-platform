@@ -1,3 +1,5 @@
+import type { MemberQrRepository } from "@/data/contracts/member-qr-repository";
+import { MockMemberQrRepository } from "./member-qr-repository";
 import type { CustomerRepository } from "@/data/contracts/customer-repository";
 import type { MemberRepository } from "@/data/contracts/member-repository";
 import type { ProductRepository } from "@/data/contracts/product-repository";
@@ -68,6 +70,7 @@ export type MockRepositories = {
   contracts: ContractRepository;
   sales: SaleRepository;
   payments: PaymentRepository;
+  memberQr: MemberQrRepository;
   memberships: MembershipRepository;
   commissions: CommissionRepository;
   stayPoints: StayPointsRepository;
@@ -102,6 +105,7 @@ export function createMockRepositories(
     contracts: new MockContractRepository(store, getIdentity, asyncOptions),
     sales: new MockSaleRepository(store, getIdentity, asyncOptions),
     payments: new MockPaymentRepository(store, getIdentity, asyncOptions),
+    memberQr: new MockMemberQrRepository(store, getIdentity, asyncOptions),
     memberships: new MockMembershipRepository(store, getIdentity, asyncOptions),
     commissions: new MockCommissionRepository(store, getIdentity, asyncOptions),
     stayPoints: new MockStayPointsRepository(store, getIdentity, asyncOptions),

@@ -1,0 +1,50 @@
+/* Blog featured post: one rounded card, cover photo left (3fr), dark green panel right (2fr). Stacks on phones. */
+
+.blog-featured {
+  display: grid;
+  overflow: hidden;
+  border-radius: 22px;
+  background: var(--color-brand-deep);
+  box-shadow: 0 2px 4px rgb(14 43 32 / 0.06), 0 30px 50px -34px rgb(14 43 32 / 0.7);
+}
+.blog-featured__media { display: block; min-width: 0; }
+.site-blog-page .blog-featured__photo { border-radius: 0; }
+.site-blog-page .blog-featured__photo .site-photo__image { object-fit: contain; object-position: center; }
+
+.blog-featured__panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  padding: 26px 20px 30px;
+  color: var(--color-on-dark);
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgb(220 192 106 / 0.12), transparent 60%),
+    linear-gradient(160deg, var(--color-brand-primary), var(--color-brand-deep));
+}
+.blog-featured__title {
+  margin-top: 14px;
+  font-family: var(--site-home-display, var(--font-playfair)), Georgia, serif;
+  font-size: clamp(24px, 2.3vw, 32px);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: #fff;
+  overflow-wrap: break-word;
+}
+.blog-featured__excerpt { margin-top: 12px; max-width: 34rem; font-size: 14px; line-height: 1.55; color: var(--color-on-dark-muted); }
+.blog-featured__action { margin-top: 22px; }
+.blog-featured__action .site-button svg { transition: transform 200ms ease; }
+.blog-featured__action .site-button:hover svg { transform: translateX(3px); }
+
+@media (min-width: 900px) {
+  .blog-featured { grid-template-columns: 3fr 2fr; }
+  .site-blog-page .blog-featured__media { position: relative; min-height: 100%; }
+  .site-blog-page .blog-featured__photo { position: absolute; inset: 0; aspect-ratio: auto !important; height: 100%; }
+  .blog-featured__panel { min-height: 300px; padding: 32px 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blog-featured__action .site-button svg { transition: none; }
+  .blog-featured__action .site-button:hover svg { transform: none; }
+}

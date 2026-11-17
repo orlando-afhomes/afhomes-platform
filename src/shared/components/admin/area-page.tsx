@@ -3,7 +3,7 @@
 import { useId, type ReactNode } from "react";
 import type { AdminModuleId } from "@/modules/identity/permissions";
 import type { BreadcrumbItem } from "@/shared/components/modern/breadcrumbs";
-import { TabBar, tabId, tabPanelId } from "@/shared/components/modern/tab-bar";
+import { TabBar, tabId, tabPanelId, type TabBarTab } from "@/shared/components/modern/tab-bar";
 import { useTabParam } from "@/shared/components/modern/use-tab-param";
 import { useNotifications } from "@/shared/providers/notifications-provider";
 import { AdminPage } from "./admin-page";
@@ -20,6 +20,7 @@ export type AreaPageTab = {
   allowed: boolean;
   /** Optional count shown beside the label. */
   count?: number;
+  icon?: TabBarTab["Icon"];
   /** The tab panel content; only the active tab is rendered. `select` opens another tab (e.g. a summary card drilling down). */
   render: (select: (value: string) => void) => ReactNode;
 };
@@ -98,7 +99,7 @@ export function AreaPage({
             <TabBar
               label={title}
               idPrefix={idPrefix}
-              tabs={visible.map(({ value, label, count }) => ({ value, label, count, unreadCount: unreadByTab[value] }))}
+              tabs={visible.map(({ value, label, count, icon }) => ({ value, label, count, Icon: icon, unreadCount: unreadByTab[value] }))}
               value={active.value}
               onChange={select}
             />

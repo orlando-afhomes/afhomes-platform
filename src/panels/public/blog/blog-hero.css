@@ -1,0 +1,50 @@
+/* Blog index hero: the Home hero (site-home-hero), shorter, with a row of three topic highlights.
+   Overrides of shared classes are scoped under .site-blog-page .blog-hero so they win whatever order the stylesheets load in. */
+
+.site-blog-page .blog-hero { min-height: clamp(24rem, 27vw, 28rem); }
+.site-blog-page .blog-hero .site-home-hero__photo { position: absolute; inset: 0; z-index: -2; border-radius: 0; }
+.site-blog-page .blog-hero .site-home-hero__photo .site-photo__image { object-position: 50% 50%; }
+.site-blog-page .blog-hero .site-home-hero__shade {
+  background:
+    linear-gradient(90deg, rgb(14 43 32 / 0.9) 0%, rgb(14 43 32 / 0.72) 34%, rgb(14 43 32 / 0.3) 64%, rgb(14 43 32 / 0.08) 100%),
+    linear-gradient(180deg, rgb(14 43 32 / 0.6) 0%, transparent 34%);
+}
+@media (max-width: 767px) {
+  .site-blog-page .blog-hero .site-home-hero__shade { background: linear-gradient(180deg, rgb(14 43 32 / 0.76) 0%, rgb(14 43 32 / 0.7) 50%, rgb(14 43 32 / 0.92) 100%); }
+}
+
+.site-blog-page .blog-hero .blog-hero__inner { padding-top: 104px; padding-bottom: 36px; }
+
+/* Eyebrow: light, uppercase, gold line after */
+.site-blog-page .blog-hero .site-eyebrow { color: var(--color-on-dark); font-weight: 600; letter-spacing: 0.12em; }
+.site-blog-page .blog-hero .site-eyebrow::after { width: 56px; background: var(--color-accent-light); }
+
+/* "AFhomes Lifestyle Blog" on one line, "Lifestyle Blog" in gold italic */
+.site-blog-page .blog-hero .site-home-hero__title { margin-top: 12px; font-size: clamp(34px, 4.4vw, 58px); line-height: 1.1; }
+.site-blog-page .blog-hero .site-home-hero__accent { display: inline; }
+.site-blog-page .blog-hero .site-home-hero__lede { margin-top: 12px; max-width: 36rem; font-size: 16px; }
+
+/* Highlights: three items with thin light dividers; stacked with horizontal dividers on phones */
+.blog-hero__highlights { margin: 26px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; max-width: 26rem; }
+.blog-hero__highlight { display: flex; align-items: center; gap: 14px; min-width: 0; padding: 12px 0; }
+.blog-hero__highlight + .blog-hero__highlight { border-top: 1px solid rgb(255 255 255 / 0.2); }
+.blog-hero__highlight-icon {
+  display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center;
+  width: 44px; height: 44px; border-radius: 999px;
+  border: 1px solid rgb(220 192 106 / 0.6);
+  color: var(--color-accent-light);
+}
+.blog-hero__highlight-icon svg { width: 20px; height: 20px; }
+.blog-hero__highlight-text { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
+.blog-hero__highlight-title { font-size: 14px; line-height: 1.3; font-weight: 700; color: var(--color-on-dark); }
+.blog-hero__highlight-line { font-size: 12px; line-height: 1.4; color: var(--color-on-dark-muted); }
+
+@media (min-width: 768px) {
+  .blog-hero__highlights { flex-direction: row; flex-wrap: wrap; align-items: center; max-width: none; row-gap: 12px; }
+  .blog-hero__highlight { padding: 0 24px; }
+  .blog-hero__highlight:first-child { padding-left: 0; }
+  .blog-hero__highlight + .blog-hero__highlight { border-top: 0; border-left: 1px solid rgb(255 255 255 / 0.2); }
+}
+@media (min-width: 1024px) {
+  .blog-hero__highlight { padding: 0 28px; }
+}

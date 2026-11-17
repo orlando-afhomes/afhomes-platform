@@ -11,6 +11,7 @@ export type BookingInput = {
   checkOut: string;
   guests: number;
   stayingHolder: string;
+  scannedCode?: string;
   /** Nights paid in money instead of points, whole nights only (owner ruling A1). */
   cashNightDates: string[];
   /** Money part in centavos, entered by staff; counts only after Finance approves the receipt (doc 07). */
@@ -24,7 +25,7 @@ export type MemberPoints = {
   customerName: string;
   productCode: string;
   vipNumber: string | null;
-  /** Date used as the Card Claim Date (shortcut: activation date until the Membership model records it). */
+  /** Recorded Card Claim Date. */
   claimDate: string | null;
   tableVersion: number | null;
   padDate: string | null;
@@ -55,6 +56,7 @@ export interface RedemptionRepository {
   /** `cancelledAt` is the recorded date and time of the request; defaults to now. */
   cancelBooking(bookingId: string, reason: string, cancelledAt?: string, options?: MockAsyncOptions): Promise<BookingView>;
   recordNoShow(bookingId: string, reason: string, options?: MockAsyncOptions): Promise<BookingView>;
+  checkInBooking(bookingId: string, verification: import("./member-qr-repository").HolderVerification, options?: MockAsyncOptions): Promise<BookingView>;
   completeBooking(bookingId: string, options?: MockAsyncOptions): Promise<BookingView>;
   /** Owner ruling A7a: a card transfer cancels the former holder's future points bookings; their points are forfeited. Called by card servicing. */
   cancelFutureBookingsForTransfer(membershipId: string, effectiveDate: string, options?: MockAsyncOptions): Promise<BookingView[]>;

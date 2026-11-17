@@ -37,7 +37,11 @@ describe("booking with points", () => {
       expect(store.redemption.ledger).toHaveLength(0);
       expect(store.redemption.pads[member.id]).toBeUndefined();
       vi.setSystemTime(new Date("2027-03-04T06:00:00.000Z"));
-      expect((await repo.completeBooking(booking.id)).status).toBe("completed");
+      await repo.checkInBooking(booking.id, { holder: 'primary', identityChecked: true });
+      expect(store.redemption.ledger.map((entry) => entry.type)).toEqual(['reserve']);
+      await expect(repo.completeBooking(booking.id)).rejects.toThrow(/ended/);
+      vi.setSystemTime(new Date('2027-03-05T03:00:00.000Z'));
+      expect((await repo.completeBooking(booking.id)).status).toBe('completed');
       await repo.completeBooking(booking.id);
       expect(store.redemption.pads[member.id]?.date).toBe("2027-03-04");
       expect(store.redemption.ledger).toEqual([
@@ -60,7 +64,7 @@ describe("booking with points", () => {
       store.resortSpends = [];
       const repo = new MockRedemptionRepository(store, () => getDevIdentity("dev-admin"));
       const booking = await repo.createBooking(stay({ checkOut: "2027-03-05" }));
-      await expect(repo.completeBooking(booking.id)).rejects.toThrow(/Year 1/);
+      await expect(repo.checkInBooking(booking.id, { holder: 'primary', identityChecked: true })).rejects.toThrow(/Year 1/);
       expect(store.redemption.pads[member.id]).toBeUndefined();
       await repo.cancelBooking(booking.id, "Cancelled");
       expect(store.redemption.ledger).toHaveLength(0);
@@ -75,6 +79,7 @@ describe("booking with points", () => {
     const booking = await repo.createBooking(input);
     expect(booking).toMatchObject({ status: "confirmed", reservedWeekday: 3000, reservedWeekend: 4500, basisVersion: 1 });
     expect((await repo.createBooking(input)).id).toBe(booking.id);
+    await expect(repo.createBooking({ ...input, guests: 3 })).rejects.toThrow(/different details/);
     expect(store.redemption.bookings).toHaveLength(1);
     expect(store.redemption.ledger.filter((e) => e.type === "reserve")).toHaveLength(2);
     const m = await memb(repo);
@@ -155,14 +160,24 @@ describe("cancellation, no-show and completion", () => {
   });
 
   it("consumes once on completion and sets the Points Activation Date on the first redemption (scenarios J, L)", async () => {
-    const { repo, store } = setup();
-    const booking = await repo.createBooking(stay());
-    await expect(repo.completeBooking(booking.id)).rejects.toThrow(/ended/);
-    Object.assign(store.redemption.bookings[0], { checkIn: "2026-11-05", checkOut: "2026-11-07" });
-    await repo.completeBooking(booking.id);
-    await repo.completeBooking(booking.id);
-    expect(store.redemption.ledger.filter((e) => e.type === "consume")).toHaveLength(2);
-    expect(store.redemption.pads["memb-1"]).toEqual({ date: "2026-11-05", bookingId: booking.id });
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(new Date("2027-03-02T03:00:00Z"));
+      const { repo, store } = setup();
+      const booking = await repo.createBooking(stay());
+      vi.setSystemTime(new Date("2027-03-04T03:00:00Z"));
+      await expect(repo.completeBooking(booking.id)).rejects.toThrow(/ended/);
+      await expect(repo.checkInBooking(booking.id, { holder: "primary", identityChecked: false })).rejects.toThrow(/ID/);
+      await repo.checkInBooking(booking.id, { holder: "primary", identityChecked: true });
+      await repo.checkInBooking(booking.id, { holder: "primary", identityChecked: true });
+      vi.setSystemTime(new Date("2027-03-06T03:00:00Z"));
+      await repo.completeBooking(booking.id);
+      await repo.completeBooking(booking.id);
+      expect(store.redemption.ledger.filter((e) => e.type === "consume")).toHaveLength(2);
+      expect(store.redemption.pads["memb-1"]).toEqual({ date: "2027-03-04", bookingId: booking.id });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

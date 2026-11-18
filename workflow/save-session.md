@@ -111,81 +111,110 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-18 (second save this day; continues the same session arc, supersedes the earlier snapshot below in Part B history).
+- Saved at: 2026-11-18 (third save this day; supersedes the previous snapshot).
 - Repository: afhomes-platform (remote not re-checked; no fetch run).
 - Branch: develop.
-- HEAD: c5d332f "feat: refactor public experience pages and add contact map embed" (verified this run via `git rev-parse`; unchanged all session).
+- HEAD: e2e459a "docs: remove obsolete audit documents" (verified this run). The owner committed the earlier UI work as f3ddfba and the audit-doc removal as e2e459a during the session; the FP12-FP16 work is uncommitted.
 - Tool and model: OpenCode, DeepSeek V4.1 Flash 1017 (session metadata; not independently probed).
-- Session objective: owner-driven browser-comment refinements (hero status badge, callout border, staff-only Access notes, header logo tile, related/blog image frames); an ORDACY-style contact redesign was built then fully reverted per owner complaint; this run is `/save` only.
-- Development phase: frontend prototype with mock data, QA stage. Only the owner declares frontend completion; backend/database/API/hosting deferred.
-- Context note: no compaction; summary from conversation and repo reads. Prior same-day snapshot covered the post-c5d332f UI work; this one adds everything since.
+- Session objective: implement FP12 to FP16 - loading, empty, error and busy states across the public site and both login pages, a public route group with route loaders, a content-shaped skeleton system, an admin state audit, and the permanent clarification protocol. This run is `/save` only.
+- Development phase: frontend prototype with mock data, QA stage. Only the owner declares frontend completion; backend/database/API/hosting deferred. Public content will become CMS-driven later.
+- Context note: no compaction. Work was split across subagents for FP12 states, FP13 route group, FP14 login/public states and FP15 audit; the parent integrated and verified. The public route group and loading files were added after the subagent moves.
 
 ## 2. Current Project State
-- Verified this run: `develop`, HEAD c5d332f; 40 modified tracked files, 2 deleted, 8 untracked; nothing staged.
-- New this session, all uncommitted, on top of the prior uncommitted work:
-  - Open-now badge: `SITE_HOURS` 9:00 AM–5:00 PM daily Asia/Manila (owner-confirmed; matches FAQ cash-payment hours) in `src/modules/public-site/hours.ts` + `hours.test.ts`; `OpenStatusBadge` client component above the hero eyebrow (hidden until mounted, 30s refresh, no hydration flash). Hero status pill "One group, three destinations" REMOVED per owner. Badge restyled to transparent pill with solid border; text/border/soft-tint follow state (green open, red closed); pulse kept, reduced-motion disables.
-  - Callout: legacy `.site-callout` rule scoped to `p.site-callout` (payment warning); home Verify Accreditation panel border-left is now 0px.
-  - Access notes: mobile-menu Access block and footer Access column carry "not for customers" notes; footer note names "Staff Login and Sales Sign-In" so Verify Accreditation (same column, public) is not misread as restricted. Enhanced to notice pills with Info icons (amber tint on ivory menu, gold tint on dark footer).
-  - Header logo tile: white `background` removed (transparent); mobile/footer logo tiles untouched.
-  - Related grid: images `contain` + centered (50% 50%); container has gold-glow gradient, hairline divider, inset ring.
-  - Post hero frame: gradient matte, gold halo outline offset 4px, deeper shadow; cover gets matching gradient backdrop.
-  - Blog index cards + featured media: gradient letterbox backdrops, hairline dividers (featured divider switches bottom→right at 900px), inset rings; card/featured images were already `contain` centered.
-  - Contact page: ORDACY redesign (hero/steps/form-card/fields/button) was built by 3 subagents then fully REVERTED per owner ("UI design destroyed"). Page is back to the working state: "Contact Us" hero, ContactCards, "Write to us" mailto form ("Open email"), static maps, `SiteCta` closing. Grep confirms zero `contact-re-`/`PROJECT_TYPES`/"Send an inquiry" remnants.
-  - `faq.ts` cash-payment line has a sync comment pointing at `SITE_HOURS`.
-- Known pre-existing 320px home overflow (`site-feature-card` 331px in 310px content) still present; unrelated to this session.
+- Verified this run: `develop`, HEAD e2e459a; 19 modified tracked files, 14 deleted old page paths, 43 untracked files; nothing staged.
+- Implemented and uncommitted:
+  - `AGENTS.md` has a new "Clarification Protocol (all AI harnesses)" section: one-by-one or small-batch questions, 2-4 options, recommendation, wait for answers.
+  - Shared `EmptyState` and `ErrorState`; `QueryState` now delegates errors to `ErrorState` and accepts `onRetry`.
+  - Public skeleton library: `PublicHeroSkeleton`, `PublicSectionSkeleton`, `PublicTierGridSkeleton`, `PublicArticleSkeleton`, `PublicFormPageSkeleton`, `PublicLoginSkeleton`.
+  - `src/app/(public)` route group with `layout.tsx` wrapping `PublicLayout` and importing `public.css` once. All 14 public pages moved there; URLs and metadata unchanged; old per-page `PublicLayout` wrappers and duplicate CSS imports removed.
+  - 14 public `loading.tsx` files plus `src/app/login/loading.tsx` and `src/app/login/sales/loading.tsx`; login Suspense fallbacks and the blog-post fallback now use the skeletons.
+  - FAQ no-match and blog empty states use `EmptyState`; Verify uses `EmptyState` for no-match/limit and `ErrorState` for unavailable; OST registration/correction use `ErrorState`/`EmptyState`/`PublicFormPageSkeleton`.
+  - Login submit uses `Button loading`; `LoginShell` now takes an optional `year` so prerendering the skeleton never calls `new Date()`. Both login pages pass the current year.
+  - Admin audit `docs/implementation/ui-state-audit.md`: 62 routes, 62 rows, 28 complete, 25 partial, 8 redirects, 1 static. No admin source changed.
+  - Docs `phase-12` to `phase-16` and the README UI-state section are in place and marked implemented/complete where applicable.
+- Known pre-existing 320px home overflow (`site-feature-card` 331px in 310px content) still present.
+- Current focus: owner review and commit of the FP12-FP16 tree; the admin audit is the input for a separately approved Phase 2 plan.
 
 ## 3. Important Decisions
-- Only the project owner stages, commits and pushes (AGENTS.md). Every delivery stops and reports.
-- Carried: header "AFHomes / GROUP OF COMPANIES" (header only); 5 top-level nav entries; mobile green-band menu; Sales Sign-In public (owner 2026-11-18); all closing CTAs via `SiteCta`; whole home room card opens `RoomDetailsDialog`; contact maps static; group-level hero copy with resort image; FAQ limits + WAAPI accordion; mock memory-only; no new deps; namespaced classes; Redemption disabled.
-- New: `SITE_HOURS` 9:00–17:00 Asia/Manila daily; badge wording "Open now / Closed now" above the eyebrow.
-- New: staff-only notes name the sign-in links in the footer so public Verify Accreditation is not misread as restricted.
-- New: contact redesign rejected by owner and reverted; working page is the baseline.
-- Tooling: `@grill-me` resolves only to its own stub (the `grilling` target is missing); browser comments handled manually.
+- Only the project owner stages, commits and pushes (`AGENTS.md`). Every delivery stops and reports.
+- Public pages use a route group so route-level `loading.tsx` renders inside `PublicLayout`; without the group the header/footer would disappear while loading. URLs are unchanged.
+- Skeletons are content-shaped and CMS-ready. Static pages may not show a skeleton on instant navigation; the loaders become visible when CMS data makes a route suspend.
+- Button spinners are for asynchronous actions only. Navigation links/CTAs, the synchronous mailto contact form, the clipboard copy button and synchronous step buttons do not get fake spinners.
+- Shared `EmptyState`/`ErrorState` replace one-off messages; `QueryState` forwards retry only where safe.
+- Admin is audit-first: FP15 changes no admin code; any fixes need a separate approved Phase 2 plan.
+- The permanent clarification protocol applies to OpenCode, Codex, Claude Code and any agent reading `AGENTS.md`.
+- No business rules, permissions, financial logic, data contracts, routes or copy were changed.
+- No new dependencies; mock data remains browser-memory only.
+- `LoginShell` year is passed by the client login pages; the route skeleton omits it, so the skeleton footer has no year.
 
 ## 4. Completed Work
-- Created this session: `src/modules/public-site/hours.ts`, `hours.test.ts`, `src/panels/public/site/open-status-badge.tsx`, `open-status-badge.test.tsx`.
-- Modified this session: `public-home-page.tsx` (status pill removed), `site.css` (hero-top/badge/callout scoping), `site-chrome.css` (logo bg removal, access-note pills), `site-mobile-menu.tsx` + `site-footer.tsx` (notes + Info icons), `post-related.css`/`post-related.tsx`, `post-hero.css`, `blog/blog-card.css`, `blog/blog-featured.css`, `content/faq.ts` (sync comment only).
-- Reverted this session (exact HEAD/pre-redesign restores, no `git checkout` used): `contact-message.ts` + `.test.ts`, `site/contact-form.tsx`, `pages/faq-contact-pages.tsx`, `contact/contact-page.css` (redesign block truncated), `site-pages.test.tsx` (button assertion hunk).
-- Verification this session: `npx tsc --noEmit` clean and `npm run lint` clean on every run; targeted suites green (final restore run: 35 passed — contact-message 3, site-pages 12, public-links 10, site-chrome 10; badge run: 20 passed; frame run: 22 passed). Browser: badge open/closed styles, callout 0px border, both Access notes, transparent logo, related/hero/blog frames incl. responsive featured divider, restored contact page (Contact Us, Open email, 2 maps, 0 leftovers, 0 overflow). Headless-tab screenshots unavailable; DOM + computed-style verification used.
+- Governance: `AGENTS.md` clarification section.
+- Docs: `docs/implementation/README.md`, `phase-12-state-foundations.md`, `phase-13-public-layout-and-route-loading.md`, `phase-14-public-empty-and-error-states.md`, `phase-15-admin-state-audit.md`, `phase-16-state-verification.md`, `ui-state-audit.md`.
+- Shared states: `src/shared/components/modern/empty-state.tsx`, `error-state.tsx`, `query-state.tsx`, `state-components.test.tsx`.
+- Public skeletons: `src/panels/public/components/public-skeletons.tsx`, `public-skeletons.test.tsx`, `src/panels/public/public-loading.test.tsx`.
+- Public routes: `src/app/(public)/layout.tsx`, 14 moved pages, 14 public `loading.tsx`; `src/app/login/loading.tsx`, `src/app/login/sales/loading.tsx`; login page fallbacks; `src/app/(public)/blog/[slug]/page.tsx` fallback.
+- Public states: `src/panels/public/faq/faq-questions.tsx`, `blog/blog-browser.tsx`, `pages/accreditation-verification-page.tsx`, `pages/ost-registration-page.tsx`, `pages/ost-correction-page.tsx`.
+- Login: `src/panels/public/login/login-form.tsx`, `login-shell.tsx`, `src/panels/public/pages/staff-login-page.tsx`, `sales-login-page.tsx`.
+- Tests updated/added: `state-components.test.tsx`, `public-skeletons.test.tsx`, `public-loading.test.tsx`, `site-pages.test.tsx`, `ost-registration-page.test.tsx`, `ost-correction-page.test.tsx`, `staff-login-page.test.tsx`, `public-links.test.tsx`.
+- Verification:
+  - `npx tsc --noEmit`: clean.
+  - `npm run lint`: clean.
+  - Targeted public/state tests: 118 passed across 12 files; final login/loading rerun: 38 passed.
+  - Full `npm test`: 1889 passed, 4 failed.
+  - Three full-run timeouts (`business-pages`, `payment-reference-fields`, `staff-page`) pass alone: 127 passed.
+  - One failure is pre-existing and unrelated: `src/panels/admin/components/admin-mobile-nav.test.tsx` expects a "Log out" drawer footer that `AdminMobileNav` does not render.
+  - `npm run build`: passed; 94/94 static pages; public route table and rendering modes unchanged. Build initially failed on `new Date()` in the login skeleton; fixed with the `LoginShell` year prop.
+  - Browser: `/` at 375/768/1280 has one header, one footer, one main and zero horizontal overflow; `/login` and `/login/sales` fresh loads have one shell, Sign In, footer `(c) 2026 AFhomes`, zero overflow; `/faq` no-match shows "No questions found" plus the existing copy; `/register/ost/correct/invalid-token` shows "Link not valid" plus the existing message.
+- Admin audit findings: 14 routes have no query-error state; 3 contract detail routes report load failure as "Contract Not Found"; several actions have disabled-only busy states; no admin page uses `QueryState onRetry`, `EmptyState` or `useActionRunner`; Redemption exists in code while instructions record it as disabled, flagged for owner confirmation.
 
 ## 5. Git Working Tree
 - Staged: none (verified via `git diff --cached --stat`).
-- Unstaged modified (40 tracked): prior set (content site/experiences/faq; header/pages; FAQ; CTAs; room dialog/grid; maps; closings; tests) plus this session newly modified `blog-card.css`, `blog-featured.css`, `post-hero.css`, `post-related.tsx`, `site-footer.tsx`, and further edits to `public-home-page.tsx`, `site.css`, `site-chrome.css`, `site-mobile-menu.tsx`, `post-related.css`, `faq.ts`, `contact-page.css`, `faq-contact-pages.tsx`, `site-pages.test.tsx` (last three net to their pre-redesign state).
-- Deleted: `compliance-closing.css`, `experience/exp-closing.css` (pre-existing).
-- Untracked (8): 4 pre-existing (`room-details-dialog.{tsx,css}`, `room-preview-grid.tsx`, `site-cta.tsx`) + 4 this session (`hours.ts`, `hours.test.ts`, `open-status-badge.tsx`, `open-status-badge.test.tsx`).
-- Stash `stash@{0}` ("local: sales-network cleanup + member detail redesign") still present.
-- No package/lock/docs changes. LF→CRLF warnings only; `git diff --check` clean on touched files (one pre-existing EOF-blank-line in `post-related.css` trimmed this session).
+- Unstaged modified (19): `AGENTS.md`, `docs/implementation/README.md`, login page files (`src/app/login/page.tsx`, `sales/page.tsx`), FAQ/blog public components, login form/shell and pages, OST/Verify public pages and tests, `public-links.test.tsx`, `site-pages.test.tsx`, `src/shared/components/modern/query-state.tsx`.
+- Deleted (14): the old public page paths under `src/app/{about,blog,blog/[slug],compliance,contact,experiences/*,faq,page,register/ost,register/ost/correct/[token],verify,vip-privilege}`. These are moves, not removals.
+- Untracked (43): `src/app/(public)/` (layout + 14 pages + 14 loading files), 2 login loading files, 6 docs, 3 shared state files/tests, 3 public skeleton/loading test files. Full list was read via `git ls-files --others --exclude-standard`.
+- `stash@{0}` ("local: sales-network cleanup + member detail redesign") still present.
+- No package/lock changes. Git warns LF->CRLF. `git diff --check` clean (only line-ending warnings).
+- HEAD e2e459a is the owner's commit; no agent staging/commit occurred.
 
 ## 6. Pending Tasks
-- Owner review and commit of the now-larger uncommitted tree. Do not stage/commit.
-- Run one full test suite and one build (never simultaneously); `business-pages` alone if needed.
+- Owner review and commit of the FP12-FP16 tree. Do not stage or commit.
+- Decide the pre-existing `admin-mobile-nav` drawer-logout test: either restore a drawer footer/logout control or update the test. This is admin auth UI outside FP12-FP16; needs owner authorization.
+- Phase 2 admin plan from `docs/implementation/ui-state-audit.md`; start with finance/payments/commissions/membership, then customer/sales, reports/audit, organization/settings.
 - Fix the pre-existing 320px `site-feature-card` overflow under a separate plan.
-- Carried owner-content questions: hot-spring count (5/10); dated blog claims; Teppanyaki count; HR email; legal review of disclaimer/compliance/Verify privacy; Smart Wellness Hotel status; privacy policy; UI22 "keep rate pictures" note in `docs/implementation/decisions-and-gaps.md`.
-- Carried, not rechecked: tablet/dark mode; Customer Look Up as Finance/Clerk/OST; contact mailto hand-off; full desktop visual pass; B1 permission fixes; table priority sorting; Redemption decision; D14 rounding; Clerk Commissions; IST Clawback Addendum; points-per-night table; legal retention; real login/DB/hosting.
-- Tooling: `grill-me`/`grilling` skill missing.
+- CMS work later: wire public pages to data and confirm the route skeletons appear on slow navigation.
+- Carried owner content/legal items: hot-spring count (5/10); dated blog claims; Teppanyaki count; HR email; legal review of disclaimer/compliance/Verify privacy; Smart Wellness Hotel status; privacy policy; UI22 "keep rate pictures" note in `docs/implementation/decisions-and-gaps.md`.
+- Carried not rechecked: tablet/dark mode; Customer Look Up as Finance/Clerk/OST; real contact-form hand-off; full desktop visual pass; B1 permission fixes; table priority sorting; Redemption decision; D14 rounding; Clerk Commissions; IST Clawback Addendum; points-per-night table; legal retention; real login/DB/hosting.
+- Tooling: `@grill-me` still resolves to a stub (the `grilling` target is missing).
 
 ## 7. Verification State
-- This `/save` run: no typecheck, lint, tests, build, or browser QA; documentation only.
-- Latest implementation runs: typecheck clean, lint clean, all targeted suites green (see section 4). Full suite and build NOT run on the current tree.
-- Browser-verified this session: badge open/closed tint+border+text; callout 0px border/26px radius; Access notes (text, icons, colors); transparent header logo; related images contain+centered with enhanced containers; hero frame halo; blog card/featured frames incl. 900px divider switch; restored contact page.
-- Known failures: 320px home overflow (pre-existing). Agent-opened browser tabs intermittently drop from the session (reopen + single-pass evaluate works).
-- Not performed: full suite, build, `npm install`/node_modules check, tablet/dark-mode pass, screenshot capture.
+- This `/save` run: no typecheck, lint, tests, build or browser QA; documentation only.
+- Last implementation run: typecheck clean, lint clean, targeted tests green, full suite 1889/4, build passed, browser checks as in section 4.
+- Known failures:
+  - `admin-mobile-nav.test.tsx` drawer logout test: pre-existing, unrelated, not fixed.
+  - Three admin files time out under full-suite load but pass alone: `business-pages`, `payment-reference-fields`, `staff-page`.
+  - 320px home overflow from `site-feature-card` remains.
+- Not performed:
+  - Visual observation of route skeletons, because the public pages are static and resolve before a skeleton paints. They are covered by the 16-loader and 12-skeleton component tests.
+  - Admin page fixes from the audit; Phase 2 only.
+  - Screenshots; full visual desktop pass; `npm install`/node_modules check.
+- Browser tabs opened during QA were intermittently detached when the debugging bar was dismissed; all required checks were completed before the final detach.
 
 ## 8. Next Session Instructions
-- First action: `/load`, inspect the uncommitted tree vs HEAD c5d332f; ask the owner whether to verify/commit.
-- Verify: `npx tsc --noEmit`, `npm run lint`, targeted tests, one full test run, one build (sequential), browser 375/1100/1280.
-- Relevant files: `workflow/save-session.md`; `src/panels/public/pages/public-home-page.tsx`; `src/panels/public/site/open-status-badge.tsx`; `src/modules/public-site/hours.ts`; `src/shared/components/site/site-chrome.css`, `site-footer.tsx`, `site-mobile-menu.tsx`; `src/panels/public/post/post-related.{tsx,css}`, `post-hero.css`; `src/panels/public/blog/blog-card.css`, `blog-featured.css`; contact files (restored working state).
-- Required approvals: owner commits; each plan before building; permission/backend/DB/API/hosting; AGENTS edits; dependency changes.
-- Warnings: mock data resets on full page load; do not commit; never run build+tests simultaneously; full suite slow; do not delete `.next`; never claim visual verification without a browser; dev server may need restart; agent browser tabs may drop (use single-pass open+evaluate).
+- First action: `/load`, inspect the uncommitted tree against HEAD e2e459a, and ask the owner to review/commit the FP12-FP16 work.
+- Verify if needed: `npx tsc --noEmit`, `npm run lint`, targeted tests, one full test run, one build (sequential). Re-run the three admin timeout files alone if the full run times out.
+- Do not fix the `admin-mobile-nav` test or any admin page without a new owner authorization; use `docs/implementation/ui-state-audit.md` for the Phase 2 plan.
+- Relevant files: `workflow/save-session.md`; `docs/implementation/phase-12` to `phase-16`; `docs/implementation/ui-state-audit.md`; `src/app/(public)/layout.tsx`; `src/panels/public/components/public-skeletons.tsx`; `src/shared/components/modern/{empty-state,error-state,query-state}.tsx`; `src/panels/public/login/login-shell.tsx`; `src/panels/public/login/login-form.tsx`; public FAQ/blog/Verify/OST files.
+- Required approvals: owner commits; each phase before building; permission/backend/DB/API/hosting; `AGENTS.md` edits; dependency changes; any admin fix.
+- Warnings: mock data resets on full page load; do not commit; never run build+tests simultaneously; full suite slow; do not delete `.next`; never claim visual verification without a browser; route skeletons do not show on instant static navigation; browser automation may detach if the debugging bar is dismissed.
 
 ## 9. Execution Recommendation
 - Phase: QA
 - Current mode: not verified
-- Recommended next mode: default (ask before edits)
+- Recommended next mode: default (owner review)
 - Current model: DeepSeek V4.1 Flash 1017 (session metadata, not independently probed)
 - Recommended model: Sonnet 5.5
 - Effort: medium
 - Ultracode: OFF
-- Token optimization: targeted typecheck/lint/tests first, then one full test run and one build; then the 320px overflow plan.
-- Reason: the tree is complete and targeted-green but uncommitted and larger than last save; full verification and the commit decision remain.
+- Token optimization: owner reviews/commits the tree; then generate the Phase 2 admin plan from the audit in approved batches. No further verification is needed for FP12-FP16.
+- Reason: all five phases are implemented and verified; the remaining items are the commit decision, the pre-existing admin drawer test, and the separately approved admin fixes.
 <!-- SESSION_SNAPSHOT_END -->

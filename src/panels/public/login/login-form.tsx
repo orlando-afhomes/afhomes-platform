@@ -13,7 +13,6 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { RadioGroup } from "@/shared/ui/radio-group";
-import { Spinner } from "@/shared/ui/spinner";
 import { safeReturnPath } from "@/shared/lib/safe-return-path";
 import { ForgotPasswordPanel } from "./forgot-password-panel";
 import { validateEmail } from "./login-validation";
@@ -198,8 +197,7 @@ export function LoginForm({ portals, defaultPortal, description, extraLinks }: P
         </p>
       ) : null}
 
-      <Button type="submit" className="login-form__submit" disabled={submitting} aria-busy={submitting}>
-        {submitting ? <Spinner /> : null}
+      <Button type="submit" className="login-form__submit" loading={submitting}>
         Sign In
       </Button>
 

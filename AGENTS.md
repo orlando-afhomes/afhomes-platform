@@ -183,6 +183,19 @@ Testing follows `docs/development/testing.md` (TypeScript, ESLint, build, compon
 
 ---
 
+## Clarification Protocol (all AI harnesses)
+
+When using `grill-me`, `writing-plans`, or any planning/interview workflow, ask the project owner before proceeding:
+
+- One question at a time, or a small batch of closely related questions.
+- Every question offers 2 to 4 concrete options.
+- Every question states a recommendation and why.
+- Wait for the answers before planning or implementing.
+
+This applies to OpenCode, Codex, Claude Code, and any other agent reading this file.
+
+---
+
 ## 8. UI Standards
 
 **Production UI:** application-facing screens must not show developer notes, debug controls, temporary design-preview links, milestone labels, mock diagnostics, or internal commentary. Development-only tooling stays isolated and unavailable in production builds. Every visible control must serve a legitimate purpose; incomplete functionality is represented honestly.

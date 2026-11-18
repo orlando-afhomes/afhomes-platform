@@ -42,6 +42,8 @@ describe("public site pages", () => {
     await user.clear(search);
     await user.type(search, "zzqx");
     expect(screen.getByText(/No questions match your search/i)).toBeInTheDocument();
+    expect(screen.getByText(FAQ_PAGE.questions.empty)).toBeInTheDocument();
+    expect(screen.getByText("No questions found")).toBeInTheDocument();
   });
 
   it("keeps the FAQ hero and section copy within the owner's word limits", () => {

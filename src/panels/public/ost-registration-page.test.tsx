@@ -135,4 +135,28 @@ describe("OST registration", () => {
     // Neutral: nothing internal is shown to the applicant.
     expect(document.body.textContent ?? "").not.toMatch(/reg-1|mem-sm-a|AAO/);
   }, 30000);
+
+  it("shows a submit error state when the application cannot be accepted", async () => {
+    const user = userEvent.setup();
+    render(<Wrapper />);
+    await verifyAndConfirm(user);
+    await fillApplicant(user);
+    // An email already held by an account is refused neutrally by the repository.
+    fireEvent.change(field("applicant-email"), { target: { value: currentStore.accounts[0].email } });
+    await user.click(await screen.findByRole("button", { name: "Continue" }));
+
+    fireEvent.change(await screen.findByRole("textbox", { name: "No./Street/Subdivision" }), { target: { value: "123 Maharlika Street" } });
+    await pickAddressOption(user, "Province", "Metro Manila", /^metro manila$/i);
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "City/Municipality" })).toBeEnabled());
+    await pickAddressOption(user, "City/Municipality", "Makati", /^makati city$/i);
+    await pickAddressOption(user, "Barangay", "San Antonio", /^san antonio$/i);
+    await user.click(screen.getByRole("button", { name: "Review" }));
+
+    expect(await screen.findByText("Ana Cruz")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Submit Application" }));
+
+    expect(await screen.findByText("Could not submit")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(/could not accept this application online/i);
+    expect(currentStore.registrationApplications).toHaveLength(0);
+  }, 30000);
 });

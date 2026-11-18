@@ -5,7 +5,7 @@ import { LoginShell } from "@/panels/public/login/login-shell";
 
 export function StaffLoginPage() {
   return (
-    <LoginShell>
+    <LoginShell year={new Date().getFullYear()}>
       <LoginForm
         portals={[
           { value: "admin", label: "Admin" },

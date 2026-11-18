@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Newspaper } from "lucide-react";
 import { BLOG_PAGE, type BlogCategory, type BlogPost } from "@/modules/public-site/content/blog";
+import { EmptyState } from "@/shared/components/modern/empty-state";
 import { Section, SectionHeading } from "../site/blocks";
 import { BlogFilters } from "./blog-filters";
 import { BlogFeatured } from "./blog-featured";
@@ -29,7 +31,7 @@ export function BlogBrowser({ posts }: { posts: BlogPost[] }) {
   return (
     <Section className="blog-browser">
       <BlogFilters categories={BLOG_PAGE.filters} value={category} onChange={chooseCategory} />
-      {featured ? <BlogFeatured post={featured} /> : <p className="blog-browser__empty" role="status">{BLOG_PAGE.empty}</p>}
+      {featured ? <BlogFeatured post={featured} /> : <EmptyState icon={<Newspaper aria-hidden="true" />} title="No stories yet" text={BLOG_PAGE.empty} />}
       {rest.length > 0 ? (
         <div className="blog-browser__latest" id="latest">
           <SectionHeading eyebrow={BLOG_PAGE.latest.eyebrow} title={BLOG_PAGE.latest.title} />

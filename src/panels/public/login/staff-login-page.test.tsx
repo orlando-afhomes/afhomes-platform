@@ -76,6 +76,37 @@ describe("Staff login page", () => {
     expect(replace).toHaveBeenCalledWith("/admin");
   });
 
+  it("shows a pending Sign In state during the mock latency", async () => {
+    // Real timers: user-event's async act wrapper never settles with vitest fake timers here,
+    // so the pending state is asserted straight after the click, before the 400 ms resolves.
+    const user = userEvent.setup();
+    renderWithQuery(<StaffLoginPage />);
+
+    // Wrong password first: a failed sign-in is what settles the button back to idle in place.
+    await user.type(screen.getByLabelText("Email"), admin.email);
+    await user.type(screen.getByLabelText("Password"), "wrong-password");
+    await user.click(screen.getByRole("button", { name: "Sign In" }));
+
+    let submit = screen.getByRole("button", { name: "Sign In" });
+    expect(submit).toHaveAttribute("aria-busy", "true");
+    expect(submit.querySelector('[data-slot="spinner"]')).not.toBeNull();
+
+    expect(await screen.findByText("Incorrect email or password.")).toBeInTheDocument();
+    submit = screen.getByRole("button", { name: "Sign In" });
+    expect(submit).not.toHaveAttribute("aria-busy");
+    expect(submit.querySelector('[data-slot="spinner"]')).toBeNull();
+
+    // Valid credentials show the same pending state while the mock latency runs.
+    await user.clear(screen.getByLabelText("Password"));
+    await user.type(screen.getByLabelText("Password"), PASSWORD);
+    await user.click(screen.getByRole("button", { name: "Sign In" }));
+
+    submit = screen.getByRole("button", { name: "Sign In" });
+    expect(submit).toHaveAttribute("aria-busy", "true");
+    expect(submit.querySelector('[data-slot="spinner"]')).not.toBeNull();
+    await waitFor(() => expect(signIn).toHaveBeenCalledWith(admin.identityId));
+  });
+
   it("shows an error for wrong credentials and for the wrong portal", async () => {
     const user = userEvent.setup();
     renderWithQuery(<StaffLoginPage />);
@@ -116,7 +147,7 @@ describe("Staff login page", () => {
 
     const submit = screen.getByRole("button", { name: "Sign In" });
     expect(submit).toBeEnabled();
-    expect(submit).toHaveAttribute("aria-busy", "false");
+    expect(submit).not.toHaveAttribute("aria-busy");
     expect(screen.getByLabelText("Email")).toHaveValue("");
   });
 

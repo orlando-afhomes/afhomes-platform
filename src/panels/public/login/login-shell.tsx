@@ -8,8 +8,8 @@ const CARDS = [
   { tier: "gold", src: "/images/cards/gold.webp" },
 ] as const;
 
-/** Full-screen login layout: art panel on the left (top band on mobile), `children` is the green form panel. */
-export function LoginShell({ children }: { children: ReactNode }) {
+/** Full-screen login layout: art panel on the left (top band on mobile), `children` is the green form panel. `year` is supplied by the client page; the loading skeleton omits it so prerendering never reads the clock. */
+export function LoginShell({ children, year }: { children: ReactNode; year?: number }) {
   return (
     <main className="login-shell">
       <span className="login-shell__bubble login-shell__bubble--one" aria-hidden="true" />
@@ -47,7 +47,7 @@ export function LoginShell({ children }: { children: ReactNode }) {
               <path d="M120 0 H70 C20 90 90 190 55 290 C20 390 100 480 60 600 H120 Z" />
             </svg>
           </div>
-          <p className="login-shell__footer">&copy; {new Date().getFullYear()} AFhomes</p>
+          <p className="login-shell__footer">&copy; {year ? `${year} ` : ""}AFhomes</p>
         </section>
         <section className="tw:relative tw:flex tw:flex-col tw:justify-center tw:p-6 tw:text-(--color-on-dark) tw:md:p-12">{children}</section>
       </div>

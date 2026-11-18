@@ -16,6 +16,7 @@ import {
   type ApplicantErrors,
 } from "@/modules/accreditation/registration";
 import { StepIndicator } from "@/shared/components/modern/step-indicator";
+import { ErrorState } from "@/shared/components/modern/error-state";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { FormSection } from "@/shared/components/modern/form-layout";
 import { TextField } from "@/shared/forms/modern";
@@ -254,11 +255,7 @@ export function OstRegistrationPage() {
             </section>
             <ApplicantSummary applicant={normalizeApplicant(applicant)} />
             <InfoNote>The office reviews every application and will contact you. Submitting does not create a seller account or an accreditation number.</InfoNote>
-            {submitError ? (
-              <p role="alert" className="tw:text-sm tw:text-destructive">
-                {submitError}
-              </p>
-            ) : null}
+            {submitError ? <ErrorState title="Could not submit" text={submitError} /> : null}
             <Actions>
               <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={() => setStep(1)}>
                 Previous step

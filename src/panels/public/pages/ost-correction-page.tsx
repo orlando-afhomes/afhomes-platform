@@ -2,13 +2,17 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import { Link2Off } from "lucide-react";
 import { useRegistrationCorrection, useResubmitRegistration } from "@/data/queries";
 import type { RegistrationApplicant } from "@/modules/accreditation/types";
 import { normalizeApplicant, validateApplicant, type ApplicantErrors } from "@/modules/accreditation/registration";
+import { EmptyState } from "@/shared/components/modern/empty-state";
+import { ErrorState } from "@/shared/components/modern/error-state";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { FormSection } from "@/shared/components/modern/form-layout";
 import { CardSection } from "@/shared/components/modern/card-section";
 import { Button } from "@/shared/ui/button";
+import { PublicFormPageSkeleton } from "../components/public-skeletons";
 import { ApplicantAddressFields, ApplicantPersonalFields } from "../components/ost-applicant-fields";
 import { SubmissionReceipt } from "./ost-registration-page";
 
@@ -56,11 +60,7 @@ function CorrectionForm({ token, initial, returnReason }: { token: string; initi
         <FormSection title="Home Address">
           <ApplicantAddressFields value={applicant} onChange={patch} errors={errors} />
         </FormSection>
-        {submitError ? (
-          <p role="alert" className="tw:text-sm tw:text-destructive">
-            {submitError}
-          </p>
-        ) : null}
+        {submitError ? <ErrorState title="Could not resend" text={submitError} /> : null}
         <div className="tw:flex tw:flex-wrap tw:gap-2">
           <Button type="submit" loading={resubmit.isPending} className="tw:min-h-11 tw:sm:min-h-8">
             Resend application
@@ -83,7 +83,10 @@ export function OstCorrectionPage() {
         <p className="tw:mt-2 tw:text-muted-foreground">Update the application you sent to the office.</p>
       </div>
       {correction.isLoading ? (
-        <p role="status">Loading your application…</p>
+        <div role="status" aria-busy="true">
+          <span className="tw:sr-only">Loading your application…</span>
+          <PublicFormPageSkeleton fields={4} />
+        </div>
       ) : correction.data ? (
         <>
           <p className="tw:text-sm tw:text-muted-foreground">
@@ -92,7 +95,7 @@ export function OstCorrectionPage() {
           <CorrectionForm token={token} initial={correction.data.applicant} returnReason={correction.data.returnReason} />
         </>
       ) : (
-        <InfoNote title="Link Not Valid">{INVALID_LINK}</InfoNote>
+        <EmptyState icon={<Link2Off aria-hidden="true" />} title="Link not valid" text={INVALID_LINK} />
       )}
     </div>
   );

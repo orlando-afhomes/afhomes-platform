@@ -67,6 +67,33 @@ flowchart TD
     FP10 --> FP11
 ```
 
+## UI state hardening phases (FP12 to FP16)
+
+These phases cover loading, empty, error and busy states across the existing public site, both login pages and the admin site. They are interface-hardening phases, not new business feature phases, and they do not authorize implementation.
+
+The public site is mock content today but will become CMS-driven. The skeletons are shaped like the real pages so they can be reused when content becomes dynamic. The login pages and the future CMS routes share the same state contract.
+
+| Phase | File | Goal | Depends on |
+|---|---|---|---|
+| FP12 State foundations | [phase-12-state-foundations.md](phase-12-state-foundations.md) | Clarification protocol, `EmptyState`, `ErrorState`, `QueryState` retry, public skeleton compositions | none |
+| FP13 Public layout and route loading | [phase-13-public-layout-and-route-loading.md](phase-13-public-layout-and-route-loading.md) | `(public)` route group, shared layout, route `loading.tsx`, login loading files | FP12 |
+| FP14 Public empty, error and login states | [phase-14-public-empty-and-error-states.md](phase-14-public-empty-and-error-states.md) | FAQ/blog/Verify/OST states, login submit spinner, async-button audit | FP12, FP13 |
+| FP15 Admin state audit | [phase-15-admin-state-audit.md](phase-15-admin-state-audit.md) | Route-by-route admin state audit and Phase 2 batch order | FP12 |
+| FP16 State verification | [phase-16-state-verification.md](phase-16-state-verification.md) | Typecheck, lint, tests, build, browser, reduced motion, no JavaScript, final report | FP12 to FP15 |
+
+```mermaid
+flowchart LR
+    FP12 --> FP13
+    FP13 --> FP14
+    FP12 --> FP15
+    FP14 --> FP16
+    FP15 --> FP16
+```
+
+The public route skeletons require the route group in FP13. Without it, a route `loading.tsx` renders outside `PublicLayout` and the header/footer disappear while loading. The admin work is deliberately audit-first: FP15 changes no admin page, and any fixes require a separate approved Phase 2 plan.
+
+**Build status (2026-11-18):** FP12–FP14 implemented, FP15 audit complete, FP16 verification complete. The production build passes. The only failing test is a pre-existing admin drawer logout expectation recorded in FP16; the three full-run timeouts pass when run alone.
+
 ## November 12 rule alignment
 
 Start by verifying the contracts list, duplicate Customer ID recovery, dashboard activity, and pagination. Then align customer registration and seller attribution, VIP number issuance and commission month close, and the Annual Welcome Gift. Verify each approved slice before the next. Use synthetic data and preserve issued numbers and paid amounts. IGP planning may cover approved sale and receipt handling and the document checklist while the signed grant terms, the definition of `SUPERSEDED` and the band code above ₱9,000,000 remain open (the numbering questions are decided in doc 14 section 5). Redemption stays disabled. See the [decision register](decisions-and-gaps.md) for the pending company, Finance, and legal inputs.

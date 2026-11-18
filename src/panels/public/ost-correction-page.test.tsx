@@ -107,7 +107,19 @@ describe("OST correction link", () => {
   it("shows a neutral message for a link that is not valid", async () => {
     routeToken = "b".repeat(32);
     render(<Wrapper />);
-    expect(await screen.findByText(/This link is not valid any more/)).toBeInTheDocument();
+    expect(await screen.findByText("Link not valid")).toBeInTheDocument();
+    expect(screen.getByText(/This link is not valid any more/)).toBeInTheDocument();
     expect(screen.queryByText("Birth date is wrong.")).not.toBeInTheDocument();
+  });
+
+  it("shows a resend error state when the application can no longer be corrected", async () => {
+    const user = userEvent.setup();
+    render(<Wrapper />);
+    expect(await screen.findByText("Birth date is wrong.")).toBeInTheDocument();
+    // The office approved or withdrew the application between opening the link and resending.
+    currentStore.registrationApplications[0].status = "submitted";
+    await user.click(screen.getByRole("button", { name: "Resend application" }));
+    expect(await screen.findByText("Could not resend")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(/could not accept this application online/i);
   });
 });

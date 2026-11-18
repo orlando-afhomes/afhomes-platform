@@ -14,7 +14,9 @@ import { PublicFooter } from "./components/public-footer";
 import { PublicHeader } from "./components/public-header";
 import { PublicHomePage } from "./pages/public-home-page";
 
-const routeExists = (href: string) => existsSync(join(process.cwd(), "src/app", href.split("#")[0].slice(1), "page.tsx"));
+const APP_ROOTS = ["src/app", "src/app/(public)"];
+const routeExists = (href: string) =>
+  APP_ROOTS.some((root) => existsSync(join(process.cwd(), root, href.split("#")[0].slice(1), "page.tsx")));
 const publicFile = (src: string) => existsSync(join(process.cwd(), "public", src));
 
 describe("public sign-in and verification links", () => {

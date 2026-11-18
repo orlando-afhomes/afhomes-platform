@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, ShieldCheck } from "lucide-react";
+import { ChevronDown, Search, ShieldCheck } from "lucide-react";
+import { EmptyState } from "@/shared/components/modern/empty-state";
 import { FAQ_ITEMS, FAQ_PAGE, type FaqBlock, type FaqItem } from "@/modules/public-site/content/faq";
 import { PAYMENT_DISCLAIMER } from "@/modules/public-site/content/site";
 import { PUBLIC_SUPPORT_INFO } from "@/modules/public-site/support-info";
@@ -174,7 +175,7 @@ export function FaqQuestions({ query }: { query: string }) {
             );
           })
         ) : (
-          <p className="faq-questions__empty">{empty}</p>
+          <EmptyState icon={<Search aria-hidden="true" />} title="No questions found" text={empty} />
         )}
       </div>
       <aside id="payment-notice" className="faq-payment site-home-reveal" aria-label="Payment notice">

@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { ShieldCheck } from "lucide-react";
+import { ShieldAlert, ShieldCheck } from "lucide-react";
 import { useMockRepositories } from "@/data/queries";
 import type { PublicAccreditationResult } from "@/data/contracts/accreditation-repository";
 import { validateExistingAaIdentifier } from "@/modules/accreditation/identifiers";
 import { VERIFY_PRIVACY_NOTICE_PARAGRAPHS } from "@/modules/public-site/privacy-notice";
 import { TextField } from "@/shared/forms/modern";
-import { InfoNote } from "@/shared/components/modern/detail-list";
+import { EmptyState } from "@/shared/components/modern/empty-state";
+import { ErrorState } from "@/shared/components/modern/error-state";
 import { TextLinesSkeleton } from "@/shared/components/modern/skeletons";
 import { Button } from "@/shared/ui/button";
 import { VerifyContactDialog, VerifyPrivacyDialog } from "../components/verify-dialogs";
@@ -113,7 +114,11 @@ export function AccreditationVerificationPage() {
 
       <div role="status" aria-live="polite" className="verify-page__results">
         {busy ? <div className="verify-page__panel"><span className="tw:sr-only">Checking…</span><TextLinesSkeleton lines={3} /></div> : null}
-        {message ? <InfoNote>{message}</InfoNote> : null}
+        {message === UNAVAILABLE ? <ErrorState title="Verification unavailable" text={message} /> : null}
+        {message === LIMIT_REACHED ? <EmptyState icon={<ShieldAlert aria-hidden="true" />} title="Daily limit reached" text={message} /> : null}
+        {message && message !== UNAVAILABLE && message !== LIMIT_REACHED ? (
+          <EmptyState icon={<ShieldAlert aria-hidden="true" />} title="No matching accreditation" text={message} />
+        ) : null}
         {result ? <VerifyResultCard result={result} /> : null}
       </div>
 

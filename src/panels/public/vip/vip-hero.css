@@ -30,6 +30,11 @@
 /* Card fan: Bronze at the back top-right, Silver in the middle, Gold in front and lowest */
 .vip-hero__fan { position: relative; width: 100%; max-width: 380px; margin: 0 auto; aspect-ratio: 1.45 / 1; }
 @media (min-width: 900px) { .vip-hero__fan { max-width: 620px; margin-right: 0; } }
+/* Centered, stacked text on tablet and below; the fan stays centered under it. */
+@media (max-width: 899px) {
+  .site-vip .vip-hero .vip-hero__text { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .site-vip .vip-hero .site-eyebrow::before { margin-inline: auto; }
+}
 
 /* The artwork has empty margins (about 11% per side); the scale crops them so the box, radius and shadow hug the real card */
 .vip-hero__card {

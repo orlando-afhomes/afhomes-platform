@@ -1,27 +1,75 @@
-/* Contact page "Find us": one card per office with a live Google map, its address and a directions button. */
+/* Contact page "Find us": modern responsive office cards with a static route map, directions and open-map actions. */
 
 .contact-maps { margin: clamp(40px, 5vw, 72px) 8px 0; scroll-margin-top: 96px; }
 .site-contact-page .contact-maps .site-heading { margin-bottom: 20px; }
 .contact-maps__grid { display: grid; gap: 20px; }
-@media (min-width: 900px) { .contact-maps__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; } }
+@media (min-width: 1024px) { .contact-maps__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; } }
+
 .contact-maps__card {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: 18px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 22px;
   background: #fff;
   box-shadow: 0 1px 2px rgb(14 43 32 / 0.05), 0 18px 34px -26px rgb(14 43 32 / 0.5);
   scroll-margin-top: 96px;
 }
-.contact-maps__map { aspect-ratio: 16 / 10; }
-.contact-maps__body { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 12px 14px; padding: 18px 20px 20px; }
-.contact-maps__pin { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; color: var(--color-brand-primary); background: var(--color-brand-soft); }
-.contact-maps__pin svg { width: 18px; height: 18px; }
-.contact-maps__label { font-size: 16px; font-weight: 700; color: var(--color-brand-deep); }
-.contact-maps__address { margin-top: 4px; font-size: 14px; font-style: normal; line-height: 1.55; color: var(--color-text-secondary); overflow-wrap: anywhere; }
-.contact-maps__landmark { display: block; margin-top: 4px; font-style: italic; }
-.contact-maps__body .site-button { grid-column: 1 / -1; justify-self: start; }
-@media (min-width: 640px) {
-  .contact-maps__body { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
-  .contact-maps__body .site-button { grid-column: auto; justify-self: end; }
+
+.contact-maps__media { position: relative; }
+.contact-maps__photo { border-radius: 0; background: #fff; }
+.contact-maps__media::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 42%;
+  background: linear-gradient(180deg, transparent, rgb(14 43 32 / 0.18));
+  pointer-events: none;
+}
+.contact-maps__label {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid color-mix(in oklab, var(--color-accent-light) 45%, transparent);
+  border-radius: 999px;
+  background: var(--color-brand-deep);
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #fff;
+  box-shadow: 0 10px 24px -12px rgb(14 43 32 / 0.65);
+}
+.contact-maps__label svg { width: 14px; height: 14px; color: var(--color-accent-light); }
+
+.contact-maps__body { display: flex; flex: 1; flex-direction: column; gap: 8px; padding: 18px 20px 20px; }
+.contact-maps__address { font-size: 14px; font-style: normal; line-height: 1.55; color: var(--color-text-secondary); overflow-wrap: anywhere; }
+.contact-maps__landmark { font-size: 13px; font-style: italic; color: var(--color-text-muted); }
+.contact-maps__actions { margin-top: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding-top: 6px; }
+.contact-maps__actions .site-button { min-height: 40px; padding-inline: 14px; font-size: 13px; }
+.contact-maps__actions .site-button svg { width: 15px; height: 15px; }
+
+/* Tablet: one horizontal card with the map on the left. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .contact-maps__card { min-height: 260px; flex-direction: row; }
+  .contact-maps__media { flex: 0 0 42%; }
+  .contact-maps__photo { height: 100%; aspect-ratio: auto !important; }
+  .contact-maps__label { top: 12px; left: 12px; }
+  .contact-maps__body { justify-content: center; padding: 22px 24px; }
+  .contact-maps__actions { margin-top: 8px; }
+}
+
+/* Desktop: two cards side by side, actions in one row. */
+@media (min-width: 1024px) {
+  .contact-maps__actions { display: flex; }
+  .contact-maps__actions .site-button { flex: 1; }
+}
+
+/* Small phones: stack the two actions. */
+@media (max-width: 389px) {
+  .contact-maps__actions { grid-template-columns: 1fr; }
 }

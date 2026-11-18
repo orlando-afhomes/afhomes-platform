@@ -69,7 +69,8 @@
   color: var(--color-brand-primary);
 }
 .site-note { margin-top: 12px; font-size: 13px; color: var(--color-text-muted); }
-.site-callout { margin-top: 24px; border-left: 4px solid var(--color-brand-secondary); border-radius: 0 12px 12px 0; background: var(--color-brand-soft); padding: 16px 18px; line-height: 1.6; }
+/* Legacy payment-warning paragraph only. The shared SiteCallout panel keeps its own dark-panel styles. */
+p.site-callout { margin-top: 24px; border-left: 4px solid var(--color-brand-secondary); border-radius: 0 12px 12px 0; background: var(--color-brand-soft); padding: 16px 18px; line-height: 1.6; }
 .site-link { color: var(--color-brand-primary); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
 .site-link--muted { font-size: 14px; color: var(--color-text-secondary); }
 .site-center { display: flex; justify-content: center; margin-top: 32px; }
@@ -116,11 +117,36 @@
 .site-home-hero__inner { margin: 0 auto; width: 100%; max-width: 80rem; padding: 110px 16px 56px; }
 @media (min-width: 768px) { .site-home-hero__inner { padding-left: 24px; padding-right: 24px; } }
 @media (min-width: 1024px) { .site-home-hero__inner { padding-left: 88px; } }
+/* Live office status above the eyebrow. It stays hidden until the client clock is known, so no wrong status flashes. */
+.site-home-hero__top { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.site-home-hero__open { display: inline-flex; }
+.site-home-hero__open--pending { visibility: hidden; }
+/* Transparent pill with a solid border so the photo shows through. Text and tint follow the open/closed state. */
+.site-home-hero__top .site-badge {
+  background: rgb(255 255 255 / 0.06);
+  border: 1px solid rgb(255 255 255 / 0.65);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.site-home-hero__top .site-badge--live { --site-badge-dot: #4ade80; --site-badge-fg: #86efac; border-color: rgb(74 222 128 / 0.7); background: rgb(74 222 128 / 0.16); }
+.site-home-hero__top .site-badge--neutral { --site-badge-dot: #f87171; --site-badge-fg: #fca5a5; border-color: rgb(248 113 113 / 0.7); background: rgb(248 113 113 / 0.16); }
+@media (prefers-reduced-motion: no-preference) {
+  .site-home-hero__top .site-badge--live .site-badge__dot { animation-duration: 1700ms; }
+}
 .site-home-hero__title { margin-top: 16px; max-width: 56rem; font-family: var(--site-home-display); font-size: clamp(36px, 3.9vw, 58px); line-height: 1.08; font-weight: 600; letter-spacing: -0.01em; color: var(--color-on-dark); }
 .site-home-hero__line { display: block; }
 .site-home-hero__accent { display: block; font-style: italic; font-weight: 500; background: var(--gradient-gold); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: 0.06em; }
 .site-home-hero__lede { margin-top: 18px; max-width: 32rem; font-size: 16px; line-height: 1.55; color: var(--color-on-dark); }
 .site-home-hero .site-hero__actions { margin-top: 28px; gap: 14px; }
+/* Hero responsiveness: centered, stacked content on tablet and below.
+   Desktop keeps the left-aligned editorial layout with the clear photo on the right. */
+@media (max-width: 899px) {
+  .site-home-hero__inner { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .site-home-hero__top { align-items: center; }
+  .site-home-hero__lede { margin-inline: auto; }
+  .site-home-hero .site-hero__actions { justify-content: center; }
+}
 /* The hero's "Our experiences" button scrolls down: its arrow nudges down, and the section clears the floating header */
 .site-home-hero .site-button--outline-light:hover svg { transform: translateY(2px); }
 .site-home #experiences { scroll-margin-top: 24px; }
@@ -140,6 +166,16 @@
 .site-home-cta .site-cta__title { font-size: clamp(30px, 3.2vw, 46px); line-height: 1.08; font-weight: 500; color: var(--color-on-dark); }
 .site-home-cta .site-cta__text { font-size: 17px; color: var(--color-on-dark); }
 .site-home-cta .site-cta__actions { justify-content: flex-start; }
+
+/* Shared CTA band: the VIP page layout, used by every closing CTA on the public site. */
+.site-home-cta.site-cta-band { padding: 88px 0; }
+.site-home-cta.site-cta-band .site-home-cta__shade { background: radial-gradient(ellipse at center, rgb(14 43 32 / 0.66) 0%, rgb(14 43 32 / 0.84) 60%, rgb(14 43 32 / 0.92) 100%); }
+.site-home-cta.site-cta-band .site-cta { align-items: center; max-width: 48rem; margin: 0 auto; text-align: center; }
+.site-home-cta.site-cta-band .site-cta__title { color: var(--color-on-dark); overflow-wrap: break-word; }
+.site-home-cta.site-cta-band .site-cta__text { max-width: 38rem; }
+.site-home-cta.site-cta-band .site-cta__actions { justify-content: center; }
+.site-cta-band__note { margin: 16px auto 0; max-width: 38rem; text-align: center; font-size: 11px; color: var(--color-on-dark-muted); }
+@media (max-width: 600px) { .site-home-cta.site-cta-band { padding: 64px 0; } }
 
 /* Hero entrance and scroll reveal: only with motion allowed and scroll timelines supported */
 @supports (animation-timeline: view()) {

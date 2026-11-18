@@ -1,5 +1,6 @@
 import { ArrowRight, Clock, MessageCircleMore, ShieldCheck } from "lucide-react";
 import { ContactCards, Photo, SectionHeading, SiteButton } from "../site/blocks";
+import { SiteCta } from "../site/site-cta";
 import { ContactForm } from "../site/contact-form";
 import { ContactMaps } from "../contact/contact-maps";
 import { FaqBrowser } from "../faq/faq-browser";
@@ -75,24 +76,17 @@ export function ContactPage() {
         <ContactMaps />
       </div>
 
-      <section className="site-home-cta contact-closing" aria-labelledby="contact-closing-title">
-        <Photo
-          image={{ src: "/images/site/resort/amenities-w-terraces-pool1.webp", alt: "" }}
-          className="site-home-cta__photo contact-closing__photo"
-          sizes="100vw"
-        />
-        <div className="site-home-cta__shade" aria-hidden="true" />
-        <div className="contact-page__inner">
-          <div className="site-cta">
-            <h2 id="contact-closing-title" className="site-cta__title">Plan your next stay with AFhomes</h2>
-            <p className="site-cta__text">Reach out to our team for resort inquiries, reservations, and partnership opportunities.</p>
-            <div className="site-cta__actions">
-              <SiteButton href="#contact-form" variant="gold">Talk to us <ArrowRight aria-hidden="true" /></SiteButton>
-            </div>
-          </div>
-          <p className="contact-closing__note">Resort images are architectural renderings.</p>
-        </div>
-      </section>
+      <SiteCta
+        className="contact-closing"
+        titleId="contact-closing-title"
+        title="Plan your next stay with AFhomes"
+        text="Reach out to our team for resort inquiries, reservations, and partnership opportunities."
+        image={{ src: "/images/site/resort/amenities-w-terraces-pool1.webp", alt: "" }}
+        photoClassName="contact-closing__photo"
+        note="Resort images are architectural renderings."
+      >
+        <SiteButton href="#contact-form" variant="gold">Talk to us <ArrowRight aria-hidden="true" /></SiteButton>
+      </SiteCta>
     </div>
   );
 }

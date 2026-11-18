@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 /** One link in a site menu. `imageSrc` adds a thumbnail in the dropdown and phone menu. */
 export type SiteNavLink = { href: string; label: string; description?: string; imageSrc?: string };
 
-/** A menu entry that opens a panel of links (for example "Experiences"). */
-export type SiteNavGroup = { label: string; children: SiteNavLink[] };
+/** A menu entry that opens a panel of links (for example "Experiences"). `triggerClassName` adds a hook to the dropdown button, so page CSS can mark one group active without JavaScript. */
+export type SiteNavGroup = { label: string; children: SiteNavLink[]; triggerClassName?: string };
 
 export type SiteNavItem = SiteNavLink | SiteNavGroup;
 

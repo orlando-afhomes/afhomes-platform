@@ -142,6 +142,14 @@
   box-shadow: inset 0 0 0 1px rgb(220 192 106 / 0.55), 0 0 0 8px rgb(220 192 106 / 0.08);
 }
 .site-callout__icon svg { width: 30px; height: 30px; stroke-width: 1.5; }
+@keyframes site-callout-pulse {
+  0%, 100% { transform: scale(1); box-shadow: inset 0 0 0 1px rgb(220 192 106 / 0.55), 0 0 0 8px rgb(220 192 106 / 0.08); }
+  50% { transform: scale(1.045); box-shadow: inset 0 0 0 1px rgb(220 192 106 / 0.7), 0 0 0 14px rgb(220 192 106 / 0); }
+}
+.site-callout__icon { animation: site-callout-pulse 3.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .site-callout__icon { animation: none; }
+}
 .site-callout__title { font-family: var(--font-playfair), Georgia, "Times New Roman", serif; font-size: clamp(24px, 2.4vw, 32px); line-height: 1.15; font-weight: 600; letter-spacing: -0.01em; color: var(--color-on-dark); }
 .site-callout__text { margin-top: 6px; font-size: 16px; line-height: 1.5; color: var(--color-on-dark-muted); }
 .site-callout__action {
@@ -175,6 +183,7 @@
 @media (min-width: 900px) { .site-room-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; } }
 .site-room-grid > li { display: flex; min-width: 0; }
 .site-room-card {
+  position: relative;
   width: 100%;
   overflow: hidden;
   border-radius: 20px;
@@ -185,11 +194,12 @@
 .site-room-card:hover { transform: translateY(-4px); box-shadow: 0 1px 2px rgb(14 43 32 / 0.05), 0 28px 44px -26px rgb(14 43 32 / 0.6); }
 .site-room-card__link { display: flex; height: 100%; flex-direction: column; border-radius: inherit; }
 .site-room-card__link:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 3px; }
+button.site-room-card__link { width: 100%; border: 0; background: transparent; padding: 0; color: inherit; font: inherit; text-align: inherit; cursor: pointer; }
 .site-room-card__media { position: relative; display: block; aspect-ratio: 16 / 10; overflow: hidden; background: var(--color-bg-sunken); }
 .site-room-card__backdrop { object-fit: cover; filter: blur(18px) saturate(1.1); transform: scale(1.15); opacity: 0.85; }
 .site-room-card__image { object-fit: contain; transition: transform 900ms cubic-bezier(0.22, 0.8, 0.2, 1); }
 .site-room-card:hover .site-room-card__image { transform: scale(1.03); }
-.site-room-card__panel { display: flex; align-items: center; gap: 12px; padding: 14px 14px 16px 16px; }
+.site-room-card__panel { display: flex; align-items: center; gap: 12px; padding: 14px 64px 16px 16px; }
 .site-room-card__icon {
   display: grid;
   place-items: center;
@@ -205,24 +215,38 @@
 .site-room-card__category { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: color-mix(in oklab, var(--color-accent) 70%, var(--color-brand-deep)); }
 .site-room-card__name { overflow: hidden; font-family: var(--font-playfair), Georgia, "Times New Roman", serif; font-size: 19px; line-height: 1.2; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; color: var(--color-brand-deep); }
 .site-room-card__arrow {
+  position: absolute;
+  right: 14px;
+  bottom: 16px;
   display: grid;
   place-items: center;
   width: 36px;
   height: 36px;
   flex-shrink: 0;
+  border: 0;
   border-radius: 999px;
+  padding: 0;
   color: var(--color-brand-primary);
   background-color: var(--color-brand-soft);
+  cursor: pointer;
   transition: background-color 450ms cubic-bezier(0.22, 0.8, 0.2, 1), color 450ms cubic-bezier(0.22, 0.8, 0.2, 1), transform 450ms cubic-bezier(0.22, 0.8, 0.2, 1);
 }
+.site-room-card__arrow:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 3px; }
+span.site-room-card__arrow { pointer-events: none; }
 .site-room-card__arrow svg { width: 16px; height: 16px; }
 .site-room-card:hover .site-room-card__arrow { color: #fff; background-color: var(--color-brand-primary); transform: translateX(2px); }
 
 /* Tier card: ivory tile, the card artwork on a tier-coloured showcase panel, figures in soft chips */
 
 .site-tier-grid { display: grid; gap: 22px; max-width: 30rem; margin: 0 auto; }
+/* Tablets and large phones: two columns with the lead tier (Gold) featured across the top. */
+@media (min-width: 640px) {
+  .site-tier-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 46rem; }
+  .site-tier-grid > li:first-child { grid-column: 1 / -1; }
+}
 @media (min-width: 900px) {
   .site-tier-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px; max-width: none; }
+  .site-tier-grid > li:first-child { grid-column: auto; }
 }
 .site-tier-grid > li { display: flex; }
 
@@ -237,6 +261,9 @@
   background: #fff;
   box-shadow: 0 1px 2px rgb(14 43 32 / 0.05), 0 26px 46px -30px rgb(14 43 32 / 0.5);
   transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 500ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Lets the stat figures size themselves to the card, not the viewport (2-col tablet and 3-col desktop cards differ). */
+  container-type: inline-size;
+  container-name: tier-card;
 }
 .site-tier-card:hover {
   transform: translateY(-6px);
@@ -295,7 +322,7 @@
   gap: 10px;
   margin: 22px 14px 0;
   font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
-  font-size: 28px;
+  font-size: clamp(24px, 6vw, 28px);
   line-height: 1.1;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -318,6 +345,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -339,13 +367,28 @@
 .site-tier-card__value {
   margin: 2px 0 0;
   font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
-  font-size: 32px;
+  font-size: clamp(26px, 7vw, 32px);
   line-height: 1;
   font-weight: 600;
   font-variant-numeric: lining-nums tabular-nums;
   color: var(--color-brand-deep);
 }
 .site-tier-card__note { margin: 0; font-size: 13px; line-height: 1.35; color: var(--color-text-secondary); }
+
+/* Very small phones: tighten the card frame and stage density. */
+@media (max-width: 399px) {
+  .site-tier-card { padding: 10px 10px 18px; }
+  .site-tier-card__stage { padding: 26px 20px 28px; }
+  .site-tier-card__name { margin: 18px 10px 0; }
+  .site-tier-card__stats { margin: 14px 8px 0; }
+}
+/* Narrow cards (small phones, 2-col tablets, early 3-col desktop): shrink the stat internals so the figures never crowd. */
+@container tier-card (max-width: 320px) {
+  .site-tier-card__stat { padding: 0 12px; }
+  .site-tier-card__label { font-size: 11px; letter-spacing: 0.06em; }
+  .site-tier-card__icon { width: 24px; height: 24px; }
+  .site-tier-card__value { font-size: 26px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .site-tier-card, .site-tier-card__media { transition: none; }

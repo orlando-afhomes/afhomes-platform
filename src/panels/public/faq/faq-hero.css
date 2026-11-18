@@ -36,6 +36,11 @@
 
 /* Quick help chips */
 .faq-hero__quick { margin-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
+/* Centered search and chips on tablet and below. */
+@media (max-width: 899px) {
+  .site-faq-page .faq-hero .faq-hero__search { margin-inline: auto; }
+  .site-faq-page .faq-hero .faq-hero__quick { justify-content: center; }
+}
 .faq-hero__quick-label { font-size: 13px; font-weight: 700; color: var(--color-on-dark); }
 .faq-hero__chips { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .faq-hero__chip {

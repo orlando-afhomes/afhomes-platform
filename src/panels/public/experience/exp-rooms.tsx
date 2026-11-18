@@ -1,48 +1,39 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { useEffect, useState } from "react";
 import { ArrowRight, Images, LayoutDashboard } from "lucide-react";
-import type { Room, SiteImage } from "@/modules/public-site/content/experiences";
+import type { Room } from "@/modules/public-site/content/experiences";
 import { ROOM_CATEGORY_LABELS } from "@/modules/public-site/content/experiences";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { Photo, RenderingsNote, Section, SectionHeading } from "../site/blocks";
-
-/** All pictures of a room: photos first, then the floor plan. */
-function roomImages(room: Room): SiteImage[] {
-  return room.floorPlan ? [...room.photos, room.floorPlan] : room.photos;
-}
+import { RoomDetailsDialog } from "./room-details-dialog";
 
 /** Accommodation cards; each opens a dialog to browse the room's photos and floor plan. */
 export function ExperienceRooms({ id, eyebrow, title, text, note, rooms }: { id?: string; eyebrow: string; title: string; text: string; note: string; rooms: Room[] }) {
-  const [open, setOpen] = useState<{ room: Room; index: number } | null>(null);
-  const images = open ? roomImages(open.room) : [];
-  const shown = images[open?.index ?? 0];
+  const [openRoom, setOpenRoom] = useState<Room | null>(null);
+
+  // Deep links from the Home room cards: #room-<id> opens that room's details.
+  useEffect(() => {
+    const openFromHash = () => {
+      const id = decodeURIComponent(window.location.hash.slice(1));
+      const room = rooms.find((entry) => `room-${entry.id}` === id);
+      if (room) setOpenRoom(room);
+    };
+    openFromHash();
+    window.addEventListener("hashchange", openFromHash);
+    return () => window.removeEventListener("hashchange", openFromHash);
+  }, [rooms]);
 
   return (
     <Section id={id} tone="soft" className="exp-rooms">
       <SectionHeading eyebrow={eyebrow} title={title} text={text} />
       <ul className="exp-rooms__grid">
         {rooms.map((room) => {
-          const all = roomImages(room);
           const main = room.photos[0];
-          const thumbs = all.slice(1, 4);
           const photoCount = room.photos.length;
           return (
-            <li key={room.id} className="exp-rooms__card">
+            <li key={room.id} id={`room-${room.id}`} className="exp-rooms__card">
               <div className="exp-rooms__media">
                 {main ? <Photo image={main} ratio="16 / 9" className="exp-rooms__main" sizes="(min-width: 900px) 400px, 100vw" /> : null}
-                {thumbs.length > 0 ? (
-                  <ul className="exp-rooms__thumbs" aria-label={`${room.name} pictures`}>
-                    {thumbs.map((image, offset) => (
-                      <li key={image.src}>
-                        <button type="button" className="exp-rooms__thumb" aria-label={`Show: ${image.alt}`} onClick={() => setOpen({ room, index: offset + 1 })}>
-                          <Photo image={image} ratio="4 / 3" sizes="120px" />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
               </div>
               <div className="exp-rooms__body">
                 <p className="exp-rooms__tag">{ROOM_CATEGORY_LABELS[room.category]}</p>
@@ -59,7 +50,7 @@ export function ExperienceRooms({ id, eyebrow, title, text, note, rooms }: { id?
                     </li>
                   ) : null}
                 </ul>
-                <button type="button" className="exp-rooms__view" aria-label={`View details: ${room.name}`} onClick={() => setOpen({ room, index: 0 })}>
+                <button type="button" className="exp-rooms__view" aria-label={`View details: ${room.name}`} onClick={() => setOpenRoom(room)}>
                   View details
                   <ArrowRight aria-hidden="true" className="exp-rooms__view-icon" />
                 </button>
@@ -71,32 +62,12 @@ export function ExperienceRooms({ id, eyebrow, title, text, note, rooms }: { id?
       <p className="exp-rooms__note">{note}</p>
       <RenderingsNote />
 
-      <Dialog open={open !== null} onOpenChange={(next) => (next ? null : setOpen(null))}>
-        <DialogContent className="site-lightbox exp-rooms__dialog">
-          <DialogHeader>
-            <DialogTitle>{open?.room.name}</DialogTitle>
-            <DialogDescription className="tw:sr-only">Photos and floor plan</DialogDescription>
-          </DialogHeader>
-          {open && shown ? (
-            <>
-              <span className="site-lightbox__frame exp-rooms__frame">
-                <Image src={shown.src} alt={shown.alt} fill sizes="(min-width: 1024px) 900px, 100vw" className="site-photo__image site-photo__image--contain" />
-              </span>
-              {images.length > 1 ? (
-                <ul className="exp-rooms__picker" aria-label={`${open.room.name} pictures`}>
-                  {images.map((image, index) => (
-                    <li key={image.src}>
-                      <button type="button" className="exp-rooms__pick" aria-pressed={index === open.index} aria-label={`Show: ${image.alt}`} onClick={() => setOpen({ room: open.room, index })}>
-                        <Photo image={image} ratio="4 / 3" sizes="96px" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </>
-          ) : null}
-        </DialogContent>
-      </Dialog>
+      <RoomDetailsDialog
+        key={openRoom?.id ?? "closed"}
+        room={openRoom}
+        open={openRoom !== null}
+        onOpenChange={(next) => { if (!next) setOpenRoom(null); }}
+      />
     </Section>
   );
 }

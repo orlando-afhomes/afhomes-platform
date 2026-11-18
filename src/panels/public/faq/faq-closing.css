@@ -1,16 +1,4 @@
-/* FAQ closing band: the Home closing band, left-aligned, with the photo showing on the right */
-.site-home-cta.faq-closing { padding: 72px 0; }
-.site-home-cta.faq-closing .site-home-cta__shade {
-  background: linear-gradient(90deg, rgb(14 43 32 / 0.95) 0%, rgb(14 43 32 / 0.82) 40%, rgb(14 43 32 / 0.2) 100%);
-}
-.site-home-cta.faq-closing .site-cta { align-items: flex-start; text-align: left; }
-.site-home-cta.faq-closing .site-cta__title {
-  max-width: 30rem;
-  font-size: clamp(30px, 3.4vw, 46px);
-  color: #fff;
-  overflow-wrap: break-word;
-}
-.site-home-cta.faq-closing .site-cta__text { max-width: 34rem; }
+/* FAQ CTA accent: gold italic word inside the shared closing band. */
 .faq-closing__accent {
   font-style: italic;
   font-weight: 500;
@@ -21,10 +9,4 @@
   color: transparent;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
-}
-@media (max-width: 600px) {
-  .site-home-cta.faq-closing { padding: 56px 0; }
-  .site-home-cta.faq-closing .site-home-cta__shade {
-    background: linear-gradient(90deg, rgb(14 43 32 / 0.95) 0%, rgb(14 43 32 / 0.75) 100%);
-  }
 }

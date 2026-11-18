@@ -42,6 +42,11 @@
 }
 
 .contact-hero__inner { padding: 72px 18px 66px; }
+/* Centered, stacked content on tablet and below. */
+@media (max-width: 899px) {
+  .contact-hero__inner { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .contact-hero__lede { margin-inline: auto; }
+}
 
 .site-contact-page .contact-hero .site-eyebrow {
   color: var(--color-accent-light);
@@ -225,25 +230,7 @@
 
 .contact-message__panel .site-note { margin: 6px 0 0; font-size: 11px; line-height: 1.45; }
 
-.site-contact-page .contact-closing { padding-block: clamp(28px, 3.15vw, 48px); }
 .contact-closing__photo img { object-position: center 55%; }
-
-.contact-closing .site-home-cta__shade {
-  background: linear-gradient(90deg, rgb(14 43 32 / 0.97), rgb(14 43 32 / 0.86) 44%, rgb(14 43 32 / 0.15) 100%);
-}
-
-.contact-closing .site-cta { max-width: 42rem; gap: 7px; }
-.contact-closing .site-cta .site-cta__title { font-size: clamp(28px, 3.3vw, 45px); }
-.contact-closing .site-cta .site-cta__text { max-width: 100%; font-size: clamp(13px, 1.35vw, 16px); }
-.contact-closing .site-cta__actions { margin-top: 4px; }
-.contact-closing .site-button { min-height: 44px; font-size: 13px; }
-
-.contact-closing__note {
-  width: fit-content;
-  margin-top: 12px;
-  color: var(--color-on-dark-muted);
-  font-size: 11px;
-}
 
 @media (max-width: 599px) {
   .contact-hero::before {
@@ -281,15 +268,4 @@
   .contact-message__panel [data-slot="input"] { height: clamp(34px, 3.5vw, 44px); }
   .contact-message__panel [data-slot="textarea"] { height: 3.5rem; min-height: 3.5rem; }
   .contact-message__panel [type="submit"] { height: 36px; min-height: 36px; }
-  .contact-closing .site-button { min-height: 34px; padding-inline: 16px; }
-
-  .contact-closing__note {
-    position: absolute;
-    right: 5.5%;
-    bottom: 10px;
-    margin: 0;
-    border-radius: 4px;
-    padding: 2px 6px;
-    background: var(--color-brand-deep);
-  }
 }

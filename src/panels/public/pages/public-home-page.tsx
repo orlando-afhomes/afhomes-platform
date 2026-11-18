@@ -1,11 +1,13 @@
-import { ArrowDown, ArrowRight, House, ShieldCheck, Tent, TreePine } from "lucide-react";
+import { ArrowDown, ArrowRight, ShieldCheck } from "lucide-react";
 import { ABOUT } from "@/modules/public-site/content/about";
-import { EXPERIENCE_CARDS, RESORT_AMENITIES, ROOM_CATEGORY_LABELS, ROOMS } from "@/modules/public-site/content/experiences";
-import { SiteCallout, SiteFeatureCard, SiteRoomCard } from "@/shared/components/site";
+import { EXPERIENCE_CARDS, RESORT_AMENITIES, ROOMS } from "@/modules/public-site/content/experiences";
+import { SiteCallout, SiteFeatureCard } from "@/shared/components/site";
 import { Photo, Section, SectionHeading, SiteButton } from "../site/blocks";
+import { OpenStatusBadge } from "../site/open-status-badge";
+import { RoomPreviewGrid } from "../site/room-preview-grid";
+import { SiteCta } from "../site/site-cta";
 import { VipTierList } from "../site/vip-tier-list";
-
-const ROOM_ICONS = { villa: <House />, "a-frame": <TreePine />, glamping: <Tent /> };
+import "../experience/room-details-dialog.css";
 
 /** Home page. Layout and copy only; the cards, badges and callout are shared site components. */
 export function PublicHomePage() {
@@ -15,12 +17,15 @@ export function PublicHomePage() {
         <Photo image={ABOUT.hero} ratio="16 / 9" priority sizes="100vw" className="site-home-hero__photo" />
         <div className="site-home-hero__shade" aria-hidden="true" />
         <div className="site-home-hero__inner">
-          <p className="site-eyebrow site-eyebrow--light">AFhomes Resort</p>
+          <div className="site-home-hero__top">
+            <OpenStatusBadge />
+            <p className="site-eyebrow site-eyebrow--light">Your Home Away From Home</p>
+          </div>
           <h1 className="site-home-hero__title">
-            <span className="site-home-hero__line">Homestyle Hotspring</span>{" "}
-            <em className="site-home-hero__accent">Escape</em>
+            <span className="site-home-hero__line">Homestyle Hospitality</span>{" "}
+            <em className="site-home-hero__accent">Reimagined</em>
           </h1>
-          <p className="site-home-hero__lede">Pioneering resort destinations that feel like home.</p>
+          <p className="site-home-hero__lede">A hospitality group creating destinations that feel like home.</p>
           <div className="site-hero__actions">
             <SiteButton href="/vip-privilege#cards" variant="gold">Join VIP <ArrowRight aria-hidden="true" /></SiteButton>
             <SiteButton href="#experiences" variant="outline-light">Our experiences <ArrowDown aria-hidden="true" /></SiteButton>
@@ -47,13 +52,7 @@ export function PublicHomePage() {
 
       <Section>
         <SectionHeading eyebrow="Accommodations" title="Cozy, warm accommodations" text="Stays designed for comfort, relaxation, and joy." />
-        <ul className="site-room-grid site-home-reveal" aria-label="Accommodations preview">
-          {[ROOMS[0], ROOMS[5], ROOMS[1], ROOMS[2], ROOMS[4], ROOMS[7]].map((room) => (
-            <li key={room.id}>
-              <SiteRoomCard href="/experiences/hotspring-ecofarm-resort#accommodations" name={room.name} category={ROOM_CATEGORY_LABELS[room.category]} icon={ROOM_ICONS[room.category]} image={room.photos[0]} />
-            </li>
-          ))}
-        </ul>
+        <RoomPreviewGrid rooms={[ROOMS[0], ROOMS[5], ROOMS[1], ROOMS[2], ROOMS[4], ROOMS[7]]} />
         <div className="site-center"><SiteButton href="/experiences/hotspring-ecofarm-resort#accommodations">View floor plans <ArrowRight aria-hidden="true" /></SiteButton></div>
       </Section>
 
@@ -68,17 +67,9 @@ export function PublicHomePage() {
         />
       </Section>
 
-      <section className="site-home-cta site-home-reveal">
-        <Photo image={RESORT_AMENITIES[4]} ratio="16 / 9" sizes="100vw" className="site-home-cta__photo" />
-        <div className="site-home-cta__shade" aria-hidden="true" />
-        <div className="site-section__inner">
-          <div className="site-cta">
-            <h2 className="site-cta__title">Your stay awaits</h2>
-            <p className="site-cta__text">Where comfort meets excitement, dreams come true.</p>
-            <div className="site-cta__actions"><SiteButton href="/contact" variant="gold">Contact us <ArrowRight aria-hidden="true" /></SiteButton></div>
-          </div>
-        </div>
-      </section>
+      <SiteCta title="Your stay awaits" text="Where comfort meets excitement, dreams come true." image={RESORT_AMENITIES[4]}>
+        <SiteButton href="/contact" variant="gold">Contact us <ArrowRight aria-hidden="true" /></SiteButton>
+      </SiteCta>
     </div>
   );
 }

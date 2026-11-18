@@ -1,0 +1,13 @@
+/* Room details dialog: shared by the resort room cards and the Home accommodations preview. */
+.exp-rooms__frame { height: min(62vh, 36rem); }
+.exp-rooms__picker { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.exp-rooms__picker > li { width: 84px; }
+.exp-rooms__pick { display: block; width: 100%; border: 2px solid transparent; border-radius: 10px; cursor: pointer; opacity: 0.7; transition: opacity 200ms ease, border-color 200ms ease; }
+.exp-rooms__pick .site-photo { border-radius: 8px; }
+.exp-rooms__pick:hover { opacity: 1; }
+.exp-rooms__pick[aria-pressed="true"] { border-color: var(--color-brand-primary); opacity: 1; }
+.exp-rooms__pick:focus-visible { outline: 2px solid var(--color-state-focus); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .exp-rooms__pick { transition: none; }
+}

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Map as MapIcon, MapPin, ShieldCheck } from "lucide-react";
+import { Info, Map as MapIcon, MapPin, ShieldCheck } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import type { SiteNavLink } from "./site-nav-types";
 
@@ -46,6 +46,9 @@ export function SiteFooter({ brand, contacts, columns, locations, legal, classNa
             {column.links.map((link) => (
               <Link key={link.href} href={link.href} className="site-footer__link">{link.label}</Link>
             ))}
+            {column.heading === "Access" ? (
+              <p className="site-footer__access-note"><Info aria-hidden="true" />Staff and sellers only.</p>
+            ) : null}
           </nav>
         ))}
 

@@ -5,6 +5,7 @@
 
 .site-experience-page .exp-rooms__card {
   display: grid;
+  scroll-margin-top: 120px;
   gap: 18px;
   border: 1px solid var(--color-border-subtle);
   border-radius: 18px;
@@ -16,14 +17,9 @@
 
 .site-experience-page .exp-rooms__media { display: flex; flex-direction: column; gap: 8px; }
 .site-experience-page .exp-rooms__main { border-radius: 12px; }
-.site-experience-page .exp-rooms__thumbs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 
-.site-experience-page .exp-rooms__thumb,
 .site-experience-page .exp-rooms__pick { display: block; width: 100%; border-radius: 8px; cursor: pointer; }
-.site-experience-page .exp-rooms__thumb .site-photo,
 .site-experience-page .exp-rooms__pick .site-photo { border-radius: 8px; }
-.site-experience-page .exp-rooms__thumb .site-photo__image { transition: transform 300ms ease; }
-.site-experience-page .exp-rooms__thumb:hover .site-photo__image { transform: scale(1.05); }
 
 .site-experience-page .exp-rooms__body { display: flex; flex-direction: column; align-items: flex-start; padding: 4px 6px 6px; }
 .site-experience-page .exp-rooms__tag { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent-strong); }
@@ -51,23 +47,10 @@
 .site-experience-page .exp-rooms__view-icon { width: 15px; height: 15px; transition: transform 200ms ease; }
 .site-experience-page .exp-rooms__view:hover .exp-rooms__view-icon { transform: translateX(2px); }
 
-.site-experience-page .exp-rooms__thumb:focus-visible,
-.site-experience-page .exp-rooms__view:focus-visible,
-.exp-rooms__pick:focus-visible { outline: 2px solid var(--color-state-focus); outline-offset: 3px; }
+.site-experience-page .exp-rooms__view:focus-visible { outline: 2px solid var(--color-state-focus); outline-offset: 3px; }
 
 .site-experience-page .exp-rooms__note { margin-top: 24px; font-size: 13px; color: var(--color-text-muted); }
 
-/* Dialog content renders in a portal outside the page wrapper, so these stay namespaced but unscoped. */
-.exp-rooms__frame { height: min(62vh, 36rem); }
-.exp-rooms__picker { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
-.exp-rooms__picker > li { width: 84px; }
-.exp-rooms__pick { display: block; width: 100%; border: 2px solid transparent; border-radius: 10px; cursor: pointer; opacity: 0.7; transition: opacity 200ms ease, border-color 200ms ease; }
-.exp-rooms__pick .site-photo { border-radius: 8px; }
-.exp-rooms__pick:hover { opacity: 1; }
-.exp-rooms__pick[aria-pressed="true"] { border-color: var(--color-brand-primary); opacity: 1; }
-
 @media (prefers-reduced-motion: reduce) {
-  .site-experience-page .exp-rooms__thumb .site-photo__image,
-  .site-experience-page .exp-rooms__view-icon,
-  .exp-rooms__pick { transition: none; }
+  .site-experience-page .exp-rooms__view-icon { transition: none; }
 }

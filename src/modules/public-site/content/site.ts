@@ -15,29 +15,51 @@ export const SITE = {
   bir: "BIR 2303 OCN: 056RC20240000003585",
 } as const;
 
-/** `map.embedSrc` is the owner-supplied Google Maps embed URL; `map.href` opens the same place in Google Maps. */
-export type Office = { id: string; label: string; name: string; lines: string[]; landmark?: string; map: { embedSrc: string; href: string } };
+/**
+ * `map.embedSrc` is the owner-supplied Google Maps embed URL (used on About/Experience);
+ * `map.href` opens the place in Google Maps, `map.directionsHref` opens directions,
+ * and `map.image` is the static route map shown on the Contact "Find us" cards.
+ */
+export type Office = {
+  id: string;
+  label: string;
+  name: string;
+  /** Concise location for compact cards; `lines` keeps the full postal address. */
+  shortAddress: string;
+  lines: string[];
+  landmark?: string;
+  map: { embedSrc: string; href: string; directionsHref: string; image: { src: string; alt: string } };
+};
+
+/** Static route map for the Contact cards; the same owner-supplied map shows both offices. */
+const ROUTE_MAP = { src: "/images/site/about/map-1-scaled.webp", alt: "AFhomes route map" };
 
 export const OFFICES: Office[] = [
   {
     id: "satellite",
     label: "Satellite Office",
     name: "AFhomes Hotspring & Ecofarm Resort Corp.",
+    shortAddress: "Alaminos Commercial Complex, Alaminos, Laguna",
     lines: ["Alaminos Commercial Complex", "Maharlika Road, Brgy. San Juan, Alaminos, Laguna", "2nd Floor, Units 201-207"],
     landmark: "Located above Puregold Alaminos",
     map: {
       embedSrc: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3870.2698870470545!2d121.23496237540918!3d14.061233886363397!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33bd69007c5d7a7b%3A0x51868980e31a27b7!2sAFHomes%20Satellite%20Office!5e0!3m2!1sen!2sph!4v1794920507607!5m2!1sen!2sph",
       href: "https://www.google.com/maps/search/?api=1&query=AFHomes%20Satellite%20Office%2C%20Alaminos%2C%20Laguna",
+      directionsHref: "https://www.google.com/maps/dir/?api=1&destination=AFHomes%20Satellite%20Office%2C%20Alaminos%2C%20Laguna",
+      image: ROUTE_MAP,
     },
   },
   {
     id: "head",
     label: "Head Office",
     name: "AFhomes Hotspring & Ecofarm Resort Corp.",
+    shortAddress: "Brgy. Perez, Calauan, Laguna",
     lines: ["Brgy. Perez, Calauan, Laguna", "Region IV-A (CALABARZON), 4012"],
     map: {
       embedSrc: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3869.5602722871154!2d121.25441907541052!3d14.103115786326342!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33bd67003f398345%3A0x88aba5401f799eed!2s(Under%20construction)%20AFhomes%20Hotspring%20and%20Ecofarm%20Resort!5e0!3m2!1sen!2sph!4v1794920555735!5m2!1sen!2sph",
       href: "https://www.google.com/maps/search/?api=1&query=AFhomes%20Hotspring%20and%20Ecofarm%20Resort%2C%20Calauan%2C%20Laguna",
+      directionsHref: "https://www.google.com/maps/dir/?api=1&destination=AFhomes%20Hotspring%20and%20Ecofarm%20Resort%2C%20Calauan%2C%20Laguna",
+      image: ROUTE_MAP,
     },
   },
 ];
@@ -71,7 +93,7 @@ export const MAIN_NAV: NavLink[] = [
   { href: "/contact", label: "Contact" },
 ];
 
-/** Public actions shown at the right of the header and in the phone menu. Sales Sign-In is deliberately not linked anywhere public (owner decision, 2026-11-17); sellers type /login/sales. */
+/** Public actions shown at the right of the header and in the phone menu. Sales Sign-In is linked from the footer Access column and the phone menu (owner, 2026-11-18). */
 export const ACTION_LINKS: NavLink[] = [
   { href: "/verify", label: "Verify Accreditation" },
   { href: "/vip-privilege#cards", label: "Join VIP" },
@@ -86,6 +108,7 @@ export const FOOTER_COLUMNS: { heading: string; links: NavLink[] }[] = [
     links: [
       { href: "/verify", label: "Verify Accreditation" },
       { href: "/login", label: "Staff Login" },
+      { href: "/login/sales", label: "Sales Sign-In" },
     ],
   },
 ];

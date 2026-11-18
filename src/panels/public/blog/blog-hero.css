@@ -48,3 +48,10 @@
 @media (min-width: 1024px) {
   .blog-hero__highlight { padding: 0 28px; }
 }
+/* Centered, stacked content on tablet and below; the highlights block stays centered with readable left-aligned rows. */
+@media (max-width: 899px) {
+  .site-blog-page .blog-hero .blog-hero__highlights { margin-inline: auto; }
+}
+@media (min-width: 768px) and (max-width: 899px) {
+  .site-blog-page .blog-hero .blog-hero__highlights { justify-content: center; }
+}

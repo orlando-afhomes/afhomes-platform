@@ -111,69 +111,81 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-17
-- Repository: afhomes-platform (remote not re-checked; no fetch run)
-- Branch: develop
-- HEAD: 0527933 "feat: upgrade Next.js and refactor public site chrome" (verified this run via `git rev-parse`). Previous snapshot HEAD 9cb9d43 is its parent.
-- Tool and model: OpenCode (Beam Free). Model ID not independently verified this run.
-- Session objective: run `/load` then `/save`. No implementation, code change, or verification was requested or performed this session.
-- Development phase: frontend prototype with mock data, QA stage. Only the owner declares frontend completion. Backend, database, API and hosting are skipped until then (owner, 2026-11-16, carried forward).
-- Context note: this session started fresh with no prior conversation. The snapshot and repository state are the sources. Between `/load` and `/save` no edits were made by this session, yet the working tree is now very large and dirty (see sections 2 and 5); origin of those changes is unknown to this session and must be reconciled by the owner.
+- Saved at: 2026-11-18 (second save this day; continues the same session arc, supersedes the earlier snapshot below in Part B history).
+- Repository: afhomes-platform (remote not re-checked; no fetch run).
+- Branch: develop.
+- HEAD: c5d332f "feat: refactor public experience pages and add contact map embed" (verified this run via `git rev-parse`; unchanged all session).
+- Tool and model: OpenCode, DeepSeek V4.1 Flash 1017 (session metadata; not independently probed).
+- Session objective: owner-driven browser-comment refinements (hero status badge, callout border, staff-only Access notes, header logo tile, related/blog image frames); an ORDACY-style contact redesign was built then fully reverted per owner complaint; this run is `/save` only.
+- Development phase: frontend prototype with mock data, QA stage. Only the owner declares frontend completion; backend/database/API/hosting deferred.
+- Context note: no compaction; summary from conversation and repo reads. Prior same-day snapshot covered the post-c5d332f UI work; this one adds everything since.
 
 ## 2. Current Project State
-- Verified this run: on `develop`, HEAD 0527933. Working tree is NOT clean: many modified tracked files plus many untracked files (see section 5). Nothing staged.
-- `package.json` / `package-lock.json`: `next` and `eslint-config-next` at 16.4.5 (verified). Lockfile shows further churn this run (+318/-... lines vs the prior +50/-50), i.e. the tree has moved beyond the documented bump; not verified against `node_modules`.
-- New/expanded areas visible in the uncommitted tree: `src/app/admin/customer-lookup/`, `src/data/contracts/member-qr-repository.ts` + mock + tests, `src/panels/admin/components/member-qr.*`, `src/panels/admin/pages/customer-lookup.css`, a large public-site page/component split under `src/panels/public/{about,blog,compliance,contact,faq,post,vip}/`, `src/panels/public/site/vip-tier-list.tsx`, and new shared site components (`site-badge`, `site-callout`, `site-components.css`, `site-feature-card`, `site-header-scroll`, `site-room-card`, `site-tier-card`). Business intent of these not verified this session.
-- Docs touched in the working tree: `docs/business-rules/09-vip-membership-and-stay-points.md`, `docs/business-rules/10-redemption.md`, `docs/implementation/decisions-and-gaps.md`.
-- Current focus per prior snapshot: QA stage, owner content decisions and review. That assumption may no longer hold given the large dirty tree; owner confirmation required before any work continues.
+- Verified this run: `develop`, HEAD c5d332f; 40 modified tracked files, 2 deleted, 8 untracked; nothing staged.
+- New this session, all uncommitted, on top of the prior uncommitted work:
+  - Open-now badge: `SITE_HOURS` 9:00 AM–5:00 PM daily Asia/Manila (owner-confirmed; matches FAQ cash-payment hours) in `src/modules/public-site/hours.ts` + `hours.test.ts`; `OpenStatusBadge` client component above the hero eyebrow (hidden until mounted, 30s refresh, no hydration flash). Hero status pill "One group, three destinations" REMOVED per owner. Badge restyled to transparent pill with solid border; text/border/soft-tint follow state (green open, red closed); pulse kept, reduced-motion disables.
+  - Callout: legacy `.site-callout` rule scoped to `p.site-callout` (payment warning); home Verify Accreditation panel border-left is now 0px.
+  - Access notes: mobile-menu Access block and footer Access column carry "not for customers" notes; footer note names "Staff Login and Sales Sign-In" so Verify Accreditation (same column, public) is not misread as restricted. Enhanced to notice pills with Info icons (amber tint on ivory menu, gold tint on dark footer).
+  - Header logo tile: white `background` removed (transparent); mobile/footer logo tiles untouched.
+  - Related grid: images `contain` + centered (50% 50%); container has gold-glow gradient, hairline divider, inset ring.
+  - Post hero frame: gradient matte, gold halo outline offset 4px, deeper shadow; cover gets matching gradient backdrop.
+  - Blog index cards + featured media: gradient letterbox backdrops, hairline dividers (featured divider switches bottom→right at 900px), inset rings; card/featured images were already `contain` centered.
+  - Contact page: ORDACY redesign (hero/steps/form-card/fields/button) was built by 3 subagents then fully REVERTED per owner ("UI design destroyed"). Page is back to the working state: "Contact Us" hero, ContactCards, "Write to us" mailto form ("Open email"), static maps, `SiteCta` closing. Grep confirms zero `contact-re-`/`PROJECT_TYPES`/"Send an inquiry" remnants.
+  - `faq.ts` cash-payment line has a sync comment pointing at `SITE_HOURS`.
+- Known pre-existing 320px home overflow (`site-feature-card` 331px in 310px content) still present; unrelated to this session.
 
 ## 3. Important Decisions
 - Only the project owner stages, commits and pushes (AGENTS.md). Every delivery stops and reports.
-- Still binding from earlier sessions: UI5 to UI22 and A1 to A8; SweetAlert2 only through `AppAlert`/`useConfirmRun`; mock business data in browser memory only; no new dependencies without approval; max 5 table columns; namespaced kebab-case classes; no gold in the shell; a public header must not use `usePathname`; dynamic route params must be read inside a `Suspense` boundary.
-- Owner, 2026-11-16 (UI21 and UI22): Customer Look Up is staff-only (no public lookup); Verify copies the v2 steps and output while keeping the v3 rules (Expired shown, OST shows Valid until, IST does not); all 9 blog posts in full with a category filter; contact form opens the visitor's email app; VIP page keeps the old numbers with doc 09 point wording; keep the old villa pictures with printed room rates.
-- Hot-spring count (5 or 10) still unanswered by the owner (carried forward).
-- Redemption remains disabled per docs; mock UI may be live — do not activate routes/APIs without authorization.
+- Carried: header "AFHomes / GROUP OF COMPANIES" (header only); 5 top-level nav entries; mobile green-band menu; Sales Sign-In public (owner 2026-11-18); all closing CTAs via `SiteCta`; whole home room card opens `RoomDetailsDialog`; contact maps static; group-level hero copy with resort image; FAQ limits + WAAPI accordion; mock memory-only; no new deps; namespaced classes; Redemption disabled.
+- New: `SITE_HOURS` 9:00–17:00 Asia/Manila daily; badge wording "Open now / Closed now" above the eyebrow.
+- New: staff-only notes name the sign-in links in the footer so public Verify Accreditation is not misread as restricted.
+- New: contact redesign rejected by owner and reverted; working page is the baseline.
+- Tooling: `@grill-me` resolves only to its own stub (the `grilling` target is missing); browser comments handled manually.
 
 ## 4. Completed Work
-- This session: `/load` then `/save`. No product, test, doc, or configuration change authored by this session. The working tree is dirty, but none of it was produced here.
-- Repository: HEAD 0527933 contains the Next.js bump + public-site chrome refactor (verified via `git show --stat` earlier this session).
-- Historical verification (carried, not re-run): `npx tsc --noEmit` clean; `npm run lint` clean; full test run 161 files passed with 2 slow files (9 tests) timing out under load but passing alone; `business-pages.test.tsx` alone 103 passed; `npm run build` passed with all 9 blog posts prerendered. These predate the current dirty tree and the 16.4.5 bump, so they do not prove the current state.
+- Created this session: `src/modules/public-site/hours.ts`, `hours.test.ts`, `src/panels/public/site/open-status-badge.tsx`, `open-status-badge.test.tsx`.
+- Modified this session: `public-home-page.tsx` (status pill removed), `site.css` (hero-top/badge/callout scoping), `site-chrome.css` (logo bg removal, access-note pills), `site-mobile-menu.tsx` + `site-footer.tsx` (notes + Info icons), `post-related.css`/`post-related.tsx`, `post-hero.css`, `blog/blog-card.css`, `blog/blog-featured.css`, `content/faq.ts` (sync comment only).
+- Reverted this session (exact HEAD/pre-redesign restores, no `git checkout` used): `contact-message.ts` + `.test.ts`, `site/contact-form.tsx`, `pages/faq-contact-pages.tsx`, `contact/contact-page.css` (redesign block truncated), `site-pages.test.tsx` (button assertion hunk).
+- Verification this session: `npx tsc --noEmit` clean and `npm run lint` clean on every run; targeted suites green (final restore run: 35 passed — contact-message 3, site-pages 12, public-links 10, site-chrome 10; badge run: 20 passed; frame run: 22 passed). Browser: badge open/closed styles, callout 0px border, both Access notes, transparent logo, related/hero/blog frames incl. responsive featured divider, restored contact page (Contact Us, Open email, 2 maps, 0 leftovers, 0 overflow). Headless-tab screenshots unavailable; DOM + computed-style verification used.
 
 ## 5. Git Working Tree
-- Staged: none (verified).
-- Unstaged modified (verified, count ~74 tracked files): docs (09, 10, decisions-and-gaps), package.json/package-lock.json, many src files across admin/customer-lookup/member-qr, public site pages, content modules, data contracts/mocks/repositories/seed, redemption, stay points, promos, notifications, shared components, theme tokens. Full list recorded by `git diff --name-status` this run (not reproduced here).
-- Untracked (verified, ~70+ files): `public/images/member-qr-logo.jpg`, `src/app/admin/customer-lookup/page.tsx`, member-qr contract/mock/tests, `src/modules/public-site/content/blog.test.ts`, `member-qr.tsx` + test + css, large public-site page/component split (about, blog, compliance, contact, faq, post, vip), `src/panels/public/site/vip-tier-list.tsx`, new shared site components (site-badge, site-callout, site-components.css, site-feature-card, site-header-scroll, site-room-card, site-tier-card).
-- Deleted (tracked): `src/panels/public/site/blog-index.tsx`, `src/panels/public/site/faq-list.tsx`.
-- Stash `stash@{0}` "local: sales-network cleanup + member detail redesign" still present (verified earlier this session).
-- Origin of all working-tree changes: unknown to this session (not authored here). Git warns LF→CRLF on checkout. The dirty tree is large enough that it should be treated as in-progress work of unknown owner/agent provenance until reconciled.
+- Staged: none (verified via `git diff --cached --stat`).
+- Unstaged modified (40 tracked): prior set (content site/experiences/faq; header/pages; FAQ; CTAs; room dialog/grid; maps; closings; tests) plus this session newly modified `blog-card.css`, `blog-featured.css`, `post-hero.css`, `post-related.tsx`, `site-footer.tsx`, and further edits to `public-home-page.tsx`, `site.css`, `site-chrome.css`, `site-mobile-menu.tsx`, `post-related.css`, `faq.ts`, `contact-page.css`, `faq-contact-pages.tsx`, `site-pages.test.tsx` (last three net to their pre-redesign state).
+- Deleted: `compliance-closing.css`, `experience/exp-closing.css` (pre-existing).
+- Untracked (8): 4 pre-existing (`room-details-dialog.{tsx,css}`, `room-preview-grid.tsx`, `site-cta.tsx`) + 4 this session (`hours.ts`, `hours.test.ts`, `open-status-badge.tsx`, `open-status-badge.test.tsx`).
+- Stash `stash@{0}` ("local: sales-network cleanup + member detail redesign") still present.
+- No package/lock/docs changes. LF→CRLF warnings only; `git diff --check` clean on touched files (one pre-existing EOF-blank-line in `post-related.css` trimmed this session).
 
 ## 6. Pending Tasks
-- Reconcile the large dirty working tree with the owner: determine whether it is intended in-progress work, a leftover from another session/agent, or accidental. Do not commit, discard, or stash without owner direction.
-- Verify the Next 16.4.5 bump and the dirty tree together: `npm install` state, typecheck, lint, tests, build, browser smoke. Not performed this session.
-- Owner answers still needed: hot-spring count (5 or 10); keep/edit/archive old blog posts with dated claims (REBAP 50% VIP promotion, "potential investors"; Expo post "over 20 hectares" and "600 staycation units"); Teppanyaki Lounge count (four in text, two in caption); whether to show HR email; legal review of disclaimer, compliance statements, Verify privacy notice; update Smart Wellness Hotel status once open (grand opening November 2026); privacy policy page.
-- Add the UI22 "keep the rate pictures" answer to `docs/implementation/decisions-and-gaps.md` (small docs edit, not done).
-- Not yet checked: tablet width and dark mode for public site and shell; Customer Look Up as Finance, Clerk and OST in browser (only Super Admin checked); real contact-form hand-off to email app; visual pass of every desktop page.
-- From earlier snapshots, still open: priority sorting for every table; B1 permission fixes (`sales-network.*` for svd/ssm/sm; Admin adds IST and OST; `finance.refund` for admin; remove `requestedBy` check in `finance-cancellation-detail-page.tsx`; delete customer-status copy in `membership-repository.ts`); Redemption decision (docs disabled, mock UI live); small word items; commission rounding rule (D14); Clerk Commissions visibility. Outside the team: signed IST Clawback Addendum, real points-per-night table, legal retention period, real login, database and hosting.
+- Owner review and commit of the now-larger uncommitted tree. Do not stage/commit.
+- Run one full test suite and one build (never simultaneously); `business-pages` alone if needed.
+- Fix the pre-existing 320px `site-feature-card` overflow under a separate plan.
+- Carried owner-content questions: hot-spring count (5/10); dated blog claims; Teppanyaki count; HR email; legal review of disclaimer/compliance/Verify privacy; Smart Wellness Hotel status; privacy policy; UI22 "keep rate pictures" note in `docs/implementation/decisions-and-gaps.md`.
+- Carried, not rechecked: tablet/dark mode; Customer Look Up as Finance/Clerk/OST; contact mailto hand-off; full desktop visual pass; B1 permission fixes; table priority sorting; Redemption decision; D14 rounding; Clerk Commissions; IST Clawback Addendum; points-per-night table; legal retention; real login/DB/hosting.
+- Tooling: `grill-me`/`grilling` skill missing.
 
 ## 7. Verification State
-- This session: no typecheck, lint, test, build, or browser QA was run (not performed). `/save` is documentation only.
-- Historical verification (carried): typecheck/lint clean; full test run 161 files passed with 2 slow files (9 tests) timing out under load but passing alone; `business-pages.test.tsx` alone 103 passed; build passed with all 9 blog posts prerendered. Predates the current dirty tree and the 16.4.5 bump.
-- Known failures: none beyond slow-test timeouts under full-run load. Dev-only `/blog/[slug]` params warning not rechecked.
-- Checks not performed this session: everything (typecheck, lint, tests, build, browser, `npm install` state, `node_modules` vs lockfile).
+- This `/save` run: no typecheck, lint, tests, build, or browser QA; documentation only.
+- Latest implementation runs: typecheck clean, lint clean, all targeted suites green (see section 4). Full suite and build NOT run on the current tree.
+- Browser-verified this session: badge open/closed tint+border+text; callout 0px border/26px radius; Access notes (text, icons, colors); transparent header logo; related images contain+centered with enhanced containers; hero frame halo; blog card/featured frames incl. 900px divider switch; restored contact page.
+- Known failures: 320px home overflow (pre-existing). Agent-opened browser tabs intermittently drop from the session (reopen + single-pass evaluate works).
+- Not performed: full suite, build, `npm install`/node_modules check, tablet/dark-mode pass, screenshot capture.
 
 ## 8. Next Session Instructions
-- Recommended first action: `/load`, then ask the owner to reconcile the large dirty working tree (see section 5) before any implementation or verification. Confirm whether it is intended in-progress work. Only after that, verify the tree (typecheck → lint → targeted tests → full test run → build → browser smoke).
-- If the dirty tree is not intended, the owner must decide how to handle it (stash/keep/discard) — agent must not perform Git write operations.
-- Relevant files: `workflow/save-session.md`, `package.json`, `package-lock.json`, the modified/untracked groups in section 5, `docs/implementation/decisions-and-gaps.md`, `src/modules/identity/permissions.ts`, `src/panels/admin/navigation.ts`.
-- Required approvals: any commit/push (owner only); each plan before building; permission changes; backend/database/API/hosting work; `AGENTS.md` edits; dependency changes or downloads; handling of the dirty working tree.
-- Warnings: mock data resets on full page load; do not run build and tests simultaneously; run `business-pages` alone; full test run has slow-test timeouts that pass alone; do not delete `.next`; never claim visual verification without a browser run; the dirty tree may break typecheck/tests until reconciled; do not stage or commit anything.
+- First action: `/load`, inspect the uncommitted tree vs HEAD c5d332f; ask the owner whether to verify/commit.
+- Verify: `npx tsc --noEmit`, `npm run lint`, targeted tests, one full test run, one build (sequential), browser 375/1100/1280.
+- Relevant files: `workflow/save-session.md`; `src/panels/public/pages/public-home-page.tsx`; `src/panels/public/site/open-status-badge.tsx`; `src/modules/public-site/hours.ts`; `src/shared/components/site/site-chrome.css`, `site-footer.tsx`, `site-mobile-menu.tsx`; `src/panels/public/post/post-related.{tsx,css}`, `post-hero.css`; `src/panels/public/blog/blog-card.css`, `blog-featured.css`; contact files (restored working state).
+- Required approvals: owner commits; each plan before building; permission/backend/DB/API/hosting; AGENTS edits; dependency changes.
+- Warnings: mock data resets on full page load; do not commit; never run build+tests simultaneously; full suite slow; do not delete `.next`; never claim visual verification without a browser; dev server may need restart; agent browser tabs may drop (use single-pass open+evaluate).
 
 ## 9. Execution Recommendation
-- Phase: QA / reconciliation (owner must clarify scope before feature work)
+- Phase: QA
+- Current mode: not verified
 - Recommended next mode: default (ask before edits)
+- Current model: DeepSeek V4.1 Flash 1017 (session metadata, not independently probed)
 - Recommended model: Sonnet 5.5
 - Effort: medium
 - Ultracode: OFF
-- Token optimization: first reconcile the dirty tree with the owner (cheap, no code), then targeted typecheck+lint, then one full test run and one build, then one item at a time.
-- Reason: HEAD is committed at 0527933, but the working tree now contains a large, unverified set of changes of unknown origin; verification and scope clarification must precede any feature or QA work.
+- Token optimization: targeted typecheck/lint/tests first, then one full test run and one build; then the 320px overflow plan.
+- Reason: the tree is complete and targeted-green but uncommitted and larger than last save; full verification and the commit decision remain.
 <!-- SESSION_SNAPSHOT_END -->

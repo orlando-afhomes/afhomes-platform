@@ -13,7 +13,7 @@ export function PostRelated({ post }: { post: BlogPost }) {
       <ul className="post-related__grid">
         {related.map((item) => (
           <li key={item.slug} className="post-related__card">
-            <Photo image={item.cover} ratio="16 / 9" className="post-related__photo" sizes="(min-width: 900px) 360px, (min-width: 600px) 50vw, 100vw" />
+            <Photo image={item.cover} ratio="16 / 9" fit="contain" className="post-related__photo" sizes="(min-width: 900px) 360px, (min-width: 600px) 50vw, 100vw" />
             <div className="post-related__body">
               {item.categories[0] ? <p className="post-related__category">{item.categories[0]}</p> : null}
               <h3 className="post-related__heading">

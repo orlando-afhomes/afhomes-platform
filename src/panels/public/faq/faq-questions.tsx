@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, ShieldCheck } from "lucide-react";
 import { FAQ_ITEMS, FAQ_PAGE, type FaqBlock, type FaqItem } from "@/modules/public-site/content/faq";
 import { PAYMENT_DISCLAIMER } from "@/modules/public-site/content/site";
@@ -57,32 +57,89 @@ function itemText(item: FaqItem): string {
 
 const SEARCH_INDEX = FAQ_ITEMS.map((item) => ({ item, text: itemText(item) }));
 
-/** Opens the question named in the address hash (quick-help chips and links like /faq#payment). */
-function openHashTarget() {
-  const id = decodeURIComponent(window.location.hash.slice(1));
-  if (!id) return;
-  const target = document.getElementById(id);
-  if (target instanceof HTMLDetailsElement) target.open = true;
+/** One answer whose height animates from 0 to its content height and back. */
+function FaqDisclosure({ id, open, children }: { id: string; open: boolean; children: ReactNode }) {
+  const clipRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<Animation | null>(null);
+
+  useEffect(() => {
+    const el = clipRef.current;
+    if (!el) return;
+    const reduced = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced || typeof el.animate !== "function") {
+      animationRef.current?.cancel();
+      el.style.height = open ? "auto" : "0px";
+      return;
+    }
+
+    const start = el.getBoundingClientRect().height;
+    animationRef.current?.cancel();
+    if (open) {
+      el.style.height = "auto";
+      const end = el.scrollHeight;
+      el.style.height = `${start}px`;
+      const animation = el.animate(
+        [{ height: `${start}px` }, { height: `${end}px` }],
+        { duration: 320, easing: "cubic-bezier(0.22, 0.8, 0.2, 1)" },
+      );
+      animationRef.current = animation;
+      animation.onfinish = () => { el.style.height = "auto"; };
+    } else {
+      el.style.height = `${start}px`;
+      const animation = el.animate(
+        [{ height: `${start}px` }, { height: "0px" }],
+        { duration: 320, easing: "cubic-bezier(0.22, 0.8, 0.2, 1)" },
+      );
+      animationRef.current = animation;
+      animation.onfinish = () => { el.style.height = "0px"; };
+    }
+  }, [open]);
+
+  useEffect(() => () => animationRef.current?.cancel(), []);
+
+  return (
+    <div id={id} className="faq-questions__answer-wrap" aria-hidden={!open}>
+      <div ref={clipRef} className="faq-questions__answer-clip">
+        {children}
+      </div>
+    </div>
+  );
 }
 
-/** Questions as native disclosure boxes: keyboard and screen reader friendly with no extra script. */
+/** Questions as accessible disclosure buttons; answers animate open and closed. */
 export function FaqQuestions({ query }: { query: string }) {
   const { eyebrow, title, text, empty } = FAQ_PAGE.questions;
-  const listRef = useRef<HTMLDivElement>(null);
+  const [openIds, setOpenIds] = useState<Set<string>>(() => new Set());
   const needle = query.trim().toLowerCase();
-  const items = needle ? SEARCH_INDEX.filter((entry) => entry.text.includes(needle)).map((entry) => entry.item) : FAQ_ITEMS;
+  const items = useMemo(
+    () => (needle ? SEARCH_INDEX.filter((entry) => entry.text.includes(needle)).map((entry) => entry.item) : FAQ_ITEMS),
+    [needle],
+  );
 
+  const toggle = (id: string) =>
+    setOpenIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  // Open the question named in the address hash (quick-help chips and links like /faq#payment).
   useEffect(() => {
-    openHashTarget();
-    window.addEventListener("hashchange", openHashTarget);
-    return () => window.removeEventListener("hashchange", openHashTarget);
+    const openFromHash = () => {
+      const id = decodeURIComponent(window.location.hash.slice(1));
+      if (!id || !FAQ_ITEMS.some((item) => item.id === id)) return;
+      setOpenIds((current) => {
+        if (current.has(id)) return current;
+        const next = new Set(current);
+        next.add(id);
+        return next;
+      });
+    };
+    openFromHash();
+    window.addEventListener("hashchange", openFromHash);
+    return () => window.removeEventListener("hashchange", openFromHash);
   }, []);
-
-  // While searching, open the matching questions so the answers show at once.
-  useEffect(() => {
-    if (!needle || !listRef.current) return;
-    listRef.current.querySelectorAll("details").forEach((details) => { details.open = true; });
-  }, [needle]);
 
   const status = needle ? (items.length === 1 ? "1 question found" : `${items.length} questions found`) : "";
 
@@ -90,19 +147,32 @@ export function FaqQuestions({ query }: { query: string }) {
     <Section className="faq-questions">
       <SectionHeading eyebrow={eyebrow} title={title} text={text} />
       <p className="faq-questions__status" role="status" aria-live="polite">{status}</p>
-      <div ref={listRef} className="faq-questions__list-wrap site-home-reveal">
+      <div className="faq-questions__list-wrap site-home-reveal">
         {items.length ? (
-          items.map((item) => (
-            <details key={item.id} className="faq-questions__item" id={item.id}>
-              <summary className="faq-questions__summary">
-                <span>{item.question}</span>
-                <ChevronDown aria-hidden="true" className="faq-questions__chevron" />
-              </summary>
-              <div className="faq-questions__answer">
-                <Blocks blocks={item.blocks} />
+          items.map((item) => {
+            // While searching, keep every matching answer open so the result is visible at once.
+            const isOpen = Boolean(needle) || openIds.has(item.id);
+            return (
+              <div key={item.id} className="faq-questions__item" id={item.id} data-open={isOpen ? "" : undefined}>
+                <button
+                  type="button"
+                  id={`${item.id}-summary`}
+                  className="faq-questions__summary"
+                  aria-expanded={isOpen}
+                  aria-controls={`${item.id}-answer`}
+                  onClick={() => toggle(item.id)}
+                >
+                  <span>{item.question}</span>
+                  <ChevronDown aria-hidden="true" className="faq-questions__chevron" />
+                </button>
+                <FaqDisclosure id={`${item.id}-answer`} open={isOpen}>
+                  <div className="faq-questions__answer">
+                    <Blocks blocks={item.blocks} />
+                  </div>
+                </FaqDisclosure>
               </div>
-            </details>
-          ))
+            );
+          })
         ) : (
           <p className="faq-questions__empty">{empty}</p>
         )}

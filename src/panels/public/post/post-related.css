@@ -47,8 +47,15 @@
   box-shadow: var(--shadow-soft);
   transition: transform 300ms ease, box-shadow 300ms ease;
 }
-.site-post-page .post-related__photo { border-radius: 0; }
-.site-post-page .post-related__photo .site-photo__image { object-position: top; transition: transform 300ms ease; }
+.site-post-page .post-related__photo {
+  border-radius: 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(220 192 106 / 0.14), transparent 60%),
+    linear-gradient(180deg, var(--color-bg-subtle), var(--color-bg-sunken));
+  box-shadow: inset 0 0 0 1px rgb(14 43 32 / 0.08);
+}
+.site-post-page .post-related__photo .site-photo__image { object-position: center; transition: transform 300ms ease; }
 .post-related__body { display: flex; flex: 1; flex-direction: column; gap: 6px; padding: 14px 16px; }
 .post-related__category { margin: 0; font-size: 11.5px; color: var(--color-text-muted); }
 .post-related__heading {
@@ -99,17 +106,4 @@
   .post-related__card:focus-within { transform: none; }
   .site-post-page .post-related__card:hover .post-related__photo .site-photo__image,
   .site-post-page .post-related__card:focus-within .post-related__photo .site-photo__image { transform: none; }
-}
-
-/* Closing band: the Home closing band, left-aligned, strong dark green on the left fading to the photo */
-.site-home-cta.post-cta { padding: 72px 0; }
-.site-home-cta.post-cta .site-home-cta__shade {
-  background: linear-gradient(90deg, rgb(14 43 32 / 0.95) 0%, rgb(14 43 32 / 0.82) 40%, rgb(14 43 32 / 0.2) 100%);
-}
-.site-home-cta.post-cta .site-cta { align-items: flex-start; text-align: left; }
-.site-home-cta.post-cta .site-cta__title { max-width: 32rem; color: #fff; overflow-wrap: break-word; }
-.site-home-cta.post-cta .site-cta__text { max-width: 34rem; }
-@media (max-width: 600px) {
-  .site-home-cta.post-cta { padding: 56px 0; }
-  .site-home-cta.post-cta .site-home-cta__shade { background: linear-gradient(90deg, rgb(14 43 32 / 0.95) 0%, rgb(14 43 32 / 0.75) 100%); }
 }

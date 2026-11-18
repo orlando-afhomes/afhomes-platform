@@ -3,32 +3,46 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, Menu } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/shared/ui/sheet";
+import { Briefcase, ChevronRight, Info, Menu, UserRound, X } from "lucide-react";
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/shared/ui/sheet";
 import { isNavGroup, type SiteHeaderAction, type SiteNavItem, type SiteNavLink } from "./site-nav-types";
 
 type SiteMobileMenuProps = {
   brandName: string;
+  brandSubName?: string;
+  logoSrc: string;
   items: SiteNavItem[];
   actions: SiteHeaderAction[];
   extraLinks: SiteNavLink[];
 };
 
 /** Phone and tablet menu for the site header. Closes when a link is chosen. */
-export function SiteMobileMenu({ brandName, items, actions, extraLinks }: SiteMobileMenuProps) {
+export function SiteMobileMenu({ brandName, brandSubName, logoSrc, items, actions, extraLinks }: SiteMobileMenuProps) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
+  const fullName = brandSubName ? `${brandName} ${brandSubName}` : brandName;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger render={<Button type="button" variant="outline" size="icon" aria-label="Open menu" className="site-header__menu-button" />}>
+      <SheetTrigger render={<button type="button" aria-label="Open menu" className="site-header__menu-button" />}>
         <Menu aria-hidden="true" />
       </SheetTrigger>
-      <SheetContent side="right" className="site-mobile-menu">
+      <SheetContent side="right" className="site-mobile-menu" showCloseButton={false}>
         <SheetHeader className="site-mobile-menu__header">
-          <SheetTitle>{brandName}</SheetTitle>
+          <SheetTitle className="tw:sr-only">{fullName} menu</SheetTitle>
           <SheetDescription className="tw:sr-only">Site menu</SheetDescription>
+          <div className="site-mobile-menu__brand">
+            <span className="site-mobile-menu__logo" aria-hidden="true">
+              <Image src={logoSrc} alt="" width={32} height={36} sizes="46px" className="site-mobile-menu__logo-image" />
+            </span>
+            <span className="site-mobile-menu__brand-text">
+              <span className="site-mobile-menu__brand-name">{brandName}</span>
+              {brandSubName ? <span className="site-mobile-menu__brand-sub">{brandSubName}</span> : null}
+            </span>
+          </div>
+          <SheetClose render={<button type="button" aria-label="Close menu" className="site-mobile-menu__close" />}>
+            <X aria-hidden="true" />
+          </SheetClose>
         </SheetHeader>
         <nav aria-label="Mobile" className="site-mobile-menu__nav">
           {items.map((item) =>
@@ -51,11 +65,23 @@ export function SiteMobileMenu({ brandName, items, actions, extraLinks }: SiteMo
               {action.label}
             </Link>
           ))}
-          {extraLinks.map((link) => (
-            <Link key={link.href} href={link.href} onClick={close} className="site-mobile-menu__small-link">
-              {link.label}
-            </Link>
-          ))}
+          {extraLinks.length ? (
+            <div className="site-mobile-menu__access">
+              <p className="site-mobile-menu__access-label">Access</p>
+              <div className="site-mobile-menu__access-links">
+                {extraLinks.map((link) => (
+                  <Link key={link.href} href={link.href} onClick={close} className="site-mobile-menu__access-link">
+                    <span className="site-mobile-menu__access-icon" aria-hidden="true">
+                      {link.href === "/login/sales" ? <Briefcase /> : <UserRound />}
+                    </span>
+                    <span className="site-mobile-menu__access-text">{link.label}</span>
+                    <ChevronRight aria-hidden="true" className="site-mobile-menu__access-chevron" />
+                  </Link>
+                ))}
+              </div>
+              <p className="site-mobile-menu__access-note"><Info aria-hidden="true" />For staff and sellers only — not for customers.</p>
+            </div>
+          ) : null}
         </div>
       </SheetContent>
     </Sheet>

@@ -6,7 +6,6 @@ import { ComplianceClosing } from "../compliance/compliance-closing";
 import "../compliance/compliance-hero-table.css";
 import "../compliance/compliance-journey.css";
 import "../compliance/compliance-documents.css";
-import "../compliance/compliance-closing.css";
 
 /**
  * Compliance page, laid out from the owner's Compliance reference design.

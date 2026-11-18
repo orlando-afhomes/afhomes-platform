@@ -209,15 +209,18 @@ export const HOTEL_PAGE = {
   closing: { title: "Grand opening: November 2026", text: "Ask us about the AFhomes Smart Wellness Hotel and your VIP Privilege Card.", image: img("hotel/reception-1024x683", "The hotel reception") },
 };
 
+/** Teppanyaki photo used as the restaurant hero and CTA background (owner request, 2026-11-18). */
+const RESTAURANT_TEPPANYAKI = img("hotel/teppan-scene-2-ps-1-1024x683", "Teppanyaki dining at the ALM Japanese Restaurant");
+
 export const RESTAURANT_PAGE = {
-  hero: { eyebrow: "Alaminos, Laguna", title: RESTAURANT.title, lede: RESTAURANT.tagline, status: RESTAURANT.status, image: RESTAURANT.hero },
+  hero: { eyebrow: "Alaminos, Laguna", title: RESTAURANT.title, lede: RESTAURANT.tagline, status: RESTAURANT.status, image: RESTAURANT_TEPPANYAKI },
   overview: { eyebrow: "Restaurant overview", title: "A 600sqm landmark for authentic Japanese dining", text: RESTAURANT.intro, features: RESTAURANT.sections },
   reservation: {
     eyebrow: "Plan your visit",
     title: "Dinners and celebrations",
     text: RESTAURANT.closing,
     note: RESTAURANT.reservation,
-    image: img("hotel/teppan-scene-2-ps-1-1024x683", "Teppanyaki dining at the ALM Japanese Restaurant"),
+    image: RESTAURANT.hero,
   },
-  closing: { title: "Japanese tradition meets modern sophistication", text: "Contact our office to plan your dinner or celebration.", image: RESTAURANT.hero },
+  closing: { title: "Japanese tradition meets modern sophistication", text: "Contact our office to plan your dinner or celebration.", image: RESTAURANT_TEPPANYAKI },
 };

@@ -3,26 +3,32 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { VIP_TIERS } from "@/modules/public-site/content/vip";
 import { BLOG_POSTS } from "@/modules/public-site/content/blog";
+import { FAQ_INTRO, FAQ_PAGE } from "@/modules/public-site/content/faq";
 import { OFFICES, SITE } from "@/modules/public-site/content/site";
 import { PUBLIC_SUPPORT_INFO } from "@/modules/public-site/support-info";
 import { BlogPage, BlogPostPage } from "./pages/blog-pages";
 import { ContactPage, FaqPage } from "./pages/faq-contact-pages";
+import { PublicHomePage } from "./pages/public-home-page";
 import { VipPage } from "./pages/vip-page";
 import { HotelPage, ResortPage, RestaurantPage } from "./pages/experience-pages";
 import { HOTEL, RESTAURANT, RESORT, ROOMS } from "@/modules/public-site/content/experiences";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  window.history.replaceState(null, "", "/");
+});
 
 describe("public site pages", () => {
-  it("FAQ answers open from their question (a native summary, so the keyboard works in browsers)", async () => {
+  it("FAQ answers open from an accessible disclosure button", async () => {
     const user = userEvent.setup();
     render(<FaqPage />);
-    const summary = screen.getByText("Is your company offering bonds, shares, stocks, or co-ownership?").closest("summary")!;
-    expect(summary).not.toHaveAttribute("tabindex", "-1");
-    const details = summary.closest("details")!;
-    expect(details.open).toBe(false);
-    await user.click(summary);
-    expect(details.open).toBe(true);
+    const button = screen.getByRole("button", { name: /Is your company offering bonds, shares, stocks, or co-ownership\?/ });
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    const answer = document.getElementById(button.getAttribute("aria-controls")!)!;
+    expect(answer).toHaveAttribute("aria-hidden", "true");
+    await user.click(button);
+    expect(button).toHaveAttribute("aria-expanded", "true");
+    expect(answer).toHaveAttribute("aria-hidden", "false");
     expect(screen.getAllByText(/not an investment product, timeshare, or ownership stake/i).length).toBeGreaterThan(0);
   });
 
@@ -36,6 +42,13 @@ describe("public site pages", () => {
     await user.clear(search);
     await user.type(search, "zzqx");
     expect(screen.getByText(/No questions match your search/i)).toBeInTheDocument();
+  });
+
+  it("keeps the FAQ hero and section copy within the owner's word limits", () => {
+    const words = (value: string) => value.trim().split(/\s+/).length;
+    expect(words(FAQ_INTRO.lede)).toBeLessThanOrEqual(4);
+    expect(words(FAQ_INTRO.text)).toBe(6);
+    expect(words(FAQ_PAGE.questions.text)).toBeLessThanOrEqual(7);
   });
 
   it("shows the three VIP tiers with the doc 05 numbers and the doc 09 points wording", () => {
@@ -61,11 +74,14 @@ describe("public site pages", () => {
     expect(screen.getByRole("link", { name: "Talk to us" })).toHaveAttribute("href", "#contact-form");
     expect(container.querySelector("#contact-form")).toContainElement(screen.getByRole("form", { name: "Contact form" }));
 
-    // "Find us": one live map and one directions link per office.
-    expect(screen.getAllByTitle(/^Map of the AFhomes /)).toHaveLength(OFFICES.length);
+    // "Find us": one static route map and two map actions per office.
+    expect(screen.getAllByRole("img", { name: "AFhomes route map" })).toHaveLength(OFFICES.length);
+    expect(screen.getByText("Alaminos Commercial Complex, Alaminos, Laguna")).toBeInTheDocument();
     const directions = screen.getAllByRole("link", { name: "Get directions" });
-    expect(directions.map((link) => link.getAttribute("href"))).toEqual(OFFICES.map((office) => office.map.href));
-    for (const link of directions) expect(link).toHaveAttribute("target", "_blank");
+    expect(directions.map((link) => link.getAttribute("href"))).toEqual(OFFICES.map((office) => office.map.directionsHref));
+    const maps = screen.getAllByRole("link", { name: "Open map" });
+    expect(maps.map((link) => link.getAttribute("href"))).toEqual(OFFICES.map((office) => office.map.href));
+    for (const link of [...directions, ...maps]) expect(link).toHaveAttribute("target", "_blank");
     expect(screen.getByRole("link", { name: PUBLIC_SUPPORT_INFO.email })).toHaveAttribute("href", `mailto:${PUBLIC_SUPPORT_INFO.email}`);
     expect(screen.getByRole("link", { name: PUBLIC_SUPPORT_INFO.phone })).toHaveAttribute("href", PUBLIC_SUPPORT_INFO.phoneHref);
     expect(screen.getByRole("link", { name: "Send us a message on Facebook" })).toHaveAttribute("href", SITE.facebookUrl);
@@ -95,6 +111,7 @@ describe("public site pages", () => {
     render(<ResortPage />);
     expect(screen.getByRole("heading", { level: 1, name: RESORT.title })).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /^View details: / })).toHaveLength(ROOMS.length);
+    expect(screen.queryByRole("button", { name: /^Show: / })).toBeNull();
     await user.click(screen.getByRole("button", { name: "View details: King Villa" }));
     expect(within(screen.getByRole("dialog")).getByRole("button", { name: "Show: King Villa floor plan" })).toBeInTheDocument();
     await user.keyboard("{Escape}");
@@ -102,6 +119,23 @@ describe("public site pages", () => {
     await user.click(screen.getByRole("tab", { name: /Resort map/ }));
     expect(screen.getByTitle("Resort Location")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Get directions/ })).toHaveAttribute("target", "_blank");
+  });
+
+  it("home room cards open details in place", async () => {
+    const user = userEvent.setup();
+    render(<PublicHomePage />);
+    expect(screen.getByRole("link", { name: "View floor plans" })).toHaveAttribute("href", "/experiences/hotspring-ecofarm-resort#accommodations");
+    await user.click(screen.getByRole("button", { name: "King Villa: view details" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("button", { name: "Show: King Villa floor plan" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "King Villa: view resort page" })).toBeNull();
+  });
+
+  it("opens a room's View details from a room deep link", async () => {
+    window.history.replaceState(null, "", "#room-king-villa");
+    render(<ResortPage />);
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("button", { name: "Show: King Villa floor plan" })).toBeInTheDocument();
   });
 
   it("hotel and restaurant pages show their own title and details", () => {

@@ -9,6 +9,14 @@
 @media (min-width: 768px) { .post-hero__inner { padding-left: 24px; padding-right: 24px; } }
 @media (min-width: 900px) { .post-hero__inner { grid-template-columns: minmax(0, 11fr) minmax(0, 9fr); gap: 40px; padding-top: 118px; padding-bottom: 56px; } }
 .post-hero__inner > * { min-width: 0; }
+/* Centered, stacked content on tablet and below; the frame caps its width so it does not sprawl. */
+@media (max-width: 899px) {
+  .post-hero__inner { text-align: center; }
+  .post-hero__text { display: flex; flex-direction: column; align-items: center; }
+  .post-hero__actions { justify-content: center; }
+  .post-hero__share { justify-content: center; }
+  .post-hero__frame { width: 100%; max-width: 560px; margin-inline: auto; }
+}
 
 .post-hero__back { display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--color-on-dark); text-decoration: none; transition: color 160ms ease; }
 .post-hero__back svg { width: 15px; height: 15px; transition: transform 160ms ease; }
@@ -25,8 +33,15 @@
 .post-hero__share { display: inline-flex; align-items: center; gap: 10px; }
 .post-hero__share-label { font-size: 12.5px; font-weight: 600; }
 
-.post-hero__frame { border-radius: 18px; padding: 6px; background: #fff; box-shadow: 0 24px 60px rgb(0 0 0 / 0.38), 0 6px 18px rgb(0 0 0 / 0.2); }
-.site-post-page .post-hero__cover { border-radius: 13px; background: #fff; }
+.post-hero__frame {
+  border-radius: 20px;
+  padding: 6px;
+  background: linear-gradient(180deg, #fff, var(--color-bg-subtle));
+  outline: 1px solid rgb(220 192 106 / 0.55);
+  outline-offset: 4px;
+  box-shadow: 0 30px 70px rgb(0 0 0 / 0.45), 0 8px 22px rgb(0 0 0 / 0.22);
+}
+.site-post-page .post-hero__cover { border-radius: 14px; background: linear-gradient(180deg, #fff, var(--color-bg-subtle)); }
 
 /* Share buttons */
 .post-share { display: inline-flex; align-items: center; gap: 8px; }

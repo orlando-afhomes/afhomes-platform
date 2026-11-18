@@ -15,8 +15,9 @@ export type FaqItem = { id: string; question: string; blocks: FaqBlock[] };
 
 export const FAQ_INTRO = {
   title: "Frequently Asked Questions",
-  lede: "Your questions answered, from bookings to the VIP Privilege Loyalty Program.",
-  text: "Find answers to all your questions about AFhomes Hotspring & Ecofarm Resort. Learn about our amenities, policies, activities, and exclusive VIP Privilege Loyalty Program perks.",
+  // Owner word limits (2026-11-18): eyebrow at most 4 words, lede exactly 6 words.
+  lede: "Your questions, answered.",
+  text: "Find answers to your AFhomes questions.",
 };
 
 export const FAQ_ITEMS: FaqItem[] = [
@@ -160,6 +161,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     question: "What forms of payment are accepted for the VIP Privilege Loyalty Program?",
     blocks: [
       { type: "terms", items: [
+        // Keep these hours in sync with SITE_HOURS in ../../hours.ts (the Home status badge).
         { term: "1. Cash payment", text: "Visit our office during business hours (9:00 AM – 5:00 PM, Monday to Sunday)." },
         { term: "2. Bank deposit", text: "We accept both cash and check deposits at any branch." },
       ] },
@@ -203,7 +205,8 @@ export const FAQ_PAGE = {
   questions: {
     eyebrow: "Common questions",
     title: "Your AFhomes FAQs",
-    text: "Browse through the most frequently asked questions about AFhomes Hotspring & Ecofarm Resort, our offerings, and the VIP Privilege Loyalty Program.",
+    // Owner word limit (2026-11-18): at most 7 words.
+    text: "Answers to common AFhomes questions.",
     empty: "No questions match your search. Try another word, or contact us below.",
   },
   help: { eyebrow: "Still curious?" },

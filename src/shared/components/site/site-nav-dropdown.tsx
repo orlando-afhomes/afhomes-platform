@@ -4,13 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { cn } from "@/shared/lib/utils";
 import type { SiteNavGroup } from "./site-nav-types";
 
 /** Header menu that opens a panel of links on hover, click, or keyboard. Escape closes it. */
 export function SiteNavDropdown({ group }: { group: SiteNavGroup }) {
   return (
     <Popover>
-      <PopoverTrigger className="site-header__link site-header__dropdown-button">
+      <PopoverTrigger className={cn("site-header__link site-header__dropdown-button", group.triggerClassName)}>
         {group.label}
         <ChevronDown aria-hidden="true" className="site-header__chevron" />
       </PopoverTrigger>

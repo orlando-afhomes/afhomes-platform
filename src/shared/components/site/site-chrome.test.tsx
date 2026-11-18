@@ -49,6 +49,21 @@ describe("SiteHeader", () => {
     expect(trigger).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("link", { name: /Experience One/ })).toHaveAttribute("href", "/experiences/one");
   });
+
+  it("marks the dropdown trigger with the group's class so page CSS can single out one group", () => {
+    render(
+      <SiteHeader
+        brand={brand}
+        items={[
+          { label: "Experiences", triggerClassName: "site-header__dropdown-button--experiences", children: [{ href: "/experiences/one", label: "Experience One" }] },
+          { label: "Explore", triggerClassName: "site-header__dropdown-button--explore", children: [{ href: "/faq", label: "FAQ" }] },
+        ]}
+        actions={[]}
+      />,
+    );
+    expect(screen.getByRole("button", { name: /Experiences/ })).toHaveClass("site-header__dropdown-button--experiences");
+    expect(screen.getByRole("button", { name: /Explore/ })).toHaveClass("site-header__dropdown-button--explore");
+  });
 });
 
 describe("SiteFooter", () => {
@@ -104,6 +119,21 @@ describe("shared site components", () => {
     render(<SiteRoomCard href="/rooms" name="King Villa" category="Villa" image={{ src: "/images/logo.png", alt: "King Villa" }} />);
     expect(screen.getByRole("link", { name: "King Villa: view details" })).toHaveAttribute("href", "/rooms");
     expect(screen.getByText("Villa")).toBeInTheDocument();
+  });
+
+  it("SiteRoomCard can open details by clicking the whole card", async () => {
+    const user = userEvent.setup();
+    let opened = false;
+    render(
+      <SiteRoomCard
+        name="King Villa"
+        category="Villa"
+        image={{ src: "/images/logo.png", alt: "King Villa" }}
+        onSelect={() => { opened = true; }}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "King Villa: view details" }));
+    expect(opened).toBe(true);
   });
 
   it("SiteTierCard sets the tier color class and shows its lines", () => {

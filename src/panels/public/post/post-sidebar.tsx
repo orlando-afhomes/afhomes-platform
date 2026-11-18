@@ -82,7 +82,7 @@ export function PostSidebar({ post }: { post: BlogPost }) {
                 <Award size={15} />
               </span>
               <h2 id="post-sidebar-highlights" className="post-sidebar__title">
-                {BLOG_POST_PAGE.highlightsTitle}
+                {post.highlightsTitle ?? BLOG_POST_PAGE.highlightsTitle}
               </h2>
             </div>
             <ul className="post-sidebar__checks">

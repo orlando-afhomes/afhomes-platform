@@ -1,7 +1,7 @@
-import { ArrowRight, ArrowUpRight, Clock, MapPin, MessageCircleMore, ShieldCheck } from "lucide-react";
-import { ABOUT } from "@/modules/public-site/content/about";
+import { ArrowRight, Clock, MessageCircleMore, ShieldCheck } from "lucide-react";
 import { ContactCards, Photo, SectionHeading, SiteButton } from "../site/blocks";
 import { ContactForm } from "../site/contact-form";
+import { ContactMaps } from "../contact/contact-maps";
 import { FaqBrowser } from "../faq/faq-browser";
 import { FaqHelp } from "../faq/faq-help";
 import { FaqClosing } from "../faq/faq-closing";
@@ -31,8 +31,6 @@ const CONTACT_HELP = [
 ];
 
 export function ContactPage() {
-  const { address, directionsHref } = ABOUT.visit;
-
   return (
     <div className="site-home site-contact-page">
       <section className="contact-hero" aria-labelledby="contact-title">
@@ -72,22 +70,9 @@ export function ContactPage() {
           <div className="site-panel contact-message__panel">
             <ContactForm />
           </div>
-          <div className="contact-location">
-            <Photo
-              image={{ src: "/images/site/home/arial-1-scaled.webp", alt: "Aerial architectural rendering of the AFhomes resort" }}
-              className="contact-location__photo"
-              sizes="(min-width: 900px) 40vw, 90vw"
-            />
-            <div className="contact-location__details">
-              <MapPin aria-hidden="true" className="contact-location__pin" />
-              <div>
-                <h3>Our Location</h3>
-                <address>{address}</address>
-              </div>
-              <SiteButton href={directionsHref} variant="light" external>View on Map <ArrowUpRight aria-hidden="true" /></SiteButton>
-            </div>
-          </div>
         </section>
+
+        <ContactMaps />
       </div>
 
       <section className="site-home-cta contact-closing" aria-labelledby="contact-closing-title">

@@ -1,0 +1,35 @@
+/* Resort detail: location (tabs, site plan or live map, info card) */
+.site-experience-page .exp-location { background: #fff; }
+.site-experience-page .exp-location__heading { max-width: 58rem; margin-bottom: 18px; }
+.exp-location__activities { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 20px; }
+.exp-location__activities-label { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-muted); }
+.exp-location__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.exp-location__chip { border-radius: 999px; padding: 4px 10px; font-size: 13px; line-height: 1.3; color: var(--color-brand-primary); background: var(--color-brand-soft); }
+
+.exp-location__tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.exp-location__tab {
+  display: inline-flex; min-height: 40px; align-items: center; gap: 8px;
+  border: 1px solid var(--color-border-strong); border-radius: 999px; padding: 0 18px;
+  font-size: 14px; font-weight: 600; color: var(--color-text-primary); background: #fff;
+  transition: background-color 250ms ease, border-color 250ms ease, color 250ms ease;
+}
+.exp-location__tab:hover { border-color: var(--color-brand-primary); color: var(--color-brand-primary); }
+.exp-location__tab[aria-selected="true"] { border-color: var(--color-brand-primary); color: #fff; background: var(--color-brand-primary); }
+.exp-location__tab:focus-visible { outline: 2px solid var(--color-state-focus); outline-offset: 3px; }
+.exp-location__tab-icon { width: 16px; height: 16px; }
+
+.exp-location__panel { display: grid; grid-template-columns: minmax(0, 1fr); overflow: hidden; border: 1px solid var(--color-border-subtle); border-radius: 14px; background: #fff; box-shadow: var(--shadow-raised); }
+.exp-location__panel[hidden] { display: none; }
+.site-experience-page .exp-location__media { border-radius: 0; aspect-ratio: 16 / 9; }
+.exp-location__card { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 22px 20px 24px; background: var(--color-accent-soft); }
+.exp-location__card-title { font-family: var(--site-home-display, Georgia, serif); font-size: 22px; line-height: 1.2; font-weight: 600; color: var(--color-brand-deep); }
+.exp-location__card-text { font-size: 14px; line-height: 1.55; color: var(--color-text-secondary); }
+.exp-location__card-action { margin-top: 6px; }
+.exp-location__action-icon { width: 16px; height: 16px; }
+
+@media (min-width: 900px) {
+  .exp-location__panel { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .site-experience-page .exp-location__media { aspect-ratio: auto !important; min-height: 340px; height: 100%; }
+  .exp-location__card { justify-content: center; padding: 32px 28px; }
+}
+@media (prefers-reduced-motion: reduce) { .exp-location__tab { transition: none; } }

@@ -1,0 +1,12 @@
+/* Resort detail: photo cards row ("What awaits you", hotel lounge) */
+.exp-cards__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+@media (min-width: 640px) { .exp-cards__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) {
+  .exp-cards__grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .exp-cards__grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.exp-cards__card { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--color-border-subtle); border-radius: 12px; background: #fff; box-shadow: var(--shadow-soft); }
+.site-experience-page .exp-cards__photo { border-radius: 0; }
+.exp-cards__body { display: flex; flex-direction: column; gap: 8px; padding: 16px 18px 20px; }
+.exp-cards__title { font-family: var(--site-home-display, Georgia, serif); font-size: 19px; line-height: 1.2; font-weight: 600; color: var(--color-brand-deep); }
+.exp-cards__text { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; font-size: 14px; line-height: 1.5; color: var(--color-text-secondary); }

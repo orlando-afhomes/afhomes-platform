@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, ShieldCheck } from "lucide-react";
+import { Map as MapIcon, MapPin, ShieldCheck } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import type { SiteNavLink } from "./site-nav-types";
 
@@ -8,7 +8,8 @@ export type SiteFooterProps = {
   brand: { name: string; tagline: string; logoSrc: string };
   contacts: { icon: React.ReactNode; label: string; href: string; external?: boolean }[];
   columns: { heading: string; links: SiteNavLink[] }[];
-  locations: { label: string; lines: string[]; landmark?: string }[];
+  /** `map` adds a small link under the address, e.g. to a map of that office. */
+  locations: { label: string; lines: string[]; landmark?: string; map?: { href: string; label: string } }[];
   legal: { disclaimer?: string; copyright: string };
   className?: string;
 };
@@ -59,6 +60,12 @@ export function SiteFooter({ brand, contacts, columns, locations, legal, classNa
                   <span key={line} className="site-footer__office-line">{line}</span>
                 ))}
                 {location.landmark ? <span className="site-footer__office-note">{location.landmark}</span> : null}
+                {location.map ? (
+                  <Link href={location.map.href} className="site-footer__office-map" aria-label={`${location.map.label}: ${location.label}`}>
+                    <MapIcon aria-hidden="true" />
+                    {location.map.label}
+                  </Link>
+                ) : null}
               </span>
             </address>
           ))}

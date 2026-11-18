@@ -1,0 +1,40 @@
+/* Experience hero: the Home hero (site-home-hero) with a shorter height, as in the owner's resort reference.
+   Overrides of shared classes are scoped under .site-experience-page .exp-hero so they win whatever order the stylesheets load in. */
+
+.site-experience-page .exp-hero { min-height: clamp(30rem, 34vw, 38rem); }
+.site-experience-page .exp-hero .site-home-hero__photo { position: absolute; border-radius: 0; }
+.site-experience-page .exp-hero .site-home-hero__photo .site-photo__image { object-position: 50% 50%; }
+.site-experience-page .exp-hero .site-home-hero__shade {
+  background:
+    linear-gradient(90deg, rgb(14 43 32 / 0.88) 0%, rgb(14 43 32 / 0.66) 34%, rgb(14 43 32 / 0.2) 66%, rgb(14 43 32 / 0.04) 100%),
+    linear-gradient(180deg, rgb(14 43 32 / 0.55) 0%, transparent 30%);
+}
+@media (max-width: 767px) {
+  .site-experience-page .exp-hero .site-home-hero__shade { background: linear-gradient(180deg, rgb(14 43 32 / 0.7) 0%, rgb(14 43 32 / 0.66) 50%, rgb(14 43 32 / 0.9) 100%); }
+}
+
+.site-experience-page .exp-hero .exp-hero__inner { padding-bottom: 56px; }
+.site-experience-page .exp-hero .site-eyebrow { color: var(--color-on-dark); font-weight: 600; }
+.site-experience-page .exp-hero .exp-hero__title { max-width: 34rem; font-size: clamp(34px, 3.6vw, 52px); }
+.site-experience-page .exp-hero .site-home-hero__lede { max-width: 30rem; color: var(--color-on-dark-muted); }
+
+/* Subtle glass pill with a gold edge */
+.exp-hero__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin-top: 16px;
+  border: 1px solid rgb(220 192 106 / 0.55);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.1);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-accent-light);
+}
+.exp-hero__status::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: var(--color-accent-light); }
+.site-experience-page .exp-hero .site-hero__actions { margin-top: 24px; }

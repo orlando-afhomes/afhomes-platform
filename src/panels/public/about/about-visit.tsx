@@ -1,10 +1,13 @@
 import { ArrowUpRight, MapPin } from "lucide-react";
 import { ABOUT } from "@/modules/public-site/content/about";
-import { Photo, Section, SectionHeading, SiteButton } from "../site/blocks";
+import { OFFICES } from "@/modules/public-site/content/site";
+import { SiteMapEmbed } from "@/shared/components/site";
+import { Section, SectionHeading, SiteButton } from "../site/blocks";
 
-/** "Visit us": text and directions on the left, the resort map on the right. */
+/** "Visit us": text and directions on the left, the live Google map of the main office (the resort) on the right. */
 export function AboutVisit() {
   const { visit } = ABOUT;
+  const mainOffice = OFFICES.find((office) => office.id === "head") ?? OFFICES[0];
   return (
     <Section className="about-visit">
       <div className="about-visit__card site-home-reveal">
@@ -15,12 +18,12 @@ export function AboutVisit() {
             <span>{visit.address}</span>
           </p>
           <div className="about-visit__actions">
-            <SiteButton href={visit.directionsHref} external>
+            <SiteButton href={mainOffice.map.href} external>
               {visit.cta} <ArrowUpRight aria-hidden="true" />
             </SiteButton>
           </div>
         </div>
-        <Photo image={visit.map} ratio="16 / 10" fit="contain" className="about-visit__map" sizes="(min-width: 900px) 600px, 100vw" />
+        <SiteMapEmbed src={mainOffice.map.embedSrc} title={`Map of the AFhomes ${mainOffice.label}`} className="about-visit__map" />
       </div>
     </Section>
   );

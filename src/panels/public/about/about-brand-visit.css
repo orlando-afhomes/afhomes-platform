@@ -21,7 +21,7 @@
 .about-visit__address { display: flex; align-items: flex-start; gap: 8px; font-size: 13.5px; line-height: 1.5; color: var(--color-text-secondary); }
 .about-visit__address-icon { width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; color: var(--color-brand-primary); }
 .about-visit__actions { margin-top: 22px; display: flex; }
-.about-visit .about-visit__map { width: 100%; border-radius: 0; }
+.about-visit .about-visit__map { width: 100%; border-radius: 0; aspect-ratio: 16 / 10; }
 @media (min-width: 900px) {
   .about-visit__card { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .about-visit__copy { padding: 40px; }

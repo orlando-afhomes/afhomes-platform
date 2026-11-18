@@ -1,14 +1,15 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { VIP_TIERS } from "@/modules/public-site/content/vip";
 import { BLOG_POSTS } from "@/modules/public-site/content/blog";
-import { ABOUT } from "@/modules/public-site/content/about";
-import { SITE } from "@/modules/public-site/content/site";
+import { OFFICES, SITE } from "@/modules/public-site/content/site";
 import { PUBLIC_SUPPORT_INFO } from "@/modules/public-site/support-info";
 import { BlogPage, BlogPostPage } from "./pages/blog-pages";
 import { ContactPage, FaqPage } from "./pages/faq-contact-pages";
 import { VipPage } from "./pages/vip-page";
+import { HotelPage, ResortPage, RestaurantPage } from "./pages/experience-pages";
+import { HOTEL, RESTAURANT, RESORT, ROOMS } from "@/modules/public-site/content/experiences";
 
 afterEach(cleanup);
 
@@ -54,15 +55,17 @@ describe("public site pages", () => {
   it("links contact actions to the form and official contact details", () => {
     const { container } = render(<ContactPage />);
 
-    expect(screen.getByRole("heading", { name: "Satellite Office" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Head Office" })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Satellite Office" })).toHaveLength(2); // contact card and map card
+    expect(screen.getAllByRole("heading", { name: "Head Office" })).toHaveLength(2); // contact card and map card
     expect(screen.getByRole("link", { name: "Use the contact form" })).toHaveAttribute("href", "#contact-form");
     expect(screen.getByRole("link", { name: "Talk to us" })).toHaveAttribute("href", "#contact-form");
     expect(container.querySelector("#contact-form")).toContainElement(screen.getByRole("form", { name: "Contact form" }));
 
-    const mapLink = screen.getByRole("link", { name: "View on Map" });
-    expect(mapLink).toHaveAttribute("href", ABOUT.visit.directionsHref);
-    expect(mapLink).toHaveAttribute("target", "_blank");
+    // "Find us": one live map and one directions link per office.
+    expect(screen.getAllByTitle(/^Map of the AFhomes /)).toHaveLength(OFFICES.length);
+    const directions = screen.getAllByRole("link", { name: "Get directions" });
+    expect(directions.map((link) => link.getAttribute("href"))).toEqual(OFFICES.map((office) => office.map.href));
+    for (const link of directions) expect(link).toHaveAttribute("target", "_blank");
     expect(screen.getByRole("link", { name: PUBLIC_SUPPORT_INFO.email })).toHaveAttribute("href", `mailto:${PUBLIC_SUPPORT_INFO.email}`);
     expect(screen.getByRole("link", { name: PUBLIC_SUPPORT_INFO.phone })).toHaveAttribute("href", PUBLIC_SUPPORT_INFO.phoneHref);
     expect(screen.getByRole("link", { name: "Send us a message on Facebook" })).toHaveAttribute("href", SITE.facebookUrl);
@@ -84,7 +87,30 @@ describe("public site pages", () => {
   it("renders a blog post with its date, text and neighbours", () => {
     render(<BlogPostPage post={BLOG_POSTS[3]} />);
     expect(screen.getByRole("heading", { level: 1, name: "We're Growing—Just for You!" })).toBeInTheDocument();
-    expect(screen.getByText("Teppanyaki Lounge")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Teppanyaki Lounge" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Older post/ })).toHaveAttribute("href", `/blog/${BLOG_POSTS[4].slug}`);
+  });
+  it("resort page lists every room, opens its photos, and switches the location tab to the live map", async () => {
+    const user = userEvent.setup();
+    render(<ResortPage />);
+    expect(screen.getByRole("heading", { level: 1, name: RESORT.title })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /^View details: / })).toHaveLength(ROOMS.length);
+    await user.click(screen.getByRole("button", { name: "View details: King Villa" }));
+    expect(within(screen.getByRole("dialog")).getByRole("button", { name: "Show: King Villa floor plan" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByTitle("Resort Location")).toBeNull();
+    await user.click(screen.getByRole("tab", { name: /Resort map/ }));
+    expect(screen.getByTitle("Resort Location")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Get directions/ })).toHaveAttribute("target", "_blank");
+  });
+
+  it("hotel and restaurant pages show their own title and details", () => {
+    render(<HotelPage />);
+    expect(screen.getByRole("heading", { level: 1, name: HOTEL.title })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: HOTEL.lounge.title })).toBeInTheDocument();
+    cleanup();
+    render(<RestaurantPage />);
+    expect(screen.getByRole("heading", { level: 1, name: RESTAURANT.title })).toBeInTheDocument();
+    expect(screen.getByText(RESTAURANT.reservation)).toBeInTheDocument();
   });
 });

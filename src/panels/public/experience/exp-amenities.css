@@ -1,0 +1,16 @@
+/* Resort detail: amenities photo grid */
+.site-experience-page .exp-amenities { background: #fff; }
+.exp-amenities__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 640px) { .exp-amenities__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; } }
+@media (min-width: 1024px) { .exp-amenities__grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.exp-amenities__item { display: block; width: 100%; overflow: hidden; border-radius: 6px; cursor: zoom-in; }
+.exp-amenities__item:focus-visible { outline: 2px solid var(--color-state-focus); outline-offset: 3px; }
+.site-experience-page .exp-amenities__photo { border-radius: 6px; }
+.exp-amenities__photo .site-photo__image { transition: transform 400ms cubic-bezier(0.22, 0.8, 0.2, 1); }
+.exp-amenities__item:hover .site-photo__image,
+.exp-amenities__item:focus-visible .site-photo__image { transform: scale(1.05); }
+@media (prefers-reduced-motion: reduce) {
+  .exp-amenities__photo .site-photo__image { transition: none; }
+  .exp-amenities__item:hover .site-photo__image,
+  .exp-amenities__item:focus-visible .site-photo__image { transform: none; }
+}

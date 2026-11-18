@@ -130,7 +130,7 @@
 
 .contact-message {
   display: grid;
-  grid-template-areas: "guide" "form" "location";
+  grid-template-areas: "guide" "form";
   align-items: start;
   gap: 24px;
   margin: clamp(34px, 4.8vw, 68px) 8px 0;
@@ -225,64 +225,6 @@
 
 .contact-message__panel .site-note { margin: 6px 0 0; font-size: 11px; line-height: 1.45; }
 
-.contact-location {
-  grid-area: location;
-  overflow: hidden;
-  border-radius: 15px;
-  background: var(--color-brand-deep);
-  color: var(--color-on-dark);
-  box-shadow: var(--shadow-soft);
-}
-
-.contact-location .contact-location__photo {
-  height: clamp(6.25rem, 10.6vw, 10rem);
-  aspect-ratio: auto !important;
-  border-radius: 0;
-}
-
-.contact-location__photo img { object-position: center 43%; }
-
-.contact-location__details {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 8px;
-  align-items: center;
-  padding: 9px 12px;
-  background: linear-gradient(155deg, var(--color-brand-primary), var(--color-brand-deep));
-}
-
-.contact-location__pin {
-  align-self: start;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  padding: 4px;
-  background: var(--color-on-dark-hover);
-}
-
-.contact-location__details h3 { font-size: 12px; font-weight: 700; }
-
-.contact-location__details address {
-  margin-top: 2px;
-  color: var(--color-on-dark-muted);
-  font-size: 11px;
-  font-style: normal;
-  line-height: 1.35;
-}
-
-.contact-location__details .site-button {
-  grid-column: 2;
-  justify-self: start;
-  min-height: 44px;
-  gap: 5px;
-  padding-inline: 9px;
-  background: var(--color-accent-soft);
-  font-size: 11px;
-}
-
-.contact-location__details .site-button:hover { background: var(--color-bg-surface-raised); }
-.contact-location__details .site-button svg { width: 12px; height: 12px; }
-
 .site-contact-page .contact-closing { padding-block: clamp(28px, 3.15vw, 48px); }
 .contact-closing__photo img { object-position: center 55%; }
 
@@ -316,8 +258,6 @@
 
 @media (min-width: 600px) {
   .contact-page__body .contact-details { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .contact-location__details { grid-template-columns: auto minmax(0, 1fr) auto; }
-  .contact-location__details .site-button { grid-column: auto; }
 }
 
 @media (min-width: 900px) {
@@ -327,7 +267,7 @@
   .contact-details .contact-details__landmark { font-size: clamp(10.5px, 1.12vw, 14px); }
 
   .contact-message {
-    grid-template-areas: "guide form" "location form";
+    grid-template-areas: "guide form";
     grid-template-columns: minmax(0, 0.78fr) minmax(0, 1fr);
     gap: 20px clamp(24px, 2.85vw, 42px);
     margin-inline: 11px 6px;
@@ -341,7 +281,6 @@
   .contact-message__panel [data-slot="input"] { height: clamp(34px, 3.5vw, 44px); }
   .contact-message__panel [data-slot="textarea"] { height: 3.5rem; min-height: 3.5rem; }
   .contact-message__panel [type="submit"] { height: 36px; min-height: 36px; }
-  .contact-location__details .site-button { min-height: 28px; }
   .contact-closing .site-button { min-height: 34px; padding-inline: 16px; }
 
   .contact-closing__note {

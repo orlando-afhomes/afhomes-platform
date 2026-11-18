@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, MapPin, Phone } from "lucide-react";
-import type { Highlight, SiteImage } from "@/modules/public-site/content/experiences";
+import type { SiteImage } from "@/modules/public-site/content/experiences";
 import { OFFICES, PAYMENT_DISCLAIMER, RENDERINGS_NOTE, SITE } from "@/modules/public-site/content/site";
 import { PUBLIC_SUPPORT_INFO } from "@/modules/public-site/support-info";
 import { cn } from "@/shared/lib/utils";
@@ -13,23 +13,6 @@ export function Photo({ image, ratio = "4 / 3", className, priority = false, siz
     <span className={cn("site-photo", className)} style={{ aspectRatio: ratio }}>
       <Image src={image.src} alt={image.alt} fill sizes={sizes} priority={priority} className={fit === "contain" ? "site-photo__image site-photo__image--contain" : "site-photo__image"} />
     </span>
-  );
-}
-
-export function PageHero({ eyebrow, title, lede, status, image, children }: { eyebrow?: string; title: string; lede?: string; status?: string; image?: SiteImage; children?: ReactNode }) {
-  return (
-    <section className={cn("site-hero", image && "site-hero--image")}>
-      <div className="site-hero__inner">
-        <div className="site-hero__text">
-          {eyebrow ? <p className="site-eyebrow">{eyebrow}</p> : null}
-          <h1 className="site-hero__title">{title}</h1>
-          {status ? <p className="site-status">{status}</p> : null}
-          {lede ? <p className="site-hero__lede">{lede}</p> : null}
-          {children ? <div className="site-hero__actions">{children}</div> : null}
-        </div>
-        {image ? <Photo image={image} ratio="4 / 3" priority className="site-hero__photo" sizes="(min-width: 1024px) 520px, 100vw" /> : null}
-      </div>
-    </section>
   );
 }
 
@@ -51,33 +34,6 @@ export function SectionHeading({ eyebrow, title, text, align = "left" }: { eyebr
   );
 }
 
-/** Responsive grid of titled cards, with an optional picture on each. */
-export function HighlightGrid({ items, columns = 3, numbered = false }: { items: Highlight[]; columns?: 2 | 3 | 4; numbered?: boolean }) {
-  return (
-    <ul className={cn("site-grid", `site-grid--${columns}`)}>
-      {items.map((item, index) => (
-        <li key={item.title} className="site-card">
-          {item.image ? <Photo image={item.image} ratio="3 / 2" className="site-card__photo" sizes="(min-width: 1024px) 360px, 100vw" /> : null}
-          <div className="site-card__body">
-            {numbered ? <span className="site-card__number">{String(index + 1).padStart(2, "0")}</span> : null}
-            <h3 className="site-card__title">{item.title}</h3>
-            <p className="site-card__text">{item.text}</p>
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-export function SplitFeature({ image, children, reverse = false, ratio = "4 / 3" }: { image: SiteImage; children: ReactNode; reverse?: boolean; ratio?: string }) {
-  return (
-    <div className={cn("site-split", reverse && "site-split--reverse")}>
-      <Photo image={image} ratio={ratio} className="site-split__photo" />
-      <div className="site-split__text">{children}</div>
-    </div>
-  );
-}
-
 export function RenderingsNote() {
   return <p className="site-note">{RENDERINGS_NOTE}</p>;
 }
@@ -93,19 +49,6 @@ export function SiteButton({ href, children, variant = "primary", external = fal
     return <a href={href} className={className} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{children}</a>;
   }
   return <Link href={href} className={className}>{children}</Link>;
-}
-
-/** Call to action used at the bottom of most pages. */
-export function CtaBand({ title, text, children }: { title: string; text: string; children?: ReactNode }) {
-  return (
-    <Section tone="dark">
-      <div className="site-cta">
-        <h2 className="site-cta__title">{title}</h2>
-        <p className="site-cta__text">{text}</p>
-        <div className="site-cta__actions">{children ?? <SiteButton href="/contact" variant="light">Contact us</SiteButton>}</div>
-      </div>
-    </Section>
-  );
 }
 
 /** Offices, phone, email and Facebook, copied from the old contact page. */

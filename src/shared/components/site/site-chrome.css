@@ -324,6 +324,11 @@
 .site-footer__office-body { display: flex; min-width: 0; flex-direction: column; }
 .site-footer__office-label { color: var(--color-on-dark); }
 .site-footer__office-note { margin-top: 4px; font-size: 13px; color: var(--color-on-dark-faint); }
+.site-footer__office-map { display: inline-flex; width: fit-content; align-items: center; gap: 6px; margin-top: 8px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--color-accent-light); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color 300ms ease, color 300ms ease; }
+.site-footer__office-map svg { width: 14px; height: 14px; flex-shrink: 0; }
+.site-footer__office-map:hover { color: #fff; text-decoration-color: currentColor; }
+.site-footer__office-map:focus-visible { outline: 2px solid var(--color-accent-light); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .site-footer__office-map { transition: none; } }
 
 .site-footer__legal {
   margin: 0 auto;
@@ -418,7 +423,8 @@
   .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__link:hover,
   .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__dropdown-button[aria-expanded="true"] { color: #fff; }
   /* The current page keeps its gold underline drawn over the hero. */
-  .public-layout:has(.site-home:not(.site-about):not(.site-vip):not(.site-compliance):not(.site-faq-page):not(.site-blog-page):not(.site-post-page):not(.site-contact-page)) .site-header__link[href="/"]::after,
+  .public-layout:has(.site-home:not(.site-about):not(.site-vip):not(.site-compliance):not(.site-faq-page):not(.site-blog-page):not(.site-post-page):not(.site-contact-page):not(.site-experience-page)) .site-header__link[href="/"]::after,
+  .public-layout:has(.site-experience-page) .site-header__dropdown-button::after,
   .public-layout:has(.site-blog-page) .site-header__link[href="/blog"]::after,
   .public-layout:has(.site-post-page) .site-header__link[href="/blog"]::after,
   .public-layout:has(.site-faq-page) .site-header__link[href="/faq"]::after,

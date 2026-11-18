@@ -107,9 +107,7 @@ export const ABOUT = {
     title: "Come and Experience AFhomes",
     text: "Visit our flagship destination, AFhomes Hotspring & Ecofarm Resort, located in Calauan, Laguna. Discover a resort escape where wellness, nature, and hospitality come together.",
     address: "Brgy. Perez, Calauan, Laguna, Region IV-A (CALABARZON), 4012",
-    directionsHref: "https://www.google.com/maps/search/?api=1&query=Brgy.+Perez%2C+Calauan%2C+Laguna",
     cta: "Get Directions",
-    map: img("about/map-1-scaled", "Map to the AFhomes Hotspring & Ecofarm Resort in Calauan, Laguna"),
   },
   closing: {
     title: "Be Part of the AFhomes Experience",

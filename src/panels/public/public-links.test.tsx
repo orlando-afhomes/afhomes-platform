@@ -68,7 +68,7 @@ describe("public sign-in and verification links", () => {
 describe("public site pictures", () => {
   it("only references pictures that exist under public/", () => {
     const sources = [
-      ABOUT.hero.src, ABOUT.story.image.src, ...ABOUT.experiences.cards.map((card) => card.image.src), ABOUT.featured.image.src, ABOUT.transparency.image.src, ...ABOUT.awaits.items.map((item) => item.image.src), ABOUT.logo.image.src, ABOUT.visit.map.src, ABOUT.closing.image.src, ...ABOUT.registrations.map((item) => item.image.src),
+      ABOUT.hero.src, ABOUT.story.image.src, ...ABOUT.experiences.cards.map((card) => card.image.src), ABOUT.featured.image.src, ABOUT.transparency.image.src, ...ABOUT.awaits.items.map((item) => item.image.src), ABOUT.logo.image.src, ABOUT.closing.image.src, ...ABOUT.registrations.map((item) => item.image.src),
       RESORT.masterplan.src, HOTEL.hero.src, HOTEL.apnea.image.src, ...HOTEL.gallery.map((item) => item.src), ...HOTEL.lounge.items.map((item) => item.image.src),
       RESTAURANT.hero.src, ...EXPERIENCE_CARDS.map((card) => card.image.src), ...KEY_OFFERINGS.map((item) => item.image!.src),
       ...RESORT_AMENITIES.map((item) => item.src), ...ROOMS.flatMap((room) => [...room.photos.map((photo) => photo.src), ...(room.floorPlan ? [room.floorPlan.src] : [])]),

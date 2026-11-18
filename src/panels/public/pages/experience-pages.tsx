@@ -1,119 +1,101 @@
-import { HOTEL, KEY_OFFERINGS, NATURAL_FEATURES, RESORT, RESORT_ACTIVITIES, RESORT_AMENITIES, RESTAURANT, ROOMS } from "@/modules/public-site/content/experiences";
-import { COMPLIANCE_PHASES } from "@/modules/public-site/content/compliance";
+import { Activity, ArrowRight, BedDouble, ChefHat, Coffee, GlassWater, Leaf, Map as MapIcon, Mountain, Waves, Wind } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { HOTEL_PAGE, KEY_OFFERINGS, RESORT_AMENITIES, RESORT_PAGE, RESTAURANT_PAGE, ROOMS, type Highlight } from "@/modules/public-site/content/experiences";
 import { ABOUT } from "@/modules/public-site/content/about";
-import { CtaBand, HighlightGrid, PageHero, Photo, RenderingsNote, Section, SectionHeading, SiteButton, SplitFeature } from "../site/blocks";
-import { ImageGallery, RoomExplorer } from "../site/gallery";
+import { OFFICES } from "@/modules/public-site/content/site";
+import { SiteButton } from "../site/blocks";
+import { ExperienceHero } from "../experience/exp-hero";
+import { ExperienceOverview, ExperienceTrust } from "../experience/exp-overview";
+import { ExperienceClosing } from "../experience/exp-closing";
+import { ExperienceRooms } from "../experience/exp-rooms";
+import { ExperienceAmenities } from "../experience/exp-amenities";
+import { ExperiencePhotoCards } from "../experience/exp-cards";
+import { ExperienceLocation } from "../experience/exp-location";
+import { HotelGallery } from "../experience/exp-hotel-gallery";
+import { RestaurantReservation } from "../experience/exp-reservation";
+import "../experience/exp-hero.css";
+import "../experience/exp-overview.css";
+import "../experience/exp-closing.css";
+import "../experience/exp-rooms.css";
+import "../experience/exp-amenities.css";
+import "../experience/exp-cards.css";
+import "../experience/exp-location.css";
+import "../experience/exp-hotel-gallery.css";
+import "../experience/exp-reservation.css";
 
+/** Pairs each overview card with its icon, in content order. */
+const withIcons = (items: Highlight[], icons: LucideIcon[]) => items.map((item, index) => ({ ...item, icon: icons[index % icons.length] }));
+
+/**
+ * Experience detail pages, laid out from the owner's resort detail reference design.
+ * The wrapper reuses the Home page styling (`site-home`); `site-experience-page` marks these pages for their own tweaks
+ * and the header's "Experiences" underline.
+ */
 export function ResortPage() {
+  const { hero, overview, rooms, amenities, awaits, location, closing } = RESORT_PAGE;
+  const resort = OFFICES.find((office) => office.id === "head") ?? OFFICES[0];
   return (
-    <>
-      <PageHero eyebrow={RESORT.banner} title={RESORT.title} lede={RESORT.tagline} status="In development" image={RESORT.masterplan}>
-        <SiteButton href="/compliance">View milestones</SiteButton>
-        <SiteButton href="/faq#homestyle" variant="outline">Homestyle FAQ</SiteButton>
-      </PageHero>
-
-      <Section>
-        <SectionHeading eyebrow="Natural features and experience" title="A 60-hectare master-planned destination in Laguna" text={RESORT.intro} />
-        <HighlightGrid items={NATURAL_FEATURES} />
-        <ul className="site-registrations">
-          {ABOUT.registrations.map((registration) => (
-            <li key={registration.label} className="site-registrations__item">
-              <Photo image={registration.image} ratio="1 / 1" fit="contain" className="site-registrations__logo" sizes="96px" />
-              <span>{registration.label}</span>
-            </li>
-          ))}
-        </ul>
-      </Section>
-
-      <Section id="accommodations" tone="soft">
-        <SectionHeading eyebrow="Villas and amenities" title="Where luxury meets convenience" text={RESORT.roomsIntro} />
-        <RoomExplorer rooms={ROOMS} />
-        <p className="site-note">{RESORT.roomsNote}</p>
-        <RenderingsNote />
-      </Section>
-
-      <Section>
-        <SectionHeading eyebrow="Amenities" title="Fun for every age" text="Pools, a playground, courts, parks and restaurants, all in one gated and guarded resort." />
-        <ImageGallery images={RESORT_AMENITIES} label="Resort amenities" columns={3} />
-        <RenderingsNote />
-      </Section>
-
-      <Section tone="soft">
-        <SectionHeading eyebrow="Key offerings" title="What awaits you" />
-        <HighlightGrid items={KEY_OFFERINGS} columns={2} />
-      </Section>
-
-      <Section>
-        <SectionHeading eyebrow="Activities" title={RESORT.activitiesIntro} />
-        <ul className="site-chips">
-          {RESORT_ACTIVITIES.map((activity) => <li key={activity} className="site-chip">{activity}</li>)}
-        </ul>
-        <p className="site-note">Built phase by phase, with {COMPLIANCE_PHASES.length} regulatory phases completed.</p>
-      </Section>
-
-      <CtaBand title="Experience your home away from home" text="Imagine a place where comfort meets excitement, and every moment feels like a dream come true. Your home away from home awaits!">
-        <SiteButton href="/vip-privilege" variant="light">VIP Privilege</SiteButton>
+    <div className="site-home site-experience-page site-experience-page--resort">
+      <ExperienceHero eyebrow={hero.eyebrow} title={hero.title} lede={hero.lede} status={hero.status} image={hero.image}>
+        <SiteButton href="#amenities" variant="gold">View amenities <ArrowRight aria-hidden="true" /></SiteButton>
+        <SiteButton href="/contact" variant="outline-light">Contact us <ArrowRight aria-hidden="true" /></SiteButton>
+      </ExperienceHero>
+      <ExperienceOverview id="overview" eyebrow={overview.eyebrow} title={overview.title} text={overview.text} features={withIcons(overview.features, [MapIcon, Waves, Mountain, Leaf])}>
+        <ExperienceTrust items={ABOUT.registrations} />
+      </ExperienceOverview>
+      <ExperienceRooms id="accommodations" eyebrow={rooms.eyebrow} title={rooms.title} text={rooms.text} note={rooms.note} rooms={ROOMS} />
+      <ExperienceAmenities id="amenities" eyebrow={amenities.eyebrow} title={amenities.title} text={amenities.text} images={RESORT_AMENITIES} />
+      <ExperiencePhotoCards id="lifestyle" eyebrow={awaits.eyebrow} title={awaits.title} text={awaits.text} items={KEY_OFFERINGS} tone="soft" />
+      <ExperienceLocation
+        id="location"
+        eyebrow={location.eyebrow}
+        title={location.title}
+        activities={location.activities}
+        sitePlan={location.sitePlan}
+        map={{ ...location.map, embedSrc: resort.map.embedSrc, href: resort.map.href }}
+      />
+      <ExperienceClosing title={closing.title} text={closing.text} image={closing.image}>
+        <SiteButton href="/vip-privilege" variant="gold">VIP Privilege <ArrowRight aria-hidden="true" /></SiteButton>
         <SiteButton href="/contact" variant="outline-light">Contact us</SiteButton>
-      </CtaBand>
-    </>
+      </ExperienceClosing>
+    </div>
   );
 }
 
 export function HotelPage() {
+  const { hero, overview, gallery, apnea, lounge, closing } = HOTEL_PAGE;
   return (
-    <>
-      <PageHero eyebrow={HOTEL.eyebrow} title={HOTEL.title} lede={HOTEL.lede} status={HOTEL.status} image={HOTEL.hero}>
-        <SiteButton href="/contact">Contact us</SiteButton>
-      </PageHero>
-
-      <Section>
-        <SplitFeature image={HOTEL.gallery[0]} ratio="4 / 3">
-          <SectionHeading eyebrow="Smart wellness rooms" title="Every room is an adaptive ecosystem" text={HOTEL.intro} />
-        </SplitFeature>
-        <HighlightGrid items={HOTEL.features} columns={2} numbered />
-      </Section>
-
-      <Section tone="soft">
-        <SectionHeading title={HOTEL.apnea.title} text={HOTEL.apnea.text} />
-        <Photo image={HOTEL.apnea.image} ratio="1600 / 390" className="site-banner-photo" sizes="(min-width: 1200px) 1100px, 100vw" />
-        <ImageGallery images={HOTEL.gallery.slice(1)} label="Hotel photos" columns={2} />
-      </Section>
-
-      <Section>
-        <SectionHeading eyebrow="Beyond the rooms" title={HOTEL.lounge.title} text={HOTEL.lounge.text} />
-        <HighlightGrid items={HOTEL.lounge.items} />
-      </Section>
-
-      <CtaBand title="Grand opening: November 2026" text="Ask us about the AFhomes Smart Wellness Hotel and your VIP Privilege Card." />
-    </>
+    <div className="site-home site-experience-page site-experience-page--hotel">
+      <ExperienceHero eyebrow={hero.eyebrow} title={hero.title} lede={hero.lede} status={hero.status} image={hero.image}>
+        <SiteButton href="#overview" variant="gold">Learn more <ArrowRight aria-hidden="true" /></SiteButton>
+        <SiteButton href="/contact" variant="outline-light">Contact us <ArrowRight aria-hidden="true" /></SiteButton>
+      </ExperienceHero>
+      <ExperienceOverview id="overview" eyebrow={overview.eyebrow} title={overview.title} text={overview.text} features={withIcons(overview.features, [BedDouble, Wind, Leaf, Activity])} />
+      <HotelGallery id="inside" eyebrow={gallery.eyebrow} title={gallery.title} images={gallery.images} apnea={apnea} />
+      <ExperiencePhotoCards id="lounge" eyebrow={lounge.eyebrow} title={lounge.title} text={lounge.text} items={lounge.items} tone="soft" />
+      <ExperienceClosing title={closing.title} text={closing.text} image={closing.image}>
+        <SiteButton href="/vip-privilege" variant="gold">VIP Privilege <ArrowRight aria-hidden="true" /></SiteButton>
+        <SiteButton href="/contact" variant="outline-light">Contact us</SiteButton>
+      </ExperienceClosing>
+    </div>
   );
 }
 
 export function RestaurantPage() {
+  const { hero, overview, reservation, closing } = RESTAURANT_PAGE;
   return (
-    <>
-      <PageHero eyebrow="Alaminos, Laguna" title={RESTAURANT.title} lede={RESTAURANT.tagline} status={RESTAURANT.status} image={RESTAURANT.hero}>
-        <SiteButton href="/contact">Contact us</SiteButton>
-      </PageHero>
-
-      <Section>
-        <div className="site-prose">
-          {RESTAURANT.intro.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-        </div>
-      </Section>
-
-      <Section tone="soft">
-        <HighlightGrid items={RESTAURANT.sections} />
-      </Section>
-
-      <Section>
-        <div className="site-prose">
-          <p>{RESTAURANT.closing}</p>
-        </div>
-        <p className="site-callout">{RESTAURANT.reservation}</p>
-      </Section>
-
-      <CtaBand title="Japanese tradition meets modern sophistication" text="Contact our office to plan your dinner or celebration." />
-    </>
+    <div className="site-home site-experience-page site-experience-page--restaurant">
+      <ExperienceHero eyebrow={hero.eyebrow} title={hero.title} lede={hero.lede} status={hero.status} image={hero.image}>
+        <SiteButton href="#overview" variant="gold">Learn more <ArrowRight aria-hidden="true" /></SiteButton>
+        <SiteButton href="/contact" variant="outline-light">Contact us <ArrowRight aria-hidden="true" /></SiteButton>
+      </ExperienceHero>
+      <ExperienceOverview id="overview" eyebrow={overview.eyebrow} title={overview.title} text={overview.text} features={withIcons(overview.features, [ChefHat, GlassWater, Coffee])} />
+      <RestaurantReservation id="reservations" eyebrow={reservation.eyebrow} title={reservation.title} text={reservation.text} note={reservation.note} image={reservation.image}>
+        <SiteButton href="/contact" variant="primary">Contact us <ArrowRight aria-hidden="true" /></SiteButton>
+      </RestaurantReservation>
+      <ExperienceClosing title={closing.title} text={closing.text} image={closing.image}>
+        <SiteButton href="/contact" variant="gold">Contact us <ArrowRight aria-hidden="true" /></SiteButton>
+      </ExperienceClosing>
+    </div>
   );
 }

@@ -23,6 +23,8 @@ export type BlogPost = {
   closing?: "experience" | "vip" | "contact";
   /** Optional sidebar card: short highlights taken from the post's own text. */
   highlights?: string[];
+  /** Title of the highlights card when "Event Highlights" does not fit the post. */
+  highlightsTitle?: string;
   /** Optional sidebar card: one-paragraph summary of the event, taken from the post's own text. */
   about?: string;
   blocks: BlogBlock[];
@@ -66,6 +68,9 @@ export const BLOG_POSTS: BlogPost[] = [
     categories: ["Events & Activities"],
     excerpt: "Excellence is a commitment that guides every decision, every service, and every experience we provide.",
     cover: cover("1-scaled", "AFhomes team development initiative"),
+    highlightsTitle: "Training Focus",
+    highlights: ["Modern hospitality standards", "Customer service excellence", "Effective communication and client engagement"],
+    about: "Excellence is a commitment that guides every decision, every service, and every experience we provide.",
     closing: "experience",
     blocks: [
       { type: "p", text: "At AFhomes Hotspring & Ecofarm Resort Corp., excellence is not just a goal. It is a commitment that guides every decision, every service, and every experience we provide." },
@@ -93,6 +98,8 @@ export const BLOG_POSTS: BlogPost[] = [
     categories: ["Blog", "Eco-Friendly Living", "Wellness & Relaxation"],
     excerpt: "Wellness and relaxation at the resort's natural hot springs: a sanctuary where nature, comfort and community meet.",
     cover: cover("1", "Natural hot springs in Laguna"),
+    highlightsTitle: "Wellness Benefits",
+    highlights: ["Relieve stress and tension", "Support skin health", "Reduce joint pain and muscle fatigue", "Enhance overall well-being through deep relaxation"],
     blocks: [
       { type: "p", text: "Laguna has long been known as the home of natural hot springs in the Philippines, but not all experiences are created equal. At AFhomes Hotspring & Ecofarm Resort, we are building more than just another destination. We are creating a sanctuary where the authenticity of natural hot springs in Laguna is preserved, celebrated, and shared with families, wellness seekers, and future generations." },
       { type: "h2", text: "What Makes Our Natural Hot Springs Authentic" },
@@ -116,6 +123,8 @@ export const BLOG_POSTS: BlogPost[] = [
     categories: ["Behind the Scenes"],
     excerpt: "The resort is expanding, because great service begins with an exceptional space.",
     cover: cover("were-growing-just-for-you-2-hero", "The expanded AFhomes office"),
+    highlightsTitle: "What's New",
+    highlights: ["A New Reception Lobby", "Spacious Office Area", "Wash Area & Restrooms", "Teppanyaki Lounge", "Training and Meeting Rooms", "Kids Playground"],
     closing: "vip",
     blocks: [
       { type: "h2", text: "AFhomes Hotspring & Ecofarm Resort Expands to Serve You Better" },
@@ -157,6 +166,8 @@ export const BLOG_POSTS: BlogPost[] = [
     categories: ["Resort Highlights"],
     excerpt: "What makes a homestyle resort different, and why it should be your next destination.",
     cover: cover("homestyle-blog-header", "A homestyle villa at AFhomes"),
+    highlightsTitle: "The AFhomes Difference",
+    highlights: ["Thoughtful Accessibility That Makes Sense", "True Freedom to Create Your Experience", "Nature Meets Nurture"],
     closing: "vip",
     blocks: [
       { type: "p", text: "In a world of traditional resorts, AFhomes Hotspring & Ecofarm Resort stands apart as the Philippines' first largest homestyle hot spring and ecofarm resort. But what exactly makes a homestyle resort different, and why should it be your next destination? Let's explore how AFhomes revolutionizes the resort experience by putting families first." },
@@ -189,6 +200,8 @@ export const BLOG_POSTS: BlogPost[] = [
     categories: ["News & Promos"],
     excerpt: "The Bronze card is the entry tier for people new to the VIP Privilege Loyalty Program.",
     cover: cover("introducing-the-bronze-vip-membershipheader-1", "The Bronze VIP Privilege Card"),
+    highlightsTitle: "Card Benefits",
+    highlights: ["Annual Welcome Gift Loyalty Stay Points with a total worth of 50K.", "15% long-term VIP discount on all resort consumption", "Advance priority booking and reservations", "Complimentary free entrance for the cardholder"],
     closing: "vip",
     blocks: [
       { type: "p", text: "Start your journey into the world of exclusive resort benefits with our Bronze VIP Privilege Card at AFhomes Resort. Designed specifically for those new to the VIP Privilege Loyalty Program, this introductory tier offers an accessible way to experience premium resort perks." },
@@ -213,6 +226,8 @@ export const BLOG_POSTS: BlogPost[] = [
     categories: ["Behind the Scenes"],
     excerpt: "Training and seminars that prepare every team member to lead.",
     cover: cover("empowering-success-featured", "AFhomes team seminar"),
+    highlightsTitle: "Training Topics",
+    highlights: ["Building Expertise with Market Trends", "Delivering Customer Service Excellence", "Boosting Visibility with Digital Marketing", "Leading with Vision and Purpose", "Fostering Lifelong Learning"],
     closing: "contact",
     blocks: [
       { type: "p", text: "At AFhomes, empowering our team is a priority. Through focused training and seminars, we ensure every participant is prepared to lead. These programs are designed to inspire, educate, and equip our team for success." },
@@ -244,6 +259,8 @@ export const BLOG_POSTS: BlogPost[] = [
     categories: ["Events & Activities"],
     excerpt: "Highlights from the REBAP National Convention, held November 8 to 10, 2024 at the Taal Vista Hotel in Tagaytay.",
     cover: cover("featured", "AFhomes at REBAP NATCON 2024"),
+    highlights: ["Introducing AFhomes Hotspring & Ecofarm Resort", "Exclusive Deals: A Crowd-Pleasing Success", "Learning, Growing, and Innovating", "Fostering Connections and Collaboration", "Recognition for Excellence: A Plaque of Appreciation"],
+    about: "Highlights from the REBAP National Convention, held November 8 to 10, 2024 at the Taal Vista Hotel in Tagaytay.",
     blocks: [
       { type: "p", text: "From November 8–10, 2024, the Taal Vista Hotel in Tagaytay hosted the REBAP National Convention. This highly anticipated event brought together leaders, innovators, and visionaries in real estate. As a result, the convention sparked exciting conversations and ideas for the future of the industry." },
       { type: "p", text: "AFhomes was honored to be part of it, and we were excited to showcase our commitment to innovation, sustainability, and exceptional service." },
@@ -273,6 +290,8 @@ export const BLOG_POSTS: BlogPost[] = [
     categories: ["Events & Activities"],
     excerpt: "AFhomes showcased its vision at the World Travel Expo 2024 at SPACE at One Ayala, Makati City, October 18 to 20.",
     cover: cover("chatgpt-image-may-12-2026-04-04-28-pm", "AFhomes at the World Travel Expo 2024"),
+    highlights: ["Natural Beauty: An expansive ecofarm set amidst serene landscapes.", "Luxurious Comfort: Homestyle accommodations designed for relaxation.", "Sustainable Living: Eco-conscious practices and organic farming."],
+    about: "AFhomes showcased its vision at the World Travel Expo 2024 at SPACE at One Ayala, Makati City, October 18 to 20.",
     closing: "contact",
     blocks: [
       { type: "h2", text: "A Resounding Success for AFhomes at the World Travel Expo" },

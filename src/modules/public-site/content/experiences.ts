@@ -80,13 +80,6 @@ export const RESORT_AMENITIES: SiteImage[] = [
 export type RoomCategory = "villa" | "a-frame" | "glamping";
 export type Room = { id: string; name: string; category: RoomCategory; photos: SiteImage[]; floorPlan?: SiteImage };
 
-export const ROOM_FILTERS: { value: "all" | RoomCategory; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "villa", label: "Villas" },
-  { value: "a-frame", label: "A-Frames" },
-  { value: "glamping", label: "Glamping" },
-];
-
 /** Singular room type shown on a single room card. */
 export const ROOM_CATEGORY_LABELS: Record<RoomCategory, string> = { villa: "Villa", "a-frame": "A-Frame", glamping: "Glamping" };
 
@@ -163,4 +156,68 @@ export const RESORT = {
   roomsIntro: "Discover the perfect blend of luxury and convenience in our villas, featuring top-notch amenities for a comfortable stay.",
   roomsNote: "All images shown are architectural renderings, and the rates are effective upon opening.",
   activitiesIntro: "AFhomes Hotspring & Ecofarm Resort in Calauan, Laguna offers hot springs, organic cuisine and villas.",
+};
+
+/**
+ * Experience detail pages, laid out from the owner's resort detail reference design (2026-11-17).
+ * Only facts already on the site are used: no guest counts, prices or accreditations were added.
+ */
+export const RESORT_PAGE = {
+  hero: {
+    eyebrow: "AFhomes Hotspring & Ecofarm Resort",
+    title: RESORT.title,
+    lede: "A homestyle resort destination in Calauan, Laguna that blends relaxation, wellness, leisure, and nature.",
+    status: "In development",
+    image: img("home/arial-1-scaled", "Aerial view of the AFhomes resort grounds"),
+  },
+  overview: {
+    eyebrow: "Resort overview",
+    title: "A 60-hectare master-planned destination in Laguna",
+    text: RESORT.intro,
+    features: [
+      { title: "Master-planned Resort Living", text: "A 60-hectare destination, built phase by phase with full environmental and regulatory compliance." },
+      ...NATURAL_FEATURES,
+    ] satisfies Highlight[],
+  },
+  rooms: { eyebrow: "Stay and accommodations", title: "Where luxury meets convenience", text: RESORT.roomsIntro, note: RESORT.roomsNote },
+  amenities: { eyebrow: "Amenities", title: "Fun for every age", text: "Pools, a playground, courts, parks and restaurants, all in one gated and guarded resort." },
+  awaits: { eyebrow: "Resort lifestyle", title: "What awaits you", text: "More than a stay: hot spring pools, homestyle villas, ecofarm living, and spa wellness in one resort." },
+  location: {
+    eyebrow: "Location",
+    title: RESORT.activitiesIntro,
+    activities: RESORT_ACTIVITIES,
+    sitePlan: {
+      title: "Resort Site Plan",
+      text: "The 60-hectare master plan brings together accommodations, hot spring facilities, ecofarm areas, and recreational spaces.",
+      image: RESORT.masterplan,
+    },
+    map: { title: "Resort Location", text: "Find the resort in Brgy. Perez, Calauan, Laguna, and open the route in Google Maps." },
+  },
+  closing: {
+    title: "Experience your home away from home",
+    text: "Imagine a place where comfort meets excitement, and every moment feels like a dream come true. Your home away from home awaits!",
+    image: img("resort/amenities-w-pool-with-fountain", "A resort pool with a fountain"),
+  },
+};
+
+export const HOTEL_PAGE = {
+  hero: { eyebrow: HOTEL.eyebrow, title: HOTEL.title, lede: HOTEL.lede, status: HOTEL.status, image: HOTEL.gallery[2] },
+  overview: { eyebrow: "Hotel overview", title: "Every room is an adaptive ecosystem", text: HOTEL.intro, features: HOTEL.features },
+  gallery: { eyebrow: "Inside the hotel", title: "Rooms and spaces made for rest", images: HOTEL.gallery },
+  apnea: HOTEL.apnea,
+  lounge: { eyebrow: "Beyond the rooms", title: HOTEL.lounge.title, text: HOTEL.lounge.text, items: HOTEL.lounge.items },
+  closing: { title: "Grand opening: November 2026", text: "Ask us about the AFhomes Smart Wellness Hotel and your VIP Privilege Card.", image: img("hotel/reception-1024x683", "The hotel reception") },
+};
+
+export const RESTAURANT_PAGE = {
+  hero: { eyebrow: "Alaminos, Laguna", title: RESTAURANT.title, lede: RESTAURANT.tagline, status: RESTAURANT.status, image: RESTAURANT.hero },
+  overview: { eyebrow: "Restaurant overview", title: "A 600sqm landmark for authentic Japanese dining", text: RESTAURANT.intro, features: RESTAURANT.sections },
+  reservation: {
+    eyebrow: "Plan your visit",
+    title: "Dinners and celebrations",
+    text: RESTAURANT.closing,
+    note: RESTAURANT.reservation,
+    image: img("hotel/teppan-scene-2-ps-1-1024x683", "Teppanyaki dining at the ALM Japanese Restaurant"),
+  },
+  closing: { title: "Japanese tradition meets modern sophistication", text: "Contact our office to plan your dinner or celebration.", image: RESTAURANT.hero },
 };

@@ -1,0 +1,13 @@
+/* Experience closing band: the Home closing band, centered, deep green with a faint photo */
+.site-experience-page .site-home-cta.exp-closing { padding: 64px 0; }
+.site-experience-page .site-home-cta.exp-closing .site-home-cta__photo { border-radius: 0; }
+.site-experience-page .site-home-cta.exp-closing .site-home-cta__shade {
+  background: linear-gradient(180deg, rgb(14 43 32 / 0.86) 0%, rgb(14 43 32 / 0.9) 100%);
+}
+.site-experience-page .site-home-cta.exp-closing .site-cta { align-items: center; max-width: 48rem; margin: 0 auto; text-align: center; gap: 12px; }
+.site-experience-page .site-home-cta.exp-closing .site-cta__title { font-size: clamp(28px, 2.8vw, 40px); }
+.site-experience-page .site-home-cta.exp-closing .site-cta__text { max-width: 38rem; font-size: 16px; color: var(--color-on-dark-muted); }
+.site-experience-page .site-home-cta.exp-closing .site-cta__actions { justify-content: center; }
+@media (max-width: 600px) {
+  .site-experience-page .site-home-cta.exp-closing { padding: 52px 0; }
+}

@@ -21,4 +21,12 @@ describe("blog post helpers", () => {
     expect(related.some((item) => item.slug === post.slug)).toBe(false);
     expect(related[0].categories).toContain(post.categories[0]);
   });
+
+  it("sidebar highlights and summaries only use words that appear in their own post", () => {
+    // The AI Summit post's highlights keep the wording of the owner's reference design, so it is exempt.
+    for (const post of BLOG_POSTS.slice(1)) {
+      const text = post.blocks.flatMap((block) => (block.type === "list" ? block.items : [block.text])).join(" ").toLowerCase();
+      for (const line of post.highlights ?? []) expect(text, `${post.slug}: ${line}`).toContain(line.toLowerCase().replace(/[.]$/, ""));
+    }
+  });
 });

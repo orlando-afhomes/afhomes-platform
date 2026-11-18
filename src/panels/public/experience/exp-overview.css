@@ -1,0 +1,58 @@
+/* Experience overview: cream band, serif heading, feature cards and the trust badges, as in the owner's resort reference.
+   Overrides of shared classes are scoped under .site-experience-page so they win whatever order the stylesheets load in. */
+
+.site-experience-page .exp-overview { background: var(--color-bg-surface); }
+.site-experience-page .exp-overview .exp-overview__heading { max-width: 48rem; margin-bottom: 28px; }
+.site-experience-page .exp-overview .exp-overview__title { max-width: 36rem; }
+.site-experience-page .exp-overview .exp-overview__text { max-width: 46rem; }
+.site-experience-page .exp-overview .exp-overview__text + .exp-overview__text { margin-top: 8px; }
+
+/* 1 column on phones, 2 on tablets, then as many as fit (4 across on desktop, 3 when there are three) */
+.exp-overview__features { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 640px) { .exp-overview__features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .exp-overview__features { grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 20px; } }
+
+.exp-overview__feature {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border-default);
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--color-bg-canvas) 70%, #fff);
+  padding: 22px 22px 24px;
+  box-shadow: 0 14px 30px -22px rgb(14 43 32 / 0.35), var(--shadow-soft);
+}
+.exp-overview__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--color-accent);
+}
+.exp-overview__icon svg { width: 32px; height: 32px; }
+.exp-overview__feature-title {
+  margin-top: 12px;
+  font-family: var(--site-home-display, Georgia, serif);
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--color-brand-deep);
+}
+.exp-overview__feature-text { margin-top: 10px; font-size: 14px; line-height: 1.55; color: var(--color-text-secondary); }
+
+.exp-overview__extra { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 28px; }
+
+/* Trust badges */
+.exp-trust { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 20px; }
+.exp-trust__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 999px;
+  background: #fff;
+  padding: 6px 18px 6px 6px;
+  box-shadow: 0 8px 20px -14px rgb(14 43 32 / 0.4);
+}
+.site-experience-page .exp-trust .exp-trust__logo { width: 32px; height: 32px; flex-shrink: 0; border-radius: 999px; background: #fff; }
+.exp-trust__label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-brand-deep); }

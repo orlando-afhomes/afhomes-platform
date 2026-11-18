@@ -1,0 +1,38 @@
+/* Hotel gallery and sleep apnea card (hotel detail page) */
+
+.site-experience-page .exp-hotel-gallery { background: var(--color-bg-surface-raised); }
+
+.exp-hotel-gallery__grid { display: grid; gap: 14px; }
+.exp-hotel-gallery__cell { min-width: 0; }
+.exp-hotel-gallery__item { display: block; width: 100%; height: 100%; cursor: zoom-in; border-radius: 18px; box-shadow: 0 14px 30px -20px rgb(14 43 32 / 0.45); }
+.exp-hotel-gallery__item:focus-visible { outline: 2px solid var(--color-state-focus); outline-offset: 3px; }
+.site-experience-page .exp-hotel-gallery__photo { border-radius: 18px; }
+.exp-hotel-gallery__photo .site-photo__image { transition: transform 400ms ease; }
+.exp-hotel-gallery__item:hover .site-photo__image { transform: scale(1.03); }
+
+@media (min-width: 900px) {
+  .exp-hotel-gallery__grid { grid-template-columns: 1.55fr 1fr; grid-template-rows: repeat(2, clamp(13rem, 17vw, 16.5rem)); gap: 18px; }
+  .exp-hotel-gallery__cell:first-child { grid-row: span 2; }
+  /* Photos fill their grid cell on desktop instead of keeping the inline ratio */
+  .site-experience-page .exp-hotel-gallery__photo { height: 100%; aspect-ratio: auto !important; }
+}
+
+/* Sleep apnea card: cream, text first, the wide banner below across the card */
+.exp-apnea { margin-top: 40px; display: grid; gap: 22px; border: 1px solid var(--color-border-subtle); border-radius: 22px; background: var(--color-bg-subtle); padding: 24px 18px; box-shadow: 0 18px 40px -28px rgb(14 43 32 / 0.35); }
+.exp-apnea__text { display: grid; gap: 10px; }
+.exp-apnea__title { font-family: var(--site-home-display); font-size: clamp(22px, 2.2vw, 30px); line-height: 1.15; font-weight: 600; letter-spacing: -0.01em; color: var(--color-brand-deep); }
+.exp-apnea__title::after { content: ""; display: block; width: 48px; height: 2px; margin-top: 12px; border-radius: 2px; background: var(--color-accent); }
+.exp-apnea__body { max-width: 40rem; font-size: 15px; line-height: 1.6; color: var(--color-text-secondary); }
+.exp-apnea__banner { border-radius: 16px; background: #fff; padding: 10px; box-shadow: var(--shadow-soft); }
+.site-experience-page .exp-apnea__photo { border-radius: 10px; background: #fff; }
+
+@media (min-width: 768px) {
+  .exp-apnea { padding: 32px 36px 36px; }
+  .exp-apnea__text { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); align-items: end; gap: 28px; }
+  .exp-apnea__body { padding-bottom: 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exp-hotel-gallery__photo .site-photo__image { transition: none; }
+  .exp-hotel-gallery__item:hover .site-photo__image { transform: none; }
+}

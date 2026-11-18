@@ -5,6 +5,7 @@ export { SiteNavDropdown } from "./site-nav-dropdown";
 export { SiteBadge, type SiteBadgeTone } from "./site-badge";
 export { SiteFeatureCard, type SiteFeatureCardProps } from "./site-feature-card";
 export { SiteCallout, type SiteCalloutProps } from "./site-callout";
+export { SiteMapEmbed, type SiteMapEmbedProps } from "./site-map-embed";
 export { SiteRoomCard, type SiteRoomCardProps } from "./site-room-card";
 export { SiteTierCard, type SiteTier, type SiteTierBenefit, type SiteTierCardProps } from "./site-tier-card";
 export { isNavGroup, type SiteHeaderAction, type SiteNavGroup, type SiteNavItem, type SiteNavLink } from "./site-nav-types";

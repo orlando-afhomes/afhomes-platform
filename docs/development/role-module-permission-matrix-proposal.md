@@ -63,7 +63,7 @@ Recorded in `docs/business-rules/01-roles-and-permissions.md` §3.1, §3.7 and �
 
 Active areas: Dashboard (neutral landing), Organization Management (Departments, Staff/Employees, Roles & Permissions), Sales Network, IST/OST Accreditation, Customer Management, Customer Import/Export, VIP Products, Payment Schemes & Contracts, Sales Management, Finance & Payments, Commission Management, VIP Membership, VIP Card Issuance, Stay Points, Reports & Analytics, Sales Performance, Audit Logs & Governance, Public IST/OST Verification. The Public Website CMS is deferred (owner ruling R11, 2026-11-12). Public Customer Lookup is removed from scope (owner ruling R11, 2026-11-12; doc 11 §21).
 
-Disabled: Redemption, Services (`10` §17, `09` §21; preserved but hidden).
+Redemption: staff QR/Stay Points prototype authorized (2026-11-17); live use separately unauthorized. Services: disabled (`10` §17, `09` §21).
 
 ---
 
@@ -286,10 +286,11 @@ Historical attribution must be preserved on transfers/conversions (`02` §6.3, �
 ## 14. Disabled-Module Restrictions
 
 Redemption and Services:
-- Status: DISABLED (`10` §17, `09` §21).
-- No navigation, routes, APIs, or workflows.
+- Redemption: staff QR/Stay Points prototype authorized (2026-11-17) with synthetic data and sample points-per-night values; live Redemption and customer submissions require separate authorization.
+- Services: DISABLED (`09` §21).
+- Keep the authorized Redemption prototype behind its module and operation grants; do not expose live workflows.
 - Preserve future architecture.
-- Reactivation requires separate authorization.
+- Live reactivation requires separate authorization.
 
 ---
 
@@ -309,11 +310,14 @@ Primary sources:
 - `docs/business-rules/11-reports-and-analytics.md`
 - `docs/business-rules/12-audit-logs-and-governance.md`
 - `docs/business-rules/13-sales-performance-reporting.md`
+- `docs/business-rules/14-igp-sales.md`
 - `docs/project.md`, `docs/development/*.md`
 
 ---
 
-## 16. Existing Implementation Gap Analysis
+## 16. Existing Implementation Gap Analysis (Historical)
+
+Historical note: this section describes the state before the B05/B06 panel work and the current module grants. Check `src/modules/identity/permissions.ts` and the route tree for the current state.
 
 **Already implemented correctly:**
 - Centralized navigation config and availability filtering (`src/panels/admin/navigation.ts`).
@@ -323,7 +327,7 @@ Primary sources:
 - Component rendering tests (`admin-nav-list.test.tsx`).
 
 **Implemented provisionally:**
-- `ROLE_MODULE_GRANTS` reduced to documented modules in R1, but many modules remain unresolved and denied.
+- The R1 reduction was superseded by the current grants in `permissions.ts`; those grants include customers, sales, commissions, membership, stay-points, reports and audit-logs for the roles shown there.
 - Dashboard treated as neutral landing (not a business module grant).
 - Admin/Super Admin granted identical Organization Management access; protected Super Admin privileges not modeled in nav.
 
@@ -336,7 +340,7 @@ Primary sources:
 - Full role/module permission matrix for accreditation, customers, VIP products, sales, commissions, membership, stay points, reports, audit logs, CMS.
 
 **Deferred technical implementation:**
-- B05 panel shells, B06+ business modules, backend RBAC.
+- Backend RBAC and real authentication. The B05/B06 shells and the listed frontend business modules now exist; this line is historical.
 
 ---
 

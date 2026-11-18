@@ -8,7 +8,7 @@
 
 ## 1. Project Overview
 
-AFHomes Platform is a modular business management system for AFHomes. It covers Organization Management, Departments and Staff, Roles and Permissions, Sales Network, Genealogy, IST/OST Accreditation, Customer Management, Customer Applications, Public Accreditation Verification, VIP Products, VIP Contracts, Payment Schemes, VIP Card Issuance, Sales Management, Finance and Payments, Commission Management, VIP Membership, Stay Points, Reports and Analytics, Audit Logs and Governance, Public Website/CMS capabilities, Redemption (preserved but disabled), and Services (preserved but disabled).
+AFHomes Platform is a modular business management system for AFHomes. It covers Organization Management, Departments and Staff, Roles and Permissions, Sales Network, Genealogy, IST/OST Accreditation, Customer Management, Customer Applications, Public Accreditation Verification, VIP Products, VIP Contracts, Payment Schemes, VIP Card Issuance, Sales Management, Finance and Payments, Commission Management, VIP Membership, Stay Points, Reports and Analytics, Audit Logs and Governance, Public Website/CMS capabilities, the authorized Redemption staff prototype, and Services (disabled).
 
 ---
 
@@ -54,7 +54,7 @@ This directory (`docs/development/`) contains the authoritative development arch
 | Production HTTPS | TLS reverse proxy |
 | Future Customer Portal | Planned, separately authorized |
 | Future mobile application | React Native + Expo direction |
-| Redemption | Preserved but disabled |
+| Redemption | Staff prototype authorized 2026-11-17; live use disabled |
 | Services | Preserved but disabled |
 
 Critical architecture: single-repository, single Next.js application, panel-based and feature-based modular monolith. Not separate frontend/backend applications, not microservices, not Express/NestJS, not Kubernetes, not Turborepo by default, not static-only Next.js website, not DigitalOcean App Platform. Backend APIs and frontend share the same application runtime. MongoDB remains server-accessed; browser never connects directly to MongoDB.
@@ -101,7 +101,7 @@ Do not create additional development documents. Keep the set of development docu
 
 ## 8. Business Rules Index
 
-Thirteen canonical business-rule documents under `docs/business-rules/`:
+Fourteen canonical business-rule documents under `docs/business-rules/`:
 
 | # | Document | Primary responsibility |
 |---|---|---|
@@ -118,6 +118,7 @@ Thirteen canonical business-rule documents under `docs/business-rules/`:
 | 11 | [11-reports-and-analytics.md](../business-rules/11-reports-and-analytics.md) | Reports and Analytics |
 | 12 | [12-audit-logs-and-governance.md](../business-rules/12-audit-logs-and-governance.md) | Audit Logs and Governance |
 | 13 | [13-sales-performance-reporting.md](../business-rules/13-sales-performance-reporting.md) | Sales Performance Reporting |
+| 14 | [14-igp-sales.md](../business-rules/14-igp-sales.md) | IGP Sales |
 
 Business rules are the authoritative business behavior. Implementation must follow the applicable business-rule document. Do not allow frontend, backend, or database agents to invent replacement business rules. Other documents must reference the authoritative source rather than creating independent competing definitions. (e.g., 11 references 13 for Confirmed Sales recognition; 10 references 09 for Stay Points balance rules; 12 references 07 for Finance verification authority.)
 
@@ -142,7 +143,7 @@ Concise module-ownership summary (AFHomes is a connected business system):
 
 Do not redefine all financial formulas; link to authoritative documents.
 
-**Redemption: Preserved but disabled.** **Services: Preserved but disabled.** Disabled means no user-facing navigation, no unauthorized direct route access, no active backend processing, code and architectural support retained where present, future activation requires explicit approval. A hidden menu alone does not enforce a backend feature flag.
+**Redemption:** the staff QR/Stay Points prototype is authorized (2026-11-17) with synthetic data and sample points-per-night values; live Redemption and customer submissions require separate authorization. **Services: Preserved but disabled.** A disabled module has no user-facing navigation, no unauthorized direct route access, no active backend processing, code and architectural support retained where present, and future activation requires explicit approval. A hidden menu alone does not enforce a backend feature flag.
 
 ---
 
@@ -373,27 +374,27 @@ Do not run deployment procedures merely because an example exists in README.
 
 ## 22. Quick Reference and Next Steps
 
-- Documentation baseline complete (13 business rules + 9 dev docs).
+- Documentation baseline complete (14 business rules + 10 development documents).
 - A frontend prototype exists (see section above); the backend, database, authentication and deployment do not.
 - Next work: each feature in `docs/implementation/` needs explicit project-owner authorization before it starts.
 - All changes require explicit project-owner authorization.
-- STOP — await explicit authorization before implementation, Git operations, or deployment.
+- Historical note: this stop point applied before the frontend prototype. Backend, database and deployment still require authorization.
 
 ---
 
 ## Completion Report
 
 - **File created/updated:** `docs/development/README.md` (rewritten/expanded).
-- **Documentation navigation:** Nine development documents indexed; thirteen business-rule documents referenced; relative links valid; AI agent reading order defined.
+- **Documentation navigation:** Ten development documents indexed; fourteen business-rule documents referenced; relative links valid; AI agent reading order defined.
 - **Architecture alignment:** Next.js App Router, React/TypeScript, shadcn/ui/Base UI/Tailwind 4/custom CSS, Zod (approved, not yet used in `src/`), TanStack Query, REST `/api/v1`, Better Auth direction, Mongoose, Local MongoDB, MongoDB Atlas, DigitalOcean, Docker Compose, HTTPS.
-- **Business scope:** Organization, Staff, Roles, Sales Network, Genealogy, Accreditation, Customers, VIP Products/Contracts, Sales, Finance, Commissions, Membership, Stay Points, Reports, Audit, Redemption disabled, Services disabled.
+- **Business scope:** Organization, Staff, Roles, Sales Network, Genealogy, Accreditation, Customers, VIP Products/Contracts, Sales, Finance, Commissions, Membership, Stay Points, Reports, Audit, Redemption staff prototype authorized, Services disabled.
 - **Implementation roadmap:** Phases 0–8 included; Phase 2 local MongoDB correction; Phase 7 cloud deployment.
 - **Agent governance:** Required reading order, source-of-truth hierarchy, authorization boundaries, Git safety, historical data protection, security requirements.
-- **Cross-document consistency:** Aligned with architecture.md, implementation.md, business rules 01–13. No material conflicts.
+- **Cross-document consistency:** Aligned with architecture.md, implementation.md, business rules 01–14. No material conflicts.
 - **Validation:** Markdown formatting verified; relative links verified; document index completeness checked; architecture consistency checked; git diff scope verified.
-- **Execution safety:** Application code modified: No. Next.js scaffold created: No. Dependencies installed: No. Database modified: No. MongoDB started: No. Atlas configured: No. Docker configuration modified: No. Other documentation modified: No. New Markdown files created: No. Git commit: No. Git push: No. Git merge: No. Deployment: No. Redemption enabled: No. Services enabled: No. Legacy production data migrated: No.
+- **Execution safety:** Application code modified: No. Next.js scaffold created: No. Dependencies installed: No. Database modified: No. MongoDB started: No. Atlas configured: No. Docker configuration modified: No. Other documentation modified: No. New Markdown files created: No. Git commit: No. Git push: No. Git merge: No. Deployment: No. Redemption live use enabled: No; staff prototype authorized 2026-11-17. Services enabled: No. Legacy production data migrated: No.
 
-STOP — awaiting explicit project-owner authorization before starting implementation, database configuration, Git operations, or deployment.
+Historical note: this stop point applied before the frontend prototype. Implementation, database configuration, Git operations and deployment still require authorization.
 
 ## Consistency update (2026-11-12)
 

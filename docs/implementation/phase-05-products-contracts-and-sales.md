@@ -32,7 +32,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none for the current catalog. The Move effective date is decided (R1: 2026-11-09). |
 | Acceptance | A configuration change never rewrites a finalized contract. Unapproved tier codes are not activated (only Bronze B1, Silver S1, Gold G1). No prices are invented. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F5.2 Contract preparation
 
@@ -43,20 +43,20 @@ Routes (from the atlas):
 | Target | Same, with the approved template. Sellers do not prepare contracts (follow-up 6; doc 05 section 11): the Clerk prepares and the Administrator approves. |
 | Layer | Frontend (mock) |
 | Blocked by | none |
-| Acceptance | Duplicate contracts are refused. A seller (IST or OST) cannot prepare, edit or submit a contract. The seeded contract list test currently fails (see the session snapshot, "CTR-4"); investigate before relying on it. |
-| Status | Exists (per atlas) |
+| Acceptance | Duplicate contracts are refused. A seller (IST or OST) cannot prepare, edit or submit a contract. The recorded 2026-11-18 full suite has no contract-list failure. |
+| Status | Exists in mock |
 
 ## F5.3 Contract review and finalization
 
 | Field | Value |
 |---|---|
 | Journey | J06 |
-| Current | Start Review is a review action. Return requires a reason. Finalization checks authority, configured terms, an approved arrangement if one applies, a nonempty schedule, acceptance and classification. A verified reservation is not a finalization gate in the current mock. Finalize creates a Pending membership if needed and reconciles the sale with already-verified money. Non-Standard finalization is blocked in the current mock until the two-step approval of doc 05 section 10.2 is built. |
+| Current | Start Review is a review action. Return requires a reason. Finalization checks authority, configured terms, an approved arrangement if one applies, a nonempty schedule, acceptance and classification. A verified reservation is not a finalization gate in the current mock. Finalize creates a Pending membership if needed and reconciles the sale with already-verified money. Non-Standard uses the two-step approval of doc 05 section 10.2. |
 | Target | Finalize and hand off the approved contract. Keep the sale, settlement, payout and membership milestones separate. Non-Standard is decided (R1, doc 05 section 10.2, items 15, 17 and 20): only price and schedule may differ, a written justification is recorded, the Administrator or Super Administrator approves, then Finance confirms (only the Super Administrator may do both), there is no price floor, and commission uses the actual TCP. |
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Each prerequisite, when missing, blocks finalization with a specific message. A finalized contract is immutable. A Non-Standard contract cannot be finalized without both approvals; a rejection at either step returns it to Returned with a reason; a later price or schedule change returns it to approval; each step is audited separately (doc 05 section 20, item 30). |
-| Status | Exists (per atlas) |
+| Status | Implemented in mock; Non-Standard two-step approval and finalization |
 
 ## F5.4 Reservation
 
@@ -68,14 +68,14 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | A failed reservation claim leaves the saved customer and contract intact and can be retried separately. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F5.5 Sales milestones
 
 | Field | Value |
 |---|---|
 | Journey | J06, J07 |
-| Current | The platform has Confirmed Sale. There is no complete Closed Deal, late-period, replacement or cure workflow. `src/modules/finance/milestones.ts` changed in `fc060bb`. |
+| Current | The platform derives Closed Deal at 25%, late admission, Stage 1 and Full Payment from the counted ledger; Defaulted and reinstatement are implemented. Only a VIP “replacement” path is not evident. |
 | Target | Per R7: a sale counts at 25% collected (Closed Deal), replacing the D25 rule. Months are closed and late receipts go into the first open month. A sale with no payment for 90 days is listed and an Administrator marks it Defaulted. Keep the platform Confirmed Sale and derive all measures from one verified ledger with linked reversals. Follow-up 3: the sale counts at 25% once the Administrator approves the sale record; contract finalization is tracked separately and is not required (doc 05 item 18). The Stage 1 stamp date is the later of the triggering receipt's date and the latest counted receipt (OCT O3; follow-up 17). A sale that is not Active loses its Closed Deal (OCT R33). |
 | Layer | Frontend (mock) |
 | Blocked by | none (the code still stamps by approval date; aligning it with OCT O3 is a separate task, decision D-B) |
@@ -99,7 +99,7 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J06 |
-| Current | No IGP page exists. The workbook IGP process is documented (U10). |
+| Current | IGP is the Sales tab at `/admin/sales?tab=igp`; the legacy `/admin/sales/igp` route redirects. The register, Series Number allocator, shared receipts, staged commission and Grant checklist exist within doc 14 restrictions. |
 | Target | Per R13 (doc 14): IGP is in scope and built together with VIP, for AFhomes-channel sales only, with a 16-character Series Number. The build needs authorization. |
 | Layer | Frontend (mock) |
 | Blocked by | none for the flow; the band code above PHP 9M and the signed Grant terms are open (decisions-and-gaps "Still open") |

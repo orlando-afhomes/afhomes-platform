@@ -17,20 +17,21 @@ Routes (from the atlas):
 | `/admin/reports/commissions` | protected |
 | `/admin/reports/membership` | protected |
 | `/admin/reports/stay-points` | protected |
+| `/admin/reports/promo-points` | protected |
 | `/admin/audit-logs` | protected |
 | `/admin/customers/import-export` | shared with FP4 |
 
-## F11.1 Dashboard and six reports
+## F11.1 Dashboard and seven reports
 
 | Field | Value |
 |---|---|
 | Journey | J12 |
-| Current | A role-appropriate dashboard and six report routes. Date range and role scope select the records. Finance views all reports, view only (owner ruling, follow-up 25). Active snapshots and dated measures use their documented definitions. Empty states are shown. Reading a report never changes records. The explanatory notes were removed from these pages in the last session. |
+| Current | A role-appropriate dashboard and seven report routes, including Promo Points. Date range and role scope select the records. Finance views all reports, view only (owner ruling, follow-up 25). Active snapshots and dated measures use their documented definitions. Empty states are shown. Reading a report never changes records. The explanatory notes were removed from these pages in the last session. |
 | Target | Same. Authoritative source records, correct business event dates, historical attribution, no double-counting (docs 11 and 13). |
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Report tests pass. Finance sees every report and cannot change any record from it. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F11.2 Audit log
 
@@ -42,7 +43,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock), Backend later |
 | Blocked by | none (only the written legal retention schedule is open; the interim rule stands) |
 | Acceptance | A user without the grant sees "Access restricted". |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F11.3 Source-total reconciliation
 
@@ -102,7 +103,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | A sale appears once per person. My Sales totals exclude referred sales. A referrer outside the member's team sees only the referred sale. |
-| Status | Exists |
+| Status | Exists in mock; Referred by me list verified |
 
 ## Out of scope
 

@@ -14,13 +14,13 @@ This document defines the complete implementation roadmap for the AFHomes Platfo
 
 ## 2. Current Project Status
 
-The repository is a frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); there is no API, database, real authentication or deployment. 14 business-rule documents (01 to 14) and 10 development documents form the documentation baseline. The subphases 4A to 4L below were built as frontend work on mocks; the per-feature status, decisions and blockers are tracked in `docs/implementation/` (feature phases FP1 to FP11), which follows the 4A to 4L order. Every new feature still needs explicit project-owner authorization.
+The repository is a frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); there is no API, database, real authentication or deployment. 14 business-rule documents (01 to 14) and 10 development documents form the documentation baseline. The subphases 4A to 4L below were built as frontend work on mocks; the per-feature status, decisions and blockers are tracked in `docs/implementation/` (feature phases FP1 to FP16), which follows the 4A to 4L order. Every new feature still needs explicit project-owner authorization.
 
 ---
 
 ## 3. Approved Technical Architecture
 
-Single-repository, single Next.js application, panel-based and feature-based modular monolith. Next.js App Router, React, TypeScript, shadcn/ui on Base UI, Tailwind CSS 4, namespaced custom CSS, Zod (approved, not yet used in `src/`), TanStack Query (Ant Design removed in commit 22c9b4f; UI standard effective November 8, 2026). Frontend-first development with centralized mock data. REST `/api/v1`. Centralized auth (Better Auth direction, compatibility verification required) and RBAC. Mongoose. Local MongoDB first, then MongoDB Atlas. DigitalOcean Droplet + Docker Compose + HTTPS. Future Customer Portal, future React Native mobile. Redemption and Services preserved but disabled.
+Single-repository, single Next.js application, panel-based and feature-based modular monolith. Next.js App Router, React, TypeScript, shadcn/ui on Base UI, Tailwind CSS 4, namespaced custom CSS, Zod (approved, not yet used in `src/`), TanStack Query (Ant Design removed in commit 22c9b4f; UI standard effective November 8, 2026). Frontend-first development with centralized mock data. REST `/api/v1`. Centralized auth (Better Auth direction, compatibility verification required) and RBAC. Mongoose. Local MongoDB first, then MongoDB Atlas. DigitalOcean Droplet + Docker Compose + HTTPS. Future Customer Portal, future React Native mobile. Redemption staff prototype authorized (2026-11-17) with synthetic data; live Redemption and customer submissions require separate authorization. Services remains disabled.
 
 ---
 
@@ -101,7 +101,7 @@ Every Phase 0–8 must contain: Objective, Starting state, Scope, In-scope imple
 
 ## 10. Phase 0: Documentation Foundation
 
-Objective: establish authoritative business and technical documentation. Starting state: documentation-only repo (historical; the prototype has since been built). Scope: business rules 01–13, project scope, technical architecture, frontend, database, backend, security, testing, implementation, deployment, documentation navigation. Deliverables: 13 canonical business-rule docs, 9 dev docs. Validation: file completeness, business-rule references, architecture consistency, correct technology stack, local MongoDB-first strategy, deployment alignment, no contradictory module ownership, no invented commercial rules, working documentation links. Exit: required documentation complete, major contradictions identified, critical dependencies documented, documentation baseline submitted for project-owner acceptance. Restrictions: documentation-only; no scaffolding, DB provisioning, or cloud deployment. Do not claim project-owner approval if not explicitly given.
+Objective: establish authoritative business and technical documentation. Starting state: documentation-only repo (historical; the prototype has since been built). Scope: business rules 01–14, project scope, technical architecture, frontend, database, backend, security, testing, implementation, deployment, documentation navigation. Deliverables: 14 canonical business-rule docs, 10 development documents. Validation: file completeness, business-rule references, architecture consistency, correct technology stack, local MongoDB-first strategy, deployment alignment, no contradictory module ownership, no invented commercial rules, working documentation links. Exit: required documentation complete, major contradictions identified, critical dependencies documented, documentation baseline submitted for project-owner acceptance. Restrictions: documentation-only; no scaffolding, DB provisioning, or cloud deployment. Do not claim project-owner approval if not explicitly given.
 
 ---
 
@@ -150,11 +150,11 @@ Local MongoDB environment, persistent local storage, local security, transaction
 
 ### Required source documents
 
-architecture.md, database.md, backend.md, security.md, testing.md, business-rules 01–13.
+architecture.md, database.md, backend.md, security.md, testing.md, business-rules 01–14.
 
 ### Business-rule dependencies
 
-All entity/identifier/transaction rules from 01–13.
+All entity/identifier/transaction rules from 01–14.
 
 ### Technical dependencies
 
@@ -232,7 +232,7 @@ Each subphase includes dependencies, deliverables, security, tests, acceptance, 
 
 ### Disabled and deferred modules
 
-Redemption and Services preserved but disabled. Do not delete existing code. Hide disabled navigation. Block disabled backend workflows. Preserve future module boundaries. Do not execute redemption. Do not consume points through disabled redemption flows. Do not activate Services. Require separate authorization before reactivation. Document future activation as separately approved enhancement. Do not make functional Redemption or Services implementation a Phase 4 acceptance requirement. However, disabled-state protection must be validated before production.
+The staff Redemption prototype is authorized (2026-11-17) with synthetic data and sample points-per-night values; live Redemption and customer submissions require separate authorization. Services remains disabled. Do not delete retained code. Hide disabled navigation. Block disabled backend workflows. Preserve future module boundaries. Do not enable live redemption or Services. Require separate authorization before live activation. Document future activation as a separately approved enhancement. Do not make live Redemption or Services implementation a Phase 4 acceptance requirement. However, disabled-state protection must be validated before production.
 
 ### Phase 4 acceptance
 
@@ -533,7 +533,7 @@ Stable, monitored production operation under approved business and operational p
 
 ## 42. Cross-Document Consistency
 
-After rewriting, compare implementation.md with architecture.md, frontend.md, database.md, backend.md, security.md, testing.md, deployment.md, business-rules 01–13. If another document remains inconsistent, report the precise mismatch. Do not modify that file.
+After rewriting, compare implementation.md with architecture.md, frontend.md, database.md, backend.md, security.md, testing.md, deployment.md, business-rules 01–14. If another document remains inconsistent, report the precise mismatch. Do not modify that file.
 
 ---
 
@@ -545,13 +545,13 @@ After rewriting, compare implementation.md with architecture.md, frontend.md, da
 
 ## 44. Strict Execution Scope
 
-This task authorizes modification of `docs/development/implementation.md` only. Do not modify any other file. Do not create extra development documents. The development directory must retain exactly nine approved files. Do not modify application code, package manifests, environment files, Mongoose schemas, database configuration, Docker configuration, CI/CD workflows, Git configuration. Do not scaffold Next.js, install packages, start MongoDB, create databases, connect to production Atlas, create test suites, create API routes, implement authentication, provision DigitalOcean, run migrations, import customer records, commit, push, merge, deploy. If another document requires correction, report the mismatch for a separate authorized task.
+This task authorizes modification of `docs/development/implementation.md` only. Do not modify any other file. Do not create extra development documents. The development directory must retain exactly ten approved files. Do not modify application code, package manifests, environment files, Mongoose schemas, database configuration, Docker configuration, CI/CD workflows, Git configuration. Do not scaffold Next.js, install packages, start MongoDB, create databases, connect to production Atlas, create test suites, create API routes, implement authentication, provision DigitalOcean, run migrations, import customer records, commit, push, merge, deploy. If another document requires correction, report the mismatch for a separate authorized task.
 
 ---
 
 ## 45. Final Verification
 
-After writing implementation.md: re-read the complete document; verify all nine phases; verify the Phase 2 local MongoDB correction; verify Atlas is not mandatory in Phase 2; verify phase dependencies; verify the Phase 4 dependency sequence; verify all 13 business-rule areas are covered; verify the Finance authority safeguards; verify the official identifier dependencies; verify the Membership activation rules; verify Stay Points integrity; verify Genealogy history; verify Redemption/Services remain disabled; verify future Customer/Mobile scope; verify migration controls; verify the Phase 6/7 staging boundary; verify deployment approval requirements; verify Definition of Ready/Done; verify critical blockers; verify no invented business approvals; check Markdown links; check Mermaid diagrams; compare with all development documents; confirm only implementation.md changed; inspect the final Git diff. Use read-only commands: `git status --short`, `git diff --stat`, `git diff --check`. Inspect untracked Markdown directly. Do not stage or commit.
+After writing implementation.md: re-read the complete document; verify all nine phases; verify the Phase 2 local MongoDB correction; verify Atlas is not mandatory in Phase 2; verify phase dependencies; verify the Phase 4 dependency sequence; verify all 14 business-rule areas are covered; verify the Finance authority safeguards; verify the official identifier dependencies; verify the Membership activation rules; verify Stay Points integrity; verify Genealogy history; verify live Redemption and Services remain disabled and the staff Redemption prototype is authorized; verify future Customer/Mobile scope; verify migration controls; verify the Phase 6/7 staging boundary; verify deployment approval requirements; verify Definition of Ready/Done; verify critical blockers; verify no invented business approvals; check Markdown links; check Mermaid diagrams; compare with all development documents; confirm only implementation.md changed; inspect the final Git diff. Use read-only commands: `git status --short`, `git diff --stat`, `git diff --check`. Inspect untracked Markdown directly. Do not stage or commit.
 
 ---
 
@@ -583,7 +583,7 @@ Next.js, React/TypeScript, REST `/api/v1`, Better Auth direction, Mongoose, Loca
 
 ### G. Business Integrity
 
-Roadmap protects customer identity, historical genealogy, Finance verification, Confirmed Sales, Commissions, Membership activation, VIP Card IDs, Stay Points, Reporting, Audit.
+Roadmap protects customer identity, historical genealogy, Finance verification, Confirmed Sales, Commissions, Membership activation, VIP Numbers, Stay Points, Reporting, Audit.
 
 ### H. Development Governance
 
@@ -595,7 +595,7 @@ Verified blocker table with classification: full blocker, partial blocker, techn
 
 ### J. Cross-Document Consistency
 
-Aligned with architecture, frontend, database, backend, security, testing, deployment, business-rules 01–13. No material inconsistencies.
+Aligned with architecture, frontend, database, backend, security, testing, deployment, business-rules 01–14. No material inconsistencies.
 
 ### K. Validation
 
@@ -621,7 +621,7 @@ Markdown validation, link validation, Mermaid validation, phase consistency, dep
 - Git push: No.
 - Git merge: No.
 - Deployment: No.
-- Redemption enabled: No.
+- Redemption live use enabled: No; staff prototype authorized 2026-11-17.
 - Services enabled: No.
 
-STOP — awaiting explicit project-owner authorization before beginning any implementation phase, database operation, Git change or deployment.
+Historical note: this stop point applied before the frontend prototype. Implementation phases, database operations and deployment still require authorization.

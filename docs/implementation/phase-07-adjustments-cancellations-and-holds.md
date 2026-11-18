@@ -26,7 +26,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none. Overpayment and refund timing are not covered by any ruling in `decisions-and-gaps.md`; treat them as an unrecorded question for the owner, not a blocker for the control. |
 | Acceptance | An adjustment above the adjustable amount is refused. The original receipt is never edited. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F7.2 Cancellation request and decision
 
@@ -38,7 +38,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | A self-decision succeeds and is flagged in the history. A declined request leaves the record unchanged. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F7.3 Holds
 
@@ -50,7 +50,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Holds are resolved with a reason. The hold list links to the contract. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F7.4 Reconciliation of linked effects
 
@@ -69,12 +69,12 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J08 |
-| Current | Not implemented. The workbook documents returned checks, default, cure, late admission, closed periods, replacement and rescission (OCT R32 to R34, O6 to O9). Per R7 a sale with no approved receipt for 90 days is listed and an Administrator or the Super Administrator marks it Defaulted (doc 07 section 15, doc 13 section 4.6). |
+| Current | The 90-day no-payment list, Defaulted status and reinstatement are implemented. The wider workbook paths (cure, replacement, rescission) remain documented future work. |
 | Target | Keep these paths distinct. The 90-day no-payment list, then Defaulted marked by the Administrator or Super Administrator; a Defaulted sale loses its Closed Deal at once (OCT R33) and returns to Active if the buyer pays again. Reinstatement follows doc 08 (R9 item 4): the clawback still owed is written off, anything recovered is reported for refund, a returned-cheque clawback is never written off. Automatic recovery of paid commission waits for the signed addendum. |
 | Layer | Frontend (mock) |
 | Blocked by | none (G07 and G09 decided); automatic recovery waits for the signed IST addendum (see F8.5) |
 | Acceptance | A sale with no approved receipt for 90 days appears on the list. Only an Administrator or Super Administrator can mark it Defaulted. A Defaulted sale leaves the Confirmed count and shows its own status. A new approved receipt returns it to Active. Reinstatement writes off the owed clawback. |
-| Status | Missing |
+| Status | Implemented in mock; 90-day list, Defaulted status and reinstatement tested |
 
 ## Out of scope
 

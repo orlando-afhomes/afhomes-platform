@@ -14,7 +14,7 @@ This document defines the complete deployment, infrastructure, and production op
 
 ## 2. Current Versus Target Deployment State
 
-- **Verified current implementation (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); no infrastructure or deployment.
+- **Historical snapshot (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); no infrastructure or deployment.
 - **Approved target deployment:** DigitalOcean Droplet (application) + Docker Compose + HTTPS reverse proxy + MongoDB Atlas Cloud (database).
 - **Future implementation work:** all infrastructure setup, deployment, migration requires separate authorization.
 
@@ -888,7 +888,7 @@ Do not automatically execute Phase 7 merely because deployment instructions are 
 38. Recovery must be validated.
 39. Production releases require authorization.
 40. CI/CD cannot bypass production approval.
-41. Redemption remains disabled.
+41. Live Redemption remains disabled; the staff prototype is authorized under the 2026-11-17 status.
 42. Services remains disabled.
 43. Production demo login remains disabled.
 44. Future mobile clients may reuse `/api/v1`.
@@ -1107,14 +1107,14 @@ Use authoritative technical documentation where appropriate. Verify version-sens
 
 ## 61. Final Verification
 
-After completing `deployment.md`: re-read entire document; verify single Next.js application topology; confirm correct container organization; confirm DigitalOcean hosting; confirm MongoDB Atlas hosting; confirm local MongoDB-first development; verify environment separation; verify reverse proxy and HTTPS; verify domain and DNS planning; verify secrets management; verify firewall and SSH security; verify Docker architecture; verify Atlas connectivity; verify local-to-cloud migration; verify production data protection; verify CI/CD design; verify controlled deployment; verify rollback; verify monitoring; verify backups; verify recovery; verify incident response; verify staging acceptance; verify production release gates; verify disabled Redemption and Services; verify cross-document consistency; validate Markdown links; validate Mermaid diagrams; confirm only deployment.md changed; inspect final Git diff. Use read-only commands: `git status --short`, `git diff --stat`, `git diff --check`. Inspect untracked Markdown separately as necessary. Do not stage, commit or push.
+After completing `deployment.md`: re-read entire document; verify single Next.js application topology; confirm correct container organization; confirm DigitalOcean hosting; confirm MongoDB Atlas hosting; confirm local MongoDB-first development; verify environment separation; verify reverse proxy and HTTPS; verify domain and DNS planning; verify secrets management; verify firewall and SSH security; verify Docker architecture; verify Atlas connectivity; verify local-to-cloud migration; verify production data protection; verify CI/CD design; verify controlled deployment; verify rollback; verify monitoring; verify backups; verify recovery; verify incident response; verify staging acceptance; verify production release gates; verify live Redemption and Services remain disabled and the staff Redemption prototype is authorized; verify cross-document consistency; validate Markdown links; validate Mermaid diagrams; confirm only deployment.md changed; inspect final Git diff. Use read-only commands: `git status --short`, `git diff --stat`, `git diff --check`. Inspect untracked Markdown separately as necessary. Do not stage, commit or push.
 
 ---
 
 ## 62. Completion Report
 
 ### A. Repository Verification
-- Actual repository: `afhomes-platform`; branch: `develop`; initial working tree untracked docs/workflow files preserved. Documentation-only repository.
+- Actual repository: `afhomes-platform`; branch: `develop`; initial working tree held untracked docs/workflow files. At the time of writing this was a documentation-only repository; the current repository now contains a frontend prototype.
 
 ### B. Deployment Document Updated
 - `docs/development/deployment.md` (comprehensively rewritten/expanded).
@@ -1163,7 +1163,7 @@ Markdown validation, diagram validation, link validation, cross-document consist
 - Git push: No.
 - Git merge: No.
 - Deployment: No.
-- Redemption enabled: No.
+- Redemption live use enabled: No; staff prototype authorized 2026-11-17.
 - Services enabled: No.
 
-STOP — awaiting explicit project-owner authorization before any infrastructure setup, Docker implementation, cloud configuration, Git operation, database migration or deployment.
+Historical note: this stop point applied before the frontend prototype. Infrastructure setup, cloud configuration, database migration and deployment still require authorization.

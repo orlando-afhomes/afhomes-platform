@@ -14,7 +14,7 @@ This document defines the complete testing and quality assurance strategy for th
 
 ## 2. Current Versus Target Testing State
 
-- **Verified current implementation (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); Vitest and Testing Library run component and unit tests on the mocks; no API, database or end-to-end tests yet.
+- **Historical snapshot (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); Vitest and Testing Library run component and unit tests on the mocks; no API, database or end-to-end tests yet.
 - **Approved target testing architecture:** manual-first frontend development, automated verification before production, local MongoDB integration testing, Atlas staging validation.
 - **Planned testing work:** all test implementation requires separate authorization.
 
@@ -70,7 +70,7 @@ Define responsibilities for static analysis, type checking, unit testing, compon
 
 ## 6. Tooling Direction
 
-The existing repository may not contain any testing infrastructure. Document a proposed approach compatible with the approved Next.js/TypeScript architecture. Evaluate appropriate tooling categories: TypeScript type checking, static code analysis, domain unit testing, React component testing, browser E2E testing, API integration testing, MongoDB integration testing, security testing, accessibility testing, performance testing, CI execution. Potential candidates include Vitest for TypeScript unit/integration tests, React Testing Library for React component behavior, Playwright for browser E2E tests, HTTP-level API testing utilities, appropriate isolated MongoDB test environments, automated accessibility checking tools. These are engineering candidates unless an authoritative document already approves a specific testing framework. Do not claim packages are installed. Do not add dependencies. Do not create testing configuration files. Document selection criteria: compatibility, maintenance, reliability, integration with approved Next.js application.
+Vitest and Testing Library are installed and used; Playwright and database or end-to-end tooling are not installed. Document a proposed approach compatible with the approved Next.js/TypeScript architecture. Evaluate appropriate tooling categories: TypeScript type checking, static code analysis, domain unit testing, React component testing, browser E2E testing, API integration testing, MongoDB integration testing, security testing, accessibility testing, performance testing, CI execution. Potential candidates include Vitest for TypeScript unit/integration tests, React Testing Library for React component behavior, Playwright for browser E2E tests, HTTP-level API testing utilities, appropriate isolated MongoDB test environments, automated accessibility checking tools. These are engineering candidates unless an authoritative document already approves a specific testing framework. Check `package.json` before claiming a package is installed. Do not add dependencies. Do not create testing configuration files. Document selection criteria: compatibility, maintenance, reliability, integration with approved Next.js application.
 
 ---
 
@@ -234,7 +234,7 @@ Ordinary local development records may persist. Automated integration test recor
 
 Financial and membership operations are high priority. Document tests covering atomic state transitions, conflicting concurrent requests, transaction failure, retry, duplicate requests, unique-index conflicts, rollback, audit consistency, partial failure prevention.
 
-Representative scenarios: concurrent Finance verification (two authorized requests attempt to verify the same payment → not verified twice, no duplicate balance effect, no duplicate Confirmed Sale, consistent authoritative outcome); concurrent VIP activation (two requests attempt to activate same eligible membership → one official membership identity, one valid assigned VIP Card ID, no duplicate activation effect); concurrent points operations (two operations attempt to use same available points → no unauthorized overspending, no inconsistent ledger, no duplicate consumption); transaction failure (a required write fails during a multi-document operation → no partially completed business transaction reported as successful, state remains recoverable and reconcilable).
+Representative scenarios: concurrent Finance verification (two authorized requests attempt to verify the same payment → not verified twice, no duplicate balance effect, no duplicate Confirmed Sale, consistent authoritative outcome); concurrent VIP activation (two requests attempt to activate same eligible membership → one official membership identity, one valid assigned VIP Number, no duplicate activation effect); concurrent points operations (two operations attempt to use same available points → no unauthorized overspending, no inconsistent ledger, no duplicate consumption); transaction failure (a required write fails during a multi-document operation → no partially completed business transaction reported as successful, state remains recoverable and reconcilable).
 
 Do not prescribe unsupported database behavior beyond verified transaction capabilities.
 
@@ -341,7 +341,7 @@ Create a finalized contract using applicable product terms. Change current produ
 
 ### 25.2 Unresolved pricing
 
-If current source documents contain unresolved Gold/Silver price discrepancies or other contractual conflicts, do not invent expected prices. Document the test dependency pending authorized correction.
+If current source documents contain unresolved contractual conflicts, do not invent expected prices. The Gold and Silver prices were resolved on 2026-11-10/12 and are not a dependency. Document any genuinely open conflict pending authorized correction.
 
 ---
 
@@ -359,7 +359,7 @@ Two simultaneous eligible activations must not produce the same official identif
 
 ### 26.3 Repeated requests
 
-An already completed activation must not receive a second official VIP Card ID.
+An already completed activation must not receive a second official VIP Number.
 
 ### 26.4 Date correctness
 
@@ -469,7 +469,7 @@ Preserve actual historical activation dates and contract snapshots.
 
 ### 31.5 Duplicate prevention
 
-Repeated activation attempts must not produce duplicate memberships, duplicate VIP Card IDs, or duplicate activation audit events representing separate successful activations.
+Repeated activation attempts must not produce duplicate memberships, duplicate VIP Numbers, or duplicate activation audit events representing separate successful activations.
 
 ### 31.6 Financial Hold
 
@@ -513,11 +513,11 @@ Where applicable, distinguish historical or contractual Annual Welcome Gift enti
 
 ## 33. Redemption Testing for Future Activation
 
-Redemption is currently disabled. The testing architecture must preserve the future acceptance criteria without activating the module. Use document 10. Future relevant scenarios include eligibility, available balance, Weekday/Weekend selection, scheduled stay/service date, manual approval, points reservation, mixed Points + Cash, Finance verification, service completion, final points consumption, cancellation, restoration or forfeiture under approved rules, duplicate-consumption prevention.
+The staff QR/Stay Points prototype is authorized (2026-11-17) with synthetic data; live Redemption and customer submissions require separate authorization. The testing architecture must preserve the future live acceptance criteria without enabling live use. Use document 10. Future relevant scenarios include eligibility, available balance, Weekday/Weekend selection, scheduled stay/service date, manual approval, points reservation, mixed Points + Cash, Finance verification, service completion, final points consumption, cancellation, restoration or forfeiture under approved rules, duplicate-consumption prevention.
 
-### 33.1 Current disabled-state tests
+### 33.1 Current prototype-state tests
 
-Before future authorization, test that: Redemption navigation is hidden; Direct page access does not enable restricted workflows; API calls cannot execute disabled redemption operations; No points can be consumed through disabled redemption functionality. Do not create working redemption tests that require the module to be activated during this documentation task.
+For the authorized staff prototype, test that: live Redemption and customer submissions remain blocked; the prototype uses synthetic browser-memory data; no live points are consumed; Services remains disabled; direct access cannot enable live operations. Do not create live redemption tests that require authorization beyond the staff prototype.
 
 ---
 
@@ -713,7 +713,7 @@ Use actual business impact to determine priority. Do not classify all tests as e
 
 ## 51. Regression Testing
 
-Document how future changes should be reviewed against existing business behavior. Examples: role changes must not weaken authorization; genealogy changes must not affect historical sales; contract configuration changes must not mutate signed contracts; Finance changes must not duplicate confirmed sales; Commission changes must not bypass manual approval; Membership changes must not issue duplicate VIP IDs; Points changes must not restore spent balances; Import changes must not create duplicate certified settlements; Public search changes must not expose private data; Disabled feature changes must not reactivate Redemption or Services. Test coverage should evolve as modules are implemented.
+Document how future changes should be reviewed against existing business behavior. Examples: role changes must not weaken authorization; genealogy changes must not affect historical sales; contract configuration changes must not mutate signed contracts; Finance changes must not duplicate confirmed sales; Commission changes must not bypass manual approval; Membership changes must not issue duplicate VIP IDs; Points changes must not restore spent balances; Import changes must not create duplicate certified settlements; Public search changes must not expose private data; Disabled feature changes must not enable live Redemption or Services; the staff Redemption prototype remains authorized. Test coverage should evolve as modules are implemented.
 
 ---
 
@@ -816,7 +816,7 @@ Align with `docs/development/implementation.md`: Phase 0 Documentation; Phase 1 
 17. Commission approval remains manual under Finance authority.
 18. Approved commission is not Paid commission.
 19. Commission payout must not be duplicated.
-20. VIP Card IDs must follow official allocation requirements.
+20. VIP Numbers must follow official allocation requirements.
 21. VIP Number rules (one number at RA recording, monthly sequence, never reused) must be respected.
 22. Historical identifiers remain unchanged.
 23. Genealogy transfers preserve historical attribution.
@@ -837,7 +837,7 @@ Align with `docs/development/implementation.md`: Phase 0 Documentation; Phase 1 
 38. Imports must not create duplicate business records.
 39. Database migration requires reconciliation.
 40. No automatic legacy Supabase production migration.
-41. Redemption remains disabled.
+41. Live Redemption remains disabled; the staff prototype is authorized under the 2026-11-17 status.
 42. Services remains disabled.
 43. Production release requires automated critical verification.
 44. Manual frontend testing remains permitted during the early phase.
@@ -867,17 +867,17 @@ Only genuine blockers. Do not invent decisions. Examples: Better Auth + MongoDB 
 ## Completion Report
 
 - **File created/updated:** `docs/development/testing.md` (comprehensively rewritten/expanded).
-- **Testing architecture coverage:** testing layers, tooling direction, manual-first frontend development, automated production readiness, test isolation, synthetic data, test case design, unit/component/mock/API/service/DB/transaction/authentication/RBAC/staff/genealogy/accreditation/customer/VIP/finance/reversal/commission/membership/Stay Points/redemption (disabled)/services (disabled)/reporting/audit/historical/import/migration/security/performance/accessibility/E2E/negative/fault-injection/backup/deployment/CI-CD/priority/regression/traceability/acceptance/release-gates/reporting/phases/invariants.
+- **Testing architecture coverage:** testing layers, tooling direction, manual-first frontend development, automated production readiness, test isolation, synthetic data, test case design, unit/component/mock/API/service/DB/transaction/authentication/RBAC/staff/genealogy/accreditation/customer/VIP/finance/reversal/commission/membership/Stay Points/redemption (staff prototype authorized; live use disabled)/services (disabled)/reporting/audit/historical/import/migration/security/performance/accessibility/E2E/negative/fault-injection/backup/deployment/CI-CD/priority/regression/traceability/acceptance/release-gates/reporting/phases/invariants.
 - **Database testing:** local MongoDB, replica-set transactions, Mongoose, Atlas staging, migration, import, backup/recovery.
-- **Business module testing:** all 13 business-rule docs represented in traceability matrix.
+- **Business module testing:** all 14 business-rule docs represented in traceability matrix.
 - **Critical financial and security tests:** payment verification, reversals, sales recognition, commission payouts, membership activation, identifier uniqueness, points integrity, RBAC, customer privacy, idempotency, concurrency.
 - **Release acceptance:** risk-based priorities, release-blocking conditions, test reporting standards, production validation, backup/recovery testing.
-- **Cross-document consistency:** aligned with architecture, frontend, database, backend, security, implementation, deployment, business-rules 01–13. No material inconsistencies.
+- **Cross-document consistency:** aligned with architecture, frontend, database, backend, security, implementation, deployment, business-rules 01–14. No material inconsistencies.
 - **Unresolved critical dependencies:** listed in Section 58.
 - **Validation results:** Markdown structure validated; relative links verified; architecture and business-rule consistency checked; git diff inspection performed.
 - **Execution safety:** Application code modified: No. Test suite created: No. Test configuration created: No. Dependencies installed: No. Tests executed: No. Local MongoDB modified: No. MongoDB Atlas modified: No. Database migration executed: No. Data import executed: No. Other documentation modified: No. Git commit: No. Git push: No. Git merge: No. Deployment: No. Redemption enabled: No. Services enabled: No. Production data migrated: No.
 
-STOP — awaiting explicit project-owner authorization before creating tests, changing application code, starting databases, modifying Git or deploying.
+Historical note: this stop point applied before the frontend prototype. Creating new tests, changing application code, starting databases and deploying still require authorization.
 
 ## Consistency update (2026-11-12)
 

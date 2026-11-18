@@ -26,7 +26,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | A submitted customer is never duplicated by a second submit. A seller, including an OST, can start and save a draft of their own customer but cannot submit, approve or enter a Customer ID (doc 04 section 18, items 3 to 5 and 13). Approval is refused without a closing seller. Send back and reject each require a reason and delete nothing. Blank drafts consume no Customer ID. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F4.2 Exit protection and returning to the failing step
 
@@ -38,7 +38,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Back and forward browser navigation behave as defined. A fresh New Customer starts blank. |
-| Status | Exists (per atlas), history navigation unverified |
+| Status | Exists in mock; browser history navigation still unverified |
 
 ## F4.3 Import and export
 
@@ -50,7 +50,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Invalid rows never commit. Duplicates are prevented. Imported historical receipts show "Approved (imported)" and are not placed in the normal approval queue. A batch is not final until an Administrator signs it off, and the sign-off is audited. Imported customers keep an existing Customer ID only if it is unique; otherwise the row is Invalid. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F4.4 Closing seller and referrer attribution
 
@@ -62,19 +62,19 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Both roles are recorded separately. Recommender contact and email follow the selected referrer. A referrer is optional and never invented. The closing seller is required at approval. Past attribution is preserved after team transfers (doc 04 section 12). |
-| Status | Decided (R5); verify against the code before building further |
+| Status | Implemented in mock; closing seller and referrer attribution tested |
 
 ## F4.5 OST referral lead and SM handoff
 
 | Field | Value |
 |---|---|
 | Journey | J05 |
-| Current | The OST operation list has no customer create or prepare grant. SM designation does not authorize contract finalization (U04). |
+| Current | Sellers, including OST, can start and save their own customer draft with `customers.draft`; the Clerk completes and submits, and the Administrator reviews. Sellers cannot prepare contracts. |
 | Target | Per R5 and follow-up 23: a seller (IST or OST) starts the customer draft for their own customer, the Clerk completes it and the Administrator or Super Administrator approves, sends back with a reason, or rejects with a reason. The closing seller is credited, plus an optional referrer. OST sees only its own records (R4). Starting a draft grants no access to other customers. |
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | An OST can start and save a draft for their own customer, and the office sees it for completion. An OST cannot submit, approve, enter a Customer ID or view another OST's customers (doc 04 section 18, items 4, 5, 13 and 26). SM designation does not authorize contract finalization. No automatic grants to OST beyond starting a draft. |
-| Status | Partial; verify against the code |
+| Status | Implemented in mock; seller draft, Clerk submit and Administrator review tested |
 
 ## Out of scope
 

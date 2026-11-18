@@ -305,14 +305,14 @@ These rulings take precedence over earlier text in this document where they diff
 
 1. **Overriding authority rule.** The Administrator can do everything in the system. The Super Administrator has full control and no blocks. Both may approve their own entries, and the audit history shows that the same person entered and approved. Clerks enter only. Sellers view only (section 3.7). This supersedes the R4 answer that the Administrator never approves their own entry.
 2. **Role mapping (R4).** Director = Super Administrator. Supervisor = Administrator. Clerk is a new office staff job that enters information but cannot approve. Finance verifies money and pays (section 3.8).
-3. **Sellers view only (R4).** SVD, SSM and SM see their own and their team's customers, sales and pay. OST sees only their own. The single exception is the seller customer draft (doc 04 §5).
+3. **Sellers view only (R4).** SVD, SSM and SM see their own and their team's customers, sales and pay. OST sees only their own. The exceptions are the seller customer draft (doc 04 §5) and the seller payment-slip upload (follow-up item 2; doc 07).
 4. **Modules for viewing, action permissions for changes (R4).** Module access controls navigation and viewing. Entering, editing and important actions (approve, verify payment, payout, refund, import) each need a separate action permission (section 3.1). This replaces the former rule that a module grant gives every function of the module.
 5. **Forgotten passwords (R5).** Until real authentication exists, an Administrator issues a temporary password; an email reset waits for real authentication (section 6.2.1).
 6. ~~**Open.** (Superseded, owner ruling 2026-11-12: settled by follow-up item 1.) Whether the Administrator may assign or remove the Super Administrator role is not settled; section 3.4 stays in force until the owner decides.~~ **Settled 2026-11-12 (follow-ups, item 1 below).**
 
 ## Owner rulings amendment (2026-11-12, follow-ups)
 
-These rulings take precedence over earlier text in this document where they differ. Item numbers follow the master follow-up list in `docs/implementation/decisions-and-gaps.md`; they are not renumbered here.
+These rulings take precedence over earlier text in this document where they differ. Item numbers are kept as first cited; the master follow-up list is in `docs/implementation/decisions-and-gaps.md`.
 
 1. **Super Administrator role.** Only a Super Administrator can create, give or remove the Super Administrator role; an Administrator cannot. Otherwise the Administrator can do everything (sections 3.4 and 3.7). This closes the former open question in section 12.
 2. **Seller payment slip.** A seller may upload a payment slip photo for their own customer. It is proof only and counts only after a Clerk enters the receipt and Finance, an Administrator or the Super Administrator approves it (sections 3.7 and 3.8; doc 07).

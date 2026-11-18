@@ -41,7 +41,7 @@ Next.js App Router is the approved backend framework and application architectur
 
 ## 3. Current Versus Target Implementation
 
-- **Verified current implementation (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); no API, database or real authentication.
+- **Historical snapshot (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); no API, database or real authentication.
 - **Approved target:** as above.
 - **Future implementation work:** all backend development requires separate explicit authorization.
 
@@ -379,11 +379,11 @@ Use document 12. Document a centralized logical audit architecture. Relevant aud
 
 ---
 
-## 18. Disabled Redemption and Services
+## 18. Redemption Prototype and Disabled Services
 
-The new MongoDB Platform preserves these modules but does not currently activate them. **Redemption: Disabled. Services: Disabled.**
+The staff Redemption prototype is authorized (2026-11-17) with synthetic data and sample points-per-night values; live Redemption and customer submissions require separate authorization. **Services: Disabled.**
 
-Backend architecture must support future activation without currently exposing active workflows.
+Backend architecture must support future live activation without exposing live workflows. Do not remove the authorized prototype route.
 
 ### 18.1 Feature flag enforcement
 
@@ -551,7 +551,7 @@ Use validated server configuration. Fail safely when required configuration is m
 
 ### 26.5 Feature flags
 
-Redemption and Services must default to disabled unless explicitly authorized. Feature flags must be enforced by protected backend operations.
+Live Redemption and Services must default to disabled unless explicitly authorized; the staff Redemption prototype is authorized. Feature flags must be enforced by protected backend operations.
 
 ---
 
@@ -635,7 +635,7 @@ Align with `docs/development/implementation.md`. The backend documentation must 
 18. Financial operations require correct atomicity.
 19. Sensitive writes require idempotency.
 20. Official identifiers have one authoritative allocation path.
-21. Historical VIP Card IDs are preserved.
+21. Historical VIP Numbers are preserved.
 22. Genealogy transfers do not rewrite historical sales attribution.
 23. Customer creation is not membership activation.
 24. Contract finalization is not payment verification.
@@ -653,7 +653,7 @@ Align with `docs/development/implementation.md`. The backend documentation must 
 36. No double-counting of sales.
 37. Audit events preserve significant historical state changes.
 38. Disabled modules are blocked server-side.
-39. Redemption remains disabled.
+39. Live Redemption remains disabled; the staff prototype is authorized under the 2026-11-17 status.
 40. Services remains disabled.
 41. Public APIs disclose only authorized information.
 42. Sensitive customer and financial data remain protected.
@@ -736,7 +736,7 @@ The completed backend document aligns with architecture.md (single Next.js modul
 - [ ] Stay Points.
 - [ ] Reports.
 - [ ] Audit.
-- [ ] Disabled Redemption.
+- [ ] Redemption staff prototype authorized; live use disabled.
 - [ ] Disabled Services.
 
 ### Operational Correctness
@@ -768,20 +768,20 @@ Only mark an item complete when actually documented. Documentation completeness 
 
 ## 38. Strict Execution Limits
 
-This task authorizes modification of `docs/development/backend.md` only. Do not modify architecture.md, README.md, frontend.md, database.md, security.md, testing.md, implementation.md, deployment.md, docs/project.md, any business-rule file, application source code, package.json, environment configuration, database schemas, Docker files, Git configuration. Do not create backend source files, Next.js route handlers, Mongoose models, authentication adapters, migration scripts, API test files, Docker containers, additional Markdown documents. Do not install dependencies, run database migrations, import records, start MongoDB, connect to production Atlas, configure DigitalOcean, create a deployment, commit, push, merge. If a conflict requires editing another file, identify it in the completion report rather than modifying that file. The development directory must continue to contain exactly the previously approved nine files.
+This task authorizes modification of `docs/development/backend.md` only. Do not modify architecture.md, README.md, frontend.md, database.md, security.md, testing.md, implementation.md, deployment.md, docs/project.md, any business-rule file, application source code, package.json, environment configuration, database schemas, Docker files, Git configuration. Do not create backend source files, Next.js route handlers, Mongoose models, authentication adapters, migration scripts, API test files, Docker containers, additional Markdown documents. Do not install dependencies, run database migrations, import records, start MongoDB, connect to production Atlas, configure DigitalOcean, create a deployment, commit, push, merge. If a conflict requires editing another file, identify it in the completion report rather than modifying that file. The development directory must continue to contain exactly the previously approved ten files.
 
 ---
 
 ## 39. Final Verification
 
-After completing `backend.md`: re-read the entire file; verify Next.js modular-monolith consistency; verify REST `/api/v1`; check module boundaries; check authentication and authorization; verify local MongoDB-first integration; verify MongoDB Atlas deployment direction; verify financial consistency requirements; verify Commission Management authority; verify Membership activation distinctions; verify Stay Points ledger boundaries; verify genealogy history; verify reporting authority; verify disabled feature handling; verify audit requirements; validate Markdown links and diagrams; compare against architecture.md; compare against database.md; compare against frontend.md; compare against business rules 01–13; confirm no other files were modified; inspect the final Git diff. Use read-only commands: `git status --short`, `git diff --stat`, `git diff --check`. Inspect untracked Markdown files separately as necessary. Do not stage, commit or push.
+After completing `backend.md`: re-read the entire file; verify Next.js modular-monolith consistency; verify REST `/api/v1`; check module boundaries; check authentication and authorization; verify local MongoDB-first integration; verify MongoDB Atlas deployment direction; verify financial consistency requirements; verify Commission Management authority; verify Membership activation distinctions; verify Stay Points ledger boundaries; verify genealogy history; verify reporting authority; verify disabled feature handling; verify audit requirements; validate Markdown links and diagrams; compare against architecture.md; compare against database.md; compare against frontend.md; compare against business rules 01–14; confirm no other files were modified; inspect the final Git diff. Use read-only commands: `git status --short`, `git diff --stat`, `git diff --check`. Inspect untracked Markdown files separately as necessary. Do not stage, commit or push.
 
 ---
 
 ## 40. Completion Report
 
 ### A. Repository Verification
-- Actual repository: `afhomes-platform`; branch: `develop`; initial working tree untracked docs/workflow files preserved. Documentation-only repository; no application code.
+- Actual repository: `afhomes-platform`; branch: `develop`; initial working tree held untracked docs/workflow files. At the time of writing this was a documentation-only repository; the current repository now contains a frontend prototype.
 
 ### B. Document Updated
 - `docs/development/backend.md` (comprehensively rewritten/expanded).
@@ -793,7 +793,7 @@ Next.js runtime, REST `/api/v1`, authentication, authorization, domain services,
 All AFHomes domains have documented backend responsibilities: organization/staff/roles, sales network/genealogy, accreditation, customers, VIP products/contracts, sales, finance, commissions, VIP membership/card issuance, stay points, reporting, audit, disabled redemption/services.
 
 ### E. Financial Integrity
-Finance authority, Confirmed Sales, commission approval, membership activation, VIP Card IDs, Stay Points, transactions, idempotency, audit all covered.
+Finance authority, Confirmed Sales, commission approval, membership activation, VIP Numbers, Stay Points, transactions, idempotency, audit all covered.
 
 ### F. API and Security
 `/api/v1`, Zod, safe API response/error conventions, RBAC, record-level access, request validation, sensitive file access, feature flags.
@@ -802,7 +802,7 @@ Finance authority, Confirmed Sales, commission approval, membership activation, 
 Background jobs, notifications, logging, health checks, testing, DigitalOcean deployment alignment.
 
 ### H. Cross-Document Consistency
-Aligned with architecture, frontend, database, security, testing, implementation, deployment, business rules 01–13. No material mismatches.
+Aligned with architecture, frontend, database, security, testing, implementation, deployment, business rules 01–14. No material mismatches.
 
 ### I. Critical Dependencies
 Better Auth adapter compatibility; selected Node.js/Next.js versions; local replica-set setup; selected Atlas tier and transaction support; financial rounding policies; a legally advised retention period (records are kept indefinitely until then); selected object-storage provider.
@@ -825,11 +825,11 @@ Markdown validation, link validation, Mermaid validation, cross-document review,
 - Git push: No.
 - Git merge: No.
 - Deployment: No.
-- Redemption enabled: No.
+- Redemption live use enabled: No; staff prototype authorized 2026-11-17.
 - Services enabled: No.
 - Production data migrated: No.
 
-STOP — awaiting explicit project-owner authorization before any backend coding, database setup, Git operation or deployment.
+Historical note: this stop point applied before the frontend prototype. Backend coding, database setup and deployment still require authorization.
 
 ## Consistency update (2026-11-12)
 

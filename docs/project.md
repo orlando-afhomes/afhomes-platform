@@ -14,25 +14,25 @@
 |---|---|
 | Project Name | AFHomes Platform |
 | Repository / Root Directory | `afhomes-platform` |
-| Project Type | Full-Stack Web-Based Business Management Platform |
+| Project Type | Full-Stack Web-Based Business Management Platform (target) |
 | Architecture | Modular Monolith (single Next.js application) |
 | Development Methodology | Incremental, phase-based Agile development |
 | Development Strategy | Frontend-First, Mock-Data-Driven |
 | Development Execution | AI-Assisted Development |
-| Current Phase | Planning and Documentation |
+| Current Phase | Phase 1 frontend prototype on typed in-memory mock data; backend, database, authentication and deployment not started |
 | Primary Deliverable | Functional Web-Based Platform |
 | Initial Development Environment | Local Development |
-| Local Persistent Database | MongoDB (localhost) |
-| Cloud Database | MongoDB Atlas |
-| Application Hosting | DigitalOcean Droplet |
-| Deployment | Docker Compose + HTTPS |
+| Target Local Database | MongoDB (localhost) |
+| Target Cloud Database | MongoDB Atlas |
+| Target Application Hosting | DigitalOcean Droplet |
+| Target Deployment | Docker Compose + HTTPS |
 | Authentication Direction | Better Auth (subject to compatibility verification) |
 
 AFHomes Platform is a new implementation built from scratch. An earlier AFHomes system exists, but its architecture must not dictate the new project's structure. The previous system may be consulted only as a reference for verified business rules, operational workflows, and domain knowledge. Do not automatically copy legacy architecture, implementation patterns, or unverified behavior.
 
 ### 2. Project Background
 
-AFHomes requires a centralized platform for managing business operations, organizational users, customers, VIP membership cards, IST/OST accreditation, sales genealogy, and related administrative processes. The new platform aims for a cleaner, more organized, modular, secure, and scalable foundation. The initial work focuses on documentation and architecture; implementation follows the phased roadmap in `docs/development/implementation.md`.
+AFHomes requires a centralized platform for managing business operations, organizational users, customers, VIP membership cards, IST/OST accreditation, sales genealogy, and related administrative processes. The new platform aims for a cleaner, more organized, modular, secure, and scalable foundation. The project began with documentation and architecture. A frontend prototype on typed in-memory mock data now exists; backend, database and deployment follow the phased roadmap in `docs/development/implementation.md`.
 
 ### 3. Project Objectives
 
@@ -49,7 +49,7 @@ AFHomes requires a centralized platform for managing business operations, organi
 7. Support Sales Network and genealogy.
 8. Support IST/OST accreditation.
 9. Support Customer Management.
-10. Support public customer and accreditation verification.
+10. Support public accreditation verification and staff-only customer checks.
 11. Support VIP products and contracts.
 12. Support authorized Sales Management.
 13. Support Finance and Payments.
@@ -63,7 +63,7 @@ AFHomes requires a centralized platform for managing business operations, organi
 21. Support controlled MongoDB Atlas migration.
 22. Prepare secure DigitalOcean deployment.
 23. Preserve architectural support for future Customer and Mobile interfaces.
-24. Preserve Redemption and Services for separately authorized future activation.
+24. Preserve the authorized Redemption staff prototype and the disabled Services module for separately authorized future activation.
 
 Do not imply all objectives are Phase 1 deliverables.
 
@@ -86,14 +86,14 @@ AFHomes has a single Next.js application with logical presentation panels.
 
 ### 6. Disabled Modules
 
-- **Redemption:** Preserved but disabled. Future activation requires separate authorization.
+- **Redemption:** the staff QR/Stay Points prototype is authorized (2026-11-17) with synthetic data and sample points-per-night values. Live Redemption and customer submissions require separate authorization.
 - **Services:** Preserved but disabled. Future activation requires separate authorization.
 
-Disabled means no user-facing navigation, no unauthorized direct route access, no active backend processing, code and architectural support retained where present, future activation requires explicit approval. A hidden menu alone does not enforce a backend feature flag. Do not delete their source code or documented architecture.
+A disabled module has no user-facing navigation, no unauthorized direct route access, no active backend processing, code and architectural support retained where present, and future activation requires explicit approval. A hidden menu alone does not enforce a backend feature flag. Do not delete retained source code or documented architecture.
 
 ### 7. Target Users and Roles
 
-Relevant users may include: Super Administrator, Administrator, HR, Finance, Staff, Vice Director / applicable official designation, Senior Sales Manager, Sales Manager, Outside Sales Team, Internal Sales Team, Customer, Public Visitor.
+Relevant users may include: Super Administrator, Administrator, HR, Finance, Staff, SVD, SSM, SM, OST, Customer, Public Visitor.
 
 This high-level role description is not the definitive permission matrix. See `docs/business-rules/01-roles-and-permissions.md`. The company requires centralized permission enforcement, applicable multiple-role assignments, protected Super Administrator authority, module permissions, record-level data scopes, business-operation restrictions, auditable permission changes. Do not invent per-action CRUD permission toggles if the canonical policy defines module-level permissions with separate mandatory sensitive-operation restrictions.
 
@@ -114,7 +114,7 @@ Primary logical layers: App Router; Panels and presentation; Shared UI; Domain m
 | UI framework | React |
 | Programming language | TypeScript |
 | Styling | Tailwind CSS 4 + namespaced custom CSS |
-| UI components | shadcn/ui on Base UI; TanStack Table; Lucide (Ant Design 6 temporary, unmigrated modules only) |
+| UI components | shadcn/ui on Base UI; TanStack Table; Lucide |
 | Additional styling | None (no CSS Modules, no new project-authored CSS-in-JS) |
 | Validation | Zod |
 | Client asynchronous state | TanStack Query |
@@ -134,7 +134,7 @@ Primary logical layers: App Router; Panels and presentation; Shared UI; Domain m
 
 Better Auth is the target authentication solution; compatibility with selected Next.js, Node.js, MongoDB, and integration packages must be verified before implementation. Do not claim compatibility has been tested or deployment configured without evidence.
 
-If `testing.md` names preferred testing tools, summarize them as approved or candidate tools according to that document. Do not falsely report that Vitest, Playwright, or any other package is already installed.
+Vitest and Testing Library are installed and used. Playwright and database or end-to-end tooling are not installed. Check `package.json` before claiming any package is installed.
 
 ### 10. Frontend-First Development
 
@@ -180,11 +180,11 @@ Distinguish two different data movement requirements.
 
 ### 15. Business-Rule Authority
 
-`docs/business-rules/` (01–13) defines authoritative business behavior. Implementation must follow the applicable business-rule document. Do not allow frontend, backend, or database agents to invent replacement business rules. Other documents must reference the authoritative source rather than creating independent competing definitions.
+`docs/business-rules/` (01–14) defines authoritative business behavior. Implementation must follow the applicable business-rule document. Do not allow frontend, backend, or database agents to invent replacement business rules. Other documents must reference the authoritative source rather than creating independent competing definitions.
 
 ### 16. Sales Network and Genealogy
 
-Manages the official seller hierarchy and reporting relationships. Use canonical designation rules. The hierarchy includes Vice Director / applicable official designation → SSM → SM → OST. OST direct sponsorship relationships must follow the authoritative business rules. Transfers must preserve historical sale attribution.
+Manages the official seller hierarchy and reporting relationships. Use canonical designation rules. The hierarchy is SVD (Sales Vice Director) → SSM → SM → OST. OST direct sponsorship relationships must follow the authoritative business rules. Transfers must preserve historical sale attribution.
 
 ### 17. Customer and VIP Contract Identity
 
@@ -200,15 +200,15 @@ Manages authorized commission obligations, Finance approval, Holds, and actual p
 
 ### 20. VIP Membership and Stay Points
 
-VIP Membership manages official membership activation, issued VIP Card identity, validity, and contractual entitlements. Activation follows authorized eligibility rules. Stay Points manages transactional points earning, eligibility, balances, holds, reservations, consumption where enabled, and auditable ledger history. The available balance must not be confused with a contractual annual entitlement cap. Weekday and Weekend balances are separate. Gold primary and supplementary holders share the applicable membership entitlement pool. Redemption is preserved but disabled.
+VIP Membership manages official membership activation, the issued VIP Number, validity, and contractual entitlements. Activation follows authorized eligibility rules. Stay Points manages transactional points earning, eligibility, balances, holds, reservations, consumption where enabled, and auditable ledger history. The available balance must not be confused with a contractual annual entitlement cap. Weekday and Weekend balances are separate. Gold primary and supplementary holders share the applicable membership entitlement pool. The staff Redemption prototype is authorized; live Redemption and Services remain disabled until separate authorization.
 
 ### 21. Official Identifiers
 
-The master document identifies distinct categories: MongoDB internal identity, Customer ID, RA number/reference, VIP Card ID, AAI/AAO accreditation number, Sale reference, Payment or financial transaction reference.
+The master document identifies distinct categories: MongoDB internal identity, Customer ID, RA number/reference, VIP Number, AAI/AAO accreditation number, Sale reference, Payment or financial transaction reference.
 
 - **Customer identity:** use the authoritative Customer Management definition. Do not automatically use RA numbers as Customer IDs.
 - **RA reference:** preserve approved RA scope and uniqueness rules. If RA uniqueness remains unresolved, flag the exact dependency.
-- **VIP Card ID:** established target format `YYMMDDNNNNNVTPMMS`. Verify exact component definitions from document 06. Preserve the authoritative RA-derived sequence relationship where specified. Do not create a competing standalone card serial allocator.
+- **VIP Number:** established target format `YYMMDDNNNNNVTPMMS` (17 characters). Verify exact component definitions from document 06. “Card ID” is the historical term and now means the VIP Number. Preserve the authoritative RA-derived sequence relationship where specified. Do not create a competing standalone card serial allocator.
 - **Accreditation:** use the authoritative AAI/AAO numbering rules from document 03.
 - **Identifier governance:** official identifiers must be system-controlled, appropriate to their domain, unique according to approved scope, concurrency-safe, historically preserved, auditable. Do not reproduce the full allocator algorithms in `project.md`.
 
@@ -263,7 +263,7 @@ No phase is automatically authorized by documentation. AI agent implementation c
 | Deployment | Docker Compose |
 | HTTPS | Required |
 | Core modules | Included in phased roadmap |
-| Redemption | Preserved but disabled |
+| Redemption | Staff QR/Stay Points prototype authorized 2026-11-17; live use separately unauthorized |
 | Services | Preserved but disabled |
 | Customer Portal | Future authorized phase |
 | Mobile | Future authorized phase |
@@ -275,7 +275,7 @@ Do not repeat the old "hosting selection deferred" decision.
 
 ### 26. Critical Dependencies
 
-Review `implementation.md` and the actual business documents. Potential examples: conflicting Gold contract price; incomplete Silver contract amount; Non-Standard commercial rules; Move A/B1/B2 payment scheme details; RA numbering scope and uniqueness; accreditation expiry/account eligibility interpretation; Better Auth/MongoDB compatibility; Atlas tier capabilities; formal audit retention; production domain and infrastructure sizing; backup and recovery objectives. Do not declare all of these unresolved without verification. If the canonical business documents now contain an approved resolution, update the master context accordingly. Scope-specific blocking: a pricing discrepancy does not necessarily block frontend scaffolding; an Atlas tier decision does not block local MongoDB development; a card ID allocation conflict may block final issuance logic without blocking unrelated Customer Management. No invented approvals: do not resolve commercial, financial, or security-sensitive conflicts by guessing.
+Review `implementation.md` and the actual business documents. Potential examples: Better Auth/MongoDB compatibility; Atlas tier capabilities; formal audit retention; production domain and infrastructure sizing; backup and recovery objectives; the signed AFHomes/JA&D terms, the band code above ₱9M and the definition of `SUPERSEDED`; the IST Commission and Clawback Addendum; the Admin points-per-night table and holiday calendar. The Gold and Silver prices, Non-Standard terms, Move A/B schemes, RA numbering and accreditation expiry were resolved by the 2026-11-10/12 rulings and are not open. Scope-specific blocking: an Atlas tier decision does not block local MongoDB development; a missing signed term blocks only the feature that depends on it. No invented approvals: do not resolve commercial, financial, or security-sensitive conflicts by guessing.
 
 ### 27. Business-Policy Change Governance
 
@@ -325,6 +325,7 @@ No phase is automatically authorized by documentation. Every implementation phas
 | `docs/development/testing.md` | Quality assurance |
 | `docs/development/implementation.md` | Phased roadmap |
 | `docs/development/deployment.md` | Hosting and operations |
+| `docs/development/role-module-permission-matrix-proposal.md` | Role, module and record-scope permission proposal |
 
 ### 33. Business-Rule References
 
@@ -343,6 +344,7 @@ No phase is automatically authorized by documentation. Every implementation phas
 | 11 | `docs/business-rules/11-reports-and-analytics.md` | Reports and Analytics |
 | 12 | `docs/business-rules/12-audit-logs-and-governance.md` | Audit Logs and Governance |
 | 13 | `docs/business-rules/13-sales-performance-reporting.md` | Sales Performance Reporting |
+| 14 | `docs/business-rules/14-igp-sales.md` | IGP Sales |
 
 ### 34. Agent Reading Order
 
@@ -387,7 +389,7 @@ Agents must:
 - Preserve Stay Points ledger integrity.
 - Do not create competing data stores or identifier allocators.
 - Do not expose secrets in client code.
-- Keep Redemption and Services disabled.
+- Keep live Redemption and Services disabled; the staff Redemption prototype is authorized.
 - Do not automatically migrate legacy production data.
 - Do not deploy without authorization.
 - Do not commit or push without authorization.
@@ -495,10 +497,10 @@ The master project document is not the correct place for complete database schem
 35. Stay Points are ledger-controlled.
 36. Annual points caps are not immediately spendable balances.
 37. Customer privacy is enforced.
-38. Public accreditation and customer lookup follow separate approved policies.
+38. Public accreditation verification and staff-only customer lookup follow separate approved policies.
 39. Reports consume authoritative data.
 40. Audit history remains traceable.
-41. Redemption remains disabled.
+41. Live Redemption remains disabled; the staff prototype is authorized under the 2026-11-17 status.
 42. Services remains disabled.
 43. Future Customer Portal remains separately authorized.
 44. Future mobile application remains separately authorized.
@@ -520,11 +522,11 @@ The master project document is not the correct place for complete database schem
 - **File created/updated:** `docs/project.md`
 - **Major sections included:** Part I Project Overview; Part II Business and Application Scope; Part III Approved Technical Architecture; Part IV Critical Business Principles; Part V Project Delivery and Governance; Part VI Documentation and AI Agents; Part VII Execution Safety; Part VIII What Does Not Belong in project.md; Part IX Critical Project Invariants; Part X Completion Report.
 - **Confirmed project and architectural decisions:** Modular monolith on Next.js/React/TypeScript/Tailwind 4/shadcn/Base UI; MongoDB + Mongoose; Better Auth; frontend-first mock-data-driven; local MongoDB first then Atlas; DigitalOcean Droplet + Docker Compose + HTTPS; protected system roles with configurable built-in/custom roles and `own`/`team`/`all` scopes; VIP cards remain Pending until Finance verification with minimum Finance workflow in MVP; latest approved 2026 VIP contracts with versioned snapshots; exact-AA-number-only public accreditation search (active only); IST hides "Valid Until", OST shows it; import compatibility now, migration after MVP; soft archival preserving history; centralized mock data via services/repositories.
-- **Remaining unresolved dependencies:** Better Auth + MongoDB compatibility; exact role-permission matrix; Finance payment/settlement eligibility rules; complete VIP contract clauses/benefit calculations; official identifier generation and import mappings; accreditation active-status/expiry evaluation rules; final hosting provider and deployment approval; audit retention policy.
+- **Remaining unresolved dependencies:** Better Auth + MongoDB compatibility; exact role-permission matrix; Finance payment/settlement eligibility rules; complete VIP contract clauses/benefit calculations; official identifier import mappings; audit retention policy; the signed AFHomes/JA&D terms, the band code above ₱9M, the definition of `SUPERSEDED`, the IST Commission and Clawback Addendum, and the Admin points-per-night table. Hosting is decided: DigitalOcean Droplet with Docker Compose and HTTPS.
 - **Contradictions identified:** None in this final pass; conflicts flagged in earlier tasks (Finance activation auto vs separate step; mock persistence in-memory-only vs optional localStorage; architecture label refinement) remain documented for reconciliation where applicable.
 - **Documentation validation result:** Structure is internally consistent with the approved scope; no application code, frameworks, dependencies, databases, or unrelated files were modified. Document distinguishes approved decisions, deferred features, and unresolved dependencies.
 
-STOP — awaiting explicit project-owner authorization before beginning application implementation, database setup, Git changes, cloud configuration, or deployment.
+Historical note: this was the Phase 0 stop point. The frontend prototype now exists; backend, database and deployment still require authorization.
 
 ## Consistency update (2026-11-12)
 

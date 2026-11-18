@@ -1,6 +1,7 @@
 # FP16: State Verification and Handoff
 
-- Status: Complete on 2026-11-18. Build and focused checks pass; full suite has one known pre-existing admin drawer failure.
+- Status: Complete on 2026-11-18, with recorded limitations. Build and focused checks pass; full suite has one known pre-existing admin drawer failure; F16.3 browser coverage is partial.
+- The task boxes below are the original plan; they are retained as history and are not a live checklist. See the recorded results below.
 - Layer: QA and documentation.
 - Business rules: none changed.
 - Depends on: FP12 to FP15.
@@ -34,7 +35,7 @@ Verify that every loading, empty, error and busy state delivered by FP12 to FP15
 | Layer | QA |
 | Blocked by | FP12 to FP15 |
 | Acceptance | Every command below exits 0, or the failure is recorded and explained. |
-| Status | Planned |
+| Status | Complete on 2026-11-18; all listed checks ran |
 
 **Commands**
 
@@ -57,7 +58,7 @@ Verify that every loading, empty, error and busy state delivered by FP12 to FP15
 | Layer | QA |
 | Blocked by | F16.1 |
 | Acceptance | The full result is recorded; any timeout is rerun alone and reported honestly. |
-| Status | Planned |
+| Status | Complete on 2026-11-18; full suite recorded 4 failures (3 timeouts pass alone, 1 pre-existing admin drawer test) |
 
 **Tasks**
 
@@ -79,7 +80,7 @@ Verify that every loading, empty, error and busy state delivered by FP12 to FP15
 | Layer | QA |
 | Blocked by | F16.2 |
 | Acceptance | No horizontal overflow, no clipped text, no missing spinner, no infinite loading. |
-| Status | Planned |
+| Status | Partial; browser checks at 375/768/1280 only. 320/1100, reduced-motion and no-JavaScript checks were not performed |
 
 **Routes and states**
 
@@ -152,3 +153,4 @@ Verify that every loading, empty, error and busy state delivered by FP12 to FP15
   - `/register/ost/correct/invalid-token`: "Link not valid" plus the existing message, one header/footer.
 - Build fix: `LoginShell` now takes an optional `year`; the login pages pass it, while the route skeleton omits it so prerendering never reads the clock.
 - Not observed in browser: the route skeletons themselves, because the public pages are static and resolve before a skeleton paints. They are covered by `public-loading.test.tsx` (16 route loaders) and `public-skeletons.test.tsx` (12 tests). They will appear when CMS data makes the routes suspend.
+- Known pre-existing limitation: the 320px home layout still overflows from `site-feature-card`. This predates FP12–FP16 and is not a regression from the state work.

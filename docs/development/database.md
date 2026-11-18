@@ -42,7 +42,7 @@ Mongoose is the selected target ODM under the approved architecture; actual inst
 
 ## 3. Current Versus Target State
 
-- **Verified current implementation (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); no database or Atlas cluster.
+- **Historical snapshot (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); no database or Atlas cluster.
 - **Approved target:** local MongoDB first, then MongoDB Atlas Cloud for staging/production.
 - **Future implementation work:** all database setup, schema creation, migration, import requires separate authorization.
 
@@ -157,7 +157,7 @@ Use local MongoDB replica set for realistic integration testing. Single-node rep
 
 ### 10.2 Transaction-dependent workflows
 
-Finance verification and related state updates; official VIP Membership activation; VIP Card ID allocation; financial balance reconciliation; commission payout confirmation; points ledger updates; authorized genealogy transfers affecting related records; audit records associated with sensitive state changes.
+Finance verification and related state updates; official VIP Membership activation; VIP Number allocation; financial balance reconciliation; commission payout confirmation; points ledger updates; authorized genealogy transfers affecting related records; audit records associated with sensitive state changes.
 
 ### 10.3 Requirements
 
@@ -211,7 +211,7 @@ Typed repository interfaces; mock and real adapters; UI communicates via service
 
 For each domain document: business purpose, source-of-truth ownership, conceptual entity/collection, important identifiers, core attributes, relationship references, cardinality, expected queries, required indexes, consistency requirements, audit/history requirements, sensitive-data classification. Do not invent approved commercial values or create actual Mongoose schemas.
 
-Domains: Organization and Staff; Sales Network and Genealogy; Accreditation; Customers; VIP Products and Contracts; Sales; Finance; Commissions; VIP Membership; Stay Points; Redemption (disabled); Reports and Audit.
+Domains: Organization and Staff; Sales Network and Genealogy; Accreditation; Customers; VIP Products and Contracts; Sales; Finance; Commissions; VIP Membership; Stay Points; Redemption (staff prototype authorized; live use disabled); Reports and Audit.
 
 ---
 
@@ -254,7 +254,7 @@ Use MongoDB transactions where multi-document consistency required (Finance veri
 
 ## 22. Financial Numeric Precision
 
-Do not use uncontrolled binary floating-point for authoritative currency. Evaluate consistent exact-money representation: integer minor currency units where domain permits, or Decimal128 with explicit precision/rounding. Do not silently mix. Preserve manually approved commission rates and calculation bases. Avoid floating-point discrepancies. Stay Points: approved policy includes whole-peso earning and 70/30 allocation; document need for consistent precision/rounding; do not invent unapproved rounding policy where business source ambiguous. Reconciliation: exact amounts, consistent arithmetic, repeatable calculations, traceable corrections, financial auditability.
+Do not use uncontrolled binary floating-point for authoritative currency. Evaluate consistent exact-money representation: integer minor currency units where domain permits, or Decimal128 with explicit precision/rounding. Do not silently mix. Preserve manually approved commission rates and calculation bases. Avoid floating-point discrepancies. Stay Points: approved policy includes 70/30 allocation; document need for consistent precision/rounding; do not invent unapproved rounding policy where business source ambiguous. Reconciliation: exact amounts, consistent arithmetic, repeatable calculations, traceable corrections, financial auditability.
 
 ---
 
@@ -371,7 +371,7 @@ A historical payment should not be invented from missing evidence. A certified h
 - **Scenario E (Production migration):** separately authorized; production data excludes unauthorized synthetic records; source-write handling documented; cutover controlled; rollback conditions established.
 - **Scenario F (CSV import):** correct field mapping; type validation; duplicate detection; no bypass of business authorization.
 - **Scenario G (XLSX customer import):** application-level parsing; business validation; preview and confirmation; referential integrity; reconciliation; audit history.
-- **Scenario H (Duplicate VIP Card ID):** conflict detected; original valid identifier preserved; no silent automatic renumbering.
+- **Scenario H (Duplicate VIP Number):** conflict detected; original valid identifier preserved; no silent automatic renumbering.
 - **Scenario I (Duplicate financial import):** no duplicate monetary collection; existing authoritative transaction preserved.
 - **Scenario J (Historical customer import):** invalid lifecycle states held for review; no fabricated activation or payment verification.
 - **Scenario K (Unapproved Supabase migration):** no automatic migration; separate authorization required.
@@ -430,7 +430,7 @@ Align with `docs/development/implementation.md`. Do not create independent contr
 34. Backups and recovery must be documented.
 35. Database and application environments must remain isolated.
 36. Business policies may change without corrupting finalized historical records.
-37. Redemption remains disabled.
+37. Live Redemption remains disabled; the staff prototype is authorized under the 2026-11-17 status.
 38. Services remains disabled.
 39. No database implementation is authorized by this documentation task.
 
@@ -444,7 +444,7 @@ Use authoritative MongoDB documentation for technical details. Relevant official
 
 ## 39. Cross-Document Alignment
 
-The finalized database document must agree with architecture.md, frontend.md, backend.md, security.md, testing.md, implementation.md, deployment.md, business-rules 01–13. If another document omits the newly approved local MongoDB-first requirement, identify the precise mismatch in the final report. Do not modify the other documents during this task. (Other dev docs already mention MongoDB Atlas; local-first addition is new in this document.)
+The finalized database document must agree with architecture.md, frontend.md, backend.md, security.md, testing.md, implementation.md, deployment.md, business-rules 01–14. If another document omits the newly approved local MongoDB-first requirement, identify the precise mismatch in the final report. Do not modify the other documents during this task. (Other dev docs already mention MongoDB Atlas; local-first addition is new in this document.)
 
 ---
 
@@ -521,7 +521,7 @@ Only mark items complete if genuinely documented.
 
 ## 41. Cross-Document Alignment
 
-The finalized database document agrees with architecture.md (single Next.js app, backend services in Next.js server runtime, MongoDB Atlas target, DigitalOcean Droplet hosting, server-only DB access), frontend.md (frontend-first mock stage, in-memory mock reset, typed repository interfaces, API adapters, no direct MongoDB access), backend.md (Mongoose repositories, domain services, validation, transactions, idempotency, audit integration), security.md (secure credentials, DB access restrictions, RBAC, privacy, environment isolation, sensitive data protection), testing.md (local MongoDB integration tests, transaction tests, unique identifier tests, financial reconciliation, import testing, migration verification), implementation.md (Phase 1 mock frontend, Phase 2 local MongoDB, Phase 3 backend integration, Phase 7 cloud deployment), deployment.md (MongoDB Atlas in production, DigitalOcean Droplet, Docker Compose for app services, secure connectivity, monitoring, backup/recovery), business-rules 01–13.
+The finalized database document agrees with architecture.md (single Next.js app, backend services in Next.js server runtime, MongoDB Atlas target, DigitalOcean Droplet hosting, server-only DB access), frontend.md (frontend-first mock stage, in-memory mock reset, typed repository interfaces, API adapters, no direct MongoDB access), backend.md (Mongoose repositories, domain services, validation, transactions, idempotency, audit integration), security.md (secure credentials, DB access restrictions, RBAC, privacy, environment isolation, sensitive data protection), testing.md (local MongoDB integration tests, transaction tests, unique identifier tests, financial reconciliation, import testing, migration verification), implementation.md (Phase 1 mock frontend, Phase 2 local MongoDB, Phase 3 backend integration, Phase 7 cloud deployment), deployment.md (MongoDB Atlas in production, DigitalOcean Droplet, Docker Compose for app services, secure connectivity, monitoring, backup/recovery), business-rules 01–14.
 
 Other dev docs already mention MongoDB Atlas; the local-first addition is new in this document. No mismatch requiring separate doc update beyond note.
 
@@ -534,9 +534,7 @@ Other dev docs already mention MongoDB Atlas; the local-first addition is new in
 - Atlas transaction support.
 - Network connectivity (Droplet-to-Atlas).
 - Financial precision policy.
-- Official identifier uniqueness (RA scope).
 - Production data migration authorization.
-- Accreditation active-status/expiry evaluation rules.
 - Formal retention period: records are kept indefinitely until legal advice sets a period (owner ruling R11, docs 11 and 12); only the legally advised period is open.
 
 ---
@@ -548,12 +546,12 @@ Other dev docs already mention MongoDB Atlas; the local-first addition is new in
 - **MongoDB Atlas:** documented managed cloud database, security, Mongoose integration, environment separation, indexes, transactions, backups, monitoring.
 - **Domain data modeling:** covered all major AFHomes domains and relevant integrity requirements.
 - **Migration and import:** local-to-Atlas strategy, backup/restore, validation, controlled cutover, CSV/JSON, XLSX business importer, duplicate prevention, historical reconciliation, no automatic Supabase migration.
-- **Cross-document consistency:** aligned with architecture, frontend, backend, security, testing, implementation, deployment, business-rules 01–13.
+- **Cross-document consistency:** aligned with architecture, frontend, backend, security, testing, implementation, deployment, business-rules 01–14.
 - **Critical technical dependencies:** listed in Section 42.
 - **Validation:** Markdown structure, diagrams, links, cross-document consistency, git scope verified.
-- **Execution safety:** Application code modified: No. MongoDB locally installed: No. MongoDB containers started: No. Local database created: No. Atlas cluster configured: No. Existing databases modified: No. Migrations executed: No. Imports executed: No. Production data copied: No. Other documents modified: No. Git commit: No. Git push: No. Git merge: No. Deployment: No. Redemption enabled: No. Services enabled: No.
+- **Execution safety:** Application code modified: No. MongoDB locally installed: No. MongoDB containers started: No. Local database created: No. Atlas cluster configured: No. Existing databases modified: No. Migrations executed: No. Imports executed: No. Production data copied: No. Other documents modified: No. Git commit: No. Git push: No. Git merge: No. Deployment: No. Redemption live use enabled: No; staff prototype authorized 2026-11-17. Services enabled: No.
 
-STOP — awaiting explicit project-owner authorization before setting up local MongoDB or beginning database implementation.
+Historical note: this stop point applied before the frontend prototype. Setting up local MongoDB or beginning database implementation still requires authorization.
 
 ## Consistency update (2026-11-12)
 

@@ -216,7 +216,7 @@ Audit: sale entry and approval; Series Number issuance; cancel and reissue with 
 
 - Doc 08 (R8/R9 rewrite) carries the general commission, allowance and clawback rules this document refers to.
 - Cross-references to this document are in place in docs 02, 03, 08, 11, 12 and 13 (consistency update, 2026-11-12).
-- Frontend: IGP sales register, Series Number allocator, and checklist are on the frontend backlog; nothing is built yet.
+- Frontend: the mock implements the IGP sales register, Series Number allocator and checklist; live/backend work is not built.
 
 ### Outstanding owner decisions
 

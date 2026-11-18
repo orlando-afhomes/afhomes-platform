@@ -1,6 +1,6 @@
 @AGENTS.md
 
-# CLAUDE.md — AFHomes Platform V3
+# CLAUDE.md — AFHomes Platform
 
 Claude Code entry point. `AGENTS.md` (imported above) is mandatory governance and wins on any conflict, especially the Git rules and owner-approval gates.
 
@@ -28,7 +28,7 @@ Claude Code entry point. `AGENTS.md` (imported above) is mandatory governance an
 - Business rules: `docs/business-rules/NN-*.md`. Roles 01, network 02, accreditation 03, customers 04, products 05, card issuance 06, finance 07, commissions 08, membership and points 09, redemption 10, reports 11, audit 12, sales reporting 13, IGP 14.
 - Feature roadmap and decision log: `docs/implementation/` (planning record, authorizes nothing).
 - Technical design: `docs/development/` (`frontend.md` for UI, `testing.md` for tests, `implementation.md` for phases).
-- Historical audit (not current authority): `docs/audits/afhomes-v3-project-audit.md`. Read it only when relevant; do not import it.
+- Decision register: `docs/implementation/decisions-and-gaps.md`. Read the relevant decision when a rule or status is unclear; it does not override the business rules.
 - Some docs may still describe the project as documentation-only or Ant Design as present. Trust the code and `AGENTS.md` section 8.
 
 ## Working method
@@ -43,7 +43,7 @@ Claude Code entry point. `AGENTS.md` (imported above) is mandatory governance an
 ## Verification
 - Scripts: `npm run lint`, `npm test`, `npm run build`. No typecheck script; use `npx tsc --noEmit`.
 - Run targeted tests first (`npx vitest run <path>`); the full suite is slow.
-- Lint, typecheck, and tests had failures before this configuration (see audit). Separate pre-existing failures from new regressions and report real results only.
+- Some pre-existing lint, typecheck and test failures were recorded during the UI migration. Separate pre-existing failures from new regressions and report real results only.
 - A stale `.next` can cause false typecheck errors. Do not delete `.next` or generated files without permission.
 
 ## Reports

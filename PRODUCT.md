@@ -37,7 +37,7 @@ The AFhomes public website presents AFhomes Group of Companies: a hospitality an
 
 ## Evidence on Hand
 - 64 shrunk WebP pictures in `public/images/site/` (resort masterplan, hotel rooms, restaurant, villa renderings, VIP cards, compliance documents).
-- Four VIP card images (Bronze, Silver, Gold) with real tier data.
+- Three VIP card images (Bronze, Silver, Gold) with real tier data.
 - No testimonials, awards, visitor counts or prices exist as content. Do not invent them.
 
 ## Product Principles

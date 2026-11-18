@@ -99,7 +99,7 @@ A customer whose membership expires remains a customer. Preserve the customer re
 |---|---:|---|
 | YYMMDD | 6 | Date the signed Reservation Agreement is recorded (Asia/Manila) |
 | NNNNN | 5 | Monthly running sequence, 00001 to 99999, resets on the 1st of each month |
-| VT | 2 | Tier code (B1, S1, G1 active; B2, S2, P1, R1 and others reserved) |
+| VT | 2 | Tier code (B1, S1, G1 active; B2, S2, P1, R1 are historical products and G2, P2, R2 are reserved, per doc 05 §4) |
 | P | 1 | C = Cash, T = Terms/Installment (snapshot at issuance) |
 | MM | 2 | Months, 01 to 36; Cash uses 01 (snapshot at issuance) |
 | S | 1 | S = Standard, N = Non-Standard |
@@ -182,7 +182,7 @@ Old and new numbers coexist without renumbering. Each record keeps the rule it w
 
 ## 10. Benefits and Membership Entitlements
 
-See `05-vip-products-and-contracts.md` Section 14. VIP Product module owns contractual entitlement definitions and version snapshots; Stay Points module owns actual entitlement evaluation, release, balance accounting, and redemption.
+See `05-vip-products-and-contracts.md` Section 14. VIP Product module owns contractual entitlement definitions and version snapshots; Stay Points module owns actual entitlement evaluation, release and balance accounting; points use is defined by doc 10.
 
 ---
 

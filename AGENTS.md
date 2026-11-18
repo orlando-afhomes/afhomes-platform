@@ -2,7 +2,7 @@
 
 > Permanent operating instructions for Claude Code, OpenCode, Codex, GitHub Copilot, and other AI coding agents.
 >
-> This file governs how agents work. It is not the source of business truth. Business behavior is defined by `docs/business-rules/01–13`. Technical design is defined by `docs/development/*.md`. Project context is defined by `docs/project.md`.
+> This file governs how agents work. It is not the source of business truth. Business behavior is defined by `docs/business-rules/01–14`. Technical design is defined by `docs/development/*.md`. Project context is defined by `docs/project.md`.
 
 ---
 
@@ -72,7 +72,7 @@ Read the relevant documents before implementation; do not load all of them by de
 - Master context: `docs/project.md`.
 - Business rules `docs/business-rules/`: `01-roles-and-permissions`, `02-sales-network-and-genealogy`, `03-ist-ost-accreditation`, `04-customer-management`, `05-vip-products-and-contracts`, `06-vip-card-issuance`, `07-finance-and-payments`, `08-commission-management`, `09-vip-membership-and-stay-points`, `10-redemption`, `11-reports-and-analytics`, `12-audit-logs-and-governance`, `13-sales-performance-reporting`, `14-igp-sales`.
 - Development specs `docs/development/`: `README`, `architecture`, `frontend`, `database`, `backend`, `security`, `testing`, `implementation`, `deployment`, `role-module-permission-matrix-proposal`.
-- Feature roadmap `docs/implementation/` (feature phases FP1 to FP11, decision log `decisions-and-gaps.md`). It is a planning record and does not authorize any work.
+- Feature roadmap `docs/implementation/` (feature phases FP1 to FP16, decision log `decisions-and-gaps.md`). It is a planning record and does not authorize any work.
 
 Precedence: (1) latest verified explicit project-owner instructions, (2) canonical business-rule documents, (3) approved architecture/development specifications, (4) master project context, (5) verified historical material. The Git policy above overrides all of these as an agent-operation restriction.
 
@@ -134,7 +134,7 @@ Summary only; canonical documents govern. Never assume module visibility grants 
 - **Finance (07):** distinct states: payment submitted, Finance-verified, contract finalized, sale confirmed, fully paid, membership officially activated. Receipts are entered by a Clerk and approved by Finance, the Administrator or the Super Administrator; a sale counts at 25% approved collection. Receipt approval never auto-activates membership. Reversals preserve traceable history.
 - **Commissions (08):** per-sale commission goes only to the closing seller (DSC) and the referrer (DRI), at each person's set rate frozen on the sale; VIP releases at 40% collected and is paid at month-end; leaders earn monthly BA, PA and PB; approved is not Paid, only confirmed disbursement is Paid; clawback recovery follows doc 08; prevent duplicate payouts.
 - **Membership/Stay Points (09):** approved activation lifecycle; ledger-controlled points under the signed Grant's Annual Welcome Gift (fixed yearly tranches with weekday and weekend parts, released only when the yearly qualifying spend is met); preserve contractual benefits; prevent duplicate or invalid credits.
-- **Redemption (10) and Services:** **currently disabled.** Redemption rules were decided on 2026-11-12 (doc 10); building them needs separate authorization. Preserve documented future architecture. Do not activate routes, APIs, backend operations, or navigation without separate authorization. Hiding navigation alone is insufficient once backend routes exist.
+- **Redemption (10) and Services:** the staff QR/Stay Points prototype is authorized (2026-11-17) with synthetic data and sample points-per-night values; live Redemption and customer submissions require separate authorization; Services remain disabled. Do not remove the authorized prototype routes; do not enable live Redemption or Services without separate authorization.
 - **Reporting (11, 13):** authoritative source records, correct business event dates, historical attribution, no double-counting, role-based access, approved date filters.
 - **Audit (12):** centralized, logically append-only history for sensitive actions; never log credentials or unnecessary sensitive data; preserve corrections; invent no retention durations.
 
@@ -148,9 +148,9 @@ Do not silently resolve these during development; verify canonical documents bef
   - Expired accreditation does not block selling, and renewal issues a new AA number (doc 03).
   - Module versus operation permissions, and the Administrator and Super Administrator authority rule (doc 01).
   - Receipts, sale counting at 25%, commissions, allowances and clawback (docs 07, 08, 13).
-  - Points under the signed Grant Welcome Gift rule (doc 09), Redemption rules (doc 10, still disabled until build authorization), and IGP in scope (doc 14).
+  - Points under the signed Grant Welcome Gift rule (doc 09), Redemption rules (doc 10; staff prototype authorized 2026-11-17, live use still separately unauthorized), and IGP in scope (doc 14).
   - No public card lookup, and audit and records kept indefinitely until legal advice (docs 11, 12).
-- Still open: the signing of the IST Commission and Clawback Addendum (it gates automatic recovery); the points-per-night redemption table (filled in by an Admin); Better Auth/MongoDB compatibility; Atlas transaction capability for the target tier; a legally advised retention period; production domain, sizing, and providers.
+- Still open: the AFHomes/JA&D signed Goodwill and Formal VIP Grant terms, the band code above ₱9M and the definition of `SUPERSEDED`; the signed IST Commission and Clawback Addendum (it gates automatic recovery); the Admin points-per-night table, holiday calendar and venue cancellation cut-offs; a legally advised retention schedule; commission stamping under D-B (counted receipt date; month-close requirement); Better Auth/MongoDB compatibility; Atlas transaction capability for the target tier; production domain, sizing, and providers.
 
 Unresolved commercial or infrastructure decisions do not automatically block independent frontend work.
 

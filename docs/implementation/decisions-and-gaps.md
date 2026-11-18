@@ -83,7 +83,7 @@ Related list: `AGENTS.md` section 5 "Unresolved decisions" covers the same groun
   - Records are kept forever until legal advice.
   - History is imported and run in parallel.
   - The CMS is deferred.
-- **R12, Redemption (2026-11-12): Decided (U11).** Recorded in doc 10. The build stays disabled.
+- **R12, Redemption (2026-11-12): Decided (U11).** Recorded in doc 10. The live build stays disabled; the staff prototype was authorized on 2026-11-17.
   - Points pay only for room stays, using weekday or weekend points.
   - The Admin-maintained points-per-night table is fixed per card at its Card Claim Date.
   - Admins keep a holiday calendar.
@@ -136,7 +136,7 @@ Recorded in the "Owner rulings amendment (2026-11-12, follow-ups)" section of ea
 - Require the actual closing seller at approval. A blank draft may omit it.
 - When one person is both closing seller and referrer, a Clerk records a short reference to an existing dated referral. The approving Administrator or Super Administrator verifies it before referral commission can attach.
 - Pause VIP Number issuance when an applicable approved rate is missing. Explicit approved zero is a rate.
-- Allow a provisional first-stay room hold under venue rules. Confirm points at successful check-in; cancelled or failed check-in does not set the Points Activation Date. Redemption stays disabled in the current build.
+- Allow a provisional first-stay room hold under venue rules. Confirm points at successful check-in; cancelled or failed check-in does not set the Points Activation Date. Live Redemption stays disabled; the staff prototype is authorized.
 - Plan the approved AFhomes-channel IGP sales flow and track grant paperwork. Grant terms gate IGP VIP memberships and benefits.
 
 ### Payout day decisions (2026-11-12)
@@ -150,7 +150,7 @@ The owner answered these directly on 2026-11-12. Recorded in the "Owner rulings 
 
 The owner answered the questions raised by the documentation audit on 2026-11-12.
 
-- **A1, points plus cash stay.** Split by whole nights: each night is paid all in points or all in money. The redemption build stays disabled (docs 10, 09).
+- **A1, points plus cash stay.** Split by whole nights: each night is paid all in points or all in money. The live redemption build stays disabled; the staff prototype is authorized (docs 10, 09).
 - **A2, Customer ID.** Keep Customer ID `YYYY-NNNN`, assigned at submit. It identifies the person only and is never the Reservation Agreement, Grant or card number (the VIP Number) (doc 04).
 - **A3, payout list approval.** Finance, the Administrator or the Super Administrator may approve a payout list they prepared themselves; it is flagged in the history like receipts (docs 08, 12).
 - **A4, HR and accounts.** HR may activate and reactivate office staff accounts, never Administrator or Super Administrator accounts and never seller accounts. The app code already does this (doc 01, matrix).
@@ -261,7 +261,7 @@ Kept as official names: VIP Number, Reservation Agreement, Grant, Series Number,
 | G09 | Allowances and signed recovery | Decided 2026-11-12 (R9; recovery waits for the signed addendum) | J08, J09, J12 | F7.5, F8.5, F8.6, F11.4 |
 | G10 | Contract-specific benefits and points | Decided 2026-11-12 (R10) | J10, J11 | F9.4, F10.3, F10.4 |
 | G11 | Reports, Public Customer Lookup and CMS | Decided 2026-11-12 (R11; no public lookup, CMS deferred) | J01, J02, J12 | F2.6, F11.6 |
-| G12 | IGP, Redemption and Services scope | Decided 2026-11-12 (R11–R13; IGP in scope, Redemption planned, build disabled) | J06, J11 | F5.7, F10.5 |
+| G12 | IGP, Redemption and Services scope | Decided 2026-11-12 (R11–R13; IGP in scope, Redemption staff prototype authorized 2026-11-17, live build disabled) | J06, J11 | F5.7, F10.5 |
 
 ### What each decision asked for (historical, before the 2026-11-12 rulings)
 
@@ -287,14 +287,14 @@ Kept as official names: VIP Number, Reservation Agreement, Grant, Series Number,
 | U03 | Account recovery | Decided: Admin temporary password until real auth (R5) | J01 | G01 | F2.4 |
 | U04 | OST draft and SM finalization handoff | Decided: seller draft, clerk completes, Admin approves (R5) | J05 | G03 | F4.5 |
 | U05 | Acting SM delegation | Removed from scope (no Acting SM, final; R3, A5) | J04 | G04 | F3.6 |
-| U06 | Returned payment submitter correction | Decided: Fix and resend (R6); UI still missing | J07 | G06 | F6.4 |
+| U06 | Returned payment submitter correction | Decided: Fix and resend (R6); implemented in mock | J07 | G06 | F6.4 |
 | U07 | Live Finance process and paid commission recovery | Decided (R9); automatic recovery after the addendum is signed | J09 | G09 | F8.5 |
 | U08 | Public Customer Lookup and Customer Portal | Out of scope by owner (R11); portal deferred | J02 | G11 | F11.6 |
 | U09 | CMS | Deferred by owner (R11) | J01 | G11 | F2.6 |
-| U10 | IGP web flow | In scope (R13, doc 14); not built | J06 | G12 | F5.7 |
-| U11 | Redemption and Services | Rules decided (R12, doc 10); stays disabled until build authorization | J11 | G12 | F10.5 |
-| U12 | Durable payroll, period close and historical import | Decided (R7, R9, R11); not built | J12 | G09 | F11.4 |
-| U13 | Resort spend intake and card servicing | Decided: office entry with receipt number (R10) | J10 | G10 | F9.4, F10.3 |
+| U10 | IGP web flow | In scope (R13, doc 14); implemented in mock within doc 14 restrictions | J06 | G12 | F5.7 |
+| U11 | Redemption and Services | Rules decided (R12, doc 10); staff prototype authorized 2026-11-17; live Redemption separately unauthorized | J11 | G12 | F10.5 |
+| U12 | Durable payroll, period close and historical import | Decided (R7, R9, R11); period close and historical receipt preview built in mock; durable payroll and transition pending | J12 | G09 | F11.4 |
+| U13 | Resort spend intake and card servicing | Decided: office entry with receipt number (R10); resort spend entry implemented in mock, card servicing walkthrough pending | J10 | G10 | F9.4, F10.3 |
 
 U01 to U13 descriptions are in the atlas `COVERAGE.md` section "Incomplete and unverified journeys".
 

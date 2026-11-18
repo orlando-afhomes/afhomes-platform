@@ -1,6 +1,7 @@
 # FP15: Admin State Audit
 
 - Status: Complete on 2026-11-18. Audit only; no admin source changed.
+- The task boxes below are the original plan; they are retained as history and are not a live checklist. See Status and Verification for the recorded result.
 - Layer: Documentation only. No admin page changes in this phase.
 - Business rules: none changed.
 - Depends on: FP12 (shared state contract and components).
@@ -35,7 +36,7 @@ The owner chose an audit-first approach so that a large number of admin pages ar
 | Layer | Documentation |
 | Blocked by | none |
 | Acceptance | The number of rows equals the number of admin page files; every row has a route, surface type, four state columns, a gap and a priority. |
-| Status | Planned |
+| Status | Complete on 2026-11-18; audit document written |
 
 **File:** Create `docs/implementation/ui-state-audit.md`.
 

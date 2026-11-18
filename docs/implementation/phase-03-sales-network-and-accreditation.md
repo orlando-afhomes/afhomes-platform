@@ -27,7 +27,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none (G02 decided in R3) |
 | Acceptance | Invalid sponsor, cycles and out-of-scope parents are rejected. An expired parent is accepted with a reminder; a suspended, resigned or terminated parent is rejected (doc 02 section 4.1). A Clerk cannot approve. An entered but unapproved seller has no login and no final AA number. OST cannot get unrestricted team-wide access. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F3.2 Member edit, transfer and status
 
@@ -39,7 +39,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | A transfer does not change attribution on past sales. Only the Administrator and Super Administrator see the controls. A Clerk and sellers cannot change an approved record. A backdated transfer date is rejected. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F3.3 Genealogy and branch scope
 
@@ -51,7 +51,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Each role sees only its permitted branch. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F3.4 Accreditation expiry, renewal and AA alias history
 
@@ -63,19 +63,19 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none (G02 decided in R3) |
 | Acceptance | Action-specific checks per doc 03 section 9: an expired seller can log in, sell, refer and sponsor with a reminder recorded on the sale; a suspended, resigned or terminated seller is blocked for sales dated on or after the suspension or end date. The public check shows an expired seller as Expired. Renewal before the expiry month is held, not recorded; a renewal issues a new AA number from the monthly sequence, moves all history to it and keeps the old number in the AA Number History, which resolves to the current number. Renewal is allowed while the login is Suspended or Deactivated and does not change the account status; leavers are never renewed (owner answer A6). |
-| Status | Decided, awaiting build authorization |
+| Status | Implemented in mock; renewal, AA alias history and timing tests passed |
 
 ## F3.5 Effective-dated vacant seat and roll-up
 
 | Field | Value |
 |---|---|
 | Journey | J04 |
-| Current | Tree and transfer UI exist. There is no vacant-seat compensation engine. |
+| Current | Vacancy dates, the no-allowance flag and roll-up exist; the genealogy shows “Seat vacant since”. Allowance amounts are not built. |
 | Target | A vacant position earns no seat allowance. Its downline rolls up to the next active level above, and assumed accounts go to the first active level above (AUG R1, R23). |
 | Layer | Frontend (mock) |
 | Blocked by | none (G04 decided in R3) |
 | Acceptance | A vacancy is recorded with an effective date (the day after the holder's end date) and the team stays in place. The vacant seat earns no allowance and its downline counts toward the next active level until the seat is filled (doc 02 section 5.1.1). Past periods are not rewritten. The seat is filled only by promotion (doc 02 section 8) or team transfer (section 6) by the Administrator or Super Administrator. |
-| Status | Missing |
+| Status | Implemented in mock; vacancy dates, no-allowance flag and roll-up tested |
 
 ## F3.6 Acting SM delegation
 
@@ -106,12 +106,12 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J02 |
-| Current | `/register/ost`: verify the referral code, confirm the sponsor, enter names and optional contact, then Review. Review has no Submit and creates no record (U01). |
+| Current | `/register/ost`: verify the referral code, confirm the sponsor, enter names and optional contact, then Review and Submit. Submit stores an application; it issues no AA number and no login. A returned applicant corrects the same application through a private link. |
 | Target | Per R5 (doc 03 section 9.2): the application is kept and Submit creates an application, not a seller record (no AA number, no login). The office reviews it: a Clerk may check and complete it; the Administrator or Super Administrator approves (it becomes a seller under the two-step rule with an eligible upline), returns it to fix, or rejects it with a reason. Every decision is audited. |
 | Layer | Frontend (mock); Backend for email or text delivery of the private link |
 | Blocked by | none for the mock (G01, G02, U01 decided); real delivery of the private link waits for backend authorization |
 | Acceptance | Submit stores an application and issues no AA number or login. A returned applicant corrects the same application through a private link and the office sees the history of each version (follow-up 22). Rejection needs a reason. An approved application follows the two-step seller rule. |
-| Status | Missing |
+| Status | Implemented in mock; submit, private correction link and office decision flow |
 
 ## Out of scope
 

@@ -229,7 +229,7 @@ Finance separation: monetary payment components are approved only as receipts un
 
 Points lifecycle: reserved points are not finally consumed until the authorized completion event or another separately approved contractual outcome.
 
-Module status: Redemption and Services remain preserved but hidden/disabled in the planned MongoDB system. Redemption rules are being planned in doc 10 (owner ruling R11 item 3, 2026-11-12); the module stays disabled until the owner authorizes its build. Audit documentation must not re-enable these modules. Historical records must remain traceable where authorized.
+Module status: the staff Redemption prototype is authorized (2026-11-17) with synthetic data and sample points-per-night values; live Redemption and customer submissions require separate authorization. Services remains disabled. Audit documentation must not enable live use. Historical records must remain traceable where authorized.
 
 ---
 
@@ -479,7 +479,7 @@ Only include unresolved dependencies that materially affect future implementatio
 - [ ] Existing modules retain their authority.
 - [ ] Audit Logs do not authorize business changes.
 - [ ] Historical records remain traceable.
-- [ ] Redemption remains disabled where required.
+- [ ] Live Redemption remains disabled; the staff prototype is authorized under the 2026-11-17 status.
 - [ ] Services remains disabled where required.
 - [ ] No application implementation authorized.
 
@@ -494,7 +494,7 @@ Only include unresolved dependencies that materially affect future implementatio
 - **Outstanding dependencies:** Listed in Section 26.
 - **Acceptance results:** All checklist items covered. Documentation completeness does not prove implementation readiness.
 - **Doc 14:** IGP audit events (doc 14 §12) were added after this report.
-- **Change scope:** Documentation only (at the time of writing). No application code, database, migrations, other documentation files, Git commit/push/merge, or deployment. Only `docs/business-rules/12-audit-logs-and-governance.md` created. Redemption and Services remain disabled. No unauthorized implementation assumptions. No unsupported technical architecture represented as implemented. No invented retention periods.
+- **Change scope:** Documentation only (at the time of writing). No application code, database, migrations, other documentation files, Git commit/push/merge, or deployment. Only `docs/business-rules/12-audit-logs-and-governance.md` created. Live Redemption and Services remain disabled; the staff Redemption prototype is authorized under the 2026-11-17 status. No unauthorized implementation assumptions. No unsupported technical architecture represented as implemented. No invented retention periods.
 
 ## Owner rulings amendment (2026-11-12, rounds R6, R7, R11)
 
@@ -507,7 +507,7 @@ These rulings are authoritative and take precedence over earlier text in this do
 5. **History import (R11 item 5).** Every seller and every unfinished sale is imported with its full receipt history; finished sales stay in the Excel archives; a side-by-side parallel run follows and the switch happens when a month closes with no unexplained differences (Rollout Guide v1.4 §6 and §8). Section 21.2; doc 11 §26.
 6. **No public lookup (R11 item 1).** There is no public VIP card or customer check; only staff check cards (doc 11 §21).
 7. **IGP in scope (R11 item 2).** IGP audit events follow this document; IGP rules are in `docs/business-rules/14-igp-sales.md`. Section 2.
-8. **Redemption (R11 item 3).** Planned in doc 10; stays disabled until the owner authorizes the build. Section 18.
+8. **Redemption (R11 item 3; 2026-11-17 status).** Live Redemption stays disabled until the owner authorizes it; the staff prototype is authorized under the 2026-11-17 status. Section 18.
 9. **CMS deferred (R11 item 6).** No CMS audit events are required until the CMS is authorized.
 
 ## Consistency update (2026-11-12)
@@ -529,7 +529,7 @@ These rulings take precedence over earlier text in this document where they diff
 23. **Customer approval (follow-up 23).** Admin approval of a seller-started customer, return to the Clerk with a reason, and rejection with a reason are audited events; nothing is deleted (section 12).
 - **Self-approval for all approvals (owner answer A3, 2026-11-12).** The self-approval flag covers every approval (receipts, payout lists, cancellations, adjustments), not only receipts and payouts (sections 14, 15 and 25). Actors now include Clerk and HR; Customer is a future actor (section 8). IGP events: doc 14 §12 and section 23.1.
 
-Numbering note: item numbers in this amendment follow the master follow-up list in `docs/implementation/decisions-and-gaps.md`; existing numbers are not renumbered.
+Numbering note: item numbers in this amendment follow the master follow-up list in `docs/implementation/decisions-and-gaps.md`; they are listed in ruling order, not numeric order.
 
 ## Owner rulings amendment (2026-11-16, fewer clicks, same history)
 

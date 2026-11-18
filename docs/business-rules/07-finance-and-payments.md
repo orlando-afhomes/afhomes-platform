@@ -28,7 +28,7 @@ This document does not define commission calculations, Stay Points rules, refund
 - `02-sales-network-and-genealogy.md` — sales attribution and visibility.
 - `04-customer-management.md` — customer identity.
 - `05-vip-products-and-contracts.md` — VIP tiers, payment schemes, contract lifecycle.
-- `06-vip-card-issuance.md` — activation and Card ID rules.
+- `06-vip-card-issuance.md` - activation and VIP Number rules.
 - `13-sales-performance-reporting.md` — Confirmed Sales and reporting adjustments.
 
 ---
@@ -122,7 +122,7 @@ Known source-documented options:
 | Installment 4_month | 4-Month Installment |
 | Move b1 40 12 / Move b2 25 12 | Move B (one scheme, doc 05 item 7) |
 
-Other officially documented approved schemes must also be preserved. Do not assume these five are necessarily exhaustive. Admin can configure applicable payment schemes, terms, and availability (per 05). Finance consumes the applicable finalized contractual terms and must not silently rewrite an approved payment scheme, final contract price, installment schedule, or negotiated agreement. Move A and Move B terms are those in doc 05 items 6 and 7; do not invent calculations for any scheme whose authoritative terms are unavailable.
+Other officially documented approved schemes must also be preserved. Do not assume these four are necessarily exhaustive. Admin can configure applicable payment schemes, terms, and availability (per 05). Finance consumes the applicable finalized contractual terms and must not silently rewrite an approved payment scheme, final contract price, installment schedule, or negotiated agreement. Move A and Move B terms are those in doc 05 items 6 and 7; do not invent calculations for any scheme whose authoritative terms are unavailable.
 
 ### 6.2 Payment Type / Method (how a payment is made)
 
@@ -191,7 +191,7 @@ Inspect existing repository models before prescribing precise database fields or
 4. The receipt enters the approval queue.
 5. Finance, the Administrator or the Super Administrator approves it, rejects it, or returns it for correction (section 5.2).
 6. A returned receipt shows a **Fix and resend** control to the person who entered it. Resending creates a new version for approval; the old version stays in history and is never overwritten (U06).
-7. Only an approved receipt counts. Approval adds the receipt to the sale's collected total and stamps, when first reached, the Closed Deal date (25%), the Stage 1 date (40%) and the Full Payment date (100%) (OPS §4.3; doc 13 §4). The stamped date is not the approval date: it is the later of the triggering receipt's own date and the date of the latest receipt already counted (OCT O3; doc 13 §4.3 and open item 2).
+7. Only an approved receipt counts. Approval adds the receipt to the sale's collected total and stamps, when first reached, the Closed Deal date (25%), the Stage 1 date (40%) and the Full Payment date (100%) (OPS §4.3; doc 13 §4). The stamped date is not the approval date: it is the later of the triggering receipt's own date and the date of the latest receipt already counted (OCT O3; doc 13 §4.3 and item 2).
 8. A receipt dated in a closed month is not added to that month. It is admitted into the first open month and counts there (owner ruling R7 item 2, also cited as R6 item 5; OPS §4.3). The closed month's figures do not change.
 9. Any resulting balance, sales, or membership eligibility change follows approved cross-module rules.
 
@@ -307,13 +307,13 @@ Fully Paid does not automatically mean that the membership activation event has 
 
 ---
 
-## 18. VIP Card ID Integration
+## 18. VIP Number Integration
 
-Preserve the latest approved official VIP Card ID rules documented in `docs/business-rules/06-vip-card-issuance.md`. The approved format is `YYMMDDNNNNNVTPMMS` (exactly 17 characters), one VIP Number for the Reservation Agreement, Grant and card (owner ruling R2, 2026-11-12). Segments: YYMMDD = Reservation Agreement recording date; NNNNN = monthly company-wide sequence; VT = VIP tier code; P+MM = payment category and duration snapshot; S/N = contract classification. Example: `27032000001G1C01S`.
+Preserve the latest approved official VIP Number rules documented in `docs/business-rules/06-vip-card-issuance.md`. The approved format is `YYMMDDNNNNNVTPMMS` (exactly 17 characters), one VIP Number for the Reservation Agreement, Grant and card (owner ruling R2, 2026-11-12). Segments: YYMMDD = Reservation Agreement recording date; NNNNN = monthly company-wide sequence; VT = VIP tier code; P+MM = payment category and duration snapshot; S/N = contract classification. Example: `27032000001G1C01S`.
 
 Required safeguards: one company-wide monthly allocator only; a payment correction never reissues the number; no card release merely because payment was submitted; no activation eligibility before Finance-verified full payment; no newly generated official ID when a historical payment is corrected; preserve the original assigned VIP Number and its history; never recycle official issued identifiers.
 
-Do not modify the VIP Card ID format or numbering allocator. If the actual VIP Number implementation conflicts with the documented policy, identify the conflict rather than inventing a new serial strategy.
+Do not modify the VIP Number format or numbering allocator. If the actual VIP Number implementation conflicts with the documented policy, identify the conflict rather than inventing a new serial strategy.
 
 ---
 
@@ -358,7 +358,7 @@ Important distinctions:
 - **Partially paid:** maintain the remaining contractual balance and appropriate pending/collection workflow.
 - **Conflicting financial information:** records with inconsistent contractual amounts, verified payments, remaining balances, or contradictory lifecycle states require reconciliation. Do not fabricate missing receipts, settlement events, consent, or historical activation dates.
 
-Source precedence: inspect the actual Customer Management, Finance, Import, and Membership code or documents before asserting that any particular historical import mechanism is implemented in the current repository. Document required business invariants separately from implementation claims. Preserve issued historical VIP numbers and original commercial terms. Do not automatically renumber older memberships into the new VIP Card ID format.
+Source precedence: inspect the actual Customer Management, Finance, Import, and Membership code or documents before asserting that any particular historical import mechanism is implemented in the current repository. Document required business invariants separately from implementation claims. Preserve issued historical VIP numbers and original commercial terms. Do not automatically renumber older memberships into the new VIP Number format.
 
 ---
 
@@ -581,7 +581,7 @@ A previously verified payment affects a reported Confirmed Sale. The correction 
 ### VIP Membership
 - [x] Verified full-payment eligibility.
 - [x] Separate official activation event.
-- [x] Correct Card ID dependencies.
+- [x] Correct VIP Number dependencies.
 - [x] Automatic Financial Hold.
 - [x] Benefit restrictions.
 - [x] Original identity and validity preservation.

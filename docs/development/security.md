@@ -664,11 +664,11 @@ Do not expose development-only mock login, demo identity switching, debug endpoi
 
 ## 35. Feature Flag Security
 
-Redemption and Services remain disabled under the current MongoDB project scope. Security must apply both to the frontend and backend.
+The staff Redemption prototype is authorized (2026-11-17) with synthetic data and sample points-per-night values; live Redemption and customer submissions require separate authorization. Services remains disabled. Security must apply both to the frontend and backend.
 
 ### 35.1 Frontend
 
-Hide disabled modules from user-facing navigation.
+Hide disabled modules (Services) from user-facing navigation; keep the authorized Redemption prototype behind its module and operation grants.
 
 ### 35.2 Backend
 
@@ -824,7 +824,7 @@ All implementation phases require separate authorization. Do not begin coding du
 40. Backups are protected.
 41. Restore operations require authorization.
 42. Security incidents require controlled response.
-43. Redemption remains disabled.
+43. Live Redemption remains disabled; the staff prototype is authorized under the 2026-11-17 status.
 44. Services remains disabled.
 45. Future mobile clients use secured APIs.
 46. Historical customer and financial data remains protected.
@@ -960,13 +960,13 @@ Only mark these as covered if actually documented. Documentation coverage does n
 
 ## 46. Strict Modification Scope
 
-This task authorizes modification of `docs/development/security.md` only. Do not modify README.md, architecture.md, frontend.md, database.md, backend.md, testing.md, implementation.md, deployment.md, docs/project.md, docs/business-rules/. Do not create extra Markdown documents. The development directory must continue to contain exactly nine approved files. Do not modify application code, authentication logic, role assignments, account records, API middleware, database schemas, Docker configuration, environment files, cloud infrastructure, Git configuration. Do not run production security operations. Do not install dependencies. Do not implement or deploy anything. If another document contains an outdated security rule, report the discrepancy in the final completion report rather than editing the other file.
+This task authorizes modification of `docs/development/security.md` only. Do not modify README.md, architecture.md, frontend.md, database.md, backend.md, testing.md, implementation.md, deployment.md, docs/project.md, docs/business-rules/. Do not create extra Markdown documents. The development directory must continue to contain exactly ten approved files. Do not modify application code, authentication logic, role assignments, account records, API middleware, database schemas, Docker configuration, environment files, cloud infrastructure, Git configuration. Do not run production security operations. Do not install dependencies. Do not implement or deploy anything. If another document contains an outdated security rule, report the discrepancy in the final completion report rather than editing the other file.
 
 ---
 
 ## 47. Final Verification
 
-After updating `security.md`: re-read the entire document; confirm authentication architecture; confirm account-lifecycle distinctions; confirm staff approval; confirm OST approval reconciliation; confirm accreditation restrictions; confirm multiple-role behavior; confirm module permission design; confirm record-level authorization; confirm genealogy visibility; confirm Finance separation; confirm commission authority; confirm customer privacy; confirm public search restrictions; confirm API protection; confirm MongoDB security; confirm Atlas connectivity security; confirm deployment security; confirm audit protections; confirm feature flags; confirm incident response; confirm testing coverage; compare with architecture.md; compare with backend.md; compare with database.md; compare with business-rules 01–13; validate Markdown links and diagrams; confirm only security.md changed; inspect the final Git diff. Use read-only commands: `git status --short`, `git diff --stat`, `git diff --check`. Inspect untracked documentation separately where necessary. Do not stage, commit or push.
+After updating `security.md`: re-read the entire document; confirm authentication architecture; confirm account-lifecycle distinctions; confirm staff approval; confirm OST approval reconciliation; confirm accreditation restrictions; confirm multiple-role behavior; confirm module permission design; confirm record-level authorization; confirm genealogy visibility; confirm Finance separation; confirm commission authority; confirm customer privacy; confirm public search restrictions; confirm API protection; confirm MongoDB security; confirm Atlas connectivity security; confirm deployment security; confirm audit protections; confirm feature flags; confirm incident response; confirm testing coverage; compare with architecture.md; compare with backend.md; compare with database.md; compare with business-rules 01–14; validate Markdown links and diagrams; confirm only security.md changed; inspect the final Git diff. Use read-only commands: `git status --short`, `git diff --stat`, `git diff --check`. Inspect untracked documentation separately where necessary. Do not stage, commit or push.
 
 ---
 
@@ -994,7 +994,7 @@ Input validation, IDOR/BOLA, XSS, CSRF, CORS, SSRF, rate limiting, secure file h
 Local MongoDB, MongoDB Atlas, DigitalOcean Droplet, Docker, HTTPS, secrets, monitoring, backups, incident response.
 
 ### H. Cross-Document Consistency
-Aligned with architecture, frontend, backend, database, testing, deployment, implementation, business rules 01–13. No material inconsistencies.
+Aligned with architecture, frontend, backend, database, testing, deployment, implementation, business rules 01–14. No material inconsistencies.
 
 ### I. Unresolved Critical Decisions
 Better Auth/MongoDB compatibility; production session configuration; MFA policy for privileged roles if not yet approved; password recovery provider/configuration; direct Sales Network creation versus OST sponsor approval; exact accreditation login restrictions; effective role union and explicit restrictions; protected Super Administrator delegation rules; approved module access versus sensitive-operation authority; formal data retention periods; audit retention; export authority; exceptional lawful deletion procedures; specific privacy notification obligations; selected reverse proxy; cloud network topology; approved object-storage provider; selected CAPTCHA/challenge provider if applicable; monitoring/security tooling.
@@ -1016,11 +1016,11 @@ Markdown formatting, link validation, diagram validation, cross-document consist
 - Git push: No.
 - Git merge: No.
 - Deployment: No.
-- Redemption enabled: No.
+- Redemption live use enabled: No; staff prototype authorized 2026-11-17.
 - Services enabled: No.
 - Production data migrated: No.
 
-STOP — awaiting explicit project-owner authorization before security implementation, database operations, Git changes or deployment.
+Historical note: this stop point applied before the frontend prototype. Security implementation, database operations and deployment still require authorization.
 
 ## Consistency update (2026-11-12)
 

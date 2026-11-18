@@ -372,14 +372,14 @@ These are documentation acceptance examples, not executed tests.
 17. Every points movement is a ledger entry and is audited.
 18. Signed contracts keep their own terms; no bulk recalculation of historical memberships.
 19. No cash value, no cash-out.
-20. Redemption stays disabled until separately authorized.
+20. Live Redemption stays disabled until separately authorized; the staff prototype is authorized under the 2026-11-17 status.
 
 ---
 
 ## 28. Outstanding Dependencies and Owner Decisions
 
 Owner decisions resolved 2026-11-12 (none outstanding in this document):
-- If the Year 1 condition is not met when the first redemption sets the PAD, tranche 1 is not released and is not carried over, following the signed Grant; later tranches keep their own conditions. A bill entered late but dated inside the period still counts (section 12.5), and an Administrator or the Super Administrator can grant a waiver (section 14) (owner ruling A7, 2026-11-12; decisions-and-gaps.md).
+- If the Year 1 condition is not met when the first redemption sets the PAD, tranche 1 is not released and is not carried over, following the signed Grant; later tranches keep their own conditions. A bill entered late but dated inside the period still counts (section 12 item 5), and an Administrator or the Super Administrator can grant a waiver (section 14) (owner ruling A7, 2026-11-12; decisions-and-gaps.md).
 
 Configured by Admin or Super Admin (no value invented here): the meaning of "next administrative cycle" for waivers; expiry reminder schedule; eligible venue list.
 
@@ -427,8 +427,8 @@ Resolved: Non-Standard contracts keep Standard tier benefits (doc 05 §10.2). Se
 
 ### System Integration
 - [ ] Consistent with docs 01, 04, 05, 06, 07, 10, 12, 13.
-- [ ] Spend-to-Earn engine removed from the rules (`src/modules/stay-points/engine.ts` is on the frontend backlog for rework).
-- [ ] Redemption remains disabled until authorized.
+- [ ] Spend-to-Earn engine removed from the rules; `src/modules/stay-points/engine.ts` implements the fixed Annual Welcome Gift tranches.
+- [ ] Live Redemption remains disabled until authorized; the staff prototype is authorized under the 2026-11-17 status.
 
 ---
 

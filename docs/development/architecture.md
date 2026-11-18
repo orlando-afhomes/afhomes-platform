@@ -10,7 +10,7 @@
 
 ## 1. Purpose and Authority
 
-This document is the authoritative technical architecture for the AFHomes Platform. It reconciles the earlier 33-section architecture with the latest approved business rules and infrastructure decisions. Business rules (01–13) are authoritative for business behavior; this document is authoritative for technical design. Where a business rule conflicts with an older architecture statement, the business rule wins and the conflict is reported.
+This document is the authoritative technical architecture for the AFHomes Platform. It reconciles the earlier 33-section architecture with the latest approved business rules and infrastructure decisions. Business rules (01–14) are authoritative for business behavior; this document is authoritative for technical design. Where a business rule conflicts with an older architecture statement, the business rule wins and the conflict is reported.
 
 ---
 
@@ -48,7 +48,7 @@ This document is the authoritative technical architecture for the AFHomes Platfo
 
 ## 3. Current Versus Target Architecture
 
-- **Verified current implementation (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); no API, database or deployment.
+- **Historical snapshot (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); no API, database or deployment. The qualitative description remains true; the hash is not the current HEAD.
 - **Approved target architecture:** as above.
 - **Future implementation work:** all application development requires separate explicit authorization.
 
@@ -159,7 +159,7 @@ Dependencies point inward. Prohibited: `modules` importing panel UI; `shared` im
 
 ## 8. Target Repository Structure
 
-(See existing target layout.) Target organizational structure, not an instruction to immediately create every directory. Modules must include organization, staff, roles, customers, vip-products, vip-contracts, vip-cards, sales, finance, commissions, sale-team, genealogy, accreditation, memberships, stay-points, reporting, redemption, services, audit.
+(See existing target layout.) Target organizational structure, not an instruction to immediately create every directory. Current modules under `src/modules/`: accounts, accreditation, audit, commissions, contracts, customers, finance, identity, igp, imports, membership, notifications, organization, promos, public-site, reconciliation, redemption, reports, sales, sales-network, settings, stay-points, vip. Services remains a documented future module boundary.
 
 ---
 
@@ -171,7 +171,7 @@ Three logically independent presentation panels: Admin (MVP), Public (limited MV
 
 ## 10. Frontend Technology and Design System
 
-Next.js App Router, React, TypeScript, shadcn/ui on Base UI, Tailwind CSS 4, namespaced custom CSS, Zod (approved, not yet used in `src/`), TanStack Query (Ant Design was removed in commit 22c9b4f). Panel-scoped themes (`.admin-theme`, `.public-theme`, `.customer-theme`). Shared shadcn/ui primitives under `src/shared/ui/` only when intentional. Server Components by default; `"use client"` only where needed.
+Next.js App Router, React, TypeScript, shadcn/ui on Base UI, Tailwind CSS 4, namespaced custom CSS, Zod (approved, not yet used in `src/`), TanStack Query (Ant Design was removed in commit 22c9b4f). Panel-scoped CSS variables sourced from `src/theme/tokens.css`. Shared shadcn/ui primitives under `src/shared/ui/` only when intentional. Server Components by default; `"use client"` only where needed.
 
 ---
 
@@ -253,7 +253,7 @@ Sales Network hierarchy SVD→SSM→SM→OST; OST may attach directly. Historica
 
 ## 23. Feature Flags
 
-Redemption and Services preserved but hidden/disabled. Central feature configuration; server-side enforcement; client presentation behavior; environment config; secure defaults; testing; controlled activation; audit requirements. Hidden menu is not security. Future activation requires separate authorization.
+The staff Redemption prototype is authorized (2026-11-17) with synthetic data and sample points-per-night values; live Redemption and customer submissions require separate authorization. Services remains disabled. Central feature configuration; server-side enforcement; client presentation behavior; environment config; secure defaults; testing; controlled activation; audit requirements. Hidden menu is not security. Future activation of live Redemption or Services requires separate authorization.
 
 ---
 
@@ -361,7 +361,7 @@ Align with `docs/development/implementation.md` Phases 0–8. Phases are plannin
 
 ## 39. Architectural Invariants
 
-(As listed in task: one repo, one Next.js app, panel/feature modular monolith, App Router, React/TS, shadcn/ui/Base UI/Tailwind 4/custom CSS (Ant Design superseded Nov 8, 2026 and later removed), Zod, TanStack Query, centralized mock data, mock reset on refresh, mock identity not production auth, `/api/v1`, thin handlers, domain logic outside presentation, server-only Mongoose/DB, MongoDB Atlas, DigitalOcean Droplet, Docker Compose, HTTPS reverse proxy, centralized auth, server-side RBAC, record-level visibility, historical genealogy preservation, Finance payment verification authority, manual Finance commission approvals, correct VIP membership activation eligibility, official VIP identifier uniqueness, correct Stay Points ledger lifecycle, audit history, no double processing, no automatic Supabase migration, Redemption disabled, Services disabled, future Customer Portal supported, future mobile can reuse REST API, no unauthorized microservice redesign, current business policies revisable through authorized decisions, historical signed contract terms protected, architecture doc does not authorize implementation, production readiness requires separate verification/approval.)
+(As listed in task: one repo, one Next.js app, panel/feature modular monolith, App Router, React/TS, shadcn/ui/Base UI/Tailwind 4/custom CSS (Ant Design superseded Nov 8, 2026 and later removed), Zod, TanStack Query, centralized mock data, mock reset on refresh, mock identity not production auth, `/api/v1`, thin handlers, domain logic outside presentation, server-only Mongoose/DB, MongoDB Atlas, DigitalOcean Droplet, Docker Compose, HTTPS reverse proxy, centralized auth, server-side RBAC, record-level visibility, historical genealogy preservation, Finance payment verification authority, manual Finance commission approvals, correct VIP membership activation eligibility, official VIP identifier uniqueness, correct Stay Points ledger lifecycle, audit history, no double processing, no automatic Supabase migration, Redemption staff prototype authorized with live use disabled, Services disabled, future Customer Portal supported, future mobile can reuse REST API, no unauthorized microservice redesign, current business policies revisable through authorized decisions, historical signed contract terms protected, architecture doc does not authorize implementation, production readiness requires separate verification/approval.)
 
 ---
 
@@ -387,14 +387,14 @@ Compare against frontend.md, database.md, backend.md, security.md, testing.md, i
 
 ## 42. Final Repository Check
 
-Branch: `develop`. Working tree: untracked docs/workflow files (preserved). No application code. `git diff --check` passed. Authorized changes confined to `docs/development/`.
+Historical snapshot at the time of writing: branch `develop`, working tree held untracked docs/workflow files, no application code yet, `git diff --check` passed, and changes were confined to `docs/development/`. The current repository now contains a frontend prototype.
 
 ---
 
 ## 43. Completion Report
 
 ### A. Repository Verification
-- Repository: `afhomes-platform`; branch: `develop`; initial working tree untracked docs/workflow files preserved. Inspected docs/project.md, business-rules 01–13, existing dev docs. No app code.
+- Repository: `afhomes-platform`; branch: `develop`; initial working tree untracked docs/workflow files preserved. Inspected docs/project.md, business-rules 01–14, existing dev docs. No app code at that time.
 
 ### B. Architecture Completion
 `architecture.md` covers frontend through production deployment: purpose/authority, approved decisions, current vs target, principles, actors/trust boundaries, diagrams, layers, dependency direction, repository structure, routing, panels, frontend tech/design, server/client components, state, mock data, shared modules, backend services, REST API, auth, RBAC, MongoDB Atlas/Mongoose, business data ownership, financial transactions/idempotency, VIP membership/Stay Points, sales/commission integration, feature flags, files/media, background jobs, reporting, audit/logging, security, environment separation, DigitalOcean infra, Docker Compose, reverse proxy/HTTPS, Atlas connectivity, CI/CD, monitoring, backup/recovery, testing, implementation phases, future customer/mobile, invariants, dependencies, references/governance.
@@ -413,10 +413,10 @@ Next.js, React, TypeScript, shadcn/ui on Base UI, Tailwind CSS 4, custom CSS, Zo
 - Implementation scope: phased, no auto-authorization.
 
 ### E. Development Documentation Alignment
-Updated `architecture.md` comprehensively. Other 8 dev docs (README, frontend, database, backend, security, testing, implementation, deployment) already aligned with decisions; minimal/no changes needed. Exactly 9 files remain in `docs/development/`.
+Updated `architecture.md` comprehensively. Other 9 development documents (README, frontend, database, backend, security, testing, implementation, deployment and the role-module permission proposal) are aligned with decisions. Exactly 10 files remain in `docs/development/`.
 
 ### F. Business-Rule Alignment
-Reviewed all 13 business-rule docs. Conflicts reconciled in architecture (finance activation, mock persistence, terminology SVD, hosting). Unresolved critical conflicts preserved as dependencies (contract price discrepancies, RA uniqueness, audit retention, etc.).
+Reviewed all 14 business-rule docs. Conflicts reconciled in architecture (finance activation, mock persistence, terminology SVD, hosting). Unresolved critical conflicts preserved as dependencies (contract price discrepancies, RA uniqueness, audit retention, etc.).
 
 ### G. Deployment Architecture
 DigitalOcean Droplet, Docker Compose, HTTPS reverse proxy, MongoDB Atlas, secrets, monitoring, backups, recovery, release procedures documented.
@@ -439,11 +439,11 @@ Architecture completeness: all required areas covered. Mermaid diagrams included
 - Git push: No.
 - Git merge: No.
 - Deployment: No.
-- Redemption activated: No.
+- Redemption live use activated: No; staff prototype authorized 2026-11-17.
 - Services activated: No.
 - Historical production data migrated: No.
 
-STOP — awaiting explicit project-owner authorization before starting Phase 1 implementation.
+Historical note: this stop point applied before Phase 1 implementation. The frontend prototype now exists; backend, database and deployment still require authorization.
 
 ## Consistency update (2026-11-12)
 

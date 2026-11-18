@@ -2,6 +2,8 @@
 
 > **STATUS: STAFF PROTOTYPE AUTHORIZED, 2026-11-17.** The owner approved the QR loyalty prototype, including Stay Points bookings, with synthetic browser-memory data and sample points-per-night values. Live Redemption and customer submissions require separate authorization. Services remain disabled.
 >
+> **Reading rule:** an unqualified “disabled” in this document means live Redemption and customer submissions; the staff prototype is authorized under the 2026-11-17 status.
+>
 > Single source of truth for the **Redemption Management** module (use of Stay Points).
 >
 > **Owner ruling R12 (2026-11-12):** rewritten to the signed VIP Grant (Grant §I "And Annual Welcome Gift", §I-A, §V) and the owner's R12 answers. See the amendment at the end.
@@ -61,7 +63,7 @@ Signed customer contracts keep their governing terms. Historical bookings and po
 6. Office or front-desk staff make bookings for now. A customer self-service portal is deferred.
 7. A card transfer needs a written request and written management approval. Unused points do not pass to the new holder (Grant §V).
 8. The first redemption sets the Points Activation Date if it comes before the second anniversary of the Card Claim Date (doc 09).
-9. The build stays disabled until the owner authorizes it.
+9. Live Redemption and customer submissions stay disabled until the owner authorizes them; the staff QR/Stay Points prototype is authorized under the 2026-11-17 status.
 
 **Superseded.** The earlier "Seven Approved Redemption Rules" (undated) are replaced as follows: Rule 1 (Admin-configured monetary conversion or service-specific points pricing for any resort service) and Rule 5 (Admin-configured partial retention and no-show policies) are superseded by decisions 1, 3 and 5. Rule 2 (stay date selects the bucket), Rule 3 (staff review), Rule 4 (reserve, then consume after the stay) and Rule 7 (Finance verifies any money portion) are retained as refined below. Rule 6 (Points + Cash) is retained only for accommodation, with the split by whole nights (section 9.3).
 
@@ -149,7 +151,7 @@ Points plus cash for a stay is allowed (owner follow-up ruling, 2026-11-12). Whe
 
 1. If the PAD is not yet set, the first redemption before the second anniversary of the Card Claim Date sets the PAD on that date. The first redemption is the first stay where points are actually used at check-in; a booking cancelled in time does not count (owner follow-up ruling, 2026-11-12).
 2. Tranche 1 is due on the PAD and is released only if the Year 1 condition is met (doc 09 §12). The booking proceeds only if points are then available.
-3. If the Year 1 condition is not met at that moment, tranche 1 is not released and is not carried over, following the signed Grant (owner ruling A7, 2026-11-12; doc 09). A bill entered late but dated inside the period still counts (doc 09 section 12.5), and an Administrator or the Super Administrator can grant a waiver (doc 09 section 14). The booking proceeds only if other released points are available.
+3. If the Year 1 condition is not met at that moment, tranche 1 is not released and is not carried over, following the signed Grant (owner ruling A7, 2026-11-12; doc 09). A bill entered late but dated inside the period still counts (doc 09 section 12 item 5), and an Administrator or the Super Administrator can grant a waiver (doc 09 section 14). The booking proceeds only if other released points are available.
 
 ---
 
@@ -250,7 +252,7 @@ Audit: booking creation, confirmation, completion, cancellation (including late 
 - **K (Transfer):** approved transfer with unused points → points forfeited and not passed to the new holder; the former holder's future points bookings are cancelled, after staff inform the former holder before the transfer is finalized (A7).
 - **L (Duplicate completion):** completion recorded twice → points consumed once.
 - **M (Financial Hold):** membership on Financial Hold → no new booking with points.
-- **N (Module disabled):** no redemption workflow is reachable in the application until authorized.
+- **N (Live module disabled):** no live redemption workflow is reachable in the application until authorized; the staff prototype is authorized under the 2026-11-17 status.
 
 These are documentation acceptance examples, not executed tests.
 
@@ -271,7 +273,7 @@ These are documentation acceptance examples, not executed tests.
 11. Unused points are forfeited on a transfer and do not pass to the new holder.
 12. No cash value and no cash-out.
 13. Any money part is verified under doc 07.
-14. Redemption stays disabled until the owner authorizes the build.
+14. Live Redemption stays disabled until the owner authorizes it; the staff prototype is authorized under the 2026-11-17 status.
 
 ---
 
@@ -318,7 +320,7 @@ Other dependencies: customer self-service portal (deferred); booking inventory a
 ### System
 - [ ] Action permissions per doc 01; Admin and Super Admin self-approval audited.
 - [ ] Ledger and audit complete.
-- [ ] Redemption remains disabled until authorized.
+- [ ] Live Redemption remains disabled until authorized; the staff prototype is authorized under the 2026-11-17 status.
 
 ---
 
@@ -327,7 +329,7 @@ Other dependencies: customer self-service portal (deferred); booking inventory a
 - **File updated:** `docs/business-rules/10-redemption.md` (rewrite 2026-11-12, owner ruling R12).
 - **Sources:** signed Grant §I, §I-A, §I-B(c), §V (Silver text lines 51 to 81 and the Bronze and Gold equivalents); owner rulings R10, R11, R12 and the overriding authority rule.
 - **Outstanding:** section 23.
-- **Change scope:** documentation only. Redemption and Services remain disabled. No application code, database, or Git operation.
+- **Change scope (historical note, 2026-11-12):** documentation only at that time. Live Redemption and Services remain disabled; the staff Redemption prototype is authorized under the 2026-11-17 status. No application code, database, or Git operation.
 
 ---
 
@@ -343,7 +345,7 @@ These rulings take precedence over earlier text in this document where they diff
 6. **Bookings.** Office or front-desk staff make bookings for now. A customer self-service portal is deferred.
 7. **Transfer.** A card transfer needs a written request and written management approval. Unused points do not pass to the new holder.
 8. **Points Activation Date.** The first redemption sets the PAD if it comes before the second anniversary of the Card Claim Date (R10).
-9. **Disabled.** The build stays disabled until the owner authorizes it.
+9. **Live use disabled.** Live Redemption and customer submissions stay disabled until the owner authorizes them; the staff prototype is authorized under the 2026-11-17 status.
 10. **Earning model (R10).** Points come only from released Annual Welcome Gift tranches (doc 09). The earlier references to ₱1-per-point earning, a per-transaction 70/30 split, Pending points and Points Hold are withdrawn.
 
 ## Owner rulings amendment (2026-11-12, follow-ups)

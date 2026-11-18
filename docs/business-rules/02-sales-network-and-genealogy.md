@@ -119,7 +119,7 @@ The system validates:
 
 - Parent designation
 - Parent account status
-- Parent standing: an expired accreditation does not make a parent ineligible (a reminder is shown); a suspended, resigned or terminated parent is ineligible (doc 03 §9, §5.2 below)
+- Parent standing: an expired accreditation does not make a parent ineligible (a reminder is shown); a suspended, resigned or terminated parent is ineligible (doc 03 §9; §5.2 below)
 - Genealogy compatibility
 
 Do not infer the parent from the account creator. Do not create intermediate parents automatically.

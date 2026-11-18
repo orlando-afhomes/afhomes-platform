@@ -19,19 +19,19 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J10 |
-| Current | Authorized Admin, Finance or Super Admin opens the Activation Queue. Checks: finalized contract, verified full settlement, required identifiers, valid mapping. Activate records Active. The prototype currently also generates a Card ID from the recorded RA and the activation date; that behavior is superseded (doc 06: activation never creates a number). Missing data or an ineligible balance stops activation with feedback. |
+| Current | Authorized Admin, Finance or Super Admin opens the Activation Queue. Checks: finalized contract, verified full settlement, required identifiers, valid mapping. Activate records Active and reuses the issued VIP Number; it never creates or changes a number. Missing data or an ineligible balance stops activation with feedback. |
 | Target | Pending and fully settled records stay distinct from active memberships. Finance verification never activates a membership by itself. Activation never creates or changes the VIP Number, which is issued when the signed Reservation Agreement is recorded (doc 06). |
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Activation is refused for each missing prerequisite (finalized contract, verified full settlement, required identifiers, valid mapping). Activation creates no number and leaves the VIP Number unchanged. Receipt approval alone never activates. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock; activation prerequisites tested |
 
 ## F9.2 VIP Number issuance and numbering
 
 | Field | Value |
 |---|---|
 | Journey | J10, J06 |
-| Current | The prototype issues a Card ID at activation, separate from the RA. This differs from R2. |
+| Current | One VIP Number is issued when the signed Reservation Agreement is recorded; activation reuses it and never creates a second number. |
 | Target | Per R2 (NUM v6.2): one VIP Number for the Reservation Agreement, the Grant and the Card, issued when the signed Reservation Agreement is recorded, with a monthly sequence. Validity starts on the Card Claim Date. Numbers are never reused or renumbered. |
 | Layer | Frontend (mock) |
 | Blocked by | none |
@@ -43,7 +43,7 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J10 |
-| Current | The prototype computes validity from activation. R2 decided that validity starts on the Card Claim Date. |
+| Current | Validity starts on the recorded or deemed Card Claim Date; claim history is kept. |
 | Target | Validity starts on the Card Claim Date (actual or deemed). Keep claim history. Cardholders can claim up to one year after full settlement; the deemed claim date follows doc 06. |
 | Layer | Frontend (mock) |
 | Blocked by | none |
@@ -55,7 +55,7 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J10 |
-| Current | The membership list is read and inspect only. Full custody, replacement, holder-change and signed-version servicing have gaps (U13). NUM sections 5 and 6 include card void or recall on applicable replacements. |
+| Current | Activate, Service Card, Record Card Claim, replacement, holder change and transfer are implemented in the mock; the full servicing walkthrough remains pending. |
 | Target | Record the applicable entitlement version and servicing evidence. Preserve Gold supplementary shared benefits where applicable. |
 | Layer | Frontend (mock) |
 | Blocked by | none |

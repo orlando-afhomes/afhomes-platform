@@ -32,11 +32,11 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J09 |
-| Current | The platform requires Approved commission, Confirmed Sale, no existing payout, 40% net verified collections and a known qualifying verification date. A payout may be recorded from the first day of the month after the month in which 40% was verified. There is no waiting period. |
-| Target | Per R8: each person has set DSC and DRI rates frozen on the sale, only the closing seller and the referrer earn per-sale commission, and VIP commission is paid 100% at the month-end of the month 40% is collected, with no 7-day wait. Owner decision D-A (2026-11-12): the payout may be recorded from the first day of the month after the month in which net verified collections first reached 40%; the next calendar month stands in for month close until a month-close feature exists. Owner decision D-B (2026-11-12): for now the month is set by the verification (approval) date of the payment that reached 40%; doc 13 (OCT O3) stamps Stage 1 by the receipt's own date, and that alignment is a separate task. |
+| Current | The platform requires Approved commission, Confirmed Sale, no existing payout, 40% net verified collections and a known qualifying counted receipt date. A payout may be recorded from the first day of the month after the month in which 40% was collected. There is no waiting period. |
+| Target | Per R8: each person has set DSC and DRI rates frozen on the sale, only the closing seller and the referrer earn per-sale commission, and VIP commission is paid 100% at the month-end of the month 40% is collected, with no 7-day wait. Owner decision D-A (2026-11-12): the payout may be recorded from the first day of the month after the month in which net verified collections first reached 40%; the next calendar month stands in for month close until a month-close feature exists. Owner decision D-B (2026-11-12) is now implemented as doc 13 (OCT O3): the month is set by the counted receipt date, including late admission; the earlier verification-date rule is superseded. |
 | Layer | Frontend (mock) |
 | Blocked by | none (G08 decided R8) |
-| Acceptance | Rules live in `src/modules/commissions/` with tests, and effective dates drive which policy applies. VIP releases 100% at 40% collected with no waiting period. The IGP release (40% at 40% collected, the rest at full payment, doc 14 section 8) is not built. |
+| Acceptance | Rules live in `src/modules/commissions/` with tests, and effective dates drive which policy applies. VIP releases 100% at 40% collected with no waiting period. IGP releases 40% at 40% collected and the rest at full payment (doc 14 section 8); the mock implements both stages. |
 | Status | VIP and IGP release stages use counted receipt dates; monthly lists require close |
 
 ## F8.3 Payout recording and confirmation
@@ -49,7 +49,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | A payout date before release is refused. A second payout for the same commission is refused. A self-approved payout list is allowed and flagged in the history. |
-| Status | Exists (per atlas, updated in `fc060bb`) |
+| Status | Exists in mock; payout recording, confirmation and duplicate prevention verified |
 
 ## F8.4 Post-initiation adjustment
 
@@ -68,7 +68,7 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J09 |
-| Current | No recovery ledger. |
+| Current | The recovery ledger and direct collection are implemented; automatic deduction waits for the signed addendum. |
 | Target | Per R9 and follow-up 2 (doc 08 section 14): a clawback is recorded as owed (five triggers of OCT R32), collected directly by the office, and written off by an Administrator or the Super Administrator; a Defaulted sale's clawback is written off on reinstatement, except a returned-cheque clawback. Only automatic deduction from future pay waits for the signed IST Commission and Clawback Addendum (and a signed OST agreement for OST sellers). History is never deleted. |
 | Layer | Frontend (mock) |
 | Blocked by | none for recording, direct collection and write-off. Automatic deduction waits for the signed addendum (open item). |

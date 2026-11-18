@@ -22,12 +22,12 @@ Reminder: the mock login is temporary. It must be removed when real authenticati
 | Field | Value |
 |---|---|
 | Journey | J01, TO-BE "Approved homepage entry choices" |
-| Current | The homepage provides Home and Login only. Sales sign-in and AA verification work by direct address (U02). |
+| Current | The homepage, header and footer link to seller sign-in (`/login/sales`) and the seller check (`/verify`); there is no public card or customer lookup. |
 | Target | Per R5: Home gets links to seller login and the seller check. There is no public card or customer check (R11). |
 | Layer | Frontend (mock) |
 | Blocked by | none (G01 and U02 decided in R5) |
 | Acceptance | The homepage shows links to seller login (`/login/sales`) and the seller check (`/verify`). Every public link leads to the intended page. There is no public card or customer lookup. Registration, verification and account access stay distinct. |
-| Status | Decided, awaiting build authorization |
+| Status | Implemented in mock; homepage and header links verified |
 
 ## F2.2 Admin/Staff and Sales sign-in
 
@@ -39,31 +39,31 @@ Reminder: the mock login is temporary. It must be removed when real authenticati
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Wrong credentials, portal mismatch and inactive identity each stop sign-in with a message. Mock credentials are never shown on the page. |
-| Status | Exists (mock) |
+| Status | Exists in mock |
 
 ## F2.3 Sign-out and restricted landing
 
 | Field | Value |
 |---|---|
 | Journey | J01 |
-| Current | Log out asks for confirmation, clears query data and the mock identity, then replaces navigation with `/login`. A direct `/admin` visit shows a skeleton while the identity hydrates, then redirects to `/login` if signed out. The atlas found no return to the originally requested URL after login. |
+| Current | Log out asks for confirmation, clears query data and the mock identity, then replaces navigation with `/login`. A direct `/admin` visit shows a skeleton while the identity hydrates, then redirects to `/login` if signed out. Login returns to the requested URL through the `next` parameter when one is present. |
 | Target | Route to the approved destination. Decide whether to return to the requested URL. |
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | After logout no data from the previous identity is visible. Cancel keeps the session. |
-| Status | Exists (mock). Return-to-URL: Missing. |
+| Status | Implemented in mock; return-to-URL handled through the `next` parameter |
 
 ## F2.4 Account recovery
 
 | Field | Value |
 |---|---|
 | Journey | J01 |
-| Current | Forgot password is a form state in each login route. A valid email shows "Email recovery not available yet." and no reset link is sent (U03). |
+| Current | Forgot password shows a neutral message and never reveals whether an email exists. An Administrator or Super Administrator can set a temporary password in Staff. |
 | Target | Per R5 and doc 01 (section on account recovery) until real authentication: an Administrator sets an interim temporary password for a forgotten account. Self-service email recovery is not part of the ruling and arrives with real authentication (F2.5). |
 | Layer | Frontend (mock) for the interim Administrator reset; Backend for real recovery |
 | Blocked by | none for the interim reset (G01 and U03 decided in R5); real recovery waits for F2.5 |
 | Acceptance | An Administrator can set a temporary password for a user. The reset is audited and the new password is never shown to anyone else. The response does not reveal whether an email exists. |
-| Status | Missing |
+| Status | Implemented in mock; audited temporary password issued by an Administrator or Super Administrator |
 
 ## F2.5 Real identity and role check
 

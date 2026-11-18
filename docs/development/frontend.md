@@ -164,13 +164,13 @@ Feature-based organization (see example in architecture.md). Pages compose featu
 
 - shadcn/ui on Base UI, Tailwind CSS 4, CSS variables from `src/theme/tokens.css`, namespaced regular CSS per feature; no CSS Modules. Ant Design is no longer used.
 - Shared primitives in `src/shared/ui/` when genuinely reusable; panel-specific variants with panel; feature-specific UI within feature.
-- Panel-scoped themes (`.admin-theme`, `.public-theme`, `.customer-theme`) via scoped CSS variables; avoid global overrides.
+- Panel-scoped CSS variables sourced from `src/theme/tokens.css`; avoid global overrides.
 - Responsive design across desktop/tablet/mobile; data-intensive Admin screens use responsive tables, overflow, mobile filters, accessible sidebars, touch targets, responsive forms.
 - Accessibility: semantic HTML, keyboard nav, focus visibility, screen readers, form labels, error announcements, dialog focus, contrast, reduced motion, zoom, WCAG alignment.
 
 ### 14.0 Foundation (M1-A)
 
-- Packages: `@base-ui/react`, `class-variance-authority`, `clsx`, `tailwind-merge`, `sonner`, `tailwindcss` 4 with `@tailwindcss/postcss`, `tw-animate-css`. TanStack Table 8.21.3 is installed when the first table migrates. Every confirmation, discard prompt and notice pop-up uses SweetAlert2 through the shared `AppAlert` (`src/shared/components/modern/app-alert.tsx`) and its wrappers `ConfirmDialog`, `NoticeDialog` and `useConfirmRun` (owner decision 2026-11-12). Form dialogs with fields stay on the shadcn Dialog; toasts stay on Sonner. Feature code never calls SweetAlert2 directly. The shadcn `alert-dialog` primitive remains in `src/shared/ui/` but is no longer used by screens.
+- Packages: `@base-ui/react`, `class-variance-authority`, `clsx`, `tailwind-merge`, `sonner`, `tailwindcss` 4 with `@tailwindcss/postcss`, `tw-animate-css`. TanStack Table 8.21.3 is installed and used by `DataTable`. Every confirmation, discard prompt and notice pop-up uses SweetAlert2 through the shared `AppAlert` (`src/shared/components/modern/app-alert.tsx`) and its wrappers `ConfirmDialog`, `NoticeDialog` and `useConfirmRun` (owner decision 2026-11-12). Form dialogs with fields stay on the shadcn Dialog; toasts stay on Sonner. Feature code never calls SweetAlert2 directly. The shadcn `alert-dialog` primitive remains in `src/shared/ui/` but is no longer used by screens.
 - Configuration: `postcss.config.mjs`, `components.json` (style `base-nova`; aliases `@/shared/ui`, `@/shared/lib/utils`), `src/shared/lib/utils.ts` (`cn`). Primitives live in `src/shared/ui/`; compose them in `src/shared/components/`.
 - Prefix: Tailwind is namespaced with `tw` (`tw:flex`, `tw:size-4`) in both `globals.css` and `components.json`. Unmigrated screens contain leftover utility-looking class names (for example `size-4` on icons) that were inert; unprefixed utilities restyled them during M1-A verification. Always write utilities with the prefix in new code.
 - Preflight shims: generated shadcn components assume Tailwind's preflight. Where that mattered, the generated file carries a small shim and this list must be kept current: `button.tsx` adds `tw:bg-transparent` (otherwise link and ghost buttons show the browser button background) and `table.tsx` adds `tw:border-collapse` (otherwise row borders do not render). Re-apply both after `shadcn add --overwrite`.
@@ -193,7 +193,7 @@ Presentation rules only; tokens in `tokens.css` are unchanged (see `docs/impleme
   - `info` (blue): Export, Download, Print, View records.
   - `outline` (neutral white): Cancel and Close inside pop-ups.
 - **Tables:** use `DataTable` (`src/shared/components/modern/data-table.tsx`) with `onRowOpen` so the whole row opens the record. No underlined links in cells and no "View full details" item in the row menu. Keep the row "..." menu only on table rows; a full details page shows its action buttons once, in the page header.
-- **Empty values:** render `EMPTY` or `displayValue(value)` from `src/shared/lib/empty-value.ts` (an em dash); never a blank cell. One value per column; a details view shows every value of the row.
+- **Empty values:** render `EMPTY` or `displayValue(value)` from `src/shared/lib/empty-value.ts` (a hyphen, `-`); never a blank cell. One value per column; a details view shows every value of the row.
 - **Page actions:** pass buttons through the `actions` prop of `AreaPage` (`src/shared/components/admin/area-page.tsx`), which places them at the right of the page heading, not under the tabs. `actions` may be a function of the active tab for per-tab buttons.
 - **Staff wording (UI8):** no "version" labels or technical IDs on screens; reports use a From and To date range.
 
@@ -241,7 +241,7 @@ Error/loading boundaries: `loading.tsx`, `error.tsx`, `not-found.tsx`, nested la
 
 ## 20. Frontend Routing
 
-Route files thin; compose feature pages. Route groups organize layouts. Avoid conflicting/duplicate URL paths. Intended namespaces: public, login, admin, future customer.
+Route files thin; compose feature pages. Route groups organize layouts. Avoid conflicting/duplicate URL paths. Intended namespaces: public, login, admin, status, future customer.
 
 ---
 
@@ -425,9 +425,11 @@ Approved architecture allows future extension. Customer Portal: future web panel
 
 ## 40.8 Organization & Staff Management (Frontend)
 
-Final verification: department transfer count update is covered by `org-transfer-count.test.tsx` (Finance 1→0, HR 1→2). All 116 tests pass. Lint, TypeScript, and build pass. Browser visual verification remains pending owner review.
+Historical phase notes: the current implementation is described by the organization and staff pages and repositories. Test results are recorded in `docs/implementation/phase-16-state-verification.md`; do not treat the counts below as current.
 
-Final verification: department edit/save/cancel, staff edit/save/cancel, search, filter, sort, and department counts are covered by React Testing Library interaction tests. Unsupported Department Head assignment and staff employment-status editing are blocked at repository level. Tests: 9 department repo + 9 staff repo + 11 org interaction. Total suite 110 passing.
+Department transfer count update is covered by the department and staff repository tests. Browser visual verification remains pending owner review.
+
+Department edit/save/cancel, staff edit/save/cancel, search, filter, sort, and department counts are covered by React Testing Library interaction tests. Unsupported Department Head assignment and staff employment-status editing are blocked at repository level.
 
 Department create/edit, staff create/edit, search/filter/sort, employee counts, and profile view are implemented. Department Head assignment and staff employment-status editing were removed because canonical eligibility/policy is undefined. Department active/archived status is supported. Tests: 5 department + 5 staff repo tests + 4 RTL interaction tests.
 
@@ -435,7 +437,7 @@ Organization Management is implemented at `/admin/organization` with departments
 
 ## 40.7 Account Management (Frontend)
 
-Account status transitions are enforced in `MockAccountRepository` via `ALLOWED_TRANSITIONS`. Protected Super Administrator accounts cannot be modified by non-super-admin actors. Super Administrator role assignment/revocation is restricted to super-admin actors. Dashboard KPI cards remain gated by module grants. (R3 corrections applied.)
+Account status transitions are enforced in `MockAccountRepository` via `ACCOUNT_STATUS_TRANSITIONS`. Protected Super Administrator accounts cannot be modified by non-super-admin actors. Super Administrator role assignment/revocation is restricted to super-admin actors. Dashboard KPI cards remain gated by module grants. (R3 corrections applied.)
 
 Account Management is part of **Staff & Access** at `/admin/organization/staff` (`/admin/accounts` remains only as a hidden, permission-guarded compatibility route: holders of the `accounts` grant are forwarded to `/admin/organization/staff?view=account`, the Account-only view; everyone else sees an access restriction; it is never listed in the navigation). One directory lists employees with their linked accounts plus accounts that no staff record links to, with All / Employees / Account only / Pending chips. Every row action (Edit, Activate, System roles, Change status, suspend/deactivate, Delete) lives in the row's three-dots menu; Delete is always listed and is disabled with the reason when blocked. New accounts are created only through **Add staff**, which provisions a linked Pending account; Super Admin/Admin may also grant system roles to it there. Account columns, chips, activation, system-role assignment/revocation, status transitions, and are gated by the non-delegable `accounts` module grant (Super Admin/Admin only); Staff holders see employees and linked-account status, with suspend/deactivate only. Hard deletion of accounts and staff records is disabled for everyone: Delete stays visible but unavailable, with the reason shown as visible text in the menu, until the owner approves the archive and retention policy (open item R8, doc 01 section 8). Rejected deletions change nothing and write no audit event. All of this runs over the centralized in-memory mock store. Forms use inline validation and duplicate-email checks. Dashboard KPI cards are gated by their own module grants (sales-network/customers). No backend, auth, or database work is included.
 
@@ -450,7 +452,9 @@ Account Management is part of **Staff & Access** at `/admin/organization/staff` 
 - **Sales**: my and team confirmed sales value (OST: my customers instead of team), confirmed and pending counts; my/team trend; confirmed sales by tier; activity; own returned contracts and customer drafts; account, upline, and direct-downline contributions by recording-time team.
 - **Finance**: pending verifications, verified collections (gross with net note), outstanding receivables (with overdue), approved unpaid commissions; gross/reversals-and-refunds/net trend; receivables by state; payment and payout activity; six gated Finance queues.
 
-The visual design follows `docs/ui-redesign/dashboard.png`: KPI cards with a tinted icon chip, a comparison or "Current" pill, and a faint decorative corner wave; chart cards with a segmented series switch (one series at a time, monotone curve, full-peso axis, hover tooltip, and a screen-reader-only summary and data table); equal-width activity and pending-approval cards. Period KPIs (Confirmed Sales Value, Verified Collections, Confirmed Sales Count) compare with the preceding period of equal length via `src/modules/reports/kpi-comparison.ts` (doc 11 section 32.1); snapshot KPIs never show a percentage.
+The visual design uses KPI cards with a tinted icon chip, a comparison or "Current" pill, and a faint decorative corner wave; chart cards with a segmented series switch (one series at a time, monotone curve, full-peso axis, hover tooltip, and a screen-reader-only summary and data table); equal-width activity and pending-approval cards. Period KPIs (Confirmed Sales Value, Verified Collections, Confirmed Sales Count) compare with the preceding period of equal length via `src/modules/reports/kpi-comparison.ts` (doc 11 section 32.1); snapshot KPIs never show a percentage.
+
+Historical phase notes: sections 40.1–40.5 describe earlier phases. Current grants are in `src/modules/identity/permissions.ts` and include customers, sales, commissions, membership, stay-points, reports and audit-logs for the roles shown there.
 
 ## 40.5 Sales Network Panel Shells (Phase 1B-B06)
 
@@ -521,7 +525,7 @@ Align with `implementation.md`. Phase 0 documentation; Phase 1 frontend foundati
 31. Reports use approved source metrics.
 32. Public verification respects disclosure restrictions.
 33. Public CMS architecture remains supported.
-34. Redemption remains disabled.
+34. Live Redemption remains disabled; the staff prototype is authorized under the 2026-11-17 status.
 35. Services remains disabled.
 36. Customer Portal is a future implementation phase.
 37. Mobile is a future implementation phase.
@@ -589,7 +593,7 @@ Align with `implementation.md`. Phase 0 documentation; Phase 1 frontend foundati
 - [ ] Stay Points.
 - [ ] Reports.
 - [ ] Audit.
-- [ ] Disabled Redemption.
+- [ ] Redemption staff prototype authorized; live use disabled.
 - [ ] Disabled Services.
 
 ### Data and Security
@@ -623,13 +627,13 @@ Only mark criteria complete if actually documented. Documentation completion is 
 - **File created/updated:** `docs/development/frontend.md` (rewritten/expanded).
 - **Frontend architecture coverage:** Next.js App Router, React/TypeScript, folder structure, panel architecture, UI design system, state management, mock data, typed adapters, API integration, security, frontend testing.
 - **Portal coverage:** Admin/Operations, Public, IST, OST, Future Customer.
-- **Business module coverage:** Organization/Roles, Sales Network, Genealogy, Accreditation, Customers, VIP Products, Contracts, Sales, Finance, Commissions, Membership, Stay Points, Reports, Audit, disabled Redemption/Services.
-- **Cross-document consistency:** Aligned with architecture.md and business rules 01–13. No material conflicts.
+- **Business module coverage:** Organization/Roles, Sales Network, Genealogy, Accreditation, Customers, VIP Products, Contracts, Sales, Finance, Commissions, Membership, Stay Points, Reports, Audit, Redemption staff prototype, disabled Services.
+- **Cross-document consistency:** Aligned with architecture.md and business rules 01–14. No material conflicts.
 - **Frontend implementation readiness:** Sufficient direction for future Phase 1 frontend task. Material unresolved dependencies: auth framework compatibility, exact API contracts, storage provider selection, feature flag mechanism.
 - **Validation results:** Markdown structure validated; relative links verified; architecture and business-rule consistency checked; git diff inspection performed.
-- **Execution safety:** Application code modified: No. Application scaffold created: No. Database modified: No. APIs implemented: No. Other documentation modified: No. New development files created: No. Git commit: No. Git push: No. Git merge: No. Deployment: No. Redemption enabled: No. Services enabled: No.
+- **Execution safety:** Application code modified: No. Application scaffold created: No. Database modified: No. APIs implemented: No. Other documentation modified: No. New development files created: No. Git commit: No. Git push: No. Git merge: No. Deployment: No. Redemption live use enabled: No; staff prototype authorized 2026-11-17. Services enabled: No.
 
-STOP — awaiting explicit authorization before beginning Phase 1 implementation.
+Historical note: this stop point applied before Phase 1 implementation. The frontend prototype now exists; backend, database and deployment still require authorization.
 
 ## 41. Official UI Component Standard — shadcn/ui on Base UI (supersedes Ant Design first, effective November 8, 2026)
 

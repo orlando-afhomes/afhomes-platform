@@ -1,6 +1,7 @@
 # FP12: State Foundations
 
 - Status: Implemented on 2026-11-18. Verified with typecheck, lint and focused tests.
+- The task boxes below are the original plan; they are retained as history and are not a live checklist. See Status and Verification for the recorded result.
 - Layer: Frontend (mock).
 - Business rules: none changed. UI standards: `AGENTS.md` section 8.
 - Depends on: none.
@@ -48,7 +49,7 @@ Create the shared building blocks for every loading, empty, error and busy state
 | Layer | Documentation only |
 | Blocked by | none |
 | Acceptance | The section exists verbatim; no other part of `AGENTS.md` changes. |
-| Status | Planned |
+| Status | Implemented on 2026-11-18 |
 
 **File:** `AGENTS.md`.
 
@@ -84,7 +85,7 @@ This applies to OpenCode, Codex, Claude Code, and any other agent reading this f
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Component tests cover rendering, roles, retry and success. Existing admin tests still pass. |
-| Status | Planned |
+| Status | Implemented on 2026-11-18 |
 
 **Files**
 
@@ -147,7 +148,7 @@ export function QueryState(props: {
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Every skeleton announces loading, contains skeleton blocks, matches the real layout, and renders the login shell for the login pages. |
-| Status | Planned |
+| Status | Implemented on 2026-11-18 |
 
 **Files**
 

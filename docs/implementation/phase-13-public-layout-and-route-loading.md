@@ -1,6 +1,7 @@
 # FP13: Public Layout and Route Loading
 
 - Status: Implemented on 2026-11-18. Route group and 16 loading files built; production build passes.
+- The task boxes below are the original plan; they are retained as history and are not a live checklist. See Status and Verification for the recorded result.
 - Layer: Frontend (mock).
 - Business rules: none changed. UI standards: `AGENTS.md` section 8.
 - Depends on: FP12 (state primitives and public skeletons).
@@ -35,7 +36,7 @@ Give every public route a true route-level loading state that keeps the public h
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | URLs are unchanged; the header/footer appear exactly once; all public tests and the build pass. |
-| Status | Planned |
+| Status | Implemented on 2026-11-18 |
 
 **Files**
 
@@ -101,7 +102,7 @@ const routeExists = (href: string) =>
 | Layer | Frontend (mock) |
 | Blocked by | F13.1, FP12 |
 | Acceptance | Each route has a `loading.tsx`; each renders at least one status region and one skeleton block; the header/footer remain visible. |
-| Status | Planned |
+| Status | Implemented on 2026-11-18 |
 
 **Compositions**
 

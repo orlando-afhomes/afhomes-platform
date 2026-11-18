@@ -27,7 +27,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Invalid data and in-use references block the change with a message. Unauthorized actors see no edit controls. Test per rule. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F1.2 Roles directory
 
@@ -39,7 +39,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Roles in use cannot be removed. Protected roles stay protected. The Clerk role cannot approve anything. A Director or Supervisor label resolves to the Super Administrator or Administrator role. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F1.3 Staff onboarding with a department role
 
@@ -51,7 +51,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | A role incompatible with the department is rejected. Staff record, department role and account status stay separate fields. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F1.4 Scoped approval before access is active
 
@@ -63,7 +63,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Without the grant, the action is hidden and the mutation is refused. A pending account cannot sign in. HR can activate and reactivate an office staff account but is refused for an Administrator, Super Administrator or seller account. A self-approved entry is flagged in history. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F1.5 Revocation and last-Super-Admin guard
 
@@ -75,7 +75,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | One test for the last-Super-Admin guard and one for revocation. An Administrator is refused when granting the Super Administrator role. |
-| Status | Exists (per atlas), verify when picked up |
+| Status | Exists in mock; protected-account and last-Super-Admin guards implemented |
 
 ## F1.5a My Account
 
@@ -87,19 +87,19 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Read-only fields cannot be edited. Field errors stay on the screen. |
-| Status | Exists (per atlas). The session snapshot lists My Account browser QA as not done. |
+| Status | Exists in mock; My Account browser QA still open |
 
 ## F1.6 Access-change audit trail
 
 | Field | Value |
 |---|---|
 | Journey | J03, TO-BE "Record approved access and audit" |
-| Current | The atlas says history is recorded "where implemented". |
+| Current | Account, role and staff changes append audit events and appear in `/admin/audit-logs`. |
 | Target | Persist actor, scope, timestamps and change evidence for every access change. |
 | Layer | Frontend (mock) first, Backend later |
 | Blocked by | none |
 | Acceptance | Each access change appears in `/admin/audit-logs` with actor and time. Credentials are never logged. |
-| Status | Partial |
+| Status | Implemented in mock; account, role and staff changes are audited and tested |
 
 ## Out of scope
 

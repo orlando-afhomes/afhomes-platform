@@ -25,7 +25,7 @@ It does not define Finance verification internals, Stay Points calculation, comm
 - **Sales Network** preserves original salesperson, recommender, and team attribution.
 - **Finance** owns payment verification, collections, balances, reversals.
 - **VIP Membership** owns membership status, validity, and benefits evaluation.
-- **Stay Points** owns entitlement evaluation, release, balance accounting, and redemption.
+- **Stay Points** owns entitlement evaluation, release and balance accounting; points use is defined by doc 10.
 
 ---
 
@@ -277,7 +277,7 @@ Sales Network reporting measures the full confirmed contract value under its app
 
 Every VIP tier must have a defined benefits configuration. Existing Bronze, Silver, and Gold contracts provide reference values for discount percentage, priority reservation privileges, eligible venue scope, entrance privileges, cardholder limitations, supplementary holder eligibility, membership validity, annual Welcome Gift cycles, Stay Points allocation, and qualifying spend requirements.
 
-Do not duplicate the full Stay Points calculation engine inside VIP Product Management. The VIP Product module owns contractual entitlement definitions and version snapshots. The Stay Points module owns actual entitlement evaluation, release, balance accounting, and redemption.
+Do not duplicate the full Stay Points calculation engine inside VIP Product Management. The VIP Product module owns contractual entitlement definitions and version snapshots. The Stay Points module owns actual entitlement evaluation, release and balance accounting; points use is defined by doc 10.
 
 Restrictions: do not claim points are guaranteed immediately on activation, are automatically available in the full lifetime amount, can universally be converted into cash, can be redeemed at unauthorized third-party venues, or can bypass contractual qualifying-spend requirements. Preserve finalized contract benefit terms even when Admin edits a VIP tier.
 

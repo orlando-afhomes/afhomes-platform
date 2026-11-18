@@ -87,7 +87,7 @@ Row count must equal the route count: **62**.
 | 28 | `/admin/organization/staff` | Table (tabs) | `DataTable loading` | "No staff or accounts found." | None | Dialogs and `confirmRun` pending | No error state. | Medium | Partial | Account columns appear only with the accounts grant. |
 | 29 | `/admin/promos` | Table (redirect to `/admin/stay-points?tab=promos`) | `DataTable loading` | "No promos found." | None (`promos` and `outlets` errors ignored) | `FormDialog` and `confirmRun` pending | No error state. | Medium | Partial | Points-earning rule; ending a promo keeps points already earned. |
 | 30 | `/admin/promos/points` | Table (redirect to `/admin/stay-points?tab=promo-points`) | `DataTable loading` | "No Promo Points entries yet." | None | `ReasonDialog` and `confirmRun` pending | No error state. | Medium | Partial | Voiding a use returns the points to the member. |
-| 31 | `/admin/redemption` | Table (tabs) | `QueryState` | "No bookings yet." / "No activated memberships." | `QueryState` | `FormDialog` pending; `confirmRun` pending | None | High | Complete | Project instructions record Redemption as disabled pending separate build authorization (doc 10) while the route and panels exist in code. Confirm scope with the owner before Phase 2. |
+| 31 | `/admin/redemption` | Table (tabs) | `QueryState` | "No bookings yet." / "No activated memberships." | `QueryState` | `FormDialog` pending; `confirmRun` pending | None | High | Complete | The staff Redemption prototype is authorized (2026-11-17); live Redemption and customer submissions remain separately unauthorized. Do not remove the route without owner instruction. |
 | 32 | `/admin/redemption/points-table` | Table (redirect to `/admin/vip-products?tab=points-table`) | `QueryState` | "No points tables yet." / "No rows." | `QueryState` | Config dialogs and `ReasonDialog` pending | None | Medium | Complete | A new table applies only to cards claimed on or after its start date. |
 | 33 | `/admin/reports` | Dashboard hub | Per-card `Skeleton` | Per-card "No comparison available" | Per-card error text | N/A | None | Medium | Complete | One shared date range across report tabs. |
 | 34 | `/admin/reports/collections` | Report | `AdminStatCard loading` + `ReportTable` `QueryState` | "No collections match." | `QueryState` | Export is `disabled` while busy | None (Export is disabled while busy; no spinner) | Medium | Complete | Needs `finance.reports.view`. |
@@ -130,6 +130,8 @@ Row count must equal the route count: **62**.
 | Static | 1 |
 | **Total** | **62** |
 
+Redirect taxonomy: 16 admin `page.tsx` files call a redirect helper. Eight are counted as `Redirect` rows (a server redirect only); the other eight are listed as `Table (redirect to …)` and audited through their target tab.
+
 ### Shared gaps
 
 1. **Missing query-error state on bare `DataTable` pages.** These screens pass `loading` to `DataTable` but never render `QueryState` or any other error branch: organization (area, staff, departments, roles), sales network (area, members, genealogy, member detail, registrations), promos, promo-points, Settings Lists, and the Stay Points area that hosts the promo tabs. A failed request looks like an empty table. This is the largest gap: 14 routes.
@@ -138,7 +140,7 @@ Row count must equal the route count: **62**.
 4. **`useActionRunner` is unused in admin.** Panels either use `useConfirmRun` with toasts or ad-hoc try/catch plus `toast`. The shared helper is available but not the convention here; any Phase 2 cleanup should either adopt it or say explicitly that it is not the admin pattern.
 5. **No admin page passes `QueryState onRetry`.** The retry path added to the shared error state is never offered on an admin route, so a failed load can only be retried by reloading the page.
 6. **Single empty text for filtered tables.** `/admin/customers`, `/admin/sales/contracts` and `/admin/finance/collections` show one message whether the register is empty or the filters excluded everything. Minor, but it makes "is this system empty?" ambiguous during support calls.
-7. **Business-rule caveat, not a UI gap.** Redemption has a full route and panels while project instructions record it as disabled pending separate build authorization (doc 10). The owner should confirm before Phase 2 touches it.
+7. **Business-rule status, not a UI gap.** The staff Redemption prototype is authorized (2026-11-17); live Redemption and customer submissions remain separately unauthorized. Doc 10 now carries the same status. Do not remove the route or enable live use without owner instruction.
 
 ### Phase 2 batch order (highest risk first)
 

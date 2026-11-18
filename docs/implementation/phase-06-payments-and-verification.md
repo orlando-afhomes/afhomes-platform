@@ -26,7 +26,7 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Each failed check returns correction feedback and leaves no record. A missing or duplicate OR/reference number is refused. A seller slip never counts toward the balance. Evidence is not placed in an unrestricted public location. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F6.2 Finance verification
 
@@ -38,19 +38,19 @@ Routes (from the atlas):
 | Layer | Frontend (mock) |
 | Blocked by | none |
 | Acceptance | Verification never activates membership. A rejected payment never counts toward the balance. |
-| Status | Exists (per atlas) |
+| Status | Exists in mock |
 
 ## F6.3 Suggested match and duplicate check
 
 | Field | Value |
 |---|---|
 | Journey | J07 |
-| Current | Duplicate checks exist. Workbook matching uses the sale number, or the buyer as a fallback (OPS section 4.3). The workbook's Supervisor approval is the Administrator under R4. |
+| Current | Duplicate checks exist. A suggested match is a hint only; approving it needs a reason, and true duplicate references stay blocked. Workbook matching uses the sale number, or the buyer as a fallback (OPS section 4.3). The workbook's Supervisor approval is the Administrator under R4. |
 | Target | Per R6: a Clerk enters each receipt with an OR or reference number, and Finance, the Administrator or the Super Administrator approves it. Reference numbers are unique across the system. Suggest a match and flag duplicates. |
 | Layer | Frontend (mock) |
 | Blocked by | none (G06 decided R6) |
 | Acceptance | A suggestion never auto-approves a receipt. A duplicate OR or reference number is blocked system-wide. A suggested match is only a hint for the approver. |
-| Status | Partial |
+| Status | Implemented in mock; suggested matches need a reason and duplicate references stay blocked |
 
 ## F6.4 Returned-receipt correction and resubmit (U06)
 

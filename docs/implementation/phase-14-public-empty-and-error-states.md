@@ -1,6 +1,7 @@
 # FP14: Public Empty, Error and Login States
 
 - Status: Implemented on 2026-11-18. FAQ/blog/Verify/OST states and login submit state verified.
+- The task boxes below are the original plan; they are retained as history and are not a live checklist. See Status and Verification for the recorded result.
 - Layer: Frontend (mock).
 - Business rules: none changed. Do not change copy, validation or daily-limit logic.
 - Depends on: FP12 (shared state components and skeletons), FP13 (public layout and loading files).
@@ -50,7 +51,7 @@ Replace one-off public empty and error messages with the shared components, make
 | Layer | Frontend (mock) |
 | Blocked by | FP12 |
 | Acceptance | Existing empty copy is unchanged; the `EmptyState` is readable at 320 px and announced in the results region. |
-| Status | Planned |
+| Status | Implemented on 2026-11-18 |
 
 **Files**
 
@@ -87,7 +88,7 @@ Replace one-off public empty and error messages with the shared components, make
 | Layer | Frontend (mock) |
 | Blocked by | FP12 |
 | Acceptance | A failed lookup ends the spinner, shows a clear message, and cannot be confused with a loading state. |
-| Status | Planned |
+| Status | Implemented on 2026-11-18 |
 
 **File:** `src/panels/public/pages/accreditation-verification-page.tsx`
 
@@ -112,7 +113,7 @@ Replace one-off public empty and error messages with the shared components, make
 | Layer | Frontend (mock) |
 | Blocked by | FP12, FP13 |
 | Acceptance | Loading, invalid-link and submit-error states are visually distinct and do not change the underlying rules. |
-| Status | Planned |
+| Status | Implemented on 2026-11-18 |
 
 **Files**
 
@@ -156,7 +157,7 @@ Replace one-off public empty and error messages with the shared components, make
 | Layer | Frontend (mock) |
 | Blocked by | FP12, FP13 |
 | Acceptance | The label does not jump, double clicks do not submit twice, and the pending state is announced. |
-| Status | Planned |
+| Status | Implemented on 2026-11-18 |
 
 **Files**
 

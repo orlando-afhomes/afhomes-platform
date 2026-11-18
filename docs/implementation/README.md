@@ -1,8 +1,9 @@
 # Feature-by-Feature Implementation Plan
 
 Atlas version: `2026-11-13.1`
-Atlas baseline: `develop @ a0cba09 · reviewed working copy · 13 Nov 2026`
-Docs written against: `develop @ a0cba09` plus local changes, with owner rulings R1 to R13 and answers A1 to A8.
+Historical atlas baseline: `develop @ a0cba09 · reviewed working copy · 13 Nov 2026`
+Historical docs baseline: `develop @ a0cba09` plus local changes, with owner rulings R1 to R13 and answers A1 to A8.
+Status refresh: 2026-11-18 against `develop @ ff41c1f`; feature statuses and current-state text were updated. The atlas baseline above is historical.
 
 ## Prototype working-copy update (2026-11-13)
 
@@ -29,7 +30,7 @@ It does not authorize any work. Per `AGENTS.md` section 7, every feature still n
 
 ## Not the same as the technical phases
 
-`docs/development/implementation.md` defines technical Phases 0 to 8 (documentation, frontend foundation, MongoDB, backend, business modules, integration, validation, deployment). This folder defines **feature phases FP1 to FP11**. A feature phase groups the features of one business area. Its features move through the technical phases: frontend mock first, then backend and database only when separately authorized.
+`docs/development/implementation.md` defines technical Phases 0 to 8 (documentation, frontend foundation, MongoDB, backend, business modules, integration, validation, deployment). This folder defines **feature phases FP1 to FP16**. A feature phase groups the features of one business area. Its features move through the technical phases: frontend mock first, then backend and database only when separately authorized.
 
 ## Feature phases
 
@@ -92,11 +93,11 @@ flowchart LR
 
 The public route skeletons require the route group in FP13. Without it, a route `loading.tsx` renders outside `PublicLayout` and the header/footer disappear while loading. The admin work is deliberately audit-first: FP15 changes no admin page, and any fixes require a separate approved Phase 2 plan.
 
-**Build status (2026-11-18):** FP12–FP14 implemented, FP15 audit complete, FP16 verification complete. The production build passes. The only failing test is a pre-existing admin drawer logout expectation recorded in FP16; the three full-run timeouts pass when run alone.
+**Build status (2026-11-18):** FP12–FP14 implemented, FP15 audit complete, FP16 verification complete with recorded limitations. The production build passes. The only failing test is a pre-existing admin drawer logout expectation recorded in FP16; the three full-run timeouts pass when run alone. Browser checks covered 375, 768 and 1280 px; 320/1100 px, reduced-motion and no-JavaScript checks remain open.
 
 ## November 12 rule alignment
 
-Start by verifying the contracts list, duplicate Customer ID recovery, dashboard activity, and pagination. Then align customer registration and seller attribution, VIP number issuance and commission month close, and the Annual Welcome Gift. Verify each approved slice before the next. Use synthetic data and preserve issued numbers and paid amounts. IGP planning may cover approved sale and receipt handling and the document checklist while the signed grant terms, the definition of `SUPERSEDED` and the band code above ₱9,000,000 remain open (the numbering questions are decided in doc 14 section 5). Redemption stays disabled. See the [decision register](decisions-and-gaps.md) for the pending company, Finance, and legal inputs.
+Start by verifying the contracts list, duplicate Customer ID recovery, dashboard activity, and pagination. Then align customer registration and seller attribution, VIP number issuance and commission month close, and the Annual Welcome Gift. Verify each approved slice before the next. Use synthetic data and preserve issued numbers and paid amounts. IGP planning may cover approved sale and receipt handling and the document checklist while the signed grant terms, the definition of `SUPERSEDED` and the band code above ₱9,000,000 remain open (the numbering questions are decided in doc 14 section 5). Live Redemption stays disabled; the staff prototype is authorized under the 2026-11-17 status. See the [decision register](decisions-and-gaps.md) for the pending company, Finance, and legal inputs.
 
 ### IGP prototype build sequence
 
@@ -122,10 +123,10 @@ Each card is one feature, with ID `F<phase>.<n>` (for example `F6.3`).
 
 ## What was verified, and what was not
 
-Verified against the code at `fc060bb` while writing (the removal of the 7-day commission wait, the My Sales and HR account changes and other later changes came after that commit):
-- All route folders listed in the atlas exist under `src/app/`, including `/verify` and `/register/ost`.
-- U06 is real: `src/panels/admin/components/payment-actions.tsx` only mentions resubmission in dialog text. No submitter control exists, while `src/data/mock/payment-repository.ts` supports resubmitting a Returned payment.
-- There is no Redemption or Services route under `src/app/`.
+Historical verification at `fc060bb` while writing (the removal of the 7-day commission wait, the My Sales and HR account changes and other later changes came after that commit). Current status is in the phase docs and the 2026-11-18 refresh:
+- All route folders listed in the atlas exist under `src/app/`, including the `(public)` group, `/verify` and `/register/ost`.
+- U06 was open at `fc060bb`: `payment-actions.tsx` had no submitter control. The Fix and Resend control now exists in `src/panels/admin/components/payment-actions.tsx`; `payment-repository.ts` supports resubmitting a Returned payment.
+- At `fc060bb` there was no Redemption or Services route under `src/app/`. The authorized staff Redemption prototype now exists at `/admin/redemption`; Services remains without a route.
 - The changes between `a0bdcef` and `fc060bb` touch `src/modules/commissions/rules.ts`, `src/data/mock/commission-repository.ts`, `src/modules/finance/milestones.ts`, `src/modules/stay-points/engine.ts` and a few panel files.
 
 Taken from the atlas and not re-checked in code: every other AS-IS statement. Treat those statuses as "per atlas `2026-11-12.3`" until the feature is picked up. Tests, lint and build were not run, because this is documentation only.
@@ -135,5 +136,5 @@ Taken from the atlas and not re-checked in code: every other AS-IS statement. Tr
 - Frontend first, typed in-memory mock data, no persisted business records (`AGENTS.md` section 4).
 - UI follows `AGENTS.md` section 8: shadcn/ui on Base UI, Tailwind CSS 4, no new Ant Design usage.
 - Business rules are referenced by path and section, never copied. No prices, rates or policies are invented. Unresolved items stay unresolved.
-- Redemption and Services stay disabled.
+- Live Redemption and Services stay disabled; the staff Redemption prototype is authorized.
 - Only the owner stages, commits and pushes.

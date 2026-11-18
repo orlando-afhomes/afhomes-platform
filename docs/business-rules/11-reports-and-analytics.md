@@ -20,7 +20,7 @@ Reports & Analytics provides authorized business users with consolidated operati
 
 Reports & Analytics must not implement application functionality, dashboards, APIs, or database views. This was a documentation-only specification when written; the frontend now builds against it, and building each report still needs owner authorization.
 
-Scope notes (owner ruling R11, 2026-11-12): IGP sales are in scope and built together with VIP (rules in `docs/business-rules/14-igp-sales.md`). Redemption is planned in doc 10 and stays disabled until the owner authorizes its build. There is no public VIP card or customer lookup (section 21). The CMS (website page editor) is deferred.
+Scope notes (owner ruling R11, 2026-11-12): IGP sales are in scope and built together with VIP (rules in `docs/business-rules/14-igp-sales.md`). Live Redemption stays disabled until the owner authorizes it; the staff prototype is authorized under the 2026-11-17 status. There is no public VIP card or customer lookup (section 21). The CMS (website page editor) is deferred.
 
 ---
 
@@ -98,7 +98,7 @@ Reports & Analytics consumes these sources and must not override them.
 Use `docs/business-rules/01-roles-and-permissions.md`. AFHomes supports module-based permissions and record-level authorization. These are separate concepts. Having access to a reporting module does not automatically authorize viewing every customer, financial record, or Sales Network branch.
 
 - **Super Admin:** may access all reporting information permitted by the established Super Admin role and security model.
-- **Admin:** may view management reporting according to assigned permissions; where existing authorization permits, Admin may access organization-wide reports and select particular Sales Network teams.
+- **Admin:** may view all management reporting and select any Sales Network team; the Super Administrator has the same access.
 - **Finance:** may view all reports, including sales reports, view only (owner ruling, 2026-11-12; follow-up item 25). Financial reporting includes Verified Collections, Outstanding Balances, Overdue Payments, Reversals and Refunds, Approved Commissions, Paid Commissions, Financial Reconciliation Cases. Finance reporting access must still respect applicable internal security restrictions.
 - **IST — SVD:** may access authorized personal and descendant-team performance information within the relevant SVD branch.
 - **IST — SSM:** may access authorized personal and downline reporting within the applicable SSM branch. The SVD upline may be shown as appropriate contextual information, but displaying an upline does not automatically grant access to their private reporting records.
@@ -277,7 +277,7 @@ Use `docs/business-rules/05-vip-products-and-contracts.md`. Document requirement
 
 Historical contracts: use the actual finalized contractual price. Do not recalculate old contract values from current VIP product configurations.
 
-Current standard tiers: Bronze ₱72,000 / 7 years; Silver ₱240,000 / 12 years; Gold ₱390,000 / 22 years. These are updated standard catalog baselines, not universal historical transaction values. Existing source-document conflicts must remain identified until formally resolved.
+Current standard tiers: Bronze ₱72,000 / 7 years; Silver ₱240,000 / 12 years; Gold ₱390,000 / 22 years. These are updated standard catalog baselines, not universal historical transaction values. The Gold and Silver source conflicts were resolved on 2026-11-10/12 (doc 05 §6.1 and amendment). No open price conflict remains.
 
 ### 17.2 VIP Membership Reporting
 
@@ -323,7 +323,7 @@ Redemption basis: points pay only for overnight accommodation at open AFhomes Di
 
 ## 20. Disabled Module Status
 
-The planned standalone MongoDB system preserves Redemption and Services functionality but keeps these modules hidden and disabled for now. Redemption rules are being planned in doc 10 (owner ruling R11 item 3, 2026-11-12); the module stays disabled until the owner authorizes its build. Documentation must not authorize their reactivation. Historical authorized redemption information may remain relevant for reporting and audit purposes. However, defining Redemption reports must not automatically expose a disabled Redemption module, enable new redemption requests, enable blocked routes, re-enable Services, start points consumption processing, or turn on redemption feature flags. Actual reporting availability must respect the implementation's feature flags and authorization rules.
+The system preserves Redemption and Services functionality. The staff Redemption prototype is authorized (2026-11-17) with synthetic data and sample points-per-night values; live Redemption and customer submissions require separate authorization. Services remains disabled. Documentation must not authorize live reactivation. Historical authorized redemption information may remain relevant for reporting and audit purposes. However, defining Redemption reports must not automatically expose a disabled Redemption module, enable new redemption requests, enable blocked routes, re-enable Services, start points consumption processing, or turn on redemption feature flags. Actual reporting availability must respect the implementation's feature flags and authorization rules.
 
 ---
 
@@ -349,7 +349,7 @@ Dashboard reporting should present accurate business information without becomin
 
 Document how report visibility should correspond to the user's actual role and applicable data scope.
 
-- **Admin:** may view authorized organizational reports. Where permitted, Admin may select a target Sales Network team.
+- **Admin:** may view all organizational reports and select any Sales Network team; the Super Administrator has the same access.
 - **SVD:** views applicable branch-level and personal performance.
 - **SSM:** views authorized SSM branch performance and personal information.
 - **SM:** views authorized SM branch and OST downline performance.
@@ -450,7 +450,7 @@ Scenarios A to Q are summarized here with expected outcomes.
 - **Scenario M (Refunded resort spending):** a refund lowers the period's Qualifying Spend; an unreleased tranche waits until spend qualifies again; a released tranche stays released; no Points Hold and no negative balances.
 - **Scenario N (Reporting date filter):** Admin selects Past 28 Days; each report uses applicable authoritative event date; date boundaries follow established project conventions; totals consistent with underlying module reports.
 - **Scenario O (Privacy):** OST user attempts to view unrelated seller or customer financial data → unauthorized records unavailable; reporting access does not bypass record-level permissions.
-- **Scenario P (Disabled Redemption):** Redemption disabled in planned MongoDB system → no new Redemption workflow activated; existing relevant historical records preserved; documentation does not enable hidden functionality.
+- **Scenario P (Live Redemption disabled):** live Redemption disabled while the staff prototype is authorized → no live Redemption workflow activated; existing relevant historical records preserved; documentation does not enable live functionality.
 - **Scenario Q (Policy revision):** management authorizes future change to a reporting definition → new reporting behavior follows authorized policy; historical source records preserved; material metric-definition changes identifiable.
 
 For every scenario, describe preconditions, relevant source data, applicable reporting event, expected calculation or classification, authorized visibility, historical/audit implications. Do not claim executable tests passed.
@@ -634,7 +634,7 @@ Status: **APPROVED** for dashboard KPI cards. This resolves dashboard period com
 - **Outstanding dependencies:** Listed in Section 32.
 - **Acceptance results:** All checklist items covered. Documentation completeness does not prove implementation readiness.
 - **Doc 14:** IGP (doc 14) was added later (R13, 2026-11-12) and is covered in the amendments below; this original report predates it.
-- **Change scope:** Documentation only (at the time of writing). No application code, database, migrations, existing documentation files, Git commit/push/merge, or deployment. Only `docs/business-rules/11-reports-and-analytics.md` created. Redemption and Services remain disabled. No unauthorized implementation assumptions.
+- **Change scope:** Documentation only (at the time of writing). No application code, database, migrations, existing documentation files, Git commit/push/merge, or deployment. Only `docs/business-rules/11-reports-and-analytics.md` created. Live Redemption and Services remain disabled; the staff Redemption prototype is authorized under the 2026-11-17 status. No unauthorized implementation assumptions.
 
 ## Owner rulings amendment (2026-11-12, rounds R6, R7, R11)
 
@@ -646,7 +646,7 @@ These rulings are authoritative and take precedence over earlier text in this do
 4. **Defaults (R7 item 3).** Reports list sales with no approved receipt for 90 days and Defaulted sales; the Administrator or the Super Administrator marks Defaulted; a payment returns the sale to Active. Doc 13 §4.6; clawbacks in doc 08. Section 15.
 5. **No public lookup (R11 item 1).** There is no public VIP card check; Public Customer Lookup (U08) is removed from scope and only staff check cards. Sections 21 and 31.
 6. **IGP in scope (R11 item 2).** IGP is built together with VIP; its rules are in `docs/business-rules/14-igp-sales.md`. Section 1.
-7. **Redemption (R11 item 3).** Planned in doc 10; it stays disabled until the owner authorizes the build. Sections 1 and 20.
+7. **Redemption (R11 item 3; 2026-11-17 status).** Live Redemption stays disabled until the owner authorizes it; the staff prototype is authorized under the 2026-11-17 status. Sections 1 and 20.
 8. **History import (R11 item 5).** Every seller and every unfinished sale is imported with its full receipt history; a side-by-side parallel run follows; the switch happens when a month closes with no unexplained differences (Rollout Guide v1.4 §6 and §8). Finished sales stay in the Excel archives (U12). Section 26.
 9. **CMS deferred (R11 item 6, U09).** Section 1.
 10. ~~**Open, not decided here:** whether contract finalization is still required before the 25% count.~~ **Settled:** it is not required (doc 07 follow-up item 1; doc 13 §4).
@@ -671,4 +671,4 @@ These rulings take precedence over earlier text in this document where they diff
 4. **Referred by me (follow-up of 2026-11-12, owner answer A8).** Sales where a member is the referrer but not the closing seller appear in a separate "Referred by me" list. They are not part of that member's My Sales totals and carry no contract links. A sale appears once per person.
 5. **IGP reporting.** IGP sales (doc 14) count in sales and team KPIs at their Closed Deal (10%); IGP stages and Series Number reporting follow doc 14 and doc 13.
 
-Numbering note: item numbers in this document's amendments follow the master follow-up list in `docs/implementation/decisions-and-gaps.md`; existing numbers are not renumbered.
+Numbering note: item numbers are kept as first cited; the master follow-up list is in `docs/implementation/decisions-and-gaps.md`.

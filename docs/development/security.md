@@ -436,7 +436,7 @@ Public lookup must resist unnecessary bulk discovery. Document input restriction
 
 ## 23. Public Accreditation Verification
 
-Use document 03. The public accreditation search has distinct rules from Customer Lookup. Relevant controls include official AA identifier validation, eligible active accreditation, approved identity fields, AAI/AAO distinctions, generic safe errors, rate limiting, no unauthorized private details. Preserve the approved IST versus OST validity-date display behavior. Do not expose unauthorized private profiles through public verification endpoints.
+Use document 03. The public accreditation search has distinct rules from Customer Lookup. Relevant controls include official AA identifier validation, eligible active accreditation, approved identity fields, AAI/AAO distinctions, generic safe errors, rate limiting, no unauthorized private details. The public result shows no validity date for either class; staff screens keep it (owner ruling, 2026-11-19). Do not expose unauthorized private profiles through public verification endpoints.
 
 ---
 

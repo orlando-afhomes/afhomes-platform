@@ -120,7 +120,7 @@ UI patterns: sidebar, top nav, breadcrumbs, tables, search, filters, pagination,
 
 Location: `src/panels/public/`. Separate presentation experience within the same app. Supports company branding, public website, content sections, accreditation verification, login entry, public CMS integration, approved public contact/payment inquiry info.
 
-Public verification follows approved rules: official AA number, no unauthorized discovery, IST omits "Valid Until", OST may show validity, private details restricted. There is no public customer or card lookup (owner ruling R11; doc 11 §21).
+Public verification follows approved rules: official AA number, no unauthorized discovery, no public "Valid Until" for either class, and staff screens keep it, private details restricted. There is no public customer or card lookup (owner ruling R11; doc 11 §21).
 
 Responsive sections, public nav, content presentation, search, accessibility, SEO, media, CMS-driven content where approved. Public styling isolated from Admin.
 

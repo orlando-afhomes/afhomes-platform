@@ -211,7 +211,7 @@ Every operation below is also allowed to the Administrator and the Super Adminis
 - Financial records: Finance appropriately authorized (U scope details).
 - Audit records: authorized personnel only (U).
 - ~~Public lookup: only eligible Active VIP Membership, masked (A, `04`).~~ **Superseded (owner ruling, 2026-11-12):** there is no public card or customer lookup (R11; `11` §21).
-- Public accreditation: exact AA number, active only, IST omits Valid Until, OST shows it (A, `03`).
+- Public accreditation: exact AA number, active only, no public Valid Until for either class, and staff screens keep it (A, `03`).
 
 Historical attribution must be preserved on transfers/conversions (`02` §6.3, §7.1).
 
@@ -265,7 +265,7 @@ Historical attribution must be preserved on transfers/conversions (`02` §6.3, �
 ## 12. Public Verification and CMS Boundaries
 
 - Customer Lookup: removed from scope; there is no public card or customer lookup (owner ruling R11, 2026-11-12; `11` §21).
-- IST/OST verification: exact AA number, active only; IST omits Valid Until, OST shows it (`03`, `11`).
+- IST/OST verification: exact AA number, active only; no public Valid Until for either class, and staff screens keep it (`03`, `11`).
 - No unrestricted public name discovery (`03`, `11`).
 - CMS: content management roles unresolved (`11` mentions authorized business users).
 

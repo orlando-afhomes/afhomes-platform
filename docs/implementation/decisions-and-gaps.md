@@ -238,6 +238,14 @@ Kept as official names: VIP Number, Reservation Agreement, Grant, Series Number,
 - **UI20, Non-Standard terms and approval.** Staff choosing Contract type Non-Standard enter the total price, the number of monthly payments (1 to 36) and a reason, next to the normal terms. The schedule is the plan's reservation fee and then equal monthly payments (the last takes the leftover centavos); the payment code is `T` plus the months. The Administrator approves inside "Approve deal" with the signed-approval reference; Finance then confirms or sends back from the contract page ("Confirm Non-Standard Terms", "Send Back"). The Finance dashboard lists "Non-Standard Terms to Confirm", linking to Collections filtered to them. A send-back clears both approvals (doc 05 item 32).
 - **Known limit:** commission amounts must be exact centavos (no approved rounding, D14), so a Non-Standard price whose commission does not divide exactly is refused when the VIP Number is issued. A rounding rule from the owner would remove this limit.
 
+### Late bill and Non-Activated tranche (2026-11-19)
+
+- **GATE-1, late bill versus Non-Activated.** A tranche not released at its due date is not finally closed. A bill dated inside that tranche's measurement period but approved after the due date still counts; if it completes the tier minimum, the tranche is released on the approval date (doc 09 section 12 item 5). It closes for good only at the end of the Validity Period or on an approved card transfer, except through a waiver (doc 09 section 19 item 2, amended 2026-11-19). The engine already behaved this way (`src/modules/stay-points/engine.ts`; the late-bill case is in `src/modules/stay-points/engine.test.ts`); the doc 09 glossary, section 19 item 2 and the doc 11 reporting example were corrected, and a regression test now pins the status change.
+
+### Allowance table ratification (2026-11-19)
+
+- **GATE-2, doc 11 versus doc 08.** Doc 11 section 24 listed the SM ₱1,000,000 target and the SVD 2% as invented targets. Verified against the AFhomes Commission System User Manual v2.3 §6.2 Table A and the signed IST SM, SSM and SVD service contracts v2.4 (2026-08-21): the figures are contractual (SM 1%, SSM 3%, SVD 2% PB rates; BA/PA 15,000 / 25,000 / 50,000). Owner ratified the Table A figures as the approved, configurable baseline. Doc 11's example was corrected; doc 08 section 15.4 now records the ratification. The 2% is an SVD PB rate, not a per-sale commission. No code change; `src/modules/commissions/allowances.ts` already uses the ratified values.
+
 ### Still open
 
 - **AFHomes and JA&D:** Supply the signed Goodwill and Formal VIP Grant terms, a band code above ₱9M, and a written definition of `SUPERSEDED`. Until then, track grant paperwork only, block sales above ₱9M, and refer that status for review.
@@ -303,6 +311,7 @@ U01 to U13 descriptions are in the atlas `COVERAGE.md` section "Incomplete and u
 - ~~Doc 07 amendment item 7 (per-contract Move approval wording) is stale against doc 05 item 12.~~ Fixed in R1 (2026-11-12): item 7 is marked superseded, and the Move effective date is 2026-11-09.
 - ~~The atlas baseline `a0bdcef` predates `fc060bb`.~~ Refreshed on 2026-11-12 (atlas `2026-11-12.3`, baseline `b784e30`).
 - ~~Code and rule disagree on the commission release wait: R8 removes the 7-day wait, but `src/modules/commissions/rules.ts` still defines `PAYOUT_RELEASE_WAIT_DAYS` and the payout milestone shows "Payout opens <date>". The atlas records this under G08 (Conflicting). It is for the owner to authorize a code change.~~ Fixed 2026-11-12: the wait was removed; payout opens on the first day of the month after 40% (owner decision D-A).
+- `docs/implementation/phase-03-sales-network-and-accreditation.md` line 97 still says the public result shows Valid Until for OST only. That file is a completed phase record and is not rewritten; the amended doc 03 rule governs.
 
 ### Public seller check and staff Customer Look Up (2026-11-16)
 
@@ -311,7 +320,7 @@ U01 to U13 descriptions are in the atlas `COVERAGE.md` section "Incomplete and u
     - It is open to the Super Administrator, Administrator, Clerk and Finance, through the new `customers.lookup` operation. Sellers do not get it.
     - The search needs at least 2 characters and is a partial match on the name, Customer ID, VIP Number or email. Only active, unexpired memberships are returned, up to 50.
     - Up to 6 suggestions are shown. The card shows the tier card, the name, the VIP Number, Valid Until, and total, weekday and weekend points.
-  - **The public seller check (`/verify`)** adds the v2 output and steps. The output is the masked name, the photo, Copy ID, and the support and bank block. The steps are the privacy tick, the visitor's contact details (kept for 24 hours) and 3 successful checks per 24 hours. It keeps the doc 03 rules: Expired is shown, and Valid Until is shown for OST only (doc 03 §9.4).
+  - **The public seller check (`/verify`)** adds the v2 output and steps. The output is the masked name, the photo, Copy ID, and the support and bank block. The steps are the privacy tick, the visitor's contact details (kept for 24 hours) and 3 successful checks per 24 hours. It keeps the doc 03 rules: Expired is shown, and no validity date is shown publicly for any type; staff screens keep it (owner ruling, 2026-11-19; doc 03 section 9.4).
   - **The public header, footer and home have a new look**, with the same links.
   - **The support and bank values are copied from the v2 settings.**
 - **Known limits:**

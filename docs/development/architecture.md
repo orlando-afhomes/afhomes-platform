@@ -201,7 +201,7 @@ Backend runs within the single Next.js application. Route handlers thin: parse, 
 
 ## 15. REST API Architecture
 
-Prefix `/api/v1`. Conventions: resource-oriented endpoints, HTTP methods, Zod validation, consistent envelopes, auth/authz on protected routes, pagination/filtering/sorting/search, idempotency where required, versioning. Public API restrictions: exact AA number only, active results only, no name-based discovery, IST omits "Valid Until", OST may show it, no private info.
+Prefix `/api/v1`. Conventions: resource-oriented endpoints, HTTP methods, Zod validation, consistent envelopes, auth/authz on protected routes, pagination/filtering/sorting/search, idempotency where required, versioning. Public API restrictions: exact AA number only, active results only, no name-based discovery, no public "Valid Until" for either class, and staff screens keep it, no private info.
 
 ---
 

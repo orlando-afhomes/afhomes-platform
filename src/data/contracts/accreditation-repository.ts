@@ -5,7 +5,7 @@ export type AccreditationStatusRequest = "pending" | "active" | "cancel" | "expi
 
 /**
  * Restricted public projection: masked holder name and photo only, no full name, contact or internal
- * ids (UI21). "Valid until" only for OST. An expired seller is shown as Expired (doc 03 section 9).
+ * ids (UI21). The public result never renders a validity date; the field stays for internal reuse (owner ruling, 2026-11-19; doc 03 section 9). An expired seller is shown as Expired.
  * A number replaced by a renewal resolves to the holder's current number, with
  * `quotedNumberSuperseded` set (doc 03 section 5.2.1).
  */

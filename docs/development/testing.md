@@ -309,7 +309,7 @@ Test valid date, expiration date, date after expiration, timezone interpretation
 
 ### 23.3 Public result privacy
 
-Verify only authorized fields are displayed. Preserve applicable IST/AAI versus OST/AAO validity presentation differences.
+Verify only authorized fields are displayed. The public result shows no validity date for either class; assert its absence in public tests, and keep internal screens showing it.
 
 ---
 

@@ -58,6 +58,19 @@ describe("Annual Welcome Gift", () => {
     ]);
   });
 
+  it("releases a tranche shown as not activated on its due date when a late-approved in-period bill qualifies", () => {
+    const state = createStayPointsState();
+    expect(computePointsLedger(terms, [], state, "2027-06-02").tranches[0].status).toBe("non_activated");
+
+    const spends = [{ ...bill("late", "2026-12-01", 100_000), approvedDate: "2027-06-10" }];
+    const ledger = computePointsLedger(terms, spends, state, "2027-06-10");
+    expect(ledger.tranches[0]).toMatchObject({ status: "released", releaseDate: "2027-06-10" });
+    expect(ledger.balances).toMatchObject({ spendableWeekday: 7_000, spendableWeekend: 3_000 });
+
+    computePointsLedger(terms, spends, state, "2027-06-11");
+    expect(state.ledger).toHaveLength(2);
+  });
+
   it("keeps a waived tranche closed until the next administrative cycle, then appends both buckets once", () => {
     const state = createStayPointsState();
     state.waivers.push({

@@ -384,7 +384,7 @@ Monthly team TCP plus credit; amounts in pesos a month.
 | SSM | 600,000 | 2,000,000 | 4,000,000 | 25,000 | 3% |
 | SVD | 1,800,000 | 5,000,000 | 10,000,000 | 50,000 | 2% |
 
-These are the shipped figures only. The live figures are configurable by an Administrator or the Super Administrator, and a person's own BA or PA amount or PB rate on their record overrides them (OPS §6.2). Every change is logged and never alters a closed month.
+These are the shipped figures only. The live figures are configurable by an Administrator or the Super Administrator, and a person's own BA or PA amount or PB rate on their record overrides them (OPS §6.2). Every change is logged and never alters a closed month. Owner ratification (2026-11-19): these are the approved baseline figures; they match OPS §6.2 Table A and the signed IST SM, SSM and SVD service contracts v2.4 (2026-08-21).
 
 ### 15.5 Limits
 

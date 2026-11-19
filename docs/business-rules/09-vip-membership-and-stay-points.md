@@ -49,7 +49,7 @@ This document does not define how points are used (bookings, points per night, h
 - **Qualifying Spend** — the gross pre-discount value of eligible paid transactions at AFhomes Direct Operations (section 10).
 - **AFhomes Direct Operations** — establishments operated directly by AFhomes (Grant §I-A). Franchised, licensed and third-party concessionaire establishments are excluded.
 - **Released Points** — points of a tranche that has been released; usable for redemption until the card expires.
-- **Non-Activated Tranche** — a tranche whose condition was not met and no waiver was granted; it is never released (Grant §I-B(d)(iii)).
+- **Non-Activated Tranche** — a tranche not released at its due date because its condition was not met and no waiver was granted. A bill dated inside its measurement period but approved after the due date still counts, and the tranche is released on the approval date if that bill completes the minimum (section 12 item 5). Otherwise it is never released (Grant §I-B(d)(iii)).
 - **Unreleased Tranche** — a tranche whose release date has not yet come.
 - **Weekday Points / Weekend Points** — the weekday/non-holiday and weekend/holiday buckets. They never convert into each other.
 - **Compassionate Waiver** — release of a tranche without the qualifying spend (section 14).
@@ -254,7 +254,7 @@ On the death of the Primary Cardholder, the Grant permits transfer to one direct
 ## 19. Expiration and Forfeiture (Grant §I-B(e))
 
 1. At the end of the Validity Period, released unused points (both buckets) and every unreleased tranche are forfeited automatically, without compensation, refund or carry-over.
-2. A Non-Activated tranche is never released later (section 12), except through a waiver granted within the Grant's terms.
+2. A tranche still not released at the end of the Validity Period, or forfeited on an approved card transfer, is never released later (section 12), except through a waiver granted within the Grant's terms. Before those events, a late-approved bill dated inside the measurement period still releases the tranche (section 12 item 5).
 3. The company may, at its discretion, give advance notice of expiry; it is not obliged to. Any reminder schedule is configured by Admin or Super Admin.
 4. Expiration never erases history. The membership, VIP Number, tranches and ledger stay traceable.
 5. Validity is never extended because points remain unused. No automatic renewal or reinstatement.
@@ -481,3 +481,11 @@ These rulings take precedence over earlier text in this document where they diff
 24. **Earning.** Promo Points are earned on Finance-approved resort bills at a promo's earn outlets, dated within the promo dates. Whole points, rounded down; a bill earns once.
 25. **Refunds.** A refund of a bill reverses only that bill's earned Promo Points. Promo Points never change Qualifying Spend, tranche release or any Grant balance (sections 11 to 13 are unchanged).
 26. **Uses and no cash value.** Staff record Promo Points uses at the promo's redeem outlets. A use is voidable with a reason and never deleted. Promo Points have no cash value and are never cashed out.
+
+## Owner ruling amendment (2026-11-19, late bill and Non-Activated tranche)
+
+This ruling takes precedence over earlier text in this document where it differs.
+
+1. **A late bill still releases the tranche (sections 3, 12 item 5 and 19 item 2).** A tranche not released at its due date is not finally closed. If a bill dated inside that tranche's measurement period is approved after the due date and completes the tier minimum, the tranche is released on the approval date. It stays released.
+2. **Status and reporting (sections 15 and 23; doc 11).** Until the late bill is approved, the tranche is reported as Non-Activated as of its due date. The release, when it happens, is dated on the bill's approval business date and appears as a normal release. Nothing is backdated, and one tranche is released at most once.
+3. **No other change.** Measurement periods, tier minimums, waiver rules and forfeiture at expiry are unchanged.

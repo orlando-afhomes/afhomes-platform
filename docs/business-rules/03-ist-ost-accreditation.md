@@ -207,7 +207,7 @@ The Accreditation Management workflow may support renewal only, renewal with tea
 - A suspension blocks only sales dated on or after its effective date. A sale made before it but recorded later is accepted (OCT R28).
 - A resignation or termination takes effect after its end date.
 - Existing sales of a suspended or departed person are untouched. Their commission is affected only by what happens to the sale itself (OCT R27, R33), never by their status.
-- On the public seller check, IST records never show a valid-until date; OST records show it.
+- On the public seller check, no record shows a valid-until date, IST or OST; the date stays visible to staff on the internal screens (owner ruling, 2026-11-19).
 
 ### 9.1 New Sellers and Changes (OPS §4.1; owner authority rule, 2026-11-12)
 
@@ -244,7 +244,7 @@ The check copies the process and the result of the earlier public sales-team sea
    - the AA number, with a Copy ID button
    - the status, Accredited or Expired
    - the type, IST or OST
-   - Valid Until, for OST only
+   - ~~Valid Until, for OST only~~ (superseded by the owner ruling of 2026-11-19: no validity date is shown publicly)
    - the company support and official bank account details.
 
    The full name, contact details and internal ids are never shown.
@@ -357,3 +357,9 @@ Item numbers in the amendments of this document follow the master follow-up list
 
 - **A6, renewal and account status.** Renewal is allowed while the login is Suspended or Deactivated; the login stays off until it is turned on (section 5.4). "Deactivated" is an account status, not resigned or terminated. Leavers are never renewed; if they return, they get a new AA number (section 5.2.2).
 - **A4, HR.** HR may activate and reactivate office staff accounts only (doc 01). Seller accounts and the Administrator and Super Administrator accounts are not HR's to manage.
+
+## Owner ruling amendment (2026-11-19, public validity date)
+
+This ruling takes precedence over earlier text in this document where it differs.
+
+1. **The public seller check shows no validity date (sections 9 and 9.4).** The accreditation validity date applies to every seller, IST and OST alike. It stays visible to staff inside the platform, including the sales network records and the renewal screens. It is not shown on the public seller check for any accreditation type. The Accredited and Expired statuses are unchanged.

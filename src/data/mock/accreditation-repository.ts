@@ -105,7 +105,7 @@ export class MockAccreditationRepository implements AccreditationRepository {
     // Expired is shown as Expired; pending, cancelled, suspended and departed sellers are not shown as valid (doc 03 section 9).
     const standing = getSellerStanding(record, manilaToday());
     if (standing.state === "blocked") return null;
-    // Both IST and OST accreditation expire (doc 03); IST only hides its "Valid Until" date, OST shows it (project 22).
+    // Both IST and OST accreditation expire (doc 03). The public result never renders the date; staff screens keep it (owner ruling, 2026-11-19).
     // Only the masked name leaves the repository, never the full name (UI21).
     const member = this.store.members.find((item) => item.id === record.memberId);
     return {

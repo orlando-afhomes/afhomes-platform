@@ -111,89 +111,78 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-19 11:24 (first save today; supersedes the 2026-11-18 22:53 snapshot).
+- Saved at: 2026-11-19 16:31 (supersedes the 2026-11-19 14:26 snapshot).
 - Repository: afhomes-platform (remote not re-checked; no fetch run).
-- Branch: develop. HEAD: 44c8e0f "docs: align project documentation with 2026-11-18 owner decisions" (verified). No commits were made this session.
+- Branch: develop. HEAD: 61e7744 "feat: polish public site visuals and add site action/footer-access helpers" (verified). No commits this session.
 - Tool and model: OpenCode, DeepSeek V4.1 Flash 1017 (session metadata; not independently probed).
-- Session objective: restore context with `/load`, run the site locally, then implement the owner's browser feedback: favicon, nav active state, footer Access motion, skeleton loaders, button identity/motion/palette, room modal, dropdown auto-close, experience status, contact order and blog backdrops.
+- Session objective: restore with `/load`, settle the doc 03 public "Valid Until" conflict through a one-question-at-a-time grilling round and an approved written plan, and implement the click-only question rule across the harnesses.
 - Development phase: frontend prototype on typed in-memory mock data. Backend, real authentication, database and deployment remain deferred.
-- Context note: no compaction. Plans live outside the repo at `C:\Users\SSD-ORLANDO\.opencode\plan\2026-11-18-favicon.md` and `C:\Users\SSD-ORLANDO\.opencode\plan\2026-11-19-ui-feedback-batch.md`.
+- Context note: no compaction. The plan lives outside the repo at `C:\Users\SSD-ORLANDO\.opencode\plan\2026-11-19-doc-03-valid-until.md`.
 
 ## 2. Current Project State
-- Verified this run: `develop` at 44c8e0f; nothing staged; 51 tracked files modified, five deleted and six untracked (section 5). No commits this session.
-- The dev server is running at http://localhost:3000 (background shell `sh_1f1ac3972001NaZxtTTd3hMhmy`, PID 23912). It was restarted for favicon and loading-state checks.
-- Public favicon is the AF monogram: `src/app/icon.png` 512, `src/app/apple-icon.png` 180, branded `src/app/favicon.ico` 48/32/16. The default Next favicon was replaced and the five starter SVGs were deleted.
-- Public header nav active state is pathname-driven (`aria-current`); the footer Access block is a button disclosure with a measured max-height transition; room photos open an immersive gallery.
-- Button identity lives in `src/panels/public/site/site-actions.ts`. Standard primary is green, standard secondary is ghost white, gold stays for Join VIP and VIP Privilege; home and about keep the white primary on dark via `primaryTone="contrast"`. Every action icon lifts 2 px upward on hover.
-- Documentation baseline unchanged: 14 business rules, 10 development docs, 19 implementation docs, plus `docs/project.md`, `AGENTS.md`, `CLAUDE.md` and `PRODUCT.md`.
-- Current focus: owner review and manual commit of the accumulated UI work; then the three open policy decisions and the Phase 2 admin plan.
+- Verified at the end: `develop` at 61e7744, nothing staged, 12 tracked files modified, no untracked files. Eleven are the amendment sweep; `workflow/save-session.md` is this snapshot.
+- Canonical rule now: the accreditation validity date applies to every seller, IST and OST; it stays visible on internal screens; it is never shown on the public Verify Search for any type. Doc 03 carries a dated amendment block and a struck original clause.
+- The public result card already hid the date before this session; no UI, component or test change was made.
+- Harness question rule: exactly one clickable question per message, recommendation first, in `AGENTS.md`, global `CLAUDE.md`, `~/.codex/AGENTS.md` and the shared grilling skill.
+- Documentation baseline unchanged: 14 business rules, 10 development docs, 19 implementation docs.
 
 ## 3. Important Decisions
-- Only the project owner stages, commits, pushes, merges or deploys. No agent Git writes were performed.
-- Favicon: AF monogram only, transparent background, centered square; use Next file conventions in `src/app`; remove the `metadata.icons` override; delete the starter SVGs.
-- Nav: active state from `usePathname`, not route-class CSS, because Next keeps hidden prefetch/loading shells with a bare `.site-home`.
-- Footer Access: button disclosure with `aria-expanded`/`aria-controls`/`inert` and a measured max-height transition; native `<details>` could not animate reliably.
-- Skeletons: neutral grays only, left-to-right 1.6 s shimmer, 112 px top clearance, reduced motion instant.
-- Buttons: one identity per action (icon plus role); standard primary green, secondary ghost white, premium gold; home/about white primary exception; icons lift upward; per-button-family timings (SiteButton 350 ms, header actions 400 ms, blog chips 300 ms, utility shadcn 150 ms).
-- Room modal: charcoal immersive gallery with blurred stage, counter, thumbnail rail, ArrowLeft/ArrowRight and stage focus on open.
-- Dropdowns: close by unmounting the panel on a link click; no exit animation.
-- Experience status sits above the eyebrow; contact details follow the form; blog covers use a blurred backdrop with an 8–10 px padded frame.
-- No business rules, routes, permissions, identifiers, prices or dependencies changed.
+- Valid Until applies to the whole sales team, not OST only. Internal screens keep it; the public result shows none (owner, 2026-11-19).
+- Recording: append-only amendment block plus strikethrough of the original clause; no in-place rewrite.
+- Sweep: all current-state docs updated; the completed phase-03 plan is registered as stale, not rewritten.
+- The amendment states the rule only; no motive is asserted.
+- Public contract field `validUntil` is kept and remains populated for OST; dropping it is deferred. It is rendered nowhere.
+- No test edits were authorized in this change, so `src/data/mock/accreditation-renewal.test.ts:118` keeps its old title as a known wording residue.
+- Questions: exactly one per message, clickable options, recommendation first, wait for the choice.
+- Only the project owner stages, commits, pushes, merges or deploys.
 
 ## 4. Completed Work
-- Favicon: connected-component isolation of the AF monogram from `public/images/logo.png`; 512/180 PNGs and a 48/32/16 DIB ICO; removed the layout metadata override; deleted `public/file.svg`, `globe.svg`, `next.svg`, `vercel.svg`, `window.svg`. Served hashes matched disk and the icon links pointed at the new files.
-- Nav/footer: `site-header-link.tsx` plus `isActiveNavHref`; dropdown `aria-current`; old route-class active CSS removed; `site-footer-access.tsx` with animated max-height. 91 public/shared tests passed at that stage.
-- UI batch: gray skeletons with header clearance, action registry and full `SiteButton` migration, immersive room gallery, auto-closing dropdowns, experience status at the hero top, contact form before details, blog blurred backdrops. 99 public/shared tests passed; tsc and ESLint clean.
-- Motion: base transition includes transform/filter; SiteButton filter/transform and 350 ms icon transform; icons lift up; header action icons at 400 ms; FAQ chevron 200 ms; footer toggle 200 ms; login submit 180 ms; blog feature icon override removed.
-- Palette: VIP hero Contact us green plus Payment steps ghost; experience heroes one green primary plus ghost secondary; View plan green; home/about white primary exceptions; gold premium preserved. Final focused tests 18 passed; tsc and ESLint clean.
+- Doc 03: line 210 corrected, line 247 struck, and an `## Owner ruling amendment (2026-11-19, public validity date)` block appended.
+- `docs/implementation/decisions-and-gaps.md`: line 314 corrected; stale bullet for phase-03 line 97 added at line 306.
+- Corrected sentences in `docs/development/architecture.md:204`, `frontend.md:123`, `security.md:439`, `testing.md:312`, `role-module-permission-matrix-proposal.md:214` and `:268`, `docs/project.md:219` and `:524`, and `AGENTS.md:130`.
+- Comments corrected at `src/data/contracts/accreditation-repository.ts:8` and `src/data/mock/accreditation-repository.ts:108`.
+- Harness files outside the repo updated: `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.agents/skills/grilling/SKILL.md`. A new OpenCode global `AGENTS.md` was created then removed because it displaced the global `CLAUDE.md` policy in-session.
+- Verification: `git diff --check` clean apart from LF-to-CRLF notices; sweep found 6 hits, all accounted for; exactly one 2026-11-19 amendment heading; `npx vitest run src/panels/public/accreditation-verification-page.test.tsx` passed 2 of 2 in 13.46 s.
 
 ## 5. Git Working Tree
 - Staged: none.
-- Unstaged (this session, grouped): favicon/layout/globals; skeleton loaders; public header/footer/nav; all button-migration pages under `src/panels/public`; room dialog; blog cards/featured; contact/FAQ/closing pages; `site.css`, `site-chrome.css`, `public-skeletons.*`, `site-pages.test.tsx`, `public-links.test.tsx`, `site-chrome.test.tsx`, `site-actions.test.tsx`.
-- Unstaged (pre-existing only, from the 2026-11-18 session, not touched now): `src/panels/public/blog/blog-hero.css`, `src/panels/public/contact/contact-page.css`, `src/panels/public/vip/vip-hero.css`, `src/shared/components/site/site-components.css`, `src/shared/components/site/site-mobile-menu.tsx`.
-- Untracked: `src/app/icon.png`, `src/app/apple-icon.png`, `src/panels/public/site/site-actions.ts`, `src/panels/public/site/site-actions.test.tsx`, `src/shared/components/site/site-footer-access.tsx`, `src/shared/components/site/site-header-link.tsx`.
-- Deleted: `public/file.svg`, `public/globe.svg`, `public/next.svg`, `public/vercel.svg`, `public/window.svg`.
-- `workflow/save-session.md` is modified by this save; its previous snapshot was already uncommitted. No commits this session. `stash@{0}` ("local: sales-network cleanup + member detail redesign") is still present.
-- No renamed files.
+- Unstaged, this session: `AGENTS.md` (protocol plus line 130), the ten other swept files, and `workflow/save-session.md` after this save.
+- Untracked: none.
+- Deleted or renamed: none.
+- HEAD unchanged at 61e7744; no agent Git writes.
+- `stash@{0}` ("local: sales-network cleanup + member detail redesign") remains present.
 
 ## 6. Pending Tasks
-- Owner review and manual commit of the whole working tree.
-- GATE-1: doc 09 Non-Activated tranche rule (`09:178`) versus the late-bill release (`09:180`, `10:153-154`).
-- GATE-2: doc 11 unapproved PHP 1,000,000 monthly SM target (`11:369`) versus doc 08 SM PA target (`08:383`).
-- Protected-operation wording: `06:115`, `06:284`, `08:404`, `12:204` versus doc 01's overriding authority rule.
-- Phase 2 admin plan from `docs/implementation/ui-state-audit.md`.
-- Optional verification: full repository suite, production build (Google Fonts unreachable in this environment), visual skeleton capture.
-- Pre-existing failures: `admin-mobile-nav.test.tsx` drawer-logout expectation; three admin files time out under full-suite load; 320 px home overflow from `site-feature-card`.
-- Header keeps gold Join VIP and outlined Verify on every page; utility shadcn buttons keep static icons and 150 ms; bespoke login submit and home verification callout keep their palettes. The owner may extend the rule.
-- Home/about exception is explicit; future dark primary actions there need `primaryTone="contrast"`.
+- Owner review and commit of the 12 modified files.
+- Optional one-line fix: the title at `src/data/mock/accreditation-renewal.test.ts:118` still reads "IST hides Valid Until, OST shows it"; it needs owner approval because tests were outside the agreed scope.
+- Remaining owner rulings: bank wordmark trademark use; GATE-1 (`09:178` vs `09:180`, `10:153-154`); GATE-2 (`11:369` vs `08:383`); protected-operation wording (`06:115`, `06:284`, `08:404`, `12:204` vs doc 01's authority rule).
+- Phase 2 admin plan from `docs/implementation/ui-state-audit.md`, one batch at a time.
+- Optional verification: full repository suite, production build, visual regression.
 
 ## 7. Verification State
-- Tests: 99 public/shared tests in 12 files passed after the UI batch; 18 focused action/page tests passed after the palette and motion changes. Full repository suite not run this session.
-- Typecheck: `npx tsc --noEmit` clean after the latest TypeScript changes.
-- Lint: ESLint clean on all touched public/shared folders and files.
-- Build: not run; the dev server logs Google Fonts download failures, so a production build would hit the same network limitation.
-- Browser QA: favicon served hashes and icon links; nav active states at `/`, `/vip-privilege`, `/about` and `/blog`; dropdown panels unmount after link clicks; footer animation heights; modal focus, ArrowRight and Escape; contact order; blog two images per cover; experience status centered at 390 px; button classes/icons and hero-action screenshots.
-- Hover checks: computed transition properties and final hover targets were verified with transitions temporarily disabled because the Chrome window froze transition frames during capture.
-- Known limits: skeleton loading UI was too brief to screenshot; the modal's initial focus is a manual stage ref callback; popovers close without an exit animation; the green primary on dark photos is a deliberate owner choice.
-- Diff check: `git diff --check` clean apart from LF/CRLF warnings.
-- Not performed: full suite, production build, screenshot of skeletons, visual regression.
+- Tests: 2 of 2 passed in `src/panels/public/accreditation-verification-page.test.tsx`. Full suite not run.
+- Typecheck: not run (documentation and comment changes only).
+- Lint: not run.
+- Build: not run.
+- Manual checks: doc diff reviewed; amendment block confirmed at end of file; grep sweep reviewed.
+- Known limits: `validUntil` remains on the public contract, rendered nowhere.
+- Not performed: full suite, build, browser QA.
 
 ## 8. Next Session Instructions
-- First action: `/load`; confirm `develop` at 44c8e0f. Expect the large uncommitted UI working tree; do not discard or revert it.
-- Owner should review and commit the work before further code changes.
-- Inspect the two plan files outside the repo, `src/panels/public/site/site-actions.ts`, `src/shared/components/site/site-chrome.css`, `room-details-dialog.*`, and `public-skeletons.tsx`.
-- After the commit: resolve GATE-1, GATE-2 and the protected-operation wording; then plan Phase 2 admin states.
-- Required approvals: owner commits; any business-rule edits; backend/database/auth/deployment; any palette extension beyond the current exception.
-- Warnings: keep live Redemption and Services disabled; no public customer or card lookup; preserve reduced-motion behavior and the home/about exception; the snapshot is a progress reference, not authority over the code or business rules.
+- First action: `/load`; confirm `develop` at 61e7744 and the 12-file working tree.
+- Inspect `docs/business-rules/03-ist-ost-accreditation.md` (lines 210, 247 and the tail amendment), `docs/implementation/decisions-and-gaps.md:306` and `:314`, and the plan file named above.
+- Owner decisions needed: commit the sweep; then bank wordmark, GATE-1, GATE-2 and the protected-operation wording.
+- Required approvals: any business-rule edit, any test edit (including the stale title), backend/database/auth/deployment.
+- Warnings: keep live Redemption and Services disabled; there is no public customer or card lookup; the snapshot is a progress reference, not authority over code or rules.
 
 ## 9. Execution Recommendation
-- Phase: QA complete for the UI work; next is owner review and commit.
+- Phase: QA complete; owner review and commit next.
 - Current mode: not verified.
-- Recommended next mode: owner review/commit, then Plan for the three policy gates.
+- Recommended next mode: owner review/commit; then Plan for the next gate.
 - Current model: not verified (session metadata names DeepSeek V4.1 Flash 1017).
-- Recommended model: Sonnet 5.5.
-- Effort: medium.
+- Recommended model: Opus 5.5.
+- Effort: high for rule arbitration, low for the commit review.
 - Ultracode: OFF.
-- Token optimization: review the working tree by area from section 4; no need to reread the documentation baseline.
-- Reason: every requested UI change is implemented, tested and browser-checked; only the owner's commit and the open policy decisions remain.
+- Token optimization: read section 4 and the two doc hunks; load only the cited rule sections when a gate starts.
+- Reason: only business-rule arbitration remains, where a wrong ruling costs more than a cheaper model saves.
 <!-- SESSION_SNAPSHOT_END -->

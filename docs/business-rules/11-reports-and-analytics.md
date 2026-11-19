@@ -303,7 +303,7 @@ Document reporting for: Qualifying Spend per measurement period and progress to 
 
 Do not confuse unreleased or Non-Activated tranches (not a balance) with Released Points, Available Points (released less reserved and redeemed), Reserved Points (set aside for a confirmed booking) or Redeemed Points (consumed by a completed stay). There are no Pending points and no Points Hold; a refund lowers Qualifying Spend and never takes back a released tranche (doc 09 §13).
 
-Example: a Bronze tranche of 10,000 points is released (7,000 weekday, 3,000 weekend), and the cardholder then redeems 2,000 weekday points through a completed stay. Released remains 10,000, Redeemed is 2,000, and Available is 8,000 (5,000 weekday, 3,000 weekend). A later tranche whose minimum was not met is reported as Non-Activated and never added to the balance unless a waiver is granted.
+Example: a Bronze tranche of 10,000 points is released (7,000 weekday, 3,000 weekend), and the cardholder then redeems 2,000 weekday points through a completed stay. Released remains 10,000, Redeemed is 2,000, and Available is 8,000 (5,000 weekday, 3,000 weekend). A later tranche whose minimum was not met is reported as Non-Activated as of its due date and is not added to the balance unless a waiver is granted or a late-approved bill dated inside its measurement period later completes the minimum before the tranche is forfeited (doc 09 section 12 item 5).
 
 Gold supplementary holder: Gold primary and supplementary holders share one membership points pool. Do not double-count balances as two separate memberships.
 
@@ -366,7 +366,7 @@ The document must establish a consistent approach to defining metrics. For each 
 
 Example — Confirmed Sales Value: Source Sales and Finance as governed by document 13; Recognition the Closed Deal date, when approved receipts reach 25% of the contract price; Aggregation full contract value counted once, subject to approved adjustments; Visibility according to the user's permitted Sales Network scope.
 
-Do not invent business targets such as every SM must achieve ₱1 million monthly, OST must produce five sales per month, SVD commission should be 2%, or minimum customer conversion should be 20%. These values have not been approved.
+Do not invent business targets. The allowance targets and PB rates are the approved, configurable Table A baseline in doc 08 section 15.4 (OPS §6.2 Table A; signed IST service contracts v2.4; owner ratification, 2026-11-19). That baseline includes the SM PA target of ₱1,000,000 and the SVD PB rate of 2%; the 2% is a PB rate, not a per-sale commission. Anything else, such as a five-sale monthly quota for OST or a 20% customer-conversion target, is not approved unless the owner sets it.
 
 ---
 

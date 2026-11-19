@@ -127,7 +127,7 @@ Summary only; canonical documents govern. Never assume module visibility grants 
 
 - **Roles (01):** centralized RBAC; multiple active roles where authorized; module permissions plus record-level scopes; protected Super Administrator; account-status restrictions; auditable role/access changes.
 - **Network (02):** canonical SVD/SSM/SM/OST hierarchy; validate sponsor/parent links; prevent cycles; role-dependent upline/downline visibility; preserve historical sale attribution.
-- **Accreditation (03):** AAI = IST, AAO = OST; follow approved creation, sponsorship, approval, renewal, suspension, expiry rules. Public verification: exact identifier search, restricted fields; IST shows no "Valid Until"; OST shows applicable "Valid Until".
+- **Accreditation (03):** AAI = IST, AAO = OST; follow approved creation, sponsorship, approval, renewal, suspension, expiry rules. Public verification: exact identifier search, restricted fields; no "Valid Until" is shown publicly for either class; staff screens show it.
 - **Customers (04):** the customer identity and the VIP Number are distinct; keep draft versus submitted distinct; a seller starts a draft, the Clerk completes it and the Administrator approves; validate imports and prevent duplicates; there is no public customer or card lookup (owner, 2026-11-12).
 - **Products/contracts (05):** tiers Bronze B1, Silver S1, Gold G1; configuration changes never rewrite finalized contracts; do not activate unapproved tier codes or schemes; never fabricate prices or terms.
 - **Card issuance (06):** one VIP Number `YYMMDDNNNNNVTPMMS` for the Reservation Agreement, the Grant and the Card, issued when the signed Reservation Agreement is recorded, with a monthly sequence; validity starts on the Card Claim Date; prevent duplicates; never reuse or renumber issued numbers; no competing serial allocator. IGP uses a separate Series Number (doc 14).
@@ -187,10 +187,12 @@ Testing follows `docs/development/testing.md` (TypeScript, ESLint, build, compon
 
 When using `grill-me`, `writing-plans`, or any planning/interview workflow, ask the project owner before proceeding:
 
-- One question at a time, or a small batch of closely related questions.
-- Every question offers 2 to 4 concrete options.
-- Every question states a recommendation and why.
-- Wait for the answers before planning or implementing.
+- Answered by click only: use the harness's selection UI (OpenCode `question` tool; Claude Code AskUserQuestion; Codex interactive choice prompt). Where a harness has no selection UI, print numbered options and accept a single number. Never require typing.
+- Ask one question, or batch the independent questions whose prerequisites are already settled, up to 4 per call or the harness limit if lower. A question that depends on an unanswered question waits for the answer.
+- Every question offers 2 to 4 concrete options, each with a one-line description of its effect.
+- The recommended option is listed first and labelled "(Recommended)", with one line saying why.
+- Never ask something the agent can determine from the repository, tools, or authoritative documents.
+- Wait for the answers before proceeding or asking anything that depends on them. Never proceed on an assumption.
 
 This applies to OpenCode, Codex, Claude Code, and any other agent reading this file.
 

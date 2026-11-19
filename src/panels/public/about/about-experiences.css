@@ -30,7 +30,7 @@
 
 .about-featured__title {
   margin-top: 14px;
-  font-family: var(--site-home-display, var(--font-playfair));
+  font-family: var(--site-home-display, var(--font-display));
   font-size: clamp(28px, 2.6vw, 38px);
   line-height: 1.12;
   font-weight: 600;

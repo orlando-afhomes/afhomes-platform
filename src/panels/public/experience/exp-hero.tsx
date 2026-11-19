@@ -9,10 +9,10 @@ export function ExperienceHero({ eyebrow, title, lede, status, image, children }
       <Photo image={image} ratio="16 / 9" priority sizes="100vw" className="site-home-hero__photo" />
       <div className="site-home-hero__shade" aria-hidden="true" />
       <div className="site-home-hero__inner exp-hero__inner">
+        {status ? <div className="site-home-hero__top"><p className="exp-hero__status">{status}</p></div> : null}
         <p className="site-eyebrow site-eyebrow--light">{eyebrow}</p>
         <h1 className="site-home-hero__title exp-hero__title">{title}</h1>
         <p className="site-home-hero__lede">{lede}</p>
-        {status ? <p className="exp-hero__status">{status}</p> : null}
         {children ? <div className="site-hero__actions">{children}</div> : null}
       </div>
     </section>

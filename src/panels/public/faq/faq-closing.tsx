@@ -1,4 +1,3 @@
-import { ArrowRight } from "lucide-react";
 import { FAQ_PAGE } from "@/modules/public-site/content/faq";
 import { SiteButton } from "../site/blocks";
 import { SiteCta } from "../site/site-cta";
@@ -12,7 +11,7 @@ export function FaqClosing() {
       text={closing.text}
       image={closing.image}
     >
-      <SiteButton href={closing.href} variant="gold">{closing.cta} <ArrowRight aria-hidden="true" /></SiteButton>
+      <SiteButton href={closing.href} action="vip" surface="dark">{closing.cta}</SiteButton>
     </SiteCta>
   );
 }

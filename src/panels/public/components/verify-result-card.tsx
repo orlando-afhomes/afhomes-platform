@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { BadgeCheck, Copy, Mail, Phone } from "lucide-react";
+import Image from "next/image";
+import { BadgeCheck, Copy, Headset, Info, Mail, Phone, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { PublicAccreditationResult } from "@/data/contracts/accreditation-repository";
-import { PUBLIC_SUPPORT_INFO } from "@/modules/public-site/support-info";
-import { formatDate } from "@/shared/lib/format-date";
+import { PUBLIC_SUPPORT_INFO, type SupportBankAccount } from "@/modules/public-site/support-info";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
@@ -44,7 +44,7 @@ export function VerifyResultCard({ result }: { result: PublicAccreditationResult
         <h2 className="verify-result__name">{name}</h2>
         <div className="verify-result__number">
           <span className="verify-result__number-text">{result.aaNumber}</span>
-          <Button type="button" variant="outline" size="sm" onClick={() => void copyId()} className="tw:min-h-11 tw:sm:min-h-8">
+          <Button type="button" variant="outline" size="sm" onClick={() => void copyId()} className="verify-result__copy tw:min-h-11 tw:sm:min-h-8">
             <Copy aria-hidden="true" />
             Copy ID
           </Button>
@@ -63,12 +63,6 @@ export function VerifyResultCard({ result }: { result: PublicAccreditationResult
           <dt>Type</dt>
           <dd>{result.classification}</dd>
         </div>
-        {result.validUntil ? (
-          <div className="verify-result__fact">
-            <dt>Valid until</dt>
-            <dd>{formatDate(result.validUntil)}</dd>
-          </div>
-        ) : null}
       </dl>
       {result.quotedNumberSuperseded ? (
         <p className="verify-result__note">The number you entered was replaced when this accreditation was renewed. The current number is shown.</p>
@@ -93,27 +87,84 @@ export function VerifyResultCard({ result }: { result: PublicAccreditationResult
 
 function SupportBlock() {
   const info = PUBLIC_SUPPORT_INFO;
+
+  const copyAccount = async (account: SupportBankAccount) => {
+    try {
+      await navigator.clipboard.writeText(account.accountNumber);
+      toast.success(`${account.bankName} account number copied.`);
+    } catch {
+      toast.error("Could not copy. Select the number and copy it instead.");
+    }
+  };
+
   return (
     <div className="verify-support">
-      <h3 className="verify-support__heading">{info.heading}</h3>
-      <ul className="verify-support__contacts">
-        <li><Mail aria-hidden="true" className="tw:size-4" /><a href={`mailto:${info.email}`}>{info.email}</a></li>
-        <li><Phone aria-hidden="true" className="tw:size-4" /><a href={info.phoneHref}>{info.phone}</a></li>
-      </ul>
-      <p className="verify-support__label">Official company bank accounts</p>
-      <p className="verify-support__holder"><span>Bank account name:</span> {info.bankAccountName}</p>
-      <div className="verify-support__banks">
-        {info.bankAccounts.map((account) => (
-          <div key={account.accountNumber} className="verify-support__bank">
-            <span className="verify-support__bank-name">{account.bankName}</span>
-            <span className="verify-support__bank-label">Account number:</span>
-            <span className="verify-support__bank-number">{account.accountNumber}</span>
-          </div>
-        ))}
+      <div className="verify-support__header">
+        <span className="verify-support__badge" aria-hidden="true"><Headset /></span>
+        <div className="verify-support__intro">
+          <h3 className="verify-support__heading">{info.heading}</h3>
+          <p className="verify-support__lede">Reach the official AFhomes team, or use only the company accounts listed below.</p>
+        </div>
       </div>
-      <p className="verify-support__holder"><span>Cheque payable to:</span> {info.chequePayee}</p>
-      <p className="verify-support__reminder">{info.bankReminder}</p>
-      <p className="verify-support__reminder verify-support__reminder--strong">{info.agentReminder}</p>
+
+      <ul className="verify-support__contacts">
+        <li>
+          <a href={`mailto:${info.email}`}>
+            <span className="verify-support__contact-icon" aria-hidden="true"><Mail /></span>
+            <span className="verify-support__contact-text">
+              <span className="verify-support__contact-label">Email</span>
+              {info.email}
+            </span>
+          </a>
+        </li>
+        <li>
+          <a href={info.phoneHref}>
+            <span className="verify-support__contact-icon" aria-hidden="true"><Phone /></span>
+            <span className="verify-support__contact-text">
+              <span className="verify-support__contact-label">Call</span>
+              {info.phone}
+            </span>
+          </a>
+        </li>
+      </ul>
+
+      <section className="verify-support__accounts" aria-labelledby="verify-support-accounts-heading">
+        <p id="verify-support-accounts-heading" className="verify-support__label">Official company bank accounts</p>
+        <p className="verify-support__holder"><span>Account name</span>{info.bankAccountName}</p>
+        <div className="verify-support__banks">
+          {info.bankAccounts.map((account) => (
+            <div key={account.accountNumber} className="verify-support__bank">
+              <div className="verify-support__bank-top">
+                <span className="verify-support__bank-logo">
+                  <Image src={account.logo} alt="" width={160} height={32} unoptimized />
+                </span>
+                <button
+                  type="button"
+                  className="verify-support__copy"
+                  aria-label={`Copy ${account.bankName} account number`}
+                  onClick={() => void copyAccount(account)}
+                >
+                  <Copy aria-hidden="true" />
+                </button>
+              </div>
+              <div className="verify-support__bank-body">
+                <span className="verify-support__bank-name">{account.bankName}</span>
+                <span className="verify-support__bank-label">Account number</span>
+                <span className="verify-support__bank-number">{account.accountNumber}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="verify-support__cheque">
+          <span className="verify-support__label">Cheque payable to</span>
+          <p>{info.chequePayee}</p>
+        </div>
+      </section>
+
+      <div className="verify-support__notices">
+        <p className="verify-support__reminder"><Info aria-hidden="true" />{info.bankReminder}</p>
+        <p className="verify-support__reminder verify-support__reminder--strong"><ShieldCheck aria-hidden="true" />{info.agentReminder}</p>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/shared/lib/utils";
+import { SiteHeaderLink } from "./site-header-link";
 import { SiteHeaderScroll } from "./site-header-scroll";
 import { SiteMobileMenu } from "./site-mobile-menu";
 import { SiteNavDropdown } from "./site-nav-dropdown";
@@ -36,7 +37,7 @@ export function SiteHeader({ brand, items, actions, mobileExtraLinks = [], class
             isNavGroup(item) ? (
               <SiteNavDropdown key={item.label} group={item} />
             ) : (
-              <Link key={item.href} href={item.href} className="site-header__link">{item.label}</Link>
+              <SiteHeaderLink key={item.href} link={item} />
             ),
           )}
         </nav>

@@ -19,3 +19,10 @@ export type SiteHeaderAction = {
 export function isNavGroup(item: SiteNavItem): item is SiteNavGroup {
   return "children" in item;
 }
+
+/** True when `href` is the current page or a parent section of it. The home href matches only "/". */
+export function isActiveNavHref(pathname: string, href: string) {
+  const path = href.split("#")[0];
+  if (path === "/") return pathname === "/";
+  return pathname === path || pathname.startsWith(`${path}/`);
+}

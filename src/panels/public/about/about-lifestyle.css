@@ -61,7 +61,7 @@
 .about-mission__icon svg { width: 30px; height: 30px; }
 .about-mission__body { min-width: 0; }
 .about-mission__title {
-  font-family: var(--site-home-display, var(--font-playfair)), Georgia, serif;
+  font-family: var(--site-home-display, var(--font-display)), Georgia, serif;
   font-size: clamp(20px, 1.7vw, 24px);
   line-height: 1.2;
   font-weight: 600;

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Briefcase, ChevronRight, Info, Menu, UserRound, X } from "lucide-react";
+import { Briefcase, ChevronDown, ChevronRight, Info, Menu, UserRound, X } from "lucide-react";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/shared/ui/sheet";
 import { isNavGroup, type SiteHeaderAction, type SiteNavItem, type SiteNavLink } from "./site-nav-types";
 
@@ -19,11 +19,13 @@ type SiteMobileMenuProps = {
 /** Phone and tablet menu for the site header. Closes when a link is chosen. */
 export function SiteMobileMenu({ brandName, brandSubName, logoSrc, items, actions, extraLinks }: SiteMobileMenuProps) {
   const [open, setOpen] = useState(false);
-  const close = () => setOpen(false);
+  const [accessOpen, setAccessOpen] = useState(false);
+  const close = () => { setOpen(false); setAccessOpen(false); };
+  const changeOpen = (next: boolean) => { setOpen(next); if (!next) setAccessOpen(false); };
   const fullName = brandSubName ? `${brandName} ${brandSubName}` : brandName;
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={changeOpen}>
       <SheetTrigger render={<button type="button" aria-label="Open menu" className="site-header__menu-button" />}>
         <Menu aria-hidden="true" />
       </SheetTrigger>
@@ -67,19 +69,31 @@ export function SiteMobileMenu({ brandName, brandSubName, logoSrc, items, action
           ))}
           {extraLinks.length ? (
             <div className="site-mobile-menu__access">
-              <p className="site-mobile-menu__access-label">Access</p>
-              <div className="site-mobile-menu__access-links">
-                {extraLinks.map((link) => (
-                  <Link key={link.href} href={link.href} onClick={close} className="site-mobile-menu__access-link">
-                    <span className="site-mobile-menu__access-icon" aria-hidden="true">
-                      {link.href === "/login/sales" ? <Briefcase /> : <UserRound />}
-                    </span>
-                    <span className="site-mobile-menu__access-text">{link.label}</span>
-                    <ChevronRight aria-hidden="true" className="site-mobile-menu__access-chevron" />
-                  </Link>
-                ))}
+              <button
+                type="button"
+                className="site-mobile-menu__access-toggle"
+                aria-expanded={accessOpen}
+                aria-controls="site-mobile-menu-access"
+                onClick={() => setAccessOpen((value) => !value)}
+              >
+                <span className="site-mobile-menu__access-label">Access</span>
+                <span className="site-mobile-menu__access-hint">Staff &amp; sellers</span>
+                <ChevronDown aria-hidden="true" className="site-mobile-menu__access-toggle-chevron" />
+              </button>
+              <div id="site-mobile-menu-access" className="site-mobile-menu__access-panel" hidden={!accessOpen}>
+                <div className="site-mobile-menu__access-links">
+                  {extraLinks.map((link) => (
+                    <Link key={link.href} href={link.href} onClick={close} className="site-mobile-menu__access-link">
+                      <span className="site-mobile-menu__access-icon" aria-hidden="true">
+                        {link.href === "/login/sales" ? <Briefcase /> : <UserRound />}
+                      </span>
+                      <span className="site-mobile-menu__access-text">{link.label}</span>
+                      <ChevronRight aria-hidden="true" className="site-mobile-menu__access-chevron" />
+                    </Link>
+                  ))}
+                </div>
+                <p className="site-mobile-menu__access-note"><Info aria-hidden="true" />For staff and sellers only — not for customers.</p>
               </div>
-              <p className="site-mobile-menu__access-note"><Info aria-hidden="true" />For staff and sellers only — not for customers.</p>
             </div>
           ) : null}
         </div>

@@ -6,11 +6,13 @@ import type { SiteImage } from "@/modules/public-site/content/experiences";
 import { OFFICES, PAYMENT_DISCLAIMER, RENDERINGS_NOTE, SITE } from "@/modules/public-site/content/site";
 import { PUBLIC_SUPPORT_INFO } from "@/modules/public-site/support-info";
 import { cn } from "@/shared/lib/utils";
+import { resolveSiteButton, type SiteAction, type SitePrimaryTone, type SiteSurface } from "./site-actions";
 
-/** Photo with a fixed shape. `sizes` keeps next/image from over-fetching. */
-export function Photo({ image, ratio = "4 / 3", className, priority = false, sizes = "(min-width: 1024px) 560px, 100vw", fit = "cover" }: { image: SiteImage; ratio?: string; className?: string; priority?: boolean; sizes?: string; fit?: "cover" | "contain" }) {
+/** Photo with a fixed shape. `sizes` keeps next/image from over-fetching. `backdrop` adds a blurred copy behind a contained image. */
+export function Photo({ image, ratio = "4 / 3", className, priority = false, sizes = "(min-width: 1024px) 560px, 100vw", fit = "cover", backdrop = false }: { image: SiteImage; ratio?: string; className?: string; priority?: boolean; sizes?: string; fit?: "cover" | "contain"; backdrop?: boolean }) {
   return (
     <span className={cn("site-photo", className)} style={{ aspectRatio: ratio }}>
+      {backdrop ? <Image src={image.src} alt="" fill sizes="10vw" aria-hidden="true" className="site-photo__backdrop" /> : null}
       <Image src={image.src} alt={image.alt} fill sizes={sizes} priority={priority} className={fit === "contain" ? "site-photo__image site-photo__image--contain" : "site-photo__image"} />
     </span>
   );
@@ -42,13 +44,19 @@ export function PaymentWarning() {
   return <p className="site-callout">{PAYMENT_DISCLAIMER}</p>;
 }
 
-export function SiteButton({ href, children, variant = "primary", external = false }: { href: string; children: ReactNode; variant?: "primary" | "outline" | "light" | "outline-light" | "gold"; external?: boolean }) {
-  const className = `site-button site-button--${variant}`;
+export function SiteButton({ href, children, action, surface = "light", primaryTone = "brand", external = false }: { href: string; children: ReactNode; action: SiteAction; surface?: SiteSurface; primaryTone?: SitePrimaryTone; external?: boolean }) {
+  const { icon: Icon, className } = resolveSiteButton(action, surface, primaryTone);
+  const content = (
+    <>
+      <Icon aria-hidden="true" />
+      {children}
+    </>
+  );
   // Same-page section links ("#...") use a plain anchor so the browser's smooth scrolling applies.
   if (external || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) {
-    return <a href={href} className={className} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{children}</a>;
+    return <a href={href} className={className} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{content}</a>;
   }
-  return <Link href={href} className={className}>{children}</Link>;
+  return <Link href={href} className={className}>{content}</Link>;
 }
 
 /** Offices, phone, email and Facebook, copied from the old contact page. */

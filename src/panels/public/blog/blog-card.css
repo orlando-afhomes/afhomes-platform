@@ -18,10 +18,9 @@
   border-radius: 0;
   flex-shrink: 0;
   border-bottom: 1px solid var(--color-border-subtle);
-  background: linear-gradient(180deg, var(--color-bg-subtle), var(--color-bg-sunken));
-  box-shadow: inset 0 0 0 1px rgb(14 43 32 / 0.06);
+  background: var(--color-bg-sunken);
 }
-.site-blog-page .blog-card__photo .site-photo__image { object-fit: contain; object-position: center; }
+.site-blog-page .blog-card__photo .site-photo__image { object-fit: contain; object-position: center; padding: 8px; box-sizing: border-box; }
 
 .blog-card__body { display: flex; flex: 1; flex-direction: column; gap: 8px; padding: 16px 18px 18px; min-width: 0; }
 

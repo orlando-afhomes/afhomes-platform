@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { ShieldAlert, ShieldCheck } from "lucide-react";
+import { useRef, useState, type FormEvent } from "react";
+import { ChevronDown, Search, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useMockRepositories } from "@/data/queries";
 import type { PublicAccreditationResult } from "@/data/contracts/accreditation-repository";
 import { validateExistingAaIdentifier } from "@/modules/accreditation/identifiers";
@@ -35,6 +35,7 @@ export function AccreditationVerificationPage() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<PublicAccreditationResult | null>(null);
   const [message, setMessage] = useState("");
+  const privacyRef = useRef<HTMLDetailsElement>(null);
 
   const reset = () => {
     setPhase("idle");
@@ -53,6 +54,7 @@ export function AccreditationVerificationPage() {
       setMessage(LIMIT_REACHED);
       return;
     }
+    if (privacyRef.current) privacyRef.current.open = false;
     setPhase("privacy");
   };
 
@@ -81,10 +83,15 @@ export function AccreditationVerificationPage() {
       </header>
 
       <section className="verify-page__panel" aria-labelledby="verify-search-heading">
-        <h2 id="verify-search-heading" className="verify-page__panel-title">Search by AA number</h2>
-        <p className="verify-page__hint">
-          Enter the full AA number. Up to {VERIFY_DAILY_LIMIT} successful checks per visitor in 24 hours. Searching by name is not available.
-        </p>
+        <div className="verify-page__panel-head">
+          <span className="verify-page__panel-icon" aria-hidden="true"><Search /></span>
+          <div className="verify-page__panel-copy">
+            <h2 id="verify-search-heading" className="verify-page__panel-title">Search by AA number</h2>
+            <p className="verify-page__hint">
+              Enter the full AA number. Up to {VERIFY_DAILY_LIMIT} successful checks per visitor in 24 hours. Searching by name is not available.
+            </p>
+          </div>
+        </div>
         <form onSubmit={start} className="verify-page__form" noValidate>
           <TextField
             label="AA number"
@@ -100,12 +107,17 @@ export function AccreditationVerificationPage() {
             maxLength={16}
             autoComplete="off"
           />
-          <Button type="submit" loading={busy} disabled={value === ""} className="tw:min-h-11 tw:sm:min-h-9">
+          <Button type="submit" loading={busy} disabled={value === ""} className="verify-page__submit">
             Search
           </Button>
         </form>
-        <details className="verify-page__privacy">
-          <summary>Privacy notice: <strong>Data Privacy Act of 2012</strong></summary>
+        <details ref={privacyRef} className="verify-page__privacy">
+          <summary>
+            <span>Privacy notice: <strong>Data Privacy Act of 2012</strong></span>
+            <span className="verify-page__privacy-chevron" aria-hidden="true">
+              <ChevronDown />
+            </span>
+          </summary>
           <div className="verify-page__privacy-body">
             {VERIFY_PRIVACY_NOTICE_PARAGRAPHS.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
           </div>

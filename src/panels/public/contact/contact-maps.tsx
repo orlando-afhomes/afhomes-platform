@@ -1,4 +1,4 @@
-import { ArrowUpRight, MapPin, Navigation } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { OFFICES, officeMapAnchor } from "@/modules/public-site/content/site";
 import { Photo, SectionHeading, SiteButton } from "../site/blocks";
 
@@ -21,11 +21,11 @@ export function ContactMaps() {
               <address className="contact-maps__address">{office.shortAddress}</address>
               {office.landmark ? <p className="contact-maps__landmark">{office.landmark}</p> : null}
               <div className="contact-maps__actions">
-                <SiteButton href={office.map.directionsHref} variant="primary" external>
-                  Get directions <Navigation aria-hidden="true" />
+                <SiteButton href={office.map.directionsHref} action="directions" external>
+                  Get directions
                 </SiteButton>
-                <SiteButton href={office.map.href} variant="outline" external>
-                  Open map <ArrowUpRight aria-hidden="true" />
+                <SiteButton href={office.map.href} action="open-map" external>
+                  Open map
                 </SiteButton>
               </div>
             </div>

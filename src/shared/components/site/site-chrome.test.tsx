@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SiteBadge } from "./site-badge";
@@ -9,7 +9,14 @@ import { SiteHeader } from "./site-header";
 import { SiteRoomCard } from "./site-room-card";
 import { SiteTierCard } from "./site-tier-card";
 
+const navState = vi.hoisted(() => ({ pathname: "/" }));
+vi.mock("next/navigation", () => ({ usePathname: () => navState.pathname }));
+
 const brand = { name: "Test Brand", href: "/", logoSrc: "/images/logo.png" };
+
+beforeEach(() => {
+  navState.pathname = "/";
+});
 
 afterEach(cleanup);
 
@@ -29,6 +36,34 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "/about");
     expect(screen.getByRole("link", { name: "Verify Now" })).toHaveAttribute("href", "/verify");
     expect(screen.getByRole("link", { name: "Test Brand home" })).toHaveAttribute("href", "/");
+  });
+
+  it("marks only the link for the current page", () => {
+    navState.pathname = "/vip-privilege";
+    render(
+      <SiteHeader
+        brand={brand}
+        items={[
+          { href: "/", label: "Home" },
+          { href: "/vip-privilege", label: "VIP Privilege" },
+        ]}
+        actions={[]}
+      />,
+    );
+    expect(screen.getByRole("link", { name: "Home" })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: "VIP Privilege" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("marks a dropdown group when one of its pages is current", () => {
+    navState.pathname = "/about";
+    render(
+      <SiteHeader
+        brand={brand}
+        items={[{ label: "Explore", children: [{ href: "/about", label: "About" }, { href: "/faq", label: "FAQ" }] }]}
+        actions={[]}
+      />,
+    );
+    expect(screen.getByRole("button", { name: /Explore/ })).toHaveAttribute("aria-current", "true");
   });
 
   it("opens the dropdown group on click and shows its links", async () => {

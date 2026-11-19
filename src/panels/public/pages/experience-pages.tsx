@@ -1,4 +1,4 @@
-import { Activity, ArrowRight, BedDouble, ChefHat, Coffee, GlassWater, Leaf, Map as MapIcon, Mountain, Waves, Wind } from "lucide-react";
+import { Activity, BedDouble, ChefHat, Coffee, GlassWater, Leaf, Map as MapIcon, Mountain, Waves, Wind } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { HOTEL_PAGE, KEY_OFFERINGS, RESORT_AMENITIES, RESORT_PAGE, RESTAURANT_PAGE, ROOMS, type Highlight } from "@/modules/public-site/content/experiences";
 import { ABOUT } from "@/modules/public-site/content/about";
@@ -37,8 +37,8 @@ export function ResortPage() {
   return (
     <div className="site-home site-experience-page site-experience-page--resort">
       <ExperienceHero eyebrow={hero.eyebrow} title={hero.title} lede={hero.lede} status={hero.status} image={hero.image}>
-        <SiteButton href="#amenities" variant="gold">View amenities <ArrowRight aria-hidden="true" /></SiteButton>
-        <SiteButton href="/contact" variant="outline-light">Contact us <ArrowRight aria-hidden="true" /></SiteButton>
+        <SiteButton href="#amenities" action="amenities" surface="dark">View amenities</SiteButton>
+        <SiteButton href="/contact" action="contact" surface="dark">Contact us</SiteButton>
       </ExperienceHero>
       <ExperienceOverview id="overview" eyebrow={overview.eyebrow} title={overview.title} text={overview.text} features={withIcons(overview.features, [MapIcon, Waves, Mountain, Leaf])}>
         <ExperienceTrust items={ABOUT.registrations} />
@@ -55,8 +55,8 @@ export function ResortPage() {
         map={{ ...location.map, embedSrc: resort.map.embedSrc, href: resort.map.href }}
       />
       <ExperienceClosing title={closing.title} text={closing.text} image={closing.image}>
-        <SiteButton href="/vip-privilege" variant="gold">VIP Privilege <ArrowRight aria-hidden="true" /></SiteButton>
-        <SiteButton href="/contact" variant="outline-light">Contact us</SiteButton>
+        <SiteButton href="/vip-privilege" action="vip" surface="dark">VIP Privilege</SiteButton>
+        <SiteButton href="/contact" action="contact" surface="dark">Contact us</SiteButton>
       </ExperienceClosing>
     </div>
   );
@@ -67,15 +67,15 @@ export function HotelPage() {
   return (
     <div className="site-home site-experience-page site-experience-page--hotel">
       <ExperienceHero eyebrow={hero.eyebrow} title={hero.title} lede={hero.lede} status={hero.status} image={hero.image}>
-        <SiteButton href="#overview" variant="gold">Learn more <ArrowRight aria-hidden="true" /></SiteButton>
-        <SiteButton href="/contact" variant="outline-light">Contact us <ArrowRight aria-hidden="true" /></SiteButton>
+        <SiteButton href="#overview" action="learn" surface="dark">Learn more</SiteButton>
+        <SiteButton href="/contact" action="contact" surface="dark">Contact us</SiteButton>
       </ExperienceHero>
       <ExperienceOverview id="overview" eyebrow={overview.eyebrow} title={overview.title} text={overview.text} features={withIcons(overview.features, [BedDouble, Wind, Leaf, Activity])} />
       <HotelGallery id="inside" eyebrow={gallery.eyebrow} title={gallery.title} images={gallery.images} apnea={apnea} />
       <ExperiencePhotoCards id="lounge" eyebrow={lounge.eyebrow} title={lounge.title} text={lounge.text} items={lounge.items} tone="soft" />
       <ExperienceClosing title={closing.title} text={closing.text} image={closing.image}>
-        <SiteButton href="/vip-privilege" variant="gold">VIP Privilege <ArrowRight aria-hidden="true" /></SiteButton>
-        <SiteButton href="/contact" variant="outline-light">Contact us</SiteButton>
+        <SiteButton href="/vip-privilege" action="vip" surface="dark">VIP Privilege</SiteButton>
+        <SiteButton href="/contact" action="contact" surface="dark">Contact us</SiteButton>
       </ExperienceClosing>
     </div>
   );
@@ -86,15 +86,15 @@ export function RestaurantPage() {
   return (
     <div className="site-home site-experience-page site-experience-page--restaurant">
       <ExperienceHero eyebrow={hero.eyebrow} title={hero.title} lede={hero.lede} status={hero.status} image={hero.image}>
-        <SiteButton href="#overview" variant="gold">Learn more <ArrowRight aria-hidden="true" /></SiteButton>
-        <SiteButton href="/contact" variant="outline-light">Contact us <ArrowRight aria-hidden="true" /></SiteButton>
+        <SiteButton href="#overview" action="learn" surface="dark">Learn more</SiteButton>
+        <SiteButton href="/contact" action="contact" surface="dark">Contact us</SiteButton>
       </ExperienceHero>
       <ExperienceOverview id="overview" eyebrow={overview.eyebrow} title={overview.title} text={overview.text} features={withIcons(overview.features, [ChefHat, GlassWater, Coffee])} />
       <RestaurantReservation id="reservations" eyebrow={reservation.eyebrow} title={reservation.title} text={reservation.text} note={reservation.note} image={reservation.image}>
-        <SiteButton href="/contact" variant="primary">Contact us <ArrowRight aria-hidden="true" /></SiteButton>
+        <SiteButton href="/contact" action="contact">Contact us</SiteButton>
       </RestaurantReservation>
       <ExperienceClosing title={closing.title} text={closing.text} image={closing.image}>
-        <SiteButton href="/contact" variant="gold">Contact us <ArrowRight aria-hidden="true" /></SiteButton>
+        <SiteButton href="/contact" action="contact" surface="dark">Contact us</SiteButton>
       </ExperienceClosing>
     </div>
   );

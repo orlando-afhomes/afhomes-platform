@@ -24,7 +24,7 @@
 .post-hero__back:hover svg { transform: translateX(-2px); }
 
 .post-hero__meta { margin-top: 12px; font-size: 12.5px; line-height: 1.5; color: var(--color-on-dark-faint); }
-.post-hero__title { margin-top: 10px; font-family: var(--site-home-display, var(--font-playfair)), Georgia, serif; font-size: clamp(30px, 3.3vw, 46px); line-height: 1.12; font-weight: 600; letter-spacing: -0.01em; color: var(--color-on-dark); text-wrap: balance; overflow-wrap: break-word; }
+.post-hero__title { margin-top: 10px; font-family: var(--site-home-display, var(--font-display)), Georgia, serif; font-size: clamp(30px, 3.3vw, 46px); line-height: 1.12; font-weight: 600; letter-spacing: -0.01em; color: var(--color-on-dark); text-wrap: balance; overflow-wrap: break-word; }
 .post-hero__intro { margin-top: 16px; max-width: 36rem; font-size: 15px; line-height: 1.6; color: rgb(255 255 255 / 0.85); }
 
 .post-hero__actions { margin-top: 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }

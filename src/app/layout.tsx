@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
+import { Geist, Geist_Mono, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/shared/providers/query-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-/** Display serif used only on the public Home page headings. */
-const playfairDisplay = Playfair_Display({
-  variable: "--font-playfair",
+/** Display serif used across the public headings, cards and hero accents. */
+const sourceSerif = Source_Serif_4({
+  variable: "--font-display",
   subsets: ["latin"],
   style: ["normal", "italic"],
 });
@@ -25,15 +25,11 @@ const playfairDisplay = Playfair_Display({
 export const metadata: Metadata = {
   title: "AFhomes Platform",
   description: "AFhomes business management platform",
-  icons: {
-    icon: "/images/logo.png",
-    apple: "/images/logo.png",
-  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable}`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable}`}>
       <body className="root-body">
         <QueryProvider>
           <MockStoreProvider>

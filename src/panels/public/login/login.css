@@ -216,7 +216,7 @@
   }
 
   .login-form__submit.login-form__submit {
-    transition: background-color 180ms ease-out, box-shadow 180ms ease-out, transform 150ms ease-out;
+    transition: background-color 180ms ease-out, box-shadow 180ms ease-out, transform 180ms ease-out;
   }
   .login-form__submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-raised); }
   .login-form__submit:active:not(:disabled) { transform: translateY(0); box-shadow: var(--shadow-soft); }

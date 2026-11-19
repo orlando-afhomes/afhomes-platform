@@ -31,7 +31,7 @@
 .site-post-page .post-closing__photo { border-radius: 16px; }
 .post-closing__content { min-width: 0; padding: 4px 4px 8px; }
 .post-closing__title {
-  font-family: var(--site-home-display, var(--font-playfair)), Georgia, serif;
+  font-family: var(--site-home-display, var(--font-display)), Georgia, serif;
   font-size: clamp(24px, 2.4vw, 32px);
   line-height: 1.15;
   font-weight: 600;

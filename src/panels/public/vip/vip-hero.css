@@ -18,10 +18,8 @@
   .site-vip .vip-hero .vip-hero__inner { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 32px; padding-bottom: 64px; }
 }
 
-/* Short gold line above the eyebrow (the Home eyebrow puts it after) */
+/* Eyebrow: light, uppercase; the shared rule adds the gold leading dot */
 .site-vip .vip-hero .site-eyebrow { color: var(--color-on-dark); font-weight: 600; }
-.site-vip .vip-hero .site-eyebrow::after { content: none; }
-.site-vip .vip-hero .site-eyebrow::before { content: ""; display: block; width: 56px; height: 2px; margin-bottom: 22px; background: var(--color-accent-light); }
 
 /* "VIP Privilege Card" on one line, "Privilege Card" in gold italic */
 .site-vip .vip-hero .site-home-hero__title { font-size: clamp(38px, 4.4vw, 64px); }
@@ -33,7 +31,6 @@
 /* Centered, stacked text on tablet and below; the fan stays centered under it. */
 @media (max-width: 899px) {
   .site-vip .vip-hero .vip-hero__text { display: flex; flex-direction: column; align-items: center; text-align: center; }
-  .site-vip .vip-hero .site-eyebrow::before { margin-inline: auto; }
 }
 
 /* The artwork has empty margins (about 11% per side); the scale crops them so the box, radius and shadow hug the real card */

@@ -1,4 +1,4 @@
-import { ArrowRight, Clock, MessageCircleMore, ShieldCheck } from "lucide-react";
+import { Clock, MessageCircleMore, ShieldCheck } from "lucide-react";
 import { ContactCards, Photo, SectionHeading, SiteButton } from "../site/blocks";
 import { SiteCta } from "../site/site-cta";
 import { ContactForm } from "../site/contact-form";
@@ -49,10 +49,6 @@ export function ContactPage() {
       </section>
 
       <div className="contact-page__inner contact-page__body">
-        <section aria-label="Contact details">
-          <ContactCards />
-        </section>
-
         <section id="contact-form" className="contact-message" aria-label="Write to us">
           <div className="contact-message__guide">
             <SectionHeading eyebrow="Send a message" title="Write to us" text="Fill in the form and your email app opens with the message ready to send to our office." />
@@ -73,6 +69,10 @@ export function ContactPage() {
           </div>
         </section>
 
+        <section aria-label="Contact details">
+          <ContactCards />
+        </section>
+
         <ContactMaps />
       </div>
 
@@ -85,7 +85,7 @@ export function ContactPage() {
         photoClassName="contact-closing__photo"
         note="Resort images are architectural renderings."
       >
-        <SiteButton href="#contact-form" variant="gold">Talk to us <ArrowRight aria-hidden="true" /></SiteButton>
+        <SiteButton href="#contact-form" action="talk" surface="dark">Talk to us</SiteButton>
       </SiteCta>
     </div>
   );

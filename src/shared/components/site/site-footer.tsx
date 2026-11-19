@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Info, Map as MapIcon, MapPin, ShieldCheck } from "lucide-react";
+import { Map as MapIcon, MapPin, ShieldCheck } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { SiteFooterAccess } from "./site-footer-access";
 import type { SiteNavLink } from "./site-nav-types";
 
 export type SiteFooterProps = {
@@ -40,17 +41,22 @@ export function SiteFooter({ brand, contacts, columns, locations, legal, classNa
           </div>
         </div>
 
-        {columns.map((column) => (
-          <nav key={column.heading} aria-label={column.heading} className="site-footer__block">
-            <h2 className="site-footer__heading">{column.heading}</h2>
-            {column.links.map((link) => (
-              <Link key={link.href} href={link.href} className="site-footer__link">{link.label}</Link>
-            ))}
-            {column.heading === "Access" ? (
-              <p className="site-footer__access-note"><Info aria-hidden="true" />Staff and sellers only.</p>
-            ) : null}
-          </nav>
-        ))}
+        {columns.map((column) => {
+          const links = column.links.map((link) => (
+            <Link key={link.href} href={link.href} className="site-footer__link">{link.label}</Link>
+          ));
+
+          if (column.heading === "Access") {
+            return <SiteFooterAccess key={column.heading} heading={column.heading} links={column.links} />;
+          }
+
+          return (
+            <nav key={column.heading} aria-label={column.heading} className="site-footer__block">
+              <h2 className="site-footer__heading">{column.heading}</h2>
+              {links}
+            </nav>
+          );
+        })}
 
         <div className="site-footer__block site-footer__block--offices">
           <h2 className="site-footer__heading">Our offices</h2>

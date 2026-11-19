@@ -34,6 +34,20 @@ describe("public skeletons", () => {
     expect(screen.queryByRole("heading")).toBeNull();
   });
 
+  it("marks every skeleton region for the neutral gray palette", () => {
+    const { container } = render(<PublicHeroSkeleton />);
+    expect(container.querySelector('[role="status"]')).toHaveClass("public-skeleton");
+  });
+
+  it("adds header clearance to hero-first and form-first pages", () => {
+    const hero = render(<PublicHeroSkeleton />);
+    expect(hero.container.querySelector('[role="status"]')?.className).toContain("tw:pt-28");
+    hero.unmount();
+
+    const form = render(<PublicFormPageSkeleton topSpacing />);
+    expect(form.container.querySelector('[role="status"]')?.className).toContain("tw:pt-28");
+  });
+
   it("drops the hero actions and media panels when asked", () => {
     const full = render(<PublicHeroSkeleton />);
     const fullCount = full.container.querySelectorAll('[data-slot="skeleton"]').length;

@@ -3,7 +3,7 @@ import { PublicFormPageSkeleton, PublicSectionSkeleton } from "@/panels/public/c
 export default function Loading() {
   return (
     <div className="site-home">
-      <PublicFormPageSkeleton fields={1} />
+      <PublicFormPageSkeleton fields={1} topSpacing />
       <PublicSectionSkeleton cards={1} />
     </div>
   );

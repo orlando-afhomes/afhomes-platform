@@ -35,7 +35,7 @@
   [role="menuitem"],
   [role="option"],
   [role="button"] {
-    transition-property: color, background-color, border-color, box-shadow, opacity;
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform, filter;
     transition-duration: 150ms;
     transition-timing-function: ease-out;
   }
@@ -62,8 +62,11 @@
 /* Skeleton placeholder: design-system tone, shimmer sweep, and a 150 ms
  * fade-in delay so fast loads never flash a skeleton. */
 @keyframes ui-skeleton-shimmer {
-  to {
+  from {
     background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
   }
 }
 

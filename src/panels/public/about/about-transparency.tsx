@@ -1,4 +1,4 @@
-import { ArrowRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { ABOUT } from "@/modules/public-site/content/about";
 import { Photo, Section, SectionHeading, SiteButton } from "../site/blocks";
 
@@ -31,9 +31,8 @@ export function AboutTransparency() {
             ))}
           </ul>
           <div className="about-transparency__actions">
-            <SiteButton href={transparency.href} variant="primary">
+            <SiteButton href={transparency.href} action="verify">
               {transparency.cta}
-              <ArrowRight aria-hidden="true" />
             </SiteButton>
           </div>
         </div>

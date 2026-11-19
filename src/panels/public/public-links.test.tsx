@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { render, screen, within } from "@testing-library/react";
@@ -13,6 +13,13 @@ import { VIP_PAGE, VIP_TIERS } from "@/modules/public-site/content/vip";
 import { PublicFooter } from "./components/public-footer";
 import { PublicHeader } from "./components/public-header";
 import { PublicHomePage } from "./pages/public-home-page";
+
+const navState = vi.hoisted(() => ({ pathname: "/" }));
+vi.mock("next/navigation", () => ({ usePathname: () => navState.pathname }));
+
+beforeEach(() => {
+  navState.pathname = "/";
+});
 
 const APP_ROOTS = ["src/app", "src/app/(public)"];
 const routeExists = (href: string) =>
@@ -36,6 +43,21 @@ describe("public sign-in and verification links", () => {
   it("keeps the public header to five top-level navigation entries", () => {
     const { container } = render(<PublicHeader />);
     expect(container.querySelectorAll(".site-header__nav > *")).toHaveLength(5);
+  });
+
+  it("marks only the current page in the header nav", () => {
+    navState.pathname = "/vip-privilege";
+    const { container } = render(<PublicHeader />);
+    expect(container.querySelector('.site-header__nav a[href="/"]')).not.toHaveAttribute("aria-current");
+    expect(container.querySelector('.site-header__nav a[href="/vip-privilege"]')).toHaveAttribute("aria-current", "page");
+    expect(container.querySelector(".site-header__dropdown-button--explore")).not.toHaveAttribute("aria-current");
+  });
+
+  it("marks the Explore group when one of its pages is current", () => {
+    navState.pathname = "/blog/a-post";
+    const { container } = render(<PublicHeader />);
+    expect(container.querySelector(".site-header__dropdown-button--explore")).toHaveAttribute("aria-current", "true");
+    expect(container.querySelector('.site-header__nav a[href="/"]')).not.toHaveAttribute("aria-current");
   });
 
   it("keeps Contact as a top-level link, outside the Explore dropdown", () => {
@@ -68,14 +90,38 @@ describe("public sign-in and verification links", () => {
     expect(routeExists("/login/sales")).toBe(true);
   });
 
-  it("shows Staff Login and Sales Sign-In in the mobile menu Access block", async () => {
+  it("puts Staff Login and Sales Sign-In behind the mobile menu Access button", async () => {
     const user = userEvent.setup();
     const { container } = render(<PublicHeader />);
     await user.click(within(container).getByRole("button", { name: "Open menu" }));
     const dialog = await screen.findByRole("dialog", { name: "AFHomes Group of Companies menu" });
-    expect(within(dialog).getByText("Access")).toBeInTheDocument();
+    const toggle = within(dialog).getByRole("button", { name: /Access/ });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(within(dialog).queryByRole("link", { name: "Staff Login" })).not.toBeInTheDocument();
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
     expect(within(dialog).getByRole("link", { name: "Staff Login" })).toHaveAttribute("href", "/login");
     expect(within(dialog).getByRole("link", { name: "Sales Sign-In" })).toHaveAttribute("href", "/login/sales");
+  });
+
+  it("keeps the footer Access links behind a collapsed toggle", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<PublicFooter />);
+    const access = container.querySelector(".site-footer__access");
+    expect(access).not.toBeNull();
+    const toggle = within(access as HTMLElement).getByRole("button", { name: /Access/ });
+    const panel = access?.querySelector(".site-footer__access-panel");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(panel).toHaveAttribute("data-open", "false");
+    expect(access?.querySelector('a[href="/login/sales"]')).not.toBeNull();
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(panel).toHaveAttribute("data-open", "true");
+    expect(within(access as HTMLElement).getByRole("link", { name: "Staff Login" })).toHaveAttribute("href", "/login");
   });
 
   it("points only at routes that exist under src/app", () => {

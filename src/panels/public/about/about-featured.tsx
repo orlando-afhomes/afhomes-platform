@@ -1,4 +1,4 @@
-import { ArrowRight, Leaf, Mountain, Waves, type LucideIcon } from "lucide-react";
+import { Leaf, Mountain, Waves, type LucideIcon } from "lucide-react";
 import { ABOUT } from "@/modules/public-site/content/about";
 import { Photo, Section, SiteButton } from "../site/blocks";
 
@@ -18,9 +18,8 @@ export function AboutFeatured() {
           <h2 className="about-featured__title">{title}</h2>
           <p className="about-featured__text">{text}</p>
           <div className="about-featured__actions">
-            <SiteButton href={href} variant="gold">
+            <SiteButton href={href} action="explore" surface="dark" primaryTone="contrast">
               {cta}
-              <ArrowRight aria-hidden="true" />
             </SiteButton>
           </div>
         </div>

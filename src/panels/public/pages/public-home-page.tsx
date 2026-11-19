@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowRight, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { ABOUT } from "@/modules/public-site/content/about";
 import { EXPERIENCE_CARDS, RESORT_AMENITIES, ROOMS } from "@/modules/public-site/content/experiences";
 import { SiteCallout, SiteFeatureCard } from "@/shared/components/site";
@@ -27,8 +27,8 @@ export function PublicHomePage() {
           </h1>
           <p className="site-home-hero__lede">A hospitality group creating destinations that feel like home.</p>
           <div className="site-hero__actions">
-            <SiteButton href="/vip-privilege#cards" variant="gold">Join VIP <ArrowRight aria-hidden="true" /></SiteButton>
-            <SiteButton href="#experiences" variant="outline-light">Our experiences <ArrowDown aria-hidden="true" /></SiteButton>
+            <SiteButton href="/vip-privilege#cards" action="join-vip" surface="dark">Join VIP</SiteButton>
+            <SiteButton href="#experiences" action="experiences" surface="dark">Our experiences</SiteButton>
           </div>
         </div>
       </section>
@@ -47,13 +47,13 @@ export function PublicHomePage() {
       <Section tone="soft">
         <SectionHeading eyebrow="VIP Privilege" title="Exclusive member benefits" text="Enjoy member perks across the entire resort." />
         <VipTierList />
-        <div className="site-center"><SiteButton href="/vip-privilege">Compare cards <ArrowRight aria-hidden="true" /></SiteButton></div>
+        <div className="site-center"><SiteButton href="/vip-privilege" action="compare">Compare cards</SiteButton></div>
       </Section>
 
       <Section>
         <SectionHeading eyebrow="Accommodations" title="Cozy, warm accommodations" text="Stays designed for comfort, relaxation, and joy." />
         <RoomPreviewGrid rooms={[ROOMS[0], ROOMS[5], ROOMS[1], ROOMS[2], ROOMS[4], ROOMS[7]]} />
-        <div className="site-center"><SiteButton href="/experiences/hotspring-ecofarm-resort#accommodations">View floor plans <ArrowRight aria-hidden="true" /></SiteButton></div>
+        <div className="site-center"><SiteButton href="/experiences/hotspring-ecofarm-resort#accommodations" action="floor-plans">View floor plans</SiteButton></div>
       </Section>
 
       <Section tone="soft">
@@ -68,7 +68,7 @@ export function PublicHomePage() {
       </Section>
 
       <SiteCta title="Your stay awaits" text="Where comfort meets excitement, dreams come true." image={RESORT_AMENITIES[4]}>
-        <SiteButton href="/contact" variant="gold">Contact us <ArrowRight aria-hidden="true" /></SiteButton>
+        <SiteButton href="/contact" action="contact" surface="dark" primaryTone="contrast">Contact us</SiteButton>
       </SiteCta>
     </div>
   );

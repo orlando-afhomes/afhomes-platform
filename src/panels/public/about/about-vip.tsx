@@ -1,4 +1,3 @@
-import { ArrowRight } from "lucide-react";
 import { ABOUT } from "@/modules/public-site/content/about";
 import { Section, SectionHeading, SiteButton } from "../site/blocks";
 import { VipTierList } from "../site/vip-tier-list";
@@ -13,9 +12,8 @@ export function AboutVip() {
       </div>
       <VipTierList />
       <div className="site-center">
-        <SiteButton href={vip.href} variant="primary">
+        <SiteButton href={vip.href} action="compare">
           {vip.cta}
-          <ArrowRight aria-hidden="true" />
         </SiteButton>
       </div>
     </Section>

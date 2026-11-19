@@ -1,4 +1,3 @@
-import { ChevronRight } from "lucide-react";
 import { VIP_PAGE } from "@/modules/public-site/content/vip";
 import { SiteButton } from "../site/blocks";
 import { SiteCta } from "../site/site-cta";
@@ -12,7 +11,7 @@ export function VipClosing() {
       text={closing.text}
       image={closing.image}
     >
-      <SiteButton href="/contact" variant="light">Contact us <ChevronRight aria-hidden="true" /></SiteButton>
+      <SiteButton href="/contact" action="contact" surface="dark">Contact us</SiteButton>
     </SiteCta>
   );
 }

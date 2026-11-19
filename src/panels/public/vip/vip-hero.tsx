@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { ChevronRight } from "lucide-react";
 import { VIP_INTRO, VIP_PAGE, VIP_TIERS } from "@/modules/public-site/content/vip";
 import { Photo, SiteButton } from "../site/blocks";
 
@@ -22,8 +21,8 @@ export function VipHero() {
           </h1>
           <p className="site-home-hero__lede">{VIP_INTRO.lede}</p>
           <div className="site-hero__actions">
-            <SiteButton href="/contact" variant="primary">Contact us <ChevronRight aria-hidden="true" /></SiteButton>
-            <SiteButton href="/faq#payment" variant="outline-light">Payment steps <ChevronRight aria-hidden="true" /></SiteButton>
+            <SiteButton href="/contact" action="contact" surface="dark">Contact us</SiteButton>
+            <SiteButton href="/faq#payment" action="payment-steps" surface="dark">Payment steps</SiteButton>
           </div>
         </div>
         <div className="vip-hero__fan" aria-hidden="true">

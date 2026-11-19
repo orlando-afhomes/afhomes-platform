@@ -9,7 +9,7 @@ export function BlogCard({ post }: { post: BlogPost }) {
   const href = `/blog/${post.slug}`;
   return (
     <article className="blog-card">
-      <Photo image={post.cover} ratio="16 / 10" className="blog-card__photo" sizes="(min-width: 1000px) 400px, (min-width: 640px) 50vw, 100vw" />
+      <Photo image={post.cover} ratio="16 / 10" className="blog-card__photo" sizes="(min-width: 1000px) 400px, (min-width: 640px) 50vw, 100vw" backdrop />
       <div className="blog-card__body">
         <BlogMeta post={post} tone="light" />
         <h3 className="blog-card__title">

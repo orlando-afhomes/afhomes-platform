@@ -3,13 +3,13 @@ import { FormSkeleton } from "@/shared/components/modern/skeletons";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { LoginShell } from "../login/login-shell";
 
-const CARD = "tw:flex tw:flex-col tw:gap-3 tw:rounded-2xl tw:border tw:border-border tw:bg-card tw:p-3 tw:shadow-(--shadow-soft)";
+const CARD = "tw:flex tw:flex-col tw:gap-3 tw:rounded-2xl tw:p-3";
 const PAGE = "tw:mx-auto tw:flex tw:w-full tw:flex-col tw:px-4 tw:md:px-6";
 
 /** One loading announcement per skeleton, with a decorative shape inside. */
 function LoadingRegion({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div role="status" aria-busy="true" className={className}>
+    <div role="status" aria-busy="true" className={`public-skeleton ${className ?? ""}`.trim()}>
       <span className="tw:sr-only">Loading…</span>
       {children}
     </div>
@@ -19,8 +19,8 @@ function LoadingRegion({ children, className }: { children: ReactNode; className
 /** Public hero: dark rounded block, pill line, two title lines, lede and optional actions/media. */
 export function PublicHeroSkeleton({ actions = true, media = true }: { actions?: boolean; media?: boolean } = {}) {
   return (
-    <LoadingRegion className="tw:mx-auto tw:w-full tw:max-w-7xl tw:px-4 tw:pt-6 tw:md:px-6">
-      <div className="tw:flex tw:flex-col tw:gap-8 tw:rounded-3xl tw:bg-(--color-brand-deep) tw:px-6 tw:py-12 tw:sm:px-10 tw:lg:flex-row tw:lg:items-center tw:lg:gap-10">
+    <LoadingRegion className="tw:mx-auto tw:w-full tw:max-w-7xl tw:px-4 tw:pt-28 tw:md:px-6">
+      <div className="tw:flex tw:flex-col tw:gap-8 tw:rounded-3xl tw:px-6 tw:py-12 tw:sm:px-10 tw:lg:flex-row tw:lg:items-center tw:lg:gap-10">
         <div className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:gap-5">
           <Skeleton className="tw:h-6 tw:w-40 tw:rounded-full" />
           <div className="tw:flex tw:flex-col tw:gap-3">
@@ -70,7 +70,7 @@ export function PublicTierGridSkeleton() {
     <LoadingRegion className={`${PAGE} tw:max-w-7xl tw:py-10`}>
       <div className="tw:grid tw:gap-6 tw:sm:grid-cols-2 tw:lg:grid-cols-3">
         {Array.from({ length: 3 }, (_, index) => (
-          <div key={index} className="tw:flex tw:flex-col tw:gap-4 tw:rounded-2xl tw:border tw:border-border tw:bg-card tw:p-3 tw:shadow-(--shadow-soft)">
+          <div key={index} className="tw:flex tw:flex-col tw:gap-4 tw:rounded-2xl tw:p-3">
             <Skeleton className="tw:h-56 tw:w-full tw:rounded-xl" />
             <Skeleton className="tw:h-5 tw:w-1/2" />
             <div className="tw:grid tw:grid-cols-2 tw:gap-3">
@@ -109,15 +109,15 @@ export function PublicArticleSkeleton() {
 }
 
 /** Form page: heading, white card with label/input pairs, and button blocks. */
-export function PublicFormPageSkeleton({ fields = 4 }: { fields?: number } = {}) {
+export function PublicFormPageSkeleton({ fields = 4, topSpacing = false }: { fields?: number; topSpacing?: boolean } = {}) {
   return (
-    <LoadingRegion className="tw:mx-auto tw:flex tw:w-full tw:max-w-3xl tw:flex-col tw:gap-6 tw:px-4 tw:py-8 tw:md:px-6">
+    <LoadingRegion className={`tw:mx-auto tw:flex tw:w-full tw:max-w-3xl tw:flex-col tw:gap-6 tw:px-4 tw:md:px-6 ${topSpacing ? "tw:pt-28" : "tw:py-8"}`}>
       <div className="tw:flex tw:flex-col tw:gap-2">
         <Skeleton className="tw:h-9 tw:w-3/4" />
         <Skeleton className="tw:h-4 tw:w-full" />
         <Skeleton className="tw:h-4 tw:w-1/2" />
       </div>
-      <div className="tw:flex tw:flex-col tw:gap-5 tw:rounded-2xl tw:border tw:border-border tw:bg-card tw:p-5 tw:shadow-(--shadow-soft) tw:sm:p-6">
+      <div className="tw:flex tw:flex-col tw:gap-5 tw:rounded-2xl tw:p-5 tw:sm:p-6">
         <Skeleton className="tw:h-6 tw:w-44" />
         <FormSkeleton fields={fields} />
         <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">

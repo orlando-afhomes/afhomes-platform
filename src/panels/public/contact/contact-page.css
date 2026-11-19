@@ -55,8 +55,6 @@
   letter-spacing: 0.08em;
 }
 
-.site-contact-page .site-eyebrow::after { width: 40px; }
-
 .contact-hero__title {
   margin-top: 8px;
   color: var(--color-bg-canvas);

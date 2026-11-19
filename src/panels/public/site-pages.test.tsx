@@ -108,6 +108,41 @@ describe("public site pages", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Teppanyaki Lounge" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Older post/ })).toHaveAttribute("href", `/blog/${BLOG_POSTS[4].slug}`);
   });
+  it("puts the experience status above the eyebrow", () => {
+    const { container } = render(<ResortPage />);
+    const top = container.querySelector(".exp-hero .site-home-hero__top");
+    expect(top).not.toBeNull();
+    expect(top?.querySelector(".exp-hero__status")?.textContent).toBe("In development");
+    expect(top?.nextElementSibling?.classList.contains("site-eyebrow")).toBe(true);
+  });
+
+  it("places the contact form before the contact details", () => {
+    const { container } = render(<ContactPage />);
+    const form = container.querySelector("#contact-form");
+    const details = container.querySelector(".contact-details");
+    expect(form).not.toBeNull();
+    expect(details).not.toBeNull();
+    expect(form!.compareDocumentPosition(details!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("puts a decorative blurred backdrop behind blog card covers", () => {
+    const { container } = render(<BlogPage />);
+    const covers = container.querySelectorAll(".blog-card__photo");
+    expect(covers.length).toBeGreaterThan(0);
+    for (const cover of covers) expect(cover.querySelectorAll("img")).toHaveLength(2);
+    expect(container.querySelector(".blog-featured__photo img[aria-hidden='true']")).not.toBeNull();
+  });
+
+  it("moves through room photos with the arrow keys and shows the counter", async () => {
+    const user = userEvent.setup();
+    render(<ResortPage />);
+    await user.click(screen.getByRole("button", { name: "View details: Premier A-Frame" }));
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText("1 / 2")).toBeInTheDocument();
+    await user.keyboard("{ArrowRight}");
+    expect(within(dialog).getByText("2 / 2")).toBeInTheDocument();
+  });
+
   it("resort page lists every room, opens its photos, and switches the location tab to the live map", async () => {
     const user = userEvent.setup();
     render(<ResortPage />);

@@ -16,7 +16,8 @@
   white-space: nowrap;
   transition: background-color 400ms cubic-bezier(0.22, 0.8, 0.2, 1), border-color 400ms cubic-bezier(0.22, 0.8, 0.2, 1), color 400ms cubic-bezier(0.22, 0.8, 0.2, 1), box-shadow 400ms cubic-bezier(0.22, 0.8, 0.2, 1), transform 400ms cubic-bezier(0.22, 0.8, 0.2, 1), filter 400ms cubic-bezier(0.22, 0.8, 0.2, 1);
 }
-.site-header__action svg { width: 16px; height: 16px; flex-shrink: 0; }
+.site-header__action svg { width: 16px; height: 16px; flex-shrink: 0; transition: transform 400ms cubic-bezier(0.22, 0.8, 0.2, 1); }
+.site-header__action:hover svg { transform: translateY(-2px); }
 .site-header__action--primary {
   background: var(--gradient-gold);
   color: var(--color-brand-deep);
@@ -31,7 +32,9 @@
 .site-header__action--outline:hover { border-color: var(--color-brand-primary); background-color: var(--color-brand-soft); }
 @media (prefers-reduced-motion: reduce) {
   .site-header__action { transition: none; }
+  .site-header__action svg { transition: none; }
   .site-header__action--primary:hover { transform: none; }
+  .site-header__action:hover svg { transform: none; }
 }
 .site-header__action--block { width: 100%; min-height: 48px; font-size: 15px; }
 
@@ -69,7 +72,7 @@
 }
 .site-header__logo-image { height: 100%; width: auto; object-fit: contain; }
 .site-header__name { display: flex; flex-direction: column; gap: 1px; line-height: 1; }
-.site-header__name-main { font-family: var(--font-playfair), Georgia, "Times New Roman", serif; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; color: var(--color-brand-deep); }
+.site-header__name-main { font-family: var(--font-display), Georgia, "Times New Roman", serif; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; color: var(--color-brand-deep); }
 .site-header__name-sub { font-size: 8.5px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: color-mix(in oklab, var(--color-text-muted) 82%, transparent); }
 .site-header__nav, .site-header__actions { display: none; }
 .site-header__actions { flex-shrink: 0; }
@@ -104,6 +107,11 @@
 }
 .site-header__link:hover { color: var(--color-brand-primary); background-color: color-mix(in oklab, var(--color-brand-soft) 70%, transparent); }
 .site-header__link:hover::after { transform: scaleX(1); }
+/* Current page: persistent gold underline; the label reads brand green on the solid header. */
+.site-header__link[aria-current]::after,
+.site-header__dropdown-button[aria-current]::after { transform: scaleX(1); }
+.site-header__link[aria-current],
+.site-header__dropdown-button[aria-current] { color: var(--color-brand-primary); }
 .site-header__dropdown-button { cursor: pointer; border: 0; background: transparent; font-family: inherit; }
 /* Keep the underline under the label only, not under the chevron */
 .site-header__dropdown-button::after { right: 31px; }
@@ -267,7 +275,7 @@
 }
 .site-mobile-menu__logo-image { height: 100%; width: auto; object-fit: contain; }
 .site-mobile-menu__brand-text { display: flex; flex-direction: column; line-height: 1; }
-.site-mobile-menu__brand-name { font-family: var(--font-playfair), Georgia, "Times New Roman", serif; font-size: 19px; font-weight: 600; letter-spacing: -0.01em; color: #fff; }
+.site-mobile-menu__brand-name { font-family: var(--font-display), Georgia, "Times New Roman", serif; font-size: 19px; font-weight: 600; letter-spacing: -0.01em; color: #fff; }
 .site-mobile-menu__brand-sub { margin-top: 3px; font-size: 8.5px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: rgb(255 255 255 / 0.68); }
 .site-mobile-menu__close {
   display: inline-flex;
@@ -338,7 +346,29 @@
   border-top: 1px solid var(--color-border-subtle);
   padding-top: 16px;
 }
-.site-mobile-menu__access-label { padding: 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-text-muted); }
+.site-mobile-menu__access-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 14px;
+  background: #fff;
+  padding: 0 12px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+.site-mobile-menu__access-toggle:hover { border-color: color-mix(in oklab, var(--color-brand-primary) 35%, transparent); background: var(--color-brand-soft); }
+.site-mobile-menu__access-toggle:focus-visible { outline: 2px solid var(--color-state-focus); outline-offset: 3px; }
+.site-mobile-menu__access-label { flex: 1; min-width: 0; font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-text-muted); }
+.site-mobile-menu__access-hint { font-size: 12px; font-weight: 500; color: var(--color-text-muted); }
+.site-mobile-menu__access-toggle-chevron { width: 16px; height: 16px; flex-shrink: 0; color: var(--color-text-muted); transition: transform 180ms ease; }
+.site-mobile-menu__access-toggle[aria-expanded="true"] .site-mobile-menu__access-toggle-chevron { transform: rotate(180deg); }
+.site-mobile-menu__access-panel { display: flex; flex-direction: column; gap: 8px; }
+.site-mobile-menu__access-panel[hidden] { display: none; }
 .site-mobile-menu__access-note {
   display: flex;
   align-items: flex-start;
@@ -398,6 +428,8 @@
   .site-mobile-menu,
   .site-mobile-menu__close,
   .site-mobile-menu__link,
+  .site-mobile-menu__access-toggle,
+  .site-mobile-menu__access-toggle-chevron,
   .site-mobile-menu__access-link { transition: none; }
   .site-mobile-menu[data-open],
   .site-mobile-menu[data-ending-style],
@@ -489,6 +521,38 @@
   transition: width 200ms ease;
 }
 .site-footer__link:hover::after { width: 100%; }
+.site-footer__access { display: block; }
+.site-footer__access-toggle {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  margin-left: -6px;
+  padding: 0 6px;
+  font-family: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease;
+}
+.site-footer__access-toggle:hover { color: var(--color-on-dark); background: rgb(255 255 255 / 0.07); }
+.site-footer__access-toggle:focus-visible { outline: 2px solid var(--color-accent-light); outline-offset: 3px; }
+.site-footer__access-chevron { width: 14px; height: 14px; flex-shrink: 0; transition: transform 200ms ease; }
+.site-footer__access-toggle[aria-expanded="true"] .site-footer__access-chevron { transform: rotate(180deg); }
+.site-footer__access-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 220ms ease;
+}
+.site-footer__access-panel[data-open="true"] { max-height: var(--access-panel-height, 0px); }
+@media (prefers-reduced-motion: reduce) {
+  .site-footer__access-panel { transition: none; }
+}
+.site-footer__access-body { min-height: 0; overflow: hidden; }
+.site-footer__access-nav { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding-top: 6px; }
 .site-footer__access-note {
   display: flex;
   align-items: flex-start;
@@ -633,35 +697,9 @@
   .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__link { color: rgb(255 255 255 / 0.92); }
   .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__link:hover,
   .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__dropdown-button[aria-expanded="true"] { color: #fff; background-color: rgb(255 255 255 / 0.14); }
-  /* The current page keeps its gold underline drawn over the hero. Each dropdown button is marked on its own so Experience pages light up Experiences, VIP Privilege is a top-level link, and About/Compliance/FAQ/Blog pages light up Explore. */
-  .public-layout:has(.site-home:not(.site-about):not(.site-vip):not(.site-compliance):not(.site-faq-page):not(.site-blog-page):not(.site-post-page):not(.site-contact-page):not(.site-experience-page)) .site-header__link[href="/"]::after,
-  .public-layout:has(.site-experience-page) .site-header__dropdown-button--experiences::after,
-  .public-layout:has(.site-vip) .site-header__link[href="/vip-privilege"]::after,
-  .public-layout:has(.site-about) .site-header__dropdown-button--explore::after,
-  .public-layout:has(.site-compliance) .site-header__dropdown-button--explore::after,
-  .public-layout:has(.site-faq-page) .site-header__dropdown-button--explore::after,
-  .public-layout:has(.site-blog-page) .site-header__dropdown-button--explore::after,
-  .public-layout:has(.site-post-page) .site-header__dropdown-button--explore::after,
-  .public-layout:has(.site-contact-page) .site-header__link[href="/contact"]::after { transform: scaleX(1); }
-  /* The active label also reads brand-green on the solid header; over the hero photo it stays white. */
-  .public-layout:has(.site-home:not(.site-about):not(.site-vip):not(.site-compliance):not(.site-faq-page):not(.site-blog-page):not(.site-post-page):not(.site-contact-page):not(.site-experience-page)) .site-header__link[href="/"],
-  .public-layout:has(.site-experience-page) .site-header__dropdown-button--experiences,
-  .public-layout:has(.site-vip) .site-header__link[href="/vip-privilege"],
-  .public-layout:has(.site-about) .site-header__dropdown-button--explore,
-  .public-layout:has(.site-compliance) .site-header__dropdown-button--explore,
-  .public-layout:has(.site-faq-page) .site-header__dropdown-button--explore,
-  .public-layout:has(.site-blog-page) .site-header__dropdown-button--explore,
-  .public-layout:has(.site-post-page) .site-header__dropdown-button--explore,
-  .public-layout:has(.site-contact-page) .site-header__link[href="/contact"] { color: var(--color-brand-primary); }
-  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__link[href="/"],
-  .public-layout:has(.site-experience-page) > .site-header:not([data-scrolled]) .site-header__dropdown-button--experiences,
-  .public-layout:has(.site-vip) > .site-header:not([data-scrolled]) .site-header__link[href="/vip-privilege"],
-  .public-layout:has(.site-about) > .site-header:not([data-scrolled]) .site-header__dropdown-button--explore,
-  .public-layout:has(.site-compliance) > .site-header:not([data-scrolled]) .site-header__dropdown-button--explore,
-  .public-layout:has(.site-faq-page) > .site-header:not([data-scrolled]) .site-header__dropdown-button--explore,
-  .public-layout:has(.site-blog-page) > .site-header:not([data-scrolled]) .site-header__dropdown-button--explore,
-  .public-layout:has(.site-post-page) > .site-header:not([data-scrolled]) .site-header__dropdown-button--explore,
-  .public-layout:has(.site-contact-page) > .site-header:not([data-scrolled]) .site-header__link[href="/contact"] { color: #fff; }
+  /* The current page keeps its gold underline drawn over the hero. The link and the group button mark themselves from the pathname, so hidden prefetch shells cannot affect them. */
+  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__link[aria-current],
+  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__dropdown-button[aria-current] { color: #fff; }
 
   .public-layout:has(.site-contact-page) > .site-header:not([data-scrolled]) .site-header__action--outline:not(:hover) {
     border-color: color-mix(in oklab, var(--color-accent-light) 42%, transparent);

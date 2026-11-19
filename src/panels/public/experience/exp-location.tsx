@@ -91,7 +91,7 @@ export function ExperienceLocation({ id, eyebrow, title, activities, sitePlan, m
         <div className="exp-location__card">
           <h3 className="exp-location__card-title">{sitePlan.title}</h3>
           <p className="exp-location__card-text">{sitePlan.text}</p>
-          <button type="button" className="site-button site-button--gold exp-location__card-action" onClick={() => setPlanOpen(true)}>
+          <button type="button" className="site-button site-button--primary exp-location__card-action" onClick={() => setPlanOpen(true)}>
             View plan <ArrowRight aria-hidden="true" className="exp-location__action-icon" />
           </button>
         </div>
@@ -104,7 +104,7 @@ export function ExperienceLocation({ id, eyebrow, title, activities, sitePlan, m
           <h3 className="exp-location__card-title">{map.title}</h3>
           <p className="exp-location__card-text">{map.text}</p>
           <span className="exp-location__card-action">
-            <SiteButton href={map.href} variant="gold" external>Get directions</SiteButton>
+            <SiteButton href={map.href} action="directions" external>Get directions</SiteButton>
           </span>
         </div>
       </div>

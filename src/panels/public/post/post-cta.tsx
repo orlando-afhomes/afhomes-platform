@@ -1,4 +1,3 @@
-import { ArrowRight } from "lucide-react";
 import { BLOG_POST_PAGE } from "@/modules/public-site/content/blog";
 import { SiteButton } from "../site/blocks";
 import { SiteCta } from "../site/site-cta";
@@ -8,7 +7,7 @@ export function PostCta() {
   const { cta } = BLOG_POST_PAGE;
   return (
     <SiteCta title={cta.title} text={cta.text} image={cta.image}>
-      <SiteButton href={cta.href} variant="gold">{cta.label} <ArrowRight aria-hidden="true" /></SiteButton>
+      <SiteButton href={cta.href} action="explore" surface="dark">{cta.label}</SiteButton>
     </SiteCta>
   );
 }

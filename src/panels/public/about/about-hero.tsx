@@ -1,4 +1,3 @@
-import { ArrowRight } from "lucide-react";
 import { ABOUT } from "@/modules/public-site/content/about";
 import { Photo, SiteButton } from "../site/blocks";
 
@@ -17,8 +16,8 @@ export function AboutHero() {
         </h1>
         <p className="site-home-hero__lede">{copy.lede}</p>
         <div className="site-hero__actions">
-          <SiteButton href="/vip-privilege#cards" variant="gold">Join VIP <ArrowRight aria-hidden="true" /></SiteButton>
-          <SiteButton href="#story" variant="outline-light">Our Story <ArrowRight aria-hidden="true" /></SiteButton>
+          <SiteButton href="/vip-privilege#cards" action="join-vip" surface="dark">Join VIP</SiteButton>
+          <SiteButton href="#story" action="story" surface="dark">Our Story</SiteButton>
         </div>
       </div>
     </section>

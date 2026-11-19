@@ -60,7 +60,7 @@ describe("public seller check", () => {
     const result = await screen.findByRole("region", { name: "Verification result" }, { timeout: 3000 });
     expect(result).toHaveTextContent("AAO26100004");
     expect(result).toHaveTextContent("Accredited");
-    expect(result).toHaveTextContent("Valid until");
+    expect(result).not.toHaveTextContent("Valid until");
     expect(result).toHaveTextContent(/\*/);
     expect(result).toHaveTextContent("SECURITY BANK");
     // The visitor's own details are never shown back.

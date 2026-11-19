@@ -1,4 +1,4 @@
-import { ArrowUpRight, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { ABOUT } from "@/modules/public-site/content/about";
 import { OFFICES } from "@/modules/public-site/content/site";
 import { SiteMapEmbed } from "@/shared/components/site";
@@ -18,8 +18,8 @@ export function AboutVisit() {
             <span>{visit.address}</span>
           </p>
           <div className="about-visit__actions">
-            <SiteButton href={mainOffice.map.href} external>
-              {visit.cta} <ArrowUpRight aria-hidden="true" />
+            <SiteButton href={mainOffice.map.href} action="directions" external>
+              {visit.cta}
             </SiteButton>
           </div>
         </div>

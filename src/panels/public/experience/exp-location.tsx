@@ -1,12 +1,11 @@
 "use client";
 
 import { useId, useRef, useState, type KeyboardEvent } from "react";
-import Image from "next/image";
 import { ArrowRight, Map as MapIcon, MapPin } from "lucide-react";
 import type { SiteImage } from "@/modules/public-site/content/experiences";
 import { SiteMapEmbed } from "@/shared/components/site/site-map-embed";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { Photo, Section, SiteButton } from "../site/blocks";
+import { PhotoLightbox } from "./photo-lightbox";
 
 type LocationTab = "plan" | "map";
 
@@ -26,7 +25,7 @@ export function ExperienceLocation({ id, eyebrow, title, activities, sitePlan, m
 }) {
   const baseId = useId();
   const [tab, setTab] = useState<LocationTab>("plan");
-  const [planOpen, setPlanOpen] = useState(false);
+  const [planIndex, setPlanIndex] = useState<number | null>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const headingId = `${baseId}-heading`;
   const tabId = (value: LocationTab) => `${baseId}-tab-${value}`;
@@ -91,7 +90,7 @@ export function ExperienceLocation({ id, eyebrow, title, activities, sitePlan, m
         <div className="exp-location__card">
           <h3 className="exp-location__card-title">{sitePlan.title}</h3>
           <p className="exp-location__card-text">{sitePlan.text}</p>
-          <button type="button" className="site-button site-button--primary exp-location__card-action" onClick={() => setPlanOpen(true)}>
+          <button type="button" className="site-button site-button--primary exp-location__card-action" onClick={() => setPlanIndex(0)}>
             View plan <ArrowRight aria-hidden="true" className="exp-location__action-icon" />
           </button>
         </div>
@@ -109,17 +108,7 @@ export function ExperienceLocation({ id, eyebrow, title, activities, sitePlan, m
         </div>
       </div>
 
-      <Dialog open={planOpen} onOpenChange={setPlanOpen}>
-        <DialogContent className="site-lightbox">
-          <DialogHeader>
-            <DialogTitle>{sitePlan.title}</DialogTitle>
-            <DialogDescription className="tw:sr-only">{sitePlan.image.alt}</DialogDescription>
-          </DialogHeader>
-          <span className="site-lightbox__frame">
-            <Image src={sitePlan.image.src} alt={sitePlan.image.alt} fill sizes="(min-width: 1024px) 900px, 100vw" className="site-photo__image site-photo__image--contain" />
-          </span>
-        </DialogContent>
-      </Dialog>
+      <PhotoLightbox images={[sitePlan.image]} index={planIndex} onIndexChange={setPlanIndex} title={sitePlan.title} />
     </Section>
   );
 }

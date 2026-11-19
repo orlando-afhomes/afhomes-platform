@@ -4,7 +4,7 @@
 
 .exp-hotel-gallery__grid { display: grid; gap: 14px; }
 .exp-hotel-gallery__cell { min-width: 0; }
-.exp-hotel-gallery__item { display: block; width: 100%; height: 100%; cursor: zoom-in; border-radius: 18px; box-shadow: 0 14px 30px -20px rgb(14 43 32 / 0.45); }
+.exp-hotel-gallery__item { display: block; width: 100%; height: 100%; cursor: pointer; border-radius: 18px; box-shadow: 0 14px 30px -20px rgb(14 43 32 / 0.45); }
 .exp-hotel-gallery__item:focus-visible { outline: 2px solid var(--color-state-focus); outline-offset: 3px; }
 .site-experience-page .exp-hotel-gallery__photo { border-radius: 18px; }
 .exp-hotel-gallery__photo .site-photo__image { transition: transform 400ms ease; }

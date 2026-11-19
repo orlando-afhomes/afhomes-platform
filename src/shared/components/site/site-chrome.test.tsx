@@ -38,6 +38,21 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: "Test Brand home" })).toHaveAttribute("href", "/");
   });
 
+  it("marks the Verify page so its header opts out of the transparent style", () => {
+    const page = (pathname: string) => {
+      navState.pathname = pathname;
+      return <SiteHeader brand={brand} items={[]} actions={[]} />;
+    };
+    const { container, rerender } = render(page("/verify"));
+    expect(container.querySelector('header[data-page="verify"]')).not.toBeNull();
+
+    rerender(page("/"));
+    expect(container.querySelector("header")).not.toHaveAttribute("data-page");
+
+    rerender(page("/contact"));
+    expect(container.querySelector("header")).not.toHaveAttribute("data-page");
+  });
+
   it("marks only the link for the current page", () => {
     navState.pathname = "/vip-privilege";
     render(

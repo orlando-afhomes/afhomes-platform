@@ -248,7 +248,6 @@ p.site-callout { margin-top: 24px; border-left: 4px solid var(--color-brand-seco
 /* Lightbox */
 
 .site-lightbox { max-width: min(56rem, calc(100% - 2rem)) !important; }
-.site-lightbox__frame { position: relative; display: block; width: 100%; height: min(70vh, 40rem); }
 
 /* FAQ */
 

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/shared/lib/utils";
+import { SiteHeaderFrame } from "./site-header-frame";
 import { SiteHeaderLink } from "./site-header-link";
 import { SiteHeaderScroll } from "./site-header-scroll";
 import { SiteMobileMenu } from "./site-mobile-menu";
@@ -19,7 +20,7 @@ export type SiteHeaderProps = {
 /** Sticky site header: brand, main menu with optional dropdown groups, action buttons, and a phone menu. */
 export function SiteHeader({ brand, items, actions, mobileExtraLinks = [], className }: SiteHeaderProps) {
   return (
-    <header className={cn("site-header", className)}>
+    <SiteHeaderFrame className={cn("site-header", className)}>
       <SiteHeaderScroll />
       <div className="site-header__bar">
         <Link href={brand.href} className="site-header__brand" aria-label={`${brand.name}${brand.subName ? ` ${brand.subName}` : ""} home`}>
@@ -53,6 +54,6 @@ export function SiteHeader({ brand, items, actions, mobileExtraLinks = [], class
 
         <SiteMobileMenu brandName={brand.name} brandSubName={brand.subName} logoSrc={brand.logoSrc} items={items} actions={actions} extraLinks={mobileExtraLinks} />
       </div>
-    </header>
+    </SiteHeaderFrame>
   );
 }

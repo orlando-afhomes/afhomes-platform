@@ -11,7 +11,7 @@ import { ContactPage, FaqPage } from "./pages/faq-contact-pages";
 import { PublicHomePage } from "./pages/public-home-page";
 import { VipPage } from "./pages/vip-page";
 import { HotelPage, ResortPage, RestaurantPage } from "./pages/experience-pages";
-import { HOTEL, RESTAURANT, RESORT, ROOMS } from "@/modules/public-site/content/experiences";
+import { HOTEL, RESTAURANT, RESORT, RESORT_AMENITIES, ROOMS } from "@/modules/public-site/content/experiences";
 
 afterEach(() => {
   cleanup();
@@ -141,6 +141,20 @@ describe("public site pages", () => {
     expect(within(dialog).getByText("1 / 2")).toBeInTheDocument();
     await user.keyboard("{ArrowRight}");
     expect(within(dialog).getByText("2 / 2")).toBeInTheDocument();
+  });
+
+  it("opens the amenities photos in the shared gallery with arrows and a counter", async () => {
+    const user = userEvent.setup();
+    render(<ResortPage />);
+    await user.click(screen.getAllByRole("button", { name: /^Enlarge: / })[0]);
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText(`1 / ${RESORT_AMENITIES.length}`)).toBeInTheDocument();
+    await user.keyboard("{ArrowRight}");
+    expect(within(dialog).getByText(`2 / ${RESORT_AMENITIES.length}`)).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Next picture" }));
+    expect(within(dialog).getByText(`3 / ${RESORT_AMENITIES.length}`)).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("resort page lists every room, opens its photos, and switches the location tab to the live map", async () => {

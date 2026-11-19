@@ -641,9 +641,10 @@
 .site-footer__copyright { font-size: 12px; color: var(--color-on-dark-faint); }
 
 /* Home page: the header floats over the hero, transparent, and eases into a rounded bar once the page scrolls.
-   SiteHeaderScroll sets data-scrolled on the header. Needs :has(); without it the normal solid header stays. */
+   SiteHeaderScroll sets data-scrolled on the header. The Verify page opts out with data-page="verify" on the
+   header because its background is light. Needs :has(); without it the normal solid header stays. */
 @supports (selector(:has(*))) {
-  .public-layout:has(.site-home) > .site-header {
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header {
     --site-header-ease: cubic-bezier(0.22, 0.8, 0.2, 1);
     position: fixed;
     top: 0;
@@ -656,7 +657,7 @@
     backdrop-filter: none;
     animation: none;
   }
-  .public-layout:has(.site-home) > .site-header .site-header__bar {
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header .site-header__bar {
     max-width: min(82rem, calc(100% - 32px));
     margin-top: 0;
     padding-top: 14px;
@@ -672,7 +673,7 @@
       background-color 650ms var(--site-header-ease),
       box-shadow 650ms var(--site-header-ease);
   }
-  .public-layout:has(.site-home) > .site-header[data-scrolled] .site-header__bar {
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header[data-scrolled] .site-header__bar {
     margin-top: 10px;
     padding-top: 9px;
     padding-bottom: 9px;
@@ -680,26 +681,26 @@
     background-color: rgb(255 255 255 / 0.94);
     box-shadow: 0 16px 40px -18px rgb(14 43 32 / 0.5);
   }
-  .public-layout:has(.site-home) > .site-header .site-header__name-main,
-  .public-layout:has(.site-home) > .site-header .site-header__name-sub,
-  .public-layout:has(.site-home) > .site-header .site-header__link {
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header .site-header__name-main,
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header .site-header__name-sub,
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header .site-header__link {
     animation: none;
     transition: color 550ms var(--site-header-ease);
   }
   /* Top of the page: white text on the photo; hover brightens it to full white and draws the gold underline. */
-  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__name-main { color: #fff; }
-  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__name-sub { color: rgb(255 255 255 / 0.7); }
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header:not([data-scrolled]) .site-header__name-main { color: #fff; }
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header:not([data-scrolled]) .site-header__name-sub { color: rgb(255 255 255 / 0.7); }
   /* On the photo the secondary action and the phone menu button are frosted glass with white content */
-  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__action--outline { border-color: rgb(255 255 255 / 0.45); color: #fff; background-color: rgb(255 255 255 / 0.12); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__action--outline:hover { border-color: #fff; color: var(--color-brand-deep); background-color: #fff; }
-  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__menu-button { border-color: rgb(255 255 255 / 0.45); background: rgb(255 255 255 / 0.12); color: #fff; box-shadow: none; }
-  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__menu-button:hover { border-color: #fff; background: rgb(255 255 255 / 0.22); color: #fff; }
-  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__link { color: rgb(255 255 255 / 0.92); }
-  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__link:hover,
-  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__dropdown-button[aria-expanded="true"] { color: #fff; background-color: rgb(255 255 255 / 0.14); }
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header:not([data-scrolled]) .site-header__action--outline { border-color: rgb(255 255 255 / 0.45); color: #fff; background-color: rgb(255 255 255 / 0.12); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header:not([data-scrolled]) .site-header__action--outline:hover { border-color: #fff; color: var(--color-brand-deep); background-color: #fff; }
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header:not([data-scrolled]) .site-header__menu-button { border-color: rgb(255 255 255 / 0.45); background: rgb(255 255 255 / 0.12); color: #fff; box-shadow: none; }
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header:not([data-scrolled]) .site-header__menu-button:hover { border-color: #fff; background: rgb(255 255 255 / 0.22); color: #fff; }
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header:not([data-scrolled]) .site-header__link { color: rgb(255 255 255 / 0.92); }
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header:not([data-scrolled]) .site-header__link:hover,
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header:not([data-scrolled]) .site-header__dropdown-button[aria-expanded="true"] { color: #fff; background-color: rgb(255 255 255 / 0.14); }
   /* The current page keeps its gold underline drawn over the hero. The link and the group button mark themselves from the pathname, so hidden prefetch shells cannot affect them. */
-  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__link[aria-current],
-  .public-layout:has(.site-home) > .site-header:not([data-scrolled]) .site-header__dropdown-button[aria-current] { color: #fff; }
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header:not([data-scrolled]) .site-header__link[aria-current],
+  .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header:not([data-scrolled]) .site-header__dropdown-button[aria-current] { color: #fff; }
 
   .public-layout:has(.site-contact-page) > .site-header:not([data-scrolled]) .site-header__action--outline:not(:hover) {
     border-color: color-mix(in oklab, var(--color-accent-light) 42%, transparent);
@@ -738,10 +739,10 @@
     .public-layout:has(.site-contact-page) .site-footer__disclaimer-text { font-size: clamp(11px, 1.18vw, 13px); line-height: 1.4; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .public-layout:has(.site-home) > .site-header .site-header__bar,
-    .public-layout:has(.site-home) > .site-header .site-header__name-main,
-    .public-layout:has(.site-home) > .site-header .site-header__name-sub,
-    .public-layout:has(.site-home) > .site-header .site-header__link { transition: none; }
+    .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header .site-header__bar,
+    .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header .site-header__name-main,
+    .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header .site-header__name-sub,
+    .public-layout:has(.site-home):not(:has(> .site-header[data-page="verify"])) > .site-header .site-header__link { transition: none; }
   }
 }
 

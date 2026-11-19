@@ -21,6 +21,7 @@ import "../experience/exp-amenities.css";
 import "../experience/exp-cards.css";
 import "../experience/exp-location.css";
 import "../experience/exp-hotel-gallery.css";
+import "../experience/photo-lightbox.css";
 import "../experience/exp-reservation.css";
 
 /** Pairs each overview card with its icon, in content order. */

@@ -111,78 +111,81 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-19 16:31 (supersedes the 2026-11-19 14:26 snapshot).
+- Saved at: 2026-11-19 22:19 (supersedes the 2026-11-19 16:31 snapshot).
 - Repository: afhomes-platform (remote not re-checked; no fetch run).
-- Branch: develop. HEAD: 61e7744 "feat: polish public site visuals and add site action/footer-access helpers" (verified). No commits this session.
+- Branch: develop. HEAD: 38a4d73 "docs: update accreditation and stay-point rules, AGENTS clarification protocol" (verified). The owner committed the 16-file sweep during this session; the agent made no Git writes.
 - Tool and model: OpenCode, DeepSeek V4.1 Flash 1017 (session metadata; not independently probed).
-- Session objective: restore with `/load`, settle the doc 03 public "Valid Until" conflict through a one-question-at-a-time grilling round and an approved written plan, and implement the click-only question rule across the harnesses.
+- Session objective: resolve GATE-1 and GATE-2 with owner rulings; implement the click-only question protocol across harnesses; fix the /verify header; add a shared photo viewer.
 - Development phase: frontend prototype on typed in-memory mock data. Backend, real authentication, database and deployment remain deferred.
-- Context note: no compaction. The plan lives outside the repo at `C:\Users\SSD-ORLANDO\.opencode\plan\2026-11-19-doc-03-valid-until.md`.
+- Context note: no compaction. The earlier doc 03 plan remains at `C:\Users\SSD-ORLANDO\.opencode\plan\2026-11-19-doc-03-valid-until.md`.
 
 ## 2. Current Project State
-- Verified at the end: `develop` at 61e7744, nothing staged, 12 tracked files modified, no untracked files. Eleven are the amendment sweep; `workflow/save-session.md` is this snapshot.
-- Canonical rule now: the accreditation validity date applies to every seller, IST and OST; it stays visible on internal screens; it is never shown on the public Verify Search for any type. Doc 03 carries a dated amendment block and a struck original clause.
-- The public result card already hid the date before this session; no UI, component or test change was made.
-- Harness question rule: exactly one clickable question per message, recommendation first, in `AGENTS.md`, global `CLAUDE.md`, `~/.codex/AGENTS.md` and the shared grilling skill.
+- Verified at save start: `develop` at 38a4d73, nothing staged, 12 tracked files modified, 3 untracked. Two uncommitted UI change sets: the /verify header fix and the shared photo viewer.
+- Committed by the owner in 38a4d73: doc 03 public validity sweep; GATE-1 late-bill ruling (doc 09, doc 11, decision log, engine test); GATE-2 allowance table ratification (doc 08, doc 11, decision log); project AGENTS question protocol.
+- GATE-1 and GATE-2 are closed. Open business gates: bank wordmark trademark use; protected-operation wording.
+- Question rule: click-only; one question or a batch of independent settled questions; recommendation first. Global files: `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.agents/skills/grilling/SKILL.md`, `~/.agents/skills/writing-plans/SKILL.md` (one-click plan approval plus execution method).
+- Public header: home and contact keep the transparent hero header; only /verify uses the solid header via `data-page="verify"` on the header.
+- Experience photo dialogs (amenities, hotel gallery, location site plan) share `PhotoLightbox`; the room gallery keeps its richer modal.
 - Documentation baseline unchanged: 14 business rules, 10 development docs, 19 implementation docs.
+- Dev server was running at http://localhost:3000 (background shell from this session; may end when the session closes).
 
 ## 3. Important Decisions
-- Valid Until applies to the whole sales team, not OST only. Internal screens keep it; the public result shows none (owner, 2026-11-19).
-- Recording: append-only amendment block plus strikethrough of the original clause; no in-place rewrite.
-- Sweep: all current-state docs updated; the completed phase-03 plan is registered as stale, not rewritten.
-- The amendment states the rule only; no motive is asserted.
-- Public contract field `validUntil` is kept and remains populated for OST; dropping it is deferred. It is rendered nowhere.
-- No test edits were authorized in this change, so `src/data/mock/accreditation-renewal.test.ts:118` keeps its old title as a known wording residue.
-- Questions: exactly one per message, clickable options, recommendation first, wait for the choice.
+- Doc 03: no public validity date for any accreditation type; staff screens keep it (owner, 2026-11-19; committed).
+- GATE-1: a tranche not released at its due date is provisional; a late-approved bill dated inside the measurement period releases it on the approval date. It closes for good at expiry or transfer, except by waiver (owner, 2026-11-19; committed).
+- GATE-2: doc 08 section 15.4 Table A figures are approved configurable baselines, verified against OPS manual v2.3 section 6.2 and the signed IST SM, SSM and SVD contracts v2.4. SM 1%, SSM 3% and SVD 2% are PB rates, not per-sale commissions (owner, 2026-11-19; committed).
+- Questions: click-only; batch the independent settled frontier; one combined writing-plans handoff (Subagent-driven / Native / Request changes).
+- Header fix: /verify only. Contact and home headers must not change. `SiteHeaderFrame` renders `data-page="verify"` on the header; the home rules exclude that header.
+- Photo viewer: gallery with prev/next, dark cinematic style matching `RoomDetailsDialog`; used by amenities, hotel gallery and location site plan; pointer cursor on amenity and hotel gallery photo cards.
 - Only the project owner stages, commits, pushes, merges or deploys.
 
 ## 4. Completed Work
-- Doc 03: line 210 corrected, line 247 struck, and an `## Owner ruling amendment (2026-11-19, public validity date)` block appended.
-- `docs/implementation/decisions-and-gaps.md`: line 314 corrected; stale bullet for phase-03 line 97 added at line 306.
-- Corrected sentences in `docs/development/architecture.md:204`, `frontend.md:123`, `security.md:439`, `testing.md:312`, `role-module-permission-matrix-proposal.md:214` and `:268`, `docs/project.md:219` and `:524`, and `AGENTS.md:130`.
-- Comments corrected at `src/data/contracts/accreditation-repository.ts:8` and `src/data/mock/accreditation-repository.ts:108`.
-- Harness files outside the repo updated: `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.agents/skills/grilling/SKILL.md`. A new OpenCode global `AGENTS.md` was created then removed because it displaced the global `CLAUDE.md` policy in-session.
-- Verification: `git diff --check` clean apart from LF-to-CRLF notices; sweep found 6 hits, all accounted for; exactly one 2026-11-19 amendment heading; `npx vitest run src/panels/public/accreditation-verification-page.test.tsx` passed 2 of 2 in 13.46 s.
+- GATE-1: doc 09 glossary and section 19 item 2 narrowed; 2026-11-19 amendment block appended; doc 11 reporting example corrected; decision log entry; `src/modules/stay-points/engine.test.ts` regression test. Committed in 38a4d73.
+- GATE-2: doc 11 line 369 rewritten; doc 08 section 15.4 ratification sentence; decision log entry. Committed in 38a4d73.
+- Question protocol: global CLAUDE, Codex AGENTS, grilling and writing-plans skills updated; project AGENTS protocol updated. Project file committed in 38a4d73; global files are outside Git.
+- /verify header: new `src/shared/components/site/site-header-frame.tsx`; `site-header.tsx` uses it; `site-chrome.css` home rules exclude the verify header; `site-chrome.test.tsx` test. Uncommitted.
+- Photo viewer: new `src/panels/public/experience/photo-lightbox.tsx` and `.css`; used by `exp-amenities.tsx`, `exp-hotel-gallery.tsx`, `exp-location.tsx`; `experience-pages.tsx` imports the CSS; `dialog.tsx` gains optional `overlayClassName`; dead `site-lightbox__frame` rule removed; `site-pages.test.tsx` new amenities gallery test. Uncommitted.
+- Verification: GATE-1 engine tests 6/6; header site-chrome tests 14/14; photo viewer site-pages tests 17/17; ESLint clean on changed TSX; live browser checks for the header and viewer; `git diff --check` clean apart from LF/CRLF notices.
 
 ## 5. Git Working Tree
 - Staged: none.
-- Unstaged, this session: `AGENTS.md` (protocol plus line 130), the ten other swept files, and `workflow/save-session.md` after this save.
-- Untracked: none.
+- Unstaged: 12 tracked files.
+  - Header set: `src/shared/components/site/site-chrome.css`, `site-chrome.test.tsx`, `site-header.tsx`.
+  - Viewer set: `src/panels/public/experience/exp-amenities.css`, `exp-amenities.tsx`, `exp-hotel-gallery.css`, `exp-hotel-gallery.tsx`, `exp-location.tsx`, `src/panels/public/pages/experience-pages.tsx`, `src/panels/public/site-pages.test.tsx`, `src/panels/public/site.css`, `src/shared/ui/dialog.tsx`.
+- Untracked: `src/panels/public/experience/photo-lightbox.css`, `photo-lightbox.tsx`, `src/shared/components/site/site-header-frame.tsx`.
 - Deleted or renamed: none.
-- HEAD unchanged at 61e7744; no agent Git writes.
+- `workflow/save-session.md` becomes modified after this save; it was committed in 38a4d73 before.
 - `stash@{0}` ("local: sales-network cleanup + member detail redesign") remains present.
 
 ## 6. Pending Tasks
-- Owner review and commit of the 12 modified files.
-- Optional one-line fix: the title at `src/data/mock/accreditation-renewal.test.ts:118` still reads "IST hides Valid Until, OST shows it"; it needs owner approval because tests were outside the agreed scope.
-- Remaining owner rulings: bank wordmark trademark use; GATE-1 (`09:178` vs `09:180`, `10:153-154`); GATE-2 (`11:369` vs `08:383`); protected-operation wording (`06:115`, `06:284`, `08:404`, `12:204` vs doc 01's authority rule).
-- Phase 2 admin plan from `docs/implementation/ui-state-audit.md`, one batch at a time.
-- Optional verification: full repository suite, production build, visual regression.
+- Owner review and commit of the two UI change sets (header fix, photo viewer) and this snapshot.
+- Remaining owner rulings: bank wordmark trademark use; protected-operation wording (`06:115`, `06:284`, `08:404`, `12:204` vs doc 01).
+- Optional: full repository suite, typecheck, production build, visual regression.
+- Security follow-up: rotate the local OpenCode service password that appeared in a tool output during this session; the value was not recorded.
 
 ## 7. Verification State
-- Tests: 2 of 2 passed in `src/panels/public/accreditation-verification-page.test.tsx`. Full suite not run.
-- Typecheck: not run (documentation and comment changes only).
-- Lint: not run.
+- Tests: engine 6/6; site-chrome 14/14; site-pages 17/17 (includes the new amenities gallery test). Full suite not run.
+- Lint: ESLint clean on all changed TSX files.
+- Typecheck: not run.
 - Build: not run.
-- Manual checks: doc diff reviewed; amendment block confirmed at end of file; grep sweep reviewed.
-- Known limits: `validUntil` remains on the public contract, rendered nowhere.
-- Not performed: full suite, build, browser QA.
+- Browser QA: /verify header solid and readable; /contact header unchanged (transparent, white); home marker present in SSR, absent on /contact and /verify; photo viewer opened with counter 1/10, ArrowRight to 2/10, site plan title with no arrows, Escape close; card cursor pointer.
+- Known limits: the contact footer rule still uses `:has(.site-contact-page)`; full suite and build not run.
+- Not performed: full suite, typecheck, build, production visual regression.
 
 ## 8. Next Session Instructions
-- First action: `/load`; confirm `develop` at 61e7744 and the 12-file working tree.
-- Inspect `docs/business-rules/03-ist-ost-accreditation.md` (lines 210, 247 and the tail amendment), `docs/implementation/decisions-and-gaps.md:306` and `:314`, and the plan file named above.
-- Owner decisions needed: commit the sweep; then bank wordmark, GATE-1, GATE-2 and the protected-operation wording.
-- Required approvals: any business-rule edit, any test edit (including the stale title), backend/database/auth/deployment.
-- Warnings: keep live Redemption and Services disabled; there is no public customer or card lookup; the snapshot is a progress reference, not authority over code or rules.
+- First action: `/load`; confirm `develop` at 38a4d73, the 12 modified files and 3 untracked files. `workflow/save-session.md` is also modified by this save.
+- Inspect `src/shared/components/site/site-header-frame.tsx`, `site-chrome.css` around the home header rules, `photo-lightbox.tsx`, and the three experience components.
+- Owner decisions needed: commit the two UI sets; then bank wordmark and protected-operation wording.
+- Required approvals: any business-rule edit, any test edit, backend/database/auth/deployment.
+- Warnings: keep live Redemption and Services disabled; there is no public customer or card lookup; `src/data/mock/accreditation-renewal.test.ts:118` still has the old "IST hides Valid Until, OST shows it" title; the snapshot is a progress reference, not authority over code or rules.
 
 ## 9. Execution Recommendation
 - Phase: QA complete; owner review and commit next.
 - Current mode: not verified.
-- Recommended next mode: owner review/commit; then Plan for the next gate.
-- Current model: not verified (session metadata names DeepSeek V4.1 Flash 1017).
-- Recommended model: Opus 5.5.
-- Effort: high for rule arbitration, low for the commit review.
+- Recommended next mode: owner review/commit; then Plan for the bank wordmark or protected-operation wording.
+- Current model: DeepSeek V4.1 Flash 1017 (session metadata; not verified).
+- Recommended model: Sonnet 5.5 for the commit review; Opus 5.5 if a rule gate starts.
+- Effort: low for review; high for rule arbitration.
 - Ultracode: OFF.
-- Token optimization: read section 4 and the two doc hunks; load only the cited rule sections when a gate starts.
-- Reason: only business-rule arbitration remains, where a wrong ruling costs more than a cheaper model saves.
+- Token optimization: inspect the two change sets separately; load only the cited rule sections when a gate starts.
+- Reason: two verified UI sets and two business rulings are ready; the remaining work is owner review and rule arbitration.
 <!-- SESSION_SNAPSHOT_END -->

@@ -1,0 +1,108 @@
+/* Shared photo viewer for the experience pages: dark surface, blurred stage, glass controls.
+   Matches the room gallery so every photo dialog on the public site reads the same. */
+
+.site-photo-lightbox {
+  max-width: min(64rem, calc(100% - 2rem)) !important;
+  max-height: min(92vh, 58rem);
+  gap: 0;
+  overflow: hidden;
+  border-radius: 24px;
+  background: #0b1712;
+  color: #fff;
+}
+.site-photo-lightbox__overlay {
+  background: rgb(4 14 10 / 0.82);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.site-photo-lightbox__head {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 64px 16px 24px;
+  background: linear-gradient(180deg, rgb(11 23 18 / 0.98), rgb(11 23 18 / 0.82));
+}
+.site-photo-lightbox__heading { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.site-photo-lightbox__title {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  font-size: clamp(20px, 2.2vw, 26px);
+  font-weight: 600;
+  line-height: 1.15;
+  color: #fff;
+}
+.site-photo-lightbox__count {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: rgb(255 255 255 / 0.65);
+}
+
+.site-photo-lightbox [data-slot="dialog-close"] {
+  top: 14px;
+  right: 14px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgb(255 255 255 / 0.12);
+  border: 1px solid rgb(255 255 255 / 0.18);
+}
+.site-photo-lightbox [data-slot="dialog-close"]:hover { background: rgb(255 255 255 / 0.22); color: #fff; }
+
+.site-photo-lightbox__stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: calc(min(92vh, 58rem) - 9rem);
+  overflow: hidden;
+  background: #07110d;
+}
+.site-photo-lightbox__stage:focus { outline: none; }
+.site-photo-lightbox__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  object-fit: cover;
+  filter: blur(26px) saturate(1.1);
+  transform: scale(1.2);
+  opacity: 0.45;
+}
+.site-photo-lightbox__image { z-index: 1; }
+
+.site-photo-lightbox__nav {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.25);
+  background: rgb(11 23 18 / 0.55);
+  color: #fff;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transform: translateY(-50%);
+  cursor: pointer;
+  transition: background-color 180ms ease;
+}
+.site-photo-lightbox__nav:hover { background: rgb(11 23 18 / 0.85); }
+.site-photo-lightbox__nav:focus-visible { outline: 2px solid var(--color-accent-light); outline-offset: 2px; }
+.site-photo-lightbox__nav--prev { left: 16px; }
+.site-photo-lightbox__nav--next { right: 16px; }
+.site-photo-lightbox__nav svg { width: 20px; height: 20px; }
+
+@media (max-width: 640px) {
+  .site-photo-lightbox { max-width: calc(100% - 1rem) !important; max-height: 94vh; }
+  .site-photo-lightbox__head { padding: 16px 56px 12px 18px; }
+  .site-photo-lightbox__stage { aspect-ratio: 4 / 3; max-height: calc(94vh - 8.5rem); }
+  .site-photo-lightbox__nav { width: 36px; height: 36px; }
+  .site-photo-lightbox__nav--prev { left: 10px; }
+  .site-photo-lightbox__nav--next { right: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-photo-lightbox__nav { transition: none; }
+}

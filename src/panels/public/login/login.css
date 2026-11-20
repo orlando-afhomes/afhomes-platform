@@ -3,11 +3,11 @@
 .login-shell {
   position: relative;
   display: flex;
-  min-height: 100vh;
+  min-height: 100dvh;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 24px 16px;
+  padding: clamp(16px, 3vw, 24px) clamp(12px, 3vw, 16px);
   background: var(--color-brand-deep);
 }
 
@@ -38,9 +38,9 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: clamp(10px, 2.2vw, 16px);
   overflow: hidden;
-  padding: 24px;
+  padding: clamp(18px, 4vw, 24px);
   background: var(--color-bg-surface-raised);
   color: var(--color-text-primary);
 }
@@ -73,33 +73,35 @@
 .login-shell__dot--two { bottom: 22%; right: 20%; width: 24px; height: 24px; }
 .login-shell__dot--three { bottom: 30%; left: 4%; width: 28px; height: 28px; }
 
+/*
+ * One fanned cluster at every width (owner instruction 2026-11-20). The box, the
+ * card width, the overlaps and the lift are all percentages of this container,
+ * so tablet and phone render the desktop composition scaled down exactly.
+ */
 .login-shell__cards {
   position: relative;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
   width: 100%;
-  padding-left: 2%;
-  margin-top: auto;
-  margin-bottom: auto;
+  max-width: 420px;
+  aspect-ratio: 100 / 56;
+  margin: auto;
+  flex: none;
 }
 .login-shell__card-image {
-  position: relative;
-  width: min(62%, 280px);
+  position: absolute;
+  top: 0;
+  width: 55%;
   height: auto;
-  flex: none;
   filter: drop-shadow(0 6px 10px rgba(14, 43, 32, 0.3));
 }
-/* One fanned cluster at every width: the overlap, tilt and lift are all relative to each card. */
-.login-shell__card-image--bronze { transform: rotate(-9deg); }
-.login-shell__card-image--silver { transform: rotate(-2deg) translateY(25%); z-index: 1; margin-left: -44%; }
-.login-shell__card-image--gold { transform: rotate(7deg) translateY(53%); z-index: 2; margin-left: -44%; }
+.login-shell__card-image--bronze { left: 1%; transform: rotate(-9deg); }
+.login-shell__card-image--silver { left: 21%; top: 18%; transform: rotate(-2deg); z-index: 1; }
+.login-shell__card-image--gold { left: 41%; top: 35%; transform: rotate(7deg); z-index: 2; }
 
 @media (prefers-reduced-motion: no-preference) {
   .login-shell__card-image { transition: transform 300ms ease; }
-  .login-shell__cards:hover .login-shell__card-image--bronze { transform: rotate(-12deg) translateY(-3%); }
-  .login-shell__cards:hover .login-shell__card-image--silver { transform: rotate(-2deg) translateY(21%); }
-  .login-shell__cards:hover .login-shell__card-image--gold { transform: rotate(10deg) translateY(49%); }
+  .login-shell__cards:hover .login-shell__card-image--bronze { transform: rotate(-12deg) translateY(-2%); }
+  .login-shell__cards:hover .login-shell__card-image--silver { transform: rotate(-2deg) translateY(-2%); }
+  .login-shell__cards:hover .login-shell__card-image--gold { transform: rotate(10deg) translateY(-2%); }
 }
 
 .login-shell__footer {
@@ -109,10 +111,28 @@
   color: var(--color-text-muted);
 }
 
+@media (max-width: 767px) {
+  /* Phones: a compact art band so the form stays close to the first screen. */
+  .login-shell__cards { max-width: 300px; }
+  .login-shell__footer { margin-top: 0; }
+}
+
 @media (min-width: 768px) {
-  .login-shell__card { grid-template-columns: 1.05fr 1fr; min-height: 580px; }
+  .login-shell__card { grid-template-columns: 1.05fr 1fr; min-height: min(580px, calc(100dvh - 48px)); }
   .login-shell__art { padding: 32px 40px 32px 32px; }
+}
+
+@media (min-width: 1100px) {
+  /* Wide screens only: show the organic edge and keep the fan clear of its curve. */
   .login-shell__edge { display: block; }
+  .login-shell__art { padding-right: 136px; }
+}
+
+@media (min-width: 768px) and (max-height: 700px) {
+  /* Laptop screens: keep the whole card inside the viewport and tighten the art. */
+  .login-shell__card { min-height: auto; }
+  .login-shell__art { padding-block: 24px; gap: 12px; }
+  .login-shell__cards { max-width: 360px; }
 }
 
 .login-form__input.login-form__input {

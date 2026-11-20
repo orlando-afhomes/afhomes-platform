@@ -20,6 +20,7 @@ import type { BreadcrumbItem } from "@/shared/components/modern/breadcrumbs";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { DetailList, DetailRow, InfoNote } from "@/shared/components/modern/detail-list";
 import { Money } from "@/shared/components/modern/money";
+import { ImagePreview } from "@/shared/components/modern/image-preview";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
 import { DetailSkeleton } from "@/shared/components/modern/skeletons";
@@ -382,6 +383,7 @@ export function ContractLedgerSection({ record }: { record: ContractRecord }) {
                   rows: [
                     { label: "Reference no.", value: entryPayment?.referenceNo ?? null },
                     { label: "Invoice / Receipt no.", value: entryPayment?.documentNo ?? null },
+                    { label: "Receipt file", value: <ImagePreview src={entryPayment?.evidenceFileDataUrl} fileName={entryPayment?.evidenceFileName} label="Receipt file" /> },
                     { label: "Status", value: entryPayment ? <BizBadge status={entryPayment.status} /> : null },
                   ],
                 },

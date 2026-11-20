@@ -501,7 +501,8 @@ describe("contract, payment, sale and membership workflow", () => {
     const base = { contractId: "ctr-4", purpose: "installment" as const, amountCentavos: pesos(1000), method: "Cash" as const, paidDate: manilaToday() };
     const cash = await clerk.payments.submit(base);
     expect(cash.referenceNo).toMatch(/^PAY-\d{8}-\d{4}$/);
-    expect(cash.documentNo).toBeNull();
+    // Cash gets the system-issued Official Receipt number; other methods keep the document number.
+    expect(cash.documentNo).toMatch(/^OR-\d{8}-\d{4}$/);
     const second = await clerk.payments.submit({ ...base, paidDate: "2026-11-06", documentNo: "OR-12345" });
     expect(second.documentNo).toBe("OR-12345");
     expect(second.referenceNo).not.toBe(cash.referenceNo);

@@ -123,6 +123,8 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
         email: null,
         address: null,
         dateOfBirth: null,
+        governmentIdImage: null,
+        supplementaryHolder: null,
         customerNumber: customer.customerNumber,
       };
   const ownerName = owner?.displayName ?? "Company";

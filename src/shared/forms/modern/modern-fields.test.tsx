@@ -36,11 +36,11 @@ describe("modern masked fields", () => {
     await waitFor(() => expect(input.selectionStart).toBe(3));
   });
 
-  it("keeps the caret after a digit inserted in the middle of a TIN", async () => {
+  it("keeps the caret after a digit inserted in the middle of a TIN and drops past nine digits", async () => {
     render(<MaskHarness kind="tin" />);
     const input = screen.getByLabelText("TIN") as HTMLInputElement;
     insertInMiddle(input, 5, "0");
-    await waitFor(() => expect(input.value).toBe("123-405-678-9"));
+    await waitFor(() => expect(input.value).toBe("123-405-678"));
     await waitFor(() => expect(input.selectionStart).toBe(6));
   });
 });
@@ -221,28 +221,27 @@ describe("tin, landline and office address fields", () => {
     expect(input.value).toBe("123-456-789");
   });
 
-  it("types a full 12-digit TIN into the 15-character display width", async () => {
+  it("caps the display at 9 digits, dropping anything typed past the TIN length", async () => {
     render(<TinHarness />);
     const input = screen.getByLabelText("TIN number") as HTMLInputElement;
-    // Regression guard: the old 14-character cap truncated the branch code.
-    expect(TIN_DISPLAY_LENGTH).toBe(15);
-    expect(input).toHaveAttribute("maxlength", "15");
+    expect(TIN_DISPLAY_LENGTH).toBe(11);
+    expect(input).toHaveAttribute("maxlength", "11");
     await userEvent.type(input, "091235467860");
-    expect(input.value).toBe("091-235-467-860");
-    expect(input.value).toHaveLength(15);
+    expect(input.value).toBe("091-235-467");
+    expect(input.value).toHaveLength(11);
     expect(validateTinNumber(input.value)).toBeNull();
   });
 
-  it("keeps a 9-digit TIN valid and rejects 11 digits with the exact message", async () => {
+  it("keeps a 9-digit TIN valid and rejects an over-long canonical value with the exact message", async () => {
     render(<TinHarness />);
     const input = screen.getByLabelText("TIN number") as HTMLInputElement;
     await userEvent.type(input, "123456789");
     expect(input.value).toBe("123-456-789");
     expect(validateTinNumber(input.value)).toBeNull();
-    await userEvent.clear(input);
-    await userEvent.type(input, "09123546786");
-    expect(input.value).toBe("091-235-467-86");
-    expect(validateTinNumber(input.value)).toBe("TIN must be 9 or 12 digits.");
+    // The field caps typing at 9 digits; an over-long value from another source is still rejected.
+    await userEvent.type(input, "0");
+    expect(input.value).toBe("123-456-789");
+    expect(validateTinNumber("091-235-467-86")).toBe("TIN must be 9 digits.");
   });
 
   it("renders the landline field with its label and keeps typed digits", async () => {

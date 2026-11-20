@@ -18,6 +18,11 @@ const WARNING =
   "tw:border-warning/40 tw:bg-warning/10 tw:text-warning tw:hover:border-warning/60 tw:hover:bg-warning/20 tw:focus-visible:border-warning tw:focus-visible:ring-warning/30 tw:dark:bg-warning/20 tw:dark:text-[color-mix(in_oklch,var(--warning),white_45%)] tw:dark:hover:bg-warning/30";
 const INFO =
   "tw:border-info/40 tw:bg-info/10 tw:text-info tw:hover:border-info/60 tw:hover:bg-info/20 tw:focus-visible:border-info tw:focus-visible:ring-info/30 tw:dark:bg-info/20 tw:dark:text-[color-mix(in_oklch,var(--info),white_45%)] tw:dark:hover:bg-info/30";
+// Secondary actions (Cancel, Details, filters): soft brand wash so they read as
+// real buttons without competing with the solid primary action (owner choice,
+// 2026-11-20). `secondary` is kept as a deprecated alias of this same style.
+const OUTLINE =
+  "tw:border-primary/25 tw:bg-primary/10 tw:text-primary tw:shadow-xs tw:hover:border-primary/40 tw:hover:bg-primary/15 tw:aria-expanded:border-primary/40 tw:aria-expanded:bg-primary/15 tw:dark:border-primary/30 tw:dark:bg-primary/15 tw:dark:text-primary tw:dark:hover:bg-primary/20 tw:dark:aria-expanded:bg-primary/20";
 
 const buttonVariantsBase = cva(
   "tw:group/button tw:bg-transparent tw:inline-flex tw:shrink-0 tw:items-center tw:justify-center tw:rounded-lg tw:border tw:border-transparent tw:bg-clip-padding tw:text-sm tw:font-semibold tw:tracking-[0.005em] tw:whitespace-nowrap tw:transition-[background-color,border-color,box-shadow,color,transform,filter] tw:duration-150 tw:ease-out tw:motion-reduce:transition-none tw:outline-none tw:select-none tw:focus-visible:border-ring tw:focus-visible:ring-3 tw:focus-visible:ring-ring/40 tw:active:not-aria-[haspopup]:translate-y-px tw:active:not-aria-[haspopup]:shadow-none tw:disabled:pointer-events-none tw:disabled:opacity-45 tw:disabled:shadow-none tw:aria-invalid:border-destructive tw:aria-invalid:ring-3 tw:aria-invalid:ring-destructive/20 tw:dark:aria-invalid:border-destructive/50 tw:dark:aria-invalid:ring-destructive/40 tw:[&_svg]:pointer-events-none tw:[&_svg]:shrink-0 tw:[&_svg:not([class*=size-])]:size-4",
@@ -31,12 +36,11 @@ const buttonVariantsBase = cva(
         // `destructive`). `success`, `warning` and `info` are the other semantic colors. Prefer primary/outline/danger in new code; `default`
         // and `destructive` remain as deprecated aliases.
         primary: PRIMARY,
-        // Neutral button for Cancel, Close and filters: white fill, gray border, dark text.
-        // Deliberately not brand-tinted so it never looks like `secondary`.
-        outline:
-          "tw:border-input tw:bg-card tw:text-foreground tw:shadow-xs tw:hover:bg-muted tw:aria-expanded:bg-muted tw:dark:border-white/15 tw:dark:bg-white/5 tw:dark:hover:bg-white/10",
-        secondary:
-          "tw:border-primary/15 tw:bg-secondary tw:text-secondary-foreground tw:shadow-xs tw:hover:border-primary/30 tw:hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_6%)] tw:aria-expanded:bg-secondary tw:aria-expanded:text-secondary-foreground",
+        // Neutral button for Cancel, Close and filters: soft brand wash with a
+        // primary-tinted border (owner choice, 2026-11-20). `secondary` below is
+        // its deprecated alias so existing call sites keep working.
+        outline: OUTLINE,
+        secondary: OUTLINE,
         ghost:
           "tw:hover:bg-muted tw:hover:text-foreground tw:aria-expanded:bg-muted tw:aria-expanded:text-foreground tw:dark:hover:bg-muted/50",
         destructive: DANGER,

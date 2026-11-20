@@ -716,22 +716,12 @@ describe("customer application new fields and secondary holder", () => {
     return view;
   }
 
-  function stubImagePreviews() {
-    const revokeObjectURL = vi.fn();
-    vi.stubGlobal("URL", Object.assign(class extends URL {}, {
-      createObjectURL: (file: File) => `blob:${file.name}`,
-      revokeObjectURL,
-    }));
-    return revokeObjectURL;
-  }
-
   function selectIdImage(name: string, secondary = false, type = "image/png") {
     const label = secondary ? "Select secondary holder Government ID image file" : "Select Government ID image file";
     fireEvent.change(screen.getByLabelText(label), { target: { files: [new File(["fixture"], name, { type })] } });
   }
 
-  it("keeps ID previews independent across steps and clears them on removal, toggle-off, and exit", async () => {
-    const revoke = stubImagePreviews();
+  it("keeps ID images independent across steps and clears them on removal and toggle-off", async () => {
     const user = userEvent.setup();
     await reachCustomerStep(user, /gold vip/i);
     await user.click(secondaryToggle()!);
@@ -739,53 +729,36 @@ describe("customer application new fields and secondary holder", () => {
     selectIdImage("secondary.png", true);
     selectIdImage("invalid.pdf", false, "application/pdf");
     expect(screen.getByRole("alert")).toHaveTextContent(/jpeg, png, or webp/i);
-    expect(screen.getByRole("img", { name: "Government ID image preview" })).toHaveAttribute("src", "blob:primary.png");
-    expect(screen.getByRole("img", { name: "Extra cardholder Government ID image preview" })).toHaveAttribute("src", "blob:secondary.png");
+    expect(await screen.findByRole("img", { name: "Government ID image preview" })).toHaveAttribute("src", expect.stringContaining("data:image/png;base64,"));
+    expect(await screen.findByRole("img", { name: "Extra cardholder Government ID image preview" })).toHaveAttribute("src", expect.stringContaining("data:image/png;base64,"));
     await user.click(screen.getByRole("button", { name: "Back" }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
     expect(screen.getByText("primary.png")).toBeVisible();
     expect(screen.getByText("secondary.png")).toBeVisible();
     expect(sessionStorage.getItem("afhomes.customer-wizard.v1")).toBeNull();
     selectIdImage("replacement.webp", false, "image/webp");
-    expect(revoke).toHaveBeenCalledWith("blob:primary.png");
-    expect(screen.getByRole("img", { name: "Government ID image preview" })).toHaveAttribute("src", "blob:replacement.webp");
+    await waitFor(() => expect(screen.getByRole("img", { name: "Government ID image preview" })).toHaveAttribute("src", expect.stringContaining("data:image/webp;base64,")));
     await user.click(screen.getByRole("button", { name: "Remove Government ID image" }));
-    expect(revoke).toHaveBeenCalledWith("blob:replacement.webp");
-    await user.click(secondaryToggle()!);
-    expect(revoke).toHaveBeenCalledWith("blob:secondary.png");
+    expect(screen.queryByText("replacement.webp")).toBeNull();
     await user.click(secondaryToggle()!);
     expect(screen.queryByText("secondary.png")).toBeNull();
-    selectIdImage("exit.png");
-    cleanup();
-    expect(revoke).toHaveBeenCalledWith("blob:exit.png");
-    show("dev-clerk", <CustomerFormPage />);
-    expect(await screen.findByRole("heading", { name: "Choose a VIP Card" })).toBeVisible();
-    expect(screen.queryByText("exit.png")).toBeNull();
   });
 
-  it("clears the temporary ID preview after saving a draft", async () => {
-    const revoke = stubImagePreviews();
+  it("saves the chosen ID image with the draft", async () => {
     const createDraft = vi.spyOn(MockCustomerRepository.prototype, "createDraft");
     const user = userEvent.setup();
     await reachCustomerStep(user, /silver vip/i);
     await user.type(screen.getByLabelText(/^first name/i), "Maria");
     selectIdImage("draft-id.png");
+    expect(await screen.findByText("draft-id.png")).toBeVisible();
     await user.click(screen.getByRole("button", { name: /save as draft/i }));
     expect(await screen.findByText("Draft saved.")).toBeVisible();
     expect(screen.queryByText("draft-id.png")).toBeNull();
-    expect(revoke).toHaveBeenCalledWith("blob:draft-id.png");
-    expect(createDraft.mock.calls[0]?.[0]).toMatchObject({ firstName: "Maria", mobileNumber: null });
-    expect(JSON.stringify(createDraft.mock.calls)).not.toMatch(/draft-id\.png|blob:/);
-  });
-
-  it("discards the ID preview before the browser can cache the departing page", async () => {
-    const revoke = stubImagePreviews();
-    const user = userEvent.setup();
-    await reachCustomerStep(user, /silver vip/i);
-    selectIdImage("cached-page.png");
-    fireEvent(window, new Event("pagehide"));
-    expect(revoke).toHaveBeenCalledWith("blob:cached-page.png");
-    expect(screen.queryByText("cached-page.png")).toBeNull();
+    expect(createDraft.mock.calls[0]?.[0]).toMatchObject({
+      firstName: "Maria",
+      mobileNumber: null,
+      governmentIdImage: { fileName: "draft-id.png", dataUrl: expect.stringContaining("data:image/png;base64,") },
+    });
   });
 
   async function fillValidPrimary(user: ReturnType<typeof userEvent.setup>) {
@@ -1218,16 +1191,16 @@ describe("customer application new fields and secondary holder", () => {
   });
 
   it("clears the secondary profile on plan change", async () => {
-    const revoke = stubImagePreviews();
     const user = userEvent.setup();
     await reachCustomerStep(user, /gold vip/i);
     await user.click(screen.getByRole("switch", { name: /secondary card holder/i }));
     await user.type(await screen.findByLabelText("First name (Extra cardholder)"), "Ana");
     selectIdImage("gold-only.png", true);
+    expect(await screen.findByText("gold-only.png")).toBeVisible();
     const progress = screen.getByRole("list", { name: "Progress" });
     await user.click(within(progress).getByText(/vip card/i));
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
-    expect(revoke).toHaveBeenCalledWith("blob:gold-only.png");
+    expect(screen.queryByText("gold-only.png")).toBeNull();
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await choosePlanAndContinue(user);
     await screen.findByRole("heading", { name: "Personal Details" });
@@ -1246,7 +1219,6 @@ describe("customer application new fields and secondary holder", () => {
 
   // Full submit path with combobox address picks; needs headroom over the 15s project default under load.
   it("submits Gold with a full secondary profile", { timeout: 30_000 }, async () => {
-    const revoke = stubImagePreviews();
     const submit = vi.spyOn(MockCustomerRepository.prototype, "submit");
     const user = userEvent.setup();
     await reachCustomerStep(user, /gold vip/i);
@@ -1259,18 +1231,18 @@ describe("customer application new fields and secondary holder", () => {
     await user.type(screen.getByLabelText("Landline (Extra cardholder)"), "028123456");
     await user.type(screen.getByLabelText("TIN number (Extra cardholder)"), "123456789");
     selectIdImage("submitted-id.png");
+    expect(await screen.findByText("submitted-id.png")).toBeVisible();
     await attachProofAndReachReview(user);
     expect(screen.queryByText("Fix These Before Continuing")).toBeNull();
     const holderRow = screen.getByText("Extra cardholder", { selector: "dt" });
     expect(holderRow.parentElement).toHaveTextContent("Ana Santos");
     await acceptAndSubmit(user);
     expect(await screen.findByText(/waiting for Finance verification|submitted|drafted/i)).toBeInTheDocument();
-    expect(revoke).toHaveBeenCalledWith("blob:submitted-id.png");
     expect(submit.mock.calls[0]?.[1]).toMatchObject({
       mobileNumber: "09171110009",
+      governmentIdImage: { fileName: "submitted-id.png", dataUrl: expect.stringContaining("data:image/png;base64,") },
       supplementaryHolder: { mobileNumber: "09171110002" },
     });
-    expect(JSON.stringify(submit.mock.calls)).not.toMatch(/submitted-id\.png|blob:/);
   });
 
   // Full submit path with combobox address picks; needs headroom over the 15s project default under load.
@@ -1555,13 +1527,13 @@ describe("customer application realtime field validation", () => {
     await user.type(landline, "4567");
     expect(screen.queryByText("Landline must be 7 to 10 digits.")).toBeNull();
 
-    // TIN: 9 or 12 digits.
+    // TIN: exactly 9 digits.
     const tin = screen.getByLabelText("TIN number") as HTMLInputElement;
     await user.type(tin, "12345");
     fireEvent.blur(tin);
-    expect(await screen.findByText("TIN must be 9 or 12 digits.")).toBeInTheDocument();
+    expect(await screen.findByText("TIN must be 9 digits.")).toBeInTheDocument();
     await user.type(tin, "6789");
-    expect(screen.queryByText("TIN must be 9 or 12 digits.")).toBeNull();
+    expect(screen.queryByText("TIN must be 9 digits.")).toBeNull();
 
     // Email: syntax check only when the field is filled.
     const email = screen.getByLabelText("Email") as HTMLInputElement;
@@ -1575,27 +1547,26 @@ describe("customer application realtime field validation", () => {
     // Citizenship is a fixed reference list now; the code field is covered in customer-form-sections tests.
   });
 
-  it("accepts a full 12-digit TIN in the primary and secondary holder fields", async () => {
+  it("accepts a full 9-digit TIN in the primary and secondary holder fields and caps extra digits", async () => {
     const user = userEvent.setup();
     const primary = render(<ValidationHarness />);
     const tin = screen.getByLabelText("TIN number") as HTMLInputElement;
-    // Regression guard: the old 14-character cap truncated the branch code.
-    expect(tin).toHaveAttribute("maxlength", "15");
+    expect(tin).toHaveAttribute("maxlength", "11");
     await user.type(tin, "091235467860");
-    expect(tin.value).toBe("091-235-467-860");
-    expect(tin.value).toHaveLength(15);
+    expect(tin.value).toBe("091-235-467");
+    expect(tin.value).toHaveLength(11);
     fireEvent.blur(tin);
-    expect(screen.queryByText("TIN must be 9 or 12 digits.")).toBeNull();
+    expect(screen.queryByText("TIN must be 9 digits.")).toBeNull();
     primary.unmount();
 
     render(<ValidationHarness secondary />);
     const secondaryTin = screen.getByLabelText("TIN number (Extra cardholder)") as HTMLInputElement;
-    expect(secondaryTin).toHaveAttribute("maxlength", "15");
+    expect(secondaryTin).toHaveAttribute("maxlength", "11");
     await user.type(secondaryTin, "091235467860");
-    expect(secondaryTin.value).toBe("091-235-467-860");
-    expect(secondaryTin.value).toHaveLength(15);
+    expect(secondaryTin.value).toBe("091-235-467");
+    expect(secondaryTin.value).toHaveLength(11);
     fireEvent.blur(secondaryTin);
-    expect(screen.queryByText("TIN must be 9 or 12 digits.")).toBeNull();
+    expect(screen.queryByText("TIN must be 9 digits.")).toBeNull();
   });
 
   it("switches the landline digit rule when the address area code changes", async () => {
@@ -1642,7 +1613,7 @@ describe("customer application realtime field validation", () => {
     expect(screen.queryByText("Enter a valid email address.")).toBeNull();
     expect(screen.queryByText("Mobile number required.")).toBeNull();
     expect(screen.queryByText("Landline must be 7 to 10 digits.")).toBeNull();
-    expect(screen.queryByText("TIN must be 9 or 12 digits.")).toBeNull();
+    expect(screen.queryByText("TIN must be 9 digits.")).toBeNull();
   });
 
   it("applies the same realtime rules to the secondary holder mirror", async () => {
@@ -1666,9 +1637,9 @@ describe("customer application realtime field validation", () => {
     const tin = screen.getByLabelText("TIN number (Extra cardholder)") as HTMLInputElement;
     await user.type(tin, "12345");
     fireEvent.blur(tin);
-    expect(await screen.findByText("TIN must be 9 or 12 digits.")).toBeInTheDocument();
+    expect(await screen.findByText("TIN must be 9 digits.")).toBeInTheDocument();
     await user.type(tin, "6789");
-    expect(screen.queryByText("TIN must be 9 or 12 digits.")).toBeNull();
+    expect(screen.queryByText("TIN must be 9 digits.")).toBeNull();
 
     const email = screen.getByLabelText("Email (Extra cardholder)") as HTMLInputElement;
     await user.type(email, "not-an-email");
@@ -1693,7 +1664,7 @@ describe("customer application realtime field validation", () => {
     fireEvent.blur(citizenship);
     expect(screen.queryByText("Mobile number required.")).toBeNull();
     expect(screen.queryByText("Landline must be 7 to 10 digits.")).toBeNull();
-    expect(screen.queryByText("TIN must be 9 or 12 digits.")).toBeNull();
+    expect(screen.queryByText("TIN must be 9 digits.")).toBeNull();
     expect(screen.queryByText("Enter a valid email address.")).toBeNull();
     expect(screen.queryByText("Citizenship must be 80 characters or less.")).toBeNull();
   });
@@ -1728,7 +1699,7 @@ describe("customer application realtime field validation", () => {
     await user.type(tin, "12345");
     fireEvent.blur(tin);
     expect(screen.getByText("TIN was rejected by the server.")).toBeInTheDocument();
-    expect(screen.queryByText("TIN must be 9 or 12 digits.")).toBeNull();
+    expect(screen.queryByText("TIN must be 9 digits.")).toBeNull();
 
     const email = screen.getByLabelText("Email") as HTMLInputElement;
     await user.type(email, "not-an-email");
@@ -1787,7 +1758,7 @@ describe("secondary holder submit payload", () => {
       false,
     );
     expect(errors.landline).toBe("Landline must be 7 to 10 digits.");
-    expect(errors.tinNumber).toBe("TIN must be 9 or 12 digits.");
+    expect(errors.tinNumber).toBe("TIN must be 9 digits.");
   });
 });
 

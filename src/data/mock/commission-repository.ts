@@ -357,7 +357,7 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
     });
   }
 
-  async recordPayout(id: string, input: { reference: string; method?: string | null; payoutDate: string; evidenceFileName?: string }, options?: MockAsyncOptions): Promise<CommissionView> {
+  async recordPayout(id: string, input: { reference: string; method?: string | null; payoutDate: string; evidenceFileName?: string; evidenceDataUrl?: string }, options?: MockAsyncOptions): Promise<CommissionView> {
     return this.run(options, (identity) => {
       this.require(identity, "commission.payout", "Only Finance can record payouts.");
       const commission = this.find(id);
@@ -382,7 +382,7 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
       if (commission.releaseDate && (!input.method?.trim() || !input.evidenceFileName?.trim())) {
         throw new Error("Enter the payment method and attach proof of payment.");
       }
-      commission.payout = { reference: input.reference.trim(), method: input.method?.trim() || null, payoutDate: input.payoutDate, processedBy: identity.id, initiatedAt: nowIso(), confirmedAt: null, evidenceFileName: input.evidenceFileName?.trim() || null };
+      commission.payout = { reference: input.reference.trim(), method: input.method?.trim() || null, payoutDate: input.payoutDate, processedBy: identity.id, initiatedAt: nowIso(), confirmedAt: null, evidenceFileName: input.evidenceFileName?.trim() || null, evidenceFileDataUrl: input.evidenceDataUrl?.trim() || null };
       this.event(commission, identity, BUSINESS_AUDIT_ACTIONS.COMMISSION_PAYOUT_RECORDED);
       this.audit(identity, { module: "commissions", action: BUSINESS_AUDIT_ACTIONS.COMMISSION_PAYOUT_RECORDED, entityType: "commission", entityId: commission.id, newValue: "payout_initiated" });
       return this.view(commission, false);

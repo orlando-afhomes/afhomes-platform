@@ -15,7 +15,7 @@ type FieldCase = {
 const PRIMARY_CASES: FieldCase[] = [
   { key: "mobileNumber", valid: "09171234567", invalid: "0917123456", message: "Mobile number required." },
   { key: "landline", valid: "0285550100", invalid: "123", message: "Landline must be 7 to 10 digits." },
-  { key: "tinNumber", valid: "123-456-789", invalid: "123", message: "TIN must be 9 or 12 digits." },
+  { key: "tinNumber", valid: "123-456-789", invalid: "123", message: "TIN must be 9 digits." },
   {
     key: "governmentIdNumber",
     valid: "P1234567A",
@@ -176,7 +176,7 @@ describe("validateSecondaryField", () => {
   it("uses the same messages as the primary fields once a value is present", () => {
     expect(validateSecondaryField("mobileNumber", "123")).toBe("Mobile number required.");
     expect(validateSecondaryField("landline", "123")).toBe("Landline must be 7 to 10 digits.");
-    expect(validateSecondaryField("tinNumber", "123")).toBe("TIN must be 9 or 12 digits.");
+    expect(validateSecondaryField("tinNumber", "123")).toBe("TIN must be 9 digits.");
     expect(validateSecondaryField("governmentIdNumber", "123", { idType: "Passport" })).toBe(
       "Enter a valid Passport number (8-9 uppercase letters and digits, starting with a letter).",
     );

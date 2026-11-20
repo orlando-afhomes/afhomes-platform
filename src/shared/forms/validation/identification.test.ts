@@ -114,16 +114,14 @@ describe("validateGovIdNumber driver's license", () => {
 });
 
 describe("validateGovIdNumber TIN", () => {
-  it("accepts 9 or 12 digits", () => {
+  it("accepts exactly 9 digits", () => {
     expect(validateGovIdNumber("123456789", "TIN")).toBeNull();
     expect(validateGovIdNumber("123-456-789", "TIN")).toBeNull();
-    expect(validateGovIdNumber("123456789000", "TIN")).toBeNull();
-    expect(validateGovIdNumber("123-456-789-000", "TIN")).toBeNull();
   });
 
   it("rejects other lengths or letters with the exact message", () => {
-    for (const value of ["12345678", "1234567890", "12345678901", "1234567890123", "A12345678"]) {
-      expect(validateGovIdNumber(value, "TIN"), value).toBe("TIN must be 9 or 12 digits.");
+    for (const value of ["12345678", "1234567890", "123456789000", "12345678901", "1234567890123", "A12345678"]) {
+      expect(validateGovIdNumber(value, "TIN"), value).toBe("TIN must be 9 digits.");
     }
   });
 });

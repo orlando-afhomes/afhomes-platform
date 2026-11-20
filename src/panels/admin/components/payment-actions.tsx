@@ -8,12 +8,15 @@ import { useReferenceEntries } from "@/data/settings-queries";
 import { adjustableCentavos, adjustmentTotalCentavos, buildScheduleState, findSuggestedMatch } from "@/modules/finance/rules";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { PAYMENT_METHODS, PAYMENT_PURPOSES, type PaymentMethod, type PaymentPurpose } from "@/modules/finance/types";
+import { nextOfficialReceiptNo } from "@/modules/finance/payment-reference";
 import { manilaToday } from "@/shared/lib/dates";
 import { centavosToInputText, formatPeso, parsePesoToCentavos } from "@/shared/lib/money";
+import { MAX_UPLOAD_BYTES, readFileAsDataUrl } from "@/shared/lib/file-data";
 import { MoneyField, SelectField, StandardDateField, TextAreaField, TextField } from "@/shared/forms/modern";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
+import { ImagePreview } from "@/shared/components/modern/image-preview";
 import { toast } from "sonner";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { RowActionButton, RowActionsMenu, type RowActionTone } from "@/shared/components/modern/row-actions-menu";
@@ -37,9 +40,10 @@ function useNextUnpaidLine(contractId: string): { purpose: PaymentPurpose; amoun
   return line && purpose ? { purpose, amountCentavos: line.amountCentavos - line.allocatedCentavos } : null;
 }
 
-/** Submit a payment for a contract (Staff, IST and OST for their own scope). Only the receipt file name is kept. */
+/** Submit a payment for a contract (Staff, IST and OST for their own scope). The receipt is kept for the Finance viewer. */
 export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId: string; open: boolean; onClose: () => void }) {
   const submit = useSubmitPayment();
+  const payments = usePayments();
   const suggestion = useNextUnpaidLine(contractId);
   // Purpose and amount follow the next unpaid schedule line until the user edits them.
   const [purposeEdit, setPurpose] = useState<PaymentPurpose | null>(null);
@@ -49,11 +53,13 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
   const [method, setMethod] = useState<PaymentMethod>("Bank Transfer");
   const [paidDate, setPaidDate] = useState(manilaToday());
   const [documentNo, setDocumentNo] = useState("");
-  const [file, setFile] = useState("");
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
   const [bankId, setBankId] = useState("");
   const [error, setError] = useState<string | undefined>();
   const bankOptions = (useReferenceEntries().data ?? []).filter((entry) => entry.list === "bank" && entry.status === "active").map((entry) => ({ value: entry.id, label: entry.label }));
   const usesBank = method === "Bank Transfer" || method === "Cheque";
+  // Cash receipts get the system-issued OR number, previewed in the disabled field.
+  const autoDocumentNo = method === "Cash" ? nextOfficialReceiptNo(payments.data ?? [], paidDate) : "";
 
   const send = async () => {
     const amountCentavos = parsePesoToCentavos(amount);
@@ -62,18 +68,40 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
       return;
     }
     try {
-      await submit.mutateAsync({ contractId, purpose, amountCentavos, method, paidDate, documentNo: documentNo.trim() || null, evidenceFileName: file || null, bankId: usesBank && bankId ? bankId : null });
+      // Read at submit so a quick click never races the file read.
+      const evidenceDataUrl = evidenceFile ? await readFileAsDataUrl(evidenceFile) : null;
+      await submit.mutateAsync({
+        contractId,
+        purpose,
+        amountCentavos,
+        method,
+        paidDate,
+        documentNo: method === "Cash" ? autoDocumentNo : documentNo.trim() || null,
+        evidenceFileName: evidenceFile?.name ?? null,
+        evidenceDataUrl,
+        bankId: usesBank && bankId ? bankId : null,
+      });
       toast.success("Payment submitted for Finance verification.");
       setBankId("");
       setAmount(null);
       setPurpose(null);
       setDocumentNo("");
-      setFile("");
+      setEvidenceFile(null);
       setError(undefined);
       onClose();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Could not submit.");
     }
+  };
+
+  const chooseEvidence = (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError("Choose a receipt file up to 5 MB.");
+      return;
+    }
+    setError(undefined);
+    setEvidenceFile(file);
   };
 
   return (
@@ -85,18 +113,19 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
       <StandardDateField label="Date on the receipt" required value={paidDate} onChange={setPaidDate} />
       <TextField
         label="Invoice / Receipt number"
-        value={documentNo}
+        value={method === "Cash" ? autoDocumentNo : documentNo}
         onChange={setDocumentNo}
+        disabled={method === "Cash"}
         maxLength={40}
         hint={method === "Cash"
-          ? "For cash, record the Invoice or Official Receipt number issued for this collection. Cash needs no bank or e-wallet reference."
-          : "Invoice, Official Receipt, Collection Receipt, or Acknowledgment Receipt number issued for this collection."}
+          ? "Generated by the system for cash receipts (OR-YYYYMMDD-NNNN). Finance sees this number when it reviews the payment."
+          : "Number of the Invoice, Official Receipt, Collection Receipt, or Acknowledgment Receipt issued for this collection."}
       />
       <p className="tw:text-xs tw:text-muted-foreground">The payment reference (PAY-YYYYMMDD-NNNN) is generated by the system and is mandatory for every method. Finance verifies the payment before it counts.</p>
       <div className="tw:flex tw:flex-col tw:gap-1.5">
         <Label htmlFor="payment-evidence">Receipt file</Label>
-        <Input id="payment-evidence" type="file" accept="image/*,application/pdf" onChange={(event) => setFile(event.target.files?.[0]?.name ?? "")} />
-        <p className="tw:text-xs tw:text-muted-foreground">Only the file name is recorded with this payment.</p>
+        <Input id="payment-evidence" type="file" accept="image/*,application/pdf" onChange={(event) => chooseEvidence(event.target.files?.[0])} />
+        <p className="tw:text-xs tw:text-muted-foreground">{evidenceFile ? `${evidenceFile.name}. Finance can view it full size.` : "Image or PDF up to 5 MB; Finance can view it full size."}</p>
       </div>
     </FormDialog>
   );
@@ -105,23 +134,45 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
 /** Fix and resend a returned receipt. The original version stays in the payment history (07 section 9.1, U06). */
 function PaymentResubmitDialog({ payment, onClose }: { payment: PaymentView; onClose: () => void }) {
   const action = usePaymentAction();
+  const payments = usePayments();
   const [amount, setAmount] = useState(centavosToInputText(payment.amountCentavos));
   const [method, setMethod] = useState<PaymentMethod>(payment.method);
   const [paidDate, setPaidDate] = useState(payment.paidDate);
   const [documentNo, setDocumentNo] = useState(payment.documentNo ?? "");
-  const [file, setFile] = useState("");
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
   const [error, setError] = useState<string | undefined>();
 
   const send = async () => {
     const amountCentavos = parsePesoToCentavos(amount);
     if (!amountCentavos) return setError("Enter a valid amount.");
     try {
-      await action.mutateAsync({ id: payment.id, action: "resubmit", input: { amountCentavos, method, paidDate, documentNo: documentNo.trim() || null, ...(file ? { evidenceFileName: file } : {}) } });
+      // Read at submit so a quick click never races the file read.
+      const evidenceDataUrl = evidenceFile ? await readFileAsDataUrl(evidenceFile) : undefined;
+      await action.mutateAsync({
+        id: payment.id,
+        action: "resubmit",
+        input: {
+          amountCentavos,
+          method,
+          paidDate,
+          documentNo: method === "Cash"
+            ? documentNo.trim() || nextOfficialReceiptNo(payments.data ?? [], paidDate)
+            : documentNo.trim() || null,
+          ...(evidenceFile ? { evidenceFileName: evidenceFile.name, evidenceDataUrl } : {}),
+        },
+      });
       toast.success("Payment resent for Finance verification.");
       onClose();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Could not resend.");
     }
+  };
+
+  const chooseEvidence = (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > MAX_UPLOAD_BYTES) return setError("Choose a receipt file up to 5 MB.");
+    setError(undefined);
+    setEvidenceFile(file);
   };
 
   return (
@@ -136,8 +187,15 @@ function PaymentResubmitDialog({ payment, onClose }: { payment: PaymentView; onC
       <TextField label="Invoice / Receipt number" value={documentNo} onChange={setDocumentNo} maxLength={40} hint="Invoice, Official Receipt, Collection Receipt, or Acknowledgment Receipt number." />
       <div className="tw:flex tw:flex-col tw:gap-1.5">
         <Label htmlFor="payment-resend-evidence">New receipt file</Label>
-        <Input id="payment-resend-evidence" type="file" accept="image/*,application/pdf" onChange={(event) => setFile(event.target.files?.[0]?.name ?? "")} />
-        <p className="tw:text-xs tw:text-muted-foreground">{payment.evidenceFileName ? `Current file: ${payment.evidenceFileName}. Leave empty to keep it.` : "Only the file name is recorded with this payment."}</p>
+        <Input id="payment-resend-evidence" type="file" accept="image/*,application/pdf" onChange={(event) => chooseEvidence(event.target.files?.[0])} />
+        {payment.evidenceFileDataUrl ? (
+          <ImagePreview
+            src={payment.evidenceFileDataUrl}
+            fileName={payment.evidenceFileName}
+            label="Current receipt file"
+          />
+        ) : null}
+        <p className="tw:text-xs tw:text-muted-foreground">{payment.evidenceFileName ? `Current file: ${payment.evidenceFileName}. Leave empty to keep it.` : "Image or PDF up to 5 MB; Finance can view it full size."}</p>
       </div>
     </FormDialog>
   );
@@ -294,7 +352,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
                     { label: "Date on receipt", value: formatDate(detail.paidDate) },
                     { label: "Payment reference", value: detail.referenceNo },
                     { label: "Invoice / Receipt no.", value: detail.documentNo ?? null },
-                    { label: "Receipt file", value: detail.evidenceFileName },
+                    { label: "Receipt file", value: <ImagePreview src={detail.evidenceFileDataUrl} fileName={detail.evidenceFileName} label="Receipt file" /> },
                     { label: "Submitted by", value: detail.submitterName },
                     { label: "Submitted", value: formatDate(detail.submittedAt) },
                   ],

@@ -55,8 +55,9 @@ export const MAX_STREET_LENGTH = 160;
 export const MAX_STREET_TEXT = MAX_STREET_LENGTH;
 export const MAX_CITY_LENGTH = 100;
 export const MAX_ZIP_LENGTH = 4;
-export const MAX_TIN_LENGTH = 12;
-export const MAX_TIN_DIGITS = 12;
+/** A Philippine TIN is exactly 9 digits (owner instruction 2026-11-20). */
+export const MAX_TIN_LENGTH = 9;
+export const MAX_TIN_DIGITS = 9;
 export const MAX_LANDLINE_DIGITS = 10;
 export const MAX_MOBILE_DIGITS = 11;
 export const MAX_GOV_ID_LENGTH = 40;
@@ -104,25 +105,21 @@ export function isValidPhilippineMobile(value: string): boolean {
   return /^09\d{9}$/.test(normalizePhilippineMobile(digits));
 }
 
-/** Format a TIN as 123-456-789 or 123-456-789-000. */
+/** Format a 9-digit TIN as 123-456-789. */
 export function formatTin(value: string): string {
   const digits = value.replace(/\D/g, "").slice(0, MAX_TIN_DIGITS);
-  if (digits.length <= 9) {
-    return digits.replace(/(\d{3})(?=\d)/g, "$1-").replace(/-$/, "");
-  }
-  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6, 9)}-${digits.slice(9)}`;
+  return digits.replace(/(\d{3})(?=\d)/g, "$1-");
 }
 
-/** Digits-only TIN for storage, capped at 12 digits. undefined stays "not provided", null stays null, blank becomes null. */
+/** Digits-only TIN for storage, capped at 9 digits. undefined stays "not provided", null stays null, blank becomes null. */
 export function normalizeTin(value: string | null | undefined): string | null | undefined {
   if (value === undefined || value === null) return value;
   return value.replace(/\D/g, "").slice(0, MAX_TIN_DIGITS) || null;
 }
 
-/** Validate a TIN (9 or 12 digits). */
+/** Validate a TIN (exactly 9 digits). */
 export function isValidTin(value: string): boolean {
-  const digits = value.replace(/\D/g, "");
-  return digits.length === 9 || digits.length === MAX_TIN_DIGITS;
+  return value.replace(/\D/g, "").length === MAX_TIN_DIGITS;
 }
 
 /** Normalize a Philippine ZIP code to 4 digits as a string. */

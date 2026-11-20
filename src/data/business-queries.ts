@@ -293,7 +293,7 @@ export type CommissionAction =
   | { id: string; action: "adjust"; percentBp: number; reason: string }
   | { id: string; action: "hold"; decision: "keep" | "cancel" | "restore"; reason: string }
   | { id: string; action: "cancel"; reason: string }
-  | { id: string; action: "payout"; reference: string; method: string | null; payoutDate: string; evidenceFileName?: string }
+  | { id: string; action: "payout"; reference: string; method: string | null; payoutDate: string; evidenceFileName?: string; evidenceDataUrl?: string }
   | { id: string; action: "void"; reason: string }
   | { id: string; action: "confirm" };
 export function useCommissionAction() {
@@ -328,7 +328,7 @@ export function useOperation(operation: AdminOperation): boolean {
 
 // Month-end payouts in bulk
 export type BulkCommissionPayout =
-  | { kind: "payout"; ids: string[]; reference: string; method: string | null; payoutDate: string; evidenceFileName?: string }
+  | { kind: "payout"; ids: string[]; reference: string; method: string | null; payoutDate: string; evidenceFileName?: string; evidenceDataUrl?: string }
   | { kind: "confirm"; ids: string[] };
 export type BulkCommissionResult = { done: number; failed: { id: string; reason: string }[] };
 

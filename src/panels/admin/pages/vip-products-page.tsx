@@ -13,6 +13,7 @@ import { formatDate } from "@/shared/lib/format-date";
 import { matchesSearch } from "@/shared/lib/search";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { Money } from "@/shared/components/modern/money";
+import { ImagePreview } from "@/shared/components/modern/image-preview";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
@@ -153,8 +154,7 @@ export function VipProductsTab({ creating, onCloseCreate }: { creating: boolean;
                   rows: [
                     ...(productDetail.imageUrl
                       ? [{ label: "Product image", wide: true, value: (
-                          // eslint-disable-next-line @next/next/no-img-element -- in-memory object URL preview
-                          <img src={productDetail.imageUrl} alt={`${productDetail.name} product`} className="tw:h-32 tw:w-48 tw:rounded-md tw:bg-muted tw:object-cover" />
+                          <ImagePreview src={productDetail.imageUrl} fileName={productDetail.imageFileName} label={`${productDetail.name} product image`} />
                         ) }]
                       : []),
                     { label: "Card Level", value: productDetail.tier },

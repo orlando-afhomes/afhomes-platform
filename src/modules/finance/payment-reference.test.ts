@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextPaymentReference } from "./payment-reference";
+import { nextOfficialReceiptNo, nextPaymentReference } from "./payment-reference";
 
 describe("nextPaymentReference", () => {
   it("builds PAY-YYYYMMDD-NNNN and skips references already used", () => {
@@ -16,5 +16,14 @@ describe("nextPaymentReference", () => {
 
   it("skips a candidate reserved by an imported or historical receipt", () => {
     expect(nextPaymentReference([], "2026-11-20", (reference) => reference === "PAY-20261120-0001")).toBe("PAY-20261120-0002");
+  });
+});
+
+describe("nextOfficialReceiptNo", () => {
+  it("builds OR-YYYYMMDD-NNNN from the document numbers already recorded", () => {
+    expect(nextOfficialReceiptNo([], "2026-11-20")).toBe("OR-20261120-0001");
+    expect(
+      nextOfficialReceiptNo([{ documentNo: "OR-20261120-0001" }, { documentNo: null }, { documentNo: "OR-20261119-0001" }], "2026-11-20"),
+    ).toBe("OR-20261120-0002");
   });
 });

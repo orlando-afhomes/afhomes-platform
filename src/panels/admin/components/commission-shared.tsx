@@ -6,6 +6,7 @@ import { useBulkCommissionPayout, useCommissionAction, type BulkCommissionResult
 import type { CommissionView } from "@/data/contracts/commission-repository";
 import { formatBasisPoints, formatPeso, parsePercentToBasisPoints } from "@/shared/lib/money";
 import { manilaToday } from "@/shared/lib/dates";
+import { MAX_UPLOAD_BYTES, readFileAsDataUrl } from "@/shared/lib/file-data";
 import type { ColumnDef } from "@/shared/components/modern/data-table";
 import { FieldShell, PercentField, SelectField, StandardDateField, TextField, describedBy, useFieldIds } from "@/shared/forms/modern";
 import { HandCoins } from "lucide-react";
@@ -16,6 +17,7 @@ import { BizBadge } from "@/shared/components/business/biz-badge";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import type { RowActionTone } from "@/shared/components/modern/row-actions-menu";
 import { Money } from "@/shared/components/modern/money";
+import { ImagePreview } from "@/shared/components/modern/image-preview";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { PAYOUT_RELEASE_THRESHOLD_BP } from "@/modules/commissions/rules";
 import { commissionRoleLabel } from "@/modules/commissions/types";
@@ -98,7 +100,7 @@ export function CommissionDetailsSheet({ detail, onClose, items }: { detail: Com
                     { label: "Ready-to-pay date", value: detail.payoutReleaseDate ? formatDate(detail.payoutReleaseDate) : null },
                     { label: "Payout", value: detail.payout ? (detail.payout.confirmedAt ? "Payment sent" : "Initiated, not confirmed") : payoutNote(detail) },
                     { label: "Payout reference", value: detail.payout?.reference },
-                    { label: "Proof", value: detail.payout?.evidenceFileName },
+                    { label: "Proof", value: <ImagePreview src={detail.payout?.evidenceFileDataUrl} fileName={detail.payout?.evidenceFileName} label="Payout proof" /> },
                     { label: "On hold because", value: detail.holdReason, wide: true },
                   ],
                 },
@@ -171,13 +173,23 @@ export function PayoutDialog({ commissions, onClose }: { commissions: Commission
   const [reference, setReference] = useState("");
   const [method, setMethod] = useState("");
   const [date, setDate] = useState(manilaToday());
-  const [file, setFile] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
   const [error, setError] = useState<string | undefined>();
   const single = commissions.length === 1;
   const proofRequired = commissions.some((item) => Boolean(item.releaseDate));
   const send = async () => {
     try {
-      const result = await bulk.mutateAsync({ kind: "payout", ids: commissions.map(({ id }) => id), reference, method: method || null, payoutDate: date, evidenceFileName: file });
+      // Read at submit so a quick click never races the file read.
+      const evidenceDataUrl = proofFile ? await readFileAsDataUrl(proofFile) : undefined;
+      const result = await bulk.mutateAsync({
+        kind: "payout",
+        ids: commissions.map(({ id }) => id),
+        reference,
+        method: method || null,
+        payoutDate: date,
+        evidenceFileName: proofFile?.name ?? "",
+        evidenceDataUrl,
+      });
       // Nothing recorded: keep the form open with the reason so it can be corrected.
       if (result.done === 0) return setError([...new Set(result.failed.map(({ reason }) => reason))].join(" "));
       if (single) toast.success("Payout recorded. Confirm paid out to mark it Paid.");
@@ -198,7 +210,22 @@ export function PayoutDialog({ commissions, onClose }: { commissions: Commission
       <StandardDateField label="Payout date" required value={date} onChange={setDate} />
       <div className="tw:grid tw:gap-2">
         <Label htmlFor="commission-payout-evidence">Payment proof</Label>
-        <Input id="commission-payout-evidence" type="file" required={proofRequired} accept="image/*,application/pdf" onChange={(event) => setFile(event.target.files?.[0]?.name ?? "")} />
+        <Input
+          id="commission-payout-evidence"
+          type="file"
+          required={proofRequired}
+          accept="image/*,application/pdf"
+          onChange={(event) => {
+            const file = event.target.files?.[0] ?? null;
+            if (file && file.size > MAX_UPLOAD_BYTES) {
+              setError("Choose a proof file up to 5 MB.");
+              return;
+            }
+            setError(undefined);
+            setProofFile(file);
+          }}
+        />
+        <p className="tw:text-xs tw:text-muted-foreground">Image or PDF up to 5 MB; Finance can view it full size.</p>
       </div>
     </FormDialog>
   );

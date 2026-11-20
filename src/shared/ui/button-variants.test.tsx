@@ -23,9 +23,9 @@ describe("buttonVariants semantic colors", () => {
     }
   });
 
-  it("outline is neutral and differs from secondary", () => {
-    expect(has({ variant: "outline" }, "tw:bg-card")).toBe(true);
-    expect(has({ variant: "outline" }, "tw:border-input")).toBe(true);
-    expect(buttonVariants({ variant: "outline" })).not.toBe(buttonVariants({ variant: "secondary" }));
+  it("outline is a soft brand tint and secondary is its alias", () => {
+    expect(has({ variant: "outline" }, "tw:bg-primary/10")).toBe(true);
+    expect(has({ variant: "outline" }, "tw:border-primary/25")).toBe(true);
+    expect(buttonVariants({ variant: "outline" })).toBe(buttonVariants({ variant: "secondary" }));
   });
 });

@@ -194,11 +194,10 @@ export function PhilippineLandlineField({
   );
 }
 
-/** Display width for a fully grouped 12-digit TIN. */
-// A 12-digit TIN groups as 123-456-789-012: 12 digits plus 3 hyphens.
-export const TIN_DISPLAY_LENGTH = MAX_TIN_LENGTH + 3;
+/** Display width for a fully grouped 9-digit TIN (123-456-789: 9 digits plus 2 hyphens). */
+export const TIN_DISPLAY_LENGTH = MAX_TIN_LENGTH + 2;
 
-/** TIN input with live 123-456-789 / 123-456-789-000 grouping; digits only in the canonical value. */
+/** TIN input with live 123-456-789 grouping; digits only in the canonical value. */
 export function TinField({ maxLength = TIN_DISPLAY_LENGTH, ...rest }: MaskedProps) {
   return <MaskedInput {...rest} maxLength={maxLength} inputMode="numeric" format={formatTin} />;
 }

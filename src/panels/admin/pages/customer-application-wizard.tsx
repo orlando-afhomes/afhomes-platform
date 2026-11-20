@@ -8,15 +8,17 @@ import { ArrowLeft, ArrowRight, ArrowLeftRight, Banknote, CalendarClock, CreditC
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import { useAccreditations, useCreateCustomerDraft, useCustomers, useMembers } from "@/data/queries";
 import type { Customer } from "@/modules/customers/types";
-import { useCorrectCustomer, useOperation, usePaymentSchemes, useRegisterCustomer, useUpdateCustomerDraft, useVipProducts } from "@/data/business-queries";
+import { useCorrectCustomer, useOperation, usePaymentSchemes, usePayments, useRegisterCustomer, useUpdateCustomerDraft, useVipProducts } from "@/data/business-queries";
 import { customerAttributionErrors, pendingAttributionMemberIds } from "@/modules/customers/attribution";
 import { validateCustomerForSubmit } from "@/modules/customers/rules";
 import { isEditableRegistration } from "@/modules/customers/review";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/modules/finance/types";
+import { nextOfficialReceiptNo } from "@/modules/finance/payment-reference";
 import { applicablePriceStatus, displayPriceFor } from "@/modules/vip/pricing";
 import { buildSchedule } from "@/modules/contracts/rules";
 import type { VipTierCode } from "@/modules/vip/types";
 import { manilaToday } from "@/shared/lib/dates";
+import { MAX_UPLOAD_BYTES, readFileAsDataUrl } from "@/shared/lib/file-data";
 import { formatPeso } from "@/shared/lib/money";
 import { cn } from "@/shared/lib/utils";
 import type { RadioCardOption } from "@/shared/components/modern/radio-card-group";
@@ -47,7 +49,7 @@ import {
 } from "../components/customer-form-sections";
 import { PlanSummary } from "../components/customer-plan-summary";
 import { NonStandardTermsFields, nonStandardTermsFromText, nonStandardTextErrors, type NonStandardTermsText } from "../components/non-standard-terms-fields";
-import { useCustomerIdImagePreview } from "../components/customer-id-image-preview";
+import { toCustomerImage, useCustomerIdImagePreview } from "../components/customer-id-image-preview";
 import { useNewCustomerExit } from "../components/use-new-customer-exit";
 import { useWizardStepHistory } from "../components/use-wizard-step-history";
 import { ReasonDialog } from "@/shared/components/modern/form-dialog";
@@ -161,6 +163,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const members = useMembers();
   const accreditations = useAccreditations();
   const customers = useCustomers();
+  const payments = usePayments();
   const create = useCreateCustomerDraft();
   const updateDraft = useUpdateCustomerDraft();
   const correct = useCorrectCustomer();
@@ -190,6 +193,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const [paidDate, setPaidDate] = useState(initialPaidDate);
   const [documentNo, setDocumentNo] = useState("");
   const [proofName, setProofName] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [nonStandardText, setNonStandardText] = useState<NonStandardTermsText>({ price: "", months: "", reason: "" });
   const [reservationErrors, setReservationErrors] = useState<Record<string, string | undefined>>({});
@@ -248,11 +252,26 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   );
 
   const set: SetDraft = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
+  /** The form input plus any Government ID images chosen in this session (browser-memory data URLs). */
+  const customerInput = (saveAsDraft = false) => {
+    const input = toInput(draft, { saveAsDraft });
+    const primaryImage = toCustomerImage(primaryIdPreview);
+    const secondaryImage = toCustomerImage(secondaryIdPreview);
+    return {
+      ...input,
+      ...(primaryImage ? { governmentIdImage: primaryImage } : {}),
+      ...(secondaryImage && input.supplementaryHolder
+        ? { supplementaryHolder: { ...input.supplementaryHolder, governmentIdImage: secondaryImage } }
+        : {}),
+    };
+  };
   const activeProducts = (products.data ?? []).filter((item) => item.status === "active");
   const product = activeProducts.find((item) => item.code === draft.vipPlan);
   const scheme = (schemes.data ?? []).find((item) => item.id === draft.paymentSchemeId);
   const supplementaryAllowed = Boolean(product && product.supplementaryHolders > 0);
   const reservationCentavos = scheme?.reservationCentavos ?? null;
+  // Cash receipts get the system-issued OR number; the entry field is disabled and previews it.
+  const autoDocumentNo = method === "Cash" && reservationCentavos ? nextOfficialReceiptNo(payments.data ?? [], paidDate) : "";
   // Doc 05 §10.2: staff who prepare the contract enter the Non-Standard price, monthly payments and reason here.
   const standardSchedule = product && scheme ? buildSchedule(product, scheme) : null;
   const asksNonStandard = canPrepare && !resubmitting && draft.contractClassification === "N" && standardSchedule != null && standardSchedule.errors.length === 0;
@@ -378,6 +397,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
     setPaidDate(initialPaidDate);
     setDocumentNo("");
     setProofName("");
+    setProofFile(null);
     setProofKey((key) => key + 1);
     setAccepted(false);
     setNonStandardText({ price: "", months: "", reason: "" });
@@ -392,7 +412,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
       exit.dismiss();
       return;
     }
-    const input = toInput(draft, { saveAsDraft: true });
+    const input = customerInput(true);
     setBusy(true);
     setAction("draft");
     try {
@@ -445,15 +465,24 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
     setBusy(true);
     setAction("submit");
     try {
+      // Read at submit so a quick click never races the file read.
+      const proofDataUrl = proofFile ? await readFileAsDataUrl(proofFile) : null;
       const result = await register.mutateAsync({
-        customer: toInput(draft),
+        customer: customerInput(),
         draftId: existing?.id,
         contract: canPrepare && scheme && !resubmitting ? {
           schemeId: scheme.id,
           customerAccepted: accepted,
           ...(asksNonStandard ? { nonStandardTerms: nonStandardTermsFromText(nonStandardText) } : {}),
           reservation: canPay && reservationCentavos
-            ? { amountCentavos: reservationCentavos, method, paidDate, documentNo: documentNo || null, evidenceFileName: proofName || null }
+            ? {
+                amountCentavos: reservationCentavos,
+                method,
+                paidDate,
+                documentNo: method === "Cash" ? autoDocumentNo : documentNo.trim() || null,
+                evidenceFileName: proofName || null,
+                evidenceDataUrl: proofDataUrl,
+              }
             : undefined,
         } : undefined,
       });
@@ -668,7 +697,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             <Row label="Reservation fee" value={reservationCentavos ? formatPeso(reservationCentavos) : "None for this payment plan"} />
             <Row label="Payment method" value={reservationCentavos && canPay ? method : "—"} />
             <Row label="Date on receipt" value={paidDate || "—"} />
-            <Row label="Invoice / Receipt no." value={documentNo || "—"} />
+            <Row label="Invoice / Receipt no." value={(method === "Cash" ? autoDocumentNo : documentNo) || "—"} />
             <Row label="Proof" value={proofName || "—"} />
             <div className="tw:sm:col-span-2">
               <CheckboxField variant="card" label="The customer reviewed and accepted the payment schedule." checked={accepted} onChange={(value) => { setAccepted(value); setReservationErrors((current) => ({ ...current, accepted: undefined })); }} error={reservationErrors.accepted} />
@@ -717,15 +746,37 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
                     <StandardDateField label="Date on the receipt" required value={paidDate} onChange={setPaidDate} error={reservationErrors.paidDate} />
                     <TextField
                       label="Invoice / Receipt number"
-                      value={documentNo}
+                      value={method === "Cash" ? autoDocumentNo : documentNo}
                       onChange={setDocumentNo}
+                      disabled={method === "Cash"}
                       maxLength={40}
-                      hint={method === "Cash" ? "For cash, record the Invoice or Official Receipt number. Cash needs no bank or e-wallet reference; the system generates the payment reference." : "Invoice, Official Receipt, or Collection Receipt number. The system generates the payment reference."}
+                      hint={method === "Cash"
+                        ? "Generated by the system for cash receipts (OR-YYYYMMDD-NNNN). Finance sees this number when it reviews the payment."
+                        : "Number of the Invoice, Official Receipt, Collection Receipt, or Acknowledgment Receipt issued for this collection."}
                     />
                   </div>
-                  <FieldShell ids={proofIds} label="Proof of payment" required error={reservationErrors.proof} hint="Only the file name is recorded with this payment.">
+                  <FieldShell ids={proofIds} label="Proof of payment" required error={reservationErrors.proof} hint="Image or PDF up to 5 MB. Finance reviews this proof with the payment.">
                     <div className="tw:flex tw:items-stretch tw:gap-2">
-                      <input key={proofKey} id={proofIds.id} type="file" accept="image/*,application/pdf" aria-invalid={Boolean(reservationErrors.proof) || undefined} className="tw:peer tw:sr-only" onChange={(event) => setProofName(event.target.files?.[0]?.name ?? "")} />
+                      <input
+                        key={proofKey}
+                        id={proofIds.id}
+                        type="file"
+                        accept="image/*,application/pdf"
+                        aria-invalid={Boolean(reservationErrors.proof) || undefined}
+                        className="tw:peer tw:sr-only"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > MAX_UPLOAD_BYTES) {
+                            setReservationErrors((current) => ({ ...current, proof: "Choose a file up to 5 MB." }));
+                            setProofKey((key) => key + 1);
+                            return;
+                          }
+                          setProofName(file.name);
+                          setProofFile(file);
+                          setReservationErrors((current) => ({ ...current, proof: undefined }));
+                        }}
+                      />
                       <label
                         htmlFor={proofIds.id}
                         className={cn(
@@ -749,6 +800,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
                           aria-label="Remove file"
                           onClick={() => {
                             setProofName("");
+                            setProofFile(null);
                             setProofKey((key) => key + 1);
                           }}
                         >
@@ -795,7 +847,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
       <AppAlert
         open={exit.destination !== null}
         title="Leave this application?"
-        description={`Save the application as a customer draft to continue it later.${hasReservationChanges ? " Re-enter reservation details and payment evidence when you reopen the draft." : ""}${hasIdPreview ? " Government ID previews are temporary." : ""}`}
+        description={`Save the application as a customer draft to continue it later.${hasReservationChanges ? " Re-enter reservation details and payment evidence when you reopen the draft." : ""}`}
         confirmText="Save Draft"
         denyText="Discard all Changes"
         cancelText="Stay"

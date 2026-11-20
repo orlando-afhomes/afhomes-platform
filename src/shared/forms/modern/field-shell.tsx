@@ -4,6 +4,7 @@ import { useId, type ReactNode } from "react";
 import { CircleAlert } from "lucide-react";
 import { Label } from "@/shared/ui/label";
 import { cn } from "@/shared/lib/utils";
+import { HintTip } from "./hint-tip";
 
 export type FieldShellIds = { id: string; errorId: string; hintId: string };
 
@@ -51,7 +52,10 @@ export function FieldShell({
   );
   return (
     <div className={cn("tw:flex tw:min-w-0 tw:flex-col tw:gap-2", className)}>
-      {labelFor ? <Label htmlFor={ids.id}>{caption}</Label> : <Label>{caption}</Label>}
+      <div className="tw:flex tw:min-w-0 tw:items-center tw:gap-1.5">
+        {labelFor ? <Label id={`${ids.id}-label`} htmlFor={ids.id}>{caption}</Label> : <Label id={`${ids.id}-label`}>{caption}</Label>}
+        {hint ? <HintTip labelId={`${ids.id}-label`} text={hint} /> : null}
+      </div>
       {children}
       {error ? (
         <p id={ids.errorId} role="alert" className="tw:flex tw:items-start tw:gap-1.5 tw:text-sm tw:text-destructive">
@@ -59,8 +63,9 @@ export function FieldShell({
           {error}
         </p>
       ) : null}
-      {hint && !error ? (
-        <p id={ids.hintId} className="tw:text-xs tw:text-muted-foreground">
+      {/* The guide note lives in the info icon; keep the accessible description in the DOM. */}
+      {hint ? (
+        <p id={ids.hintId} className="tw:sr-only">
           {hint}
         </p>
       ) : null}

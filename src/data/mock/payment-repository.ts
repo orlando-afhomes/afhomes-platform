@@ -5,7 +5,7 @@ import type { Contract } from "@/modules/contracts/types";
 import { meetsPayoutRelease } from "@/modules/commissions/rules";
 import { adjustableCentavos, exceedsContractPrice, findDuplicatePayment, findReferenceConflict, findSuggestedMatch } from "@/modules/finance/rules";
 import { firstOpenDate } from "@/modules/finance/month-close";
-import { nextPaymentReference } from "@/modules/finance/payment-reference";
+import { nextOfficialReceiptNo, nextPaymentReference } from "@/modules/finance/payment-reference";
 import { PAYMENT_METHODS, PAYMENT_PURPOSES, type Payment, type PaymentEvent } from "@/modules/finance/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import type { IgpSale } from "@/modules/igp/types";
@@ -66,8 +66,11 @@ export function preparePaymentSubmission(store: MockStore, target: PaymentTarget
     id: nextId(store, "payment", "pay"), contractId: target.id, customerId: target.customerId, saleId: sale?.id ?? null,
     purpose: input.purpose, amountCentavos: input.amountCentavos, method: input.method, paidDate: input.paidDate,
     referenceNo: nextPaymentReference(store.payments, input.paidDate, (reference) => hasReferenceConflict(store, reference)),
-    documentNo: input.documentNo?.trim() || null,
+    // Cash gets a system-issued Official Receipt number; other methods keep the
+    // number of the document issued by the bank or provider (owner 2026-11-20).
+    documentNo: input.documentNo?.trim() || (input.method === "Cash" ? nextOfficialReceiptNo(store.payments, input.paidDate) : null),
     evidenceFileName: input.evidenceFileName?.trim() || null,
+    evidenceFileDataUrl: input.evidenceDataUrl?.trim() || null,
     ...(bankId ? { bankId } : {}),
     submittedBy, submittedAt: timestamp, status: "submitted", verifiedBy: null, verifiedAt: null, verifiedDate: null,
     decisionReason: null, adjustments: [],
@@ -157,6 +160,8 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
         paidDate: input.paidDate ?? payment.paidDate,
         documentNo: input.documentNo !== undefined ? input.documentNo?.trim() || null : payment.documentNo ?? null,
       };
+      // A cash correction without a document number keeps the system OR sequence.
+      if (next.method === "Cash" && !next.documentNo) next.documentNo = nextOfficialReceiptNo(this.store.payments, next.paidDate, undefined);
       validateFields(this.store, contract, next, payment.id);
       if (input.referenceNo !== undefined && input.referenceNo?.trim() !== payment.referenceNo) {
         throw new Error("A resent receipt must keep its original payment reference.");
@@ -166,6 +171,7 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
       this.event(payment, identity, BUSINESS_AUDIT_ACTIONS.PAYMENT_RESUBMITTED, null, { purpose, amountCentavos, method, paidDate, referenceNo, documentNo, evidenceFileName });
       Object.assign(payment, next);
       if (input.evidenceFileName !== undefined) payment.evidenceFileName = input.evidenceFileName?.trim() || null;
+      if (input.evidenceDataUrl !== undefined) payment.evidenceFileDataUrl = input.evidenceDataUrl?.trim() || null;
       payment.status = "submitted";
       payment.decisionReason = null;
       this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.PAYMENT_RESUBMITTED, entityType: "payment", entityId: payment.id, previousValue: "returned", newValue: "submitted", relatedRecordIds: [contract.id] });

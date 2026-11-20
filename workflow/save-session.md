@@ -111,77 +111,75 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-20 14:24 (supersedes the 2026-11-19 22:19 snapshot).
-- Repository: afhomes-platform; remote `https://github.com/orlando-afhomes/afhomes-platform.git` (push confirmed this session).
-- Branch: develop. HEAD: 677a240 "feat: table ordering, pagination, import/export tabs, customer fields, cash payment rule" (verified).
-- Tool and model: OpenCode, GLM-5.3-Flash (harness metadata; not independently probed).
-- Session objective: UI/UX batch from browser comments (breadcrumbs, buttons, prefix, citizenship, seller teams, cash rule), then merge the work to develop and verify it, then fix the login art responsiveness.
+- Saved at: 2026-11-20 (supersedes the 2026-11-20 14:24 snapshot).
+- Repository: afhomes-platform; branch develop; HEAD c958594 "style: refactor login shell card layout and add Claude settings" (verified; no fetch this session).
+- Tool and model: OpenCode, DeepSeek V4.1 Flash 1017 (opencode-go), harness metadata; not independently probed.
+- Session objective: `/load`, then a UI/UX batch from browser comments (hint icons, button redesign, TIN rule, cash OR number, persisted images with a full-size viewer), then restore the step circles.
 - Development phase: frontend prototype on typed in-memory mock data. Backend, auth, database and deployment remain deferred.
-- Context note: no compaction. Session began in the `kind-eagle` worktree and was moved to the main checkout.
+- Context note: no compaction.
 
 ## 2. Current Project State
-- develop at 677a240, pushed to origin; clean except one CSS edit and one untracked file (section 5).
-- Session work committed by the owner as 677a240 (78 files, +1024/−847) and fast-forwarded into develop, then pushed.
-- Worktrees: `worktree\13158f\kind-eagle` at 677a240 (detached, clean), `worktree\13158f\crisp-tiger` at 897a000 (detached, clean), `.claude\worktrees\skills-load-73b67f` at 1ad7b0b (pre-existing).
-- Current focus: login art panel responsiveness in `src/panels/public/login/login.css`; edit is uncommitted.
-- Dev server runs at http://localhost:3000 from this checkout; `.next/dev` was deleted and regenerated after the route moves.
+- Baseline c958594 was clean and in sync with the local origin/develop ref at session start.
+- The whole UI/UX batch is implemented and uncommitted in the working tree (38 modified, 4 untracked files).
+- Dev server at http://localhost:3000 (owner's process) served the changed code for browser QA; the mock store resets on page reload.
+- Worktrees: `stellar-comet` and `sunny-squid` at c958594 (detached), as reported by `/load`; not touched this session.
 
 ## 3. Important Decisions
-- Owner explicitly authorized commit, merge, fast-forward and push despite the standing AGENTS Git prohibition; AGENTS.md was not modified. Future agents will again refuse Git writes unless the policy is amended.
-- Table ordering: newest business date first, attention statuses only break same-date ties; staff and members add a Newest/A-Z/Z-A control.
-- Customers area has separate `import` and `export` tabs; old `?tab=import-export` falls back; notifications point at the new tabs.
-- Same-team rule for Closing seller and Referrer (branchId), applied to customer wizard, IGP record/correct, Prepare Contract and VIP commission correction.
-- Citizenship stores ISO codes (`citizenshipCodes`) with nationality text kept in sync; searchable fixed list; dual/multiple toggle. Prefix is an optional fixed list.
-- Cash rule: system payment reference `PAY-YYYYMMDD-NNNN` for every method, separate `documentNo` (invoice/receipt), no bank/e-wallet reference for cash, Finance verification stays manual.
-- Breadcrumbs: every crumb with a route is clickable, including the current page.
-- Login art: one proportional card fan at all widths; organic edge only at ≥1100px with 136px reserved padding; compact mobile band; `100dvh`; short-height laptop tweaks.
+- Outline/secondary buttons (Details, Change, Cancel, Back, filters) use a soft brand-tinted fill; `secondary` is a deprecated alias of `outline` (owner choice, confirmed again this session).
+- Every admin FieldShell hint became a small "Field guide" info icon: opens on hover and click, keyboard focusable; the guide text stays in the DOM as sr-only text. The listed wizard notes moved there; dynamic state notes stay inline.
+- TIN accepts exactly 9 digits everywhere (format 123-456-789); 12-digit TINs are rejected; seeds and tests updated.
+- Cash receipts get a system `OR-YYYYMMDD-NNNN` Invoice/Receipt number, shown disabled at entry points (customer wizard, payment submit, IGP record); Finance correction/verification dialogs stay editable. The `PAY-YYYYMMDD-NNNN` reference is unchanged. Doc 07 still describes manual OR entry; the owner decision needs a doc update.
+- Uploaded images are stored as data URLs in the browser-memory mock store (no localStorage/IndexedDB) and shown as clickable thumbnails with a shared full-size viewer (Dialog, click-to-zoom, PDF opens in a new tab). Scope: Government ID (both holders), reservation proof, payment evidence, commission payout proof, VIP product image.
+- Non-preview uploads are read at submit time (avoids FileReader races); ID image and product image previews read at selection.
+- Step indicator: circles only, no boxed step buttons (direct owner instruction; reverts the 677a240 pill redesign).
 
 ## 4. Completed Work
-- Build fix: `(verify)` and `(correction)` route groups; header frame no longer uses `usePathname`; active-nav split; build passes again.
-- Table UX: `src/shared/lib/table-order.ts` + `DataTable` `orderBy`; pagination text and page dropdown; import/export tab split; proportional login fan and `sizes`.
-- Browser-comment batch: breadcrumb links, Cancel/Save-Draft variants, step pill redesign, prefix, citizenship picker, same-team sellers, print button variants (`info`), cash rule across wizard/Finance/IGP dialogs.
-- Customer ID auto/manual verified as already functional (repository and tests), no change needed.
-- Dead `src/shared/forms/validation/reference-number.ts` and its test removed.
-- Verification on develop: `npx tsc --noEmit` clean, `npm run lint` clean, `npm run build` passes (96 routes); full suite 174/176 files, `business-pages` and `staff-page` pass 124/124 when run alone (load flakes).
-- Login responsiveness pass: CSS rewritten; CDP measurements at 390×844, 768×1024, 1000×700, 1440×900 show no horizontal overflow, cluster inside the art panel, and clear of the green curve at ≥1100. CDP screenshot script fixed after a websocket buffering error but not re-run.
+- Shared UI: outline/secondary button redesign; `field-shell.tsx` + new `hint-tip.tsx`; new `image-preview.tsx` and `file-data.ts`; profile uploader button variant.
+- Customers: `types.ts` (CustomerImage), repository copy key, ID preview now yields data URLs, wizard passes images plus the cash OR, customer detail shows ID thumbnails, restricted projection strips them, acquisition channel label marked Optional.
+- Finance: `payment-reference.ts` gains `nextOfficialReceiptNo`; payment repository stores the evidence data URL and auto-OR for cash; payment submit/resubmit dialogs use the new rules and viewer; contract ledger shows the receipt thumbnail.
+- Commissions: payout stores and displays the proof data URL. Products: image stored as a data URL and clickable in the detail sheet. IGP record uses the cash OR rule.
+- TIN: sanitizer, validation, masked-field width, and five test files updated; seeds normalized to 9-digit TINs.
+- Step bar restored: 2-line change in `step-indicator.tsx`.
+- Verification: typecheck, lint and build clean; targeted suites pass (business-pages 103/103, commissions/roles/sales-network 29/29, staff-page 20/20, customer-review/VIP/parity/commission-effects 66/66, image-preview 3/3, business-flow 82/82, modern fields 29/29, payment-reference 4/4). Full suite 1872/1889 with 17 load timeouts, all in files that pass standalone.
+- Browser QA: hint tooltip, TIN cap, cash OR display, and step circles confirmed on localhost:3000.
 
 ## 5. Git Working Tree
 - Staged: none.
-- Unstaged: `src/panels/public/login/login.css` (this session; responsive art fix).
-- Untracked: `.claude/settings.json` (source unknown; likely pre-existing tooling).
-- Deleted or renamed this session: the moved route files and the removed reference-number module were committed in 677a240.
+- Unstaged (38 files, all this session): shared UI/forms (`button.tsx`, `field-shell.tsx`, `masked-fields.tsx`, `profile-photo-uploader.tsx`, `input-sanitizers.ts`, `identification.ts` and their tests), customers (`types.ts`, wizard/sections/detail/ID preview, customer/customer-fields/field-validation tests, `seed-data.ts`), finance (`types.ts`, `payment-reference.ts`, payment repository/dialogs, `contract-sections.tsx`, `business-flow.test.ts`), commissions (`types.ts`, repository contract/mock, `business-queries.ts`, `commission-shared.tsx`), products/IGP dialogs and page, and `step-indicator.tsx`.
+- Untracked: `src/shared/components/modern/image-preview.tsx`, `src/shared/components/modern/image-preview.test.tsx`, `src/shared/forms/modern/hint-tip.tsx`, `src/shared/lib/file-data.ts`.
+- Deleted or renamed: none.
 - `workflow/save-session.md` becomes modified after this save.
 
 ## 6. Pending Tasks
-- Owner review and commit of the login CSS edit, then push.
-- Re-run login visual QA with the fixed CDP screenshot script if desired (geometry already verified).
-- Optional: full suite rerun after the CSS edit (CSS-only; not rerun).
-- Owner action: remove the `kind-eagle` and `crisp-tiger` worktrees when convenient.
-- Open governance choice: amend AGENTS.md if agents should keep performing Git operations.
+- Owner review and commit/push of the full batch.
+- Documentation: update doc 07 to record the system-generated cash OR number (it still says the Clerk enters a required OR/reference).
+- Optional: rerun the full suite; the 17 failures were load timeouts and pass standalone.
+- Optional: end-to-end browser QA of submit -> customer record -> image viewer (the tab closed mid-flow; the component test covers the viewer).
+- Known limits: Government ID images only attach on creation (the uploader is hidden when editing an existing record); seeded payment evidence is filename-only; staff/accredited-seller/OST-registration profile photos still use object URLs; 5 MB caps are client-side.
 
 ## 7. Verification State
-- Typecheck: clean on develop before the CSS edit.
-- Lint: clean on develop before the CSS edit.
-- Build: passes on develop before the CSS edit (route list includes `/verify`).
-- Tests: 174/176 files; the two failing files pass 124/124 alone; failures are timing flakes, not code.
-- Login QA: geometry verified by CDP for four viewports after the breakpoint fix; earlier headless CLI screenshots were mis-sized and are not evidence.
-- Not performed: build/lint/typecheck after the final CSS edit; screenshot capture after the script fix.
+- Typecheck: clean after all changes (`npx tsc --noEmit`).
+- Lint: clean (`npm run lint`).
+- Build: passes (`npm run build`, compiled successfully).
+- Tests: targeted suites all pass (numbers above); full suite 1872/1889, 17 15-second timeouts in business-pages/staff-page/roles/sales-network under load, each passing standalone.
+- Browser QA: hint icon opens the guide; TIN caps at 9 digits; cash shows `OR-20261120-0001` with the field disabled; the step bar shows circles with no boxes.
+- Not performed: full-suite rerun after the final read-at-submit refactor and step change (targeted suites were rerun); image-viewer click path in the browser.
 
 ## 8. Next Session Instructions
-- First action: `/load`; expect develop at 677a240 plus the uncommitted `login.css` edit.
-- Inspect `src/panels/public/login/login.css` (cards, edge breakpoints) and `login-shell.tsx`.
-- Run `npx tsc --noEmit`, `npm run lint`, `npm run build` if more login changes are made; CSS-only edits do not change tests.
-- Required approvals: owner commits; any AGENTS.md amendment.
-- Warnings: keep live Redemption and Services disabled; no public customer or card lookup; dev server on 3000 is the owner's process.
+- First action: `/load`; expect develop at c958594 with the uncommitted batch above.
+- Inspect `src/shared/ui/button.tsx`, `src/shared/forms/modern/field-shell.tsx` + `hint-tip.tsx`, `src/shared/components/modern/image-preview.tsx`, `src/shared/lib/file-data.ts`, the wizard/payment/IGP cash paths, and `step-indicator.tsx`.
+- Verify with `npx tsc --noEmit`, `npm run lint`, `npm run build`, and targeted `npx vitest run` for touched areas; run the full suite only if time allows.
+- Required approvals: owner commits; the doc 07 alignment; any AGENTS.md amendment.
+- Warnings: keep live Redemption and Services disabled; no public customer or card lookup; the dev server on 3000 is the owner's process; browser QA data is memory-only and resets on reload.
 
 ## 9. Execution Recommendation
-- Phase: QA complete; owner review and commit of the CSS edit next.
+- Phase: Build and QA complete; owner review and commit next.
 - Current mode: not verified.
 - Recommended next mode: owner review/commit.
-- Current model: GLM-5.3-Flash (opencode-go), verified from harness metadata.
+- Current model: DeepSeek V4.1 Flash 1017 (opencode-go), verified from harness metadata.
 - Recommended model: Sonnet 5.5, low effort.
 - Effort: low.
 - Ultracode: OFF.
-- Token optimization: no further runs needed unless the login layout changes again.
-- Reason: all requested work is on develop and verified; one small CSS pass awaits commit.
+- Token optimization: review the diff; rerun only the four formerly failing files if repeating the suite.
+- Reason: the batch is complete and verified; commit and the doc 07 alignment remain.
 <!-- SESSION_SNAPSHOT_END -->

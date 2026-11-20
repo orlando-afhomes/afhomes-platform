@@ -75,6 +75,8 @@ export type CommissionPayout = {
   /** Set only when disbursement is confirmed; until then the commission is not Paid (08 section 15.4). */
   confirmedAt: string | null;
   evidenceFileName?: string | null;
+  /** Proof content as a data URL, kept in the browser-scoped mock store for the viewer. */
+  evidenceFileDataUrl?: string | null;
 };
 
 export type CommissionEvent = { at: string; actorId: string; event: string; note: string | null };

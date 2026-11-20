@@ -15,6 +15,8 @@ export type SubmitPaymentInput = {
   /** Invoice / Official Receipt number of the document issued for this collection. */
   documentNo?: string | null;
   evidenceFileName?: string | null;
+  /** File content as a data URL; kept in the browser-scoped mock store for the viewer. */
+  evidenceDataUrl?: string | null;
   /** Optional bank (admin-managed list entry id) for bank transfers and cheques. */
   bankId?: string | null;
 };

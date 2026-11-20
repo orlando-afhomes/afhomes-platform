@@ -77,8 +77,8 @@ export function validateGovIdNumber(value: string, idType?: string): string | nu
     return "Enter a valid Driver's License number (an uppercase letter followed by 6-11 digits).";
   }
   if (kind.includes("tin")) {
-    if (/^(?:\d{9}|\d{12})$/.test(compact)) return null;
-    return "TIN must be 9 or 12 digits.";
+    if (/^\d{9}$/.test(compact)) return null;
+    return "TIN must be 9 digits.";
   }
   const digitType = DIGIT_ID_TYPES.find((entry) => kind.includes(entry.key));
   if (digitType) {
@@ -91,12 +91,12 @@ export function validateGovIdNumber(value: string, idType?: string): string | nu
   return null;
 }
 
-/** TIN: optional, 9 digits or 12 digits (with branch code). */
+/** TIN: optional, exactly 9 digits (owner instruction 2026-11-20). */
 export function validateTinNumber(value: string): string | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
   if (!isValidTin(trimmed)) {
-    return "TIN must be 9 or 12 digits.";
+    return "TIN must be 9 digits.";
   }
   return null;
 }

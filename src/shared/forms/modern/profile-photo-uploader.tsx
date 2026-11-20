@@ -24,6 +24,8 @@ export type ProfilePhotoUploaderProps = {
   document?: boolean;
   previewAlt?: string;
   removeLabel?: string;
+  /** Button style for the select/change action; the owner asked for a primary Government ID button (2026-11-20). */
+  uploadVariant?: "outline" | "default";
   className?: string;
 };
 
@@ -46,6 +48,7 @@ export function ProfilePhotoUploader({
   document = false,
   previewAlt = "Selected profile photo preview",
   removeLabel,
+  uploadVariant = "outline",
   className,
 }: ProfilePhotoUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -90,7 +93,7 @@ export function ProfilePhotoUploader({
         <div className="tw:flex tw:flex-wrap tw:gap-2">
           <Button
             type="button"
-            variant="outline"
+            variant={uploadVariant}
             aria-label={ariaLabel}
             aria-describedby={error ? errorId : undefined}
             className="tw:min-h-11 tw:sm:min-h-8"

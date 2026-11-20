@@ -8,8 +8,35 @@ export function nextPaymentReference(
   paidDate: string,
   isReserved: (reference: string) => boolean = () => false,
 ): string {
-  const prefix = `PAY-${paidDate.replaceAll("-", "")}`;
-  const used = new Set(existing.map((item) => item.referenceNo).filter((value): value is string => Boolean(value)));
+  return nextSequenceReference("PAY", existing.map((item) => item.referenceNo), paidDate, isReserved);
+}
+
+/**
+ * Cash receipts get the system-issued Official Receipt number OR-YYYYMMDD-NNNN
+ * (owner instruction 2026-11-20): the entry form shows it disabled and Finance
+ * sees the same number when it reviews the payment. Non-cash receipts keep the
+ * number of the issued document, entered by the Clerk.
+ */
+export function nextOfficialReceiptNo(
+  existing: ReadonlyArray<{ documentNo?: string | null }>,
+  paidDate: string,
+  isReserved: (reference: string) => boolean = () => false,
+): string {
+  return nextSequenceReference("OR", existing.map((item) => item.documentNo), paidDate, isReserved);
+}
+
+function nextSequenceReference(
+  kind: "PAY" | "OR",
+  values: ReadonlyArray<string | null | undefined>,
+  paidDate: string,
+  isReserved: (reference: string) => boolean,
+): string {
+  const prefix = `${kind}-${paidDate.replaceAll("-", "")}`;
+  const used = new Set(
+    values
+      .map((value) => value?.trim().toUpperCase())
+      .filter((value): value is string => Boolean(value)),
+  );
   let sequence = 1;
   while (true) {
     const candidate = `${prefix}-${String(sequence).padStart(4, "0")}`;

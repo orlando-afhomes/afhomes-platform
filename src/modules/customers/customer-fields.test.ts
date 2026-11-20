@@ -75,8 +75,8 @@ describe("customer landline and TIN format checks", () => {
 
   it("passes valid landline and TIN values", () => {
     expect(validateCustomerForSubmit(validInput({ landline: "2855010", tinNumber: "123-456-789" }), [], undefined, false)).toEqual({});
-    expect(validateCustomerForSubmit(validInput({ tinNumber: "123456789000" }), [], undefined, false)).toEqual({});
-    expect(validateCustomerForSubmit(validInput({ tinNumber: "091-235-467-860" }), [], undefined, false)).toEqual({});
+    expect(validateCustomerForSubmit(validInput({ tinNumber: "123456789" }), [], undefined, false)).toEqual({});
+    expect(validateCustomerForSubmit(validInput({ tinNumber: "091-235-467" }), [], undefined, false)).toEqual({});
   });
 
   it("rejects badly formatted landline and TIN values", () => {
@@ -84,10 +84,14 @@ describe("customer landline and TIN format checks", () => {
       landline: "Landline must be 7 digits for this area code.",
     });
     expect(validateCustomerForSubmit(validInput({ tinNumber: "123" }), [], undefined, false)).toMatchObject({
-      tinNumber: "TIN must be 9 or 12 digits.",
+      tinNumber: "TIN must be 9 digits.",
     });
     expect(validateCustomerForSubmit(validInput({ tinNumber: "091-235-467-86" }), [], undefined, false)).toMatchObject({
-      tinNumber: "TIN must be 9 or 12 digits.",
+      tinNumber: "TIN must be 9 digits.",
+    });
+    // A legacy 12-digit TIN is no longer accepted.
+    expect(validateCustomerForSubmit(validInput({ tinNumber: "123456789000" }), [], undefined, false)).toMatchObject({
+      tinNumber: "TIN must be 9 digits.",
     });
   });
 });
@@ -290,7 +294,7 @@ describe("validateSupplementaryHolder contact checks", () => {
       supplementaryHolder: "Landline must be 7 to 10 digits.",
     });
     expect(validateSupplementaryHolder(validHolder({ tinNumber: "12" }), true)).toMatchObject({
-      supplementaryHolder: "TIN must be 9 or 12 digits.",
+      supplementaryHolder: "TIN must be 9 digits.",
     });
   });
 

@@ -902,7 +902,7 @@ export function AttributionSection({ draft, set, errors, members, existing, pend
           />
         )}
       </div>
-      <RadioCardField label="Acquisition channel" value={(draft.acquisitionChannel || undefined) as AcquisitionChannel | undefined} options={ACQUISITION_CHANNELS.map((value) => ({ value, label: value }))} onChange={(value) => set("acquisitionChannel", value)} hint="Optional." />
+      <RadioCardField label="Acquisition channel (Optional)" value={(draft.acquisitionChannel || undefined) as AcquisitionChannel | undefined} options={ACQUISITION_CHANNELS.map((value) => ({ value, label: value }))} onChange={(value) => set("acquisitionChannel", value)} hint="Optional." />
     </SectionBlock>
   );
 }

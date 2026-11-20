@@ -35,7 +35,7 @@ export interface CommissionRepository {
   resolveHold(id: string, action: "keep" | "cancel" | "restore", reason: string, options?: MockAsyncOptions): Promise<CommissionView>;
   cancel(id: string, reason: string, options?: MockAsyncOptions): Promise<CommissionView>;
   /** Records an initiated payout. Not Paid until disbursement is confirmed (08 section 15.4). */
-  recordPayout(id: string, input: { reference: string; method?: string | null; payoutDate: string; evidenceFileName?: string }, options?: MockAsyncOptions): Promise<CommissionView>;
+  recordPayout(id: string, input: { reference: string; method?: string | null; payoutDate: string; evidenceFileName?: string; evidenceDataUrl?: string }, options?: MockAsyncOptions): Promise<CommissionView>;
   confirmPayout(id: string, options?: MockAsyncOptions): Promise<CommissionView>;
   voidPayout(id: string, reason: string, options?: MockAsyncOptions): Promise<CommissionView>;
 }

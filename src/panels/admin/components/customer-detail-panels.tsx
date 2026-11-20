@@ -38,6 +38,7 @@ import { formatDate } from "@/shared/lib/format-date";
 import { cn } from "@/shared/lib/utils";
 import { Money } from "@/shared/components/modern/money";
 import { InfoNote } from "@/shared/components/modern/detail-list";
+import { ImagePreview } from "@/shared/components/modern/image-preview";
 import { buttonVariants } from "@/shared/ui/button";
 import { StatusBadge, ToneBadge } from "@/shared/components/modern/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
@@ -161,6 +162,29 @@ export function CustomerInfoCard({
             <Fact icon={CalendarDays} term="Date of Birth">
               {formatDate(customer.dateOfBirth)}
             </Fact>
+            <Fact icon={BadgeCheck} term="Government ID">
+              <span className="tw:flex tw:flex-col tw:gap-2">
+                <span>
+                  {[customer.governmentIdType, customer.governmentIdNumber].filter(Boolean).join(" · ") || "—"}
+                </span>
+                {customer.governmentIdImage ? (
+                  <ImagePreview
+                    src={customer.governmentIdImage.dataUrl}
+                    fileName={customer.governmentIdImage.fileName}
+                    label="Government ID image"
+                  />
+                ) : null}
+              </span>
+            </Fact>
+            {customer.supplementaryHolder?.governmentIdImage ? (
+              <Fact icon={BadgeCheck} term="Extra cardholder ID">
+                <ImagePreview
+                  src={customer.supplementaryHolder.governmentIdImage.dataUrl}
+                  fileName={customer.supplementaryHolder.governmentIdImage.fileName}
+                  label="Extra cardholder Government ID image"
+                />
+              </Fact>
+            ) : null}
             <Fact icon={Share2} term="Channel">
               {customer.acquisitionChannel ?? "—"}
             </Fact>

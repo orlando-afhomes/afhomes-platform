@@ -13,6 +13,7 @@ import { formatDate } from "@/shared/lib/format-date";
 import { CheckboxField, MoneyField, PointsField, ProfilePhotoUploader, SelectField, TextAreaField, TextField } from "@/shared/forms/modern";
 import { FormGrid } from "@/shared/components/modern/form-layout";
 import { centavosToInputText, formatIntegerInput, parsePercentToBasisPoints, parsePesoToCentavos } from "@/shared/lib/money";
+import { readFileAsDataUrl } from "@/shared/lib/file-data";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 
 /** Per-tier Card ID payment codes for move-category schemes (doc 06 §6.3 mapping). */
@@ -78,10 +79,14 @@ function ProductForm({ product, onClose }: { product: VipProduct | null; onClose
       return;
     }
     setImageError(null);
-    // A saved product keeps its stored image link, so only an image picked in this form is released.
-    if (imageUrl && imageUrl !== product?.imageUrl && typeof URL.revokeObjectURL === "function") URL.revokeObjectURL(imageUrl);
-    setImageUrl(typeof URL.createObjectURL === "function" ? URL.createObjectURL(file) : null);
-    setImageName(file.name);
+    // Stored as a data URL in the browser-memory mock store, so it survives navigation.
+    readFileAsDataUrl(file).then(
+      (dataUrl) => {
+        setImageUrl(dataUrl);
+        setImageName(file.name);
+      },
+      () => setImageError("Could not read the selected image. Choose the file again."),
+    );
   };
 
   const submit = async () => {
@@ -133,7 +138,6 @@ function ProductForm({ product, onClose }: { product: VipProduct | null; onClose
         fileName={imageName}
         onSelect={acceptImage}
         onClear={() => {
-          if (imageUrl && imageUrl !== product?.imageUrl && typeof URL.revokeObjectURL === "function") URL.revokeObjectURL(imageUrl);
           setImageUrl(null);
           setImageName(null);
         }}

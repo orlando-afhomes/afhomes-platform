@@ -22,7 +22,7 @@ const COPY_KEYS = [
 ] as const;
 const DRAFT_COPY_KEYS = [
   ...COPY_KEYS, "referrerMemberId", "customerIdMode", "noMiddleName", "citizenship", "landline", "tinNumber",
-  "occupation", "businessIndustry", "employedPosition", "officeAddress",
+  "occupation", "businessIndustry", "employedPosition", "officeAddress", "governmentIdImage",
 ] as const;
 
 export class MockCustomerRepository extends BusinessRepository implements CustomerRepository {

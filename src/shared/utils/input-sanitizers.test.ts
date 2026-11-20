@@ -164,7 +164,7 @@ describe("normalizeTin", () => {
 
   it("strips formatting and turns blank into null", () => {
     expect(normalizeTin("123-456-789")).toBe("123456789");
-    expect(normalizeTin("123-456-789-000")).toBe("123456789000");
+    expect(normalizeTin("123-456-789-000")).toBe("123456789");
     expect(normalizeTin("")).toBeNull();
     expect(normalizeTin(" - ")).toBeNull();
   });

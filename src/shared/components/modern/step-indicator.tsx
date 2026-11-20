@@ -28,7 +28,7 @@ export function StepIndicator({
         const badge = (
           <span
             className={cn(
-              "tw:flex tw:size-9 tw:items-center tw:justify-center tw:rounded-full tw:border-2 tw:text-xs tw:font-semibold tw:transition-colors",
+              "tw:flex tw:size-8 tw:items-center tw:justify-center tw:rounded-full tw:border-2 tw:text-xs tw:font-semibold tw:transition-colors",
               active && "tw:border-primary tw:bg-primary tw:text-primary-foreground tw:shadow-(--shadow-soft)",
               done && "tw:border-primary tw:bg-secondary tw:text-primary",
               !active && !done && "tw:border-border tw:bg-card tw:text-muted-foreground tw:group-hover:border-primary/40",
@@ -52,7 +52,7 @@ export function StepIndicator({
               <button
                 type="button"
                 onClick={() => onStepClick(index)}
-                className="tw:relative tw:z-[1] tw:flex tw:w-full tw:cursor-pointer tw:flex-col tw:items-center tw:gap-2 tw:rounded-xl tw:border tw:border-border/70 tw:bg-card tw:px-2 tw:py-2.5 tw:shadow-xs tw:transition-[background-color,border-color,box-shadow,transform] tw:duration-150 tw:hover:-translate-y-0.5 tw:hover:border-primary/30 tw:hover:bg-primary/5 tw:hover:shadow-(--shadow-soft) tw:focus-visible:ring-3 tw:focus-visible:ring-ring/40 tw:motion-reduce:transition-none tw:motion-reduce:hover:translate-y-0"
+                className="tw:relative tw:z-[1] tw:flex tw:w-full tw:cursor-pointer tw:flex-col tw:items-center tw:gap-1.5 tw:rounded-md tw:px-1 tw:outline-none tw:focus-visible:ring-3 tw:focus-visible:ring-ring/40"
               >
                 {badge}
                 {label}

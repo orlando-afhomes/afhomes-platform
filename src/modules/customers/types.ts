@@ -25,6 +25,16 @@ export const CUSTOMER_CIVIL_STATUSES = ["Single", "Married", "Widowed", "Separat
 
 export type ContractClassification = "S" | "N";
 
+/**
+ * An uploaded image kept in the browser-scoped mock store. `dataUrl` is the
+ * image itself (mock phase only; no file content leaves the browser), so the
+ * image can still be viewed after the form is submitted.
+ */
+export type CustomerImage = {
+  dataUrl: string;
+  fileName: string;
+};
+
 /** Supplementary cardholder, allowed only when the selected VIP product permits one (Gold: product.supplementaryHolders > 0). */
 export type SupplementaryHolder = {
   firstName: string;
@@ -50,6 +60,8 @@ export type SupplementaryHolder = {
   officeAddress?: OfficeAddressValue | null;
   /** Residential address; supplies the landline area code on submit. */
   address?: AddressValue | null;
+  /** Uploaded government ID image; viewed on the customer record. */
+  governmentIdImage?: CustomerImage | null;
 };
 
 /**
@@ -82,6 +94,8 @@ export type Customer = {
   governmentIdType?: string | null;
   /** Restricted: shown only to the owning seller and Admin views, never in downline projections. */
   governmentIdNumber?: string | null;
+  /** Uploaded government ID image (data URL) for Finance and Admin review. */
+  governmentIdImage?: CustomerImage | null;
   /** Printed nationality text, kept in sync with citizenshipCodes. */
   citizenship?: string | null;
   /** ISO codes from the citizenship reference list; more than one means dual or multiple citizenship. */

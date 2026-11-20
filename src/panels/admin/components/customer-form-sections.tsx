@@ -3,6 +3,7 @@
 import { useMemo, useState, type FocusEvent, type ReactNode } from "react";
 import { Briefcase, Heart, HeartCrack, HeartHandshake, HeartOff, IdCard, Handshake, MapPin, Mars, Phone, Split, User, UserRound, Users, Venus, type LucideIcon } from "lucide-react";
 import { ACQUISITION_CHANNELS, type AcquisitionChannel, type Customer, type CustomerDraftInput, type SupplementaryHolder } from "@/modules/customers/types";
+import { CITIZENSHIP_OPTIONS, citizenshipLabels } from "@/modules/customers/citizenship";
 import { currentManilaYear, nextCustomerId } from "@/modules/customers/customer-number";
 import { validateCustomerField, validateSecondaryField, type CustomerFieldContext } from "@/modules/customers/field-validation";
 import { composeCustomerName } from "@/modules/customers/rules";
@@ -28,12 +29,17 @@ const EMPTY_OFFICE: OfficeAddressValue = { street: "", municipality: "", provinc
 /** Display width for a 10-digit landline plus up to three separators (e.g. 02-8888-8888). */
 const LANDLINE_DISPLAY_LENGTH = MAX_LANDLINE_DIGITS + 3;
 
+/** Optional courtesy titles (owner instruction 2026-11-20). */
+const PREFIX_OPTIONS = ["Mr.", "Mrs.", "Ms.", "Miss", "Mx.", "Dr.", "Atty.", "Engr.", "Arch.", "Prof.", "Rev.", "Fr.", "Sr.", "Hon."].map((value) => ({ value, label: value }));
+
 export type CustomerDraft = {
   firstName: string;
   middleName: string;
   noMiddleName: boolean;
   lastName: string;
   suffix: string;
+  /** Optional courtesy title from the fixed list. */
+  prefix: string;
   gender: string;
   civilStatus: string;
   dateOfBirth: string;
@@ -43,6 +49,7 @@ export type CustomerDraft = {
   governmentIdType: string;
   governmentIdNumber: string;
   citizenship: string;
+  citizenshipCodes: string[];
   tinNumber: string;
   landline: string;
   occupation: string;
@@ -113,6 +120,7 @@ export function toDraft(customer?: Customer): CustomerDraft {
     firstName: customer?.firstName ?? "",
     middleName: customer?.middleName ?? "",
     noMiddleName: customer?.noMiddleName ?? Boolean(customer && customer.firstName && !customer.middleName),
+    prefix: customer?.prefix ?? "",
     lastName: customer?.lastName ?? "",
     suffix: customer?.suffix ?? "",
     gender: customer?.gender ?? "",
@@ -124,6 +132,7 @@ export function toDraft(customer?: Customer): CustomerDraft {
     governmentIdType: customer?.governmentIdType ?? "",
     governmentIdNumber: customer?.governmentIdNumber ?? "",
     citizenship: customer?.citizenship ?? "",
+    citizenshipCodes: customer?.citizenshipCodes ?? [],
     tinNumber: customer?.tinNumber ?? "",
     landline: customer?.landline ?? "",
     occupation: customer?.occupation ?? "",
@@ -205,6 +214,7 @@ export function toInput(draft: CustomerDraft, { saveAsDraft = false } = {}): Cus
     firstName: draft.firstName.trim(),
     middleName: draft.noMiddleName ? null : draft.middleName.trim() || null,
     noMiddleName: draft.noMiddleName,
+    prefix: draft.prefix || null,
     lastName: draft.lastName.trim(),
     suffix: draft.suffix || null,
     gender: draft.gender || null,
@@ -215,7 +225,8 @@ export function toInput(draft: CustomerDraft, { saveAsDraft = false } = {}): Cus
     address: draft.address,
     governmentIdType: draft.governmentIdType || null,
     governmentIdNumber: draft.governmentIdNumber || null,
-    citizenship: draft.citizenship.trim() || null,
+    citizenship: (draft.citizenshipCodes.length > 0 ? citizenshipLabels(draft.citizenshipCodes) : draft.citizenship.trim()) || null,
+    citizenshipCodes: draft.citizenshipCodes.length > 0 ? draft.citizenshipCodes : null,
     tinNumber: draft.tinNumber.trim() || null,
     landline: draft.landline.trim() || null,
     occupation: draft.occupation.trim() || null,
@@ -306,6 +317,7 @@ export function IdentitySection({ draft, set, errors }: SectionProps) {
   return (
     <SectionBlock title="Personal Details" description="Name, gender, civil status, and birth date as shown on the customer's government ID." icon={<UserRound className="tw:size-4" />}>
       <FormGrid>
+        <SelectField label="Prefix" value={draft.prefix || undefined} options={PREFIX_OPTIONS} onChange={(value) => set("prefix", value)} allowClear clearLabel="No prefix" placeholder="Search prefix" hint="Optional." />
         <PersonNameField
           label="First name"
           required
@@ -324,18 +336,9 @@ export function IdentitySection({ draft, set, errors }: SectionProps) {
           error={errors.lastName ?? localError("lastName", draft.lastName)}
         />
         <SuffixField value={draft.suffix} onChange={(value) => set("suffix", value)} />
-        <TextField
-          label="Citizenship"
-          value={draft.citizenship}
-          onChange={(value) => set("citizenship", cleanTitleInput(value))}
-          onBlur={() => {
-            markTouched("citizenship");
-            set("citizenship", cleanTitleInput(draft.citizenship));
-          }}
-          maxLength={80}
-          autoComplete="off"
-          error={errors.citizenship ?? localError("citizenship", draft.citizenship)}
-        />
+        <div onBlur={() => markTouched("citizenship")}>
+          <CitizenshipField draft={draft} set={set} error={errors.citizenship ?? localError("citizenship", draft.citizenship)} />
+        </div>
         <div onBlur={() => markTouched("dateOfBirth")}>
           <StandardDateField
             label="Date of birth"
@@ -350,6 +353,63 @@ export function IdentitySection({ draft, set, errors }: SectionProps) {
       <RadioCardField label="Gender" required value={draft.gender || undefined} options={GENDER_CARDS} onChange={(value) => set("gender", value)} error={errors.gender} />
       <RadioCardField label="Civil status" required value={draft.civilStatus || undefined} options={CIVIL_CARDS} onChange={(value) => set("civilStatus", value)} error={errors.civilStatus} />
     </SectionBlock>
+  );
+}
+
+/** Searchable citizenship picker: one citizenship, or several when dual/multiple is on (owner instruction 2026-11-20). */
+function CitizenshipField({ draft, set, error }: { draft: CustomerDraft; set: SetDraft; error?: string }) {
+  const codes = draft.citizenshipCodes;
+  const [multi, setMulti] = useState(codes.length > 1);
+  const apply = (next: string[]) => {
+    const cleaned = [...new Set(next.filter(Boolean))];
+    set("citizenshipCodes", cleaned);
+    set("citizenship", citizenshipLabels(cleaned));
+  };
+  const unused = CITIZENSHIP_OPTIONS.filter((option) => !codes.includes(option.value));
+
+  return (
+    <div className="tw:flex tw:flex-col tw:gap-3">
+      <SelectField
+        label="Citizenship"
+        value={codes[0]}
+        options={CITIZENSHIP_OPTIONS}
+        onChange={(value) => apply([value, ...codes.slice(1)])}
+        allowClear
+        clearLabel="No citizenship yet"
+        placeholder="Search country or nationality"
+        error={error}
+        hint="Fixed reference list; the record stores the country code."
+      />
+      <CheckboxField
+        label="Dual or multiple citizenship"
+        checked={multi}
+        onChange={setMulti}
+      />
+      {multi
+        ? codes.slice(1).map((code, index) => (
+            <SelectField
+              key={`${code}-${index + 1}`}
+              label={index === 0 ? "Additional citizenship" : `Additional citizenship ${index + 2}`}
+              value={code}
+              options={CITIZENSHIP_OPTIONS.filter((option) => option.value === code || !codes.includes(option.value))}
+              onChange={(value) => apply(codes.map((item, position) => (position === index + 1 ? value : item)))}
+              allowClear
+              clearLabel="Remove this citizenship"
+              placeholder="Search country or nationality"
+            />
+          ))
+        : null}
+      {multi && unused.length > 0 ? (
+        <SelectField
+          label="Add another citizenship"
+          value={undefined}
+          options={unused}
+          onChange={(value) => apply([...codes, value])}
+          placeholder="Search country or nationality"
+          hint="Choose to append; clear an additional field to remove it."
+        />
+      ) : null}
+    </div>
   );
 }
 
@@ -727,6 +787,30 @@ export function AttributionSection({ draft, set, errors, members, existing, pend
     [members, pendingOstIds],
   );
   const closingSeller = members.find((member) => member.id === closingSellerId);
+  const referrer = members.find((member) => member.id === referrerId);
+  // Same-team rule (owner instruction 2026-11-20): each list follows the other party's team.
+  const closingOptions = useMemo(
+    () => (referrer ? sellerOptions.filter((option) => members.find((member) => member.id === option.value)?.branchId === referrer.branchId) : sellerOptions),
+    [sellerOptions, members, referrer],
+  );
+  const referrerOptions = useMemo(
+    () => (closingSeller ? sellerOptions.filter((option) => members.find((member) => member.id === option.value)?.branchId === closingSeller.branchId) : sellerOptions),
+    [sellerOptions, members, closingSeller],
+  );
+  const chooseClosingSeller = (value: string) => {
+    set("ownerMemberId", value);
+    const nextTeam = members.find((member) => member.id === value)?.branchId;
+    if (referrer && nextTeam !== referrer.branchId) {
+      set("referrerMemberId", "");
+      set("recommenderMemberId", "");
+    }
+  };
+  const chooseReferrer = (value: string) => {
+    set("referrerMemberId", value);
+    set("recommenderMemberId", value);
+    const nextTeam = members.find((member) => member.id === value)?.branchId;
+    if (closingSeller && nextTeam !== closingSeller.branchId) set("ownerMemberId", "");
+  };
   const upline = useMemo(() => sellerUpline(members, closingSellerId), [members, closingSellerId]);
   const sameSeller = Boolean(closingSellerId) && closingSellerId === referrerId;
 
@@ -750,12 +834,12 @@ export function AttributionSection({ draft, set, errors, members, existing, pend
             disabled={pendingOstIds === null}
             error={errors.ownerMemberId}
             value={closingSellerId || undefined}
-            options={sellerOptions}
-            onChange={(value) => set("ownerMemberId", value)}
+            options={closingOptions}
+            onChange={chooseClosingSeller}
             allowClear
             clearLabel="No closing seller yet"
             placeholder="Type to search sellers"
-            hint={accreditationHint ?? "Internal Seller (IST) or Outsourced Seller (OST) who closed the sale. Required before approval."}
+            hint={accreditationHint ?? "Internal Seller (IST) or Outsourced Seller (OST) in the same team. Required before approval."}
           />
         ) : (
           <TextField label="Closing seller" value={closingSeller ? attributionPartyLabel(closingSeller) : "You (the seller starting this draft)"} onChange={() => {}} disabled hint="The office confirms the closing seller before approval." />
@@ -765,15 +849,12 @@ export function AttributionSection({ draft, set, errors, members, existing, pend
           disabled={pendingOstIds === null}
           error={attributionErrors.referrerMemberId ?? attributionErrors.recommenderMemberId}
           value={referrerId || undefined}
-          options={sellerOptions}
-          onChange={(value) => {
-            set("referrerMemberId", value);
-            set("recommenderMemberId", value);
-          }}
+          options={referrerOptions}
+          onChange={chooseReferrer}
           allowClear
           clearLabel="No referrer"
           placeholder="Type to search sellers"
-          hint={accreditationHint ?? "Optional. Internal Seller (IST) or Outsourced Seller (OST), who may be a different person from the closing seller."}
+          hint={accreditationHint ?? "Optional. Only teammates of the closing seller are listed; may be the same person, verified with a dated referral."}
         />
         {office && sameSeller ? (
           <TextField

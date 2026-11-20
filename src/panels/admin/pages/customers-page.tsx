@@ -20,6 +20,7 @@ import { useContractHref } from "../components/use-contract-href";
 import { buildCustomerMenuProps } from "../actions/customer-actions";
 import { useCustomers, useMembers } from "@/data/queries";
 import type { Customer } from "@/modules/customers/types";
+import type { TableOrder } from "@/shared/lib/table-order";
 import type { ColumnDef } from "@/shared/components/modern/data-table";
 import { buttonVariants } from "@/shared/ui/button";
 import { AdminFilterBar, AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
@@ -47,6 +48,12 @@ export function CustomersActions() {
     </Link>
   ) : null;
 }
+
+/** Newest first; sent-back and submitted records rise ahead on the same date (owner ruling 2026-11-20). */
+const CUSTOMER_ORDER: TableOrder<Customer> = {
+  date: (row) => row.createdAt,
+  attention: (row) => (row.status === "sent_back" ? 3 : row.status === "submitted" ? 2 : row.status === "draft" ? 1 : 0),
+};
 
 export function CustomersTab() {
   const router = useRouter();
@@ -129,6 +136,7 @@ export function CustomersTab() {
           getRowId={(row) => row.id}
           emptyText="No customers match."
           caption="Customers"
+          orderBy={CUSTOMER_ORDER}
           onRowOpen={(row) => router.push(`/admin/customers/${row.id}`)}
           getRowLabel={(row) => `Open ${customerRecordName(row)}`}
           rowActions={(row) => {

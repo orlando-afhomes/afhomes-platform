@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useOperation } from "@/data/business-queries";
 import type { PromoInput, PromoView } from "@/data/contracts/promo-repository";
+import type { TableOrder } from "@/shared/lib/table-order";
 import { useDeletePromo, useEndPromo, usePromos, useSavePromo } from "@/data/promo-queries";
 import { useActiveOutlets, useOutlets } from "@/data/settings-queries";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
@@ -46,6 +47,11 @@ export function AddPromoButton() {
 }
 
 /** Promos list with details; Edit, End and Delete need promos.manage. */
+/** Newest promo first. */
+const PROMO_ORDER: TableOrder<PromoView> = {
+  date: (row) => row.createdAt,
+};
+
 export function PromosPanel() {
   const canManage = useOperation("promos.manage");
   const promos = usePromos();
@@ -108,7 +114,7 @@ export function PromosPanel() {
   return (
     <>
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search promos" filters={[{ label: "Status filter", value: status, onChange: setStatus, options: STATUS_ITEMS }]} />
-      <DataTable<PromoView> caption="Promos" data={rows} columns={columns} getRowId={(row) => row.id} emptyText="No promos found." loading={promos.isLoading}
+      <DataTable<PromoView> caption="Promos" orderBy={PROMO_ORDER} data={rows} columns={columns} getRowId={(row) => row.id} emptyText="No promos found." loading={promos.isLoading}
         onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open ${row.name}`} />
       <RecordDetailsSheet
         open={detail !== null}

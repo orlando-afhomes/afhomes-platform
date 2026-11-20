@@ -175,7 +175,9 @@ describe("Customer Registration workflow", () => {
     expect(sales).toMatchObject([{ contractId: result.contractId }]);
     expect(store.contracts.filter((record) => record.customerId === result.customerId)).toMatchObject([{ id: result.contractId }]);
     expect(store.memberships.filter((record) => record.customerId === result.customerId)).toMatchObject([{ contractId: result.contractId }]);
-    expect(store.payments.find((record) => record.referenceNo === "RES-DUPLICATE-TEST")).toMatchObject({ contractId: result.contractId, saleId: sales[0].id });
+    const receipt = store.payments.find((record) => record.contractId === result.contractId)!;
+    expect(receipt).toMatchObject({ saleId: sales[0].id });
+    expect(receipt.referenceNo).toMatch(/^PAY-\d{8}-\d{4}$/);
   });
 
   it("keeps the saved draft when submission validation fails", async () => {
@@ -439,11 +441,10 @@ describe("contract, payment, sale and membership workflow", () => {
     expect(lines.every((line) => line.status === "paid")).toBe(true);
   });
 
-  it("rejects duplicate, over-balance and clerk-verified payments", async () => {
+  it("rejects over-balance and clerk-verified payments", async () => {
     const store = createMockStore();
     const clerk = as(store, "dev-clerk");
-    await expect(clerk.payments.submit({ contractId: "ctr-1", purpose: "reservation", amountCentavos: pesos(10000), method: "Bank Transfer", paidDate: "2026-09-30", referenceNo: "BT-PAY-1" })).rejects.toThrow(/duplicate/i);
-    await expect(clerk.payments.submit({ contractId: "ctr-1", purpose: "installment", amountCentavos: pesos(500000), method: "Cash", paidDate: manilaToday(), referenceNo: "OVER-1" })).rejects.toThrow(/exceeds/i);
+    await expect(clerk.payments.submit({ contractId: "ctr-1", purpose: "installment", amountCentavos: pesos(500000), method: "Cash", paidDate: manilaToday() })).rejects.toThrow(/exceeds/i);
     await expect(clerk.payments.verify("pay-4")).rejects.toThrow();
   });
 
@@ -494,14 +495,16 @@ describe("contract, payment, sale and membership workflow", () => {
     expect(store.auditEvents.some((item) => item.action === "SALE_REINSTATED" && item.entityId === sale.id)).toBe(true);
   });
 
-  it("requires a reference number and blocks one already used on any contract (R6)", async () => {
+  it("generates a mandatory unique payment reference for every method, cash included", async () => {
     const store = createMockStore();
     const clerk = as(store, "dev-clerk");
-    const base = { contractId: "ctr-4", purpose: "installment" as const, amountCentavos: pesos(15500), method: "Cash" as const, paidDate: manilaToday() };
-    await expect(clerk.payments.submit(base)).rejects.toThrow(/reference number/i);
-    await expect(clerk.payments.submit({ ...base, referenceNo: "  " })).rejects.toThrow(/reference number/i);
-    await expect(clerk.payments.submit({ ...base, referenceNo: "bt-pay-1" })).rejects.toThrow(/already used/i);
-    await expect(clerk.payments.submit({ ...base, referenceNo: "FRESH-1" })).resolves.toMatchObject({ referenceNo: "FRESH-1" });
+    const base = { contractId: "ctr-4", purpose: "installment" as const, amountCentavos: pesos(1000), method: "Cash" as const, paidDate: manilaToday() };
+    const cash = await clerk.payments.submit(base);
+    expect(cash.referenceNo).toMatch(/^PAY-\d{8}-\d{4}$/);
+    expect(cash.documentNo).toBeNull();
+    const second = await clerk.payments.submit({ ...base, paidDate: "2026-11-06", documentNo: "OR-12345" });
+    expect(second.documentNo).toBe("OR-12345");
+    expect(second.referenceNo).not.toBe(cash.referenceNo);
   });
 
   it("requires a reason to approve a possible matching receipt", async () => {
@@ -519,25 +522,24 @@ describe("contract, payment, sale and membership workflow", () => {
     const store = createMockStore();
     const finance = as(store, "dev-finance");
     const clerk = as(store, "dev-clerk");
-    const entered = await clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(15500), method: "Cash", paidDate: manilaToday(), referenceNo: "FIX-1", evidenceFileName: "original.pdf" });
+    const entered = await clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(15500), method: "Cash", paidDate: manilaToday(), evidenceFileName: "original.pdf" });
     await finance.payments.returnForCorrection(entered.id, "Wrong date");
     // Finance did not enter this receipt and holds no broad entry role, so it cannot resend it.
     await expect(finance.payments.resubmit(entered.id, { paidDate: "2026-11-06" })).rejects.toThrow(/not allowed|only the submitter/i);
-    await expect(clerk.payments.resubmit(entered.id, { method: "GCash" })).rejects.toThrow(/reference/i);
     expect(store.payments.find((p) => p.id === entered.id)!.status).toBe("returned");
     await expect(clerk.payments.resubmit(entered.id, { referenceNo: "FIX-2" })).rejects.toThrow(/reference/i);
     const fixed = await clerk.payments.resubmit(entered.id, { paidDate: "2026-11-06", method: "Cheque", evidenceFileName: "corrected.pdf" });
-    expect(fixed).toMatchObject({ status: "submitted", paidDate: "2026-11-06", referenceNo: "FIX-1", evidenceFileName: "corrected.pdf" });
+    expect(fixed).toMatchObject({ status: "submitted", paidDate: "2026-11-06", referenceNo: entered.referenceNo, evidenceFileName: "corrected.pdf" });
     expect(fixed.history.map((entry) => entry.event)).toEqual(["PAYMENT_SUBMITTED", "PAYMENT_RETURNED", "PAYMENT_RESUBMITTED"]);
     expect(fixed.history.at(-1)).toMatchObject({ previousVersion: {
       amountCentavos: entered.amountCentavos, paidDate: entered.paidDate, method: "Cash",
-      purpose: "installment", referenceNo: "FIX-1", evidenceFileName: "original.pdf",
+      purpose: "installment", referenceNo: entered.referenceNo, evidenceFileName: "original.pdf",
     } });
     await finance.payments.returnForCorrection(entered.id, "Wrong amount");
     const resentAgain = await clerk.payments.resubmit(entered.id, { amountCentavos: pesos(15000) });
     expect(resentAgain.history.filter((entry) => entry.previousVersion).map((entry) => entry.previousVersion?.evidenceFileName))
       .toEqual(["original.pdf", "corrected.pdf"]);
-    await expect(finance.payments.verify(entered.id)).resolves.toMatchObject({ status: "verified", referenceNo: "FIX-1" });
+    await expect(finance.payments.verify(entered.id)).resolves.toMatchObject({ status: "verified", referenceNo: entered.referenceNo });
     await finance.payments.returnForCorrection("pay-4", "Check receipt date");
     await expect(clerk.payments.resubmit("pay-4", { paidDate: "2026-11-06" })).rejects.toThrow(/submitter/i);
   });

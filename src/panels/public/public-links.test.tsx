@@ -21,7 +21,7 @@ beforeEach(() => {
   navState.pathname = "/";
 });
 
-const APP_ROOTS = ["src/app", "src/app/(public)"];
+const APP_ROOTS = ["src/app", "src/app/(public)", "src/app/(verify)", "src/app/(correction)"];
 const routeExists = (href: string) =>
   APP_ROOTS.some((root) => existsSync(join(process.cwd(), root, href.split("#")[0].slice(1), "page.tsx")));
 const publicFile = (src: string) => existsSync(join(process.cwd(), "public", src));

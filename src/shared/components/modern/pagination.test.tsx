@@ -19,10 +19,9 @@ describe("pageItems", () => {
 });
 
 describe("Pagination", () => {
-  it("shows the visible range and total", () => {
+  it("shows the page count", () => {
     render(<Pagination page={2} pageSize={10} total={48} onPageChange={() => {}} />);
-    expect(screen.getByText("11–20")).toBeInTheDocument();
-    expect(screen.getByText("48")).toBeInTheDocument();
+    expect(document.querySelector('p[aria-live="polite"]')).toHaveTextContent("Showing page 2/5");
   });
 
   it("calls onPageChange from the controls and disables the ends", async () => {
@@ -49,6 +48,6 @@ describe("Pagination", () => {
   it("renders no page controls for a single page", () => {
     render(<Pagination page={1} pageSize={10} total={4} onPageChange={() => {}} />);
     expect(screen.queryByRole("navigation", { name: "Pagination" })).toBeNull();
-    expect(screen.getByText("1–4")).toBeInTheDocument();
+    expect(document.querySelector('p[aria-live="polite"]')).toHaveTextContent("Showing page 1/1");
   });
 });

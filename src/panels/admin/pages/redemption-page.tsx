@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useOperation } from "@/data/business-queries";
 import { useTierDisplayName } from "../components/use-tier-display-name";
 import type { BookingView, MemberPoints } from "@/data/contracts/redemption-repository";
+import type { TableOrder } from "@/shared/lib/table-order";
 import { useRedemption, useRedemptionBookingAction } from "@/data/redemption-queries";
 import type { BookingStatus } from "@/modules/redemption/types";
 import { AreaPage } from "@/shared/components/admin/area-page";
@@ -58,6 +59,12 @@ const ACTION_TONE: Record<string, { tone: RowActionTone; variant: "success" | "w
 };
 
 type Dialog = { kind: "cancel" | "no-show" | "approve-cash"; booking: BookingView } | null;
+
+/** Newest booking first; bookings still waiting for payment rise ahead on the same date. */
+const BOOKING_ORDER: TableOrder<BookingView> = {
+  date: (row) => row.createdAt,
+  attention: (row) => (row.status === "pending_payment" ? 2 : 0),
+};
 
 /** Manila date and time now, in the value format of a datetime-local input. */
 function nowManilaInput(): string {
@@ -176,7 +183,7 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
         {overview ? (
           <>
             <FilterBar search={bookingSearch} onSearch={setBookingSearch} searchLabel="Search bookings" filters={[{ label: "Booking status filter", value: bookingStatus, onChange: setBookingStatus, options: bookingStatusOptions }, { label: "Venue filter", value: bookingVenue, onChange: setBookingVenue, options: venueOptions }]} />
-            <DataTable data={visibleBookings} columns={bookingColumns} getRowId={(row) => row.id} emptyText={overview.bookings.length === 0 ? "No bookings yet." : "No bookings match the filters."} caption="Redemption Bookings" onRowOpen={(row) => setOpenId(row.id)} getRowLabel={(row) => `Open booking ${row.reference}`} rowActions={(row) => {
+            <DataTable data={visibleBookings} columns={bookingColumns} getRowId={(row) => row.id} emptyText={overview.bookings.length === 0 ? "No bookings yet." : "No bookings match the filters."} caption="Redemption Bookings" orderBy={BOOKING_ORDER} onRowOpen={(row) => setOpenId(row.id)} getRowLabel={(row) => `Open booking ${row.reference}`} rowActions={(row) => {
               const menu = buildRedemptionBookingMenuProps(row, { canBook, canApprove }, {
                 onApproveCash: () => open("approve-cash", row),
                 onCheckIn: () => recordCheckIn(row),

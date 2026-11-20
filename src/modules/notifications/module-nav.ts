@@ -50,7 +50,7 @@ const ACTION_TABS: Partial<Record<AuditModule, Readonly<Record<string, string>>>
     REFERENCE_ENTRY_CREATED: "lists", REFERENCE_ENTRY_UPDATED: "lists", REFERENCE_ENTRY_DELETED: "lists",
     OUTLET_CREATED: "lists", OUTLET_UPDATED: "lists", OUTLET_DELETED: "lists",
   },
-  customers: { CUSTOMER_IMPORT_COMPLETED: "import-export", CUSTOMERS_EXPORTED: "import-export" },
+  customers: { CUSTOMER_IMPORT_COMPLETED: "import", CUSTOMERS_EXPORTED: "export" },
   "vip-products": {
     PAYMENT_SCHEME_CREATED: "schemes", PAYMENT_SCHEME_UPDATED: "schemes",
     TIER_LEVEL_CREATED: "tier-codes", TIER_LEVEL_UPDATED: "tier-codes", TIER_LEVEL_DEACTIVATED: "tier-codes",

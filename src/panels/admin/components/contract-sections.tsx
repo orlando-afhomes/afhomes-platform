@@ -381,6 +381,7 @@ export function ContractLedgerSection({ record }: { record: ContractRecord }) {
                   title: "Payment",
                   rows: [
                     { label: "Reference no.", value: entryPayment?.referenceNo ?? null },
+                    { label: "Invoice / Receipt no.", value: entryPayment?.documentNo ?? null },
                     { label: "Status", value: entryPayment ? <BizBadge status={entryPayment.status} /> : null },
                   ],
                 },

@@ -53,12 +53,13 @@ describe("receipt import validation", () => {
 });
 
 describe("history import repository", () => {
-  it("blocks a live receipt reference reserved by a historical batch", async () => {
+  it("ignores a hand-typed reference and never reuses a historical receipt reference", async () => {
     const { store, repos } = reposFor();
     await repos.historyImports.createBatch({ fileName: "history.csv", records: [row()], declaration: true });
     const clerk = reposFor(store, "dev-clerk").repos;
-    await expect(clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: 250000, method: "Cash", paidDate: "2026-11-10", referenceNo: "or-h-1" }))
-      .rejects.toThrow(/already used/i);
+    const payment = await clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: 250000, method: "Cash", paidDate: "2026-11-10", referenceNo: "or-h-1" });
+    expect(payment.referenceNo).toMatch(/^PAY-\d{8}-\d{4}$/);
+    expect(payment.referenceNo).not.toBe("OR-H-1");
   });
   const records = [row(), row({ "Receipt reference": "OR-H-2", "Receipt date": "2026-08-16" }), row({ "Receipt reference": "OR-H-3", "Sale status": "Finished" })];
 

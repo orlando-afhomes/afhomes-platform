@@ -49,7 +49,18 @@ export function PrepareContractDialog({ customer, open, onClose, repeatPurchase 
   }, [standard, nonStandard, scheme, nonStandardText.price, nonStandardText.months]);
 
   const askScheme = repeatPurchase || !customer.paymentSchemeId;
-  const sellerOptions = (members.data ?? []).map((item) => ({ value: item.id, label: item.displayName }));
+  // Same-team rule: each picker follows the other party's team (owner instruction 2026-11-20).
+  const referrerTeam = members.data?.find((item) => item.id === (referrer === "none" ? "" : referrer))?.branchId;
+  const sellerTeam = members.data?.find((item) => item.id === seller)?.branchId;
+  const sellerOptions = (members.data ?? [])
+    .filter((item) => !referrerTeam || item.branchId === referrerTeam)
+    .map((item) => ({ value: item.id, label: item.displayName }));
+  const referrerOptions = [
+    { value: "none", label: "No referrer" },
+    ...(members.data ?? [])
+      .filter((item) => !sellerTeam || item.branchId === sellerTeam)
+      .map((item) => ({ value: item.id, label: item.displayName })),
+  ];
   const options = (schemes.data ?? []).map((item) => ({
     value: item.id,
     label: item.commercialStatus === "configured" ? item.label : `${item.label} (terms pending)`,
@@ -83,8 +94,8 @@ export function PrepareContractDialog({ customer, open, onClose, repeatPurchase 
     <FormDialog open={open} title={repeatPurchase ? "New VIP Purchase" : "Prepare Contract"} description={`${customer.displayName} · ${product?.name ?? "No plan selected"}${!askScheme && scheme ? ` · ${scheme.label}` : ""}`} submitText={repeatPurchase ? "Create Purchase Contract" : "Prepare Contract"} pending={prepare.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
       {repeatPurchase ? <SelectField label="VIP plan" required value={productCode} options={(products.data ?? []).filter((item) => item.status === "active").map((item) => ({ value: item.code, label: item.name }))} onChange={(value) => { setProductCode((products.data ?? []).find((item) => item.code === value)?.code); }} /> : null}
       {repeatPurchase ? <>
-        <SelectField label="Closing seller" required value={seller} options={sellerOptions} onChange={setSeller} />
-        <SelectField label="Referrer" value={referrer} options={[{ value: "none", label: "No referrer" }, ...sellerOptions]} onChange={setReferrer} />
+        <SelectField label="Closing seller" required value={seller} options={sellerOptions} onChange={(value) => { setSeller(value); if (referrer !== "none" && !sellerOptions.some((option) => option.value === referrer)) setReferrer("none"); }} />
+        <SelectField label="Referrer" value={referrer} options={referrerOptions} onChange={(value) => { setReferrer(value); if (value !== "none" && seller && !referrerOptions.some((option) => option.value === seller)) setSeller(""); }} />
         <SelectField label="Contract type" required value={classification} options={[{ value: "S", label: "Standard" }, { value: "N", label: "Non-Standard" }]} onChange={(value) => setClassification(value === "N" ? "N" : "S")} />
       </> : null}
       {askScheme ? <SelectField label="Payment plan" required value={schemeId || undefined} options={options} onChange={setSchemeId} placeholder="Select a payment plan" /> : null}

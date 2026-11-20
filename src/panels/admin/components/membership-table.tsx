@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useActivateMembership, useMemberships, useOperation, useRecordCardClaim } from "@/data/business-queries";
 import type { MembershipView } from "@/data/contracts/membership-repository";
+import type { TableOrder } from "@/shared/lib/table-order";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { Button, buttonVariants } from "@/shared/ui/button";
@@ -19,6 +20,12 @@ import { humanize } from "@/shared/lib/humanize";
 import { matchesSearch, optionsFrom } from "@/shared/lib/search";
 import { useContractHref } from "./use-contract-href";
 import { CardServiceDialog } from "./card-service-dialog";
+
+/** Newest activation first; payment holds and pending activations rise ahead on the same date. */
+const MEMBERSHIP_ORDER: TableOrder<MembershipView> = {
+  date: (row) => row.activationDate ?? row.createdAt,
+  attention: (row) => (row.financialHold ? 3 : row.status === "pending" ? 2 : 0),
+};
 
 /** A Financial Hold is shown as the membership's status (one badge, one filter value). */
 const statusKey = (item: MembershipView) => (item.financialHold ? "financial_hold" : item.status);
@@ -86,7 +93,7 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
         { label: "Plan filter", value: planFilter, onChange: setPlanFilter, options: planOptions },
         { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: statusOptions },
       ]} />
-      <DataTable data={visible} columns={columns} getRowId={(row) => row.id} emptyText={data.length === 0 ? emptyText : "No memberships match the filters."} caption={caption} {...tableProps} />
+      <DataTable data={visible} columns={columns} getRowId={(row) => row.id} emptyText={data.length === 0 ? emptyText : "No memberships match the filters."} caption={caption} orderBy={MEMBERSHIP_ORDER} {...tableProps} />
       <RecordDetailsSheet
         open={detail !== null}
         onClose={() => setDetailId(null)}

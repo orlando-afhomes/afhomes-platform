@@ -11,7 +11,6 @@ import { PAYMENT_METHODS, PAYMENT_PURPOSES, type PaymentMethod, type PaymentPurp
 import { manilaToday } from "@/shared/lib/dates";
 import { centavosToInputText, formatPeso, parsePesoToCentavos } from "@/shared/lib/money";
 import { MoneyField, SelectField, StandardDateField, TextAreaField, TextField } from "@/shared/forms/modern";
-import { REFERENCE_LIMITS, cleanReferenceNumber, referencePolicyFor, validateReferenceNumber, type ReferencePolicy } from "@/shared/forms/validation/reference-number";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -25,13 +24,6 @@ import { humanize } from "@/shared/lib/humanize";
 import { EMPTY } from "@/shared/lib/empty-value";
 
 const PURPOSE_LABELS: Record<PaymentPurpose, string> = { reservation: "Reservation", down_payment: "Down payment", installment: "Installment", full: "Full payment" };
-
-/** Per-policy guidance for the receipt/reference field. */
-function referenceHint(policy: ReferencePolicy): string {
-  if (policy === "digital") return "12-16 letters or digits, uppercase; no spaces or symbols.";
-  if (policy === "bank") return "6-20 letters or digits, uppercase; no spaces or symbols.";
-  return "Letters, digits, spaces, and , . / - only.";
-}
 
 /** The next unpaid schedule line of a contract (purpose and remaining amount), or null when it cannot be derived. */
 function useNextUnpaidLine(contractId: string): { purpose: PaymentPurpose; amountCentavos: number } | null {
@@ -56,12 +48,10 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
   const amount = amountEdit ?? (suggestion ? centavosToInputText(suggestion.amountCentavos) : "");
   const [method, setMethod] = useState<PaymentMethod>("Bank Transfer");
   const [paidDate, setPaidDate] = useState(manilaToday());
-  const [reference, setReference] = useState("");
-  const [referenceTouched, setReferenceTouched] = useState(false);
+  const [documentNo, setDocumentNo] = useState("");
   const [file, setFile] = useState("");
   const [bankId, setBankId] = useState("");
   const [error, setError] = useState<string | undefined>();
-  const refPolicy = referencePolicyFor(method);
   const bankOptions = (useReferenceEntries().data ?? []).filter((entry) => entry.list === "bank" && entry.status === "active").map((entry) => ({ value: entry.id, label: entry.label }));
   const usesBank = method === "Bank Transfer" || method === "Cheque";
 
@@ -71,20 +61,13 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
       setError("Enter a valid amount.");
       return;
     }
-    const referenceError = requiredReferenceError(reference, refPolicy);
-    if (referenceError) {
-      setReferenceTouched(true);
-      setError(referenceError);
-      return;
-    }
     try {
-      await submit.mutateAsync({ contractId, purpose, amountCentavos, method, paidDate, referenceNo: reference, evidenceFileName: file || null, bankId: usesBank && bankId ? bankId : null });
+      await submit.mutateAsync({ contractId, purpose, amountCentavos, method, paidDate, documentNo: documentNo.trim() || null, evidenceFileName: file || null, bankId: usesBank && bankId ? bankId : null });
       toast.success("Payment submitted for Finance verification.");
       setBankId("");
       setAmount(null);
       setPurpose(null);
-      setReference("");
-      setReferenceTouched(false);
+      setDocumentNo("");
       setFile("");
       setError(undefined);
       onClose();
@@ -97,19 +80,19 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
     <FormDialog open={open} title="Submit Payment" description="Finance verifies every payment. A submitted payment is not yet counted as paid." submitText="Submit Payment" pending={submit.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <SelectField label="Purpose" required value={purpose} options={PAYMENT_PURPOSES.map((value) => ({ value, label: PURPOSE_LABELS[value] }))} onChange={setPurpose} />
       <MoneyField label="Amount" required value={amount} onChange={setAmount} />
-      <SelectField label="Method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value }))} onChange={(value) => { setMethod(value); setReference(cleanReferenceNumber(reference, referencePolicyFor(value))); }} />
+      <SelectField label="Method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value }))} onChange={setMethod} />
       {usesBank && bankOptions.length > 0 ? <SelectField label="Bank" value={bankId} options={bankOptions} onChange={setBankId} allowClear placeholder="Select bank (optional)" /> : null}
       <StandardDateField label="Date on the receipt" required value={paidDate} onChange={setPaidDate} />
       <TextField
-        label="Receipt or reference number"
-        required
-        value={reference}
-        onChange={(value) => setReference(cleanReferenceNumber(value, refPolicy))}
-        onBlur={() => setReferenceTouched(true)}
-        maxLength={REFERENCE_LIMITS[refPolicy].max}
-        hint={referenceHint(refPolicy)}
-        error={referenceTouched ? (requiredReferenceError(reference, refPolicy) ?? undefined) : undefined}
+        label="Invoice / Receipt number"
+        value={documentNo}
+        onChange={setDocumentNo}
+        maxLength={40}
+        hint={method === "Cash"
+          ? "For cash, record the Invoice or Official Receipt number issued for this collection. Cash needs no bank or e-wallet reference."
+          : "Invoice, Official Receipt, Collection Receipt, or Acknowledgment Receipt number issued for this collection."}
       />
+      <p className="tw:text-xs tw:text-muted-foreground">The payment reference (PAY-YYYYMMDD-NNNN) is generated by the system and is mandatory for every method. Finance verifies the payment before it counts.</p>
       <div className="tw:flex tw:flex-col tw:gap-1.5">
         <Label htmlFor="payment-evidence">Receipt file</Label>
         <Input id="payment-evidence" type="file" accept="image/*,application/pdf" onChange={(event) => setFile(event.target.files?.[0]?.name ?? "")} />
@@ -119,18 +102,13 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
   );
 }
 
-/** The receipt or reference number is required (07 section 5.1); uniqueness is checked when the payment is saved. */
-function requiredReferenceError(reference: string, policy: ReferencePolicy): string | null {
-  if (!reference.trim()) return "Enter the receipt or reference number.";
-  return validateReferenceNumber(reference, policy);
-}
-
 /** Fix and resend a returned receipt. The original version stays in the payment history (07 section 9.1, U06). */
 function PaymentResubmitDialog({ payment, onClose }: { payment: PaymentView; onClose: () => void }) {
   const action = usePaymentAction();
   const [amount, setAmount] = useState(centavosToInputText(payment.amountCentavos));
   const [method, setMethod] = useState<PaymentMethod>(payment.method);
   const [paidDate, setPaidDate] = useState(payment.paidDate);
+  const [documentNo, setDocumentNo] = useState(payment.documentNo ?? "");
   const [file, setFile] = useState("");
   const [error, setError] = useState<string | undefined>();
 
@@ -138,7 +116,7 @@ function PaymentResubmitDialog({ payment, onClose }: { payment: PaymentView; onC
     const amountCentavos = parsePesoToCentavos(amount);
     if (!amountCentavos) return setError("Enter a valid amount.");
     try {
-      await action.mutateAsync({ id: payment.id, action: "resubmit", input: { amountCentavos, method, paidDate, ...(file ? { evidenceFileName: file } : {}) } });
+      await action.mutateAsync({ id: payment.id, action: "resubmit", input: { amountCentavos, method, paidDate, documentNo: documentNo.trim() || null, ...(file ? { evidenceFileName: file } : {}) } });
       toast.success("Payment resent for Finance verification.");
       onClose();
     } catch (failure) {
@@ -152,9 +130,10 @@ function PaymentResubmitDialog({ payment, onClose }: { payment: PaymentView; onC
       <SelectField label="Method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value }))} onChange={setMethod} />
       <StandardDateField label="Date on the receipt" required value={paidDate} onChange={setPaidDate} />
       <div className="tw:flex tw:flex-col tw:gap-1.5">
-        <Label htmlFor="payment-resend-reference">Receipt or reference number</Label>
+        <Label htmlFor="payment-resend-reference">Payment reference (system)</Label>
         <Input id="payment-resend-reference" value={payment.referenceNo ?? ""} readOnly />
       </div>
+      <TextField label="Invoice / Receipt number" value={documentNo} onChange={setDocumentNo} maxLength={40} hint="Invoice, Official Receipt, Collection Receipt, or Acknowledgment Receipt number." />
       <div className="tw:flex tw:flex-col tw:gap-1.5">
         <Label htmlFor="payment-resend-evidence">New receipt file</Label>
         <Input id="payment-resend-evidence" type="file" accept="image/*,application/pdf" onChange={(event) => setFile(event.target.files?.[0]?.name ?? "")} />
@@ -313,7 +292,8 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
                   rows: [
                     { label: "Method", value: detail.method },
                     { label: "Date on receipt", value: formatDate(detail.paidDate) },
-                    { label: "Reference no.", value: detail.referenceNo },
+                    { label: "Payment reference", value: detail.referenceNo },
+                    { label: "Invoice / Receipt no.", value: detail.documentNo ?? null },
                     { label: "Receipt file", value: detail.evidenceFileName },
                     { label: "Submitted by", value: detail.submitterName },
                     { label: "Submitted", value: formatDate(detail.submittedAt) },

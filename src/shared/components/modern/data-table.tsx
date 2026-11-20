@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type KeyboardEvent, type ReactNode } from "react";
+import { useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -11,6 +11,7 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import { EMPTY, displayValue } from "@/shared/lib/empty-value";
+import { sortForTable, type TableOrder } from "@/shared/lib/table-order";
 import { Pagination } from "./pagination";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
@@ -72,6 +73,7 @@ export function DataTable<T>({
   rowActions,
   getRowLabel,
   showAllRows = false,
+  orderBy,
 }: {
   data: T[];
   columns: ColumnDef<T, unknown>[];
@@ -95,12 +97,15 @@ export function DataTable<T>({
   getRowLabel?: (row: T) => string;
   /** Shows every row on one page with no pager (used while printing a report). */
   showAllRows?: boolean;
+  /** Newest record first, with attention rows ahead on the same date. Keep the object module-level so memoization holds. */
+  orderBy?: TableOrder<T>;
 }) {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: TABLE_PAGE_SIZE });
+  const orderedRows = useMemo(() => sortForTable(data, orderBy), [data, orderBy]);
   // TanStack Table returns functions that React Compiler cannot memoize safely.
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data,
+    data: orderedRows,
     columns,
     getRowId,
     state: serverPagination ? undefined : { pagination: showAllRows ? { pageIndex: 0, pageSize: Math.max(data.length, 1) } : pagination },
@@ -121,7 +126,7 @@ export function DataTable<T>({
   const footer = serverPagination ?? {
     page: pagination.pageIndex + 1,
     pageSize: pagination.pageSize,
-    total: data.length,
+    total: orderedRows.length,
     onPageChange: (page: number) => table.setPageIndex(page - 1),
   };
 

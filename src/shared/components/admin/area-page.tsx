@@ -3,6 +3,21 @@
 import { useId, type ReactNode } from "react";
 import type { AdminModuleId } from "@/modules/identity/permissions";
 import type { BreadcrumbItem } from "@/shared/components/modern/breadcrumbs";
+
+/** Area root routes for breadcrumb links, keyed by the page title used across the admin panel. */
+const AREA_HREFS: Record<string, string> = {
+  Customers: "/admin/customers",
+  Sales: "/admin/sales",
+  Finance: "/admin/finance",
+  Commissions: "/admin/commissions",
+  Membership: "/admin/membership",
+  "Stay Points": "/admin/stay-points",
+  Redemption: "/admin/redemption",
+  Settings: "/admin/vip-products",
+  "Sales Network": "/admin/sales-network",
+  Organization: "/admin/organization",
+  Reports: "/admin/reports",
+};
 import { TabBar, tabId, tabPanelId, type TabBarTab } from "@/shared/components/modern/tab-bar";
 import { useTabParam } from "@/shared/components/modern/use-tab-param";
 import { useNotifications } from "@/shared/providers/notifications-provider";
@@ -83,7 +98,11 @@ export function AreaPage({
   const active = visible.find((tab) => tab.value === activeValue);
   // Declared tabs, not allowed tabs: a restricted user still sees which sub-view is open.
   const showTabBar = tabs.length > 1;
-  const pageCrumbs = crumbs ?? (active && showTabBar ? [{ label: title }, { label: active.label }] : [{ label: title }]);
+  const areaHref = AREA_HREFS[title];
+  const tabHref = (value: string) => (areaHref ? `${areaHref}?${param}=${value}` : undefined);
+  const pageCrumbs = crumbs ?? (active && showTabBar
+    ? [{ label: title, href: areaHref }, { label: active.label, href: tabHref(active.value) }]
+    : [{ label: title, href: areaHref }]);
 
   return (
     <AdminPage

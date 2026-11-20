@@ -39,17 +39,10 @@ describe("SiteHeader", () => {
   });
 
   it("marks the Verify page so its header opts out of the transparent style", () => {
-    const page = (pathname: string) => {
-      navState.pathname = pathname;
-      return <SiteHeader brand={brand} items={[]} actions={[]} />;
-    };
-    const { container, rerender } = render(page("/verify"));
+    const { container, rerender } = render(<SiteHeader brand={brand} items={[]} actions={[]} page="verify" />);
     expect(container.querySelector('header[data-page="verify"]')).not.toBeNull();
 
-    rerender(page("/"));
-    expect(container.querySelector("header")).not.toHaveAttribute("data-page");
-
-    rerender(page("/contact"));
+    rerender(<SiteHeader brand={brand} items={[]} actions={[]} />);
     expect(container.querySelector("header")).not.toHaveAttribute("data-page");
   });
 

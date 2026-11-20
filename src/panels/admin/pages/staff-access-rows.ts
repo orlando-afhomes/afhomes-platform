@@ -1,5 +1,6 @@
 import type { Account, AccountPolicies, AccountStatus, LinkedAccountSummary } from "@/modules/accounts/types";
 import type { StaffActionPolicy, StaffMember } from "@/modules/organization/types";
+import { sortForTable } from "@/shared/lib/table-order";
 
 /**
  * One row of the unified Staff & Access directory: an employee (with its
@@ -76,10 +77,21 @@ export function countPendingRows(rows: AccessRow[]): number {
   return rows.filter((row) => accessRowAccountStatus(row) === "pending").length;
 }
 
-export function filterAccessRows(rows: AccessRow[], filters: AccessFilters, sortAsc: boolean): AccessRow[] {
+/** Sort options for the Staff & Access directory: newest record first (default), then name. */
+export type AccessSort = "newest" | "asc" | "desc";
+
+export function accessRowDate(row: AccessRow): string | null {
+  return row.kind === "employee" ? row.staff.createdAt : row.account.createdAt;
+}
+
+export function accessRowAttention(row: AccessRow): number {
+  if (accessRowAccountStatus(row) === "pending") return 2;
+  return row.kind === "employee" && row.staff.status === "suspended" ? 1 : 0;
+}
+
+export function filterAccessRows(rows: AccessRow[], filters: AccessFilters, sort: AccessSort = "newest"): AccessRow[] {
   const term = filters.search.trim().toLowerCase();
-  return rows
-    .filter((row) => {
+  const filtered = rows.filter((row) => {
       if (filters.chip === "employees" && row.kind !== "employee") return false;
       if (filters.chip === "account" && row.kind !== "account") return false;
       if (filters.chip === "pending" && accessRowAccountStatus(row) !== "pending") return false;
@@ -103,6 +115,7 @@ export function filterAccessRows(rows: AccessRow[], filters: AccessFilters, sort
         row.account.displayName.toLowerCase().includes(term) ||
         row.account.email.toLowerCase().includes(term)
       );
-    })
-    .sort((a, b) => (sortAsc ? 1 : -1) * accessRowName(a).localeCompare(accessRowName(b)));
+    });
+  if (sort === "newest") return sortForTable(filtered, { date: accessRowDate, attention: accessRowAttention });
+  return filtered.sort((a, b) => (sort === "asc" ? 1 : -1) * accessRowName(a).localeCompare(accessRowName(b)));
 }

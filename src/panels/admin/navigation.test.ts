@@ -92,7 +92,7 @@ describe("admin navigation", () => {
   it("shows the staff Customer Look Up to office roles only, never to sellers", () => {
     for (const identityId of ["dev-super-admin", "dev-admin", "dev-clerk", "dev-finance"]) expect(visibleIds(identityId), identityId).toContain("customer-lookup");
     for (const identityId of ["dev-svd-a", "dev-ost-a1", "dev-hr"]) expect(visibleIds(identityId), identityId).not.toContain("customer-lookup");
-    expect(tabAccess("dev-super-admin", "customers")).toEqual(["customers", "import-export"]);
+    expect(tabAccess("dev-super-admin", "customers")).toEqual(["customers", "import", "export"]);
   });
 
   it("keeps the former per-page rules for the Administrator", () => {

@@ -116,11 +116,20 @@ describe("sales attribution section", () => {
     expect(screen.getByLabelText("Senior Sales Manager")).toHaveValue("Maria Santos · AAI26100002");
     expect(screen.getByLabelText("Sales Vice Director")).toHaveValue("Ramon Del Rosario · AAI26100001");
 
-    // A referrer from another team is allowed and does not change the closing seller.
-    await pickSeller(user, "Referrer / VIP Recommender", "Paolo", /Paolo Ramos/);
-    expect(sellerCombos()[1]).toHaveValue("Paolo Ramos · AAO26100007 (OST)");
+    // Only teammates appear: a same-team referrer is allowed and keeps the closing seller.
+    await pickSeller(user, "Referrer / VIP Recommender", "Mark", /Mark Villanueva/);
+    expect(sellerCombos()[1]).toHaveValue("Mark Villanueva · AAO26100005 (OST)");
     expect(sellerCombos()[0]).toHaveValue("Ana Mendoza · AAO26100004 (OST)");
     expect(screen.queryByLabelText("Dated referral reference")).toBeNull();
+  });
+
+  it("hides a seller from another team once the closing seller is chosen", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await pickSeller(user, "Closing seller", "Ana", /Ana Mendoza/);
+    await user.click(sellerCombos()[1]);
+    expect(screen.queryByRole("option", { name: /Paolo Ramos/ })).toBeNull();
+    expect(screen.getByRole("option", { name: /Mark Villanueva/ })).toBeVisible();
   });
 
   it("shows an em dash for SM and SSM when the closing OST reports straight to the SVD", async () => {

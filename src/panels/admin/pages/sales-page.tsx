@@ -11,6 +11,7 @@ import { parsePesoToCentavos } from "@/shared/lib/money";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { approveDealConfirm, buildSalesMenuProps } from "../actions/sales-contract-actions";
 import type { SaleView } from "@/data/contracts/sale-repository";
+import type { TableOrder } from "@/shared/lib/table-order";
 import { confirmedValueInPeriod, mySales, referredSales, teamSales, totalsFor } from "@/modules/sales/rules";
 import { manilaToday } from "@/shared/lib/dates";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
@@ -37,6 +38,14 @@ function VipCommissionCorrectionDialog({ sale, canApprove, onClose }: { sale: Sa
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string>();
 
+  const teamBranch = members.data?.find((member) => member.id === sale.sellerMemberId)?.branchId;
+  const referrerOptions = [
+    { value: "none", label: "No referrer" },
+    ...(members.data ?? [])
+      .filter((member) => !teamBranch || member.branchId === teamBranch)
+      .map((member) => ({ value: member.id, label: member.displayName })),
+  ];
+
   return (
     <FormDialog open title="Correct VIP Commission" description={sale.customerName} submitText="Save Correction" pending={save.isPending} error={error} onClose={onClose} onSubmit={() => {
       const dscRateBp = dsc.trim() ? parsePesoToCentavos(dsc) : undefined;
@@ -48,7 +57,7 @@ function VipCommissionCorrectionDialog({ sale, canApprove, onClose }: { sale: Sa
       void save.mutateAsync({ id: sale.id, referrerMemberId: referrer === "none" ? null : referrer, dscRateBp, driRateBp, reason })
         .then(onClose, (failure: Error) => setError(failure.message));
     }}>
-      <SelectField label="Referrer" value={referrer} onChange={(value) => { setReferrer(value); setDri(""); }} options={[{ value: "none", label: "No referrer" }, ...(members.data ?? []).map((member) => ({ value: member.id, label: member.displayName }))]} />
+      <SelectField label="Referrer" value={referrer} onChange={(value) => { setReferrer(value); setDri(""); }} options={referrerOptions} />
       {canApprove && sale.commissionRates ? <>
         <TextField label="Closing seller rate (%)" hint="Leave blank to keep the frozen rate." value={dsc} onChange={setDsc} inputMode="decimal" />
         {referrer !== "none" ? <TextField label="Referrer rate (%)" hint="Leave blank to use the applicable approved rate." value={dri} onChange={setDri} inputMode="decimal" /> : null}
@@ -75,6 +84,12 @@ function saleBadgeStatus(sale: SaleView): string {
 type SalesScope = "mine" | "team" | "referred" | "all";
 
 /** Sales tab of the Sales area (the area page checks the `sales` grant). */
+/** Newest recorded sale first; pending and defaulted sales rise ahead on the same date. */
+const SALE_ORDER: TableOrder<SaleView> = {
+  date: (row) => row.confirmedDate ?? row.recordedDate,
+  attention: (row) => (row.status === "pending" ? 2 : row.status === "defaulted" ? 1 : 0),
+};
+
 export function SalesTab() {
   const router = useRouter();
   const sales = useSales();
@@ -152,6 +167,7 @@ export function SalesTab() {
           getRowId={(row) => row.id}
           emptyText="No sales match."
           caption="Sales"
+          orderBy={SALE_ORDER}
           onRowOpen={(row) => setDetailId(row.id)}
           getRowLabel={(row) => `Open the sale for ${row.customerName}`}
           rowActions={referredView ? undefined : (row) => {

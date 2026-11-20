@@ -221,7 +221,7 @@ describe("centralized presentation", () => {
     const data = Array.from({ length: 3 }, (_, index) => ({ id: `r${index}`, name: `N${index}` }));
     render(<DataTable data={data} columns={columns} getRowId={(row) => row.id} emptyText="-" caption="History" />);
     expect(screen.queryByRole("navigation", { name: "Pagination" })).toBeNull();
-    expect(screen.getByText(/of/)).toBeInTheDocument();
+    expect(document.querySelector('p[aria-live="polite"]')).toHaveTextContent("Showing page 1/1");
     expect(document.querySelectorAll("tbody tr")).toHaveLength(3);
   });
 

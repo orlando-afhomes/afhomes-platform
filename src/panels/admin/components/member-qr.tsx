@@ -124,7 +124,7 @@ function QrImage({ holder, replace }: { holder: MemberQrCode; replace?: () => vo
       <img src={image} alt={`Membership QR for ${holder.holderName}, ${holder.vipNumber}`} width={360} height={324} className="tw:h-auto tw:max-w-full" />
       <div className="tw:flex tw:flex-wrap tw:gap-2">
         <Button variant="outline" render={<a href={image} download={`afhomes-${holder.vipNumber}-${holder.holder}.png`} />} nativeButton={false}>Download QR</Button>
-        <Button type="button" variant="outline" onClick={print}>Print QR</Button>
+        <Button type="button" variant="info" onClick={print}>Print QR</Button>
         {replace ? <Button type="button" variant="outline" onClick={replace}>Replace QR</Button> : null}
       </div>
     </> : null}

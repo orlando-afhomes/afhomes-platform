@@ -49,25 +49,31 @@ afterEach(() => {
 const SUBMITTED = "cust-a3";
 
 describe("Customers area", () => {
-  it("opens the Import and Export tab for an Administrator from the URL", async () => {
-    window.history.replaceState(null, "", "/admin/customers?tab=import-export");
+  it("opens the Import tab for an Administrator from the URL", async () => {
+    window.history.replaceState(null, "", "/admin/customers?tab=import");
     show("dev-admin", <CustomersRoute />);
-    expect(screen.getByRole("tab", { name: "Import and Export" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Import" })).toHaveAttribute("aria-selected", "true");
     expect(await screen.findByRole("button", { name: "Download Template" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "New Customer" })).toBeNull();
   });
 
-  it("offers one Download template menu with Excel and CSV, and a filtered export preview", async () => {
+  it("offers one Download template menu with Excel and CSV", async () => {
     const user = userEvent.setup();
-    window.history.replaceState(null, "", "/admin/customers?tab=import-export");
+    window.history.replaceState(null, "", "/admin/customers?tab=import");
     show("dev-admin", <CustomersRoute />);
     await user.click(await screen.findByRole("button", { name: "Download Template" }));
     expect(await screen.findByRole("menuitem", { name: "Excel (.xlsx)" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "CSV (.csv)" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "CSV template" })).toBeNull();
+  });
+
+  it("shows the filtered export preview on the Export tab", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/admin/customers?tab=export");
+    show("dev-admin", <CustomersRoute />);
 
     const preview = await screen.findByRole("table", { name: "Customers to Export" });
-    expect(within(preview).getByText("Noel Pascual")).toBeInTheDocument();
+    expect(await within(preview).findByText("Noel Pascual")).toBeInTheDocument();
     expect(screen.queryByText(/matching customer/)).toBeNull();
     expect(screen.getByRole("button", { name: "Export" })).toBeEnabled();
     await user.type(screen.getByRole("searchbox", { name: "Search customers by name" }), "Noel");

@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
 import type { OrgMember } from "@/modules/organization/types";
+import type { TableOrder } from "@/shared/lib/table-order";
 import type { AccreditationRecord } from "@/modules/accreditation/types";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
@@ -53,6 +54,12 @@ const ACCREDITATION_ITEMS = withAll("All accreditation", [
   { value: "none", label: "No record" },
 ]);
 
+/** Newest membership event first; suspended and inactive members rise ahead on the same date. */
+const MEMBER_ORDER: TableOrder<OrgMember> = {
+  date: (row) => row.parentHistory?.at(-1)?.changedAt ?? null,
+  attention: (row) => (row.status === "suspended" ? 2 : row.status === "inactive" ? 1 : 0),
+};
+
 /** The area page owns "Add IST" and "Add OST" in the page header and passes the open dialog down. */
 export function SalesNetworkMembersPage({
   embedded = false,
@@ -76,7 +83,7 @@ export function SalesNetworkMembersPage({
   const [statusFilter, setStatusFilter] = useState("all");
   const [teamFilter, setTeamFilter] = useState("all");
   const [accreditationFilter, setAccreditationFilter] = useState("all");
-  const [sortAsc, setSortAsc] = useState(true);
+  const [sort, setSort] = useState<"newest" | "asc" | "desc">("newest");
 
   const [editMember, setEditMember] = useState<OrgMember | null>(null);
   const [transferMember, setTransferMember] = useState<OrgMember | null>(null);
@@ -125,8 +132,8 @@ export function SalesNetworkMembersPage({
         const oldNumberMatches = (accreditationRecordsByMember.get(member.id) ?? []).some((record) => record.aaNumberHistory?.some((entry) => entry.aaNumber.toLowerCase().includes(term)));
         return term === "" || member.displayName.toLowerCase().includes(term) || (member.aaNumber ?? "").toLowerCase().includes(term) || oldNumberMatches;
       })
-      .sort((a, b) => (sortAsc ? a.displayName.localeCompare(b.displayName) : b.displayName.localeCompare(a.displayName)));
-  }, [members, search, designationFilter, statusFilter, teamFilter, accreditationFilter, accreditationRecordsByMember, sortAsc]);
+      .sort((a, b) => (sort === "asc" ? 1 : sort === "desc" ? -1 : 0) * a.displayName.localeCompare(b.displayName));
+  }, [members, search, designationFilter, statusFilter, teamFilter, accreditationFilter, accreditationRecordsByMember, sort]);
 
   const teamItems = useMemo(
     () => withAll("All teams", Array.from(new Set(members.map((member) => teamDisplayName(member, members)))).sort().map((team) => ({ value: team, label: team }))),
@@ -216,7 +223,7 @@ export function SalesNetworkMembersPage({
     );
   }
 
-  const sortLabel = sortAsc ? "Sort A-Z" : "Sort Z-A";
+  const sortLabel = sort === "newest" ? "Sort A-Z" : sort === "asc" ? "Sort Z-A" : "Newest first";
 
   return (
     <AdminPage
@@ -236,13 +243,14 @@ export function SalesNetworkMembersPage({
           { label: "Accreditation status filter", value: accreditationFilter, onChange: setAccreditationFilter, options: ACCREDITATION_ITEMS },
         ]}
       >
-        <Button variant="outline" className="tw:h-11 tw:md:flex-none" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
-          {sortAsc ? <ArrowDownAZ aria-hidden="true" /> : <ArrowUpAZ aria-hidden="true" />}
+        <Button variant="outline" className="tw:h-11 tw:md:flex-none" onClick={() => setSort(sort === "newest" ? "asc" : sort === "asc" ? "desc" : "newest")} aria-label={sortLabel}>
+          {sort === "desc" ? <ArrowUpAZ aria-hidden="true" /> : <ArrowDownAZ aria-hidden="true" />}
           {sortLabel}
         </Button>
       </FilterBar>
       <DataTable<OrgMember>
         caption="Sales Network Members"
+        orderBy={sort === "newest" ? MEMBER_ORDER : undefined}
         data={filtered}
         columns={columns}
         getRowId={(member) => member.id}

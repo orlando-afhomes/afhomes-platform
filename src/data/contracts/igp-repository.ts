@@ -7,7 +7,7 @@ export type IgpSaleView = IgpSale & { buyerName: string; referrerName: string | 
 export type IgpRegister = {
   sales: IgpSaleView[];
   buyers: Array<{ value: string; label: string }>;
-  sellers: Array<{ value: string; label: string; designation: Designation }>;
+  sellers: Array<{ value: string; label: string; designation: Designation; branchId: string }>;
   accreditations: JadAccreditation[];
   thresholdBp: number;
 };

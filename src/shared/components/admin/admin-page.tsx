@@ -8,6 +8,31 @@ import { DashboardHeader } from "@/shared/components/dashboard/dashboard-layout"
 import { PageContainer } from "@/shared/components/modern/page-container";
 import { StatusLink, StatusPage } from "@/shared/components/status/status-page";
 
+/** Section landmarks every list page may link back to, so breadcrumbs never dead-end on a bare label. */
+const SECTION_HREFS: Record<string, string> = {
+  Dashboard: "/admin",
+  Customers: "/admin/customers",
+  Sales: "/admin/sales",
+  Money: "/admin/finance",
+  Finance: "/admin/finance",
+  Commissions: "/admin/commissions",
+  "Member Services": "/admin/membership",
+  Membership: "/admin/membership",
+  "Stay Points": "/admin/stay-points",
+  Promos: "/admin/promos",
+  Redemption: "/admin/redemption",
+  Management: "/admin/organization",
+  Organization: "/admin/organization",
+  Settings: "/admin/vip-products",
+  "Sales Network": "/admin/sales-network",
+  "Reports and Audit": "/admin/reports",
+  Reports: "/admin/reports",
+  "Audit Logs": "/admin/audit-logs",
+};
+
+const withSectionHrefs = (items: BreadcrumbItem[]): BreadcrumbItem[] =>
+  items.map((item) => (item.href ? item : { ...item, href: SECTION_HREFS[item.label] }));
+
 /**
  * Standard admin page shell: module gate, breadcrumbs, dashboard-scale
  * heading with the actions on the same line, and content column.
@@ -38,7 +63,7 @@ export function AdminPage({
   if (!allowed || !anyOf.some((moduleId) => granted.has(moduleId))) {
     return (
       <PageContainer>
-        <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, ...crumbs]} />
+        <Breadcrumbs items={withSectionHrefs([{ label: "Dashboard", href: "/admin" }, ...crumbs])} />
         <StatusPage variant="403" embedded description={`This account does not have access to ${title}.`}>
           <StatusLink href="/admin" primary>
             Back to dashboard
@@ -52,7 +77,7 @@ export function AdminPage({
   }
   return (
     <PageContainer>
-      <Breadcrumbs items={[{ label: "Dashboard", href: "/admin" }, ...crumbs]} />
+      <Breadcrumbs items={withSectionHrefs([{ label: "Dashboard", href: "/admin" }, ...crumbs])} />
       <DashboardHeader title={title} description={description} actions={actions} />
       <div className="tw:mt-6 tw:flex tw:flex-col tw:gap-6">{children}</div>
     </PageContainer>

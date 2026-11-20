@@ -52,30 +52,30 @@ describe("staff access rows", () => {
 
   it("filters by chip and counts pending accounts from either source", () => {
     const rows = buildAccessRows(store.staff, store.accounts, accountPolicies, staffPolicies, true);
-    expect(filterAccessRows(rows, { ...noFilters, chip: "account" }, true).every((row) => row.kind === "account")).toBe(true);
-    expect(filterAccessRows(rows, { ...noFilters, chip: "employees" }, true).every((row) => row.kind === "employee")).toBe(true);
+    expect(filterAccessRows(rows, { ...noFilters, chip: "account" }, "asc").every((row) => row.kind === "account")).toBe(true);
+    expect(filterAccessRows(rows, { ...noFilters, chip: "employees" }, "asc").every((row) => row.kind === "employee")).toBe(true);
     // Seed: acct-pending is the only pending account record.
-    expect(ids(filterAccessRows(rows, { ...noFilters, chip: "pending" }, true))).toEqual(["acct-pending"]);
+    expect(ids(filterAccessRows(rows, { ...noFilters, chip: "pending" }, "asc"))).toEqual(["acct-pending"]);
     expect(countPendingRows(rows)).toBe(1);
     // Without the full account record, the linked summary status is used.
     const hrRows = buildAccessRows(store.staff, store.accounts, undefined, staffPolicies, false);
-    expect(ids(filterAccessRows(hrRows, { ...noFilters, chip: "pending" }, true))).toEqual(["staff-1"]);
+    expect(ids(filterAccessRows(hrRows, { ...noFilters, chip: "pending" }, "asc"))).toEqual(["staff-1"]);
   });
 
   it("applies search, department, role, and employment filters", () => {
     const rows = buildAccessRows(store.staff, store.accounts, accountPolicies, staffPolicies, true);
-    expect(ids(filterAccessRows(rows, { ...noFilters, search: "pending@" }, true))).toEqual(["acct-pending"]);
-    expect(ids(filterAccessRows(rows, { ...noFilters, search: "analyst" }, true))).toEqual(["staff-2"]);
-    expect(ids(filterAccessRows(rows, { ...noFilters, departmentId: "dept-finance" }, true))).toEqual(["staff-2"]);
-    const byRole = filterAccessRows(rows, { ...noFilters, roleId: "role-ops-staff" }, true);
+    expect(ids(filterAccessRows(rows, { ...noFilters, search: "pending@" }, "asc"))).toEqual(["acct-pending"]);
+    expect(ids(filterAccessRows(rows, { ...noFilters, search: "analyst" }, "asc"))).toEqual(["staff-2"]);
+    expect(ids(filterAccessRows(rows, { ...noFilters, departmentId: "dept-finance" }, "asc"))).toEqual(["staff-2"]);
+    const byRole = filterAccessRows(rows, { ...noFilters, roleId: "role-ops-staff" }, "asc");
     expect(ids(byRole)).toEqual(["staff-clerk", "staff-3", "staff-records"]);
-    expect(filterAccessRows(rows, { ...noFilters, status: "active" }, true).some((row) => row.kind === "account")).toBe(false);
+    expect(filterAccessRows(rows, { ...noFilters, status: "active" }, "asc").some((row) => row.kind === "account")).toBe(false);
   });
 
   it("sorts by display name in either direction", () => {
     const rows = buildAccessRows(store.staff, store.accounts, accountPolicies, staffPolicies, true);
-    const asc = filterAccessRows(rows, noFilters, true);
-    const desc = filterAccessRows(rows, noFilters, false);
+    const asc = filterAccessRows(rows, noFilters, "asc");
+    const desc = filterAccessRows(rows, noFilters, "desc");
     expect(ids(desc)).toEqual(ids(asc).reverse());
   });
 });

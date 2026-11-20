@@ -133,15 +133,24 @@ describe("DataTable", () => {
     const data = rows(25);
     render(<DataTable data={data} columns={columns} getRowId={(row) => row.id} emptyText="-" />);
     expect(document.querySelectorAll("tbody tr")).toHaveLength(10);
-    expect(screen.getByText("1–10").parentElement).toHaveTextContent("Showing 1–10 of 25");
+    expect(document.querySelector('p[aria-live="polite"]')).toHaveTextContent("Showing page 1/3");
     expect(screen.getByRole("button", { name: "Page 1" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("button", { name: "Previous page" })).toBeDisabled();
     await user.click(screen.getByRole("button", { name: "Next page" }));
     await user.click(screen.getByRole("button", { name: "Next page" }));
     expect(screen.getByRole("button", { name: "Page 3" })).toHaveAttribute("aria-current", "page");
     expect(document.querySelectorAll("tbody tr")).toHaveLength(5);
-    expect(screen.getByText("21–25").parentElement).toHaveTextContent("Showing 21–25 of 25");
+    expect(document.querySelector('p[aria-live="polite"]')).toHaveTextContent("Showing page 3/3");
     expect(screen.getByRole("button", { name: "Next page" })).toBeDisabled();
+  });
+
+  it("jumps to a page from the page dropdown", async () => {
+    const user = userEvent.setup();
+    render(<DataTable data={rows(25)} columns={columns} getRowId={(row) => row.id} emptyText="-" />);
+    await user.click(screen.getByRole("combobox", { name: "Go to page" }));
+    await user.click(await screen.findByRole("option", { name: "Page 2" }));
+    expect(screen.getByRole("button", { name: "Page 2" })).toHaveAttribute("aria-current", "page");
+    expect(document.querySelector('p[aria-live="polite"]')).toHaveTextContent("Showing page 2/3");
   });
 
   it("applies column meta classes to the header and every cell of that column", () => {

@@ -69,6 +69,8 @@ export type Customer = {
   firstName?: string;
   middleName?: string | null;
   noMiddleName?: boolean;
+  /** Optional courtesy title chosen from the fixed list (Mr., Ms., Dr., ...). */
+  prefix?: string | null;
   lastName?: string;
   suffix?: string | null;
   gender?: string | null;
@@ -80,8 +82,10 @@ export type Customer = {
   governmentIdType?: string | null;
   /** Restricted: shown only to the owning seller and Admin views, never in downline projections. */
   governmentIdNumber?: string | null;
-  /** optional */
+  /** Printed nationality text, kept in sync with citizenshipCodes. */
   citizenship?: string | null;
+  /** ISO codes from the citizenship reference list; more than one means dual or multiple citizenship. */
+  citizenshipCodes?: string[] | null;
   /** optional */
   landline?: string | null;
   /** sensitive, same gating as governmentIdNumber */

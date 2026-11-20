@@ -16,7 +16,7 @@ export type PaymentAdjustment = {
   actorId: string;
 };
 
-type PaymentVersion = Pick<Payment, "purpose" | "amountCentavos" | "method" | "paidDate" | "referenceNo" | "evidenceFileName">;
+type PaymentVersion = Pick<Payment, "purpose" | "amountCentavos" | "method" | "paidDate" | "referenceNo" | "documentNo" | "evidenceFileName">;
 
 export type PaymentEvent = {
   at: string;
@@ -43,7 +43,10 @@ export type Payment = {
   paidDate: string;
   /** Accounting date for a receipt admitted after its own month closed. */
   countedDate?: string;
+  /** System-generated payment reference (PAY-YYYYMMDD-NNNN); mandatory for every method. */
   referenceNo: string | null;
+  /** Invoice, Official Receipt, Collection Receipt, or Acknowledgment Receipt number of the issued document. */
+  documentNo?: string | null;
   evidenceFileName: string | null;
   /** Optional bank (list entry id) for bank transfers and cheques; absent on older receipts. */
   bankId?: string | null;

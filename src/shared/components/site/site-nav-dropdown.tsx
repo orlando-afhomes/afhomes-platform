@@ -10,10 +10,8 @@ import { cn } from "@/shared/lib/utils";
 import { isActiveNavHref, type SiteNavGroup } from "./site-nav-types";
 
 /** Header menu that opens a panel of links on click or keyboard. Escape or a link click closes it. */
-export function SiteNavDropdown({ group }: { group: SiteNavGroup }) {
-  const pathname = usePathname();
+export function SiteNavDropdown({ group, active = false }: { group: SiteNavGroup; active?: boolean }) {
   const [open, setOpen] = useState(false);
-  const active = group.children.some((link) => isActiveNavHref(pathname, link.href));
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -43,4 +41,11 @@ export function SiteNavDropdown({ group }: { group: SiteNavGroup }) {
       ) : null}
     </Popover>
   );
+}
+
+/** Dropdown that reads the pathname to mark a group when one of its pages is current. */
+export function ActiveSiteNavDropdown({ group }: { group: SiteNavGroup }) {
+  const pathname = usePathname();
+  const active = group.children.some((link) => isActiveNavHref(pathname, link.href));
+  return <SiteNavDropdown group={group} active={active} />;
 }

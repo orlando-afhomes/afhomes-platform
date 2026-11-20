@@ -75,25 +75,31 @@
 
 .login-shell__cards {
   position: relative;
-  height: 72px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
   width: 100%;
+  padding-left: 2%;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 .login-shell__card-image {
-  position: absolute;
-  top: 0;
-  width: 112px;
+  position: relative;
+  width: min(62%, 280px);
   height: auto;
+  flex: none;
   filter: drop-shadow(0 6px 10px rgba(14, 43, 32, 0.3));
 }
-.login-shell__card-image--bronze { left: 6%; transform: rotate(-9deg); }
-.login-shell__card-image--silver { left: 30%; transform: rotate(-2deg); z-index: 1; }
-.login-shell__card-image--gold { left: 54%; transform: rotate(7deg); z-index: 2; }
+/* One fanned cluster at every width: the overlap, tilt and lift are all relative to each card. */
+.login-shell__card-image--bronze { transform: rotate(-9deg); }
+.login-shell__card-image--silver { transform: rotate(-2deg) translateY(25%); z-index: 1; margin-left: -44%; }
+.login-shell__card-image--gold { transform: rotate(7deg) translateY(53%); z-index: 2; margin-left: -44%; }
 
 @media (prefers-reduced-motion: no-preference) {
   .login-shell__card-image { transition: transform 300ms ease; }
-  .login-shell__cards:hover .login-shell__card-image--bronze { transform: rotate(-12deg) translateY(-4px); }
-  .login-shell__cards:hover .login-shell__card-image--silver { transform: rotate(-2deg) translateY(-8px); }
-  .login-shell__cards:hover .login-shell__card-image--gold { transform: rotate(10deg) translateY(-4px); }
+  .login-shell__cards:hover .login-shell__card-image--bronze { transform: rotate(-12deg) translateY(-3%); }
+  .login-shell__cards:hover .login-shell__card-image--silver { transform: rotate(-2deg) translateY(21%); }
+  .login-shell__cards:hover .login-shell__card-image--gold { transform: rotate(10deg) translateY(49%); }
 }
 
 .login-shell__footer {
@@ -107,11 +113,6 @@
   .login-shell__card { grid-template-columns: 1.05fr 1fr; min-height: 580px; }
   .login-shell__art { padding: 32px 40px 32px 32px; }
   .login-shell__edge { display: block; }
-  .login-shell__cards { height: 260px; margin-top: auto; margin-bottom: auto; }
-  .login-shell__card-image { width: 62%; max-width: 280px; }
-  .login-shell__card-image--bronze { top: 0; left: 2%; }
-  .login-shell__card-image--silver { top: 44px; left: 20%; }
-  .login-shell__card-image--gold { top: 92px; left: 38%; }
 }
 
 .login-form__input.login-form__input {

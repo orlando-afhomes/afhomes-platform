@@ -5,6 +5,7 @@ import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { matchesSearch } from "@/shared/lib/search";
 import { useOperation, usePayments } from "@/data/business-queries";
 import type { IgpSaleView } from "@/data/contracts/igp-repository";
+import type { TableOrder } from "@/shared/lib/table-order";
 import { useIgpAction, useIgpRegister } from "@/data/igp-queries";
 import { useEffectiveModuleIds } from "@/data/queries";
 import { IGP_DOCUMENT_LABELS } from "@/modules/igp/rules";
@@ -45,6 +46,12 @@ const REGISTER_COLUMNS: ColumnDef<IgpSaleView, unknown>[] = [
 ];
 
 /** Heading buttons of the IGP tab (Sales area). Same permissions as before; the area page opens the dialogs. */
+/** Newest IGP sale first; sales under review rise ahead on the same date. */
+const IGP_SALE_ORDER: TableOrder<IgpSaleView> = {
+  date: (row) => row.date,
+  attention: (row) => (row.status === "pending_review" ? 2 : 0),
+};
+
 export function IgpActions({ onOpen, onOpenHistory }: { onOpen: (dialog: IgpHeaderDialog) => void; onOpenHistory: () => void }) {
   const modules = useEffectiveModuleIds();
   const canEnter = useOperation("igp.enter");
@@ -110,7 +117,7 @@ export function IgpTab({ headerDialog, onHeaderDialogClose, historyOpen, onHisto
       <QueryState isLoading={registerQuery.isLoading} error={registerQuery.error}>
         {register && <>
           <FilterBar search={search} onSearch={setSearch} searchLabel="Search property sales (IGP)" filters={[{ label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: statusOptions }]} />
-          <DataTable data={visibleSales} columns={REGISTER_COLUMNS} getRowId={({ id }) => id} caption="Property Sales (IGP)"
+          <DataTable data={visibleSales} columns={REGISTER_COLUMNS} getRowId={({ id }) => id} caption="Property Sales (IGP)" orderBy={IGP_SALE_ORDER}
             emptyText={register.sales.length === 0 ? "No property sales (IGP) are available." : "No property sales (IGP) match the filters."}
             onRowOpen={(row) => setSelected(row.id)}
             getRowLabel={(row) => `Open property sale (IGP) ${row.seriesNumber}`} />

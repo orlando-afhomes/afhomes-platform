@@ -4,6 +4,7 @@ import { EMPTY } from "@/shared/lib/empty-value";
 import { useMemo, useState } from "react";
 import { useCommissionAction, useCommissionClawbackAction, useCommissionClawbacks, useCommissions, useOperation } from "@/data/business-queries";
 import type { CommissionView } from "@/data/contracts/commission-repository";
+import type { TableOrder } from "@/shared/lib/table-order";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
@@ -23,6 +24,12 @@ import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sh
 import { humanize } from "@/shared/lib/humanize";
 import { matchesSearch, optionsFrom } from "@/shared/lib/search";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
+
+/** Newest approved commission first; held and approved-unpaid rows rise ahead on the same date. */
+const COMMISSION_ORDER: TableOrder<CommissionView> = {
+  date: (row) => row.approvedAt,
+  attention: (row) => (row.status === "on_hold" ? 2 : row.status === "approved" ? 1 : 0),
+};
 
 type DialogState = { kind: "adjust" | "cancel" | "hold" | "payout" | "void"; commission: CommissionView } | null;
 
@@ -110,6 +117,7 @@ export function CommissionsPanel() {
           getRowId={(row) => row.id}
           emptyText={all.length === 0 ? "No commissions yet." : "No commissions match the filters."}
           caption="Commissions"
+          orderBy={COMMISSION_ORDER}
           onRowOpen={(row) => setDetailId(row.id)}
           getRowLabel={(row) => `Open commission for ${row.recipientName}`}
           rowActions={(row) => <RowActionsMenu itemName={`commission for ${row.recipientName}`} extraItems={itemsFor(row)} />}

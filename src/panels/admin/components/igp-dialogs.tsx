@@ -11,7 +11,6 @@ import type { IgpClauses, IgpDocumentKey, IgpEntry, IgpScheme } from "@/modules/
 import type { ConfirmTone } from "@/shared/components/modern/app-alert";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { MoneyField, PercentField, SelectField, StandardDateField, TextAreaField, TextField } from "@/shared/forms/modern";
-import { cleanReferenceNumber, referencePolicyFor, validateReferenceNumber } from "@/shared/forms/validation/reference-number";
 import { manilaToday } from "@/shared/lib/dates";
 import { parsePesoToCentavos } from "@/shared/lib/money";
 
@@ -54,10 +53,19 @@ export function IgpSaleDialog({ register, sale, mode, onClose }: {
   const [paidDate, setPaidDate] = useState(manilaToday);
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState<PaymentMethod>("Cash");
-  const [reference, setReference] = useState("");
+  const [documentNo, setDocumentNo] = useState("");
   const [reason, setReason] = useState("");
   const title = { record: "Record property sale (IGP)", reissue: "Reissue Series Number", correct: "Correct property sale (IGP)" }[mode];
   const sellers = register.sellers.filter(({ value }) => register.accreditations.some(({ memberId }) => value === memberId));
+  // Same-team rule: each picker follows the other party's team (owner instruction 2026-11-20).
+  const closingOptions = useMemo(() => {
+    const branch = mode === "record" ? sellers.find((sellerOption) => sellerOption.value === referrer)?.branchId : undefined;
+    return branch ? sellers.filter((sellerOption) => sellerOption.branchId === branch) : sellers;
+  }, [sellers, referrer, mode]);
+  const referrerOptions = useMemo(() => {
+    const branch = sellers.find((sellerOption) => sellerOption.value === (mode === "record" ? seller : sale?.sellerMemberId))?.branchId;
+    return branch ? sellers.filter((sellerOption) => sellerOption.branchId === branch) : sellers;
+  }, [sellers, seller, mode, sale]);
   const catalog = useIgpCatalog(mode !== "correct");
   const projectOptions = useMemo(() => {
     const options = (catalog.data?.projects ?? []).filter(({ status, id }) => status === "active" || id === sale?.projectId)
@@ -77,13 +85,11 @@ export function IgpSaleDialog({ register, sale, mode, onClose }: {
     if (mode === "correct" && sale) return { type: "correct", id: sale.id, input: { priceCentavos, referrerMemberId: referrer || null, referralReference, reason } };
     const terms = { projectId, unitId, priceCentavos, scheme, termMonths: scheme === "C" ? 1 : Number(term), clauses, date };
     if (mode === "reissue" && sale) return { type: "reissue", id: sale.id, input: { ...terms, reason } };
-    const referenceError = validateReferenceNumber(reference, referencePolicyFor(method));
-    if (!reference.trim() || referenceError) throw new Error(referenceError ?? "Enter the receipt or reference number.");
     return {
       type: "record",
       input: {
         ...terms, customerId: buyer, sellerMemberId: seller, referrerMemberId: referrer || null, referralReference, entry,
-        payment: { amountCentavos: parsePesoToCentavos(amount) ?? 0, method, paidDate: entry === "reservation" ? date : paidDate, referenceNo: reference },
+        payment: { amountCentavos: parsePesoToCentavos(amount) ?? 0, method, paidDate: entry === "reservation" ? date : paidDate, documentNo: documentNo.trim() || null },
       },
     };
   };
@@ -101,16 +107,16 @@ export function IgpSaleDialog({ register, sale, mode, onClose }: {
         {scheme === "T" && <TextField label="Term in months" value={term} inputMode="numeric" required onChange={setTerm} />}
         <SelectField label="Contract type" value={clauses} options={[{ value: "S", label: "Standard" }, { value: "N", label: "Non-Standard" }]} onChange={setClauses} />
       </>}
-      {mode === "record" && <SelectField label="Closing seller" value={seller} options={sellers} required onChange={setSeller} />}
-      {mode !== "reissue" && <SelectField label="Referrer" value={referrer} options={sellers} allowClear onChange={setReferrer} />}
+      {mode === "record" && <SelectField label="Closing seller" value={seller} options={closingOptions} required onChange={(value) => { setSeller(value); if (referrer && referrerOptions.length > 0 && !referrerOptions.some((option) => option.value === referrer)) setReferrer(""); }} />}
+      {mode !== "reissue" && <SelectField label="Referrer" value={referrer} options={referrerOptions} allowClear onChange={(value) => { setReferrer(value); if (seller && value && closingOptions.length > 0 && !closingOptions.some((option) => option.value === seller)) setSeller(""); }} />}
       {mode !== "reissue" && seller && seller === referrer && <TextField label="Verified referral reference" value={referralReference} required onChange={setReferralReference} />}
       {mode === "record" && scheme === "T" && <SelectField label="Issue at" value={entry} options={[{ value: "reservation", label: "Reservation fee payment" }, { value: "cts", label: "Contract to Sell signing" }]} onChange={setEntry} />}
       {mode !== "correct" && <StandardDateField label={mode === "reissue" ? "New issue date" : entry === "cts" ? "Contract to Sell signing date" : "Reservation payment date"} value={date} required onChange={setDate} />}
       {mode === "record" && <>
         {entry === "cts" && <StandardDateField label="Down payment receipt date" value={paidDate} required onChange={setPaidDate} />}
         <MoneyField label={entry === "cts" ? "Down payment amount" : "Reservation amount"} value={amount} required onChange={setAmount} />
-        <SelectField label="Payment method" value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value }))} onChange={(value) => { setMethod(value); setReference(cleanReferenceNumber(reference, referencePolicyFor(value))); }} />
-        <TextField label="Receipt or reference number" value={reference} required onChange={(value) => setReference(cleanReferenceNumber(value, referencePolicyFor(method)))} />
+        <SelectField label="Payment method" value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value }))} onChange={setMethod} />
+        <TextField label="Invoice / Receipt number" value={documentNo} onChange={setDocumentNo} maxLength={40} hint={method === "Cash" ? "Optional for cash: record the Invoice or Official Receipt number. The system generates the payment reference." : "Invoice, Official Receipt, or Collection Receipt number. The system generates the payment reference."} />
       </>}
       {mode !== "record" && <TextAreaField label="Reason" value={reason} required onChange={setReason} />}
     </IgpForm>

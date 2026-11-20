@@ -94,7 +94,8 @@ export type AdminAreaTabRule = {
 export const ADMIN_AREA_TABS = {
   customers: [
     { value: "customers", label: "Customers", formerHref: "/admin/customers", rule: { grants: ["customers"] } },
-    { value: "import-export", label: "Import and Export", formerHref: "/admin/customers/import-export", rule: { grants: ["customers"], operation: "customers.import" } },
+    { value: "import", label: "Import", formerHref: "/admin/customers/import-export", rule: { grants: ["customers"], operation: "customers.import" } },
+    { value: "export", label: "Export", formerHref: "/admin/customers/import-export", rule: { grants: ["customers"], operation: "customers.import" } },
   ],
   sales: [
     { value: "sales", label: "Sales", formerHref: "/admin/sales", rule: { grants: ["sales"] } },

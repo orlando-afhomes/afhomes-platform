@@ -39,6 +39,7 @@ export function LoginShell({ children, year }: { children: ReactNode; year?: num
                   alt=""
                   width={1920}
                   height={1198}
+                  sizes="(min-width: 768px) 280px, 62vw"
                   className={`login-shell__card-image login-shell__card-image--${card.tier}`}
                 />
               ))}

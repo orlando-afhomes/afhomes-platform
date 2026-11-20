@@ -1,11 +1,10 @@
 "use client";
 
-import { LogOut } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
-import { Button } from "@/shared/ui/button";
 import { AdminBrand } from "./admin-brand";
 import { AdminNavList } from "./admin-nav-list";
+import { LogoutButton } from "./admin-logout-button";
 import { useRoleAwareAdminNavigation } from "../use-role-aware-navigation";
 import { useLogout } from "../use-logout";
 import { useAdminUser } from "../use-admin-user";
@@ -48,13 +47,5 @@ export function AdminSidebar({ collapsed }: { collapsed: boolean; onCollapse?: (
       </div>
       {dialog}
     </aside>
-  );
-}
-
-function LogoutButton({ onClick }: { onClick: () => void }) {
-  return (
-    <Button type="button" variant="ghost" size="icon" onClick={onClick} aria-label="Log out" title="Log out" className="tw:size-9 tw:shrink-0 tw:text-white/70 tw:hover:bg-white/10 tw:hover:text-white">
-      <LogOut aria-hidden="true" />
-    </Button>
   );
 }

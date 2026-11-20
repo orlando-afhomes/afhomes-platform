@@ -10,7 +10,10 @@ export type SubmitPaymentInput = {
   amountCentavos: number;
   method: PaymentMethod;
   paidDate: string;
+  /** Ignored on submit: the system generates the payment reference. Kept for repository compatibility. */
   referenceNo?: string | null;
+  /** Invoice / Official Receipt number of the document issued for this collection. */
+  documentNo?: string | null;
   evidenceFileName?: string | null;
   /** Optional bank (admin-managed list entry id) for bank transfers and cheques. */
   bankId?: string | null;

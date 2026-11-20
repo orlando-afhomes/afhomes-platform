@@ -28,6 +28,13 @@ import { formatDate } from "@/shared/lib/format-date";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { Button } from "@/shared/ui/button";
 import { RegistrationCompletionDialog } from "./registration-completion-dialog";
+import type { TableOrder } from "@/shared/lib/table-order";
+
+/** Newest application first; returned and pending applications rise ahead on the same date. */
+const APPLICATION_ORDER: TableOrder<RegistrationApplication> = {
+  date: (item) => item.submittedAt ?? item.createdAt,
+  attention: (item) => (item.status === "needs_info" ? 3 : item.status === "submitted" || item.status === "pending_review" ? 2 : 0),
+};
 
 const STATUS_TONE: Record<RegistrationStatus, BadgeTone> = {
   draft: "neutral",
@@ -206,6 +213,7 @@ export function RegistrationApplicationsPage({ embedded = false }: { embedded?: 
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search applications" filters={[{ label: "Status filter", value: status, onChange: setStatus, options: STATUS_FILTER }]} />
       <DataTable<RegistrationApplication>
         caption="Seller Applications"
+        orderBy={APPLICATION_ORDER}
         data={rows}
         columns={columns}
         getRowId={(item) => item.id}

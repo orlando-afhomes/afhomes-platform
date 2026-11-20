@@ -42,6 +42,7 @@ import {
   parseAccessChip,
   type AccessChip,
   type AccessRow,
+  type AccessSort,
 } from "./staff-access-rows";
 import { LINKED_ACCOUNT_ACTION_LABELS, confirmLinkedAccountStatus, linkedAccountActions } from "./staff-account-actions";
 
@@ -119,7 +120,7 @@ export function StaffPage({
   const [deptFilter, setDeptFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortAsc, setSortAsc] = useState(true);
+  const [sort, setSort] = useState<AccessSort>("newest");
   const [editDialog, setEditDialog] = useState(false);
   const [editStaffId, setEditStaffId] = useState<string | null>(null);
   // A stale employee from an earlier edit must not leak into the add form.
@@ -335,9 +336,9 @@ export function StaffPage({
       filterAccessRows(
         rows,
         { chip: canManageAccounts ? chip : "all", search, departmentId: deptFilter, roleId: roleFilter, status: statusFilter },
-        sortAsc,
+        sort,
       ),
-    [rows, canManageAccounts, chip, search, deptFilter, roleFilter, statusFilter, sortAsc],
+    [rows, canManageAccounts, chip, search, deptFilter, roleFilter, statusFilter, sort],
   );
 
   // Dialogs read current records, so they reflect each successful mutation.
@@ -369,7 +370,7 @@ export function StaffPage({
     };
   }
 
-  const sortLabel = sortAsc ? "Sort A-Z" : "Sort Z-A";
+  const sortLabel = sort === "newest" ? "Sort A-Z" : sort === "asc" ? "Sort Z-A" : "Newest first";
 
   return (
     <AdminPage
@@ -415,8 +416,8 @@ export function StaffPage({
             { label: "Staff status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_FILTER_ITEMS },
           ]}
         >
-          <Button variant="outline" className="tw:h-11 tw:md:flex-none" onClick={() => setSortAsc((value) => !value)} aria-label={sortLabel}>
-            {sortAsc ? <ArrowDownAZ aria-hidden="true" /> : <ArrowUpAZ aria-hidden="true" />}
+          <Button variant="outline" className="tw:h-11 tw:md:flex-none" onClick={() => setSort(sort === "newest" ? "asc" : sort === "asc" ? "desc" : "newest")} aria-label={sortLabel}>
+            {sort === "desc" ? <ArrowUpAZ aria-hidden="true" /> : <ArrowDownAZ aria-hidden="true" />}
             {sortLabel}
           </Button>
         </FilterBar>

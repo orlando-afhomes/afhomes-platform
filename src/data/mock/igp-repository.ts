@@ -39,7 +39,7 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
         }).reverse(),
         buyers: canEnter ? this.store.customers.filter((customer) => customer.status === "approved" || customer.status === "active_member")
           .map(({ id, displayName }) => ({ value: id, label: displayName })) : [],
-        sellers: canEnter ? this.store.members.map(({ id, displayName, designation }) => ({ value: id, label: displayName, designation })) : [],
+        sellers: canEnter ? this.store.members.map(({ id, displayName, designation, branchId }) => ({ value: id, label: displayName, designation, branchId })) : [],
         accreditations: canEnter ? structuredClone(this.store.igp.accreditations) : [],
         thresholdBp: this.store.igp.thresholdBp,
       };

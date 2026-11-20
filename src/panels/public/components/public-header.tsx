@@ -28,12 +28,21 @@ const ACTIONS: SiteHeaderAction[] = [
   { href: "/vip-privilege#cards", label: "Join VIP", variant: "primary", icon: <Crown aria-hidden="true" /> },
 ];
 
-export function PublicHeader() {
+export type PublicHeaderProps = {
+  /** Solid header for pages on a light background, such as the accreditation verification page. */
+  variant?: "transparent" | "solid";
+  /** Mark the current page in the menu. Off where the route's params are unknown at build time. */
+  trackActive?: boolean;
+};
+
+export function PublicHeader({ variant = "transparent", trackActive = true }: PublicHeaderProps) {
   return (
     <SiteHeader
       brand={{ name: "AFHomes", subName: "Group of Companies", href: "/", logoSrc: "/images/logo.png" }}
       items={NAV_ITEMS}
       actions={ACTIONS}
+      page={variant === "solid" ? "verify" : undefined}
+      trackActive={trackActive}
       mobileExtraLinks={[
         { href: "/login", label: "Staff Login" },
         { href: "/login/sales", label: "Sales Sign-In" },

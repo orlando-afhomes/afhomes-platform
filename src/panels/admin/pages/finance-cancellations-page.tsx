@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useContracts } from "@/data/business-queries";
 import { useTierDisplayName } from "../components/use-tier-display-name";
 import { CANCELLATION_GROUND_LABELS } from "@/modules/contracts/types";
+import type { TableOrder } from "@/shared/lib/table-order";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { QueryState } from "@/shared/components/modern/query-state";
@@ -12,6 +13,9 @@ import { matchesSearch, optionsFrom } from "@/shared/lib/search";
 import { humanize } from "@/shared/lib/humanize";
 
 type CancellationRow = NonNullable<ReturnType<typeof useContracts>["data"]>[number];
+
+/** Newest request first; every row here is awaiting confirmation, so all attention ranks are equal. */
+const CANCELLATION_ORDER: TableOrder<CancellationRow> = { date: (row) => row.cancellation?.requestedAt };
 
 /** Cancellations tab of the Finance area ([finance]). */
 export function FinanceCancellationsPanel() {
@@ -37,7 +41,7 @@ export function FinanceCancellationsPanel() {
   return (
     <QueryState isLoading={contracts.isLoading} error={contracts.error}>
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search cancellation requests" filters={[{ label: "Ground filter", value: groundFilter, onChange: setGroundFilter, options: optionsFrom("All grounds", requests.map((item) => item.cancellation?.ground), (value) => CANCELLATION_GROUND_LABELS[value as keyof typeof CANCELLATION_GROUND_LABELS] ?? humanize(value)) }]} />
-      <DataTable data={visible} columns={columns} getRowId={(row) => row.id} caption="Cancellation Requests" onRowOpen={(row) => router.push(`/admin/finance/cancellations/${row.id}`)} getRowLabel={(row) => `Open cancellation request from ${row.customerName}`} emptyText={requests.length === 0 ? "No cancellation is awaiting confirmation." : "No requests match the filters."} />
+      <DataTable data={visible} columns={columns} getRowId={(row) => row.id} caption="Cancellation Requests" orderBy={CANCELLATION_ORDER} onRowOpen={(row) => router.push(`/admin/finance/cancellations/${row.id}`)} getRowLabel={(row) => `Open cancellation request from ${row.customerName}`} emptyText={requests.length === 0 ? "No cancellation is awaiting confirmation." : "No requests match the filters."} />
     </QueryState>
   );
 }

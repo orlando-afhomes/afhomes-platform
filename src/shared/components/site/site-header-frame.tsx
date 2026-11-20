@@ -1,17 +1,12 @@
-"use client";
-
-import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
 /**
- * Renders the site header element and marks the one route whose header must use the solid style.
- * The Verify page sits on a light background, unlike the home and contact heroes, so it opts out of
- * the transparent header rules. The marker is on the header itself, so it is server-rendered.
+ * Renders the site header element and applies the route marker that lets page CSS pick a solid header.
+ * The value comes from the layout that owns the route, so prerendering needs no client hook or pathname check.
  */
-export function SiteHeaderFrame({ className, children }: { className?: string; children: ReactNode }) {
-  const pathname = usePathname();
+export function SiteHeaderFrame({ className, page, children }: { className?: string; page?: string; children: ReactNode }) {
   return (
-    <header className={className} data-page={pathname === "/verify" ? "verify" : undefined}>
+    <header className={className} data-page={page}>
       {children}
     </header>
   );

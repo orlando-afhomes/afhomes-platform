@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { BadgeCheck, Hourglass, Scale, Undo2 } from "lucide-react";
 import { usePayments } from "@/data/business-queries";
 import type { PaymentView } from "@/data/contracts/payment-repository";
+import type { TableOrder } from "@/shared/lib/table-order";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
@@ -39,6 +40,12 @@ export function usePaymentColumns() {
 }
 
 /** Receipts tab of the Finance area (waiting, exceptions, or every receipt). The area page gates it on [finance, sales] + finance.verify. */
+/** Newest receipt date first; unreviewed and blocked receipts rise ahead on the same date. */
+const PAYMENT_ORDER: TableOrder<PaymentView> = {
+  date: (row) => row.paidDate,
+  attention: (row) => (row.approvalBlocked || row.referenceConflict ? 3 : row.status === "submitted" || row.status === "under_review" ? 2 : 0),
+};
+
 export function FinanceVerificationPanel() {
   const requested = useSearchParams().get("show");
   const initialShow = SHOW_OPTIONS.find((option) => option.value === requested)?.value ?? "all";
@@ -86,7 +93,7 @@ function ReceiptsPanel({ initialShow }: { initialShow: string }) {
         ) : null}
       </FilterBar>
       <QueryState isLoading={payments.isLoading} error={payments.error}>
-        <DataTable data={visible} columns={columns} getRowId={(row) => row.id} emptyText={source.length > 0 ? "No receipts match the search." : show === "all" ? "No payments yet." : show === "exceptions" ? "No receipt exceptions need review." : "Nothing is waiting for verification."} caption={show === "all" ? "All payments" : show === "exceptions" ? "Receipt exceptions" : "Verification queue"} rowActions={paymentActions.rowActions} onRowOpen={paymentActions.open} getRowLabel={(row) => `Open payment from ${row.customerName}`} />
+        <DataTable data={visible} columns={columns} getRowId={(row) => row.id} emptyText={source.length > 0 ? "No receipts match the search." : show === "all" ? "No payments yet." : show === "exceptions" ? "No receipt exceptions need review." : "Nothing is waiting for verification."} caption={show === "all" ? "All payments" : show === "exceptions" ? "Receipt exceptions" : "Verification queue"} orderBy={PAYMENT_ORDER} rowActions={paymentActions.rowActions} onRowOpen={paymentActions.open} getRowLabel={(row) => `Open payment from ${row.customerName}`} />
       </QueryState>
     </>
   );

@@ -40,7 +40,7 @@ function SeededIgp({ children }: { children: ReactNode }) {
           customerId: "cust-a6", projectId: "igp-prj-1", unitId: "igp-unit-1",
           priceCentavos: 180_000_000, scheme: "T", termMonths: 12, clauses: "S", date: "2025-01-10",
           sellerMemberId: "mem-ost-a1", referrerMemberId: null, entry: "reservation",
-          payment: { paidDate: "2025-01-10", method: "Cash", amountCentavos: 18_000_000, referenceNo: "IGP-0101" },
+          payment: { paidDate: "2025-01-10", method: "Cash", amountCentavos: 18_000_000 },
         },
       });
       setReady(true);
@@ -113,7 +113,8 @@ describe("Property Sales (IGP) page", () => {
     await user.click(within(table).getAllByRole("row", { name: /^Open property sale \(IGP\)/ })[0]);
     const sheet = await screen.findByRole("dialog");
     expect(within(sheet).getByText("Approved collections")).toBeInTheDocument();
-    expect(within(sheet).getByRole("button", { name: "IGP-0101" })).toBeInTheDocument();
+    const receipt = within(sheet).getAllByRole("button").find((button) => /^PAY-\d{8}-\d{4}$/.test(button.textContent ?? ""));
+    expect(receipt).toBeDefined();
     expect(within(sheet).getByRole("heading", { name: "JA&D Accreditation History" })).toBeInTheDocument();
     // Receipt status is a plain word, never a raw code such as "under_review".
     expect(within(sheet).queryByText(/_/)).toBeNull();

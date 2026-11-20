@@ -24,7 +24,6 @@ import { StepIndicator } from "@/shared/components/modern/step-indicator";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { CardGridSkeleton } from "@/shared/components/modern/skeletons";
 import { CheckboxField, FieldShell, RadioCardField, StandardDateField, TextField, describedBy, useFieldIds } from "@/shared/forms/modern";
-import { REFERENCE_LIMITS, cleanReferenceNumber, referencePolicyFor, validateReferenceNumber, type ReferencePolicy } from "@/shared/forms/validation/reference-number";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { AppAlert } from "@/shared/components/modern/app-alert";
@@ -100,13 +99,6 @@ const METHOD_ICONS: Record<PaymentMethod, ReactNode> = {
   Cheque: <WalletCards className="tw:size-4" />,
 };
 const SCHEME_ICONS = { cash: <Banknote className="tw:size-5" />, installment: <CalendarClock className="tw:size-5" />, move: <ArrowLeftRight className="tw:size-5" /> };
-
-/** Per-policy guidance for the receipt/reference field. */
-function referenceHint(policy: ReferencePolicy): string {
-  if (policy === "digital") return "12-16 letters or digits, uppercase; no spaces or symbols.";
-  if (policy === "bank") return "6-20 letters or digits, uppercase; no spaces or symbols.";
-  return "Letters, digits, spaces, and , . / - only.";
-}
 
 const CLASSIFICATION_OPTIONS: RadioCardOption<"S" | "N">[] = [
   { value: "S", label: "Standard (S)", description: "Standard contract terms.", icon: <Layers className="tw:size-4" /> },
@@ -196,8 +188,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const [method, setMethod] = useState<PaymentMethod>(DEFAULT_PAYMENT_METHOD);
   const [initialPaidDate] = useState(manilaToday);
   const [paidDate, setPaidDate] = useState(initialPaidDate);
-  const [reference, setReference] = useState("");
-  const [referenceTouched, setReferenceTouched] = useState(false);
+  const [documentNo, setDocumentNo] = useState("");
   const [proofName, setProofName] = useState("");
   const [accepted, setAccepted] = useState(false);
   const [nonStandardText, setNonStandardText] = useState<NonStandardTermsText>({ price: "", months: "", reason: "" });
@@ -221,7 +212,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
     }
   }, [existing]);
 
-  const hasReservationChanges = method !== DEFAULT_PAYMENT_METHOD || paidDate !== initialPaidDate || Boolean(reference || proofName || accepted || nonStandardText.price || nonStandardText.months || nonStandardText.reason);
+  const hasReservationChanges = method !== DEFAULT_PAYMENT_METHOD || paidDate !== initialPaidDate || Boolean(documentNo || proofName || accepted || nonStandardText.price || nonStandardText.months || nonStandardText.reason);
   const hasIdPreview = Boolean(primaryIdPreview.value || secondaryIdPreview.value);
   const dirty = JSON.stringify(draft) !== EMPTY_DRAFT || hasReservationChanges || hasIdPreview;
   const exit = useNewCustomerExit({
@@ -265,7 +256,6 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   // Doc 05 §10.2: staff who prepare the contract enter the Non-Standard price, monthly payments and reason here.
   const standardSchedule = product && scheme ? buildSchedule(product, scheme) : null;
   const asksNonStandard = canPrepare && !resubmitting && draft.contractClassification === "N" && standardSchedule != null && standardSchedule.errors.length === 0;
-  const refPolicy = referencePolicyFor(method);
   const sellers = (members.data ?? []).map((member) => ({ value: member.id, label: member.displayName }));
   const steps = canManage ? STEPS : STEPS.slice(0, STEP_SALES + 1);
   const lastStep = canManage ? STEP_REVIEW : STEP_SALES;
@@ -386,8 +376,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
     setFocusTick(0);
     setMethod(DEFAULT_PAYMENT_METHOD);
     setPaidDate(initialPaidDate);
-    setReference("");
-    setReferenceTouched(false);
+    setDocumentNo("");
     setProofName("");
     setProofKey((key) => key + 1);
     setAccepted(false);
@@ -441,11 +430,6 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
     if (canPrepare && !resubmitting && canPay && reservationCentavos) {
       if (!proofName) found.proof = "Attach the proof of the reservation fee payment.";
       if (paidDate > manilaToday()) found.paidDate = "The payment date cannot be in the future.";
-      const referenceError = reference.trim() ? validateReferenceNumber(reference, refPolicy) : "Enter the receipt or reference number.";
-      if (referenceError) {
-        found.reference = referenceError;
-        setReferenceTouched(true);
-      }
     }
     setReservationErrors(found);
     if (Object.keys(found).length > 0) {
@@ -469,7 +453,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
           customerAccepted: accepted,
           ...(asksNonStandard ? { nonStandardTerms: nonStandardTermsFromText(nonStandardText) } : {}),
           reservation: canPay && reservationCentavos
-            ? { amountCentavos: reservationCentavos, method, paidDate, referenceNo: reference || null, evidenceFileName: proofName || null }
+            ? { amountCentavos: reservationCentavos, method, paidDate, documentNo: documentNo || null, evidenceFileName: proofName || null }
             : undefined,
         } : undefined,
       });
@@ -684,7 +668,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             <Row label="Reservation fee" value={reservationCentavos ? formatPeso(reservationCentavos) : "None for this payment plan"} />
             <Row label="Payment method" value={reservationCentavos && canPay ? method : "—"} />
             <Row label="Date on receipt" value={paidDate || "—"} />
-            <Row label="Receipt/reference" value={reference || "—"} />
+            <Row label="Invoice / Receipt no." value={documentNo || "—"} />
             <Row label="Proof" value={proofName || "—"} />
             <div className="tw:sm:col-span-2">
               <CheckboxField variant="card" label="The customer reviewed and accepted the payment schedule." checked={accepted} onChange={(value) => { setAccepted(value); setReservationErrors((current) => ({ ...current, accepted: undefined })); }} error={reservationErrors.accepted} />
@@ -703,7 +687,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
               </div>
               <dl className="tw:grid tw:grid-cols-1 tw:gap-x-6 tw:gap-y-4 tw:sm:grid-cols-2">
                 <Row label="Customer ID" value={draft.customerNumber || EMPTY} />
-                <Row label="Applicant" value={[draft.firstName, draft.noMiddleName ? "" : draft.middleName, draft.lastName, draft.suffix].filter(Boolean).join(" ")} />
+                <Row label="Applicant" value={[draft.prefix, draft.firstName, draft.noMiddleName ? "" : draft.middleName, draft.lastName, draft.suffix].filter(Boolean).join(" ")} />
                 <Row label="Mobile number" value={draft.mobileNumber} />
                 <Row label="VIP card" value={product ? `${product.name} · ${formatPeso(displayPriceFor(product, scheme))}` : ""} />
                 <Row label="Payment plan" value={scheme?.label} />
@@ -714,7 +698,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
               </dl>
             </div>
             <div>
-              <Button type="button" variant="outline" size="sm" onClick={() => window.print()}>
+              <Button type="button" variant="info" onClick={() => window.print()}>
                 <Printer aria-hidden="true" className="tw:size-4" /> Print Application Form
               </Button>
             </div>
@@ -728,18 +712,15 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             <SectionBlock title="Reservation Fee and Proof" description={reservationCentavos ? `Submit the ${formatPeso(reservationCentavos)} reservation fee with its proof. Finance verifies it before the sale moves on.` : "This payment plan has no reservation fee. The contract is drafted without a payment."} icon={<Banknote className="tw:size-4" />}>
               {reservationCentavos && canPay ? (
                 <>
-                  <RadioCardField label="Payment method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value, icon: METHOD_ICONS[value] }))} onChange={(value) => { setMethod(value); setReference(cleanReferenceNumber(reference, referencePolicyFor(value))); }} />
+                  <RadioCardField label="Payment method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value, icon: METHOD_ICONS[value] }))} onChange={setMethod} />
                   <div className="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-2">
                     <StandardDateField label="Date on the receipt" required value={paidDate} onChange={setPaidDate} error={reservationErrors.paidDate} />
                     <TextField
-                      label="Receipt or reference number"
-                      required
-                      value={reference}
-                      onChange={(value) => setReference(cleanReferenceNumber(value, refPolicy))}
-                      onBlur={() => setReferenceTouched(true)}
-                      maxLength={REFERENCE_LIMITS[refPolicy].max}
-                      hint={referenceHint(refPolicy)}
-                      error={referenceTouched ? ((reference.trim() ? validateReferenceNumber(reference, refPolicy) : "Enter the receipt or reference number.") ?? undefined) : undefined}
+                      label="Invoice / Receipt number"
+                      value={documentNo}
+                      onChange={setDocumentNo}
+                      maxLength={40}
+                      hint={method === "Cash" ? "For cash, record the Invoice or Official Receipt number. Cash needs no bank or e-wallet reference; the system generates the payment reference." : "Invoice, Official Receipt, or Collection Receipt number. The system generates the payment reference."}
                     />
                   </div>
                   <FieldShell ids={proofIds} label="Proof of payment" required error={reservationErrors.proof} hint="Only the file name is recorded with this payment.">
@@ -787,11 +768,11 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
       <Card className="customer-application__actions tw:sticky tw:bottom-2 tw:z-10 tw:flex-col-reverse tw:gap-2 tw:p-3 tw:shadow-md tw:sm:flex-row tw:sm:items-center tw:sm:justify-between tw:lg:static tw:lg:shadow-none">
         <div className="tw:flex tw:gap-2">
-          <Button type="button" variant="outline" disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => (step === STEP_CARD ? exit.requestExit(() => { allowExit(); router.back(); }) : setStep(step - 1))}>
+          <Button type="button" variant={step === STEP_CARD ? "ghost" : "outline"} disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => (step === STEP_CARD ? exit.requestExit(() => { allowExit(); router.back(); }) : setStep(step - 1))}>
             {step === STEP_CARD ? "Cancel" : (<><ArrowLeft aria-hidden="true" className="tw:size-4" /> Back</>)}
           </Button>
           {!isSubmitted ? (
-            <Button type="button" variant="outline" loading={saving && action === "draft"} disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => void saveDraft()}>
+            <Button type="button" variant="secondary" loading={saving && action === "draft"} disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => void saveDraft()}>
               Save as Draft
             </Button>
           ) : null}

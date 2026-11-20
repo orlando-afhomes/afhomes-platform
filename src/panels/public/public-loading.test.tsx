@@ -12,8 +12,8 @@ import HotelLoading from "../../app/(public)/experiences/smart-wellness-hotel/lo
 import RestaurantLoading from "../../app/(public)/experiences/alm-japanese-restaurant/loading";
 import FaqLoading from "../../app/(public)/faq/loading";
 import OstLoading from "../../app/(public)/register/ost/loading";
-import OstCorrectionLoading from "../../app/(public)/register/ost/correct/[token]/loading";
-import VerifyLoading from "../../app/(public)/verify/loading";
+import OstCorrectionLoading from "../../app/(correction)/register/ost/correct/[token]/loading";
+import VerifyLoading from "../../app/(verify)/verify/loading";
 import VipLoading from "../../app/(public)/vip-privilege/loading";
 import LoginLoading from "../../app/login/loading";
 import SalesLoginLoading from "../../app/login/sales/loading";

@@ -5,17 +5,17 @@ import type { Contract } from "@/modules/contracts/types";
 import { meetsPayoutRelease } from "@/modules/commissions/rules";
 import { adjustableCentavos, exceedsContractPrice, findDuplicatePayment, findReferenceConflict, findSuggestedMatch } from "@/modules/finance/rules";
 import { firstOpenDate } from "@/modules/finance/month-close";
+import { nextPaymentReference } from "@/modules/finance/payment-reference";
 import { PAYMENT_METHODS, PAYMENT_PURPOSES, type Payment, type PaymentEvent } from "@/modules/finance/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import type { IgpSale } from "@/modules/igp/types";
 import { tierDisplayName } from "@/modules/vip/tier-options";
-import { cleanReferenceNumber, referencePolicyFor, validateReferenceNumber } from "@/shared/forms/validation/reference-number";
-import { DEV_IDENTITIES } from "./dev-identities";
+import type { MockStore } from "./seed";
 import { BusinessRepository, DATE_ONLY, canSeeContract, customerName, nowIso, today } from "./business-base";
 import { paymentsOfContract, reconcileContract } from "./business-effects";
 import { applyCommissionTrigger, restoreDefaultedCommission } from "./commission-effects";
 import { nextId } from "./ids";
-import type { MockStore } from "./seed";
+import { DEV_IDENTITIES } from "./dev-identities";
 import { canCorrectPayment } from "./scope";
 import { canSeeIgpSale, findIgpPaymentTarget, reconcileIgpCollections } from "./igp-payment-effects";
 import { hasImportedReceiptReference, hasRedemptionReceiptReference, hasResortReceiptReference } from "./resort-receipt-reference";
@@ -55,7 +55,6 @@ function validateFields(store: MockStore, target: PaymentTarget, input: Pick<Sub
 export function preparePaymentSubmission(store: MockStore, target: PaymentTarget, input: SubmitPaymentInput, submittedBy: string): Payment {
   if (isClosedPaymentTarget(target)) throw new Error("Payments cannot be submitted for this contract.");
   validateFields(store, target, input);
-  validateReference(store, input.referenceNo);
   const bankId = input.bankId || null;
   if (bankId) {
     if (input.method !== "Bank Transfer" && input.method !== "Cheque") throw new Error("A bank applies only to bank transfers and cheques.");
@@ -66,7 +65,9 @@ export function preparePaymentSubmission(store: MockStore, target: PaymentTarget
   return {
     id: nextId(store, "payment", "pay"), contractId: target.id, customerId: target.customerId, saleId: sale?.id ?? null,
     purpose: input.purpose, amountCentavos: input.amountCentavos, method: input.method, paidDate: input.paidDate,
-    referenceNo: input.referenceNo?.trim() ?? null, evidenceFileName: input.evidenceFileName?.trim() || null,
+    referenceNo: nextPaymentReference(store.payments, input.paidDate, (reference) => hasReferenceConflict(store, reference)),
+    documentNo: input.documentNo?.trim() || null,
+    evidenceFileName: input.evidenceFileName?.trim() || null,
     ...(bankId ? { bankId } : {}),
     submittedBy, submittedAt: timestamp, status: "submitted", verifiedBy: null, verifiedAt: null, verifiedDate: null,
     decisionReason: null, adjustments: [],
@@ -154,19 +155,15 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
         amountCentavos: input.amountCentavos ?? payment.amountCentavos,
         method: input.method ?? payment.method,
         paidDate: input.paidDate ?? payment.paidDate,
+        documentNo: input.documentNo !== undefined ? input.documentNo?.trim() || null : payment.documentNo ?? null,
       };
       validateFields(this.store, contract, next, payment.id);
       if (input.referenceNo !== undefined && input.referenceNo?.trim() !== payment.referenceNo) {
-        throw new Error("A resent receipt must keep its original reference number.");
+        throw new Error("A resent receipt must keep its original payment reference.");
       }
       validateReference(this.store, payment.referenceNo, payment.id);
-      const { purpose, amountCentavos, method, paidDate, referenceNo, evidenceFileName } = payment;
-      const nextPolicy = referencePolicyFor(next.method);
-      if (nextPolicy !== referencePolicyFor(method) && referenceNo &&
-        (cleanReferenceNumber(referenceNo, nextPolicy) !== referenceNo || validateReferenceNumber(referenceNo, nextPolicy))) {
-        throw new Error("The original reference number does not match the format for the new payment method.");
-      }
-      this.event(payment, identity, BUSINESS_AUDIT_ACTIONS.PAYMENT_RESUBMITTED, null, { purpose, amountCentavos, method, paidDate, referenceNo, evidenceFileName });
+      const { purpose, amountCentavos, method, paidDate, referenceNo, documentNo, evidenceFileName } = payment;
+      this.event(payment, identity, BUSINESS_AUDIT_ACTIONS.PAYMENT_RESUBMITTED, null, { purpose, amountCentavos, method, paidDate, referenceNo, documentNo, evidenceFileName });
       Object.assign(payment, next);
       if (input.evidenceFileName !== undefined) payment.evidenceFileName = input.evidenceFileName?.trim() || null;
       payment.status = "submitted";

@@ -1,17 +1,18 @@
 "use client";
 
-import { Upload, UsersRound } from "lucide-react";
+import { Download, Upload, UsersRound } from "lucide-react";
 import { AreaPage } from "@/shared/components/admin";
 import { ADMIN_AREA_TABS } from "../navigation";
 import { useAdminAreaTabAccess } from "../use-role-aware-navigation";
-import { CustomerImportExportTab } from "./customer-import-export-page";
+import { CustomerExportPanel, CustomerImportPanel } from "./customer-import-export-page";
 import { CustomersActions, CustomersTab } from "./customers-page";
 
-const TAB_ICONS = { customers: UsersRound, "import-export": Upload };
+const TAB_ICONS = { customers: UsersRound, import: Upload, export: Download };
 
 const PANELS = {
   customers: () => <CustomersTab />,
-  "import-export": () => <CustomerImportExportTab />,
+  import: () => <CustomerImportPanel />,
+  export: () => <CustomerExportPanel />,
 };
 
 export function CustomersAreaPage() {

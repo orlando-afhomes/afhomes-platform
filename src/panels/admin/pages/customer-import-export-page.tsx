@@ -40,15 +40,6 @@ const ROW_BADGE: Record<CustomerImportRow["status"], { status: string; label: st
 
 type Preview = { fileName: string; records: CustomerImportRecord[] };
 
-export function CustomerImportExportTab() {
-  return (
-    <>
-      <CustomerImportPanel />
-      <CustomerExportPanel />
-    </>
-  );
-}
-
 const NOT_AVAILABLE = <InfoNote title="Not Available">Customer import and export are limited to Administrators.</InfoNote>;
 
 /** Import steps and the import job history. Needs `customers.import`; anyone else sees a "Not available" note. */

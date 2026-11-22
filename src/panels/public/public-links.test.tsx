@@ -46,17 +46,33 @@ const routeExists = (href: string) =>
 const publicFile = (src: string) => existsSync(join(process.cwd(), "public", src));
 
 describe("public sign-in and verification links", () => {
-  it("shows Verify Accreditation in the header and on the home page", () => {
+  it("shows Customer Login in the header and Verify Accreditation on the home page", () => {
     renderSite(
       <>
         <PublicHeader />
         <PublicHomePage />
       </>,
     );
-    expect(screen.getByRole("link", { name: "Verify Accreditation" })).toHaveAttribute("href", "/verify");
+    expect(screen.getByRole("link", { name: "Customer Login" })).toHaveAttribute("href", "/portal");
     // The header and the Home hero both offer Join VIP; both go to the card comparison.
     for (const link of screen.getAllByRole("link", { name: "Join VIP" })) expect(link).toHaveAttribute("href", "/vip-privilege#cards");
     expect(screen.getByRole("link", { name: "Verify now" })).toHaveAttribute("href", "/verify");
+  });
+
+  it("keeps Verify Accreditation in the header Explore menu", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<PublicHeader />);
+    await user.click(container.querySelector(".site-header__dropdown-button--explore") as HTMLElement);
+    expect(await screen.findByRole("link", { name: /Verify Accreditation/ })).toHaveAttribute("href", "/verify");
+  });
+
+  it("limits the footer staff-only note to the Staff Login and Sales Sign-In links", () => {
+    const { container } = render(<PublicFooter />);
+    const note = container.querySelector(".site-footer__access-note");
+    expect(note?.textContent).toContain("Staff Login and Sales Sign-In");
+    const links = [...container.querySelectorAll(".site-footer__access-nav > a")].map((link) => link.textContent);
+    expect(links).toEqual(["Customer Login", "Verify Accreditation", "Staff Login", "Sales Sign-In"]);
+    expect(note?.previousElementSibling?.textContent).toBe("Sales Sign-In");
   });
 
   it("keeps the public header to five top-level navigation entries", () => {

@@ -43,10 +43,12 @@ export function SiteFooterAccess({ heading, links }: { heading: string; links: S
       <div id={panelId} ref={panelRef} className="site-footer__access-panel" data-open={open} inert={!open}>
         <div className="site-footer__access-body">
           <nav aria-label={heading} className="site-footer__access-nav">
-            {links.map((link) => (
+            {[...links.filter((link) => !link.staffOnly), ...links.filter((link) => link.staffOnly)].map((link) => (
               <Link key={link.href} href={link.href} className="site-footer__link">{link.label}</Link>
             ))}
-            <p className="site-footer__access-note"><Info aria-hidden="true" />Staff and sellers only.</p>
+            {links.some((link) => link.staffOnly) && (
+              <p className="site-footer__access-note"><Info aria-hidden="true" />Staff Login and Sales Sign-In are for staff and sellers only.</p>
+            )}
           </nav>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { Crown, ShieldCheck } from "lucide-react";
+import { Crown, LogIn } from "lucide-react";
 import { SiteHeader, type SiteHeaderAction, type SiteNavItem } from "@/shared/components/site";
 import { EXPERIENCE_LINKS, MAIN_NAV } from "@/modules/public-site/content/site";
 
@@ -18,14 +18,15 @@ const NAV_ITEMS: SiteNavItem[] = [
       { ...MAIN_NAV[4], description: "Answers to common questions" }, // FAQ
       { ...MAIN_NAV[5], description: "News and stories from AFhomes" }, // Blog
       { ...MAIN_NAV[7], description: "Promo Points offers and rewards" }, // Offers
+      { href: "/verify", label: "Verify Accreditation", description: "Check a seller's accreditation by AA number" },
     ],
   },
   MAIN_NAV[6], // Contact stays a top-level link (owner, 2026-11-18)
 ];
 
-/** Verify Accreditation is the secondary action; Join VIP is the main call to action. */
+/** Customer Login is the secondary action; Join VIP is the main call to action. Verify Accreditation sits in the Explore menu (03-ist-ost-accreditation: header and Home). */
 const ACTIONS: SiteHeaderAction[] = [
-  { href: "/verify", label: "Verify Accreditation", variant: "outline", icon: <ShieldCheck aria-hidden="true" /> },
+  { href: "/portal", label: "Customer Login", variant: "outline", icon: <LogIn aria-hidden="true" /> },
   { href: "/vip-privilege#cards", label: "Join VIP", variant: "primary", icon: <Crown aria-hidden="true" /> },
 ];
 

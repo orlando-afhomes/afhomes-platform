@@ -56,6 +56,7 @@ function PortalLogin() {
         <div className="tw:flex tw:flex-col tw:gap-2">
           <h1 className="tw:text-3xl tw:font-semibold">Customer Login</h1>
           <p className="tw:text-sm tw:text-(--color-on-dark-muted)">Sign in to view your VIP membership, Stay Points, Promo Points and activity.</p>
+          <p className="tw:text-sm tw:text-(--color-on-dark-muted)">This is a preview. Only test customer accounts can sign in for now.</p>
         </div>
         <div className="tw:flex tw:flex-col tw:gap-2">
           <Label htmlFor={`${id}-email`}>Email</Label>

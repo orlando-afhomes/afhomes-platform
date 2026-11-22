@@ -111,82 +111,44 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-22 (Asia/Singapore; exact time not recorded).
-- Repository: afhomes-platform.
-- Branch: develop.
-- HEAD: 1dbba88 (verified).
-- Objective: Implement approved AFHomes architecture phases 0–7, resume after an interrupted session, finish validation and save a handoff.
-- Development phase: Frontend prototype on typed browser-memory data. Backend, real authentication, database, migrations and deployment remain deferred.
-- Context note: This session resumed from prior conversation state and verified current files.
+- Saved 2026-11-22 (Asia/Singapore). AFHomes Platform, develop, HEAD 50d6143.
+- Tool and model: Codex, GPT-6.2 Sol for this save.
+- Objective: Restore the architecture handoff, review the portal and UI changes, then verify the three follow-up fixes. Phase: frontend prototype and QA.
 
 ## 2. Current Project State
-- Verified current branch and HEAD: develop at 1dbba88. Nothing is staged.
-- Architecture work from the previous run is present in commits through 1dbba88. This agent did not make Git writes.
-- This resumed turn completed the Settings lazy-load experiment, corrected asynchronous test readiness and updated the architecture report.
-- Existing portal/UI work remains in the tree and was preserved. The current tree has 59 modified tracked files and 7 untracked files; not all belong to this architecture task.
-- Settings defers Payment Plans, Import Old Records and Property Projects (IGP) using Next dynamic imports and an accessible skeleton.
+- HEAD advanced from the reviewed working tree's base 1dbba88 to 50d6143, titled “feat: rebuild customer portal app, compact phone headers and lazy-load settings.” Commit actor was not investigated.
+- The prior architecture handoff records phases 0–7 complete for browser-memory mock data. See docs/development/architecture-refactoring-report.md for scope and evidence.
 
 ## 3. Important Decisions
-- Keep the existing Next.js modular monolith and installed stack. No dependencies added.
-- Linked account data is the source of live roles for linked mock identities; unlinked synthetic personas retain their fixed roles.
-- Access changes cancel pending authority reads and remove protected query caches before fresh grants appear. Public Experiences, Offers and VIP projections remain allowlisted. Real production authorization requires backend checks in future work.
-- Per owner choice on 2026-11-22, new payment schemes reject conflicting single and per-tier payment codes. Existing contract snapshots and issued VIP Numbers remain unchanged. Document 06 records this decision.
-- Customer cursor pagination is additive, stable by ID, and limited to 1–100 entries. No HTTP/database rollout was included.
-- Git staging, commits, pushes, merges, resets and deployment remain owner-only.
+- Portal sign-in requires exactly one normalized email owner across all customer records before card eligibility is checked. Duplicate contact emails are rejected without revealing the other owner.
+- Profile photos accept up to 2 MiB. Save validation rejects empty or incorrectly padded base64. Profile shows Activated immediately above Valid until.
+- Preserve browser-memory mock data and the approved stack. Backend, real authentication, databases, migrations and deployment require separate authorization. Git writes are owner-only.
+- Architecture decisions remain in the architecture report and canonical business rules, including rejection of conflicting payment codes for new configurations while preserving existing contract and VIP Number snapshots.
 
 ## 4. Completed Work
-- Phases 0–7 are summarized in docs/development/architecture-refactoring-report.md.
-- Controlled production webpack comparison, five cacheless HTTP samples per variant with all other production source hashes unchanged:
-  - Eager Settings: 44 scripts, 727,295 compressed body bytes, 2,387,077 decoded bytes.
-  - Lazy Settings: 43 scripts, 718,537 compressed body bytes, 2,356,728 decoded bytes.
-  - Savings: 8,758 compressed bytes (1.204%). No browser speed/Core Web Vitals claim.
-- Production browser smoke verified synthetic sign-in and Products, Payment Plans, Property Projects and Import Old Records panels. The temporary tab was closed.
-- Final full Vitest run: 192 files, 1,983 tests passed, zero failed. Raw output: workflow/architecture-baseline/final-verified-tests.json.
-- TypeScript, lint, architecture scan (672 source files), architecture checker tests (4/4), production webpack build (100 pages), and git diff check passed.
-- The earlier full run had five readiness assertion failures. Four affected test files were updated to await async access/data; their corrected run passed 45/45 before the final clean full run.
+- User supplied fixes. Codex reviewed them and independently verified the three findings were resolved. Review and save made no source edits.
+- Relevant files: src/data/mock/customer-portal-repository.ts and its test, src/shared/forms/validation/image.ts and its test, src/panels/customer-portal/pages/customer-portal-page.tsx, and src/panels/customer-portal/customer-portal-page.test.tsx.
+- The final review confirmed the shared-email case with only one cardholder, exact image size boundaries and invalid padding, and the two membership dates and their order.
 
 ## 5. Git Working Tree
-- Staged: none.
-- Unstaged: 59 modified tracked files. Existing owner portal/UI changes include customer portal, QR/repository changes, admin/public layout and styling. This resumed task changed the architecture report, Settings page lazy imports, and asynchronous readiness assertions in four tests. Other current edits may be owner work.
-- Untracked: 7 files: scripts/measure-route-payload.mjs; src/panels/admin/components/customer-detail-photo.test.tsx; src/shared/components/dashboard/page-actions.css; src/shared/components/dashboard/page-actions.test.tsx; src/shared/components/dashboard/page-actions.tsx; src/shared/forms/validation/image.ts; src/shared/lib/member-qr-image.ts.
-- Deleted/renamed: none reported.
-- Read-only diff stat: 59 files, 1,140 insertions, 399 deletions.
-- Initial and resumed inventories are under workflow/architecture-baseline. The tracked patch does not back up untracked files.
+- Before this save: clean at 50d6143. No staged, unstaged, or untracked files and no pending deletions or renames.
+- This save modifies only the snapshot body in workflow/save-session.md. No other changes were made in the save turn.
 
 ## 6. Pending Tasks
-- No approved work remains in the architecture roadmap scope.
-- Browser Performance API timing and Core Web Vitals were not available; current evidence is HTTP script payload size and functional rendering.
-- Database pagination/indexes, snapshot-consistent cursors, production authentication and server authorization remain future separately authorized work.
-- Preserve current user changes in any later work.
+- No open findings remain within the three-fix review scope. No further implementation is authorized by this handoff.
+- Portal browser verification and the full test suite were not rerun for the three fixes. Precise browser performance timing remains unverified from the architecture work.
 
 ## 7. Verification State
-- Full suite: 1,983/1,983 passed across 192 files.
-- TypeScript: passed.
-- ESLint plus architecture scan: passed.
-- Architecture checker tests: 4/4 passed.
-- Production webpack build: passed; 100 pages generated.
-- Browser smoke: passed for synthetic sign-in and the four Settings panels.
-- Payload measurement is compressed and decoded script response body size; it excludes headers, inline payload, CSS/fonts and does not measure latency.
-- Corrected targeted suites: commission/report 28/28, profile 11/11, reconciliation import 6/6, Settings/IGP 26/26.
-- Benign JSDOM scroll/canvas/navigation warnings and one React key warning appeared; final suite passed.
-- No database or migration check was needed or run.
+- Final review independently ran four targeted Vitest files: image validation, mock portal repository, portal provider, and portal page. All 20 tests passed. The DOM test emitted a canvas getContext warning without failing.
+- User reported TypeScript and lint passed and that temporarily changing Activated to the wrong date caused its test to fail. Codex did not repeat those checks.
+- The 20-test run was on the reviewed working tree before HEAD advanced. Tests, lint, typecheck, build and browser checks were not performed during this save.
+- Earlier architecture baseline only: 1,983 tests passed across 192 files. The prior report records passing typecheck, lint, webpack build and Settings browser smoke. See workflow/architecture-baseline/final-verified-tests.json and the architecture report.
 
 ## 8. Next Session Instructions
-- First run /load; verify current status, branch and HEAD. Preserve the 59 modified tracked and 7 untracked files.
-- Review docs/development/architecture-refactoring-report.md and workflow/architecture-baseline/final-verified-tests.json.
-- Inspect the current diff for src/panels/admin/pages/vip-products-page.tsx and the four asynchronous test updates with the owner’s current changes before further edits.
-- No owner decision remains for the implemented architecture scope. New backend/auth/database/production work needs its own authorization.
-- Do not perform Git writes or destructive operations.
+- Run /load and verify HEAD and the working tree. Use the portal files above for follow-up and the architecture report for earlier work.
+- Preserve any owner changes. Obtain explicit authorization for new implementation, and keep Git operations read-only.
 
 ## 9. Execution Recommendation
-- Phase: QA complete.
-- Current mode: not verified.
-- Recommended next mode: Plan for any new requested scope.
-- Current model: GPT-6 Luna (supplied by system).
-- Recommended model: GPT-6 Sol, medium effort for routine frontend work; availability not verified.
-- Effort: medium.
-- Ultracode: OFF.
-- Token optimization: inspect only the targeted current diff and avoid repeating completed checks without new changes.
-- Reason: implementation and final verification are complete; remaining modifications include preserved owner work.
-
+- Phase: targeted QA complete. Current mode: Default. Current model: GPT-6.2 Sol.
+- For a new substantial scope, use Plan mode with GPT-6.2 Sol at medium effort. Model availability in the next session is unverified.
 <!-- SESSION_SNAPSHOT_END -->

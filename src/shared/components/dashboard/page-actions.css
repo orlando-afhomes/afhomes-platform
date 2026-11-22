@@ -1,0 +1,37 @@
+/*
+ * Page header actions. On phones, a header with two or more buttons keeps them on one line:
+ * each button that has an icon shows the icon only (its text stays in the page for screen readers),
+ * and if the row is still too wide it scrolls inside its own box, never the page.
+ */
+@media (max-width: 639px) {
+  .page-actions:has(:is(a, button) ~ :is(a, button)) {
+    flex-wrap: nowrap;
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-block: 2px;
+  }
+
+  .page-actions:has(:is(a, button) ~ :is(a, button))::-webkit-scrollbar {
+    display: none;
+  }
+
+  .page-actions:has(:is(a, button) ~ :is(a, button)) div {
+    flex-wrap: nowrap;
+  }
+
+  .page-actions:has(:is(a, button) ~ :is(a, button)) :is(a, button):has(svg) {
+    flex: none;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    padding: 0;
+    gap: 0;
+    font-size: 0;
+  }
+
+  .page-actions:has(:is(a, button) ~ :is(a, button)) :is(a, button):has(svg) svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}

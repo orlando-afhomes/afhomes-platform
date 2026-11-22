@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createMockStore } from "./seed";
-import { MockCustomerPortalRepository } from "./customer-portal-repository";
+import { MOCK_CUSTOMER_PASSWORD, MockCustomerPortalRepository } from "./customer-portal-repository";
 
 function setup() {
   const store = createMockStore();
@@ -28,6 +28,56 @@ describe("customer portal repository", () => {
     expect(overview.qr).toHaveLength(1);
     expect(portal.overview().qr[0].code).toBe(overview.qr[0].code);
     expect(portal.findCustomerByEmail("missing@example.com")).toBeUndefined();
+  });
+
+  it("signs in only with the right email and password", () => {
+    const { portal } = setup();
+    expect(portal.authenticate("customer.b1@afhomes.local", MOCK_CUSTOMER_PASSWORD)).toMatchObject({ id: "cust-b1" });
+    expect(portal.authenticate("customer.b1@afhomes.local", "wrong")).toBeUndefined();
+    expect(portal.authenticate("missing@example.com", MOCK_CUSTOMER_PASSWORD)).toBeUndefined();
+  });
+
+  it("refuses an email another customer already uses, ignoring case and spaces", () => {
+    const { store, portal } = setup();
+    const other = store.customers.find((item) => item.id !== "cust-b1" && item.email)!;
+    expect(() => portal.updateContact({ mobileNumber: "09171110002", email: `  ${other.email!.toUpperCase()} `, landline: "" })).toThrow("This email can't be used.");
+    expect(store.customers.find((item) => item.id === "cust-b1")?.email).toBe("customer.b1@afhomes.local");
+    expect(portal.updateContact({ mobileNumber: "09171110002", email: "customer.b1@afhomes.local", landline: "" }).customer.email).toBe("customer.b1@afhomes.local");
+  });
+
+  it("does not sign anyone in when two records share the email", () => {
+    const { store, portal } = setup();
+    const other = store.customers.find((item) => item.id === "cust-a1")!;
+    other.email = "Customer.B1@afhomes.local";
+    store.memberships.filter((item) => item.customerId === "cust-a1").forEach((item) => { item.cardId ??= "26110200009A1T04S"; });
+    expect(portal.authenticate("customer.b1@afhomes.local", MOCK_CUSTOMER_PASSWORD)).toBeUndefined();
+  });
+
+  it("does not sign in a cardholder whose email is also on a customer without a card", () => {
+    const { store, portal } = setup();
+    const noCard = store.customers.find((item) => item.id === "cust-a1")!;
+    store.memberships = store.memberships.filter((item) => item.customerId !== "cust-a1");
+    noCard.email = "CUSTOMER.B1@afhomes.local ";
+    expect(portal.authenticate("customer.b1@afhomes.local", MOCK_CUSTOMER_PASSWORD)).toBeUndefined();
+    noCard.email = "someone.else@afhomes.local";
+    expect(portal.authenticate("customer.b1@afhomes.local", MOCK_CUSTOMER_PASSWORD)).toMatchObject({ id: "cust-b1" });
+  });
+
+  it("lets the signed-in customer set and remove only their own profile picture", () => {
+    const { store, portal } = setup();
+    const image = { dataUrl: "data:image/png;base64,aGVsbG8=", fileName: "me.png" };
+    expect(portal.updateProfilePhoto(image).customer.photoUrl).toBe(image.dataUrl);
+    expect(store.customers.find((item) => item.id === "cust-b1")?.profilePhoto?.fileName).toBe("me.png");
+    expect(store.customers.find((item) => item.id === "cust-a1")?.profilePhoto ?? null).toBeNull();
+    expect(portal.updateProfilePhoto(null).customer.photoUrl).toBeNull();
+  });
+
+  it("rejects a profile picture that is not an image or is over 2MB", () => {
+    const { portal } = setup();
+    expect(() => portal.updateProfilePhoto({ dataUrl: "data:text/html;base64,aGk=", fileName: "x.html" })).toThrow("Unsupported image format.");
+    expect(() => portal.updateProfilePhoto({ dataUrl: "javascript:alert(1)", fileName: "x" })).toThrow("Unsupported image format.");
+    const big = `data:image/png;base64,${"A".repeat(Math.ceil((2 * 1024 * 1024 * 4) / 3 / 4) * 4 + 4)}`;
+    expect(() => portal.updateProfilePhoto({ dataUrl: big, fileName: "big.png" })).toThrow("Image must be 2MB or smaller.");
   });
 
   it("is bound to the signed-in customer and cannot return another customer's data", () => {

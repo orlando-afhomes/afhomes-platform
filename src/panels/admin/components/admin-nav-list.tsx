@@ -29,7 +29,7 @@ function formatBadgeCount(count: number): string {
 }
 
 const BADGE_PILL =
-  "tw:ml-auto tw:inline-flex tw:h-5 tw:min-w-5 tw:items-center tw:justify-center tw:rounded-full tw:bg-destructive tw:px-1 tw:text-[11px] tw:font-semibold tw:text-white tw:ring-2 tw:ring-(--color-brand-deep)";
+  "tw:ml-auto tw:inline-flex tw:h-5 tw:min-w-5 tw:items-center tw:justify-center tw:rounded-full tw:bg-destructive tw:px-1 tw:text-xs tw:font-semibold tw:text-white tw:ring-2 tw:ring-(--color-brand-deep)";
 
 const NAV_GROUPS: { label: string; icon: LucideIcon; members: readonly AdminNavItem["id"][] }[] = [
   { label: "Money", icon: Landmark, members: ["finance", "commissions"] },

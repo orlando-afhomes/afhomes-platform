@@ -73,7 +73,7 @@ export function SalesTeamOverview({
       ) : error ? (
         <DashboardError error={error} fallback="Could not load your sales network." />
       ) : (
-        <div className="tw:grid tw:gap-6 tw:md:grid-cols-2">
+        <div className="tw:grid tw:grid-cols-1 tw:gap-6 tw:md:grid-cols-2">
           <div className="tw:min-w-0">
             <SubHeading>Account</SubHeading>
             {currentMember ? (

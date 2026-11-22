@@ -10,6 +10,7 @@ import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { AdminPage } from "@/shared/components/admin/admin-page";
 import { CUSTOMER_LOOKUP_GRANTS } from "../navigation";
 import { useRoleAwareAdminNavigation } from "../use-role-aware-navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { MemberQrButton, ScanMemberQrButton } from "../components/member-qr";
 import { EnterResortBillButton } from "./stay-points-page";
@@ -212,7 +213,12 @@ function LoyaltyActions({ holder }: { holder: MemberQrHolder }) {
   const [create, setCreate] = useState(false);
   return <Card className="customer-lookup__loyalty">
     <div className="customer-lookup__loyalty-heading">
-      <span className="customer-lookup__accent-icon"><Info aria-hidden="true" /></span>
+      {holder.photoUrl ? (
+        <Avatar className="tw:size-14">
+          <AvatarImage src={holder.photoUrl} alt={`Profile picture of ${holder.holderName}`} />
+          <AvatarFallback>{holder.holderName.slice(0, 2).toUpperCase()}</AvatarFallback>
+        </Avatar>
+      ) : <span className="customer-lookup__accent-icon"><Info aria-hidden="true" /></span>}
       <h2>{holder.holderName}</h2>
     </div>
     <dl className="customer-lookup__loyalty-details">

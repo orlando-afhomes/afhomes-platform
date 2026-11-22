@@ -48,6 +48,8 @@ export type PortalOverview = {
     mobileNumber: string;
     email: string;
     landline: string;
+    /** The customer's own profile picture (data URL), or null. */
+    photoUrl: string | null;
   };
   memberships: PortalMembership[];
   membership: PortalMembership;

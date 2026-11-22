@@ -30,6 +30,7 @@ import {
   isValidEmail,
   isValidName,
 } from "@/shared/utils/input-sanitizers";
+import { validateProfileImageFile } from "@/shared/forms/validation/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { FormSkeleton } from "@/shared/components/modern/skeletons";
@@ -128,12 +129,9 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
 
   const handleAvatarFile = (file: File) => {
     setAvatarError(null);
-    if (!file.type.startsWith("image/")) {
-      setAvatarError("Unsupported image format.");
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      setAvatarError("Image must be 2MB or smaller.");
+    const imageError = validateProfileImageFile(file);
+    if (imageError) {
+      setAvatarError(imageError);
       return;
     }
     const reader = new FileReader();

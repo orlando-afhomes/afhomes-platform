@@ -290,7 +290,7 @@ function PublicOfferDialog({ editing, onClose }: { editing: PromoView; onClose: 
         {rewards.length === 0 ? <p className="tw:mb-3 tw:text-sm tw:text-muted-foreground">No rewards configured. Add a named reward and its approved point cost.</p> : null}
         <div className="tw:flex tw:flex-col tw:gap-4">
           {rewards.map((reward) => (
-            <div key={reward.key} className="tw:grid tw:gap-3 tw:rounded-lg tw:border tw:border-border tw:bg-muted/30 tw:p-3 tw:sm:grid-cols-2">
+            <div key={reward.key} className="tw:grid tw:grid-cols-1 tw:gap-3 tw:rounded-lg tw:border tw:border-border tw:bg-muted/30 tw:p-3 tw:sm:grid-cols-2">
               <TextField label="Reward name" required value={reward.name} maxLength={80} onChange={(value) => patchReward(reward.key, { name: value })} />
               <SelectField label="Outlet" required value={reward.outletId} options={editing.redeemOutletIds.map((id) => ({ value: id, label: outletName(id) }))} onChange={(value) => patchReward(reward.key, { outletId: value })} />
               <div className="tw:sm:col-span-2">
@@ -363,7 +363,7 @@ function PromoDialog({ editing, onClose }: { editing: PromoView | null; onClose:
       onClose={onClose}
       onSubmit={() => void submit()}
     >
-      <div className="tw:grid tw:gap-x-4 tw:gap-y-3 tw:sm:grid-cols-2">
+      <div className="tw:grid tw:grid-cols-1 tw:gap-x-4 tw:gap-y-3 tw:sm:grid-cols-2">
         <div className="tw:min-w-0 tw:sm:col-span-2">
           <TextField label="Promo name" required value={name} maxLength={80} onChange={(value) => { setName(value); setError(undefined); }} />
         </div>
@@ -372,7 +372,7 @@ function PromoDialog({ editing, onClose }: { editing: PromoView | null; onClose:
         <MoneyField label="Pesos spent per point" required disabled={locked} value={rate} onChange={setRate} hint="Spending that counts divided by this amount, rounded down to whole points." />
         <SelectField label="Status" required value={status} options={[{ value: "draft", label: "Draft" }, { value: "active", label: "Active" }]} onChange={(value) => setStatus(value === "active" ? "active" : "draft")} />
       </div>
-      <div className="tw:grid tw:gap-4 tw:rounded-lg tw:border tw:border-border tw:bg-muted/40 tw:p-4 tw:sm:grid-cols-2">
+      <div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:rounded-lg tw:border tw:border-border tw:bg-muted/40 tw:p-4 tw:sm:grid-cols-2">
         <fieldset className="tw:min-w-0">
           <legend className="tw:mb-3 tw:text-sm tw:font-semibold">Earn points at</legend>
           {options.map((outlet) => (
@@ -386,7 +386,7 @@ function PromoDialog({ editing, onClose }: { editing: PromoView | null; onClose:
           ))}
         </fieldset>
       </div>
-      <div className="tw:grid tw:gap-4 tw:sm:grid-cols-2">
+      <div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:sm:grid-cols-2">
         <StandardDateField label="Points expire on" value={expiry} onChange={setExpiry} hint="Leave empty if the points never expire. It cannot be before the end date." />
       </div>
     </FormDialog>

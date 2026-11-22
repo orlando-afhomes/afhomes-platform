@@ -10,7 +10,7 @@ const BODY_COPY =
 export function CustomerImportHowItWorks() {
   const titleId = useId();
   return (
-    <div className="customer-import-how-it-works tw:grid tw:gap-4 tw:lg:grid-cols-[minmax(0,1fr)_15rem]">
+    <div className="customer-import-how-it-works tw:grid tw:grid-cols-1 tw:gap-4 tw:lg:grid-cols-[minmax(0,1fr)_15rem]">
       <section
         aria-labelledby={titleId}
         className="tw:flex tw:flex-col tw:gap-4 tw:rounded-xl tw:border tw:border-border tw:bg-secondary/40 tw:p-5 tw:shadow-(--shadow-soft) tw:sm:flex-row tw:sm:items-center"
@@ -29,7 +29,7 @@ export function CustomerImportHowItWorks() {
           <p className="tw:m-0 tw:text-sm tw:text-muted-foreground">{BODY_COPY}</p>
         </div>
       </section>
-      <div className="tw:grid tw:gap-4 tw:sm:grid-cols-2 tw:lg:grid-cols-1 tw:lg:gap-3">
+      <div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:sm:grid-cols-2 tw:lg:grid-cols-1 tw:lg:gap-3">
         <div className="tw:flex tw:items-center tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-4 tw:shadow-(--shadow-soft)">
           <span
             aria-hidden="true"

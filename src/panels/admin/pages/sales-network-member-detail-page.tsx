@@ -4,7 +4,7 @@ import { EMPTY } from "@/shared/lib/empty-value";
 import { useId, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { BadgeCheck, Briefcase, CalendarDays, FileText, History, Home, Layers, MapPin, Network, Phone, User, Users } from "lucide-react";
+import { ArrowLeft, ArrowRightLeft, BadgeCheck, Briefcase, CalendarDays, FileText, History, Home, Layers, MapPin, Network, Pencil, Phone, RefreshCw, User, UserCheck, UserX, Users, type LucideIcon } from "lucide-react";
 import type { OrgMember } from "@/modules/organization/types";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
@@ -199,6 +199,13 @@ export function SalesNetworkMemberDetailPage() {
     transfer: { variant: "warning", rank: 1 },
     deactivate: { variant: "destructive", rank: 3 },
   };
+  const HEADER_ICON: Record<string, LucideIcon> = {
+    reactivate: UserCheck,
+    deactivate: UserX,
+    transfer: ArrowRightLeft,
+    "set-accreditation": BadgeCheck,
+    "renew-accreditation": RefreshCw,
+  };
   const headerButtons = menu.extraItems
     .map((item) => ({ ...item, ...(HEADER_BUTTON[item.key] ?? { variant: "info" as const, rank: 2 }) }))
     .sort((a, b) => a.rank - b.rank);
@@ -236,18 +243,21 @@ export function SalesNetworkMemberDetailPage() {
       actions={
         <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
           <Link href="/admin/sales-network/members" className={cn(buttonVariants({ variant: "outline" }), "tw:min-h-11 tw:sm:min-h-8")}>
-            Back
+            <ArrowLeft aria-hidden="true" /> Back
           </Link>
           {menu.onEdit ? (
             <Button type="button" onClick={menu.onEdit}>
-              Edit
+              <Pencil aria-hidden="true" /> Edit
             </Button>
           ) : null}
-          {headerButtons.map((item) => (
-            <Button key={item.key} type="button" variant={item.variant} onClick={item.onClick}>
-              {item.label}
-            </Button>
-          ))}
+          {headerButtons.map((item) => {
+            const Icon = HEADER_ICON[item.key] ?? BadgeCheck;
+            return (
+              <Button key={item.key} type="button" variant={item.variant} onClick={item.onClick}>
+                <Icon aria-hidden="true" /> {item.label}
+              </Button>
+            );
+          })}
         </div>
       }
     >
@@ -284,7 +294,7 @@ export function SalesNetworkMemberDetailPage() {
         <AdminTabs items={tabItems} value={activeTab} onChange={setTab} label="Member detail views" idPrefix={tabPrefix} />
 
         {activeTab === "overview" ? (
-          <div role="tabpanel" id={`${tabPrefix}-panel-overview`} aria-labelledby={`${tabPrefix}-tab-overview`} className="tw:grid tw:gap-5 tw:lg:grid-cols-2">
+          <div role="tabpanel" id={`${tabPrefix}-panel-overview`} aria-labelledby={`${tabPrefix}-tab-overview`} className="tw:grid tw:grid-cols-1 tw:gap-5 tw:lg:grid-cols-2">
             <AdminSection title="Membership" icon={User}>
               <InfoGrid label="Membership details" columns={2}>
                 <InfoItem term="Accreditation Number">{aaDisplay(member)}</InfoItem>
@@ -334,7 +344,7 @@ export function SalesNetworkMemberDetailPage() {
         ) : null}
 
         {activeTab === "profile" && profile ? (
-          <div role="tabpanel" id={`${tabPrefix}-panel-profile`} aria-labelledby={`${tabPrefix}-tab-profile`} className="tw:grid tw:gap-5 tw:lg:grid-cols-2">
+          <div role="tabpanel" id={`${tabPrefix}-panel-profile`} aria-labelledby={`${tabPrefix}-tab-profile`} className="tw:grid tw:grid-cols-1 tw:gap-5 tw:lg:grid-cols-2">
             <AdminSection title="Personal" icon={User}>
               <InfoGrid label="Personal details" columns={2}>
                 <InfoItem term="First Name">{profile.firstName}</InfoItem>

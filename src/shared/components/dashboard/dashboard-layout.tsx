@@ -1,6 +1,7 @@
 import { useId, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { PageActions } from "./page-actions";
 
 /** Icon chip tones shared by every dashboard card; colors come from the brand tokens. */
 export type DashboardTone = "brand" | "info" | "accent" | "violet" | "soft";
@@ -34,7 +35,7 @@ export function DashboardHeader({ title, description, actions }: { title: string
         <h1 className="tw:text-[1.75rem] tw:leading-tight tw:font-bold tw:tracking-tight tw:text-foreground">{title}</h1>
         {description ? <p className="tw:mt-1.5 tw:text-sm tw:text-muted-foreground">{description}</p> : null}
       </div>
-      {actions ? <div className="tw:flex tw:shrink-0 tw:flex-wrap tw:items-center tw:gap-2">{actions}</div> : null}
+      {actions ? <PageActions>{actions}</PageActions> : null}
     </div>
   );
 }
@@ -81,7 +82,7 @@ export function DashboardCard({
             </p>
           ) : null}
         </div>
-        {actions ? <div className="tw:flex tw:shrink-0 tw:flex-wrap tw:items-center tw:gap-2">{actions}</div> : null}
+        {actions ? <PageActions>{actions}</PageActions> : null}
       </div>
       <div className="tw:mt-5 tw:flex tw:min-w-0 tw:flex-1 tw:flex-col">{children}</div>
     </section>

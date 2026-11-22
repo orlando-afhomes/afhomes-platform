@@ -23,7 +23,7 @@ export function currentCardHolders(store: MockStore, membershipId: string) {
   };
   const owner = JSON.stringify([customer.id, membership.cardId, membership.cardServices?.length ?? 0]);
   const holders: Array<{ key: string; info: MemberQrHolder }> = [
-    { key: owner, info: { ...info, holder: "primary", holderName: customer.displayName } },
+    { key: owner, info: { ...info, holder: "primary", holderName: customer.displayName, photoUrl: customer.profilePhoto?.dataUrl ?? null } },
   ];
   const extra = customer.supplementaryHolder;
   if (grant?.benefits.supplementaryHolders && extra && extra.firstName && extra.lastName) {

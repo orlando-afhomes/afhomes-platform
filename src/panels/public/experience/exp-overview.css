@@ -55,4 +55,4 @@
   box-shadow: 0 8px 20px -14px rgb(14 43 32 / 0.4);
 }
 .site-experience-page .exp-trust .exp-trust__logo { width: 32px; height: 32px; flex-shrink: 0; border-radius: 999px; background: #fff; }
-.exp-trust__label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-brand-deep); }
+.exp-trust__label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-brand-deep); }

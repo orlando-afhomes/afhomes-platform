@@ -228,7 +228,7 @@ button.site-room-card__link { width: 100%; border: 0; background: transparent; p
 }
 .site-room-card__icon svg { width: 18px; height: 18px; stroke-width: 1.75; }
 .site-room-card__text { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
-.site-room-card__category { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: color-mix(in oklab, var(--color-accent) 70%, var(--color-brand-deep)); }
+.site-room-card__category { font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: color-mix(in oklab, var(--color-accent) 70%, var(--color-brand-deep)); }
 .site-room-card__name { overflow: hidden; font-family: var(--font-display), Georgia, "Times New Roman", serif; font-size: 19px; line-height: 1.2; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; color: var(--color-brand-deep); }
 .site-room-card__arrow {
   position: absolute;
@@ -401,7 +401,7 @@ span.site-room-card__arrow { pointer-events: none; }
 /* Narrow cards (small phones, 2-col tablets, early 3-col desktop): shrink the stat internals so the figures never crowd. */
 @container tier-card (max-width: 320px) {
   .site-tier-card__stat { padding: 0 12px; }
-  .site-tier-card__label { font-size: 11px; letter-spacing: 0.06em; }
+  .site-tier-card__label { font-size: 12px; letter-spacing: 0.06em; }
   .site-tier-card__icon { width: 24px; height: 24px; }
   .site-tier-card__value { font-size: 26px; }
 }

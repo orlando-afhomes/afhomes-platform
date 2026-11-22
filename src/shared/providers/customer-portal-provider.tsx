@@ -11,8 +11,7 @@ type CustomerPortalContextValue = {
   customerId: string | null;
   customer: PortalCustomer | null;
   repository: CustomerPortalRepository;
-  samples: PortalCustomer[];
-  signIn: (email: string) => void;
+  signIn: (email: string, password: string) => void;
   signOut: () => void;
 };
 
@@ -24,16 +23,15 @@ export function CustomerPortalProvider({ children, initialCustomerId }: { childr
   const queryClient = useQueryClient();
   const [customerId, setCustomerId] = useState<string | null>(initialCustomerId ?? null);
   const repository = useMemo(() => new MockCustomerPortalRepository(store, customerId), [store, customerId]);
-  const samples = useMemo(() => repository.sampleCustomers(), [repository]);
-  const customer = customerId ? samples.find((item) => item.id === customerId) ?? null : null;
+  const customer = customerId ? repository.sampleCustomers().find((item) => item.id === customerId) ?? null : null;
 
   const clearPortalCache = useCallback(() => {
     queryClient.removeQueries({ queryKey: ["customer-portal"] });
   }, [queryClient]);
 
-  const signIn = useCallback((email: string) => {
-    const match = repository.findCustomerByEmail(email);
-    if (!match) throw new Error("Use the sample customer email shown on this page.");
+  const signIn = useCallback((email: string, password: string) => {
+    const match = repository.authenticate(email, password);
+    if (!match) throw new Error("Incorrect email or password.");
     clearPortalCache();
     setCustomerId(match.id);
   }, [clearPortalCache, repository]);
@@ -44,7 +42,7 @@ export function CustomerPortalProvider({ children, initialCustomerId }: { childr
   }, [clearPortalCache]);
 
   return (
-    <CustomerPortalContext.Provider value={{ customerId, customer, repository, samples, signIn, signOut }}>
+    <CustomerPortalContext.Provider value={{ customerId, customer, repository, signIn, signOut }}>
       {children}
     </CustomerPortalContext.Provider>
   );

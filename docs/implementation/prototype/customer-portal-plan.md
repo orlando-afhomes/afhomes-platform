@@ -122,7 +122,7 @@
 - Test: customer-portal repository, provider/cache, and page tests under `src/data/mock/`, `src/shared/providers/`, and `src/panels/customer-portal/`
 
 **Interfaces**
-- Mock sign-in selects only a seeded synthetic customer; keep it separate from staff `DevIdentity` and staff credentials.
+- Mock sign-in is email + password for a seeded synthetic customer (owner decision, 2026-11-22): the page shows no sample or prototype notes, and the test password is `MOCK_CUSTOMER_PASSWORD` in `src/data/mock/customer-portal-repository.ts` (mock only). "Forgot Password?" links to `/contact`; no reset flow exists. The customer may also upload their own profile picture (owner decision, 2026-11-22): images only, 2MB or smaller, shown at once, replaceable and removable; staff and the owning seller see it on the customer record, and staff see it on the counter QR lookup. The portal QR is the same image as the staff "Show QR" (logo in the center). keep it separate from staff `DevIdentity` and staff credentials.
 - Repository methods resolve the customer from the mock session, not a customer ID supplied in a URL or form. The portal may read only that customer’s profile, memberships, Promo/Stay balances, linked activity, and QR.
 - Contact update input is limited to `landline`, `mobileNumber`, and `email`, using existing validation. Do not call the broad staff `CustomerRepository.correct()` method.
 - Display Promo Points and Stay Points as separate balances and histories. Show linked bills/rewards/bookings only when they belong to the signed-in customer. Display the issued membership QR read-only; do not expose QR replacement.

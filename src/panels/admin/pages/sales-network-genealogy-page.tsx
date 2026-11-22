@@ -158,7 +158,7 @@ export function SalesNetworkGenealogyPage({ embedded = false }: { embedded?: boo
           </Button>
         </div>
       </Card>
-      <div className="tw:grid tw:gap-3 tw:lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="tw:grid tw:grid-cols-1 tw:gap-3 tw:lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Card className="tw:min-w-0 tw:p-3">
           <section aria-label="Team tree" className="tw:min-w-0">
           {membersQuery.isLoading ? (

@@ -39,7 +39,7 @@ export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; column
 /** Grid of titled cards (products, schemes, team panels). */
 export function CardGridSkeleton({ cards = 3, className }: { cards?: number; className?: string }) {
   return (
-    <div className={cn("tw:grid tw:gap-4 tw:sm:grid-cols-2 tw:lg:grid-cols-3", className)}>
+    <div className={cn("tw:grid tw:grid-cols-1 tw:gap-4 tw:sm:grid-cols-2 tw:lg:grid-cols-3", className)}>
       {Array.from({ length: cards }, (_, index) => (
         <div key={index} className={cn(CARD, "tw:flex tw:flex-col tw:gap-4 tw:p-5")}>
           <div className="tw:flex tw:items-center tw:gap-3">
@@ -71,7 +71,7 @@ export function DetailSkeleton() {
           <Skeleton key={index} className="tw:h-9 tw:w-24" />
         ))}
       </div>
-      <div className="tw:grid tw:gap-4 tw:lg:grid-cols-2">
+      <div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:lg:grid-cols-2">
         {Array.from({ length: 2 }, (_, card) => (
           <div key={card} className={cn(CARD, "tw:flex tw:flex-col tw:gap-4 tw:p-5")}>
             <Skeleton className="tw:h-5 tw:w-1/3" />

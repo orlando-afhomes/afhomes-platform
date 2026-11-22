@@ -52,7 +52,7 @@ export function NotificationsMenu() {
         {unreadTotal > 0 ? (
           <span
             aria-hidden="true"
-            className="tw:absolute tw:-top-0.5 tw:-right-0.5 tw:flex tw:h-5 tw:min-w-5 tw:items-center tw:justify-center tw:rounded-full tw:bg-destructive tw:px-1 tw:text-[11px] tw:font-bold tw:text-white"
+            className="tw:absolute tw:-top-0.5 tw:-right-0.5 tw:flex tw:h-5 tw:min-w-5 tw:items-center tw:justify-center tw:rounded-full tw:bg-destructive tw:px-1 tw:text-xs tw:font-bold tw:text-white"
           >
             {badge}
           </span>

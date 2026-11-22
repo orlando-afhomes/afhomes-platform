@@ -71,7 +71,7 @@ describe("reconciliation and historical import pages", () => {
     const csv = "Receipt reference,Receipt date,Amount,Payment method,Customer,Sale reference,Sale status\nR-1,bad-date,-5,Cash,Customer,Sale,Open";
     const file = new File([csv], "receipts.csv", { type: "text/csv" });
     Object.defineProperty(file, "text", { value: async () => csv });
-    await user.upload(screen.getByLabelText(/Receipt file/), file);
+    await user.upload(await screen.findByLabelText(/Receipt file/), file);
     const table = await screen.findByRole("table", { name: "Import Preview for receipts.csv" });
     expect(within(table).getByRole("cell", { name: "2 issues" })).toBeInTheDocument();
     expect(within(table).queryByText(/Receipt date must be/)).toBeNull();

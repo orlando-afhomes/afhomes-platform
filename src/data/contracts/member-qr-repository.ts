@@ -9,6 +9,8 @@ export type MemberQrHolder = {
   vipNumber: string;
   status: string;
   financialHold: boolean;
+  /** The primary cardholder's own profile picture (data URL) so staff can match the face; never set for a supplementary holder. */
+  photoUrl?: string | null;
   scannedCode?: string;
 };
 

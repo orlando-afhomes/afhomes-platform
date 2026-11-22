@@ -8,7 +8,7 @@ import { recordLabel } from "@/shared/lib/record-label";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Pencil, RotateCcw, Trash2, X } from "lucide-react";
+import { Check, FilePlus2, FileText, Pencil, RotateCcw, Trash2, X } from "lucide-react";
 import { useApproveCustomer, useContracts, useDiscardCustomerDraft, useMemberships, useOperation, usePaymentSchemes, useRejectCustomer, useSales, useSendBackCustomer } from "@/data/business-queries";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import { canPrepareVipContract, isEditableContractStatus, preferOpenContract } from "@/modules/contracts/rules";
@@ -157,12 +157,12 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
         <>
           {canPrepare && ownRecord && currentPurchase && isEditableContractStatus(currentPurchase.status) ? (
             <Link href={contractHref(currentPurchase.id)} className={buttonVariants({ className: "tw:min-h-11 tw:sm:min-h-8" })}>
-              Continue Contract
+              <FileText aria-hidden="true" /> Continue Contract
             </Link>
           ) : null}
           {canStartPurchase ? (
             <Button variant={currentPurchase ? "outline" : "default"} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setPreparing(hasPurchaseHistory ? "separate" : "initial")}>
-              {hasPurchaseHistory ? "New VIP Purchase" : "Prepare Contract"}
+              <FilePlus2 aria-hidden="true" /> {hasPurchaseHistory ? "New VIP Purchase" : "Prepare Contract"}
             </Button>
           ) : null}
           {canApprove && canReviewRegistration(customer.status) ? (
@@ -209,7 +209,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
       {purchases.length > 1 ? <SelectField label="VIP purchase" value={contract?.id} options={purchases.map((item) => ({ value: item.id, label: recordLabel(item.vipNumber ?? EMPTY, tierName(item.productCode), humanize(item.status)) }))} onChange={(value) => setSelectedContractId(value ?? "")} /> : null}
       <CustomerDetailTabs value={tab} onChange={setTab} />
       {tab === "overview" ? (
-        <div className="tw:grid tw:gap-6 tw:lg:grid-cols-5">
+        <div className="tw:grid tw:grid-cols-1 tw:gap-6 tw:lg:grid-cols-5">
           <div className="tw:min-w-0 tw:lg:col-span-3 tw:flex tw:flex-col tw:gap-6">
             <CustomerInfoCard customer={viewCustomer} vipPlanName={tierName(viewCustomer.vipPlan)} ownerName={ownerName} recommenderName={recommenderName} referralReference={ownRecord ? customer.referralReference : null} />
             <LinkedRecordsCard

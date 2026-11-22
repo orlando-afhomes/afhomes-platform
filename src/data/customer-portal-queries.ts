@@ -17,6 +17,22 @@ export function useCustomerPortalOverview() {
   });
 }
 
+export function useUpdatePortalPhoto() {
+  const { customerId, repository } = useCustomerPortal();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (photo: { dataUrl: string; fileName: string } | null) => {
+      if (!customerId) throw new Error("Sign in first.");
+      return Promise.resolve(repository.updateProfilePhoto(photo));
+    },
+    onSuccess: (overview) => {
+      if (customerId) queryClient.setQueryData(overviewKey(customerId), overview);
+      // Staff screens read the same record, so refresh their customer queries too.
+      void queryClient.invalidateQueries({ queryKey: ["customers"] });
+    },
+  });
+}
+
 export function useUpdatePortalContact() {
   const { customerId, repository } = useCustomerPortal();
   const queryClient = useQueryClient();

@@ -18,7 +18,7 @@ export function AdminBrand({ tone = "dark", iconOnly = false, className }: { ton
       {iconOnly ? null : (
         <span className="tw:flex tw:min-w-0 tw:flex-col tw:gap-px">
           <span className={cn("tw:text-[15px] tw:leading-tight tw:font-bold tw:tracking-tight", tone === "dark" ? "tw:text-white" : "tw:text-foreground")}>AFHomes</span>
-          <span className={cn("tw:text-[11px] tw:leading-tight tw:whitespace-nowrap", tone === "dark" ? "tw:text-white/65" : "tw:text-muted-foreground")}>Management Platform</span>
+          <span className={cn("tw:text-xs tw:leading-tight tw:whitespace-nowrap", tone === "dark" ? "tw:text-white/65" : "tw:text-muted-foreground")}>Management Platform</span>
         </span>
       )}
     </span>

@@ -38,7 +38,7 @@ export function AdminSidebar({ collapsed }: { collapsed: boolean; onCollapse?: (
           {collapsed ? null : (
             <span className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:leading-tight">
               <span className="tw:truncate tw:text-[13px] tw:font-semibold tw:text-white">{user.name}</span>
-              <span className="tw:truncate tw:text-[11px] tw:text-white/65">{user.roleLabel}</span>
+              <span className="tw:truncate tw:text-xs tw:text-white/65">{user.roleLabel}</span>
             </span>
           )}
           {collapsed ? null : <LogoutButton onClick={logout} />}

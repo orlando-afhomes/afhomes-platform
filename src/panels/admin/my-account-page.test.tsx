@@ -95,7 +95,7 @@ describe("my account page", () => {
   it("rejects non-image and oversized profile pictures", async () => {
     render(<TestWrapper />);
     await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 });
-    const file = screen.getByLabelText("Profile picture file");
+    const file = await screen.findByLabelText("Profile picture file");
     fireEvent.change(file, { target: { files: [new File(["x"], "a.txt", { type: "text/plain" })] } });
     expect(await screen.findByText("Unsupported image format.")).toBeInTheDocument();
     const big = new File(["x"], "big.png", { type: "image/png" });

@@ -105,7 +105,7 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
           <ContractTiles contract={record.contract} payments={record.payments} />
           <ContractDetailTabs value={tab} onChange={setTab} />
           {tab === "overview" ? (
-            <div className="tw:grid tw:gap-6 tw:lg:grid-cols-5">
+            <div className="tw:grid tw:grid-cols-1 tw:gap-6 tw:lg:grid-cols-5">
               <div className="tw:min-w-0 tw:lg:col-span-3">
                 <ContractTermsSection record={record} />
               </div>

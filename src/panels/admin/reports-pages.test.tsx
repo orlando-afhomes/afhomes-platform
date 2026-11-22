@@ -136,6 +136,7 @@ describe("reports summary", () => {
   it("shows one card per report and opens a report on click", async () => {
     const onOpen = vi.fn();
     show("dev-finance", <ReportsSummaryPanel onOpen={onOpen} />);
+    await screen.findByRole("button", { name: "Open the Collections report" });
     const buttons = await screen.findAllByRole("button", { name: /^Open the .* report$/ });
     expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual([
       "Open the Sales report",
@@ -152,7 +153,7 @@ describe("reports summary", () => {
 
   it("groups the cards under Money, People and Points and offers From and To dates", async () => {
     show("dev-finance", <ReportsSummaryPanel onOpen={vi.fn()} />);
-    await screen.findByRole("button", { name: "Open the Sales report" });
+    await screen.findByRole("button", { name: "Open the Collections report" });
     expect(screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent)).toEqual(["Money", "People", "Points"]);
     expect(screen.getByLabelText("From")).toBeInTheDocument();
     expect(screen.getByLabelText("To")).toBeInTheDocument();

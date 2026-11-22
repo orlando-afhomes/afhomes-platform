@@ -7,7 +7,11 @@ import type { Membership } from "@/modules/membership/types";
 import type { PortalActivity, PortalContactInput, PortalCustomer, PortalMembership, PortalOverview } from "@/modules/customer-portal/types";
 import { promoBalance, promoBalanceByPromo } from "@/modules/promos/rules";
 import { validateEmailAddress, validateLandline, validateMobileNumber } from "@/shared/forms/validation/contact";
+import { validateProfileImageDataUrl } from "@/shared/forms/validation/image";
 import { manilaToday } from "@/shared/lib/dates";
+
+// shortcut: one shared mock customer password; replace with real authentication (Better Auth) when the backend is authorized. Never shown in the UI.
+export const MOCK_CUSTOMER_PASSWORD = "Afhomes@2026";
 
 const contactOf = (customer: Customer | undefined, key: "mobileNumber" | "email" | "landline") => customer?.[key]?.trim() ?? "";
 
@@ -22,10 +26,22 @@ export class MockCustomerPortalRepository implements CustomerPortalRepository {
       .map((customer) => ({ id: customer.id, displayName: customer.displayName, email: customer.email! }));
   }
 
+  /**
+   * The one customer who signs in with this email. The email must belong to exactly one customer record
+   * (cardholder or not); only then is that customer checked for a card. Shared emails sign nobody in.
+   */
   findCustomerByEmail(email: string): PortalCustomer | undefined {
     const term = email.trim().toLowerCase();
     if (!term) return undefined;
-    return this.sampleCustomers().find((customer) => customer.email.toLowerCase() === term);
+    const owners = this.store.customers.filter((customer) => customer.email?.trim().toLowerCase() === term);
+    if (owners.length !== 1) return undefined;
+    return this.sampleCustomers().find((customer) => customer.id === owners[0].id);
+  }
+
+  /** Mock sign-in: the same message for an unknown email and a wrong password, so neither is revealed. */
+  authenticate(email: string, password: string): PortalCustomer | undefined {
+    const match = this.findCustomerByEmail(email);
+    return match && password === MOCK_CUSTOMER_PASSWORD ? match : undefined;
   }
 
   private currentCustomer(): Customer {
@@ -54,6 +70,7 @@ export class MockCustomerPortalRepository implements CustomerPortalRepository {
         id: customer.id, displayName: customer.displayName, customerNumber: customer.customerNumber ?? null,
         firstName: customer.firstName ?? null, lastName: customer.lastName ?? null,
         mobileNumber: contactOf(customer, "mobileNumber"), email: contactOf(customer, "email"), landline: contactOf(customer, "landline"),
+        photoUrl: customer.profilePhoto?.dataUrl ?? null,
       },
       memberships: memberships.map((item) => this.viewMembership(item)),
       membership: this.viewMembership(membership),
@@ -84,9 +101,23 @@ export class MockCustomerPortalRepository implements CustomerPortalRepository {
       ?? validateEmailAddress(email)
       ?? validateLandline(landline);
     if (error) throw new Error(error);
+    const taken = this.store.customers.some((other) => other.id !== customer.id && other.email?.trim().toLowerCase() === email.toLowerCase());
+    if (taken) throw new Error("This email can't be used. Enter a different one.");
     customer.mobileNumber = mobileNumber;
     customer.email = email;
     customer.landline = landline || null;
+    return this.overview();
+  }
+
+  updateProfilePhoto(photo: { dataUrl: string; fileName: string } | null): PortalOverview {
+    const customer = this.currentCustomer();
+    if (photo) {
+      const error = validateProfileImageDataUrl(photo.dataUrl);
+      if (error) throw new Error(error);
+      customer.profilePhoto = { dataUrl: photo.dataUrl, fileName: photo.fileName.slice(0, 120) };
+    } else {
+      customer.profilePhoto = null;
+    }
     return this.overview();
   }
 

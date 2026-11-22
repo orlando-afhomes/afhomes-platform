@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { BadgeCheck, History, Info, Receipt } from "lucide-react";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { matchesSearch } from "@/shared/lib/search";
 import { useOperation, usePayments } from "@/data/business-queries";
@@ -59,10 +60,10 @@ export function IgpActions({ onOpen, onOpenHistory }: { onOpen: (dialog: IgpHead
   const register = useIgpRegister(modules.has("sales") || modules.has("finance")).data;
   if (!register) return null;
   return <>
-    {canEnter && <Button onClick={() => onOpen("record")}>Record Sale</Button>}
-    {canManage && <Button variant="info" onClick={() => onOpen("accredit")}>Record JA&D Accreditation</Button>}
-    {canManage && <Button variant="warning" onClick={() => onOpen("threshold")}>When a Sale Counts</Button>}
-    {canManage && register.accreditations.length > 0 && <Button variant="outline" onClick={onOpenHistory}>JA&D Approval History</Button>}
+    {canEnter && <Button onClick={() => onOpen("record")}><Receipt aria-hidden="true" /> Record Sale</Button>}
+    {canManage && <Button variant="info" onClick={() => onOpen("accredit")}><BadgeCheck aria-hidden="true" /> Record JA&D Accreditation</Button>}
+    {canManage && <Button variant="warning" onClick={() => onOpen("threshold")}><Info aria-hidden="true" /> When a Sale Counts</Button>}
+    {canManage && register.accreditations.length > 0 && <Button variant="outline" onClick={onOpenHistory}><History aria-hidden="true" /> JA&D Approval History</Button>}
   </>;
 }
 

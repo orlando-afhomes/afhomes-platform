@@ -138,20 +138,20 @@ export function AllowanceReviewPanel() {
     <>
       <div className="tw:flex tw:flex-col tw:gap-6">
         <StepBlock step={1} title="Month and Leader" connector>
-          <div className="tw:grid tw:gap-4 tw:sm:grid-cols-2">
+          <div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:sm:grid-cols-2">
             <MonthField label="Month" required value={month} onChange={(value) => { setMonth(value); setResult(undefined); }} />
             <SelectField label="Internal Seller (IST) leader" required value={memberId} onChange={(value) => { setMemberId(value); setResult(undefined); }}
               options={(query.data?.members ?? []).map(({ id, name, position }) => ({ value: id, label: `${name} · ${position}` }))} />
           </div>
         </StepBlock>
         <StepBlock step={2} title="Figures for Each Period" description="Fill in both periods. Leave a field empty if the amount is zero." connector>
-          <div className="tw:grid tw:gap-4 tw:lg:grid-cols-2">
+          <div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:lg:grid-cols-2">
             <Stretch title="Qualifying Period" value={qualifying} onChange={(value) => { setQualifying(value); setResult(undefined); }} />
             <Stretch title="Extended Period" value={extended} onChange={(value) => { setExtended(value); setResult(undefined); }} />
           </div>
         </StepBlock>
         <StepBlock step={3} title="Company Spreadsheet Figures (Optional)" description="Type the amounts from the company Excel file so the system can compare them.">
-          <div className="tw:grid tw:gap-4 tw:sm:grid-cols-3">
+          <div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:sm:grid-cols-3">
             <MoneyField label="Basic allowance" value={company.ba} onChange={(ba) => { setCompany({ ...company, ba }); setResult(undefined); }} />
             <MoneyField label="Performance allowance" value={company.pa} onChange={(pa) => { setCompany({ ...company, pa }); setResult(undefined); }} />
             <MoneyField label="Performance bonus" value={company.pb} onChange={(pb) => { setCompany({ ...company, pb }); setResult(undefined); }} />

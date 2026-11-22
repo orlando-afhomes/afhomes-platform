@@ -96,6 +96,8 @@ export type Customer = {
   governmentIdNumber?: string | null;
   /** Uploaded government ID image (data URL) for Finance and Admin review. */
   governmentIdImage?: CustomerImage | null;
+  /** Profile picture the customer uploads in the portal; shown on the record to staff and the owning seller, never in downline projections. */
+  profilePhoto?: CustomerImage | null;
   /** Printed nationality text, kept in sync with citizenshipCodes. */
   citizenship?: string | null;
   /** ISO codes from the citizenship reference list; more than one means dual or multiple citizenship. */

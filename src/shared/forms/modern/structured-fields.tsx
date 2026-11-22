@@ -95,7 +95,7 @@ export function OfficeAddressFields({ value, onChange, errors = {}, disabled, fi
   const municipalityOptions = listCities(value.province).map((name) => ({ value: name, label: name }));
   const derivedZip = postalFor(value.province, value.municipality) ?? "";
   return (
-    <div className="tw:grid tw:gap-3 tw:sm:grid-cols-2">
+    <div className="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-2">
       <TextField
         id="afhomes-office-street"
         label="No./Street/Subdivision"

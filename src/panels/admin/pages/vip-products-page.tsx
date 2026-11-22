@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { CircleCheck, CircleOff, Pencil, Plus, ShieldCheck } from "lucide-react";
 import { useApproveProduct, useDeleteProduct, useOperation, useProductDeleteBlockers, useUpdateProduct, useVipProducts } from "@/data/business-queries";
 import type { VipProduct } from "@/modules/vip/types";
@@ -17,15 +18,21 @@ import { ImagePreview } from "@/shared/components/modern/image-preview";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
+import { TableSkeleton } from "@/shared/components/modern/skeletons";
 import { ProductDialog } from "../components/vip-product-dialogs";
 import { ADMIN_AREA_TABS } from "../navigation";
 import { useAdminAreaTabAccess } from "../use-role-aware-navigation";
-import { PaymentSchemesTab } from "./payment-schemes-page";
-import { HistoryImportPanel } from "./history-import-page";
-import { IgpProjectsTab } from "./igp-projects-page";
 import { LIST_TABS, ListsPage, type ListTabId } from "./lists-page";
 import { RedemptionHolidaysPanel, RedemptionPointsTablePanel, RedemptionVenuesPanel } from "./redemption-points-table-page";
 import { TierLevelsPanel } from "./tier-codes-page";
+
+function SettingsPanelLoading() {
+  return <div role="status" aria-busy="true"><span className="tw:sr-only">Loading settings…</span><TableSkeleton /></div>;
+}
+
+const PaymentSchemesTab = dynamic(() => import("./payment-schemes-page").then((module) => module.PaymentSchemesTab), { loading: SettingsPanelLoading });
+const HistoryImportPanel = dynamic(() => import("./history-import-page").then((module) => module.HistoryImportPanel), { loading: SettingsPanelLoading });
+const IgpProjectsTab = dynamic(() => import("./igp-projects-page").then((module) => module.IgpProjectsTab), { loading: SettingsPanelLoading });
 
 /** Header button per tab: the label and the operation that allows it. */
 const ADD_BUTTONS: Partial<Record<string, { label: string; operation: "vip-products.manage" | "redemption.configure" | "igp.manage" }>> = {

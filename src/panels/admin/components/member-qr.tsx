@@ -12,6 +12,7 @@ import { Button } from "@/shared/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { activeRoles } from "@/data/mock/dev-identities";
 import { queryKeys } from "@/data/query-keys";
+import { renderMemberQrImage } from "@/shared/lib/member-qr-image";
 
 export function MemberQrButton({ membershipId, lookupShortcut = false }: { membershipId: string; lookupShortcut?: boolean }) {
   const [open, setOpen] = useState(false);
@@ -70,36 +71,8 @@ function QrImage({ holder, replace }: { holder: MemberQrCode; replace?: () => vo
   const [error, setError] = useState("");
   useEffect(() => {
     let disposed = false;
-    void import("qrcode").then(async ({ toCanvas }) => {
-      const qr = document.createElement("canvas");
-      // High error correction keeps the code readable around the small center mark.
-      await toCanvas(qr, holder.code, { scale: 5, margin: 4, errorCorrectionLevel: "H" });
-      const logo = new Image();
-      logo.src = "/images/member-qr-logo.jpg";
-      await logo.decode();
-      const card = document.createElement("canvas");
-      card.width = 360;
-      card.height = 324;
-      const context = card.getContext("2d");
-      if (!context) throw new Error("Could not create the QR image.");
-      context.fillStyle = "#fff";
-      context.fillRect(0, 0, card.width, card.height);
-      context.drawImage(qr, Math.floor((card.width - qr.width) / 2), 0);
-
-      const logoSize = 32;
-      const logoX = (card.width - logoSize) / 2;
-      const logoY = Math.floor((qr.height - logoSize) / 2);
-      const padding = 3;
-      context.fillRect(logoX - padding, logoY - padding, logoSize + 2 * padding, logoSize + 2 * padding);
-
-      context.drawImage(logo, logoX, logoY, logoSize, logoSize);
-      context.fillStyle = "#111";
-      context.textAlign = "center";
-      context.font = "bold 18px sans-serif";
-      context.fillText(holder.holderName, 180, 278, 328);
-      context.font = "16px sans-serif";
-      context.fillText(holder.vipNumber, 180, 304, 328);
-      if (!disposed) setImage(card.toDataURL("image/png"));
+    void renderMemberQrImage(holder).then((url) => {
+      if (!disposed) setImage(url);
     }).catch(() => { if (!disposed) setError("Could not create the QR image."); });
     return () => { disposed = true; };
   }, [holder]);

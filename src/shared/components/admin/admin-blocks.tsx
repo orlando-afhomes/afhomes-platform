@@ -91,7 +91,7 @@ export function InfoSplitCard({
   aside?: ReactNode;
 }) {
   return (
-    <div className="tw:grid tw:gap-4 tw:lg:grid-cols-[minmax(0,1fr)_16rem]">
+    <div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:lg:grid-cols-[minmax(0,1fr)_16rem]">
       <section
         aria-label={title}
         className="tw:flex tw:gap-4 tw:rounded-2xl tw:border tw:border-border tw:bg-card tw:p-5 tw:text-card-foreground tw:shadow-(--shadow-soft) tw:sm:p-6"

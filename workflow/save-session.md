@@ -111,70 +111,82 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-22 (Asia/Manila business date; exact time not recorded).
-- Repository: afhomes-platform; branch `develop`; HEAD `16e5fef` (verified in this run).
-- Tool and model: Claude Code (desktop app), Sonnet 5.5, medium effort (set by the owner's `/model` and `/effort` commands this session).
-- Session objective: Save a handoff, run two code reviews on the uncommitted milestone, plan and apply fixes for all 17 findings, then run the full test suite.
-- Development phase: Frontend prototype on typed in-memory mock data; backend, real authentication, database, migrations, and deployment remain deferred.
-- Context note: No compaction. The harness lost its Bash tool mid-session, so PowerShell was used for commands.
+- Saved at: 2026-11-22 (Asia/Singapore; exact time not recorded).
+- Repository: afhomes-platform.
+- Branch: develop.
+- HEAD: 1dbba88 (verified).
+- Objective: Implement approved AFHomes architecture phases 0–7, resume after an interrupted session, finish validation and save a handoff.
+- Development phase: Frontend prototype on typed browser-memory data. Backend, real authentication, database, migrations and deployment remain deferred.
+- Context note: This session resumed from prior conversation state and verified current files.
 
 ## 2. Current Project State
-- Verified: branch `develop`, HEAD `16e5fef` (`fix: tighten VIP plan sellability, experiences audit and mutation access refreshes`, 2026-11-22 15:04 +0800). Working tree clean (`git status --short` empty; nothing staged or untracked).
-- Verified: the owner committed in order `b64f4d3` (Phase 1 portal/promos/GSD), `6c943f2` (refactor: architecture boundaries, public content from repositories; the earlier large uncommitted milestone), and `16e5fef` (this session's 17 fixes, 32 files).
-- Current focus: the review-fix pass is done and committed. Open items are an owner decision and test hygiene (section 6).
+- Verified current branch and HEAD: develop at 1dbba88. Nothing is staged.
+- Architecture work from the previous run is present in commits through 1dbba88. This agent did not make Git writes.
+- This resumed turn completed the Settings lazy-load experiment, corrected asynchronous test readiness and updated the architecture report.
+- Existing portal/UI work remains in the tree and was preserved. The current tree has 59 modified tracked files and 7 untracked files; not all belong to this architecture task.
+- Settings defers Payment Plans, Import Old Records and Property Projects (IGP) using Next dynamic imports and an accessible skeleton.
 
 ## 3. Important Decisions
-- Owner answers this session (2026-11-22): keep `listPage` (documented Phase 7 in `docs/development/architecture-refactoring-report.md`); add a separate `experiences` audit module; Super Administrator keeps full control of approved products; narrow the `affectsAccess` flag only and keep the access gate's unmount-while-revalidating behavior.
-- Implemented rule: on an approved product, only an identity with `vip-products.approve` (Super Administrator) may change price, validity, earning cycles, points, minimum spend, VIP discount, supplementary holders or card level. Administrators keep description, benefits, image, listing, status and price-status flagging.
-- Assumption: the Administrator may still flag or resolve a price conflict (`priceStatus`) because it does not change what a customer pays.
-- Public VIP card: "Total points over N years" now follows the product's `earningCycles`; the discount-years text still comes from the owner-approved per-code table.
-- Project Git policy unchanged: only the owner stages, commits, pushes, merges, resets and deploys.
+- Keep the existing Next.js modular monolith and installed stack. No dependencies added.
+- Linked account data is the source of live roles for linked mock identities; unlinked synthetic personas retain their fixed roles.
+- Access changes cancel pending authority reads and remove protected query caches before fresh grants appear. Public Experiences, Offers and VIP projections remain allowlisted. Real production authorization requires backend checks in future work.
+- Per owner choice on 2026-11-22, new payment schemes reject conflicting single and per-tier payment codes. Existing contract snapshots and issued VIP Numbers remain unchanged. Document 06 records this decision.
+- Customer cursor pagination is additive, stable by ID, and limited to 1–100 entries. No HTTP/database rollout was included.
+- Git staging, commits, pushes, merges, resets and deployment remain owner-only.
 
 ## 4. Completed Work
-- Experience image path: `src/data/mock/experience-repository.ts` accepts plain `/images/` paths only and rejects control characters, `%`, `?`, `#` and backslashes; highlight titles capped at 80 (`src/modules/experiences/rules.ts`); toast reflects archived state (`src/panels/admin/pages/experiences-page.tsx`).
-- `experiences` audit module: `src/modules/audit/types.ts`, `src/modules/notifications/creation-actions.ts` (empty creation list), `src/panels/admin/navigation.ts` (one-tab `experiences` area), `src/panels/admin/notifications/module-nav.ts`, plus tests.
-- Products (`src/data/mock/product-repository.ts`): retired products cannot be approved; approved-product economic-edit guard; approved benefits cannot be cleared; `delete` formatting fixed. Promo preview requires `promos.manage` (`src/data/mock/promo-repository.ts`).
-- Purchase surfaces: customer import ignores drafts (`src/modules/customers/import.ts`); wizard blocks Continue for a retired resumed-draft card (`src/panels/admin/pages/customer-application-wizard.tsx`); repeat-purchase dialog treats a retired plan as no choice (`src/panels/admin/components/prepare-contract-dialog.tsx`); `tierOptions` reuses `isSellableProduct`.
-- Access: `affectsAccess` removed from the temporary-password, draft-save, sponsor-lookup and both registration mutations (`src/data/queries.ts`); notification provider and menu read operations from `useAccessSnapshot()`.
-- Public card: `earningCycles` added to the public allowlist; perks deduplicated; `src/modules/public-site/content/vip.test.ts` added.
-- Other files in the commit were committed by the owner; the exact 32-file list is in `git show --stat 16e5fef`.
+- Phases 0–7 are summarized in docs/development/architecture-refactoring-report.md.
+- Controlled production webpack comparison, five cacheless HTTP samples per variant with all other production source hashes unchanged:
+  - Eager Settings: 44 scripts, 727,295 compressed body bytes, 2,387,077 decoded bytes.
+  - Lazy Settings: 43 scripts, 718,537 compressed body bytes, 2,356,728 decoded bytes.
+  - Savings: 8,758 compressed bytes (1.204%). No browser speed/Core Web Vitals claim.
+- Production browser smoke verified synthetic sign-in and Products, Payment Plans, Property Projects and Import Old Records panels. The temporary tab was closed.
+- Final full Vitest run: 192 files, 1,983 tests passed, zero failed. Raw output: workflow/architecture-baseline/final-verified-tests.json.
+- TypeScript, lint, architecture scan (672 source files), architecture checker tests (4/4), production webpack build (100 pages), and git diff check passed.
+- The earlier full run had five readiness assertion failures. Four affected test files were updated to await async access/data; their corrected run passed 45/45 before the final clean full run.
 
 ## 5. Git Working Tree
-- Branch `develop`, HEAD `16e5fef`. Staged: none. Unstaged: none. Untracked: none. Deleted or renamed: none pending. Verified by read-only Git commands.
-- All of this session's edits are inside commit `16e5fef` (verified for key files by name; not every file compared line by line).
-- No Git write operation was performed by the agent.
+- Staged: none.
+- Unstaged: 59 modified tracked files. Existing owner portal/UI changes include customer portal, QR/repository changes, admin/public layout and styling. This resumed task changed the architecture report, Settings page lazy imports, and asynchronous readiness assertions in four tests. Other current edits may be owner work.
+- Untracked: 7 files: scripts/measure-route-payload.mjs; src/panels/admin/components/customer-detail-photo.test.tsx; src/shared/components/dashboard/page-actions.css; src/shared/components/dashboard/page-actions.test.tsx; src/shared/components/dashboard/page-actions.tsx; src/shared/forms/validation/image.ts; src/shared/lib/member-qr-image.ts.
+- Deleted/renamed: none reported.
+- Read-only diff stat: 59 files, 1,140 insertions, 399 deletions.
+- Initial and resumed inventories are under workflow/architecture-baseline. The tracked patch does not back up untracked files.
 
 ## 6. Pending Tasks
-- Owner decision: seeded product validity is 22/12/7 years (`src/data/mock/seed-data.ts`) but public copy says 20/10/5 years (`src/modules/public-site/content/vip.ts`, `VIP_BENEFITS`, `CARD_PRESENTATION`). Which is correct is not decided; nothing was changed.
-- Test hygiene: many admin page tests render before the async access gate resolves and fail on "Checking access…" (for example `area-page.test.tsx`, `admin-dashboard-page.test.tsx`, `admin-kit.test.tsx`, `departments-page.test.tsx`, `roles-page.test.tsx`, `customer-review-pages.test.tsx` Import-tab test). Cause is the access-gate work (`src/panels/admin/components/admin-auth-gate.tsx`), not these fixes (assumed from failure text; not baseline-tested).
-- Other failures seen once in the full run and judged unrelated: "Profile picture file" and "Receipt file" label lookups, reports summary card count (expected 7, got 6), plus 15-second timeouts in staff, business pages, modern fields and commissions suites.
-- Authority-changing commands still unmount the admin page by design; revisit only if the owner wants forms kept mounted.
-- Still deferred: Phase 2/3 items from the earlier plan if not already covered by commit `6c943f2` (not verified in this session), external Business Rules folder reconciliation, live Redemption/Services disabled.
+- No approved work remains in the architecture roadmap scope.
+- Browser Performance API timing and Core Web Vitals were not available; current evidence is HTTP script payload size and functional rendering.
+- Database pagination/indexes, snapshot-consistent cursors, production authentication and server authorization remain future separately authorized work.
+- Preserve current user changes in any later work.
 
 ## 7. Verification State
-- Targeted tests (data, module and repository suites): 154 of 154 passed. UI suites run: 79 of 80 passed; the one failure is the pre-existing Import-tab "Checking access…" test.
-- After the final regression fix: `tier-level-repository`, `business-flow` and `product-repository` suites 107 of 107 passed.
-- `npx tsc --noEmit`: passed (exit 0), last run after the final edit.
-- `npm run lint` (includes the architecture check, 669 files): passed, run before the last small test edits.
-- `npm run build`: passed, run before the last small test edits.
-- Full `npx vitest run`: failed in the access-gate, label-lookup, report-count and timeout groups listed in section 6; not re-run after the two regression fixes.
-- Browser QA: not performed. No dedicated test for the notification-operations change (one-line swap).
+- Full suite: 1,983/1,983 passed across 192 files.
+- TypeScript: passed.
+- ESLint plus architecture scan: passed.
+- Architecture checker tests: 4/4 passed.
+- Production webpack build: passed; 100 pages generated.
+- Browser smoke: passed for synthetic sign-in and the four Settings panels.
+- Payload measurement is compressed and decoded script response body size; it excludes headers, inline payload, CSS/fonts and does not measure latency.
+- Corrected targeted suites: commission/report 28/28, profile 11/11, reconciliation import 6/6, Settings/IGP 26/26.
+- Benign JSDOM scroll/canvas/navigation warnings and one React key warning appeared; final suite passed.
+- No database or migration check was needed or run.
 
 ## 8. Next Session Instructions
-- First action: run `/load`, confirm `git status --short` is still clean at `16e5fef`, then ask the owner about the validity-years mismatch.
-- If fixing tests, start with one shared fix so admin page tests wait for the access gate (look at `src/panels/admin/components/admin-auth-gate.tsx` and a shared test render helper), then re-run the full suite.
-- Files to inspect: `src/data/mock/product-repository.ts`, `src/data/access-snapshot.ts`, `src/data/protected-cache.ts`, `docs/implementation/prototype/customer-portal-plan.md`.
-- Approvals needed: owner authorization for any new phase or feature; all Git operations stay with the owner.
-- Warnings: do not enable live Redemption or Services, do not add public customer/card lookup, do not reintroduce Ant Design, and do not invent which validity figure is right.
+- First run /load; verify current status, branch and HEAD. Preserve the 59 modified tracked and 7 untracked files.
+- Review docs/development/architecture-refactoring-report.md and workflow/architecture-baseline/final-verified-tests.json.
+- Inspect the current diff for src/panels/admin/pages/vip-products-page.tsx and the four asynchronous test updates with the owner’s current changes before further edits.
+- No owner decision remains for the implemented architecture scope. New backend/auth/database/production work needs its own authorization.
+- Do not perform Git writes or destructive operations.
 
 ## 9. Execution Recommendation
-- Phase: QA
-- Current mode: not verified
-- Recommended next mode: Plan, then Build once approved
-- Current model: Sonnet 5.5, medium effort (reported by the app)
-- Recommended model: Sonnet 5.5
-- Effort: medium
-- Ultracode: OFF
-- Token optimization: fix the access-gate test pattern once in a shared helper, run the affected suites individually with longer timeouts, and skip the full suite until then.
-- Reason: the remaining work is a single shared test fix plus one owner decision, not new design.
+- Phase: QA complete.
+- Current mode: not verified.
+- Recommended next mode: Plan for any new requested scope.
+- Current model: GPT-6 Luna (supplied by system).
+- Recommended model: GPT-6 Sol, medium effort for routine frontend work; availability not verified.
+- Effort: medium.
+- Ultracode: OFF.
+- Token optimization: inspect only the targeted current diff and avoid repeating completed checks without new changes.
+- Reason: implementation and final verification are complete; remaining modifications include preserved owner work.
+
 <!-- SESSION_SNAPSHOT_END -->

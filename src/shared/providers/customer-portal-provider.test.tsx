@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MOCK_CUSTOMER_PASSWORD } from "@/data/mock/customer-portal-repository";
 import { createMockStore } from "@/data/mock/seed";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { CustomerPortalProvider, useCustomerPortal } from "./customer-portal-provider";
@@ -14,7 +15,7 @@ function SessionActions() {
   const { signIn, signOut } = useCustomerPortal();
   return (
     <>
-      <button type="button" onClick={() => signIn(SAMPLE_CUSTOMER_EMAIL)}>Sign in</button>
+      <button type="button" onClick={() => signIn(SAMPLE_CUSTOMER_EMAIL, MOCK_CUSTOMER_PASSWORD)}>Sign in</button>
       <button type="button" onClick={signOut}>Sign out</button>
     </>
   );

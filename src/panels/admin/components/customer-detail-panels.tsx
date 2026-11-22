@@ -39,6 +39,7 @@ import { cn } from "@/shared/lib/utils";
 import { Money } from "@/shared/components/modern/money";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { ImagePreview } from "@/shared/components/modern/image-preview";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { buttonVariants } from "@/shared/ui/button";
 import { StatusBadge, ToneBadge } from "@/shared/components/modern/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
@@ -133,7 +134,16 @@ export function CustomerInfoCard({
     <Card className="customer-detail__card tw:rounded-2xl">
       <CardHeading icon={User} title="Customer Information" />
       <CardContent>
-        <div className="customer-detail__facts tw:grid tw:gap-x-8 tw:md:grid-cols-2">
+        {customer.profilePhoto ? (
+          <div className="tw:mb-4 tw:flex tw:items-center tw:gap-3">
+            <Avatar className="tw:size-16 tw:text-lg">
+              <AvatarImage src={customer.profilePhoto.dataUrl} alt={`Profile picture of ${customer.displayName}`} />
+              <AvatarFallback>{customer.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <span className="tw:text-sm tw:text-muted-foreground">Profile picture uploaded by the customer</span>
+          </div>
+        ) : null}
+        <div className="customer-detail__facts tw:grid tw:grid-cols-1 tw:gap-x-8 tw:md:grid-cols-2">
           <FactList label="Contact details">
             <Fact icon={BadgeCheck} term="VIP Plan">
               {vipPlanName ? <ToneBadge tone="success">{vipPlanName}</ToneBadge> : "—"}

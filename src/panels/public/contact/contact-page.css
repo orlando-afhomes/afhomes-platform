@@ -50,7 +50,7 @@
 
 .site-contact-page .contact-hero .site-eyebrow {
   color: var(--color-accent-light);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
 }
@@ -120,7 +120,7 @@
 
 .contact-details .site-link--muted,
 .contact-details .site-card__text {
-  font-size: clamp(11.5px, 1.22vw, 15px);
+  font-size: clamp(12px, 1.22vw, 15px);
   line-height: 1.32;
 }
 
@@ -148,7 +148,7 @@
 
 .site-contact-page .contact-message .site-eyebrow {
   color: var(--color-brand-primary);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.07em;
 }
@@ -229,7 +229,7 @@
   color: var(--color-on-dark);
 }
 
-.contact-message__panel .site-note { margin: 6px 0 0; font-size: 11px; line-height: 1.45; }
+.contact-message__panel .site-note { margin: 6px 0 0; font-size: 12px; line-height: 1.45; }
 
 .contact-closing__photo img { object-position: center 55%; }
 
@@ -252,7 +252,7 @@
   .contact-page__body .contact-details { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .contact-details .site-card--contact { min-height: clamp(14.5rem, 24.9vw, 18rem); }
   .contact-details .site-card--contact:has(.contact-details__address) { padding-inline-end: 10px; }
-  .contact-details .contact-details__landmark { font-size: clamp(10.5px, 1.12vw, 14px); }
+  .contact-details .contact-details__landmark { font-size: clamp(12px, 1.12vw, 14px); }
 
   .contact-message {
     grid-template-areas: "guide form";
@@ -265,7 +265,7 @@
   .contact-message__help { gap: 11px; }
   .contact-message__panel .site-form { gap: 7px; }
   .contact-message__panel .site-form > div { gap: 3px; }
-  .contact-message__panel .site-note { font-size: 10px; }
+  .contact-message__panel .site-note { font-size: 12px; }
   .contact-message__panel [data-slot="input"] { height: clamp(34px, 3.5vw, 44px); }
   .contact-message__panel [data-slot="textarea"] { height: 3.5rem; min-height: 3.5rem; }
   .contact-message__panel [type="submit"] { height: 36px; min-height: 36px; }

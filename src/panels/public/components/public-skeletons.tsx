@@ -50,7 +50,7 @@ export function PublicSectionSkeleton({ cards = 3 }: { cards?: number } = {}) {
         <Skeleton className="tw:h-8 tw:w-80 tw:max-w-full" />
         <Skeleton className="tw:h-4 tw:w-[28rem] tw:max-w-full" />
       </div>
-      <div className="tw:grid tw:gap-5 tw:sm:grid-cols-2 tw:lg:grid-cols-3">
+      <div className="tw:grid tw:grid-cols-1 tw:gap-5 tw:sm:grid-cols-2 tw:lg:grid-cols-3">
         {Array.from({ length: cards }, (_, index) => (
           <div key={index} className={CARD}>
             <Skeleton className="tw:h-40 tw:w-full tw:rounded-xl" />
@@ -68,7 +68,7 @@ export function PublicSectionSkeleton({ cards = 3 }: { cards?: number } = {}) {
 export function PublicTierGridSkeleton() {
   return (
     <LoadingRegion className={`${PAGE} tw:max-w-7xl tw:py-10`}>
-      <div className="tw:grid tw:gap-6 tw:sm:grid-cols-2 tw:lg:grid-cols-3">
+      <div className="tw:grid tw:grid-cols-1 tw:gap-6 tw:sm:grid-cols-2 tw:lg:grid-cols-3">
         {Array.from({ length: 3 }, (_, index) => (
           <div key={index} className="tw:flex tw:flex-col tw:gap-4 tw:rounded-2xl tw:p-3">
             <Skeleton className="tw:h-56 tw:w-full tw:rounded-xl" />

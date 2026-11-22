@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { Handshake, UserPlus } from "lucide-react";
 import { hasOperationPermission } from "@/modules/identity/permissions";
 import { AreaPage } from "@/shared/components/admin";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
@@ -32,10 +33,10 @@ export function SalesNetworkAreaPage() {
         active === "members" && canManage ? (
           <>
             <Button type="button" onClick={() => setAccreditedMode("IST")}>
-              Add Internal Seller
+              <UserPlus aria-hidden="true" /> Add Internal Seller
             </Button>
             <Button type="button" variant="info" onClick={() => setAccreditedMode("OST")}>
-              Add Outsourced Seller
+              <Handshake aria-hidden="true" /> Add Outsourced Seller
             </Button>
           </>
         ) : null

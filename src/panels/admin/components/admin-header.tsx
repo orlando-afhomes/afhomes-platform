@@ -74,7 +74,7 @@ export function AdminHeader({
             </Avatar>
             <span className="tw:hidden tw:min-w-0 tw:flex-col tw:leading-tight tw:md:flex">
               <span className="tw:text-[13px] tw:font-semibold tw:whitespace-nowrap tw:text-foreground">{user.name}</span>
-              <span className="tw:text-[11px] tw:whitespace-nowrap tw:text-muted-foreground">{user.roleLabel}</span>
+              <span className="tw:text-xs tw:whitespace-nowrap tw:text-muted-foreground">{user.roleLabel}</span>
             </span>
             <ChevronDown aria-hidden="true" className="tw:hidden tw:size-4 tw:shrink-0 tw:text-muted-foreground tw:md:block" />
           </DropdownMenuTrigger>

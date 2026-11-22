@@ -46,7 +46,9 @@ describe("experience content", () => {
     expect(created).toMatchObject({ slug: "night-market", published: true, standard: false });
     const published = await admin.experiences.listPublic();
     expect(published.some((item) => item.slug === "night-market")).toBe(true);
-    expect(store.auditEvents.filter((item) => item.action === "EXPERIENCE_CREATED" && item.entityId === created.id)).toHaveLength(1);
+    const events = store.auditEvents.filter((item) => item.action === "EXPERIENCE_CREATED" && item.entityId === created.id);
+    expect(events).toHaveLength(1);
+    expect(events[0].module).toBe("experiences");
   });
 
   it("archives an experience without deleting it, and restores it", async () => {
@@ -75,6 +77,10 @@ describe("experience content", () => {
     await expect(create({ imageSrc: "/images/%2e%2e/secret.webp" })).rejects.toThrow(/\/images/i);
     await expect(create({ imageSrc: "/images/%252e%252e/secret.webp" })).rejects.toThrow(/\/images/i);
     await expect(create({ imageSrc: "/images/site/../../secret.webp" })).rejects.toThrow(/\/images/i);
+    for (const hidden of ["/images/.\t./secret.webp", "/images/.%09./secret.webp", "/images/.\n./secret.webp", "/images/a.webp?x=1", "/images/a.webp#top", "/images/a%20b.webp"]) {
+      await expect(create({ imageSrc: hidden }), hidden).rejects.toThrow(/\/images/i);
+    }
+    await expect(create({ highlights: [{ title: "x".repeat(81), text: "Fine." }] })).rejects.toThrow(/title/i);
     await expect(create({ statusTone: "closed" as never })).rejects.toThrow(/status/i);
   });
 

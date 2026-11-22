@@ -146,6 +146,10 @@ export const ADMIN_AREA_TABS = {
     { value: "historical-import", label: "Import Old Records", formerHref: "/admin/reports/historical-import", rule: { grants: ["reports"], operation: "history-import.manage" } },
     { value: "igp-projects", label: "Property Projects (IGP)", formerHref: "/admin/vip-products", rule: { grants: ["sales", "finance"], operation: "igp.manage" } },
   ],
+  // One-tab area: the Experiences page is a single view; the entry gives its audit events a notification destination.
+  experiences: [
+    { value: "experiences", label: "Experiences", formerHref: "/admin/experiences", rule: { grants: ["experiences"] } },
+  ],
   "sales-network": [
     { value: "members", label: "Members", formerHref: "/admin/sales-network/members", rule: { grants: ["sales-network-members"] } },
     { value: "genealogy", label: "Team Tree", formerHref: "/admin/sales-network/genealogy", rule: { grants: ["sales-network-genealogy"] } },
@@ -211,7 +215,7 @@ export const adminNavigation: AdminNavItem[] = [
   areaItem("stay-points", "Stay Points"),
   areaItem("redemption", "Redemption"),
   areaItem("vip-products", "Settings"),
-  { id: "experiences", label: "Experiences", href: "/admin/experiences", available: true },
+  areaItem("experiences", "Experiences"),
   areaItem("sales-network", "Sales Network"),
   areaItem("organization", "Organization"),
   // Compatibility entry point only: /admin/accounts forwards authorized users to

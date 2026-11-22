@@ -208,8 +208,10 @@ function mapRecord(record: CustomerImportRecord, context: ImportContext) {
   const tier = text("VIP tier");
   // A product code or a tier level name (Bronze, Silver, Gold or any level an Admin added) from the catalog.
   input.vipPlan = tier ? productCodeForTier(tier, context.products) : null;
-  if (tier && !input.vipPlan) errors.push(`VIP tier must be a product code in the catalog (${context.products.filter((product) => product.status === "active").map((product) => product.code).join(", ")}) or a tier level name (${[...new Set(context.products.filter((product) => product.status === "active").map((product) => product.tier))].join(", ")}).`);
-  else if (input.vipPlan && !context.products.some((product) => product.code === input.vipPlan && product.status === "active")) errors.push("The VIP tier is not available.");
+  if (tier && !input.vipPlan) {
+    const sellable = context.products.filter((product) => isSellableProduct(product));
+    errors.push(`VIP tier must be a product code in the catalog (${sellable.map((product) => product.code).join(", ")}) or a tier level name (${[...new Set(sellable.map((product) => product.tier))].join(", ")}).`);
+  }
 
   const warnings: string[] = [];
   const schemeText = text("Payment scheme").toLowerCase();

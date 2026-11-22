@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { AuditEventView } from "@/modules/audit/types";
 import { useAuditEvents, useEffectiveModuleIds } from "@/data/queries";
-import { getGrantedOperations } from "@/modules/identity/permissions";
+import { useAccessSnapshot } from "@/data/access-snapshot";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { isNotificationBadgeEvent } from "@/modules/notifications/creation-actions";
 import { isAreaNavKey, notificationDestination } from "@/panels/admin/notifications/module-nav";
@@ -50,7 +50,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const requestedTab = useSearchParams()?.get("tab");
   const grants = useEffectiveModuleIds();
-  const operations = useMemo(() => getGrantedOperations(identity), [identity]);
+  const { operations } = useAccessSnapshot();
   const audit = useAuditEvents({ pageSize: 100 });
   const denied = audit.isError;
   const currentPath = normalizePath(pathname ?? "/admin");

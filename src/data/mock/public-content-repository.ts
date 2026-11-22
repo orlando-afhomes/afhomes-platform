@@ -20,6 +20,7 @@ export function projectPublicVipProducts(store: Pick<MockStore, "products" | "ti
           vipDiscountPercent: product.vipDiscountPercent,
           pointsPerCycle: product.pointsPerCycle,
           lifetimePoints: product.lifetimePoints,
+          earningCycles: product.earningCycles,
           supplementaryHolders: product.supplementaryHolders,
           benefitsSummary: product.benefitsSummary ?? null,
           imageUrl: product.imageUrl ?? null,
@@ -28,27 +29,27 @@ export function projectPublicVipProducts(store: Pick<MockStore, "products" | "ti
 }
 
 export function projectPromoOffer(store: Pick<MockStore, "outlets">, promo: Promo): PublicPromoOffer {
-    const outletName = (id: string) => store.outlets.find((outlet) => outlet.id === id)?.name ?? "AFhomes outlet";
-    return {
-      id: promo.id,
-      title: promo.publicTitle,
-      summary: promo.publicSummary,
-      terms: promo.publicTerms,
-      startDate: promo.startDate,
-      endDate: promo.endDate,
-      pointsExpiryDate: promo.pointsExpiryDate,
-      earnOutlets: promo.earnOutletIds.map(outletName),
-      rewards: promo.rewards
-        .filter((reward) => reward.status === "active" && reward.pointsCost > 0 && promo.redeemOutletIds.includes(reward.outletId))
-        .map((reward) => ({ id: reward.id, name: reward.name, description: reward.description, outletName: outletName(reward.outletId), pointsCost: reward.pointsCost })),
-    };
+  const outletName = (id: string) => store.outlets.find((outlet) => outlet.id === id)?.name ?? "AFhomes outlet";
+  return {
+    id: promo.id,
+    title: promo.publicTitle,
+    summary: promo.publicSummary,
+    terms: promo.publicTerms,
+    startDate: promo.startDate,
+    endDate: promo.endDate,
+    pointsExpiryDate: promo.pointsExpiryDate,
+    earnOutlets: promo.earnOutletIds.map(outletName),
+    rewards: promo.rewards
+      .filter((reward) => reward.status === "active" && reward.pointsCost > 0 && promo.redeemOutletIds.includes(reward.outletId))
+      .map((reward) => ({ id: reward.id, name: reward.name, description: reward.description, outletName: outletName(reward.outletId), pointsCost: reward.pointsCost })),
+  };
 }
 
 export function projectPublicOffers(store: Pick<MockStore, "promos" | "outlets">, date = manilaToday()): PublicPromoOffer[] {
-      return store.promos
-        .filter((promo) => promo.published && promo.status === "active" && date >= promo.startDate && date <= promo.endDate)
-        .map((promo) => projectPromoOffer(store, promo))
-        .filter((offer) => offer.title && offer.summary && offer.terms && offer.rewards.length > 0);
+  return store.promos
+    .filter((promo) => promo.published && promo.status === "active" && date >= promo.startDate && date <= promo.endDate)
+    .map((promo) => projectPromoOffer(store, promo))
+    .filter((offer) => offer.title && offer.summary && offer.terms && offer.rewards.length > 0);
 }
 
 /** Reads the existing browser store without constructing staff repositories. */

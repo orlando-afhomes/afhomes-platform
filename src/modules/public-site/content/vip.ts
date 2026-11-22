@@ -52,6 +52,8 @@ export type VipCardView = {
   registration: string;
   pointsPerYear: number;
   totalPoints: number;
+  /** Years the total points are released over: the product's earning cycles. */
+  pointsYears: number;
   image: string;
   /** Registration plus the product's own approved perks. */
   perks: string[];
@@ -75,8 +77,9 @@ export function vipCardView(product: PublicVipProduct): VipCardView {
     registration,
     pointsPerYear: product.pointsPerCycle,
     totalPoints: product.lifetimePoints,
+    pointsYears: product.earningCycles,
     image: product.imageUrl ?? known?.image ?? CARD_PRESENTATION.G1.image,
-    perks: [`Registration for ${registration.charAt(0).toLowerCase()}${registration.slice(1)}`, ...(known ? STANDARD_PERKS : customBenefits)],
+    perks: [...new Set([`Registration for ${registration.charAt(0).toLowerCase()}${registration.slice(1)}`, ...(known ? STANDARD_PERKS : customBenefits)])],
   };
 }
 
@@ -90,6 +93,7 @@ export const VIP_CARD_SEED: VipCardView[] = VIP_TIERS.map((tier) => ({
   registration: tier.registration,
   pointsPerYear: tier.pointsPerYear,
   totalPoints: tier.totalPoints,
+  pointsYears: tier.discountYears,
   image: tier.image,
   perks: [`Registration for ${tier.registration.charAt(0).toLowerCase()}${tier.registration.slice(1)}`, ...STANDARD_PERKS],
 }));

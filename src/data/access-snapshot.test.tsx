@@ -11,7 +11,8 @@ import { QueryClient, QueryClientProvider, useMutation } from "@tanstack/react-q
 import { createMockStore } from "@/data/mock/seed";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { DevIdentityProvider, useDevIdentity } from "@/shared/providers/dev-identity-provider";
-import { useEffectiveModuleIds } from "./queries";
+import { useState } from "react";
+import { useEffectiveModuleIds, useSetTemporaryPassword } from "./queries";
 afterEach(()=>{cleanup();vi.restoreAllMocks();});
 it("refreshes mounted grants after the linked account is suspended", async () => {
  const store = createMockStore(); const client = new QueryClient({defaultOptions:{queries:{retry:false}}});
@@ -95,6 +96,14 @@ it("retains an entered draft after a rejected access-affecting command",async()=
  const input=await screen.findByLabelText("Draft");
  act(()=>screen.getByRole("button",{name:"Save invalid"}).click());
  await screen.findByText("Command rejected");expect(screen.getByLabelText("Draft")).toBe(input);
+});
+
+it("keeps the page mounted and shows the issued password after a temporary-password command",async()=>{
+ function Form(){const reset=useSetTemporaryPassword();const [issued,setIssued]=useState(false);return <><label>Draft<input defaultValue="Keep me" /></label><button onClick={()=>void reset.mutateAsync("acct-hr").then(()=>setIssued(true))}>Reset password</button>{issued?<p>Password issued</p>:null}</>;}
+ render(<QueryProvider><MockStoreProvider><DevIdentityProvider initialIdentityId="dev-super-admin"><AdminPage anyOf={["customers"]} title="Customers" crumbs={[]}><Form /></AdminPage></DevIdentityProvider></MockStoreProvider></QueryProvider>);
+ const input=await screen.findByLabelText("Draft");
+ act(()=>screen.getByRole("button",{name:"Reset password"}).click());
+ await screen.findByText("Password issued");expect(screen.getByLabelText("Draft")).toBe(input);
 });
 
 it("automatically refreshes mounted access after an authorized suspension command",async()=>{

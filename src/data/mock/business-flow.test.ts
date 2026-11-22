@@ -1254,7 +1254,7 @@ describe("owner-decided restrictions (C2)", () => {
     const flagged = await admin.products.update("S1", { priceStatus: "conflict" }, "Test: flag conflict");
     expect(flagged).toMatchObject({ priceStatus: "conflict", configVersion: 2 });
 
-    const edited = await admin.products.update("S1", { priceCentavos: pesos(241000) }, "Test: ordinary price edit");
+    const edited = await as(store, "dev-super-admin").products.update("S1", { priceCentavos: pesos(241000) }, "Test: ordinary price edit");
     expect(edited).toMatchObject({ priceStatus: "conflict", configVersion: 3 });
 
     const resolved = await admin.products.update("S1", { priceStatus: "contract_stated" }, "Test: resolution");

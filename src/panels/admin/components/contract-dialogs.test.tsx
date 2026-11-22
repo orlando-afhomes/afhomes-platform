@@ -70,4 +70,16 @@ describe("New VIP Purchase", () => {
     expect(await screen.findByRole("option", { name: "Bronze VIP" })).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "Bronze Plus VIP" })).toBeNull();
   });
+
+  it("treats a retired plan held by the customer as no choice and blocks the contract", async () => {
+    const user = userEvent.setup();
+    const store = createMockStore();
+    await createMockRepositories(store, () => getDevIdentity("dev-admin")).products.update("B1", { status: "retired" }, "Stop offering Bronze");
+    const customer = store.customers.find((item) => item.id === "cust-b1")!;
+    render(<Wrapper store={store}><PrepareContractDialog customer={customer} open onClose={() => {}} repeatPurchase /></Wrapper>);
+    await waitFor(() => expect(screen.getByText(/Customer B One · No plan selected/)).toBeInTheDocument());
+    await user.click(screen.getByRole("checkbox", { name: /separate purchase/i }));
+    await user.click(screen.getByRole("button", { name: "Create Purchase Contract" }));
+    expect(await screen.findByText("Choose a VIP plan.")).toBeInTheDocument();
+  });
 });

@@ -78,7 +78,8 @@ describe("VIP tier levels", () => {
     await admin.contracts.finalize("ctr-3");
     const before = await admin.contracts.getById("ctr-3");
     expect(before?.productCode).toBe("G1");
-    await admin.products.update("G1", { priceCentavos: pesos(450000), vipDiscountPercent: 30, description: "New description" }, "Price review");
+    // Price and discount on an approved product are the Super Administrator's to change.
+    await as(store, "dev-super-admin").products.update("G1", { priceCentavos: pesos(450000), vipDiscountPercent: 30, description: "New description" }, "Price review");
     const after = await admin.contracts.getById("ctr-3");
     expect(after).toMatchObject({ status: "finalized", priceCentavos: before!.priceCentavos, validityYears: before!.validityYears, productConfigVersion: before!.productConfigVersion });
     expect(after?.benefits).toEqual(before?.benefits);

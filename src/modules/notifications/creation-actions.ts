@@ -11,6 +11,8 @@ export const CREATION_ACTIONS: Readonly<Record<AuditModule, readonly string[]>> 
   accreditation: ["ACCREDITATION_ISSUED", "REGISTRATION_SUBMITTED", "JAD_ACCREDITATION_RECORDED"],
   customers: ["CUSTOMER_DRAFT_CREATED", "CUSTOMER_SUBMITTED", "CUSTOMER_IMPORT_COMPLETED"],
   "vip-products": ["PRODUCT_CREATED", "PAYMENT_SCHEME_CREATED", "TIER_LEVEL_CREATED"],
+  // Website content changes are history-only: no navlink badge (owner added this module 2026-11-22).
+  experiences: [],
   contracts: ["CONTRACT_PREPARED", "CONTRACT_RA_RECORDED"],
   finance: ["PAYMENT_SUBMITTED", "RECEIPT_IMPORT_CREATED", "MONTH_CLOSED"],
   sales: ["SALE_RECORDED", "IGP_SERIES_ISSUED", "IGP_PROJECT_CREATED", "IGP_UNIT_CREATED"],

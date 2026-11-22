@@ -3,6 +3,7 @@ import type { ExperienceInput, ExperienceRepository } from "@/data/contracts/exp
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import {
   EXPERIENCE_HIGHLIGHT_TEXT_MAX,
+  EXPERIENCE_HIGHLIGHT_TITLE_MAX,
   EXPERIENCE_TEXT_MAX,
   experienceSlugProblem,
   isExperienceStatusTone,
@@ -27,21 +28,15 @@ function clone<T>(value: T): T {
 }
 
 /**
- * Resolves percent escapes and `.`/`..` segments before the folder check, so an encoded
- * path such as `/images/%2e%2e/secret.webp` cannot resolve outside `/images/`.
+ * Accepts only a plain site path and resolves `.`/`..` segments before the folder check.
+ * Percent escapes, control characters (browsers strip tab and newline from URLs), backslashes,
+ * `?` and `#` are rejected outright, so no encoded or hidden form can resolve outside `/images/`.
  * Returns the normalized path, or null when the input is not a plain site path.
  */
 function normalizedImageSrc(raw: string): string | null {
-  let decoded: string;
-  try {
-    decoded = decodeURIComponent(raw);
-  } catch {
-    return null;
-  }
-  // A second decoding must not be able to produce a new separator or dot segment.
-  if (!decoded.startsWith("/") || /[\\\0%]/.test(decoded)) return null;
+  if (!raw.startsWith("/") || /[\x00-\x1f\x7f\\%?#]/.test(raw)) return null;
   const segments: string[] = [];
-  for (const segment of decoded.split("/")) {
+  for (const segment of raw.split("/")) {
     if (!segment || segment === ".") continue;
     if (segment === "..") return null;
     segments.push(segment);
@@ -97,6 +92,7 @@ export class MockExperienceRepository extends BusinessRepository implements Expe
       const highlightTitle = item.title.trim();
       const text = item.text.trim();
       if (!highlightTitle) throw new Error("Every highlight needs a title.");
+      if (highlightTitle.length > EXPERIENCE_HIGHLIGHT_TITLE_MAX) throw new Error(`A highlight title must be ${EXPERIENCE_HIGHLIGHT_TITLE_MAX} characters or fewer.`);
       if (!text) throw new Error("Every highlight needs its text.");
       if (text.length > EXPERIENCE_HIGHLIGHT_TEXT_MAX) throw new Error(`Highlight text must be ${EXPERIENCE_HIGHLIGHT_TEXT_MAX} characters or fewer.`);
       return { title: highlightTitle, text };
@@ -106,7 +102,7 @@ export class MockExperienceRepository extends BusinessRepository implements Expe
 
   private record(identity: DevIdentity, action: string, experience: Experience, previousValue: string | null, newValue: string | null) {
     this.audit(identity, {
-      module: "vip-products",
+      module: "experiences",
       action,
       entityType: "experience",
       entityId: experience.id,

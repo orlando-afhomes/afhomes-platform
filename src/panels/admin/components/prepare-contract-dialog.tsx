@@ -35,7 +35,10 @@ export function PrepareContractDialog({ customer, open, onClose, repeatPurchase 
   const [error, setError] = useState<string | undefined>();
   const [nonStandardText, setNonStandardText] = useState<NonStandardTermsText>({ price: "", months: "", reason: "" });
 
-  const product = products.data?.find((item) => item.code === productCode);
+  // A repeat purchase may only use a sellable plan; a retired or draft plan held by the customer counts as no choice.
+  const sellableProducts = (products.data ?? []).filter((item) => isSellableProduct(item));
+  const selectedCode = repeatPurchase && !sellableProducts.some((item) => item.code === productCode) ? undefined : productCode;
+  const product = (repeatPurchase ? sellableProducts : products.data)?.find((item) => item.code === selectedCode);
   const scheme = schemes.data?.find((item) => item.id === schemeId);
   const standard = useMemo(() => (product && scheme ? buildSchedule(product, scheme) : null), [product, scheme]);
   const nonStandard = classification === "N";
@@ -74,10 +77,14 @@ export function PrepareContractDialog({ customer, open, onClose, repeatPurchase 
       setError("Confirm that this is a separate purchase before creating its contract.");
       return;
     }
+    if (repeatPurchase && !selectedCode) {
+      setError("Choose a VIP plan.");
+      return;
+    }
     try {
       const contract = await prepare.mutateAsync({
         customerId: customer.id,
-        productCode,
+        productCode: selectedCode,
         schemeId,
         customerAccepted: accepted,
         ...(nonStandard ? { nonStandardTerms } : {}),
@@ -93,7 +100,7 @@ export function PrepareContractDialog({ customer, open, onClose, repeatPurchase 
 
   return (
     <FormDialog open={open} title={repeatPurchase ? "New VIP Purchase" : "Prepare Contract"} description={`${customer.displayName} · ${product?.name ?? "No plan selected"}${!askScheme && scheme ? ` · ${scheme.label}` : ""}`} submitText={repeatPurchase ? "Create Purchase Contract" : "Prepare Contract"} pending={prepare.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
-      {repeatPurchase ? <SelectField label="VIP plan" required value={productCode} options={(products.data ?? []).filter((item) => isSellableProduct(item)).map((item) => ({ value: item.code, label: item.name }))} onChange={(value) => { setProductCode((products.data ?? []).find((item) => item.code === value)?.code); }} /> : null}
+      {repeatPurchase ? <SelectField label="VIP plan" required value={selectedCode} options={sellableProducts.map((item) => ({ value: item.code, label: item.name }))} onChange={(value) => { setProductCode((products.data ?? []).find((item) => item.code === value)?.code); }} /> : null}
       {repeatPurchase ? <>
         <SelectField label="Closing seller" required value={seller} options={sellerOptions} onChange={(value) => { setSeller(value); if (referrer !== "none" && !sellerOptions.some((option) => option.value === referrer)) setReferrer("none"); }} />
         <SelectField label="Referrer" value={referrer} options={referrerOptions} onChange={(value) => { setReferrer(value); if (value !== "none" && seller && !referrerOptions.some((option) => option.value === seller)) setSeller(""); }} />

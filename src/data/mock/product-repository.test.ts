@@ -160,6 +160,37 @@ describe("product drafts and Super Administrator approval", () => {
     expect(store.products.find((item) => item.code === "B3")?.benefitsSummary).toBe("Priority reservations and a welcome gift.");
   });
 
+  it("lets trimmed benefits through but never a cleared one on an approved product", async () => {
+    const store = createMockStore();
+    const { admin } = await draft(store);
+    await offerScheme(admin);
+    await as(store, "dev-super-admin").products.approve("B3", "Approved by management");
+    const updated = await admin.products.update("B3", { benefitsSummary: "  Priority reservations only.  " }, "Trim the wording");
+    expect(updated.benefitsSummary).toBe("  Priority reservations only.  ");
+    await expect(admin.products.update("B3", { benefitsSummary: "" }, "Cleanup")).rejects.toThrow(/stated benefits/i);
+  });
+
+  it("does not approve a retired draft", async () => {
+    const store = createMockStore();
+    const { admin } = await draft(store);
+    await offerScheme(admin);
+    await admin.products.update("B3", { status: "retired" }, "Stop offering the product");
+    await expect(as(store, "dev-super-admin").products.approve("B3", "Approved by management")).rejects.toThrow(/active/i);
+    expect(store.products.find((item) => item.code === "B3")).toMatchObject({ approvalStatus: "draft", status: "retired" });
+  });
+
+  it("keeps the price, points and discount of an approved product with the Super Administrator", async () => {
+    const store = createMockStore();
+    const { admin } = await draft(store);
+    await offerScheme(admin);
+    const superAdmin = as(store, "dev-super-admin");
+    await superAdmin.products.approve("B3", "Approved by management");
+    await expect(admin.products.update("B3", { priceCentavos: pesos(95000) }, "Price change")).rejects.toThrow(/Super Administrator/);
+    await expect(admin.products.update("B3", { vipDiscountPercent: 12 }, "Discount change")).rejects.toThrow(/Super Administrator/);
+    await expect(admin.products.update("B3", { description: "A new description." }, "Wording")).resolves.toMatchObject({ description: "A new description." });
+    await expect(superAdmin.products.update("B3", { priceCentavos: pesos(95000) }, "Price change")).resolves.toMatchObject({ priceCentavos: pesos(95000) });
+  });
+
   it("refuses approval when validity, earning cycles or points are zero", async () => {
     const store = createMockStore();
     const admin = as(store, "dev-admin");

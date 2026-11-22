@@ -207,4 +207,15 @@ describe("customer registration review pages (doc 04 sections 5 and 10)", () => 
     expect(await screen.findByRole("radio", { name: /silver vip/i })).toBeInTheDocument();
     expect(screen.queryByRole("radio", { name: /bronze plus vip/i })).toBeNull();
   });
+
+  it("blocks Continue when a resumed draft holds a card that was retired", async () => {
+    const store = createMockStore();
+    const admin = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    const draft = await admin.customers.createDraft({ displayName: "Resume Buyer", vipPlan: "B1" });
+    await admin.products.update("B1", { status: "retired" }, "Stop offering Bronze");
+    show("dev-admin", <CustomerFormPage customerId={draft.id} />, store);
+    expect(await screen.findByText("This card is no longer available. Choose another card.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /continue/i })).toBeDisabled();
+    expect(screen.queryByRole("radio", { checked: true })).toBeNull();
+  });
 });

@@ -39,8 +39,8 @@ export function VipCards() {
                 </span>
               </p>
               <ul className="vip-cards__perks">
-                {tier.perks.map((perk) => (
-                  <li key={perk} className="vip-cards__perk">
+                {tier.perks.map((perk, index) => (
+                  <li key={`${index}-${perk}`} className="vip-cards__perk">
                     <Check aria-hidden="true" className="vip-cards__perk-icon" />
                     <span>{perk}</span>
                   </li>
@@ -58,7 +58,7 @@ export function VipCards() {
                   </p>
                 </div>
                 <p className="vip-cards__points-total">
-                  Total <strong>{formatPoints(tier.totalPoints)}</strong>{tier.discountYears === null ? " points" : ` over ${tier.discountYears} years`}
+                  Total <strong>{formatPoints(tier.totalPoints)}</strong> over {tier.pointsYears} {tier.pointsYears === 1 ? "year" : "years"}
                 </p>
               </div>
             </li>

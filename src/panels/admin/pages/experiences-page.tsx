@@ -203,8 +203,9 @@ function ExperienceDialog({ experience, onClose }: { experience: Experience | nu
   const submit = async () => {
     const input: ExperienceInput = { title, slug, category, summary, status, statusTone, imageSrc, imageAlt, overview, highlights };
     try {
-      await save.mutateAsync({ id: experience?.id, experience: input });
-      toast.success(experience ? "Experience updated and published." : "Experience added and published.");
+      const saved = await save.mutateAsync({ id: experience?.id, experience: input });
+      const state = saved.published ? " and published" : " (still archived)";
+      toast.success(experience ? `Experience updated${state}.` : "Experience added and published.");
       onClose();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Could not save.");

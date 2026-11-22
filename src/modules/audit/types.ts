@@ -1,6 +1,6 @@
 export type AuditModule =
   | "sales-network" | "accreditation" | "organization"
-  | "customers" | "vip-products" | "contracts" | "finance" | "sales" | "commissions" | "membership" | "stay-points";
+  | "customers" | "vip-products" | "experiences" | "contracts" | "finance" | "sales" | "commissions" | "membership" | "stay-points";
 
 export type AuditEntityType =
   | "member" | "accreditation" | "registration" | "account" | "staff" | "department-role" | "department"
@@ -50,11 +50,11 @@ export const AUDIT_ACTIONS = {
 
 export const AUDIT_MODULES = [
   "sales-network", "accreditation", "organization",
-  "customers", "vip-products", "contracts", "finance", "sales", "commissions", "membership", "stay-points",
+  "customers", "vip-products", "experiences", "contracts", "finance", "sales", "commissions", "membership", "stay-points",
 ] as const satisfies ReadonlyArray<AuditEvent["module"]>;
 export const AUDIT_ENTITY_TYPES = [
   "member", "accreditation", "registration", "account", "staff", "department-role", "department",
-  "customer", "report-export", "product", "payment-scheme", "contract", "sale", "payment", "membership", "commission", "commission-position-rate", "resort-spend", "receipt-import", "reconciliation", "redemption-booking", "redemption-config", "reference-entry", "tier-level", "outlet", "promo", "igp-project", "igp-unit",
+  "customer", "report-export", "product", "payment-scheme", "contract", "sale", "payment", "membership", "commission", "commission-position-rate", "resort-spend", "receipt-import", "reconciliation", "redemption-booking", "redemption-config", "reference-entry", "tier-level", "outlet", "promo", "igp-project", "igp-unit", "experience",
 ] as const satisfies ReadonlyArray<AuditEvent["entityType"]>;
 
 /** Plain labels for record types whose automatic title-casing reads wrong (acronyms, sentence case). */

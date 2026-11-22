@@ -5,6 +5,7 @@ const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const EXPERIENCE_SLUG_MAX = 60;
 export const EXPERIENCE_TEXT_MAX = 600;
 export const EXPERIENCE_HIGHLIGHT_TEXT_MAX = 400;
+export const EXPERIENCE_HIGHLIGHT_TITLE_MAX = 80;
 
 /** Why a page address cannot be used, or null when it is valid. */
 export function experienceSlugProblem(

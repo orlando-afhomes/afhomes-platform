@@ -32,6 +32,18 @@ function termsComplete(scheme: PaymentScheme): boolean {
 
 const TEXT_MAX = 500;
 
+/** Terms that set what a customer pays or earns; on an approved product only the approver may change them. */
+const ECONOMIC_KEYS: ReadonlyArray<keyof VipProduct> = [
+  "priceCentavos", "validityYears", "earningCycles", "pointsPerCycle", "lifetimePoints",
+  "weekdayPointsPerCycle", "weekendPointsPerCycle", "minSpendPerCycleCentavos", "vipDiscountPercent", "supplementaryHolders", "tierLevelId",
+];
+
+/** Approval required stated benefits; an approved product keeps them so its public card cannot lose the custom perks. */
+function benefitsLostError(before: VipProduct, next: VipProduct): string | null {
+  if (before.approvalStatus !== "approved" || !before.benefitsSummary?.trim() || next.benefitsSummary?.trim()) return null;
+  return "An approved product keeps its stated benefits. Enter the benefits or retire the product instead of clearing them.";
+}
+
 function productTermErrors(next: VipProduct): string | null {
   if ((next.description ?? "").length > TEXT_MAX) return `The description must be ${TEXT_MAX} characters or fewer.`;
   if ((next.benefitsSummary ?? "").length > TEXT_MAX) return `The benefits summary must be ${TEXT_MAX} characters or fewer.`;
@@ -85,15 +97,13 @@ export class MockProductRepository extends BusinessRepository implements Product
         if (level.status !== "active") throw new Error("This card level is inactive. Choose an active one.");
       }
       const next = { ...product, ...input } as VipProduct;
-      // Approval required stated benefits; an approved product keeps them so its public card
-      // cannot lose the custom perks. Clear them on a draft, or retire the product instead.
-      if (product.approvalStatus === "approved" && input.benefitsSummary !== undefined && !input.benefitsSummary?.trim()) {
-        throw new Error("An approved product keeps its stated benefits. Enter the benefits or retire the product instead of clearing them.");
-      }
-      const invalidTerms = productTermErrors(next);
+      const invalidTerms = benefitsLostError(product, next) ?? productTermErrors(next);
       if (invalidTerms) throw new Error(invalidTerms);
-      const changed = (Object.keys(input) as Array<keyof ProductUpdateInput>).filter((key) => input[key] !== undefined && input[key] !== product[key]);
+      const changed =(Object.keys(input) as Array<keyof ProductUpdateInput>).filter((key) => input[key] !== undefined && input[key] !== product[key]);
       if (changed.length === 0) throw new Error("Nothing was changed.");
+      if (product.approvalStatus === "approved" && changed.some((key) => ECONOMIC_KEYS.includes(key)) && !this.can(identity, "vip-products.approve")) {
+        throw new Error("Changing the price, points or discount of an approved product needs Super Administrator approval.");
+      }
       if (input.priceStatus !== undefined && input.priceStatus !== "contract_stated" && input.priceStatus !== "conflict") throw new Error("The price status must be contract_stated or conflict.");
       const priceChanged = changed.includes("priceCentavos");
       const statusChanged = changed.includes("priceStatus");
@@ -199,6 +209,7 @@ export class MockProductRepository extends BusinessRepository implements Product
       const product = this.store.products.find((item) => item.code === code);
       if (!product) throw new Error("Product not found.");
       if (product.approvalStatus === "approved") throw new Error("This product is already approved.");
+      if (product.status !== "active") throw new Error("Make the product active before approving it.");
       const codeProblem = productCodeError(product.code, this.store.products.filter((item) => item.code !== product.code).map((item) => item.code));
       if (codeProblem) throw new Error(codeProblem);
       if (!product.name.trim()) throw new Error("A product name is required before approval.");
@@ -210,7 +221,6 @@ export class MockProductRepository extends BusinessRepository implements Product
       const hasScheme = this.store.paymentSchemes.some((scheme) => scheme.availability === "available" && scheme.applicableTiers.includes(product.code));
       if (!hasScheme) throw new Error("Configure an available payment plan for this product before approval.");
       product.approvalStatus = "approved";
-      product.status = "active";
       product.configVersion += 1;
       product.effectiveDate = today();
       product.changes.push({ version: product.configVersion, date: today(), actorId: identity.id, reason: text, summary: "approved" });
@@ -227,7 +237,8 @@ export class MockProductRepository extends BusinessRepository implements Product
     });
   }
 
-  async delete(code: VipTierCode, reason: string, options?: MockAsyncOptions): Promise<void> {    return this.run(options, (identity) => {
+  async delete(code: VipTierCode, reason: string, options?: MockAsyncOptions): Promise<void> {
+    return this.run(options, (identity) => {
       this.require(identity, "vip-products.manage", "Managing VIP products is not allowed for this identity.");
       if (!reason.trim()) throw new Error("A reason or approval reference is required to delete a product.");
       const index = this.store.products.findIndex((item) => item.code === code);

@@ -6,11 +6,10 @@ import { Bell } from "lucide-react";
 import { notificationDestination } from "@/panels/admin/notifications/module-nav";
 import { isNotificationBadgeEvent } from "@/modules/notifications/creation-actions";
 import { formatNotificationTime } from "@/modules/notifications/format-time";
-import { getGrantedOperations } from "@/modules/identity/permissions";
+import { useAccessSnapshot } from "@/data/access-snapshot";
 import { useEffectiveModuleIds } from "@/data/queries";
 import { ADMIN_AREA_TABS, adminAreaHref, isNavRuleAllowed, type AdminAreaTabRule } from "@/panels/admin/navigation";
 import { useNotifications } from "@/shared/providers/notifications-provider";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { humanize } from "@/shared/lib/humanize";
 import { formatNotificationAction } from "@/modules/notifications/format-action";
 import { Button } from "@/shared/ui/button";
@@ -28,9 +27,8 @@ const MAX_ROWS = 30;
 
 export function NotificationsMenu() {
   const { unreadTotal, events, denied, markAllSeen } = useNotifications();
-  const { identity } = useDevIdentity();
   const modules = useEffectiveModuleIds();
-  const operations = useMemo(() => getGrantedOperations(identity), [identity]);
+  const { operations } = useAccessSnapshot();
   const visible = useMemo(
     () => events.flatMap((event) => {
       const { area, tab } = notificationDestination(event);

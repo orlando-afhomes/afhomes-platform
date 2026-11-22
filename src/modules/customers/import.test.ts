@@ -85,4 +85,20 @@ describe("customer import tier names", () => {
     const [diamond] = buildImportRows([row({ "VIP tier": "Diamond" })], context);
     expect(diamond.errors.join(" ")).toMatch(/tier level name \(Bronze, Silver, Gold, Platinum\)/);
   });
+
+  it("never offers or accepts a draft product", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    await admin.products.create({
+      code: "B3", name: "Bronze Plus VIP", tierLevelId: "tier-level-bronze", priceCentavos: 9_000_000, validityYears: 7, earningCycles: 5, vipDiscountPercent: 10,
+      lifetimePoints: 50_000, pointsPerCycle: 10_000, weekdayPointsPerCycle: 7_000, weekendPointsPerCycle: 3_000, minSpendPerCycleCentavos: 100_000, supplementaryHolders: 0,
+      benefitsSummary: "Priority reservations.",
+    }, "Draft for review");
+    const context = { existing: [], products: await admin.products.list(), schemes: store.paymentSchemes };
+    const [byCode, byBadTier] = buildImportRows([row({ "VIP tier": "B3" }), row({ "VIP tier": "Diamond" })], context);
+    expect(byCode.input.vipPlan).toBeNull();
+    expect(byCode.errors.join(" ")).toMatch(/VIP tier must be a product code/);
+    expect(byCode.errors.join(" ")).not.toMatch(/B3/);
+    expect(byBadTier.errors.join(" ")).not.toMatch(/B3/);
+  });
 });

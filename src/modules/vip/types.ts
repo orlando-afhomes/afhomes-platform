@@ -50,6 +50,8 @@ export type PublicVipProduct = {
   vipDiscountPercent: number;
   pointsPerCycle: number;
   lifetimePoints: number;
+  /** Yearly tranches the lifetime points are released over (lifetime = points per cycle x cycles). */
+  earningCycles: number;
   supplementaryHolders: number;
   /** Approved plain-words benefits; custom products never inherit the standard card perks. */
   benefitsSummary: string | null;

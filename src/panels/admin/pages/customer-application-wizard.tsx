@@ -293,8 +293,11 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
     if (found.reason) errors.nonStandardReason = found.reason;
     return errors;
   };
+  // A resumed draft may hold a card that was retired or sent back to draft since it was saved.
+  const stalePlanErrors = (): CustomerErrors => (draft.vipPlan && products.data && !product ? { vipPlan: "This card is no longer available. Choose another card." } : {});
   const allErrors = (): CustomerErrors => ({
     ...validateCustomerForSubmit(toInput(draft), customers.data ?? [], undefined, supplementaryAllowed),
+    ...stalePlanErrors(),
     ...attributionErrors,
     ...nonStandardErrors(),
   });
@@ -534,7 +537,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   };
 
   const schemeOptions: PaymentOption<string>[] = (schemes.data ?? [])
-    .filter((item) => draft.vipPlan && item.applicableTiers.includes(draft.vipPlan as VipTierCode))
+    .filter((item) => product && item.applicableTiers.includes(product.code))
     .map((item) => {
       const content = schemeCardContent(item, product);
       return {
@@ -590,11 +593,11 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
           {products.isLoading ? (
             <div role="status" aria-busy="true"><span className="tw:sr-only">Loading VIP cards…</span><CardGridSkeleton cards={3} /></div>
           ) : (
-            <VipCardChoiceGrid products={sellableProducts} schemes={schemes.data ?? []} value={(draft.vipPlan || "") as VipTierCode | ""} onChange={choosePlan} invalid={Boolean(errors.vipPlan)} />
+            <VipCardChoiceGrid products={sellableProducts} schemes={schemes.data ?? []} value={(draft.vipPlan || "") as VipTierCode | ""} onChange={choosePlan} invalid={Boolean(errors.vipPlan ?? stalePlanErrors().vipPlan)} />
           )}
-          {errors.vipPlan ? (
+          {errors.vipPlan ?? stalePlanErrors().vipPlan ? (
             <p role="alert" className="tw:text-sm tw:text-destructive">
-              {errors.vipPlan}
+              {errors.vipPlan ?? stalePlanErrors().vipPlan}
             </p>
           ) : null}
         </section>
@@ -831,7 +834,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
           ) : null}
         </div>
         {step < lastStep ? (
-          <Button type="button" disabled={busy || (step === STEP_CARD && !draft.vipPlan) || (step === STEP_REVIEW && reviewErrorList.length > 0)} className="tw:min-h-11 tw:sm:min-h-8" onClick={next}>
+          <Button type="button" disabled={busy || (step === STEP_CARD && !product) || (step === STEP_REVIEW && reviewErrorList.length > 0)} className="tw:min-h-11 tw:sm:min-h-8" onClick={next}>
             Continue <ArrowRight aria-hidden="true" className="tw:size-4" />
           </Button>
         ) : !canManage ? (

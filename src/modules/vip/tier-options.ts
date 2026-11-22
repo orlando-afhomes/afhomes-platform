@@ -14,7 +14,7 @@ export function isSellableProduct(product: Pick<VipProduct, "status" | "approval
  */
 export function tierOptions(products: ReadonlyArray<VipProduct> | undefined, include?: ReadonlyArray<VipTierCode | null | undefined>): TierOption[] {
   // A draft is never selectable; `include` only keeps a retired product that a record already holds.
-  const available = (products ?? []).filter((product) => product.approvalStatus === "approved" && (product.status === "active" || include?.includes(product.code)));
+  const available = (products ?? []).filter((product) => isSellableProduct(product) || (product.approvalStatus === "approved" && include?.includes(product.code)));
   return toTierOptions(available);
 }
 

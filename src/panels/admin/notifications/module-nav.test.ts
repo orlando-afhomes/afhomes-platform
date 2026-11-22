@@ -59,6 +59,10 @@ describe("notificationDestination", () => {
     expect(notificationDestination({ module: "finance", action: "FINANCIAL_HOLD_APPLIED" })).toEqual({ area: "finance", tab: "collections" });
   });
 
+  it("sends Experiences content events to the Experiences page, not VIP products", () => {
+    expect(notificationDestination({ module: "experiences", action: "EXPERIENCE_CREATED" })).toEqual({ area: "experiences", tab: "experiences" });
+  });
+
   it("separates bills, waivers and promo ledger entries in Stay Points", () => {
     expect(notificationDestination({ module: "stay-points", action: "RESORT_BILL_ENTERED" })).toEqual({ area: "stay-points", tab: "resort-bills" });
     expect(notificationDestination({ module: "stay-points", action: "COMPASSIONATE_WAIVER_REQUESTED" })).toEqual({ area: "stay-points", tab: "waivers" });

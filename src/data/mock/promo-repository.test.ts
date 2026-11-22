@@ -129,7 +129,7 @@ describe("Promo Points", () => {
   });
 
   it("previews a draft public offer without publishing it", async () => {
-    const { store, admin } = setup();
+    const { store, admin, as } = setup();
     const draft = await admin.promos.create(promoInput({
       name: "Previewed Weekend", rewards: [{ name: "Spa Day Pass", description: "One day pass", outletId: SPA, pointsCost: 3 }],
       redeemOutletIds: [SPA], publicTitle: "Previewed Weekend", publicSummary: "A previewed offer.", publicTerms: "One reward per visit.",
@@ -142,6 +142,9 @@ describe("Promo Points", () => {
     expect(store.promos.find((promo) => promo.id === draft.id)!.published).toBe(false);
     await expect(admin.promos.publicOffers()).resolves.toHaveLength(0);
     await expect(admin.promos.previewOffer("missing-promo")).rejects.toThrow(/not found/i);
+    for (const id of ["dev-clerk", "dev-finance", "dev-ost-a1"]) {
+      await expect(as(id).promos.previewOffer(draft.id)).rejects.toThrow(/not allowed/i);
+    }
   });
 
   it("publishes only complete public offers and uses named rewards at their configured cost", async () => {

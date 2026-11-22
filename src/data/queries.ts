@@ -398,7 +398,7 @@ export function useSetTemporaryPassword() {
   const repositories = useMockRepositories();
   const queryClient = useQueryClient();
   return useMutation({
-    meta: { affectsAccess: true },
+    // No affectsAccess: a credential reset changes no one's authority, and refreshing access would unmount the page before the password is shown.
     mutationFn: (id: string) => repositories.accounts.setTemporaryPassword(id),
     onSuccess: () => invalidateAudit(queryClient),
   });
@@ -409,7 +409,6 @@ export function useCreateCustomerDraft() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
-    meta: { affectsAccess: true },
     mutationFn: (input: CustomerDraftInput) => repositories.customers.createDraft(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers", identity.id] });
@@ -629,7 +628,6 @@ export function useSeatVacancies() {
 export function useVerifyReferralSponsor() {
   const repositories = useMockRepositories();
   return useMutation({
-    meta: { affectsAccess: true },
     mutationFn: (code: string) => repositories.members.resolveReferralSponsor(code),
   });
 }
@@ -678,7 +676,6 @@ export function useSubmitRegistration() {
   const repositories = useMockRepositories();
   const queryClient = useQueryClient();
   return useMutation({
-    meta: { affectsAccess: true },
     mutationFn: (input: SubmitRegistrationInput) => repositories.registrations.submit(input),
     onSuccess: () => {
       invalidateAudit(queryClient);
@@ -701,7 +698,6 @@ export function useResubmitRegistration(token: string) {
   const repositories = useMockRepositories();
   const queryClient = useQueryClient();
   return useMutation({
-    meta: { affectsAccess: true },
     mutationFn: (applicant: RegistrationApplicant) => repositories.registrations.resubmit(token, applicant),
     onSuccess: () => {
       invalidateAudit(queryClient);

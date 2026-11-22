@@ -165,7 +165,10 @@ export class MockPromoRepository extends BusinessRepository implements PromoRepo
   }
 
   async previewOffer(id: string, options?: MockAsyncOptions): Promise<PublicPromoOffer> {
-    return this.run(options, () => this.offer(this.find(id)));
+    return this.run(options, (identity) => {
+      this.require(identity, "promos.manage", MANAGE_DENIED);
+      return this.offer(this.find(id));
+    });
   }
 
   async create(input: PromoInput, options?: MockAsyncOptions): Promise<PromoView> {

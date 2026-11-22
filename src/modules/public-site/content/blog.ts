@@ -151,7 +151,7 @@ export const BLOG_POSTS: BlogPost[] = [
       { type: "list", items: [
         "Special long-term VIP discounts of 15% to 25% for all consumption: entrance fees, restaurants, coffee shop, wine bar, videoke, massage, spa, conference room, events, amusement games, adventure games, eco-farming experience, native products shops, and staycation.",
         "Annual Welcome Gift Loyalty Stay Points for accommodations.",
-        "The Gold VIP Privilege Card has a 20-year validity, and can be registered in two persons' names.",
+        "The Gold VIP Privilege Card has a 22-year validity, and can be registered in two persons' names.",
         "Advance Reservation Rights allow a VIP Privilege Cardholder to make reservations one month in advance, while non-cardholders can only reserve one week in advance, giving the primary cardholder an advantage during peak times.",
         "No Annual Maintenance Fees.",
         "Birthday Gifts to make your special day even better.",

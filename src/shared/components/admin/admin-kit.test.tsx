@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render as renderDom, screen, waitFor } from "@testing-library/react";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -33,16 +34,25 @@ function render(node: ReactNode) {
   return renderToStaticMarkup(createElement(Wrapper, null, node));
 }
 
+afterEach(cleanup);
+
+// AdminPage shows "Checking access…" until the access snapshot resolves, so it needs a client render that waits.
+async function renderReady(node: ReactNode) {
+  const { container } = renderDom(createElement(Wrapper, null, node));
+  await waitFor(() => expect(screen.queryByText("Checking access…")).toBeNull());
+  return container.innerHTML;
+}
+
 describe("admin kit", () => {
-  it("renders the page shell with dashboard-scale title and breadcrumbs", () => {
-    const html = render(<AdminPage anyOf={["customers"]} title="Customers" crumbs={[{ label: "Sales" }]}><p>Body</p></AdminPage>);
+  it("renders the page shell with dashboard-scale title and breadcrumbs", async () => {
+    const html = await renderReady(<AdminPage anyOf={["customers"]} title="Customers" crumbs={[{ label: "Sales" }]}><p>Body</p></AdminPage>);
     expect(html).toContain("Customers");
     expect(html).toContain("Dashboard");
     expect(html).toContain("Body");
   });
 
-  it("restricts modules the identity lacks", () => {
-    const html = render(<AdminPage anyOf={["nonexistent-module" as never]} title="Hidden" crumbs={[]}><p>Body</p></AdminPage>);
+  it("restricts modules the identity lacks", async () => {
+    const html = await renderReady(<AdminPage anyOf={["nonexistent-module" as never]} title="Hidden" crumbs={[]}><p>Body</p></AdminPage>);
     expect(html).toContain("Access restricted");
     expect(html).not.toContain(">Body<");
   });

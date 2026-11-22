@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useState, type ReactNode } from "react";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
@@ -128,6 +128,9 @@ describe("useTabParam", () => {
   });
 });
 
+// AreaPage shows "Checking access…" until the access snapshot resolves.
+const waitForAccess = () => waitFor(() => expect(screen.queryByText("Checking access…")).toBeNull());
+
 describe("AreaPage", () => {
   const tabs = [
     { value: "one", label: "One", allowed: true, render: () => <p>Panel one</p> },
@@ -144,6 +147,7 @@ describe("AreaPage", () => {
         </NotificationsContext.Provider>
       </Wrapper>,
     );
+    await waitForAccess();
     expect(screen.getByRole("tab", { name: /^Three/ })).toHaveAccessibleDescription("2 unread notifications");
     const mobileSelect = screen.getByRole("combobox", { name: "Finance views" });
     expect(mobileSelect).toHaveAccessibleDescription("2 unread notifications");
@@ -162,6 +166,7 @@ describe("AreaPage", () => {
         <AreaPage anyOf={["reports"]} title="Finance" tabs={tabs} actions={(tab) => <button type="button">Action {tab}</button>} />
       </Wrapper>,
     );
+    await waitForAccess();
     expect(screen.getByRole("heading", { level: 1, name: "Finance" })).toBeInTheDocument();
     expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["One", "Three4"]);
     const panel = screen.getByRole("tabpanel");
@@ -174,46 +179,50 @@ describe("AreaPage", () => {
     expect(screen.queryByText("Panel two")).toBeNull();
   });
 
-  it("places the actions in the page header beside the title, above the tab bar", () => {
+  it("places the actions in the page header beside the title, above the tab bar", async () => {
     render(
       <Wrapper>
         <AreaPage anyOf={["reports"]} title="Finance" tabs={tabs} actions={<button type="button">Add receipt</button>} />
       </Wrapper>,
     );
+    await waitForAccess();
     const header = screen.getByRole("heading", { level: 1, name: "Finance" }).parentElement?.parentElement as HTMLElement;
     expect(within(header).getByRole("button", { name: "Add receipt" })).toBeInTheDocument();
     expect(within(header).queryByRole("tablist")).toBeNull();
     expect(header).toHaveClass("tw:justify-between", "tw:flex-wrap");
   });
 
-  it("never opens a tab that is not allowed from the URL", () => {
+  it("never opens a tab that is not allowed from the URL", async () => {
     search = "tab=two";
     render(
       <Wrapper>
         <AreaPage anyOf={["reports"]} title="Finance" tabs={tabs} />
       </Wrapper>,
     );
+    await waitForAccess();
     expect(screen.getByRole("tabpanel")).toHaveTextContent("Panel one");
     expect(window.location.search).toBe("?tab=one");
   });
 
-  it("renders no panel and hides the tab when allowed is false", () => {
+  it("renders no panel and hides the tab when allowed is false", async () => {
     render(
       <Wrapper>
         <AreaPage anyOf={["reports"]} title="Finance" tabs={[tabs[0], tabs[1]]} />
       </Wrapper>,
     );
+    await waitForAccess();
     expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["One"]);
     expect(screen.queryByRole("tab", { name: "Two" })).toBeNull();
     expect(screen.queryByText("Panel two")).toBeNull();
   });
 
-  it("keeps the tab bar and breadcrumb with one allowed tab when several tabs are declared", () => {
+  it("keeps the tab bar and breadcrumb with one allowed tab when several tabs are declared", async () => {
     render(
       <Wrapper>
         <AreaPage anyOf={["reports"]} title="Finance" tabs={[tabs[0], tabs[1]]} />
       </Wrapper>,
     );
+    await waitForAccess();
     const bar = screen.getByRole("tablist", { name: "Finance" });
     expect(within(bar).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["One"]);
     expect(screen.getByRole("tab", { name: "One" })).toHaveAttribute("aria-selected", "true");
@@ -221,22 +230,24 @@ describe("AreaPage", () => {
     expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("One");
   });
 
-  it("renders a single declared tab without a tab bar", () => {
+  it("renders a single declared tab without a tab bar", async () => {
     render(
       <Wrapper>
         <AreaPage anyOf={["reports"]} title="Finance" tabs={[tabs[0]]} />
       </Wrapper>,
     );
+    await waitForAccess();
     expect(screen.queryByRole("tablist")).toBeNull();
     expect(screen.getByText("Panel one")).toBeInTheDocument();
   });
 
-  it("shows the no-access view when no tab is allowed", () => {
+  it("shows the no-access view when no tab is allowed", async () => {
     render(
       <Wrapper>
         <AreaPage anyOf={["reports"]} title="Finance" tabs={[tabs[1]]} />
       </Wrapper>,
     );
+    await waitForAccess();
     expect(screen.getByText(/does not have access to Finance/)).toBeInTheDocument();
     expect(screen.queryByText("Panel two")).toBeNull();
   });

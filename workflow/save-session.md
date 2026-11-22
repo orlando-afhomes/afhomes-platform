@@ -112,73 +112,69 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 
 ## 1. Session Metadata
 - Saved at: 2026-11-22 (Asia/Manila business date; exact time not recorded).
-- Repository: afhomes-platform; branch `develop`; HEAD `b64f4d3` (verified in this run).
-- Tool and model: Claude Code (desktop app), Sonnet 5.5 as reported by the environment.
-- Session objective: Save a handoff snapshot only. This session's own context contained just the `/save` request; no implementation work was done or seen in it.
+- Repository: afhomes-platform; branch `develop`; HEAD `16e5fef` (verified in this run).
+- Tool and model: Claude Code (desktop app), Sonnet 5.5, medium effort (set by the owner's `/model` and `/effort` commands this session).
+- Session objective: Save a handoff, run two code reviews on the uncommitted milestone, plan and apply fixes for all 17 findings, then run the full test suite.
 - Development phase: Frontend prototype on typed in-memory mock data; backend, real authentication, database, migrations, and deployment remain deferred.
-- Context note: The conversation had no earlier turns. Everything below about the working tree comes from read-only Git inspection. The cause and intent of the uncommitted changes are NOT known from this session.
+- Context note: No compaction. The harness lost its Bash tool mid-session, so PowerShell was used for commands.
 
 ## 2. Current Project State
-- Branch `develop`, HEAD `b64f4d3` (`feat: add promo rewards and public offers, customer portal, GSD counter`, committed 2026-11-22 11:17 +0800). Verified.
-- The previous snapshot (OpenCode run) recorded a clean tree at `b64f4d3`. The tree is no longer clean: 101 uncommitted entries exist now (see section 5). Verified by `git status`.
-- From file names only (assumed, not verified by reading the diffs): the uncommitted work looks like Phase 2 (dynamic Experiences: `src/modules/experiences/`, `src/data/mock/experience-repository.ts`, `src/panels/admin/pages/experiences-page.tsx`, `src/app/admin/experiences`, `src/app/(public)/experiences/[slug]`), plus a public-content repository, an access snapshot (`src/data/access-snapshot.ts`), role helpers (`src/modules/identity/active-roles.ts`, `record-scope.ts`), a finance collection-state module, an architecture check script (`scripts/check-architecture.mjs`), and notification module-nav relocation.
-- Treat all of that as unknown until the owner confirms or the diffs are read.
+- Verified: branch `develop`, HEAD `16e5fef` (`fix: tighten VIP plan sellability, experiences audit and mutation access refreshes`, 2026-11-22 15:04 +0800). Working tree clean (`git status --short` empty; nothing staged or untracked).
+- Verified: the owner committed in order `b64f4d3` (Phase 1 portal/promos/GSD), `6c943f2` (refactor: architecture boundaries, public content from repositories; the earlier large uncommitted milestone), and `16e5fef` (this session's 17 fixes, 32 files).
+- Current focus: the review-fix pass is done and committed. Open items are an owner decision and test hygiene (section 6).
 
 ## 3. Important Decisions
-- Carried over from the prior snapshot (not re-verified here): frontend-first with browser-memory-only mock data; Stay Points and Promo Points stay separate; GSD is a prototype-only identity; live Redemption, customer submissions, and Services stay disabled; Phase 2 and Phase 3 need explicit owner authorization.
-- Project Git policy: the owner alone stages, commits, pushes, merges, resets, and deploys. No agent performs any Git write.
-- No new decision was made in this session.
+- Owner answers this session (2026-11-22): keep `listPage` (documented Phase 7 in `docs/development/architecture-refactoring-report.md`); add a separate `experiences` audit module; Super Administrator keeps full control of approved products; narrow the `affectsAccess` flag only and keep the access gate's unmount-while-revalidating behavior.
+- Implemented rule: on an approved product, only an identity with `vip-products.approve` (Super Administrator) may change price, validity, earning cycles, points, minimum spend, VIP discount, supplementary holders or card level. Administrators keep description, benefits, image, listing, status and price-status flagging.
+- Assumption: the Administrator may still flag or resolve a price conflict (`priceStatus`) because it does not change what a customer pays.
+- Public VIP card: "Total points over N years" now follows the product's `earningCycles`; the discount-years text still comes from the owner-approved per-code table.
+- Project Git policy unchanged: only the owner stages, commits, pushes, merges, resets and deploys.
 
 ## 4. Completed Work
-- This session: only this snapshot was written. No application, documentation, or test change was made by this session.
-- Prior committed work (`b64f4d3`): Phase 1 customer portal, promo rewards and public offers, GSD counter, experience badge and copy changes, `docs/implementation/` reorganization. Source: prior snapshot.
+- Experience image path: `src/data/mock/experience-repository.ts` accepts plain `/images/` paths only and rejects control characters, `%`, `?`, `#` and backslashes; highlight titles capped at 80 (`src/modules/experiences/rules.ts`); toast reflects archived state (`src/panels/admin/pages/experiences-page.tsx`).
+- `experiences` audit module: `src/modules/audit/types.ts`, `src/modules/notifications/creation-actions.ts` (empty creation list), `src/panels/admin/navigation.ts` (one-tab `experiences` area), `src/panels/admin/notifications/module-nav.ts`, plus tests.
+- Products (`src/data/mock/product-repository.ts`): retired products cannot be approved; approved-product economic-edit guard; approved benefits cannot be cleared; `delete` formatting fixed. Promo preview requires `promos.manage` (`src/data/mock/promo-repository.ts`).
+- Purchase surfaces: customer import ignores drafts (`src/modules/customers/import.ts`); wizard blocks Continue for a retired resumed-draft card (`src/panels/admin/pages/customer-application-wizard.tsx`); repeat-purchase dialog treats a retired plan as no choice (`src/panels/admin/components/prepare-contract-dialog.tsx`); `tierOptions` reuses `isSellableProduct`.
+- Access: `affectsAccess` removed from the temporary-password, draft-save, sponsor-lookup and both registration mutations (`src/data/queries.ts`); notification provider and menu read operations from `useAccessSnapshot()`.
+- Public card: `earningCycles` added to the public allowlist; perks deduplicated; `src/modules/public-site/content/vip.test.ts` added.
+- Other files in the commit were committed by the owner; the exact 32-file list is in `git show --stat 16e5fef`.
 
 ## 5. Git Working Tree
-- Branch `develop`, HEAD `b64f4d3`.
-- Staged: none (`git diff --cached --stat` empty).
-- Unstaged: 72 entries, 1,905 insertions and 851 deletions (`git diff --stat`). 71 modified, 1 deleted. Status: pre-existing or unknown (not made by this session).
-  - Largest groups: `src/panels/admin` (17 files), `src/data/mock` (14), `src/panels/public` (10), `src/shared/providers` (4), `src/modules/vip` (3), `src/data/contracts` (3), `src/app/(public)/experiences` (3 pages).
-  - Also modified: `package.json`, `docs/development/architecture.md`, `docs/development/backend.md`, `src/modules/identity/permissions.ts` and test, `src/modules/customers/import.ts` and test, `src/modules/audit/types.ts`, `src/modules/sales-network/genealogy.ts`, `src/modules/public-site/content/vip.ts`, and this file.
-- Deleted: `src/modules/notifications/module-nav.ts` (a new `src/panels/admin/notifications/module-nav.ts` is untracked, so this looks like a move).
-- Untracked: 29 files, status pre-existing or unknown.
-  - `scripts/check-architecture.mjs` and `.test.mjs`
-  - `src/app/(public)/experiences/[slug]/page.tsx`, `src/app/admin/experiences/page.tsx`
-  - `src/data/access-snapshot.ts` and test; `src/data/contracts/experience-repository.ts`, `public-content-repository.ts`; `src/data/experience-queries.ts`, `public-content-queries.ts`
-  - `src/data/mock/customer-pagination.test.ts`, `experience-repository(.test).ts`, `public-content-repository(.test).ts`
-  - `src/modules/experiences/` (`rules.ts`, `sample-seed.ts`, `types.ts`); `src/modules/finance/application/collection-state(.test).ts`; `src/modules/identity/active-roles.ts`, `record-scope.ts`
-  - `src/panels/admin/components/customer-draft.ts`; `src/panels/admin/notifications/module-nav.ts`; `src/panels/admin/pages/experiences-page(.test).tsx`; `src/panels/admin/providers/notifications-provider.tsx`
-  - `src/panels/public/experience/` (2 files); `src/panels/public/pages/experience-detail-page.tsx`, `standard-experience-page.tsx`
-  - `src/shared/providers/customer-portal-provider.test.tsx`
-- Git also warns that LF will be replaced by CRLF on many modified files; this is a line-ending notice, not a content change.
-- Unfinished work: the above looks like an in-progress, uncommitted milestone. Its completeness is unknown.
+- Branch `develop`, HEAD `16e5fef`. Staged: none. Unstaged: none. Untracked: none. Deleted or renamed: none pending. Verified by read-only Git commands.
+- All of this session's edits are inside commit `16e5fef` (verified for key files by name; not every file compared line by line).
+- No Git write operation was performed by the agent.
 
 ## 6. Pending Tasks
-- Owner to confirm what the 101 uncommitted entries are (Phase 2 Experiences or something broader) and whether they were authorized.
-- Phase 2 (dynamic Experiences) and Phase 3 (VIP product drafts, Super Admin approval) remain subject to explicit owner authorization.
-- Reconcile the external `AFHomes Document\Business Rules` folder with the repository Promo Points amendment before any production rollout (from prior snapshot).
-- Full-suite timeouts (`business-pages`, `staff-page`) were a known project issue (from prior snapshot).
-- Keep live Redemption, customer submissions, Services, and public customer/card lookup disabled.
+- Owner decision: seeded product validity is 22/12/7 years (`src/data/mock/seed-data.ts`) but public copy says 20/10/5 years (`src/modules/public-site/content/vip.ts`, `VIP_BENEFITS`, `CARD_PRESENTATION`). Which is correct is not decided; nothing was changed.
+- Test hygiene: many admin page tests render before the async access gate resolves and fail on "Checking access…" (for example `area-page.test.tsx`, `admin-dashboard-page.test.tsx`, `admin-kit.test.tsx`, `departments-page.test.tsx`, `roles-page.test.tsx`, `customer-review-pages.test.tsx` Import-tab test). Cause is the access-gate work (`src/panels/admin/components/admin-auth-gate.tsx`), not these fixes (assumed from failure text; not baseline-tested).
+- Other failures seen once in the full run and judged unrelated: "Profile picture file" and "Receipt file" label lookups, reports summary card count (expected 7, got 6), plus 15-second timeouts in staff, business pages, modern fields and commissions suites.
+- Authority-changing commands still unmount the admin page by design; revisit only if the owner wants forms kept mounted.
+- Still deferred: Phase 2/3 items from the earlier plan if not already covered by commit `6c943f2` (not verified in this session), external Business Rules folder reconciliation, live Redemption/Services disabled.
 
 ## 7. Verification State
-- This session: tests, lint, typecheck, build, and browser QA were all not performed.
-- Prior state, valid only for commit `b64f4d3` and not for the current dirty tree: targeted tests, `npx tsc --noEmit`, `npm run lint`, and `npm run build` passed; full suite 1,881 passed with 16 timeouts.
-- The current uncommitted tree has no recorded verification.
+- Targeted tests (data, module and repository suites): 154 of 154 passed. UI suites run: 79 of 80 passed; the one failure is the pre-existing Import-tab "Checking access…" test.
+- After the final regression fix: `tier-level-repository`, `business-flow` and `product-repository` suites 107 of 107 passed.
+- `npx tsc --noEmit`: passed (exit 0), last run after the final edit.
+- `npm run lint` (includes the architecture check, 669 files): passed, run before the last small test edits.
+- `npm run build`: passed, run before the last small test edits.
+- Full `npx vitest run`: failed in the access-gate, label-lookup, report-count and timeout groups listed in section 6; not re-run after the two regression fixes.
+- Browser QA: not performed. No dedicated test for the notification-operations change (one-line swap).
 
 ## 8. Next Session Instructions
-- First action: run `/load`, then `git status --short` and ask the owner what the uncommitted changes are before building on them.
-- Then run `npx tsc --noEmit` and targeted tests on the new files (`src/data/mock/experience-repository.test.ts`, `src/panels/admin/pages/experiences-page.test.tsx`, `src/data/access-snapshot.test.tsx`) to learn their real state.
-- Files to inspect: `src/modules/experiences/`, `src/data/mock/experience-repository.ts`, `scripts/check-architecture.mjs`, `docs/implementation/prototype/customer-portal-plan.md`.
-- Approvals needed: owner authorization for any further phase work. All Git writes stay with the owner.
-- Warnings: do not assume the dirty tree is verified or complete. Do not delete, overwrite, or discard these files. Do not enable live Redemption or Services.
+- First action: run `/load`, confirm `git status --short` is still clean at `16e5fef`, then ask the owner about the validity-years mismatch.
+- If fixing tests, start with one shared fix so admin page tests wait for the access gate (look at `src/panels/admin/components/admin-auth-gate.tsx` and a shared test render helper), then re-run the full suite.
+- Files to inspect: `src/data/mock/product-repository.ts`, `src/data/access-snapshot.ts`, `src/data/protected-cache.ts`, `docs/implementation/prototype/customer-portal-plan.md`.
+- Approvals needed: owner authorization for any new phase or feature; all Git operations stay with the owner.
+- Warnings: do not enable live Redemption or Services, do not add public customer/card lookup, do not reintroduce Ant Design, and do not invent which validity figure is right.
 
 ## 9. Execution Recommendation
-- Phase: QA (review and verify the uncommitted work before more building).
-- Current mode: not verified.
-- Recommended next mode: Plan, then Build only after the owner approves scope.
-- Current model: Sonnet 5.5 (reported by environment, not independently verified).
-- Recommended model: Sonnet 5.5.
-- Effort: high.
-- Ultracode: OFF.
-- Token optimization: read the diffs of the new files only, run targeted tests first, and avoid the slow full suite until the tree is understood.
-- Reason: The working tree holds a large multi-file change of unknown origin, so verification should come before any new building.
+- Phase: QA
+- Current mode: not verified
+- Recommended next mode: Plan, then Build once approved
+- Current model: Sonnet 5.5, medium effort (reported by the app)
+- Recommended model: Sonnet 5.5
+- Effort: medium
+- Ultracode: OFF
+- Token optimization: fix the access-gate test pattern once in a shared helper, run the affected suites individually with longer timeouts, and skip the full suite until then.
+- Reason: the remaining work is a single shared test fix plus one owner decision, not new design.
 <!-- SESSION_SNAPSHOT_END -->

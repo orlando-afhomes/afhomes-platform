@@ -67,7 +67,7 @@ describe("Customers area", () => {
   it("opens the Import tab for an Administrator from the URL", async () => {
     window.history.replaceState(null, "", "/admin/customers?tab=import");
     show("dev-admin", <CustomersRoute />);
-    expect(screen.getByRole("tab", { name: "Import" })).toHaveAttribute("aria-selected", "true");
+    expect(await screen.findByRole("tab", { name: "Import" })).toHaveAttribute("aria-selected", "true");
     expect(await screen.findByRole("button", { name: "Download Template" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "New Customer" })).toBeNull();
   });

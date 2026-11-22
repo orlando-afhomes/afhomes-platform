@@ -56,7 +56,7 @@ async function confirmInAlertDialog(user: User, name: string | RegExp) {
 }
 
 async function openCreate(user: User) {
-  await user.click(screen.getByRole("button", { name: "Create role" }));
+  await user.click(await screen.findByRole("button", { name: "Create role" }));
   return screen.findByPlaceholderText("e.g. HR Staff");
 }
 

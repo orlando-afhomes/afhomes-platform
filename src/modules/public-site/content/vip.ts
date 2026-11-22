@@ -109,7 +109,7 @@ export type VipBenefit = { parts: { text: string; strong?: boolean }[] };
 
 export const VIP_BENEFITS: VipBenefit[] = [
   { parts: [{ text: "Special discounts of 15% to 25% on all consumption:", strong: true }, { text: " entrance fee, restaurants, coffee shop, wine bar, videoke, massage, spa, conference room, events, amusement games, adventure games, eco-farming experience, native products shops, and staycation." }] },
-  { parts: [{ text: "The " }, { text: "Gold VIP Privilege Card", strong: true }, { text: " has a 20-year validity." }] },
+  { parts: [{ text: "The " }, { text: "Gold VIP Privilege Card", strong: true }, { text: " has a 22-year validity." }] },
   { parts: [{ text: "Advance reservation rights.", strong: true }, { text: " A VIP Privilege Cardholder can make reservations one month in advance, while a non-cardholder can only reserve one week in advance, giving the primary cardholder an advantage during peak times." }] },
   { parts: [{ text: "No annual maintenance fees,", strong: true }, { text: " plus birthday gifts and complimentary welcome drinks." }] },
 ];

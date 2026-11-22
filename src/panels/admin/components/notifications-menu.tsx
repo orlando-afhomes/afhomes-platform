@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
-import { notificationDestination } from "@/modules/notifications/module-nav";
+import { notificationDestination } from "@/panels/admin/notifications/module-nav";
 import { isNotificationBadgeEvent } from "@/modules/notifications/creation-actions";
 import { formatNotificationTime } from "@/modules/notifications/format-time";
 import { getGrantedOperations } from "@/modules/identity/permissions";

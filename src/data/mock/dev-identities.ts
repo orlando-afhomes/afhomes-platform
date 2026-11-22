@@ -34,9 +34,4 @@ export function getDevIdentity(id: string) {
   return DEV_IDENTITIES.find((identity) => identity.id === id) ?? DEV_IDENTITIES[0];
 }
 
-export function activeRoles(identity: DevIdentity) {
-  if (identity.status !== "active") return [];
-  if (!identity.roleAssignments) return [...identity.roles];
-  const active = identity.roleAssignments.filter((assignment) => assignment.status === "active").map((assignment) => assignment.role);
-  return identity.roles.filter((role) => active.includes(role));
-}
+export { activeRoles } from "@/modules/identity/active-roles";

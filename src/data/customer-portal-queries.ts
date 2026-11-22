@@ -10,7 +10,7 @@ export function useCustomerPortalOverview() {
   const { customerId, repository } = useCustomerPortal();
   return useQuery({
     queryKey: customerId ? overviewKey(customerId) : ["customer-portal", "signed-out"],
-    queryFn: () => repository.overview(customerId!),
+    queryFn: () => repository.overview(),
     enabled: Boolean(customerId),
     retry: false,
     gcTime: 0,
@@ -23,7 +23,7 @@ export function useUpdatePortalContact() {
   return useMutation({
     mutationFn: (input: PortalContactInput) => {
       if (!customerId) throw new Error("Sign in first.");
-      return Promise.resolve(repository.updateContact(customerId, input));
+      return Promise.resolve(repository.updateContact(input));
     },
     onSuccess: (overview) => {
       if (customerId) queryClient.setQueryData(overviewKey(customerId), overview);

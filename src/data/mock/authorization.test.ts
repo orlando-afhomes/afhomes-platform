@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createMockStore } from "@/data/mock/seed";
 import { createMockRepositories } from "@/data/mock/repositories";
 import {
+  resolveActiveSystemRoles,
   hasModuleAccess,
   resolveEffectiveModules,
   resolveLinkedDepartmentRole,
@@ -80,6 +81,7 @@ describe("effective module grants", () => {
       moduleIds: ["departments", "staff"],
     });
     await adminRepos.staff.update("staff-1", { departmentRoleId: created.id });
+    store.accounts.find((item) => item.id === "acct-hr")!.roleIds = ["finance"];
     const identity = linkedIdentity({ roles: ["finance"], staffId: "staff-1" });
     const granted = resolveEffectiveModules(store, identity);
     expect(granted.has("finance")).toBe(true);
@@ -237,4 +239,13 @@ describe("hasModuleAccess", () => {
     expect(hasModuleAccess(store, getDevIdentity("dev-hr"), "departments")).toBe(true);
     expect(hasModuleAccess(store, getDevIdentity("dev-hr"), "accounts")).toBe(false);
   });
+});
+
+it("keeps unlinked synthetic roles and filters inactive assignments on linked accounts",()=>{
+ const store=createMockStore();
+ expect(resolveActiveSystemRoles(store,getDevIdentity("dev-finance"))).toEqual(["finance"]);
+ const identity={...getDevIdentity("dev-admin"),roleAssignments:[{role:"admin" as const,status:"archived" as const}]};
+ expect(resolveActiveSystemRoles(store,identity)).toEqual([]);
+ store.accounts.find(x=>x.id==="acct-admin")!.roleIds=[];
+ expect(resolveActiveSystemRoles(store,getDevIdentity("dev-admin"))).toEqual([]);
 });

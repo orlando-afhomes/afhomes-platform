@@ -1,22 +1,30 @@
+"use client";
+
 import Image from "next/image";
 import { Check, Coins, Crown, Gem, Info, Star, type LucideIcon } from "lucide-react";
-import { formatPoints, VIP_PAGE, VIP_POINTS_NOTE, VIP_TIER_PERKS, VIP_TIERS, type VipTierSummary } from "@/modules/public-site/content/vip";
+import { usePublicVipProducts } from "@/data/public-content-queries";
+import { formatPoints, VIP_CARD_SEED, VIP_PAGE, VIP_POINTS_NOTE, vipCardView, type VipCardView } from "@/modules/public-site/content/vip";
 import { Section, SectionHeading } from "@/panels/public/site/blocks";
 
-const TIER_ICONS: Record<VipTierSummary["code"], LucideIcon> = { gold: Crown, silver: Gem, bronze: Star };
+const TIER_ICONS: Record<VipCardView["style"], LucideIcon> = { gold: Crown, silver: Gem, bronze: Star };
 
-/** "Choose your card": the three VIP Privilege Cards side by side (owner's reference design, 2026-11-17). */
+/** "Choose your card": the approved, publicly listed VIP Privilege Cards side by side. */
 export function VipCards() {
-  const { cards } = VIP_PAGE;
+  const { cards: copy } = VIP_PAGE;
+  const products = usePublicVipProducts();
+  const cards = (products.isPending ? VIP_CARD_SEED : (products.data ?? []).map(vipCardView))
+    .slice()
+    .sort((left, right) => right.totalPoints - left.totalPoints);
+
   return (
     <Section id="cards" className="vip-cards">
-      <SectionHeading eyebrow={cards.eyebrow} title={cards.title} text={cards.text} />
-      <ul className="vip-cards__grid">
-        {VIP_TIERS.map((tier) => {
-          const TierIcon = TIER_ICONS[tier.code];
-          const registration = tier.registration.charAt(0).toLowerCase() + tier.registration.slice(1);
+      <SectionHeading eyebrow={copy.eyebrow} title={copy.title} text={copy.text} />
+      {cards.length === 0 ? <p className="site-note">No VIP cards are listed right now.</p> : null}
+      <ul className="vip-cards__grid" aria-busy={products.isPending}>
+        {cards.map((tier) => {
+          const TierIcon = TIER_ICONS[tier.style];
           return (
-            <li key={tier.code} className={`vip-cards__card vip-cards__card--${tier.code} site-home-reveal`}>
+            <li key={tier.code} className={`vip-cards__card vip-cards__card--${tier.style} site-home-reveal`}>
               <span className="vip-cards__media">
                 <Image src={tier.image} alt={`${tier.name} VIP Privilege Card`} fill sizes="(min-width: 900px) 380px, 90vw" className="vip-cards__image" />
               </span>
@@ -26,10 +34,12 @@ export function VipCards() {
               </h3>
               <p className="vip-cards__discount">
                 <span className="vip-cards__discount-value">{tier.discountPercent}%</span>
-                <span className="vip-cards__discount-text">fixed VIP discount for {tier.discountYears} years</span>
+                <span className="vip-cards__discount-text">
+                  {tier.discountYears === null ? "fixed VIP discount" : `fixed VIP discount for ${tier.discountYears} years`}
+                </span>
               </p>
               <ul className="vip-cards__perks">
-                {[`Registration for ${registration}`, ...VIP_TIER_PERKS].map((perk) => (
+                {tier.perks.map((perk) => (
                   <li key={perk} className="vip-cards__perk">
                     <Check aria-hidden="true" className="vip-cards__perk-icon" />
                     <span>{perk}</span>
@@ -48,7 +58,7 @@ export function VipCards() {
                   </p>
                 </div>
                 <p className="vip-cards__points-total">
-                  Total <strong>{formatPoints(tier.totalPoints)}</strong> over {tier.discountYears} years
+                  Total <strong>{formatPoints(tier.totalPoints)}</strong>{tier.discountYears === null ? " points" : ` over ${tier.discountYears} years`}
                 </p>
               </div>
             </li>

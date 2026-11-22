@@ -21,6 +21,8 @@ import { seedTierLevels } from "@/modules/vip/tier-levels";
 import type { Account } from "@/modules/accounts/types";
 import type { Promo, PromoPointsEntry } from "@/modules/promos/types";
 import { seedPromos } from "@/modules/promos/sample-seed";
+import type { Experience } from "@/modules/experiences/types";
+import { seedExperiences } from "@/modules/experiences/sample-seed";
 import type { AuditEvent } from "@/modules/audit/types";
 import type { ReceiptImportBatch } from "@/modules/imports/receipt-import";
 import type { ReconciliationEntry } from "@/modules/reconciliation/rules";
@@ -60,6 +62,8 @@ export type MockStore = {
   /** Promo Points: admin-defined promos and their separate points ledger (not Grant Stay Points). */
   promos: Promo[];
   promoPoints: PromoPointsEntry[];
+  /** Public website Experiences content; distinct from Promo Rewards. */
+  experiences: Experience[];
   accounts: Account[];
   departments: Department[];
   roles: DepartmentRole[];
@@ -128,6 +132,7 @@ export function createSeedStore(): MockStore {
     outlets: seedOutlets(),
     promos: seedPromos(),
     promoPoints: [],
+    experiences: seedExperiences(),
     accounts: accounts.map((item) => ({ ...item, roleIds: [...item.roleIds] })),
     departments: departments.map((item) => ({ ...item })),
     roles: roles.map((item) => ({ ...item, moduleIds: [...item.moduleIds] })),
@@ -148,7 +153,7 @@ export function createSeedStore(): MockStore {
     registrationSequence: 1,
     // Continues after the seeded audit-1..audit-8 display records.
     auditSequence: 9,
-    counters: { promo: 2, ...seedData.counters },
+    counters: { experience: 4, promo: 2, ...seedData.counters },
   };
 }
 
@@ -192,6 +197,7 @@ export function createMockStore(seed: MockStore = createSeedStore()): MockStore 
     outlets: seed.outlets.map((item) => ({ ...item })),
     promos: clone(seed.promos),
     promoPoints: clone(seed.promoPoints),
+    experiences: clone(seed.experiences),
     accounts: seed.accounts.map((item) => ({ ...item, roleIds: [...item.roleIds] })),
     departments: seed.departments.map((item) => ({ ...item })),
     roles: seed.roles.map((item) => ({ ...item, moduleIds: [...item.moduleIds] })),

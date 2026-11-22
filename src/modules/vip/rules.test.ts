@@ -93,3 +93,9 @@ describe("product code rules", () => {
     expect(productCodeError("b1", ["B1"])).toBe("A product with this code already exists.");
   });
 });
+
+it("rejects conflicting single and per-tier payment codes before configuration is saved", () => {
+  const scheme = { ...base, category: "move" as const, paymentCode: "T04", paymentCodeByTier: { B1: "T12" } };
+  expect(schemeTermErrors(scheme, products).join(" ")).toMatch(/conflict/i);
+  expect(schemeTermErrors({ ...scheme, paymentCodeByTier: { B1: "T04" } }, products)).toEqual([]);
+});

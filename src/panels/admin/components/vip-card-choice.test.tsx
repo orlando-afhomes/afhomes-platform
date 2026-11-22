@@ -19,6 +19,8 @@ function product(overrides: Partial<VipProduct> & Pick<VipProduct, "code" | "nam
     minSpendPerCycleCentavos: peso(1_000),
     supplementaryHolders: 0,
     status: "active",
+    approvalStatus: "approved",
+    publiclyListed: true,
     configVersion: 1,
     effectiveDate: null,
     changes: [],

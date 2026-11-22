@@ -60,7 +60,7 @@ export const SITE_ACTIONS: Record<SiteAction, SiteActionConfig> = {
   vip: { icon: Gem, role: "gold" },
   talk: { icon: MessageCircle, role: "primary" },
   read: { icon: BookOpen, role: "secondary" },
-  directions: { icon: MapPin, role: "secondary" },
+  directions: { icon: MapPin, role: "primary" },
   "open-map": { icon: MapIcon, role: "secondary" },
   explore: { icon: Compass, role: "primary" },
 };

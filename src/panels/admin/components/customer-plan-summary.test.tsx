@@ -28,6 +28,8 @@ const gold: VipProduct = {
   minSpendPerCycleCentavos: pesos(3000),
   supplementaryHolders: 1,
   status: "active",
+  approvalStatus: "approved",
+  publiclyListed: true,
   configVersion: 1,
   effectiveDate: null,
   changes: [],

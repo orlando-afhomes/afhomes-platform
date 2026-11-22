@@ -2,8 +2,14 @@ import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { CustomerImportJob, CustomerImportRecord } from "@/modules/customers/import";
 import type { Customer, CustomerDraftInput } from "@/modules/customers/types";
 
+/** Stable ID ordering; cursors belong to the current identity's visible collection. */
+export type CustomerPageQuery = { limit: number; afterId?: string };
+export type CustomerPage = { items: Customer[]; total: number; nextCursor: string | null };
+
 export interface CustomerRepository {
   list(options?: MockAsyncOptions): Promise<Customer[]>;
+  /** Additive cursor API for future large directories; list() remains compatible. Page sizes are 1–100. */
+  listPage(query: CustomerPageQuery, options?: MockAsyncOptions): Promise<CustomerPage>;
   getById(id: string, options?: MockAsyncOptions): Promise<Customer | null>;
   createDraft(input: CustomerDraftInput, options?: MockAsyncOptions): Promise<Customer>;
   updateDraft(id: string, input: CustomerDraftInput, options?: MockAsyncOptions): Promise<Customer>;

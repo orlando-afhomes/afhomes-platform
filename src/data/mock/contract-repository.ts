@@ -11,6 +11,7 @@ import { findApprovedCommissionRate, freezeCommissionRates } from "./commission-
 import { commissionStageAmounts } from "@/modules/commissions/rules";
 import { evaluateSaleParties, salePartyBlockMessage } from "@/modules/sales/accreditation-standing";
 import { applicablePriceStatus } from "@/modules/vip/pricing";
+import { isSellableProduct } from "@/modules/vip/tier-options";
 import type { PaymentScheme, VipTierCode } from "@/modules/vip/types";
 import { BusinessRepository, DATE_ONLY, canSeeContract, customerName, genealogyFor, nowIso, today } from "./business-base";
 import { cancelRelatedContractRecords, paymentsOfContract, reconcileContract } from "./business-effects";
@@ -132,8 +133,8 @@ export class MockContractRepository extends BusinessRepository implements Contra
       const sellerMemberId = input.sellerMemberId ?? customer.ownerMemberId;
       if (input.sellerMemberId !== undefined && !this.store.members.some((item) => item.id === sellerMemberId)) throw new Error("Choose a valid closing seller.");
       if (input.referrerMemberId && !this.store.members.some((item) => item.id === input.referrerMemberId)) throw new Error("Choose a valid referrer.");
-      const product = this.store.products.find((item) => item.code === productCode && item.status === "active");
-      if (!product) throw new Error("The customer has no active VIP plan.");
+      const product = this.store.products.find((item) => item.code === productCode && isSellableProduct(item));
+      if (!product) throw new Error("The customer has no approved, active VIP plan.");
       const scheme = this.store.paymentSchemes.find((item) => item.id === input.schemeId);
       if (!scheme || scheme.availability !== "available") throw new Error("The selected payment plan is not available.");
       const reservationDate = input.reservationDate ?? today();

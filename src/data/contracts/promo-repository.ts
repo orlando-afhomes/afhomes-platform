@@ -75,6 +75,8 @@ export interface PromoRepository {
   list(options?: MockAsyncOptions): Promise<PromoView[]>;
   /** Published, date-valid offers with configured active rewards; safe for the public website. */
   publicOffers(options?: MockAsyncOptions): Promise<PublicPromoOffer[]>;
+  /** The public projection as it stands now, even while a draft; never publishes or changes visibility. */
+  previewOffer(id: string, options?: MockAsyncOptions): Promise<PublicPromoOffer>;
   create(input: PromoInput, options?: MockAsyncOptions): Promise<PromoView>;
   update(id: string, input: PromoInput, options?: MockAsyncOptions): Promise<PromoView>;
   /** Ends the promo today (or on its end date when that is earlier). Earned points stay usable until their expiry. */

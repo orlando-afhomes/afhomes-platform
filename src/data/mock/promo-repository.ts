@@ -1,3 +1,4 @@
+import { projectPromoOffer, projectPublicOffers } from "./public-content-repository";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type {
   PromoInput, PromoLedgerRow, PromoMembershipBalance, PromoRepository, PromoView, PublicPromoOffer, RecordPromoUseInput,
@@ -152,27 +153,19 @@ export class MockPromoRepository extends BusinessRepository implements PromoRepo
     return this.run(options, () => this.store.promos.map((promo) => this.view(promo)));
   }
 
+  /** Public projection of one promo, with no publication or date gate. Read-only. */
+  private offer(promo: Promo): PublicPromoOffer {
+    return projectPromoOffer(this.store, promo);
+  }
+
   async publicOffers(options?: MockAsyncOptions): Promise<PublicPromoOffer[]> {
     return this.run(options, () => {
-      const date = today();
-      const outletName = (id: string) => this.store.outlets.find((outlet) => outlet.id === id)?.name ?? "AFhomes outlet";
-      return this.store.promos
-        .filter((promo) => promo.published && promo.status === "active" && date >= promo.startDate && date <= promo.endDate)
-        .map((promo) => ({
-          id: promo.id,
-          title: promo.publicTitle,
-          summary: promo.publicSummary,
-          terms: promo.publicTerms,
-          startDate: promo.startDate,
-          endDate: promo.endDate,
-          pointsExpiryDate: promo.pointsExpiryDate,
-          earnOutlets: promo.earnOutletIds.map(outletName),
-          rewards: promo.rewards
-            .filter((reward) => reward.status === "active" && reward.pointsCost > 0 && promo.redeemOutletIds.includes(reward.outletId))
-            .map((reward) => ({ id: reward.id, name: reward.name, description: reward.description, outletName: outletName(reward.outletId), pointsCost: reward.pointsCost })),
-        }))
-        .filter((offer) => offer.title && offer.summary && offer.terms && offer.rewards.length > 0);
+      return projectPublicOffers(this.store);
     });
+  }
+
+  async previewOffer(id: string, options?: MockAsyncOptions): Promise<PublicPromoOffer> {
+    return this.run(options, () => this.offer(this.find(id)));
   }
 
   async create(input: PromoInput, options?: MockAsyncOptions): Promise<PromoView> {

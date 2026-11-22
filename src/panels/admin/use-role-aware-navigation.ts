@@ -1,10 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
-import { useMockStore } from "@/shared/providers/mock-store-provider";
-import { resolveEffectiveModules } from "@/data/mock/authorization";
-import { getGrantedOperations } from "@/modules/identity/permissions";
+import { useAccessSnapshot } from "@/data/access-snapshot";
+
+
 import {
   filterNavForAccess,
   getAdminAreaTabAccess,
@@ -15,11 +14,10 @@ import {
 } from "@/panels/admin/navigation";
 
 export function useRoleAwareAdminNavigation(): AdminNavItem[] {
-  const { identity } = useDevIdentity();
-  const store = useMockStore();
+  const { modules, operations } = useAccessSnapshot();
   return useMemo(
-    () => filterNavForAccess(getAvailableAdminNavigation(), resolveEffectiveModules(store, identity), getGrantedOperations(identity)),
-    [identity, store],
+    () => filterNavForAccess(getAvailableAdminNavigation(), modules, operations),
+    [modules, operations],
   );
 }
 
@@ -30,10 +28,9 @@ export function useRoleAwareAdminNavigation(): AdminNavItem[] {
  * `const access = useAdminAreaTabAccess("finance"); ... { value: "collections", allowed: access.collections, ... }`.
  */
 export function useAdminAreaTabAccess<A extends AdminAreaKey>(area: A): Record<AdminAreaTabValue<A>, boolean> {
-  const { identity } = useDevIdentity();
-  const store = useMockStore();
+  const { modules, operations } = useAccessSnapshot();
   return useMemo(
-    () => getAdminAreaTabAccess(area, resolveEffectiveModules(store, identity), getGrantedOperations(identity)),
-    [area, identity, store],
+    () => getAdminAreaTabAccess(area, modules, operations),
+    [area, modules, operations],
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 
 // shortcut: mock login only, remove when real authentication (Better Auth/API) is implemented
+import { useAccessSnapshot } from "@/data/access-snapshot";
+import { Button } from "@/shared/ui/button";
 import type { ReactNode } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
@@ -27,5 +29,14 @@ export function AdminAuthGate({ children }: { children: ReactNode }) {
     );
   }
   if (status !== "signed-in") return <AdminShellSkeleton />;
+  return <AdminAccessGate>{children}</AdminAccessGate>;
+}
+
+/** Keeps protected portals and page siblings inside the same access boundary. */
+function AdminAccessGate({ children }: { children: ReactNode }) {
+  const access = useAccessSnapshot();
+  if (access.isError) return <StatusPage variant="403" description="Access could not be verified."><Button onClick={() => void access.refetch()}>Try again</Button></StatusPage>;
+  if (!access.ready) return <AdminShellSkeleton />;
+  if (access.modules.size === 0) return <StatusPage variant="403" />;
   return <>{children}</>;
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CircleCheck, CircleOff, Pencil, Plus } from "lucide-react";
-import { useDeleteProduct, useOperation, useProductDeleteBlockers, useUpdateProduct, useVipProducts } from "@/data/business-queries";
+import { CircleCheck, CircleOff, Pencil, Plus, ShieldCheck } from "lucide-react";
+import { useApproveProduct, useDeleteProduct, useOperation, useProductDeleteBlockers, useUpdateProduct, useVipProducts } from "@/data/business-queries";
 import type { VipProduct } from "@/modules/vip/types";
 import { AreaPage } from "@/shared/components/admin";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
@@ -104,19 +104,27 @@ export function VipProductsAreaPage() {
 export function VipProductsTab({ creating, onCloseCreate }: { creating: boolean; onCloseCreate: () => void }) {
   const products = useVipProducts();
   const canManage = useOperation("vip-products.manage");
+  const canApprove = useOperation("vip-products.approve");
   const blockers = useProductDeleteBlockers();
   const deleteProduct = useDeleteProduct();
   const updateProduct = useUpdateProduct();
+  const approveProduct = useApproveProduct();
   const [statusTarget, setStatusTarget] = useState<VipProduct | null>(null);
+  const [approvalTarget, setApprovalTarget] = useState<VipProduct | null>(null);
   const [editing, setEditing] = useState<VipProduct | null>(null);
   const [productCode, setProductCode] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [approvalFilter, setApprovalFilter] = useState("all");
   const [tierFilter, setTierFilter] = useState("all");
   const tierNameOptions = useMemo(() => [...new Set((products.data ?? []).map((item) => item.tier))].map((tier) => ({ value: tier, label: tier })), [products.data]);
   const visibleProducts = useMemo(
-    () => (products.data ?? []).filter((item) => (statusFilter === "all" || item.status === statusFilter) && (tierFilter === "all" || item.tier === tierFilter) && matchesSearch(search, item.name, item.code)),
-    [products.data, search, statusFilter, tierFilter],
+    () => (products.data ?? []).filter((item) =>
+      (statusFilter === "all" || item.status === statusFilter)
+      && (approvalFilter === "all" || item.approvalStatus === approvalFilter)
+      && (tierFilter === "all" || item.tier === tierFilter)
+      && matchesSearch(search, item.name, item.code)),
+    [products.data, search, statusFilter, approvalFilter, tierFilter],
   );
 
   const productColumns = useMemo<ColumnDef<VipProduct, unknown>[]>(
@@ -124,7 +132,12 @@ export function VipProductsTab({ creating, onCloseCreate }: { creating: boolean;
       { id: "name", header: "Product", cell: ({ row }) => <span className="tw:font-semibold">{row.original.name}</span> },
       { id: "tier", header: "Card Level", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => row.original.tier },
       { id: "price", header: "Price", cell: ({ row }) => <Money value={row.original.priceCentavos} /> },
-      { id: "status", header: "Status", cell: ({ row }) => <BizBadge status={row.original.status} /> },
+      { id: "status", header: "Status", cell: ({ row }) => (
+        <span className="tw:flex tw:flex-wrap tw:gap-1">
+          <BizBadge status={row.original.approvalStatus} />
+          {row.original.approvalStatus === "approved" ? <BizBadge status={row.original.status} /> : null}
+        </span>
+      ) },
       { id: "updated", header: "Last Updated", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => lastChangeDate(row.original) },
     ],
     [],
@@ -136,16 +149,22 @@ export function VipProductsTab({ creating, onCloseCreate }: { creating: boolean;
         <QueryState isLoading={products.isLoading} error={products.error}>
           <FilterBar search={search} onSearch={setSearch} searchLabel="Search products" filters={[
             { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: [{ value: "all", label: "All statuses" }, { value: "active", label: "Active" }, { value: "retired", label: "Retired" }] },
+            { label: "Approval filter", value: approvalFilter, onChange: setApprovalFilter, options: [{ value: "all", label: "All approvals" }, { value: "draft", label: "Draft" }, { value: "approved", label: "Approved" }] },
             { label: "Card level filter", value: tierFilter, onChange: setTierFilter, options: [{ value: "all", label: "All card levels" }, ...tierNameOptions] },
           ]} />
-          <DataTable data={visibleProducts} columns={productColumns} getRowId={(row) => row.code} emptyText={(products.data ?? []).length === 0 ? "No products." : "No products match the filters."} caption="VIP Product Catalog" onRowOpen={(row) => setProductCode(row.code)} getRowLabel={(row) => `Open ${row.name}`} rowActions={(row) => <RowActionsMenu itemName={row.name} onEdit={canManage ? () => setEditing(row) : undefined} onDelete={canManage && blockers.data && blockers.data[row.code] === null ? () => deleteProduct.mutateAsync({ code: row.code, reason: "Unused product removed from the catalog." }) : undefined} deleteDisabledReason={canManage ? blockers.data?.[row.code] : undefined} deleteDescription="This removes the product from the catalog. It has not been used, and the removal is recorded in the audit log." />} />
+          <DataTable data={visibleProducts} columns={productColumns} getRowId={(row) => row.code} emptyText={(products.data ?? []).length === 0 ? "No products." : "No products match the filters."} caption="VIP Product Catalog" onRowOpen={(row) => setProductCode(row.code)} getRowLabel={(row) => `Open ${row.name}`} rowActions={(row) => <RowActionsMenu itemName={row.name} onEdit={canManage ? () => setEditing(row) : undefined} extraItems={canApprove && row.approvalStatus === "draft" ? [{ key: "approve", label: "Approve product", tone: "success", onClick: () => setApprovalTarget(row) }] : []} onDelete={canManage && blockers.data && blockers.data[row.code] === null ? () => deleteProduct.mutateAsync({ code: row.code, reason: "Unused product removed from the catalog." }) : undefined} deleteDisabledReason={canManage ? blockers.data?.[row.code] : undefined} deleteDescription="This removes the product from the catalog. It has not been used, and the removal is recorded in the audit log." />} />
         </QueryState>
       <RecordDetailsSheet
         open={productDetail !== null}
         onClose={() => setProductCode(null)}
         title={productDetail?.name ?? "Product"}
         subtitle={productDetail ? `${productDetail.tier} level` : undefined}
-        badge={productDetail ? <BizBadge status={productDetail.status} /> : undefined}
+        badge={productDetail ? (
+          <span className="tw:flex tw:flex-wrap tw:gap-1">
+            <BizBadge status={productDetail.approvalStatus} />
+            {productDetail.approvalStatus === "approved" ? <BizBadge status={productDetail.status} /> : null}
+          </span>
+        ) : undefined}
         sections={
           productDetail
             ? [
@@ -183,11 +202,14 @@ export function VipProductsTab({ creating, onCloseCreate }: { creating: boolean;
         footer={
           productDetail && canManage ? (
             <>
-              {productDetail.status === "retired" ? (
+              {productDetail.approvalStatus === "draft" && canApprove ? (
+                <Button type="button" variant="success" onClick={() => setApprovalTarget(productDetail)}><ShieldCheck aria-hidden="true" /> Approve Product</Button>
+              ) : null}
+              {productDetail.approvalStatus === "approved" && productDetail.status === "retired" ? (
                 <Button type="button" variant="success" onClick={() => setStatusTarget(productDetail)}><CircleCheck aria-hidden="true" /> Make Available</Button>
               ) : null}
               <Button type="button" variant="warning" onClick={() => { setEditing(productDetail); setProductCode(null); }}><Pencil aria-hidden="true" /> Edit Product</Button>
-              {productDetail.status === "active" ? (
+              {productDetail.approvalStatus === "approved" && productDetail.status === "active" ? (
                 <Button type="button" variant="destructive" onClick={() => setStatusTarget(productDetail)}><CircleOff aria-hidden="true" /> Make Unavailable</Button>
               ) : null}
             </>
@@ -204,6 +226,17 @@ export function VipProductsTab({ creating, onCloseCreate }: { creating: boolean;
         tone={statusTarget?.status === "active" ? "destructive" : "success"}
         onClose={() => setStatusTarget(null)}
         onSubmit={(reason) => (statusTarget ? updateProduct.mutateAsync({ code: statusTarget.code, reason, input: { status: statusTarget.status === "active" ? "retired" : "active" } }) : Promise.resolve())}
+      />
+      <ReasonDialog
+        open={approvalTarget !== null}
+        title={`Approve ${approvalTarget?.name ?? "product"}`}
+        description="Approval needs complete terms, stated benefits, and an available payment plan. It activates the product for sale but does not issue a VIP Number. Listing it publicly is a separate choice."
+        label="Approval reference"
+        confirmText="Approve Product"
+        successText={`${approvalTarget?.name ?? "Product"} is approved.`}
+        tone="success"
+        onClose={() => setApprovalTarget(null)}
+        onSubmit={(reason) => (approvalTarget ? approveProduct.mutateAsync({ code: approvalTarget.code, reason }) : Promise.resolve())}
       />
       <ProductDialog product={editing} creating={creating} onClose={() => { setEditing(null); onCloseCreate(); }} />
     </>

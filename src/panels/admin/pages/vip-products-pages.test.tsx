@@ -3,8 +3,13 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
+import type { ProductCreateInput } from "@/data/contracts/product-repository";
+import { getDevIdentity } from "@/data/mock/dev-identities";
+import { createMockRepositories } from "@/data/mock/repositories";
+import { createMockStore, type MockStore } from "@/data/mock/seed";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { pesos } from "@/shared/lib/money";
 import { NON_ACTIVE_TIER_CODES } from "@/modules/vip/types";
 import { SalesAreaPage } from "./sales-area-page";
 import { VipProductsAreaPage } from "./vip-products-page";
@@ -16,11 +21,11 @@ vi.mock("next/navigation", async (importOriginal) => ({
   useSearchParams: () => new URLSearchParams(window.location.search),
 }));
 
-function Wrapper({ children, identityId }: { children: React.ReactNode; identityId: string }) {
+function Wrapper({ children, identityId, store }: { children: React.ReactNode; identityId: string; store?: MockStore }) {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   return (
     <QueryClientProvider client={queryClient}>
-      <MockStoreProvider>
+      <MockStoreProvider store={store}>
         <DevIdentityProvider initialIdentityId={identityId}>{children}</DevIdentityProvider>
       </MockStoreProvider>
     </QueryClientProvider>
@@ -31,9 +36,21 @@ afterEach(() => {
   cleanup();
   window.history.replaceState(null, "", "/");
 });
-function show(page: ReactElement, tab = "products", identityId = "dev-super-admin") {
+function show(page: ReactElement, tab = "products", identityId = "dev-super-admin", store?: MockStore) {
   window.history.replaceState(null, "", `/admin/vip-products?tab=${tab}`);
-  return render(<Wrapper identityId={identityId}>{page}</Wrapper>);
+  return render(<Wrapper identityId={identityId} store={store}>{page}</Wrapper>);
+}
+
+const DRAFT_INPUT: ProductCreateInput = {
+  code: "B3", name: "Bronze Plus VIP", tierLevelId: "tier-level-bronze", priceCentavos: pesos(90000), validityYears: 7, earningCycles: 5,
+  vipDiscountPercent: 10, lifetimePoints: 50000, pointsPerCycle: 10000, weekdayPointsPerCycle: 7000, weekendPointsPerCycle: 3000,
+  minSpendPerCycleCentavos: pesos(1000), supplementaryHolders: 0, benefitsSummary: "Priority reservations and a welcome gift.",
+};
+
+async function storeWithDraftProduct() {
+  const store = createMockStore();
+  await createMockRepositories(store, () => getDevIdentity("dev-admin")).products.create(DRAFT_INPUT, "Draft for management review");
+  return store;
 }
 
 describe("VIP products pages split by process", () => {
@@ -163,6 +180,48 @@ describe("VIP products pages split by process", () => {
     fireEvent.click(within(dialog).getByRole("checkbox", { name: "Bronze" }));
     const card = within(dialog).getByRole("group", { name: "Bronze terms" });
     for (const label of ["Package price", "Monthly installment", "Number of installments"]) expect(within(card).getByLabelText(label)).toBeInTheDocument();
+  });
+
+  it("shows a new product as a draft and offers approval only to a Super Administrator", async () => {
+    const store = await storeWithDraftProduct();
+
+    show(<VipProductsAreaPage />, "products", "dev-admin", store);
+    const row = await screen.findByRole("row", { name: "Open Bronze Plus VIP" });
+    expect(within(row).getByText("Draft")).toBeInTheDocument();
+    fireEvent.click(within(row).getByRole("button", { name: "Actions for Bronze Plus VIP" }));
+    await screen.findByRole("menu");
+    expect(screen.queryByText("Approve product")).toBeNull();
+
+    cleanup();
+    show(<VipProductsAreaPage />, "products", "dev-super-admin", store);
+    fireEvent.click(await screen.findByRole("button", { name: "Actions for Bronze Plus VIP" }));
+    fireEvent.click(await screen.findByText("Approve product"));
+    expect(await screen.findByRole("dialog", { name: "Approve Bronze Plus VIP" })).toBeInTheDocument();
+  });
+
+  it("offers an active draft product in payment-plan setup", async () => {
+    const store = await storeWithDraftProduct();
+    show(<VipProductsAreaPage />, "schemes", "dev-super-admin", store);
+    await screen.findByRole("table", { name: "Payment Plans" });
+    fireEvent.click(await screen.findByRole("button", { name: /New payment plan/ }));
+    const dialog = await screen.findByRole("dialog", { name: "New Payment Plan" });
+    expect(within(dialog).getByRole("checkbox", { name: "Bronze Plus VIP" })).toBeInTheDocument();
+  });
+
+  it("refuses to clear the stated benefits of an approved product", async () => {
+    const store = await storeWithDraftProduct();
+    const admin = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    await admin.products.updateScheme("scheme-spot-cash", { applicableTiers: ["B1", "S1", "G1", "B3"] }, "Offer the new product");
+    await createMockRepositories(store, () => getDevIdentity("dev-super-admin")).products.approve("B3", "Approved by management");
+
+    show(<VipProductsAreaPage />, "products", "dev-super-admin", store);
+    fireEvent.click(await screen.findByRole("row", { name: "Open Bronze Plus VIP" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Product" }));
+    const dialog = await screen.findByRole("dialog", { name: "Edit Bronze Plus VIP" });
+    fireEvent.change(within(dialog).getByLabelText(/Other benefits/), { target: { value: "" } });
+    fireEvent.change(within(dialog).getByLabelText(/Reason or approval reference/), { target: { value: "Cleanup" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save Changes" }));
+    expect(await within(dialog).findByText(/keeps its stated benefits/i)).toBeInTheDocument();
   });
 
   it("gives a seller the scheme guide in Sales and no Settings catalog", async () => {

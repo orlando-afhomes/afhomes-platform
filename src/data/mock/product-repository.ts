@@ -1,9 +1,10 @@
+import { projectPublicVipProducts } from "./public-content-repository";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { PaymentSchemeInput, ProductCreateInput, ProductRepository, ProductUpdateInput } from "@/data/contracts/product-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { installmentCountFor, productCodeError, schemeTermErrors } from "@/modules/vip/rules";
-import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
+import type { PaymentScheme, PublicVipProduct, VipProduct, VipTierCode } from "@/modules/vip/types";
 import { BusinessRepository, today } from "./business-base";
 import { nextId } from "./ids";
 import type { MockStore } from "./seed";
@@ -35,6 +36,13 @@ function productTermErrors(next: VipProduct): string | null {
   if ((next.description ?? "").length > TEXT_MAX) return `The description must be ${TEXT_MAX} characters or fewer.`;
   if ((next.benefitsSummary ?? "").length > TEXT_MAX) return `The benefits summary must be ${TEXT_MAX} characters or fewer.`;
   if (!Number.isInteger(next.priceCentavos) || next.priceCentavos <= 0) return "The price must be a positive amount.";
+  if (!Number.isInteger(next.validityYears) || next.validityYears < 1) return "Validity must be at least one year.";
+  if (!Number.isInteger(next.earningCycles) || next.earningCycles < 1) return "Earning cycles must be at least one.";
+  if (!Number.isInteger(next.pointsPerCycle) || next.pointsPerCycle <= 0) return "Points per cycle must be positive.";
+  if (!Number.isInteger(next.lifetimePoints) || next.lifetimePoints <= 0) return "Lifetime points must be positive.";
+  if (!Number.isInteger(next.weekdayPointsPerCycle) || next.weekdayPointsPerCycle < 0 || !Number.isInteger(next.weekendPointsPerCycle) || next.weekendPointsPerCycle < 0) return "Weekday and weekend points cannot be negative.";
+  if (!Number.isInteger(next.vipDiscountPercent) || next.vipDiscountPercent < 0 || next.vipDiscountPercent > 100) return "The VIP discount must be between 0 and 100 percent.";
+  if (!Number.isInteger(next.supplementaryHolders) || next.supplementaryHolders < 0) return "Extra cardholders cannot be negative.";
   if (next.weekdayPointsPerCycle + next.weekendPointsPerCycle !== next.pointsPerCycle) return "Weekday and weekend points must add up to the points per cycle.";
   if (next.pointsPerCycle * next.earningCycles !== next.lifetimePoints) return "Lifetime points must equal points per cycle times earning cycles.";
   if (next.earningCycles > next.validityYears) return "Earning cycles cannot exceed the validity years.";
@@ -56,6 +64,11 @@ export class MockProductRepository extends BusinessRepository implements Product
     return this.run(options, () => this.store.products.map((product) => this.resolved(product)));
   }
 
+  /** Public projection: approved, active, explicitly listed products only, allowlisted fields only. */
+  async listPublic(options?: MockAsyncOptions): Promise<PublicVipProduct[]> {
+    return this.run(options, () => projectPublicVipProducts(this.store));
+  }
+
   async listSchemes(options?: MockAsyncOptions): Promise<PaymentScheme[]> {
     return this.run(options, () => clone(this.store.paymentSchemes));
   }
@@ -72,6 +85,11 @@ export class MockProductRepository extends BusinessRepository implements Product
         if (level.status !== "active") throw new Error("This card level is inactive. Choose an active one.");
       }
       const next = { ...product, ...input } as VipProduct;
+      // Approval required stated benefits; an approved product keeps them so its public card
+      // cannot lose the custom perks. Clear them on a draft, or retire the product instead.
+      if (product.approvalStatus === "approved" && input.benefitsSummary !== undefined && !input.benefitsSummary?.trim()) {
+        throw new Error("An approved product keeps its stated benefits. Enter the benefits or retire the product instead of clearing them.");
+      }
       const invalidTerms = productTermErrors(next);
       if (invalidTerms) throw new Error(invalidTerms);
       const changed = (Object.keys(input) as Array<keyof ProductUpdateInput>).filter((key) => input[key] !== undefined && input[key] !== product[key]);
@@ -159,6 +177,8 @@ export class MockProductRepository extends BusinessRepository implements Product
         imageUrl: input.imageUrl ?? null,
         imageFileName: input.imageFileName ?? null,
         status: "active",
+        approvalStatus: "draft",
+        publiclyListed: input.publiclyListed ?? false,
         configVersion: 1,
         effectiveDate: today(),
         changes: [{ version: 1, date: today(), actorId: identity.id, reason: reason.trim(), summary: "created" }],
@@ -171,8 +191,43 @@ export class MockProductRepository extends BusinessRepository implements Product
     });
   }
 
-  async delete(code: VipTierCode, reason: string, options?: MockAsyncOptions): Promise<void> {
+  async approve(code: VipTierCode, reason: string, options?: MockAsyncOptions): Promise<VipProduct> {
     return this.run(options, (identity) => {
+      this.require(identity, "vip-products.approve", "Approving VIP products is not allowed for this identity.");
+      const text = reason.trim();
+      if (!text) throw new Error("A reason or approval reference is required for approval.");
+      const product = this.store.products.find((item) => item.code === code);
+      if (!product) throw new Error("Product not found.");
+      if (product.approvalStatus === "approved") throw new Error("This product is already approved.");
+      const codeProblem = productCodeError(product.code, this.store.products.filter((item) => item.code !== product.code).map((item) => item.code));
+      if (codeProblem) throw new Error(codeProblem);
+      if (!product.name.trim()) throw new Error("A product name is required before approval.");
+      const level = this.store.tierLevels.find((item) => item.id === product.tierLevelId);
+      if (!level || level.status !== "active") throw new Error("Choose an active card level before approval.");
+      const invalidTerms = productTermErrors(product);
+      if (invalidTerms) throw new Error(invalidTerms);
+      if (!product.benefitsSummary?.trim()) throw new Error("State the product benefits before approval.");
+      const hasScheme = this.store.paymentSchemes.some((scheme) => scheme.availability === "available" && scheme.applicableTiers.includes(product.code));
+      if (!hasScheme) throw new Error("Configure an available payment plan for this product before approval.");
+      product.approvalStatus = "approved";
+      product.status = "active";
+      product.configVersion += 1;
+      product.effectiveDate = today();
+      product.changes.push({ version: product.configVersion, date: today(), actorId: identity.id, reason: text, summary: "approved" });
+      this.audit(identity, {
+        module: "vip-products",
+        action: BUSINESS_AUDIT_ACTIONS.PRODUCT_APPROVED,
+        entityType: "product",
+        entityId: product.code,
+        previousValue: "draft",
+        newValue: "approved",
+        reason: text,
+      });
+      return this.resolved(product);
+    });
+  }
+
+  async delete(code: VipTierCode, reason: string, options?: MockAsyncOptions): Promise<void> {    return this.run(options, (identity) => {
       this.require(identity, "vip-products.manage", "Managing VIP products is not allowed for this identity.");
       if (!reason.trim()) throw new Error("A reason or approval reference is required to delete a product.");
       const index = this.store.products.findIndex((item) => item.code === code);

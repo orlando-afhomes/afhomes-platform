@@ -14,6 +14,7 @@ const AREA_HREFS: Record<string, string> = {
   "Stay Points": "/admin/stay-points",
   Redemption: "/admin/redemption",
   Settings: "/admin/vip-products",
+  Experiences: "/admin/experiences",
   "Sales Network": "/admin/sales-network",
   Organization: "/admin/organization",
   Reports: "/admin/reports",

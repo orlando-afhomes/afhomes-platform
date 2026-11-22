@@ -6,7 +6,7 @@ import { useCreatePaymentScheme, useCreateProduct, useUpdatePaymentScheme, useUp
 import { useTierLevels } from "@/data/tier-level-queries";
 import { productCodeError } from "@/modules/vip/rules";
 import { tierLevelOptions } from "@/modules/vip/tier-levels";
-import { tierOptions } from "@/modules/vip/tier-options";
+import { configurationTierOptions } from "@/modules/vip/tier-options";
 import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
 import { manilaToday } from "@/modules/accreditation/dates";
 import { formatDate } from "@/shared/lib/format-date";
@@ -64,6 +64,7 @@ function ProductForm({ product, onClose }: { product: VipProduct | null; onClose
   const [minSpend, setMinSpend] = useState(product ? toPesoText(product.minSpendPerCycleCentavos) : "");
   const [holders, setHolders] = useState(product ? String(product.supplementaryHolders) : "0");
   const [status, setStatus] = useState<"active" | "retired">(product?.status ?? "active");
+  const [listed, setListed] = useState(product?.publiclyListed ?? false);
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | undefined>();
 
@@ -115,13 +116,14 @@ function ProductForm({ product, onClose }: { product: VipProduct | null; onClose
           ...(text.description !== (product.description ?? null) ? { description: text.description } : {}),
           ...(text.benefitsSummary !== (product.benefitsSummary ?? null) ? { benefitsSummary: text.benefitsSummary } : {}),
           ...(imageUrl !== (product.imageUrl ?? null) ? { imageUrl, imageFileName: imageUrl ? imageName : null } : {}),
+          ...(listed !== (product.publiclyListed ?? false) ? { publiclyListed: listed } : {}),
         };
         await update.mutateAsync({ code: product.code, reason, input: { priceCentavos, minSpendPerCycleCentavos: minCentavos, status, ...optional, ...(numbers as Record<string, number>) } });
         toast.success(`${product.name} updated on ${formatDate(manilaToday())}.`);
       } else {
-        const input = { code: code.trim().toUpperCase(), name, tierLevelId, ...text, imageUrl, imageFileName: imageUrl ? imageName : null, priceCentavos, minSpendPerCycleCentavos: minCentavos, ...(numbers as Record<keyof typeof numbers, number>) };
+        const input = { code: code.trim().toUpperCase(), name, tierLevelId, ...text, imageUrl, imageFileName: imageUrl ? imageName : null, publiclyListed: listed, priceCentavos, minSpendPerCycleCentavos: minCentavos, ...(numbers as Record<keyof typeof numbers, number>) };
         await create.mutateAsync({ reason, input });
-        toast.success(`${name.trim()} added to the catalog.`);
+        toast.success(`${name.trim()} added to the catalog as a draft.`);
       }
       onClose();
     } catch (failure) {
@@ -130,7 +132,7 @@ function ProductForm({ product, onClose }: { product: VipProduct | null; onClose
   };
 
   return (
-    <FormDialog open title={product ? `Edit ${product.name}` : "New Product"} description={product ? "Signed contracts keep their original terms." : undefined} submitText={product ? "Save Changes" : "Create Product"} size="lg" pending={update.isPending || create.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
+    <FormDialog open title={product ? `Edit ${product.name}` : "New Product"} description={product ? "Signed contracts keep their original terms." : "New products start as drafts. A Super Administrator approves them before sale or public listing."} submitText={product ? "Save Changes" : "Create Product"} size="lg" pending={update.isPending || create.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
       <ProfilePhotoUploader
         label="Product image"
         document
@@ -167,8 +169,10 @@ function ProductForm({ product, onClose }: { product: VipProduct | null; onClose
         <TextField label="Extra cardholders" required inputMode="numeric" value={holders} onChange={setHolders} />
         {product ? <SelectField label="Availability" value={status} options={[{ value: "active", label: "Active" }, { value: "retired", label: "Retired" }]} onChange={(value) => setStatus(value)} hint="A product that has been used can only be retired." /> : null}
       </FormGrid>
+      <CheckboxField label="Show on the public website" checked={listed} onChange={setListed} />
+      <p className="tw:text-sm tw:text-muted-foreground">Only approved, active products appear on the public VIP page.</p>
       <TextAreaField label="Description" value={description} onChange={setDescription} hint="Optional. Up to 500 characters." />
-      <TextAreaField label="Other benefits" value={benefits} onChange={setBenefits} hint="Optional. Benefits beyond the discount and Stay Points above, in plain words." />
+      <TextAreaField label="Other benefits" value={benefits} onChange={setBenefits} hint={product?.approvalStatus === "approved" ? "Required for an approved product; its public card shows these benefits." : "Optional. Benefits beyond the discount and Stay Points above, in plain words."} />
       <TextAreaField label="Reason or approval reference" required value={reason} onChange={setReason} />
     </FormDialog>
   );
@@ -196,8 +200,9 @@ function SchemeForm({ scheme, onClose }: { scheme: PaymentScheme | null; onClose
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | undefined>();
   const products = useVipProducts();
-  // Active catalog products, plus any tier this scheme already carries (a retired one stays editable).
-  const planOptions = tierOptions(products.data, scheme?.applicableTiers);
+  // Active catalog products (drafts included, because a new product needs a payment plan before approval),
+  // plus any tier this scheme already carries (a retired one stays editable).
+  const planOptions = configurationTierOptions(products.data, scheme?.applicableTiers);
   const pending = create.isPending || update.isPending;
   /** The form has no category control: new schemes default to non-move (hidden), edits mirror the stored category. */
   const isMove = scheme?.category === "move";

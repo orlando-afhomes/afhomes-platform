@@ -25,11 +25,11 @@ function tabAccess(identityId: string, area: keyof typeof ADMIN_AREA_TABS) {
   return Object.keys(access).filter((tab) => access[tab]);
 }
 
-const ALL_AREAS = ["dashboard", "customers", "customer-lookup", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "vip-products", "sales-network", "organization", "reports", "audit-logs"];
+const ALL_AREAS = ["dashboard", "customers", "customer-lookup", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "vip-products", "experiences", "sales-network", "organization", "reports", "audit-logs"];
 const SELLER_AREAS = ["dashboard", "customers", "sales", "commissions", "membership", "stay-points", "sales-network", "reports"];
 
 describe("admin navigation", () => {
-  it("is a flat list of 14 pages with no groups", () => {
+  it("is a flat list of 15 pages with no groups", () => {
     const items = getAvailableAdminNavigation();
     expect(items.map((item) => item.href)).toEqual([
       "/admin",
@@ -42,6 +42,7 @@ describe("admin navigation", () => {
       "/admin/stay-points",
       "/admin/redemption",
       "/admin/vip-products",
+      "/admin/experiences",
       "/admin/sales-network",
       "/admin/organization",
       "/admin/reports",

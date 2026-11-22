@@ -11,7 +11,7 @@ import type { AccreditationAdminStatus, RegistrationApplicant, RegistrationCompl
 import type { SubmitRegistrationInput } from "@/data/contracts/registration-repository";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
-import { resolveEffectiveModules } from "@/data/mock/authorization";
+import { useAccessSnapshot } from "@/data/access-snapshot";
 import { createMockRepositories } from "@/data/mock/repositories";
 import { canReadAuditHistory } from "@/data/mock/audit-repository";
 import { queryKeys } from "@/data/query-keys";
@@ -172,6 +172,7 @@ export function useUpdateLinkedAccountStatus() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: { staffId: string; status: "active" | "suspended" | "deactivated" }) =>
       repositories.staff.updateLinkedAccountStatus(input.staffId, input.status),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
@@ -180,9 +181,7 @@ export function useUpdateLinkedAccountStatus() {
 
 /** System role grants plus linked department-role grants for the active identity. */
 export function useEffectiveModuleIds(): Set<AdminModuleId> {
-  const store = useMockStore();
-  const { identity } = useDevIdentity();
-  return useMemo(() => resolveEffectiveModules(store, identity), [store, identity]);
+  return useAccessSnapshot().modules;
 }
 
 export function useCreateDepartment() {
@@ -190,6 +189,7 @@ export function useCreateDepartment() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: { name: string; status?: "active" | "deactivated" }) => repositories.departments.create(input),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
@@ -200,6 +200,7 @@ export function useUpdateDepartment() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: { id: string; name?: string; status?: "active" | "deactivated" }) =>
       repositories.departments.update(input.id, input),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
@@ -220,6 +221,7 @@ export function useCreateDepartmentRole() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: {
       name: string;
       departmentId: string;
@@ -235,6 +237,7 @@ export function useUpdateDepartmentRole() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: {
       id: string;
       name?: string;
@@ -251,6 +254,7 @@ export function useDeleteDepartmentRole() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (id: string) => repositories.roles.delete(id),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
@@ -261,6 +265,7 @@ export function useCreateStaff() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: {
       displayName: string;
       position: string;
@@ -298,6 +303,7 @@ export function useUpdateStaff() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: {
       id: string;
       displayName?: string;
@@ -335,6 +341,7 @@ export function useDeleteAccount() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (id: string) => repositories.accounts.delete(id),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
@@ -345,6 +352,7 @@ export function useUpdateAccount() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: { id: string; displayName?: string; email?: string; departmentId?: string | null }) =>
       repositories.accounts.update(input.id, input),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
@@ -356,6 +364,7 @@ export function useAssignAccountRole() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: { id: string; role: string }) => repositories.accounts.assignRole(input.id, input.role),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
@@ -366,6 +375,7 @@ export function useRevokeAccountRole() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: { id: string; role: string }) => repositories.accounts.revokeRole(input.id, input.role),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
@@ -376,6 +386,7 @@ export function useUpdateAccountStatus() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: { id: string; status: "pending" | "active" | "suspended" | "deactivated" }) =>
       repositories.accounts.updateStatus(input.id, input.status),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
@@ -387,6 +398,7 @@ export function useSetTemporaryPassword() {
   const repositories = useMockRepositories();
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (id: string) => repositories.accounts.setTemporaryPassword(id),
     onSuccess: () => invalidateAudit(queryClient),
   });
@@ -397,6 +409,7 @@ export function useCreateCustomerDraft() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: CustomerDraftInput) => repositories.customers.createDraft(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers", identity.id] });
@@ -409,6 +422,7 @@ export function useDeleteDepartment() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (id: string) => repositories.departments.delete(id),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
@@ -419,6 +433,7 @@ export function useDeleteStaff() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (id: string) => repositories.staff.delete(id),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
@@ -452,6 +467,7 @@ export function useCreateSalesNetworkMember() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: CreateSalesNetworkMemberInput) => repositories.members.create(input),
     onSuccess: () => {
       invalidateAudit(queryClient);
@@ -468,6 +484,7 @@ export function useTransferSalesNetworkMember() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: { id: string; newParentId: string | null; designation?: Designation; teamName?: string | null }) =>
       repositories.members.transfer(input.id, input.newParentId, input),
     onSuccess: () => {
@@ -485,6 +502,7 @@ export function useChangeSalesNetworkMemberStatus() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: { id: string; status: "active" | "inactive" | "suspended" }) =>
       repositories.members.changeStatus(input.id, input.status),
     onSuccess: () => {
@@ -510,6 +528,7 @@ export function useUpdateSalesNetworkMember() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: { id: string } & UpdateSalesNetworkMemberInput) =>
       repositories.members.update(input.id, input),
     onSuccess: () => {
@@ -526,6 +545,7 @@ export function useCreateAccreditedSeller() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: CreateAccreditedSellerInput) => repositories.members.createAccreditedSeller(input),
     onSuccess: () => {
       invalidateAudit(queryClient);
@@ -544,6 +564,7 @@ export function useUpdateAccreditationStatus() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: { recordId: string; requested: AccreditationStatusRequest; expectedPrevious?: AccreditationAdminStatus; reason?: string }) =>
       repositories.accreditations.updateStatus(input.recordId, input.requested, undefined, input.expectedPrevious, input.reason),
     onSuccess: () => {
@@ -561,6 +582,7 @@ export function useIssuePendingAccreditation() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (memberId: string) => repositories.accreditations.issuePendingAccreditation(memberId),
     onSuccess: () => {
       invalidateAudit(queryClient);
@@ -579,6 +601,7 @@ export function useRenewAccreditation() {
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: { recordId: string; expectedAaNumber?: string; renewalDate?: string }) =>
       repositories.accreditations.renew(input.recordId, { expectedAaNumber: input.expectedAaNumber, renewalDate: input.renewalDate }),
     onSuccess: () => {
@@ -606,6 +629,7 @@ export function useSeatVacancies() {
 export function useVerifyReferralSponsor() {
   const repositories = useMockRepositories();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (code: string) => repositories.members.resolveReferralSponsor(code),
   });
 }
@@ -654,6 +678,7 @@ export function useSubmitRegistration() {
   const repositories = useMockRepositories();
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (input: SubmitRegistrationInput) => repositories.registrations.submit(input),
     onSuccess: () => {
       invalidateAudit(queryClient);
@@ -676,6 +701,7 @@ export function useResubmitRegistration(token: string) {
   const repositories = useMockRepositories();
   const queryClient = useQueryClient();
   return useMutation({
+    meta: { affectsAccess: true },
     mutationFn: (applicant: RegistrationApplicant) => repositories.registrations.resubmit(token, applicant),
     onSuccess: () => {
       invalidateAudit(queryClient);

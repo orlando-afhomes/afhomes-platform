@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { productsInLevel, seedTierLevels, tierLevelNameError, tierLevelOptions } from "./tier-levels";
-import { defaultProductCode, tierDisplayName, tierOptions } from "./tier-options";
+import { defaultProductCode, tierDisplayName, tierOptions, configurationTierOptions } from "./tier-options";
 import type { VipProduct } from "./types";
 
 describe("tier levels", () => {
@@ -20,14 +20,18 @@ describe("tier levels", () => {
 
   it("counts products per level and builds tier options from the catalog, not a fixed list", () => {
     const products = [
-      { code: "B1", tier: "Bronze", tierLevelId: "a", status: "active" },
-      { code: "B3", tier: "Bronze", tierLevelId: "a", status: "retired" },
-      { code: "P3", tier: "Platinum", tierLevelId: "p", status: "active" },
+      { code: "B1", tier: "Bronze", tierLevelId: "a", status: "active", approvalStatus: "approved" },
+      { code: "B3", tier: "Bronze", tierLevelId: "a", status: "retired", approvalStatus: "approved" },
+      { code: "P3", tier: "Platinum", tierLevelId: "p", status: "active", approvalStatus: "approved" },
     ] as VipProduct[];
     expect(productsInLevel(products, "a")).toBe(2);
     expect(tierOptions(products)).toEqual([{ value: "B1", label: "Bronze" }, { value: "P3", label: "Platinum" }]);
     expect(tierOptions(products, ["B3"]).map((item) => item.value)).toEqual(["B1", "B3", "P3"]);
     expect(tierOptions(undefined)).toEqual([]);
+    const draft = { code: "B9", tier: "Bronze", tierLevelId: "a", status: "active", approvalStatus: "draft" } as VipProduct;
+    expect(tierOptions([draft], ["B9"])).toEqual([]);
+    expect(configurationTierOptions([draft]).map((item) => item.value)).toContain("B9");
+    expect(defaultProductCode([draft])).toBe("");
     expect(defaultProductCode(products)).toBe("B1");
     expect(defaultProductCode([])).toBe("");
   });

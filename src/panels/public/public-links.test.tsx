@@ -3,6 +3,10 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState, type ReactElement, type ReactNode } from "react";
+import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
+import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { ABOUT } from "@/modules/public-site/content/about";
 import { BLOG_PAGE, BLOG_POSTS, BLOG_POST_PAGE } from "@/modules/public-site/content/blog";
 import { COMPLIANCE_DOCUMENT_IMAGES, COMPLIANCE_PAGE } from "@/modules/public-site/content/compliance";
@@ -17,6 +21,21 @@ import { PublicHomePage } from "./pages/public-home-page";
 const navState = vi.hoisted(() => ({ pathname: "/" }));
 vi.mock("next/navigation", () => ({ usePathname: () => navState.pathname }));
 
+function SiteProviders({ children }: { children: ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
+  return (
+    <QueryClientProvider client={queryClient}>
+      <MockStoreProvider>
+        <DevIdentityProvider initialIdentityId="dev-super-admin">{children}</DevIdentityProvider>
+      </MockStoreProvider>
+    </QueryClientProvider>
+  );
+}
+
+function renderSite(ui: ReactElement) {
+  return render(ui, { wrapper: SiteProviders });
+}
+
 beforeEach(() => {
   navState.pathname = "/";
 });
@@ -28,7 +47,7 @@ const publicFile = (src: string) => existsSync(join(process.cwd(), "public", src
 
 describe("public sign-in and verification links", () => {
   it("shows Verify Accreditation in the header and on the home page", () => {
-    render(
+    renderSite(
       <>
         <PublicHeader />
         <PublicHomePage />
@@ -76,7 +95,7 @@ describe("public sign-in and verification links", () => {
   });
 
   it("links Sales Sign-In from the footer Access column", () => {
-    const { container } = render(
+    const { container } = renderSite(
       <>
         <PublicHeader />
         <PublicHomePage />
@@ -125,7 +144,7 @@ describe("public sign-in and verification links", () => {
   });
 
   it("points only at routes that exist under src/app", () => {
-    render(
+    renderSite(
       <>
         <PublicHeader />
         <PublicFooter />

@@ -1,8 +1,9 @@
 import { ShieldCheck } from "lucide-react";
 import { ABOUT } from "@/modules/public-site/content/about";
-import { EXPERIENCE_CARDS, RESORT_AMENITIES, ROOMS } from "@/modules/public-site/content/experiences";
-import { SiteCallout, SiteFeatureCard } from "@/shared/components/site";
+import { RESORT_AMENITIES, ROOMS } from "@/modules/public-site/content/experiences";
+import { SiteCallout } from "@/shared/components/site";
 import { Photo, Section, SectionHeading, SiteButton } from "../site/blocks";
+import { ExperienceCardList } from "../experience/experience-card-list";
 import { OpenStatusBadge } from "../site/open-status-badge";
 import { RoomPreviewGrid } from "../site/room-preview-grid";
 import { SiteCta } from "../site/site-cta";
@@ -35,13 +36,7 @@ export function PublicHomePage() {
 
       <Section id="experiences">
         <SectionHeading eyebrow="Our experiences" title="Three homestyle destinations" text="Open now in Alaminos, flagship resort coming." />
-        <ul className="site-grid site-grid--3">
-          {EXPERIENCE_CARDS.map((card) => (
-            <li key={card.href} className="site-home-reveal">
-              <SiteFeatureCard href={card.href} title={card.title} text={card.text} image={card.image} badge={{ label: card.status, tone: card.statusTone }} />
-            </li>
-          ))}
-        </ul>
+        <ExperienceCardList />
       </Section>
 
       <Section tone="soft">

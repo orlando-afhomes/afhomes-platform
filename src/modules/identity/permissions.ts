@@ -1,6 +1,6 @@
 import type { AccountStatus } from "@/modules/accounts/types";
 import type { DevIdentity, DevRole } from "@/modules/identity/types";
-import { activeRoles } from "@/data/mock/dev-identities";
+import { activeRoles } from "@/modules/identity/active-roles";
 
 export type AdminModuleId =
   | "dashboard"
@@ -20,6 +20,7 @@ export type AdminModuleId =
   | "accreditation"
   | "customers"
   | "vip-products"
+  | "experiences"
   | "sales"
   // Parent navigation scopes only; never granted to any role (deny by default).
   | "sales-group"
@@ -44,6 +45,10 @@ export type AdminOperation =
   | "settings.lists.manage"
   | "admin.protected"
   | "vip-products.manage"
+  /** Approve and activate a complete Draft VIP product (Super Administrator only). */
+  | "vip-products.approve"
+  /** Create, edit, archive and restore public website Experiences content (Administrator, Super Administrator). */
+  | "experiences.manage"
   | "contracts.approve"
   | "finance.verify"
   | "finance.refund"
@@ -112,8 +117,8 @@ const OST_BUSINESS_MODULES: readonly AdminModuleId[] = ["customers", "sales", "c
 // HR manages departments and staff but does not delegate module grants (no
 // "roles"), so department-role privilege assignment stays protected.
 const ROLE_MODULE_GRANTS: Record<DevRole, readonly AdminModuleId[]> = {
-  super_admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products", "sales-network", "sales-network-members", "sales-network-genealogy", "accreditation-registrations", "accreditation-records", "accreditation-renewals", ...BUSINESS_ADMIN_MODULES],
-  admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products", "sales-network", "sales-network-members", "sales-network-genealogy", "accreditation-registrations", "accreditation-records", "accreditation-renewals", ...BUSINESS_ADMIN_MODULES],
+  super_admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products", "experiences", "sales-network", "sales-network-members", "sales-network-genealogy", "accreditation-registrations", "accreditation-records", "accreditation-renewals", ...BUSINESS_ADMIN_MODULES],
+  admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products", "experiences", "sales-network", "sales-network-members", "sales-network-genealogy", "accreditation-registrations", "accreditation-records", "accreditation-renewals", ...BUSINESS_ADMIN_MODULES],
   hr: [...BASE_MODULES, "departments", "staff"],
   // Prototype-only General Service Department counter identity: scan and Promo Points use, no broad access.
   gsd: [...BASE_MODULES, "stay-points"],
@@ -200,6 +205,7 @@ export const ALL_MODULE_IDS: ReadonlySet<AdminModuleId> = new Set([
   "accreditation",
   "customers",
   "vip-products",
+  "experiences",
   "sales",
   "finance",
   "commissions",
@@ -223,6 +229,8 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "promo-points.use",
     "admin.protected",
     "vip-products.manage",
+    "vip-products.approve",
+    "experiences.manage",
     "contracts.approve",
     "finance.verify",
     "finance.refund",
@@ -266,6 +274,7 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "promos.manage",
     "promo-points.use",
     "vip-products.manage",
+    "experiences.manage",
     "contracts.approve",
     // Owner ruling R6 (2026-11-12): the Administrator approves receipts alongside Finance and the Super Administrator.
     "finance.verify",

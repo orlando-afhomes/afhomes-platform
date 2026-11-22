@@ -35,6 +35,28 @@ export type ProductChange = {
 };
 
 /**
+ * New products start as Draft and cannot be sold or shown publicly. Only a
+ * Super Administrator approves them (prototype plan, Phase 3); approval is not
+ * part of product creation and never assigns a VIP Number.
+ */
+export type ProductApprovalStatus = "draft" | "approved";
+
+/** Customer-safe public card fields; the allowlist for the public VIP page. */
+export type PublicVipProduct = {
+  code: VipTierCode;
+  name: string;
+  tier: string;
+  tierColorKey: TierColorKey;
+  vipDiscountPercent: number;
+  pointsPerCycle: number;
+  lifetimePoints: number;
+  supplementaryHolders: number;
+  /** Approved plain-words benefits; custom products never inherit the standard card perks. */
+  benefitsSummary: string | null;
+  imageUrl: string | null;
+};
+
+/**
  * VIP product configuration (doc 05). Prices and benefits are the values stated
  * in the October 2026 standard contracts (05 section 5); they are not settled
  * catalog decisions. A change creates a new configVersion and never alters
@@ -73,6 +95,10 @@ export type VipProduct = {
   imageUrl?: string | null;
   imageFileName?: string | null;
   status: "active" | "retired";
+  /** Draft until a Super Administrator approves the complete product. */
+  approvalStatus: ProductApprovalStatus;
+  /** Explicit opt-in for the public VIP page; only approved, active products show. */
+  publiclyListed: boolean;
   configVersion: number;
   effectiveDate: string | null;
   changes: ProductChange[];

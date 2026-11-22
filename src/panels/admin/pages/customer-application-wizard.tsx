@@ -16,6 +16,7 @@ import { PAYMENT_METHODS, type PaymentMethod } from "@/modules/finance/types";
 import { nextOfficialReceiptNo } from "@/modules/finance/payment-reference";
 import { applicablePriceStatus, displayPriceFor } from "@/modules/vip/pricing";
 import { buildSchedule } from "@/modules/contracts/rules";
+import { isSellableProduct } from "@/modules/vip/tier-options";
 import type { VipTierCode } from "@/modules/vip/types";
 import { manilaToday } from "@/shared/lib/dates";
 import { MAX_UPLOAD_BYTES, readFileAsDataUrl } from "@/shared/lib/file-data";
@@ -265,8 +266,8 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
         : {}),
     };
   };
-  const activeProducts = (products.data ?? []).filter((item) => item.status === "active");
-  const product = activeProducts.find((item) => item.code === draft.vipPlan);
+  const sellableProducts = (products.data ?? []).filter((item) => isSellableProduct(item));
+  const product = sellableProducts.find((item) => item.code === draft.vipPlan);
   const scheme = (schemes.data ?? []).find((item) => item.id === draft.paymentSchemeId);
   const supplementaryAllowed = Boolean(product && product.supplementaryHolders > 0);
   const reservationCentavos = scheme?.reservationCentavos ?? null;
@@ -314,7 +315,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   };
 
   const choosePlan = (code: VipTierCode) => {
-    const next = activeProducts.find((item) => item.code === code);
+    const next = sellableProducts.find((item) => item.code === code);
     if (!(next && next.supplementaryHolders > 0)) secondaryIdPreview.onClear();
     const keepScheme = (schemes.data ?? []).some((item) => item.id === draft.paymentSchemeId && item.applicableTiers.includes(code));
     setDraft((current) => ({
@@ -589,7 +590,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
           {products.isLoading ? (
             <div role="status" aria-busy="true"><span className="tw:sr-only">Loading VIP cards…</span><CardGridSkeleton cards={3} /></div>
           ) : (
-            <VipCardChoiceGrid products={activeProducts} schemes={schemes.data ?? []} value={(draft.vipPlan || "") as VipTierCode | ""} onChange={choosePlan} invalid={Boolean(errors.vipPlan)} />
+            <VipCardChoiceGrid products={sellableProducts} schemes={schemes.data ?? []} value={(draft.vipPlan || "") as VipTierCode | ""} onChange={choosePlan} invalid={Boolean(errors.vipPlan)} />
           )}
           {errors.vipPlan ? (
             <p role="alert" className="tw:text-sm tw:text-destructive">

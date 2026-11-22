@@ -7,7 +7,7 @@ import { hasOperationPermission, type AdminOperation } from "@/modules/identity/
 import type { DevIdentity } from "@/modules/identity/types";
 import { manilaToday } from "@/shared/lib/dates";
 import { appendAuditEvent } from "./audit";
-import { hasBlockedLinkedAccount } from "./authorization";
+import { resolveMockIdentity } from "./authorization";
 import { activeRoles } from "./dev-identities";
 import type { MockStore } from "./seed";
 import { isActiveIdentity } from "./scope";
@@ -34,14 +34,15 @@ export abstract class BusinessRepository {
 
   /**
    * A linked account that is not active removes all protected access (doc 01),
-   * exactly as resolveEffectiveModules does for the organization modules. The
+   * exactly as resolveEffectiveModules does for the organization modules. Current linked-account
+   * roles also replace stale persona roles. The
    * identity is treated as inactive, so every grant and scope check below
    * denies it. Identities without a linked account keep identity-status gating
    * (see hasBlockedLinkedAccount).
    */
   private effectiveIdentity(): DevIdentity {
     const identity = this.getIdentity();
-    return hasBlockedLinkedAccount(this.store, identity) ? { ...identity, status: "inactive" } : identity;
+    return resolveMockIdentity(this.store, identity);
   }
 
   protected can(identity: DevIdentity, operation: AdminOperation): boolean {

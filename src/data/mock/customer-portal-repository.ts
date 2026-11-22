@@ -13,7 +13,8 @@ const contactOf = (customer: Customer | undefined, key: "mobileNumber" | "email"
 
 /** Browser-scoped customer portal data. No staff lookup, no stored business data. */
 export class MockCustomerPortalRepository implements CustomerPortalRepository {
-  constructor(private readonly store: MockStore) {}
+  /** `customerId` is the signed-in mock session, never a URL or form value. */
+  constructor(private readonly store: MockStore, private readonly customerId: string | null) {}
 
   sampleCustomers(): PortalCustomer[] {
     return this.store.customers
@@ -27,9 +28,15 @@ export class MockCustomerPortalRepository implements CustomerPortalRepository {
     return this.sampleCustomers().find((customer) => customer.email.toLowerCase() === term);
   }
 
-  overview(customerId: string): PortalOverview {
-    const customer = this.store.customers.find((item) => item.id === customerId);
+  private currentCustomer(): Customer {
+    if (!this.customerId) throw new Error("Sign in first.");
+    const customer = this.store.customers.find((item) => item.id === this.customerId);
     if (!customer) throw new Error("Customer account not found.");
+    return customer;
+  }
+
+  overview(): PortalOverview {
+    const customer = this.currentCustomer();
     const memberships = this.membershipsFor(customer.id);
     const membership = memberships.find((item) => item.status === "active" && item.cardId) ?? memberships.find((item) => item.cardId);
     if (!membership) throw new Error("No VIP membership is linked to this customer.");
@@ -68,9 +75,8 @@ export class MockCustomerPortalRepository implements CustomerPortalRepository {
     };
   }
 
-  updateContact(customerId: string, input: PortalContactInput): PortalOverview {
-    const customer = this.store.customers.find((item) => item.id === customerId);
-    if (!customer) throw new Error("Customer account not found.");
+  updateContact(input: PortalContactInput): PortalOverview {
+    const customer = this.currentCustomer();
     const mobileNumber = input.mobileNumber.trim();
     const email = input.email.trim();
     const landline = input.landline.trim();
@@ -81,7 +87,7 @@ export class MockCustomerPortalRepository implements CustomerPortalRepository {
     customer.mobileNumber = mobileNumber;
     customer.email = email;
     customer.landline = landline || null;
-    return this.overview(customerId);
+    return this.overview();
   }
 
   private membershipsFor(customerId: string): Membership[] {

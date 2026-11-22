@@ -25,11 +25,19 @@ export function usePromos() {
   return useQuery({ queryKey: queryKeys.business.list("promos", identity.id), queryFn: ({ signal }) => promos.list({ signal }) });
 }
 
-/** Public, customer-safe offers. No identity partition: only published fields are returned. */
-export function usePublicOffers() {
+/** The saved public projection of one promo, even while it is a draft; read-only. */
+export function usePromoPreview(id: string | null) {
   const { promos } = useMockRepositories();
-  return useQuery({ queryKey: ["public-offers"], queryFn: ({ signal }) => promos.publicOffers({ signal }) });
+  const { identity } = useDevIdentity();
+  return useQuery({
+    queryKey: [...queryKeys.business.list("promo-preview", identity.id), id],
+    queryFn: ({ signal }) => promos.previewOffer(id!, { signal }),
+    enabled: Boolean(id),
+  });
 }
+
+/** Public, customer-safe offers. No identity partition: only published fields are returned. */
+export { usePublicOffers } from "./public-content-queries";
 
 export function usePromoLedger() {
   const { promos } = useMockRepositories();

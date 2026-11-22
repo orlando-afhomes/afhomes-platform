@@ -1,4 +1,4 @@
-import { CustomerValidationError, type CustomerRepository } from "@/data/contracts/customer-repository";
+import { CustomerValidationError, type CustomerRepository, type CustomerPageQuery, type CustomerPage } from "@/data/contracts/customer-repository";
 import { invalidateChangedHolderCodes } from "./member-qr-repository";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
@@ -9,6 +9,7 @@ import { currentManilaYear, nextCustomerId } from "@/modules/customers/customer-
 import { composeCustomerName, restrictCustomer, validateCustomerForSubmit } from "@/modules/customers/rules";
 import type { Customer, CustomerDraftInput, CustomerStatus } from "@/modules/customers/types";
 import type { DevIdentity } from "@/modules/identity/types";
+import { isSellableProduct } from "@/modules/vip/tier-options";
 import { BusinessRepository, nowIso, today } from "./business-base";
 import { nextId, randomNumericId } from "./ids";
 import type { MockStore } from "./seed";
@@ -77,8 +78,8 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
     if (input.recommenderMemberId && !this.store.members.some((item) => item.id === input.recommenderMemberId)) {
       throw new Error("The referrer must be a Sales Network seller.");
     }
-    if (input.vipPlan && !this.store.products.some((item) => item.code === input.vipPlan && item.status === "active")) {
-      throw new Error("The selected VIP plan is not available.");
+    if (input.vipPlan && !this.store.products.some((item) => item.code === input.vipPlan && isSellableProduct(item))) {
+      throw new Error("The selected VIP plan is not approved and active.");
     }
     if (input.paymentSchemeId && !this.store.paymentSchemes.some((item) => item.id === input.paymentSchemeId)) {
       throw new Error("The selected payment plan does not exist.");
@@ -122,6 +123,19 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
 
   async list(options?: MockAsyncOptions): Promise<Customer[]> {
     return this.run(options, (identity) => this.visible(identity));
+  }
+
+  async listPage(query: CustomerPageQuery, options?: MockAsyncOptions): Promise<CustomerPage> {
+    return this.run(options, (identity) => {
+      if (!Number.isInteger(query.limit) || query.limit < 1 || query.limit > 100) {
+        throw new Error("Page size must be a whole number from 1 to 100.");
+      }
+      const visible = this.visible(identity).sort((left, right) => left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
+      const afterId = query.afterId;
+      const remaining = afterId === undefined ? visible : visible.filter((item) => item.id > afterId);
+      const items = remaining.slice(0, query.limit);
+      return { items, total: visible.length, nextCursor: remaining.length > items.length ? items.at(-1)!.id : null };
+    });
   }
 
   async getById(id: string, options?: MockAsyncOptions): Promise<Customer | null> {

@@ -1,7 +1,7 @@
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { DevIdentity } from "@/modules/identity/types";
-import { VIP_CLOSED_DEAL_THRESHOLD_BP } from "@/modules/sales/rules";
-import { approvedCollectionMilestone, isFullySettled } from "@/modules/finance/rules";
+
+import { reconcileContractState } from "@/modules/finance/application/reconcile-contract";
 import { firstOpenDate } from "@/modules/finance/month-close";
 import type { Payment } from "@/modules/finance/types";
 import { appendAuditEvent } from "./audit";
@@ -113,82 +113,14 @@ export function cancelRelatedContractRecords(
  * Idempotent: running it twice changes nothing the second time.
  */
 export function reconcileContract(store: MockStore, contractId: string, actor: Actor): void {
-  const contract = store.contracts.find((item) => item.id === contractId);
-  if (!contract) return;
-  const payments = paymentsOfContract(store, contractId);
-  const sale = store.sales.find((item) => item.contractId === contractId);
-  const businessDate = today();
-
-  if (sale?.approval) {
-    const milestone = approvedCollectionMilestone(sale.valueCentavos, payments, sale.closedDealThresholdBp ?? VIP_CLOSED_DEAL_THRESHOLD_BP);
-    if (sale.status === "pending" && milestone) {
-      const reconfirmation = sale.adjustments.some((adjustment) => adjustment.kind === "reversal");
-      sale.status = "confirmed";
-      sale.confirmedDate = milestone.date;
-      sale.adjustments.push({
-        id: nextId(store, "adjustment", "adj"),
-        date: reconfirmation ? firstOpenDate(store.closedMonths, businessDate) : milestone.countedDate,
-        amountCentavos: sale.valueCentavos,
-        kind: reconfirmation ? "reconfirmation" : "confirmation",
-        reason: "Approved collection reached 25%",
-        actorId: actor === "system" ? SYSTEM_ACTOR_ID : actor.id,
-      });
-      auditEffect(store, actor, "sales", reconfirmation ? BUSINESS_AUDIT_ACTIONS.SALE_RECONFIRMED : BUSINESS_AUDIT_ACTIONS.SALE_CONFIRMED, "sale", sale.id, {
-        previousValue: "pending",
-        newValue: "confirmed",
-        relatedRecordIds: [contract.id],
-      });
-    } else if (sale.status === "confirmed" && !milestone) {
-      sale.status = "pending";
-      sale.adjustments.push({
-        id: nextId(store, "adjustment", "adj"),
-        date: firstOpenDate(store.closedMonths, businessDate),
-        amountCentavos: -sale.valueCentavos,
-        kind: "reversal",
-        reason: "Required payment reversed or refunded",
-        actorId: actor === "system" ? SYSTEM_ACTOR_ID : actor.id,
-      });
-      auditEffect(store, actor, "sales", BUSINESS_AUDIT_ACTIONS.SALE_REVERSED, "sale", sale.id, {
-        previousValue: "confirmed",
-        newValue: "pending",
-        relatedRecordIds: [contract.id],
-      });
-    }
-    if (sale.status === "pending" && actor !== "system" && sale.commissionRates) {
-      holdUnpaidCommissionForReview(store, actor, sale.id, "The sale is no longer Confirmed.", ["stage1"], true);
-    }
-    if (sale.status !== "confirmed") holdUnpaidCommissions(store, sale.id, "The sale is no longer Confirmed.");
-    if (actor !== "system" && sale.status === "confirmed" && sale.commissionRates) {
-      const stageOne = approvedCollectionMilestone(sale.valueCentavos, payments, 4_000);
-      const full = approvedCollectionMilestone(sale.valueCentavos, payments, 10_000);
-      if (!stageOne) holdUnpaidCommissionForReview(store, actor, sale.id, "Approved collections fell below 40%.", ["stage1"], true);
-      releaseSaleCommissions(store, actor, { saleId: sale.id, contractId, product: "VIP",
-        valueCentavos: sale.valueCentavos, rates: sale.commissionRates,
-        stage1Date: stageOne?.countedDate ?? null, fullPaymentDate: full?.countedDate ?? null });
-    }
-  }
-
-  const membership = store.memberships.find((item) => item.contractId === contractId);
-  if (membership && membership.status === "active") {
-    const settled = isFullySettled(contract, payments);
-    if (!settled && !membership.financialHold) {
-      membershipPointsLedger(membership, store);
-      membership.financialHold = true;
-      membership.history.push({ at: nowIso(), actorId: SYSTEM_ACTOR_ID, event: BUSINESS_AUDIT_ACTIONS.FINANCIAL_HOLD_APPLIED, note: null });
-      auditEffect(store, "system", "finance", BUSINESS_AUDIT_ACTIONS.FINANCIAL_HOLD_APPLIED, "membership", membership.id, {
-        previousValue: "no_hold",
-        newValue: "financial_hold",
-        relatedRecordIds: [contract.id],
-      });
-    } else if (settled && membership.financialHold) {
-      membership.financialHold = false;
-      membership.history.push({ at: nowIso(), actorId: SYSTEM_ACTOR_ID, event: BUSINESS_AUDIT_ACTIONS.FINANCIAL_HOLD_RELEASED, note: null });
-      membershipPointsLedger(membership, store);
-      auditEffect(store, "system", "finance", BUSINESS_AUDIT_ACTIONS.FINANCIAL_HOLD_RELEASED, "membership", membership.id, {
-        previousValue: "financial_hold",
-        newValue: "no_hold",
-        relatedRecordIds: [contract.id],
-      });
-    }
-  }
+  reconcileContractState(store, contractId, actor, {
+    today,
+    nowIso,
+    nextAdjustmentId: () => nextId(store, "adjustment", "adj"),
+    audit: (effectActor, module, action, entityType, entityId, extra) => auditEffect(store, effectActor, module, action, entityType, entityId, extra),
+    holdUnpaidCommissions: (saleId, reason) => holdUnpaidCommissions(store, saleId, reason),
+    holdCommissionForReview: (effectActor, saleId, reason, stages, restoreWhenQualified) => holdUnpaidCommissionForReview(store, effectActor, saleId, reason, stages, restoreWhenQualified),
+    releaseCommissions: (effectActor, sale) => releaseSaleCommissions(store, effectActor, sale),
+    synchronizePoints: (membership) => { membershipPointsLedger(membership, store); },
+  });
 }

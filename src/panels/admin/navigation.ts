@@ -14,6 +14,7 @@ export type AdminNavKey =
   | "stay-points"
   | "redemption"
   | "vip-products"
+  | "experiences"
   | "sales-network"
   | "organization"
   | "reports"
@@ -210,6 +211,7 @@ export const adminNavigation: AdminNavItem[] = [
   areaItem("stay-points", "Stay Points"),
   areaItem("redemption", "Redemption"),
   areaItem("vip-products", "Settings"),
+  { id: "experiences", label: "Experiences", href: "/admin/experiences", available: true },
   areaItem("sales-network", "Sales Network"),
   areaItem("organization", "Organization"),
   // Compatibility entry point only: /admin/accounts forwards authorized users to

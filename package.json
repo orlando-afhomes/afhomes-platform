@@ -6,8 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "test": "vitest run"
+    "lint": "eslint && node scripts/check-architecture.mjs",
+    "test": "vitest run",
+    "check:architecture": "node scripts/check-architecture.mjs",
+    "test:architecture": "node --test scripts/check-architecture.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

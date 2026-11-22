@@ -128,6 +128,22 @@ describe("Promo Points", () => {
     expect(store.auditEvents.filter((e) => e.entityType === "promo" && e.action.startsWith("PROMO_")).length).toBeGreaterThanOrEqual(5);
   });
 
+  it("previews a draft public offer without publishing it", async () => {
+    const { store, admin } = setup();
+    const draft = await admin.promos.create(promoInput({
+      name: "Previewed Weekend", rewards: [{ name: "Spa Day Pass", description: "One day pass", outletId: SPA, pointsCost: 3 }],
+      redeemOutletIds: [SPA], publicTitle: "Previewed Weekend", publicSummary: "A previewed offer.", publicTerms: "One reward per visit.",
+      published: false,
+    }));
+
+    const preview = await admin.promos.previewOffer(draft.id);
+    expect(preview).toMatchObject({ title: "Previewed Weekend", summary: "A previewed offer.", terms: "One reward per visit." });
+    expect(preview.rewards).toHaveLength(1);
+    expect(store.promos.find((promo) => promo.id === draft.id)!.published).toBe(false);
+    await expect(admin.promos.publicOffers()).resolves.toHaveLength(0);
+    await expect(admin.promos.previewOffer("missing-promo")).rejects.toThrow(/not found/i);
+  });
+
   it("publishes only complete public offers and uses named rewards at their configured cost", async () => {
     const { store, admin, clerk, finance, bill } = setup();
     await expect(admin.promos.create(promoInput({

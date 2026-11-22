@@ -4,7 +4,7 @@ export type AuditModule =
 
 export type AuditEntityType =
   | "member" | "accreditation" | "registration" | "account" | "staff" | "department-role" | "department"
-  | "customer" | "customer-import" | "customer-export" | "report-export" | "product" | "payment-scheme" | "contract" | "sale" | "payment" | "membership" | "commission" | "commission-position-rate" | "resort-spend" | "receipt-import" | "reconciliation" | "redemption-booking" | "redemption-config" | "reference-entry" | "tier-level" | "outlet" | "promo" | "igp-project" | "igp-unit";
+  | "customer" | "customer-import" | "customer-export" | "report-export" | "product" | "payment-scheme" | "contract" | "sale" | "payment" | "membership" | "commission" | "commission-position-rate" | "resort-spend" | "receipt-import" | "reconciliation" | "redemption-booking" | "redemption-config" | "reference-entry" | "tier-level" | "outlet" | "promo" | "igp-project" | "igp-unit" | "experience";
 
 /** Minimal append-only mock audit event for Sales Network / Accreditation / Organization actions. */
 export type AuditEvent = {
@@ -152,6 +152,11 @@ export const BUSINESS_AUDIT_ACTIONS = {
   PRODUCT_DELETED: "PRODUCT_DELETED",
   PRODUCT_UPDATED: "PRODUCT_UPDATED",
   PRODUCT_RETIRED: "PRODUCT_RETIRED",
+  PRODUCT_APPROVED: "PRODUCT_APPROVED",
+  EXPERIENCE_CREATED: "EXPERIENCE_CREATED",
+  EXPERIENCE_UPDATED: "EXPERIENCE_UPDATED",
+  EXPERIENCE_ARCHIVED: "EXPERIENCE_ARCHIVED",
+  EXPERIENCE_RESTORED: "EXPERIENCE_RESTORED",
   PAYMENT_SCHEME_CREATED: "PAYMENT_SCHEME_CREATED",
   PAYMENT_SCHEME_UPDATED: "PAYMENT_SCHEME_UPDATED",
   CONTRACT_PREPARED: "CONTRACT_PREPARED",

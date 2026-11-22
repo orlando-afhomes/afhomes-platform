@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useMembers } from "@/data/queries";
 import { usePaymentSchemes, usePrepareContract, useVipProducts } from "@/data/business-queries";
 import { buildNonStandardSchedule, buildSchedule } from "@/modules/contracts/rules";
+import { isSellableProduct } from "@/modules/vip/tier-options";
 import type { Customer } from "@/modules/customers/types";
 import { CheckboxField, SelectField } from "@/shared/forms/modern";
 import { parsePesoToCentavos } from "@/shared/lib/money";
@@ -92,7 +93,7 @@ export function PrepareContractDialog({ customer, open, onClose, repeatPurchase 
 
   return (
     <FormDialog open={open} title={repeatPurchase ? "New VIP Purchase" : "Prepare Contract"} description={`${customer.displayName} · ${product?.name ?? "No plan selected"}${!askScheme && scheme ? ` · ${scheme.label}` : ""}`} submitText={repeatPurchase ? "Create Purchase Contract" : "Prepare Contract"} pending={prepare.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
-      {repeatPurchase ? <SelectField label="VIP plan" required value={productCode} options={(products.data ?? []).filter((item) => item.status === "active").map((item) => ({ value: item.code, label: item.name }))} onChange={(value) => { setProductCode((products.data ?? []).find((item) => item.code === value)?.code); }} /> : null}
+      {repeatPurchase ? <SelectField label="VIP plan" required value={productCode} options={(products.data ?? []).filter((item) => isSellableProduct(item)).map((item) => ({ value: item.code, label: item.name }))} onChange={(value) => { setProductCode((products.data ?? []).find((item) => item.code === value)?.code); }} /> : null}
       {repeatPurchase ? <>
         <SelectField label="Closing seller" required value={seller} options={sellerOptions} onChange={(value) => { setSeller(value); if (referrer !== "none" && !sellerOptions.some((option) => option.value === referrer)) setReferrer("none"); }} />
         <SelectField label="Referrer" value={referrer} options={referrerOptions} onChange={(value) => { setReferrer(value); if (value !== "none" && seller && !referrerOptions.some((option) => option.value === seller)) setSeller(""); }} />

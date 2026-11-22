@@ -1,17 +1,41 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render as renderRaw, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState, type ReactElement, type ReactNode } from "react";
 import { VIP_TIERS } from "@/modules/public-site/content/vip";
 import { BLOG_POSTS } from "@/modules/public-site/content/blog";
 import { FAQ_INTRO, FAQ_PAGE } from "@/modules/public-site/content/faq";
 import { OFFICES, SITE } from "@/modules/public-site/content/site";
 import { PUBLIC_SUPPORT_INFO } from "@/modules/public-site/support-info";
+import { getDevIdentity } from "@/data/mock/dev-identities";
+import { createMockRepositories } from "@/data/mock/repositories";
+import { createMockStore, type MockStore } from "@/data/mock/seed";
+import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
+import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { BlogPage, BlogPostPage } from "./pages/blog-pages";
 import { ContactPage, FaqPage } from "./pages/faq-contact-pages";
 import { PublicHomePage } from "./pages/public-home-page";
 import { VipPage } from "./pages/vip-page";
 import { HotelPage, ResortPage, RestaurantPage } from "./pages/experience-pages";
+import { ExperienceDetailPage } from "./pages/experience-detail-page";
+import { StandardExperiencePage } from "./pages/standard-experience-page";
 import { HOTEL, RESTAURANT, RESORT, RESORT_AMENITIES, ROOMS } from "@/modules/public-site/content/experiences";
+
+function SiteProviders({ children, store }: { children: ReactNode; store?: MockStore }) {
+  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
+  return (
+    <QueryClientProvider client={queryClient}>
+      <MockStoreProvider store={store}>
+        <DevIdentityProvider initialIdentityId="dev-super-admin">{children}</DevIdentityProvider>
+      </MockStoreProvider>
+    </QueryClientProvider>
+  );
+}
+
+function render(ui: ReactElement, options?: { store?: MockStore }) {
+  return renderRaw(ui, { wrapper: ({ children }) => <SiteProviders store={options?.store}>{children}</SiteProviders> });
+}
 
 afterEach(() => {
   cleanup();
@@ -83,6 +107,9 @@ describe("public site pages", () => {
     expect(directions.map((link) => link.getAttribute("href"))).toEqual(OFFICES.map((office) => office.map.directionsHref));
     const maps = screen.getAllByRole("link", { name: "Open map" });
     expect(maps.map((link) => link.getAttribute("href"))).toEqual(OFFICES.map((office) => office.map.href));
+    // Get directions is the primary action; Open map is the quieter secondary action.
+    for (const link of directions) expect(link).toHaveClass("site-button--primary");
+    for (const link of maps) expect(link).toHaveClass("site-button--outline");
     for (const link of [...directions, ...maps]) expect(link).toHaveAttribute("target", "_blank");
     expect(screen.getByRole("link", { name: PUBLIC_SUPPORT_INFO.email })).toHaveAttribute("href", `mailto:${PUBLIC_SUPPORT_INFO.email}`);
     expect(screen.getByRole("link", { name: PUBLIC_SUPPORT_INFO.phone })).toHaveAttribute("href", PUBLIC_SUPPORT_INFO.phoneHref);
@@ -208,5 +235,100 @@ describe("public site pages", () => {
     render(<RestaurantPage />);
     expect(screen.getByRole("heading", { level: 1, name: RESTAURANT.title })).toBeInTheDocument();
     expect(screen.getByText(RESTAURANT.reservation)).toBeInTheDocument();
+  });
+
+  it("shows only approved, active, publicly listed VIP products on the public page", async () => {
+    const store = createMockStore();
+    const admin = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    await admin.products.create({
+      code: "B3", name: "Bronze Plus VIP", tierLevelId: "tier-level-bronze", priceCentavos: 9_000_000, validityYears: 7, earningCycles: 5,
+      vipDiscountPercent: 10, lifetimePoints: 50000, pointsPerCycle: 10000, weekdayPointsPerCycle: 7000, weekendPointsPerCycle: 3000,
+      minSpendPerCycleCentavos: 100_000, supplementaryHolders: 0, benefitsSummary: "Complimentary welcome dessert; Late checkout on Sundays.",
+    }, "Draft for management review");
+
+    const draftView = render(<VipPage />, { store });
+    await waitFor(() => expect(draftView.container.querySelector('.vip-cards__grid[aria-busy="false"]')).not.toBeNull());
+    expect(screen.queryByText("Bronze Plus VIP")).toBeNull();
+    expect(screen.getByText(/fixed VIP discount for 20 years/)).toBeInTheDocument();
+    cleanup();
+
+    await admin.products.updateScheme("scheme-spot-cash", { applicableTiers: ["B1", "S1", "G1", "B3"] }, "Offer the new product");
+    await createMockRepositories(store, () => getDevIdentity("dev-super-admin")).products.approve("B3", "Approved by management");
+    await admin.products.update("B3", { publiclyListed: true }, "List on the public website");
+
+    const listedView = render(<VipPage />, { store });
+    await waitFor(() => expect(listedView.container.querySelector('.vip-cards__grid[aria-busy="false"]')).not.toBeNull());
+    expect(screen.getByText("Bronze Plus VIP")).toBeInTheDocument();
+    const customCard = screen.getByText("Bronze Plus VIP").closest("li")!;
+    expect(within(customCard).getByText("Complimentary welcome dessert")).toBeInTheDocument();
+    expect(within(customCard).getByText(/Late checkout on Sundays/)).toBeInTheDocument();
+    expect(within(customCard).queryByText("Free entrance fee (for the cardholder)")).toBeNull();
+    expect(within(customCard).queryByText("Priority reservation rights")).toBeNull();
+    expect(screen.getAllByText("Free entrance fee (for the cardholder)")).toHaveLength(3);
+  });
+
+  it("adds a newly published experience to the home cards and its own page", async () => {
+    const store = createMockStore();
+    const admin = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    await admin.experiences.create({
+      title: "Night Market",
+      slug: "night-market",
+      category: "Community",
+      summary: "An evening market of local food, crafts, and music.",
+      status: "Opening soon",
+      statusTone: "upcoming",
+      imageSrc: "/images/site/resort/amenities-w-park1.webp",
+      imageAlt: "The resort park at dusk",
+      overview: "A weekly evening market on the resort grounds.",
+      highlights: [{ title: "Local food", text: "Stalls from Laguna kitchens." }],
+    });
+
+    render(<PublicHomePage />, { store });
+    expect(await screen.findByText("Night Market")).toBeInTheDocument();
+
+    cleanup();
+    render(<ExperienceDetailPage slug="night-market" />, { store });
+    expect(await screen.findByRole("heading", { level: 1, name: "Night Market" })).toBeInTheDocument();
+    expect(screen.getByText("A weekly evening market on the resort grounds.")).toBeInTheDocument();
+
+    cleanup();
+    render(<ExperienceDetailPage slug="missing-experience" />, { store });
+    expect(await screen.findByRole("heading", { name: "This experience is not available" })).toBeInTheDocument();
+  });
+
+  it("drops an archived experience from the public cards", async () => {
+    const store = createMockStore();
+    const admin = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    const created = await admin.experiences.create({
+      title: "Night Market",
+      slug: "night-market",
+      category: "Community",
+      summary: "An evening market of local food, crafts, and music.",
+      status: "Opening soon",
+      statusTone: "upcoming",
+      imageSrc: "/images/site/resort/amenities-w-park1.webp",
+      imageAlt: "The resort park at dusk",
+      overview: "A weekly evening market on the resort grounds.",
+      highlights: [],
+    });
+    await admin.experiences.setPublished(created.id, false);
+
+    render(<PublicHomePage />, { store });
+    await waitFor(() => expect(screen.queryByText("Night Market")).toBeNull());
+    expect(screen.getByText("Hotspring & Ecofarm Resort")).toBeInTheDocument();
+  });
+
+  it("hides an archived original destination but keeps the other designed pages", async () => {
+    const store = createMockStore();
+    const admin = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    const resort = (await admin.experiences.list()).find((item) => item.slug === "hotspring-ecofarm-resort")!;
+    await admin.experiences.setPublished(resort.id, false);
+
+    render(<StandardExperiencePage slug="hotspring-ecofarm-resort" variant="resort" />, { store });
+    expect(await screen.findByRole("heading", { name: "This experience is not available" })).toBeInTheDocument();
+
+    cleanup();
+    render(<StandardExperiencePage slug="smart-wellness-hotel" variant="hotel" />, { store });
+    expect(await screen.findByRole("heading", { level: 1, name: HOTEL.title })).toBeInTheDocument();
   });
 });

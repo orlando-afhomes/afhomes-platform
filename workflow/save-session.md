@@ -111,64 +111,74 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-22 (Asia/Singapore).
-- Repository: afhomes-platform; branch `develop`; HEAD `ead677c` (verified in this run).
-- Tool and model: Codex desktop context; model not independently verified.
-- Session objective: Restore project context, then save a handoff snapshot. No implementation requested or performed.
-- Development phase: Frontend prototype on typed in-memory mock data; backend, real authentication, database, and deployment remain deferred.
-- Context note: Current conversation context was available; no additional history was assumed beyond the existing snapshot.
+- Saved at: 2026-11-22 (Asia/Manila business date; exact time not recorded).
+- Repository: afhomes-platform; branch `develop`; HEAD `b64f4d3` (verified in this run).
+- Tool and model: Claude Code (desktop app), Sonnet 5.5 as reported by the environment.
+- Session objective: Save a handoff snapshot only. This session's own context contained just the `/save` request; no implementation work was done or seen in it.
+- Development phase: Frontend prototype on typed in-memory mock data; backend, real authentication, database, migrations, and deployment remain deferred.
+- Context note: The conversation had no earlier turns. Everything below about the working tree comes from read-only Git inspection. The cause and intent of the uncommitted changes are NOT known from this session.
 
 ## 2. Current Project State
-- Current branch and HEAD verified as `develop` at `ead677c`.
-- The prior snapshot reports that the field-guide, image-viewer, cash OR, and 9-digit TIN batch is committed in `ead677c`; commit contents, remote state, and prior verification were not rechecked in this save session.
-- Current source change: `src/panels/public/experience/exp-rooms.tsx` no longer imports or renders `RenderingsNote`. The reason and owner are unknown.
-- Package versions were not rechecked in this save session; the prior snapshot records Next.js 16.4.5, React 19.3, Tailwind CSS 4, TanStack Query/Table, Vitest + Testing Library, Zod, SweetAlert2, and Sonner.
+- Branch `develop`, HEAD `b64f4d3` (`feat: add promo rewards and public offers, customer portal, GSD counter`, committed 2026-11-22 11:17 +0800). Verified.
+- The previous snapshot (OpenCode run) recorded a clean tree at `b64f4d3`. The tree is no longer clean: 101 uncommitted entries exist now (see section 5). Verified by `git status`.
+- From file names only (assumed, not verified by reading the diffs): the uncommitted work looks like Phase 2 (dynamic Experiences: `src/modules/experiences/`, `src/data/mock/experience-repository.ts`, `src/panels/admin/pages/experiences-page.tsx`, `src/app/admin/experiences`, `src/app/(public)/experiences/[slug]`), plus a public-content repository, an access snapshot (`src/data/access-snapshot.ts`), role helpers (`src/modules/identity/active-roles.ts`, `record-scope.ts`), a finance collection-state module, an architecture check script (`scripts/check-architecture.mjs`), and notification module-nav relocation.
+- Treat all of that as unknown until the owner confirms or the diffs are read.
 
 ## 3. Important Decisions
-- Keep the approved frontend-first architecture and browser-memory-only mock business data; backend, production authentication, databases, migrations, infrastructure, and deployment need separate authorization.
-- Keep live Redemption and Services disabled; do not add public customer or card lookup.
-- Prior snapshot records owner decisions for field-guide popovers, soft brand-tinted secondary buttons, exactly 9-digit TINs, and generated cash receipt numbers in `OR-YYYYMMDD-NNNN` form. These were not independently reverified in this save session.
-- Prior snapshot notes that business rule document 07 still describes manual OR entry; align it only after owner approval.
-- Project Git policy reserves all staging, commits, pushes, merges, resets, and deployment for the owner.
+- Carried over from the prior snapshot (not re-verified here): frontend-first with browser-memory-only mock data; Stay Points and Promo Points stay separate; GSD is a prototype-only identity; live Redemption, customer submissions, and Services stay disabled; Phase 2 and Phase 3 need explicit owner authorization.
+- Project Git policy: the owner alone stages, commits, pushes, merges, resets, and deploys. No agent performs any Git write.
+- No new decision was made in this session.
 
 ## 4. Completed Work
-- This session: restored context and updated this handoff snapshot only.
-- No application code was changed by the agent. The existing `exp-rooms.tsx` modification was present before this snapshot update.
-- Prior snapshot reports the UI batch was verified with targeted tests, typecheck, lint, build, and browser checks; none were rerun in this session.
+- This session: only this snapshot was written. No application, documentation, or test change was made by this session.
+- Prior committed work (`b64f4d3`): Phase 1 customer portal, promo rewards and public offers, GSD counter, experience badge and copy changes, `docs/implementation/` reorganization. Source: prior snapshot.
 
 ## 5. Git Working Tree
-- Branch: `develop`; HEAD: `ead677c`.
-- Staged: none.
-- Unstaged: `src/panels/public/experience/exp-rooms.tsx` (present before this session; provenance and intent unknown); `workflow/save-session.md` (already modified before this save, then updated inside its snapshot markers as requested).
-- Untracked: none reported by `git ls-files --others --exclude-standard`.
-- Deleted or renamed: none reported by `git diff --name-status`.
-- No Git write operation was performed.
+- Branch `develop`, HEAD `b64f4d3`.
+- Staged: none (`git diff --cached --stat` empty).
+- Unstaged: 72 entries, 1,905 insertions and 851 deletions (`git diff --stat`). 71 modified, 1 deleted. Status: pre-existing or unknown (not made by this session).
+  - Largest groups: `src/panels/admin` (17 files), `src/data/mock` (14), `src/panels/public` (10), `src/shared/providers` (4), `src/modules/vip` (3), `src/data/contracts` (3), `src/app/(public)/experiences` (3 pages).
+  - Also modified: `package.json`, `docs/development/architecture.md`, `docs/development/backend.md`, `src/modules/identity/permissions.ts` and test, `src/modules/customers/import.ts` and test, `src/modules/audit/types.ts`, `src/modules/sales-network/genealogy.ts`, `src/modules/public-site/content/vip.ts`, and this file.
+- Deleted: `src/modules/notifications/module-nav.ts` (a new `src/panels/admin/notifications/module-nav.ts` is untracked, so this looks like a move).
+- Untracked: 29 files, status pre-existing or unknown.
+  - `scripts/check-architecture.mjs` and `.test.mjs`
+  - `src/app/(public)/experiences/[slug]/page.tsx`, `src/app/admin/experiences/page.tsx`
+  - `src/data/access-snapshot.ts` and test; `src/data/contracts/experience-repository.ts`, `public-content-repository.ts`; `src/data/experience-queries.ts`, `public-content-queries.ts`
+  - `src/data/mock/customer-pagination.test.ts`, `experience-repository(.test).ts`, `public-content-repository(.test).ts`
+  - `src/modules/experiences/` (`rules.ts`, `sample-seed.ts`, `types.ts`); `src/modules/finance/application/collection-state(.test).ts`; `src/modules/identity/active-roles.ts`, `record-scope.ts`
+  - `src/panels/admin/components/customer-draft.ts`; `src/panels/admin/notifications/module-nav.ts`; `src/panels/admin/pages/experiences-page(.test).tsx`; `src/panels/admin/providers/notifications-provider.tsx`
+  - `src/panels/public/experience/` (2 files); `src/panels/public/pages/experience-detail-page.tsx`, `standard-experience-page.tsx`
+  - `src/shared/providers/customer-portal-provider.test.tsx`
+- Git also warns that LF will be replaced by CRLF on many modified files; this is a line-ending notice, not a content change.
+- Unfinished work: the above looks like an in-progress, uncommitted milestone. Its completeness is unknown.
 
 ## 6. Pending Tasks
-- Review the `exp-rooms.tsx` change and confirm its intended effect before changing or reverting it.
-- Owner decision/approval is still needed before aligning `docs/business-rules/07-finance-and-payments` with the system-generated cash OR behavior.
-- Optional follow-up recorded previously: rerun the full suite after its earlier load timeouts and complete browser QA for the image-viewer click path.
-- Preserve the restrictions on disabled modules, public lookups, and owner-only Git operations.
+- Owner to confirm what the 101 uncommitted entries are (Phase 2 Experiences or something broader) and whether they were authorized.
+- Phase 2 (dynamic Experiences) and Phase 3 (VIP product drafts, Super Admin approval) remain subject to explicit owner authorization.
+- Reconcile the external `AFHomes Document\Business Rules` folder with the repository Promo Points amendment before any production rollout (from prior snapshot).
+- Full-suite timeouts (`business-pages`, `staff-page`) were a known project issue (from prior snapshot).
+- Keep live Redemption, customer submissions, Services, and public customer/card lookup disabled.
 
 ## 7. Verification State
-- This run verified `pwd`, branch, HEAD, staged/unstaged status, diff names and stats, and the untracked-file list.
-- No tests, lint, typecheck, build, browser QA, or application behavior checks were run in this session.
-- The prior snapshot reported clean typecheck, lint, build and targeted test runs; it also reported 17 full-suite timeouts that passed when run alone. Those results are historical and were not rerun.
-- Snapshot readback and marker/content checks are performed after this update.
+- This session: tests, lint, typecheck, build, and browser QA were all not performed.
+- Prior state, valid only for commit `b64f4d3` and not for the current dirty tree: targeted tests, `npx tsc --noEmit`, `npm run lint`, and `npm run build` passed; full suite 1,881 passed with 16 timeouts.
+- The current uncommitted tree has no recorded verification.
 
 ## 8. Next Session Instructions
-- First action: run `/load` and compare the snapshot with the current code and Git state.
-- Review `src/panels/public/experience/exp-rooms.tsx` as an existing uncommitted change; do not assume it is authorized or discard it.
-- If asked to address the cash OR documentation, inspect the relevant part of `docs/business-rules/07-finance-and-payments` and its implementation paths, then follow the project approval rules.
-- Do not perform Git writes, enable Redemption or Services, or add public customer/card lookup.
+- First action: run `/load`, then `git status --short` and ask the owner what the uncommitted changes are before building on them.
+- Then run `npx tsc --noEmit` and targeted tests on the new files (`src/data/mock/experience-repository.test.ts`, `src/panels/admin/pages/experiences-page.test.tsx`, `src/data/access-snapshot.test.tsx`) to learn their real state.
+- Files to inspect: `src/modules/experiences/`, `src/data/mock/experience-repository.ts`, `scripts/check-architecture.mjs`, `docs/implementation/prototype/customer-portal-plan.md`.
+- Approvals needed: owner authorization for any further phase work. All Git writes stay with the owner.
+- Warnings: do not assume the dirty tree is verified or complete. Do not delete, overwrite, or discard these files. Do not enable live Redemption or Services.
 
 ## 9. Execution Recommendation
-- Phase: Context restored; handoff snapshot saved; no implementation work performed.
-- Current mode: Default (verified from the active developer instruction).
-- Recommended next mode: Review the existing `exp-rooms.tsx` change and clarify its intended result before implementation.
-- Current model: not verified.
-- Effort: low for reviewing the one-line behavior change; reassess if scope expands.
-- Ultracode: not verified.
-- Token optimization: inspect only the changed component and directly related presentation rules.
-- Reason: the current tree contains a source change with unknown intent, while the next business-document task still has an owner-approval gate.
+- Phase: QA (review and verify the uncommitted work before more building).
+- Current mode: not verified.
+- Recommended next mode: Plan, then Build only after the owner approves scope.
+- Current model: Sonnet 5.5 (reported by environment, not independently verified).
+- Recommended model: Sonnet 5.5.
+- Effort: high.
+- Ultracode: OFF.
+- Token optimization: read the diffs of the new files only, run targeted tests first, and avoid the slow full suite until the tree is understood.
+- Reason: The working tree holds a large multi-file change of unknown origin, so verification should come before any new building.
 <!-- SESSION_SNAPSHOT_END -->

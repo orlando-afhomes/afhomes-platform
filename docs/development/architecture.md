@@ -39,9 +39,9 @@ This document is the authoritative technical architecture for the AFHomes Platfo
 | Reverse proxy | HTTPS-enabled production reverse proxy |
 | Database hosting | MongoDB Atlas (not the Droplet) |
 | Testing | Manual-first frontend development; automated before production |
-| Customer Portal | Future phase |
+| Customer Portal | Browser-memory prototype; production capability requires separate authorization |
 | Mobile application | Future React Native + Expo client |
-| Redemption | Preserved, hidden and disabled |
+| Redemption | Authorized staff prototype; live use remains disabled |
 | Services | Preserved, hidden and disabled |
 
 ---

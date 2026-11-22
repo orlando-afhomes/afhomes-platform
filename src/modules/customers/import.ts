@@ -1,4 +1,5 @@
 import type { PaymentScheme, VipProduct, VipTierCode } from "@/modules/vip/types";
+import { isSellableProduct } from "@/modules/vip/tier-options";
 import { isValidEmail, isValidPhilippineMobile, isValidPostalCode, normalizePhilippineMobile } from "@/shared/utils/input-sanitizers";
 import { composeCustomerName, validateCustomerForSubmit } from "./rules";
 import { validateCustomerId } from "./customer-number";
@@ -65,13 +66,13 @@ export type CustomerImportJob = {
 
 type ImportContext = { existing: readonly Customer[]; products: readonly VipProduct[]; schemes: readonly PaymentScheme[] };
 
-/** A product code, or a tier level name such as Bronze (the first active product of that level), from the catalog. */
+/** A sellable product code, or a tier level name such as Bronze (the first approved active product of that level), from the catalog. */
 function productCodeForTier(tier: string, products: readonly VipProduct[]): VipTierCode | null {
   const wanted = tier.toLowerCase();
-  const byCode = products.find((product) => product.code.toLowerCase() === wanted);
+  const byCode = products.find((product) => product.code.toLowerCase() === wanted && isSellableProduct(product));
   if (byCode) return byCode.code;
   const byName = products.filter((product) => product.tier.toLowerCase() === wanted);
-  return (byName.find((product) => product.status === "active") ?? byName[0])?.code ?? null;
+  return (byName.find((product) => isSellableProduct(product)))?.code ?? null;
 }
 const CLASSIFICATION_ALIASES: Record<string, "S" | "N"> = { s: "S", standard: "S", n: "N", "non-standard": "N", nonstandard: "N" };
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;

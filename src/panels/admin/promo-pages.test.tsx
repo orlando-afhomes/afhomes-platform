@@ -82,6 +82,19 @@ describe("promos page", () => {
     fireEvent.click(screen.getByText(/Teppanyaki Dining Points/).closest("tr")!);
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
+
+  it("previews the saved public offer without publishing it", async () => {
+    showStayPoints("dev-admin", "promos");
+    await screen.findByText(/Teppanyaki Dining Points/);
+    fireEvent.click(screen.getByText(/Teppanyaki Dining Points/).closest("tr")!);
+    const details = await screen.findByRole("dialog");
+    fireEvent.click(within(details).getByRole("button", { name: /Preview public offer/ }));
+
+    const preview = await screen.findByRole("dialog", { name: "Preview public offer" });
+    expect(await within(preview).findByText("Not ready to publish")).toBeInTheDocument();
+    expect(within(preview).getByText(/This preview never publishes the offer/)).toBeInTheDocument();
+    expect(within(preview).getByText("No public title yet")).toBeInTheDocument();
+  });
 });
 
 describe("promo points page", () => {

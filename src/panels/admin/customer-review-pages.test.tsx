@@ -5,6 +5,11 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
+import type { ProductCreateInput } from "@/data/contracts/product-repository";
+import { getDevIdentity } from "@/data/mock/dev-identities";
+import { createMockRepositories } from "@/data/mock/repositories";
+import { createMockStore, type MockStore } from "@/data/mock/seed";
+import { pesos } from "@/shared/lib/money";
 import { AppToaster } from "@/shared/components/modern/app-toaster";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
@@ -19,11 +24,11 @@ vi.mock("next/navigation", async (importOriginal) => ({
   useSearchParams: () => new URLSearchParams(window.location.search),
 }));
 
-function Wrapper({ identityId, children }: { identityId: string; children: React.ReactNode }) {
+function Wrapper({ identityId, store, children }: { identityId: string; store?: MockStore; children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   return (
     <QueryClientProvider client={queryClient}>
-      <MockStoreProvider>
+      <MockStoreProvider store={store}>
         <DevIdentityProvider initialIdentityId={identityId}>
           <AppToaster />
           {children}
@@ -33,8 +38,8 @@ function Wrapper({ identityId, children }: { identityId: string; children: React
   );
 }
 
-function show(identityId: string, page: ReactElement) {
-  return render(<Wrapper identityId={identityId}>{page}</Wrapper>);
+function show(identityId: string, page: ReactElement, store?: MockStore) {
+  return render(<Wrapper identityId={identityId} store={store}>{page}</Wrapper>);
 }
 
 afterEach(() => {
@@ -47,6 +52,16 @@ afterEach(() => {
 
 // cust-a3 is submitted and its closing seller (SM) differs from the referrer (OST), so it can be approved as seeded.
 const SUBMITTED = "cust-a3";
+
+const DRAFT_PRODUCT: ProductCreateInput = {
+  code: "B3", name: "Bronze Plus VIP", tierLevelId: "tier-level-bronze", priceCentavos: pesos(90000), validityYears: 7, earningCycles: 5,
+  vipDiscountPercent: 10, lifetimePoints: 50000, pointsPerCycle: 10000, weekdayPointsPerCycle: 7000, weekendPointsPerCycle: 3000,
+  minSpendPerCycleCentavos: pesos(1000), supplementaryHolders: 0, benefitsSummary: "Priority reservations and a welcome gift.",
+};
+
+async function seedDraftProduct(store: MockStore) {
+  await createMockRepositories(store, () => getDevIdentity("dev-admin")).products.create(DRAFT_PRODUCT, "Draft for management review");
+}
 
 describe("Customers area", () => {
   it("opens the Import tab for an Administrator from the URL", async () => {
@@ -183,5 +198,13 @@ describe("customer registration review pages (doc 04 sections 5 and 10)", () => 
     expect(within(progress).queryByText(/^review$/i)).toBeNull();
     expect(within(progress).queryByText(/reservation/i)).toBeNull();
     expect(screen.queryByRole("button", { name: /submit application/i })).toBeNull();
+  });
+
+  it("keeps a draft product out of the VIP card choice", async () => {
+    const store = createMockStore();
+    await seedDraftProduct(store);
+    show("dev-ost-a1", <CustomerFormPage />, store);
+    expect(await screen.findByRole("radio", { name: /silver vip/i })).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: /bronze plus vip/i })).toBeNull();
   });
 });

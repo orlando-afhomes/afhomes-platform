@@ -349,3 +349,7 @@ These rulings take precedence over earlier text in this document where they diff
 This ruling refines section 8 and takes precedence over earlier text in this document where it differs.
 
 10. **Issued inside Approve deal.** The Administrator's "Approve deal" action confirms that the signed Reservation Agreement is on file and issues the VIP Number after the sale approval and before finalization. Steps 1 to 4 of section 8 may be recorded by this one action; each is still audited on its own. Issuance stays once only and permanent, and still pauses while a commission rate is missing (item 9).
+
+## Owner clarification — 2026-11-22: conflicting configuration
+
+For newly saved or updated payment-scheme configuration, a single scheme payment code and a per-tier payment code must not conflict. Matching codes or one configured source are allowed, subject to the existing approved mappings and validation. Reject conflicting configuration rather than choosing one source automatically. This decision does not rewrite existing finalized contract snapshots or issued VIP Numbers.

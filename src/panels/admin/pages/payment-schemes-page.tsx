@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Pencil } from "lucide-react";
 import { useOperation, usePaymentSchemes, useVipProducts } from "@/data/business-queries";
-import { tierOptions } from "@/modules/vip/tier-options";
+import { configurationTierOptions } from "@/modules/vip/tier-options";
 import type { PaymentScheme, VipTierCode } from "@/modules/vip/types";
 import { schemeHowItWorks as termsSummary } from "@/modules/vip/rules";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
@@ -59,7 +59,7 @@ export function PaymentSchemesTab({ creating, onCloseCreate }: { creating: boole
         <QueryState isLoading={schemes.isLoading} error={schemes.error}>
           <FilterBar search={search} onSearch={setSearch} searchLabel="Search payment plans" filters={[
             { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: [{ value: "all", label: "All statuses" }, { value: "available", label: "Available" }, { value: "unavailable", label: "Unavailable" }] },
-            { label: "Card level filter", value: tierFilter, onChange: setTierFilter, options: [{ value: "all", label: "All card levels" }, ...tierOptions(products.data, schemes.data?.flatMap((item) => item.applicableTiers))] },
+            { label: "Card level filter", value: tierFilter, onChange: setTierFilter, options: [{ value: "all", label: "All card levels" }, ...configurationTierOptions(products.data, schemes.data?.flatMap((item) => item.applicableTiers))] },
           ]} />
           <DataTable data={visibleSchemes} columns={schemeColumns} getRowId={(row) => row.id} emptyText={(schemes.data ?? []).length === 0 ? "No payment plans." : "No payment plans match the filters."} caption="Payment Plans" onRowOpen={(row) => setSchemeId(row.id)} getRowLabel={(row) => `Open ${row.label}`} rowActions={(row) => <RowActionsMenu itemName={row.label} onEdit={canManage ? () => openSchemeEditor(row) : undefined} />} />
         </QueryState>

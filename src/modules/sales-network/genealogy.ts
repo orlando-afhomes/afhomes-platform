@@ -3,9 +3,9 @@ import type { AccreditationRecord } from "@/modules/accreditation/types";
 import { manilaToday } from "@/modules/accreditation/dates";
 import { getCurrentAccreditationRecord, getSellerStanding } from "@/modules/accreditation/eligibility";
 import type { DevIdentity } from "@/modules/identity/types";
-import { getVisibleMemberIds, getUplineSummaries } from "@/data/mock/scope";
-import { getDescendantIds } from "@/data/mock/scope";
-import type { MockStore } from "@/data/mock/seed";
+import { getVisibleMemberIds, getUplineSummaries } from "@/modules/identity/record-scope";
+import { getDescendantIds } from "@/modules/identity/record-scope";
+import type { MemberScope } from "@/modules/identity/record-scope";
 
 /** Plain position names for messages (display.ts imports this file, so it cannot be imported here). */
 const POSITION_NAME: Record<Designation, string> = { SVD: "Sales Vice Director", SSM: "Senior Sales Manager", SM: "Sales Manager", OST: "Outsourced Seller (OST)" };
@@ -130,7 +130,7 @@ export type GenealogyTreeNode = {
   totalDescendantCount: number;
 };
 
-export function getAuthorizedGenealogyMemberIds(identity: DevIdentity, store: MockStore): Set<string> {
+export function getAuthorizedGenealogyMemberIds(identity: DevIdentity, store: MemberScope): Set<string> {
   const visible = getVisibleMemberIds(identity, store);
   const uplines = getUplineSummaries(identity, store);
   const ids = new Set(visible);

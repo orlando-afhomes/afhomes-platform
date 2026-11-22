@@ -74,7 +74,10 @@ describe("customer import tier names", () => {
     await admin.products.create({
       code: "P3", name: "Platinum VIP", tierLevelId: platinum.id, priceCentavos: 60_000_000, validityYears: 22, earningCycles: 20, vipDiscountPercent: 30,
       lifetimePoints: 600_000, pointsPerCycle: 30_000, weekdayPointsPerCycle: 20_000, weekendPointsPerCycle: 10_000, minSpendPerCycleCentavos: 400_000, supplementaryHolders: 0,
+      benefitsSummary: "Priority reservations and a welcome gift.",
     }, "Approved by memo");
+    await admin.products.updateScheme("scheme-spot-cash", { applicableTiers: ["B1", "S1", "G1", "P3"] }, "Offer Platinum");
+    await as(store, "dev-super-admin").products.approve("P3", "Approved by memo");
     const products = await admin.products.list();
     const context = { existing: [], products, schemes: store.paymentSchemes };
     const plans = buildImportRows([row({ "VIP tier": "bronze" }), row({ "VIP tier": "G1" }), row({ "VIP tier": "Platinum" }), row({ "VIP tier": "Diamond" })], context).map((item) => item.input.vipPlan);

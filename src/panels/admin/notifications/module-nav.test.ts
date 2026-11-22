@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AUDIT_MODULES } from "@/modules/audit/types";
-import { CREATION_ACTIONS } from "./creation-actions";
+import { CREATION_ACTIONS } from "@/modules/notifications/creation-actions";
 import { MODULE_PRIMARY_NAV, MODULE_PRIMARY_TAB, isAreaNavKey, modulesForNavKey, notificationDestination } from "./module-nav";
 import { ADMIN_AREA_TABS, adminNavigation, type AdminNavItem, type AdminNavKey } from "@/panels/admin/navigation";
 
@@ -78,3 +78,4 @@ describe("modulesForNavKey", () => {
     expect(modulesForNavKey("reports")).toEqual([]);
   });
 });
+

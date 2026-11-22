@@ -151,6 +151,24 @@ describe("role-aware permissions", () => {
     }
   });
 
+  it("limits Experiences content to the Administrator and Super Administrator", () => {
+    for (const id of ["dev-admin", "dev-super-admin"]) {
+      expect(isModuleGranted(getDevIdentity(id), "experiences")).toBe(true);
+      expect(hasOperationPermission(getDevIdentity(id), "experiences.manage")).toBe(true);
+    }
+    for (const id of ["dev-clerk", "dev-finance", "dev-hr", "dev-gsd", "dev-svd-a", "dev-ost-a1"]) {
+      expect(isModuleGranted(getDevIdentity(id), "experiences")).toBe(false);
+      expect(hasOperationPermission(getDevIdentity(id), "experiences.manage")).toBe(false);
+    }
+  });
+
+  it("limits VIP product approval to the Super Administrator", () => {
+    expect(hasOperationPermission(getDevIdentity("dev-super-admin"), "vip-products.approve")).toBe(true);
+    for (const id of ["dev-admin", "dev-clerk", "dev-finance", "dev-hr", "dev-gsd", "dev-svd-a", "dev-ost-a1"]) {
+      expect(hasOperationPermission(getDevIdentity(id), "vip-products.approve")).toBe(false);
+    }
+  });
+
   it("limits reconciliation and the history import to the right roles", () => {
     const can = (id: string, operation: "reconciliation.manage" | "history-import.manage" | "history-import.signoff") => hasOperationPermission(getDevIdentity(id), operation);
     for (const id of ["dev-admin", "dev-super-admin"]) {

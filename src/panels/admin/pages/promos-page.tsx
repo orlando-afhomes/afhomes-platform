@@ -2,12 +2,12 @@
 
 import { EMPTY } from "@/shared/lib/empty-value";
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Eye, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useOperation } from "@/data/business-queries";
 import type { PromoInput, PromoRewardInput, PromoView } from "@/data/contracts/promo-repository";
 import type { TableOrder } from "@/shared/lib/table-order";
-import { useDeletePromo, useEndPromo, usePromos, useSavePromo } from "@/data/promo-queries";
+import { useDeletePromo, useEndPromo, usePromoPreview, usePromos, useSavePromo } from "@/data/promo-queries";
 import { useActiveOutlets, useOutlets } from "@/data/settings-queries";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
@@ -21,6 +21,7 @@ import { formatDate } from "@/shared/lib/format-date";
 import { formatPeso, parsePesoToCentavos, centavosToInputText } from "@/shared/lib/money";
 import { matchesSearch } from "@/shared/lib/search";
 import { Button } from "@/shared/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 
 const STATUS_ITEMS = [
   { value: "all", label: "All statuses" },
@@ -64,6 +65,7 @@ export function PromosPanel() {
   const [editing, setEditing] = useState<PromoView | null>(null);
   const [offerEditing, setOfferEditing] = useState<PromoView | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
 
   const outletNames = useMemo(() => new Map((outlets.data ?? []).map((outlet) => [outlet.id, outlet.name])), [outlets.data]);
   const names = (ids: string[]) => ids.map((id) => outletNames.get(id) ?? EMPTY).join(", ");
@@ -137,15 +139,89 @@ export function PromosPanel() {
             { label: "Named rewards", value: detail.rewards.length ? detail.rewards.map((reward) => `${reward.name} (${reward.pointsCost.toLocaleString("en-PH")} pts)`).join(", ") : "None configured" },
           ],
         }] : []}
+        footer={detail ? (
+          <Button type="button" variant="outline" onClick={() => setPreviewId(detail.id)}>
+            <Eye aria-hidden="true" /> Preview public offer
+          </Button>
+        ) : undefined}
       />
       {editing ? <PromoDialog key={editing.id} editing={editing} onClose={() => setEditing(null)} /> : null}
       {offerEditing ? <PublicOfferDialog key={offerEditing.id} editing={offerEditing} onClose={() => setOfferEditing(null)} /> : null}
+      {previewId ? (
+        <PreviewOfferDialog
+          id={previewId}
+          name={(promos.data ?? []).find((promo) => promo.id === previewId)?.name ?? "Promo"}
+          onClose={() => setPreviewId(null)}
+        />
+      ) : null}
       {confirmDialog}
     </>
   );
 }
 
 type RewardDraft = PromoRewardInput & { key: string };
+
+/** Read-only preview of the saved public projection. It never changes publication state. */
+function PreviewOfferDialog({ id, name, onClose }: { id: string; name: string; onClose: () => void }) {
+  const preview = usePromoPreview(id);
+  const offer = preview.data;
+  const missing = offer ? [
+    !offer.title.trim() ? "public title" : null,
+    !offer.summary.trim() ? "public summary" : null,
+    !offer.terms.trim() ? "public terms" : null,
+    offer.rewards.length === 0 ? "at least one priced reward" : null,
+  ].filter((item): item is string => Boolean(item)) : [];
+
+  return (
+    <Dialog open onOpenChange={(next) => (!next ? onClose() : undefined)}>
+      <DialogContent className="tw:max-h-[90vh] tw:overflow-y-auto tw:sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Preview public offer</DialogTitle>
+          <DialogDescription>{name}. This preview never publishes the offer.</DialogDescription>
+        </DialogHeader>
+        {preview.isLoading ? <p role="status" className="tw:text-sm tw:text-muted-foreground">Loading preview…</p> : null}
+        {preview.error ? <p role="alert" className="tw:text-sm tw:text-destructive">The preview could not be loaded.</p> : null}
+        {offer ? (
+          <div className="tw:flex tw:flex-col tw:gap-4">
+            {missing.length > 0 ? (
+              <div role="note" className="tw:rounded-lg tw:border tw:border-warning/40 tw:bg-warning/10 tw:p-3 tw:text-sm">
+                <p className="tw:font-semibold">Not ready to publish</p>
+                <p className="tw:text-muted-foreground">Add the {missing.join(", ")} before publishing.</p>
+              </div>
+            ) : null}
+            <article className="tw:flex tw:flex-col tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-4">
+              <p className="tw:text-xs tw:font-semibold tw:tracking-wide tw:text-muted-foreground tw:uppercase">
+                {formatDate(offer.startDate)} to {formatDate(offer.endDate)}
+              </p>
+              <h3 className="tw:text-lg tw:font-semibold">{offer.title || "No public title yet"}</h3>
+              <p className="tw:text-sm tw:text-muted-foreground">{offer.summary || "No public summary yet."}</p>
+              <div>
+                <p className="tw:text-xs tw:font-semibold tw:tracking-wide tw:text-muted-foreground tw:uppercase">Rewards</p>
+                {offer.rewards.length > 0 ? (
+                  <ul className="tw:mt-1 tw:flex tw:flex-col tw:gap-1">
+                    {offer.rewards.map((reward) => (
+                      <li key={reward.id} className="tw:text-sm">
+                        <span className="tw:font-semibold">{reward.name}</span>
+                        <span className="tw:text-muted-foreground"> · {reward.pointsCost.toLocaleString("en-PH")} points at {reward.outletName}</span>
+                        {reward.description ? <span className="tw:block tw:text-muted-foreground">{reward.description}</span> : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : <p className="tw:mt-1 tw:text-sm tw:text-muted-foreground">No eligible rewards yet.</p>}
+              </div>
+              <p className="tw:text-sm">{offer.terms || "No public terms yet."}</p>
+              <p className="tw:text-xs tw:text-muted-foreground">Earn points at {offer.earnOutlets.join(", ") || "no outlet yet"}. Promo Points have no cash value.</p>
+            </article>
+            <p className="tw:text-sm tw:text-muted-foreground">Only a published, in-date offer with complete public terms appears on the website.</p>
+          </div>
+        ) : null}
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function PublicOfferDialog({ editing, onClose }: { editing: PromoView; onClose: () => void }) {
   const save = useSavePromo();

@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffectiveModuleIds } from "@/data/queries";
+import { useAccessSnapshot } from "@/data/access-snapshot";
+import { Button } from "@/shared/ui/button";
 import type { AdminModuleId } from "@/modules/identity/permissions";
 import { Breadcrumbs, type BreadcrumbItem } from "@/shared/components/modern/breadcrumbs";
 import { DashboardHeader } from "@/shared/components/dashboard/dashboard-layout";
@@ -24,6 +25,7 @@ const SECTION_HREFS: Record<string, string> = {
   Management: "/admin/organization",
   Organization: "/admin/organization",
   Settings: "/admin/vip-products",
+  Experiences: "/admin/experiences",
   "Sales Network": "/admin/sales-network",
   "Reports and Audit": "/admin/reports",
   Reports: "/admin/reports",
@@ -59,7 +61,14 @@ export function AdminPage({
   embedded?: boolean;
   children: ReactNode;
 }) {
-  const granted = useEffectiveModuleIds();
+  const access = useAccessSnapshot();
+  const granted = access.modules;
+  if (!access.ready) {
+    return <PageContainer>
+      <p role={access.isError ? "alert" : "status"}>{access.isError ? "Access could not be verified." : "Checking access…"}</p>
+      {access.isError ? <Button onClick={() => void access.refetch()}>Try again</Button> : null}
+    </PageContainer>;
+  }
   if (!allowed || !anyOf.some((moduleId) => granted.has(moduleId))) {
     return (
       <PageContainer>

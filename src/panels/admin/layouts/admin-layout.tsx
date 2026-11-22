@@ -6,7 +6,7 @@ import { AppToaster } from "@/shared/components/modern/app-toaster";
 import { AdminHeader } from "../components/admin-header";
 import { AdminSidebar } from "../components/admin-sidebar";
 import { AdminSidebarContext } from "./admin-sidebar-context";
-import { NotificationsProvider } from "@/shared/providers/notifications-provider";
+import { NotificationsProvider } from "@/panels/admin/providers/notifications-provider";
 
 // Owns the sidebar collapsed state so the header toggle and the rail stay in sync.
 export function AdminLayout({ children }: { children: React.ReactNode }) {

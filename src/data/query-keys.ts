@@ -2,6 +2,7 @@ import type { AuditQuery } from "@/modules/audit/types";
 
 /** Centralized, stable TanStack Query keys. Add a namespace here before using it in a hook. */
 export const queryKeys = {
+  access: { all: ["access-snapshot"] as const },
   audit: {
     /** Prefix of every audit query, used for invalidation and cleanup. */
     all: ["audit"] as const,

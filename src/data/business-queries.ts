@@ -1,5 +1,7 @@
 "use client";
 
+import { useAccessSnapshot } from "@/data/access-snapshot";
+
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import type { ApplyVipPositionRateInput, CommissionRateSetting, VipPositionRate } from "@/modules/commissions/types";
 import type { AllowanceReviewInput } from "@/modules/commissions/allowances";
@@ -9,7 +11,7 @@ import type { ReportExportInput } from "@/data/contracts/report-repository";
 import type { SubmitPaymentInput } from "@/data/contracts/payment-repository";
 import { CUSTOMER_LOOKUP_MIN_LENGTH } from "@/data/contracts/membership-repository";
 import type { StayPointsAction } from "@/data/contracts/stay-points-repository";
-import type { MockRepositories } from "@/data/mock/repositories";
+import type { Repositories } from "@/data/contracts/repositories";
 import { useMockRepositories } from "@/data/queries";
 import { queryKeys } from "@/data/query-keys";
 import type { ContractCancellationGround } from "@/modules/contracts/types";
@@ -19,7 +21,7 @@ import type { CustomerImportRecord } from "@/modules/customers/import";
 import type { CustomerDraftInput } from "@/modules/customers/types";
 import type { VipTierCode } from "@/modules/vip/types";
 import type { CardServiceInput } from "@/modules/membership/types";
-import { hasOperationPermission, type AdminOperation } from "@/modules/identity/permissions";
+import { type AdminOperation } from "@/modules/identity/permissions";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 
 /**
@@ -29,12 +31,12 @@ import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
  * step (a payment verification, for example) moves sales, holds and commissions.
  */
 function invalidateBusiness(queryClient: QueryClient) {
-  for (const key of [queryKeys.business.all, ["customers"], ["products"], queryKeys.audit.all]) {
+  for (const key of [queryKeys.business.all, ["customers"], ["products"], ["public-vip-products"], queryKeys.audit.all]) {
     queryClient.invalidateQueries({ queryKey: key });
   }
 }
 
-function useBusinessQuery<T>(namespace: string, load: (repositories: MockRepositories, signal?: AbortSignal) => Promise<T>) {
+function useBusinessQuery<T>(namespace: string, load: (repositories: Repositories, signal?: AbortSignal) => Promise<T>) {
   const repositories = useMockRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
@@ -43,7 +45,7 @@ function useBusinessQuery<T>(namespace: string, load: (repositories: MockReposit
   });
 }
 
-function useBusinessMutation<V, R>(run: (repositories: MockRepositories, variables: V) => Promise<R>) {
+function useBusinessMutation<V, R>(run: (repositories: Repositories, variables: V) => Promise<R>) {
   const repositories = useMockRepositories();
   const queryClient = useQueryClient();
   return useMutation({
@@ -101,6 +103,8 @@ export function useCorrectCustomer() {
 export function useVipProducts() {
   return useBusinessQuery("products", (r, signal) => r.products.list({ signal }));
 }
+/** Public VIP cards: approved, active, explicitly listed products; no identity partition. */
+export { usePublicVipProducts } from "./public-content-queries";
 export function usePaymentSchemes() {
   return useBusinessQuery("schemes", (r, signal) => r.products.listSchemes({ signal }));
 }
@@ -109,6 +113,9 @@ export function useUpdateProduct() {
 }
 export function useCreateProduct() {
   return useBusinessMutation((r, v: { input: ProductCreateInput; reason: string }) => r.products.create(v.input, v.reason));
+}
+export function useApproveProduct() {
+  return useBusinessMutation((r, v: { code: VipTierCode; reason: string }) => r.products.approve(v.code, v.reason));
 }
 export function useDeleteProduct() {
   return useBusinessMutation((r, v: { code: VipTierCode; reason: string }) => r.products.delete(v.code, v.reason));
@@ -236,7 +243,7 @@ export function useServiceCard() {
 export function useCommissions() {
   return useBusinessQuery("commissions", (r, signal) => r.commissions.list({ signal }));
 }
-function useCommissionQuery<T>(namespace: string, enabled: boolean, load: (r: MockRepositories, signal: AbortSignal) => Promise<T>) {
+function useCommissionQuery<T>(namespace: string, enabled: boolean, load: (r: Repositories, signal: AbortSignal) => Promise<T>) {
   const repositories = useMockRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
@@ -322,8 +329,7 @@ export function useStayPointsAction() {
 
 /** Whether the active identity holds an operation grant (presentation only; repositories enforce it). */
 export function useOperation(operation: AdminOperation): boolean {
-  const { identity } = useDevIdentity();
-  return identity.status === "active" && hasOperationPermission(identity, operation);
+  return useAccessSnapshot().operations.has(operation);
 }
 
 // Month-end payouts in bulk
@@ -337,7 +343,7 @@ export type BulkCommissionResult = { done: number; failed: { id: string; reason:
  * call as a single payout, so each keeps its own checks, duplicate guard and audit entry
  * (doc 08 §11.3, §11.6, §11.7). A failure skips that commission and is reported.
  */
-export async function runBulkCommissionPayout(r: Pick<MockRepositories, "commissions">, input: BulkCommissionPayout): Promise<BulkCommissionResult> {
+export async function runBulkCommissionPayout(r: Pick<Repositories, "commissions">, input: BulkCommissionPayout): Promise<BulkCommissionResult> {
   const result: BulkCommissionResult = { done: 0, failed: [] };
   for (const id of input.ids) {
     try {

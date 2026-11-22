@@ -64,10 +64,19 @@ export function hasBlockedLinkedAccount(store: Pick<MockStore, "accounts" | "sta
   return !account || account.status !== "active";
 }
 
+/** Live linked accounts own system roles; unlinked synthetic personas retain their explicit roles. */
+export function resolveMockIdentity(store: Pick<MockStore, "accounts" | "staff">, identity: DevIdentity): DevIdentity {
+  const accountId = resolveActorAccountId(store, identity);
+  if (!accountId) return identity;
+  const account = store.accounts.find((item) => item.id === accountId);
+  if (!account || account.status !== "active") return { ...identity, roles: [], status: "inactive" };
+  // activeRoles still applies explicit inactive/archived role assignments.
+  return { ...identity, roles: [...account.roleIds] };
+}
+
 /** Active system roles, honouring identity status and linked account status. */
 export function resolveActiveSystemRoles(store: Pick<MockStore, "accounts" | "staff">, identity: DevIdentity): DevRole[] {
-  if (hasBlockedLinkedAccount(store, identity)) return [];
-  return activeRoles(identity);
+  return activeRoles(resolveMockIdentity(store, identity));
 }
 
 export function hasActiveSystemRole(store: Pick<MockStore, "accounts" | "staff">, identity: DevIdentity, role: DevRole): boolean {
@@ -104,8 +113,9 @@ export function resolveLinkedDepartmentRole(
  */
 export function resolveEffectiveModules(store: AuthorizationStore, identity: DevIdentity): Set<AdminModuleId> {
   if (hasBlockedLinkedAccount(store, identity)) return new Set();
-  const granted = getGrantedModuleIds(identity);
-  const role = resolveLinkedDepartmentRole(store, identity);
+  const effectiveIdentity = resolveMockIdentity(store, identity);
+  const granted = getGrantedModuleIds(effectiveIdentity);
+  const role = resolveLinkedDepartmentRole(store, effectiveIdentity);
   if (role) {
     for (const moduleId of getRoleEffectiveGrants(role)) granted.add(moduleId);
   }

@@ -5,11 +5,11 @@ import Link from "next/link";
 import { ChevronRight, Search } from "lucide-react";
 import type { OrgMember } from "@/modules/organization/types";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
-import { useMockStore } from "@/shared/providers/mock-store-provider";
+import { useAccessSnapshot } from "@/data/access-snapshot";
 import { useMembers, useSeatVacancies } from "@/data/queries";
 import { openVacancyStartByMember } from "@/modules/sales-network/vacancy";
-import { resolveEffectiveModules } from "@/data/mock/authorization";
-import { getAuthorizedGenealogyMemberIds, buildAuthorizedGenealogyTree, type GenealogyTreeNode } from "@/modules/sales-network/genealogy";
+
+import { buildAuthorizedGenealogyTree, type GenealogyTreeNode } from "@/modules/sales-network/genealogy";
 import { aaDisplay, designationLabel, teamDisplayName } from "@/modules/sales-network/display";
 import { PageContainer } from "@/shared/components/modern/page-container";
 import { PageHeader } from "@/shared/components/modern/page-header";
@@ -28,14 +28,12 @@ import { SalesNetworkTreeNodeTitle } from "../components/sales-network-tree-node
 
 export function SalesNetworkGenealogyPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { identity } = useDevIdentity();
-  const store = useMockStore();
-  const granted = resolveEffectiveModules(store, identity);
+  const { modules: granted, genealogyIds: authorizedIds } = useAccessSnapshot();
   const membersQuery = useMembers();
   const members = useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
   const vacanciesQuery = useSeatVacancies();
   const vacantSince = useMemo(() => openVacancyStartByMember(vacanciesQuery.data ?? []), [vacanciesQuery.data]);
 
-  const authorizedIds = useMemo(() => getAuthorizedGenealogyMemberIds(identity, store), [identity, store]);
   const tree = useMemo(() => buildAuthorizedGenealogyTree(members, authorizedIds), [members, authorizedIds]);
 
   const [search, setSearch] = useState("");

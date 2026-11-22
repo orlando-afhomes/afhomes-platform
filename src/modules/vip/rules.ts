@@ -103,6 +103,11 @@ type SchemeTerms = Pick<
  */
 export function schemeTermErrors(scheme: SchemeTerms, products: ReadonlyArray<Pick<VipProduct, "code" | "priceCentavos">>): string[] {
   const errors: string[] = [];
+  // Owner decision, 2026-11-22: conflicting sources must be corrected before saving.
+  for (const [tier, code] of Object.entries(scheme.paymentCodeByTier ?? {})) {
+    if (scheme.paymentCode && code && scheme.paymentCode !== code) errors.push(`The ${tier} payment code conflicts with the single scheme code. Use matching codes or one source.`);
+  }
+
   if (!positiveInteger(scheme.reservationCentavos)) errors.push("The reservation fee must be a positive amount.");
   if (!positiveInteger(scheme.installmentCount)) errors.push("The number of installments must be a whole number greater than zero.");
   for (const [tier, count] of Object.entries(scheme.installmentCountByTier ?? {})) if (!positiveInteger(count)) errors.push(`The ${tier} number of installments must be a whole number greater than zero.`);

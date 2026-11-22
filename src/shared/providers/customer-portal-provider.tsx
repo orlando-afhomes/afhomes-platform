@@ -22,9 +22,9 @@ const CustomerPortalContext = createContext<CustomerPortalContextValue | null>(n
 export function CustomerPortalProvider({ children, initialCustomerId }: { children: ReactNode; initialCustomerId?: string }) {
   const store = useMockStore();
   const queryClient = useQueryClient();
-  const repository = useMemo(() => new MockCustomerPortalRepository(store), [store]);
-  const samples = useMemo(() => repository.sampleCustomers(), [repository]);
   const [customerId, setCustomerId] = useState<string | null>(initialCustomerId ?? null);
+  const repository = useMemo(() => new MockCustomerPortalRepository(store, customerId), [store, customerId]);
+  const samples = useMemo(() => repository.sampleCustomers(), [repository]);
   const customer = customerId ? samples.find((item) => item.id === customerId) ?? null : null;
 
   const clearPortalCache = useCallback(() => {

@@ -33,6 +33,7 @@ it("shows only published, complete offers with named rewards and point costs", a
   renderOffers();
   expect(await screen.findByRole("heading", { name: "Wellness Weekend" })).toBeInTheDocument();
   expect(screen.getByText("Spa Day Pass")).toBeInTheDocument();
-  expect(screen.getByText(/3 points at/)).toBeInTheDocument();
+  const reward = screen.getByText("Spa Day Pass").closest("li")!;
+  expect(reward).toHaveTextContent(/3 points.*at Resort Spa/);
   expect(screen.getByText(/Promo Points have no cash value/i)).toBeInTheDocument();
 });

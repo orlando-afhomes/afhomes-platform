@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Images, LayoutDashboard } from "lucide-react";
 import type { Room } from "@/modules/public-site/content/experiences";
 import { ROOM_CATEGORY_LABELS } from "@/modules/public-site/content/experiences";
-import { Photo, RenderingsNote, Section, SectionHeading } from "../site/blocks";
+import { Photo, Section, SectionHeading } from "../site/blocks";
 import { RoomDetailsDialog } from "./room-details-dialog";
 
 /** Accommodation cards; each opens a dialog to browse the room's photos and floor plan. */
@@ -60,7 +60,6 @@ export function ExperienceRooms({ id, eyebrow, title, text, note, rooms }: { id?
         })}
       </ul>
       <p className="exp-rooms__note">{note}</p>
-      <RenderingsNote />
 
       <RoomDetailsDialog
         key={openRoom?.id ?? "closed"}

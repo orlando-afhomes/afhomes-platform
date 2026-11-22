@@ -111,75 +111,64 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-20 (supersedes the 2026-11-20 14:24 snapshot).
-- Repository: afhomes-platform; branch develop; HEAD c958594 "style: refactor login shell card layout and add Claude settings" (verified; no fetch this session).
-- Tool and model: OpenCode, DeepSeek V4.1 Flash 1017 (opencode-go), harness metadata; not independently probed.
-- Session objective: `/load`, then a UI/UX batch from browser comments (hint icons, button redesign, TIN rule, cash OR number, persisted images with a full-size viewer), then restore the step circles.
-- Development phase: frontend prototype on typed in-memory mock data. Backend, auth, database and deployment remain deferred.
-- Context note: no compaction.
+- Saved at: 2026-11-22 (Asia/Singapore).
+- Repository: afhomes-platform; branch `develop`; HEAD `ead677c` (verified in this run).
+- Tool and model: Codex desktop context; model not independently verified.
+- Session objective: Restore project context, then save a handoff snapshot. No implementation requested or performed.
+- Development phase: Frontend prototype on typed in-memory mock data; backend, real authentication, database, and deployment remain deferred.
+- Context note: Current conversation context was available; no additional history was assumed beyond the existing snapshot.
 
 ## 2. Current Project State
-- Baseline c958594 was clean and in sync with the local origin/develop ref at session start.
-- The whole UI/UX batch is implemented and uncommitted in the working tree (38 modified, 4 untracked files).
-- Dev server at http://localhost:3000 (owner's process) served the changed code for browser QA; the mock store resets on page reload.
-- Worktrees: `stellar-comet` and `sunny-squid` at c958594 (detached), as reported by `/load`; not touched this session.
+- Current branch and HEAD verified as `develop` at `ead677c`.
+- The prior snapshot reports that the field-guide, image-viewer, cash OR, and 9-digit TIN batch is committed in `ead677c`; commit contents, remote state, and prior verification were not rechecked in this save session.
+- Current source change: `src/panels/public/experience/exp-rooms.tsx` no longer imports or renders `RenderingsNote`. The reason and owner are unknown.
+- Package versions were not rechecked in this save session; the prior snapshot records Next.js 16.4.5, React 19.3, Tailwind CSS 4, TanStack Query/Table, Vitest + Testing Library, Zod, SweetAlert2, and Sonner.
 
 ## 3. Important Decisions
-- Outline/secondary buttons (Details, Change, Cancel, Back, filters) use a soft brand-tinted fill; `secondary` is a deprecated alias of `outline` (owner choice, confirmed again this session).
-- Every admin FieldShell hint became a small "Field guide" info icon: opens on hover and click, keyboard focusable; the guide text stays in the DOM as sr-only text. The listed wizard notes moved there; dynamic state notes stay inline.
-- TIN accepts exactly 9 digits everywhere (format 123-456-789); 12-digit TINs are rejected; seeds and tests updated.
-- Cash receipts get a system `OR-YYYYMMDD-NNNN` Invoice/Receipt number, shown disabled at entry points (customer wizard, payment submit, IGP record); Finance correction/verification dialogs stay editable. The `PAY-YYYYMMDD-NNNN` reference is unchanged. Doc 07 still describes manual OR entry; the owner decision needs a doc update.
-- Uploaded images are stored as data URLs in the browser-memory mock store (no localStorage/IndexedDB) and shown as clickable thumbnails with a shared full-size viewer (Dialog, click-to-zoom, PDF opens in a new tab). Scope: Government ID (both holders), reservation proof, payment evidence, commission payout proof, VIP product image.
-- Non-preview uploads are read at submit time (avoids FileReader races); ID image and product image previews read at selection.
-- Step indicator: circles only, no boxed step buttons (direct owner instruction; reverts the 677a240 pill redesign).
+- Keep the approved frontend-first architecture and browser-memory-only mock business data; backend, production authentication, databases, migrations, infrastructure, and deployment need separate authorization.
+- Keep live Redemption and Services disabled; do not add public customer or card lookup.
+- Prior snapshot records owner decisions for field-guide popovers, soft brand-tinted secondary buttons, exactly 9-digit TINs, and generated cash receipt numbers in `OR-YYYYMMDD-NNNN` form. These were not independently reverified in this save session.
+- Prior snapshot notes that business rule document 07 still describes manual OR entry; align it only after owner approval.
+- Project Git policy reserves all staging, commits, pushes, merges, resets, and deployment for the owner.
 
 ## 4. Completed Work
-- Shared UI: outline/secondary button redesign; `field-shell.tsx` + new `hint-tip.tsx`; new `image-preview.tsx` and `file-data.ts`; profile uploader button variant.
-- Customers: `types.ts` (CustomerImage), repository copy key, ID preview now yields data URLs, wizard passes images plus the cash OR, customer detail shows ID thumbnails, restricted projection strips them, acquisition channel label marked Optional.
-- Finance: `payment-reference.ts` gains `nextOfficialReceiptNo`; payment repository stores the evidence data URL and auto-OR for cash; payment submit/resubmit dialogs use the new rules and viewer; contract ledger shows the receipt thumbnail.
-- Commissions: payout stores and displays the proof data URL. Products: image stored as a data URL and clickable in the detail sheet. IGP record uses the cash OR rule.
-- TIN: sanitizer, validation, masked-field width, and five test files updated; seeds normalized to 9-digit TINs.
-- Step bar restored: 2-line change in `step-indicator.tsx`.
-- Verification: typecheck, lint and build clean; targeted suites pass (business-pages 103/103, commissions/roles/sales-network 29/29, staff-page 20/20, customer-review/VIP/parity/commission-effects 66/66, image-preview 3/3, business-flow 82/82, modern fields 29/29, payment-reference 4/4). Full suite 1872/1889 with 17 load timeouts, all in files that pass standalone.
-- Browser QA: hint tooltip, TIN cap, cash OR display, and step circles confirmed on localhost:3000.
+- This session: restored context and updated this handoff snapshot only.
+- No application code was changed by the agent. The existing `exp-rooms.tsx` modification was present before this snapshot update.
+- Prior snapshot reports the UI batch was verified with targeted tests, typecheck, lint, build, and browser checks; none were rerun in this session.
 
 ## 5. Git Working Tree
+- Branch: `develop`; HEAD: `ead677c`.
 - Staged: none.
-- Unstaged (38 files, all this session): shared UI/forms (`button.tsx`, `field-shell.tsx`, `masked-fields.tsx`, `profile-photo-uploader.tsx`, `input-sanitizers.ts`, `identification.ts` and their tests), customers (`types.ts`, wizard/sections/detail/ID preview, customer/customer-fields/field-validation tests, `seed-data.ts`), finance (`types.ts`, `payment-reference.ts`, payment repository/dialogs, `contract-sections.tsx`, `business-flow.test.ts`), commissions (`types.ts`, repository contract/mock, `business-queries.ts`, `commission-shared.tsx`), products/IGP dialogs and page, and `step-indicator.tsx`.
-- Untracked: `src/shared/components/modern/image-preview.tsx`, `src/shared/components/modern/image-preview.test.tsx`, `src/shared/forms/modern/hint-tip.tsx`, `src/shared/lib/file-data.ts`.
-- Deleted or renamed: none.
-- `workflow/save-session.md` becomes modified after this save.
+- Unstaged: `src/panels/public/experience/exp-rooms.tsx` (present before this session; provenance and intent unknown); `workflow/save-session.md` (already modified before this save, then updated inside its snapshot markers as requested).
+- Untracked: none reported by `git ls-files --others --exclude-standard`.
+- Deleted or renamed: none reported by `git diff --name-status`.
+- No Git write operation was performed.
 
 ## 6. Pending Tasks
-- Owner review and commit/push of the full batch.
-- Documentation: update doc 07 to record the system-generated cash OR number (it still says the Clerk enters a required OR/reference).
-- Optional: rerun the full suite; the 17 failures were load timeouts and pass standalone.
-- Optional: end-to-end browser QA of submit -> customer record -> image viewer (the tab closed mid-flow; the component test covers the viewer).
-- Known limits: Government ID images only attach on creation (the uploader is hidden when editing an existing record); seeded payment evidence is filename-only; staff/accredited-seller/OST-registration profile photos still use object URLs; 5 MB caps are client-side.
+- Review the `exp-rooms.tsx` change and confirm its intended effect before changing or reverting it.
+- Owner decision/approval is still needed before aligning `docs/business-rules/07-finance-and-payments` with the system-generated cash OR behavior.
+- Optional follow-up recorded previously: rerun the full suite after its earlier load timeouts and complete browser QA for the image-viewer click path.
+- Preserve the restrictions on disabled modules, public lookups, and owner-only Git operations.
 
 ## 7. Verification State
-- Typecheck: clean after all changes (`npx tsc --noEmit`).
-- Lint: clean (`npm run lint`).
-- Build: passes (`npm run build`, compiled successfully).
-- Tests: targeted suites all pass (numbers above); full suite 1872/1889, 17 15-second timeouts in business-pages/staff-page/roles/sales-network under load, each passing standalone.
-- Browser QA: hint icon opens the guide; TIN caps at 9 digits; cash shows `OR-20261120-0001` with the field disabled; the step bar shows circles with no boxes.
-- Not performed: full-suite rerun after the final read-at-submit refactor and step change (targeted suites were rerun); image-viewer click path in the browser.
+- This run verified `pwd`, branch, HEAD, staged/unstaged status, diff names and stats, and the untracked-file list.
+- No tests, lint, typecheck, build, browser QA, or application behavior checks were run in this session.
+- The prior snapshot reported clean typecheck, lint, build and targeted test runs; it also reported 17 full-suite timeouts that passed when run alone. Those results are historical and were not rerun.
+- Snapshot readback and marker/content checks are performed after this update.
 
 ## 8. Next Session Instructions
-- First action: `/load`; expect develop at c958594 with the uncommitted batch above.
-- Inspect `src/shared/ui/button.tsx`, `src/shared/forms/modern/field-shell.tsx` + `hint-tip.tsx`, `src/shared/components/modern/image-preview.tsx`, `src/shared/lib/file-data.ts`, the wizard/payment/IGP cash paths, and `step-indicator.tsx`.
-- Verify with `npx tsc --noEmit`, `npm run lint`, `npm run build`, and targeted `npx vitest run` for touched areas; run the full suite only if time allows.
-- Required approvals: owner commits; the doc 07 alignment; any AGENTS.md amendment.
-- Warnings: keep live Redemption and Services disabled; no public customer or card lookup; the dev server on 3000 is the owner's process; browser QA data is memory-only and resets on reload.
+- First action: run `/load` and compare the snapshot with the current code and Git state.
+- Review `src/panels/public/experience/exp-rooms.tsx` as an existing uncommitted change; do not assume it is authorized or discard it.
+- If asked to address the cash OR documentation, inspect the relevant part of `docs/business-rules/07-finance-and-payments` and its implementation paths, then follow the project approval rules.
+- Do not perform Git writes, enable Redemption or Services, or add public customer/card lookup.
 
 ## 9. Execution Recommendation
-- Phase: Build and QA complete; owner review and commit next.
-- Current mode: not verified.
-- Recommended next mode: owner review/commit.
-- Current model: DeepSeek V4.1 Flash 1017 (opencode-go), verified from harness metadata.
-- Recommended model: Sonnet 5.5, low effort.
-- Effort: low.
-- Ultracode: OFF.
-- Token optimization: review the diff; rerun only the four formerly failing files if repeating the suite.
-- Reason: the batch is complete and verified; commit and the doc 07 alignment remain.
+- Phase: Context restored; handoff snapshot saved; no implementation work performed.
+- Current mode: Default (verified from the active developer instruction).
+- Recommended next mode: Review the existing `exp-rooms.tsx` change and clarify its intended result before implementation.
+- Current model: not verified.
+- Effort: low for reviewing the one-line behavior change; reassess if scope expands.
+- Ultracode: not verified.
+- Token optimization: inspect only the changed component and directly related presentation rules.
+- Reason: the current tree contains a source change with unknown intent, while the next business-document task still has an owner-approval gate.
 <!-- SESSION_SNAPSHOT_END -->

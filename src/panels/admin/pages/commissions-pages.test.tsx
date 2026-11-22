@@ -7,6 +7,7 @@ import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider, useMockStore } from "@/shared/providers/mock-store-provider";
 import { AppToaster } from "@/shared/components/modern/app-toaster";
 import { buildPayoutList, releaseSaleCommissions } from "@/data/mock/commission-effects";
+import { MockCommissionRepository } from "@/data/mock/commission-repository";
 import { getDevIdentity } from "@/data/mock/dev-identities";
 import type { MockStore } from "@/data/mock/seed";
 import { CommissionsAreaPage } from "./commissions-area-page";
@@ -32,6 +33,7 @@ function Wrapper({ children, identityId }: { children: React.ReactNode; identity
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   navigation.search = "";
   window.history.replaceState(null, "", "/");
 });
@@ -208,5 +210,22 @@ describe("Allowance review form", () => {
     await user.click(screen.getByRole("button", { name: "Calculate Allowances" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Choose the month.");
     expect(screen.getByRole("button", { name: "Calculate Allowances" }).className).toContain("tw:text-info");
+  });
+
+  it("saves once and shows a busy Save Review while the request is pending", async () => {
+    const user = userEvent.setup();
+    const save = vi.spyOn(MockCommissionRepository.prototype, "saveAllowanceReview").mockImplementationOnce(() => new Promise(() => {}));
+    show(<CommissionsAreaPage />, "allowances");
+    await screen.findByRole("region", { name: "Step 1: Month and Leader" });
+    fireEvent.change(screen.getByLabelText(/^Month/), { target: { value: "2026-11" } });
+    await user.click(screen.getByRole("combobox", { name: "Internal Seller (IST) leader" }));
+    const options = await screen.findAllByRole("option");
+    await user.click(options[0]);
+
+    const button = screen.getByRole("button", { name: "Save Review" });
+    await user.dblClick(button);
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    expect(button).toHaveAttribute("aria-busy", "true");
+    expect(button).toHaveAttribute("aria-disabled", "true");
   });
 });

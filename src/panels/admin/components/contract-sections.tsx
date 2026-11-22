@@ -19,6 +19,7 @@ import { BizBadge } from "@/shared/components/business/biz-badge";
 import type { BreadcrumbItem } from "@/shared/components/modern/breadcrumbs";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { DetailList, DetailRow, InfoNote } from "@/shared/components/modern/detail-list";
+import { ErrorState } from "@/shared/components/modern/error-state";
 import { Money } from "@/shared/components/modern/money";
 import { ImagePreview } from "@/shared/components/modern/image-preview";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
@@ -36,6 +37,12 @@ export function useContractRecord(contractId: string, includePaymentReference = 
   const payments = usePayments();
   const memberships = useMemberships();
   const tierName = useTierDisplayName();
+  // A first-load failure of payments or memberships leaves no data to render, so the page
+  // must not show an empty ledger or balances. A failed background refetch keeps its data
+  // and is allowed to stay on screen.
+  const dataError = (payments.isError && payments.data === undefined) || (memberships.isError && memberships.data === undefined);
+  const error = contracts.error ?? payments.error ?? memberships.error;
+  const refetch = () => Promise.all([contracts.refetch(), payments.refetch(), memberships.refetch()]);
   const contract = contracts.data?.find((item) => item.id === contractId);
   const planName = tierName(contract?.productCode);
   const contractPayments = useMemo(() => (payments.data ?? []).filter((item) => item.contractId === contractId), [payments.data, contractId]);
@@ -47,7 +54,20 @@ export function useContractRecord(contractId: string, includePaymentReference = 
     () => (contract ? deriveMilestones({ contract, payments: contractPayments, saleConfirmedDate: contract.sale?.confirmedDate ?? null, activationDate: membership?.activationDate ?? null, cardId: membership?.cardId ?? null, vipNumber: contract.vipNumber, signedAgreementRecordedDate: contract.signedAgreementRecordedDate, includePaymentReference }) : []),
     [contract, contractPayments, membership?.activationDate, membership?.cardId, includePaymentReference],
   );
-  return { isLoading: contracts.isLoading, contract, planName, payments: contractPayments, membership, schedule, ledger, milestones };
+  return {
+    isLoading: contracts.isLoading || payments.isLoading || memberships.isLoading,
+    contractError: contracts.isError,
+    dataError,
+    error,
+    refetch,
+    contract,
+    planName,
+    payments: contractPayments,
+    membership,
+    schedule,
+    ledger,
+    milestones,
+  };
 }
 
 export type ContractRecord = Omit<ReturnType<typeof useContractRecord>, "contract"> & { contract: ContractView };
@@ -101,6 +121,24 @@ export function ContractPageFrame({
     return (
       <AdminPage anyOf={anyOf} title="Contract" crumbs={parentCrumbs}>
         <DetailSkeleton />
+      </AdminPage>
+    );
+  }
+  if (record.contractError && !record.contract) {
+    return (
+      <AdminPage anyOf={anyOf} title="Contract Unavailable" crumbs={parentCrumbs}>
+        <ErrorState text={record.error instanceof Error ? record.error.message : undefined} onRetry={() => void record.refetch()} />
+      </AdminPage>
+    );
+  }
+  if (record.dataError) {
+    return (
+      <AdminPage anyOf={anyOf} title="Contract Data Unavailable" crumbs={parentCrumbs}>
+        <ErrorState
+          title="Contract data could not be loaded"
+          text="Payments or the membership record could not be loaded, so the balances on this page would be incomplete. Try again before acting on this contract."
+          onRetry={() => void record.refetch()}
+        />
       </AdminPage>
     );
   }

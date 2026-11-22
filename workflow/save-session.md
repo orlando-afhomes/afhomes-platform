@@ -111,44 +111,52 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved 2026-11-22 (Asia/Singapore). AFHomes Platform, develop, HEAD 50d6143.
-- Tool and model: Codex, GPT-6.2 Sol for this save.
-- Objective: Restore the architecture handoff, review the portal and UI changes, then verify the three follow-up fixes. Phase: frontend prototype and QA.
+- Saved 2026-11-22. AFHomes Platform, branch develop, HEAD 41e4e2f (verified with read-only Git).
+- Tool and model: Claude Code, Sonnet 5.5 (Opus 5.5 was used briefly for planning). Context was not compacted.
+- Objective: review the roadmap, run a health check, write the detailed fixes register, and settle the four items listed as "waiting on others". Phase: frontend prototype, QA and owner decisions.
 
 ## 2. Current Project State
-- HEAD advanced from the reviewed working tree's base 1dbba88 to 50d6143, titled “feat: rebuild customer portal app, compact phone headers and lazy-load settings.” Commit actor was not investigated.
-- The prior architecture handoff records phases 0–7 complete for browser-memory mock data. See docs/development/architecture-refactoring-report.md for scope and evidence.
+- Frontend mock prototype on browser-memory data. Backend, real auth, database and deployment are not started and need separate authorization.
+- Health check at 50d6143 (verified): tsc, lint and build pass; full suite 1,990 of 1,991 passed, the one failure a 15 s timeout that passes alone.
+- Commit 41e4e2f ("apply 2026-11-22 owner decisions on IGP, clawback and privacy") now holds the work of this session. Commit 02a053e promoted Customer Login (header and footer). The commit actor was not investigated.
 
 ## 3. Important Decisions
-- Portal sign-in requires exactly one normalized email owner across all customer records before card eligibility is checked. Duplicate contact emails are rejected without revealing the other owner.
-- Profile photos accept up to 2 MiB. Save validation rejects empty or incorrectly padded base64. Profile shows Activated immediately above Valid until.
-- Preserve browser-memory mock data and the approved stack. Backend, real authentication, databases, migrations and deployment require separate authorization. Git writes are owner-only.
-- Architecture decisions remain in the architecture report and canonical business rules, including rejection of conflicting payment codes for new configurations while preserving existing contract and VIP Number snapshots.
+- Owner decisions 2026-11-22, recorded in docs/implementation/fixes/05-owner-decisions-2026-11-22.md and in dated amendments to docs 03, 04, 08, 10, 12, 14, decisions-and-gaps.md and AGENTS.md section 5:
+  - IGP band digit 0 above PHP 9M; SUPERSEDED means Replaced; Formal VIP Grant card level by price (B1 from 1M, S1 from 2M, G1 from 4M), editable and frozen at signing.
+  - Clawback offset per IST once the Administrator records the signed addendum date (payouts first, then allowances, capped, carry forward). OST and unsigned ISTs: direct collection.
+  - Starting points-per-night table, holiday calendar to Dec 2027, venue cut-offs (Hotel 48 h, Resort 72 h).
+  - Working ten-year retention schedule and a public Privacy Policy at /privacy.
+- Header: Customer Login (/portal) plus Join VIP; Verify Accreditation sits in the Explore menu; footer Access note applies to the staff and seller links only; the portal sign-in page says it is a preview.
+- Git writes are owner-only. These rules are working defaults, not legal advice.
 
 ## 4. Completed Work
-- User supplied fixes. Codex reviewed them and independently verified the three findings were resolved. Review and save made no source edits.
-- Relevant files: src/data/mock/customer-portal-repository.ts and its test, src/shared/forms/validation/image.ts and its test, src/panels/customer-portal/pages/customer-portal-page.tsx, and src/panels/customer-portal/customer-portal-page.test.tsx.
-- The final review confirmed the shared-email case with only one cardholder, exact image size boundaries and invalid padding, and the two membership dates and their order.
+- Fixes register: docs/implementation/fixes/ (README and files 01 to 05).
+- Code: src/modules/igp (rules, types), src/data/mock/igp-repository.ts, src/modules/commissions (rules, types, allowances), src/data/mock/commission-repository.ts, src/modules/redemption/sample-seed.ts, src/modules/audit/retention.ts, src/panels/public/pages/privacy-page.tsx, src/panels/admin/components/clawback-addendum-dialog.tsx, footer legal links, matching tests.
+- Verification of the final tree (this session, before the commit): tsc, lint and build pass. Full suite: 4 tests timed out under load and pass alone; one real regression (extra Allowance Review column) was fixed and its file passes. The full suite was not re-run after that fix. /privacy loaded in the browser pane with no console errors at a narrow width.
 
 ## 5. Git Working Tree
-- Before this save: clean at 50d6143. No staged, unstaged, or untracked files and no pending deletions or renames.
-- This save modifies only the snapshot body in workflow/save-session.md. No other changes were made in the save turn.
+- Staged: none (verified).
+- Unstaged, modified: docs/implementation/prototype/16-state-verification.md and src/panels/admin/business-pages.test.tsx. Origin unknown; they were not edited in this save and may be the owner's slow-test fix (fixes/02 T1).
+- Untracked: none. No deletions or renames.
+- This save modifies only the snapshot body in workflow/save-session.md.
 
 ## 6. Pending Tasks
-- No open findings remain within the three-fix review scope. No further implementation is authorized by this handoff.
-- Portal browser verification and the full test suite were not rerun for the three fixes. Precise browser performance timing remains unverified from the architecture work.
+- Fixes register files 01 to 04: admin state fixes (25 Partial routes, four batches), slow-test fix and open browser checks, mock feature gaps (F6.5, F7.4, F8.6, F11.5, portal plan audit), document drift. None is authorized yet.
+- Not built: membership record for IGP buyers, IGP history import, any retention deletion, an admin view of the retention schedule.
+- Legal and the Data Protection Officer should review retention, privacy wording and the clawback addendum before real payouts.
+- Doc 07 was modified by someone else earlier in the session (not by this work); its status is now unknown.
 
 ## 7. Verification State
-- Final review independently ran four targeted Vitest files: image validation, mock portal repository, portal provider, and portal page. All 20 tests passed. The DOM test emitted a canvas getContext warning without failing.
-- User reported TypeScript and lint passed and that temporarily changing Activated to the wrong date caused its test to fail. Codex did not repeat those checks.
-- The 20-test run was on the reviewed working tree before HEAD advanced. Tests, lint, typecheck, build and browser checks were not performed during this save.
-- Earlier architecture baseline only: 1,983 tests passed across 192 files. The prior report records passing typecheck, lint, webpack build and Settings browser smoke. See workflow/architecture-baseline/final-verified-tests.json and the architecture report.
+- tsc, lint, build: passed before commit 41e4e2f (this session). Not re-run in this save.
+- Tests: see section 4. Browser QA: only /privacy checked, narrow width. 320 and 1100 px, reduced motion, no-JS and role walkthroughs: not performed.
 
 ## 8. Next Session Instructions
-- Run /load and verify HEAD and the working tree. Use the portal files above for follow-up and the architecture report for earlier work.
-- Preserve any owner changes. Obtain explicit authorization for new implementation, and keep Git operations read-only.
+- Run /load, then check git status; the two modified files above may be unfinished owner work. Preserve them.
+- Read docs/implementation/fixes/README.md and ask the owner which file to plan next. Recommended: the slow-test fix first (small), then admin state fixes Batch 1.
+- Keep Git operations read-only. Obtain explicit authorization for each batch.
 
 ## 9. Execution Recommendation
-- Phase: targeted QA complete. Current mode: Default. Current model: GPT-6.2 Sol.
-- For a new substantial scope, use Plan mode with GPT-6.2 Sol at medium effort. Model availability in the next session is unverified.
+- Phase: Plan. Recommended next mode: Plan. Recommended model: Sonnet 5.5. Effort: medium. Ultracode: OFF.
+- Token optimization: load only the fixes file for the chosen batch and its listed tests; run targeted tests first.
+- Reason: ordinary frontend state fixes and test hardening.
 <!-- SESSION_SNAPSHOT_END -->

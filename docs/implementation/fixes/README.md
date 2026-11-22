@@ -16,8 +16,8 @@ Created 2026-11-22 from the roadmap review (`docs/implementation/README.md`, `pr
 
 | File | Scope | Status |
 |---|---|---|
-| [01-admin-ui-state-fixes.md](01-admin-ui-state-fixes.md) | 25 Partial admin routes: error, retry and busy states, in 4 batches | Open, awaiting batch approval |
-| [02-test-and-qa-fixes.md](02-test-and-qa-fixes.md) | Slow test, 320 px overflow, open browser checks, role walkthroughs | Open |
+| [01-admin-ui-state-fixes.md](01-admin-ui-state-fixes.md) | 25 Partial admin routes: error, retry and busy states, in 4 batches | Batch 1 built 2026-11-22; batches 2 to 4 open |
+| [02-test-and-qa-fixes.md](02-test-and-qa-fixes.md) | Slow test, 320 px overflow, open browser checks, role walkthroughs | T1, T2 and R1 built 2026-11-22; browser checks and role walkthroughs open |
 | [03-mock-feature-gaps.md](03-mock-feature-gaps.md) | F6.5, F7.4, F8.6, F11.5, portal plan audit | Open, awaiting approval |
 | [04-doc-drift.md](04-doc-drift.md) | Documents that disagree with each other or the code | Open |
 | [05-owner-decisions-2026-11-22.md](05-owner-decisions-2026-11-22.md) | Eight items that were "waiting on others", now decided and built | Decided, built in the mock |

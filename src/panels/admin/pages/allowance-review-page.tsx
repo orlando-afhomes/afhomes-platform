@@ -106,6 +106,7 @@ export function AllowanceReviewPanel() {
   ], []);
 
   async function calculate(persist = false) {
+    if (persist && save.isPending) return;
     setResult(undefined);
     setError(undefined);
     const match = MONTH_PATTERN.exec(month);
@@ -173,7 +174,7 @@ export function AllowanceReviewPanel() {
           </div>
         ) : null}
         <div className="tw:flex tw:flex-wrap tw:gap-2">
-          <Button type="button" disabled={save.isPending} onClick={() => void calculate(true)}>Save Review</Button>
+          <Button type="button" loading={save.isPending} onClick={() => void calculate(true)}>Save Review</Button>
           <Button type="button" variant="info" onClick={() => void calculate()}>Calculate Allowances</Button>
         </div>
       </div>

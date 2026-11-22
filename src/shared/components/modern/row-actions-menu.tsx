@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, type ComponentProps } from "react";
 import { toast } from "sonner";
 import { ChevronRight, MoreHorizontal, Pencil, Trash2, type LucideIcon } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { Spinner } from "@/shared/ui/spinner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,6 +59,10 @@ export type RowActionItem = {
   tone?: RowActionTone;
   /** Same as `tone: "danger"`; kept for existing callers. */
   danger?: boolean;
+  /** Blocks the action, for example while the same mutation is still running. */
+  disabled?: boolean;
+  /** Shows a spinner in place of the icon while this action is running. */
+  loading?: boolean;
   onClick: () => void;
 };
 
@@ -157,6 +162,8 @@ export function RowActionsMenu({
           id={triggerId}
           tone={onEdit ? "default" : single ? singleTone : "danger"}
           icon={onEdit ? Pencil : single ? undefined : Trash2}
+          loading={single?.loading}
+          disabled={single?.disabled}
           aria-label={`${onEdit ? "Edit" : single ? single.label : "Delete"} ${itemName}`}
           onClick={onEdit ?? single?.onClick ?? (() => (onDelete ? setConfirmOpen(true) : setNoticeOpen(true)))}
         >
@@ -189,9 +196,12 @@ export function RowActionsMenu({
               <DropdownMenuItem
                 key={extra.key}
                 variant={tone === "danger" ? "destructive" : "default"}
+                disabled={extra.disabled}
+                aria-busy={extra.loading || undefined}
                 onClick={extra.onClick}
                 className={tone === "default" || tone === "danger" ? itemClass : `${itemClass} ${TONE_CLASS[tone]}`}
               >
+                {extra.loading ? <Spinner aria-hidden="true" /> : null}
                 {extra.label}
               </DropdownMenuItem>
             );

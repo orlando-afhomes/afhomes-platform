@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { MockContractRepository } from "@/data/mock/contract-repository";
+import { MockPaymentRepository } from "@/data/mock/payment-repository";
 import { FinanceCancellationDetailPage } from "./pages/finance-cancellation-detail-page";
 import { FinanceCollectionDetailPage } from "./pages/finance-collection-detail-page";
 import { SalesContractDetailPage } from "./pages/sales-contract-detail-page";
@@ -15,8 +17,8 @@ vi.mock("next/navigation", async (importOriginal) => ({
   usePathname: () => "/admin",
 }));
 
-function Wrapper({ identityId, children }: { identityId: string; children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
+function Wrapper({ identityId, children, client }: { identityId: string; children: React.ReactNode; client?: QueryClient }) {
+  const [queryClient] = useState(() => client ?? new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   return (
     <QueryClientProvider client={queryClient}>
       <MockStoreProvider>
@@ -26,11 +28,14 @@ function Wrapper({ identityId, children }: { identityId: string; children: React
   );
 }
 
-function show(identityId: string, page: ReactElement) {
-  return render(<Wrapper identityId={identityId}>{page}</Wrapper>);
+function show(identityId: string, page: ReactElement, client?: QueryClient) {
+  return render(<Wrapper identityId={identityId} client={client}>{page}</Wrapper>);
 }
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 const button = (name: string) => screen.queryByRole("button", { name });
 
@@ -128,6 +133,42 @@ describe("contract details show actions allowed for each viewer", () => {
     expect(within(dialog).getByText("₱67,500.00")).toBeInTheDocument();
     expect(within(dialog).getByText("₱172,500.00")).toBeInTheDocument();
     await user.keyboard("{Escape}");
+  });
+
+  it("shows a load error with a retry instead of Not Found when the contract query fails", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockContractRepository.prototype, "list").mockRejectedValueOnce(new Error("Contract list failed."));
+    show("dev-admin", <SalesContractDetailPage contractId="ctr-3" />);
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Contract list failed\./)).toBeInTheDocument();
+    expect(screen.queryByText("Contract Not Found")).toBeNull();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("button", { name: "Approve Deal" })).toBeInTheDocument();
+  });
+
+  it("refuses to show a contract with an empty ledger when payments fail on first load", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockPaymentRepository.prototype, "list").mockRejectedValueOnce(new Error("Payments failed."));
+    show("dev-finance", <FinanceCollectionDetailPage contractId="ctr-1" />);
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/balances on this page would be incomplete/)).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "Payment Ledger" })).toBeNull();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("table", { name: "Payment Ledger" })).toBeInTheDocument();
+  });
+
+  it("keeps the loaded contract when a background payments refresh fails", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    show("dev-finance", <FinanceCollectionDetailPage contractId="ctr-1" />, client);
+    await screen.findByRole("table", { name: "Payment Ledger" });
+
+    vi.spyOn(MockPaymentRepository.prototype, "list").mockRejectedValueOnce(new Error("Background refresh failed."));
+    await act(async () => {
+      await client.invalidateQueries();
+    });
+
+    expect(screen.getByRole("table", { name: "Payment Ledger" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("Finance cancellation page has no decision buttons when nothing is requested", async () => {

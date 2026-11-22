@@ -1053,7 +1053,7 @@ describe("customer application new fields and secondary holder", () => {
   });
 
   it("completes the office address province-first with the same ZIP rule", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     await reachCustomerStep(user, /silver vip/i);
     const employmentCard = screen.getByRole("heading", { name: "Employment" }).closest(".customer-application__block") as HTMLElement;
     const officeProvince = () => within(employmentCard).getByRole("combobox", { name: "Province" }) as HTMLInputElement;

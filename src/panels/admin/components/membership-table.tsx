@@ -12,7 +12,7 @@ import { Button, buttonVariants } from "@/shared/ui/button";
 import { EMPTY } from "@/shared/lib/empty-value";
 import { MemberQrButton } from "./member-qr";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
-import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
+import { RowActionsMenu, type RowActionItem } from "@/shared/components/modern/row-actions-menu";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { formatDate } from "@/shared/lib/format-date";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
@@ -67,9 +67,21 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
     [],
   );
 
-  const activateItem = (item: MembershipView) => {
+  const activateItem = (item: MembershipView): RowActionItem[] => {
+    const activating = activate.isPending && activate.variables === item.id;
     if (canActivate && item.status === "pending" && item.eligible) {
-      return [{ key: "activate", label: "Activate", tone: "success" as const, onClick: () => activate.mutateAsync(item.id).then(() => toast.success("Membership activated."), (error: unknown) => toast.error("Could not activate", { description: error instanceof Error ? error.message : "Request failed." })) }];
+      return [{
+        key: "activate",
+        label: "Activate",
+        tone: "success" as const,
+        loading: activating,
+        disabled: activate.isPending,
+        onClick: () => {
+          // One request per click, even if the row menu is reopened before the refresh settles.
+          if (activate.isPending) return;
+          void activate.mutateAsync(item.id).then(() => toast.success("Membership activated."), (error: unknown) => toast.error("Could not activate", { description: error instanceof Error ? error.message : "Request failed." }));
+        },
+      }];
     }
     if (item.status !== "active") return [];
     return [
@@ -122,7 +134,7 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
         footer={
           detail ? (
             <>
-              {activateItem(detail).map((item) => <Button key={item.key} type="button" variant={item.tone === "success" ? "success" : "default"} onClick={item.onClick}>{item.label}</Button>)}
+              {activateItem(detail).map((item) => <Button key={item.key} type="button" variant={item.tone === "success" ? "success" : "default"} loading={item.loading} disabled={item.disabled} onClick={item.onClick}>{item.label}</Button>)}
               {detail.status === "active" && detail.cardId ? <MemberQrButton membershipId={detail.id} /> : null}
               <Link href={contractHref(detail.contractId)} className={buttonVariants({ variant: "info" })}>Open Contract</Link>
             </>

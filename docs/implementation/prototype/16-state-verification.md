@@ -146,6 +146,7 @@ Verify that every loading, empty, error and busy state delivered by FP12 to FP15
 - Full `npm test`: **1889 passed, 4 failed**.
   - 3 failures were 15 s timeouts under full-run load in `business-pages`, `payment-reference-fields` and `staff-page`; all three files pass alone (**127 tests**).
   - 1 failure is pre-existing and outside FP12–FP16: `admin-mobile-nav.test.tsx` expects a "Log out" button in the drawer, but `AdminMobileNav` has no drawer footer. No admin file was changed in these phases. This needs an owner decision in the Phase 2 admin plan.
+    - **Resolved 2026-11-22:** `AdminMobileNav` now renders `LogoutButton` in its drawer footer. The fixes register (`02-test-and-qa-fixes.md`, T2) records that the 2026-11-22 full run did not fail that test. The note is closed; the test remains the regression guard.
 - Browser:
   - `/` at 375/768/1280: one header, one footer, one main landmark, zero horizontal overflow.
   - `/login` and `/login/sales`: one login shell on a fresh load, "Sign In" button, footer `© 2026 AFhomes`, zero horizontal overflow.
@@ -154,3 +155,4 @@ Verify that every loading, empty, error and busy state delivered by FP12 to FP15
 - Build fix: `LoginShell` now takes an optional `year`; the login pages pass it, while the route skeleton omits it so prerendering never reads the clock.
 - Not observed in browser: the route skeletons themselves, because the public pages are static and resolve before a skeleton paints. They are covered by `public-loading.test.tsx` (16 route loaders) and `public-skeletons.test.tsx` (12 tests). They will appear when CMS data makes the routes suspend.
 - Known pre-existing limitation: the 320px home layout still overflows from `site-feature-card`. This predates FP12–FP16 and is not a regression from the state work.
+  - **Fixed 2026-11-22 (R1):** `min-width: 0` on the grid item, card, link and body, and a bounded title, let the ellipsis contain the nowrap title. Browser re-check at 320/375/768/1100/1280 px still has to be recorded here.

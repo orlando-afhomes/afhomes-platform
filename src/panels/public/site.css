@@ -208,6 +208,7 @@ p.site-callout { margin-top: 24px; border-left: 4px solid var(--color-brand-seco
 /* Grids and cards */
 
 .site-grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+.site-grid > li { min-width: 0; }
 @media (min-width: 640px) { .site-grid--2, .site-grid--3, .site-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1000px) { .site-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .site-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .site-card { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--color-border-default); border-radius: 20px; background: var(--color-bg-canvas); box-shadow: var(--shadow-soft); }

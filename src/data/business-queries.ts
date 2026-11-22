@@ -289,6 +289,10 @@ export function useCommissionClawbackAction() {
   ));
 }
 
+export function useSetClawbackAddendum() {
+  return useBusinessMutation((r, input: { memberId: string; signedDate: string | null }) => r.commissions.setClawbackAddendum(input.memberId, input.signedDate));
+}
+
 export function useAllowanceReviews(enabled: boolean) {
   return useCommissionQuery("allowance-reviews", enabled, (r, signal) => r.commissions.allowanceReviews({ signal }));
 }

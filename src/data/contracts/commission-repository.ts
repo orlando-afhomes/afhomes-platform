@@ -5,7 +5,7 @@ import type { Designation } from "@/modules/organization/types";
 
 export type CommissionRateView = CommissionRateSetting & { memberName: string };
 export type CommissionRateDirectory = {
-  members: { id: string; name: string; designation: Designation }[];
+  members: { id: string; name: string; designation: Designation; clawbackAddendumSignedDate: string | null }[];
   rates: CommissionRateView[];
   positionRates: VipPositionRate[];
 };
@@ -26,6 +26,8 @@ export interface CommissionRepository {
   preparePayoutList(month: string, options?: MockAsyncOptions): Promise<CommissionPayoutList>;
   approvePayoutList(id: string, options?: MockAsyncOptions): Promise<CommissionPayoutList>;
   clawbacks(options?: MockAsyncOptions): Promise<CommissionClawback[]>;
+  /** Administrator only, audited. Records the day an IST signed the Clawback Addendum, or clears it with null. Never an OST. */
+  setClawbackAddendum(memberId: string, signedDate: string | null, options?: MockAsyncOptions): Promise<void>;
   recordRecovery(id: string, input: { amountCentavos: number; reference: string }, options?: MockAsyncOptions): Promise<void>;
   writeOff(id: string, reason: string, options?: MockAsyncOptions): Promise<void>;
   allowanceReviews(options?: MockAsyncOptions): Promise<{ reviews: AllowanceReview[]; members: { id: string; name: string; position: AllowanceReview["position"] }[] }>;

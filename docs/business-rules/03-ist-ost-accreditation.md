@@ -251,7 +251,7 @@ The check copies the process and the result of the earlier public sales-team sea
 6. **Not found.** A number that is unknown, pending, suspended, departed or cancelled gets one general message.
 
 Open for go-live:
-- The privacy notice wording and the privacy contact need legal review.
+- The privacy notice now points to the public Privacy Policy at `/privacy` (owner decision 2026-11-22); Legal should still review the wording.
 - The daily limit and a robot check must move to the server.
 
 ---

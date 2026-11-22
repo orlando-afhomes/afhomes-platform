@@ -639,6 +639,9 @@
 .site-footer__disclaimer-title { margin-bottom: 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent-light); }
 .site-footer__disclaimer-text { max-width: 62rem; font-size: 13px; line-height: 1.65; color: var(--color-on-dark-muted); }
 .site-footer__copyright { font-size: 12px; color: var(--color-on-dark-faint); }
+.site-footer__legal-links { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; }
+.site-footer__legal-links a { color: var(--color-on-dark-muted); text-decoration: underline; text-underline-offset: 3px; }
+.site-footer__legal-links a:hover, .site-footer__legal-links a:focus-visible { color: var(--color-accent-light); }
 
 /* Home page: the header floats over the hero, transparent, and eases into a rounded bar once the page scrolls.
    SiteHeaderScroll sets data-scrolled on the header. The Verify page opts out with data-page="verify" on the

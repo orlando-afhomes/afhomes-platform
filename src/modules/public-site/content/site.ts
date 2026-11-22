@@ -100,6 +100,9 @@ export const ACTION_LINKS: NavLink[] = [
   { href: "/vip-privilege#cards", label: "Join VIP" },
 ];
 
+/** Legal links shown beside the copyright line in the footer. */
+export const LEGAL_LINKS: NavLink[] = [{ href: "/privacy", label: "Privacy Policy" }];
+
 /** Footer link columns. Every target is an existing route (checked by public-links.test.tsx). */
 export const FOOTER_COLUMNS: { heading: string; links: NavLink[] }[] = [
   { heading: "Explore", links: MAIN_NAV.filter((link) => link.href !== "/") },

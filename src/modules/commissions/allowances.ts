@@ -39,6 +39,8 @@ export type AllowanceReview = AllowanceReviewInput & {
   position: keyof typeof SHIPPED_ALLOWANCE_TERMS;
   result: AllowanceTotals;
   withholdBa: boolean;
+  /** Payback taken out of this allowance under the signed addendum (owner decision 2026-11-22). Zero or absent: none. */
+  clawbackOffsetCentavos?: number;
   reviewedAt: string;
   reviewedBy: string;
 };

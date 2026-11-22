@@ -158,6 +158,19 @@ describe("Commissions area", () => {
     expect(tabNames()).toEqual(["Commissions", "Commission Paybacks", "Leader Allowances"]);
   });
 
+  it("lets an Administrator record the signed addendum from Commission Paybacks, and nobody else", async () => {
+    const user = userEvent.setup();
+    const admin = show(<CommissionsAreaPage />, "recovery", "dev-admin");
+    await user.click(await screen.findByRole("button", { name: "Signed Addendum Dates" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("combobox", { name: /Seller/ })).toBeInTheDocument();
+    expect(within(dialog).getByText(/Only Internal Sellers \(IST\) sign this/)).toBeInTheDocument();
+    admin.unmount();
+    show(<CommissionsAreaPage />, "recovery", "dev-finance");
+    await screen.findByRole("table", { name: "Commission Paybacks" });
+    expect(screen.queryByRole("button", { name: "Signed Addendum Dates" })).toBeNull();
+  });
+
   it("gives a Clerk no Commissions area now that month close prepares the payout list", async () => {
     show(<CommissionsAreaPage />, "rates", "dev-clerk");
     expect(await screen.findByRole("heading", { name: "Access restricted" })).toBeInTheDocument();

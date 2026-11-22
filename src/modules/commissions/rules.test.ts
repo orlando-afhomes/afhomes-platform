@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { Contract } from "@/modules/contracts/types";
 import type { Payment } from "@/modules/finance/types";
-import { collectedPercent, commissionStageAmounts, meetsPayoutRelease, payoutReleaseDate, payoutReleaseDateFor, payoutThresholdDate } from "./rules";
+import { clawbackOffsetEligible, collectedPercent, commissionStageAmounts, meetsPayoutRelease, payoutReleaseDate, payoutReleaseDateFor, payoutThresholdDate, planClawbackOffsets } from "./rules";
+import type { CommissionClawback } from "./types";
 
 const contract = { priceCentavos: 7_200_000 } as Pick<Contract, "priceCentavos">;
 
@@ -83,5 +84,29 @@ describe("commission stage amounts", () => {
       { stage: "full", amountCentavos: 30_000 },
     ]);
     expect(commissionStageAmounts(1_000_000, 0, "VIP")).toEqual([{ stage: "stage1", amountCentavos: 0 }]);
+  });
+});
+
+describe("clawback offsets under the signed addendum", () => {
+  const clawback = (id: string, raisedDate: string, amountCentavos: number, over: Partial<CommissionClawback> = {}): CommissionClawback => ({
+    id, commissionId: `c-${id}`, saleId: "s1", recipientMemberId: "m1", trigger: "cancellation", raisedDate, amountCentavos, recoveries: [], writeOff: null, ...over,
+  });
+
+  it("offsets oldest first, never beyond the payable amount, and leaves the rest open", () => {
+    const open = [clawback("b", "2026-11-10", 400_000), clawback("a", "2026-11-02", 700_000)];
+    expect(planClawbackOffsets(open, "2026-11-01", 1_000_000)).toEqual([
+      { clawbackId: "a", amountCentavos: 700_000 },
+      { clawbackId: "b", amountCentavos: 300_000 },
+    ]);
+    expect(planClawbackOffsets(open, "2026-11-01", 0)).toEqual([]);
+  });
+
+  it("skips an unsigned seller, an event before signing, a settled balance and a written-off one", () => {
+    const early = clawback("e", "2026-10-31", 500_000);
+    const settled = clawback("s", "2026-11-05", 500_000, { recoveries: [{ date: "2026-11-06", amountCentavos: 500_000, reference: "r", actorId: "x" }] });
+    const off = clawback("w", "2026-11-05", 500_000, { writeOff: { date: "2026-11-07", actorId: "x", reason: "r" } });
+    expect(planClawbackOffsets([early, settled, off], "2026-11-01", 9_000_000)).toEqual([]);
+    expect(clawbackOffsetEligible(clawback("n", "2026-11-05", 100), null)).toBe(false);
+    expect(clawbackOffsetEligible(clawback("n", "2026-11-05", 100), "2026-11-05")).toBe(true);
   });
 });

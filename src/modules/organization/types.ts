@@ -27,6 +27,11 @@ export type OrgMember = {
   mockAccreditationEligible?: boolean;
   /** Read-only mock accreditation number fixture. Phase 06 owns real issuance. */
   aaNumber?: string | null;
+  /**
+   * Date-only. The day this Internal Seller signed the IST Commission and Clawback Addendum (owner decision 2026-11-22).
+   * Automatic payout offsets apply only to this person, and only to clawbacks raised on or after this date. Never set for an OST.
+   */
+  clawbackAddendumSignedDate?: string | null;
   /** Append-only parent/branch relationship history. */
   parentHistory?: Array<{
     previousParentId: string | null;

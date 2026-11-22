@@ -128,6 +128,10 @@ Other officially documented approved schemes must also be preserved. Do not assu
 
 Cash, Bank Transfer, GCash, Maya, Card, Cheque. A customer can have an installment scheme while paying an individual installment via GCash or Bank Transfer. Payment method does not determine the contractual payment schedule.
 
+### 6.3 Payments Happen Outside the Platform
+
+Customers must make payments outside the AFHomes Platform through an accepted external payment method or channel. The platform is for recording and verifying payments; it must not accept, initiate, process, route, or settle customer payments. Do not connect the platform to a payment gateway, checkout service, wallet, bank, card processor, or other payment service for customer payment processing or automatic payment verification. A payment method recorded in the platform is descriptive only. Staff may enter a receipt and its supporting reference or evidence after an external payment is made, and it counts only after the normal approval in section 5.2.
+
 ---
 
 ## 7. Payment Purposes and Categories
@@ -527,7 +531,7 @@ A previously verified payment affects a reported Confirmed Sale. The correction 
 - Contract-specific refund exceptions.
 - Detailed Non-Standard commercial authorization: resolved (doc 05 §10.2).
 - Exact grace periods where none are established.
-- External payment-gateway or banking integrations.
+- External payment-gateway or banking integrations: excluded; customer payments are made outside the platform (owner ruling 2026-11-22; section 6.3).
 - Membership benefit treatment beyond the approved Financial Hold restriction.
 - Detailed Commission reversal and payout consequences: defined in doc 08 (sections 8, 11 and 14); no longer open here.
 - Tax/accounting/reporting procedures not established by source documentation.
@@ -655,3 +659,7 @@ These rulings take precedence over earlier text in this document where they diff
 4. **Receipt approval in one click (2026-11-16).** Approving a receipt needs no separate "Start review" step and no extra confirmation; a mistaken approval is corrected through the audited reversal (section 9.1). "Under Review" remains a readable status for older records but is not a step staff must take (section 9.3). Return and Reject still need a reason.
 5. **Receipt entry defaults (2026-11-16).** The receipt form pre-fills the purpose and amount of the next unpaid schedule line and today's business date (Asia/Manila). Staff can change them before saving.
 6. **Sale approval through Approve deal (2026-11-16).** The sale approval that must come before receipt approval (section 15) is recorded by the Administrator's "Approve deal" action on the contract (doc 05 item 30).
+
+## Owner ruling amendment (2026-11-22, external payments)
+
+1. **Payments outside the platform.** Customers make payments through external channels. The AFHomes Platform records and verifies payment information only; it must not accept, initiate, process, route, settle, or automatically verify customer payments through an integration. Section 6.3.

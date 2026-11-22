@@ -62,6 +62,8 @@ export type CommissionPayoutList = {
   approvedBy: string | null;
   approvedAt: string | null;
   approvedCommissionIds?: string[];
+  /** Paybacks taken out of this list's payouts when it was approved (owner decision 2026-11-22). Amounts in the entries stay gross. */
+  offsets?: { recipientMemberId: string; clawbackId: string; amountCentavos: number }[];
 };
 
 export type CommissionPayout = {

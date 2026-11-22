@@ -410,7 +410,7 @@ Decided since the original list (2026-11-12):
 - **Payment Scheme enumeration:** decided, Spot Cash, Move A, 4-Month Installment, Move B plus Admin-configured schemes (doc 05 §8).
 - **Commission percentages and referral payouts:** decided, doc 08 (per-person rates, DSC and DRI).
 - **VIP activation requirements:** decided, docs 07 and 09 (Finance-verified full settlement; approval never auto-activates).
-- **Retention:** interim rule, records kept indefinitely with no automatic deletion until a legally advised schedule exists (docs 11, 12).
+- **Retention:** a working ten-year schedule was adopted on 2026-11-22 (doc 12 amendment); nothing is deleted automatically in the prototype.
 
 Still deferred:
 

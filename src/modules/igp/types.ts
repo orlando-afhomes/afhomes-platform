@@ -1,9 +1,20 @@
 import type { GenealogyEntry } from "@/modules/contracts/types";
 import type { SaleAdjustment } from "@/modules/sales/types";
+import type { VipTierCode } from "@/modules/vip/types";
 
 export type IgpScheme = "C" | "T";
 export type IgpEntry = "reservation" | "cts";
 export type IgpClauses = "S" | "N";
+/** Lowest contract price (centavos) at which an IGP buyer's Formal VIP Grant carries this card level. */
+export type IgpGrantTierRule = { tier: VipTierCode; minPriceCentavos: number };
+
+/** Owner decision 2026-11-22: PHP 1M Bronze, PHP 2M Silver, PHP 4M Gold. Administrators can edit the minimums. */
+export const DEFAULT_IGP_GRANT_TIER_RULES: readonly IgpGrantTierRule[] = [
+  { tier: "B1", minPriceCentavos: 100_000_000 },
+  { tier: "S1", minPriceCentavos: 200_000_000 },
+  { tier: "G1", minPriceCentavos: 400_000_000 },
+];
+
 export type IgpStatus = "pending" | "approved" | "defaulted" | "cancelled" | "replaced" | "pending_review";
 
 export type JadAccreditation = {
@@ -70,6 +81,8 @@ export type IgpSale = IgpIntake & IgpMilestones & {
   commissionRates: Array<{ memberId: string; role: "DSC" | "DRI"; rateBp: number }>;
   commissionReviewReason: string | null;
   documents: IgpDocument[];
+  /** Card level of the Formal VIP Grant, frozen when that document is signed. Null: price below the lowest rule. */
+  grantTier?: VipTierCode | null;
   replacesId: string | null;
   replacedById: string | null;
   refund: { amountCentavos: number; date: string | null; reason: string } | null;
@@ -79,6 +92,7 @@ export type IgpState = {
   sales: IgpSale[];
   accreditations: JadAccreditation[];
   thresholdBp: number;
+  grantTierRules: IgpGrantTierRule[];
   projects: IgpProject[];
   units: IgpUnit[];
 };
@@ -100,5 +114,5 @@ export function seedIgpCatalog(): { projects: IgpProject[]; units: IgpUnit[] } {
 }
 
 export function createIgpState(): IgpState {
-  return { sales: [], accreditations: [], thresholdBp: 1_000, ...seedIgpCatalog() };
+  return { sales: [], accreditations: [], thresholdBp: 1_000, grantTierRules: DEFAULT_IGP_GRANT_TIER_RULES.map((rule) => ({ ...rule })), ...seedIgpCatalog() };
 }

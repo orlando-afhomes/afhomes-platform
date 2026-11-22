@@ -9,6 +9,7 @@ import {
   priceStay,
   selectTableVersion,
 } from "./rules";
+import { createRedemptionSeed } from "./sample-seed";
 
 const venue: RedemptionVenue = { id: "v1", name: "Hotel", status: "open", cutoffHours: 48, checkInTime: "14:00", sample: true };
 const version = (id: string, n: number, effectiveDate: string): PointsTableVersion => ({
@@ -93,5 +94,26 @@ describe("first redemption and Year 1 condition (J, J2, A7b)", () => {
   });
   it("does not set the PAD on or after the second anniversary", () => {
     expect(evaluateFirstRedemption({ padSet: false, claimDate: "2026-11-02", checkIn: "2028-11-02", yearOneConditionMet: true }).setsPad).toBe(false);
+  });
+});
+
+describe("adopted starting configuration (owner decision 2026-11-22)", () => {
+  const seed = createRedemptionSeed();
+  const holidays = new Set(seed.holidays.map(({ date }) => date));
+
+  it("draws a Christmas Eve night, a Thursday, from the weekend bucket at the Standard weekend rate", () => {
+    const pricing = priceStay({ version: seed.tableVersions[0], venueId: "venue-wellness-hotel", roomType: "Standard", checkIn: "2026-12-24", checkOut: "2026-12-25", holidays, cashNightDates: [] });
+    expect(pricing.nights[0]).toMatchObject({ reason: "holiday", bucket: "weekend", points: 1500 });
+  });
+
+  it("lets a Bronze yearly tranche (7,000 weekday and 3,000 weekend) cover whole nights in both buckets", () => {
+    const [{ weekdayPoints, weekendPoints }] = seed.tableVersions[0].rows;
+    expect(Math.floor(7000 / weekdayPoints)).toBe(7);
+    expect(Math.floor(3000 / weekendPoints)).toBe(2);
+  });
+
+  it("is no longer marked as sample data", () => {
+    expect(seed.venues.every(({ sample }) => !sample)).toBe(true);
+    expect(seed.tableVersions[0].sample).toBe(false);
   });
 });

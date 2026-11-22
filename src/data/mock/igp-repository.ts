@@ -5,7 +5,7 @@ import { getCurrentAccreditationRecord, getSellerStanding } from "@/modules/accr
 import { firstOpenDate } from "@/modules/finance/month-close";
 import { totalVerifiedCentavos } from "@/modules/finance/rules";
 import type { DevIdentity } from "@/modules/identity/types";
-import { formatIgpSeriesNumber, igpChecklist, igpPriceBand, isIgpDefaultReviewDue, jadAccreditationOn, jadNumberProblem } from "@/modules/igp/rules";
+import { formatIgpSeriesNumber, grantTierRulesProblem, igpChecklist, igpGrantTier, igpPriceBand, isIgpDefaultReviewDue, jadAccreditationOn, jadNumberProblem } from "@/modules/igp/rules";
 import type { IgpIntake, IgpSale } from "@/modules/igp/types";
 import { addYearsToDate, parseManilaDateOnly } from "@/shared/lib/dates";
 import { BusinessRepository, customerName, genealogyFor, nowIso, today } from "./business-base";
@@ -42,6 +42,7 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
         sellers: canEnter ? this.store.members.map(({ id, displayName, designation, branchId }) => ({ value: id, label: displayName, designation, branchId })) : [],
         accreditations: canEnter ? structuredClone(this.store.igp.accreditations) : [],
         thresholdBp: this.store.igp.thresholdBp,
+        grantTierRules: structuredClone(this.store.igp.grantTierRules),
       };
     });
   }
@@ -194,6 +195,17 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
         this.audit(identity, { module: "sales", entityType: "sale", entityId: "igp-threshold", action: "IGP_THRESHOLD_CHANGED", previousValue, newValue: String(basisPoints), reason });
         return null;
       }
+      if (action.type === "grantTierRules") {
+        this.requireManagement(identity);
+        const reason = required(action.reason, "the reason");
+        const problem = grantTierRulesProblem(action.rules);
+        if (problem) throw new Error(problem);
+        const describe = (rules: readonly { tier: string; minPriceCentavos: number }[]) => rules.map(({ tier, minPriceCentavos }) => `${tier}:${minPriceCentavos}`).join(", ");
+        const previousValue = describe(this.store.igp.grantTierRules);
+        this.store.igp.grantTierRules = action.rules.map(({ tier, minPriceCentavos }) => ({ tier, minPriceCentavos }));
+        this.audit(identity, { module: "sales", entityType: "sale", entityId: "igp-grant-tier-rules", action: "IGP_GRANT_TIER_RULES_CHANGED", previousValue, newValue: describe(action.rules), reason });
+        return null;
+      }
       const sale = findIgpPaymentTarget(this.store, action.id);
       if (!sale || !canSeeIgpSale(identity, sale)) throw new Error("Property sale (IGP) not found.");
       if (sale.status === "cancelled" || sale.status === "replaced" || sale.status === "pending_review") throw new Error("This Series Number is closed.");
@@ -272,6 +284,11 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
         }
         const previousValue = document.signedDate;
         Object.assign(document, { status: "signed", signedDate, signers });
+        // The card level is frozen the first time the Formal VIP Grant is signed; later rule edits never change it.
+        if (document.key === "formal_grant" && sale.grantTier === undefined) {
+          sale.grantTier = igpGrantTier(sale.priceCentavos, this.store.igp.grantTierRules);
+          this.log(identity, sale, "IGP_GRANT_TIER_FROZEN", { newValue: sale.grantTier ?? "none", reason: `Price ${sale.priceCentavos} centavos` });
+        }
         this.log(identity, sale, "IGP_DOCUMENT_RECORDED", { previousValue, newValue: signedDate, reason: action.key });
       }
       return structuredClone(sale);

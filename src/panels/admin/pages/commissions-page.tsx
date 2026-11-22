@@ -24,6 +24,8 @@ import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sh
 import { humanize } from "@/shared/lib/humanize";
 import { matchesSearch, optionsFrom } from "@/shared/lib/search";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
+import { Button } from "@/shared/ui/button";
+import { ClawbackAddendumDialog } from "../components/clawback-addendum-dialog";
 
 /** Newest approved commission first; held and approved-unpaid rows rise ahead on the same date. */
 const COMMISSION_ORDER: TableOrder<CommissionView> = {
@@ -138,6 +140,12 @@ function recoveredOf(row: CommissionClawback): number {
   return row.recoveries.reduce((sum, item) => sum + item.amountCentavos, 0);
 }
 
+function recoveryText(item: CommissionClawback["recoveries"][number]): string {
+  if (item.reference.startsWith("PAYOUT-OFFSET:")) return `Taken out of the payout: ${formatPeso(item.amountCentavos)}`;
+  if (item.reference.startsWith("ALLOWANCE-OFFSET:")) return `Taken out of the allowance: ${formatPeso(item.amountCentavos)}`;
+  return `Received ${formatPeso(item.amountCentavos)}, reference ${item.reference}`;
+}
+
 function recoveryStatus(row: CommissionClawback): string {
   return row.refundDueCentavos ? "Refund due" : row.writeOff ? "Not collected" : clawbackBalance(row) === 0 ? "Paid back" : "Owed";
 }
@@ -156,6 +164,8 @@ export function useCommissionRecoveryVisible(): boolean {
 export function CommissionRecoveryPanel() {
   const canCollect = useOperation("commission.clawback.collect");
   const canWriteOff = useOperation("commission.clawback.writeOff");
+  const canManageRates = useOperation("commission.rates.manage");
+  const [addendumOpen, setAddendumOpen] = useState(false);
   const commissionsQuery = useCommissions();
   const commissions = useMemo(() => commissionsQuery.data ?? [], [commissionsQuery.data]);
   const enabled = useCommissionRecoveryVisible();
@@ -188,6 +198,7 @@ export function CommissionRecoveryPanel() {
   const detail = detailId ? (query.data ?? []).find((row) => row.id === detailId) ?? null : null;
   return (
     <section className="tw:grid tw:gap-3" aria-label="Commission paybacks">
+      {canManageRates ? <div><Button type="button" variant="outline" onClick={() => setAddendumOpen(true)}>Signed Addendum Dates</Button></div> : null}
       <QueryState isLoading={query.isLoading} error={query.error}>
         <DataTable data={query.data ?? []} caption="Commission Paybacks" emptyText="No payback records." getRowId={(row) => row.id}
           onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open payback for ${sellerOf(row)}`}
@@ -220,9 +231,10 @@ export function CommissionRecoveryPanel() {
             ],
           },
         ] : []}
-        history={detail?.recoveries.map((item, index) => ({ key: `${item.date}-${index}`, when: formatDate(item.date), text: `Received ${formatPeso(item.amountCentavos)}, reference ${item.reference}` }))}
+        history={detail?.recoveries.map((item, index) => ({ key: `${item.date}-${index}`, when: formatDate(item.date), text: recoveryText(item) }))}
         footer={detail && itemsFor(detail).length > 0 ? menuItemButtons(itemsFor(detail)) : undefined}
       />
+      {addendumOpen ? <ClawbackAddendumDialog onClose={() => setAddendumOpen(false)} /> : null}
       {collecting ? <FormDialog open title="Record Payback Received" submitText="Record Payback" pending={action.isPending} error={error}
         onClose={() => setCollecting(null)} onSubmit={() => {
           const amountCentavos = parsePesoToCentavos(amount);

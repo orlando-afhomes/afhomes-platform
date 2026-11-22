@@ -94,7 +94,12 @@ export function AllowanceReviewPanel() {
   // array on every render would remount every cell.
   const reviewColumns = useMemo<ColumnDef<AllowanceReview, unknown>[]>(() => [
     { header: "Month", cell: ({ row }) => <span className="tw:font-semibold">{row.original.month}</span> },
-    { header: "Leader", accessorKey: "memberName" },
+    { header: "Leader", cell: ({ row }) => (
+      <span className="tw:grid">
+        <span>{row.original.memberName}</span>
+        {row.original.clawbackOffsetCentavos ? <span className="tw:text-xs tw:text-muted-foreground">Payback taken out: <Money value={row.original.clawbackOffsetCentavos} /></span> : null}
+      </span>
+    ) },
     { header: "Basic Allowance", cell: ({ row }) => <Money value={row.original.result.baCentavos} /> },
     { header: "Performance Allowance", cell: ({ row }) => <Money value={row.original.result.paCentavos} /> },
     { header: "Performance Bonus", cell: ({ row }) => <Money value={row.original.result.pbCentavos} /> },

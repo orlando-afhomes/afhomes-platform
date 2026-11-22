@@ -85,7 +85,7 @@ Fixed 16 characters, stored without spaces or dashes:
 
 Length check: 1 + 6 + 4 + 1 + 1 + 2 + 1 = 16.
 
-**TCP above ₱9,000,000.** The single-digit band has no code for it (OPS §4.2; OCT R38). Such a sale is blocked and cannot be recorded until JA&D or the company defines its band code (owner follow-up ruling, 2026-11-12).
+**TCP above ₱9,000,000.** The single-digit band has no code for it (OPS §4.2; OCT R38). ~~Such a sale is blocked and cannot be recorded until JA&D or the company defines its band code (owner follow-up ruling, 2026-11-12).~~ Superseded 2026-11-22: band digit `0` stands for a TCP above ₱9,000,000 (see the amendment at the end of this document).
 
 ### 5.2 Issuance
 
@@ -222,11 +222,11 @@ Audit: sale entry and approval; Series Number issuance; cancel and reissue with 
 
 1. ~~**Unit details.**~~ Settled 2026-11-12 (follow-ups): project name, unit or lot number, Property Owner name, TCP and payment plan; more fields may be added later (section 5.2).
 2. ~~**Cancel and reissue effects.**~~ Settled 2026-11-12 (follow-ups): payments move to the new number, commission is recalculated on the new TCP, and the old number stays in history as Replaced (section 5.3). Former wording: Whether approved receipts move from the cancelled number to the new number, whether released commission on the old number is clawed back or carried over, and whether rates and the threshold are frozen again on the new number. The sources define the numbering only.
-3. **TCP above ₱9,000,000.** Decided 2026-11-12 (follow-ups): such a sale stays blocked until JA&D or the company defines its band code (section 5.1). The band code itself is still an open input from JA&D or the company; the block lifts only when it is supplied.
+3. ~~**TCP above ₱9,000,000.**~~ Settled 2026-11-22 (band digit `0`; see the amendment at the end). Earlier text, decided 2026-11-12 (follow-ups): such a sale stays blocked until JA&D or the company defines its band code (section 5.1). The band code itself is still an open input from JA&D or the company; the block lifts only when it is supplied.
 4. ~~**Missing JA&D accreditation.**~~ Settled 2026-11-12 (follow-ups): a seller without a JA&D accreditation number cannot be the closing seller or the referrer (section 6).
 5. ~~**Reservation fee refund and cancellation charges.**~~ Settled 2026-11-12 (follow-ups): decided outside the system by the Property Owner or JA&D; the system records the cancellation, refund amount and date, and any clawback (section 7).
-6. **The buyer's VIP grant: waiting for the company's IGP VIP grant terms.** The Goodwill VIP Grant (after the first installment) and the Formal VIP Grant (after completion) are issued by AFhomes as tenant, but their benefits are not defined in any company paper (all current source texts searched, 2026-11-12). Nothing is invented. Former wording: What the Goodwill of VIP grant and the Formal VIP Grant confer (privileges, Stay Points) and whether they create a VIP membership record under docs 06 and 09.
-7. **Number status SUPERSEDED.** JAD Rev 7 §6c lists ACTIVE, CANCELLED and SUPERSEDED but defines only CANCELLED; when SUPERSEDED applies is not defined.
+6. ~~**The buyer's VIP grant: waiting for the company's IGP VIP grant terms.**~~ Settled 2026-11-22 (card level by price, editable; see the amendment at the end). Earlier text: The Goodwill VIP Grant (after the first installment) and the Formal VIP Grant (after completion) are issued by AFhomes as tenant, but their benefits are not defined in any company paper (all current source texts searched, 2026-11-12). Nothing is invented. Former wording: What the Goodwill of VIP grant and the Formal VIP Grant confer (privileges, Stay Points) and whether they create a VIP membership record under docs 06 and 09.
+7. ~~**Number status SUPERSEDED.**~~ Settled 2026-11-22 (`SUPERSEDED` means `Replaced`; see the amendment at the end). Earlier text: JAD Rev 7 §6c lists ACTIVE, CANCELLED and SUPERSEDED but defines only CANCELLED; when SUPERSEDED applies is not defined.
 
 ---
 
@@ -267,3 +267,13 @@ These rulings extend sections 5.2 and 6 and take precedence over earlier text in
 31. **IGP property catalog.** An Administrator or the Super Administrator maintains a catalog of IGP projects, the units of each project, and the Property Owner set on each unit. The sale form picks from this catalog.
 32. **Snapshot on the sale.** An issued sale keeps its own copy of the project name, unit or lot number and Property Owner name. Later catalog edits do not change issued sales.
 33. **Unit change.** A change of unit on an issued sale is never an edit. It is a cancel and reissue under section 5.3. The statement in section 1 that property title, property-owner contracts and document generation are not handled by the platform is unchanged.
+
+---
+
+## Owner rulings amendment (2026-11-22, band above ₱9M, SUPERSEDED, grant card level)
+
+These rulings take precedence over earlier text in this document where they differ. Source search: the JA&D numbering guideline Rev 7 (§3 table, §5, §6c) and the JA&D Sales Collections module define a single band digit from 1 to 9 and name the Goodwill and Formal VIP Grant documents without stating their benefits, so the owner decided the three points below.
+
+1. **TCP above ₱9,000,000.** The band digit is `0`. Bands 1 to 9 stay "whole millions, rounded up". The Series Number stays 16 characters, and the exact TCP stays on the sale. A sale above ₱9,000,000 is therefore recorded and numbered like any other; it is no longer blocked. The reissue and correction rules compare bands as before, so every price above ₱9,000,000 is one band and a price change inside it is a correction.
+2. **`SUPERSEDED`.** It means the same as `Replaced`: the record was replaced by a reissued Series Number, kept for history, linked to its replacement and never reused. An imported `SUPERSEDED` row must name its replacing Series Number; without it the row is rejected with a clear message. No separate review status is used. (The platform has no IGP history import yet, so the rule applies when one is built.)
+3. **Card level of the Goodwill and Formal VIP Grant.** The Formal VIP Grant carries the highest card level whose minimum contract price the sale reaches: ₱1,000,000 Bronze (B1), ₱2,000,000 Silver (S1), ₱4,000,000 Gold (G1). Below ₱1,000,000 the sale carries no card level. The minimums are editable by the Administrator or Super Administrator with a reason (`IGP_GRANT_TIER_RULES_CHANGED`), and a change applies only to grants signed afterwards. The level is frozen on the sale when the Formal VIP Grant is first recorded as signed (`IGP_GRANT_TIER_FROZEN`); later rule edits never change it. The tier code stays within the approved tiers B1, S1 and G1 (doc 05). Creating a membership record for an IGP buyer is not part of this ruling and is not built.

@@ -306,7 +306,7 @@ A clawback is recorded as owed against the person who was paid: DSC from the clo
 
 ### 14.3 Before the Clawback Addendum Is Signed
 
-The IST Commission and Clawback Addendum is a DRAFT (2026-09-24) awaiting legal review. Until it is signed, no amount is deducted from anyone's commission or allowances. The office collects a clawback directly from the person, and the collection is recorded against the open clawback.
+The IST Commission and Clawback Addendum is a DRAFT (2026-09-24). Until an IST's signing date is recorded in the platform, no amount is deducted from that person's commission or allowances. The office collects a clawback directly from the person, and the collection is recorded against the open clawback. Under the 2026-11-22 ruling the Administrator records each IST's signing date (see the amendment at the end of this document).
 
 ### 14.4 After the Clawback Addendum Is Signed
 
@@ -536,7 +536,7 @@ Decided on 2026-11-12 and removed from this list: payout frequency (monthly), th
 
 Still open:
 
-- **Clawback Addendum signature and retroactivity.** It is a DRAFT. Its cover note asks counsel whether the new clawback applies to events after signing on commission released before signing.
+- ~~**Clawback Addendum signature and retroactivity.**~~ Settled 2026-11-22: the platform records the signing date per IST and offsets only clawbacks raised on or after it (see the amendment at the end).
 - **Permitted range for a deviating rate.** No maximum or aggregate cap has been set.
 - **Engagement reviews** (QP review AUG R18, below-target review R19, R20, OCT I12), which set engagement end dates used by section 15.5, are not yet written into the platform rules.
 - Tax withholding and statutory deductions.
@@ -654,3 +654,15 @@ These rulings refine section 11 and take precedence over earlier text in this do
 
 1. **Automatic list (§11.1 item 4, §11.5).** Closing a month makes the system prepare that month's DSC and DRI payout list from the released commissions not yet listed. Because the system prepared it, the approver is not treated as approving their own list (§11.2). Approving the list is still required.
 2. **Bulk record and confirm (§11.3, §11.6).** After the list is approved, Finance, the Administrator or the Super Administrator may record the payout for all ready commissions at once, with one payout date, method, reference and proof, and confirm disbursement for all at once. Each commission is still recorded, checked for duplicates (§11.7) and audited on its own; one that fails is skipped and reported. Held commissions are never confirmed in bulk. To leave one out, staff record payouts one by one.
+
+---
+
+## Owner rulings amendment (2026-11-22, clawback offset per signed IST)
+
+This ruling takes precedence over earlier text in this document where they differ. Source: the DRAFT IST Commission and Clawback Addendum (2026-09-24, sections 2, 3 and 6) and the Sales Collections module (Rev Q), which set the order of recovery and the cap.
+
+1. **Signing date per IST.** The Administrator or Super Administrator records the day each Internal Seller signed the addendum (audited, `COMMISSION_ADDENDUM_RECORDED`). The date cannot be in the future and can be cleared. An OST never has one (section 14.4.1 is unchanged).
+2. **Automatic offset.** For an IST with a signing date, an open clawback raised on or after that date is taken out automatically, oldest first, in this order: (a) the person's DSC and DRI in the payout list when it is approved; (b) their BA, PA and PB when the month's allowance review is first saved. Each offset is capped at what is payable in that payout or review, so nobody is paid below zero. The rest stays open and carries forward. Each offset is a recovery on the clawback with the reference `PAYOUT-OFFSET:<list>:<clawback>` or `ALLOWANCE-OFFSET:<review>:<clawback>`, an audit event (`COMMISSION_CLAWBACK_OFFSET`), and is shown on the payout list and allowance review.
+3. **Retroactivity.** A clawback raised before the signing date is not offset. It is collected directly, as in section 14.3.
+4. **Everything else is unchanged.** An IST without a signing date, and every OST, stay on direct collection. Direct demand remains the last step. Write-off, reinstatement refunds and the Rev H exception for a Paid PB are unchanged.
+5. **Legal review.** The addendum remains a draft in the company's files. This ruling lets the system apply the terms for each IST whose signing date the Administrator records; Legal should confirm the addendum before the platform is used for real payouts.

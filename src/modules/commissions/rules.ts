@@ -9,6 +9,34 @@ export function clawbackBalance(clawback: CommissionClawback): number {
   return clawback.writeOff ? 0 : clawback.amountCentavos - clawback.recoveries.reduce((sum, item) => sum + item.amountCentavos, 0);
 }
 
+/**
+ * A clawback may be taken out of future pay only for a person with a signed addendum, and only when the clawback was
+ * raised on or after the signing date (owner decision 2026-11-22; draft addendum section 6).
+ */
+export function clawbackOffsetEligible(clawback: CommissionClawback, signedDate: string | null | undefined): boolean {
+  return Boolean(signedDate) && signedDate! <= clawback.raisedDate && clawbackBalance(clawback) > 0;
+}
+
+/**
+ * Splits `payableCentavos` across the open eligible clawbacks, oldest first. Each offset is capped at what is left to pay,
+ * so the person is never paid below zero; the rest stays open and carries forward (draft addendum section 3).
+ */
+export function planClawbackOffsets(
+  clawbacks: readonly CommissionClawback[], signedDate: string | null | undefined, payableCentavos: number,
+): { clawbackId: string; amountCentavos: number }[] {
+  let remaining = Number.isSafeInteger(payableCentavos) && payableCentavos > 0 ? payableCentavos : 0;
+  const plan: { clawbackId: string; amountCentavos: number }[] = [];
+  const queue = clawbacks.filter((item) => clawbackOffsetEligible(item, signedDate))
+    .sort((a, b) => a.raisedDate.localeCompare(b.raisedDate) || a.id.localeCompare(b.id));
+  for (const item of queue) {
+    if (remaining <= 0) break;
+    const amountCentavos = Math.min(clawbackBalance(item), remaining);
+    plan.push({ clawbackId: item.id, amountCentavos });
+    remaining -= amountCentavos;
+  }
+  return plan;
+}
+
 export function commissionStageAmounts(
   basisCentavos: number, rateBp: number, product: CommissionProduct,
 ): { stage: CommissionStage; amountCentavos: number }[] {

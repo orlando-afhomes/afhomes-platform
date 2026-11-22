@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildJadNumber, defaultJadPrefix, formatIgpSeriesNumber, igpPriceBand, igpChecklist, igpMilestones, isValidJadNumber, jadNumberProblem } from "./rules";
+import { DEFAULT_IGP_GRANT_TIER_RULES } from "./types";
+import { buildJadNumber, grantTierRulesProblem, igpGrantTier, defaultJadPrefix, formatIgpSeriesNumber, igpPriceBand, igpChecklist, igpMilestones, isValidJadNumber, jadNumberProblem } from "./rules";
 import type { Payment } from "@/modules/finance/types";
 
 describe("IGP numbering", () => {
@@ -8,12 +9,39 @@ describe("IGP numbering", () => {
     expect(formatIgpSeriesNumber({ date: "2026-11-20", sequence: 2, priceCentavos: 85_000_000, scheme: "C", termMonths: 1, clauses: "S" })).toBe("A26112000021C01S");
   });
 
-  it("rejects prices outside the supported band, impossible dates and overflowing sequences", () => {
+  it("uses band 0 above 9,000,000 and keeps the number 16 characters", () => {
     const input = { date: "2026-11-20", sequence: 1, priceCentavos: 900_000_000, scheme: "C", termMonths: 1, clauses: "N" } as const;
     expect(igpPriceBand(input.priceCentavos)).toBe(9);
-    expect(() => formatIgpSeriesNumber({ ...input, priceCentavos: 900_000_001 })).toThrow(/₱9,000,000/);
+    expect(igpPriceBand(900_000_001)).toBe(0);
+    const above = formatIgpSeriesNumber({ ...input, priceCentavos: 900_000_001 });
+    expect(above).toBe("A26112000010C01N");
+    expect(above).toHaveLength(16);
+  });
+
+  it("rejects an invalid price, impossible dates and overflowing sequences", () => {
+    const input = { date: "2026-11-20", sequence: 1, priceCentavos: 900_000_000, scheme: "C", termMonths: 1, clauses: "N" } as const;
+    expect(() => igpPriceBand(0)).toThrow(/valid property price/);
     expect(() => formatIgpSeriesNumber({ ...input, date: "2026-02-29" })).toThrow(/date/);
     expect(() => formatIgpSeriesNumber({ ...input, sequence: 10_000 })).toThrow(/sequence/);
+  });
+});
+
+describe("IGP Formal VIP Grant card level", () => {
+  const rules = DEFAULT_IGP_GRANT_TIER_RULES;
+  it("picks Bronze from 1M, Silver from 2M and Gold from 4M, and none below 1M", () => {
+    expect(igpGrantTier(99_999_999, rules)).toBeNull();
+    expect(igpGrantTier(150_000_000, rules)).toBe("B1");
+    expect(igpGrantTier(200_000_000, rules)).toBe("S1");
+    expect(igpGrantTier(399_999_999, rules)).toBe("S1");
+    expect(igpGrantTier(500_000_000, rules)).toBe("G1");
+  });
+
+  it("requires unique card levels with rising positive minimums", () => {
+    expect(grantTierRulesProblem(rules)).toBeNull();
+    expect(grantTierRulesProblem([])).toMatch(/at least one/);
+    expect(grantTierRulesProblem([rules[0], rules[0]])).toMatch(/only once/);
+    expect(grantTierRulesProblem([{ tier: "B1", minPriceCentavos: 0 }])).toMatch(/above zero/);
+    expect(grantTierRulesProblem([rules[1], rules[0]])).toMatch(/higher minimum/);
   });
 });
 

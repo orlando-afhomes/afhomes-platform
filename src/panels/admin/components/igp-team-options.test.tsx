@@ -29,6 +29,7 @@ const REGISTER: IgpRegister = {
   ],
   accreditations: [accreditation("mem-a1"), accreditation("mem-a2"), accreditation("mem-b1")],
   thresholdBp: 500,
+  grantTierRules: [{ tier: "B1", minPriceCentavos: 100_000_000 }],
 };
 
 function show() {

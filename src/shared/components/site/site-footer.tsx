@@ -11,7 +11,7 @@ export type SiteFooterProps = {
   columns: { heading: string; links: SiteNavLink[] }[];
   /** `map` adds a small link under the address, e.g. to a map of that office. */
   locations: { label: string; lines: string[]; landmark?: string; map?: { href: string; label: string } }[];
-  legal: { disclaimer?: string; copyright: string };
+  legal: { disclaimer?: string; copyright: string; links?: SiteNavLink[] };
   className?: string;
 };
 
@@ -92,6 +92,11 @@ export function SiteFooter({ brand, contacts, columns, locations, legal, classNa
           </div>
         ) : null}
         <p className="site-footer__copyright">{legal.copyright}</p>
+        {legal.links?.length ? (
+          <nav aria-label="Legal" className="site-footer__legal-links">
+            {legal.links.map((link) => <Link key={link.href} href={link.href}>{link.label}</Link>)}
+          </nav>
+        ) : null}
       </div>
     </footer>
   );

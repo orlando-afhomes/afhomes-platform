@@ -1,4 +1,4 @@
-import type { IgpDocumentKey, IgpIntake, IgpSale, JadAccreditation } from "@/modules/igp/types";
+import type { IgpDocumentKey, IgpGrantTierRule, IgpIntake, IgpSale, JadAccreditation } from "@/modules/igp/types";
 import type { Designation } from "@/modules/organization/types";
 import type { MockAsyncOptions } from "./async-options";
 import type { SubmitPaymentInput } from "./payment-repository";
@@ -10,6 +10,7 @@ export type IgpRegister = {
   sellers: Array<{ value: string; label: string; designation: Designation; branchId: string }>;
   accreditations: JadAccreditation[];
   thresholdBp: number;
+  grantTierRules: IgpGrantTierRule[];
 };
 
 /** The project, unit and owner names are copied from the catalog when the sale is saved. */
@@ -21,6 +22,7 @@ export type IgpAction =
   | { type: "record"; input: RecordIgpSale }
   | { type: "accredit"; memberId: string; number: string; approvedDate: string }
   | { type: "threshold"; basisPoints: number; reason: string }
+  | { type: "grantTierRules"; rules: IgpGrantTierRule[]; reason: string }
   | { type: "approve"; id: string }
   | { type: "default"; id: string; reason: string }
   | { type: "cancel"; id: string; refundCentavos: number; refundDate: string | null; reason: string }

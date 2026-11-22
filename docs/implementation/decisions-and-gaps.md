@@ -246,12 +246,17 @@ Kept as official names: VIP Number, Reservation Agreement, Grant, Series Number,
 
 - **GATE-2, doc 11 versus doc 08.** Doc 11 section 24 listed the SM ₱1,000,000 target and the SVD 2% as invented targets. Verified against the AFhomes Commission System User Manual v2.3 §6.2 Table A and the signed IST SM, SSM and SVD service contracts v2.4 (2026-08-21): the figures are contractual (SM 1%, SSM 3%, SVD 2% PB rates; BA/PA 15,000 / 25,000 / 50,000). Owner ratified the Table A figures as the approved, configurable baseline. Doc 11's example was corrected; doc 08 section 15.4 now records the ratification. The 2% is an SVD PB rate, not a per-sale commission. No code change; `src/modules/commissions/allowances.ts` already uses the ratified values.
 
+### Owner decisions, 2026-11-22 (items that were waiting on others)
+
+The company papers in `Documents\AFHomes Document\Business Rules` were searched first. Where they gave no answer, the owner decided and the rule was built into the prototype. Details and acceptance checks: [fixes/05-owner-decisions-2026-11-22.md](fixes/05-owner-decisions-2026-11-22.md).
+
+- **JA&D grant and band (doc 14):** band digit `0` for a TCP above ₱9M; `SUPERSEDED` means `Replaced`; the Formal VIP Grant carries Bronze from ₱1M, Silver from ₱2M and Gold from ₱4M, editable and frozen at signing.
+- **IST Clawback Addendum (doc 08):** the Administrator records each IST's signing date; open paybacks raised on or after it are offset automatically from payouts and then allowances, capped at the amount payable. Others are collected directly. Legal should confirm the addendum before real payouts.
+- **Points table, holidays and cut-offs (doc 10):** adopted starting table, calendar to December 2027, and 48 h Hotel and 72 h Resort cut-offs; an Administrator can publish a new dated version.
+- **Retention and privacy (doc 12):** working ten-year schedule and a public Privacy Policy at `/privacy`; Legal and the Data Protection Officer may replace them.
+
 ### Still open
 
-- **AFHomes and JA&D:** Supply the signed Goodwill and Formal VIP Grant terms, a band code above ₱9M, and a written definition of `SUPERSEDED`. Until then, track grant paperwork only, block sales above ₱9M, and refer that status for review.
-- **Legal and Finance:** Review the IST Commission and Clawback Addendum and record who has signed it. Until a signed agreement authorizes deductions, record the debt and collect directly under the existing policy.
-- **Administrator:** Prepare the first dated points-per-night table by venue, room type, and night class, together with the holiday calendar and venue cancellation cut-offs. Apply the version in effect on the Card Claim Date.
-- **Data Protection Officer and Legal:** Supply a written retention schedule by record type, with a start date for each period, legal holds, and secure disposal. The prototype has no automatic deletion. Update the interim rule after the approved schedule is available.
 - **Commission stamping (D-B):** Stage 1 uses the counted receipt date under doc 13 (OCT O3). Monthly payout lists require the month to be closed.
 
 ## Decisions (G01 to G12)

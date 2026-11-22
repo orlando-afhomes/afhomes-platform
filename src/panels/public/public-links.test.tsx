@@ -12,10 +12,11 @@ import { BLOG_PAGE, BLOG_POSTS, BLOG_POST_PAGE } from "@/modules/public-site/con
 import { COMPLIANCE_DOCUMENT_IMAGES, COMPLIANCE_PAGE } from "@/modules/public-site/content/compliance";
 import { FAQ_PAGE } from "@/modules/public-site/content/faq";
 import { EXPERIENCE_CARDS, HOTEL, KEY_OFFERINGS, RESORT, RESORT_AMENITIES, RESTAURANT, ROOMS } from "@/modules/public-site/content/experiences";
-import { FOOTER_COLUMNS, MAIN_NAV, EXPERIENCE_LINKS, ACTION_LINKS, OFFICES } from "@/modules/public-site/content/site";
+import { FOOTER_COLUMNS, MAIN_NAV, EXPERIENCE_LINKS, ACTION_LINKS, LEGAL_LINKS, OFFICES } from "@/modules/public-site/content/site";
 import { VIP_PAGE, VIP_TIERS } from "@/modules/public-site/content/vip";
 import { PublicFooter } from "./components/public-footer";
 import { PublicHeader } from "./components/public-header";
+import { PrivacyPage } from "./pages/privacy-page";
 import { PublicHomePage } from "./pages/public-home-page";
 
 const navState = vi.hoisted(() => ({ pathname: "/" }));
@@ -73,6 +74,18 @@ describe("public sign-in and verification links", () => {
     const links = [...container.querySelectorAll(".site-footer__access-nav > a")].map((link) => link.textContent);
     expect(links).toEqual(["Customer Login", "Verify Accreditation", "Staff Login", "Sales Sign-In"]);
     expect(note?.previousElementSibling?.textContent).toBe("Sales Sign-In");
+  });
+
+  it("publishes the privacy policy with the retention schedule and links it from the footer", () => {
+    const { container, unmount } = render(<PublicFooter />);
+    expect(container.querySelector('.site-footer__legal-links a[href="/privacy"]')).toHaveTextContent("Privacy Policy");
+    expect(routeExists("/privacy")).toBe(true);
+    unmount();
+    render(<PrivacyPage />);
+    expect(screen.getByRole("heading", { level: 1, name: "Privacy Policy" })).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "Records retention schedule" })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Audit log\s+10 years/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Contact our Data Protection Officer" })).toBeInTheDocument();
   });
 
   it("keeps the public header to five top-level navigation entries", () => {
@@ -176,7 +189,7 @@ describe("public sign-in and verification links", () => {
 
   it("keeps every menu and footer target on an existing route", () => {
     const footerLinks = FOOTER_COLUMNS.flatMap((column) => column.links);
-    for (const link of [...MAIN_NAV, ...EXPERIENCE_LINKS, ...ACTION_LINKS, ...footerLinks]) expect(routeExists(link.href), link.href).toBe(true);
+    for (const link of [...MAIN_NAV, ...EXPERIENCE_LINKS, ...ACTION_LINKS, ...LEGAL_LINKS, ...footerLinks]) expect(routeExists(link.href), link.href).toBe(true);
     for (const post of BLOG_POSTS) expect(routeExists("/blog"), post.slug).toBe(true);
   });
 });

@@ -47,7 +47,7 @@ export function CommissionPayoutBar({ commissions }: { commissions: CommissionVi
   function approve(list: CommissionPayoutList) {
     setListId(null);
     confirmRun({
-      title: "Approve Payout List?", description: `Approve ${plural(list.entries.length, "commission")} from ${monthLabel(list.month)} (${formatPeso(listTotal(list))}) for payment.`,
+      title: "Approve Payout List?", description: `Approve ${plural(list.entries.length, "commission")} from ${monthLabel(list.month)} (${formatPeso(listTotal(list))}) for payment. Paybacks owed by sellers with a signed addendum are taken out of their payouts automatically.`,
       confirmText: "Approve List", tone: "success", action: () => listAction.mutateAsync({ kind: "approve", id: list.id }),
       successTitle: "Payout list approved.", errorTitle: "Could not approve",
     });

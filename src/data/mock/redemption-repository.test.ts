@@ -5,7 +5,7 @@ import { MockRedemptionRepository } from "./redemption-repository";
 import type { PointsSource } from "./redemption-points-source";
 import { createMockStore } from "./seed";
 
-// 2027-03-04 is a Thursday (weekday night), 2027-03-05 a Friday (weekend night). Sample table: Standard 3,000 / 4,500.
+// 2027-03-04 is a Thursday (weekday night), 2027-03-05 a Friday (weekend night). Adopted table (2026-11-22): Standard 1,000 / 1,500.
 const stay = (overrides: Partial<BookingInput> = {}): BookingInput => ({
   requestId: `req-${Math.random()}`, membershipId: "memb-1", venueId: "venue-wellness-hotel", roomType: "Standard",
   checkIn: "2027-03-04", checkOut: "2027-03-06", guests: 2, stayingHolder: "Primary cardholder", cashNightDates: [], cashAmountCentavos: 0, ...overrides,
@@ -45,10 +45,10 @@ describe("booking with points", () => {
       await repo.completeBooking(booking.id);
       expect(store.redemption.pads[member.id]?.date).toBe("2027-03-04");
       expect(store.redemption.ledger).toEqual([
-        expect.objectContaining({ trancheId: "1", type: "reserve", bucket: "weekday", points: 3000 }),
-        expect.objectContaining({ trancheId: "1", type: "consume", bucket: "weekday", points: 3000 }),
+        expect.objectContaining({ trancheId: "1", type: "reserve", bucket: "weekday", points: 1000 }),
+        expect.objectContaining({ trancheId: "1", type: "consume", bucket: "weekday", points: 1000 }),
       ]);
-      expect((await memb(repo)).weekday).toMatchObject({ available: 4000, reserved: 0 });
+      expect((await memb(repo)).weekday).toMatchObject({ available: 6000, reserved: 0 });
     } finally {
       vi.useRealTimers();
     }
@@ -77,23 +77,23 @@ describe("booking with points", () => {
     const { repo, store } = setup();
     const input = stay({ requestId: "same" });
     const booking = await repo.createBooking(input);
-    expect(booking).toMatchObject({ status: "confirmed", reservedWeekday: 3000, reservedWeekend: 4500, basisVersion: 1 });
+    expect(booking).toMatchObject({ status: "confirmed", reservedWeekday: 1000, reservedWeekend: 1500, basisVersion: 1 });
     expect((await repo.createBooking(input)).id).toBe(booking.id);
     await expect(repo.createBooking({ ...input, guests: 3 })).rejects.toThrow(/different details/);
     expect(store.redemption.bookings).toHaveLength(1);
     expect(store.redemption.ledger.filter((e) => e.type === "reserve")).toHaveLength(2);
     const m = await memb(repo);
-    expect(m.weekday.available).toBe(7000);
-    expect(m.weekend.available).toBe(500);
+    expect(m.weekday.available).toBe(9000);
+    expect(m.weekend.available).toBe(3500);
   });
 
   it("does not borrow across buckets (scenario D)", async () => {
-    const { repo } = setup("dev-admin", { weekday: 100000, weekend: 4000 });
+    const { repo } = setup("dev-admin", { weekday: 100000, weekend: 1000 });
     await expect(repo.createBooking(stay())).rejects.toThrow(/weekend points/i);
   });
 
   it("prevents double spend: a second booking cannot reuse reserved points", async () => {
-    const { repo } = setup("dev-admin", { weekday: 3000, weekend: 4500 });
+    const { repo } = setup("dev-admin", { weekday: 1000, weekend: 1500 });
     await repo.createBooking(stay());
     await expect(repo.createBooking(stay())).rejects.toThrow(/not enough/i);
   });
@@ -121,7 +121,7 @@ describe("booking with points", () => {
   it("splits points plus cash by whole nights and holds the booking in Pending Payment until Finance approves", async () => {
     const { as, repo } = setup();
     const booking = await repo.createBooking(stay({ cashNightDates: ["2027-03-05"], cashAmountCentavos: 500000 }));
-    expect(booking).toMatchObject({ status: "pending_payment", reservedWeekday: 3000, reservedWeekend: 0, cashNights: 1 });
+    expect(booking).toMatchObject({ status: "pending_payment", reservedWeekday: 1000, reservedWeekend: 0, cashNights: 1 });
     await expect(repo.approveCashPayment(booking.id, "OR-1")).resolves.toMatchObject({ status: "confirmed" });
     const other = await repo.createBooking(stay({ cashNightDates: ["2027-03-05"], cashAmountCentavos: 500000 }));
     await expect(as("dev-finance").approveCashPayment(other.id, "or-1")).rejects.toThrow(/already used/);
@@ -146,8 +146,8 @@ describe("cancellation, no-show and completion", () => {
     const booking = await repo.createBooking(stay());
     expect((await repo.cancelBooking(booking.id, "Late call", "2027-03-03T12:00:00.000Z")).status).toBe("late_cancelled");
     const m = await memb(repo);
-    expect(m.weekday.available).toBe(7000);
-    expect(m.weekend.available).toBe(500);
+    expect(m.weekday.available).toBe(9000);
+    expect(m.weekend.available).toBe(3500);
   });
 
   it("records a no-show only from the check-in date and forfeits the points (scenario I)", async () => {
@@ -204,7 +204,7 @@ describe("points table, holidays and venues", () => {
     const v2 = await repo.publishTableVersion({ effectiveDate: "2026-12-01", weekendDays: [5, 6], rows, note: "Approved" });
     expect(v2).toMatchObject({ version: 2, sample: false });
     expect(store.redemption.tableVersions).toHaveLength(2);
-    expect(store.redemption.tableVersions[0].rows[0].weekdayPoints).toBe(3000);
+    expect(store.redemption.tableVersions[0].rows[0].weekdayPoints).toBe(1000);
     expect((await repo.createBooking(stay())).basisVersion).toBe(1);
     await expect(repo.publishTableVersion({ effectiveDate: "2026-12-01", weekendDays: [5, 6], rows, note: null })).rejects.toThrow(/later than/);
     await expect(repo.publishTableVersion({ effectiveDate: "2027-01-01", weekendDays: [], rows, note: null })).rejects.toThrow(/weekend/);

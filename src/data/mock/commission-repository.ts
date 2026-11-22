@@ -6,7 +6,7 @@ import type { DevIdentity } from "@/modules/identity/types";
 import { parseManilaDateOnly } from "@/shared/lib/dates";
 import { firstOpenDate } from "@/modules/finance/month-close";
 import { applyBasisPoints } from "@/shared/lib/money";
-import { clawbackBalance, collectedPercent, meetsPayoutRelease, payoutReleaseDate, payoutReleaseDateFor } from "@/modules/commissions/rules";
+import { clawbackBalance, collectedPercent, meetsPayoutRelease, payoutReleaseDate, payoutReleaseDateFor, planClawbackOffsets } from "@/modules/commissions/rules";
 import { BusinessRepository, customerName, nowIso, today } from "./business-base";
 import { paymentsOfContract } from "./business-effects";
 import type { MockStore } from "./seed";
@@ -24,7 +24,7 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
   async rateDirectory(options?: MockAsyncOptions): Promise<CommissionRateDirectory> {
     return this.run(options, (identity) => {
       this.require(identity, "commission.rates.manage", "Only an administrator can manage rates.");
-      const members = this.store.members.map(({ id, displayName, designation }) => ({ id, name: displayName, designation }));
+      const members = this.store.members.map(({ id, displayName, designation, clawbackAddendumSignedDate }) => ({ id, name: displayName, designation, clawbackAddendumSignedDate: clawbackAddendumSignedDate ?? null }));
       return {
         members,
         positionRates: this.store.vipPositionRates.map((item) => ({ ...item })),
@@ -148,8 +148,49 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
         commission.approvedAt = approvalDate;
         this.event(commission, identity, BUSINESS_AUDIT_ACTIONS.COMMISSION_APPROVED, reason ?? null);
       }
+      list.offsets = this.offsetPayouts(identity, list.id, eligible);
       this.audit(identity, { module: "commissions", action: "COMMISSION_PAYOUT_LIST_APPROVED", entityType: "commission", entityId: id, previousValue: "prepared", newValue: "approved", reason, relatedRecordIds: eligible.map((item) => item.id) });
       return structuredClone(list);
+    });
+  }
+
+  /**
+   * Takes open paybacks out of each signed IST's payouts on an approved list (owner decision 2026-11-22). Oldest payback first,
+   * capped at that person's total on the list. Unsigned ISTs and every OST are left to direct collection.
+   */
+  private offsetPayouts(identity: DevIdentity, listId: string, approved: Commission[]): NonNullable<CommissionPayoutList["offsets"]> {
+    const offsets: NonNullable<CommissionPayoutList["offsets"]> = [];
+    for (const memberId of new Set(approved.map((item) => item.recipientMemberId))) {
+      const member = this.store.members.find((item) => item.id === memberId);
+      if (!member || member.designation === "OST") continue;
+      const payable = approved.filter((item) => item.recipientMemberId === memberId).reduce((sum, item) => sum + item.amountCentavos, 0);
+      const open = this.store.commissionClawbacks.filter((item) => item.recipientMemberId === memberId);
+      for (const { clawbackId, amountCentavos } of planClawbackOffsets(open, member.clawbackAddendumSignedDate, payable)) {
+        this.recordOffset(identity, clawbackId, amountCentavos, `PAYOUT-OFFSET:${listId}:${clawbackId}`);
+        offsets.push({ recipientMemberId: memberId, clawbackId, amountCentavos });
+      }
+    }
+    return offsets;
+  }
+
+  private recordOffset(identity: DevIdentity, clawbackId: string, amountCentavos: number, reference: string) {
+    const item = this.store.commissionClawbacks.find((entry) => entry.id === clawbackId)!;
+    item.recoveries.push({ date: today(), actorId: identity.id, amountCentavos, reference });
+    this.audit(identity, { module: "commissions", action: "COMMISSION_CLAWBACK_OFFSET", entityType: "commission", entityId: item.commissionId, newValue: String(amountCentavos), reason: reference, relatedRecordIds: [item.saleId, item.id] });
+  }
+
+  async setClawbackAddendum(memberId: string, signedDate: string | null, options?: MockAsyncOptions): Promise<void> {
+    return this.run(options, (identity) => {
+      this.require(identity, "commission.rates.manage", "Only an administrator can record a signed addendum.");
+      const member = this.store.members.find((item) => item.id === memberId);
+      if (!member) throw new Error("Seller not found.");
+      if (member.designation === "OST") throw new Error("The addendum covers Internal Sellers (IST) only.");
+      if (signedDate !== null && (signedDate !== signedDate.trim() || !parseManilaDateOnly(signedDate) || signedDate > today())) {
+        throw new Error("Enter the signing date, on or before today.");
+      }
+      const previous = member.clawbackAddendumSignedDate ?? null;
+      member.clawbackAddendumSignedDate = signedDate;
+      this.audit(identity, { module: "commissions", action: "COMMISSION_ADDENDUM_RECORDED", entityType: "member", entityId: memberId, previousValue: previous ?? "none", newValue: signedDate ?? "none" });
     });
   }
 
@@ -226,6 +267,17 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
         workbookDifferenceReason: workbook ? input.workbookDifferenceReason?.trim() || undefined : undefined,
         reviewedAt: nowIso(), reviewedBy: identity.id,
       };
+      // A payback is taken from the first review of a month only, so saving the review again never deducts twice.
+      if (!previous && member.clawbackAddendumSignedDate) {
+        const payable = result.baCentavos + result.paCentavos + result.pbCentavos;
+        const open = this.store.commissionClawbacks.filter((item) => item.recipientMemberId === memberId);
+        let offset = 0;
+        for (const { clawbackId, amountCentavos } of planClawbackOffsets(open, member.clawbackAddendumSignedDate, payable)) {
+          this.recordOffset(identity, clawbackId, amountCentavos, `ALLOWANCE-OFFSET:${review.id}:${clawbackId}`);
+          offset += amountCentavos;
+        }
+        if (offset > 0) review.clawbackOffsetCentavos = offset;
+      } else if (previous?.clawbackOffsetCentavos) review.clawbackOffsetCentavos = previous.clawbackOffsetCentavos;
       this.store.allowanceReviews.push(structuredClone(review));
       this.audit(identity, { module: "commissions", action: "COMMISSION_ALLOWANCE_REVIEWED", entityType: "member", entityId: memberId,
         previousValue: previous ? JSON.stringify(previous.result) : undefined, newValue: JSON.stringify(result),

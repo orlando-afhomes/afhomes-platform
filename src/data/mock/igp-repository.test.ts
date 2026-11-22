@@ -61,7 +61,6 @@ describe("IGP sale and receipts", () => {
     const { store, input, clerk, finance, admin, otherSeller } = fixture;
     await expect(clerk.igp.act({ type: "record", input })).rejects.toThrow(/JA&D/);
     await accredit(fixture);
-    await expect(clerk.igp.act({ type: "record", input: { ...input, priceCentavos: 900_000_001 } })).rejects.toThrow(/₱9,000,000/);
     const sale = (await clerk.igp.act({ type: "record", input }))!;
     const receipt = store.payments.find(({ contractId }) => contractId === sale.id)!;
     expect(sale.seriesNumber).toBe("A25011000012T12S");
@@ -74,6 +73,40 @@ describe("IGP sale and receipts", () => {
     expect(store.igp.sales[0]).toMatchObject({ closedDealDate: "2025-01-10", stage1Date: null, fullPaymentDate: null });
     expect(store.igp.sales[0].adjustments).toMatchObject([{ amountCentavos: 180_000_000, date: "2025-01-10" }]);
     await expect(clerk.payments.submit({ ...input.payment, purpose: "installment", contractId: "ctr-1" })).rejects.toThrow(/already used|outstanding/);
+  });
+
+  it("issues band 0 for a price above 9,000,000 and keeps the exact price", async () => {
+    const fixture = setup();
+    const { input, admin } = fixture;
+    await accredit(fixture);
+    const sale = (await admin.igp.act({ type: "record", input: { ...input, priceCentavos: 1_000_000_000 } }))!;
+    expect(sale.seriesNumber).toBe("A25011000010T12S");
+    expect(sale.seriesNumber).toHaveLength(16);
+    expect(sale.priceCentavos).toBe(1_000_000_000);
+  });
+
+  it("freezes the Formal VIP Grant card level when it is signed, and only management edits the rules", async () => {
+    const fixture = setup();
+    const { store, input, clerk, finance, admin } = fixture;
+    await accredit(fixture);
+    const sale = (await admin.igp.act({ type: "record", input }))!;
+    await admin.igp.act({ type: "approve", id: sale.id });
+    await finance.payments.verify(store.payments.find(({ contractId }) => contractId === sale.id)!.id);
+    for (const [referenceNo, paidDate, amountCentavos] of [["IGP-0102", "2025-01-11", 54_000_000], ["IGP-0103", "2025-02-12", 108_000_000]] as const) {
+      const receipt = await clerk.payments.submit({ contractId: sale.id, purpose: "installment", method: "Cash", referenceNo, paidDate, amountCentavos });
+      await finance.payments.verify(receipt.id);
+    }
+    const sign = { type: "document", id: sale.id, key: "formal_grant", signedDate: "2025-02-13", signers: "AFhomes" } as const;
+    await clerk.igp.act(sign);
+    expect(store.igp.sales[0].grantTier).toBe("B1");
+
+    const raised = [{ tier: "B1", minPriceCentavos: 100_000_000 }, { tier: "S1", minPriceCentavos: 150_000_000 }];
+    await expect(clerk.igp.act({ type: "grantTierRules", rules: raised, reason: "Clerk" })).rejects.toThrow(/Administrator/);
+    await expect(admin.igp.act({ type: "grantTierRules", rules: [raised[1], raised[0]], reason: "Wrong order" })).rejects.toThrow(/higher minimum/);
+    await admin.igp.act({ type: "grantTierRules", rules: raised, reason: "Owner update." });
+    expect((await admin.igp.list()).grantTierRules).toEqual(raised);
+    await clerk.igp.act({ ...sign, signedDate: "2025-02-14" });
+    expect(store.igp.sales[0].grantTier).toBe("B1");
   });
 
   it("releases IGP commissions in two stages and moves each receipt once when reissued", async () => {

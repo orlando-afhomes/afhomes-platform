@@ -184,3 +184,50 @@ it("preserves the actual payout date and posts late confirmation to the first op
   expect(confirmed.payout).toMatchObject({ payoutDate, countedDate: "2026-11-01", confirmedAt: expect.any(String) });
   await expect(repository.confirmPayout(commission.id)).rejects.toThrow(/already confirmed/i);
 });
+
+describe("payback offset under the signed addendum", () => {
+  function setupOffset(memberId: string, clawbackCentavos: number) {
+    const store = createMockStore();
+    const admin = DEV_IDENTITIES.find(({ id }) => id === "dev-admin")!;
+    const repository = new MockCommissionRepository(store, () => admin, { delayMs: 0 });
+    releaseSaleCommissions(store, admin, { saleId: "sale-off", contractId: "ctr-off", product: "VIP", valueCentavos: 1_000_000,
+      rates: [{ memberId, role: "DSC", rateBp: 500 }], stage1Date: "2026-09-25", fullPaymentDate: null });
+    store.commissionClawbacks.push({ id: "cb-off", commissionId: "comm-old", saleId: "sale-old", recipientMemberId: memberId, trigger: "cancellation",
+      raisedDate: "2026-11-02", amountCentavos: clawbackCentavos, recoveries: [], writeOff: null });
+    store.closedMonths.push({
+      month: "2026-09", closedAt: "2026-10-01", closedBy: "dev-admin",
+      recognizedSalesCentavos: 0, grossCollectionsCentavos: 0, adjustedCollectionsCentavos: 0,
+      releasedCommissionCentavos: 50_000, paidCommissionCentavos: 0, calculationPolicy: "approved-receipt-date-v1",
+      allowanceReviewCentavos: null, allowanceReviewCount: 0,
+    });
+    return { store, repository };
+  }
+
+  it("takes the payback out of a signed IST's payout, capped at the payable amount, and carries the rest forward", async () => {
+    const { store, repository } = setupOffset("mem-sm-a", 80_000);
+    await repository.setClawbackAddendum("mem-sm-a", "2026-11-01");
+    const list = await repository.preparePayoutList("2026-09");
+    const approved = await repository.approvePayoutList(list.id);
+    expect(approved.offsets).toEqual([{ recipientMemberId: "mem-sm-a", clawbackId: "cb-off", amountCentavos: 50_000 }]);
+    expect(clawbackBalance(store.commissionClawbacks.find(({ id }) => id === "cb-off")!)).toBe(30_000);
+    expect(store.auditEvents.some(({ action }) => action === "COMMISSION_CLAWBACK_OFFSET")).toBe(true);
+  });
+
+  it("leaves an IST with no signed addendum and every OST to direct collection", async () => {
+    const unsigned = setupOffset("mem-sm-a", 30_000);
+    const unsignedList = await unsigned.repository.approvePayoutList((await unsigned.repository.preparePayoutList("2026-09")).id);
+    expect(unsignedList.offsets).toEqual([]);
+    const ost = setupOffset("mem-ost-a1", 30_000);
+    await expect(ost.repository.setClawbackAddendum("mem-ost-a1", "2026-11-01")).rejects.toThrow(/IST/);
+    const ostList = await ost.repository.approvePayoutList((await ost.repository.preparePayoutList("2026-09")).id);
+    expect(ostList.offsets).toEqual([]);
+    expect(clawbackBalance(ost.store.commissionClawbacks.find(({ id }) => id === "cb-off")!)).toBe(30_000);
+  });
+
+  it("only an administrator records the signing date, and not a future date", async () => {
+    const { store, repository } = setupOffset("mem-sm-a", 30_000);
+    const finance = new MockCommissionRepository(store, () => DEV_IDENTITIES.find(({ id }) => id === "dev-finance")!, { delayMs: 0 });
+    await expect(finance.setClawbackAddendum("mem-sm-a", "2026-11-01")).rejects.toThrow(/administrator/i);
+    await expect(repository.setClawbackAddendum("mem-sm-a", "2999-01-01")).rejects.toThrow(/on or before today/);
+  });
+});

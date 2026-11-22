@@ -1,15 +1,32 @@
 import { approvedCollectionMilestone, netVerifiedCentavos } from "@/modules/finance/rules";
 import type { Payment } from "@/modules/finance/types";
 import { diffCalendarDays, parseManilaDateOnly } from "@/shared/lib/dates";
-import type { IgpClauses, IgpDocument, IgpDocumentKey, IgpEntry, IgpMilestones, IgpSale, IgpScheme, JadAccreditation } from "./types";
+import type { VipTierCode } from "@/modules/vip/types";
+import type { IgpClauses, IgpDocument, IgpDocumentKey, IgpEntry, IgpGrantTierRule, IgpMilestones, IgpSale, IgpScheme, JadAccreditation } from "./types";
 
 const MILLION_CENTAVOS = 100_000_000;
 
+/** Whole millions rounded up, 1 to 9. Owner decision 2026-11-22: band 0 means "above ₱9,000,000"; the exact price stays on the sale. */
 export function igpPriceBand(priceCentavos: number): number {
   if (!Number.isSafeInteger(priceCentavos) || priceCentavos < 1) throw new Error("Enter a valid property price.");
   const band = Math.ceil(priceCentavos / MILLION_CENTAVOS);
-  if (band > 9) throw new Error("Property prices above ₱9,000,000 need an approved JA&D band code.");
-  return band;
+  return band > 9 ? 0 : band;
+}
+
+/** The highest card level whose minimum price the contract price reaches, or null below the lowest minimum. */
+export function igpGrantTier(priceCentavos: number, rules: readonly IgpGrantTierRule[]): VipTierCode | null {
+  return [...rules].sort((a, b) => b.minPriceCentavos - a.minPriceCentavos).find((rule) => priceCentavos >= rule.minPriceCentavos)?.tier ?? null;
+}
+
+/** Minimums must be positive whole centavos and rise with the card level, in the order given (Bronze, Silver, Gold). */
+export function grantTierRulesProblem(rules: readonly IgpGrantTierRule[]): string | null {
+  if (rules.length === 0) return "Enter at least one card level.";
+  if (new Set(rules.map(({ tier }) => tier)).size !== rules.length) return "Each card level can appear only once.";
+  if (rules.some(({ minPriceCentavos }) => !Number.isSafeInteger(minPriceCentavos) || minPriceCentavos < 1)) return "Enter a minimum price above zero for every card level.";
+  for (let index = 1; index < rules.length; index += 1) {
+    if (rules[index].minPriceCentavos <= rules[index - 1].minPriceCentavos) return "A higher card level needs a higher minimum price.";
+  }
+  return null;
 }
 
 export function formatIgpSeriesNumber(input: {

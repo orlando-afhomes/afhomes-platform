@@ -293,7 +293,7 @@ Document the need for an authorized retention policy. Potential considerations: 
 
 **Owner ruling R11 item 4 (2026-11-12): records are kept forever, and nothing is deleted until legal advice sets a retention period.** This covers audit events and the business records they describe. No automatic deletion, purge or expiry exists.
 
-Important: do not invent retention durations such as 5, 7, 10, or 20 years. The final retention period, archival rules and any lawful deletion procedure remain an open dependency until legal advice is received and the owner approves it.
+~~Important: do not invent retention durations such as 5, 7, 10, or 20 years.~~ Superseded 2026-11-22: the owner adopted a working ten-year schedule (see the amendment at the end of this document). Legal advice may still replace it.
 
 History import (owner ruling R11 item 5): every seller and every unfinished sale is imported with its full receipt history; finished sales stay in the company's Excel archives and are not imported (doc 11 §26). Imported records keep their original dates and are identifiable as imported. Imported receipts are marked "Approved (imported)"; an Administrator signs off each import batch once, and the sign-off is an audit event recording the batch, the number of records, the actor and the timestamp (owner follow-up ruling, 2026-11-12; doc 07 §20).
 
@@ -405,7 +405,7 @@ The completed document must preserve:
 
 ## 26. Outstanding Dependencies
 
-Material unresolved matters may include: formal audit retention periods; authorized archival policy; exceptional lawful deletion procedures; audit export authorization; audit access levels; security event retention; policy approval hierarchy; policy publication workflow; requirements for customer notification of policy changes; specific audit tamper-evidence technology; historical policy reconstruction technical approach; audit storage architecture; operational log versus business audit separation; legal hold requirements; audit disaster-recovery procedures; cross-system event correlation mechanisms.
+Material unresolved matters may include: ~~formal audit retention periods~~ (working schedule adopted 2026-11-22); authorized archival policy; exceptional lawful deletion procedures; audit export authorization; audit access levels; security event retention; policy approval hierarchy; policy publication workflow; requirements for customer notification of policy changes; specific audit tamper-evidence technology; historical policy reconstruction technical approach; audit storage architecture; operational log versus business audit separation; legal hold requirements; audit disaster-recovery procedures; cross-system event correlation mechanisms.
 
 Only include unresolved dependencies that materially affect future implementation. Do not invent technical or commercial policies. Do not ask the project owner minor clarification questions during this task.
 
@@ -538,3 +538,23 @@ These rulings take precedence over earlier text in this document where they diff
 1. **Approve deal.** One Administrator action records separate audit events, each only when that step runs: `CUSTOMER_APPROVED`, `SALE_APPROVED`, `CONTRACT_RA_RECORDED`, `VIP_NUMBER_ISSUED` and `CONTRACT_FINALIZED` (doc 05 items 30 and 31).
 2. **Bulk payouts.** Recording or confirming payouts for many commissions at once records one audit event per commission (doc 08, 2026-11-16 amendment).
 3. **Start review removed.** Staff no longer start a review on a contract or a receipt. Older `*_REVIEW_STARTED` events stay readable in the history.
+
+---
+
+## Owner ruling amendment (2026-11-22, working retention schedule and privacy policy)
+
+This ruling takes precedence over earlier text in this document where they differ, including the interim "kept forever" rule of R11 item 4. No retention schedule exists in the company's papers, and the contracts' Annex C (Data Privacy Agreement) lists the data-subject rights but gives no period, so the owner adopted this working schedule. It is not legal advice; the Data Protection Officer and Legal may replace it.
+
+| Record | Kept for | Counted from |
+|---|---|---|
+| Payments, receipts, commissions and payouts | 10 years | End of the calendar year of the transaction |
+| Contracts, VIP Grants, property sale (IGP) records and memberships | 10 years | End or expiry of the contract |
+| Audit log | 10 years | Date of the event |
+| Customer and seller personal data | 10 years | End of the relationship |
+| Rejected or withdrawn applications | 2 years | Date of the decision |
+| Public accreditation check records | 1 year | Date of the check |
+| Marketing consent | Until withdrawn | Withdrawal |
+
+1. A legal hold suspends disposal. Disposal means deletion or anonymisation and is itself an audit event.
+2. The schedule is in `src/modules/audit/retention.ts` with a function that returns the earliest disposal date. The prototype deletes nothing: mock data lives in browser memory only.
+3. A public Privacy Policy under the Data Privacy Act of 2012 is published at `/privacy`, linked from the website footer and from the accreditation check notice. It lists the same schedule, the data-subject rights, and how to reach the Data Protection Officer through the company's published email and phone.

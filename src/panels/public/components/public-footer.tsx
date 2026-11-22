@@ -1,6 +1,6 @@
 import { ExternalLink, Mail, Phone } from "lucide-react";
 import { SiteFooter } from "@/shared/components/site";
-import { DISCLAIMER, FOOTER_COLUMNS, OFFICES, SITE, officeMapAnchor } from "@/modules/public-site/content/site";
+import { DISCLAIMER, FOOTER_COLUMNS, LEGAL_LINKS, OFFICES, SITE, officeMapAnchor } from "@/modules/public-site/content/site";
 import { PUBLIC_SUPPORT_INFO } from "@/modules/public-site/support-info";
 
 /** AFhomes public footer. The shared SiteFooter does the layout; this file only supplies AFhomes content. */
@@ -16,7 +16,7 @@ export function PublicFooter() {
       ]}
       columns={FOOTER_COLUMNS}
       locations={OFFICES.map((office) => ({ label: office.label, lines: office.lines, landmark: office.landmark, map: { href: `/contact#${officeMapAnchor(office)}`, label: "View on map" } }))}
-      legal={{ disclaimer: DISCLAIMER, copyright: `© 2026 ${SITE.groupName}. All rights reserved.` }}
+      legal={{ disclaimer: DISCLAIMER, copyright: `© 2026 ${SITE.groupName}. All rights reserved.`, links: LEGAL_LINKS }}
     />
   );
 }

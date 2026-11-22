@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BadgeCheck, History, Info, Receipt } from "lucide-react";
+import { BadgeCheck, Crown, History, Info, Receipt } from "lucide-react";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { matchesSearch } from "@/shared/lib/search";
 import { useOperation, usePayments } from "@/data/business-queries";
@@ -32,7 +32,7 @@ const STATUS_LABELS: Record<IgpStatus, string> = {
 type IgpDialog = "reissue" | "correct" | "cancel" | "default" | "document" | "receipt";
 
 /** Dialogs opened from the page heading buttons; the Sales area page owns their open state. */
-export type IgpHeaderDialog = "record" | "accredit" | "threshold";
+export type IgpHeaderDialog = "record" | "accredit" | "threshold" | "grant-tiers";
 
 function statusLabel(sale: IgpSaleView): string {
   return sale.defaultReviewDue ? "Due for stopped-paying review" : sale.status === "approved" && sale.closedDealDate ? "Confirmed Sale" : STATUS_LABELS[sale.status];
@@ -63,6 +63,7 @@ export function IgpActions({ onOpen, onOpenHistory }: { onOpen: (dialog: IgpHead
     {canEnter && <Button onClick={() => onOpen("record")}><Receipt aria-hidden="true" /> Record Sale</Button>}
     {canManage && <Button variant="info" onClick={() => onOpen("accredit")}><BadgeCheck aria-hidden="true" /> Record JA&D Accreditation</Button>}
     {canManage && <Button variant="warning" onClick={() => onOpen("threshold")}><Info aria-hidden="true" /> When a Sale Counts</Button>}
+    {canManage && <Button variant="outline" onClick={() => onOpen("grant-tiers")}><Crown aria-hidden="true" /> VIP Card Levels</Button>}
     {canManage && register.accreditations.length > 0 && <Button variant="outline" onClick={onOpenHistory}><History aria-hidden="true" /> JA&D Approval History</Button>}
   </>;
 }
@@ -148,6 +149,7 @@ export function IgpTab({ headerDialog, onHeaderDialogClose, historyOpen, onHisto
                   { label: "Closing seller reference", value: `${sale.seriesNumber} - ${sale.sellerJadNumber}` },
                   { label: "Referrer", value: sale.referrerName ?? (sale.referrerMemberId ? "Recorded" : EMPTY) },
                   { label: "Confirmed Sale", value: sale.closedDealDate ? formatDate(sale.closedDealDate) : `At ${sale.thresholdBp / 100}% approved` },
+                  ...(sale.grantTier !== undefined ? [{ label: "VIP Grant card level", value: sale.grantTier ?? "None (below the lowest price)" }] : []),
                   { label: "Stage 1", value: sale.stage1Date ? formatDate(sale.stage1Date) : "At 40% approved" },
                   { label: "Full payment", value: sale.fullPaymentDate ? formatDate(sale.fullPaymentDate) : "At 100% approved" },
                   ...(sale.refund ? [{ label: "Refund", value: <><Money value={sale.refund.amountCentavos} />{sale.refund.date ? ` on ${formatDate(sale.refund.date)}` : ""}</> }] : []),
@@ -199,7 +201,7 @@ export function IgpTab({ headerDialog, onHeaderDialogClose, historyOpen, onHisto
             footer={saleActions || linkActions ? <div className="tw:flex tw:flex-wrap tw:gap-2">{saleActions}{linkActions}</div> : undefined} />
           {headerDialog === "record" && <IgpSaleDialog mode="record" register={register} onClose={onHeaderDialogClose} />}
           {(dialog === "correct" || dialog === "reissue") && sale && <IgpSaleDialog mode={dialog} register={register} sale={sale} onClose={close} />}
-          {(headerDialog === "accredit" || headerDialog === "threshold") && <IgpSettingsDialog mode={headerDialog} register={register} onClose={onHeaderDialogClose} />}
+          {(headerDialog === "accredit" || headerDialog === "threshold" || headerDialog === "grant-tiers") && <IgpSettingsDialog mode={headerDialog} register={register} onClose={onHeaderDialogClose} />}
           {sale && (dialog === "cancel" || dialog === "default" || dialog === "document") &&
             <IgpRecordDetailDialog sale={sale} mode={dialog} documentKey={document} onClose={close} />}
           {sale && dialog === "receipt" && <PaymentSubmitDialog contractId={sale.id} open onClose={close} />}

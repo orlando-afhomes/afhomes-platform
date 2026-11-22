@@ -14,7 +14,7 @@ import type { ConfirmTone } from "@/shared/components/modern/app-alert";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { MoneyField, PercentField, SelectField, StandardDateField, TextAreaField, TextField } from "@/shared/forms/modern";
 import { manilaToday } from "@/shared/lib/dates";
-import { parsePesoToCentavos } from "@/shared/lib/money";
+import { centavosToInputText, parsePesoToCentavos } from "@/shared/lib/money";
 
 function IgpForm({ title, submitText, submitVariant, description, build, onClose, children }: {
   title: string; submitText: string; submitVariant?: ConfirmTone; description?: string; build: () => IgpAction; onClose: () => void; children: ReactNode;
@@ -138,7 +138,36 @@ export function IgpSaleDialog({ register, sale, mode, onClose }: {
   );
 }
 
+const GRANT_TIER_NAMES: Record<string, string> = { B1: "Bronze (B1)", S1: "Silver (S1)", G1: "Gold (G1)" };
+
+/** Editable minimum contract price for each VIP card level a property buyer's Formal VIP Grant carries (owner decision 2026-11-22). */
+function IgpGrantTierDialog({ register, onClose }: { register: IgpRegister; onClose: () => void }) {
+  const [minimums, setMinimums] = useState(() => register.grantTierRules.map(({ minPriceCentavos }) => centavosToInputText(minPriceCentavos)));
+  const [reason, setReason] = useState("");
+  return (
+    <IgpForm title="VIP card level by property price" submitText="Save" onClose={onClose}
+      description="A property buyer's Formal VIP Grant carries the highest card level whose minimum price the contract price reaches. A change applies only to grants signed after you save."
+      build={() => ({
+        type: "grantTierRules", reason,
+        rules: register.grantTierRules.map(({ tier }, index) => ({ tier, minPriceCentavos: parsePesoToCentavos(minimums[index]) ?? 0 })),
+      })}>
+      {register.grantTierRules.map(({ tier }, index) => (
+        <MoneyField key={tier} label={`${GRANT_TIER_NAMES[tier] ?? tier} from`} value={minimums[index]} required
+          onChange={(value) => setMinimums((current) => current.map((entry, at) => at === index ? value : entry))} />
+      ))}
+      <TextAreaField label="Reason for the change" value={reason} required onChange={setReason} />
+    </IgpForm>
+  );
+}
+
 export function IgpSettingsDialog({ register, mode, onClose }: {
+  register: IgpRegister; mode: "accredit" | "threshold" | "grant-tiers"; onClose: () => void;
+}) {
+  if (mode === "grant-tiers") return <IgpGrantTierDialog register={register} onClose={onClose} />;
+  return <IgpSettingsFields register={register} mode={mode} onClose={onClose} />;
+}
+
+function IgpSettingsFields({ register, mode, onClose }: {
   register: IgpRegister; mode: "accredit" | "threshold"; onClose: () => void;
 }) {
   const [seller, setSeller] = useState("");

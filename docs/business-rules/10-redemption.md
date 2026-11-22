@@ -1,6 +1,6 @@
 # AFHomes Platform — Redemption Management Business Rules
 
-> **STATUS: STAFF PROTOTYPE AUTHORIZED, 2026-11-17.** The owner approved the QR loyalty prototype, including Stay Points bookings, with synthetic browser-memory data and sample points-per-night values. Live Redemption and customer submissions require separate authorization. Services remain disabled.
+> **STATUS: STAFF PROTOTYPE AUTHORIZED, 2026-11-17.** The owner approved the QR loyalty prototype, including Stay Points bookings, with synthetic browser-memory data. The starting points-per-night table, holiday calendar and cut-offs were adopted by the owner on 2026-11-22 (see the amendment at the end). Live Redemption and customer submissions require separate authorization. Services remain disabled.
 >
 > **Reading rule:** an unqualified “disabled” in this document means live Redemption and customer submissions; the staff prototype is authorized under the 2026-11-17 status.
 >
@@ -282,7 +282,7 @@ These are documentation acceptance examples, not executed tests.
 Owner decisions resolved 2026-11-12 (none outstanding in this document):
 - Points plus money is split by whole nights (A1); a former holder's future points bookings are cancelled at transfer, with staff informing the former holder first (A7); a failed Year 1 condition means tranche 1 is not released and not carried over (A7).
 
-Configured by Admin or Super Admin (no values set here): points per night per venue and room type; which nights are weekend nights; holiday calendar; venue list and opening status; cut-off per venue; transfer fee (management).
+Starting values adopted 2026-11-22 (see the amendment at the end). Configured by Admin or Super Admin: points per night per venue and room type; which nights are weekend nights; holiday calendar; venue list and opening status; cut-off per venue; transfer fee (management).
 
 Other dependencies: customer self-service portal (deferred); booking inventory and availability source.
 
@@ -375,3 +375,15 @@ These rulings take precedence over earlier text in this document where they diff
 22. **Separate wallet.** Promo Points (doc 09, items 22 to 26 of the 2026-11-13 amendment) are not Grant Stay Points. Redemption of Grant points (weekday and weekend buckets, overnight stays only) is unchanged.
 23. **Where Promo Points are used.** Only at the redeem outlets named by the promo, within the promo's rules. Staff record each use; it can be voided with a reason and is never deleted.
 24. **Expiry and value.** Promo Points expire on the promo's points expiry date if one is set. They have no cash value and are never cashed out.
+
+---
+
+## Owner ruling amendment (2026-11-22, starting points table, holidays and cut-offs)
+
+This ruling takes precedence over earlier text in this document where they differ. The company has not issued its own points-per-night table, holiday calendar or cancellation cut-offs; the signed Grants defer the rate to the Terms of Use (frozen at the Card Claim Date) and mention only "venue-specific cut-off times" and one-month advance booking. The owner adopted the following as the starting configuration. An Administrator can publish a new dated version at any time; the version in effect on the Card Claim Date still applies (section 8.2).
+
+1. **Points per night** (weekday / weekend or holiday): Smart Wellness Hotel Standard 1,000 / 1,500; Deluxe 1,500 / 2,000; Hotspring & Ecofarm Resort Villa 2,500 / 3,000. A Bronze yearly tranche (7,000 weekday and 3,000 weekend points) therefore covers 7 weekday nights and 2 weekend nights in a Standard room; Silver (14,000 / 6,000) and Gold (17,500 / 7,500) cover more.
+2. **Weekend nights** stay Friday and Saturday. A holiday night draws from the weekend bucket (section 7).
+3. **Cut-offs.** Hotel: 48 hours before the 14:00 check-in. Resort: 72 hours. Cancelling after the cut-off, or a no-show, forfeits the points (section 10).
+4. **Holiday calendar** from November 2026 to December 2027: the Philippine regular holidays and the fixed special non-working days, including Holy Week. Eid dates and days proclaimed later are added by an Administrator.
+5. The seed values are no longer marked as sample data. Live Redemption and customer submissions stay separately unauthorized.

@@ -109,6 +109,7 @@ describe("Property Sales (IGP) page", () => {
     expect(headers).toEqual(["Series Number", "Buyer", "Project", "Contract Price", "Status"]);
     expect(screen.getByRole("button", { name: "JA&D Approval History" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "When a Sale Counts" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "VIP Card Levels" })).toBeInTheDocument();
     expect(within(table).queryByRole("button", { name: /^Actions for/ })).toBeNull();
     await user.click(within(table).getAllByRole("row", { name: /^Open property sale \(IGP\)/ })[0]);
     const sheet = await screen.findByRole("dialog");
@@ -140,6 +141,17 @@ describe("IGP sale form and JA&D entry", () => {
     await user.click(unit);
     await user.click(await screen.findByRole("option", { name: "Lot 9" }));
     expect(within(dialog).getByRole("textbox", { name: "Property owner" })).toHaveValue("Sample Land Holdings");
+  });
+
+  it("shows the editable minimum price for Bronze, Silver and Gold", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/admin/sales?tab=igp");
+    show();
+    await user.click(await screen.findByRole("button", { name: "VIP Card Levels" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("textbox", { name: /Bronze \(B1\) from/ })).toHaveValue("1,000,000");
+    expect(within(dialog).getByRole("textbox", { name: /Silver \(S1\) from/ })).toHaveValue("2,000,000");
+    expect(within(dialog).getByRole("textbox", { name: /Gold \(G1\) from/ })).toHaveValue("4,000,000");
   });
 
   it("builds the JA&D number from the type, the approval date and the typed digits", async () => {

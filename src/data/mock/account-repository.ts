@@ -2,7 +2,7 @@ import { humanize } from "@/shared/lib/humanize";
 import { ACCOUNT_DELETE_DISABLED, ACCOUNT_STATUS_TRANSITIONS, type Account, type AccountActionPolicy, type AccountPolicies, type AccountStatus } from "@/modules/accounts/types";
 import { AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
-import type { DevIdentity } from "@/modules/identity/types";
+import type { DevIdentity, DevRole } from "@/modules/identity/types";
 import { SYSTEM_ROLES } from "@/modules/identity/permissions";
 import type { MockStore } from "./seed";
 import { appendAuditEvent } from "./audit";
@@ -111,7 +111,7 @@ export class MockAccountRepository {
     if (this.isSelf(identity, account.id)) {
       return { ...none, canEdit: true, restriction: OWN_ACCOUNT_RESTRICTION };
     }
-    const assignable = (role: (typeof SYSTEM_ROLES)[number]) => canAssignSystemRole(this.store, identity, role);
+    const assignable = (role: DevRole) => canAssignSystemRole(this.store, identity, role);
     return {
       canEdit: true,
       canManageRoles: true,

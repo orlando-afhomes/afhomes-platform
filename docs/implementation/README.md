@@ -21,6 +21,12 @@ This folder turns the AFHomes Workflow Atlas into an implementation roadmap. It 
 
 It does not authorize any work. Per `AGENTS.md` section 7, every feature still needs explicit project-owner authorization before implementation starts.
 
+## Folder layout
+
+- `README.md` — this roadmap index.
+- `decisions-and-gaps.md` — the decision register; not prototype-only.
+- `prototype/` — all FP1–FP16 phase records, the admin UI-state audit, and the customer-portal plan. These are frontend-mock prototype records; backend, database and live-service work still require separate authorization.
+
 ## Source and authority
 
 - The Workflow Atlas is an offline viewer built by Codex: `C:/Users/SSD-ORLANDO/.codex/visualizations/2026/11/13/01a1d2c4-6803-75d2-b0f7-ecc65baa94f1/afhomes-viewer/dist/index.html`. The previous viewer is preserved in its original folder.
@@ -30,7 +36,7 @@ It does not authorize any work. Per `AGENTS.md` section 7, every feature still n
 
 ## Not the same as the technical phases
 
-`docs/development/implementation.md` defines technical Phases 0 to 8 (documentation, frontend foundation, MongoDB, backend, business modules, integration, validation, deployment). This folder defines **feature phases FP1 to FP16**. A feature phase groups the features of one business area. Its features move through the technical phases: frontend mock first, then backend and database only when separately authorized.
+`docs/development/implementation.md` defines technical Phases 0 to 8 (documentation, frontend foundation, MongoDB, backend, business modules, integration, validation, deployment). This folder indexes **feature phases FP1 to FP16**, recorded under `prototype/`. A feature phase groups the features of one business area. Its features move through the technical phases: frontend mock first, then backend and database only when separately authorized.
 
 ## Feature phases
 
@@ -38,17 +44,17 @@ The order follows the dependency order of subphases 4A to 4L in `docs/developmen
 
 | Phase | File | Atlas journeys | Business rules |
 |---|---|---|---|
-| FP1 Organization and access | [phase-01-organization-and-access.md](phase-01-organization-and-access.md) | J03 | 01 |
-| FP2 Public entry and sign-in | [phase-02-public-entry-and-sign-in.md](phase-02-public-entry-and-sign-in.md) | J01 | 01 |
-| FP3 Sales network and accreditation | [phase-03-sales-network-and-accreditation.md](phase-03-sales-network-and-accreditation.md) | J04, J02 | 02, 03 |
-| FP4 Customer applications | [phase-04-customer-applications.md](phase-04-customer-applications.md) | J05 | 04 |
-| FP5 Products, contracts and sales | [phase-05-products-contracts-and-sales.md](phase-05-products-contracts-and-sales.md) | J06 | 05, 06, 13, 14 |
-| FP6 Payments and verification | [phase-06-payments-and-verification.md](phase-06-payments-and-verification.md) | J07 | 07, 13 |
-| FP7 Adjustments, cancellations and holds | [phase-07-adjustments-cancellations-and-holds.md](phase-07-adjustments-cancellations-and-holds.md) | J08 | 07, 08 |
-| FP8 Commissions and payouts | [phase-08-commissions-and-payouts.md](phase-08-commissions-and-payouts.md) | J09 | 08 |
-| FP9 Membership and cards | [phase-09-membership-and-cards.md](phase-09-membership-and-cards.md) | J10 | 06, 07, 09 |
-| FP10 Stay points and services | [phase-10-stay-points-and-services.md](phase-10-stay-points-and-services.md) | J11 | 09, 10 |
-| FP11 Reports, audit and close | [phase-11-reports-audit-and-close.md](phase-11-reports-audit-and-close.md) | J12 | 11, 12, 13, 14 |
+| FP1 Organization and access | [01-organization-and-access.md](prototype/01-organization-and-access.md) | J03 | 01 |
+| FP2 Public entry and sign-in | [02-public-entry-and-sign-in.md](prototype/02-public-entry-and-sign-in.md) | J01 | 01 |
+| FP3 Sales network and accreditation | [03-sales-network-and-accreditation.md](prototype/03-sales-network-and-accreditation.md) | J04, J02 | 02, 03 |
+| FP4 Customer applications | [04-customer-applications.md](prototype/04-customer-applications.md) | J05 | 04 |
+| FP5 Products, contracts and sales | [05-products-contracts-and-sales.md](prototype/05-products-contracts-and-sales.md) | J06 | 05, 06, 13, 14 |
+| FP6 Payments and verification | [06-payments-and-verification.md](prototype/06-payments-and-verification.md) | J07 | 07, 13 |
+| FP7 Adjustments, cancellations and holds | [07-adjustments-cancellations-and-holds.md](prototype/07-adjustments-cancellations-and-holds.md) | J08 | 07, 08 |
+| FP8 Commissions and payouts | [08-commissions-and-payouts.md](prototype/08-commissions-and-payouts.md) | J09 | 08 |
+| FP9 Membership and cards | [09-membership-and-cards.md](prototype/09-membership-and-cards.md) | J10 | 06, 07, 09 |
+| FP10 Stay points and services | [10-stay-points-and-services.md](prototype/10-stay-points-and-services.md) | J11 | 09, 10 |
+| FP11 Reports, audit and close | [11-reports-audit-and-close.md](prototype/11-reports-audit-and-close.md) | J12 | 11, 12, 13, 14 |
 
 Decisions and gaps: [decisions-and-gaps.md](decisions-and-gaps.md).
 
@@ -76,11 +82,16 @@ The public site is mock content today but will become CMS-driven. The skeletons 
 
 | Phase | File | Goal | Depends on |
 |---|---|---|---|
-| FP12 State foundations | [phase-12-state-foundations.md](phase-12-state-foundations.md) | Clarification protocol, `EmptyState`, `ErrorState`, `QueryState` retry, public skeleton compositions | none |
-| FP13 Public layout and route loading | [phase-13-public-layout-and-route-loading.md](phase-13-public-layout-and-route-loading.md) | `(public)` route group, shared layout, route `loading.tsx`, login loading files | FP12 |
-| FP14 Public empty, error and login states | [phase-14-public-empty-and-error-states.md](phase-14-public-empty-and-error-states.md) | FAQ/blog/Verify/OST states, login submit spinner, async-button audit | FP12, FP13 |
-| FP15 Admin state audit | [phase-15-admin-state-audit.md](phase-15-admin-state-audit.md) | Route-by-route admin state audit and Phase 2 batch order | FP12 |
-| FP16 State verification | [phase-16-state-verification.md](phase-16-state-verification.md) | Typecheck, lint, tests, build, browser, reduced motion, no JavaScript, final report | FP12 to FP15 |
+| FP12 State foundations | [12-state-foundations.md](prototype/12-state-foundations.md) | Clarification protocol, `EmptyState`, `ErrorState`, `QueryState` retry, public skeleton compositions | none |
+| FP13 Public layout and route loading | [13-public-layout-and-route-loading.md](prototype/13-public-layout-and-route-loading.md) | `(public)` route group, shared layout, route `loading.tsx`, login loading files | FP12 |
+| FP14 Public empty, error and login states | [14-public-empty-and-error-states.md](prototype/14-public-empty-and-error-states.md) | FAQ/blog/Verify/OST states, login submit spinner, async-button audit | FP12, FP13 |
+| FP15 Admin state audit | [15-admin-state-audit.md](prototype/15-admin-state-audit.md) | Route-by-route admin state audit and Phase 2 batch order | FP12 |
+| FP16 State verification | [16-state-verification.md](prototype/16-state-verification.md) | Typecheck, lint, tests, build, browser, reduced motion, no JavaScript, final report | FP12 to FP15 |
+
+Supporting prototype records:
+
+- [Admin UI state audit](prototype/admin-ui-state-audit.md)
+- [Customer portal prototype plan](prototype/customer-portal-plan.md)
 
 ```mermaid
 flowchart LR

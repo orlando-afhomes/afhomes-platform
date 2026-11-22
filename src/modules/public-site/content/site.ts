@@ -91,6 +91,7 @@ export const MAIN_NAV: NavLink[] = [
   { href: "/faq", label: "FAQ" },
   { href: "/blog", label: "Blog" },
   { href: "/contact", label: "Contact" },
+  { href: "/offers", label: "Offers" },
 ];
 
 /** Public actions shown at the right of the header and in the phone menu. Sales Sign-In is linked from the footer Access column and the phone menu (owner, 2026-11-18). */

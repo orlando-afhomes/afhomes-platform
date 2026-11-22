@@ -115,6 +115,8 @@ const ROLE_MODULE_GRANTS: Record<DevRole, readonly AdminModuleId[]> = {
   super_admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products", "sales-network", "sales-network-members", "sales-network-genealogy", "accreditation-registrations", "accreditation-records", "accreditation-renewals", ...BUSINESS_ADMIN_MODULES],
   admin: [...BASE_MODULES, "departments", "roles", "staff", "accounts", "vip-products", "sales-network", "sales-network-members", "sales-network-genealogy", "accreditation-registrations", "accreditation-records", "accreditation-renewals", ...BUSINESS_ADMIN_MODULES],
   hr: [...BASE_MODULES, "departments", "staff"],
+  // Prototype-only General Service Department counter identity: scan and Promo Points use, no broad access.
+  gsd: [...BASE_MODULES, "stay-points"],
   // Interim baseline (doc 01 §3.2: module set per role stays open): the Clerk enters customers, contracts and receipts.
   clerk: [...BASE_MODULES, "customers", "sales", "accreditation-registrations", "stay-points"],
   finance: [...BASE_MODULES, "finance", "commissions", "membership", "stay-points", "redemption", "reports"],
@@ -124,8 +126,8 @@ const ROLE_MODULE_GRANTS: Record<DevRole, readonly AdminModuleId[]> = {
   ost: [...BASE_MODULES, "sales-network", "sales-network-members", "sales-network-genealogy", ...OST_BUSINESS_MODULES],
 };
 
-/** Every system role, in display order. */
-export const SYSTEM_ROLES = Object.keys(ROLE_MODULE_GRANTS) as DevRole[];
+/** Every assignable system role, in display order. The prototype GSD counter role is dev-only. */
+export const SYSTEM_ROLES = (Object.keys(ROLE_MODULE_GRANTS) as DevRole[]).filter((role) => role !== "gsd");
 
 /** Module grants of a system role (static mock baseline). */
 export function getRoleModuleGrants(role: DevRole): readonly AdminModuleId[] {
@@ -298,6 +300,8 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "audit.read",
   ],
   hr: ["organization.departments.manage", "organization.staff.manage"],
+  // Prototype-only GSD counter identity: records a named reward use after scanning; never approves money or bills.
+  gsd: ["promo-points.use"],
   // Doc 01 §3.7/§3.8: the Clerk enters and completes; never approves (no finance.verify, contracts.approve, membership.activate).
   clerk: ["customers.manage", "customers.draft", "customers.lookup", "contracts.prepare", "payments.submit", "stay-points.enter", "commission.payout.prepare", "igp.enter", "promo-points.use"],
   finance: [

@@ -311,7 +311,7 @@ U01 to U13 descriptions are in the atlas `COVERAGE.md` section "Incomplete and u
 - ~~Doc 07 amendment item 7 (per-contract Move approval wording) is stale against doc 05 item 12.~~ Fixed in R1 (2026-11-12): item 7 is marked superseded, and the Move effective date is 2026-11-09.
 - ~~The atlas baseline `a0bdcef` predates `fc060bb`.~~ Refreshed on 2026-11-12 (atlas `2026-11-12.3`, baseline `b784e30`).
 - ~~Code and rule disagree on the commission release wait: R8 removes the 7-day wait, but `src/modules/commissions/rules.ts` still defines `PAYOUT_RELEASE_WAIT_DAYS` and the payout milestone shows "Payout opens <date>". The atlas records this under G08 (Conflicting). It is for the owner to authorize a code change.~~ Fixed 2026-11-12: the wait was removed; payout opens on the first day of the month after 40% (owner decision D-A).
-- `docs/implementation/phase-03-sales-network-and-accreditation.md` line 97 still says the public result shows Valid Until for OST only. That file is a completed phase record and is not rewritten; the amended doc 03 rule governs.
+- `docs/implementation/prototype/03-sales-network-and-accreditation.md` line 97 still says the public result shows Valid Until for OST only. That file is a completed phase record and is not rewritten; the amended doc 03 rule governs.
 
 ### Public seller check and staff Customer Look Up (2026-11-16)
 

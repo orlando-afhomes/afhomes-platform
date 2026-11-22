@@ -108,12 +108,23 @@ describe("public site pages", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Teppanyaki Lounge" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Older post/ })).toHaveAttribute("href", `/blog/${BLOG_POSTS[4].slug}`);
   });
-  it("puts the experience status above the eyebrow", () => {
-    const { container } = render(<ResortPage />);
-    const top = container.querySelector(".exp-hero .site-home-hero__top");
-    expect(top).not.toBeNull();
-    expect(top?.querySelector(".exp-hero__status")?.textContent).toBe("In development");
-    expect(top?.nextElementSibling?.classList.contains("site-eyebrow")).toBe(true);
+  it("puts the experience status under the heading with a status-specific tone", () => {
+    const pages = [
+      { page: <ResortPage />, status: "In development", tone: "progress" },
+      { page: <HotelPage />, status: "Grand opening: November 2026", tone: "upcoming" },
+      { page: <RestaurantPage />, status: "Now open", tone: "live" },
+    ];
+    for (const { page, status, tone } of pages) {
+      const { container, unmount } = render(page);
+      const heading = container.querySelector(".exp-hero__title");
+      const badge = container.querySelector(".exp-hero__status");
+      expect(badge).not.toBeNull();
+      expect(badge?.textContent).toBe(status);
+      expect(badge?.classList.contains(`site-badge--${tone}`)).toBe(true);
+      expect(heading!.compareDocumentPosition(badge!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(container.querySelector(".exp-hero .site-home-hero__top .exp-hero__status")).toBeNull();
+      unmount();
+    }
   });
 
   it("places the contact form before the contact details", () => {

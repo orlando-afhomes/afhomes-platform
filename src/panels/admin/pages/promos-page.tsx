@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useOperation } from "@/data/business-queries";
-import type { PromoInput, PromoView } from "@/data/contracts/promo-repository";
+import type { PromoInput, PromoRewardInput, PromoView } from "@/data/contracts/promo-repository";
 import type { TableOrder } from "@/shared/lib/table-order";
 import { useDeletePromo, useEndPromo, usePromos, useSavePromo } from "@/data/promo-queries";
 import { useActiveOutlets, useOutlets } from "@/data/settings-queries";
@@ -16,7 +16,7 @@ import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sh
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
-import { CheckboxField, MoneyField, SelectField, StandardDateField, TextField } from "@/shared/forms/modern";
+import { CheckboxField, MoneyField, PointsField, SelectField, StandardDateField, TextAreaField, TextField } from "@/shared/forms/modern";
 import { formatDate } from "@/shared/lib/format-date";
 import { formatPeso, parsePesoToCentavos, centavosToInputText } from "@/shared/lib/money";
 import { matchesSearch } from "@/shared/lib/search";
@@ -62,6 +62,7 @@ export function PromosPanel() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [editing, setEditing] = useState<PromoView | null>(null);
+  const [offerEditing, setOfferEditing] = useState<PromoView | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
 
   const outletNames = useMemo(() => new Map((outlets.data ?? []).map((outlet) => [outlet.id, outlet.name])), [outlets.data]);
@@ -91,15 +92,18 @@ export function PromosPanel() {
           <RowActionsMenu
             itemName={promo.name}
             onEdit={canManagePromo ? () => setEditing(promo) : undefined}
-            extraItems={canManagePromo ? [{
-              key: "end", label: "End Promo", danger: true,
-              onClick: () => confirmRun({
-                title: `End ${promo.name}?`,
-                description: "No new points are earned after today. Points already earned stay usable until they expire.",
-                confirmText: "End Promo", danger: true, action: () => end(promo.id),
-                successTitle: `${promo.name} ended.`, errorTitle: "Could not end the promo.",
-              }),
-            }] : []}
+            extraItems={canManagePromo ? [
+              { key: "offer", label: "Public Offer & Rewards", onClick: () => setOfferEditing(promo) },
+              {
+                key: "end", label: "End Promo", danger: true,
+                onClick: () => confirmRun({
+                  title: `End ${promo.name}?`,
+                  description: "No new points are earned after today. Points already earned stay usable until they expire.",
+                  confirmText: "End Promo", danger: true, action: () => end(promo.id),
+                  successTitle: `${promo.name} ended.`, errorTitle: "Could not end the promo.",
+                }),
+              },
+            ] : []}
             onDelete={canManagePromo && promo.pointsEarned === 0 ? () => remove(promo.id) : undefined}
             deleteDisabledReason={canManagePromo && promo.pointsEarned > 0 ? "Points were already earned. End the promo instead." : null}
             deleteTitle={`Delete ${promo.name}?`}
@@ -129,12 +133,104 @@ export function PromosPanel() {
             { label: "Use at", value: names(detail.redeemOutletIds) },
             { label: "Points expire", value: detail.pointsExpiryDate ? formatDate(detail.pointsExpiryDate) : null },
             { label: "Points earned", value: detail.pointsEarned.toLocaleString("en-PH") },
+            { label: "Public offer", value: detail.published ? "Published" : "Not published" },
+            { label: "Named rewards", value: detail.rewards.length ? detail.rewards.map((reward) => `${reward.name} (${reward.pointsCost.toLocaleString("en-PH")} pts)`).join(", ") : "None configured" },
           ],
         }] : []}
       />
       {editing ? <PromoDialog key={editing.id} editing={editing} onClose={() => setEditing(null)} /> : null}
+      {offerEditing ? <PublicOfferDialog key={offerEditing.id} editing={offerEditing} onClose={() => setOfferEditing(null)} /> : null}
       {confirmDialog}
     </>
+  );
+}
+
+type RewardDraft = PromoRewardInput & { key: string };
+
+function PublicOfferDialog({ editing, onClose }: { editing: PromoView; onClose: () => void }) {
+  const save = useSavePromo();
+  const outlets = useOutlets();
+  const [publicTitle, setPublicTitle] = useState(editing.publicTitle);
+  const [publicSummary, setPublicSummary] = useState(editing.publicSummary);
+  const [publicTerms, setPublicTerms] = useState(editing.publicTerms);
+  const [published, setPublished] = useState(editing.published);
+  const [rewards, setRewards] = useState<RewardDraft[]>(editing.rewards.map((reward) => ({ ...reward, key: reward.id })));
+  const [error, setError] = useState<string | undefined>();
+  const outletName = (id: string) => outlets.data?.find((outlet) => outlet.id === id)?.name ?? id;
+
+  const addReward = () => setRewards((current) => [...current, {
+    key: crypto.randomUUID(), name: "", description: "", outletId: editing.redeemOutletIds[0] ?? "", pointsCost: 0, status: "active",
+  }]);
+  const patchReward = (key: string, patch: Partial<RewardDraft>) => setRewards((current) => current.map((reward) => reward.key === key ? { ...reward, ...patch } : reward));
+
+  const submit = async () => {
+    const promo: PromoInput = {
+      name: editing.name,
+      status: editing.status === "ended" ? "active" : editing.status,
+      startDate: editing.startDate,
+      endDate: editing.endDate,
+      earnOutletIds: editing.earnOutletIds,
+      earnPesosPerPointCentavos: editing.earnPesosPerPointCentavos,
+      redeemOutletIds: editing.redeemOutletIds,
+      pointsExpiryDate: editing.pointsExpiryDate,
+      rewards: rewards.map((reward) => ({
+        id: reward.id, name: reward.name, description: reward.description,
+        outletId: reward.outletId, pointsCost: reward.pointsCost, status: reward.status,
+      })),
+      publicTitle,
+      publicSummary,
+      publicTerms,
+      published,
+    };
+    try {
+      await save.mutateAsync({ id: editing.id, promo });
+      toast.success(published ? "Public offer published." : "Public offer saved.", { description: editing.name });
+      onClose();
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Could not save the public offer.");
+    }
+  };
+
+  return (
+    <FormDialog
+      open
+      title="Public Offer & Rewards"
+      size="lg"
+      scrollBody
+      description="Only a published offer with complete public copy and at least one priced reward appears on the website."
+      submitText="Save Offer"
+      pending={save.isPending}
+      error={error}
+      onClose={onClose}
+      onSubmit={() => void submit()}
+    >
+      <TextField label="Public title" value={publicTitle} maxLength={120} onChange={(value) => { setPublicTitle(value); setError(undefined); }} />
+      <TextAreaField label="Public summary" value={publicSummary} maxLength={600} onChange={(value) => { setPublicSummary(value); setError(undefined); }} />
+      <TextAreaField label="Public terms" value={publicTerms} maxLength={600} onChange={(value) => { setPublicTerms(value); setError(undefined); }} />
+      <CheckboxField label="Publish this offer on the public website" checked={published} onChange={(checked) => { setPublished(checked); setError(undefined); }} />
+      <p className="tw:text-sm tw:text-muted-foreground">Drafts and unpublished offers stay private.</p>
+      <fieldset className="tw:rounded-lg tw:border tw:border-border tw:p-4">
+        <legend className="tw:px-1 tw:text-sm tw:font-semibold">Named rewards</legend>
+        {rewards.length === 0 ? <p className="tw:mb-3 tw:text-sm tw:text-muted-foreground">No rewards configured. Add a named reward and its approved point cost.</p> : null}
+        <div className="tw:flex tw:flex-col tw:gap-4">
+          {rewards.map((reward) => (
+            <div key={reward.key} className="tw:grid tw:gap-3 tw:rounded-lg tw:border tw:border-border tw:bg-muted/30 tw:p-3 tw:sm:grid-cols-2">
+              <TextField label="Reward name" required value={reward.name} maxLength={80} onChange={(value) => patchReward(reward.key, { name: value })} />
+              <SelectField label="Outlet" required value={reward.outletId} options={editing.redeemOutletIds.map((id) => ({ value: id, label: outletName(id) }))} onChange={(value) => patchReward(reward.key, { outletId: value })} />
+              <div className="tw:sm:col-span-2">
+                <TextField label="Reward description" value={reward.description} maxLength={300} onChange={(value) => patchReward(reward.key, { description: value })} />
+              </div>
+              <PointsField label="Approved point cost" required value={reward.pointsCost > 0 ? String(reward.pointsCost) : ""} onChange={(value) => patchReward(reward.key, { pointsCost: Number(value.replace(/,/g, "")) || 0 })} />
+              <div className="tw:flex tw:flex-col tw:justify-end tw:gap-2">
+                <CheckboxField label="Available" checked={reward.status !== "archived"} onChange={(checked) => patchReward(reward.key, { status: checked ? "active" : "archived" })} />
+                <Button type="button" variant="outline" onClick={() => setRewards((current) => current.filter((item) => item.key !== reward.key))}>Remove reward</Button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <Button type="button" variant="outline" className="tw:mt-3" onClick={addReward}><Plus aria-hidden="true" /> Add Reward</Button>
+      </fieldset>
+    </FormDialog>
   );
 }
 

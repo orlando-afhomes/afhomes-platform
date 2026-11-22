@@ -8,6 +8,8 @@ export type DevRole =
   | "finance"
   | "hr"
   | "clerk"
+  /** Prototype-only GSD counter identity; grants QR scan and Promo Points use only. */
+  | "gsd"
   | "svd"
   | "ssm"
   | "sm"

@@ -64,9 +64,25 @@ export function requireCurrentScan(store: MockStore, code: string | undefined, m
   }
 }
 
+/** Stable holder code for a membership; used by staff and the read-only customer portal. */
+export function issueHolderCode(store: MockStore, membershipId: string, role: CardHolder): MemberQrCode | undefined {
+  const holder = currentCardHolders(store, membershipId).find(({ info }) => info.holder === role && info.status === "active");
+  if (!holder) return undefined;
+  const { info, key } = holder;
+  const id = JSON.stringify([info.membershipId, info.holder]);
+  let record = store.memberQr[id];
+  if (record?.holderKey !== key) {
+    record = { holderKey: key, token: newToken() };
+    store.memberQr[id] = record;
+  }
+  return { ...info, code: prefix + record.token };
+}
+
 export class MockMemberQrRepository extends BusinessRepository implements MemberQrRepository {
   private requireLookup(identity: DevIdentity) {
-    this.require(identity, "customers.lookup", "Your account cannot look up customers.");
+    // A scan is not a customer lookup: the prototype GSD counter may resolve a code for Promo Points use.
+    if (this.can(identity, "customers.lookup") || this.can(identity, "promo-points.use")) return;
+    throw new Error("Your account cannot look up customers.");
   }
 
   private issue(holder: ReturnType<typeof currentCardHolders>[number], token?: string): MemberQrCode {

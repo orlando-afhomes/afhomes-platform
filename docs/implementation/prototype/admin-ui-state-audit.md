@@ -217,7 +217,7 @@ Also confirm the shared dialog rule: while a dialog is pending, Cancel is disabl
 | Audit rows | 62 |
 | Duplicate routes | None (every route appears once) |
 | Complete claims with named code path | Yes; each Complete row names the component or prop that provides the state |
-| Files created | `docs/implementation/ui-state-audit.md` only |
+| Files created | `docs/implementation/prototype/admin-ui-state-audit.md` only |
 | Source, test, config and other docs written by this task | None |
 | Concurrent shared-primitive change | During this audit, `QueryState` began delegating its error state to a new `ErrorState` and gained `onRetry` (files timestamped 15:24, after the admin evidence was read). The audit reflects the code read after that change. No admin page passes `onRetry`. |
 | Git commands run | None |

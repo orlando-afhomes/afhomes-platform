@@ -5,8 +5,8 @@ import { createMockStore, type MockStore } from "@/data/mock/seed";
 
 const MockStoreContext = createContext<MockStore | null>(null);
 
-export function MockStoreProvider({ children }: { children: ReactNode }) {
-  const [store] = useState(() => createMockStore());
+export function MockStoreProvider({ children, store: initialStore }: { children: ReactNode; store?: MockStore }) {
+  const [store] = useState(() => initialStore ?? createMockStore());
   return <MockStoreContext.Provider value={store}>{children}</MockStoreContext.Provider>;
 }
 

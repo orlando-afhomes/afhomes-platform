@@ -128,6 +128,66 @@ describe("Promo Points", () => {
     expect(store.auditEvents.filter((e) => e.entityType === "promo" && e.action.startsWith("PROMO_")).length).toBeGreaterThanOrEqual(5);
   });
 
+  it("publishes only complete public offers and uses named rewards at their configured cost", async () => {
+    const { store, admin, clerk, finance, bill } = setup();
+    await expect(admin.promos.create(promoInput({
+      name: "Incomplete", published: true, publicTitle: "Incomplete offer", publicSummary: "Missing rewards",
+      publicTerms: "Terms", rewards: [],
+    }))).rejects.toThrow(/at least one reward/i);
+
+    const reward = { name: "Spa Day Pass", description: "One day pass", outletId: SPA, pointsCost: 3 };
+    const offer = await admin.promos.create(promoInput({
+      name: "Wellness Weekend", startDate: "2000-01-01", endDate: "2099-12-31",
+      earnOutletIds: [SPA], redeemOutletIds: [SPA], pointsExpiryDate: "2099-12-31",
+      rewards: [reward], published: true, publicTitle: "Wellness Weekend",
+      publicSummary: "Earn and use points at the spa.", publicTerms: "One reward per visit.",
+    }));
+    expect((await admin.promos.publicOffers()).map((item) => item.id)).toContain(offer.id);
+    expect((await admin.promos.publicOffers())[0].rewards[0]).toMatchObject({ name: "Spa Day Pass", pointsCost: 3 });
+
+    const spend = await bill(SPA);
+    await finance.stayPoints.act({ action: "approve", spendId: spend.id });
+    const use = await clerk.promos.recordUse({
+      requestId: "reward-use", membershipId: "memb-1", promoId: offer.id, rewardId: offer.rewards[0].id,
+      holder: "primary", identityChecked: true, note: "Spa visit",
+    });
+    expect(use).toMatchObject({ points: 3, rewardName: "Spa Day Pass", outletId: SPA });
+    expect((await balanceOf(admin))?.available).toBe(8);
+
+    await admin.promos.update(offer.id, promoInput({
+      name: "Wellness Weekend", startDate: "2000-01-01", endDate: "2099-12-31",
+      earnOutletIds: [SPA], redeemOutletIds: [SPA], pointsExpiryDate: "2099-12-31",
+      rewards: [{ ...reward, id: offer.rewards[0].id, status: "archived" }], published: false,
+      publicTitle: "Wellness Weekend", publicSummary: "Ended.", publicTerms: "One reward per visit.",
+    }));
+    await expect(admin.promos.publicOffers()).resolves.toHaveLength(0);
+    await expect(clerk.promos.recordUse({
+      requestId: "archived-use", membershipId: "memb-1", promoId: offer.id, rewardId: offer.rewards[0].id,
+      holder: "primary", identityChecked: true, note: "",
+    })).rejects.toThrow(/not available/i);
+    expect(store.promoPoints.filter((entry) => entry.type === "use")).toHaveLength(1);
+  });
+
+  it("lets the demo GSD identity use a reward, while scanning alone and approval remain blocked", async () => {
+    const { as, admin, finance, bill } = setup();
+    const promo = await admin.promos.create(promoInput({
+      rewards: [{ name: "Spa Day Pass", description: "One day pass", outletId: SPA, pointsCost: 3 }],
+      redeemOutletIds: [SPA],
+    }));
+    const spend = await bill(TEPPAN);
+    await finance.stayPoints.act({ action: "approve", spendId: spend.id });
+    const [issued] = await admin.memberQr.holders("memb-1");
+    const gsd = as("dev-gsd");
+    const before = (await admin.promos.balances()).find((item) => item.membershipId === "memb-1")!.total.available;
+    await expect(gsd.memberQr.resolve(issued.code)).resolves.toMatchObject({ membershipId: "memb-1" });
+    expect((await admin.promos.balances()).find((item) => item.membershipId === "memb-1")!.total.available).toBe(before);
+    await expect(gsd.stayPoints.act({ action: "approve", spendId: spend.id })).rejects.toThrow(/Finance or an Administrator/);
+    await expect(gsd.promos.recordUse({
+      requestId: "gsd-use", membershipId: "memb-1", promoId: promo.id, rewardId: promo.rewards[0].id,
+      holder: "primary", identityChecked: true, scannedCode: issued.code, note: "Counter service",
+    })).resolves.toMatchObject({ points: 3, actorId: "dev-gsd" });
+  });
+
   it("keeps a used outlet from being deleted", async () => {
     const { store, admin } = setup();
     expect(outletInUse(store, SPA)).toBe(false);

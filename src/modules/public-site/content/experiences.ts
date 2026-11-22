@@ -107,23 +107,23 @@ export const HOTEL = {
   title: "AFhomes Smart Wellness Hotel",
   lede: "Bridging luxury lodging and wellness science.",
   intro:
-    "An upscale sanctuary designed to bridge the gap between luxury lodging and wellness science. Featuring 18 rooms: 1 signature suite and 17 smart wellness equipped rooms. Every accommodation is an adaptive ecosystem optimized for restorative stays.",
+    "18 rooms: one signature suite and 17 smart wellness rooms. Every stay is tuned for deeper rest.",
   hero: img("hotel/s-1-ps-985x1024", "The AFhomes Smart Wellness Hotel"),
   features: [
-    { title: "Smart Sleep Intelligence", text: "Non-contact mmWave sensors monitor breathing patterns and sleep cycles. No wearables, no cameras." },
-    { title: "Atmospheric Oxygen Enrichment", text: "Elevated O2 levels support travel recovery, cognitive clarity, and deeper restorative sleep." },
-    { title: "Forest-Ion & AQI Control", text: "Negative-ion generators and real-time air-quality sensors maintain the purest indoor environment." },
-    { title: "Personalized Guest Analytics", text: "Smart Sleep Report: to support your wellness journey, guests can access data upon request, visualizing their sleep efficiency and breathing rhythms during their stay (to understand snoring and obstructive sleep apnea)." },
+    { title: "Smart Sleep Intelligence", text: "Contact-free sensors track breathing and sleep cycles. No wearables or cameras." },
+    { title: "Atmospheric Oxygen Enrichment", text: "Elevated oxygen supports recovery, focus, and deeper sleep." },
+    { title: "Forest-Ion & AQI Control", text: "Negative ions and live air-quality sensors keep the room fresh." },
+    { title: "Personalized Guest Analytics", text: "Request your Smart Sleep Report to review sleep efficiency and breathing patterns." },
   ] satisfies Highlight[],
   apnea: { title: "Do you know about sleep apnea?", text: "Sleep apnea is more common than you think and serious if left untreated.", image: img("hotel/apnea-scaled", "Sleep apnea information") },
   gallery: [img("hotel/smart-wellness-pod-1024x797", "A smart wellness room"), img("hotel/reception-1024x683", "The hotel reception"), img("hotel/room-1024x683", "A hotel room")],
   lounge: {
     title: "The Smart Wellness Lounge",
-    text: "Beyond the rooms, a dedicated guest gathering space for dining, relaxation, and recovery, all without leaving the property.",
+    text: "Dining, coffee, wine, and sauna—all without leaving the hotel.",
     items: [
-      { title: "In-House Teppanyaki Food Service", text: "A teppanyaki dining counter within the lounge extends the signature ALM culinary standard to hotel guests, served live by skilled chefs, just steps from the rooms.", image: img("hotel/teppan-scene-2-ps-1-1024x683", "The teppanyaki counter") },
-      { title: "Coffee & Wine Bar", text: "A curated coffee and wine selection in a relaxed lounge setting, available from morning service through the evening, for quiet work or unhurried conversation.", image: img("hotel/2-coffee-wine-bar-1-1024x683", "The coffee and wine bar") },
-      { title: "Sauna Rooms", text: "Private sauna facilities for restorative heat therapy, a natural complement to the hotel's smart-sleep intelligence and oxygen-enriched wellness focus.", image: img("hotel/sauna-1024x683", "A private sauna room") },
+      { title: "In-House Teppanyaki Food Service", text: "Live teppanyaki by ALM chefs, steps from your room.", image: img("hotel/teppan-scene-2-ps-1-1024x683", "The teppanyaki counter") },
+      { title: "Coffee & Wine Bar", text: "Coffee by day, wine by evening, in a quiet lounge.", image: img("hotel/2-coffee-wine-bar-1-1024x683", "The coffee and wine bar") },
+      { title: "Sauna Rooms", text: "Private sauna sessions to complement your sleep-focused stay.", image: img("hotel/sauna-1024x683", "A private sauna room") },
     ] satisfies Highlight[],
   },
 };
@@ -133,15 +133,15 @@ export const RESTAURANT = {
   title: "AFhomes ALM Japanese Restaurant",
   hero: img("restaurant/afhomes-resto-v4-1024x683", "The AFhomes ALM Japanese Restaurant"),
   intro: [
-    "A premier 600-square-meter culinary destination, AFhomes ALM Japanese Restaurant stands as a landmark dining establishment operating as an independent subsidiary with its own dedicated industrial-scale kitchen. Designed to deliver an exceptional Japanese dining experience, the restaurant combines authentic flavors, elegant interiors, and world-class hospitality.",
-    "The restaurant features an exclusive lounge and reception area, providing a sophisticated setting for private family celebrations, business meetings, corporate functions, and special occasions. Every space is thoughtfully designed to offer comfort, privacy, and refined elegance.",
+    "A 600-square-meter Japanese restaurant with its own industrial kitchen, lounge, and reception. Refined interiors and attentive service set the stage.",
+    "Built for family celebrations, business dinners, corporate functions, and private events.",
   ],
   sections: [
-    { title: "Authentic Japanese Cuisine", text: "From expertly crafted sushi and maki rolls to flavorful teppanyaki specialties prepared with fresh meats, seafood, and vegetables, every dish is designed to showcase the rich flavors and culinary traditions of Japan. Our chefs combine traditional techniques with contemporary presentation, creating meals that satisfy both the palate and the senses." },
-    { title: "Signature Refreshments", text: "Enhance your dining experience with our selection of handcrafted, alcohol-free beverages. Featuring refreshing fruit-infused mocktails, crisp botanical blends, and tropical favorites, our drinks are thoughtfully created to complement the flavors of Japanese cuisine while providing a refreshing and sophisticated alternative." },
-    { title: "Premium Coffee Selection", text: "Complete your dining experience with our freshly brewed coffee offerings. From rich, aromatic coffee to smooth and creamy café favorites, each cup is carefully prepared to provide the perfect balance of flavor and comfort. Whether you're enjoying a rich cappuccino or a smooth café latte, our beverage collection provides the perfect accompaniment to any meal or gathering." },
+    { title: "Authentic Japanese Cuisine", text: "Sushi, maki, and teppanyaki prepared with fresh meat, seafood, and vegetables." },
+    { title: "Signature Refreshments", text: "Alcohol-free mocktails and botanical blends made to pair with Japanese flavors." },
+    { title: "Premium Coffee Selection", text: "Cappuccino, latte, and freshly brewed coffee to close the meal." },
   ] satisfies Highlight[],
-  closing: "Whether you're planning an intimate dinner or celebrating a special milestone, AFhomes ALM Japanese Restaurant provides a welcoming atmosphere where exceptional food, attentive service, and elegant surroundings create an unforgettable dining experience.",
+  closing: "Book ahead for an intimate dinner or a milestone celebration.",
   reservation: "Reservations only. No walk-ins accepted.",
   tagline: "Discover a place where Japanese culinary tradition meets modern sophistication.",
 };
@@ -168,6 +168,7 @@ export const RESORT_PAGE = {
     title: RESORT.title,
     lede: "A homestyle resort destination in Calauan, Laguna that blends relaxation, wellness, leisure, and nature.",
     status: "In development",
+    statusTone: "progress" as const,
     image: img("home/arial-1-scaled", "Aerial view of the AFhomes resort grounds"),
   },
   overview: {
@@ -201,7 +202,7 @@ export const RESORT_PAGE = {
 };
 
 export const HOTEL_PAGE = {
-  hero: { eyebrow: HOTEL.eyebrow, title: HOTEL.title, lede: HOTEL.lede, status: HOTEL.status, image: HOTEL.gallery[2] },
+  hero: { eyebrow: HOTEL.eyebrow, title: HOTEL.title, lede: HOTEL.lede, status: HOTEL.status, statusTone: "upcoming" as const, image: HOTEL.gallery[2] },
   overview: { eyebrow: "Hotel overview", title: "Every room is an adaptive ecosystem", text: HOTEL.intro, features: HOTEL.features },
   gallery: { eyebrow: "Inside the hotel", title: "Rooms and spaces made for rest", images: HOTEL.gallery },
   apnea: HOTEL.apnea,
@@ -213,7 +214,7 @@ export const HOTEL_PAGE = {
 const RESTAURANT_TEPPANYAKI = img("hotel/teppan-scene-2-ps-1-1024x683", "Teppanyaki dining at the ALM Japanese Restaurant");
 
 export const RESTAURANT_PAGE = {
-  hero: { eyebrow: "Alaminos, Laguna", title: RESTAURANT.title, lede: RESTAURANT.tagline, status: RESTAURANT.status, image: RESTAURANT_TEPPANYAKI },
+  hero: { eyebrow: "Alaminos, Laguna", title: RESTAURANT.title, lede: RESTAURANT.tagline, status: RESTAURANT.status, statusTone: "live" as const, image: RESTAURANT_TEPPANYAKI },
   overview: { eyebrow: "Restaurant overview", title: "A 600sqm landmark for authentic Japanese dining", text: RESTAURANT.intro, features: RESTAURANT.sections },
   reservation: {
     eyebrow: "Plan your visit",

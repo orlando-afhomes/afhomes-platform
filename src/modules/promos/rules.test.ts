@@ -10,6 +10,7 @@ const promo: Promo = {
   startDate: "2026-12-01", endDate: "2026-12-31",
   earnOutletIds: ["tep"], earnPesosPerPointCentavos: 10_000, // P100 per point
   redeemOutletIds: ["tep", "cafe"], pointsExpiryDate: "2027-03-31",
+  rewards: [], publicTitle: "", publicSummary: "", publicTerms: "", published: false,
   createdAt: "2026-11-13", updatedAt: "2026-11-13",
 };
 

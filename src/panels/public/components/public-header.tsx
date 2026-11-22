@@ -17,6 +17,7 @@ const NAV_ITEMS: SiteNavItem[] = [
       { ...MAIN_NAV[3], description: "Permits, registrations and disclosures" }, // Compliance
       { ...MAIN_NAV[4], description: "Answers to common questions" }, // FAQ
       { ...MAIN_NAV[5], description: "News and stories from AFhomes" }, // Blog
+      { ...MAIN_NAV[7], description: "Promo Points offers and rewards" }, // Offers
     ],
   },
   MAIN_NAV[6], // Contact stays a top-level link (owner, 2026-11-18)

@@ -1,19 +1,24 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type {
-  PromoInput, PromoLedgerRow, PromoMembershipBalance, PromoRepository, PromoView, RecordPromoUseInput,
+  PromoInput, PromoLedgerRow, PromoMembershipBalance, PromoRepository, PromoView, PublicPromoOffer, RecordPromoUseInput,
 } from "@/data/contracts/promo-repository";
 import { currentCardHolders, requireCurrentScan } from "./member-qr-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { canUsePoints, isUseVoided, promoBalance, promoBalanceByPromo } from "@/modules/promos/rules";
-import type { Promo, PromoPointsEntry } from "@/modules/promos/types";
+import type { Promo, PromoPointsEntry, PromoReward } from "@/modules/promos/types";
 import { parseManilaDateOnly } from "@/shared/lib/dates";
 import { BusinessRepository, canSeeContract, customerName, nowIso, today } from "./business-base";
+import { activeRoles } from "./dev-identities";
 import { nextId } from "./ids";
 import type { MockStore } from "./seed";
 
 const NAME_MAX = 80;
 const NOTE_MAX = 200;
+const REWARD_NAME_MAX = 80;
+const REWARD_DESCRIPTION_MAX = 300;
+const PUBLIC_TITLE_MAX = 120;
+const PUBLIC_TEXT_MAX = 600;
 const MANAGE_DENIED = "Managing promos is not allowed for this identity.";
 const USE_DENIED = "Recording Promo Points use is not allowed for this identity.";
 
@@ -24,7 +29,13 @@ export class MockPromoRepository extends BusinessRepository implements PromoRepo
 
   private view(promo: Promo): PromoView {
     const pointsEarned = this.store.promoPoints.filter((e) => e.promoId === promo.id && e.type === "earn").reduce((sum, e) => sum + e.points, 0);
-    return { ...promo, earnOutletIds: [...promo.earnOutletIds], redeemOutletIds: [...promo.redeemOutletIds], pointsEarned };
+    return {
+      ...promo,
+      earnOutletIds: [...promo.earnOutletIds],
+      redeemOutletIds: [...promo.redeemOutletIds],
+      rewards: promo.rewards.map((reward) => ({ ...reward })),
+      pointsEarned,
+    };
   }
 
   private find(id: string): Promo {
@@ -55,13 +66,57 @@ export class MockPromoRepository extends BusinessRepository implements PromoRepo
     if (!Number.isSafeInteger(input.earnPesosPerPointCentavos) || input.earnPesosPerPointCentavos <= 0) throw new Error("Enter pesos per point above zero.");
     const expiry = input.pointsExpiryDate || null;
     if (expiry !== null && (!parseManilaDateOnly(expiry) || expiry < input.endDate)) throw new Error("Points must expire on or after the promo end date.");
+    const redeemOutletIds = this.checkOutlets(input.redeemOutletIds, "redeeming");
+    const rewards = this.cleanRewards(input.rewards ?? current?.rewards ?? [], redeemOutletIds);
+    const publicTitle = (input.publicTitle ?? current?.publicTitle ?? "").trim();
+    const publicSummary = (input.publicSummary ?? current?.publicSummary ?? "").trim();
+    const publicTerms = (input.publicTerms ?? current?.publicTerms ?? "").trim();
+    if (publicTitle.length > PUBLIC_TITLE_MAX) throw new Error(`The public title must be ${PUBLIC_TITLE_MAX} characters or fewer.`);
+    if (publicSummary.length > PUBLIC_TEXT_MAX) throw new Error(`The public summary must be ${PUBLIC_TEXT_MAX} characters or fewer.`);
+    if (publicTerms.length > PUBLIC_TEXT_MAX) throw new Error(`The public terms must be ${PUBLIC_TEXT_MAX} characters or fewer.`);
+    const published = input.published ?? current?.published ?? false;
+    if (published) {
+      if (input.status !== "active") throw new Error("Only an active promo can be published.");
+      if (!publicTitle || !publicSummary || !publicTerms) throw new Error("Enter the public title, summary and terms before publishing.");
+      if (rewards.filter((reward) => reward.status === "active").length === 0) throw new Error("Configure at least one reward before publishing.");
+      for (const reward of rewards.filter((item) => item.status === "active")) {
+        if (!Number.isSafeInteger(reward.pointsCost) || reward.pointsCost <= 0) throw new Error(`Enter the approved point cost for ${reward.name}.`);
+      }
+    }
     return {
       name, status: input.status, startDate: input.startDate, endDate: input.endDate,
       earnOutletIds: this.checkOutlets(input.earnOutletIds, "earning"),
       earnPesosPerPointCentavos: input.earnPesosPerPointCentavos,
-      redeemOutletIds: this.checkOutlets(input.redeemOutletIds, "redeeming"),
+      redeemOutletIds,
       pointsExpiryDate: expiry,
+      rewards,
+      publicTitle,
+      publicSummary,
+      publicTerms,
+      published,
     };
+  }
+
+  private cleanRewards(rewards: PromoInput["rewards"], redeemOutletIds: string[]): PromoReward[] {
+    const rows = rewards ?? [];
+    const seenNames = new Set<string>();
+    const seenIds = new Set<string>();
+    return rows.map((input) => {
+      const name = input.name.trim().replace(/\s+/g, " ");
+      if (!name) throw new Error("Every reward needs a name.");
+      if (name.length > REWARD_NAME_MAX) throw new Error(`Reward names must be ${REWARD_NAME_MAX} characters or fewer.`);
+      if (seenNames.has(name.toLowerCase())) throw new Error("Reward names must be unique within a promo.");
+      seenNames.add(name.toLowerCase());
+      const description = input.description.trim();
+      if (description.length > REWARD_DESCRIPTION_MAX) throw new Error(`Reward descriptions must be ${REWARD_DESCRIPTION_MAX} characters or fewer.`);
+      if (!this.store.outlets.some((outlet) => outlet.id === input.outletId)) throw new Error("Select a reward outlet from the outlet list.");
+      if (!redeemOutletIds.includes(input.outletId)) throw new Error("A reward outlet must also be one of the promo's redeem outlets.");
+      if (!Number.isSafeInteger(input.pointsCost) || input.pointsCost <= 0) throw new Error(`Enter the approved point cost for ${name}.`);
+      const status = input.status === "archived" ? "archived" : "active";
+      const id = input.id && !seenIds.has(input.id) ? input.id : nextId(this.store, "promoReward", "pr");
+      seenIds.add(id);
+      return { id, name, description, outletId: input.outletId, pointsCost: input.pointsCost, status };
+    });
   }
 
   private visibleMemberships(identity: DevIdentity) {
@@ -69,6 +124,12 @@ export class MockPromoRepository extends BusinessRepository implements PromoRepo
       const contract = this.store.contracts.find((item) => item.id === membership.contractId);
       return contract && canSeeContract(identity, contract);
     });
+  }
+
+  /** GSD reaches only the scanned membership for a Promo Points use and its balance. */
+  private promoMemberships(identity: DevIdentity) {
+    if (activeRoles(identity).includes("gsd")) return this.store.memberships;
+    return this.visibleMemberships(identity);
   }
 
   private row(entry: PromoPointsEntry): PromoLedgerRow {
@@ -89,6 +150,29 @@ export class MockPromoRepository extends BusinessRepository implements PromoRepo
 
   async list(options?: MockAsyncOptions): Promise<PromoView[]> {
     return this.run(options, () => this.store.promos.map((promo) => this.view(promo)));
+  }
+
+  async publicOffers(options?: MockAsyncOptions): Promise<PublicPromoOffer[]> {
+    return this.run(options, () => {
+      const date = today();
+      const outletName = (id: string) => this.store.outlets.find((outlet) => outlet.id === id)?.name ?? "AFhomes outlet";
+      return this.store.promos
+        .filter((promo) => promo.published && promo.status === "active" && date >= promo.startDate && date <= promo.endDate)
+        .map((promo) => ({
+          id: promo.id,
+          title: promo.publicTitle,
+          summary: promo.publicSummary,
+          terms: promo.publicTerms,
+          startDate: promo.startDate,
+          endDate: promo.endDate,
+          pointsExpiryDate: promo.pointsExpiryDate,
+          earnOutlets: promo.earnOutletIds.map(outletName),
+          rewards: promo.rewards
+            .filter((reward) => reward.status === "active" && reward.pointsCost > 0 && promo.redeemOutletIds.includes(reward.outletId))
+            .map((reward) => ({ id: reward.id, name: reward.name, description: reward.description, outletName: outletName(reward.outletId), pointsCost: reward.pointsCost })),
+        }))
+        .filter((offer) => offer.title && offer.summary && offer.terms && offer.rewards.length > 0);
+    });
   }
 
   async create(input: PromoInput, options?: MockAsyncOptions): Promise<PromoView> {
@@ -159,7 +243,7 @@ export class MockPromoRepository extends BusinessRepository implements PromoRepo
   async balances(options?: MockAsyncOptions): Promise<PromoMembershipBalance[]> {
     return this.run(options, (identity) => {
       const result: PromoMembershipBalance[] = [];
-      for (const membership of this.visibleMemberships(identity)) {
+      for (const membership of this.promoMemberships(identity)) {
         const entries = this.store.promoPoints.filter((entry) => entry.membershipId === membership.id);
         if (entries.length === 0) continue;
         result.push({
@@ -179,17 +263,24 @@ export class MockPromoRepository extends BusinessRepository implements PromoRepo
   async recordUse(input: RecordPromoUseInput, options?: MockAsyncOptions): Promise<PromoLedgerRow> {
     return this.run(options, (identity) => {
       this.require(identity, "promo-points.use", USE_DENIED);
-      const membership = this.visibleMemberships(identity).find((item) => item.id === input.membershipId);
+      const membership = this.promoMemberships(identity).find((item) => item.id === input.membershipId);
       if (!membership || !membership.cardId) throw new Error("Select a membership with a VIP Number.");
       const promo = this.find(input.promoId);
       const note = input.note.trim();
       if (note.length > NOTE_MAX) throw new Error(`The note must be ${NOTE_MAX} characters or fewer.`);
       if (input.identityChecked !== true) throw new Error("Confirm you checked the cardholder's ID.");
       if (!input.requestId?.trim()) throw new Error("A request key is required.");
+      const reward = input.rewardId
+        ? promo.rewards.find((item) => item.id === input.rewardId && item.status === "active")
+        : undefined;
+      if (input.rewardId && !reward) throw new Error("This reward is not available.");
+      const outletId = reward ? reward.outletId : (input.outletId ?? "");
+      const points = reward ? reward.pointsCost : Number(input.points);
       const previous = this.store.promoPoints.find((entry) => entry.type === "use" && entry.actorId === identity.id && entry.requestId === input.requestId);
       if (previous) {
-        if (previous.membershipId !== input.membershipId || previous.promoId !== input.promoId || previous.outletId !== input.outletId
-          || previous.points !== input.points || (previous.note ?? "") !== note || previous.holder !== input.holder) {
+        if (previous.membershipId !== input.membershipId || previous.promoId !== input.promoId || previous.outletId !== outletId
+          || previous.points !== points || (previous.note ?? "") !== note || previous.holder !== input.holder
+          || previous.rewardId !== input.rewardId) {
           throw new Error("This request key was already used with different details.");
         }
         return this.row(previous);
@@ -199,15 +290,16 @@ export class MockPromoRepository extends BusinessRepository implements PromoRepo
       if (holder?.info.status !== "active") throw new Error("Select an active cardholder.");
       const entries = this.store.promoPoints.filter((entry) => entry.membershipId === membership.id);
       const available = promoBalance(entries, today(), this.store.promos, promo.id).available;
-      const check = canUsePoints(available, input.points, promo, input.outletId, today());
+      const check = canUsePoints(available, points, promo, outletId, today());
       if (!check.ok) throw new Error(check.error);
       const entry: PromoPointsEntry = {
         id: nextId(this.store, "promoPoints", "pp"), promoId: promo.id, membershipId: membership.id, type: "use",
-        points: input.points, outletId: input.outletId, note: note || undefined, date: today(), actorId: identity.id,
+        points, outletId, note: note || undefined, date: today(), actorId: identity.id,
         requestId: input.requestId, holder: input.holder, identityChecked: true,
+        rewardId: reward?.id, rewardName: reward?.name, rewardPointsCost: reward?.pointsCost,
       };
       this.store.promoPoints.push(entry);
-      this.record(identity, BUSINESS_AUDIT_ACTIONS.PROMO_POINTS_USED, promo.id, String(available), String(available - input.points), { related: [membership.id, entry.id] });
+      this.record(identity, BUSINESS_AUDIT_ACTIONS.PROMO_POINTS_USED, promo.id, String(available), String(available - points), { related: [membership.id, entry.id] });
       return this.row(entry);
     });
   }

@@ -127,6 +127,7 @@ export const ADMIN_AREA_TABS = {
     { value: "waivers", label: "Gift Exceptions", formerHref: "/admin/stay-points", rule: { grants: ["stay-points"] } },
     { value: "promos", label: "Promos", formerHref: "/admin/promos", rule: { grants: ["stay-points"] } },
     { value: "promo-points", label: "Promo Points", formerHref: "/admin/promos/points", rule: { grants: ["stay-points"] } },
+    { value: "gsd-points", label: "GSD Point Service", formerHref: "/admin/stay-points", rule: { grants: ["stay-points"], operation: "promo-points.use" } },
   ],
   redemption: [
     { value: "bookings", label: "Bookings", formerHref: "/admin/redemption", rule: { grants: ["redemption"] } },

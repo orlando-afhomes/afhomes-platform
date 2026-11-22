@@ -15,6 +15,7 @@ const ACCOUNT_ROWS: Array<[string, string, MockPortal]> = [
   ["finance@afhomes.test", "dev-finance", "staff"],
   ["hr@afhomes.test", "dev-hr", "staff"],
   ["clerk@afhomes.test", "dev-clerk", "staff"],
+  ["gsd@afhomes.test", "dev-gsd", "staff"],
   ["svd.alpha@afhomes.test", "dev-svd-a", "sales"],
   ["ssm.alpha@afhomes.test", "dev-ssm-a", "sales"],
   ["sm.alpha@afhomes.test", "dev-sm-a", "sales"],

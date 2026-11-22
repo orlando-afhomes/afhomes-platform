@@ -15,6 +15,7 @@ function useInvalidatePromos() {
   return () => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.business.all });
     void queryClient.invalidateQueries({ queryKey: queryKeys.audit.all });
+    void queryClient.invalidateQueries({ queryKey: ["public-offers"] });
   };
 }
 
@@ -22,6 +23,12 @@ export function usePromos() {
   const { promos } = useMockRepositories();
   const { identity } = useDevIdentity();
   return useQuery({ queryKey: queryKeys.business.list("promos", identity.id), queryFn: ({ signal }) => promos.list({ signal }) });
+}
+
+/** Public, customer-safe offers. No identity partition: only published fields are returned. */
+export function usePublicOffers() {
+  const { promos } = useMockRepositories();
+  return useQuery({ queryKey: ["public-offers"], queryFn: ({ signal }) => promos.publicOffers({ signal }) });
 }
 
 export function usePromoLedger() {

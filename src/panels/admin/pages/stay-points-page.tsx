@@ -36,6 +36,7 @@ import { usePromoPointsBalanceSection } from "../components/promo-points-balance
 import { useAdminAreaTabAccess } from "../use-role-aware-navigation";
 import { PromoPointsPanel, RecordPromoUseButton } from "./promo-points-page";
 import { AddPromoButton, PromosPanel } from "./promos-page";
+import { GsdPointsPanel } from "./gsd-points-page";
 
 export const GIFT_ACTIONS: Record<GiftLedgerEntry["type"], string> = {
   release: "Given", waiver_release: "Given by exception", expiry: "Expired", transfer: "Lost on transfer",
@@ -475,6 +476,7 @@ export function StayPointsAreaPage() {
           { value: "waivers", label: "Gift Exceptions", allowed: access.waivers, render: () => withPicker(<WaiversPanel />) },
           { value: "promos", label: "Promos", allowed: access.promos, render: () => <PromosPanel /> },
           { value: "promo-points", label: "Promo Points", allowed: access["promo-points"], render: () => <PromoPointsPanel /> },
+          { value: "gsd-points", label: "GSD Point Service", allowed: access["gsd-points"], render: () => <GsdPointsPanel /> },
         ]}
       />
     </StayPointsMembershipProvider>

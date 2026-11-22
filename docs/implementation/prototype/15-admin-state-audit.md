@@ -18,7 +18,7 @@ The owner chose an audit-first approach so that a large number of admin pages ar
 - Enumerate every `src/app/admin/**/page.tsx`.
 - Record the current loading, empty, error and pending-button coverage.
 - Check the shared primitives: `DataTable`, `QueryState`, `Button loading`, `useActionRunner`, `FormDialog`.
-- Write `docs/implementation/ui-state-audit.md`.
+- Write `docs/implementation/prototype/admin-ui-state-audit.md`.
 - Recommend Phase 2 batches by risk.
 
 ## Out of scope
@@ -38,7 +38,7 @@ The owner chose an audit-first approach so that a large number of admin pages ar
 | Acceptance | The number of rows equals the number of admin page files; every row has a route, surface type, four state columns, a gap and a priority. |
 | Status | Complete on 2026-11-18; audit document written |
 
-**File:** Create `docs/implementation/ui-state-audit.md`.
+**File:** Create `docs/implementation/prototype/admin-ui-state-audit.md`.
 
 **Method**
 

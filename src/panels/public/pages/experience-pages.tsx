@@ -37,7 +37,7 @@ export function ResortPage() {
   const resort = OFFICES.find((office) => office.id === "head") ?? OFFICES[0];
   return (
     <div className="site-home site-experience-page site-experience-page--resort">
-      <ExperienceHero eyebrow={hero.eyebrow} title={hero.title} lede={hero.lede} status={hero.status} image={hero.image}>
+      <ExperienceHero eyebrow={hero.eyebrow} title={hero.title} lede={hero.lede} status={hero.status} statusTone={hero.statusTone} image={hero.image}>
         <SiteButton href="#amenities" action="amenities" surface="dark">View amenities</SiteButton>
         <SiteButton href="/contact" action="contact" surface="dark">Contact us</SiteButton>
       </ExperienceHero>
@@ -67,7 +67,7 @@ export function HotelPage() {
   const { hero, overview, gallery, apnea, lounge, closing } = HOTEL_PAGE;
   return (
     <div className="site-home site-experience-page site-experience-page--hotel">
-      <ExperienceHero eyebrow={hero.eyebrow} title={hero.title} lede={hero.lede} status={hero.status} image={hero.image}>
+      <ExperienceHero eyebrow={hero.eyebrow} title={hero.title} lede={hero.lede} status={hero.status} statusTone={hero.statusTone} image={hero.image}>
         <SiteButton href="#overview" action="learn" surface="dark">Learn more</SiteButton>
         <SiteButton href="/contact" action="contact" surface="dark">Contact us</SiteButton>
       </ExperienceHero>
@@ -86,7 +86,7 @@ export function RestaurantPage() {
   const { hero, overview, reservation, closing } = RESTAURANT_PAGE;
   return (
     <div className="site-home site-experience-page site-experience-page--restaurant">
-      <ExperienceHero eyebrow={hero.eyebrow} title={hero.title} lede={hero.lede} status={hero.status} image={hero.image}>
+      <ExperienceHero eyebrow={hero.eyebrow} title={hero.title} lede={hero.lede} status={hero.status} statusTone={hero.statusTone} image={hero.image}>
         <SiteButton href="#overview" action="learn" surface="dark">Learn more</SiteButton>
         <SiteButton href="/contact" action="contact" surface="dark">Contact us</SiteButton>
       </ExperienceHero>

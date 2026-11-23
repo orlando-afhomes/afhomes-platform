@@ -220,43 +220,43 @@ function MonthSwitchSection({ period, enabled }: { period: string; enabled: bool
 
   function signOff() {
     confirmRun({
-      title: "Sign Off the Switch?",
-      description: `Record that ${period} closed with no unexplained differences. This completes the workbook comparison for the month; payout confirmation keeps its existing controls and is unchanged by this record. This is audited with your name and the time.`,
-      confirmText: "Sign Off", tone: "success",
+      title: "Complete the Comparison?",
+      description: `Confirm that ${period} matches the company spreadsheets with no unexplained differences. Payouts are not affected. This is recorded with your name and the time.`,
+      confirmText: "Complete", tone: "success",
       action: () => record.mutateAsync(period),
-      successTitle: "Switch signed off.", errorTitle: "Could not sign off",
+      successTitle: "Comparison completed.", errorTitle: "Could not complete the comparison",
     });
   }
 
   const current = status.data;
   return (
-    <section aria-label="Switch off the company spreadsheets" className="tw:flex tw:flex-col tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-4">
+    <section aria-label="Complete spreadsheet comparison" className="tw:flex tw:flex-col tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-4">
       <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
-        <h2 className="tw:text-base tw:font-semibold">Switch Off the Company Spreadsheets</h2>
-        {current?.signOff ? <BizBadge status="approved" label="Signed off" /> : null}
+        <h2 className="tw:text-base tw:font-semibold">Complete Spreadsheet Comparison</h2>
+        {current?.signOff ? <BizBadge status="approved" label="Completed" /> : null}
       </div>
-      <p className="tw:text-sm tw:text-muted-foreground">A comparison-only record under doc 08 section 16: signing off completes the spreadsheet comparison for the month. It does not change payout rules.</p>
+      <p className="tw:text-sm tw:text-muted-foreground">Confirm each month matches the company spreadsheets. Payouts are not affected.</p>
       <QueryState isLoading={status.isLoading} error={status.error ?? record.error}>
         {current?.signOff ? (
           <p className="tw:text-sm">
-            Signed off for {current.signOff.month} by {current.signOff.actorId} on {formatDate(current.signOff.recordedAt)}: {current.signOff.checkedMeasures} measures and {current.signOff.checkedLeaders} leaders checked with no unexplained differences.
+            Completed for {current.signOff.month} by {current.signOff.actorId} on {formatDate(current.signOff.recordedAt)}: {current.signOff.checkedMeasures} measures and {current.signOff.checkedLeaders} leaders checked with no unexplained differences.
           </p>
         ) : !current?.closed ? (
-          <p className="tw:text-sm tw:text-muted-foreground">Close the month before the switch can be signed off.</p>
+          <p className="tw:text-sm tw:text-muted-foreground">Close the month first.</p>
         ) : current.unexplained.length > 0 ? (
           <div className="tw:flex tw:flex-col tw:gap-2">
-            <p className="tw:text-sm">Resolve every item before the switch can be signed off:</p>
+            <p className="tw:text-sm">Resolve every item first:</p>
             <ul className="tw:list-disc tw:pl-5 tw:text-sm">
               {current.unexplained.map((item) => <li key={item}>{item}</li>)}
             </ul>
           </div>
         ) : isSuper ? (
           <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
-            <p className="tw:text-sm">No unexplained differences for {period}. The switch can be signed off.</p>
-            <Button type="button" variant="success" loading={record.isPending} onClick={signOff}>Sign Off the Switch</Button>
+            <p className="tw:text-sm">No unexplained differences for {period}.</p>
+            <Button type="button" variant="success" loading={record.isPending} onClick={signOff}>Complete Comparison</Button>
           </div>
         ) : (
-          <p className="tw:text-sm tw:text-muted-foreground">No unexplained differences for {period}. Only the Super Administrator signs off the switch.</p>
+          <p className="tw:text-sm tw:text-muted-foreground">No unexplained differences for {period}. Only the Super Administrator can complete the comparison.</p>
         )}
       </QueryState>
       {dialog}

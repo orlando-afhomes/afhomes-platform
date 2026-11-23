@@ -15,12 +15,12 @@ const newKey = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? 
 const fmt = (n: number) => n.toLocaleString("en-PH");
 
 /** Records a points booking for a cardholder (office staff entry, doc 10 section 9). */
-export function RedemptionBookingDialog({ open, overview, onClose, selected }: { open: boolean; overview: RedemptionOverview; onClose: () => void; selected?: import("@/data/contracts/member-qr-repository").MemberQrHolder }) {
+export function RedemptionBookingDialog({ open, overview, onClose, selected, presetVenueId }: { open: boolean; overview: RedemptionOverview; onClose: () => void; selected?: import("@/data/contracts/member-qr-repository").MemberQrHolder; presetVenueId?: string }) {
   const create = useCreateRedemptionBooking();
   const products = useVipProducts();
   const [requestId, setRequestId] = useState(newKey);
   const [membershipId, setMembershipId] = useState(selected?.membershipId ?? "");
-  const [venueId, setVenueId] = useState("");
+  const [venueId, setVenueId] = useState(presetVenueId ?? "");
   const [roomType, setRoomType] = useState("");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
@@ -34,6 +34,7 @@ export function RedemptionBookingDialog({ open, overview, onClose, selected }: {
   const allowsSupplementary = ((products.data ?? []).find((item) => item.code === member?.productCode)?.supplementaryHolders ?? 0) > 0;
   const version = member?.claimDate ? selectTableVersion(overview.tableVersions, member.claimDate) : null;
   const venues = overview.venues.filter((item) => item.status === "open");
+  const roomLabel = /resort|villa/i.test(venues.find((item) => item.id === venueId)?.name ?? "") ? "Villa type" : "Room type";
   const rooms = version && venueId ? version.rows.filter((row) => row.venueId === venueId).map((row) => row.roomType) : [];
 
   const holidayDates = new Set(overview.holidays.filter((item) => !item.removed).map((item) => item.date));
@@ -49,7 +50,7 @@ export function RedemptionBookingDialog({ open, overview, onClose, selected }: {
   const nights = ready ? (price([]).value?.nights ?? []) : [];
 
   const reset = () => {
-    setMembershipId(""); setVenueId(""); setRoomType(""); setCheckIn(""); setCheckOut(""); setGuests("2"); setHolder("Primary cardholder"); setCash([]); setAmount(""); setError(undefined);
+    setMembershipId(""); setVenueId(presetVenueId ?? ""); setRoomType(""); setCheckIn(""); setCheckOut(""); setGuests("2"); setHolder("Primary cardholder"); setCash([]); setAmount(""); setError(undefined);
     setRequestId(newKey());
   };
   const close = () => { reset(); onClose(); };
@@ -71,8 +72,8 @@ export function RedemptionBookingDialog({ open, overview, onClose, selected }: {
     <FormDialog open={open} title="New Booking with Points" description="Each night: points or cash." submitText="Record Booking" pending={create.isPending} error={error} onClose={close} onSubmit={() => void submit()}>
       {selected ? <p>{selected.holderName} · {selected.vipNumber}</p> : <SelectField label="Cardholder" required value={membershipId} placeholder="Choose a card" options={eligible.map((item) => ({ value: item.membershipId, label: `${item.customerName} · ${item.vipNumber}` }))} onChange={(value) => { setMembershipId(value); setVenueId(""); setRoomType(""); setCash([]); }} hint={member ? `Available: ${fmt(member.weekday.available)} weekday, ${fmt(member.weekend.available)} weekend points.` : undefined} />}
       {selected && member ? <p>Available: {fmt(member.weekday.available)} weekday and {fmt(member.weekend.available)} weekend points.</p> : null}
-      <SelectField label="Venue" required value={venueId} options={venues.map((item) => ({ value: item.id, label: item.name }))} onChange={(value) => { setVenueId(value); setRoomType(""); setCash([]); }} hint="Only open overnight venues of AFhomes Direct Operations are listed." />
-      <SelectField label="Room type" required value={roomType} options={rooms.map((item) => ({ value: item, label: item }))} onChange={(value) => { setRoomType(value); setCash([]); }} disabled={!venueId} />
+      <SelectField label="Venue" required value={venueId} disabled={Boolean(presetVenueId)} options={venues.map((item) => ({ value: item.id, label: item.name }))} onChange={(value) => { setVenueId(value); setRoomType(""); setCash([]); }} hint={presetVenueId ? undefined : "Only open overnight venues of AFhomes Direct Operations are listed."} />
+      <SelectField label={roomLabel} required value={roomType} options={rooms.map((item) => ({ value: item, label: item }))} onChange={(value) => { setRoomType(value); setCash([]); }} disabled={!venueId} />
       <StandardDateField label="Check-in" required value={checkIn} onChange={(value) => { setCheckIn(value); setCash([]); }} />
       <StandardDateField label="Departure" required value={checkOut} onChange={(value) => { setCheckOut(value); setCash([]); }} />
       <PointsField label="Guests" required value={guests} onChange={setGuests} />

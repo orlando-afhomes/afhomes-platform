@@ -1337,6 +1337,18 @@ describe("public accreditation verification", () => {
 });
 
 describe("resort bills", () => {
+  it("issues a unique OR-YYYYMMDD-NNNN number for each resort bill entered without one", async () => {
+    const store = createMockStore();
+    const clerk = as(store, "dev-clerk");
+    const date = manilaToday();
+    const bill = { action: "enter", membershipId: "memb-1", venueId: "venue-wellness-hotel", date, grossCentavos: pesos(500), excludedCentavos: 0, holder: "primary", description: "Spa" } as const;
+    const first = (await clerk.stayPoints.act(bill)).spends.at(-1)!;
+    const second = (await clerk.stayPoints.act(bill)).spends.at(-1)!;
+    const stamp = date.replaceAll("-", "");
+    expect(first.verificationRef).toBe(`OR-${stamp}-0001`);
+    expect(second.verificationRef).toBe(`OR-${stamp}-0002`);
+  });
+
   it("lets Clerk enter a bill, blocks duplicate ORs and permits Finance approval only", async () => {
     const store = createMockStore();
     const clerk = as(store, "dev-clerk");

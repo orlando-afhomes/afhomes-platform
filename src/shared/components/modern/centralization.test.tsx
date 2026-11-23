@@ -89,7 +89,7 @@ describe("centralized search and filter", () => {
     expect(status).toBe("all");
   });
 
-  it("puts the header on its own line above a wrapping control row", () => {
+  it("puts the header on its own line above a single control row", () => {
     render(
       <FilterBar
         header={<p>View chips</p>}
@@ -101,7 +101,8 @@ describe("centralized search and filter", () => {
     );
     const header = screen.getByText("View chips").parentElement as HTMLElement;
     const row = screen.getByLabelText("Search items").closest("div")?.parentElement as HTMLElement;
-    expect(row).toHaveClass("tw:md:flex-wrap");
+    // The row follows the width of the bar (container query) and never wraps once there is room for one row.
+    expect(row).toHaveClass("tw:@md:flex-row", "tw:@md:flex-nowrap");
     expect(row.contains(header)).toBe(false);
     expect(header.parentElement).toBe(row.parentElement);
   });

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ComponentProps } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { cn } from "@/shared/lib/utils";
@@ -15,6 +16,7 @@ export function SearchInput({
   placeholder,
   className,
   inputClassName,
+  inputProps,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -22,6 +24,8 @@ export function SearchInput({
   placeholder?: string;
   className?: string;
   inputClassName?: string;
+  /** Extra input attributes, e.g. keyboard handlers and aria-activedescendant for a suggestion list. */
+  inputProps?: Omit<ComponentProps<typeof Input>, "value" | "onChange" | "type" | "className">;
 }) {
   return (
     <div className={cn("tw:relative tw:w-full tw:sm:max-w-xs", className)}>
@@ -36,6 +40,7 @@ export function SearchInput({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className={cn("tw:h-11 tw:pl-8", inputClassName)}
+        {...inputProps}
       />
     </div>
   );

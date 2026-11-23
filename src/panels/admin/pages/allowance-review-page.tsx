@@ -202,7 +202,7 @@ export function AllowanceReviewPanel() {
           <AdminSection title="Assembled Month Figures">
             <QueryState isLoading={assembly.isLoading} error={assembly.error}>
               <DataTable data={assembly.data?.leaders ?? []} columns={assemblyColumns} getRowId={(row) => row.memberId} caption="Assembled Month Figures" emptyText="No Internal Seller leaders found." />
-              <p className="tw:text-sm tw:text-muted-foreground">Assembled from the month&apos;s business data (doc 08 section 15):
+              <p className="tw:text-sm tw:text-muted-foreground">Assembled from the month&apos;s business data:
               Closed Deal value and collections per leader, with vacant seats rolled up. Copy fills the form; split the
               figures into the Qualifying and Extended stretches, enter assumed collection credit, and confirm the
               appointment, window and engagement checks against the company spreadsheet.</p>

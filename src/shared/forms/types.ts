@@ -5,6 +5,9 @@ export type FieldOption<T extends string = string> = {
   label: string;
   /** Shown but not selectable (honored by the modern select field). */
   disabled?: boolean;
+  /** Optional icon and second line shown on the option row of the modern select field. */
+  icon?: import("lucide-react").LucideIcon;
+  description?: string;
 };
 
 export type BaseFieldProps = {

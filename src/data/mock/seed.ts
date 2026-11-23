@@ -19,6 +19,7 @@ import { seedTierLevels } from "@/modules/vip/tier-levels";
 import type { Account } from "@/modules/accounts/types";
 import type { Promo, PromoPointsEntry } from "@/modules/promos/types";
 import type { Experience } from "@/modules/experiences/types";
+import type { RestaurantReservation } from "@/modules/reservations/types";
 import { seedExperiences } from "@/modules/experiences/sample-seed";
 import type { AuditEvent } from "@/modules/audit/types";
 import type { ReceiptImportBatch } from "@/modules/imports/receipt-import";
@@ -43,6 +44,8 @@ export type MockStore = {
   /** Receipts recorded without a matching contract (F6.5); browser memory only. Empty in the seed. */
   unmatchedReceipts: UnmatchedReceipt[];
   memberQr: Record<string, { holderKey: string; token: string }>;
+  /** Restaurant table reservations (owner decision 2026-11-23); browser memory only. Empty in the seed. */
+  restaurantReservations: RestaurantReservation[];
   memberships: Membership[];
   commissions: Commission[];
   commissionRateSettings: CommissionRateSetting[];
@@ -117,6 +120,7 @@ export function createSeedStore(today?: string): MockStore {
     closedMonths: seed.closedMonths,
     unmatchedReceipts: seed.unmatchedReceipts,
     memberQr: seed.memberQr,
+    restaurantReservations: seed.restaurantReservations,
     memberships: seed.memberships,
     commissions: seed.commissions,
     commissionRateSettings: seed.commissionRateSettings,
@@ -187,6 +191,7 @@ export function createMockStore(seed: MockStore = createSeedStore()): MockStore 
     closedMonths: clone(seed.closedMonths),
     unmatchedReceipts: clone(seed.unmatchedReceipts),
     memberQr: clone(seed.memberQr),
+    restaurantReservations: clone(seed.restaurantReservations),
     memberships: clone(seed.memberships),
     commissions: clone(seed.commissions),
     commissionRateSettings: clone(seed.commissionRateSettings),

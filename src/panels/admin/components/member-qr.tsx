@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, ScanLine } from "lucide-react";
+import { ChevronRight, ImageUp, ScanLine } from "lucide-react";
 import type { MemberQrHolder, MemberQrCode } from "@/data/contracts/member-qr-repository";
 import { useOperation } from "@/data/business-queries";
 import { useMockRepositories } from "@/data/queries";
@@ -47,7 +47,6 @@ function MemberQrDialog({ membershipId, close }: { membershipId: string; close: 
       <DialogContent className="tw:max-h-[90dvh] tw:overflow-auto">
         <DialogHeader>
           <DialogTitle>Membership QR</DialogTitle>
-          <DialogDescription>Present this code to AFhomes staff.</DialogDescription>
         </DialogHeader>
         {query.isPending ? <p role="status">Loading QR codes…</p> : null}
         {query.isError ? <p role="alert">{query.error.message}</p> : null}
@@ -117,6 +116,8 @@ function Scanner({ close, select }: { close: () => void; select: (holder: Member
   const { memberQr } = useMockRepositories();
   const [video, setVideo] = useState<HTMLVideoElement | null>(null);
   const [error, setError] = useState("");
+  const [reading, setReading] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
   const onSelect = useRef(select);
   useEffect(() => { onSelect.current = select; }, [select]);
   useEffect(() => {
@@ -162,6 +163,29 @@ function Scanner({ close, select }: { close: () => void; select: (holder: Member
     };
   }, [memberQr, video]);
 
+  // A downloaded or saved QR image works the same as a live scan: decode it, then check it with the same rules.
+  const readImage = async (file: File | undefined) => {
+    if (!file || reading) return;
+    if (!file.type.startsWith("image/") || file.size > 8 * 1024 * 1024) {
+      setError("Choose a QR image (PNG or JPG) no larger than 8 MB.");
+      return;
+    }
+    setReading(true);
+    setError("");
+    const location = URL.createObjectURL(file);
+    try {
+      const { BrowserQRCodeReader } = await import("@zxing/browser");
+      const text = (await new BrowserQRCodeReader().decodeFromImageUrl(location)).getText();
+      onSelect.current(await memberQr.resolve(text));
+    } catch (failure) {
+      const message = failure instanceof Error ? failure.message : "";
+      setError(/AFhomes|no longer available/.test(message) ? message : "No QR code found in this image. Upload a clear picture of the whole QR.");
+    } finally {
+      URL.revokeObjectURL(location);
+      setReading(false);
+    }
+  };
+
   return <Dialog open onOpenChange={(next) => { if (!next) close(); }}>
     <DialogContent>
       <DialogHeader>
@@ -170,6 +194,9 @@ function Scanner({ close, select }: { close: () => void; select: (holder: Member
       </DialogHeader>
       <video ref={setVideo} aria-label="Camera preview" muted playsInline className="tw:aspect-video tw:w-full tw:rounded-md tw:bg-black" />
       {error ? <p role="alert">{error}</p> : null}
+      <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" hidden aria-label="QR image file"
+        onChange={(event) => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; void readImage(file); }} />
+      <Button type="button" variant="info" disabled={reading} onClick={() => fileInput.current?.click()}><ImageUp aria-hidden="true" /> {reading ? "Reading image…" : "Upload QR image"}</Button>
       <Button type="button" variant="outline" onClick={close}>Use manual lookup</Button>
     </DialogContent>
   </Dialog>;

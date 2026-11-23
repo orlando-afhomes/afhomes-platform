@@ -47,8 +47,8 @@ describe("admin sidebar", () => {
   it("groups the areas each role can open", async () => {
     const user = userEvent.setup();
     renderSidebar(false, "dev-finance");
-    await user.click(await screen.findByRole("button", { name: "Money" }));
-    expect(await screen.findByRole("link", { name: "Finance" })).toHaveAttribute("href", "/admin/finance");
+    await user.click(await screen.findByRole("button", { name: "Finance" }));
+    expect(await screen.findByRole("link", { name: "Payments" })).toHaveAttribute("href", "/admin/finance");
     expect(screen.getByRole("link", { name: "Commissions" })).toBeDefined();
     await user.click(screen.getByRole("button", { name: "Member Services" }));
     for (const name of ["Membership", "Stay Points", "Redemption"]) {

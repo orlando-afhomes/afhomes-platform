@@ -342,6 +342,13 @@ U01 to U13 descriptions are in the atlas `COVERAGE.md` section "Incomplete and u
   - The v2 government-ID side of the card is not built, because v3 stores no ID images.
   - Valid Until uses the provisional membership end date (D12).
 
+### Restaurant reservations and Earn Points wording (2026-11-23)
+
+- **Restaurant table reservations (owner, 2026-11-23).** The public site says the ALM Japanese Restaurant takes reservations only and no walk-ins, so New Booking now offers a restaurant table reservation next to the Smart Wellness Hotel room stay and the Hotspring & Ecofarm Resort villa stay.
+  - **No points, no money.** Doc 10 still allows Stay Points only for overnight stays at the two AFhomes Direct Operations; a reservation only records the guest, date, time, number of guests and notes. Prototype data in browser memory, audited, cancellable with a reason.
+  - **Sample limit.** The party size ceiling of 20 is a placeholder because no restaurant capacity rule exists. The owner should confirm it, the opening hours and any deposit or cancellation rule before live use.
+- **Earn Points form wording.** "Gross pre-discount amount" is now "Total Bill Amount" and "Excluded amount" is "Amount Not Eligible for Points". The receipt number is issued by the system and the bill date starts at today. The business rules (doc 09) keep their own terms.
+
 ### New public website (2026-11-16)
 
 - **UI22, public website rebuilt from the old WordPress site.** The content of afhomes.com.ph is carried over; the design and layout are new.

@@ -28,7 +28,8 @@ import { formatDate } from "@/shared/lib/format-date";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { matchesSearch } from "@/shared/lib/search";
 import { Button } from "@/shared/ui/button";
-import { RedemptionBookingDialog } from "../components/redemption-booking-dialog";
+import { NewBookingFlow } from "../components/new-booking-flow";
+import { RestaurantReservationsTable } from "../components/restaurant-reservations-table";
 import { buildRedemptionBookingMenuProps } from "../actions/redemption-actions";
 import { ADMIN_AREA_TABS } from "../navigation";
 import { useAdminAreaTabAccess } from "../use-role-aware-navigation";
@@ -193,7 +194,8 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
               });
               return <RowActionsMenu {...menu} extraItems={menu.extraItems.map((item) => ({ ...item, tone: ACTION_TONE[item.key]?.tone }))} />;
             }} />
-            {createOpen && canBook ? <RedemptionBookingDialog open overview={overview} selected={selected} onClose={onCreateClose} /> : null}
+            <RestaurantReservationsTable selected={selected} />
+            {createOpen && canBook ? <NewBookingFlow overview={overview} selected={selected} onClose={onCreateClose} /> : null}
           </>
         ) : null}
       </QueryState>

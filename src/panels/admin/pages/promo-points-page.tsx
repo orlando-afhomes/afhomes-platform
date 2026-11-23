@@ -1,17 +1,18 @@
 "use client";
 
-import { EMPTY } from "@/shared/lib/empty-value";
+
 import { useQuery } from "@tanstack/react-query";
 import type { CardHolder, MemberQrHolder } from "@/data/contracts/member-qr-repository";
 import { useMockRepositories } from "@/data/queries";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMemo, useState } from "react";
-import { Coins, Link2 } from "lucide-react";
+import { Coins, Gift, IdCard, Link2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useOperation, useStayPoints } from "@/data/business-queries";
 import type { PromoLedgerRow } from "@/data/contracts/promo-repository";
 import { usePromoBalances, usePromoLedger, usePromos, useRecordPromoUse, useVoidPromoUse } from "@/data/promo-queries";
 import { useOutlets } from "@/data/settings-queries";
+import { outletItems } from "../components/outlet-options";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
@@ -43,7 +44,7 @@ export function RecordPromoUseButton({ selected }: { selected?: MemberQrHolder }
   return (
     <>
       <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setOpen(true)}>
-        {selected ? <Link2 aria-hidden="true" /> : <Coins aria-hidden="true" />} Record Points Use
+        {selected ? <Link2 aria-hidden="true" /> : <Coins aria-hidden="true" />} Redeem Points
       </Button>
       {open ? <UseDialog selected={selected} onClose={() => setOpen(false)} /> : null}
     </>
@@ -178,19 +179,41 @@ function UseDialog({ onClose, selected }: { onClose: () => void; selected?: Memb
     });
   };
 
+  const membershipBalance = balances.data?.find((item) => item.membershipId === membershipId);
+  const promoItems = active.map((item) => {
+    const left = membershipBalance?.byPromo.find((entry) => entry.promoId === item.id)?.balance.available;
+    return { value: item.id, label: item.name, icon: Gift, description: membershipId && left !== undefined ? `${left.toLocaleString("en-PH")} points available` : undefined };
+  });
+  const enteredPoints = Number(points.replace(/,/g, ""));
+  const afterUse = Number.isSafeInteger(enteredPoints) && enteredPoints > 0 ? available - enteredPoints : null;
+
   return (
-    <><FormDialog open title="Record Points Use" submitText="Record Use" pending={record.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
-      {selected ? <p>{selected.holderName} · {selected.vipNumber}</p> : <SelectField label="Member" required value={membershipId} placeholder="Select a member"
+    <><FormDialog open title="Redeem Points" submitText="Redeem" pending={record.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
+      {selected ? (
+        <div className="tw:flex tw:items-center tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-muted/40 tw:p-3">
+          <span aria-hidden="true" className="tw:flex tw:size-10 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-lg tw:bg-(--color-brand-soft) tw:text-primary"><IdCard className="tw:size-5" /></span>
+          <p className="tw:flex tw:min-w-0 tw:flex-col"><strong className="tw:truncate">{selected.holderName}</strong><span className="tw:truncate tw:text-xs tw:text-muted-foreground">VIP No. {selected.vipNumber}</span></p>
+        </div>
+      ) : <SelectField label="Member" required value={membershipId} placeholder="Select a member"
         options={(memberships.data ?? []).filter((item) => item.cardId).map((item) => ({ value: item.membershipId, label: `${item.customerName} · ${item.cardId}` }))}
         onChange={(value) => { setMembershipId(value); setHolder("primary"); setIdentityChecked(false); setError(undefined); }} />}
       {!selected && Boolean(holders.data?.length) ? <SelectField label="Cardholder" required value={holder} options={holders.data!.map((item) => ({ value: item.holder, label: item.holderName }))} onChange={(value) => { setHolder(value === "supplementary" ? value : "primary"); setIdentityChecked(false); }} /> : null}
-      <CheckboxField label="I checked the cardholder’s ID" checked={identityChecked} onChange={setIdentityChecked} />
-      <SelectField label="Promo" required value={promoId} placeholder="Select a promo" options={active.map((item) => ({ value: item.id, label: item.name }))}
+      <div className="tw:flex tw:items-start tw:gap-3 tw:rounded-xl tw:border tw:border-primary/25 tw:bg-primary/5 tw:p-3">
+        <ShieldCheck aria-hidden="true" className="tw:mt-0.5 tw:size-5 tw:shrink-0 tw:text-primary" />
+        <CheckboxField label="I checked the cardholder’s ID" checked={identityChecked} onChange={setIdentityChecked} />
+      </div>
+      <SelectField label="Promo" required value={promoId} placeholder="Select a promo" options={promoItems}
         onChange={(value) => { setPromoId(value); setOutletId(""); setError(undefined); }} />
       <SelectField label="Outlet" required value={outletId} placeholder="Select an outlet" disabled={!promo}
-        options={(promo?.redeemOutletIds ?? []).map((id) => ({ value: id, label: outlets.get(id) ?? EMPTY }))}
+        options={outletItems((outletList.data ?? []).filter((outlet) => promo?.redeemOutletIds.includes(outlet.id)))}
         onChange={(value) => { setOutletId(value); setError(undefined); }} />
       <PointsField label="Points to use" required value={points} onChange={(value) => { setPoints(value); setError(undefined); }} />
+      {promo ? (
+        <dl className="tw:grid tw:grid-cols-2 tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-muted/40 tw:p-3 tw:text-sm" aria-label="Points summary">
+          <div><dt className="tw:text-xs tw:text-muted-foreground">Available</dt><dd className="tw:font-semibold">{available.toLocaleString("en-PH")} points</dd></div>
+          <div><dt className="tw:text-xs tw:text-muted-foreground">Left after this</dt><dd className={afterUse !== null && afterUse < 0 ? "tw:font-semibold tw:text-destructive" : "tw:font-semibold"}>{afterUse === null ? "—" : `${afterUse.toLocaleString("en-PH")} points`}</dd></div>
+        </dl>
+      ) : null}
       <TextField label="Note" value={note} maxLength={200} onChange={setNote} />
     </FormDialog>{confirmation}</>
   );

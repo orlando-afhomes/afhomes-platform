@@ -41,7 +41,7 @@ export function SelectField<T extends string = string>({
   const ids = useFieldIds(explicitId);
   const items = [
     ...(allowClear ? [{ value: CLEAR_VALUE, label: clearLabel }] : []),
-    ...options.map((option) => ({ value: option.value as string, label: option.label, disabled: option.disabled })),
+    ...options.map((option) => ({ value: option.value as string, label: option.label, disabled: option.disabled, icon: option.icon, description: option.description })),
   ];
   return (
     <FieldShell ids={ids} label={label} required={required} error={error} hint={hint} className={className}>

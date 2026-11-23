@@ -16,10 +16,11 @@ export type FilterBarFilter = {
 /**
  * One card holding every filter of a table: search, selects, and any extra
  * controls passed as children. The optional `header` (view chips) sits on its
- * own full-width line above the controls. At md and wider the controls share one
- * row of equal-height (44px) fields that wraps to a second line instead of
- * squashing: search grows from 14rem, selects and extra fields keep at least
- * 10rem. Extra children should be 44px tall and carry `tw:md:flex-1` (or
+ * own full-width line above the controls. Layout follows the width of the bar
+ * itself (container query), not the screen: from 28rem wide the controls share
+ * one row of equal-height (44px) fields (search takes twice the space of a
+ * select, long values truncate); narrower bars stack the controls full width.
+ * Extra children should be 44px tall and may carry `tw:md:flex-1` (or
  * `tw:md:flex-none` for buttons, which keep their natural width).
  */
 export function FilterBar({
@@ -40,13 +41,13 @@ export function FilterBar({
 }) {
   const hasControls = Boolean(onSearch) || filters.length > 0 || Boolean(children);
   return (
-    <Card className="tw:rounded-2xl">
+    <Card className="tw:@container tw:rounded-2xl">
       {header ? <div className="tw:w-full">{header}</div> : null}
       {hasControls ? (
-        <div className="tw:flex tw:flex-col tw:gap-3 tw:md:flex-row tw:md:flex-wrap tw:md:items-end tw:md:[&>*:not([data-slot=button])]:min-w-40!">
-          {onSearch ? <SearchInput value={search ?? ""} onChange={onSearch} label={searchLabel ?? "Search"} className="tw:md:max-w-none tw:md:min-w-56 tw:md:flex-[2_1_14rem]" /> : null}
+        <div className="tw:flex tw:flex-col tw:gap-3 tw:@md:flex-row tw:@md:flex-nowrap tw:@md:items-end tw:@md:[&>*:not([data-slot=button])]:min-w-0">
+          {onSearch ? <SearchInput value={search ?? ""} onChange={onSearch} label={searchLabel ?? "Search"} className="tw:@md:max-w-none tw:@md:min-w-0 tw:@md:flex-[2_1_0%]" /> : null}
           {filters.map((filter) => (
-            <div key={filter.label} className="tw:w-full tw:md:min-w-40 tw:md:flex-[1_1_10rem]">
+            <div key={filter.label} className="tw:w-full tw:@md:min-w-0 tw:@md:flex-[1_1_0%]">
               <SearchSelect
                 aria-label={filter.label}
                 items={filter.options}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Collapsible } from "@base-ui/react/collapsible";
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { MemberQrHolder } from "@/data/contracts/member-qr-repository";
 import { useMockRepositories } from "@/data/queries";
@@ -62,6 +62,7 @@ function CustomerLookupSession({ counter }: { counter: boolean }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [scanned, setScanned] = useState<MemberQrHolder | null>(null);
   const [scan, setScan] = useState(0);
+  const [active, setActive] = useState(-1);
   const lookup = useCustomerLookup(term);
   const tierName = useTierDisplayName();
 
@@ -74,6 +75,26 @@ function CustomerLookupSession({ counter }: { counter: boolean }) {
   const results = lookup.data ?? [];
   const detailsId = useId();
   const suggestions = results.slice(0, SUGGESTION_LIMIT);
+  const listId = useId();
+  const showingList = !tooShort && !scanned && !lookup.isLoading && !lookup.error && suggestions.length > 0;
+  const activeIndex = showingList ? Math.min(active, suggestions.length - 1) : -1;
+  // Arrow keys move through the suggestions and Enter opens the highlighted customer, so search needs no mouse.
+  const onSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (!showingList) return;
+    const count = suggestions.length;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActive(activeIndex < 0 ? 0 : (activeIndex + 1) % count);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActive(activeIndex <= 0 ? count - 1 : activeIndex - 1);
+    } else if (event.key === "Enter" && activeIndex >= 0) {
+      event.preventDefault();
+      setSelectedId(suggestions[activeIndex].membershipId);
+    } else if (event.key === "Escape") {
+      setActive(-1);
+    }
+  };
 
   return (
     <div className="customer-lookup">
@@ -94,8 +115,15 @@ function CustomerLookupSession({ counter }: { counter: boolean }) {
               setInput(next);
               setSelectedId(null);
               setScanned(null);
+              setActive(-1);
             }}
             className="customer-lookup__search-field"
+            inputProps={{
+              onKeyDown: onSearchKeyDown,
+              "aria-controls": showingList ? listId : undefined,
+              "aria-activedescendant": activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined,
+              "aria-autocomplete": "list",
+            }}
           />
           <div className="customer-lookup__scan"><ScanMemberQrButton
             onStart={counter ? () => { setSelectedId(null); setScanned(null); } : undefined}
@@ -118,6 +146,8 @@ function CustomerLookupSession({ counter }: { counter: boolean }) {
           ) : (
             <SuggestionList
               items={suggestions}
+              listId={listId}
+              activeIndex={activeIndex}
               detailsId={detailsId}
               selectedId={selectedId}
               tierName={tierName}
@@ -142,23 +172,30 @@ function CustomerLookupSession({ counter }: { counter: boolean }) {
 
 function SuggestionList({
   items,
+  listId,
+  activeIndex,
   detailsId,
   selectedId,
   tierName,
   onPick,
 }: {
   items: CustomerLookupResult[];
+  listId: string;
+  activeIndex: number;
   detailsId: string;
   selectedId: string | null;
   tierName: (code: CustomerLookupResult["productCode"]) => string | null;
   onPick: (id: string) => void;
 }) {
   return (
-    <ul aria-label="Suggested customers" className="customer-lookup__suggestions">
-      {items.map((item) => (
+    <ul id={listId} aria-label="Suggested customers" className="customer-lookup__suggestions">
+      {items.map((item, index) => (
         <li key={item.membershipId}>
           <Button variant="ghost"
             type="button"
+            id={`${listId}-${index}`}
+            data-active={index === activeIndex ? "true" : undefined}
+            ref={index === activeIndex ? (node) => node?.scrollIntoView?.({ block: "nearest" }) : undefined}
             aria-expanded={item.membershipId === selectedId}
             aria-controls={item.membershipId === selectedId ? `${detailsId}-${item.membershipId}` : undefined}
             onClick={() => onPick(item.membershipId)}
@@ -245,7 +282,7 @@ function LoyaltyActions({ holder }: { holder: MemberQrHolder }) {
     <div className="customer-lookup__loyalty-buttons">
       <EnterResortBillButton selected={holder} />
       <RecordPromoUseButton selected={holder} />
-      {canBook ? <Button type="button" variant="outline" className="customer-lookup__manage-bookings" aria-expanded={bookings} onClick={() => setBookings(!bookings)}><BedDouble aria-hidden="true" />{bookings ? "Hide Stay Bookings" : "Manage Stay Bookings"}</Button> : null}
+      {canBook ? <Button type="button" variant="outline" className="customer-lookup__manage-bookings" aria-expanded={bookings} onClick={() => setBookings(!bookings)}><BedDouble aria-hidden="true" />{bookings ? "Hide Stay Bookings" : "Stay Bookings"}</Button> : null}
     </div>
     {canBook && bookings ? (
       <section className="customer-lookup__bookings" aria-label="Stay bookings">

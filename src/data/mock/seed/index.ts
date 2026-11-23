@@ -103,6 +103,7 @@ export function buildSeed(today?: string) {
     closedMonths,
     unmatchedReceipts,
     memberQr,
+    restaurantReservations: [],
     memberships: business.memberships,
     commissions,
     commissionRateSettings: business.commissionRateSettings,

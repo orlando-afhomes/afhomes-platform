@@ -1,8 +1,10 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
 import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList } from "@/shared/ui/combobox";
 
-export type SearchSelectItem = { value: string; label: string; disabled?: boolean };
+/** `icon` and `description` are optional: screens that supply them get a tinted icon chip and a second line, every other dropdown renders as before. */
+export type SearchSelectItem = { value: string; label: string; disabled?: boolean; icon?: LucideIcon; description?: string };
 
 /**
  * The app's one dropdown for picking a value: a type-to-filter combobox with a
@@ -51,8 +53,18 @@ export function SearchSelect({
         <ComboboxEmpty>{emptyText}</ComboboxEmpty>
         <ComboboxList>
           {(item: SearchSelectItem) => (
-            <ComboboxItem key={item.value} value={item} disabled={item.disabled}>
-              {item.label}
+            <ComboboxItem key={item.value} value={item} disabled={item.disabled} className={item.icon || item.description ? "tw:min-h-12 tw:py-2 tw:sm:min-h-10" : undefined}>
+              {item.icon ? (
+                <span aria-hidden="true" className="tw:flex tw:size-8 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-lg tw:bg-(--color-brand-soft) tw:text-primary">
+                  <item.icon className="tw:size-4" />
+                </span>
+              ) : null}
+              {item.description ? (
+                <span className="tw:flex tw:min-w-0 tw:flex-col">
+                  <span className="tw:truncate tw:font-medium">{item.label}</span>
+                  <span className="tw:truncate tw:text-xs tw:text-muted-foreground">{item.description}</span>
+                </span>
+              ) : item.label}
             </ComboboxItem>
           )}
         </ComboboxList>

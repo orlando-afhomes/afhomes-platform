@@ -125,18 +125,18 @@ describe("promos page", () => {
 });
 
 describe("promo points page", () => {
-  it("offers Record points use to the Clerk and shows the ledger", async () => {
+  it("offers Redeem Points to the Clerk and shows the ledger", async () => {
     const user = userEvent.setup();
     showStayPoints("dev-clerk", "promo-points");
     await expectSeededLedger();
-    await user.click(screen.getByRole("button", { name: /record points use/i }));
-    expect(await screen.findByRole("dialog", { name: /record points use/i })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /redeem points/i }));
+    expect(await screen.findByRole("dialog", { name: /redeem points/i })).toBeInTheDocument();
   });
 
-  it("hides Record points use from Finance", async () => {
+  it("hides Redeem Points from Finance", async () => {
     showStayPoints("dev-finance", "promo-points");
     await expectSeededLedger();
-    await waitFor(() => expect(screen.queryByRole("button", { name: /record points use/i })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("button", { name: /redeem points/i })).toBeNull());
   });
 
   it("does not show Stay Points tabs to HR", async () => {

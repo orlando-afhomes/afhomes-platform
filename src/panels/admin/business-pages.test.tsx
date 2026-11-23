@@ -432,7 +432,7 @@ describe("business pages render for the intended roles", () => {
     expect(await screen.findByRole("table", { name: "Yearly Gifts" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("tab", { name: "Resort Bills" }));
     const bills = await screen.findByRole("table", { name: "Resort Bills" });
-    expect(screen.getByRole("button", { name: "Enter Resort Bill" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Earn Points" })).toBeInTheDocument();
     expect(screen.queryByText(/Awaiting first redemption/)).toBeNull();
     // Refunds are recorded from a verified bill's details.
     fireEvent.click(within(bills).getAllByText("Verified")[0].closest("tr")!);
@@ -527,7 +527,8 @@ describe("customer application wizard scheme pricing", () => {
     await fillCustomerStep(user);
     await certifySalesStep(user);
     expect(await screen.findByRole("heading", { name: "Application Form" })).toBeInTheDocument();
-    expect(within(wizardMain()).getByText(/Gold VIP · ₱312,000/)).toBeInTheDocument();
+    // The on-page summary was replaced by the printable application, which opens once the details are valid.
+    expect(await within(wizardMain()).findByRole("button", { name: "Print Application Form" })).toBeEnabled();
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
     await user.click(screen.getByRole("button", { name: /continue/i }));
     expect(await screen.findByRole("heading", { name: "Review the Application" })).toBeInTheDocument();
@@ -556,7 +557,8 @@ describe("customer application wizard scheme pricing", () => {
     await fillCustomerStep(user);
     await certifySalesStep(user);
     expect(await screen.findByRole("heading", { name: "Application Form" })).toBeInTheDocument();
-    expect(within(wizardMain()).getByText(/Gold VIP · ₱390,000/)).toBeInTheDocument();
+    // The on-page summary was replaced by the printable application, which opens once the details are valid.
+    expect(await within(wizardMain()).findByRole("button", { name: "Print Application Form" })).toBeEnabled();
     expect(within(wizardMain()).queryByText(/Price under review/)).toBeNull();
     await user.click(screen.getByRole("button", { name: /continue/i }));
     expect(await screen.findByRole("heading", { name: "Review the Application" })).toBeInTheDocument();

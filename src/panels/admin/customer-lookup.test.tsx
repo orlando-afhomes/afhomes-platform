@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, expect, it, vi } from "vitest";
 import { issueHolderCode } from "@/data/mock/member-qr-repository";
 import { createMockStore } from "@/data/mock/seed";
+import { manilaToday } from "@/shared/lib/dates";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { CustomerLookupPage } from "./pages/customer-lookup-panel";
@@ -43,8 +44,11 @@ it("lets GSD verify by name and opens both points actions from the customer's QR
   await user.click(screen.getByRole("button", { name: "Scan QR" }));
   await user.click(await screen.findByRole("button", { name: "Earn Points" }));
   const purchase = await screen.findByRole("dialog", { name: "Earn Points" });
+  expect(within(purchase).getByLabelText(/Purchase Date/)).toHaveValue(manilaToday());
+  expect(within(purchase).getByRole("textbox", { name: /Total Bill Amount/ })).toBeVisible();
+  expect(within(purchase).getByRole("textbox", { name: /Amount Not Eligible for Points/ })).toBeVisible();
   expect(within(purchase).getByRole("textbox", { name: /Service Used/ })).toBeVisible();
-  expect(within(purchase).getByRole("textbox", { name: /Receipt Number/ })).toBeVisible();
+  expect(within(purchase).getByRole("textbox", { name: /Receipt Number/ })).toBeDisabled();
   expect(within(purchase).getByRole("button", { name: "Submit for Review" })).toBeVisible();
   await user.keyboard("{Escape}");
 

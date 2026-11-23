@@ -30,16 +30,16 @@ describe("admin nav groups", () => {
     const user = userEvent.setup();
     const items = getRoleAwareAdminNavigation(getDevIdentity("dev-super-admin"));
     const { rerender } = render(<TestWrapper items={items} pathname="/admin/finance/collections" />);
-    expect(screen.getByRole("button", { name: "Money" })).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("link", { name: "Finance" })).toHaveAttribute("href", "/admin/finance");
-    expect(screen.getByRole("link", { name: "Finance" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("button", { name: "Finance" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("link", { name: "Payments" })).toHaveAttribute("href", "/admin/finance");
+    expect(screen.getByRole("link", { name: "Payments" })).toHaveAttribute("aria-current", "page");
     const memberServices = screen.getByRole("button", { name: "Member Services" });
     expect(memberServices).toHaveAttribute("aria-expanded", "false");
     await user.click(memberServices);
     expect(memberServices).toHaveAttribute("aria-expanded", "true");
     expect(memberServices).toHaveClass("tw:aria-expanded:bg-white/10");
     expect(screen.getByRole("link", { name: "Stay Points" })).toHaveAttribute("href", "/admin/stay-points");
-    expect(screen.getByRole("button", { name: "Money" })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: "Finance" })).toHaveAttribute("aria-expanded", "false");
     rerender(<TestWrapper items={items} pathname="/admin/stay-points" />);
     expect(memberServices).toHaveAttribute("aria-expanded", "true");
     expect(memberServices).toHaveClass("tw:aria-expanded:bg-transparent");
@@ -88,14 +88,14 @@ describe("admin nav list rendering", () => {
 
   it("renders areas only when one of their tabs is allowed", () => {
     const finance = renderNav("dev-finance");
-    expect(finance).toContain("Finance");
+    expect(finance).toContain("Payments");
     expect(finance).toContain("Commissions");
     expect(finance).not.toContain("Settings");
     const ost = renderNav("dev-ost-a1");
     // Payment Plan Guide moved to Sales, so a seller holds no Settings tab.
     expect(ost).not.toContain("Settings");
     expect(renderNav("dev-admin")).toContain("Settings");
-    expect(ost).not.toContain("Finance");
+    expect(ost).not.toContain("Payments");
     expect(ost).not.toContain("Redemption");
   });
 

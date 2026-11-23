@@ -225,6 +225,7 @@
 }
 
 .customer-lookup .customer-lookup__suggestion:hover { background: var(--muted); }
+.customer-lookup .customer-lookup__suggestion[data-active="true"] { background: var(--muted); outline: 2px solid var(--ring); outline-offset: -2px; }
 .customer-lookup .customer-lookup__suggestion[aria-expanded="true"] { background: var(--lookup-sage); }
 .customer-lookup__suggestion strong,
 .customer-lookup__suggestion small { display: block; }

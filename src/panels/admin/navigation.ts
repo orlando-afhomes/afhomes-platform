@@ -128,7 +128,6 @@ export const ADMIN_AREA_TABS = {
     { value: "waivers", label: "Gift Exceptions", formerHref: "/admin/stay-points", rule: { grants: ["stay-points"] } },
     { value: "promos", label: "Promos", formerHref: "/admin/promos", rule: { grants: ["stay-points"] } },
     { value: "promo-points", label: "Promo Points", formerHref: "/admin/promos/points", rule: { grants: ["stay-points"] } },
-    { value: "gsd-points", label: "GSD Point Service", formerHref: "/admin/stay-points", rule: { grants: ["stay-points"], operation: "promo-points.use" } },
   ],
   redemption: [
     { value: "bookings", label: "Bookings", formerHref: "/admin/redemption", rule: { grants: ["redemption"] } },
@@ -209,7 +208,7 @@ export const adminNavigation: AdminNavItem[] = [
   areaItem("customers", "Customers"),
   { id: "customer-lookup", label: "Customer Look Up", href: CUSTOMER_LOOKUP_HREF, available: true, grants: CUSTOMER_LOOKUP_GRANTS, operation: "customers.lookup" },
   areaItem("sales", "Sales"),
-  areaItem("finance", "Finance"),
+  areaItem("finance", "Payments"),
   areaItem("commissions", "Commissions"),
   areaItem("membership", "Membership"),
   areaItem("stay-points", "Stay Points"),

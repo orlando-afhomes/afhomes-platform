@@ -59,6 +59,21 @@ describe("RecordDetailsSheet", () => {
     expect(screen.getByText("Gross").parentElement?.className).not.toContain("col-span-2");
   });
 
+  it("gives each section an icon chip, defaulted from the title or set explicitly", () => {
+    renderSheet({
+      sections: [
+        { title: "Amounts", rows: [{ label: "Gross", value: "1" }] },
+        { title: "Custom", icon: <svg data-testid="own-icon" />, tone: "danger", rows: [{ label: "A", value: "b" }] },
+      ],
+    });
+    const amounts = screen.getByRole("region", { name: "Amounts" });
+    expect(amounts.querySelector("svg")).toBeTruthy();
+    expect(amounts.querySelector("span[aria-hidden]")?.className).toContain("bg-success/10");
+    const custom = screen.getByRole("region", { name: "Custom" });
+    expect(within(custom).getByTestId("own-icon")).toBeTruthy();
+    expect(custom.querySelector("span[aria-hidden]")?.className).toContain("bg-destructive/10");
+  });
+
   it("omits the footer and history when not given", () => {
     renderSheet({ footer: undefined, history: undefined });
     expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();

@@ -4,7 +4,7 @@ export type AuditModule =
 
 export type AuditEntityType =
   | "member" | "accreditation" | "registration" | "account" | "staff" | "department-role" | "department"
-  | "customer" | "customer-import" | "customer-export" | "report-export" | "product" | "payment-scheme" | "contract" | "sale" | "payment" | "membership" | "commission" | "commission-position-rate" | "resort-spend" | "receipt-import" | "reconciliation" | "redemption-booking" | "redemption-config" | "reference-entry" | "tier-level" | "outlet" | "promo" | "igp-project" | "igp-unit" | "experience";
+  | "customer" | "customer-import" | "customer-export" | "report-export" | "product" | "payment-scheme" | "contract" | "sale" | "payment" | "membership" | "commission" | "commission-position-rate" | "resort-spend" | "receipt-import" | "reconciliation" | "redemption-booking" | "redemption-config" | "reference-entry" | "tier-level" | "outlet" | "promo" | "igp-project" | "igp-unit" | "experience" | "restaurant-reservation";
 
 /** Minimal append-only mock audit event for Sales Network / Accreditation / Organization actions. */
 export type AuditEvent = {

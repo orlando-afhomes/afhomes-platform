@@ -2,39 +2,14 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { ScanLine } from "lucide-react";
 import type { MemberQrHolder } from "@/data/contracts/member-qr-repository";
 import { usePromoBalances, usePromos, useRecordPromoUse } from "@/data/promo-queries";
 import { useOutlets } from "@/data/settings-queries";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { CheckboxField, SelectField, TextField } from "@/shared/forms/modern";
 import { Button } from "@/shared/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
-import { ScanMemberQrButton } from "../components/member-qr";
 
-/**
- * Prototype GSD counter flow. A scan selects one holder; staff verify the ID, choose a
- * configured named reward, and record the use. Nothing is credited by scanning alone.
- */
-export function GsdPointsPanel() {
-  const [holder, setHolder] = useState<MemberQrHolder | null>(null);
-  const [scan, setScan] = useState(0);
-  return <Card>
-    <CardHeader>
-      <div>
-        <CardTitle>GSD counter service</CardTitle>
-        <CardDescription>Scan the customer’s membership QR to use points for a reward.</CardDescription>
-      </div>
-      <ScanMemberQrButton onStart={() => setHolder(null)} onSelect={(selected) => { setHolder(selected); setScan((value) => value + 1); }} />
-    </CardHeader>
-    <CardContent>
-      {holder ? <GsdRewardForm key={scan} holder={holder} /> : (
-        <p className="tw:flex tw:items-center tw:gap-2 tw:text-sm tw:text-muted-foreground"><ScanLine aria-hidden="true" /> No customer selected. Scan a QR to begin.</p>
-      )}
-    </CardContent>
-  </Card>;
-}
-
+/** Prototype GSD counter flow. Staff verify the ID, choose a configured named reward, and record the use. Nothing is credited by scanning alone. */
 export function GsdRewardForm({ holder, idVerified = false }: { holder: MemberQrHolder; idVerified?: boolean }) {
   const promos = usePromos();
   const balances = usePromoBalances(holder.scannedCode);

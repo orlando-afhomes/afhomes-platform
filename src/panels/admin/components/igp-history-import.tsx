@@ -111,14 +111,14 @@ export function IgpHistoryDialog({ register, onClose }: { register: IgpRegister;
         <DialogHeader>
           <DialogTitle>Import IGP History</DialogTitle>
           <DialogDescription>
-            History rows never become live sales, receipts or commissions, and never issue a VIP Number. Their Series Numbers are reserved and never reused. A SUPERSEDED row must name its replacing Series Number in the Replaces column.
+            History rows never create live sales, receipts or commissions.
           </DialogDescription>
         </DialogHeader>
         <div className="tw:flex tw:flex-col tw:gap-5">
           <TemplateStep
             step={1}
             title="Get the Template"
-            description="Series Number (16 characters, band 0 for a price above ₱9,000,000), Issue date (YYYY-MM-DD), Contract price, Status (Active, Cancelled or SUPERSEDED)."
+            description="Columns: Series Number, Issue date, Contract price, Status, Replaces."
             connector
             actions={
               <TemplateDownloadMenu

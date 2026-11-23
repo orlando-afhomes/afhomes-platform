@@ -227,7 +227,7 @@ function ExperienceDialog({ experience, onClose }: { experience: Experience | nu
       onClose={onClose}
       onSubmit={() => void submit()}
     >
-      <div className="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-2">
+      <div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:sm:grid-cols-2">
         <TextField label="Title" required value={title} onChange={(value) => { setTitle(value); setError(undefined); }} />
         <TextField
           label="Page address"
@@ -253,7 +253,7 @@ function ExperienceDialog({ experience, onClose }: { experience: Experience | nu
         <>
           <TextAreaField label="Overview" required maxLength={600} value={overview} onChange={(value) => { setOverview(value); setError(undefined); }} hint="The welcome paragraph on its own page." />
           <fieldset className="tw:flex tw:flex-col tw:gap-3">
-            <legend className="tw:text-sm tw:font-medium">Highlights</legend>
+            <legend className="tw:mb-3 tw:text-sm tw:font-medium">Highlights</legend>
             {highlights.map((item, index) => (
               <div key={index} className="tw:grid tw:grid-cols-1 tw:gap-2 tw:rounded-lg tw:border tw:border-border tw:p-3 tw:sm:grid-cols-[1fr_2fr_auto] tw:sm:items-start">
                 <TextField label="Highlight title" value={item.title} onChange={(value) => setHighlight(index, { title: value })} />

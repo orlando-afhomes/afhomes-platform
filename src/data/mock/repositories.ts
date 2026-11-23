@@ -18,6 +18,7 @@ import { MockMembershipRepository } from "./membership-repository";
 import { MockCommissionRepository } from "./commission-repository";
 import { MockStayPointsRepository } from "./stay-points-repository";
 import { MockRedemptionRepository } from "./redemption-repository";
+import { MockReservationRepository } from "./reservation-repository";
 import { MockAuditRepository } from "./audit-repository";
 import type { DevIdentity } from "@/modules/identity/types";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
@@ -59,6 +60,7 @@ export function createMockRepositories(
     commissions: new MockCommissionRepository(store, effectiveIdentity, asyncOptions),
     stayPoints: new MockStayPointsRepository(store, effectiveIdentity, asyncOptions),
     redemption: new MockRedemptionRepository(store, effectiveIdentity, asyncOptions),
+    reservations: new MockReservationRepository(store, effectiveIdentity, asyncOptions),
     referenceLists: new MockReferenceListRepository(store, effectiveIdentity, asyncOptions),
     tierLevels: new MockTierLevelRepository(store, effectiveIdentity, asyncOptions),
     outlets: new MockOutletRepository(store, effectiveIdentity, asyncOptions),

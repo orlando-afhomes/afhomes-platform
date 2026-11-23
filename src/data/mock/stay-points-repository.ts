@@ -3,6 +3,7 @@ import { activeRoles } from "./dev-identities";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { MembershipPoints, StayPointsAction, StayPointsRepository } from "@/data/contracts/stay-points-repository";
 import { findReferenceConflict } from "@/modules/finance/rules";
+import { nextOfficialReceiptNo } from "@/modules/finance/payment-reference";
 import type { DevIdentity } from "@/modules/identity/types";
 import type { Membership } from "@/modules/membership/types";
 import { WAIVER_GROUNDS } from "@/modules/stay-points/types";
@@ -46,7 +47,7 @@ export class MockStayPointsRepository extends BusinessRepository implements Stay
   async venues(options?: MockAsyncOptions) {
     return this.run(options, (identity) => {
       this.require(identity, "stay-points.enter", "You cannot enter a resort bill.");
-      return this.store.outlets.filter((outlet) => outlet.status === "active").map(({ id, name }) => ({ id, name }));
+      return this.store.outlets.filter((outlet) => outlet.status === "active").map(({ id, name, type }) => ({ id, name, type }));
     });
   }
 
@@ -75,12 +76,13 @@ export class MockStayPointsRepository extends BusinessRepository implements Stay
             || input.excludedCentavos < 0 || input.excludedCentavos >= input.grossCentavos) {
             throw new Error("Enter a positive gross amount and exclusions below the gross amount.");
           }
-          const reference = input.reference.trim();
-          if (!reference) throw new Error("Enter the official receipt number.");
           if (counter && !input.description.trim()) throw new Error("Enter the service used.");
-          if (hasResortReceiptReference(this.store, reference) || hasRedemptionReceiptReference(this.store, reference) || hasImportedReceiptReference(this.store, reference) || findReferenceConflict(this.store.payments, reference)) {
-            throw new Error("This official receipt number is already used.");
-          }
+          const taken = (candidate: string) => hasResortReceiptReference(this.store, candidate) || hasRedemptionReceiptReference(this.store, candidate)
+            || hasImportedReceiptReference(this.store, candidate) || Boolean(findReferenceConflict(this.store.payments, candidate));
+          // The staff form never sends a number: the system issues OR-YYYYMMDD-NNNN. A supplied number (imports) still goes through the duplicate check.
+          const supplied = input.reference?.trim() ?? "";
+          if (supplied && taken(supplied)) throw new Error("This official receipt number is already used.");
+          const reference = supplied || nextOfficialReceiptNo(this.store.payments, input.date, taken);
           const id = `rs-${this.store.counters.resortSpend++}`;
           this.store.resortSpends.push({
             id, membershipId: member.id, date: input.date, amountCentavos: input.grossCentavos - input.excludedCentavos,

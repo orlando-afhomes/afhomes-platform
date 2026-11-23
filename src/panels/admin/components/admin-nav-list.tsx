@@ -32,7 +32,7 @@ const BADGE_PILL =
   "tw:ml-auto tw:inline-flex tw:h-5 tw:min-w-5 tw:items-center tw:justify-center tw:rounded-full tw:bg-destructive tw:px-1 tw:text-xs tw:font-semibold tw:text-white tw:ring-2 tw:ring-(--color-brand-deep)";
 
 const NAV_GROUPS: { label: string; icon: LucideIcon; members: readonly AdminNavItem["id"][] }[] = [
-  { label: "Money", icon: Landmark, members: ["finance", "commissions"] },
+  { label: "Finance", icon: Landmark, members: ["finance", "commissions"] },
   { label: "Member Services", icon: IdCard, members: ["membership", "stay-points", "redemption"] },
   { label: "Management", icon: Building2, members: ["vip-products", "sales-network", "organization"] },
   { label: "Reports and Audit", icon: BarChart3, members: ["reports", "audit-logs"] },

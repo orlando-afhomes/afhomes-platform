@@ -13,6 +13,7 @@ import type { MembershipRepository } from "@/data/contracts/membership-repositor
 import type { CommissionRepository } from "@/data/contracts/commission-repository";
 import type { StayPointsRepository } from "@/data/contracts/stay-points-repository";
 import type { RedemptionRepository } from "@/data/contracts/redemption-repository";
+import type { ReservationRepository } from "@/data/contracts/reservation-repository";
 import type { ReconciliationRepository } from "@/data/contracts/reconciliation-repository";
 import type { HistoryImportRepository } from "@/data/contracts/history-import-repository";
 import type { IgpRepository } from "@/data/contracts/igp-repository";
@@ -47,6 +48,7 @@ export type Repositories = {
   commissions: CommissionRepository;
   stayPoints: StayPointsRepository;
   redemption: RedemptionRepository;
+  reservations: ReservationRepository;
   referenceLists: ReferenceListRepository;
   tierLevels: TierLevelRepository;
   outlets: OutletRepository;

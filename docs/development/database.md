@@ -87,7 +87,7 @@ Conceptual. Data movement must be authorized and controlled; not automatic.
 
 ## 7. Local SQL Connect Setup
 
-Use the [localhost database guide](../implementation/firebase/01-localhost/01-database-and-emulators.md) to configure SQL Connect, Auth, and Storage emulators for a dedicated demo project. Bind listeners to loopback and keep staging and production credentials out of local settings. Maintain a versioned schema, named operations, and a repeatable synthetic seed. Use an isolated target and explicit authorization for resets.
+Use the [localhost database guide](../implementation/02-full-stack/01-localhost/01-database-and-emulators.md) to configure SQL Connect, Auth, and Storage emulators for a dedicated demo project. Bind listeners to loopback and keep staging and production credentials out of local settings. Maintain a versioned schema, named operations, and a repeatable synthetic seed. Use an isolated target and explicit authorization for resets.
 
 ---
 
@@ -270,7 +270,7 @@ The Next.js server uses its dedicated service identity to call SQL Connect. Veri
 
 ## 30. Backups and Recovery
 
-Use Cloud SQL backups and approved recovery settings. Restore to isolation first and verify data, official identifiers, balances, audit history, and app compatibility. Follow the authorized retention and recovery policy and [production recovery guide](../implementation/firebase/03-production/06-monitoring-backups-and-recovery.md).
+Use Cloud SQL backups and approved recovery settings. Restore to isolation first and verify data, official identifiers, balances, audit history, and app compatibility. Follow the authorized retention and recovery policy and [production recovery guide](../implementation/02-full-stack/03-production/06-monitoring-backups-and-recovery.md).
 
 ---
 
@@ -338,7 +338,7 @@ A historical payment should not be invented from missing evidence. A certified h
 
 ## 35. Implementation Phase Alignment
 
-Follow the [technical phase mapping](implementation.md) and the [Firebase roadmap](../implementation/firebase/README.md). Test local emulators before the hosted pilot. Rehearse reviewed schema changes and approved imports in staging before authorized production changes.
+Follow the [technical phase mapping](implementation.md) and the [Full-stack roadmap](../implementation/02-full-stack/README.md). Test local emulators before the hosted pilot. Rehearse reviewed schema changes and approved imports in staging before authorized production changes.
 
 ---
 
@@ -400,7 +400,7 @@ Use the [SQL Connect Emulator guide](https://firebase.google.com/docs/sql-connec
 
 ## 39. Cross-Document Alignment
 
-Keep the development guides and [Firebase roadmap](../implementation/firebase/README.md) consistent. Use canonical business rules for data and permission requirements.
+Keep the development guides and [Full-stack roadmap](../implementation/02-full-stack/README.md) consistent. Use canonical business rules for data and permission requirements.
 
 ---
 

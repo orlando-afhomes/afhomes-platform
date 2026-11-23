@@ -24,6 +24,6 @@ Use the approved roadmap, [AGENTS.md](../../../AGENTS.md), the existing reposito
 
 - **Entry points and project rules:** [README](../../../README.md), [AGENTS.md](../../../AGENTS.md), [CLAUDE.md](../../../CLAUDE.md), [project context](../../project.md), and the [implementation index](../README.md).
 - **Development guides:** [index](../../development/README.md), [architecture](../../development/architecture.md), [database](../../development/database.md), [backend](../../development/backend.md), [frontend](../../development/frontend.md), [security](../../development/security.md), [testing](../../development/testing.md), [technical roadmap](../../development/implementation.md), [deployment](../../development/deployment.md), and [permission matrix proposal](../../development/role-module-permission-matrix-proposal.md).
-- **Feature and decision references:** [decision register](../decisions-and-gaps.md), [public sign-in plan](../prototype/02-public-entry-and-sign-in.md), and [prototype completion plan](../fixes/06-prototype-completion-plan.md).
+- **Feature and decision references:** [decision register](../decisions-and-gaps.md), [public sign-in plan](../01-prototype/features/02-public-entry-and-sign-in.md), and [prototype completion plan](../01-prototype/fixes/06-prototype-completion-plan.md).
 
 The new environment guides are planning documents. Local emulator, database, API, hosting, and recovery checks described there remain implementation milestones.

@@ -609,7 +609,7 @@ A future React Native + Expo application may use the same authorized `/api/v1` c
 
 ## 33. Implementation Phases
 
-Use the [implementation phase mapping](implementation.md) and [Firebase environment guides](../implementation/firebase/README.md). Establish the local database, backend, and API before connecting the pilot screens. Verify the hosted pilot before expanding sensitive workflows. Rehearse the release in staging before owner-approved production deployment.
+Use the [implementation phase mapping](implementation.md) and [Full-stack environment guides](../implementation/02-full-stack/README.md). Establish the local database, backend, and API before connecting the pilot screens. Verify the hosted pilot before expanding sensitive workflows. Rehearse the release in staging before owner-approved production deployment.
 
 ---
 

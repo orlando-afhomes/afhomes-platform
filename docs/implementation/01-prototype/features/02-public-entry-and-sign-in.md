@@ -71,7 +71,7 @@ Reminder: the mock login is temporary. It must be removed when real authenticati
 |---|---|
 | Journey | J01, TO-BE "Real identity and role check" |
 | Current | Mock credentials and a localStorage identity pointer, an owner-approved exception. |
-| Target | Firebase Auth verifies identity. The AFHomes server checks the staff account, permissions, and record scope before access. Follow the [localhost authentication guide](../firebase/01-localhost/02-backend-authentication-and-permissions.md). |
+| Target | Firebase Auth verifies identity. The AFHomes server checks the staff account, permissions, and record scope before access. Follow the [localhost authentication guide](../../02-full-stack/01-localhost/02-backend-authentication-and-permissions.md). |
 | Layer | Backend |
 | Blocked by | Owner authorization for backend and real authentication |
 | Acceptance | Server-side authorization with record-level filtering. All mock auth removed (see the memory note for the grep patterns). |

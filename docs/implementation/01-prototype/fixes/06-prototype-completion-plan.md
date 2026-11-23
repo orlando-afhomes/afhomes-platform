@@ -93,7 +93,7 @@ Role walkthroughs, one role at a time, synthetic data: F5.5 sales milestones, F5
 ## Open items that do not block frontend work
 
 - Done 2026-11-23: counted-date stamping and the payout-list month-close requirement verified in code and reconciled in F5.5, decisions-and-gaps.md and AGENTS.md; walkthroughs run under Stage 5.
-- Future stack checks live in the [Firebase implementation roadmap](../firebase/README.md), including the hosted SQL Connect transaction pilot, App Hosting compatibility, and production domain, location, and sizing.
+- Future stack checks live in the [Full-stack implementation roadmap](../../02-full-stack/README.md), including the hosted SQL Connect transaction pilot, App Hosting compatibility, and production domain, location, and sizing.
 - Legal and the Data Protection Officer review of the retention schedule, privacy wording and the clawback addendum before real payouts.
 - Points-per-night table is the owner's working set until the company issues its own.
 

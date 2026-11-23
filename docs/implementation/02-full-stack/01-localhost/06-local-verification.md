@@ -4,7 +4,7 @@
 
 ## Start when
 
-Each approved local module has passed its feature tests. Review the [testing guide](../../../development/testing.md) and [prototype verification record](../../prototype/16-state-verification.md).
+Each approved local module has passed its feature tests. Review the [testing guide](../../../development/testing.md) and [prototype verification record](../../01-prototype/ui-states/16-state-verification.md).
 
 ## Run and record
 

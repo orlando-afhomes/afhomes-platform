@@ -1,4 +1,4 @@
-# AFHomes Firebase Implementation Roadmap
+# AFHomes Full-Stack Implementation Roadmap
 
 This is the entry point for work from localhost through production. The repository is currently a Next.js prototype with sample data held in browser memory. The target stack below is planned. Each build, database, billing, import, and deployment milestone needs separate owner authorization under [AGENTS.md](../../../AGENTS.md).
 
@@ -6,7 +6,7 @@ This is the entry point for work from localhost through production. The reposito
 
 | Step | Start here | What it produces |
 | --- | --- | --- |
-| 00 | [Documentation and stack transition](00-update-existing-documentation.md) | One consistent set of active project instructions |
+| 00 | [Documentation and stack transition](00-documentation-transition.md) | One consistent set of active project instructions |
 | 01 | [Localhost](01-localhost/README.md) | Local database, backend, API, and tested application workflows |
 | 02 | [Staging](02-staging/README.md) | An online prototype demo, a hosted PostgreSQL pilot, and a release rehearsal |
 | 03 | [Production](03-production/README.md) | Approved imports, one launch for all approved modules, and maintenance instructions |

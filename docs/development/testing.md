@@ -8,7 +8,7 @@
 
 ## 1. Purpose and Authority
 
-This guide covers test environments, approved workflows, permissions, financial integrity, emulators, hosted PostgreSQL, imports, recovery, and production release evidence. The [Firebase roadmap](../implementation/firebase/README.md) gives the execution order.
+This guide covers test environments, approved workflows, permissions, financial integrity, emulators, hosted PostgreSQL, imports, recovery, and production release evidence. The [Full-stack roadmap](../implementation/02-full-stack/README.md) gives the execution order.
 
 ---
 
@@ -791,7 +791,7 @@ Document a standard test-result report including test scope, environment, applic
 
 ## 56. Implementation Phase Alignment
 
-Map tests to the [technical phases](implementation.md). Localhost proves mock, emulator, backend, and module behavior. Staging proves hosted transactions, access, App Hosting or Cloud Run compatibility, approved imports, and isolated recovery. Production checks the approved release and monitors business-safe health and access. See the [Firebase environment guides](../implementation/firebase/README.md).
+Map tests to the [technical phases](implementation.md). Localhost proves mock, emulator, backend, and module behavior. Staging proves hosted transactions, access, App Hosting or Cloud Run compatibility, approved imports, and isolated recovery. Production checks the approved release and monitors business-safe health and access. See the [Full-stack environment guides](../implementation/02-full-stack/README.md).
 
 ---
 

@@ -248,7 +248,7 @@ Kept as official names: VIP Number, Reservation Agreement, Grant, Series Number,
 
 ### Owner decisions, 2026-11-22 (items that were waiting on others)
 
-The company papers in `Documents\AFHomes Document\Business Rules` were searched first. Where they gave no answer, the owner decided and the rule was built into the prototype. Details and acceptance checks: [fixes/05-owner-decisions-2026-11-22.md](fixes/05-owner-decisions-2026-11-22.md).
+The company papers in `Documents\AFHomes Document\Business Rules` were searched first. Where they gave no answer, the owner decided and the rule was built into the prototype. Details and acceptance checks: [fixes/05-owner-decisions-2026-11-22.md](01-prototype/fixes/05-owner-decisions-2026-11-22.md).
 
 - **JA&D grant and band (doc 14):** band digit `0` for a TCP above ₱9M; `SUPERSEDED` means `Replaced`; the Formal VIP Grant carries Bronze from ₱1M, Silver from ₱2M and Gold from ₱4M, editable and frozen at signing.
 - **IST Clawback Addendum (doc 08):** the Administrator records each IST's signing date; open paybacks raised on or after it are offset automatically from payouts and then allowances, capped at the amount payable. Others are collected directly. Legal should confirm the addendum before real payouts.
@@ -261,7 +261,7 @@ The company papers in `Documents\AFHomes Document\Business Rules` were searched 
 
 ## Firebase Stack Transition
 
-The current [implementation roadmap](firebase/README.md) supersedes the earlier MongoDB/Mongoose, Better Auth, and DigitalOcean/Docker Compose deployment direction. The planned replacements are Firebase Auth, server-only SQL Connect with PostgreSQL, and private Cloud Storage for Firebase. The mock demo may use Vercel. Production uses Firebase App Hosting if verified in staging, with Cloud Run in the same Google project as the fallback.
+The current [implementation roadmap](02-full-stack/README.md) supersedes the earlier MongoDB/Mongoose, Better Auth, and DigitalOcean/Docker Compose deployment direction. The planned replacements are Firebase Auth, server-only SQL Connect with PostgreSQL, and private Cloud Storage for Firebase. The mock demo may use Vercel. Production uses Firebase App Hosting if verified in staging, with Cloud Run in the same Google project as the fallback.
 
 Build and test in Localhost → Staging → Production order, with an optional early sample-data preview. Release all approved modules together after full staging sign-off. Import approved business records only. Existing business decisions and per-feature authorization requirements continue to govern.
 
@@ -324,7 +324,7 @@ U01 to U13 descriptions are in the atlas `COVERAGE.md` section "Incomplete and u
 - ~~Doc 07 amendment item 7 (per-contract Move approval wording) is stale against doc 05 item 12.~~ Fixed in R1 (2026-11-12): item 7 is marked superseded, and the Move effective date is 2026-11-09.
 - ~~The atlas baseline `a0bdcef` predates `fc060bb`.~~ Refreshed on 2026-11-12 (atlas `2026-11-12.3`, baseline `b784e30`).
 - ~~Code and rule disagree on the commission release wait: R8 removes the 7-day wait, but `src/modules/commissions/rules.ts` still defines `PAYOUT_RELEASE_WAIT_DAYS` and the payout milestone shows "Payout opens <date>". The atlas records this under G08 (Conflicting). It is for the owner to authorize a code change.~~ Fixed 2026-11-12: the wait was removed; payout opens on the first day of the month after 40% (owner decision D-A).
-- `docs/implementation/prototype/03-sales-network-and-accreditation.md` line 97 still says the public result shows Valid Until for OST only. That file is a completed phase record and is not rewritten; the amended doc 03 rule governs.
+- `docs/implementation/01-prototype/features/03-sales-network-and-accreditation.md` line 97 still says the public result shows Valid Until for OST only. That file is a completed phase record and is not rewritten; the amended doc 03 rule governs.
 
 ### Public seller check and staff Customer Look Up (2026-11-16)
 

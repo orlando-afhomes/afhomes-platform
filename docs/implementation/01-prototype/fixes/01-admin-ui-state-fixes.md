@@ -1,6 +1,6 @@
 # 01 Admin UI State Fixes
 
-Source: `docs/implementation/prototype/admin-ui-state-audit.md` (route matrix and "Phase 2 batch order"). 25 routes are Partial. Each batch needs its own approved plan. Do not mix batches in one change set.
+Source: `docs/implementation/01-prototype/ui-states/admin-ui-state-audit.md` (route matrix and "Phase 2 batch order"). 25 routes are Partial. Each batch needs its own approved plan. Do not mix batches in one change set.
 
 ## Shared fixes (do once, reuse everywhere)
 

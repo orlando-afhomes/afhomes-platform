@@ -4,7 +4,7 @@
 
 ## Start when
 
-The local schema and fake staff accounts are ready. Read [roles and permissions](../../../business-rules/01-roles-and-permissions.md), [FP1 organization and access](../../prototype/01-organization-and-access.md), and the [security guide](../../../development/security.md).
+The local schema and fake staff accounts are ready. Read [roles and permissions](../../../business-rules/01-roles-and-permissions.md), [FP1 organization and access](../../01-prototype/features/01-organization-and-access.md), and the [security guide](../../../development/security.md).
 
 ## Tools and steps
 

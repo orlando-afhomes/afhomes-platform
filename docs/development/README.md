@@ -73,7 +73,7 @@ Next.js renders the existing panels and provides REST `/api/v1`. Shared domain s
 - **Staging:** Optional Vercel prototype preview, followed by an isolated Firebase project and the SQL Connect Spark pilot. Rehearse the selected Google host and approved imports.
 - **Production:** Company-owned Blaze project with the verified app host, Firebase Auth, SQL Connect, private files, monitoring, and backups. Import approved production records only.
 
-Follow the [Firebase environment guides](../implementation/firebase/README.md). Keep mock and test data separate from live records.
+Follow the [Full-stack environment guides](../implementation/02-full-stack/README.md). Keep mock and test data separate from live records.
 
 ---
 
@@ -200,7 +200,7 @@ Before beginning implementation, AI coding agents must:
 9. Inspect the actual repository and existing code.
 10. Verify the project owner's authorized scope.
 
-Use the [Firebase roadmap](../implementation/firebase/README.md) for order. Read [deployment.md](deployment.md) for hosting, [database.md](database.md) for PostgreSQL, [frontend.md](frontend.md) for frontend conventions, and [backend.md](backend.md) for the API.
+Use the [Full-stack roadmap](../implementation/02-full-stack/README.md) for order. Read [deployment.md](deployment.md) for hosting, [database.md](database.md) for PostgreSQL, [frontend.md](frontend.md) for frontend conventions, and [backend.md](backend.md) for the API.
 
 Do not treat reading documentation as permission to edit every file. Only the explicitly authorized task scope may be changed.
 
@@ -358,11 +358,11 @@ Read `01-roles-and-permissions.md`, `02-sales-network-and-genealogy.md`, `03-ist
 
 ### Example D — Setting up the local SQL Connect Emulator
 
-Read the [localhost database guide](../implementation/firebase/01-localhost/01-database-and-emulators.md) and [database.md](database.md). Get separate approval before starting implementation.
+Read the [localhost database guide](../implementation/02-full-stack/01-localhost/01-database-and-emulators.md) and [database.md](database.md). Get separate approval before starting implementation.
 
 ### Example E — Preparing a production release
 
-Read the [staging sign-off guide](../implementation/firebase/02-staging/05-release-rehearsal-and-sign-off.md), [production sequence](../implementation/firebase/03-production/README.md), and [deployment.md](deployment.md). Deployment requires explicit authorization.
+Read the [staging sign-off guide](../implementation/02-full-stack/02-staging/05-release-rehearsal-and-sign-off.md), [production sequence](../implementation/02-full-stack/03-production/README.md), and [deployment.md](deployment.md). Deployment requires explicit authorization.
 
 Do not run deployment procedures merely because an example exists in README.
 
@@ -371,7 +371,7 @@ Do not run deployment procedures merely because an example exists in README.
 ## 22. Quick Reference and Next Steps
 
 - The existing frontend prototype uses in-memory sample records. Read the [feature index](../implementation/README.md) for current prototype evidence.
-- Begin the separately authorized full-stack work with the [Firebase roadmap](../implementation/firebase/README.md).
+- Begin the separately authorized full-stack work with the [Full-stack roadmap](../implementation/02-full-stack/README.md).
 
 ---
 

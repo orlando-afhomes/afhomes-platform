@@ -1,6 +1,6 @@
 # 01 · Localhost
 
-[Roadmap](../README.md) · Previous: [Documentation alignment](../00-update-existing-documentation.md) · Next environment: [Staging](../02-staging/README.md)
+[Roadmap](../README.md) · Previous: [Documentation alignment](../00-documentation-transition.md) · Next environment: [Staging](../02-staging/README.md)
 
 Build and test on your computer with Firebase emulators and synthetic records. Keep the current browser-memory prototype available for the early demo while the real API is being built.
 

@@ -425,7 +425,7 @@ Approved architecture allows future extension. Customer Portal: future web panel
 
 ## 40.8 Organization & Staff Management (Frontend)
 
-Historical phase notes: the current implementation is described by the organization and staff pages and repositories. Test results are recorded in `docs/implementation/prototype/16-state-verification.md`; do not treat the counts below as current.
+Historical phase notes: the current implementation is described by the organization and staff pages and repositories. Test results are recorded in `docs/implementation/01-prototype/ui-states/16-state-verification.md`; do not treat the counts below as current.
 
 Department transfer count update is covered by the department and staff repository tests. Browser visual verification remains pending owner review.
 

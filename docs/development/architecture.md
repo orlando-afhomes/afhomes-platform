@@ -261,7 +261,7 @@ The staff Redemption prototype is authorized (2026-11-17) with synthetic data an
 
 ## 24. Files and Media
 
-Use Cloud Storage for Firebase in production for documents and files. Store metadata and authorized parent-record links in PostgreSQL. Validate file type, size, access, private downloads, recovery, retention, and audit. Use the Storage Emulator locally and follow the [staging guide](../implementation/firebase/02-staging/03-backend-api-and-file-storage.md) for the optional private sample bucket.
+Use Cloud Storage for Firebase in production for documents and files. Store metadata and authorized parent-record links in PostgreSQL. Validate file type, size, access, private downloads, recovery, retention, and audit. Use the Storage Emulator locally and follow the [staging guide](../implementation/02-full-stack/02-staging/03-backend-api-and-file-storage.md) for the optional private sample bucket.
 
 ---
 
@@ -347,7 +347,7 @@ Align with `docs/development/implementation.md` Phases 0–8. Phases are plannin
 
 ## 38. Resolve Outdated Architecture Statements
 
-- Hosting and persistence → see the [Firebase roadmap](../implementation/firebase/README.md) and the [supersession note](../implementation/decisions-and-gaps.md#firebase-stack-transition).
+- Hosting and persistence → see the [Full-stack roadmap](../implementation/02-full-stack/README.md) and the [supersession note](../implementation/decisions-and-gaps.md#firebase-stack-transition).
 - Localhost, staging, and production → isolate identity, database, configuration, and files per environment.
 - Seven-day MVP → not a binding architecture requirement; preserve frontend-first staged delivery.
 - Finance automatic activation → reconciled; respect full settlement and official activation requirements; do not auto-activate on arbitrary payment verification.
@@ -363,7 +363,7 @@ Align with `docs/development/implementation.md` Phases 0–8. Phases are plannin
 
 ## 39. Architectural Invariants
 
-Keep presentation separate from domain logic, keep SQL Connect access on the server, and enforce centralized permission and record checks. Preserve browser-scoped mocks, authoritative business states, identifiers, historical attribution, audit history, atomic processing, and approved feature boundaries. Use the [Firebase roadmap](../implementation/firebase/README.md) for the environment sequence and canonical business rules for behavior.
+Keep presentation separate from domain logic, keep SQL Connect access on the server, and enforce centralized permission and record checks. Preserve browser-scoped mocks, authoritative business states, identifiers, historical attribution, audit history, atomic processing, and approved feature boundaries. Use the [Full-stack roadmap](../implementation/02-full-stack/README.md) for the environment sequence and canonical business rules for behavior.
 
 ---
 

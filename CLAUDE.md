@@ -14,7 +14,7 @@ Claude Code entry point. `AGENTS.md` (imported above) is mandatory governance an
 - Next.js App Router, React, TypeScript; target UI is shadcn/ui on Base UI, Tailwind CSS 4, and namespaced custom CSS, with TanStack Table and Lucide (`AGENTS.md` section 8, effective November 8, 2026). Ant Design was removed in commit `22c9b4f`.
 - TanStack Query, typed repository contracts, Vitest + Testing Library.
 - Zod is installed but not yet used in `src/`.
-- Planned full stack: Firebase Auth, server-only SQL Connect with PostgreSQL, and private Firebase Storage. See the [Firebase environment roadmap](docs/implementation/firebase/README.md) for the Vercel demo and the Firebase App Hosting or Cloud Run release sequence.
+- Planned full stack: Firebase Auth, server-only SQL Connect with PostgreSQL, and private Firebase Storage. See the [Full-stack environment roadmap](docs/implementation/02-full-stack/README.md) for the Vercel demo and the Firebase App Hosting or Cloud Run release sequence.
 - Do not reintroduce Ant Design. Never add CSS Modules, project-authored CSS-in-JS, or another component system. A future UI migration needs explicit owner approval.
 
 ## Source map
@@ -27,7 +27,7 @@ Claude Code entry point. `AGENTS.md` (imported above) is mandatory governance an
 
 ## Where to look (load only what the task needs)
 - Business rules: `docs/business-rules/NN-*.md`. Roles 01, network 02, accreditation 03, customers 04, products 05, card issuance 06, finance 07, commissions 08, membership and points 09, redemption 10, reports 11, audit 12, sales reporting 13, IGP 14.
-- [Implementation index](docs/implementation/README.md) for feature checklists and the decision log. Start the full-stack sequence from the [Firebase roadmap](docs/implementation/firebase/README.md). Planning documents do not authorize work.
+- [Implementation index](docs/implementation/README.md) for feature checklists and the decision log. Start the full-stack sequence from the [Full-stack roadmap](docs/implementation/02-full-stack/README.md). Planning documents do not authorize work.
 - Technical design: `docs/development/` (`frontend.md` for UI, `testing.md` for tests, `implementation.md` for phases).
 - Decision register: `docs/implementation/decisions-and-gaps.md`. Read the relevant decision when a rule or status is unclear; it does not override the business rules.
 - Some docs may still describe the project as documentation-only or Ant Design as present. Trust the code and `AGENTS.md` section 8.

@@ -1,6 +1,6 @@
 # AFHomes Platform — Deployment, Infrastructure, and Production Operations
 
-> This guide defines the target deployment. The current repository is the browser-memory frontend prototype. The [Firebase implementation roadmap](../implementation/firebase/README.md) gives the approved sequence and verification steps. Provisioning, billing, imports, and deployments each require owner authorization.
+> This guide defines the target deployment. The current repository is the browser-memory frontend prototype. The [Full-stack implementation roadmap](../implementation/02-full-stack/README.md) gives the approved sequence and verification steps. Provisioning, billing, imports, and deployments each require owner authorization.
 
 ## 1. Environment and hosting decisions
 
@@ -48,7 +48,7 @@ Use approved import paths only. Rehearse validation, duplicate handling, rejecti
 
 Use private Cloud Storage for Firebase for production files with authorized upload/download, type and size checks, metadata, object retention and recovery, and restricted access. Keep file references in PostgreSQL and durable files out of application instance storage. Use the Storage Emulator locally. An approved private Supabase bucket may serve synthetic demo files before Blaze if necessary, and the paid staging rehearsal must verify Firebase Storage before release.
 
-[Database guide](database.md) · [Staging import rehearsal](../implementation/firebase/02-staging/05-release-rehearsal-and-sign-off.md) · [Firebase Storage billing](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024)
+[Database guide](database.md) · [Staging import rehearsal](../implementation/02-full-stack/02-staging/05-release-rehearsal-and-sign-off.md) · [Firebase Storage billing](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024)
 
 ## 6. Release and operations
 
@@ -59,7 +59,7 @@ Use private Cloud Storage for Firebase for production files with authorized uplo
 5. Assign release, access, billing, backup, and incident owners. Review actual hosted spend, including app hosting, Cloud SQL, SQL Connect activity, file storage and transfer, build artifacts, logs, backups, and domain charges. Set budget alerts. Approve scaling and recovery expectations based on real measurements, not guessed capacity.
 6. Schedule jobs only if approved. Document the execution identity, timing, retry behavior, monitoring, and duplicate protection. A restart or retry must not repeat a financial effect or activate deferred services.
 
-[App Hosting releases](https://firebase.google.com/docs/app-hosting/rollouts) · [Cloud Run release controls](https://docs.cloud.google.com/run/docs/rollouts-rollbacks-traffic-migration) · [Production launch guide](../implementation/firebase/03-production/05-deployment-and-launch.md)
+[App Hosting releases](https://firebase.google.com/docs/app-hosting/rollouts) · [Cloud Run release controls](https://docs.cloud.google.com/run/docs/rollouts-rollbacks-traffic-migration) · [Production launch guide](../implementation/02-full-stack/03-production/05-deployment-and-launch.md)
 
 ## 7. Recovery and maintenance
 
@@ -67,11 +67,11 @@ Maintain a previous compatible app release and the configuration needed to resto
 
 Protect Cloud SQL backups, private file recovery, configuration, keys, and build artifacts separately. Define recovery objectives, approved retention, restoration authority, and test frequency with the owner. Rehearse restoring both the data and the app in staging before release. On a failed deploy, compromised credential, connectivity issue, or data incident, contain the impact, preserve safe diagnostic evidence, escalate, and reopen only after checks pass. Review dependency and runtime updates in staging.
 
-[Cloud SQL backups](https://docs.cloud.google.com/sql/docs/postgres/backup-recovery/backups) · [Production recovery guide](../implementation/firebase/03-production/06-monitoring-backups-and-recovery.md) · [Cloud Billing budgets](https://docs.cloud.google.com/billing/docs/how-to/budgets)
+[Cloud SQL backups](https://docs.cloud.google.com/sql/docs/postgres/backup-recovery/backups) · [Production recovery guide](../implementation/02-full-stack/03-production/06-monitoring-backups-and-recovery.md) · [Cloud Billing budgets](https://docs.cloud.google.com/billing/docs/how-to/budgets)
 
 ## 8. Exit criteria and outstanding decisions
 
-Use the [staging sign-off checklist](../implementation/firebase/02-staging/05-release-rehearsal-and-sign-off.md) and the [production index](../implementation/firebase/03-production/README.md). Business modules go live together after sign-off. Keep the domain, final approved location, measured sizing, recurring cost, alert ownership, backup settings, and recovery objectives pending until the responsible people approve them. App Hosting, Cloud Run, cloud provisioning, backup restoration, and deployment remain unverified until tested.
+Use the [staging sign-off checklist](../implementation/02-full-stack/02-staging/05-release-rehearsal-and-sign-off.md) and the [production index](../implementation/02-full-stack/03-production/README.md). Business modules go live together after sign-off. Keep the domain, final approved location, measured sizing, recurring cost, alert ownership, backup settings, and recovery objectives pending until the responsible people approve them. App Hosting, Cloud Run, cloud provisioning, backup restoration, and deployment remain unverified until tested.
 
 ---
 

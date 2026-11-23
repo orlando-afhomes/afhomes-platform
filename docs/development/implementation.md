@@ -2,7 +2,7 @@
 
 > Authoritative implementation roadmap for the AFHomes Platform.
 > Read `docs/development/architecture.md` for system architecture and `docs/business-rules/` (01–14) for authoritative business behavior.
-> For numbered work instructions, start at the [Firebase implementation roadmap](../implementation/firebase/README.md). Each phase requires separate project-owner authorization.
+> For numbered work instructions, start at the [Full-stack implementation roadmap](../implementation/02-full-stack/README.md). Each phase requires separate project-owner authorization.
 
 ---
 
@@ -40,7 +40,7 @@ Implementation is governed by: documentation authority (business-rules own busin
 - `docs/development/backend.md` — backend services, API and persistence integration.
 - `docs/development/security.md` — authentication, authorization and security controls.
 - `docs/development/testing.md` — quality assurance and release verification.
-- [Firebase environment guides](../implementation/firebase/README.md) — executable phase order and acceptance requirements.
+- [Full-stack environment guides](../implementation/02-full-stack/README.md) — executable phase order and acceptance requirements.
 - `docs/development/deployment.md` — production infrastructure, operations and recovery.
 
 ---
@@ -69,15 +69,15 @@ Distinguish Implemented (authorized technical work exists), Verified (required t
 
 | Technical phase | Environment guide | What carries forward |
 | --- | --- | --- |
-| 0 Documentation | [Stack alignment](../implementation/firebase/00-update-existing-documentation.md) | Agreed architecture and working documentation |
-| 1 Frontend foundation | [Prototype checklist](../implementation/README.md) and [optional Vercel preview](../implementation/firebase/02-staging/00-vercel-prototype-demo.md) | Working sample-data build |
-| 2 Database foundation | [Localhost database](../implementation/firebase/01-localhost/01-database-and-emulators.md) | Schema, typed connector, and reproducible test data |
-| 3 Backend foundation | [Localhost backend and API](../implementation/firebase/01-localhost/README.md) | Auth, authorization, audit, and first integrated workflow |
-| 4 Business modules | [Module order](../implementation/firebase/01-localhost/05-approved-business-modules.md) | All approved business operations and tests |
-| 5 Frontend and backend integration | [Localhost integration](../implementation/firebase/01-localhost/04-frontend-and-file-storage.md) | Working screens and typed HTTP adapters with private files |
-| 6 System validation | [Local verification](../implementation/firebase/01-localhost/06-local-verification.md) and [Staging](../implementation/firebase/02-staging/README.md) | Tested release candidate, hosted transaction proof, rehearsal evidence |
-| 7 Cloud deployment | [Production](../implementation/firebase/03-production/README.md) | Approved and verified launch of all approved modules together |
-| 8 Stabilization | [Production operations](../implementation/firebase/03-production/06-monitoring-backups-and-recovery.md) | Monitoring and recovery runbook |
+| 0 Documentation | [Stack alignment](../implementation/02-full-stack/00-documentation-transition.md) | Agreed architecture and working documentation |
+| 1 Frontend foundation | [Prototype checklist](../implementation/README.md) and [optional Vercel preview](../implementation/02-full-stack/02-staging/00-vercel-prototype-demo.md) | Working sample-data build |
+| 2 Database foundation | [Localhost database](../implementation/02-full-stack/01-localhost/01-database-and-emulators.md) | Schema, typed connector, and reproducible test data |
+| 3 Backend foundation | [Localhost backend and API](../implementation/02-full-stack/01-localhost/README.md) | Auth, authorization, audit, and first integrated workflow |
+| 4 Business modules | [Module order](../implementation/02-full-stack/01-localhost/05-approved-business-modules.md) | All approved business operations and tests |
+| 5 Frontend and backend integration | [Localhost integration](../implementation/02-full-stack/01-localhost/04-frontend-and-file-storage.md) | Working screens and typed HTTP adapters with private files |
+| 6 System validation | [Local verification](../implementation/02-full-stack/01-localhost/06-local-verification.md) and [Staging](../implementation/02-full-stack/02-staging/README.md) | Tested release candidate, hosted transaction proof, rehearsal evidence |
+| 7 Cloud deployment | [Production](../implementation/02-full-stack/03-production/README.md) | Approved and verified launch of all approved modules together |
+| 8 Stabilization | [Production operations](../implementation/02-full-stack/03-production/06-monitoring-backups-and-recovery.md) | Monitoring and recovery runbook |
 
 The phase numbers map to existing technical references. The environment guides carry the step sequence. Within a module, finish its schema, backend, API, and frontend together. The optional mock demo can happen early. After the first local workflow passes, run the hosted SQL Connect pilot before expanding financial workflows. Full staging sign-off remains the gate before production.
 
@@ -91,7 +91,7 @@ Each environment guide documents prerequisites, approvals, implementation sequen
 
 ## 10. Phase 0: Documentation Foundation
 
-Align the active technical guides, project context, and agent instructions with the [Firebase roadmap](../implementation/firebase/README.md). Preserve the business rules and existing prototype evidence. Verify references and clearly label prior stack decisions as historical.
+Align the active technical guides, project context, and agent instructions with the [Full-stack roadmap](../implementation/02-full-stack/README.md). Preserve the business rules and existing prototype evidence. Verify references and clearly label prior stack decisions as historical.
 
 ---
 
@@ -103,7 +103,7 @@ Historical Phase 1 established Next.js, panel shells, domain contracts, a centra
 
 ## 12. Phase 2: Local SQL Connect Database Foundation
 
-Follow the numbered [localhost database guide](../implementation/firebase/01-localhost/01-database-and-emulators.md). Set up the SQL Connect Emulator only after owner approval. Use an explicit demo project, reviewed schema, server-side connector, and repeatable synthetic seed. Verify relationships, indexes, business identifier uniqueness, exact money round trips, Manila dates, and local transaction behavior. Hosted PostgreSQL is used in the subsequent staged pilot to prove concurrent writes and failure rollback.
+Follow the numbered [localhost database guide](../implementation/02-full-stack/01-localhost/01-database-and-emulators.md). Set up the SQL Connect Emulator only after owner approval. Use an explicit demo project, reviewed schema, server-side connector, and repeatable synthetic seed. Verify relationships, indexes, business identifier uniqueness, exact money round trips, Manila dates, and local transaction behavior. Hosted PostgreSQL is used in the subsequent staged pilot to prove concurrent writes and failure rollback.
 
 The local task ends with reproducible data, passing schema and seed checks, and isolated credentials. Cloud provisioning, legacy imports, schema deployment to production, and resets of ordinary developer data each follow the separate approval gates.
 
@@ -111,7 +111,7 @@ The local task ends with reproducible data, passing schema and seed checks, and 
 
 ## 13. Phase 3: Backend Foundation
 
-Use the [localhost backend and authentication guide](../implementation/firebase/01-localhost/02-backend-authentication-and-permissions.md) and [API guide](../implementation/firebase/01-localhost/03-api.md). Establish Firebase Auth session verification, account status, centralized authorization, Zod contracts, typed SQL Connect repositories, a safe error contract, protected transactions, and audit persistence. Verify the first authorized operation and invalid, unauthorized, retry, and rollback cases.
+Use the [localhost backend and authentication guide](../implementation/02-full-stack/01-localhost/02-backend-authentication-and-permissions.md) and [API guide](../implementation/02-full-stack/01-localhost/03-api.md). Establish Firebase Auth session verification, account status, centralized authorization, Zod contracts, typed SQL Connect repositories, a safe error contract, protected transactions, and audit persistence. Verify the first authorized operation and invalid, unauthorized, retry, and rollback cases.
 
 ---
 
@@ -119,7 +119,7 @@ Use the [localhost backend and authentication guide](../implementation/firebase/
 
 ### Objective
 
-Implement approved workflows with real server services and the local SQL Connect integration. Respect the module dependencies in the [ordered module guide](../implementation/firebase/01-localhost/05-approved-business-modules.md). Verify the hosted pilot before expanding financial workflows.
+Implement approved workflows with real server services and the local SQL Connect integration. Respect the module dependencies in the [ordered module guide](../implementation/02-full-stack/01-localhost/05-approved-business-modules.md). Verify the hosted pilot before expanding financial workflows.
 
 ### Required documents
 
@@ -133,7 +133,7 @@ Each approved subphase delivers its complete tested flow through data, service, 
 
 ### Phase 4 module dependency matrix
 
-See [module-by-module order and feature checklists](../implementation/firebase/01-localhost/05-approved-business-modules.md).
+See [module-by-module order and feature checklists](../implementation/02-full-stack/01-localhost/05-approved-business-modules.md).
 
 ### Disabled and deferred modules
 
@@ -242,11 +242,11 @@ deployment.md, database.md, security.md, testing.md, architecture.md, backend.md
 
 ### Core deliverables
 
-- [Qualify the host and runtime in staging](../implementation/firebase/02-staging/04-hosting-and-deployment.md). Identify the build, approved location, domain, SQL Connect service, secrets, hosted logs, and recovery setup.
-- [Provision the production project and PostgreSQL](../implementation/firebase/03-production/01-firebase-project-and-database.md) only after owner authorization. Apply reviewed schema changes and verify backups.
+- [Qualify the host and runtime in staging](../implementation/02-full-stack/02-staging/04-hosting-and-deployment.md). Identify the build, approved location, domain, SQL Connect service, secrets, hosted logs, and recovery setup.
+- [Provision the production project and PostgreSQL](../implementation/02-full-stack/03-production/01-firebase-project-and-database.md) only after owner authorization. Apply reviewed schema changes and verify backups.
 - Configure real staff access, least-privilege runtime identity, private files, approved feature exposure, and the validated Next.js production release.
-- [Rehearse and then execute approved imports](../implementation/firebase/03-production/04-approved-imports-and-readiness.md) under owner control. Reconcile before opening the release.
-- [Launch all approved modules together](../implementation/firebase/03-production/05-deployment-and-launch.md) after the full review and production approval.
+- [Rehearse and then execute approved imports](../implementation/02-full-stack/03-production/04-approved-imports-and-readiness.md) under owner control. Reconcile before opening the release.
+- [Launch all approved modules together](../implementation/02-full-stack/03-production/05-deployment-and-launch.md) after the full review and production approval.
 
 ### Security
 
@@ -279,7 +279,7 @@ Accepted production deployment.
 ### Scope
 
 - Monitor app health, errors, database and runtime usage, security events, cost, and backup state.
-- Detect, contain, and recover from incidents using the [production recovery guide](../implementation/firebase/03-production/06-monitoring-backups-and-recovery.md).
+- Detect, contain, and recover from incidents using the [production recovery guide](../implementation/02-full-stack/03-production/06-monitoring-backups-and-recovery.md).
 - Validate performance changes against real staging measurements and approved needs.
 - Review supported runtime and dependency updates, session security, credentials, access, and vulnerabilities.
 - Business-rule changes: future approved changes may require updated canonical documents, domain changes, database migration, backward compatibility, regression testing, release approval.
@@ -303,7 +303,7 @@ Use the [FP1–FP16 implementation index](../implementation/README.md) to map mo
 
 ## 20. Business Workflow Implementation Map
 
-Use the [module sequence](../implementation/firebase/01-localhost/05-approved-business-modules.md) and the associated feature checklists for dependent workflows and acceptance criteria.
+Use the [module sequence](../implementation/02-full-stack/01-localhost/05-approved-business-modules.md) and the associated feature checklists for dependent workflows and acceptance criteria.
 
 ---
 
@@ -387,7 +387,7 @@ Record phase, environment, revision, approvals, checks run, actual results, bloc
 
 ## 34. Delivery Order and Milestone Gates
 
-Use the [numbered Firebase phase indexes](../implementation/firebase/README.md) to move from Localhost to Staging to Production. Complete approved module and import sign-off before the single production launch.
+Use the [numbered Firebase phase indexes](../implementation/02-full-stack/README.md) to move from Localhost to Staging to Production. Complete approved module and import sign-off before the single production launch.
 
 ---
 
@@ -417,7 +417,7 @@ Incomplete approved functionality, unverified authorization or financial guarant
 
 ## 39. Operations and Post-Launch Governance
 
-Follow the [production operations guide](../implementation/firebase/03-production/06-monitoring-backups-and-recovery.md) for monitoring, access, rollback, backup verification, and recovery.
+Follow the [production operations guide](../implementation/02-full-stack/03-production/06-monitoring-backups-and-recovery.md) for monitoring, access, rollback, backup verification, and recovery.
 
 ---
 
@@ -429,7 +429,7 @@ Use AGENTS.md and the canonical business rules for binding invariants. A plan ca
 
 ## 41. Required Final implementation.md Structure
 
-Maintain the phase-to-environment mapping here and detailed instructions under the [Firebase roadmap](../implementation/firebase/README.md).
+Maintain the phase-to-environment mapping here and detailed instructions under the [Full-stack roadmap](../implementation/02-full-stack/README.md).
 
 ---
 
@@ -441,7 +441,7 @@ Keep this mapping, the technical guides, and the Firebase environment sequence c
 
 ## 43. Acceptance Checklist
 
-Use each phase index's exit checks and the [staging sign-off guide](../implementation/firebase/02-staging/05-release-rehearsal-and-sign-off.md).
+Use each phase index's exit checks and the [staging sign-off guide](../implementation/02-full-stack/02-staging/05-release-rehearsal-and-sign-off.md).
 
 ---
 

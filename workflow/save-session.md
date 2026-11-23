@@ -111,64 +111,59 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-23 (Asia/Manila business date; exact time not recorded).
-- Repository: AFHomes Platform; branch `develop`; HEAD `6ea21df` (verified in this run).
-- Tool and model: OpenCode, DeepSeek V4.1 Flash 1017 (from the session environment).
-- Session objective: implement `docs/implementation/fixes/06-prototype-completion-plan.md`, one stage per session.
-- Development phase: frontend mock prototype; UI-state hardening and QA. Backend, real authentication, database and deployment remain deferred.
-- Context note: the conversation was not compacted. Everything below was read or run in this session unless marked otherwise.
+- Saved at: 2026-11-23 (Asia/Singapore).
+- Repository: AFHomes Platform, `afhomes-platform`; branch `develop`; HEAD `3058633` at this save.
+- Tool: Codex. Exact model identifier: not verified.
+- Objective: document the Firebase delivery sequence, resolve the mock-app review findings, and save a handoff.
+- Development phase: frontend/mock prototype complete for the reviewed fixes; Firebase technical guides written. Localhost full-stack setup has not started in this session.
+- Context: based on the available conversation and the repository checks below. Historical verification is identified separately.
 
 ## 2. Current Project State
-- The plan's Stage 0 was partially run, and Stage 1 (Admin Batch 3) is implemented but uncommitted.
-- Stage 1: period close shows `Button loading`; the shared `useConfirmRun` now blocks a duplicate confirm with a ref; report export shows a spinner/`aria-busy` and ignores a second export while recording.
-- The fixes register now shows Batch 3 built and Stage 0 partial. The user-added `docs/implementation/fixes/06-prototype-completion-plan.md` remains untracked.
-- Mock feature gaps G1–G5, Batches 2 and 4, the browser and role acceptance, and document drift remain open.
+- Verified at save: `3058633` is titled `feat: complete mock feature gaps and move the planned stack to Firebase`. The working tree was clean before this save. The Firebase roadmap and IGP regression tests are tracked.
+- Current app is still based on typed, browser-memory mock data. The Firebase roadmap is a planned stack change, not a completed backend or deployment.
+- Begin at `docs/implementation/02-full-stack/README.md`. It links the numbered Localhost, Staging, and Production guides and the existing FP1–FP16 feature records. The prototype completion plan's older branch/working-copy note is historical; use live Git status.
 
 ## 3. Important Decisions
-- The completion plan governs the order: Stage 0 browser close-out, Stage 1 Batch 3, Stage 2 Batch 2, Stage 3 Batch 4, Stage 4 G1–G5 plus IGP leftovers, Stage 5 QA, Stage 6 docs, Stage 7 outside the prototype. One stage per session.
-- Batch 3 went before Batch 2 because month close is irreversible and had no busy guard.
-- Report export uses a spinner; the plan allowed either a spinner or a documented "keep disabled" choice.
-- `useConfirmRun` now guards every confirm action against a second click, not only month close.
-- No business rule changed. Git writes remain reserved for the owner.
+- Planned stack: one Next.js app, `/api/v1` Route Handlers and Zod, Firebase Auth, server-only SQL Connect with PostgreSQL, and private Firebase Storage. Use emulators locally. Vercel is the sample-data preview option subject to its plan terms. Start the Spark database trial when ready to test the local pilot against hosted PostgreSQL. Verify Firebase App Hosting in staging; Cloud Run is the fallback.
+- Launch all approved modules together after staging sign-off and approved imports only. Deployments, billing, real authentication, database work, and each implementation milestone require separate approval.
+- Doc 07: cash receipt allocation uses the shared receipt reservation check. Doc 08: saving copied allowance figures requires an explicit split confirmation, renewed after edits; changing month or leader clears the copied figures. Doc 14 §5.3: frozen Series Number segments must match the imported fields. IGP history import remains available to Administrators and Super Administrators.
+- Agent Git operations are read-only. Only the owner can stage, commit, and push. Keep mock mode synthetic and browser-scoped.
 
 ## 4. Completed Work
-- Stage 1 files: `src/panels/admin/pages/period-close-page.tsx`, `src/shared/components/modern/use-confirm-run.tsx`, `src/panels/admin/components/report-shell.tsx`.
-- Stage 1 tests: `src/panels/admin/components/confirm-tones.test.tsx` (month close double-click sends one request; the page button shows `aria-busy`/`aria-disabled`) and `src/panels/admin/reports-pages.test.tsx` (Export trigger busy while the export is recorded).
-- Docs: `docs/implementation/prototype/16-state-verification.md` records the 2026-11-23 browser pass; `docs/implementation/fixes/README.md` marks Batch 3 built, Stage 0 partial, and adds the plan row.
-- Stage 0 browser pass: the home page at 320/375/768/1100/1280 px has no document-level horizontal overflow; at 768 px one tier-card image paints 10 px into its clipped card. `/admin/membership` (both tabs), `/admin/commissions/allowances`, `/admin/finance/collections/ctr-1`, `/admin/finance/cancellations/ctr-1` and `/admin/reports/period-close` loaded with data and no application console errors.
+- Created 23 Firebase implementation guides and updated 18 existing technical/navigation files. See `docs/implementation/02-full-stack/00-documentation-transition.md` for the file inventory. Kept business-rule files and historical stack evidence.
+- Cash receipts now skip numbers reserved by unmatched receipts, across ordinary entry and related cash-entry forms. Allocator: `src/data/mock/payment-repository.ts`.
+- Allowance confirmation is required again after editing copied figures. Month and leader changes clear the copied draft. See `src/panels/admin/pages/allowance-review-page.tsx`.
+- IGP history import rejects missing replacement chains, circular links and dependent rows, dates that do not exactly match the Series Number, and payment plan, term months, or contract type mismatches. The shared validator runs in preview and on Confirm. See `src/modules/igp/history-import.ts` and `src/modules/igp/history-import.test.ts`.
+- Review fixes and their tests predate this save and are in the now-committed working baseline. This save changes only the handoff snapshot.
 
 ## 5. Git Working Tree
-- Branch `develop`, HEAD `6ea21df`, nothing staged.
-- Unstaged, this session: the seven Stage 1 source and documentation files in section 4.
-- Unstaged, this save: `workflow/save-session.md` held the previous handoff; this save replaces only its snapshot block.
-- Untracked, pre-existing/user: `docs/implementation/fixes/06-prototype-completion-plan.md`.
-- No deleted or renamed tracked files.
+- Before this save: branch `develop`, HEAD `3058633`; nothing staged, unstaged, untracked, deleted, or renamed. Verified with read-only Git.
+- This-session change: `workflow/save-session.md` snapshot only, unstaged. All other files were already in the committed baseline.
 
 ## 6. Pending Tasks
-- Stage 0 manual checks: reduced motion, no JavaScript, throttled navigation, keyboard and focus order, forced query error with retry, and double-click on every mutating button.
-- Stage 2 (Batch 2): customer detail and edit error branches, customer empty-versus-no-match wording, sales-network list `QueryState`, member detail errors, genealogy error branch. Stage 3 (Batch 4): organization, staff, departments, roles, Lists, scheme-guide empty state, account error, promos, and the S6 decision.
-- Stage 4: G1 unmatched receipts, G2 linked effects, G3 allowance assembly and workbook comparison, G4 historical sign-off, G5 portal-plan audit. IGP buyer membership and IGP history import need owner decisions.
-- Stage 5: the browser matrix and the F5.5, F5.7, F9.4, F1.5a, F3.2, F4.2 and F11.3 walkthroughs. Stage 6: D1–D8 and the README status refresh.
+- Actual payout switch under Doc 08 §16 is still open. The workbook sign-off screen records a comparison rather than switching payouts.
+- Doc 14 IGP buyer membership amendment still needs owner sign-off. Do not treat the prototype behavior as an approved live rule.
+- Prototype browser checks still listed as open: throttled navigation, forced error/retry, Back on a dirty form, and visible keyboard focus. See `docs/implementation/01-prototype/ui-states/16-state-verification.md`.
+- Firebase emulator, backend/API, Spark trial, demo release, and production work await separately authorized milestones.
 
 ## 7. Verification State
-- Targeted Stage 1 suites (confirm-tones, reports-pages, finance-pages, audit-logs-page, reconciliation-import-pages): 51/51 passed.
-- `npx tsc --noEmit`: passed. `npm run lint`: passed (ESLint and the architecture check, 677 files). `npm run build`: passed, 101 pages.
-- Full `npm test`: 2,013 passed, 5 failed of 2,018. All five were 15 s timeouts under load (`business-pages` 3, `staff-page` 2); both files pass alone, 123/123 in 211 s. The dev server was running, which raises load.
-- Browser QA: the width and page-load checks above; no application console errors (one Next.js dev HMR socket entry after a back-forward navigation).
-- Not performed: reduced motion, no JavaScript, throttled navigation, keyboard and focus, forced-error retry, and the full double-click sweep. The office-address test still times out under full load despite `delay: null`; it passes alone in about 3.9 s.
+- Earlier review work at `6ea21df` plus working changes: 172 tests passed in nine suites for receipt, IGP, and allowance fixes. The latest IGP field-validation pass reported 20 tests passing across three IGP suites, TypeScript exit 0, targeted ESLint exit 0, and `git diff HEAD --check` exit 0.
+- Documentation earlier passed 329 internal link checks and `git diff --check`. These are prior checks, not reruns at `3058633`.
+- This save verifies Git state, presence of the tracked roadmap and regression tests, and selected fix symbols. Application tests, lint, typecheck, build, browser QA, and deployments were not performed for this save.
 
 ## 8. Next Session Instructions
-- Run `/load`, verify HEAD, and review the uncommitted Stage 1 changes before building on them; the owner commits.
-- Then run Stage 2 from `06-prototype-completion-plan.md` and `01-admin-ui-state-fixes.md` (Batch 2). Stage 2 needs owner approval; do not start Stage 3 in the same change set.
-- Inspect `src/panels/admin/pages/customer-detail-page.tsx` (it still shows "Customer Not Found" without a query-error branch), `customers-page.tsx`, the sales-network pages, `sales-network-member-detail-page.tsx` and the genealogy page.
-- Run the full suite with the dev server stopped to separate real failures from load timeouts.
+- Run `/load` and verify live HEAD first. Start with `docs/implementation/02-full-stack/README.md` and the current `AGENTS.md`.
+- If the owner authorizes localhost work, follow `docs/implementation/02-full-stack/01-localhost/01-database-and-emulators.md` before backend/API work. For QA only, use the open browser checks and the existing mock fixtures.
+- Keep the payout switch and Doc 14 amendment pending until explicitly approved. Do not edit Git state or start hosted provisioning based on this snapshot.
 
 ## 9. Execution Recommendation
-- Phase: Build, paused between stages.
-- Recommended next mode: default, for Stage 2 after the owner reviews and commits Stage 1.
-- Recommended model: Sonnet 5.5.
+- Phase: QA if closing prototype checks; Plan if preparing the localhost milestone.
+- Current mode: Codex Default.
+- Recommended next mode: Default for authorized QA; Plan for localhost architecture decisions.
+- Current model: not verified.
+- Recommended model: keep the available coding model in the active session.
 - Effort: medium.
 - Ultracode: OFF.
-- Token optimization: one stage per pass, targeted suites first; run the full suite once with the dev server stopped.
-- Reason: Stage 1 is verified; the remaining risk is the unbuilt stages and the manual browser acceptance.
+- Token optimization: read only the next numbered guide or the open QA cases, then run targeted checks.
+- Reason: prototype fixes are recorded; the next implementation milestone needs explicit scope and approval.
 <!-- SESSION_SNAPSHOT_END -->

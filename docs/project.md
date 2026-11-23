@@ -153,7 +153,7 @@ Start in the SQL Connect Emulator with the Firebase Auth and Storage emulators. 
 - **Online prototype:** Vercel, sample data, and owner-approved deployment.
 - **Staging:** Separate Firebase project. Start the SQL Connect Spark trial after the local pilot. Rehearse the complete release with approved hosted services.
 - **Production:** Company-owned Firebase project on Blaze with Firebase Auth, SQL Connect and PostgreSQL, private Firebase Storage, and Firebase App Hosting if qualified. Cloud Run is the fallback in the same Google project.
-- Approve the service location, domain, capacity, cost, and recovery settings before provisioning. Use the [Firebase roadmap](implementation/firebase/README.md) and [deployment guide](development/deployment.md) for the environment steps.
+- Approve the service location, domain, capacity, cost, and recovery settings before provisioning. Use the [Full-stack roadmap](implementation/02-full-stack/README.md) and [deployment guide](development/deployment.md) for the environment steps.
 
 ### 14. Data Import and Migration Policy
 
@@ -232,7 +232,7 @@ Preserve customer identity, official identifiers, historical contracts, sales at
 | 7 | Cloud Deployment and Production Readiness | Verified Google host, managed PostgreSQL, HTTPS, backups, and recovery |
 | 8 | Stabilization and Future Enhancements | Maintain and improve the accepted system |
 
-Use the [technical phase mapping](development/implementation.md) and the [Firebase environment roadmap](implementation/firebase/README.md). Progress through Localhost, Staging, and Production with separate owner authorization. A local test or a published demo does not authorize production.
+Use the [technical phase mapping](development/implementation.md) and the [Full-stack environment roadmap](implementation/02-full-stack/README.md). Progress through Localhost, Staging, and Production with separate owner authorization. A local test or a published demo does not authorize production.
 
 ### 25. Approved Decisions
 
@@ -350,7 +350,7 @@ Before making changes, AI coding agents must:
 9. Confirm authorization.
 10. Identify dependencies.
 
-For database work, read [database.md](development/database.md). For API and UI work, read [backend.md](development/backend.md) and [frontend.md](development/frontend.md). For hosted work, read [deployment.md](development/deployment.md) and the [environment roadmap](implementation/firebase/README.md).
+For database work, read [database.md](development/database.md). For API and UI work, read [backend.md](development/backend.md) and [frontend.md](development/frontend.md). For hosted work, read [deployment.md](development/deployment.md) and the [environment roadmap](implementation/02-full-stack/README.md).
 
 Do not treat reading documentation as permission to edit every file. Only the explicitly authorized task scope may be changed.
 

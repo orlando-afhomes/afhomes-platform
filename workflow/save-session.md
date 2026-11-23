@@ -111,51 +111,43 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved 2026-11-23 (Asia/Singapore and Asia/Manila). AFHomes Platform, branch `develop`, HEAD `cd10b3e`.
-- Tool: Codex desktop, Default mode. Exact model not verified. Current conversation and preceding saved handoff were available.
-- Objective: verify GSD points rules, build the approved front-desk flow, demonstrate the forms, and fix the reported hover issue. Phase: frontend prototype with sample data.
+- Saved 2026-11-23 (Asia/Manila). AFHomes Platform, branch `develop`, HEAD `12c7518` (`feat: issue VIP Numbers on qualifying payment and defer membership creation`, made by the owner during this session; the session began at `cd10b3e`).
+- Tool: Claude Code desktop, Sonnet 5.5, permission mode not verified. Context was not compacted.
+- Objective: continue `docs/implementation/01-prototype/plans/vip-contract-printing-plan.md`, then browser-walk the print flows. Phase: frontend prototype with sample data, QA.
 
 ## 2. Current Project State
-- HEAD `cd10b3e` contains the GSD implementation, on top of `5f8a9ef` (realistic seed and prototype completion work). The working-copy hover fix is separate.
-- Customer Look Up lets GSD check active membership by name and distinguish matches by VIP Number. Scanning the member's current QR opens Earn Points and Redeem Points. GSD actions and booking views are scoped to that scanned holder. GSD cannot retrieve member codes through staff QR display or approve bills/payments.
-- Earn Points collects Service Used, Receipt Number and payment details, then submits for review. Redeem Points asks staff to check ID and offers a reward or overnight stay with the points balance and cost shown.
-- Source review: the external AFHomes VIP Grants describe the Annual Welcome Gift. No QR operating workflow was found in the AFHomes materials reviewed. The platform QR and points rules are in docs 01, 09 and 10. The seed plan still says Planned despite the committed seed implementation.
+- The printing feature is mostly built (found already in the working tree): `src/modules/contracts/print-data.ts` (template choice, Grant eligibility, receipt summary), `src/panels/admin/documents/vip-print-pdf.ts` (PDF-LIB fill for application, reservation, grant, Finance summary), `vip-print-controls.tsx` (dialog, per-session archive, signed-sample attach, reprint), seven supplied templates in `public/vip-print-templates/`, wired into the customer wizard, customer detail, sales contract detail and Finance collection detail pages. Packages `pdf-lib` and `@pdf-lib/fontkit` were added to `package.json`.
+- The owner commit `12c7518` changed VIP Number issuance (docs 04–07, `business-effects.ts`). The printing code was not re-checked against it.
 
 ## 3. Important Decisions
-- Owner approved QR entry for both GSD points actions and requested the labels Earn Points and Redeem Points. Name lookup is for active membership verification.
-- An approved qualifying purchase can earn configured Promo Points and count toward the fixed annual Stay Points gift. A scan identifies the cardholder. Separate balances, receipt uniqueness, existing bill approval, reward eligibility and stay reservation/completion rules still apply.
-- Prototype only, with browser-memory sample data. Live redemption, Services activation, Stage 7, real sign-in, database work and deployment require separate authorization. Git writes are reserved for the project owner.
-- Prior snapshot decision still relevant: IGP Formal VIP Grant signing creates the prototype buyer membership with a frozen tier, Series Number and zero Stay Points. Doc 14 amendment needs owner sign-off before live use.
+- Owner said "continue the implementation" of the printing plan, then approved the browser walkthrough and the application/access check.
+- Plan limits stand: sample PDFs only, browser memory only, official signing copies unavailable until the owner clears original wording, variants and prices. Printing changes no workflow status. Git writes are reserved for the owner.
 
 ## 4. Completed Work
-- GSD implementation in `src/panels/admin/pages/customer-lookup-panel.tsx`, `gsd-points-page.tsx`, related staff forms, `src/data/mock`, `src/modules/identity/permissions.ts` and Business Rule 01. Added UI coverage in `src/panels/admin/customer-lookup.test.tsx` and mock tests for name lookup, QR scope, receipt duplication, approval and balance limits.
-- ChatGPT browser walkthrough opened the purchase and points-use forms for a sample member under the already signed-in Super Administrator. No sample transaction was submitted. The administrator screens use the older labels.
-- Fixed the hover flash on Scan QR, Enter Resort Bill and Record Points Use by preserving the gradient and solid fill through the transition. Manage Stay Bookings now updates its fill and border on hover. Only `src/panels/admin/pages/customer-lookup.css` changed for this fix.
-- Prior handoff reports Stages 0–6, realistic seed, review fixes and role walkthroughs completed with manual exceptions recorded in `docs/implementation/01-prototype/ui-states/16-state-verification.md`. Git confirms the seed commit exists.
+- Added the missing per-page sample stamp "SAMPLE - NOT FOR SIGNING" (pale diagonal) in `vip-print-pdf.ts` (`stampSample`, called in `renderVipDocument`), plus test "stamps every page of every output as a sample" in `vip-print-pdf.test.ts`.
+- Browser walkthrough on localhost with sample accounts: Bronze Reservation Agreement (2 pages), Grant (9 pages) and Finance summary (receipts total ₱25,500, balance ₱46,500 as on the contract page) rendered filled and stamped. Application form from the wizard rendered 2 pages filled and stamped. Saving as draft linked the prepared copy ("Print filed application sample" on the customer). The Clerk saw it (has manage access). An unrelated seller could not list or open that customer and saw no print button. No console errors.
 
 ## 5. Git Working Tree
-- Before this save: `develop` at `cd10b3e`, no staged changes, no untracked files, and no deletions or renames.
-- Unstaged from this session: `src/panels/admin/pages/customer-lookup.css` (10 insertions, 4 deletions). This save additionally changes the snapshot block of `workflow/save-session.md`.
-- HEAD also contains changes to `commissions-pages.test.tsx` alongside the GSD work. Those test changes were not made or tested in the GSD task described here. No agent Git writes.
+- Staged: none. Unstaged (modified): `docs/implementation/01-prototype/README.md`, `package.json`, `package-lock.json`, `src/modules/customers/types.ts`, `src/panels/admin/contract-detail-pages.test.tsx`, `customer-application-wizard.tsx`, `customer-detail-page.tsx`, `finance-collection-detail-page.tsx`, `sales-contract-detail-page.tsx` (111 insertions, 28 deletions). Most predate this session (the printing work found in the tree); this session edited only the stamp and its test in the untracked files below.
+- Untracked: `docs/implementation/01-prototype/plans/vip-contract-printing-plan.md`, `public/vip-print-templates/` (7 PDFs), `src/modules/contracts/print-data.ts` and `.test.ts`, `src/panels/admin/documents/` (3 files). No deletions or renames. The earlier hover fix in `customer-lookup.css` and the old snapshot are no longer in the working tree (owner committed them).
 
 ## 6. Pending Tasks
-- A live sample GSD walkthrough with a real camera and customer QR was not performed. The hover fix is local and ready for owner review.
-- Full suite confirmation remains open. The prior snapshot reported 2,091 passed and 11 failed of 2,102, with affected tests passing alone. No post-fix full rerun is recorded. The 11 failures are suspected load-related, not confirmed cleared.
-- Prior open items: doc 14 amendment, G3/G4 allowance questions (including OCT I1), seven G5 owner process checks, manual browser checks, static blog dates and F11.3 comparison against official workbook figures. Stage 7 and D8 remain separate.
+- Browser-untested variants: Silver, Gold, Gold with supplementary holder, Non-Standard, and the signed-sample attach path. Unit tests cover the tiers, not the browser.
+- Re-verify printing against owner commit `12c7518` (VIP Number now issued on qualifying payment; membership deferred). Check the "Pending issuance" text and Grant eligibility still match.
+- Owner clearance before official signing copies: legacy Reservation No. field, payment deadlines, ambiguous referral labels, Grant wording and prices.
+- Prior open items: doc 14 amendment, G3/G4 allowance questions, G5 process checks, live camera GSD demo, full-suite confirmation.
 
 ## 7. Verification State
-- GSD implementation: 82 focused tests passed, including simulated QR input, expired/replaced codes, duplicate receipts and insufficient balances. TypeScript, lint and `git diff --check` passed. Webpack production build passed (101 static pages generated) after restricted attempts hit filesystem and Google Fonts access errors.
-- Hover fix: verified browser hover at the screenshot width on all four controls. The green gradient and readable text survived the transition. Lint and `git diff --check` passed. No production build or automated test suite was rerun for the CSS-only fix.
-- Save command: read-only Git checks and snapshot write/readback only. No product checks rerun.
+- Run this session (before `12c7518` was seen): focused tests passed (11 across `print-data.test.ts` and `vip-print-pdf.test.ts`, plus 14 in `contract-detail-pages.test.tsx`), `npx tsc --noEmit` clean, ESLint on the changed files clean, `npm run build` completed (tail only checked).
+- Browser QA: as above. Not performed: full test suite, visual check of every PDF page, Silver/Gold/Non-Standard browser runs.
 
 ## 8. Next Session Instructions
-- Run `/load` and verify HEAD and the working tree. Start with `src/panels/admin/pages/customer-lookup.css`, the lookup screen, and the GSD test if resuming this work.
-- For the requested live demo, use the GSD sample account plus a sample membership QR. Check both actions from the scan. The admin name-lookup shortcut is a different UI. Use sample records only.
-- If the owner authorizes broader QA, rerun the full suite with the dev server stopped, then check any failures separately. Check current canonical docs before any business-rule or launch work.
+- Run `/load`, confirm HEAD, then rerun the focused print tests and `npx tsc --noEmit` against `12c7518`.
+- Inspect `src/panels/admin/documents/`, `src/modules/contracts/print-data.ts`, and the plan file. Keep sample data only; never use real customer data.
+- Dev server may already run on port 3000; sample sign-in accounts are in `src/data/mock/mock-credentials.ts`. A full page reload resets the in-memory data and signs out, so navigate by clicks.
 
 ## 9. Execution Recommendation
-- Phase: QA. Current and recommended next mode: Default in Codex. Current model: not verified.
-- Recommended model: GPT-6.2 Sol, medium effort. Ultracode: OFF.
-- Token optimization: verify only the live GSD path for the demo. Run the full suite once separately if requested.
-- Reason: focused checks cover the implementation. The remaining checks concern live camera handling and broader regression results.
+- Phase: QA. Recommended next mode: Default. Model: Sonnet 5.5, medium effort. Ultracode: OFF.
+- Token optimization: targeted print tests first; one full-suite run only if asked.
+- Reason: remaining work is regression checks against the new commit and a few browser variants.
 <!-- SESSION_SNAPSHOT_END -->

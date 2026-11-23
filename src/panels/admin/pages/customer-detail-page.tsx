@@ -28,6 +28,7 @@ import { AdminPage } from "@/shared/components/admin";
 import { PrepareContractDialog } from "../components/prepare-contract-dialog";
 import { buildCustomerMenuProps } from "../actions/customer-actions";
 import { useContractHref } from "../components/use-contract-href";
+import { ApplicationReprint } from "../documents/vip-print-controls";
 import { useTierDisplayName } from "../components/use-tier-display-name";
 import { CustomerDetailHero } from "../components/customer-detail-hero";
 import { CustomerDetailTabs, type CustomerDetailTab } from "../components/customer-detail-tabs";
@@ -164,6 +165,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
       crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: customerRecordName(customer) }]}
       actions={
         <>
+          {canManage && ownRecord ? <ApplicationReprint customerId={customer.id} /> : null}
           {canPrepare && ownRecord && currentPurchase && isEditableContractStatus(currentPurchase.status) ? (
             <Link href={contractHref(currentPurchase.id)} className={buttonVariants({ className: "tw:min-h-11 tw:sm:min-h-8" })}>
               <FileText aria-hidden="true" /> Continue Contract

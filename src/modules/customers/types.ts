@@ -44,6 +44,9 @@ export type SupplementaryHolder = {
   suffix: string | null;
   gender: string | null;
   dateOfBirth: string | null;
+  civilStatus?: string | null;
+  mobileNumber?: string | null;
+  email?: string | null;
   /** optional */
   citizenship?: string | null;
   /** optional */

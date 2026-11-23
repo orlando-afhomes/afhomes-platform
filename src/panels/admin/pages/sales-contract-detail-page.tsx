@@ -18,6 +18,7 @@ import { actionButtonVariant, approveDealConfirm, buildContractMenuProps, canCon
 import { ContractStatusCard, ContractSummaryCard } from "../components/contract-status-cards";
 import { ContractCommissionRateNotice, ContractHistorySection, ContractLedgerSection, ContractMilestonesSection, ContractNonStandardSection, ContractPageFrame, ContractPaymentsSection, ContractScheduleSection, ContractTermsSection, ContractTiles } from "../components/contract-sections";
 import { PaymentSubmitDialog, usePaymentActions, useUnmatchedReceiptActions } from "../components/payment-actions";
+import { ContractPrintControls, FinancePrintControl } from "../documents/vip-print-controls";
 import { humanize } from "@/shared/lib/humanize";
 
 const CRUMBS = [{ label: "Sales" }, { label: "Contracts", href: "/admin/sales?tab=contracts" }];
@@ -106,6 +107,8 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
           {canApprove && contract.vipNumberIssueBlocker && contract.missingCommissionRates.length === 0 ? (
             <InfoNote title="VIP Number Issuance Is on Hold">{contract.vipNumberIssueBlocker}</InfoNote>
           ) : null}
+          {canPrepare || canApprove ? <ContractPrintControls contract={contract} payments={record.payments} referrerId={sale?.referrerMemberId ?? contract.referrerMemberId} /> : null}
+          {canVerify ? <FinancePrintControl contract={contract} payments={record.payments} /> : null}
           <ContractTiles contract={record.contract} payments={record.payments} />
           <ContractDetailTabs value={tab} onChange={setTab} />
           {tab === "overview" ? (

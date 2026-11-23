@@ -44,6 +44,8 @@ describe("contract details show actions allowed for each viewer", () => {
   it("lets an authorized reviewer approve the deal on the approved Gold terms from Contracts", async () => {
     show("dev-admin", <SalesContractDetailPage contractId="ctr-3" />);
     expect(await screen.findByRole("button", { name: "Approve Deal" })).toBeEnabled();
+    expect(await screen.findByRole("button", { name: "Print Reservation Agreement" })).toBeEnabled();
+    expect(button("Print VIP Grant")).toBeNull();
     for (const name of ["Start review", "Finalize", "Record signed agreement", "Approve Sale"]) expect(button(name)).toBeNull();
     expect(button("Edit details")).toBeNull();
   });
@@ -82,10 +84,19 @@ describe("contract details show actions allowed for each viewer", () => {
     expect(button("Confirm cancellation")).toBeNull();
   });
 
+  it("explains why the VIP Grant is unavailable on a finalized contract without a VIP Number", async () => {
+    const store = createMockStore();
+    const contract = store.contracts.find((item) => item.status === "finalized")!;
+    contract.vipNumber = undefined;
+    show("dev-admin", <SalesContractDetailPage contractId={contract.id} />, undefined, store);
+    expect(await screen.findByText(/available once the VIP Number is issued after the qualifying payment/)).toBeInTheDocument();
+    expect(button("Print VIP Grant")).toBeNull();
+  });
+
   it("keeps review actions hidden from the seller on a contract assigned to them", async () => {
     show("dev-ost-a2", <SalesContractDetailPage contractId="ctr-4" />);
     await screen.findByRole("group", { name: "Contract summary" });
-    for (const name of ["Approve Deal", "Return for Correction"]) expect(button(name)).toBeNull();
+    for (const name of ["Approve Deal", "Return for Correction", "Print Reservation Agreement", "Print VIP Grant", "Print Finance Summary"]) expect(button(name)).toBeNull();
   });
 
   it("Sales contract Payment Schedule tab shows the schedule and opens the MA1 sheet on row click", async () => {
@@ -121,7 +132,8 @@ describe("contract details show actions allowed for each viewer", () => {
     show("dev-finance", <FinanceCollectionDetailPage contractId="ctr-1" />);
     expect(await screen.findByRole("table", { name: "Payment Ledger" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Payments" })).toBeInTheDocument();
-    for (const name of ["Approve Deal", "Edit Details", "Submit Contract", "Submit Payment", "Cancel Contract", "Confirm Cancellation"]) expect(button(name)).toBeNull();
+    expect(await screen.findByRole("button", { name: "Print Finance Summary" })).toBeEnabled();
+    for (const name of ["Approve Deal", "Edit Details", "Submit Contract", "Submit Payment", "Cancel Contract", "Confirm Cancellation", "Print Reservation Agreement", "Print VIP Grant"]) expect(button(name)).toBeNull();
   });
 
   it("Finance collection ledger rows keep 5 columns and open details with the running Net verified value", async () => {

@@ -12,6 +12,7 @@ import { formatDate } from "@/shared/lib/format-date";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Money } from "@/shared/components/modern/money";
 import { ContractLedgerSection, ContractMilestonesSection, ContractNonStandardSection, ContractPageFrame, ContractPaymentsSection, ContractScheduleSection, ContractTiles } from "../components/contract-sections";
+import { FinancePrintControl } from "../documents/vip-print-controls";
 import { usePaymentActions } from "../components/payment-actions";
 
 const CRUMBS = [{ label: "Finance" }, { label: "Collections", href: "/admin/finance?tab=collections" }];
@@ -60,6 +61,7 @@ export function FinanceCollectionDetailPage({ contractId }: { contractId: string
                 {CANCELLATION_GROUND_LABELS[contract.cancellation.ground]} · <Money value={contract.cancellation.forfeitedCentavos ?? 0} /> kept by the company and recorded.
               </InfoNote>
             ) : null}
+            {canVerify ? <FinancePrintControl contract={contract} payments={record.payments} /> : null}
             <ContractTiles contract={contract} payments={record.payments} />
             <ContractNonStandardSection contract={contract} />
             <ContractScheduleSection record={record} />

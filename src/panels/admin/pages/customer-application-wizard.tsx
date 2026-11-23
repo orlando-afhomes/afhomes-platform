@@ -1,10 +1,10 @@
 "use client";
 
 import { EMPTY } from "@/shared/lib/empty-value";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, ArrowLeftRight, Banknote, CalendarClock, CreditCard, FileText, FileUp, Landmark, Layers, Pencil, Printer, Receipt, ShieldCheck, Smartphone, TriangleAlert, WalletCards, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowLeftRight, Banknote, CalendarClock, CreditCard, FileText, FileUp, Landmark, Layers, Pencil, Receipt, ShieldCheck, Smartphone, TriangleAlert, WalletCards, X } from "lucide-react";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import { useAccreditations, useCreateCustomerDraft, useCustomers, useMembers } from "@/data/queries";
 import type { Customer } from "@/modules/customers/types";
@@ -15,6 +15,7 @@ import { isEditableRegistration } from "@/modules/customers/review";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/modules/finance/types";
 import { applicablePriceStatus, displayPriceFor } from "@/modules/vip/pricing";
 import { buildSchedule } from "@/modules/contracts/rules";
+import { supportedPrintTier } from "@/modules/contracts/print-data";
 import { isSellableProduct } from "@/modules/vip/tier-options";
 import type { VipTierCode } from "@/modules/vip/types";
 import { manilaToday } from "@/shared/lib/dates";
@@ -56,6 +57,9 @@ import { ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { PaymentOptionGrid, type PaymentOption } from "../components/payment-option-card";
 import { schemeCardContent } from "../components/scheme-card-content";
 import { VipCardChoiceGrid } from "../components/vip-card-choice";
+import { VipPrintControl, applicationPrintKey, linkPreparedApplication, salePrintContacts } from "../documents/vip-print-controls";
+import { useMockStore } from "@/shared/providers/mock-store-provider";
+import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useAdminSidebar } from "../layouts/admin-sidebar-context";
 
 const STEPS = ["VIP card", "Payment plan", "Customer", "Sales and consent", "Reservation", "Review"] as const;
@@ -153,6 +157,11 @@ function ReviewBlock({ title, onEdit, children }: { title: string; onEdit: () =>
 
 export function CustomerApplicationWizard({ existing }: { existing?: Customer } = {}) {
   const router = useRouter();
+  const store = useMockStore();
+  const { identity } = useDevIdentity();
+  const printDraftId = useId();
+  const [printDraftVersion, setPrintDraftVersion] = useState(0);
+  const applicationKey = existing ? applicationPrintKey(existing.id) : `application-draft:${identity.id}:${printDraftId}:${printDraftVersion}`;
   // Sellers hold only customers.draft: they start and save their own draft, and the office completes and submits it (doc 04 section 5).
   const canDraft = useOperation("customers.draft");
   const canManage = useOperation("customers.manage");
@@ -388,7 +397,18 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
   const next = () => goTo(step + 1);
 
+  const applicationPrintInput = () => product && supportedPrintTier(product.code) && scheme && Object.keys(allErrors()).length === 0 ? {
+    kind: "application" as const,
+    customer: toInput(draft),
+    tierCode: product.code,
+    priceCentavos: asksNonStandard ? nonStandardTermsFromText(nonStandardText).priceCentavos : displayPriceFor(product, scheme),
+    schemeLabel: scheme.label,
+    contacts: salePrintContacts(members.data ?? [], draft.ownerMemberId, draft.referrerMemberId || draft.recommenderMemberId),
+    date: manilaToday(),
+  } : undefined;
+
   const resetNewApplication = () => {
+    setPrintDraftVersion((version) => version + 1);
     setStep(STEP_CARD);
     setDraft(toDraft());
     setErrors({});
@@ -419,6 +439,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
       const saved = existing
         ? await updateDraft.mutateAsync({ id: existing.id, input })
         : await create.mutateAsync(input);
+      linkPreparedApplication(store, applicationKey, saved.id, applicationPrintInput());
       if (!existing) {
         allowExit();
         resetNewApplication();
@@ -487,6 +508,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
         } : undefined,
       });
 
+      linkPreparedApplication(store, applicationKey, result.customerId, applicationPrintInput());
       primaryIdPreview.onClear();
       secondaryIdPreview.onClear();
       let successMessage: string | undefined;
@@ -708,29 +730,13 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
       {step === STEP_RESERVATION ? (
         <div className="tw:flex tw:flex-col tw:gap-4">
-          <SectionBlock title="Application Form" description="Generated from the details you entered. Print it for the customer to sign, and keep it with the proof of payment." icon={<Receipt className="tw:size-4" />}>
-            <div className="customer-application__sheet tw:flex tw:flex-col tw:gap-4 tw:rounded-xl tw:border tw:border-dashed tw:border-input tw:bg-muted/40 tw:p-5">
-              <div className="tw:flex tw:items-baseline tw:justify-between tw:gap-3 tw:border-b tw:border-border tw:pb-3">
-                <span className="tw:text-sm tw:font-semibold tw:tracking-tight">AFhomes VIP Application Form</span>
-                <span className="tw:text-xs tw:text-muted-foreground">Prepared {manilaToday()}</span>
-              </div>
-              <dl className="tw:grid tw:grid-cols-1 tw:gap-x-6 tw:gap-y-4 tw:sm:grid-cols-2">
-                <Row label="Customer ID" value={draft.customerNumber || EMPTY} />
-                <Row label="Applicant" value={[draft.prefix, draft.firstName, draft.noMiddleName ? "" : draft.middleName, draft.lastName, draft.suffix].filter(Boolean).join(" ")} />
-                <Row label="Mobile number" value={draft.mobileNumber} />
-                <Row label="VIP card" value={product ? `${product.name} · ${formatPeso(displayPriceFor(product, scheme))}` : ""} />
-                <Row label="Payment plan" value={scheme?.label} />
-                <Row label="Reservation fee" value={reservationCentavos ? formatPeso(reservationCentavos) : "None for this payment plan"} />
-                <div className="tw:sm:col-span-2">
-                  <Row label="Address" value={addressLine(draft)} />
-                </div>
-              </dl>
-            </div>
-            <div>
-              <Button type="button" variant="info" onClick={() => window.print()}>
-                <Printer aria-hidden="true" className="tw:size-4" /> Print Application Form
-              </Button>
-            </div>
+          <SectionBlock title="Application Form" icon={<Receipt className="tw:size-4" />}>
+            {product && !supportedPrintTier(product.code) ? <InfoNote title="Application template unavailable">The sample application covers Bronze, Silver, and Gold.</InfoNote> : null}
+            <VipPrintControl
+              title="Print Application Form"
+              archiveKey={applicationKey}
+              input={applicationPrintInput()}
+            />
           </SectionBlock>
 
           {resubmitting ? (

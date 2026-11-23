@@ -18,8 +18,26 @@ import { ScanMemberQrButton } from "../components/member-qr";
  */
 export function GsdPointsPanel() {
   const [holder, setHolder] = useState<MemberQrHolder | null>(null);
+  const [scan, setScan] = useState(0);
+  return <Card>
+    <CardHeader>
+      <div>
+        <CardTitle>GSD counter service</CardTitle>
+        <CardDescription>Scan the customer’s membership QR to use points for a reward.</CardDescription>
+      </div>
+      <ScanMemberQrButton onStart={() => setHolder(null)} onSelect={(selected) => { setHolder(selected); setScan((value) => value + 1); }} />
+    </CardHeader>
+    <CardContent>
+      {holder ? <GsdRewardForm key={scan} holder={holder} /> : (
+        <p className="tw:flex tw:items-center tw:gap-2 tw:text-sm tw:text-muted-foreground"><ScanLine aria-hidden="true" /> No customer selected. Scan a QR to begin.</p>
+      )}
+    </CardContent>
+  </Card>;
+}
+
+export function GsdRewardForm({ holder, idVerified = false }: { holder: MemberQrHolder; idVerified?: boolean }) {
   const promos = usePromos();
-  const balances = usePromoBalances();
+  const balances = usePromoBalances(holder.scannedCode);
   const outlets = useOutlets();
   const record = useRecordPromoUse();
   const { confirmRun, dialog } = useConfirmRun();
@@ -30,8 +48,8 @@ export function GsdPointsPanel() {
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [error, setError] = useState<string>();
 
-  const active = (promos.data ?? []).filter((promo) => promo.status === "active");
-  const promo = active.find((item) => item.id === promoId);
+  const offers = (promos.data ?? []).filter((promo) => promo.status !== "draft" && promo.rewards.some((reward) => reward.status === "active"));
+  const promo = offers.find((item) => item.id === promoId);
   const reward = promo?.rewards.find((item) => item.id === rewardId && item.status === "active");
   const available = balances.data?.find((item) => item.membershipId === holder?.membershipId)
     ?.byPromo.find((item) => item.promoId === promoId)?.balance.available ?? 0;
@@ -46,20 +64,19 @@ export function GsdPointsPanel() {
   };
 
   const submit = () => {
-    if (!holder) return setError("Scan the customer's membership QR first.");
-    if (!promo || !reward) return setError("Select a promo and an available reward.");
-    if (!identityChecked) return setError("Confirm you checked the cardholder's ID.");
-    if (reward.pointsCost > available) return setError(`Only ${available.toLocaleString("en-PH")} Promo Points are available.`);
+    if (!promo || !reward) return setError("Select an offer and an available reward.");
+    if (!identityChecked && !idVerified) return setError("Confirm you checked the cardholder's ID.");
+    if (reward.pointsCost > available) return setError(`Only ${available.toLocaleString("en-PH")} reward points are available.`);
     confirmRun({
-      title: "Record this reward use?",
-      description: `${holder.holderName} · ${holder.vipNumber}: ${reward.name} for ${reward.pointsCost.toLocaleString("en-PH")} Promo Points at ${outletName(reward.outletId)}. Expected balance: ${(available - reward.pointsCost).toLocaleString("en-PH")}.`,
-      confirmText: "Record Use",
+      title: "Redeem points for this reward?",
+      description: `${holder.holderName} · ${holder.vipNumber}: ${reward.name} for ${reward.pointsCost.toLocaleString("en-PH")} points at ${outletName(reward.outletId)}. Points left: ${(available - reward.pointsCost).toLocaleString("en-PH")}.`,
+      confirmText: "Redeem Points",
       action: async () => {
         const entry = await record.mutateAsync({
           requestId, membershipId: holder.membershipId, promoId: promo.id, rewardId: reward.id,
-          holder: holder.holder, identityChecked, scannedCode: holder.scannedCode, note,
+          holder: holder.holder, identityChecked: idVerified || identityChecked, scannedCode: holder.scannedCode, note,
         });
-        toast.success("Promo Points use recorded.", { description: `Reference ${entry.id}` });
+        toast.success("Points redeemed.", { description: `Reference ${entry.id}` });
         reset();
       },
       successTitle: "Reward recorded.",
@@ -67,40 +84,31 @@ export function GsdPointsPanel() {
     });
   };
 
+  if (balances.isError || promos.isError || outlets.isError) return <p role="alert">Could not load rewards or points. Try scanning again.</p>;
+  if (balances.isPending || promos.isPending || outlets.isPending) return <p role="status">Loading rewards and points…</p>;
+  if (offers.length === 0) return <p>No rewards are available right now.</p>;
   return (
-    <div className="tw:flex tw:flex-col tw:gap-4">
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle>GSD counter service</CardTitle>
-            <CardDescription>Scan the customer’s membership QR, verify their ID, then record an eligible reward use.</CardDescription>
-          </div>
-          <ScanMemberQrButton onSelect={(selected) => { setHolder(selected); setPromoId(""); reset(); }} />
-        </CardHeader>
-        <CardContent>
-          {holder ? (
-            <div className="tw:flex tw:flex-col tw:gap-3">
-              <p className="tw:text-sm"><span className="tw:font-semibold">{holder.holderName}</span> · {holder.vipNumber} · {holder.financialHold ? "Financial hold" : "Active"}</p>
-              <SelectField label="Promo" required value={promoId} placeholder="Select a promo"
-                options={active.map((item) => ({ value: item.id, label: item.name }))}
-                onChange={(value) => { setPromoId(value); setRewardId(""); setError(undefined); }} />
-              <SelectField label="Reward" required value={rewardId} placeholder="Select a configured reward" disabled={!promo}
-                options={(promo?.rewards ?? []).filter((item) => item.status === "active").map((item) => ({ value: item.id, label: `${item.name} · ${item.pointsCost.toLocaleString("en-PH")} points` }))}
-                onChange={(value) => { setRewardId(value); setError(undefined); }} />
-              {promo && reward ? <p className="tw:text-sm tw:text-muted-foreground">{outletName(reward.outletId)} · Available: {available.toLocaleString("en-PH")} points</p> : null}
-              <CheckboxField label="I checked the cardholder’s ID" checked={identityChecked} onChange={(checked) => { setIdentityChecked(checked); setError(undefined); }} />
-              <TextField label="Note" value={note} maxLength={200} onChange={setNote} />
-              {error ? <p role="alert" className="tw:text-sm tw:text-destructive">{error}</p> : null}
-              <div>
-                <Button type="button" onClick={submit} loading={record.isPending} disabled={!promo || !reward || !identityChecked}>Record Reward Use</Button>
-              </div>
-            </div>
-          ) : (
-            <p className="tw:flex tw:items-center tw:gap-2 tw:text-sm tw:text-muted-foreground"><ScanLine aria-hidden="true" /> No customer selected. Scan a QR to begin.</p>
-          )}
-        </CardContent>
-      </Card>
+    <>
+      <div className="tw:flex tw:flex-col tw:gap-3">
+        {!idVerified ? <p className="tw:text-sm"><strong>{holder.holderName}</strong> · {holder.vipNumber} · {holder.financialHold ? "Financial hold" : "Active"}</p> : null}
+        <SelectField label="Offer" required value={promoId} placeholder="Select an offer"
+          options={offers.map((item) => ({ value: item.id, label: item.name }))}
+          onChange={(value) => { setPromoId(value); setRewardId(""); setError(undefined); }} />
+        <SelectField label="Reward" required value={rewardId} placeholder="Choose a reward" disabled={!promo}
+          options={(promo?.rewards ?? []).filter((item) => item.status === "active").map((item) => ({ value: item.id, label: `${item.name} · ${item.pointsCost.toLocaleString("en-PH")} points` }))}
+          onChange={(value) => { setRewardId(value); setError(undefined); }} />
+        {promo ? <p role="status" className="tw:text-sm tw:text-muted-foreground">
+          {reward ? `${outletName(reward.outletId)} · Points needed: ${reward.pointsCost.toLocaleString("en-PH")} · ` : ""}
+          Available: {available.toLocaleString("en-PH")} points
+        </p> : null}
+        {!idVerified ? <CheckboxField label="I checked the cardholder’s ID" checked={identityChecked} onChange={(checked) => { setIdentityChecked(checked); setError(undefined); }} /> : null}
+        <TextField label="Note" value={note} maxLength={200} onChange={setNote} />
+        {error ? <p role="alert" className="tw:text-sm tw:text-destructive">{error}</p> : null}
+        <div>
+          <Button type="button" onClick={submit} loading={record.isPending} disabled={!promo || !reward || (!identityChecked && !idVerified)}>Redeem Points</Button>
+        </div>
+      </div>
       {dialog}
-    </div>
+    </>
   );
 }

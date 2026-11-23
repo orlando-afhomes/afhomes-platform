@@ -111,59 +111,64 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-23 (Asia/Singapore).
-- Repository: AFHomes Platform, `afhomes-platform`; branch `develop`; HEAD `3058633` at this save.
-- Tool: Codex. Exact model identifier: not verified.
-- Objective: document the Firebase delivery sequence, resolve the mock-app review findings, and save a handoff.
-- Development phase: frontend/mock prototype complete for the reviewed fixes; Firebase technical guides written. Localhost full-stack setup has not started in this session.
-- Context: based on the available conversation and the repository checks below. Historical verification is identified separately.
+- Saved at: 2026-11-23 (Asia/Manila business date; exact time not recorded).
+- Repository: AFHomes Platform; branch `develop`; HEAD `5f8a9ef` (owner committed all session work; tree clean at save).
+- Tool and model: OpenCode session (model not verified).
+- Session objective: (a) finish prototype completion plan Stages 0–6 plus two review-verdict fix rounds; (b) continue the realistic-seed-data plan from Claude's start to implementation-complete.
+- Development phase: frontend mock prototype; implementation done, owner review/commit pending. Backend, real authentication, database, deployment remain separately authorized.
+- Context note: built on the prior `/load` snapshot (Stage 1 at `6ea21df`); this save supersedes it. Nothing was compacted; everything below was read or run in this session unless marked otherwise.
 
 ## 2. Current Project State
-- Verified at save: `3058633` is titled `feat: complete mock feature gaps and move the planned stack to Firebase`. The working tree was clean before this save. The Firebase roadmap and IGP regression tests are tracked.
-- Current app is still based on typed, browser-memory mock data. The Firebase roadmap is a planned stack change, not a completed backend or deployment.
-- Begin at `docs/implementation/02-full-stack/README.md`. It links the numbered Localhost, Staging, and Production guides and the existing FP1–FP16 feature records. The prototype completion plan's older branch/working-copy note is historical; use live Git status.
+- Verified implementation status: Stages 1–6 built and verified in the working copy, then committed by the owner as `5f8a9ef` (`refactor: split the seed builder and rename dev identities to realistic names`). Realistic seed (`src/data/mock/seed/`: anchor, people, organization, business, catalog, operations, igp, index) replaced `seed-data.ts` (deleted); dev identities/credentials use realistic names with `@afhomes.com.ph`; import templates use realistic rows; IGP catalog uses generic invented names.
+- Review-verdict fixes (all committed): shared OR/bank-number duplicate check across intake, matching, submission, correction and verification; IGP monthly sequence and uniqueness include imported history; Replaces links validate against existing records or rows that will actually import (two-pass); copied allowance figures require explicit split confirmation; spreadsheet-switch sign-off relabeled comparison-only (doc 08 §16), payout rules unchanged.
+- Two genuine bugs found via the new seed and fixed: wizard Customer-ID step check now excludes the record itself (`customer-application-wizard.tsx`); dashboard KPI sr-only label no longer reads "Down +X%" (`dashboard-kpi.tsx`).
+- Open items kept as-is: Stage 7 (separate authorization); D8 owner-only note; doc-14 IGP-membership amendment proposal (awaiting owner sign-off); blog dates static (no ruling); outlet `sample` flags kept with complete rows (plan default).
 
 ## 3. Important Decisions
-- Planned stack: one Next.js app, `/api/v1` Route Handlers and Zod, Firebase Auth, server-only SQL Connect with PostgreSQL, and private Firebase Storage. Use emulators locally. Vercel is the sample-data preview option subject to its plan terms. Start the Spark database trial when ready to test the local pilot against hosted PostgreSQL. Verify Firebase App Hosting in staging; Cloud Run is the fallback.
-- Launch all approved modules together after staging sign-off and approved imports only. Deployments, billing, real authentication, database work, and each implementation milestone require separate approval.
-- Doc 07: cash receipt allocation uses the shared receipt reservation check. Doc 08: saving copied allowance figures requires an explicit split confirmation, renewed after edits; changing month or leader clears the copied figures. Doc 14 §5.3: frozen Series Number segments must match the imported fields. IGP history import remains available to Administrators and Super Administrators.
-- Agent Git operations are read-only. Only the owner can stage, commit, and push. Keep mock mode synthetic and browser-scoped.
+- Owner answers this session: do all Stages 0–6 (Stage 7 excluded by the plan); IGP-1/F11.3 — research `AFHomes Document/Business Rules` first, then implement a recommended solution, never leave pending (external folder held no IGP-benefits paper; F11.3 runs against `AFHomes_Sales_Collections_DSC_DRI-v11_0_0-BUILD_2026-10-04a.xlsx` on synthetic data); D1 AGENTS.md narrow fix authorized; S6 stays `useConfirmRun`; all five review fixes approved; IGP import stays Admin + Super Admin; switch fix as record-only copy.
+- IGP-1 owner-authorized recommendation: buyer membership record created on Formal VIP Grant signing, frozen price tier, no VIP Number, no Stay Points (grant benefits beyond tier undefined).
+- One stage per session and one-change-set-per-stage rules were set aside by the explicit "do all remaining phases" instruction; Stages 2/3/4 ran via parallel subagents, coordinator closed cross-scope gaps.
+- Git writes remain reserved for the owner (commits `9796900`, `5f8a9ef` made by the owner). Builder subagents were barred from git writes.
 
 ## 4. Completed Work
-- Created 23 Firebase implementation guides and updated 18 existing technical/navigation files. See `docs/implementation/02-full-stack/00-documentation-transition.md` for the file inventory. Kept business-rule files and historical stack evidence.
-- Cash receipts now skip numbers reserved by unmatched receipts, across ordinary entry and related cash-entry forms. Allocator: `src/data/mock/payment-repository.ts`.
-- Allowance confirmation is required again after editing copied figures. Month and leader changes clear the copied draft. See `src/panels/admin/pages/allowance-review-page.tsx`.
-- IGP history import rejects missing replacement chains, circular links and dependent rows, dates that do not exactly match the Series Number, and payment plan, term months, or contract type mismatches. The shared validator runs in preview and on Confirm. See `src/modules/igp/history-import.ts` and `src/modules/igp/history-import.test.ts`.
-- Review fixes and their tests predate this save and are in the now-committed working baseline. This save changes only the handoff snapshot.
+- Stages 2/3/4 via subagents: Batch 2 error states (53/53), Batch 4 (109/109, S6 recorded in `frontend.md`), G1/G2 finance exceptions (187/187), G3/G4 allowance assembly + switch sign-off (53/53, 5 items honestly reported not invented), IGP-1/IGP-2 (41/41), G5 portal audit (21/28 boxes ticked; 7 Step-2 RED boxes left unticked).
+- Coordinator: G1 clerk intake surface on the contract Payments tab (+2 tests); Stage 5 browser matrix + role walkthroughs (recorded in `16-state-verification.md`); Stage 6 D1–D7 (F5.5, F3.7, F8.5, AGENTS.md narrow fix, implementation README refresh, 63-page route reconcile, D7 verified clean).
+- Review round: 5 fixes + 7 regression tests in `payment-repository.ts`, `igp-repository.ts`, `history-import.ts`, `allowance-review-page.tsx`, `reconciliation-page.tsx`; fallout repaired (self-payment exclusion, `workbook` test convention, toast scoping, seed-balance test data, forced-duplicate cleanup, split-day overflow).
+- Seed continuation: business-pages migrated to seed-derived values (103/103), admin-header identity labels (4/4), commissions Set Rate race fixed, `seed-build.test.ts` determinism/format tests (4/4), plan status line set to Implemented.
+- Browser QA (seed): all admin routes × every tab, 19 public URLs, portal sign-in as cardholder; scoped checks for Finance, Clerk, HR, GSD, SVD-A, OST-A1, OST-B1, OST-C1; 8 screenshots in `/tmp/seed-qa/`; zero placeholders. Owner-manual items recorded, not attempted.
 
 ## 5. Git Working Tree
-- Before this save: branch `develop`, HEAD `3058633`; nothing staged, unstaged, untracked, deleted, or renamed. Verified with read-only Git.
-- This-session change: `workflow/save-session.md` snapshot only, unstaged. All other files were already in the committed baseline.
+- Branch `develop`, HEAD `5f8a9ef`, nothing staged, nothing unstaged, no untracked, deleted, or renamed files (verified with read-only Git at save).
+- Previous working copy (Stages 1–6, seed build, review fixes, ~72 entries incl. `src/data/mock/seed/`, deleted `seed-data.ts`) was committed by the owner; this save changes only the snapshot block.
+- No Git write operation was performed by any agent in this session.
 
 ## 6. Pending Tasks
-- Actual payout switch under Doc 08 §16 is still open. The workbook sign-off screen records a comparison rather than switching payouts.
-- Doc 14 IGP buyer membership amendment still needs owner sign-off. Do not treat the prototype behavior as an approved live rule.
-- Prototype browser checks still listed as open: throttled navigation, forced error/retry, Back on a dirty form, and visible keyboard focus. See `docs/implementation/01-prototype/ui-states/16-state-verification.md`.
-- Firebase emulator, backend/API, Spark trial, demo release, and production work await separately authorized milestones.
+- Doc-14 IGP buyer-membership amendment proposal (record the 2026-11-23 ruling, supersede "not built" notes) — needs owner sign-off; do not treat prototype behavior as live rule.
+- G3/G4 reported items: Qualifying/Extended split allocation, assumed-credit records, three unattested member filters (surfaced in UI), OCT I1 both-legs reading (needs owner ruling if the workbook treats it differently), post-close entry limit (by design).
+- G5: 7 Step-2 RED boxes left for owner process trust; gap list returned by the audit.
+- Browser/manual: throttled nav, browser forced-error, dirty-form Back, focus-ring visual (standing owner items); blog dates (no ruling); F11.3 live-figure comparison (needs the official workbook figures).
+- Stage 7 (backend, real auth, database, deployment) and D8 remain excluded/separate.
 
 ## 7. Verification State
-- Earlier review work at `6ea21df` plus working changes: 172 tests passed in nine suites for receipt, IGP, and allowance fixes. The latest IGP field-validation pass reported 20 tests passing across three IGP suites, TypeScript exit 0, targeted ESLint exit 0, and `git diff HEAD --check` exit 0.
-- Documentation earlier passed 329 internal link checks and `git diff --check`. These are prior checks, not reruns at `3058633`.
-- This save verifies Git state, presence of the tracked roadmap and regression tests, and selected fix symbols. Application tests, lint, typecheck, build, browser QA, and deployments were not performed for this save.
+- This session, real output: `npx tsc --noEmit` clean (repeated); `npm run lint` clean (681 then 687 files); `npm run build` pass (twice); `git diff --check` clean; mock suite 538/538; targeted suites green in isolation (Stage 2: 53/53; Stage 3: 109/109; G1/G2: 187/187; G3/G4: 53/53; IGP: 41/41; clerk surface: 14/14; seed-build: 4/4; business-pages: 103/103; staff: 21/21; commissions/dashboard/promo/finance/contract-detail/reconciliation suites green).
+- Full `npm test`: 2091 passed, 11 failed of 2102 — all in known load-sensitive files (business-pages, staff-page, dashboard, promo) or findBy-expiry under parallel load; every one passes standalone (business-pages 103/103, staff 21/21, promo+dashboard 19/19). Last full run did not include a post-fix whole-suite re-run; rerun once with the dev server stopped to separate load flakes.
+- Browser QA: real-browser pass per section 4 (one tab wedge on dirty-form Back recorded; no console app errors besides noted HMR/dev entries).
+- Not performed: full suite re-run after the final test edits (Gold timeout bump, commissions race fix); owner manual browser items; IGP live-figure workbook comparison.
 
 ## 8. Next Session Instructions
-- Run `/load` and verify live HEAD first. Start with `docs/implementation/02-full-stack/README.md` and the current `AGENTS.md`.
-- If the owner authorizes localhost work, follow `docs/implementation/02-full-stack/01-localhost/01-database-and-emulators.md` before backend/API work. For QA only, use the open browser checks and the existing mock fixtures.
-- Keep the payout switch and Doc 14 amendment pending until explicitly approved. Do not edit Git state or start hosted provisioning based on this snapshot.
+- Run `/load`, verify HEAD (expect `5f8a9ef`, clean tree), then run the full suite once with the dev server stopped to confirm the 11 load-only failures clear.
+- Then owner review and commit of any further changes; do not start Stage 7, backend, or provisioning without separate explicit authorization.
+- If the owner approves: record the doc-14 amendment, rule on OCT I1, and tick G5 RED boxes on trust. Keep payout-switch and IGP-membership prototype behavior out of live-rule status.
+- Inspect first: `workflow/save-session.md` (this snapshot), `git log --oneline -5`, `docs/implementation/01-prototype/plans/realistic-seed-data-plan.md` (status: Implemented, review/commit pending).
 
 ## 9. Execution Recommendation
-- Phase: QA if closing prototype checks; Plan if preparing the localhost milestone.
-- Current mode: Codex Default.
-- Recommended next mode: Default for authorized QA; Plan for localhost architecture decisions.
+- Phase: QA (one full-suite confirmation run), then owner review.
+- Current mode: not verified.
+- Recommended next mode: default, for the confirmation run and review.
 - Current model: not verified.
-- Recommended model: keep the available coding model in the active session.
+- Recommended model: Sonnet 5.5.
 - Effort: medium.
 - Ultracode: OFF.
-- Token optimization: read only the next numbered guide or the open QA cases, then run targeted checks.
-- Reason: prototype fixes are recorded; the next implementation milestone needs explicit scope and approval.
+- Token optimization: single full-suite run with the dev server stopped; targeted suites only for any failure.
+- Reason: everything verifiable is green in isolation; the only open verification is separating full-suite load flakes from real regressions.
 <!-- SESSION_SNAPSHOT_END -->

@@ -19,6 +19,7 @@ export type BookingInput = {
 };
 
 export type BookingView = RedemptionBooking & { customerName: string; venueName: string };
+export type BookingScope = MockAsyncOptions & { scannedCode?: string };
 
 export type MemberPoints = {
   membershipId: string;
@@ -49,15 +50,15 @@ export type VenueInput = { id?: string; name: string; status: "open" | "not_open
 
 /** Points bookings, the versioned points table, holidays and venues (doc 10). Office staff book; there is no member portal. */
 export interface RedemptionRepository {
-  overview(options?: MockAsyncOptions): Promise<RedemptionOverview>;
+  overview(options?: BookingScope): Promise<RedemptionOverview>;
   createBooking(input: BookingInput, options?: MockAsyncOptions): Promise<BookingView>;
   /** Finance (or Administrator) approves the money part of a points plus cash booking. */
   approveCashPayment(bookingId: string, reference: string, options?: MockAsyncOptions): Promise<BookingView>;
   /** `cancelledAt` is the recorded date and time of the request; defaults to now. */
-  cancelBooking(bookingId: string, reason: string, cancelledAt?: string, options?: MockAsyncOptions): Promise<BookingView>;
-  recordNoShow(bookingId: string, reason: string, options?: MockAsyncOptions): Promise<BookingView>;
+  cancelBooking(bookingId: string, reason: string, cancelledAt?: string, options?: BookingScope): Promise<BookingView>;
+  recordNoShow(bookingId: string, reason: string, options?: BookingScope): Promise<BookingView>;
   checkInBooking(bookingId: string, verification: import("./member-qr-repository").HolderVerification, options?: MockAsyncOptions): Promise<BookingView>;
-  completeBooking(bookingId: string, options?: MockAsyncOptions): Promise<BookingView>;
+  completeBooking(bookingId: string, options?: BookingScope): Promise<BookingView>;
   /** Owner ruling A7a: a card transfer cancels the former holder's future points bookings; their points are forfeited. Called by card servicing. */
   cancelFutureBookingsForTransfer(membershipId: string, effectiveDate: string, options?: MockAsyncOptions): Promise<BookingView[]>;
   publishTableVersion(input: TableVersionInput, options?: MockAsyncOptions): Promise<PointsTableVersion>;

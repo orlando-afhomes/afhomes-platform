@@ -104,11 +104,11 @@ function QrImage({ holder, replace }: { holder: MemberQrCode; replace?: () => vo
   </section>;
 }
 
-export function ScanMemberQrButton({ onSelect }: { onSelect: (holder: MemberQrHolder) => void }) {
+export function ScanMemberQrButton({ onSelect, onStart }: { onSelect: (holder: MemberQrHolder) => void; onStart?: () => void }) {
   const [open, setOpen] = useState(false);
   const allowed = useOperation("customers.lookup");
   return allowed ? <>
-    <Button type="button" variant="outline" onClick={() => setOpen(true)}><ScanLine aria-hidden="true" /> Scan QR</Button>
+    <Button type="button" variant="outline" onClick={() => { onStart?.(); setOpen(true); }}><ScanLine aria-hidden="true" /> Scan QR</Button>
     {open ? <Scanner close={() => setOpen(false)} select={(holder) => { onSelect(holder); setOpen(false); }} /> : null}
   </> : null;
 }

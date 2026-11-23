@@ -16,6 +16,8 @@ import { MemberQrButton, ScanMemberQrButton } from "../components/member-qr";
 import { EnterResortBillButton } from "./stay-points-page";
 import { RecordPromoUseButton } from "./promo-points-page";
 import { RedemptionBookingsPanel } from "./redemption-page";
+import { GsdRewardForm } from "./gsd-points-page";
+import { CheckboxField } from "@/shared/forms/modern";
 import { BadgeCheck, BedDouble, CalendarDays, ChevronDown, ChevronRight, Coins, CreditCard, Crown, Gift, IdCard, Info, Layers3, Search, UserRound, type LucideIcon } from "lucide-react";
 import { useCustomerLookup, useOperation, useVipProducts } from "@/data/business-queries";
 import { CUSTOMER_LOOKUP_MIN_LENGTH, type CustomerLookupResult } from "@/data/contracts/membership-repository";
@@ -51,14 +53,15 @@ export function CustomerLookupPage() {
  */
 export function CustomerLookupPanel() {
   const { identity } = useDevIdentity();
-  return <CustomerLookupSession key={identity.id} />;
+  return <CustomerLookupSession key={identity.id} counter={identity.roles.includes("gsd")} />;
 }
 
-function CustomerLookupSession() {
+function CustomerLookupSession({ counter }: { counter: boolean }) {
   const [input, setInput] = useState("");
   const [term, setTerm] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [scanned, setScanned] = useState<MemberQrHolder | null>(null);
+  const [scan, setScan] = useState(0);
   const lookup = useCustomerLookup(term);
   const tierName = useTierDisplayName();
 
@@ -94,7 +97,10 @@ function CustomerLookupSession() {
             }}
             className="customer-lookup__search-field"
           />
-          <div className="customer-lookup__scan"><ScanMemberQrButton onSelect={(holder) => { setSelectedId(null); setInput(""); setScanned(holder); }} /></div>
+          <div className="customer-lookup__scan"><ScanMemberQrButton
+            onStart={counter ? () => { setSelectedId(null); setScanned(null); } : undefined}
+            onSelect={(holder) => { setSelectedId(null); setInput(""); setScanned(holder); setScan((value) => value + 1); }}
+          /></div>
         </div>
         <div role="status" aria-live="polite" className="tw:text-sm">
           {tooShort || scanned ? null : lookup.isLoading ? (
@@ -123,11 +129,13 @@ function CustomerLookupSession() {
       {!scanned ? suggestions.map((item) => (
         <LookupDisclosure key={item.membershipId} open={item.membershipId === selectedId} id={`${detailsId}-${item.membershipId}`}>
           <div className="customer-lookup__selected">
-            <LookupCard item={item} tierName={tierName(item.productCode) ?? item.productCode} />
-            <ManualHolderActions membershipId={item.membershipId} />
+            <LookupCard item={item} tierName={tierName(item.productCode) ?? item.productCode} counter={counter} />
+            {!counter ? <ManualHolderActions membershipId={item.membershipId} /> : null}
           </div>
         </LookupDisclosure>
-      )) : <div className="customer-lookup__selected"><LoyaltyActions key={scanned.membershipId + scanned.holder} holder={scanned} /></div>}
+      )) : <div className="customer-lookup__selected">
+        {counter ? <GsdScanActions key={scan} holder={scanned} /> : <LoyaltyActions key={scan} holder={scanned} />}
+      </div>}
     </div>
   );
 }
@@ -158,7 +166,7 @@ function SuggestionList({
           >
             <span>
               <strong>{item.customerName}</strong>
-              <small>{tierName(item.productCode) ?? item.productCode} · Valid until {item.validUntil ? formatDate(item.validUntil) : "—"}</small>
+              <small>{tierName(item.productCode) ?? item.productCode} · VIP No. {item.vipNumber ?? "—"} · Valid until {item.validUntil ? formatDate(item.validUntil) : "—"}</small>
             </span>
             <ChevronDown aria-hidden="true" />
           </Button>
@@ -264,7 +272,50 @@ function ScannedPromoBalance({ membershipId }: { membershipId: string }) {
   );
 }
 
-function LookupCard({ item, tierName }: { item: CustomerLookupResult; tierName: string }) {
+function GsdScanActions({ holder }: { holder: MemberQrHolder }) {
+  const [redeem, setRedeem] = useState(false);
+  const [verified, setVerified] = useState(false);
+  const [use, setUse] = useState<"reward" | "stay">();
+  const [create, setCreate] = useState(false);
+  const redemptionId = useId();
+  return <Card className="customer-lookup__loyalty">
+    <div className="customer-lookup__loyalty-heading">
+      <span className="customer-lookup__accent-icon"><IdCard aria-hidden="true" /></span>
+      <div>
+        <h2>{holder.holderName}</h2>
+        <p>VIP No. {holder.vipNumber} · Active{holder.financialHold ? " · Financial hold" : ""}</p>
+      </div>
+    </div>
+    <div className="customer-lookup__loyalty-buttons">
+      <EnterResortBillButton selected={holder} earnPoints />
+      <Button type="button" variant="outline" aria-expanded={redeem} aria-controls={redemptionId}
+        onClick={() => { setRedeem(!redeem); setVerified(false); setUse(undefined); setCreate(false); }}>
+        Redeem Points
+      </Button>
+    </div>
+    <section id={redemptionId} hidden={!redeem} aria-label="Redeem Points">
+      {redeem ? <div className="tw:flex tw:flex-col tw:gap-4">
+        <CheckboxField label="I checked the cardholder’s ID" checked={verified} onChange={(checked) => { setVerified(checked); setUse(undefined); setCreate(false); }} />
+        {verified ? <>
+          <div className="customer-lookup__loyalty-buttons">
+            <Button type="button" variant="outline" aria-pressed={use === "reward"} onClick={() => { setUse("reward"); setCreate(false); }}>Use Points for a Reward</Button>
+            <Button type="button" variant="outline" aria-pressed={use === "stay"} onClick={() => setUse("stay")}>Use Points for an Overnight Stay</Button>
+          </div>
+          {use === "reward" ? <GsdRewardForm holder={holder} idVerified /> : null}
+          {use === "stay" ? <section className="customer-lookup__bookings" aria-label="Overnight stays">
+            <div className="customer-lookup__bookings-heading">
+              <h3>Overnight Stays</h3>
+              <Button type="button" onClick={() => setCreate(true)}>New Booking</Button>
+            </div>
+            <RedemptionBookingsPanel selected={holder} createOpen={create} onCreateClose={() => setCreate(false)} />
+          </section> : null}
+        </> : null}
+      </div> : null}
+    </section>
+  </Card>;
+}
+
+function LookupCard({ item, tierName, counter }: { item: CustomerLookupResult; tierName: string; counter: boolean }) {
   const { data: products } = useVipProducts();
   const product = products?.find((entry) => entry.code === item.productCode);
   return (
@@ -274,7 +325,7 @@ function LookupCard({ item, tierName }: { item: CustomerLookupResult; tierName: 
         <div className="customer-lookup__summary-heading">
           <div className="customer-lookup__summary-name">
             <h3>{item.customerName}</h3>
-            <span className="customer-lookup__status" title="Active membership"><BadgeCheck aria-hidden="true" /><span className="tw:sr-only">Active membership</span></span>
+            <span className="customer-lookup__status" title="Active membership"><BadgeCheck aria-hidden="true" /><span className={counter ? undefined : "tw:sr-only"}>Active membership</span></span>
           </div>
           <span className="customer-lookup__tier" data-tier={product?.tierColorKey}><Crown aria-hidden="true" />{tierName}</span>
         </div>
@@ -283,11 +334,11 @@ function LookupCard({ item, tierName }: { item: CustomerLookupResult; tierName: 
           <LookupFact icon={CalendarDays} term="Valid Until" value={item.validUntil ? formatDate(item.validUntil) : "—"} />
           <LookupFact icon={UserRound} term="Customer ID" value={item.customerNumber ?? "—"} />
         </dl>
-        <dl className="customer-lookup__points">
+        {!counter ? <dl className="customer-lookup__points">
           <LookupFact icon={Coins} term="Total Points" value={numberFormat.format(item.totalPoints)} />
           <LookupFact icon={CalendarDays} term="Weekday Points" value={numberFormat.format(item.weekdayPoints)} />
           <LookupFact icon={CalendarDays} term="Weekend Points" value={numberFormat.format(item.weekendPoints)} />
-        </dl>
+        </dl> : null}
       </div>
     </Card>
   );

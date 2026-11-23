@@ -48,7 +48,7 @@ export function invalidateChangedHolderCodes(store: MockStore, customerId: strin
   }
 }
 
-function resolvedHolder(store: MockStore, code: string): MemberQrHolder | undefined {
+export function resolvedHolder(store: MockStore, code: string): MemberQrHolder | undefined {
   const match = Object.entries(store.memberQr).find(([, item]) => prefix + item.token === code);
   if (!match) return undefined;
   const [membershipId, role] = JSON.parse(match[0]) as [string, CardHolder];
@@ -56,7 +56,8 @@ function resolvedHolder(store: MockStore, code: string): MemberQrHolder | undefi
   return holder?.key === match[1].holderKey && holder.info.status === "active" ? holder.info : undefined;
 }
 
-export function requireCurrentScan(store: MockStore, code: string | undefined, membershipId: string, role: CardHolder): void {
+export function requireCurrentScan(store: MockStore, code: string | undefined, membershipId: string, role: CardHolder, required = false): void {
+  if (required && !code) throw new Error("Scan the customer's current membership QR first.");
   if (code === undefined) return;
   const holder = resolvedHolder(store, code);
   if (!holder || holder.membershipId !== membershipId || holder.holder !== role) {
@@ -106,6 +107,7 @@ export class MockMemberQrRepository extends BusinessRepository implements Member
   holders(membershipId: string): Promise<MemberQrCode[]> {
     return this.run(undefined, (identity) => {
       this.requireLookup(identity);
+      if (activeRoles(identity).includes("gsd")) throw new Error("Ask the cardholder to show their membership QR.");
       return currentCardHolders(this.store, membershipId).filter(({ info }) => info.status === "active").map((holder) => this.issue(holder));
     });
   }

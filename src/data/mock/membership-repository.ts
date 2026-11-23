@@ -19,6 +19,7 @@ import type { MockStore } from "./seed";
 import { MockRedemptionRepository } from "./redemption-repository";
 import { closeStayPointsForTransfer, membershipPointsLedger } from "./redemption-points-source";
 import { recordDueDeemedClaim } from "./card-claim";
+import { activeRoles } from "./dev-identities";
 
 export class MockMembershipRepository extends BusinessRepository implements MembershipRepository {
   constructor(store: MockStore, getIdentity: () => DevIdentity, asyncOptions: MockAsyncOptions = {}) {
@@ -59,6 +60,7 @@ export class MockMembershipRepository extends BusinessRepository implements Memb
       const needle = term.trim().toLowerCase();
       if (needle.length < CUSTOMER_LOOKUP_MIN_LENGTH) return [];
       const asOf = today();
+      const counter = activeRoles(identity).includes("gsd");
       const found: CustomerLookupResult[] = [];
       for (const membership of this.store.memberships) {
         if (membership.status !== "active") continue;
@@ -67,7 +69,7 @@ export class MockMembershipRepository extends BusinessRepository implements Memb
         if (!customer || customer.status === "inactive" || customer.status === "rejected") continue;
         const haystack = [customer.displayName, customer.customerNumber, membership.cardId, membership.raNumber, customer.email];
         if (!haystack.some((value) => value?.toLowerCase().includes(needle))) continue;
-        const ledger = membershipPointsLedger(membership, this.store, asOf);
+        const ledger = counter ? null : membershipPointsLedger(membership, this.store, asOf);
         const points = ledger ? availableByBucket(ledger) : { weekday: 0, weekend: 0 };
         found.push({
           membershipId: membership.id,

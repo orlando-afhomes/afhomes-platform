@@ -416,7 +416,7 @@ const waiverTranches = (current: MembershipPoints) => current.ledger?.tranches.f
   !current.waivers.some((waiver) => waiver.tranche === item.number && waiver.decision?.granted !== false)) ?? [];
 
 /** "Enter resort bill" for the chosen membership (stay-points.enter). Owns its form dialog. */
-export function EnterResortBillButton({ selected }: { selected?: import("@/data/contracts/member-qr-repository").MemberQrHolder } = {}) {
+export function EnterResortBillButton({ selected, earnPoints = false }: { selected?: import("@/data/contracts/member-qr-repository").MemberQrHolder; earnPoints?: boolean } = {}) {
   const { current, supplementary } = useSelectedMembership();
   const action = useStayPointsAction();
   const canEnter = useOperation("stay-points.enter");
@@ -426,9 +426,9 @@ export function EnterResortBillButton({ selected }: { selected?: import("@/data/
   if (!canEnter || !membershipId) return null;
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)}>{selected ? <ReceiptText aria-hidden="true" /> : null}Enter Resort Bill</Button>
+      <Button type="button" onClick={() => setOpen(true)}>{selected ? <ReceiptText aria-hidden="true" /> : null}{earnPoints ? "Earn Points" : "Enter Resort Bill"}</Button>
       {open ? <StayPointsDialog dialog={{ kind: "bill" }} membershipId={membershipId} selectedHolder={selected} gold={supplementary} venues={venues.data ?? []}
-        tranches={[]} pending={action.isPending} submit={action.mutateAsync} onClose={() => setOpen(false)} /> : null}
+        tranches={[]} pending={action.isPending} submit={action.mutateAsync} onClose={() => setOpen(false)} earnPoints={earnPoints} /> : null}
     </>
   );
 }
@@ -483,7 +483,8 @@ export function StayPointsAreaPage() {
   );
 }
 
-function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pending, submit, onClose, selectedHolder }: {
+function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pending, submit, onClose, selectedHolder, earnPoints = false }: {
+  earnPoints?: boolean;
   selectedHolder?: import("@/data/contracts/member-qr-repository").MemberQrHolder;
   dialog: Dialog; membershipId: string; gold: boolean; venues: { id: string; name: string }[]; tranches: PointsTranche[];
   pending: boolean; submit: (input: StayPointsAction) => Promise<unknown>; onClose: () => void;
@@ -499,7 +500,7 @@ function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pendin
   const [ground, setGround] = useState<WaiverRequest["ground"]>();
   const [error, setError] = useState<string>();
 
-  const titles = { bill: "Enter resort bill", refund: "Record resort bill refund", request: "Record exception request", grant: "Approve Gift Exception", refuse: "Decline Gift Exception" };
+  const titles = { bill: earnPoints ? "Earn Points" : "Enter resort bill", refund: "Record resort bill refund", request: "Record exception request", grant: "Approve Gift Exception", refuse: "Decline Gift Exception" };
   const save = async () => {
     try {
       if (dialog.kind === "bill" || dialog.kind === "refund") {
@@ -507,6 +508,7 @@ function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pendin
         if (amountCentavos === null) throw new Error("Enter the amount in pesos.");
         if (dialog.kind === "refund") await submit({ action: "refund", spendId: dialog.id, date, amountCentavos, reason });
         else {
+          if (earnPoints && !reason.trim()) throw new Error("Enter the service used.");
           const excludedCentavos = excluded ? parsePesoToCentavos(excluded) : 0;
           if (excludedCentavos === null) throw new Error("Enter exclusions in pesos.");
           await submit({ action: "enter", membershipId, venueId: venue, date, reference, grossCentavos: amountCentavos, excludedCentavos, holder, scannedCode: selectedHolder?.scannedCode, description: reason });
@@ -517,22 +519,22 @@ function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pendin
       } else {
         await submit({ action: "decide-waiver", waiverId: dialog.id, granted: dialog.kind === "grant", releaseDate: date || null, reason });
       }
-      toast.success(dialog.kind === "bill" ? `Bill ${reference} saved for approval.` : "Saved.");
+      toast.success(earnPoints ? "Purchase submitted. Any eligible points will be added after review." : dialog.kind === "bill" ? `Bill ${reference} saved for approval.` : "Saved.");
       onClose();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Could not save.");
     }
   };
 
-  return <FormDialog open title={titles[dialog.kind]} submitText="Save" submitVariant={dialog.kind === "grant" ? "success" : dialog.kind === "refuse" ? "destructive" : "default"} pending={pending} error={error} onClose={onClose} onSubmit={() => void save()}>
-    {dialog.kind !== "refuse" ? <StandardDateField required label={dialog.kind === "bill" ? "Bill date" : dialog.kind === "refund" ? "Refund date" : dialog.kind === "grant" ? "Next administrative cycle date" : "Date written request received"} value={date} onChange={setDate} /> : null}
+  return <FormDialog open title={titles[dialog.kind]} submitText={earnPoints ? "Submit for Review" : "Save"} submitVariant={dialog.kind === "grant" ? "success" : dialog.kind === "refuse" ? "destructive" : "default"} pending={pending} error={error} onClose={onClose} onSubmit={() => void save()}>
+    {dialog.kind !== "refuse" ? <StandardDateField required label={dialog.kind === "bill" ? (earnPoints ? "Purchase Date" : "Bill date") : dialog.kind === "refund" ? "Refund date" : dialog.kind === "grant" ? "Next administrative cycle date" : "Date written request received"} value={date} onChange={setDate} /> : null}
     {dialog.kind === "bill" ? <>
-      <SelectField label="AFhomes Direct Operation" required value={venue} options={venues.map((item) => ({ value: item.id, label: item.name }))} onChange={setVenue} />
+      <SelectField label={earnPoints ? "Location" : "AFhomes Direct Operation"} required value={venue} options={venues.map((item) => ({ value: item.id, label: item.name }))} onChange={setVenue} />
       {selectedHolder ? <p>{selectedHolder.holderName} · {selectedHolder.vipNumber}</p> : gold ? <SelectField label="Cardholder" value={holder} options={[{ value: "primary", label: "Primary" }, { value: "supplementary", label: "Extra cardholder" }]} onChange={(value) => setHolder(value === "supplementary" ? value : "primary")} /> : null}
-      <TextField label="Official receipt number" required value={reference} onChange={setReference} />
-      <MoneyField label="Gross pre-discount amount" required value={amount} onChange={setAmount} />
+      <TextField label={earnPoints ? "Receipt Number" : "Official receipt number"} required value={reference} onChange={setReference} />
+      <MoneyField label={earnPoints ? "Amount Before Discounts" : "Gross pre-discount amount"} required value={amount} onChange={setAmount} />
       <MoneyField label="Excluded amount" value={excluded} onChange={setExcluded} hint="Exclude taxes, government fees, gratuities, points, and other amounts that do not qualify." />
-      <TextAreaField label="Notes" value={reason} onChange={setReason} />
+      <TextAreaField label={earnPoints ? "Service Used" : "Notes"} required={earnPoints} value={reason} onChange={setReason} />
     </> : null}
     {dialog.kind === "refund" ? <MoneyField label="Qualifying amount refunded" required value={amount} onChange={setAmount} /> : null}
     {dialog.kind === "refund" || dialog.kind === "grant" || dialog.kind === "refuse" ? <TextAreaField label="Written reason" required value={reason} onChange={setReason} /> : null}

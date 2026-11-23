@@ -10,6 +10,14 @@ function as(store: ReturnType<typeof createMockStore>, id: string) {
 }
 
 describe("staff Customer Look Up (UI21)", () => {
+  it("lets GSD verify an active member by name", async () => {
+    const store = createMockStore();
+    const member = store.memberships.find((item) => item.id === "memb-1")!;
+    const customer = store.customers.find((item) => item.id === member.customerId)!;
+    await expect(as(store, "dev-gsd").lookupActiveVip(customer.displayName))
+      .resolves.toContainEqual(expect.objectContaining({ membershipId: member.id, vipNumber: member.cardId }));
+  });
+
   it("finds an active VIP by part of the name, VIP Number or email, case-insensitive", async () => {
     const store = createMockStore();
     const clerk = as(store, "dev-clerk");

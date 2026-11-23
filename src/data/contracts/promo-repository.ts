@@ -85,7 +85,7 @@ export interface PromoRepository {
   delete(id: string, options?: MockAsyncOptions): Promise<void>;
   /** Entries for the memberships the identity can see, newest first. */
   ledger(options?: MockAsyncOptions): Promise<PromoLedgerRow[]>;
-  balances(options?: MockAsyncOptions): Promise<PromoMembershipBalance[]>;
+  balances(options?: MockAsyncOptions & { scannedCode?: string }): Promise<PromoMembershipBalance[]>;
   recordUse(input: RecordPromoUseInput, options?: MockAsyncOptions): Promise<PromoLedgerRow>;
   voidUse(entryId: string, reason: string, options?: MockAsyncOptions): Promise<PromoLedgerRow>;
 }

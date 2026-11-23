@@ -37,8 +37,9 @@ const entryType = (row: PromoLedgerRow) => `${ENTRY_TYPE_LABELS[row.type]}${row.
 /** "Record points use" (promo-points.use). Owns its form dialog. */
 export function RecordPromoUseButton({ selected }: { selected?: MemberQrHolder } = {}) {
   const canUse = useOperation("promo-points.use");
+  const { identity } = useDevIdentity();
   const [open, setOpen] = useState(false);
-  if (!canUse) return null;
+  if (!canUse || identity.roles.includes("gsd")) return null;
   return (
     <>
       <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setOpen(true)}>

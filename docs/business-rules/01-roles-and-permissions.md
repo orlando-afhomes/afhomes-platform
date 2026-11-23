@@ -323,3 +323,5 @@ These rulings take precedence over earlier text in this document where they diff
 ## Owner decision amendment (2026-11-16, UI21)
 
 1. **Customer Look Up (staff only).** The Super Administrator, Administrator, Clerk and Finance may look up an active VIP card in the staff application (operation `customers.lookup`). Sellers do not hold it. There is still no public customer or card lookup (doc 04 section 13).
+
+**GSD front-desk prototype.** GSD may verify active membership by name in Customer Look Up. To earn or redeem points, GSD scans the QR presented by the cardholder. GSD may submit the purchase for review, record a configured reward use or handle a stay booking for that scanned cardholder. GSD has no bill or payment approval access. The GSD role remains limited to the sample-data prototype.

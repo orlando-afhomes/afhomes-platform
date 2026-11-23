@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { BookingInput } from "@/data/contracts/redemption-repository";
 import { getDevIdentity } from "./dev-identities";
 import { MockRedemptionRepository } from "./redemption-repository";
+import { issueHolderCode } from "./member-qr-repository";
 import type { PointsSource } from "./redemption-points-source";
 import { createMockStore } from "./seed";
 import { addDaysToDate } from "@/shared/lib/dates";
@@ -28,6 +29,20 @@ const bookingsOf = (store: ReturnType<typeof createMockStore>) => store.redempti
 const memb = async (repo: MockRedemptionRepository) => (await repo.overview()).members.find((m) => m.membershipId === "memb-1")!;
 
 describe("booking with points", () => {
+  it("lets GSD book only for the QR holder and keeps the balance limit", async () => {
+    const { store, repo } = setup("dev-gsd", { weekday: 1000, weekend: 1500 });
+    const scannedCode = issueHolderCode(store, "memb-1", "primary")!.code;
+    await expect(repo.overview()).rejects.toThrow(/scan/i);
+    await expect(repo.createBooking(stay())).rejects.toThrow(/scan/i);
+    await expect(repo.createBooking(stay({ scannedCode, membershipId: "memb-other" }))).rejects.toThrow(/QR/i);
+    const booking = await repo.createBooking(stay({ scannedCode }));
+    const view = await repo.overview({ scannedCode });
+    expect(view.members.map((member) => member.membershipId)).toEqual(["memb-1"]);
+    expect(view.bookings.map((item) => item.id)).toEqual([booking.id]);
+    await expect(repo.createBooking(stay({ scannedCode }))).rejects.toThrow(/available|enough/i);
+    await expect(repo.completeBooking(booking.id)).rejects.toThrow(/scan/i);
+  });
+
   it("holds a first stay without points, then sets the PAD and uses its tranche once at check-in", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2027-03-02T03:00:00.000Z"));

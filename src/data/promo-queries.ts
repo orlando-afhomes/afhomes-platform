@@ -45,10 +45,10 @@ export function usePromoLedger() {
   return useQuery({ queryKey: queryKeys.business.list("promo-ledger", identity.id), queryFn: ({ signal }) => promos.ledger({ signal }) });
 }
 
-export function usePromoBalances() {
+export function usePromoBalances(scannedCode?: string) {
   const { promos } = useMockRepositories();
   const { identity } = useDevIdentity();
-  return useQuery({ queryKey: queryKeys.business.list("promo-balances", identity.id), queryFn: ({ signal }) => promos.balances({ signal }) });
+  return useQuery({ queryKey: [...queryKeys.business.list("promo-balances", identity.id), scannedCode ?? null], queryFn: ({ signal }) => promos.balances({ signal, scannedCode }) });
 }
 
 export function useSavePromo() {

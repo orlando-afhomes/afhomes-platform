@@ -3,7 +3,7 @@ import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type {
   PromoInput, PromoLedgerRow, PromoMembershipBalance, PromoRepository, PromoView, PublicPromoOffer, RecordPromoUseInput,
 } from "@/data/contracts/promo-repository";
-import { currentCardHolders, requireCurrentScan } from "./member-qr-repository";
+import { currentCardHolders, requireCurrentScan, resolvedHolder } from "./member-qr-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { canUsePoints, isUseVoided, promoBalance, promoBalanceByPromo } from "@/modules/promos/rules";
@@ -236,10 +236,15 @@ export class MockPromoRepository extends BusinessRepository implements PromoRepo
     });
   }
 
-  async balances(options?: MockAsyncOptions): Promise<PromoMembershipBalance[]> {
+  async balances(options?: MockAsyncOptions & { scannedCode?: string }): Promise<PromoMembershipBalance[]> {
     return this.run(options, (identity) => {
       const result: PromoMembershipBalance[] = [];
+      const counter = activeRoles(identity).includes("gsd");
+      if (counter && !this.can(identity, "promo-points.use")) return result;
+      const selected = options?.scannedCode ? resolvedHolder(this.store, options.scannedCode) : undefined;
+      if (counter && !selected) return result;
       for (const membership of this.promoMemberships(identity)) {
+        if (selected && membership.id !== selected.membershipId) continue;
         const entries = this.store.promoPoints.filter((entry) => entry.membershipId === membership.id);
         if (entries.length === 0) continue;
         result.push({
@@ -259,6 +264,9 @@ export class MockPromoRepository extends BusinessRepository implements PromoRepo
   async recordUse(input: RecordPromoUseInput, options?: MockAsyncOptions): Promise<PromoLedgerRow> {
     return this.run(options, (identity) => {
       this.require(identity, "promo-points.use", USE_DENIED);
+      const counter = activeRoles(identity).includes("gsd");
+      requireCurrentScan(this.store, input.scannedCode, input.membershipId, input.holder, counter);
+      if (counter && !input.rewardId) throw new Error("Select a configured reward.");
       const membership = this.promoMemberships(identity).find((item) => item.id === input.membershipId);
       if (!membership || !membership.cardId) throw new Error("Select a membership with a VIP Number.");
       const promo = this.find(input.promoId);
@@ -281,13 +289,12 @@ export class MockPromoRepository extends BusinessRepository implements PromoRepo
         }
         return this.row(previous);
       }
-      requireCurrentScan(this.store, input.scannedCode, membership.id, input.holder);
       const holder = currentCardHolders(this.store, membership.id).find((item) => item.info.holder === input.holder);
       if (holder?.info.status !== "active") throw new Error("Select an active cardholder.");
       const entries = this.store.promoPoints.filter((entry) => entry.membershipId === membership.id);
       const available = promoBalance(entries, today(), this.store.promos, promo.id).available;
       const check = canUsePoints(available, points, promo, outletId, today());
-      if (!check.ok) throw new Error(check.error);
+      if (!check.ok) throw new Error(counter ? check.error.replaceAll("Promo Points", "reward points") : check.error);
       const entry: PromoPointsEntry = {
         id: nextId(this.store, "promoPoints", "pp"), promoId: promo.id, membershipId: membership.id, type: "use",
         points, outletId, note: note || undefined, date: today(), actorId: identity.id,

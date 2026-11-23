@@ -77,7 +77,7 @@ export type RedemptionPanelCreateProps = { createOpen?: boolean; onCreateClose?:
 
 /** Bookings tab: New booking (redemption.book), booking actions (redemption.book; money part needs finance.verify). */
 export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = () => {}, selected }: RedemptionPanelCreateProps) {
-  const data = useRedemption();
+  const data = useRedemption(selected?.scannedCode);
   const act = useRedemptionBookingAction();
   const { memberQr } = useMockRepositories();
   const canBook = useOperation("redemption.book");
@@ -124,8 +124,8 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
     if (!text.trim()) { setError(dialog.kind === "approve-cash" ? "A receipt reference is required." : "A reason is required."); return; }
     setError(undefined);
     try {
-      if (dialog.kind === "cancel") await run(act.mutateAsync({ id: dialog.booking.id, action: "cancel", reason: text.trim(), cancelledAt: new Date(`${when}:00+08:00`).toISOString() }), "Booking cancelled.");
-      else if (dialog.kind === "no-show") await run(act.mutateAsync({ id: dialog.booking.id, action: "no-show", reason: text.trim() }), "No-show recorded.");
+      if (dialog.kind === "cancel") await run(act.mutateAsync({ id: dialog.booking.id, action: "cancel", reason: text.trim(), cancelledAt: new Date(`${when}:00+08:00`).toISOString(), scannedCode: selected?.scannedCode }), "Booking cancelled.");
+      else if (dialog.kind === "no-show") await run(act.mutateAsync({ id: dialog.booking.id, action: "no-show", reason: text.trim(), scannedCode: selected?.scannedCode }), "No-show recorded.");
       else await run(act.mutateAsync({ id: dialog.booking.id, action: "approve-cash", reference: text.trim() }), "Money part approved.");
       closeDialog();
     } catch (failure) {
@@ -152,7 +152,7 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
   const completeStay = (booking: BookingView) => confirmRun({
     title: "Complete Stay?",
     description: `Deduct ${fmt(booking.reservedWeekday)} weekday and ${fmt(booking.reservedWeekend)} weekend points for ${booking.reference}.`,
-    confirmText: "Complete Stay", tone: "success", action: () => act.mutateAsync({ id: booking.id, action: "complete" }),
+    confirmText: "Complete Stay", tone: "success", action: () => act.mutateAsync({ id: booking.id, action: "complete", scannedCode: selected?.scannedCode }),
     successTitle: `Stay ${booking.reference} completed.`, errorTitle: "Could not complete stay",
   });
 

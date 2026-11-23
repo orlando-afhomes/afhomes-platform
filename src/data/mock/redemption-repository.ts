@@ -1,8 +1,10 @@
 import type { HolderVerification } from "@/data/contracts/member-qr-repository";
-import { currentCardHolders, requireCurrentScan } from "./member-qr-repository";
+import { currentCardHolders, requireCurrentScan, resolvedHolder } from "./member-qr-repository";
+import { activeRoles } from "./dev-identities";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type {
   BookingInput,
+  BookingScope,
   BookingView,
   MemberPoints,
   RedemptionOverview,
@@ -151,15 +153,30 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
     return booking;
   }
 
+  private selectedBooking(identity: DevIdentity, bookingId: string, scannedCode?: string): RedemptionBooking {
+    const booking = this.find(bookingId);
+    const holder = booking.stayingHolder === "Gold extra cardholder" ? "supplementary" : "primary";
+    requireCurrentScan(this.store, scannedCode, booking.membershipId, holder, activeRoles(identity).includes("gsd"));
+    return booking;
+  }
+
   private auditBooking(identity: DevIdentity, booking: RedemptionBooking, action: string, previous: string | null, reason: string | null): void {
     this.audit(identity, { module: "stay-points", action, entityType: "redemption-booking", entityId: booking.id, displayReference: booking.reference, previousValue: previous, newValue: booking.status, reason, relatedRecordIds: [booking.membershipId] });
   }
 
-  async overview(options?: MockAsyncOptions): Promise<RedemptionOverview> {
+  async overview(options?: BookingScope): Promise<RedemptionOverview> {
     return this.run(options, (identity) => {
-      if (!this.canView(identity)) throw new Error("You do not have access to Redemption.");
+      const counter = activeRoles(identity).includes("gsd") && this.can(identity, "redemption.book");
+      const selected = counter && options?.scannedCode ? resolvedHolder(this.store, options.scannedCode) : undefined;
+      if (counter && !selected) throw new Error("Scan the customer's current membership QR first.");
+      if (!counter && !this.canView(identity)) throw new Error("You do not have access to Redemption.");
+      const bookings = this.state.bookings.filter((booking) => !selected || (
+        booking.membershipId === selected.membershipId &&
+        (booking.stayingHolder === "Gold extra cardholder" ? "supplementary" : "primary") === selected.holder
+      ));
+      const bookingIds = new Set(bookings.map((booking) => booking.id));
       const members: MemberPoints[] = this.store.memberships
-        .filter((membership) => membership.activationDate)
+        .filter((membership) => membership.activationDate && (!selected || membership.id === selected.membershipId))
         .map((membership) => {
           const claimDate = this.claimDate(membership);
           const version = claimDate ? selectTableVersion(this.state.tableVersions, claimDate) : null;
@@ -182,9 +199,9 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
         venues: this.state.venues,
         tableVersions: this.state.tableVersions,
         holidays: this.state.holidays,
-        bookings: [...this.state.bookings].reverse().map((booking) => this.view(booking)),
+        bookings: bookings.reverse().map((booking) => this.view(booking)),
         members,
-        ledger: [...this.state.ledger].reverse(),
+        ledger: this.state.ledger.filter((entry) => !selected || bookingIds.has(entry.bookingId)).reverse(),
       });
     });
   }
@@ -192,6 +209,8 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
   async createBooking(input: BookingInput, options?: MockAsyncOptions): Promise<BookingView> {
     return this.run(options, (identity) => {
       this.require(identity, "redemption.book", "Only office staff with the Bookings permission can book with points.");
+      const holder = input.stayingHolder.trim() === "Gold extra cardholder" ? "supplementary" : "primary";
+      requireCurrentScan(this.store, input.scannedCode, input.membershipId, holder, activeRoles(identity).includes("gsd"));
       if (!input.requestId.trim()) throw new Error("A request key is required.");
       const known = this.state.requests[input.requestId];
       if (known) {
@@ -213,7 +232,6 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
       if (input.checkIn < today()) throw new Error("The check-in date cannot be in the past.");
       if (!Number.isInteger(input.cashAmountCentavos) || input.cashAmountCentavos < 0) throw new Error("The money part must be a whole number of centavos.");
       const stayingHolder = input.stayingHolder.trim();
-      const holder = stayingHolder === "Gold extra cardholder" ? "supplementary" : "primary";
       if (stayingHolder !== "Primary cardholder" && stayingHolder !== "Gold extra cardholder") throw new Error("Choose who is staying.");
 
       const membership = this.store.memberships.find((item) => item.id === input.membershipId);
@@ -222,7 +240,6 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
       const blocked = checkMembershipEligibility({ ...membership, cardClaimDate: claimDate }, input.checkIn, input.checkOut);
       if (blocked.length > 0) throw new Error(blocked[0]);
       if (!claimDate) throw new Error("The card has not been claimed.");
-      requireCurrentScan(this.store, input.scannedCode, membership.id, holder);
       if (!currentCardHolders(this.store, membership.id).some(({ info }) => info.holder === holder)) throw new Error("Select a registered cardholder.");
 
       const venue = this.state.venues.find((item) => item.id === input.venueId);
@@ -299,10 +316,10 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
     });
   }
 
-  async cancelBooking(bookingId: string, reason: string, cancelledAt?: string, options?: MockAsyncOptions): Promise<BookingView> {
+  async cancelBooking(bookingId: string, reason: string, cancelledAt?: string, options?: BookingScope): Promise<BookingView> {
     return this.run(options, (identity) => {
       this.require(identity, "redemption.book", "Only office staff with the Bookings permission can cancel a booking.");
-      const booking = this.find(bookingId);
+      const booking = this.selectedBooking(identity, bookingId, options?.scannedCode);
       if (booking.status === "cancelled" || booking.status === "late_cancelled") return this.view(booking);
       if (booking.checkedIn || !OPEN_STATUSES.includes(booking.status)) throw new Error("This booking can no longer be cancelled.");
       if (!reason.trim()) throw new Error("A reason is required.");
@@ -322,10 +339,10 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
     });
   }
 
-  async recordNoShow(bookingId: string, reason: string, options?: MockAsyncOptions): Promise<BookingView> {
+  async recordNoShow(bookingId: string, reason: string, options?: BookingScope): Promise<BookingView> {
     return this.run(options, (identity) => {
       this.require(identity, "redemption.book", "Only office staff with the Bookings permission can record a no-show.");
-      const booking = this.find(bookingId);
+      const booking = this.selectedBooking(identity, bookingId, options?.scannedCode);
       if (booking.status === "no_show") return this.view(booking);
       if (booking.checkedIn || booking.status !== "confirmed") throw new Error("Only confirmed bookings awaiting arrival can be marked as no-show.");
       if (today() < booking.checkIn) throw new Error("A no-show can be recorded from the check-in date.");
@@ -341,7 +358,7 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
   async checkInBooking(bookingId: string, verification: HolderVerification, options?: MockAsyncOptions): Promise<BookingView> {
     return this.run(options, (identity) => {
       this.require(identity, "redemption.book", "Only office staff with the Bookings permission can check in a booking.");
-      const booking = this.find(bookingId);
+      const booking = this.selectedBooking(identity, bookingId, verification?.scannedCode);
       const expectedHolder = booking.stayingHolder === "Gold extra cardholder" ? "supplementary" : "primary";
       if (verification?.identityChecked !== true || verification.holder !== expectedHolder) throw new Error("Confirm the staying cardholder's ID.");
       if (booking.checkedIn) return this.view(booking);
@@ -351,7 +368,6 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
       const claimDate = this.claimDate(membership);
       if (!claimDate) throw new Error("The card has not been claimed.");
       const actual = today();
-      requireCurrentScan(this.store, verification.scannedCode, membership.id, expectedHolder);
       if (!currentCardHolders(this.store, membership.id).some(({ info }) => info.holder === expectedHolder)) {
         throw new Error("The staying cardholder is no longer registered.");
       }
@@ -386,10 +402,10 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
     });
   }
 
-  async completeBooking(bookingId: string, options?: MockAsyncOptions): Promise<BookingView> {
+  async completeBooking(bookingId: string, options?: BookingScope): Promise<BookingView> {
     return this.run(options, (identity) => {
       this.require(identity, "redemption.book", "Only office staff with the Bookings permission can complete a booking.");
-      const booking = this.find(bookingId);
+      const booking = this.selectedBooking(identity, bookingId, options?.scannedCode);
       if (booking.status === "completed") return this.view(booking);
       if (today() < booking.checkOut) throw new Error("A booking can be completed once the stay has ended.");
       if (booking.status !== "confirmed" || !booking.checkedIn) throw new Error("Record check-in before completing the stay.");
@@ -404,6 +420,7 @@ export class MockRedemptionRepository extends BusinessRepository implements Rede
   async cancelFutureBookingsForTransfer(membershipId: string, effectiveDate: string, options?: MockAsyncOptions): Promise<BookingView[]> {
     return this.run(options, (identity) => {
       this.require(identity, "redemption.book", "Only office staff with the Bookings permission can cancel bookings for a transfer.");
+      if (!this.canView(identity)) throw new Error("You do not have access to transfer bookings.");
       if (!isDate(effectiveDate)) throw new Error("Enter a valid transfer effective date.");
       return this.cancelForTransfer(identity, membershipId, effectiveDate);
     });

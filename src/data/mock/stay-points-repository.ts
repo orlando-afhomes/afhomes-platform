@@ -1,4 +1,5 @@
 import { requireCurrentScan } from "./member-qr-repository";
+import { activeRoles } from "./dev-identities";
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { MembershipPoints, StayPointsAction, StayPointsRepository } from "@/data/contracts/stay-points-repository";
 import { findReferenceConflict } from "@/modules/finance/rules";
@@ -55,16 +56,20 @@ export class MockStayPointsRepository extends BusinessRepository implements Stay
       switch (input.action) {
         case "enter": {
           this.require(identity, "stay-points.enter", "Only authorized office staff can enter resort bills.");
-          const member = this.member(input.membershipId, identity);
+          const counter = activeRoles(identity).includes("gsd");
+          requireCurrentScan(this.store, input.scannedCode, input.membershipId, input.holder, counter);
+          const member = counter
+            ? this.store.memberships.find((item) => item.id === input.membershipId)!
+            : this.member(input.membershipId, identity);
           if (!member.cardId) throw new Error("The membership has no VIP Number.");
-          requireCurrentScan(this.store, input.scannedCode, member.id, input.holder);
           if (!parseManilaDateOnly(input.date) || input.date > today()) throw new Error("Enter a valid bill date on or before today.");
           if (!this.store.outlets.some((outlet) => outlet.id === input.venueId && outlet.status === "active")) throw new Error("Select an AFhomes Direct Operation.");
           const allowsSupplementary = (this.store.products.find((item) => item.code === member.productCode)?.supplementaryHolders ?? 0) > 0;
           if (input.holder !== "primary" && !(input.holder === "supplementary" && allowsSupplementary)) {
             throw new Error("Only a membership whose product allows an extra cardholder can use extra cardholder spend.");
           }
-          const contract = this.store.contracts.find((item) => item.id === member.contractId)!;
+          const contract = this.store.contracts.find((item) => item.id === member.contractId);
+          if (!contract) throw new Error("Membership contract not found.");
           if (input.holder === "supplementary" && !contract.benefits.supplementaryHolders) throw new Error("The signed Grant does not allow an extra cardholder.");
           if (![input.grossCentavos, input.excludedCentavos].every(Number.isSafeInteger) || input.grossCentavos <= 0
             || input.excludedCentavos < 0 || input.excludedCentavos >= input.grossCentavos) {
@@ -72,6 +77,7 @@ export class MockStayPointsRepository extends BusinessRepository implements Stay
           }
           const reference = input.reference.trim();
           if (!reference) throw new Error("Enter the official receipt number.");
+          if (counter && !input.description.trim()) throw new Error("Enter the service used.");
           if (hasResortReceiptReference(this.store, reference) || hasRedemptionReceiptReference(this.store, reference) || hasImportedReceiptReference(this.store, reference) || findReferenceConflict(this.store.payments, reference)) {
             throw new Error("This official receipt number is already used.");
           }
@@ -83,7 +89,8 @@ export class MockStayPointsRepository extends BusinessRepository implements Stay
           });
           this.audit(identity, { module: "stay-points", action: "RESORT_BILL_ENTERED", entityType: "resort-spend", entityId: id,
             displayReference: reference, newValue: "submitted", relatedRecordIds: [member.id] });
-          return this.build(member);
+          const result = this.build(member);
+          return counter ? { ...result, spends: result.spends.filter((spend) => spend.id === id), refunds: [], waivers: [], ledger: null } : result;
         }
         case "approve":
         case "refund": {

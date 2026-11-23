@@ -49,13 +49,15 @@ const OPEN_MONTH = (() => {
   return new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 7);
 })();
 
-/** The closing-seller rate row of a seller, found the way a user would (the directory lists every seller). */
-async function closingSellerRate(name: string) {
+/** Waits until the seller's VIP closing-seller rate row shows the rate (the directory lists every seller, so search first). */
+async function expectClosingSellerRate(name: string, rate: string) {
   fireEvent.change(await screen.findByRole("searchbox", { name: "Search sellers" }), { target: { value: name } });
-  const rows = await screen.findAllByRole("row", { name: `Open rate for ${name}` });
-  const row = rows.find((item) => within(item).queryByText(COMMISSION_ROLE_LABELS.DSC) && within(item).queryByText("VIP"));
-  expect(row).toBeDefined();
-  return row!;
+  await waitFor(() => {
+    const row = screen.getAllByRole("row", { name: `Open rate for ${name}` })
+      .find((item) => within(item).queryByText(COMMISSION_ROLE_LABELS.DSC) && within(item).queryByText("VIP"));
+    expect(row).toBeDefined();
+    expect(within(row!).getByText(rate)).toBeInTheDocument();
+  });
 }
 
 function show(page: ReactElement, tab: string, identityId = "dev-admin", store?: MockStore) {
@@ -170,8 +172,7 @@ describe("Set Rate", () => {
     fireEvent.change(form.getByLabelText("Standard rate (%)"), { target: { value: "0" } });
     await user.click(form.getByRole("button", { name: "Save Rate" }));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Set Approved Commission Rate" })).toBeNull());
-    const rate = await closingSellerRate("Ana Mendoza");
-    expect(within(rate).getByText("15%")).toBeInTheDocument();
+    await expectClosingSellerRate("Ana Mendoza", "15%");
   });
 
   it("fills the approved VIP rate from the seller's position after the Admin confirms the terms", async () => {
@@ -202,8 +203,7 @@ describe("Set Rate", () => {
     await user.click(form.getByRole("checkbox", { name: /I confirm/ }));
     await user.click(form.getByRole("button", { name: "Save Rate" }));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Set Approved Commission Rate" })).toBeNull());
-    const rate = await closingSellerRate("Ana Mendoza");
-    expect(within(rate).getByText("0%")).toBeInTheDocument();
+    await expectClosingSellerRate("Ana Mendoza", "0%");
   });
 
   it("fills the closing seller from a customer and the referrer from the sale", async () => {

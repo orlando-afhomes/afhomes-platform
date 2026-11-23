@@ -191,23 +191,43 @@ describe("Promo Points", () => {
   });
 
   it("lets the demo GSD identity use a reward, while scanning alone and approval remain blocked", async () => {
-    const { as, admin, finance, bill } = setup();
+    const { store, as, admin, finance } = setup();
     const promo = await admin.promos.create(promoInput({
       rewards: [{ name: "Spa Day Pass", description: "One day pass", outletId: SPA, pointsCost: 3 }],
       redeemOutletIds: [SPA],
     }));
-    const spend = await bill(TEPPAN);
-    await finance.stayPoints.act({ action: "approve", spendId: spend.id });
     const [issued] = await admin.memberQr.holders("memb-1");
     const gsd = as("dev-gsd");
+    await expect(gsd.memberQr.holders(issued.membershipId)).rejects.toThrow(/cardholder/i);
+    const purchase = {
+      action: "enter", membershipId: issued.membershipId, venueId: TEPPAN, date: manilaToday(),
+      grossCentavos: pesos(1100), excludedCentavos: 0, reference: "GSD-OR-1",
+      holder: "primary", description: "Dinner",
+    } as const;
+    await expect(gsd.stayPoints.act(purchase)).rejects.toThrow(/scan/i);
+    const submitted = await gsd.stayPoints.act({ ...purchase, scannedCode: issued.code });
+    const spend = submitted.spends.at(-1)!;
+    expect(spend.status).toBe("submitted");
+    expect(await balanceOf(admin)).toBeUndefined();
+    await expect(gsd.stayPoints.act({ ...purchase, scannedCode: issued.code })).rejects.toThrow(/already used/i);
+    await finance.stayPoints.act({ action: "approve", spendId: spend.id });
+    await finance.stayPoints.act({ action: "approve", spendId: spend.id });
+    expect((await balanceOf(admin))?.available).toBe(11);
     const before = (await admin.promos.balances()).find((item) => item.membershipId === "memb-1")!.total.available;
     await expect(gsd.memberQr.resolve(issued.code)).resolves.toMatchObject({ membershipId: "memb-1" });
+    await expect(gsd.promos.balances()).resolves.toEqual([]);
+    await expect(gsd.promos.balances({ scannedCode: issued.code })).resolves.toHaveLength(1);
     expect((await admin.promos.balances()).find((item) => item.membershipId === "memb-1")!.total.available).toBe(before);
     await expect(gsd.stayPoints.act({ action: "approve", spendId: spend.id })).rejects.toThrow(/Finance or an Administrator/);
     await expect(gsd.promos.recordUse({
       requestId: "gsd-use", membershipId: "memb-1", promoId: promo.id, rewardId: promo.rewards[0].id,
       holder: "primary", identityChecked: true, scannedCode: issued.code, note: "Counter service",
     })).resolves.toMatchObject({ points: 3, actorId: "dev-gsd" });
+    const replacement = await admin.memberQr.replace("memb-1", "primary");
+    await expect(gsd.stayPoints.act({ ...purchase, scannedCode: issued.code, reference: "GSD-OR-2" })).rejects.toThrow(/QR/i);
+    await expect(gsd.memberQr.resolve(replacement.code)).resolves.toMatchObject({ membershipId: "memb-1" });
+    store.memberships.find((item) => item.id === issued.membershipId)!.validityEndDate = "2000-01-01";
+    await expect(gsd.memberQr.resolve(replacement.code)).rejects.toThrow(/no longer available/i);
   });
 
   it("keeps a used outlet from being deleted", async () => {

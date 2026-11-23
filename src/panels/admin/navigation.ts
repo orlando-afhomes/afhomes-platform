@@ -202,7 +202,7 @@ function areaItem(id: AdminAreaKey, label: string): AdminNavItem {
 // Keep the area registry flat for access checks and breadcrumbs. AdminNavList
 // groups the visible links for display. Each area shows while any of its tabs is allowed.
 export const CUSTOMER_LOOKUP_HREF = "/admin/customer-lookup";
-export const CUSTOMER_LOOKUP_GRANTS: AdminModuleId[] = ["customers", "membership"];
+export const CUSTOMER_LOOKUP_GRANTS: AdminModuleId[] = ["customers", "membership", "stay-points"];
 
 export const adminNavigation: AdminNavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/admin", available: true },

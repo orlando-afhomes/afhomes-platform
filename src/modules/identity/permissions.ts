@@ -309,8 +309,8 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "audit.read",
   ],
   hr: ["organization.departments.manage", "organization.staff.manage"],
-  // Prototype-only GSD counter identity: records a named reward use after scanning; never approves money or bills.
-  gsd: ["promo-points.use"],
+  // Prototype counter actions are scoped to a scanned cardholder in the repositories.
+  gsd: ["customers.lookup", "stay-points.enter", "promo-points.use", "redemption.book"],
   // Doc 01 §3.7/§3.8: the Clerk enters and completes; never approves (no finance.verify, contracts.approve, membership.activate).
   clerk: ["customers.manage", "customers.draft", "customers.lookup", "contracts.prepare", "payments.submit", "stay-points.enter", "commission.payout.prepare", "igp.enter", "promo-points.use"],
   finance: [

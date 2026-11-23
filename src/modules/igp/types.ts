@@ -33,6 +33,53 @@ export type IgpDocument = {
   signers: string | null;
 };
 
+/**
+ * IGP buyer membership (doc 14, owner ruling 2026-11-23). Created once, when the Formal VIP Grant is
+ * first recorded as signed. It links the IGP Series Number and carries the frozen card tier; it never
+ * issues a VIP Number (docs 06/14) and never carries Stay Points (doc 09 belongs to VIP memberships).
+ */
+export type IgpBuyerMembership = {
+  id: string;
+  saleId: string;
+  /** The IGP Series Number this membership belongs to. Never a VIP Number. */
+  seriesNumber: string;
+  customerId: string;
+  /** Card level frozen from the 2026-11-22 price minimums when the grant was signed; null below the lowest rule. */
+  tier: VipTierCode | null;
+  grantSignedDate: string;
+  status: "recorded";
+  /** Always "none": IGP buyer memberships are never credited Stay Points. */
+  stayPoints: "none";
+};
+
+export type IgpHistoryBatchStatus = "imported";
+
+/** Validated IGP history rows kept for reference. They never become live sales, receipts or commissions. */
+export type IgpHistoryRow = {
+  rowNumber: number;
+  seriesNumber: string;
+  date: string;
+  priceCentavos: number;
+  scheme: IgpScheme;
+  termMonths: number;
+  clauses: IgpClauses;
+  buyerLabel: string;
+  status: "active" | "cancelled" | "replaced";
+  /** The replacing Series Number. Present only on replaced rows. */
+  replaces: string | null;
+};
+
+export type IgpHistoryBatch = {
+  id: string;
+  fileName: string;
+  createdAt: string;
+  createdBy: string;
+  status: IgpHistoryBatchStatus;
+  totalRows: number;
+  rows: IgpHistoryRow[];
+  skipped: Array<{ rowNumber: number; reason: string }>;
+};
+
 export type IgpCatalogStatus = "active" | "inactive";
 
 /** A property project the sales team sells units or lots from (admin-managed list). */
@@ -95,6 +142,10 @@ export type IgpState = {
   grantTierRules: IgpGrantTierRule[];
   projects: IgpProject[];
   units: IgpUnit[];
+  /** IGP buyer memberships, created when each Formal VIP Grant is first signed (owner ruling 2026-11-23). */
+  buyerMemberships: IgpBuyerMembership[];
+  /** Imported IGP history batches (IGP-2). Their Series Numbers are reserved and never reused. */
+  historyBatches: IgpHistoryBatch[];
 };
 
 /** Synthetic sample catalog for the mock phase. */
@@ -114,5 +165,5 @@ export function seedIgpCatalog(): { projects: IgpProject[]; units: IgpUnit[] } {
 }
 
 export function createIgpState(): IgpState {
-  return { sales: [], accreditations: [], thresholdBp: 1_000, grantTierRules: DEFAULT_IGP_GRANT_TIER_RULES.map((rule) => ({ ...rule })), ...seedIgpCatalog() };
+  return { sales: [], accreditations: [], thresholdBp: 1_000, grantTierRules: DEFAULT_IGP_GRANT_TIER_RULES.map((rule) => ({ ...rule })), ...seedIgpCatalog(), buyerMemberships: [], historyBatches: [] };
 }

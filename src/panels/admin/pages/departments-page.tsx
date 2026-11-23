@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
 import { useDepartments, useDeleteDepartment, useDepartmentRoles, useStaff } from "@/data/queries";
 import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
+import { QueryState } from "@/shared/components/modern/query-state";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { AdminPage } from "@/shared/components/admin";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
@@ -101,6 +102,14 @@ export function DepartmentsPage({
 
   const sortLabel = sortAsc ? "Sort A-Z" : "Sort Z-A";
 
+  // A failed directory load reads as a retryable error, never as an empty table.
+  const listError = departmentsQuery.error ?? rolesQuery.error ?? staffQuery.error;
+  const retryLists = () => {
+    void departmentsQuery.refetch();
+    void rolesQuery.refetch();
+    void staffQuery.refetch();
+  };
+
   return (
     <AdminPage
       embedded={embedded}
@@ -119,15 +128,20 @@ export function DepartmentsPage({
           {sortLabel}
         </Button>
       </FilterBar>
+      <QueryState
+        isLoading={departmentsQuery.isLoading || rolesQuery.isLoading || staffQuery.isLoading}
+        error={listError}
+        onRetry={retryLists}
+      >
       <DataTable<Department>
         caption="Departments"
         data={filtered}
         columns={columns}
         getRowId={(dept) => dept.id}
         emptyText="No departments found."
-        loading={departmentsQuery.isLoading || rolesQuery.isLoading || staffQuery.isLoading}
         onRowOpen={(dept) => setViewDept(dept)}
       />
+      </QueryState>
       <DepartmentDialogs
         open={editDialog || creating}
         editDept={editDept}

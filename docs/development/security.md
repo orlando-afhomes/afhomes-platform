@@ -8,7 +8,7 @@
 
 ## 1. Purpose and Scope
 
-This document defines the complete security architecture for the AFHomes Platform, covering identity, authentication, sessions, account lifecycle, staff/Sales Network approval, RBAC, record-level authorization, genealogy privacy, Finance/commission security, customer privacy, public verification, API security, input validation, XSS/CSRF/CORS/SSRF, rate limiting, fraud prevention, file uploads, secrets, local MongoDB/Atlas security, DigitalOcean/Docker/HTTPS, audit integrity, logging, feature flags, backup/incident response, security testing, and implementation phases.
+This guide defines trust boundaries, authentication, sessions, staff and Sales Network approval, permissions, record privacy, Finance and commission controls, public verification, API validation, file protection, secrets, Firebase/Google Cloud security, audit, incident response, and security verification.
 
 AFHomes business rules are current approved operating policies and may change through authorized management decisions. Security implementation must support controlled policy changes without compromising historical transactions, signed contract rights, financial accountability, account identity, authorization records, audit integrity, or customer privacy.
 
@@ -19,7 +19,7 @@ AFHomes business rules are current approved operating policies and may change th
 - `docs/development/architecture.md` — system topology.
 - `docs/development/frontend.md` — client-side security responsibilities.
 - `docs/development/backend.md` — server-side enforcement.
-- `docs/development/database.md` — MongoDB security.
+- [Database guide](database.md) for local emulators, SQL Connect, and PostgreSQL security.
 - `docs/development/testing.md` — verification.
 - `docs/development/deployment.md` — production infrastructure security.
 - `docs/development/implementation.md` — phased implementation.
@@ -43,14 +43,14 @@ Frontend navigation is not a security boundary. Hidden buttons or disabled contr
 flowchart TB
     CLIENT["Public Visitor / Authenticated Browser / Future Mobile"]
     HTTPS["HTTPS"]
-    PROXY["DigitalOcean Reverse Proxy"]
+    PROXY["Managed HTTPS on Approved Google Host"]
     NEXT["Next.js Application"]
-    AUTH["Authentication / Session"]
+    AUTH["Firebase Auth Session Verification"]
     POLICY["Server-side RBAC Policy"]
     SERVICES["Business Domain Services"]
-    REPO["Mongoose Repository"]
-    DB[("MongoDB Atlas Cloud")]
-    FILES["File / Media Storage"]
+    REPO["Server SQL Connect Repository"]
+    DB[("Cloud SQL for PostgreSQL")]
+    FILES["Private Cloud Storage for Firebase"]
     AUDIT["Audit History"]
 
     CLIENT --> HTTPS
@@ -65,7 +65,7 @@ flowchart TB
     SERVICES --> AUDIT
 ```
 
-Include browser trust boundary, server trust boundary, database trust boundary, file storage boundary, external integration boundary, audit/monitoring responsibility. Future mobile application must use authorized API and never connect directly to MongoDB Atlas.
+The API is the business-data trust boundary for browser and future mobile clients. Verify identity, permissions, record scope, private-file access, integration boundaries, and audit responsibility on the server.
 
 ### 4.1 Browser is untrusted
 
@@ -77,7 +77,7 @@ Protected services enforce authentication, account eligibility, effective permis
 
 ### 4.3 Database trust boundary
 
-Database connection is server-only. No browser component may directly access MongoDB. Database credentials never enter public frontend bundles.
+SQL Connect access to protected business records is server-only. Browser and mobile clients use the AFHomes API. Privileged credentials and generated server operations stay out of client bundles.
 
 ---
 
@@ -184,9 +184,7 @@ No unauthorized sponsor assignment; no forged upperline approval; no bypass of r
 
 ## 10. Authentication Architecture
 
-Target authentication direction: Better Auth. Compatibility must be verified before implementation. Relevant checks: selected Next.js version, supported Node.js runtime, MongoDB integration, authentication adapter, session storage, session revocation, password handling, cookie security, deployment compatibility, future mobile authentication requirements.
-
-Do not claim Better Auth is already installed. Do not silently replace Better Auth with another authentication framework.
+Firebase Auth is the chosen identity provider. Verify the Firebase Admin SDK on the selected Next.js/Node.js runtime and test session creation, secure cookies, revocation, expiry, password handling, and account status. The AFHomes server applies centralized role and record checks. Use the Auth Emulator locally and test hosted authentication before release.
 
 ### 10.1 Authentication capabilities
 
@@ -472,7 +470,7 @@ Frontend validation improves user experience. Backend validation is authoritativ
 
 ### 25.2 Injection prevention
 
-Use appropriate safe database APIs and validation. Do not allow untrusted MongoDB query operators, unrestricted dynamic field paths or client-supplied database filters to bypass approved searches.
+Use typed, parameterized operations and request validation. Keep allowed filters and fields explicit and reject client-supplied SQL or operations that bypass the approved query scope.
 
 ### 25.3 Output security
 
@@ -560,7 +558,7 @@ Do not claim a specific provider is selected if it has not been approved. Descri
 
 ## 30. Secrets Management
 
-Document server-only secret handling. Examples: MongoDB connection credentials, Better Auth secrets, external API keys, file storage credentials, email/SMS provider credentials, backup credentials, deployment tokens.
+Document server-only secret handling for Firebase and Google service credentials, storage, external providers, backups, and deployment. Use managed runtime identity and Secret Manager when appropriate. Verify secrets stay out of logs and client builds.
 
 Secrets must not appear in Git-tracked source code, client-side bundles, public environment variables, application error messages, request logs, screenshots of diagnostic output, public documentation.
 
@@ -580,23 +578,23 @@ Never expose server secrets through `NEXT_PUBLIC_` variables.
 
 ## 31. Database Security
 
-The database architecture uses Local MongoDB for development and MongoDB Atlas Cloud for production. Mongoose for server-side persistence.
+Use SQL Connect Emulator locally and separate hosted PostgreSQL through SQL Connect for staging and production.
 
-### 31.1 Local MongoDB
+### 31.1 Local emulators
 
-Document localhost binding, appropriate authentication, nonproduction credentials, secure local files, avoidance of unnecessary public network exposure, separation from production, synthetic test data.
+Bind to loopback, use a demo project ID, and keep real credentials and customer files out of local test data. Verify no automatic connection to hosted services.
 
-### 31.2 MongoDB Atlas
+### 31.2 Hosted SQL Connect and Cloud SQL
 
-Document TLS, database users, least-privilege roles, network access restrictions, connection-string protection, production database separation, monitoring, backup protection, credential rotation.
+Use secure transport and least-privilege service identities. Isolate project settings, credentials, and databases. Review backup protection, access logs, and key rotation.
 
 ### 31.3 Server-only access
 
-Only authorized server infrastructure accesses MongoDB. No browser or mobile client connects directly to the database.
+Require authorized server access to the database. Use SQL Connect `NO_ACCESS` for sensitive named operations exposed through the app server. The app must check account status, permissions, and record scope before using its privileged identity.
 
 ### 31.4 Database privilege separation
 
-Distinguish normal application database identity, authorized schema/index maintenance identity, administrative database identity, read-only operational access where applicable. Do not give the application unrestricted Atlas administrative privileges.
+Distinguish the app runtime, schema and index maintenance, administrative database access, and read-only operational access. Grant the application only the access needed for its approved operations.
 
 ---
 
@@ -638,23 +636,23 @@ Separate application diagnostic logs from business audit records. Application lo
 
 ## 34. Production Infrastructure Security
 
-The approved production topology is DigitalOcean Droplet → Next.js Application → MongoDB Atlas Cloud. The application is deployed using Docker Compose and HTTPS.
+Use the staging-verified Firebase App Hosting or Cloud Run deployment in the approved production Google project. Use managed HTTPS, Firebase Auth, SQL Connect and private Cloud Storage for Firebase.
 
-### 34.1 Droplet
+### 34.1 Project controls
 
-Restricted SSH, strong administrative authentication, limited authorized users, operating-system patching, firewall, process isolation, security monitoring, restricted management access.
+Use separate staging and production projects with authorized operators, least privilege, monitored administrative access, and limited deployment permissions.
 
-### 34.2 Docker
+### 34.2 Runtime security
 
-Appropriate container isolation, minimal images, non-root execution where practical, safe volumes, resource limits, secure environment configuration, controlled container updates, no unnecessary privileged containers.
+Use a supported patched Node.js runtime. Restrict secrets, ingress, and role assignments. Verify approved configuration per environment and safe resource limits.
 
-### 34.3 Reverse proxy
+### 34.3 HTTPS and request handling
 
-HTTPS, TLS certificate management, safe proxy headers, request limits, access logging, correct forwarded-client-address trust configuration, restrictive exposure of internal services.
+Validate TLS and certificate renewal on the approved domain. Apply trusted forwarding, safe caching, request limits, security headers, and restricted access to protected routes.
 
-### 34.4 Atlas connectivity
+### 34.4 Service connectivity
 
-Restricted database network access, TLS, protected credentials, least privilege, monitoring.
+Use project-specific runtime identity, secure transport, SQL Connect service configuration, and private files. Check identity, logs, and readiness without exposing infrastructure details.
 
 ### 34.5 Production feature exposure
 
@@ -698,7 +696,7 @@ Document service identity, execution authorization, secure scheduling, job idemp
 
 ## 37. Backup and Restore Security
 
-Document security for local development backups, MongoDB Atlas backups, application configuration backups, sensitive uploaded files, authorized restoration, disaster recovery.
+Document isolation and access security for local state, Cloud SQL backups, app configuration and release artifacts, private files, authorized restoration, and disaster recovery.
 
 ### 37.1 Backup protection
 
@@ -768,12 +766,12 @@ Align with `docs/development/implementation.md`.
 
 - **Phase 0 — Documentation:** security architecture and approved business rules.
 - **Phase 1 — Frontend Foundation:** development-only mock identities, permission-aware UI and safe synthetic data. Do not implement production authentication merely by documenting it.
-- **Phase 2 — Local MongoDB:** secure local database setup, database access design and test isolation.
+- **Phase 2 — Local database:** secure SQL Connect Emulator setup, access design, and test isolation.
 - **Phase 3 — Backend Foundation:** authentication, session management, RBAC, record-level policies, input validation and security infrastructure.
 - **Phase 4 — Business Modules:** module-specific authorization, Finance controls, genealogy visibility, points integrity and auditing.
 - **Phase 5 — Integration:** connect the frontend with real authenticated backend services.
 - **Phase 6 — Security Testing:** automated authorization, financial-security, API and database tests.
-- **Phase 7 — Production Deployment:** Droplet hardening, HTTPS, secrets, Atlas network controls, monitoring and secure release verification.
+- **Phase 7 — Hosted release:** verify HTTPS, runtime IAM, protected secrets, project isolation, monitoring, backups, and secure release evidence.
 - **Phase 8 — Operations:** monitoring, credential rotation, incident handling, patching and controlled updates.
 
 All implementation phases require separate authorization. Do not begin coding during this documentation task.
@@ -811,8 +809,8 @@ All implementation phases require separate authorization. Do not begin coding du
 27. Private ID documents remain protected.
 28. API access is independently secured.
 29. Browser navigation is not a security boundary.
-30. Local MongoDB remains isolated from production.
-31. MongoDB Atlas credentials remain server-only.
+30. The local emulator remains isolated from hosted projects.
+31. SQL Connect credentials and privileged operations remain server-only.
 32. Production secrets do not enter frontend bundles.
 33. Sensitive data is excluded from ordinary logs unless specifically justified.
 34. Audit history preserves accountability.
@@ -838,7 +836,7 @@ All implementation phases require separate authorization. Do not begin coding du
 Do not invent answers to major unresolved security questions. Verify or flag the following where relevant:
 
 ### Authentication
-- Better Auth/MongoDB compatibility.
+- Firebase Auth server-session compatibility with the selected Next.js and Node.js versions.
 - Production session configuration.
 - MFA policy for privileged roles if not yet approved.
 - Password recovery provider/configuration.
@@ -854,16 +852,16 @@ Do not invent answers to major unresolved security questions. Verify or flag the
 - Approved module access versus sensitive-operation authority.
 
 ### Privacy
-- Formal data retention period: records are kept indefinitely until legal advice (R11); the advised period is open.
-- Audit retention: kept indefinitely until legal advice (R11, doc 12).
+- Apply the working retention schedule in doc 12. Confirm applicable changes with Legal and the Data Protection Officer.
+- Audit retention follows the same approved governance and any applicable legal holds.
 - Export authority.
 - Exceptional lawful deletion procedures.
 - Specific privacy notification obligations.
 
 ### Infrastructure
-- Selected reverse proxy.
+- Verify the selected hosting option's managed HTTPS, ingress, and request security.
 - Cloud network topology.
-- Approved object-storage provider.
+- Verify private Cloud Storage for Firebase access and recovery configuration.
 - Selected CAPTCHA/challenge provider if applicable.
 - Monitoring/security tooling.
 
@@ -887,7 +885,7 @@ The final `security.md` must use clear English, be specific to AFHomes, be under
 
 ### Authentication and Identity
 - [ ] Centralized identity model.
-- [ ] Better Auth target direction.
+- [ ] Firebase Auth and server session verification.
 - [ ] Compatibility verification requirements.
 - [ ] Account lifecycle.
 - [ ] Staff approval.
@@ -931,11 +929,11 @@ The final `security.md` must use clear English, be specific to AFHomes, be under
 - [ ] Idempotency.
 
 ### Infrastructure and Data Security
-- [ ] Local MongoDB protection.
-- [ ] MongoDB Atlas security.
-- [ ] Server-only credentials.
-- [ ] DigitalOcean security.
-- [ ] Docker security.
+- [ ] Local emulator isolation.
+- [ ] Hosted SQL Connect and Cloud SQL security.
+- [ ] Server-only privileged operations.
+- [ ] App Hosting or Cloud Run security.
+- [ ] Least-privilege runtime identity and secrets.
 - [ ] HTTPS.
 - [ ] Secrets management.
 - [ ] Logging.
@@ -945,9 +943,9 @@ The final `security.md` must use clear English, be specific to AFHomes, be under
 
 ### Architecture Alignment
 - [ ] Next.js modular monolith.
-- [ ] Local MongoDB-first development.
-- [ ] MongoDB Atlas production.
-- [ ] Better Auth verification.
+- [ ] Local emulator-first development.
+- [ ] Separate staging and production Cloud SQL.
+- [ ] Firebase Auth verification.
 - [ ] Correct business-module authority.
 - [ ] Redemption disabled.
 - [ ] Services disabled.
@@ -960,17 +958,19 @@ Only mark these as covered if actually documented. Documentation coverage does n
 
 ## 46. Strict Modification Scope
 
-This task authorizes modification of `docs/development/security.md` only. Do not modify README.md, architecture.md, frontend.md, database.md, backend.md, testing.md, implementation.md, deployment.md, docs/project.md, docs/business-rules/. Do not create extra Markdown documents. The development directory must continue to contain exactly ten approved files. Do not modify application code, authentication logic, role assignments, account records, API middleware, database schemas, Docker configuration, environment files, cloud infrastructure, Git configuration. Do not run production security operations. Do not install dependencies. Do not implement or deploy anything. If another document contains an outdated security rule, report the discrepancy in the final completion report rather than editing the other file.
+Follow AGENTS.md for authorization and Git requirements. Authentication, role or account changes, real data access, cloud configuration, billing, database changes, and deployment require separately scoped approval.
 
 ---
 
 ## 47. Final Verification
 
-After updating `security.md`: re-read the entire document; confirm authentication architecture; confirm account-lifecycle distinctions; confirm staff approval; confirm OST approval reconciliation; confirm accreditation restrictions; confirm multiple-role behavior; confirm module permission design; confirm record-level authorization; confirm genealogy visibility; confirm Finance separation; confirm commission authority; confirm customer privacy; confirm public search restrictions; confirm API protection; confirm MongoDB security; confirm Atlas connectivity security; confirm deployment security; confirm audit protections; confirm feature flags; confirm incident response; confirm testing coverage; compare with architecture.md; compare with backend.md; compare with database.md; compare with business-rules 01–14; validate Markdown links and diagrams; confirm only security.md changed; inspect the final Git diff. Use read-only commands: `git status --short`, `git diff --stat`, `git diff --check`. Inspect untracked documentation separately where necessary. Do not stage, commit or push.
+Confirm identity, account lifecycle, permission boundaries, API validation, customer privacy, Firebase runtime isolation, private files, the database trust boundary, audit, authorized feature exposure, and incident response. Compare related guides and canonical rules, validate links and diagrams, and record actual results.
 
 ---
 
-## 48. Completion Report
+## 48. Historical Completion Report
+
+> The following records the earlier security documentation review under the superseded infrastructure plan.
 
 ### A. Repository Verification
 - Actual repository: `afhomes-platform`; branch: `develop`; initial working tree untracked docs/workflow files preserved. Documentation-only repository.

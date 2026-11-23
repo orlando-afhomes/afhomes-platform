@@ -168,8 +168,9 @@ describe("payment-actions parity: row menu vs detail-sheet footer", () => {
       expect(source, `missing ${key} label`).toContain(`label: "${label}"`);
     }
     // Only reject carries the danger tone; the footer maps each tone to a button color.
+    // The unmatched-receipt Reject in useUnmatchedReceiptActions carries it too.
     const dangerMarks = source.match(/tone:\s*"danger"/g) ?? [];
-    expect(dangerMarks.length).toBe(1);
+    expect(dangerMarks.length).toBe(2);
     expect(source).toContain('{ key: "reject", label: "Reject", tone: "danger"');
     expect(source).toContain('{ key: "verify", label: "Verify", tone: "success"');
     expect(source).toContain('variant={TONE_VARIANT[item.tone ?? "default"]}');

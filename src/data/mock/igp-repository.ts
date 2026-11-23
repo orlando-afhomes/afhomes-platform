@@ -5,10 +5,13 @@ import { getCurrentAccreditationRecord, getSellerStanding } from "@/modules/accr
 import { firstOpenDate } from "@/modules/finance/month-close";
 import { totalVerifiedCentavos } from "@/modules/finance/rules";
 import type { DevIdentity } from "@/modules/identity/types";
-import { formatIgpSeriesNumber, grantTierRulesProblem, igpChecklist, igpGrantTier, igpPriceBand, isIgpDefaultReviewDue, jadAccreditationOn, jadNumberProblem } from "@/modules/igp/rules";
-import type { IgpIntake, IgpSale } from "@/modules/igp/types";
+import { formatIgpSeriesNumber, grantTierRulesProblem, igpChecklist, igpGrantTier, igpPriceBand, isIgpDefaultReviewDue, jadAccreditationOn, jadNumberProblem, IGP_BUYER_NO_POINTS_COPY } from "@/modules/igp/rules";
+import { buildIgpHistoryImportRows, type IgpHistoryRecord } from "@/modules/igp/history-import";
+import { MAX_IMPORT_ROWS } from "@/modules/customers/import";
+import type { IgpBuyerMembership, IgpHistoryBatch, IgpIntake, IgpSale } from "@/modules/igp/types";
 import { addYearsToDate, parseManilaDateOnly } from "@/shared/lib/dates";
 import { BusinessRepository, customerName, genealogyFor, nowIso, today } from "./business-base";
+import { nextId } from "./ids";
 import { applyCommissionTrigger, freezeCommissionRates, holdUnpaidCommissionForReview } from "./commission-effects";
 import { adjustIgpSalesValue, canSeeIgpSale, findIgpPaymentTarget, igpPayments, reconcileIgpCollections } from "./igp-payment-effects";
 import { preparePaymentSubmission } from "./payment-repository";
@@ -43,6 +46,11 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
         accreditations: canEnter ? structuredClone(this.store.igp.accreditations) : [],
         thresholdBp: this.store.igp.thresholdBp,
         grantTierRules: structuredClone(this.store.igp.grantTierRules),
+        buyerMemberships: structuredClone(this.store.igp.buyerMemberships.filter((membership) => {
+          const sale = this.store.igp.sales.find(({ id }) => id === membership.saleId);
+          return sale !== undefined && canSeeIgpSale(identity, sale);
+        })),
+        historyBatches: canEnter ? structuredClone(this.store.igp.historyBatches).reverse() : [],
       };
     });
   }
@@ -103,9 +111,23 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
     const copy = this.catalogCopy(input.projectId, input.unitId, replaced);
     igpPriceBand(input.priceCentavos);
     const month = input.date.slice(0, 7);
-    const sequence = this.store.igp.sales.reduce((next, sale) => sale.date.startsWith(month) ? Math.max(next, sale.sequence + 1) : next, 1);
+    // Imported history occupies sequence numbers too: the next monthly sequence
+    // runs past live sales and imported rows alike, so an import-then-issue
+    // order can never reproduce an imported number (review fix 2026-11-23).
+    const historySequences = this.store.igp.historyBatches
+      .flatMap((batch) => batch.rows)
+      .filter((row) => row.date.slice(0, 7) === month)
+      .map((row) => Number(row.seriesNumber.slice(7, 11)))
+      .filter((value) => Number.isInteger(value) && value > 0);
+    const sequence = Math.max(
+      1,
+      ...this.store.igp.sales.filter((sale) => sale.date.startsWith(month)).map((sale) => sale.sequence + 1),
+      ...historySequences.map((value) => value + 1),
+    );
     const seriesNumber = formatIgpSeriesNumber({ ...input, sequence });
-    if (this.store.igp.sales.some((sale) => sale.seriesNumber === seriesNumber)) throw new Error("This Series Number was already used.");
+    const taken = this.store.igp.sales.some((sale) => sale.seriesNumber === seriesNumber) ||
+      this.store.igp.historyBatches.some((batch) => batch.rows.some((row) => row.seriesNumber === seriesNumber));
+    if (taken) throw new Error("This Series Number was already used.");
     if (input.entry !== "reservation" && input.entry !== "cts") throw new Error("Choose the reason for issuing the Series Number.");
     if (input.entry === "cts" && input.scheme !== "T") throw new Error("The Contract to Sell entry applies to Terms sales.");
     if (!replaced && !this.store.customers.some((customer) => customer.id === input.customerId && (customer.status === "approved" || customer.status === "active_member"))) {
@@ -175,6 +197,42 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
     this.log(identity, sale, "IGP_SERIES_REPLACED", { previousValue: sale.seriesNumber, newValue: next.seriesNumber, reason, relatedRecordIds: [next.id, ...payments.map(({ id }) => id)] });
     this.log(identity, next, "IGP_SERIES_ISSUED", { previousValue: sale.seriesNumber, newValue: next.seriesNumber, reason, relatedRecordIds: [sale.id] });
     return next;
+  }
+
+  async importHistory(input: { fileName: string; records: IgpHistoryRecord[]; declaration: boolean }, options?: Parameters<IgpRepository["importHistory"]>[1]) {
+    return this.run(options, (identity) => {
+      this.require(identity, "igp.enter", "This account can view property sales (IGP) only.");
+      this.requireManagement(identity);
+      if (!input.declaration) throw new Error("Confirm that the rows come from official company records.");
+      if (input.records.length === 0) throw new Error("The file has no rows to import.");
+      if (input.records.length > MAX_IMPORT_ROWS) throw new Error(`A file may contain at most ${MAX_IMPORT_ROWS.toLocaleString("en-PH")} rows.`);
+      const taken = [
+        ...this.store.igp.sales.map(({ seriesNumber }) => seriesNumber),
+        ...this.store.igp.historyBatches.flatMap((batch) => batch.rows.map(({ seriesNumber }) => seriesNumber)),
+      ];
+      const rows = buildIgpHistoryImportRows(input.records, { taken, today: today() });
+      const ready = rows.filter((row) => row.status === "ready");
+      if (ready.length === 0) throw new Error("No row can be imported. Fix the file and try again.");
+      const id = nextId(this.store, "igpHistoryBatch", "igp-hist");
+      const batch: IgpHistoryBatch = {
+        id,
+        fileName: input.fileName.trim().slice(0, 200) || "upload",
+        createdAt: nowIso(),
+        createdBy: identity.id,
+        status: "imported",
+        totalRows: rows.length,
+        rows: ready.map(({ row }) => row!),
+        skipped: rows.filter((row) => row.status === "invalid").map((row) => ({ rowNumber: row.rowNumber, reason: row.errors.join(" ") })),
+      };
+      this.store.igp.historyBatches.push(batch);
+      // Imported rows never become live sales and never issue a VIP Number; their numbers are reserved.
+      this.audit(identity, {
+        module: "sales", entityType: "sale", entityId: id, action: "IGP_HISTORY_IMPORTED",
+        newValue: `imported;rows:${batch.rows.length};skipped:${batch.skipped.length}`,
+        displayReference: batch.fileName, relatedRecordIds: batch.rows.map(({ seriesNumber }) => seriesNumber),
+      });
+      return structuredClone(batch);
+    });
   }
 
   act(action: IgpAction, options?: Parameters<IgpRepository["act"]>[1]) {
@@ -285,9 +343,26 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
         const previousValue = document.signedDate;
         Object.assign(document, { status: "signed", signedDate, signers });
         // The card level is frozen the first time the Formal VIP Grant is signed; later rule edits never change it.
+        // Owner ruling 2026-11-23 (IGP-1): the same signing creates the IGP buyer membership record. It links
+        // the Series Number (never a VIP Number), carries the frozen tier, and credits no Stay Points.
         if (document.key === "formal_grant" && sale.grantTier === undefined) {
           sale.grantTier = igpGrantTier(sale.priceCentavos, this.store.igp.grantTierRules);
-          this.log(identity, sale, "IGP_GRANT_TIER_FROZEN", { newValue: sale.grantTier ?? "none", reason: `Price ${sale.priceCentavos} centavos` });
+          const membership: IgpBuyerMembership = {
+            id: nextId(this.store, "igpBuyerMembership", "igp-mem"),
+            saleId: sale.id,
+            seriesNumber: sale.seriesNumber,
+            customerId: sale.customerId,
+            tier: sale.grantTier ?? null,
+            grantSignedDate: signedDate,
+            status: "recorded",
+            stayPoints: "none",
+          };
+          this.store.igp.buyerMemberships.push(membership);
+          this.log(identity, sale, "IGP_GRANT_TIER_FROZEN", {
+            newValue: sale.grantTier ?? "none",
+            reason: `Price ${sale.priceCentavos} centavos. ${IGP_BUYER_NO_POINTS_COPY}`,
+            relatedRecordIds: [membership.id],
+          });
         }
         this.log(identity, sale, "IGP_DOCUMENT_RECORDED", { previousValue, newValue: signedDate, reason: action.key });
       }

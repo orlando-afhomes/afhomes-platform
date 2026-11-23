@@ -1,6 +1,6 @@
 import type { CommissionClawbackTrigger, CommissionPayoutList, CommissionProduct, CommissionRole, CommissionStage, FrozenCommissionRate } from "@/modules/commissions/types";
 import { clawbackBalance, commissionStageAmounts } from "@/modules/commissions/rules";
-import { SYSTEM_ACTOR_ID } from "@/modules/audit/types";
+import { BUSINESS_AUDIT_ACTIONS, SYSTEM_ACTOR_ID } from "@/modules/audit/types";
 import { firstOpenDate } from "@/modules/finance/month-close";
 import type { DevIdentity } from "@/modules/identity/types";
 import { appendAuditEvent } from "./audit";
@@ -141,7 +141,16 @@ export function applyCommissionTrigger(
   for (const commission of store.commissions) {
     if (commission.saleId !== saleId || (affectedStages && !affectedStages.includes(commission.stage ?? "stage1"))) continue;
     if (commission.status === "paid") {
-      if (trigger === "returned_cheque" && !store.closedMonths.some(({ month }) => month === commission.payout?.payoutDate.slice(0, 7))) continue;
+      if (trigger === "returned_cheque" && !store.closedMonths.some(({ month }) => month === commission.payout?.payoutDate.slice(0, 7))) {
+        // Paid in a month that is still open: doc 08 section 14.1 raises the
+        // clawback only when paid in a closed month, so the automatic route
+        // does not apply. Escalate for a Finance decision instead of silently
+        // skipping the post-disbursement exception (F7.4 target).
+        const note = "A returned cheque un-made the release stage after this commission was paid, but the payout month is still open, so no clawback was raised automatically. Finance review required.";
+        commission.history.push({ at: nowIso(), actorId: actor.id, event: BUSINESS_AUDIT_ACTIONS.COMMISSION_CLAWBACK_ESCALATED, note });
+        appendAuditEvent(store, { actorId: actor.id, actorRoles: activeRoles(actor), module: "commissions", action: BUSINESS_AUDIT_ACTIONS.COMMISSION_CLAWBACK_ESCALATED, entityType: "commission", entityId: commission.id, previousValue: "paid", newValue: "paid", reason: note, relatedRecordIds: [saleId, commission.id], outcome: "success" });
+        continue;
+      }
       if (store.commissionClawbacks.some((item) => item.commissionId === commission.id)) continue;
       const id = nextId(store, "commissionClawback", "clawback");
       store.commissionClawbacks.push({

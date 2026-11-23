@@ -6,6 +6,8 @@ Next.js web application for AFHomes: sales network, customers, VIP contracts, pa
 
 Next.js (App Router), React, TypeScript, shadcn/ui on Base UI, Tailwind CSS 4, TanStack Query and Table, Lucide, Vitest and Testing Library. Check `package.json` for exact versions.
 
+The planned full-stack setup uses Firebase Auth, SQL Connect with PostgreSQL, and private Cloud Storage for Firebase. The owner can use Vercel for a sample-data demo. Firebase App Hosting is the first production choice after staging verification, with Cloud Run as the fallback. See the [Localhost → Staging → Production roadmap](docs/implementation/firebase/README.md) for the order and required approvals.
+
 ## Run
 
 ```bash
@@ -21,7 +23,7 @@ Mock business data lives in browser memory only. A full page reload restores the
 
 ## Documentation
 
-- `AGENTS.md`: operating rules for contributors and AI agents. Only the project owner commits or pushes.
-- `docs/business-rules/`: authoritative business behavior (01 to 14).
-- `docs/development/`: technical design.
-- `docs/implementation/`: feature roadmap and decision log.
+- [AGENTS.md](AGENTS.md) sets the operating rules. Only the project owner controls Git staging, commits, and pushes.
+- [Business rules](docs/business-rules/01-roles-and-permissions.md) are authoritative for business behavior.
+- [Development guides](docs/development/README.md) describe the technical design.
+- [Implementation index](docs/implementation/README.md) links to the feature roadmap, Firebase environment guides, and decision register.

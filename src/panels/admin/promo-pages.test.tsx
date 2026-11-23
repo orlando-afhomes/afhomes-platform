@@ -7,6 +7,7 @@ import { useState, type ReactElement } from "react";
 import { AppToaster } from "@/shared/components/modern/app-toaster";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { MockPromoRepository } from "@/data/mock/promo-repository";
 import { PromoPointsReportPage } from "./pages/promo-points-report-page";
 import { StayPointsAreaPage } from "./pages/stay-points-page";
 
@@ -42,6 +43,7 @@ afterEach(() => {
   cleanup();
   toast.dismiss();
   window.history.replaceState(null, "", "/");
+  vi.restoreAllMocks();
 });
 
 describe("promos page", () => {
@@ -83,6 +85,17 @@ describe("promos page", () => {
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 
+  it("shows a load error with retry instead of an empty table when the promos query fails", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockPromoRepository.prototype, "list").mockRejectedValueOnce(new Error("Promos failed."));
+    showStayPoints("dev-admin", "promos");
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Promos failed\./)).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "Promos" })).toBeNull();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText(/Teppanyaki Dining Points/)).toBeInTheDocument();
+  });
+
   it("previews the saved public offer without publishing it", async () => {
     showStayPoints("dev-admin", "promos");
     await screen.findByText(/Teppanyaki Dining Points/);
@@ -116,6 +129,17 @@ describe("promo points page", () => {
     showStayPoints("dev-hr", "welcome-gift");
     expect(await screen.findByText(/does not have access to Stay Points/)).toBeInTheDocument();
     expect(screen.queryByRole("tablist")).toBeNull();
+  });
+
+  it("shows a load error with retry instead of an empty ledger when the Promo Points ledger fails", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockPromoRepository.prototype, "ledger").mockRejectedValueOnce(new Error("Ledger failed."));
+    showStayPoints("dev-clerk", "promo-points");
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Ledger failed\./)).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "Promo Points Ledger" })).toBeNull();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("No Promo Points entries yet.")).toBeInTheDocument();
   });
 });
 

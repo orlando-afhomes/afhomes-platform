@@ -7,6 +7,7 @@ import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
 import type { DepartmentRole } from "@/modules/organization/types";
 import { useDeleteDepartmentRole, useDepartments, useDepartmentRoles, useRoleOptions, useStaff } from "@/data/queries";
 import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
+import { QueryState } from "@/shared/components/modern/query-state";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { AdminPage } from "@/shared/components/admin";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
@@ -138,6 +139,15 @@ export function RolesPage({
 
   const sortLabel = sortAsc ? "Sort A-Z" : "Sort Z-A";
 
+  // A failed directory load reads as a retryable error, never as an empty table.
+  const listError = rolesQuery.error ?? roleOptionsQuery.error ?? departmentsQuery.error ?? staffQuery.error;
+  const retryLists = () => {
+    void rolesQuery.refetch();
+    void roleOptionsQuery.refetch();
+    void departmentsQuery.refetch();
+    void staffQuery.refetch();
+  };
+
   return (
     <AdminPage
       embedded={embedded}
@@ -159,15 +169,20 @@ export function RolesPage({
           {sortLabel}
         </Button>
       </FilterBar>
+      <QueryState
+        isLoading={rolesQuery.isLoading || departmentsQuery.isLoading || staffQuery.isLoading}
+        error={listError}
+        onRetry={retryLists}
+      >
       <DataTable<DepartmentRole>
         caption="Roles"
         data={filtered}
         columns={columns}
         getRowId={(role) => role.id}
         emptyText="No roles found."
-        loading={rolesQuery.isLoading || departmentsQuery.isLoading || staffQuery.isLoading}
         onRowOpen={(role) => setViewRole(role)}
       />
+      </QueryState>
       <RoleDialogs
         open={editDialog || creating}
         editRole={editRole}

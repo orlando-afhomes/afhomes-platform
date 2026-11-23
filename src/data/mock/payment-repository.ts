@@ -1,12 +1,12 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
-import type { PaymentRepository, PaymentVerificationOptions, PaymentView, SubmitPaymentInput } from "@/data/contracts/payment-repository";
+import type { MatchUnmatchedReceiptInput, PaymentRepository, PaymentVerificationOptions, PaymentView, SubmitPaymentInput, UnmatchedReceiptView } from "@/data/contracts/payment-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { Contract } from "@/modules/contracts/types";
 import { meetsPayoutRelease } from "@/modules/commissions/rules";
-import { adjustableCentavos, exceedsContractPrice, findDuplicatePayment, findReferenceConflict, findSuggestedMatch } from "@/modules/finance/rules";
+import { adjustableCentavos, exceedsContractPrice, findDocumentConflict, findDuplicatePayment, findReferenceConflict, findSuggestedMatch } from "@/modules/finance/rules";
 import { firstOpenDate } from "@/modules/finance/month-close";
 import { nextOfficialReceiptNo, nextPaymentReference } from "@/modules/finance/payment-reference";
-import { PAYMENT_METHODS, PAYMENT_PURPOSES, type Payment, type PaymentEvent } from "@/modules/finance/types";
+import { PAYMENT_METHODS, PAYMENT_PURPOSES, type Payment, type PaymentEvent, type SubmitUnmatchedReceiptInput, type UnmatchedReceipt } from "@/modules/finance/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import type { IgpSale } from "@/modules/igp/types";
 import { tierDisplayName } from "@/modules/vip/tier-options";
@@ -37,6 +37,47 @@ function hasReferenceConflict(store: MockStore, referenceNo: string | null | und
     Boolean(referenceNo && hasRedemptionReceiptReference(store, referenceNo));
 }
 
+/**
+ * The OR or bank reference typed from a paper receipt must be unused anywhere
+ * in the system (doc 07 section 9.2): any payment's system reference or
+ * issued-document number, any still-open unmatched receipt, the history import
+ * batches, and resort or redemption references. A rejected unmatched receipt
+ * frees its number (it never became a receipt); a matched one stays taken
+ * through the payment created from it, which keeps the number as its document
+ * number. Reversed payments stay taken because receipts are never deleted.
+ */
+function hasOrNumberConflict(store: MockStore, orNumber: string | null | undefined, selfUnmatchedId?: string, selfPaymentId?: string): boolean {
+  const wanted = (orNumber ?? "").trim();
+  if (!wanted) return true;
+  if (findReferenceConflict(store.payments, wanted, selfPaymentId)) return true;
+  if (findDocumentConflict(store.payments, wanted, selfPaymentId)) return true;
+  const key = wanted.toLowerCase();
+  if (store.unmatchedReceipts.some((item) => item.id !== selfUnmatchedId && item.status === "unmatched" && item.orNumber.trim().toLowerCase() === key)) return true;
+  return hasResortReceiptReference(store, wanted) || hasImportedReceiptReference(store, wanted) ||
+    hasRedemptionReceiptReference(store, wanted);
+}
+
+/**
+ * One shared paper-number check (doc 07 section 9.2): the OR or bank reference
+ * typed from a paper receipt must be unused anywhere in the system — payments'
+ * references and document numbers, open unmatched receipts, import batches,
+ * and resort or redemption references. Used by unmatched intake, matching,
+ * ordinary submission, correction and verification alike, so the same number
+ * can never be verified twice across contracts.
+ */
+export function assertPaperNumberUnused(
+  store: MockStore,
+  wanted: string | null | undefined,
+  self?: { paymentId?: string; unmatchedId?: string },
+): void {
+  if (!(wanted ?? "").trim()) return;
+  if (hasOrNumberConflict(store, wanted, self?.unmatchedId, self?.paymentId)) throw new Error("This OR or reference number is already used by another payment. A duplicate is not accepted.");
+}
+
+function allocateCashReceiptNo(store: MockStore, paidDate: string): string {
+  return nextOfficialReceiptNo(store.payments, paidDate, (number) => hasOrNumberConflict(store, number));
+}
+
 function validateReference(store: MockStore, referenceNo: string | null | undefined, selfId?: string) {
   if (!referenceNo?.trim()) throw new Error("Enter the receipt or reference number.");
   if (hasReferenceConflict(store, referenceNo, selfId)) throw new Error("This receipt or reference number is already used by another payment. A duplicate is not accepted.");
@@ -62,13 +103,17 @@ export function preparePaymentSubmission(store: MockStore, target: PaymentTarget
   }
   const sale = "seriesNumber" in target ? target : store.sales.find((item) => item.contractId === target.id);
   const timestamp = nowIso();
+  // A typed document number must be unused anywhere before the receipt exists.
+  const typedDocumentNo = input.documentNo?.trim() || null;
+  if (typedDocumentNo) assertPaperNumberUnused(store, typedDocumentNo);
   return {
     id: nextId(store, "payment", "pay"), contractId: target.id, customerId: target.customerId, saleId: sale?.id ?? null,
     purpose: input.purpose, amountCentavos: input.amountCentavos, method: input.method, paidDate: input.paidDate,
     referenceNo: nextPaymentReference(store.payments, input.paidDate, (reference) => hasReferenceConflict(store, reference)),
     // Cash gets a system-issued Official Receipt number; other methods keep the
     // number of the document issued by the bank or provider (owner 2026-11-20).
-    documentNo: input.documentNo?.trim() || (input.method === "Cash" ? nextOfficialReceiptNo(store.payments, input.paidDate) : null),
+    // A typed number is refused when it is already used anywhere (doc 07 9.2).
+    documentNo: typedDocumentNo ?? (input.method === "Cash" ? allocateCashReceiptNo(store, input.paidDate) : null),
     evidenceFileName: input.evidenceFileName?.trim() || null,
     evidenceFileDataUrl: input.evidenceDataUrl?.trim() || null,
     ...(bankId ? { bankId } : {}),
@@ -161,12 +206,14 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
         documentNo: input.documentNo !== undefined ? input.documentNo?.trim() || null : payment.documentNo ?? null,
       };
       // A cash correction without a document number keeps the system OR sequence.
-      if (next.method === "Cash" && !next.documentNo) next.documentNo = nextOfficialReceiptNo(this.store.payments, next.paidDate, undefined);
+      if (next.method === "Cash" && !next.documentNo) next.documentNo = allocateCashReceiptNo(this.store, next.paidDate);
       validateFields(this.store, contract, next, payment.id);
       if (input.referenceNo !== undefined && input.referenceNo?.trim() !== payment.referenceNo) {
         throw new Error("A resent receipt must keep its original payment reference.");
       }
       validateReference(this.store, payment.referenceNo, payment.id);
+      // A corrected document number is checked like a new submission, excluding this payment itself.
+      if (next.documentNo?.trim()) assertPaperNumberUnused(this.store, next.documentNo, { paymentId: payment.id });
       const { purpose, amountCentavos, method, paidDate, referenceNo, documentNo, evidenceFileName } = payment;
       this.event(payment, identity, BUSINESS_AUDIT_ACTIONS.PAYMENT_RESUBMITTED, null, { purpose, amountCentavos, method, paidDate, referenceNo, documentNo, evidenceFileName });
       Object.assign(payment, next);
@@ -194,6 +241,9 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
       const sale = igpSale ? undefined : this.store.sales.find((item) => item.contractId === contract.id);
       if (igpSale ? !igpSale.approvedBy : !sale?.approval) throw new Error("The sale must be approved before its receipts can be verified.");
       if (hasReferenceConflict(this.store, payment.referenceNo, payment.id)) throw new Error("This receipt or reference number is already used by another payment. A duplicate is never verified.");
+      // The typed document number is checked like a new submission, excluding this payment itself,
+      // so a number matched from an unmatched receipt or typed on another contract can never verify twice.
+      if (payment.documentNo?.trim()) assertPaperNumberUnused(this.store, payment.documentNo, { paymentId: payment.id });
       const others = paymentsOfContract(this.store, contract.id).filter((item) => item.id !== payment.id && item.status === "verified");
       const duplicate = findDuplicatePayment(others, payment);
       if (duplicate) throw new Error("A matching verified payment already exists for this contract. A duplicate is never verified twice.");
@@ -241,8 +291,7 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
     return this.run(options, (identity) => this.decide(identity, id, reason, "returned", BUSINESS_AUDIT_ACTIONS.PAYMENT_RETURNED));
   }
 
-  async adjust(id: string, input: { kind: "reversal" | "refund"; amountCentavos: number; reason: string }, options?: MockAsyncOptions): Promise<PaymentView> {
-    return this.run(options, (identity) => {
+  async adjust(id: string, input: { kind: "reversal" | "refund"; amountCentavos: number; reason: string }, options?: MockAsyncOptions): Promise<PaymentView> {  return this.run(options, (identity) => {
       this.require(identity, "finance.refund", "Only Finance can reverse or refund payments.");
       if (!input.reason.trim()) throw new Error("A reason is required.");
       const payment = this.paymentFor(identity, id);
@@ -272,6 +321,125 @@ export class MockPaymentRepository extends BusinessRepository implements Payment
       if (igpSale) reconcileIgpCollections(this.store, igpSale, identity, payment, input.kind);
       else reconcileContract(this.store, payment.contractId, identity);
       return this.view(payment);
+    });
+  }
+
+  private unmatchedView(record: UnmatchedReceipt): UnmatchedReceiptView {
+    const submitter = DEV_IDENTITIES.find((item) => item.id === record.submittedBy);
+    return JSON.parse(JSON.stringify({ ...record, submitterName: submitter?.displayName ?? record.submittedBy })) as UnmatchedReceiptView;
+  }
+
+  private unmatchedFor(identity: DevIdentity, id: string): UnmatchedReceipt {
+    const record = this.store.unmatchedReceipts.find((item) => item.id === id);
+    if (!record) throw new Error("Unmatched receipt not found.");
+    return record;
+  }
+
+  async listUnmatched(options?: MockAsyncOptions): Promise<UnmatchedReceiptView[]> {
+    return this.run(options, (identity) => {
+      this.require(identity, "finance.verify", "Only Finance can review unmatched receipts.");
+      return this.store.unmatchedReceipts.map((record) => this.unmatchedView(record));
+    });
+  }
+
+  /**
+   * Intake for money with no matching contract (F6.5). The Clerk records the
+   * amount, method, receipt date, the OR or bank reference from the slip and
+   * why no match was found; the receipt waits in the exceptions queue. The OR
+   * number is refused when it is used anywhere else in the system (doc 07
+   * section 9.2). Nothing here counts toward any contract until Finance
+   * matches and verifies the created payment.
+   */
+  async submitUnmatched(input: SubmitUnmatchedReceiptInput, options?: MockAsyncOptions): Promise<UnmatchedReceiptView> {
+    return this.run(options, (identity) => {
+      this.require(identity, "payments.submit", "Submitting payments is not allowed for this identity.");
+      if (!Number.isSafeInteger(input.amountCentavos) || input.amountCentavos <= 0) throw new Error("Enter an amount greater than zero.");
+      if (!(PAYMENT_METHODS as readonly string[]).includes(input.method)) throw new Error("Select a valid payment method.");
+      if (!DATE_ONLY.test(input.paidDate) || !parseManilaDateOnly(input.paidDate)) throw new Error("Enter the date on the receipt.");
+      if (input.paidDate > today()) throw new Error("The payment date cannot be in the future.");
+      if (!input.orNumber?.trim()) throw new Error("Enter the OR or bank reference number.");
+      assertPaperNumberUnused(this.store, input.orNumber);
+      if (!input.reason?.trim()) throw new Error("Explain why no matching contract or payment was found.");
+      const timestamp = nowIso();
+      const record: UnmatchedReceipt = {
+        id: nextId(this.store, "unmatchedReceipt", "unr"),
+        amountCentavos: input.amountCentavos, method: input.method, paidDate: input.paidDate,
+        orNumber: input.orNumber.trim(), reason: input.reason.trim(),
+        evidenceFileName: input.evidenceFileName?.trim() || null,
+        evidenceFileDataUrl: input.evidenceDataUrl?.trim() || null,
+        submittedBy: identity.id, submittedAt: timestamp, status: "unmatched",
+        matchedPaymentId: null, decisionReason: null, decidedBy: null, decidedAt: null,
+        history: [{ at: timestamp, actorId: identity.id, event: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_SUBMITTED, note: input.reason.trim() }],
+      };
+      this.store.unmatchedReceipts.push(record);
+      this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_SUBMITTED, entityType: "payment", entityId: record.id, newValue: "unmatched", reason: record.reason, displayReference: record.orNumber });
+      return this.unmatchedView(record);
+    });
+  }
+
+  /**
+   * Finance links an unmatched receipt to a contract (F6.5, G2). The money is
+   * frozen: only the contract and the schedule purpose are assigned, creating
+   * an ordinary submitted payment that still needs verification. The OR number
+   * is refused again at match time, and matching a receipt dated in a closed
+   * month leaves the count to the verification step, which admits it into the
+   * first open month (docs 07 section 9.1, 13 section 4.5).
+   */
+  async matchUnmatched(id: string, input: MatchUnmatchedReceiptInput, options?: MockAsyncOptions): Promise<PaymentView> {
+    return this.run(options, (identity) => {
+      this.require(identity, "finance.verify", "Only Finance can match an unmatched receipt.");
+      const record = this.unmatchedFor(identity, id);
+      if (record.status !== "unmatched") throw new Error("This receipt was already resolved and cannot be matched again.");
+      const contract = this.contractFor(identity, input.contractId);
+      if (isClosedPaymentTarget(contract)) throw new Error("Payments cannot be submitted for this contract.");
+      assertPaperNumberUnused(this.store, record.orNumber, { unmatchedId: record.id });
+      validateFields(this.store, contract, { purpose: input.purpose, amountCentavos: record.amountCentavos, method: record.method, paidDate: record.paidDate });
+      const sale = "seriesNumber" in contract ? contract : this.store.sales.find((item) => item.contractId === contract.id);
+      const timestamp = nowIso();
+      const payment: Payment = {
+        id: nextId(this.store, "payment", "pay"), contractId: contract.id, customerId: contract.customerId, saleId: sale?.id ?? null,
+        purpose: input.purpose, amountCentavos: record.amountCentavos, method: record.method, paidDate: record.paidDate,
+        referenceNo: nextPaymentReference(this.store.payments, record.paidDate, (reference) => hasReferenceConflict(this.store, reference)),
+        documentNo: record.orNumber,
+        evidenceFileName: record.evidenceFileName, evidenceFileDataUrl: record.evidenceFileDataUrl ?? null,
+        submittedBy: record.submittedBy, submittedAt: record.submittedAt, status: "submitted",
+        verifiedBy: null, verifiedAt: null, verifiedDate: null, decisionReason: null, adjustments: [],
+        history: [
+          { at: record.submittedAt, actorId: record.submittedBy, event: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_SUBMITTED, note: record.reason },
+          { at: timestamp, actorId: identity.id, event: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_MATCHED, note: input.note?.trim() || `Matched to ${contract.id}.` },
+        ],
+      };
+      this.store.payments.push(payment);
+      record.status = "matched";
+      record.matchedPaymentId = payment.id;
+      record.decisionReason = input.note?.trim() || null;
+      record.decidedBy = identity.id;
+      record.decidedAt = timestamp;
+      record.history.push({ at: timestamp, actorId: identity.id, event: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_MATCHED, note: record.decisionReason });
+      this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_MATCHED, entityType: "payment", entityId: record.id, previousValue: "unmatched", newValue: payment.id, reason: record.decisionReason ?? undefined, relatedRecordIds: [contract.id], displayReference: record.orNumber });
+      return this.view(payment);
+    });
+  }
+
+  /**
+   * Finance rejects an unmatched receipt with a reason (F6.5). The record is
+   * kept for history; it never counted toward any contract, and its OR number
+   * is freed because it never became a receipt.
+   */
+  async rejectUnmatched(id: string, reason: string, options?: MockAsyncOptions): Promise<UnmatchedReceiptView> {
+    return this.run(options, (identity) => {
+      this.require(identity, "finance.verify", "Only Finance can reject an unmatched receipt.");
+      if (!reason.trim()) throw new Error("A reason is required.");
+      const record = this.unmatchedFor(identity, id);
+      if (record.status !== "unmatched") throw new Error("This receipt was already resolved and cannot be rejected again.");
+      const timestamp = nowIso();
+      record.status = "rejected";
+      record.decisionReason = reason.trim();
+      record.decidedBy = identity.id;
+      record.decidedAt = timestamp;
+      record.history.push({ at: timestamp, actorId: identity.id, event: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_REJECTED, note: record.decisionReason });
+      this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_REJECTED, entityType: "payment", entityId: record.id, previousValue: "unmatched", newValue: "rejected", reason: record.decisionReason, displayReference: record.orNumber });
+      return this.unmatchedView(record);
     });
   }
 }

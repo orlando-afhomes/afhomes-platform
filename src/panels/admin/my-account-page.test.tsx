@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { MockStaffRepository } from "@/data/mock/staff-repository";
 import { MyAccountPage } from "./pages/my-account-page";
 
 vi.mock("next/navigation", async (importOriginal) => ({
@@ -15,8 +16,8 @@ vi.mock("next/navigation", async (importOriginal) => ({
   usePathname: () => "/admin/account",
 }));
 
-function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
-  const [queryClient] = useState(() => new QueryClient());
+function TestWrapper({ identityId = "dev-admin", client }: { identityId?: string; client?: QueryClient }) {
+  const [queryClient] = useState(() => client ?? new QueryClient());
   return (
     <QueryClientProvider client={queryClient}>
       <MockStoreProvider>
@@ -32,6 +33,7 @@ function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
 afterEach(() => {
   cleanup();
   toast.dismiss();
+  vi.restoreAllMocks();
 });
 
 async function confirmSave(user: ReturnType<typeof userEvent.setup>) {
@@ -115,6 +117,17 @@ describe("my account page", () => {
   it("shows an empty state when no staff or account is linked", async () => {
     render(<TestWrapper identityId="dev-finance" />);
     expect(await screen.findByText("No linked staff or account record found for this identity.")).toBeDefined();
+  });
+
+  it("surfaces the profile load error with a retry instead of the missing-record message", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockStaffRepository.prototype, "getSelf").mockRejectedValueOnce(new Error("Profile failed."));
+    render(<TestWrapper client={new QueryClient({ defaultOptions: { queries: { retry: false } } })} />);
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Profile failed\./)).toBeInTheDocument();
+    expect(screen.queryByText("No linked staff or account record found for this identity.")).toBeNull();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 })).toBeDefined();
   });
 
   it("restricts inactive identities", async () => {

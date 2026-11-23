@@ -1,6 +1,7 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { ApplyVipPositionRateInput, Commission, CommissionClawback, CommissionPayoutList, CommissionRateSetting, VipPositionRate } from "@/modules/commissions/types";
 import type { AllowanceReview, AllowanceReviewInput } from "@/modules/commissions/allowances";
+import type { AllowanceAssembly } from "@/modules/commissions/allowance-assembly";
 import type { Designation } from "@/modules/organization/types";
 
 export type CommissionRateView = CommissionRateSetting & { memberName: string };
@@ -31,6 +32,8 @@ export interface CommissionRepository {
   recordRecovery(id: string, input: { amountCentavos: number; reference: string }, options?: MockAsyncOptions): Promise<void>;
   writeOff(id: string, reason: string, options?: MockAsyncOptions): Promise<void>;
   allowanceReviews(options?: MockAsyncOptions): Promise<{ reviews: AllowanceReview[]; members: { id: string; name: string; position: AllowanceReview["position"] }[] }>;
+  /** Month figures per IST leader assembled from the month's business data (doc 08 section 15; F8.6). Read-only. */
+  assembleAllowanceInputs(month: string, options?: MockAsyncOptions): Promise<AllowanceAssembly>;
   saveAllowanceReview(input: AllowanceReviewInput, options?: MockAsyncOptions): Promise<AllowanceReview>;
   list(options?: MockAsyncOptions): Promise<CommissionView[]>;
   adjust(id: string, percentBp: number, reason: string, options?: MockAsyncOptions): Promise<CommissionView>;

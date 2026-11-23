@@ -16,6 +16,7 @@ import {
 import { OUTLET_TYPES, REFERENCE_LISTS, type ListEntryStatus, type OutletType } from "@/modules/settings/lists";
 import { AdminPage } from "@/shared/components/admin";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
+import { QueryState } from "@/shared/components/modern/query-state";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
@@ -110,6 +111,14 @@ export function ListsPage({
   const { mutateAsync: changeEntry } = updateEntry;
   const { mutateAsync: changeOutlet } = updateOutlet;
 
+  // One error branch for every tab: a failed lists load reads as a retryable
+  // error, never as an empty list.
+  const listError = entriesQuery.error ?? outletsQuery.error;
+  const retryLists = () => {
+    void entriesQuery.refetch();
+    void outletsQuery.refetch();
+  };
+
   const setStatus = (row: ListRow, status: ListEntryStatus) => {
     const verb = status === "inactive" ? "Deactivate" : "Activate";
     confirmRun({
@@ -195,14 +204,19 @@ export function ListsPage({
           { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: STATUS_FILTER_ITEMS },
         ]}
       />
+      <QueryState
+        isLoading={entriesQuery.isLoading || outletsQuery.isLoading}
+        error={listError}
+        onRetry={retryLists}
+      >
       <DataTable<ListRow>
         caption={current.label}
         data={filtered}
         columns={columns}
         getRowId={(row) => row.id}
         emptyText={`No ${current.label.toLowerCase()} found.`}
-        loading={entriesQuery.isLoading || outletsQuery.isLoading}
       />
+      </QueryState>
       {formOpen ? (
         <ListEntryDialog
           key={`${tab}-${adding ? "new" : (editing?.id ?? "new")}`}

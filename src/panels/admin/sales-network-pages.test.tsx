@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { MockMemberRepository } from "@/data/mock/member-repository";
 import { SalesNetworkMembersPage } from "./pages/sales-network-members-page";
 import { SalesNetworkGenealogyPage } from "./pages/sales-network-genealogy-page";
 import { SalesNetworkAreaPage } from "./pages/sales-network-area-page";
@@ -17,7 +18,7 @@ vi.mock("next/navigation", async (importOriginal) => ({
 }));
 
 function Wrapper({ identityId, children }: { identityId: string; children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   return (
     <QueryClientProvider client={queryClient}>
       <MockStoreProvider>
@@ -99,6 +100,21 @@ describe("sales network members page", () => {
     );
     expect(await screen.findByText("Access Restricted")).toBeInTheDocument();
   });
+
+  it("shows a load error with a retry instead of an empty table", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockMemberRepository.prototype, "list").mockRejectedValueOnce(new Error("Members failed."));
+    render(
+      <Wrapper identityId="dev-super-admin">
+        <SalesNetworkMembersPage />
+      </Wrapper>,
+    );
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Members failed\./)).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "Sales Network Members" })).toBeNull();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(rows().length).toBeGreaterThan(0), { timeout: 5000 });
+  });
 });
 
 describe("sales network genealogy page", () => {
@@ -130,5 +146,20 @@ describe("sales network genealogy page", () => {
     expect(toggles[0]).toHaveAttribute("aria-expanded", "false");
     await user.click(screen.getByRole("button", { name: "Expand All" }));
     await waitFor(() => expect(screen.getAllByRole("button", { name: /^Collapse (?!All)/ }).length).toBeGreaterThan(0));
+  });
+
+  it("shows a load error with a retry instead of an empty tree", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockMemberRepository.prototype, "list").mockRejectedValueOnce(new Error("Members failed."));
+    render(
+      <Wrapper identityId="dev-super-admin">
+        <SalesNetworkGenealogyPage />
+      </Wrapper>,
+    );
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Members failed\./)).toBeInTheDocument();
+    expect(screen.queryByText("No members to show.")).toBeNull();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("region", { name: "Team tree" })).toBeInTheDocument();
   });
 });

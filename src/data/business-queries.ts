@@ -8,7 +8,8 @@ import type { AllowanceReviewInput } from "@/modules/commissions/allowances";
 import type { PrepareContractInput, UpdateContractInput } from "@/data/contracts/contract-repository";
 import type { PaymentSchemeInput, ProductCreateInput, ProductUpdateInput } from "@/data/contracts/product-repository";
 import type { ReportExportInput } from "@/data/contracts/report-repository";
-import type { SubmitPaymentInput } from "@/data/contracts/payment-repository";
+import type { MatchUnmatchedReceiptInput, PaymentView, SubmitPaymentInput, UnmatchedReceiptView } from "@/data/contracts/payment-repository";
+import type { SubmitUnmatchedReceiptInput } from "@/modules/finance/types";
 import { CUSTOMER_LOOKUP_MIN_LENGTH } from "@/data/contracts/membership-repository";
 import type { StayPointsAction } from "@/data/contracts/stay-points-repository";
 import type { Repositories } from "@/data/contracts/repositories";
@@ -197,19 +198,29 @@ export function usePayments() {
 export function useSubmitPayment() {
   return useBusinessMutation((r, input: SubmitPaymentInput) => r.payments.submit(input));
 }
+export function useUnmatchedReceipts() {
+  return useBusinessQuery("unmatched-receipts", (r, signal) => r.payments.listUnmatched({ signal }));
+}
+export function useSubmitUnmatchedReceipt() {
+  return useBusinessMutation((r, input: SubmitUnmatchedReceiptInput) => r.payments.submitUnmatched(input));
+}
 export type PaymentAction =
   | { id: string; action: "verify"; exceptionReason?: string }
   | { id: string; action: "reject" | "return"; reason: string }
   | { id: string; action: "adjust"; kind: "reversal" | "refund"; amountCentavos: number; reason: string }
-  | { id: string; action: "resubmit"; input: Partial<Omit<SubmitPaymentInput, "contractId">> };
+  | { id: string; action: "resubmit"; input: Partial<Omit<SubmitPaymentInput, "contractId">> }
+  | { id: string; action: "matchUnmatched"; input: MatchUnmatchedReceiptInput }
+  | { id: string; action: "rejectUnmatched"; reason: string };
 export function usePaymentAction() {
-  return useBusinessMutation((r, v: PaymentAction) => {
+  return useBusinessMutation<PaymentAction, PaymentView | UnmatchedReceiptView>((r, v: PaymentAction) => {
     switch (v.action) {
       case "verify": return r.payments.verify(v.id, { exceptionReason: v.exceptionReason });
       case "reject": return r.payments.reject(v.id, v.reason);
       case "return": return r.payments.returnForCorrection(v.id, v.reason);
       case "adjust": return r.payments.adjust(v.id, { kind: v.kind, amountCentavos: v.amountCentavos, reason: v.reason });
       case "resubmit": return r.payments.resubmit(v.id, v.input);
+      case "matchUnmatched": return r.payments.matchUnmatched(v.id, v.input);
+      case "rejectUnmatched": return r.payments.rejectUnmatched(v.id, v.reason);
     }
   });
 }
@@ -299,6 +310,11 @@ export function useAllowanceReviews(enabled: boolean) {
 
 export function useSaveAllowanceReview() {
   return useBusinessMutation((r, input: AllowanceReviewInput) => r.commissions.saveAllowanceReview(input));
+}
+
+/** Month figures per IST leader assembled from the month's business data (doc 08 section 15; F8.6). Read-only. */
+export function useAssembledAllowanceInputs(month: string, enabled: boolean) {
+  return useCommissionQuery(`allowance-assembly:${month}`, enabled && month.trim().length > 0, (r, signal) => r.commissions.assembleAllowanceInputs(month, { signal }));
 }
 export type CommissionAction =
   | { id: string; action: "adjust"; percentBp: number; reason: string }

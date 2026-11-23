@@ -30,14 +30,14 @@ This document is the authoritative technical architecture for the AFHomes Platfo
 | Mock persistence | Browser-scoped, in-memory only; resets on full refresh |
 | REST API | `/api/v1` |
 | Backend | Next.js server runtime, route handlers and domain services |
-| Database | MongoDB Atlas Cloud |
-| ODM | Mongoose |
-| Authentication direction | Better Auth, subject to compatibility verification |
+| Database | PostgreSQL through Firebase SQL Connect |
+| Server data access | Typed SQL Connect repositories via the Firebase Admin SDK |
+| Authentication | Firebase Auth with server-verified sessions |
 | Authorization | Centralized RBAC and record-level policies |
-| Application hosting | DigitalOcean Droplet |
-| Container orchestration | Docker Compose |
-| Reverse proxy | HTTPS-enabled production reverse proxy |
-| Database hosting | MongoDB Atlas (not the Droplet) |
+| Demo hosting | Vercel, after owner approval and plan eligibility review |
+| Production hosting | Firebase App Hosting if verified in staging, Cloud Run as fallback |
+| Transport | Managed HTTPS |
+| Database hosting | Isolated staging and production Cloud SQL for PostgreSQL |
 | Testing | Manual-first frontend development; automated before production |
 | Customer Portal | Browser-memory prototype; production capability requires separate authorization |
 | Mobile application | Future React Native + Expo client |
@@ -85,7 +85,7 @@ Trust boundaries:
 3. Authorization enforced server-side.
 4. Client input always validated.
 5. Business state transitions authoritative on server.
-6. MongoDB credentials server-only.
+6. Database and privileged Firebase credentials stay server-only.
 7. Application secrets never reach Client Components.
 8. Mock identities are never production authentication.
 9. Public verification must not expose private records.
@@ -102,22 +102,23 @@ flowchart TB
         MOBILE["React Native / Expo — Future"]
     end
 
-    subgraph Droplet["DigitalOcean Droplet"]
-        PROXY["HTTPS Reverse Proxy"]
+    subgraph Host["Approved Google Application Host"]
+        PROXY["Managed HTTPS"]
         NEXT["Next.js Application"]
 
         subgraph Application["Next.js Server"]
             API["REST Route Handlers /api/v1"]
-            AUTH["Authentication and Sessions"]
+            AUTH["Firebase Auth Session Verification"]
             POLICY["RBAC and Record-Level Policies"]
             SERVICES["Domain Application Services"]
-            REPO["Mongoose Repositories"]
+            REPO["SQL Connect Server Repositories"]
             AUDIT["Audit Integration"]
         end
     end
 
-    subgraph Atlas["MongoDB Atlas Cloud"]
-        DB[("AFHomes Application Database")]
+    subgraph Firebase["Company Firebase / Google Cloud Project"]
+        DB[("Cloud SQL for PostgreSQL via SQL Connect")]
+        FILES["Private Cloud Storage for Firebase"]
     end
 
     WEB --> PROXY
@@ -131,6 +132,7 @@ flowchart TB
     SERVICES --> AUDIT
     REPO --> DB
     AUDIT --> DB
+    SERVICES --> FILES
 ```
 
 Supporting diagrams (modular domain dependencies, frontend-to-backend request lifecycle, financial transaction consistency, production network topology, optional future mobile integration) follow the same boundaries.
@@ -148,8 +150,8 @@ Supporting diagrams (modular domain dependencies, frontend-to-backend request li
 | 5 | Domain rules and validation | `src/modules/*/` (Zod schemas when adopted) | Types, invariants, Zod schemas | Nothing platform-specific |
 | 6 | Repository contracts | `src/data/contracts/` | Interfaces, typed operation boundaries | Domain types |
 | 7 | Data adapters | `src/data/mock/` (HTTP adapters later) | Mock/API implementations of contracts | Contracts, mock store / HTTP |
-| 8 | Backend infrastructure | `src/server/*` (planned; does not exist yet) | DB connection, auth, repositories, security | Mongoose, Better Auth |
-| 9 | Database and integrations | MongoDB Atlas | Persistence | — |
+| 8 | Backend infrastructure | `src/server/*` (planned) | Service identity, authentication, repositories, security | Firebase Admin SDK, SQL Connect |
+| 9 | Database and integrations | PostgreSQL through SQL Connect | Persistence | Private Firebase Storage for files |
 
 ### 7.1 Dependency Direction
 
@@ -207,7 +209,7 @@ Prefix `/api/v1`. Conventions: resource-oriented endpoints, HTTP methods, Zod va
 
 ## 16. Authentication
 
-Better Auth intended direction, subject to compatibility verification with Next.js, MongoDB adapter, runtime. Server-controlled. Frontend may use simulated sessions only during mock development. Cover sign-in/out, sessions, credential protection, account status, approval, suspension/deactivation, login protections, secure cookies, CSRF, session expiration, audit events.
+Use Firebase Auth for identity. The Next.js server verifies the session and enforces current account status and permissions. Verify sign-in, sign-out, secure cookies, CSRF protection, expiration, revocation, account changes, and audit events on the selected runtime. Keep simulated sessions confined to the mock prototype.
 
 ---
 
@@ -215,13 +217,13 @@ Better Auth intended direction, subject to compatibility verification with Next.
 
 Centralized authorization policies. Scopes `own`, `team`, `all`. Distinguish authentication, role assignment, permission evaluation, record-level authorization, UI visibility. Hiding UI is not authorization. Protect Super Administrator; prevent privilege escalation and removal of last effective Super Administrator; audit sensitive permission changes. Do not invent detailed permission matrix.
 
-Genealogy authorization: SVD/SSM/SM/OST hierarchy; OST may attach directly to SVD/SSM/SM; no fabricated intermediate managers. Finance separation: only authorized Finance verifies payments; commission approvals/payouts Finance-controlled. Public access: narrowly scoped, no private records.
+Genealogy authorization: SVD/SSM/SM/OST hierarchy; OST may attach directly to SVD/SSM/SM; no fabricated intermediate managers. Finance separation: Finance, the Administrator, or the Super Administrator approves receipts under doc 07. Commission approvals and payout confirmation follow doc 08. Public access: narrowly scoped, no private records.
 
 ---
 
-## 18. MongoDB Atlas and Mongoose
+## 18. PostgreSQL and Firebase SQL Connect
 
-Database: MongoDB Atlas Cloud. ODM: Mongoose. Managed cloud service separate from Droplet. Document connection management, environment-based config, server-only access, domain model mapping, schema validation, unique indexes, relationships, transactions, audit persistence, soft deletion/archival, identifier uniqueness, indexing strategy, migration/evolution. Mongoose server-only. Atlas connectivity via TLS, network restrictions, least-privilege users. Compass is optional admin client, not hosting. No automatic migration from Supabase. Transaction support must be verified per tier.
+Use the SQL Connect Emulator locally. Use separate hosted Cloud SQL for PostgreSQL instances with SQL Connect in staging and production. Keep typed operations in server repositories. Review schema constraints, relationships, indexes, identifiers, and migrations. Confirm atomic writes under concurrency, audit consistency, history preservation, and approved import behavior in staging. See [database.md](database.md).
 
 ---
 
@@ -259,7 +261,7 @@ The staff Redemption prototype is authorized (2026-11-17) with synthetic data an
 
 ## 24. Files and Media
 
-Secure storage abstraction for customer documents, contract files, payment evidence, accreditation files, staff photos, VIP documents, public media. Authorized upload, file validation, type/size restrictions, metadata, access control, private vs public assets, safe download, retention, backup, deletion policies, audit. Do not store all binary files in MongoDB documents. Recommend object storage compatible with DigitalOcean; do not falsely claim provider selected.
+Use Cloud Storage for Firebase in production for documents and files. Store metadata and authorized parent-record links in PostgreSQL. Validate file type, size, access, private downloads, recovery, retention, and audit. Use the Storage Emulator locally and follow the [staging guide](../implementation/firebase/02-staging/03-backend-api-and-file-storage.md) for the optional private sample bucket.
 
 ---
 
@@ -293,15 +295,15 @@ Logical separation of Local Development, Staging, Production. For each: applicat
 
 ---
 
-## 30. DigitalOcean Infrastructure
+## 30. Google Application Hosting
 
-Application hosting: DigitalOcean Droplet. Droplet hosts Next.js runtime, backend API, reverse proxy, container runtime, app config, health checks, app logging, background processing where appropriate. MongoDB hosted separately in Atlas. Docker Compose topology: app container, reverse proxy, optional worker if justified, networks, volumes, env injection, restart policy, health checks, safe deployment, rollback. Reverse proxy: HTTPS termination, domain routing, forwarding, security headers, request size limits, access logging, timeouts, certificate renewal, upstream health checks. Networking/security: firewall, restricted SSH, OS updates, non-root operations, container security, secret protection, monitoring, resource limits, Atlas connectivity, incident response. Do not recommend unrestricted DB exposure to public internet.
+Deploy one Next.js runtime with its API and domain services. Vercel is for the owner-approved demo. Validate Firebase App Hosting on the selected Next.js and Node.js versions in staging. Use Cloud Run in the same Google project if the compatibility checks fail. Apply managed HTTPS, environment isolation, runtime identity, secrets, health checks, monitoring, and a rehearsed rollback. See [deployment.md](deployment.md).
 
 ---
 
-## 31. MongoDB Atlas Production Connectivity
+## 31. SQL Connect and Cloud SQL Connectivity
 
-Application connects to Atlas securely. Document Atlas project, cluster, app database, restricted DB identity, network restrictions, TLS, production connection string stored securely, connection pooling, connection health, transaction support, index deployment, monitoring, backups, recovery. Chosen Atlas tier must be verified before implementation. Do not claim all managed capabilities on every tier. DB deployment must support business-critical consistency.
+Use a restricted server identity. Keep project ID, service ID, region, secrets, and storage isolated for each environment. SQL Connect and Cloud SQL use the same supported service location. Verify connectivity, timeouts, retry behavior, migration compatibility, transactions, monitoring, and recovery.
 
 ---
 
@@ -313,13 +315,13 @@ Document target deployment process: source control, code review, static analysis
 
 ## 33. Monitoring and Operations
 
-Application health, API errors, auth failures, container health, CPU/memory, disk, DB connectivity, Atlas performance, slow queries, app logs, audit events, job failures, availability monitoring, alerting, operational troubleshooting. Explain conceptual ownership. Do not invent SLAs or staffing commitments.
+Monitor application health, API errors, auth failures, instance health, CPU and memory, database connectivity and query performance, application logs, business audits, job failures, availability, and alerts. Business audit history is separate from runtime diagnostics. Use authorized service and recovery expectations.
 
 ---
 
 ## 34. Backup, Recovery and Disaster Response
 
-Atlas backup capabilities, backup policy dependencies, restore procedures, recovery validation, app config recovery, container image rollback, file/media recovery, secret recovery procedures, incident handling, business continuity. Do not assume Droplet snapshots replace Atlas DB backups. Do not assume Atlas backups replace app config/media backups. Retention periods and recovery objectives require authorized decisions. Do not invent them.
+Use Cloud SQL backups with validated isolated restores, and separately verify application release and configuration recovery, private-file recovery, and secret recovery. An app rollback does not restore database writes. Retention and recovery objectives follow approved decisions.
 
 ---
 
@@ -345,15 +347,15 @@ Align with `docs/development/implementation.md` Phases 0–8. Phases are plannin
 
 ## 38. Resolve Outdated Architecture Statements
 
-- Hosting not selected → DigitalOcean Droplet app + MongoDB Atlas DB.
-- MongoDB deployment ambiguity → Atlas managed cloud DB; no separate production Mongo on Droplet by default.
+- Hosting and persistence → see the [Firebase roadmap](../implementation/firebase/README.md) and the [supersession note](../implementation/decisions-and-gaps.md#firebase-stack-transition).
+- Localhost, staging, and production → isolate identity, database, configuration, and files per environment.
 - Seven-day MVP → not a binding architecture requirement; preserve frontend-first staged delivery.
 - Finance automatic activation → reconciled; respect full settlement and official activation requirements; do not auto-activate on arbitrary payment verification.
 - Incomplete business modules → expanded module map includes all domains.
 - Incomplete deployment → complete target deployment documentation.
 - Mock persistence conflict → in-memory only, reset on refresh; no localStorage.
 - Customer/Public website scope → distinguish target capability from current phase; do not permanently exclude approved public website/CMS.
-- Better Auth compatibility → intended direction subject to verification; do not claim verified.
+- Firebase Auth compatibility → verify sessions and app permission checks on the chosen runtime.
 - VD vs SVD terminology → use SVD per authoritative Sales Network docs.
 - Current implementation claims → frontend prototype on mocks only; do not present the backend, database or infrastructure as present.
 
@@ -361,27 +363,26 @@ Align with `docs/development/implementation.md` Phases 0–8. Phases are plannin
 
 ## 39. Architectural Invariants
 
-(As listed in task: one repo, one Next.js app, panel/feature modular monolith, App Router, React/TS, shadcn/ui/Base UI/Tailwind 4/custom CSS (Ant Design superseded Nov 8, 2026 and later removed), Zod, TanStack Query, centralized mock data, mock reset on refresh, mock identity not production auth, `/api/v1`, thin handlers, domain logic outside presentation, server-only Mongoose/DB, MongoDB Atlas, DigitalOcean Droplet, Docker Compose, HTTPS reverse proxy, centralized auth, server-side RBAC, record-level visibility, historical genealogy preservation, Finance payment verification authority, manual Finance commission approvals, correct VIP membership activation eligibility, official VIP identifier uniqueness, correct Stay Points ledger lifecycle, audit history, no double processing, no automatic Supabase migration, Redemption staff prototype authorized with live use disabled, Services disabled, future Customer Portal supported, future mobile can reuse REST API, no unauthorized microservice redesign, current business policies revisable through authorized decisions, historical signed contract terms protected, architecture doc does not authorize implementation, production readiness requires separate verification/approval.)
+Keep presentation separate from domain logic, keep SQL Connect access on the server, and enforce centralized permission and record checks. Preserve browser-scoped mocks, authoritative business states, identifiers, historical attribution, audit history, atomic processing, and approved feature boundaries. Use the [Firebase roadmap](../implementation/firebase/README.md) for the environment sequence and canonical business rules for behavior.
 
 ---
 
 ## 40. Technical Dependencies Requiring Verification
 
-- Better Auth and selected MongoDB adapter.
-- Next.js and selected Node.js runtime.
-- MongoDB Atlas transaction prerequisites.
-- DigitalOcean-to-Atlas connectivity.
-- Selected reverse proxy integration.
-- Deployment image/build compatibility.
+- Firebase Auth session handling and Next.js/Node.js runtime compatibility.
+- SQL Connect atomicity, concurrency, and failure recovery on hosted PostgreSQL.
+- Least-privilege identities, project isolation, service location, and quotas.
+- App Hosting staging proof or verified Cloud Run fallback.
+- Backup, recovery, private file access, region, and capacity review.
 - ~~RA numbering scope uniqueness.~~ Decided: one VIP Number, monthly sequence (doc 06, R2).
 - ~~Accreditation active-status/expiry evaluation rules.~~ Decided (doc 03, R3): an expired seller can still sell.
-- Formal retention period: records are kept indefinitely until legal advice sets a period (owner ruling R11, docs 11 and 12); only the legally advised period is open.
+- Apply the working retention and privacy requirements in doc 12. Confirm applicable Legal and DPO requirements before production.
 
 ---
 
 ## 41. Documentation Consistency Validation
 
-Compare against frontend.md, database.md, backend.md, security.md, testing.md, implementation.md, deployment.md, README.md. Ensure same technology decisions. (See task examples.) If another dev doc contradicts finalized architecture, make smallest necessary correction. Do not create new docs. Do not modify business-rule files.
+Compare the active architecture, frontend, database, backend, security, testing, implementation, and deployment guides with the Firebase environment roadmap. Preserve canonical business rules.
 
 ---
 
@@ -391,7 +392,9 @@ Historical snapshot at the time of writing: branch `develop`, working tree held 
 
 ---
 
-## 43. Completion Report
+## 43. Historical Completion Report
+
+> This report records the earlier documentation review. Its infrastructure choices have been superseded by the Firebase roadmap.
 
 ### A. Repository Verification
 - Repository: `afhomes-platform`; branch: `develop`; initial working tree untracked docs/workflow files preserved. Inspected docs/project.md, business-rules 01–14, existing dev docs. No app code at that time.

@@ -8,14 +8,14 @@
 
 ## 1. Purpose and Authority
 
-This document defines the complete testing and quality assurance strategy for the AFHomes Platform, covering what must be tested, which testing level is appropriate, which business rules apply, which environments are required, how to prepare representative test data, what constitutes a passing result, which failures block a release, how to prevent financial and authorization regressions, how to test local MongoDB and MongoDB Atlas, how to test imports, migrations, backups, and production deployment, and how testing evolves through implementation Phases 0–8.
+This guide covers test environments, approved workflows, permissions, financial integrity, emulators, hosted PostgreSQL, imports, recovery, and production release evidence. The [Firebase roadmap](../implementation/firebase/README.md) gives the execution order.
 
 ---
 
 ## 2. Current Versus Target Testing State
 
 - **Historical snapshot (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); Vitest and Testing Library run component and unit tests on the mocks; no API, database or end-to-end tests yet.
-- **Approved target testing architecture:** manual-first frontend development, automated verification before production, local MongoDB integration testing, Atlas staging validation.
+- **Target testing architecture:** manual-first UI work, automated checks for authoritative operations, local Firebase emulator integration, and hosted SQL Connect/PostgreSQL staging verification.
 - **Planned testing work:** all test implementation requires separate authorization.
 
 ---
@@ -70,7 +70,7 @@ Define responsibilities for static analysis, type checking, unit testing, compon
 
 ## 6. Tooling Direction
 
-Vitest and Testing Library are installed and used; Playwright and database or end-to-end tooling are not installed. Document a proposed approach compatible with the approved Next.js/TypeScript architecture. Evaluate appropriate tooling categories: TypeScript type checking, static code analysis, domain unit testing, React component testing, browser E2E testing, API integration testing, MongoDB integration testing, security testing, accessibility testing, performance testing, CI execution. Potential candidates include Vitest for TypeScript unit/integration tests, React Testing Library for React component behavior, Playwright for browser E2E tests, HTTP-level API testing utilities, appropriate isolated MongoDB test environments, automated accessibility checking tools. These are engineering candidates unless an authoritative document already approves a specific testing framework. Check `package.json` before claiming a package is installed. Do not add dependencies. Do not create testing configuration files. Document selection criteria: compatibility, maintenance, reliability, integration with approved Next.js application.
+Vitest and Testing Library are installed and used. Use TypeScript checks, lint, domain/service unit tests, component tests, API integration tests, browser accessibility and workflow checks, and isolated emulator/hosted database tests. Verify the manifest before claiming a browser tool or database dependency is installed. Obtain authorization for additions.
 
 ---
 
@@ -100,15 +100,15 @@ Also acknowledge colocated tests where appropriate. Define conventions for test 
 
 ### Environment A — Frontend Mock Testing
 
-Used during initial frontend development. Characteristics: in-memory synthetic records; no real MongoDB connection; mock role switching; UI workflow simulations; reset on full browser refresh.
+Use in-memory synthetic records, mock role switching, and a full-browser-refresh reset.
 
-### Environment B — Local MongoDB Development and Testing
+### Environment B — Firebase Emulators on Localhost
 
-Used for real database integration. Characteristics: local MongoDB on localhost; isolated test database; Mongoose repositories; real API calls; persistent local development data; transaction testing with appropriate replica-set support.
+Use isolated SQL Connect, Auth, and Storage emulators with test fixtures. Verify persistence across browser refresh only for the integration mode.
 
-### Environment C — MongoDB Atlas Staging
+### Environment C — Hosted Firebase Staging
 
-Used for cloud integration and deployment rehearsal. Characteristics: nonproduction cloud database; controlled synthetic or otherwise authorized test data; production-like configuration where feasible; secure access; migration rehearsals; end-to-end validation.
+Use an isolated Firebase project for the hosted SQL Connect pilot and full deployment rehearsal. Test concurrency, identity, private files, and approved imports. Use synthetic data or separately authorized sanitized test inputs.
 
 ### Environment D — Production
 
@@ -120,13 +120,13 @@ Used only for carefully controlled deployment verification and operational check
 
 Testing must not corrupt development or production data. Document separate test database names, separate credentials, explicit environment checks, protected production configuration, safe cleanup, repeatable initialization, authorized database resets, prevention of cross-environment writes.
 
-### 9.1 Local MongoDB
+### 9.1 Local emulators
 
-Local development data is persistent. Tests requiring destructive reset must use a separately isolated test database, not the developer's ordinary working database.
+Use a dedicated disposable test configuration for resets. Preserve the developer's ordinary emulator state.
 
-### 9.2 MongoDB Atlas
+### 9.2 Hosted PostgreSQL
 
-Staging and production must be separated according to the approved infrastructure policy.
+Staging and production must use separate Firebase projects, service identities, and Cloud SQL instances.
 
 ### 9.3 Production protection
 
@@ -192,7 +192,7 @@ Verify: one canonical mock source; correct synthetic relationships; consistent C
 
 ### 14.2 Browser refresh
 
-Verify: full browser refresh resets mock data to the original seed state. Do not confuse this with persistent MongoDB behavior.
+Verify that full browser refresh restores the original mock seed. Integration-mode data is handled by the configured backend.
 
 ### 14.3 Demo identity switching
 
@@ -212,17 +212,17 @@ The approved API uses `/api/v1`. Document tests for valid requests, invalid requ
 
 ## 16. Backend Service Integration Tests
 
-Test backend use cases and dependencies, including application services, repository contracts, authorization integration, database writes, audit-event generation, cross-module orchestration, error handling, rollback, idempotency. Distinguish service tests using fake repositories from integration tests using real MongoDB. For business-critical operations, mock-only service tests are insufficient to prove transaction correctness.
+Test server services, typed repositories, authorization, data writes, audit, cross-domain coordination, errors, rollback, and duplicate protection. Mock or emulator tests must be supplemented with real hosted PostgreSQL checks for critical consistency.
 
 ---
 
-## 17. Local MongoDB Database Tests
+## 17. Local SQL Connect Database Tests
 
-The database-first real integration environment is local MongoDB. Document test database initialization, Mongoose connection, schema validation, unique indexes, relationships, queries, transaction behavior, concurrency, idempotency, failure recovery, cleanup.
+Use the SQL Connect Emulator to verify schema initialization, relationships, unique constraints, named queries, transaction behavior, idempotency, and isolated cleanup.
 
-### 17.1 Transaction prerequisites
+### 17.1 Hosted transaction proof
 
-MongoDB multi-document transactions require a supported deployment such as a replica set. Use an appropriate local replica-set configuration for transaction integration testing. A standalone MongoDB server must not be assumed to support identical transaction behavior.
+Repeat overlapping approvals, guarded updates and retries, and forced rollback against hosted staging PostgreSQL. Verify the audit event and financial effects are rolled back together and that reports count a successful approval once.
 
 ### 17.2 Persistent development versus disposable tests
 
@@ -242,7 +242,7 @@ Do not prescribe unsupported database behavior beyond verified transaction capab
 
 ## 19. Authentication Testing
 
-Use the approved Better Auth direction, subject to actual compatibility verification. Document tests for successful login, invalid credentials, logout, expired session, revoked session, deactivated account, suspended account, password reset if implemented, role change during an active session, account eligibility changes, protected API access, session isolation. Do not claim Better Auth integration is already implemented. Do not use frontend demo identity switching as a substitute for authentication integration tests.
+Test Firebase Auth login, invalid credentials, logout, expiration, revocation, disabled accounts, approved password recovery, role changes, direct protected API access, wrong-project identities, and session isolation. Use the emulator for local tests and the verified hosted runtime for release evidence.
 
 ---
 
@@ -355,7 +355,7 @@ The documented current structure is 17 characters. Verify against the authoritat
 
 ### 26.2 Concurrency
 
-Two simultaneous eligible activations must not produce the same official identifier.
+Two simultaneous signed Reservation Agreement recordings must not produce the same VIP Number. Verify that official activation and Card Claim Date follow their separate approved rules.
 
 ### 26.3 Repeated requests
 
@@ -373,7 +373,7 @@ The VIP Number rule is decided (doc 06, R2): one number per Reservation Agreemen
 
 ## 27. Sales Confirmation Testing
 
-Use document 13 as the authoritative definition. Test contract finalization, Finance-verified qualifying payment, Confirmed Sale eligibility, recognition exactly once, correct contract face-value recognition, subsequent collections, reversals, reconfirmation where applicable, reporting-period adjustments, seller attribution.
+Use docs 07, 13, and 14. Test sale approval, approved receipts and qualifying thresholds, recognition exactly once, subsequent collections, reversals, correct business dates, reporting-period adjustments, and historical seller attribution. Verify that formal contract finalization is tracked separately.
 
 ### 27.1 Important distinctions
 
@@ -399,7 +399,7 @@ Submitting a payment must not automatically mark it Finance-verified.
 
 ### 28.2 Authorization
 
-Only authorized Finance personnel may verify monetary receipt.
+Verify that Finance, the Administrator, and the Super Administrator can approve receipts under doc 07. A Clerk enters the receipt and cannot approve it.
 
 ### 28.3 Exact monetary arithmetic
 
@@ -599,7 +599,7 @@ The platform supports future authorized customer and historical data imports. Do
 
 ### 38.1 XLSX
 
-Test application-level workbook parsing and validation. Do not assume raw MongoDB import tools can enforce complex multi-sheet business rules.
+Test workbook parsing, field mapping, authorization, validation, and duplicate protection through the approved application workflow. A raw database import cannot substitute for these checks.
 
 ### 38.2 Formula and external link safety
 
@@ -615,13 +615,13 @@ Do not silently convert contradictory historical records into Active memberships
 
 ---
 
-## 39. Local MongoDB to Atlas Migration Testing
+## 39. Schema Promotion and Approved Import Testing
 
-This is required by the project owner's local-first database strategy. Document future tests for local source inventory, backup creation, BSON restore, Database Tools compatibility, collection counts, official identifier uniqueness, relationship integrity, index validation, financial reconciliation, membership reconciliation, points ledger reconciliation, audit history, application compatibility, cutover readiness, rollback conditions.
+Rehearse reviewed SQL Connect schema changes, connector compatibility, backup creation, and restore. Test approved imports with isolated test inputs. Confirm row counts, identifiers, relationships, indexes, financial and membership totals, points, and audit history.
 
 ### 39.1 Staging rehearsal
 
-Migration must be rehearsed against an isolated nonproduction Atlas destination before production cutover.
+Rehearse approved imports and recovery against a separate hosted test project before production cutover.
 
 ### 39.2 Synthetic data protection
 
@@ -651,7 +651,7 @@ Use `security.md`. Required categories: authentication, session revocation, priv
 
 ## 42. Performance Testing
 
-Document a realistic performance verification approach for customer search, accreditation verification, large operational tables, genealogy queries, Finance queues, reporting filters, MongoDB indexes, pagination, API throughput, concurrent mutations, startup time, memory usage. Do not invent mandatory latency or throughput numbers without an approved performance target. Define how baselines will be measured and reviewed. Use staging or isolated performance environments. Avoid uncontrolled load tests against production.
+Measure selected workloads in staging using representative customer searches, accreditation lookups, queues, genealogy, reports, indexes, pagination, API requests, concurrent writes, and resource use. Set expectations from measured evidence and owner-approved targets. Keep load testing off production unless separately authorized.
 
 ---
 
@@ -681,13 +681,13 @@ Document controlled failure simulations where justified: database connection los
 
 ## 47. Database Backup and Restore Testing
 
-Document backup verification, restore to an isolated destination, collection completeness, index restoration, record counts, official identifier integrity, payment reconciliation, membership consistency, points ledger integrity, audit preservation, application compatibility. Do not invent backup retention periods or recovery guarantees. Testing must respect the selected Atlas tier's actual capabilities.
+Restore a Cloud SQL test backup to an isolated destination. Check row counts, identifiers, schema and indexes, payment totals, memberships, points, audit history, file links, and application compatibility. Verify recovery settings against the approved Cloud SQL configuration.
 
 ---
 
 ## 48. Deployment Validation
 
-The target deployment is DigitalOcean Droplet + Docker Compose + HTTPS + MongoDB Atlas. Testing must cover production build, configuration validation, container startup, health checks, HTTPS, reverse proxy, secure Atlas connectivity, session behavior, environment-specific feature flags, required database indexes, application readiness, logs, monitoring, rollback readiness. Do not claim any deployment tests have already been performed.
+Verify the Next.js build on Firebase App Hosting or the staged Cloud Run fallback, startup and readiness, HTTPS, isolated services, Firebase Auth, SQL Connect access, private file protection, feature flags, monitoring, backups, and a rehearsed rollback. Use actual evidence for any deployment claim.
 
 ---
 
@@ -791,7 +791,7 @@ Document a standard test-result report including test scope, environment, applic
 
 ## 56. Implementation Phase Alignment
 
-Align with `docs/development/implementation.md`: Phase 0 Documentation; Phase 1 Frontend Foundation (manual-first frontend review, incremental component/unit checks where justified); Phase 2 Local MongoDB (database integration infrastructure, schema/index testing, local transaction verification); Phase 3 Backend Foundation (API contract, authentication, RBAC, repository and service tests); Phase 4 Business Modules (module-specific automated test coverage, prioritizing high-risk workflows); Phase 5 Frontend/Backend Integration (end-to-end integration and replacement of mock adapters); Phase 6 System Validation (regression, security, financial reconciliation, performance, accessibility and release-gate evaluation); Phase 7 Production Deployment (staging validation, migration rehearsal, infrastructure checks, backup/restore, production readiness); Phase 8 Stabilization (operational monitoring, defect regression suites and controlled enhancement testing). These are future implementation responsibilities, not authorization to implement or execute tests now.
+Map tests to the [technical phases](implementation.md). Localhost proves mock, emulator, backend, and module behavior. Staging proves hosted transactions, access, App Hosting or Cloud Run compatibility, approved imports, and isolated recovery. Production checks the approved release and monitors business-safe health and access. See the [Firebase environment guides](../implementation/firebase/README.md).
 
 ---
 
@@ -800,11 +800,11 @@ Align with `docs/development/implementation.md`: Phase 0 Documentation; Phase 1 
 1. Tests must follow authoritative business rules.
 2. No invented commercial rates or prices.
 3. No real production customer data in ordinary test fixtures.
-4. Frontend mocks and local MongoDB are distinct testing modes.
+4. Frontend mocks and emulator-backed full stack are distinct testing modes.
 5. Frontend mock data resets on full browser refresh.
-6. Local MongoDB development data is persistent.
+6. Local backend data survives browser refreshes in integration mode.
 7. Automated destructive tests use isolated databases.
-8. MongoDB multi-document transaction testing requires an appropriate deployment.
+8. Critical transactions require hosted PostgreSQL concurrency and rollback verification.
 9. Production Atlas must not be used as the default test database.
 10. Payment submission is not Finance verification.
 11. Contract finalization is not payment verification.
@@ -847,7 +847,7 @@ Align with `docs/development/implementation.md`: Phase 0 Documentation; Phase 1 
 
 ## 58. Critical Unresolved Dependencies
 
-Only genuine blockers. Do not invent decisions. Examples: Better Auth + MongoDB compatibility; local replica-set configuration; selected Atlas tier transaction support; a legally advised retention period; financial rounding policies; selected object-storage provider; selected reverse proxy; exact mandatory-field matrix for customer submission; exact mandatory certification conditions; complete payment scheme canonical register from approved docs; tier-code format expansion if needed; partial stay/completion rules for redemption; mixed weekday/weekend multi-day booking calculations; policy-version applicability when a booking spans a configuration change.
+Verify actual platform and business blockers before reporting them. Examples include SQL Connect guarantees, Firebase Auth session handling, host compatibility, approved import mappings, rounding rules or retention guidance not yet settled, and recovery obligations.
 
 ---
 
@@ -864,7 +864,9 @@ Only genuine blockers. Do not invent decisions. Examples: Better Auth + MongoDB 
 
 ---
 
-## Completion Report
+## Historical Completion Report
+
+> This report is evidence of the earlier testing documentation task. Its database and hosting decisions are superseded.
 
 - **File created/updated:** `docs/development/testing.md` (comprehensively rewritten/expanded).
 - **Testing architecture coverage:** testing layers, tooling direction, manual-first frontend development, automated production readiness, test isolation, synthetic data, test case design, unit/component/mock/API/service/DB/transaction/authentication/RBAC/staff/genealogy/accreditation/customer/VIP/finance/reversal/commission/membership/Stay Points/redemption (staff prototype authorized; live use disabled)/services (disabled)/reporting/audit/historical/import/migration/security/performance/accessibility/E2E/negative/fault-injection/backup/deployment/CI-CD/priority/regression/traceability/acceptance/release-gates/reporting/phases/invariants.

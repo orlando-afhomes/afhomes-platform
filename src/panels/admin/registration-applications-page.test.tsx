@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider, useMockStore } from "@/shared/providers/mock-store-provider";
 import type { MockStore } from "@/data/mock/seed";
 import type { RegistrationApplication } from "@/modules/accreditation/types";
+import { MockRegistrationRepository } from "@/data/mock/registration-repository";
 import { RegistrationApplicationsPage } from "./pages/registration-applications-page";
 
 let currentStore: MockStore;
@@ -72,7 +73,7 @@ function Seeded({ prepare, children }: { prepare?: (store: MockStore) => void; c
 }
 
 function Wrapper({ identityId, prepare, children }: { identityId: string; prepare?: (store: MockStore) => void; children: ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   return (
     <QueryClientProvider client={queryClient}>
       <MockStoreProvider>
@@ -216,5 +217,20 @@ describe("OST applications queue", () => {
     expect(currentStore.members.at(-1)).toMatchObject({ designation: "OST", parentId: "mem-sm-a" });
     expect(currentStore.members.at(-1)?.aaNumber).toMatch(/^AAO/);
     expect(currentStore.auditEvents.at(-1)?.action).toBe("REGISTRATION_APPROVED");
+  });
+
+  it("shows a load error with a retry instead of an empty table", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockRegistrationRepository.prototype, "list").mockRejectedValueOnce(new Error("Applications failed."));
+    render(
+      <Wrapper identityId="dev-admin">
+        <RegistrationApplicationsPage />
+      </Wrapper>,
+    );
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Applications failed\./)).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "Seller Applications" })).toBeNull();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(rows()).toHaveLength(2), { timeout: 5000 });
   });
 });

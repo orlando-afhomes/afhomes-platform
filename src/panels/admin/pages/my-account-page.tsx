@@ -23,6 +23,7 @@ import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { CardSection } from "@/shared/components/modern/card-section";
 import { Card } from "@/shared/ui/card";
 import { DetailList, DetailRow } from "@/shared/components/modern/detail-list";
+import { ErrorState } from "@/shared/components/modern/error-state";
 import { EmailField, TextField } from "@/shared/forms/modern";
 import {
   cleanEmailInput,
@@ -86,6 +87,10 @@ function MyReferralCodeCard() {
 function MyAccountForm() {
   const profileQuery = useMyProfile();
   if (profileQuery.isLoading) return <div role="status" aria-busy="true" className="tw:mt-3"><span className="tw:sr-only">Loading…</span><FormSkeleton fields={4} /></div>;
+  // A failed profile load reads as a retryable error, never as a missing record.
+  if (profileQuery.error) {
+    return <ErrorState text={profileQuery.error instanceof Error ? profileQuery.error.message : undefined} onRetry={() => void profileQuery.refetch()} />;
+  }
   const profile = profileQuery.data ?? null;
   if (!profile) {
     return (

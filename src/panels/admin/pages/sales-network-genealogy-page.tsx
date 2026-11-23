@@ -15,6 +15,7 @@ import { PageContainer } from "@/shared/components/modern/page-container";
 import { PageHeader } from "@/shared/components/modern/page-header";
 import { AdminPage } from "@/shared/components/admin";
 import { DetailList, DetailRow } from "@/shared/components/modern/detail-list";
+import { ErrorState } from "@/shared/components/modern/error-state";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Badge } from "@/shared/ui/badge";
@@ -163,6 +164,11 @@ export function SalesNetworkGenealogyPage({ embedded = false }: { embedded?: boo
           <section aria-label="Team tree" className="tw:min-w-0">
           {membersQuery.isLoading ? (
             <TextLinesSkeleton lines={6} className="tw:p-3" />
+          ) : membersQuery.error && membersQuery.data === undefined ? (
+            <ErrorState
+              text={membersQuery.error instanceof Error ? membersQuery.error.message : undefined}
+              onRetry={() => void membersQuery.refetch()}
+            />
           ) : tree.length === 0 ? (
             <p className="tw:p-6 tw:text-center tw:text-muted-foreground">No members to show.</p>
           ) : (

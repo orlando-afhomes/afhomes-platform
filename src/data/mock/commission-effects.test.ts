@@ -231,3 +231,21 @@ describe("payback offset under the signed addendum", () => {
     await expect(repository.setClawbackAddendum("mem-sm-a", "2999-01-01")).rejects.toThrow(/on or before today/);
   });
 });
+
+describe("allowance input assembly (doc 08 section 15; F8.6)", () => {
+  it("assembles every IST leader's month figures from business data for authorized staff", async () => {
+    const store = createMockStore();
+    const admin = new MockCommissionRepository(store, () => DEV_IDENTITIES.find(({ id }) => id === "dev-admin")!, { delayMs: 0 });
+    const clerk = new MockCommissionRepository(store, () => DEV_IDENTITIES.find(({ id }) => id === "dev-clerk")!, { delayMs: 0 });
+    await expect(clerk.assembleAllowanceInputs("2026-09")).rejects.toThrow(/authorized staff/);
+    await expect(admin.assembleAllowanceInputs("2026-13")).rejects.toThrow(/valid month/);
+    const assembly = await admin.assembleAllowanceInputs("2026-09");
+    expect(assembly).toMatchObject({ month: "2026-09", daysInMonth: 30 });
+    expect(assembly.leaders.map((item) => item.memberId).sort())
+      .toEqual(store.members.filter((item) => item.designation !== "OST").map((item) => item.id).sort());
+    for (const leader of assembly.leaders) {
+      expect(leader.unapplied.length).toBeGreaterThan(0);
+      expect(leader.assumedCreditCentavos).toBe(0);
+    }
+  });
+});

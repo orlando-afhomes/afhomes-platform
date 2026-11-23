@@ -1318,3 +1318,204 @@ describe("resort bills", () => {
     expect(result.spends.find((bill) => bill.id === "rs-1")).toMatchObject({ amountCentavos: pesos(400), status: "verified" });
   });
 });
+
+describe("unmatched receipts and post-disbursement exceptions (G1, G2)", () => {
+  const unmatchedInput = (over: Record<string, unknown> = {}) => ({
+    amountCentavos: pesos(15500),
+    method: "Bank Transfer" as const,
+    paidDate: manilaToday(),
+    orNumber: "BT-UNMATCHED-1",
+    reason: "Bank deposit with no depositor name on the slip.",
+    ...over,
+  });
+
+  it("lets a Clerk record an unmatched receipt that waits in the Finance exceptions queue (G1)", async () => {
+    const store = createMockStore();
+    const clerk = as(store, "dev-clerk");
+    const finance = as(store, "dev-finance");
+    const record = await clerk.payments.submitUnmatched(unmatchedInput());
+    expect(record).toMatchObject({ status: "unmatched", orNumber: "BT-UNMATCHED-1", matchedPaymentId: null });
+    expect(record.history.map((entry) => entry.event)).toEqual(["UNMATCHED_RECEIPT_SUBMITTED"]);
+    // Sellers cannot record receipts; clerks cannot resolve them.
+    await expect(as(store, "dev-ost-a1").payments.submitUnmatched(unmatchedInput({ orNumber: "BT-SELLER-1" }))).rejects.toThrow(/not allowed/i);
+    await expect(clerk.payments.matchUnmatched(record.id, { contractId: "ctr-4", purpose: "installment" })).rejects.toThrow(/only finance/i);
+    await expect(clerk.payments.listUnmatched()).rejects.toThrow(/only finance/i);
+    const queue = await finance.payments.listUnmatched();
+    expect(queue.map((item) => item.id)).toEqual([record.id]);
+    expect(queue[0]).toMatchObject({ reason: "Bank deposit with no depositor name on the slip.", submitterName: "Clerk (Dev)" });
+    expect(store.auditEvents.some((event) => event.action === "UNMATCHED_RECEIPT_SUBMITTED" && event.entityId === record.id)).toBe(true);
+  });
+
+  it("refuses a duplicate OR number anywhere in the system (G1, doc 07 section 9.2)", async () => {
+    const store = createMockStore();
+    const clerk = as(store, "dev-clerk");
+    // pay-1 carries system reference BT-PAY-1; matching ignores case.
+    await expect(clerk.payments.submitUnmatched(unmatchedInput({ orNumber: "BT-PAY-1" }))).rejects.toThrow(/duplicate/i);
+    await expect(clerk.payments.submitUnmatched(unmatchedInput({ orNumber: "bt-pay-1" }))).rejects.toThrow(/duplicate/i);
+    // An issued-document number on a live payment is taken too.
+    await clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(1000), method: "Bank Transfer", paidDate: manilaToday(), documentNo: "OR-DOC-1" });
+    await expect(clerk.payments.submitUnmatched(unmatchedInput({ orNumber: "or-doc-1" }))).rejects.toThrow(/duplicate/i);
+    const first = await clerk.payments.submitUnmatched(unmatchedInput({ orNumber: "BT-ONLY-ONCE" }));
+    await expect(clerk.payments.submitUnmatched(unmatchedInput({ orNumber: "BT-ONLY-ONCE" }))).rejects.toThrow(/duplicate/i);
+    expect(first.status).toBe("unmatched");
+  });
+
+  it("skips cash receipt numbers reserved by unmatched receipts", async () => {
+    const clerk = as(createMockStore(), "dev-clerk");
+    const paidDate = "2026-11-10";
+    await clerk.payments.submitUnmatched(unmatchedInput({ paidDate, orNumber: "OR-20261110-0001" }));
+    const payment = await clerk.payments.submit({
+      contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(1000), method: "Cash", paidDate,
+    });
+    expect(payment.documentNo).toBe("OR-20261110-0002");
+  });
+
+  it("refuses the same typed document number across ordinary submission, correction and verification (review fix)", async () => {
+    const store = createMockStore();
+    const clerk = as(store, "dev-clerk");
+    const finance = as(store, "dev-finance");
+    // Ordinary submission with a typed document number used on another contract is refused.
+    await clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(1000), method: "Bank Transfer", paidDate: manilaToday(), documentNo: "OR-SHARED-1" });
+    await expect(clerk.payments.submit({ contractId: "ctr-1", purpose: "installment", amountCentavos: pesos(1000), method: "Bank Transfer", paidDate: manilaToday(), documentNo: "or-shared-1" })).rejects.toThrow(/duplicate/i);
+    // Verification refuses a legacy duplicate document number but accepts the payment itself.
+    const legacy = await clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(1000), method: "Bank Transfer", paidDate: manilaToday(), documentNo: "OR-SHARED-2" });
+    const other = await clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(1000), method: "Bank Transfer", paidDate: manilaToday() });
+    store.payments.find((item) => item.id === other.id)!.documentNo = "OR-SHARED-2";
+    await expect(finance.payments.verify(other.id)).rejects.toThrow(/duplicate/i);
+    store.payments.find((item) => item.id === other.id)!.documentNo = null;
+    await finance.payments.verify(legacy.id, { exceptionReason: "Separate counter receipts from different walk-ins." });
+    expect(store.payments.find((item) => item.id === legacy.id)).toMatchObject({ status: "verified" });
+    // A correction that changes the document number to a used one is refused.
+    const fix = await clerk.payments.submit({ contractId: "ctr-1", purpose: "installment", amountCentavos: pesos(1000), method: "Bank Transfer", paidDate: manilaToday(), documentNo: "OR-SHARED-3" });
+    await finance.payments.returnForCorrection(fix.id, "Check the slip.");
+    await expect(clerk.payments.resubmit(fix.id, { documentNo: "or-shared-2" })).rejects.toThrow(/duplicate/i);
+  });
+
+  it("refuses to match an unmatched receipt whose number landed on another payment after intake (review fix)", async () => {
+    const store = createMockStore();
+    const clerk = as(store, "dev-clerk");
+    const finance = as(store, "dev-finance");
+    const record = await clerk.payments.submitUnmatched(unmatchedInput({ orNumber: "OR-SHARED-9" }));
+    const other = await clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(1000), method: "Bank Transfer", paidDate: manilaToday() });
+    store.payments.find((item) => item.id === other.id)!.documentNo = "OR-SHARED-9";
+    await expect(finance.payments.matchUnmatched(record.id, { contractId: "ctr-4", purpose: "installment" })).rejects.toThrow(/duplicate/i);
+    expect(store.unmatchedReceipts.find((item) => item.id === record.id)).toMatchObject({ status: "unmatched" });
+  });
+
+  it("lets Finance match an unmatched receipt without editing the money (G1)", async () => {
+    const store = createMockStore();
+    const clerk = as(store, "dev-clerk");
+    const finance = as(store, "dev-finance");
+    const record = await clerk.payments.submitUnmatched(unmatchedInput({ paidDate: "2026-11-10", orNumber: "BT-MATCH-1" }));
+    const matched = await finance.payments.matchUnmatched(record.id, { contractId: "ctr-4", purpose: "installment", note: "Depositor identified as cust-a4." });
+    expect(matched).toMatchObject({ status: "submitted", contractId: "ctr-4", amountCentavos: pesos(15500), method: "Bank Transfer", paidDate: "2026-11-10", documentNo: "BT-MATCH-1" });
+    expect(matched.referenceNo).toMatch(/^PAY-20261110-/);
+    expect(matched.history.map((entry) => entry.event)).toEqual(["UNMATCHED_RECEIPT_SUBMITTED", "UNMATCHED_RECEIPT_MATCHED"]);
+    expect(store.unmatchedReceipts.find((item) => item.id === record.id)).toMatchObject({ status: "matched", matchedPaymentId: matched.id, decisionReason: "Depositor identified as cust-a4." });
+    // Resolving twice is refused; the records are never deleted.
+    await expect(finance.payments.matchUnmatched(record.id, { contractId: "ctr-4", purpose: "installment" })).rejects.toThrow(/already resolved/i);
+    await expect(finance.payments.rejectUnmatched(record.id, "Too late")).rejects.toThrow(/already resolved/i);
+    expect(store.unmatchedReceipts).toHaveLength(1);
+    expect(store.auditEvents.some((event) => event.action === "UNMATCHED_RECEIPT_MATCHED" && event.entityId === record.id)).toBe(true);
+  });
+
+  it("refuses to match an unmatched receipt that would exceed the contract balance (G1)", async () => {
+    const store = createMockStore();
+    const clerk = as(store, "dev-clerk");
+    const finance = as(store, "dev-finance");
+    // ctr-1: price 240000, verified 67500, so 500000 never fits.
+    const record = await clerk.payments.submitUnmatched(unmatchedInput({ amountCentavos: pesos(500000), orNumber: "BT-TOO-BIG" }));
+    await expect(finance.payments.matchUnmatched(record.id, { contractId: "ctr-1", purpose: "full" })).rejects.toThrow(/exceeds/i);
+    expect(store.unmatchedReceipts.find((item) => item.id === record.id)!.status).toBe("unmatched");
+  });
+
+  it("lets Finance reject an unmatched receipt with a reason while keeping the record (G1)", async () => {
+    const store = createMockStore();
+    const clerk = as(store, "dev-clerk");
+    const finance = as(store, "dev-finance");
+    const record = await clerk.payments.submitUnmatched(unmatchedInput({ orNumber: "BT-REJECT-1" }));
+    await expect(finance.payments.rejectUnmatched(record.id, "   ")).rejects.toThrow(/reason/i);
+    const rejected = await finance.payments.rejectUnmatched(record.id, "Bank confirms this deposit belongs to another company.");
+    expect(rejected).toMatchObject({ status: "rejected", decisionReason: "Bank confirms this deposit belongs to another company." });
+    // Nothing is deleted; the freed OR number can be recorded again.
+    expect(store.unmatchedReceipts).toHaveLength(1);
+    const again = await clerk.payments.submitUnmatched(unmatchedInput({ orNumber: "BT-REJECT-1" }));
+    expect(again.status).toBe("unmatched");
+    expect(store.auditEvents.some((event) => event.action === "UNMATCHED_RECEIPT_REJECTED" && event.entityId === record.id)).toBe(true);
+  });
+
+  it("counts a matched receipt dated in a closed month in the first open month with history kept (G2)", async () => {
+    const store = createMockStore();
+    const admin = as(store, "dev-admin");
+    const finance = as(store, "dev-finance");
+    const clerk = as(store, "dev-clerk");
+    const snapshot = await admin.sales.closeMonth("2026-10");
+    const record = await clerk.payments.submitUnmatched({
+      amountCentavos: pesos(18000), method: "Cash", paidDate: "2026-10-15", orNumber: "OR-CLOSED-1", reason: "Found in the October cash box.",
+    });
+    const matched = await finance.payments.matchUnmatched(record.id, { contractId: "ctr-4", purpose: "installment" });
+    const verified = await finance.payments.verify(matched.id);
+    expect(verified).toMatchObject({ paidDate: "2026-10-15", countedDate: "2026-11-01" });
+    expect(verified.history.map((entry) => entry.event)).toEqual(["UNMATCHED_RECEIPT_SUBMITTED", "UNMATCHED_RECEIPT_MATCHED", "PAYMENT_VERIFIED"]);
+    // The closed month never changes; the confirmation adjustment lands in the first open month.
+    expect(store.closedMonths.find((entry) => entry.month === "2026-10")).toMatchObject({ grossCollectionsCentavos: snapshot.grossCollectionsCentavos });
+    const sale = store.sales.find((item) => item.id === "sale-4")!;
+    expect(sale.status).toBe("confirmed");
+    expect(sale.adjustments.at(-1)).toMatchObject({ date: "2026-11-01", kind: "confirmation" });
+  });
+
+  async function releaseSeptemberCheques(store: ReturnType<typeof createMockStore>) {
+    const admin = as(store, "dev-admin");
+    const finance = as(store, "dev-finance");
+    const clerk = as(store, "dev-clerk");
+    const standard = { designation: "OST", role: "DSC", rateBp: 500, approvalReference: "Test standard approval" } as const;
+    await admin.commissions.setPositionRate(standard);
+    await admin.commissions.applyPositionRate({ memberId: "mem-ost-a2", standard, serviceTermsReference: "Test signed seller terms" });
+    await admin.contracts.recordSignedAgreement("ctr-4");
+    const first = await clerk.payments.submit({ contractId: "ctr-4", purpose: "reservation", amountCentavos: pesos(10000), method: "Cheque", paidDate: "2026-09-10", referenceNo: "CHQ-RES" });
+    await finance.payments.verify(first.id);
+    const second = await clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(20000), method: "Cheque", paidDate: "2026-09-20", referenceNo: "CHQ-INS" });
+    await finance.payments.verify(second.id);
+    await admin.sales.closeMonth("2026-09");
+    const list = store.commissionPayoutLists.find((entry) => entry.month === "2026-09")!;
+    await finance.commissions.approvePayoutList(list.id);
+    return { admin, finance, second };
+  }
+
+  it("raises a clawback when a returned cheque un-makes a stage after a closed-month payout (G2, doc 08)", async () => {
+    const store = createMockStore();
+    const { admin, finance, second } = await releaseSeptemberCheques(store);
+    const commission = store.commissions.find((item) => item.saleId === "sale-4")!;
+    await finance.commissions.recordPayout(commission.id, { reference: "CLAW-1", method: "Bank Transfer", payoutDate: "2026-10-20", evidenceFileName: "payout.pdf" });
+    await finance.commissions.confirmPayout(commission.id);
+    expect(commission.status).toBe("paid");
+    const closedOctober = await admin.sales.closeMonth("2026-10");
+    await finance.payments.adjust(second.id, { kind: "reversal", amountCentavos: pesos(20000), reason: "Cheque bounced." });
+    const clawback = store.commissionClawbacks.find((item) => item.commissionId === commission.id)!;
+    expect(clawback).toMatchObject({ saleId: "sale-4", trigger: "returned_cheque", amountCentavos: pesos(3600), raisedDate: manilaToday() });
+    // The effect lands in the first open month; history is preserved; the closed month never changes.
+    const reversed = store.payments.find((item) => item.id === second.id)!;
+    expect(reversed.adjustments.at(-1)).toMatchObject({ date: manilaToday(), reason: "Cheque bounced." });
+    expect(reversed.history.map((entry) => entry.event)).toEqual(["PAYMENT_SUBMITTED", "PAYMENT_VERIFIED", "PAYMENT_REVERSED"]);
+    expect(store.closedMonths.find((entry) => entry.month === "2026-10")).toMatchObject({ grossCollectionsCentavos: closedOctober.grossCollectionsCentavos });
+    expect(store.sales.find((item) => item.id === "sale-4")!.adjustments.at(-1)).toMatchObject({ date: manilaToday(), kind: "reversal" });
+    expect(commission.status).toBe("paid");
+    expect(store.auditEvents.some((event) => event.action === "COMMISSION_CLAWBACK_RAISED" && event.entityId === commission.id)).toBe(true);
+  });
+
+  it("escalates instead of silently skipping a returned cheque paid in an open month (G2, doc 08 section 14.1)", async () => {
+    const store = createMockStore();
+    const { finance, second } = await releaseSeptemberCheques(store);
+    const commission = store.commissions.find((item) => item.saleId === "sale-4")!;
+    await finance.commissions.recordPayout(commission.id, { reference: "OPEN-1", method: "Bank Transfer", payoutDate: manilaToday(), evidenceFileName: "payout.pdf" });
+    await finance.commissions.confirmPayout(commission.id);
+    await finance.payments.adjust(second.id, { kind: "reversal", amountCentavos: pesos(20000), reason: "Cheque bounced." });
+    // No automatic clawback: the payout month is still open (doc 08 raises it only when paid in a closed month).
+    expect(store.commissionClawbacks).toHaveLength(0);
+    expect(commission.status).toBe("paid");
+    const escalation = store.auditEvents.find((event) => event.action === "COMMISSION_CLAWBACK_ESCALATED" && event.entityId === commission.id)!;
+    expect(escalation.reason).toMatch(/payout month is still open/i);
+    expect(commission.history.at(-1)).toMatchObject({ event: "COMMISSION_CLAWBACK_ESCALATED" });
+    expect(store.payments.find((item) => item.id === second.id)!.adjustments.at(-1)).toMatchObject({ date: manilaToday() });
+  });
+});

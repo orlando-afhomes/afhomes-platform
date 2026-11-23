@@ -94,7 +94,7 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J02 |
-| Current | `/verify` takes the full identifier and does an exact-match mock query. An active eligible match shows number and class, plus Valid Until for OST only. IST shows no Valid Until. Failures show generic feedback and allow retry. No name search and no customer data. |
+| Current | `/verify` takes the full identifier and does an exact-match mock query. An active eligible match shows number and class. No Valid Until is shown publicly for any class (2026-11-19 ruling); staff screens show it. Failures show generic feedback and allow retry. No name search and no customer data. |
 | Target | Per R3: an expired seller shows as Expired (not hidden). Keep verification distinct from onboarding. There is no public customer or card lookup (R11). |
 | Layer | Frontend (mock) |
 | Blocked by | none (G02 (decided R3) may change date semantics) |

@@ -13,6 +13,7 @@ import type { PromoLedgerRow } from "@/data/contracts/promo-repository";
 import { usePromoBalances, usePromoLedger, usePromos, useRecordPromoUse, useVoidPromoUse } from "@/data/promo-queries";
 import { useOutlets } from "@/data/settings-queries";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
+import { QueryState } from "@/shared/components/modern/query-state";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
@@ -89,8 +90,10 @@ export function PromoPointsPanel() {
         { label: "Promo filter", value: promoId, onChange: setPromoId, options: promoOptions },
         { label: "Entry type filter", value: type, onChange: setType, options: optionsFrom("All entry types", data.map((row) => row.type), (value) => ENTRY_TYPE_LABELS[value as PromoLedgerRow["type"]] ?? value) },
       ]} />
-      <DataTable<PromoLedgerRow> caption="Promo Points Ledger" data={rows} columns={columns} getRowId={(row) => row.id} emptyText="No Promo Points entries yet." loading={ledger.isLoading}
+      <QueryState isLoading={ledger.isLoading} error={ledger.error} onRetry={() => void ledger.refetch()}>
+      <DataTable<PromoLedgerRow> caption="Promo Points Ledger" data={rows} columns={columns} getRowId={(row) => row.id} emptyText="No Promo Points entries yet."
         onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open ${row.customerName} ${ENTRY_TYPE_LABELS[row.type].toLowerCase()} entry`} />
+      </QueryState>
       <RecordDetailsSheet
         open={detail !== null}
         onClose={() => setDetailId(null)}

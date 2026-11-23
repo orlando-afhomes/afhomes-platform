@@ -8,9 +8,9 @@
 
 ## 1. Purpose and Scope
 
-This document defines the complete database architecture for the AFHomes Platform, covering local MongoDB development, MongoDB Atlas Cloud production, Mongoose integration, domain data modeling, identifiers, financial atomicity, Stay Points ledger integrity, security, indexing, schema evolution, import/export, local-to-Atlas migration, backup/recovery, and environment separation.
+This guide covers data modeling, identifiers, financial atomicity, ledger integrity, security, indexes, schema changes, approved imports, backups, and environment isolation.
 
-AFHomes will develop and test against MongoDB running locally on localhost before moving to MongoDB Atlas Cloud. Frontend mock data (browser-scoped, resets on refresh) is separate from persistent local MongoDB data.
+Use PostgreSQL through Firebase SQL Connect. Start in the SQL Connect Emulator on localhost, prove the pilot against PostgreSQL in staging, then use a separate company-owned production database. The frontend mock remains browser-scoped and resets on full refresh.
 
 ---
 
@@ -18,32 +18,21 @@ AFHomes will develop and test against MongoDB running locally on localhost befor
 
 | Component | Approved direction |
 |---|---|
-| Local development database | Local MongoDB |
-| Local database connection | localhost / loopback |
-| Local database deployment | Native MongoDB or local Docker container |
-| Preferred reproducible local setup | Docker-based MongoDB development environment |
-| Local transaction testing | Single-node replica set where appropriate |
-| Production database | MongoDB Atlas Cloud |
-| Production database hosting | MongoDB-managed Atlas service |
-| ODM | Mongoose |
-| Language | TypeScript |
-| Backend | Next.js server-side domain services and API handlers |
-| API | `/api/v1` |
-| Production application hosting | DigitalOcean Droplet |
-| Production container deployment | Docker Compose |
-| Database administration GUI | MongoDB Compass, optional |
-| Local-to-cloud migration | Supported through controlled tools and procedures |
-| Business-data import | Supported through validated domain-specific workflows |
-| Original Supabase production migration | Not automatically authorized |
-
-Mongoose is the selected target ODM under the approved architecture; actual installation and package compatibility must still be verified during implementation.
+| Local development | Firebase SQL Connect Emulator with integrated PGlite |
+| Local connection | Loopback-only emulator endpoints and an explicit demo project ID |
+| Staging and production database | Separate Cloud SQL for PostgreSQL instances through SQL Connect |
+| Server data access | Typed SQL Connect operations via the Firebase Admin SDK |
+| Backend and API | Next.js server services and REST `/api/v1` |
+| Production application hosting | Firebase App Hosting if verified, otherwise Cloud Run |
+| Data movement | Versioned schema changes and approved, validated application imports |
+| Original Supabase production records | No automatic migration, separate authorization required |
 
 ---
 
 ## 3. Current Versus Target State
 
 - **Historical snapshot (HEAD 0512a31, 2026-11-12):** frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); no database or Atlas cluster.
-- **Approved target:** local MongoDB first, then MongoDB Atlas Cloud for staging/production.
+- **Approved target:** SQL Connect Emulator for localhost, then isolated hosted SQL Connect in staging and production.
 - **Future implementation work:** all database setup, schema creation, migration, import requires separate authorization.
 
 ---
@@ -52,9 +41,9 @@ Mongoose is the selected target ODM under the approved architecture; actual inst
 
 Three data-development modes:
 
-1. **Mode A — Frontend In-Memory Mocks:** browser-scoped synthetic data; no MongoDB; resets on full browser refresh; development-only demo identities. Governed by `frontend.md`. Not confused with local MongoDB.
-2. **Mode B — Local MongoDB:** real persistent development database; backend connects to localhost; data persists across browser refreshes and app restarts; real Mongoose models and repositories; synthetic/authorized dev data.
-3. **Mode C — MongoDB Atlas Cloud:** cloud staging/production; secure credentials; protected network access; Atlas monitoring; approved backup; production transaction support.
+1. **Frontend mock:** Synthetic data and development identities live in browser memory. A full refresh restores the seed.
+2. **Local full stack:** Next.js uses the SQL Connect Emulator through a server repository. Records survive browser refreshes. Recreate or persist test state through documented seed and emulator procedures.
+3. **Hosted database:** Independent staging and production SQL Connect/Cloud SQL pairs. Each has project-specific authentication, service credentials, reviewed schema releases, and an approved backup and recovery policy.
 
 ---
 
@@ -71,133 +60,100 @@ flowchart TB
     subgraph Local["Developer Computer"]
         WEB["Next.js Application"]
         API["Backend API / Domain Services"]
-        MONGOOSE["Mongoose"]
-        LOCALDB[("Local MongoDB")]
-        COMPASS["MongoDB Compass — Optional"]
+        REPO["Server SQL Connect Repository"]
+        LOCALDB[("SQL Connect Emulator / PGlite")]
     end
 
-    subgraph Production["Production Hosting"]
-        DROPLET["DigitalOcean Droplet"]
-        PRODAPP["Next.js Application"]
-        PRODAPI["Backend Services"]
+    subgraph TestProject["Staging Firebase Project"]
+        TESTAPP["Staging Next.js Server"]
+        TESTDB[("SQL Connect / Staging PostgreSQL")]
     end
 
-    subgraph Cloud["MongoDB Atlas Cloud"]
-        STAGING[("Staging Database")]
-        PRODDB[("Production Database")]
+    subgraph ProdProject["Production Firebase Project"]
+        PRODAPP["App Hosting or Cloud Run"]
+        PRODDB[("SQL Connect / Production PostgreSQL")]
     end
 
-    WEB --> API
-    API --> MONGOOSE
-    MONGOOSE --> LOCALDB
-    COMPASS -. "Local Administration" .-> LOCALDB
-
-    DROPLET --> PRODAPP
-    PRODAPP --> PRODAPI
-    PRODAPI --> PRODDB
-
-    LOCALDB -. "Authorized Migration / Import" .-> STAGING
-    STAGING -. "Validated Release / Data Cutover" .-> PRODDB
+    WEB --> API --> REPO --> LOCALDB
+    TESTAPP --> TESTDB
+    PRODAPP --> PRODDB
+    LOCALDB -. "Reviewed schema and synthetic seeds" .-> TESTDB
+    TESTDB -. "Reviewed schema and approved import procedure" .-> PRODDB
 ```
 
 Conceptual. Data movement must be authorized and controlled; not automatic.
 
 ---
 
-## 7. Local MongoDB Setup
+## 7. Local SQL Connect Setup
 
-### 7.1 Local setup options
-
-- **Option A — MongoDB with Docker:** recommended for reproducible dev environments. Components: MongoDB server container, persistent Docker volume, loopback-bound port, environment-specific credentials, replica-set config when transaction tests require.
-- **Option B — Native MongoDB Installation:** install MongoDB Community Server directly. Consider service startup, local data directory, local auth, port config, replica-set config where required, backup/restore.
-
-Both provide a real MongoDB server. MongoDB Compass is an optional management client and does not replace either. Do not require simultaneous native and Docker installations.
-
-### 7.2 Local MongoDB host
-
-Preferred local access: `127.0.0.1`. Default port: `27017` (unless config requires otherwise). Illustrative local URI: `mongodb://127.0.0.1:27017/afhomes_development`. For single-node replica set: `mongodb://127.0.0.1:27017/afhomes_development?replicaSet=rs0&directConnection=true`. These are examples, not confirmed working settings. Actual URI depends on auth, replica-set config, host resolution, container vs host. Never use real production credentials in examples.
-
-### 7.3 Localhost networking
-
-Distinguish application running on host vs inside Docker container. Inside Docker, `localhost` refers to that container, not host or another container. For container-to-container, use Docker service hostname and configured network. For host-to-container, use approved published loopback port. Document these differences to prevent connection failures.
-
-### 7.4 Local data persistence
-
-Local MongoDB supports persistent development records: persistent data directories, Docker volumes, DB initialization, controlled reset procedures, seed data, environment isolation, local backup. Do not automatically delete the database on app restart. Do not automatically remove persistent volume during routine dev commands.
-
-### 7.5 Local security
-
-Even local dev follows reasonable security: loopback-only DB exposure, no public network binding by default, no production credentials, no real production customer data in ordinary dev, appropriate local auth, protected env files, restricted DB users where practical, clear separation from Atlas production.
-
-### 7.6 Local development database names
-
-Use clear environment naming. Illustrative: `afhomes_development`. Do not present example names as already provisioned.
+Use the [localhost database guide](../implementation/firebase/01-localhost/01-database-and-emulators.md) to configure SQL Connect, Auth, and Storage emulators for a dedicated demo project. Bind listeners to loopback and keep staging and production credentials out of local settings. Maintain a versioned schema, named operations, and a repeatable synthetic seed. Use an isolated target and explicit authorization for resets.
 
 ---
 
-## 8. Docker-Based Local Development
+## 8. Generated Server SDK
 
-Conceptual components: MongoDB server container, persistent Docker volume, loopback-bound port, env-specific credentials, replica-set configuration when transaction tests require. Provide reproducible dev environment. No actual container creation authorized now.
-
----
-
-## 9. Native Local Installation Alternative
-
-Native MongoDB Community Server. Consider service startup, data directory, local auth, port, replica-set where required, backup/restore. Either approach provides real MongoDB; Compass optional.
+Generate trusted server bindings from the reviewed schema and named operations. Verify Node.js, Firebase Admin SDK, and emulator compatibility. Keep generated operations behind typed server repository contracts.
 
 ---
 
-## 10. Local Transaction Support
+## 9. PostgreSQL Constraints and Data Types
 
-MongoDB multi-document transactions require appropriate deployment config (replica set or sharded cluster). Standalone does not support same multi-document transaction behavior.
+Use primary and foreign keys for durable entity relationships. Enforce the approved uniqueness scope in the database. Review indexes and schema changes. Keep exact money and date-only fields distinct from their display format.
 
-### 10.1 Local replica-set direction
+---
 
-Use local MongoDB replica set for realistic integration testing. Single-node replica set may suffice for local functional transaction testing. Does not provide production HA.
+## 10. Transaction Support
+
+Test local transactions, then prove concurrent requests and rollback in hosted staging. A single successful request or emulator-only test is insufficient.
+
+### 10.1 Hosted proof
+
+Repeat overlapping approval, retry, and forced rollback against real staged PostgreSQL. If required guarantees cannot be verified using SQL Connect operations, raise an architecture decision before expanding the affected workflow.
 
 ### 10.2 Transaction-dependent workflows
 
-Finance verification and related state updates; official VIP Membership activation; VIP Number allocation; financial balance reconciliation; commission payout confirmation; points ledger updates; authorized genealogy transfers affecting related records; audit records associated with sensitive state changes.
+Finance verification and linked balances, official VIP Number issuance, membership activation, commission payment, points-ledger updates, authorized genealogy changes, and the corresponding audit entries.
 
 ### 10.3 Requirements
 
-Transaction session lifecycle, atomicity, retry behavior, idempotency, conflict detection, rollback on failure, state consistency, audit-event consistency, DB deployment prerequisites. Do not invent blanket requirement to put every read/write in a transaction. Use transactions where needed to preserve multi-document invariants.
+Cover atomicity, retries, duplicate protection, conflict detection, rollback, and audit-event consistency. Apply transactions when related records must change together.
 
 ---
 
 ## 11. Local Data Persistence and Security
 
-Local persistence across browser refreshes and app restarts. Controlled reset procedures. No automatic volume deletion. Loopback-only exposure. No production credentials/data. Protected env files. Restricted users where practical.
+Separate local emulator data from browser mock state. Use synthetic records and a documented local seed or state procedure. Restrict emulator access to localhost and verify production configuration is absent.
 
 ---
 
-## 12. MongoDB Atlas Architecture
+## 12. Hosted SQL Connect and Cloud SQL
 
-Target production managed database. Document: managed cluster, application database, dev/staging/prod environments, database users, least-privilege access, network access, TLS, credentials, secret rotation, backups, restore, monitoring, scaling considerations. Do not assume advanced networking/backup on every pricing tier.
+Staging uses the owner-approved SQL Connect Spark trial, then approved paid services as needed for full rehearsal. Production uses a separate company-owned Blaze project. Review service identity, location, database capacity, configuration limits, costs, backups, and monitoring before provisioning.
 
 ---
 
 ## 13. Development, Staging and Production Isolation
 
-Separate clusters/databases per environment. Environment-specific credentials and network access. No real production customer data as ordinary dev seeds.
+Use separate projects and database instances for staging and production, with distinct server identities and secrets. Keep the sample-data demo and local emulator separate from both.
 
 ---
 
-## 14. Mongoose Integration
+## 14. SQL Connect Integration
 
-Selected target ODM under approved architecture; actual installation and package compatibility must be verified. Topics: TypeScript models, schema design, schema options, validation, relationships, index definitions, unique constraints, middleware boundaries, transaction sessions, safe serialization, sensitive-field handling, model registration, connection reuse, repository abstraction, schema evolution.
+Keep named and typed queries and mutations in the Firebase Admin SDK server boundary. Sensitive SQL Connect operations stay unavailable to direct clients.
 
 ### 14.1 Server-only boundary
 
-Mongoose must remain in server-side infrastructure. React Client Components must never import Mongoose, DB connection utilities, DB credentials, or server-only model implementations.
+Browsers and future mobile clients use the AFHomes API for protected records. The server checks account status, role, and record scope before every privileged operation.
 
 ### 14.2 Business validation
 
-Mongoose validation does not replace domain authorization or application business rules. Use Zod at request boundaries, domain invariants in business services, DB validation where appropriate, unique indexes, transaction guarantees. Avoid placing entire business workflow inside Mongoose middleware.
+Use Zod at the request boundary, canonical rules in application services, and PostgreSQL constraints and transactions for data integrity.
 
 ### 14.3 Repository architecture
 
-Backend services depend on typed repository contracts rather than direct Mongoose model operations throughout unrelated modules. Supports testing, controlled persistence, mock-to-real integration, domain separation, future migration options.
+Keep typed mock, HTTP, and server repository contracts so UI code can switch adapters without duplicating business rules.
 
 ---
 
@@ -209,27 +165,27 @@ Typed repository interfaces; mock and real adapters; UI communicates via service
 
 ## 16. Domain-Oriented Data Modeling
 
-For each domain document: business purpose, source-of-truth ownership, conceptual entity/collection, important identifiers, core attributes, relationship references, cardinality, expected queries, required indexes, consistency requirements, audit/history requirements, sensitive-data classification. Do not invent approved commercial values or create actual Mongoose schemas.
+For each domain document table ownership, internal and official identifiers, links and cardinality, expected queries, indexes, consistency, audit, and sensitive-data classification. Derive values and rules from the approved sources.
 
 Domains: Organization and Staff; Sales Network and Genealogy; Accreditation; Customers; VIP Products and Contracts; Sales; Finance; Commissions; VIP Membership; Stay Points; Redemption (staff prototype authorized; live use disabled); Reports and Audit.
 
 ---
 
-## 17. Collection and Relationship Strategy
+## 17. Table and Relationship Strategy
 
-Define ownership, identity, references, relationships, indexing needs, transaction concerns. Do not blindly convert SQL tables to collections.
+Define table ownership, primary and foreign keys, transactional relationships, and the indexes needed for approved queries.
 
 ---
 
-## 18. Embedding Versus References
+## 18. Relationships and Historical Snapshots
 
-Document when to use embedded vs referenced documents based on ownership, update frequency, cardinality, document growth, query patterns, transaction boundaries, history, security, independent lifecycles. Examples: contract may need immutable snapshot of product terms; payment may reference canonical sale; genealogy history record may reference stable member identities. Do not embed unbounded collections of transaction history in one customer document. Do not blindly convert every previous SQL table into a separate collection. Avoid excessive cross-collection joins for ordinary workflows without considering MongoDB modeling patterns.
+Store independent business records in related rows. Payment references its canonical sale or contract. Historical genealogy references stable member identities. Preserve signed terms separately from later product configuration. Keep financial and points event histories linked and independently auditable.
 
 ---
 
 ## 19. Official Identifiers
 
-Separate internal DB identity (`_id`) from public/business identity (Customer ID, VIP Number, accreditation number, sale reference, payment reference, commission reference). Internal `_id` does not replace company official numbers.
+Keep the internal database key separate from Customer ID, VIP Number, accreditation number, sale reference, payment reference, and commission reference.
 
 - **Customer ID:** follow Customer Management rules; preserve approved format; do not invent generator.
 - **VIP Number:** approved format `YYMMDDNNNNNVTPMMS`; one number for the Reservation Agreement, Grant and card, issued when the signed Reservation Agreement is recorded (YYMMDD = recording date, monthly company-wide sequence; doc 06); unique; never reused; no independent VIP serial allocator. There is no separate RA number.
@@ -248,13 +204,13 @@ Unique indexes where business domain requires uniqueness; beware nullable/option
 
 ## 21. Transactions and Atomicity
 
-Use MongoDB transactions where multi-document consistency required (Finance verification + balance updates, official activation + Card ID assignment, conversion with downline reassignment, audit records associated with sensitive state changes). Verify transaction support on chosen Atlas tier. Do not claim transaction support verified on a tier not yet selected. Document session lifecycle, atomicity, retry, idempotency, conflict detection, rollback, state consistency, audit-event consistency, deployment prerequisites. Do not put every read/write in a transaction; use where needed to preserve multi-document invariants.
+Use PostgreSQL-backed SQL Connect transactions for multi-record operations. Use `@transaction` where the connector meets the needed guarantees. Prove guarded transitions, uniqueness, duplicate-request behavior, and rollback under concurrent attempts. Include corresponding audit writes in the same transaction. Preserve the distinct business rules for receipt approval, official number issuance, and activation.
 
 ---
 
 ## 22. Financial Numeric Precision
 
-Do not use uncontrolled binary floating-point for authoritative currency. Evaluate consistent exact-money representation: integer minor currency units where domain permits, or Decimal128 with explicit precision/rounding. Do not silently mix. Preserve manually approved commission rates and calculation bases. Avoid floating-point discrepancies. Stay Points: approved policy includes 70/30 allocation; document need for consistent precision/rounding; do not invent unapproved rounding policy where business source ambiguous. Reconciliation: exact amounts, consistent arithmetic, repeatable calculations, traceable corrections, financial auditability.
+Use exact currency arithmetic and verify end-to-end connector and API conversion. Consider integer minor units or PostgreSQL fixed-precision numeric types. Apply the approved rounding and calculation basis. Retain repeatable reconciliation and traceable corrections.
 
 ---
 
@@ -290,15 +246,15 @@ Define conceptual sensitivity levels: Public, Internal operational, Confidential
 
 ## 28. Database Security
 
-For local and cloud: DB authentication, least-privilege users, TLS where applicable, secure connection strings, secrets, environment isolation, network restrictions, restricted maintenance access, logging/monitoring, backup security.
+For local and hosted access, require least privilege, secure transport, protected configuration, environment isolation, observability, and protected backups.
 
 ### 28.1 Local development
 
-Avoid exposing local MongoDB broadly over the network.
+Bind emulators to loopback using the local demo project identity.
 
-### 28.2 Production Atlas
+### 28.2 Hosted PostgreSQL
 
-Use Atlas database users and network policies. Do not use highest-privilege administrative credentials for normal application requests.
+Use restricted service and migration identities with isolated credentials per project.
 
 ### 28.3 Credentials
 
@@ -306,21 +262,21 @@ Do not store credentials in Git or documentation. Use placeholders in examples. 
 
 ---
 
-## 29. Atlas and DigitalOcean Connectivity
+## 29. SQL Connect Connectivity
 
-Intended production path: Next.js Backend on DigitalOcean Droplet → Secure Connection → MongoDB Atlas Cloud. Document env vars, DNS connectivity, TLS, restricted Atlas network access, DB authentication, connection pooling, retry behavior, timeouts, health monitoring, credential rotation. No browser or mobile client may connect directly to Atlas. Document approved connectivity options without assuming private endpoint support on every Atlas tier.
+The Next.js server uses its dedicated service identity to call SQL Connect. Verify the project, service, region, secure transport, timeouts, retries, and connectivity for each environment. SQL Connect and Cloud SQL use the same supported location. Clients use the AFHomes API for data access.
 
 ---
 
 ## 30. Backups and Recovery
 
-Distinguish local backups (preserve dev work or create controlled migration snapshots) and Atlas backups (managed cloud backup facilities, subject to tier/config). Document backup frequency policy requirements, retention policy dependencies, secure storage, restore rehearsal, recovery checks, historical financial integrity, recovery authorization. Do not assume every Atlas tier includes same point-in-time restore. Do not invent fixed retention period. Do not treat application hosting snapshots as replacements for database backups.
+Use Cloud SQL backups and approved recovery settings. Restore to isolation first and verify data, official identifiers, balances, audit history, and app compatibility. Follow the authorized retention and recovery policy and [production recovery guide](../implementation/firebase/03-production/06-monitoring-backups-and-recovery.md).
 
 ---
 
 ## 31. Schema Evolution
 
-MongoDB schema-flexible but AFHomes requires controlled data structures. Document Mongoose schema changes, DB validation, new optional fields, backward compatibility, index changes, data backfills, controlled collection changes, migration scripts, rollback, compatibility with historical records. Do not use unrestricted direct collection manipulation as normal release process for financial records.
+Review and version SQL Connect schema changes, PostgreSQL indexes and constraints, backfills, and connector changes. Rehearse migration and rollback compatibility before applying changes to production.
 
 ### 31.1 Migration safety
 
@@ -330,7 +286,7 @@ Require review, backup, dry-run/rehearsal, validation, explicit production autho
 
 ## 32. Database Seeding
 
-Distinguish Frontend Mock Seeds (browser-scoped, reset on refresh), Local MongoDB Development Seeds (persistent synthetic data for integration testing), Staging Test Data (controlled nonproduction datasets), Production Reference Data (authorized app config/reference records).
+Distinguish browser-memory mock seeds, local emulator seeds, staged test records, and authorized production reference data.
 
 ### 32.1 Seed safety
 
@@ -364,11 +320,11 @@ A historical payment should not be invented from missing evidence. A certified h
 
 (See Part 30 of task prompt for scenarios A–M; summarized with expected outcomes.)
 
-- **Scenario A (Initial local development):** backend connects only to approved dev DB; local data persists across browser refreshes; Atlas production untouched.
-- **Scenario B (Local transaction):** transaction behavior tested using appropriate local replica-set; partial failures do not leave inconsistent authoritative state.
-- **Scenario C (Local database backup):** authorized backup; data and metadata preserved; backup files protected.
-- **Scenario D (Local to Atlas rehearsal):** authorized local snapshot restored into isolated Atlas staging; relationships preserved; indexes validated; identifiers preserved; reconciliation completed.
-- **Scenario E (Production migration):** separately authorized; production data excludes unauthorized synthetic records; source-write handling documented; cutover controlled; rollback conditions established.
+- **Scenario A (Local development):** only the local emulator is used. Browser refresh resets mock mode and preserves integration-mode records.
+- **Scenario B (Transactional rollback):** hosted staging demonstrates concurrent requests and forced rollback without duplicate or partial financial or audit effects.
+- **Scenario C (Backup):** an authorized test backup preserves records and metadata, with restricted access.
+- **Scenario D (Staging rehearsal):** apply the reviewed schema and rehearse approved imports with test data. Verify identifiers, links, and totals.
+- **Scenario E (Production import):** require separate authorization, recovery point, validation, reconciliation, and rollback criteria. Load only approved records.
 - **Scenario F (CSV import):** correct field mapping; type validation; duplicate detection; no bypass of business authorization.
 - **Scenario G (XLSX customer import):** application-level parsing; business validation; preview and confirmation; referential integrity; reconciliation; audit history.
 - **Scenario H (Duplicate VIP Number):** conflict detected; original valid identifier preserved; no silent automatic renumbering.
@@ -382,7 +338,7 @@ A historical payment should not be invented from missing evidence. A certified h
 
 ## 35. Implementation Phase Alignment
 
-Align with `docs/development/implementation.md`. Do not create independent contradictory roadmap. Phase 0 documentation; Phase 1 frontend foundation (browser-scoped mock data); Phase 2 local database design and setup (local MongoDB first real persistent DB); Phase 3 backend foundation (connect to local MongoDB); Phase 4 business modules; Phase 5 integration; Phase 6 testing (real local transactions, authorization, consistency, uniqueness, reconciliation, import testing, failure handling); Phase 7 cloud deployment and cutover (prepare/verify Atlas, authorized staging rehearsals, approved migration/seed/import procedures, deploy to DigitalOcean, switch production config only after approval/validation); Phase 8 stabilization. Inclusion of phases in documentation does not authorize execution.
+Follow the [technical phase mapping](implementation.md) and the [Firebase roadmap](../implementation/firebase/README.md). Test local emulators before the hosted pilot. Rehearse reviewed schema changes and approved imports in staging before authorized production changes.
 
 ---
 
@@ -394,18 +350,18 @@ Align with `docs/development/implementation.md`. Do not create independent contr
 
 ## 37. Architectural Invariants
 
-1. MongoDB is the selected database technology.
-2. Mongoose is the selected ODM.
-3. Real database-backed development starts with local MongoDB.
-4. Local MongoDB data persists across browser refreshes.
+1. PostgreSQL backs Firebase SQL Connect.
+2. The Firebase Admin SDK and generated SQL Connect operations stay server-only.
+3. Database-backed development starts with the SQL Connect Emulator.
+4. Local database-backed records survive browser refreshes.
 5. Frontend mocks remain browser-scoped and reset on refresh.
-6. Local mock behavior and local MongoDB persistence are separate modes.
-7. MongoDB Atlas is the selected production managed database.
-8. The DigitalOcean Droplet hosts the application, not a second default production MongoDB.
+6. Emulator-backed development and frontend mocks are separate modes.
+7. Separate Cloud SQL instances back staging and production.
+8. The verified Google host runs Next.js and uses SQL Connect for persistence.
 9. Database credentials are server-only.
-10. Frontend components never connect directly to MongoDB.
-11. Secure Atlas connectivity is required.
-12. Appropriate MongoDB transaction support must be verified.
+10. Frontend components use the AFHomes API for protected records.
+11. Use secure service access with least privilege.
+12. Verify transactions and concurrent requests on the hosted service.
 13. Financial data must preserve consistency.
 14. Official identifiers must remain unique according to the approved scope.
 15. One VIP Number (NUM v6.2) covers the Reservation Agreement, the Grant and the Card. It is issued when the signed Reservation Agreement is recorded, with a monthly sequence, and is never reused (doc 06, owner ruling R2).
@@ -420,7 +376,7 @@ Align with `docs/development/implementation.md`. Do not create independent contr
 24. Refunds do not silently erase original financial events.
 25. Audit history remains traceable.
 26. Production business data must not be replaced with synthetic local test records.
-27. Local-to-Atlas migration is a supported planned capability.
+27. Promote reviewed schemas and connectors. Import real production data using approved procedures only.
 28. Import/export requires validation and authorization.
 29. Excel workbook imports use an appropriate application-level parser.
 30. Direct raw imports must not bypass business invariants.
@@ -432,37 +388,33 @@ Align with `docs/development/implementation.md`. Do not create independent contr
 36. Business policies may change without corrupting finalized historical records.
 37. Live Redemption remains disabled; the staff prototype is authorized under the 2026-11-17 status.
 38. Services remains disabled.
-39. No database implementation is authorized by this documentation task.
+39. Database changes require separate owner authorization.
 
 ---
 
 ## 38. Technical Reference Sources
 
-Use authoritative MongoDB documentation for technical details. Relevant official references: MongoDB Atlas — Migrate or Import Data (https://www.mongodb.com/docs/atlas/import/); MongoDB Atlas — Seed with mongorestore (https://www.mongodb.com/docs/atlas/import/mongorestore/); MongoDB Database Tools (https://www.mongodb.com/docs/database-tools/); MongoDB mongoimport (https://www.mongodb.com/docs/database-tools/mongoimport/); MongoDB Transactions (https://www.mongodb.com/docs/manual/data-modeling/enforce-consistency/transactions/). When documenting MongoDB technical details, prefer verified official documentation over assumptions. Do not copy obsolete commands without checking compatibility with target MongoDB version and deployment. Do not introduce unsupported Atlas-tier guarantees. Do not claim a migration command has been tested unless it actually was tested.
+Use the [SQL Connect Emulator guide](https://firebase.google.com/docs/sql-connect/data-connect-emulator-suite), [SQL Connect transaction guide](https://firebase.google.com/docs/sql-connect/mutations-guide), [SQL Connect service and database management](https://firebase.google.com/docs/sql-connect/manage-services-and-databases), and [Cloud SQL backups](https://docs.cloud.google.com/sql/docs/postgres/backup-recovery/backups). Record command results only after testing them on the target environment.
 
 ---
 
 ## 39. Cross-Document Alignment
 
-The finalized database document must agree with architecture.md, frontend.md, backend.md, security.md, testing.md, implementation.md, deployment.md, business-rules 01–14. If another document omits the newly approved local MongoDB-first requirement, identify the precise mismatch in the final report. Do not modify the other documents during this task. (Other dev docs already mention MongoDB Atlas; local-first addition is new in this document.)
+Keep the development guides and [Firebase roadmap](../implementation/firebase/README.md) consistent. Use canonical business rules for data and permission requirements.
 
 ---
 
 ## 40. Documentation Validation
 
 ### Local Database
-- [ ] Local MongoDB explicitly supported.
-- [ ] Native and Docker deployment options explained.
-- [ ] Localhost network behavior explained.
-- [ ] Local persistence explained.
-- [ ] Local security explained.
-- [ ] Replica-set transaction support explained.
-- [ ] Mock/frontend database distinction explained.
+- [ ] SQL Connect, Auth, and Storage emulators configured and isolated.
+- [ ] Documented emulator state or reproducible seed procedure.
+- [ ] Confirmed difference between mock and integration-mode persistence.
+- [ ] Local mutations and hosted concurrency verified.
 
-### MongoDB Atlas
-- [ ] Atlas is target production database.
-- [ ] Environment separation.
-- [ ] Mongoose integration.
+### Hosted SQL Connect
+- [ ] Separate staging and production services.
+- [ ] Typed server-only operations through the Firebase Admin SDK.
 - [ ] Secure connections.
 - [ ] Least-privilege users.
 - [ ] Indexes.
@@ -473,9 +425,9 @@ The finalized database document must agree with architecture.md, frontend.md, ba
 
 ### Data Modeling
 - [ ] All major AFHomes domains included.
-- [ ] Collection responsibilities explained.
-- [ ] Relationships and references.
-- [ ] Embedding guidance.
+- [ ] Table ownership.
+- [ ] Relationships and foreign keys.
+- [ ] Historical snapshots.
 - [ ] Identifier uniqueness.
 - [ ] Financial precision.
 - [ ] Historical contract snapshots.
@@ -484,8 +436,8 @@ The finalized database document must agree with architecture.md, frontend.md, ba
 - [ ] Audit events.
 
 ### Migration
-- [ ] Local MongoDB to Atlas strategy.
-- [ ] Database Tools described.
+- [ ] Reviewed schema promotion.
+- [ ] Approved domain import tooling.
 - [ ] Backup and restore.
 - [ ] Compatibility checks.
 - [ ] Rehearsal.
@@ -521,25 +473,25 @@ Only mark items complete if genuinely documented.
 
 ## 41. Cross-Document Alignment
 
-The finalized database document agrees with architecture.md (single Next.js app, backend services in Next.js server runtime, MongoDB Atlas target, DigitalOcean Droplet hosting, server-only DB access), frontend.md (frontend-first mock stage, in-memory mock reset, typed repository interfaces, API adapters, no direct MongoDB access), backend.md (Mongoose repositories, domain services, validation, transactions, idempotency, audit integration), security.md (secure credentials, DB access restrictions, RBAC, privacy, environment isolation, sensitive data protection), testing.md (local MongoDB integration tests, transaction tests, unique identifier tests, financial reconciliation, import testing, migration verification), implementation.md (Phase 1 mock frontend, Phase 2 local MongoDB, Phase 3 backend integration, Phase 7 cloud deployment), deployment.md (MongoDB Atlas in production, DigitalOcean Droplet, Docker Compose for app services, secure connectivity, monitoring, backup/recovery), business-rules 01–14.
-
-Other dev docs already mention MongoDB Atlas; the local-first addition is new in this document. No mismatch requiring separate doc update beyond note.
+Review the database plan alongside the active architecture, backend, frontend, security, testing, implementation, and deployment guides. Use the Firebase environment roadmap for stage order and acceptance.
 
 ---
 
 ## 42. Critical Technical Dependencies
 
-- MongoDB/Node/Mongoose compatibility.
-- Local replica-set configuration.
-- Atlas transaction support.
-- Network connectivity (Droplet-to-Atlas).
+- SQL Connect Emulator, Firebase SDK, and Node.js compatibility.
+- Hosted SQL Connect atomicity and concurrency.
+- Runtime service identity and isolation.
+- Cloud SQL configuration, costs, and approved recovery settings.
 - Financial precision policy.
 - Production data migration authorization.
-- Formal retention period: records are kept indefinitely until legal advice sets a period (owner ruling R11, docs 11 and 12); only the legally advised period is open.
+- Apply the working retention and privacy requirements in doc 12. Confirm applicable Legal and DPO requirements before production.
 
 ---
 
-## 43. Completion Report
+## 43. Historical Completion Report
+
+> This report describes the earlier database documentation work under the superseded stack.
 
 - **File created/updated:** `docs/development/database.md` (rewritten/expanded).
 - **Local MongoDB:** documented localhost development, Docker/native options, local persistence, local security, replica-set transaction support, backend integration.

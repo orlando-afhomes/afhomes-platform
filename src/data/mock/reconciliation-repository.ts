@@ -3,6 +3,7 @@ import type { ReconciliationRepository } from "@/data/contracts/reconciliation-r
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { computeSourceTotals, latestEntry, MEASURE_LABELS, validateReconciliationDecision, type ReconciliationDecisionInput, type ReconciliationEntry, type SourceTotal } from "@/modules/reconciliation/rules";
+import { checkMonthSwitchReady, type MonthSwitchSignOff, type MonthSwitchStatus } from "@/modules/reconciliation/switch-signoff";
 import { BusinessRepository, nowIso } from "./business-base";
 import { nextId } from "./ids";
 import type { MockStore } from "./seed";
@@ -68,5 +69,77 @@ export class MockReconciliationRepository extends BusinessRepository implements 
       });
       return copy(entry);
     });
+  }
+
+  async monthSwitchStatus(month: string, options?: MockAsyncOptions): Promise<MonthSwitchStatus> {
+    return this.run(options, (identity) => {
+      this.require(identity, "reconciliation.manage", "Reconciliation is not allowed for this identity.");
+      return copy(this.status(month.trim()));
+    });
+  }
+
+  async recordMonthSwitch(month: string, options?: MockAsyncOptions): Promise<MonthSwitchSignOff> {
+    return this.run(options, (identity) => {
+      // Doc 08 section 16: the Super Administrator decides the switch. No delegation.
+      if (!identity.roles.includes("super_admin")) throw new Error("Only the Super Administrator can sign off the switch.");
+      const period = month.trim();
+      const current = this.status(period);
+      if (!current.closed) throw new Error("Close the month before signing off the switch.");
+      if (current.signOff) return copy(current.signOff);
+      if (current.unexplained.length > 0) {
+        throw new Error(`The switch cannot be signed off yet: ${current.unexplained.join(" ")}`);
+      }
+      const signOff: MonthSwitchSignOff = {
+        id: nextId(this.store, "switch", "switch"),
+        month: period,
+        actorId: identity.id,
+        recordedAt: nowIso(),
+        checkedMeasures: current.checkedMeasures,
+        checkedLeaders: current.checkedLeaders,
+      };
+      this.store.monthSwitchSignOffs.push(signOff);
+      this.audit(identity, {
+        module: "finance",
+        action: BUSINESS_AUDIT_ACTIONS.PARALLEL_RUN_SWITCH_SIGNED_OFF,
+        entityType: "reconciliation",
+        entityId: period,
+        newValue: `signed_off:${signOff.checkedMeasures} measures,${signOff.checkedLeaders} leaders`,
+        relatedRecordIds: this.checkedRecordIds(period),
+      });
+      return copy(signOff);
+    });
+  }
+
+  /** Readiness of one month: closed state, existing sign-off and every unexplained difference. */
+  private status(month: string): MonthSwitchStatus {
+    const closed = this.store.closedMonths.some((item) => item.month === month);
+    const signOff = this.store.monthSwitchSignOffs.find((item) => item.month === month) ?? null;
+    if (!closed) return { month, closed, signOff, unexplained: ["The month is not closed."], ready: false, checkedMeasures: 0, checkedLeaders: 0 };
+    const totals = this.totals(month);
+    const unexplained = checkMonthSwitchReady({
+      totals,
+      entries: this.store.reconciliationEntries,
+      reviews: this.store.allowanceReviews,
+      members: this.store.members,
+      vacancies: this.store.seatVacancies,
+      month,
+    });
+    const checkedMeasures = totals.length;
+    const checkedLeaders = this.store.members.filter((item) =>
+      (item.designation === "SM" || item.designation === "SSM" || item.designation === "SVD")).length;
+    return { month, closed, signOff, unexplained, ready: unexplained.length === 0, checkedMeasures, checkedLeaders };
+  }
+
+  /** Entry and review ids behind the readiness check, for the audit trail. */
+  private checkedRecordIds(month: string): string[] {
+    const ids: string[] = [];
+    for (const measure of this.totals(month)) {
+      const entry = latestEntry(this.store.reconciliationEntries, month, measure.measure);
+      if (entry) ids.push(entry.id);
+    }
+    for (const review of this.store.allowanceReviews) {
+      if (review.month === month) ids.push(review.id);
+    }
+    return ids;
   }
 }

@@ -8,7 +8,7 @@
 
 ## 1. Purpose and Scope
 
-This document defines the complete backend architecture for the AFHomes Platform: a single Next.js modular monolith with REST `/api/v1`, centralized authentication and authorization, domain application services, typed repository contracts, Mongoose persistence against local MongoDB (dev) and MongoDB Atlas (staging/production), transaction safety, idempotency, audit integration, and deployment alignment.
+This guide defines the single Next.js backend, REST `/api/v1`, Firebase Auth, centralized authorization, domain services, typed SQL Connect repositories, PostgreSQL transactions, duplicate-request protection, audit integration, and environment boundaries.
 
 ---
 
@@ -23,19 +23,19 @@ This document defines the complete backend architecture for the AFHomes Platform
 | API architecture | REST |
 | API prefix | `/api/v1` |
 | Validation | Zod |
-| Authentication | Better Auth target direction, compatibility verification required |
+| Authentication | Firebase Auth, with a verified server session |
 | Authorization | Centralized RBAC and record-level policies |
 | Business services | Domain-oriented application services |
 | Persistence abstraction | Typed repository contracts |
-| ODM | Mongoose |
-| Local database | MongoDB on localhost |
-| Cloud database | MongoDB Atlas |
-| Application hosting | DigitalOcean Droplet |
-| Deployment | Docker Compose |
+| Repository integration | Typed SQL Connect operations via the Firebase Admin SDK |
+| Local database | SQL Connect Emulator with its integrated local database |
+| Cloud database | Separate staging and production Cloud SQL for PostgreSQL instances |
+| Hosting | Vercel demo, then verified Firebase App Hosting or Cloud Run |
+| Deployment | Owner-approved release on the host verified in staging |
 | Transport security | HTTPS |
 | Audit | Centralized, protected business audit history |
 
-Next.js App Router is the approved backend framework and application architecture. Actual implementation and installed versions remain subject to repository verification. REST `/api/v1` is the approved API strategy. Zod is the selected request-validation approach. Mongoose is the selected ODM. Better Auth remains the intended authentication direction, subject to actual compatibility verification.
+Use the Next.js server runtime, REST `/api/v1`, Zod request validation, Firebase Auth, and SQL Connect. Verify version compatibility and actual installed dependencies when implementing.
 
 ---
 
@@ -80,8 +80,8 @@ flowchart TB
     VALIDATION["Zod Request Validation"]
     SERVICE["Domain Application Service"]
     REPO["Repository Contract"]
-    MONGOOSE["Mongoose Repository"]
-    DB[("MongoDB")]
+    CONNECT["Server SQL Connect Repository"]
+    DB[("PostgreSQL")]
     AUDIT["Audit Persistence"]
     RESPONSE["Standardized API Response"]
 
@@ -92,8 +92,8 @@ flowchart TB
     API --> POLICY
     POLICY --> SERVICE
     SERVICE --> REPO
-    REPO --> MONGOOSE
-    MONGOOSE --> DB
+    REPO --> CONNECT
+    CONNECT --> DB
     SERVICE --> AUDIT
     AUDIT --> DB
     SERVICE --> RESPONSE
@@ -108,11 +108,11 @@ Validation, authentication and authorization ordering can vary appropriately by 
 
 (See architecture.md target layout.) Target conceptual layout; do not create directories now. Only actual business APIs required by a separately authorized implementation phase should be created in the future. Disabled modules must not be exposed merely because their names appear in the target folder structure.
 
-Folder ownership: `src/app/api/` thin HTTP route handlers; `src/modules/<domain>/domain/` pure domain rules/types/state constraints/invariants; `src/modules/<domain>/application/` business use cases and workflow orchestration; `src/data/contracts/` repository interfaces and typed service boundaries (shared with the existing frontend adapters); `src/modules/<domain>/schemas/` Zod validation contracts; `src/server/db/` server-only MongoDB connection management and infra helpers; `src/server/repositories/` Mongoose-backed implementations of domain repository contracts; `src/server/auth/` Better Auth integration and server-side auth infra; `src/server/security/` cross-cutting authorization and security infra; `src/server/integrations/` approved external service integrations; `src/data/adapters/` client-facing mock and API adapters.
+Keep thin handlers under `src/app/api/`, canonical rules and application services under `src/modules/`, and shared repository contracts under `src/data/contracts/`. Keep SQL Connect configuration, Firebase Auth session verification, concrete repositories, and security tooling in the planned server-only infrastructure. Client-safe HTTP and mock adapters stay in `src/data/`. Create files only for approved implementation work.
 
 ### 7.1 Dependency injection and composition
 
-Domain services must not directly import concrete Mongoose repositories from arbitrary server implementation files. Use explicit composition and dependency injection where useful. The server composition layer can construct domain application service, authorized policy evaluator, repository implementation, audit integration, transaction/session context. Do not create an elaborate dependency injection framework without justified need. Keep imports consistent with architecture.md.
+Use explicit composition so domain services depend on repository and policy interfaces. The server constructs repositories, authorized services, and audit integration. Keep transaction ownership with the service boundary and its approved connector operation.
 
 ---
 
@@ -170,13 +170,13 @@ Zod verifies data structure and input constraints. It does not replace permissio
 
 ### 11.3 Database validation
 
-MongoDB and Mongoose validation provide additional protection. Do not treat any one layer as a replacement for the others.
+PostgreSQL constraints and SQL Connect transactional mutations support domain and request validation. Authorization still runs on the server.
 
 ---
 
 ## 12. Authentication Integration
 
-Approved direction: Better Auth with selected MongoDB architecture, subject to technical compatibility verification. Before future implementation, verify: Better Auth package/version, Next.js compatibility, MongoDB integration support, adapter compatibility, supported Node.js runtime, session handling, DB persistence requirements, production security configuration. Do not falsely claim Better Auth is installed. Do not silently replace it with unrelated auth system.
+Use Firebase Auth. Verify Node.js, Next.js, Firebase Admin SDK, and server-session compatibility before rollout. Check sessions, sign-in and revocation, account status, role changes, cookie settings, CSRF protection, and the protected API. Future mobile clients require their own approved session integration.
 
 ### 12.1 Authentication responsibilities
 
@@ -234,41 +234,41 @@ Verify both authority to perform the operation and authority over the target rec
 
 ## 15. Database Integration
 
-Local MongoDB for development; MongoDB Atlas Cloud for staging and production. Backend uses Mongoose.
+Use the SQL Connect Emulator locally and separate hosted SQL Connect/Cloud SQL for PostgreSQL in staging and production.
 
 ### 15.1 Local development connection
 
-Development backend connects to authorized local MongoDB instance. Examples may use `127.0.0.1:27017`. Do not assume the URI remains identical when Next.js runs inside a Docker container. Document distinction between host-based development and container-based development.
+Use only the authorized local demo project and emulator endpoints. Keep the backend and emulator project IDs consistent, and fail safely when the local emulator configuration is incomplete.
 
 ### 15.2 Production connection
 
-Deployed Next.js application connects securely to MongoDB Atlas. No browser component may access MongoDB directly.
+Use the runtime's dedicated service identity to invoke SQL Connect. Keep protected data operations behind the AFHomes server. Configure the verified managed host, service location, project scope, and private storage for the deployed environment.
 
 ### 15.3 Configuration
 
-Use validated server-only configuration. Illustrative variable: `MONGODB_URI`. Never expose through public `NEXT_PUBLIC_` variable. Do not include real credentials.
+Validate server-only project ID, service ID, location, emulators, and service identity configuration. Keep private values out of browser settings and use placeholders in examples.
 
 ### 15.4 Connection lifecycle
 
-Document connection initialization, pooling, reuse, timeout handling, graceful shutdown, database-unavailable behavior, health/readiness checks, safe reconnection approaches.
+Document client initialization and reuse, deadlines, safe handling when the database is unavailable, retry limits, and readiness checks. Avoid retrying a sensitive operation unless duplicate handling is verified.
 
 ### 15.5 Runtime compatibility
 
-Mongoose operations require compatible server runtime. Do not assume server-only database operations can run in an Edge runtime without verifying actual driver/runtime support. Document intended compatible Node.js runtime boundary.
+Use the Node.js server runtime for the Firebase Admin SDK. Verify the selected runtime and connector version on the actual host.
 
 ---
 
-## 16. Mongoose Repositories
+## 16. SQL Connect Repositories
 
 The backend architecture must describe concrete repository responsibilities. Conceptual examples: CustomerRepository, StaffRepository, GenealogyRepository, AccreditationRepository, ContractRepository, SaleRepository, PaymentRepository, CommissionRepository, MembershipRepository, PointsLedgerRepository, AuditRepository. These are examples, not mandatory code files.
 
 ### 16.1 Repository boundaries
 
-Repositories responsible for queries, persistence, index-supported access, session-aware operations, database model mapping, safe persistence errors. Application services responsible for business eligibility, authorization coordination, business workflow, cross-domain orchestration, state transitions, transaction ownership, business outcomes. Avoid placing all business decisions inside generic Mongoose middleware.
+Repositories handle typed operations, queries, persistence, schema mapping, and safe persistence errors. Application services own eligibility, role and record scope, state transitions, cross-domain workflows, and the transaction boundary. Keep related approved writes and their audit event together.
 
 ### 16.2 Domain contract compatibility
 
-Frontend mock adapters and backend Mongoose implementations should follow compatible domain contracts where practical. Do not couple browser adapter directly to Mongoose.
+Keep browser mock and HTTP adapters and server-side SQL Connect repositories compatible through the existing typed contracts.
 
 ---
 
@@ -319,14 +319,14 @@ Use document 05. Backend responsibilities: product configuration, tier definitio
 
 Use documents 05, 07 and 13. Backend responsibilities: sales creation, contract association, direct seller attribution, historical genealogy attribution, sale state transitions, Confirmed Sales recognition, reversals and adjustments, authorized sales reporting.
 
-- **Confirmed Sale:** follow authoritative recognition rule from document 13. A Confirmed Sale depends on approved contract and Finance-verified qualifying payment conditions. Do not treat Confirmed Sale = Fully Paid. Do not count each installment collection as another full-value Confirmed Sale.
+- **Confirmed Sale:** use the approved sale record and approved receipt thresholds in [doc 13](../business-rules/13-sales-performance-reporting.md) and [doc 14](../business-rules/14-igp-sales.md). Formal contract finalization is a separate event. Count the qualifying sale once and track full payment separately.
 - **Historical attribution:** preserve seller and eligible upline relationships as applicable at the relevant sale-time business event. Do not recalculate historical seller ownership using only current genealogy.
 
 ### 17.7 Finance and Payment Services
 
 Use document 07. Finance is one of the most sensitive backend domains. Document complete architecture for payment submission, payment evidence, payment verification, payment rejection, payment correction, reservation payments, down payments, installments, full payments, outstanding balances, overdue installments, refunds, reversals, Financial Holds, reconciliation, Finance audit events.
 
-- **Authorized verification:** only authorized Finance personnel verify payment receipt. Do not allow ordinary staff, IST or OST to mark their own payment submissions verified merely because they submitted evidence.
+- **Receipt approval:** Finance, the Administrator, or the Super Administrator approves a receipt under [doc 07](../business-rules/07-finance-and-payments.md). A Clerk can enter a receipt. A seller's payment evidence does not grant approval authority.
 - **Payment states:** distinguish actual payment-submission and verification states. Do not invent a universal Finance status enum if authoritative document defines different statuses.
 - **Financial atomicity:** critical Finance operations require appropriate consistency. Document state validation, atomic transaction boundary, balance updates, idempotency, audit persistence, error rollback, safe retries, concurrency control.
 - **Reversals and refunds:** original verified transaction history must remain traceable. Do not silently delete previous payment evidence. Do not implement unauthorized automatic monetary clawbacks.
@@ -403,13 +403,13 @@ Preserve legitimate historical records and future domain interfaces where applic
 
 This section is mandatory and must be detailed. AFHomes has sensitive workflows spanning multiple business records.
 
-### 19.1 MongoDB transaction prerequisites
+### 19.1 PostgreSQL transaction prerequisites
 
-Multi-document MongoDB transactions require supported deployment conditions. The local development environment should use an appropriate replica-set configuration when testing these workflows. Production Atlas transaction support and tier requirements must be verified before implementation.
+Use SQL Connect transactional mutations for related writes. Verify rollback, concurrent retries, guarded writes, and unique constraints in hosted staging after emulator checks. A passing single operation or local test alone does not establish the production guarantee. Escalate connector gaps before expanding financial workflows.
 
 ### 19.2 Transaction boundaries
 
-Examples: Finance verification plus related state updates; Membership activation plus official identifier assignment; Commission payout confirmation plus status updates; Points ledger transitions; Authorized genealogy transfer history; Relevant audit persistence.
+Examples include receipt approval and linked balances, VIP Number issuance at signed Reservation Agreement recording, official membership activation as a separate workflow, payout and points-ledger changes, and audit events for sensitive transitions.
 
 ### 19.3 Transaction coordinator ownership
 
@@ -447,7 +447,7 @@ Define a consistent backend error taxonomy. Relevant classes: Validation failure
 
 ### 21.1 Error mapping
 
-Map internal errors to safe API responses. Do not expose stack traces, raw MongoDB errors or credentials.
+Map internal errors to safe API responses. Keep stack traces, raw SQL Connect/database errors, and credentials out of client responses.
 
 ### 21.2 Business-specific errors
 
@@ -467,7 +467,7 @@ Define consistent backend conventions for pagination, sort order, filter validat
 
 Search must not expose inaccessible records through matching names, counts, autocomplete, error details, aggregates, exports.
 
-### 22.2 MongoDB performance
+### 22.2 SQL Connect and PostgreSQL performance
 
 Queries should align with the indexes and modeling strategy from `database.md`. Do not create unbounded scans for every dashboard request.
 
@@ -491,11 +491,11 @@ Private documents must require appropriate server-side access checks. Do not exp
 
 ### 23.3 Storage abstraction
 
-The exact object-storage provider may still require approval. Do not hardcode the entire application to an unapproved storage vendor. Document a replaceable storage interface where justified.
+Use private Cloud Storage for Firebase for production uploads. Keep the storage interface behind the AFHomes service boundary so it can use the local Storage Emulator and, when approved, a private staging-only sample bucket.
 
 ### 23.4 Database versus file storage
 
-MongoDB should not automatically become the binary storage location for every uploaded document. Document an appropriate object-storage strategy compatible with the target architecture.
+Keep binary files in private Cloud Storage for Firebase and store authorized metadata and parent-record links in PostgreSQL. Use a storage adapter that runs with the emulator, and verify the production path in staging.
 
 ---
 
@@ -509,7 +509,7 @@ Document: job ownership, trigger mechanism, schedule, idempotency, retry limits,
 
 ### 24.2 Next.js deployment consideration
 
-Do not assume that an ordinary HTTP request handler is a reliable permanent background worker. Document how scheduled work can be executed safely in the DigitalOcean deployment environment. An optional dedicated worker process may be appropriate when justified. Do not automatically require microservices, Redis or a message broker.
+Use approved scheduling and execution services if background work is needed. Bound its execution time and verify its identity, duplicate protection, logs, and recovery. An ordinary API request must not be relied on as an indefinite worker.
 
 ### 24.3 Business policy separation
 
@@ -539,7 +539,7 @@ Development, Staging, Production.
 
 ### 26.2 Database configuration
 
-Development: Local MongoDB. Staging/Production: MongoDB Atlas.
+Development uses the local SQL Connect Emulator. Staging and production use isolated hosted SQL Connect and Cloud SQL for PostgreSQL. Verify project ID and service identity at startup.
 
 ### 26.3 Server-only secrets
 
@@ -577,17 +577,17 @@ Document structured backend application logging. Include request identifier, rou
 
 ## 29. Health and Readiness
 
-Document health/readiness behavior for DigitalOcean deployment. Distinguish Liveness (application process is running) and Readiness (application can perform required operational responsibilities). Relevant dependency checks may include application configuration, database connection, critical dependency availability, appropriate startup readiness. Do not publicly expose private infrastructure details in health responses. Do not assume the presence of a working health endpoint until implemented.
+Verify liveness and readiness on the approved Google host. Check validated configuration, database access, and critical dependencies without exposing infrastructure details. Confirm endpoints and provider checks in staging before relying on them.
 
 ---
 
 ## 30. Backend Testing
 
-Align with `docs/development/testing.md`. The backend test strategy must cover: domain rule tests, service tests, repository tests, API contract tests, authentication integration, RBAC, record visibility, Sales Network genealogy, accreditation, customer creation/drafts, contract approval, sales confirmation, Finance verification, refunds/reversals, commission approval, commission payout, membership activation, VIP Card uniqueness, Stay Points earning/holds, reporting reconciliation, audit history, idempotency, concurrency, database transaction rollback, local MongoDB integration, production API security.
+Follow [testing.md](testing.md) for domain, API, service, repository, Firebase Auth, RBAC, genealogy, accreditation, customer, contract, Finance, payout, membership, points, reports, audit, idempotency, concurrency, rollback, and hosted security checks.
 
-### 30.1 Local MongoDB
+### 30.1 Emulator and hosted integration
 
-Database integration tests should run against an appropriately isolated local test database. For multi-document transaction tests, verify local replica-set support. Do not run automated destructive integration tests against production Atlas.
+Use the SQL Connect Emulator and isolated test data for repeatable local integration checks. Prove transactional behavior, concurrency, and recovery in hosted staging before release. Keep destructive tests out of production.
 
 ### 30.2 Production readiness
 
@@ -597,19 +597,19 @@ Manual frontend testing alone is not sufficient for production release. Critical
 
 ## 31. Deployment Architecture
 
-Align with `deployment.md`. Production infrastructure: DigitalOcean Droplet + Docker Compose + HTTPS + MongoDB Atlas. The Next.js application contains the backend API. Document Node.js runtime, application container, reverse proxy, environment configuration, connection to Atlas, secrets, deployment validation, health checks, logging, monitoring, rollback, database compatibility, backup/recovery. Do not create an unapproved separate backend application container solely because the code contains domain services. A worker container may be documented as an optional future justified process. Do not install or configure production infrastructure.
+Follow [deployment.md](deployment.md). The single Next.js backend runs on Firebase App Hosting once verified or on the rehearsed Cloud Run fallback. Verify Node.js, identity, HTTPS, SQL Connect and PostgreSQL, private files, health, monitoring, logs, backups, and rollback.
 
 ---
 
 ## 32. Future Mobile API Compatibility
 
-A future React Native + Expo application may consume `/api/v1`. The backend API must be client-independent. Document versioned API contracts, shared domain validation, server-side authorization, consistent errors, secure authentication, pagination and filtering, idempotency, backward compatibility where practical. Do not assume the mobile application shares browser session storage. Do not build mobile-specific business logic duplicates. The mobile client must not connect directly to MongoDB Atlas.
+A future React Native + Expo application may use the same authorized `/api/v1` contracts. Keep server validation, permissions, pagination, errors, and duplicate protection client-independent. Do not create competing business logic or allow direct access to protected SQL Connect operations.
 
 ---
 
 ## 33. Implementation Phases
 
-Align with `docs/development/implementation.md`. The backend documentation must describe responsibilities within the approved roadmap: Phase 0 Documentation; Phase 1 Frontend Foundation (typed mock adapters, frontend-first, no mandatory real backend deployment); Phase 2 Database Foundation (local MongoDB, Mongoose models, data mapping, indexes, transactions, local testing); Phase 3 Backend Foundation (Next.js REST API foundation, Better Auth integration after compatibility verification, centralized authorization, domain services, repository implementations, error handling, audit framework, backend testing foundation); Phase 4 Business Module Implementation (implement approved modules in dependency order; do not begin most financially sensitive workflows until required identities, contracts, authorization, and database consistency foundations are ready); Phase 5 Frontend/Backend Integration (replace mock adapters with real API adapters, validate real business flows); Phase 6 Testing and Validation (verify financial, membership, permission and reporting invariants); Phase 7 Production Deployment (deploy approved application to DigitalOcean, connect securely to Atlas); Phase 8 Stabilization (monitor, fix, optimize and introduce only separately authorized enhancements). The implementation roadmap is not automatic authorization to start coding.
+Use the [implementation phase mapping](implementation.md) and [Firebase environment guides](../implementation/firebase/README.md). Establish the local database, backend, and API before connecting the pilot screens. Verify the hosted pilot before expanding sensitive workflows. Rehearse the release in staging before owner-approved production deployment.
 
 ---
 
@@ -627,10 +627,10 @@ Align with `docs/development/implementation.md`. The backend documentation must 
 10. Centralized authorization.
 11. Module permissions and record visibility remain separate.
 12. No client-trusted role escalation.
-13. Local MongoDB is used for real database-backed development.
-14. MongoDB Atlas is the target managed cloud database.
-15. Mongoose is server-only.
-16. No direct browser MongoDB access.
+13. Use the SQL Connect Emulator for local database integration.
+14. Cloud SQL for PostgreSQL backs SQL Connect in separate staging and production projects.
+15. Privileged Firebase Admin SDK calls and SQL Connect operations stay server-only.
+16. Direct clients use approved API endpoints for protected business records.
 17. No production credentials in client code.
 18. Financial operations require correct atomicity.
 19. Sensitive writes require idempotency.
@@ -670,7 +670,7 @@ Align with `docs/development/implementation.md`. The backend documentation must 
 
 ### Approved Decisions
 
-Next.js App Router; one application; REST `/api/v1`; TypeScript; Zod; Mongoose; local MongoDB; MongoDB Atlas; centralized RBAC; DigitalOcean deployment.
+Next.js App Router, one application, REST `/api/v1`, TypeScript, Zod, Firebase Auth, SQL Connect with PostgreSQL, centralized permissions, and the verified Firebase App Hosting or Cloud Run deployment.
 
 ### Technical Conventions
 
@@ -678,13 +678,13 @@ Response envelopes, repository method naming, API error code patterns, transacti
 
 ### Unresolved Dependencies
 
-Better Auth adapter compatibility; selected Node.js/Next.js versions; local replica-set setup; selected Atlas tier and transaction support; financial rounding policies; a legally advised retention period (records are kept indefinitely until then); selected object-storage provider. Do not invent approval. Keep concise and actionable.
+Verify SDK and runtime compatibility, hosted transactional approval, App Hosting or fallback qualification, and approved recovery settings. Use canonical rules and owner decisions for finance, privacy, and historical data.
 
 ---
 
 ## 36. Cross-Document Consistency
 
-The completed backend document aligns with architecture.md (single Next.js modular monolith, thin API handlers, domain-oriented services, `/api/v1`, MongoDB Atlas, DigitalOcean Droplet), frontend.md (typed API clients, mock adapters, frontend-first development, TanStack Query, server-enforced permissions, no direct database access), database.md (local MongoDB before Atlas, Mongoose, replica-set transaction requirements, official identifier integrity, data imports and migrations, backup/recovery), security.md (authentication, RBAC, record-level authorization, secret management, sensitive API protection, audit security), testing.md (service tests, API tests, local MongoDB integration, transaction tests, financial workflow tests, authorization tests), implementation.md (backend foundation in authorized roadmap, no premature backend implementation), deployment.md (Next.js on DigitalOcean Droplet, Docker Compose, HTTPS, MongoDB Atlas connectivity, production monitoring and recovery). If another document remains outdated, report the precise mismatch. Do not modify it during this task.
+Check this guide against architecture, frontend, database, security, testing, implementation, deployment, and the canonical business rules. The Firebase environment roadmap is the execution sequence.
 
 ---
 
@@ -702,16 +702,16 @@ The completed backend document aligns with architecture.md (single Next.js modul
 - [ ] Dependency direction.
 
 ### Database
-- [ ] Local MongoDB development.
-- [ ] MongoDB Atlas staging/production.
-- [ ] Mongoose.
+- [ ] SQL Connect Emulator.
+- [ ] Hosted PostgreSQL isolation.
+- [ ] Typed server-only SQL Connect operations.
 - [ ] Secure server-only connection.
 - [ ] Transaction prerequisites.
 - [ ] Data consistency.
 - [ ] Index/identifier requirements.
 
 ### Authentication and Authorization
-- [ ] Better Auth direction.
+- [ ] Firebase Auth identity and server session verification.
 - [ ] Compatibility verification.
 - [ ] Verified server-side sessions.
 - [ ] RBAC.
@@ -768,17 +768,19 @@ Only mark an item complete when actually documented. Documentation completeness 
 
 ## 38. Strict Execution Limits
 
-This task authorizes modification of `docs/development/backend.md` only. Do not modify architecture.md, README.md, frontend.md, database.md, security.md, testing.md, implementation.md, deployment.md, docs/project.md, any business-rule file, application source code, package.json, environment configuration, database schemas, Docker files, Git configuration. Do not create backend source files, Next.js route handlers, Mongoose models, authentication adapters, migration scripts, API test files, Docker containers, additional Markdown documents. Do not install dependencies, run database migrations, import records, start MongoDB, connect to production Atlas, configure DigitalOcean, create a deployment, commit, push, merge. If a conflict requires editing another file, identify it in the completion report rather than modifying that file. The development directory must continue to contain exactly the previously approved ten files.
+The backend plan does not authorize source changes, test or production environment setup, migrations, deployment, or Git writes. Apply the authorization rules in AGENTS.md to every milestone.
 
 ---
 
 ## 39. Final Verification
 
-After completing `backend.md`: re-read the entire file; verify Next.js modular-monolith consistency; verify REST `/api/v1`; check module boundaries; check authentication and authorization; verify local MongoDB-first integration; verify MongoDB Atlas deployment direction; verify financial consistency requirements; verify Commission Management authority; verify Membership activation distinctions; verify Stay Points ledger boundaries; verify genealogy history; verify reporting authority; verify disabled feature handling; verify audit requirements; validate Markdown links and diagrams; compare against architecture.md; compare against database.md; compare against frontend.md; compare against business rules 01–14; confirm no other files were modified; inspect the final Git diff. Use read-only commands: `git status --short`, `git diff --stat`, `git diff --check`. Inspect untracked Markdown files separately as necessary. Do not stage, commit or push.
+Check the single runtime, API contracts, module and auth boundaries, SQL Connect data path, finance and membership consistency, points, privacy, audit, feature gates, links, and diagrams. Report actual verification and preserve existing working-copy changes.
 
 ---
 
-## 40. Completion Report
+## 40. Historical Completion Report
+
+> This report describes the earlier backend documentation review. The infrastructure choices in it are superseded.
 
 ### A. Repository Verification
 - Actual repository: `afhomes-platform`; branch: `develop`; initial working tree held untracked docs/workflow files. At the time of writing this was a documentation-only repository; the current repository now contains a frontend prototype.

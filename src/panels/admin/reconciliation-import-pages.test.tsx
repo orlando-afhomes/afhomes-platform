@@ -86,4 +86,23 @@ describe("reconciliation and historical import pages", () => {
     expect(await screen.findByText("Verified receipts (net)")).toBeInTheDocument();
     expect(screen.queryByText("Parallel run")).toBeNull();
   });
+
+  it("shows the switch section to Finance without the sign-off button", async () => {
+    show("dev-finance", <ReconciliationPanel />);
+    expect(await screen.findByRole("heading", { name: "Switch Off the Company Spreadsheets" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sign Off the Switch" })).toBeNull();
+  });
+
+  it("shows the Super Administrator the switch status for the open month", async () => {
+    show("dev-super-admin", <ReconciliationPanel />);
+    expect(await screen.findByRole("heading", { name: "Switch Off the Company Spreadsheets" })).toBeInTheDocument();
+    // The seed has no closed months, so the current month cannot be signed off yet.
+    expect(await screen.findByText(/Close the month before the switch can be signed off/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sign Off the Switch" })).toBeNull();
+  });
+
+  it("labels the switch record as comparison-only without changing payout rules", async () => {
+    show("dev-super-admin", <ReconciliationPanel />);
+    expect(await screen.findByText(/A comparison-only record under doc 08 section 16/)).toBeInTheDocument();
+  });
 });

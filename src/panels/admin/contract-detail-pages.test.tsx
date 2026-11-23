@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
@@ -177,5 +177,33 @@ describe("contract details show actions allowed for each viewer", () => {
     expect(screen.getByRole("table", { name: "Payment Ledger" })).toBeInTheDocument();
     expect(button("Confirm Cancellation")).toBeNull();
     expect(button("Decline Cancellation")).toBeNull();
+  });
+});
+
+describe("unmatched receipt intake from the contract Payments tab (G1 clerk surface)", () => {
+  it("lets a Clerk record an unmatched receipt from the contract Payments tab", async () => {
+    const user = userEvent.setup();
+    show("dev-clerk", <SalesContractDetailPage contractId="ctr-1" />);
+    await screen.findByRole("tablist", { name: "Contract detail views" });
+    await user.click(screen.getByRole("tab", { name: "Payments" }));
+    await screen.findByRole("table", { name: "Payments" });
+    await user.click(screen.getByRole("button", { name: "Record unmatched receipt" }));
+    const dialog = await screen.findByRole("dialog", { name: "Record Unmatched Receipt" });
+    await user.type(within(dialog).getByLabelText(/^Amount/), "77");
+    await user.type(within(dialog).getByLabelText(/^OR \/ bank reference number/), "BT-CTR1-CLERK-UNMATCHED-01");
+    await user.type(within(dialog).getByLabelText(/^Why no match was found/), "Counter receipt for an unidentified walk-in.");
+    await user.click(within(dialog).getByRole("button", { name: "Record Receipt" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "Record Unmatched Receipt" })).toBeNull();
+    });
+  });
+
+  it("hides the unmatched intake button from sellers on the contract Payments tab", async () => {
+    const user = userEvent.setup();
+    show("dev-ost-a2", <SalesContractDetailPage contractId="ctr-4" />);
+    await screen.findByRole("tablist", { name: "Contract detail views" });
+    await user.click(screen.getByRole("tab", { name: "Payments" }));
+    await screen.findByRole("table", { name: "Payments" });
+    expect(screen.queryByRole("button", { name: "Record unmatched receipt" })).toBeNull();
   });
 });

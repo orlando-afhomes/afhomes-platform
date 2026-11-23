@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { MockReportRepository } from "@/data/mock/report-repository";
 import { manilaToday } from "@/shared/lib/dates";
 import { formatDate } from "@/shared/lib/format-date";
 import { CollectionsReportPage } from "./pages/collections-report-page";
@@ -87,6 +88,17 @@ describe("report pages", () => {
     expect(screen.queryByText(/Role-scoped figures/)).toBeNull();
     // Each stat card is one <dl>; a report shows at most 3.
     expect(document.querySelectorAll("dl").length).toBeLessThanOrEqual(3);
+  });
+
+  it("shows a busy Export trigger while the export is being recorded", async () => {
+    const user = userEvent.setup();
+    const record = vi.spyOn(MockReportRepository.prototype, "recordExport").mockImplementationOnce(() => new Promise(() => {}));
+    show("dev-finance", <SalesPerformanceReportPage />);
+    const trigger = await screen.findByRole("button", { name: /Export/ });
+    await user.click(trigger);
+    await user.click(await screen.findByRole("menuitem", { name: /Excel/ }));
+    await waitFor(() => expect(record).toHaveBeenCalledTimes(1));
+    expect(trigger).toHaveAttribute("aria-busy", "true");
   });
 
   it("shows at most 5 columns on screen and every column in the row details", async () => {

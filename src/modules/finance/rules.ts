@@ -185,6 +185,27 @@ export function findReferenceConflict(payments: readonly Payment[], referenceNo:
   return payments.find((existing) => existing.id !== selfId && (existing.referenceNo ?? "").trim().toLowerCase() === wanted);
 }
 
+/**
+ * An entered OR or bank reference collides when it matches any payment's
+ * system reference or issued-document number (07 section 9.2: the number is
+ * unique across the whole system). Used by the unmatched-receipt intake (F6.5),
+ * where the Clerk types the number from the paper receipt.
+ */
+export function findDocumentConflict(
+  payments: readonly Pick<Payment, "id" | "referenceNo" | "documentNo">[],
+  orNumber: string | null | undefined,
+  selfId?: string,
+): Pick<Payment, "id" | "referenceNo" | "documentNo"> | undefined {
+  const wanted = (orNumber ?? "").trim().toLowerCase();
+  if (!wanted) return undefined;
+  return payments.find((existing) =>
+    existing.id !== selfId && (
+      (existing.referenceNo ?? "").trim().toLowerCase() === wanted ||
+      (existing.documentNo ?? "").trim().toLowerCase() === wanted
+    ),
+  );
+}
+
 /** A hint for the approver only (07 section 9.1, F6.3): another open receipt on the same contract with the same amount and date. */
 export function findSuggestedMatch(payments: readonly Payment[], payment: Pick<Payment, "id" | "contractId" | "amountCentavos" | "paidDate">): Payment | undefined {
   return payments.find(

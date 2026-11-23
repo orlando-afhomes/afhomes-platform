@@ -32,6 +32,7 @@ import { Card } from "@/shared/ui/card";
 import { AdminPage, AdminSection, AdminSectionHeading, DetailHero } from "@/shared/components/admin";
 import { AdminTabs, type AdminTabItem } from "@/shared/components/admin/admin-tabs";
 import { DetailSkeleton } from "@/shared/components/modern/skeletons";
+import { ErrorState } from "@/shared/components/modern/error-state";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
@@ -134,6 +135,44 @@ export function SalesNetworkMemberDetailPage() {
     return (
       <PageContainer>
         <DetailSkeleton />
+      </PageContainer>
+    );
+  }
+
+  // A failed load is never a "not found": the error branch comes first with a retry.
+  if (memberQuery.error && !member) {
+    return (
+      <PageContainer>
+        <ErrorState
+          text={memberQuery.error instanceof Error ? memberQuery.error.message : undefined}
+          onRetry={() => void memberQuery.refetch()}
+        />
+        <div className="tw:mt-3 tw:flex tw:justify-center">
+          <Link href="/admin/sales-network/members" className={cn(buttonVariants({ variant: "outline" }), "tw:min-h-11 tw:sm:min-h-8")}>
+            Back to Members
+          </Link>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  // Accreditation records drive the badges and validity on this page; a
+  // first-load failure leaves nothing to render, so it blocks like the
+  // shared contract frame's data error. A failed background refetch keeps
+  // its data and is allowed to stay on screen.
+  if (accreditationsQuery.error && accreditationsQuery.data === undefined) {
+    return (
+      <PageContainer>
+        <ErrorState
+          title="Accreditation data could not be loaded"
+          text="The accreditation records could not be loaded, so the status and validity on this page would be incomplete. Try again before acting on this member."
+          onRetry={() => void accreditationsQuery.refetch()}
+        />
+        <div className="tw:mt-3 tw:flex tw:justify-center">
+          <Link href="/admin/sales-network/members" className={cn(buttonVariants({ variant: "outline" }), "tw:min-h-11 tw:sm:min-h-8")}>
+            Back to Members
+          </Link>
+        </div>
       </PageContainer>
     );
   }

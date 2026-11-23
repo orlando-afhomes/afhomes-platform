@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -7,6 +7,7 @@ import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { usePayments } from "@/data/business-queries";
+import { MockSaleRepository } from "@/data/mock/sale-repository";
 import { PeriodClosePanel } from "../pages/period-close-page";
 import { usePaymentActions } from "./payment-actions";
 
@@ -31,6 +32,7 @@ function OpenPayment() {
 afterEach(() => {
   Swal.close();
   cleanup();
+  vi.restoreAllMocks();
 });
 
 describe("Confirmation pop-up colors", () => {
@@ -40,6 +42,21 @@ describe("Confirmation pop-up colors", () => {
     await user.click(await screen.findByRole("button", { name: "Close Month" }));
     const alert = await screen.findByRole("alertdialog", { name: "Close This Month?" });
     expect(within(alert).getByRole("button", { name: "Close Month" }).className).toContain("destructive");
+  });
+
+  it("closes a month once when the confirm button is double-clicked", async () => {
+    const user = userEvent.setup();
+    const closeMonth = vi.spyOn(MockSaleRepository.prototype, "closeMonth").mockImplementationOnce(() => new Promise(() => {}));
+    render(<Wrapper><PeriodClosePanel /></Wrapper>);
+    await user.click(await screen.findByRole("button", { name: "Close Month" }));
+    const alert = await screen.findByRole("alertdialog", { name: "Close This Month?" });
+    const confirm = within(alert).getByRole("button", { name: "Close Month" });
+    const toolbar = screen.getByRole("region", { name: "Close a month", hidden: true });
+    const pageButton = within(toolbar).getByRole("button", { name: "Close Month", hidden: true });
+    await user.dblClick(confirm);
+    await waitFor(() => expect(closeMonth).toHaveBeenCalledTimes(1));
+    expect(pageButton).toHaveAttribute("aria-busy", "true");
+    expect(pageButton).toHaveAttribute("aria-disabled", "true");
   });
 
   it("colors the payment pop-ups by purpose: Reject red, Return amber", async () => {

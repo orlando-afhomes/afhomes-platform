@@ -44,38 +44,36 @@ This directory (`docs/development/`) contains the authoritative development arch
 | Initial frontend data | Browser-scoped in-memory mock store |
 | API | Versioned REST `/api/v1` |
 | Backend | Domain services within Next.js |
-| Authentication | Better Auth direction; compatibility verification required |
+| Authentication | Firebase Auth with server-verified sessions |
 | Authorization | Centralized RBAC and record-level policies |
-| ODM | Mongoose |
-| Local persistent database | MongoDB on localhost |
-| Production database | MongoDB Atlas Cloud |
-| Application hosting | DigitalOcean Droplet |
-| Container deployment | Docker Compose |
-| Production HTTPS | TLS reverse proxy |
+| Server persistence | Typed SQL Connect repositories and Firebase Admin SDK |
+| Local data services | Firebase SQL Connect, Auth, and Storage emulators |
+| Hosted database | Cloud SQL for PostgreSQL through SQL Connect |
+| Demo hosting | Vercel after owner approval and plan eligibility review |
+| Production hosting | Verified Firebase App Hosting or Cloud Run fallback |
+| Production files and transport | Private Cloud Storage for Firebase and managed HTTPS |
 | Future Customer Portal | Planned, separately authorized |
 | Future mobile application | React Native + Expo direction |
 | Redemption | Staff prototype authorized 2026-11-17; live use disabled |
 | Services | Preserved but disabled |
 
-Critical architecture: single-repository, single Next.js application, panel-based and feature-based modular monolith. Not separate frontend/backend applications, not microservices, not Express/NestJS, not Kubernetes, not Turborepo by default, not static-only Next.js website, not DigitalOcean App Platform. Backend APIs and frontend share the same application runtime. MongoDB remains server-accessed; browser never connects directly to MongoDB.
+Use a single repository and one Next.js modular monolith. The API and rendering share the application runtime. Keep business data access behind the AFHomes API and privileged operations on the server.
 
 ---
 
 ## 5. Architecture at a Glance
 
-Single Next.js modular monolith with React/TypeScript frontend, panel-based UI (Admin/Operations, Public, Future Customer), shared domain modules, centralized mock data during frontend-first development, versioned REST `/api/v1`, backend services within Next.js, centralized auth and RBAC, MongoDB Atlas (local MongoDB first in development), DigitalOcean Droplet + Docker Compose + HTTPS, security, testing, audit, future Customer Portal/mobile, hidden/disabled Redemption and Services. See `architecture.md` for full details.
+Next.js renders the existing panels and provides REST `/api/v1`. Shared domain services enforce business rules, authorization, and audit. Firebase Auth supplies identity, SQL Connect handles PostgreSQL persistence, and Firebase Storage holds private files. See [architecture.md](architecture.md) and [AGENTS.md](../../AGENTS.md) for module and approval boundaries.
 
 ---
 
 ## 6. Local Development to Cloud Strategy
 
-Three modes:
+- **Localhost:** Start with the existing browser-memory prototype, then use the Firebase emulators for the local backend, API, and file integration.
+- **Staging:** Optional Vercel prototype preview, followed by an isolated Firebase project and the SQL Connect Spark pilot. Rehearse the selected Google host and approved imports.
+- **Production:** Company-owned Blaze project with the verified app host, Firebase Auth, SQL Connect, private files, monitoring, and backups. Import approved production records only.
 
-- **Stage A — Frontend in-memory mock development:** synthetic data, browser-scoped store, no real MongoDB, full browser refresh resets mock records, development-only mock identities.
-- **Stage B — Local MongoDB development:** real MongoDB on localhost (native or Docker), persistent development records, Mongoose repositories, real backend/API integration, appropriate local transaction testing, isolated test databases. A full browser refresh must not reset persistent MongoDB records.
-- **Stage C — MongoDB Atlas Cloud:** managed cloud database, isolated staging/production, secure connections, approved deployment configuration, controlled migration, monitoring, backups/recovery.
-
-Do not require production Atlas access during early frontend development. Do not require production Atlas provisioning for Phase 2. Controlled local MongoDB to Atlas migration is supported; refer to `database.md` and `deployment.md`. Do not automatically migrate synthetic local test data into production. Do not automatically import records from earlier Supabase production system.
+Follow the [Firebase environment guides](../implementation/firebase/README.md). Keep mock and test data separate from live records.
 
 ---
 
@@ -88,12 +86,12 @@ Ten development Markdown documents (the nine below plus `role-module-permission-
 | [README.md](README.md) | Entry point, documentation navigation, approved development context, agent reading instructions |
 | [architecture.md](architecture.md) | Complete system topology, modular-monolith design, application layers, panel organization, domain boundaries, API, infrastructure, future extensibility |
 | [frontend.md](frontend.md) | Next.js App Router, React/TypeScript, UI design system, panel interfaces, state management, mock adapters, TanStack Query, accessibility, frontend conventions |
-| [database.md](database.md) | Local MongoDB development, Mongoose, domain data modeling, MongoDB Atlas, official identifiers, transactions, import/export, migration, backups, data integrity |
+| [database.md](database.md) | Local emulator, SQL Connect/PostgreSQL, domain modeling, identifiers, transactions, migration, approved imports, backup, and data integrity |
 | [backend.md](backend.md) | REST `/api/v1`, application services, validation, authentication, authorization, repositories, transactions, business workflows, security, backend integrations |
 | [security.md](security.md) | Authentication, account lifecycle, session protection, RBAC, record-level access, Finance restrictions, customer privacy, API protection, audit security, infrastructure safeguards |
-| [testing.md](testing.md) | Manual-first frontend testing, automated backend validation, security tests, financial integrity, local MongoDB integration, Atlas staging, migration verification, release acceptance |
+| [testing.md](testing.md) | Prototype, emulator, API, hosted integration, financial consistency, security, imports, recovery, and release checks |
 | [implementation.md](implementation.md) | Phases 0–8, dependency-driven execution, acceptance criteria, risks, authorization boundaries |
-| [deployment.md](deployment.md) | DigitalOcean Droplet, Docker Compose, Next.js production hosting, MongoDB Atlas, HTTPS, domain/DNS, monitoring, backups, recovery, CI/CD, operational maintenance |
+| [deployment.md](deployment.md) | Vercel demo, App Hosting and Cloud Run, Firebase projects, HTTPS, monitoring, backup, and operations |
 
 Do not create additional development documents. Keep the set of development documents as listed here; add another only with owner approval.
 
@@ -175,12 +173,12 @@ Phases 0–8 (see implementation.md for details):
 |---|---|---|
 | 0 | Documentation Foundation | Finalize authoritative documentation |
 | 1 | Frontend Foundation | Next.js, UI, panels, typed mocks |
-| 2 | Local MongoDB Database Foundation | Local persistent database and Mongoose |
+| 2 | Local SQL Connect Database Foundation | Emulator schema and reproducible synthetic records |
 | 3 | Backend Foundation | REST API, authentication, authorization |
 | 4 | Core Business Modules | Implement approved domain workflows |
 | 5 | Frontend/Backend Integration | Replace mocks with real APIs |
 | 6 | Testing and System Validation | Verify correctness, security, integrity |
-| 7 | Cloud Deployment and Production Readiness | Atlas, DigitalOcean, HTTPS, operations |
+| 7 | Cloud Deployment and Production Readiness | Verified Google host, PostgreSQL, HTTPS, monitoring, and recovery |
 | 8 | Stabilization and Future Enhancements | Monitoring, maintenance, controlled changes |
 
 A documented phase is not an authorized phase. Implementation begins only when the project owner explicitly authorizes the relevant task or phase. Do not claim an entire phase has passed acceptance merely because an AI agent completed its assigned work.
@@ -202,7 +200,7 @@ Before beginning implementation, AI coding agents must:
 9. Inspect the actual repository and existing code.
 10. Verify the project owner's authorized scope.
 
-For deployment tasks, also read `docs/development/deployment.md`. For MongoDB work, read `docs/development/database.md`. For frontend work, read `docs/development/frontend.md`. For backend/API work, read `docs/development/backend.md`.
+Use the [Firebase roadmap](../implementation/firebase/README.md) for order. Read [deployment.md](deployment.md) for hosting, [database.md](database.md) for PostgreSQL, [frontend.md](frontend.md) for frontend conventions, and [backend.md](backend.md) for the API.
 
 Do not treat reading documentation as permission to edit every file. Only the explicitly authorized task scope may be changed.
 
@@ -214,7 +212,7 @@ Do not treat reading documentation as permission to edit every file. Only the ex
 2. Do not introduce separate frontend/backend applications.
 3. Do not introduce unapproved frameworks.
 4. Keep domain business rules outside UI components.
-5. Keep MongoDB access server-only.
+5. Keep privileged SQL Connect and database access server-only.
 6. Follow the authoritative business-rule documents.
 7. Do not invent missing commercial policies.
 8. Do not bypass server-side RBAC.
@@ -233,7 +231,7 @@ Do not treat reading documentation as permission to edit every file. Only the ex
 21. Keep Redemption and Services disabled.
 22. Do not automatically migrate legacy production data.
 23. Do not deploy without authorization.
-24. Do not commit or push without authorization.
+24. Follow the [owner-only Git policy](../../AGENTS.md).
 25. Do not overwrite unrelated user work.
 26. Run applicable authorized tests.
 27. Report tests honestly.
@@ -280,9 +278,9 @@ Refer to `security.md`. Do not attempt to reproduce the entire threat model in t
 
 ## 16. Verified Current Project Status
 
-The repository is a frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); no API route handlers, no database, no real authentication and no deployment. (Verify with `git status` and file inspection before each task; do not assume this remains true indefinitely.) Distinguish local repository evidence from external infrastructure verification — do not claim MongoDB Atlas or DigitalOcean account state has been verified solely by inspecting local files.
+The repository contains a working frontend prototype with browser-memory sample data. The API, real authentication, cloud databases, and hosting integrations are planned. Verify the manifest, source, configurations, and external environments before reporting an implemented or deployed status.
 
-Status categories: Documentation status; Application source status; Local MongoDB configuration status; Atlas configuration status; Deployment configuration status; Testing status.
+Status categories: documentation, application, local emulators, staged data and hosting, production provisioning, and actual test evidence.
 
 Do not mark features implemented merely because documents mention them.
 
@@ -308,7 +306,7 @@ Review changes, run applicable tests, report actual results, report blockers, id
 
 ### 17.5 Project-owner approval
 
-Require explicit authorization for: starting implementation phases, major architecture changes, production database changes, actual data migrations, production deployment, enabling disabled modules, sensitive policy changes, Git operations where not already authorized.
+Require explicit authorization for implementation phases, architecture or policy changes, production databases, migrations, deployment, and disabled module activation. The absolute owner-only Git policy in AGENTS.md applies independently.
 
 Do not invent blanket permission to commit/push.
 
@@ -316,7 +314,7 @@ Do not invent blanket permission to commit/push.
 
 ## 18. Unresolved Decisions and Implementation Blockers
 
-Material blockers are tracked in `docs/development/implementation.md`. Representative categories: contract price discrepancies, Non-Standard commercial rules, Move payment scheme terms, RA numbering uniqueness, accreditation eligibility/expiry interpretation, Better Auth/MongoDB compatibility, Atlas transaction support, audit retention policy. Verify which issues are actually unresolved in the current canonical documents; do not falsely repeat a resolved issue as still pending. Blockers affect relevant modules rather than automatically stopping all unrelated development (e.g., a contract-price conflict should not prevent the basic Next.js application scaffold; Atlas production sizing should not block local frontend development).
+Use the [decision register](../implementation/decisions-and-gaps.md) to confirm open business decisions. Track hosted transaction proof, Firebase Auth and hosting compatibility, approved imports, and production sizing, costs, domain, and recovery in the environment phase they affect.
 
 ---
 
@@ -337,10 +335,8 @@ Material blockers are tracked in `docs/development/implementation.md`. Represent
 - Inspect working-tree changes.
 - Preserve untracked files.
 - Review diffs.
-- Avoid destructive reset/clean commands.
-- Do not overwrite coworker changes.
-- Do not force-push without explicit approval.
-- Do not commit or deploy outside authorized scope.
+- Preserve collaborator changes.
+- Follow the read-only Git rules in [AGENTS.md](../../AGENTS.md). The project owner handles reserved Git operations and release execution.
 
 Do not assume the latest historical branch report is guaranteed to remain current. The actual checkout must be inspected for each task.
 
@@ -360,13 +356,13 @@ Read `07-finance-and-payments.md`, `13-sales-performance-reporting.md` when sale
 
 Read `01-roles-and-permissions.md`, `02-sales-network-and-genealogy.md`, `03-ist-ost-accreditation.md`, `frontend.md`, `backend.md`, `security.md`.
 
-### Example D — Setting up local MongoDB
+### Example D — Setting up the local SQL Connect Emulator
 
-Read `database.md`, `backend.md`, `security.md`, `testing.md`, `implementation.md`. Local database setup requires separately authorized implementation.
+Read the [localhost database guide](../implementation/firebase/01-localhost/01-database-and-emulators.md) and [database.md](database.md). Get separate approval before starting implementation.
 
-### Example E — Deploying to DigitalOcean
+### Example E — Preparing a production release
 
-Read `deployment.md`, `architecture.md`, `database.md`, `security.md`, `testing.md`, `implementation.md`. Deployment requires explicit authorization.
+Read the [staging sign-off guide](../implementation/firebase/02-staging/05-release-rehearsal-and-sign-off.md), [production sequence](../implementation/firebase/03-production/README.md), and [deployment.md](deployment.md). Deployment requires explicit authorization.
 
 Do not run deployment procedures merely because an example exists in README.
 
@@ -374,15 +370,14 @@ Do not run deployment procedures merely because an example exists in README.
 
 ## 22. Quick Reference and Next Steps
 
-- Documentation baseline complete (14 business rules + 10 development documents).
-- A frontend prototype exists (see section above); the backend, database, authentication and deployment do not.
-- Next work: each feature in `docs/implementation/` needs explicit project-owner authorization before it starts.
-- All changes require explicit project-owner authorization.
-- Historical note: this stop point applied before the frontend prototype. Backend, database and deployment still require authorization.
+- The existing frontend prototype uses in-memory sample records. Read the [feature index](../implementation/README.md) for current prototype evidence.
+- Begin the separately authorized full-stack work with the [Firebase roadmap](../implementation/firebase/README.md).
 
 ---
 
-## Completion Report
+## Historical Completion Report
+
+> This report records the prior documentation work. Stack and phase choices described below are superseded by the Firebase environment roadmap.
 
 - **File created/updated:** `docs/development/README.md` (rewritten/expanded).
 - **Documentation navigation:** Ten development documents indexed; fourteen business-rule documents referenced; relative links valid; AI agent reading order defined.

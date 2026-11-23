@@ -72,7 +72,7 @@ Read the relevant documents before implementation; do not load all of them by de
 - Master context: `docs/project.md`.
 - Business rules `docs/business-rules/`: `01-roles-and-permissions`, `02-sales-network-and-genealogy`, `03-ist-ost-accreditation`, `04-customer-management`, `05-vip-products-and-contracts`, `06-vip-card-issuance`, `07-finance-and-payments`, `08-commission-management`, `09-vip-membership-and-stay-points`, `10-redemption`, `11-reports-and-analytics`, `12-audit-logs-and-governance`, `13-sales-performance-reporting`, `14-igp-sales`.
 - Development specs `docs/development/`: `README`, `architecture`, `frontend`, `database`, `backend`, `security`, `testing`, `implementation`, `deployment`, `role-module-permission-matrix-proposal`.
-- Feature roadmap `docs/implementation/` (feature phases FP1 to FP16, decision log `decisions-and-gaps.md`). It is a planning record and does not authorize any work.
+- Feature roadmap [docs/implementation/](docs/implementation/README.md) (FP1 to FP16 and `decisions-and-gaps.md`). Use the [Firebase implementation roadmap](docs/implementation/firebase/README.md) for the Localhost → Staging → Production sequence. These planning records do not authorize work.
 
 Precedence: (1) latest verified explicit project-owner instructions, (2) canonical business-rule documents, (3) approved architecture/development specifications, (4) master project context, (5) verified historical material. The Git policy above overrides all of these as an agent-operation restriction.
 
@@ -96,12 +96,13 @@ Single Next.js application: **Panel-Based + Feature-Based Modular Monolith**. Ve
 | Frontend async state | TanStack Query |
 | Tests | Vitest + Testing Library |
 | REST API (future) | `/api/v1` via Next.js Route Handlers |
-| Authentication (future) | Better Auth, subject to compatibility verification |
+| Authentication (future) | Firebase Auth, verified by the Next.js server |
 | Authorization | Centralized RBAC plus record-level restrictions |
-| Database (future) | Mongoose; local MongoDB first, MongoDB Atlas later |
-| Hosting (future) | DigitalOcean Droplet, Docker Compose, HTTPS |
+| Database (future) | Firebase SQL Connect with PostgreSQL. SQL Connect Emulator locally, separate Cloud SQL for PostgreSQL instances for staging and production. |
+| File storage (future) | Firebase Storage Emulator locally, private Cloud Storage for Firebase in production |
+| Hosting (future) | Vercel for the authorized demo. Firebase App Hosting for production if staging verifies it, Cloud Run fallback in the same Google project. |
 
-Do not introduce a separate Express or NestJS backend, microservices, separate frontend/backend repositories, Kubernetes, Turborepo, unnecessary distributed infrastructure, or DigitalOcean App Platform as the default.
+Do not introduce a separate Express or NestJS backend, microservices, separate frontend/backend repositories, Kubernetes, Turborepo, or unnecessary distributed infrastructure.
 
 Source layout: `src/app/` (routes, layouts), `src/panels/` (panel UI), `src/modules/` (domain contracts, validation, rules), `src/data/` (typed contracts and mock/HTTP adapters), `src/shared/` (composed shared components, forms, hooks, providers, utilities; `src/shared/ui/` for reusable shadcn/ui primitives), `src/theme/` (design tokens). `src/server/` and `src/config/` are planned and may not exist yet. Do not restructure existing files unnecessarily, generate empty files or directories in advance, or create files outside the authorized task.
 
@@ -117,7 +118,7 @@ During the mock phase: use centralized, typed, browser-scoped in-memory mock dat
 
 **Mock business data exists in browser-scoped memory only.** A full browser refresh must restore the original seed data. Do NOT persist mock business records in localStorage, IndexedDB, persistent mock databases, or server-side singleton stores shared between users. Use TanStack Query consistently. Clear or isolate permission-sensitive query caches when changing development identities; data from one mock identity must never appear under another. Mock login is never a production authorization mechanism. Components must migrate from typed mock adapters to real HTTP adapters without rewrites.
 
-Backend (when authorized): thin Route Handlers, centralized domain services, typed contracts, Zod validation, centralized authorization with record-level filtering, server-only Mongoose access, safe structured errors, idempotency, concurrency control, and audit logging for sensitive operations. Frontend navigation restrictions never substitute for backend authorization. All MongoDB access stays server-side; critical multi-document operations need transactions on an appropriate deployment (replica set). Never run unauthorized database resets or migrations. Do not auto-migrate data from the previous Supabase system. Synthetic mock data is not production data.
+Backend (when authorized): thin Route Handlers, centralized domain services, typed contracts, Zod validation, centralized authorization with record-level filtering, and server-only SQL Connect repositories using the Firebase Admin SDK. Use safe structured errors, duplicate-request protection, concurrency control, and audit logging for sensitive operations. Frontend navigation restrictions never substitute for server authorization. Critical multi-record operations and their audit events use a verified database transaction. Rehearse approved imports before production. Never run unauthorized database resets or migrations or auto-migrate records from the previous Supabase system. Synthetic mock data is not production data.
 
 ---
 
@@ -149,9 +150,9 @@ Do not silently resolve these during development; verify canonical documents bef
   - Module versus operation permissions, and the Administrator and Super Administrator authority rule (doc 01).
   - Receipts, sale counting at 25%, commissions, allowances and clawback (docs 07, 08, 13).
   - Points under the signed Grant Welcome Gift rule (doc 09), Redemption rules (doc 10; staff prototype authorized 2026-11-17, live use still separately unauthorized), and IGP in scope (doc 14).
-  - No public card lookup, and audit and records kept indefinitely until legal advice (docs 11, 12).
+  - No public card lookup (doc 11). The November 12 interim retention rule was superseded by the working schedule below (doc 12).
 - Decided by the owner on 2026-11-22 (see `docs/implementation/fixes/05-owner-decisions-2026-11-22.md` and the dated amendments in docs 08, 10, 12, 14): IGP band digit `0` above ₱9M, `SUPERSEDED` means `Replaced`, and the Formal VIP Grant card level by price (editable); per-IST clawback offset once the Administrator records the signed addendum date; the starting points-per-night table, holiday calendar and venue cut-offs; a working ten-year retention schedule and the public Privacy Policy. Legal and the Data Protection Officer may still replace the retention and privacy wording, and Legal should confirm the clawback addendum before real payouts.
-- Still open: commission stamping under D-B (counted receipt date; month-close requirement); Better Auth/MongoDB compatibility; Atlas transaction capability for the target tier; production domain, sizing, and providers.
+- Recorded 2026-11-23 (D-B reconciled): the mock stamps commission timing from the counted receipt date — late receipts are admitted to the first open month — and payout-list preparation requires the release month closed; remaining payout walkthroughs are tracked under Stage 5/6, not as a rule gap. Technical readiness checks are tracked in the [Firebase roadmap](docs/implementation/firebase/README.md), including hosted SQL Connect transaction behavior, hosting compatibility, and production domain, location, sizing, and cost review.
 
 Unresolved commercial or infrastructure decisions do not automatically block independent frontend work.
 
@@ -168,7 +169,7 @@ Unresolved commercial or infrastructure decisions do not automatically block ind
 
 ## 7. Workflow, Authorization, and Testing
 
-Every implementation milestone, task, phase, or feature requires explicit project-owner authorization before work begins. Documentation, a roadmap, planning, or prior verification is not authorization. Do not begin any phase, subphase, or feature automatically, silently expand scope, implement later phases, activate disabled modules, provision infrastructure, or perform Git operations. The phase sequence is in `docs/development/implementation.md`; check the session snapshot (`/load`, `workflow/save-session.md`) and the code for current progress. `AGENTS.md` may be changed only when the owner authorizes it.
+Every implementation milestone, task, phase, or feature requires explicit project-owner authorization before work begins. Documentation, a roadmap, planning, or prior verification is not authorization. Do not begin any phase, subphase, or feature automatically, silently expand scope, implement later phases, activate disabled modules, provision infrastructure, or perform Git operations. Use the [Firebase environment guides](docs/implementation/firebase/README.md) and [technical phase mapping](docs/development/implementation.md). Check the session snapshot (`/load`, `workflow/save-session.md`) and the code for current progress. `AGENTS.md` may be changed only when the owner authorizes it.
 
 For every authorized task:
 

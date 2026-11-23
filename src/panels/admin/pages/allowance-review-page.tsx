@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useAllowanceReviews, useOperation, useSaveAllowanceReview } from "@/data/business-queries";
+import { useCallback, useMemo, useState } from "react";
+import { useAllowanceReviews, useAssembledAllowanceInputs, useOperation, useSaveAllowanceReview } from "@/data/business-queries";
 import { calculateAllowances, SHIPPED_ALLOWANCE_TERMS, type AllowanceReview, type AllowanceStretch, type AllowanceTotals } from "@/modules/commissions/allowances";
+import type { LeaderAllowanceAssembly } from "@/modules/commissions/allowance-assembly";
 import { AdminSection, AdminStatCard, AdminStatGrid, StepBlock } from "@/shared/components/admin";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { Money } from "@/shared/components/modern/money";
@@ -53,6 +54,9 @@ function readStretch(input: Inputs): AllowanceStretch {
   };
 }
 
+/** Centavos back to a form amount the MoneyField parses, without floating-point arithmetic. */
+const centavosInput = (value: number) => `${Math.trunc(value / 100)}.${String(value % 100).padStart(2, "0")}`;
+
 export function AllowanceReviewPanel() {
   const allowed = useOperation("commission.approve");
   const canWithhold = useOperation("commission.rates.manage");
@@ -63,6 +67,8 @@ export function AllowanceReviewPanel() {
   const [month, setMonth] = useState("");
   const [qualifying, setQualifying] = useState<Inputs>(empty);
   const [extended, setExtended] = useState<Inputs>(empty);
+  const [copiedAssembly, setCopiedAssembly] = useState(false);
+  const [splitConfirmed, setSplitConfirmed] = useState(false);
   const [result, setResult] = useState<ReturnType<typeof calculateAllowances>>();
   const [error, setError] = useState<string>();
   const [withholdingDraft, setWithholdingDraft] = useState<{ key: string; reason: string }>();
@@ -71,6 +77,8 @@ export function AllowanceReviewPanel() {
   const [company, setCompany] = useState({ ba: "", pa: "", pb: "" });
   const [differenceDraft, setDifferenceDraft] = useState<{ key: string; reason: string }>();
   const [detailId, setDetailId] = useState<string | null>(null);
+  const monthValid = MONTH_PATTERN.test(month);
+  const assembly = useAssembledAllowanceInputs(month, allowed && monthValid);
   const detail = detailId ? query.data?.reviews.find(({ id }) => id === detailId) : undefined;
   const reviewKey = `${month}-${memberId}`;
   const priorReview = query.data?.reviews.findLast((item) => item.month === month && item.memberId === memberId);
@@ -105,6 +113,45 @@ export function AllowanceReviewPanel() {
     { header: "Performance Bonus", cell: ({ row }) => <Money value={row.original.result.pbCentavos} /> },
   ], []);
 
+  function resetCopiedFigures() {
+    setResult(undefined);
+    setError(undefined);
+    setSplitConfirmed(false);
+    if (!copiedAssembly) return;
+    setQualifying(empty);
+    setExtended(empty);
+    setCopiedAssembly(false);
+  }
+
+  /** Copy starts in Qualifying. Saving requires explicit review of both periods. */
+  const copyAssembly = useCallback((row: LeaderAllowanceAssembly) => {
+    setMemberId(row.memberId);
+    setQualifying({
+      days: String(row.eligibleDays),
+      team: centavosInput(row.teamTcpCentavos),
+      collections: centavosInput(row.teamCollectionsCentavos),
+      assumed: centavosInput(row.assumedCreditCentavos),
+    });
+    setExtended({ days: "0", team: "", collections: "", assumed: "" });
+    setCopiedAssembly(true);
+    setSplitConfirmed(false);
+    setResult(undefined);
+    toast.success("Assembled month figures copied. Split them into the Qualifying and Extended stretches.");
+  }, []);
+
+  const assemblyColumns = useMemo<ColumnDef<LeaderAllowanceAssembly, unknown>[]>(() => [
+    { header: "Leader", cell: ({ row }) => (
+      <span className="tw:grid">
+        <span>{row.original.memberName} · {row.original.position}</span>
+        {row.original.vacantWholeMonth ? <span className="tw:text-xs tw:text-muted-foreground">Vacant the whole month: earns no allowance</span> : null}
+      </span>
+    ) },
+    { header: "Eligible Days", cell: ({ row }) => <span>{row.original.eligibleDays} of {assembly.data?.daysInMonth ?? ""}</span> },
+    { header: "Team Confirmed Value", cell: ({ row }) => <Money value={row.original.teamTcpCentavos} /> },
+    { header: "Month Collections", cell: ({ row }) => <Money value={row.original.teamCollectionsCentavos} /> },
+    { header: "Copy", cell: ({ row }) => <Button type="button" variant="outline" onClick={() => copyAssembly(row.original)}>Copy</Button> },
+  ], [assembly.data?.daysInMonth, copyAssembly]);
+
   async function calculate(persist = false) {
     if (persist && save.isPending) return;
     setResult(undefined);
@@ -118,6 +165,7 @@ export function AllowanceReviewPanel() {
       const qualifyingValues = readStretch(qualifying);
       const extendedValues = readStretch(extended);
       if (persist) {
+        if (copiedAssembly && !splitConfirmed) throw new Error("Confirm the Qualifying/Extended split before saving copied figures.");
         let companyFigures: AllowanceTotals | null = null;
         if (companyEntered) {
           if (!companyTotals) throw new Error("Enter all three company spreadsheet amounts, including any zeros.");
@@ -145,15 +193,26 @@ export function AllowanceReviewPanel() {
       <div className="tw:flex tw:flex-col tw:gap-6">
         <StepBlock step={1} title="Month and Leader" connector>
           <div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:sm:grid-cols-2">
-            <MonthField label="Month" required value={month} onChange={(value) => { setMonth(value); setResult(undefined); }} />
-            <SelectField label="Internal Seller (IST) leader" required value={memberId} onChange={(value) => { setMemberId(value); setResult(undefined); }}
+            <MonthField label="Month" required value={month} onChange={(value) => { if (value !== month) resetCopiedFigures(); setMonth(value); }} />
+            <SelectField label="Internal Seller (IST) leader" required value={memberId} onChange={(value) => { if (value !== memberId) resetCopiedFigures(); setMemberId(value); }}
               options={(query.data?.members ?? []).map(({ id, name, position }) => ({ value: id, label: `${name} · ${position}` }))} />
           </div>
         </StepBlock>
+        {monthValid ? (
+          <AdminSection title="Assembled Month Figures">
+            <QueryState isLoading={assembly.isLoading} error={assembly.error}>
+              <DataTable data={assembly.data?.leaders ?? []} columns={assemblyColumns} getRowId={(row) => row.memberId} caption="Assembled Month Figures" emptyText="No Internal Seller leaders found." />
+              <p className="tw:text-sm tw:text-muted-foreground">Assembled from the month&apos;s business data (doc 08 section 15):
+              Closed Deal value and collections per leader, with vacant seats rolled up. Copy fills the form; split the
+              figures into the Qualifying and Extended stretches, enter assumed collection credit, and confirm the
+              appointment, window and engagement checks against the company spreadsheet.</p>
+            </QueryState>
+          </AdminSection>
+        ) : null}
         <StepBlock step={2} title="Figures for Each Period" description="Fill in both periods. Leave a field empty if the amount is zero." connector>
           <div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:lg:grid-cols-2">
-            <Stretch title="Qualifying Period" value={qualifying} onChange={(value) => { setQualifying(value); setResult(undefined); }} />
-            <Stretch title="Extended Period" value={extended} onChange={(value) => { setExtended(value); setResult(undefined); }} />
+            <Stretch title="Qualifying Period" value={qualifying} onChange={(value) => { setQualifying(value); setSplitConfirmed(false); setResult(undefined); }} />
+            <Stretch title="Extended Period" value={extended} onChange={(value) => { setExtended(value); setSplitConfirmed(false); setResult(undefined); }} />
           </div>
         </StepBlock>
         <StepBlock step={3} title="Company Spreadsheet Figures (Optional)" description="Type the amounts from the company Excel file so the system can compare them.">
@@ -171,6 +230,12 @@ export function AllowanceReviewPanel() {
               <p className="tw:text-sm tw:font-medium">Withhold basic allowance this month</p>
             </div>
             {withholdOn ? <TextField label="Reason for withholding" required value={withholding} onChange={(reason) => { setWithholdingDraft({ key: reviewKey, reason }); setResult(undefined); }} /> : null}
+          </div>
+        ) : null}
+        {copiedAssembly ? (
+          <div className="tw:flex tw:items-center tw:gap-3">
+            <Switch checked={splitConfirmed} onCheckedChange={(on) => { setSplitConfirmed(on); setResult(undefined); }} aria-label="The Qualifying/Extended split above is correct" />
+            <p className="tw:text-sm tw:font-medium">The Qualifying/Extended split above is correct</p>
           </div>
         ) : null}
         <div className="tw:flex tw:flex-wrap tw:gap-2">

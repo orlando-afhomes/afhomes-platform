@@ -54,7 +54,7 @@ export function PeriodClosePanel() {
       {canClose ? (
         <section aria-label="Close a month" className="tw:flex tw:flex-wrap tw:items-end tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-4">
           <MonthField label="Month" value={month} onChange={setMonth} />
-          <Button variant="destructive" disabled={!month || month > latest || close.isPending || months.data?.some((item) => item.month === month)} onClick={() => confirmRun({
+          <Button variant="destructive" loading={close.isPending} disabled={!month || month > latest || close.isPending || months.data?.some((item) => item.month === month)} onClick={() => confirmRun({
             title: "Close This Month?",
             description: `The totals for ${month} will be locked.`,
             confirmText: "Close Month", tone: "destructive",

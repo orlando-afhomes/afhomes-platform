@@ -138,4 +138,56 @@ describe("reconciliation", () => {
     expect(periodRange("2026-02")).toEqual({ from: "2026-02-01", to: "2026-02-28" });
     expect(validateReconciliationDecision({ period: "bad", measure: "sales_value", workbookCentavos: 0, decision: "signed_off" }, 0)).toMatch(/month/);
   });
+
+  async function readyToSwitch(store: ReturnType<typeof createMockStore>, month: string) {
+    const admin = createMockRepositories(store, () => getDevIdentity("dev-admin"));
+    const { members } = await admin.commissions.allowanceReviews();
+    const stretch = { days: 0, teamTcpCentavos: 0, collectionsCentavos: 0, assumedCreditCentavos: 0 };
+    for (const member of members) {
+      await admin.commissions.saveAllowanceReview({
+        month, memberId: member.id, qualifying: { ...stretch, days: 30 }, extended: stretch,
+        workbook: { baCentavos: 0, paCentavos: 0, pbCentavos: 0 }, workbookDifferenceReason: "Seed demo: no allowance due.",
+      });
+    }
+    await admin.sales.closeMonth(month);
+    const totals = await admin.reconciliation.sourceTotals(month);
+    for (const total of totals) {
+      await admin.reconciliation.record({ period: month, measure: total.measure, workbookCentavos: total.totalCentavos, decision: "signed_off" });
+    }
+    return { members: members.length, measures: totals.length };
+  }
+
+  it("refuses the switch before the month closes and for anyone but the Super Administrator", async () => {
+    const { store, repos } = reposFor();
+    const status = await repos.reconciliation.monthSwitchStatus("2026-10");
+    expect(status).toMatchObject({ month: "2026-10", closed: false, signOff: null, ready: false });
+    await expect(repos.reconciliation.recordMonthSwitch("2026-10")).rejects.toThrow(/Super Administrator/);
+    const superAdmin = reposFor(store, "dev-super-admin").repos;
+    await expect(superAdmin.reconciliation.recordMonthSwitch("2026-10")).rejects.toThrow(/Close the month/);
+  });
+
+  it("lists every unexplained difference, then signs off once with an audit event", async () => {
+    const { store, repos } = reposFor();
+    await repos.sales.closeMonth("2026-10");
+    const superAdmin = reposFor(store, "dev-super-admin").repos;
+    await expect(superAdmin.reconciliation.recordMonthSwitch("2026-10")).rejects.toThrow(/cannot be signed off yet/);
+    const blocked = await superAdmin.reconciliation.monthSwitchStatus("2026-10");
+    expect(blocked.closed).toBe(true);
+    expect(blocked.ready).toBe(false);
+    expect(blocked.unexplained.length).toBeGreaterThan(0);
+
+    const readyRepos = reposFor(createMockStore(), "dev-super-admin");
+    const { members, measures } = await readyToSwitch(readyRepos.store, "2026-09");
+    const before = await readyRepos.repos.reconciliation.monthSwitchStatus("2026-09");
+    expect(before).toMatchObject({ closed: true, ready: true, signOff: null });
+    expect(before.unexplained).toEqual([]);
+    const signOff = await readyRepos.repos.reconciliation.recordMonthSwitch("2026-09");
+    expect(signOff).toMatchObject({ month: "2026-09", actorId: "dev-super-admin", checkedMeasures: measures, checkedLeaders: members });
+    expect(signOff.recordedAt).toBeTruthy();
+    expect((await readyRepos.repos.reconciliation.monthSwitchStatus("2026-09")).signOff).toEqual(signOff);
+    // A second sign-off returns the same record instead of recording twice.
+    expect(await readyRepos.repos.reconciliation.recordMonthSwitch("2026-09")).toEqual(signOff);
+    expect(readyRepos.store.auditEvents.filter((event) => event.action === "PARALLEL_RUN_SWITCH_SIGNED_OFF")).toHaveLength(1);
+    expect(readyRepos.store.auditEvents.find((event) => event.action === "PARALLEL_RUN_SWITCH_SIGNED_OFF")).toMatchObject({ entityType: "reconciliation", entityId: "2026-09" });
+  });
 });

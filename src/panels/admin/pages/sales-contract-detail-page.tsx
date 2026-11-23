@@ -17,7 +17,7 @@ import { ContractDetailTabs, type ContractDetailTab } from "../components/contra
 import { actionButtonVariant, approveDealConfirm, buildContractMenuProps, canConfirmNonStandard, confirmNonStandardConfirm, needsNonStandardApproval, orderActionItems } from "../actions/sales-contract-actions";
 import { ContractStatusCard, ContractSummaryCard } from "../components/contract-status-cards";
 import { ContractCommissionRateNotice, ContractHistorySection, ContractLedgerSection, ContractMilestonesSection, ContractNonStandardSection, ContractPageFrame, ContractPaymentsSection, ContractScheduleSection, ContractTermsSection, ContractTiles } from "../components/contract-sections";
-import { PaymentSubmitDialog, usePaymentActions } from "../components/payment-actions";
+import { PaymentSubmitDialog, usePaymentActions, useUnmatchedReceiptActions } from "../components/payment-actions";
 import { humanize } from "@/shared/lib/humanize";
 
 const CRUMBS = [{ label: "Sales" }, { label: "Contracts", href: "/admin/sales?tab=contracts" }];
@@ -27,6 +27,7 @@ const BUTTON = "tw:min-h-11 tw:sm:min-h-8";
 export function SalesContractDetailPage({ contractId }: { contractId: string }) {
   const action = useContractAction();
   const paymentActions = usePaymentActions();
+  const unmatchedReceipts = useUnmatchedReceiptActions();
   const { identity } = useDevIdentity();
   const { confirmRun, dialog } = useConfirmRun();
   const canPrepare = useOperation("contracts.prepare");
@@ -137,10 +138,16 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
           {tab === "schedule" ? <ContractScheduleSection record={record} /> : null}
           {tab === "payments" ? (
             <>
+              {unmatchedReceipts.canRecord ? (
+                <div className="tw:flex tw:justify-end">
+                  <Button type="button" variant="outline" className={BUTTON} onClick={unmatchedReceipts.openIntake}>Record unmatched receipt</Button>
+                </div>
+              ) : null}
               <ContractPaymentsSection record={record} actions={canSubmitPayment ? {
                 rowActions: (payment) => canCorrectPayment(identity, payment.submittedBy) ? paymentActions.rowActions(payment) : null,
               } : undefined} />
               {canSubmitPayment ? paymentActions.dialogs : null}
+              {unmatchedReceipts.dialogs}
             </>
           ) : null}
           {tab === "history" ? (

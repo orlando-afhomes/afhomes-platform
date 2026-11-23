@@ -94,6 +94,8 @@ export function CustomersTab() {
   const totalCustomers = rows.length;
   const submittedCount = rows.filter((customer) => customer.status === "submitted").length;
   const draftCount = rows.filter((customer) => customer.status === "draft").length;
+  // S5: an empty directory reads differently from a filter with no matches.
+  const hasCustomers = (customers.data ?? []).length > 0;
 
   const columns = useMemo<ColumnDef<Customer, unknown>[]>(
     () => [
@@ -129,12 +131,12 @@ export function CustomersTab() {
         <AdminStatCard label="Draft Records" value={draftCount.toLocaleString()} icon={FileText} tone="accent" loading={customers.isLoading} error={customers.error} />
       </AdminStatGrid>
       <AdminFilterBar search={search} onSearch={setSearch} searchLabel="Search customers" filters={[{ label: "Customer status filter", value: status, onChange: setStatus, options: STATUS_OPTIONS }]} />
-      <QueryState isLoading={customers.isLoading} error={customers.error}>
+      <QueryState isLoading={customers.isLoading} error={customers.error} onRetry={() => void customers.refetch()}>
         <DataTable
           data={rows}
           columns={columns}
           getRowId={(row) => row.id}
-          emptyText="No customers match."
+          emptyText={hasCustomers ? "No customers match the current search or filter." : "No customers yet."}
           caption="Customers"
           orderBy={CUSTOMER_ORDER}
           onRowOpen={(row) => router.push(`/admin/customers/${row.id}`)}

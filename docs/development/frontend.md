@@ -33,10 +33,10 @@ It is specific to AFHomes, not a generic React guide.
 | Mock storage | Centralized browser-scoped in-memory store |
 | REST integration | `/api/v1` |
 | Backend | Server-side services within the Next.js application |
-| Production database | MongoDB Atlas through the backend |
-| Authentication | Better Auth target direction, subject to verification |
+| Production database | PostgreSQL through server-side Firebase SQL Connect |
+| Authentication | Firebase Auth with authoritative server-side session and permission checks |
 | Authorization | Centralized RBAC and record-level policies |
-| Deployment | DigitalOcean Droplet with Docker Compose and HTTPS |
+| Hosting | Vercel for the authorized demo, Firebase App Hosting or staging-verified Cloud Run for production |
 
 Next.js App Router is the approved target frontend framework. The repository's current implementation status must be verified separately; absence of installed application code does not change the approved decision.
 
@@ -99,10 +99,10 @@ Example: `src/app/admin/customers/page.tsx` composes `src/panels/admin/pages/cus
 | Panel features | Shared UI, domain contracts, client-safe adapters | Server-only infrastructure |
 | Shared UI | Generic types, UI utilities | Domain-specific finance/customer modules |
 | Domain modules | Pure types, business rules, contracts | Browser APIs, React components, database drivers |
-| Client adapters | Client-safe repository contracts, HTTP client | Mongoose, database credentials |
+| Client adapters | Client-safe repository contracts, HTTP client | Firebase Admin SDK, server-only SQL Connect operations, credentials |
 | Server infrastructure | Domain contracts, database and auth integrations | Client-only presentation components |
 
-Prohibit circular dependencies, shared UI importing feature pages, domain logic importing panel components, browser components importing Mongoose, duplicate business logic, hardcoded secrets, uncontrolled cross-panel internal imports.
+Prohibit circular dependencies, shared UI importing feature pages, domain logic importing panel components, client imports of privileged database operations, duplicate business logic, hardcoded secrets, and uncontrolled cross-panel internal imports.
 
 ---
 
@@ -170,7 +170,7 @@ Feature-based organization (see example in architecture.md). Pages compose featu
 
 ### 14.0 Foundation (M1-A)
 
-- Packages: `@base-ui/react`, `class-variance-authority`, `clsx`, `tailwind-merge`, `sonner`, `tailwindcss` 4 with `@tailwindcss/postcss`, `tw-animate-css`. TanStack Table 8.21.3 is installed and used by `DataTable`. Every confirmation, discard prompt and notice pop-up uses SweetAlert2 through the shared `AppAlert` (`src/shared/components/modern/app-alert.tsx`) and its wrappers `ConfirmDialog`, `NoticeDialog` and `useConfirmRun` (owner decision 2026-11-12). Form dialogs with fields stay on the shadcn Dialog; toasts stay on Sonner. Feature code never calls SweetAlert2 directly. The shadcn `alert-dialog` primitive remains in `src/shared/ui/` but is no longer used by screens.
+- Packages: `@base-ui/react`, `class-variance-authority`, `clsx`, `tailwind-merge`, `sonner`, `tailwindcss` 4 with `@tailwindcss/postcss`, `tw-animate-css`. TanStack Table 8.21.3 is installed and used by `DataTable`. Every confirmation, discard prompt and notice pop-up uses SweetAlert2 through the shared `AppAlert` (`src/shared/components/modern/app-alert.tsx`) and its wrappers `ConfirmDialog`, `NoticeDialog` and `useConfirmRun` (owner decision 2026-11-12). Form dialogs with fields stay on the shadcn Dialog; toasts stay on Sonner. S6 (owner decision 2026-11-23): `useConfirmRun` stays the confirmation convention for future Admin work; `useActionRunner` is not adopted. Feature code never calls SweetAlert2 directly. The shadcn `alert-dialog` primitive remains in `src/shared/ui/` but is no longer used by screens.
 - Configuration: `postcss.config.mjs`, `components.json` (style `base-nova`; aliases `@/shared/ui`, `@/shared/lib/utils`), `src/shared/lib/utils.ts` (`cn`). Primitives live in `src/shared/ui/`; compose them in `src/shared/components/`.
 - Prefix: Tailwind is namespaced with `tw` (`tw:flex`, `tw:size-4`) in both `globals.css` and `components.json`. Unmigrated screens contain leftover utility-looking class names (for example `size-4` on icons) that were inert; unprefixed utilities restyled them during M1-A verification. Always write utilities with the prefix in new code.
 - Preflight shims: generated shadcn components assume Tailwind's preflight. Where that mattered, the generated file carries a small shim and this list must be kept current: `button.tsx` adds `tw:bg-transparent` (otherwise link and ghost buttons show the browser button background) and `table.tsx` adds `tw:border-collapse` (otherwise row borders do not render). Re-apply both after `shadcn add --overwrite`.
@@ -285,9 +285,9 @@ Frontend communicates through typed data access contracts. Document repository i
 
 Mock data flow: Feature UI → Frontend Hook/Application Interface → Repository Contract → Mock Adapter → Centralized In-Memory Mock Store.
 
-Production API flow: Feature UI → Frontend Hook/API Client → REST `/api/v1` → Authentication → Authorization → Domain Application Service → Mongoose Repository → MongoDB Atlas.
+Production API flow: feature UI → frontend hook and HTTP adapter → REST `/api/v1` → verified Firebase session → AFHomes authorization → domain service → server-side SQL Connect repository → PostgreSQL.
 
-Frontend must not directly connect to MongoDB.
+Frontend components use the AFHomes API to access protected business records.
 
 ### Mock-to-real migration
 
@@ -323,7 +323,7 @@ Payment submission UI must not falsely indicate Finance has verified the payment
 
 ## 27. Authentication-Aware Frontend
 
-Support authentication through approved server-side architecture. Better Auth is target direction, with actual compatibility subject to verification. Document login screens, logout, session awareness, protected navigation, session loading, expired sessions, unauthorized screens, deactivated/suspended accounts, role selection where authorized, security-sensitive interactions. Do not write independent competing frontend authentication system. Do not treat development demo accounts as production credentials.
+Use Firebase Auth with the approved server-side session flow. Cover sign-in, logout, protected navigation, loading, expired sessions, unauthorized screens, disabled accounts, and authorized role selection. Keep demo identities separate from real authentication and enforce access through the AFHomes server.
 
 ---
 
@@ -369,7 +369,7 @@ Frontend behavior for payment proofs, customer ID documents, accreditation photo
 
 ## 33. Frontend Error Handling
 
-Consistent error presentation: validation, authentication, authorization, not found, duplicate records, invalid business-state transitions, network failures, timeouts, expired sessions, temporary unavailability, unexpected API failures. User-friendly messages; avoid exposing stack traces, MongoDB details, server secrets, sensitive backend error info. Appropriate recovery actions. Do not show success before authoritative operation succeeds.
+Present validation errors, authentication and authorization errors, missing records, duplicate requests, invalid state transitions, timeouts, expired sessions, unavailable dependencies, and unexpected API failures consistently. Show safe recovery options and hide database details, stack traces, and secrets. Show success after the authoritative operation succeeds.
 
 ---
 
@@ -409,7 +409,7 @@ Frontend consumes versioned API `/api/v1`. Document integration architecture for
 
 ### 39.1 Integration migration
 
-During initial frontend phase: use mock adapters. During future approved backend integration: replace with real API adapters. Preserve frontend feature interfaces where practical. Do not hardcode MongoDB or Mongoose into frontend components.
+Use mock adapters for the prototype. Integrate real API adapters in the approved module sequence while keeping feature interfaces stable. Privileged Firebase and SQL Connect code belongs on the server.
 
 ### 39.2 Secure server integration
 
@@ -503,7 +503,7 @@ Align with `implementation.md`. Phase 0 documentation; Phase 1 frontend foundati
 9. Thin route composition.
 10. Shared domain contracts.
 11. No business rules duplicated unnecessarily in components.
-12. No MongoDB access from browser components.
+12. Protected business records are accessed through the AFHomes API.
 13. No client-side production secrets.
 14. Centralized mock store during frontend-first development.
 15. No localStorage persistence for mock business data.
@@ -539,7 +539,7 @@ Align with `implementation.md`. Phase 0 documentation; Phase 1 frontend foundati
 
 - `docs/development/architecture.md` — system architecture.
 - `docs/development/backend.md` — backend architecture.
-- `docs/development/database.md` — MongoDB Atlas.
+- [Database guide](database.md) for PostgreSQL and server-side SQL Connect.
 - `docs/development/security.md` — security.
 - `docs/development/testing.md` — testing.
 - `docs/development/implementation.md` — phases.

@@ -144,7 +144,7 @@ Recorded in the "Owner rulings amendment (2026-11-12, follow-ups)" section of ea
 The owner answered these directly on 2026-11-12. Recorded in the "Owner rulings amendment (2026-11-12, payout day)" section of doc 08.
 
 - **D-A, payout day.** A VIP commission payout may be recorded from the first day of the month after the month in which net verified collections first reached 40%. Doc 08 says the release is paid in that month's month-end payout, made after the month is closed. Until a month-close feature exists, the start of the next calendar month stands in for month close. The 7-day wait is removed from the code.
-- **D-B, which date sets the month.** For now the month is set by the verification (approval) date of the payment that reached 40%, as the code already does. Doc 13 (OCT O3) stamps Stage 1 by the receipt's own date. Aligning the code with doc 13 is a separate task; the rule is not changed.
+- **D-B, which date sets the month (historical interim decision).** The verification date was previously used in code. The counted receipt date in doc 13 is now reconciled in the prototype. See the 2026-11-23 entry below.
 
 ### Owner answers to the audit questions (2026-11-12)
 
@@ -255,9 +255,17 @@ The company papers in `Documents\AFHomes Document\Business Rules` were searched 
 - **Points table, holidays and cut-offs (doc 10):** adopted starting table, calendar to December 2027, and 48 h Hotel and 72 h Resort cut-offs; an Administrator can publish a new dated version.
 - **Retention and privacy (doc 12):** working ten-year schedule and a public Privacy Policy at `/privacy`; Legal and the Data Protection Officer may replace them.
 
-### Still open
+### Reconciled 2026-11-23
 
-- **Commission stamping (D-B):** Stage 1 uses the counted receipt date under doc 13 (OCT O3). Monthly payout lists require the month to be closed.
+- **Commission stamping (D-B):** Stage 1 uses the counted receipt date under doc 13 (OCT O3), with late receipts posted to the first open month. Monthly payout-list preparation requires the release month to be closed.
+
+## Firebase Stack Transition
+
+The current [implementation roadmap](firebase/README.md) supersedes the earlier MongoDB/Mongoose, Better Auth, and DigitalOcean/Docker Compose deployment direction. The planned replacements are Firebase Auth, server-only SQL Connect with PostgreSQL, and private Cloud Storage for Firebase. The mock demo may use Vercel. Production uses Firebase App Hosting if verified in staging, with Cloud Run in the same Google project as the fallback.
+
+Build and test in Localhost → Staging → Production order, with an optional early sample-data preview. Release all approved modules together after full staging sign-off. Import approved business records only. Existing business decisions and per-feature authorization requirements continue to govern.
+
+Open **technical** checks are hosted SQL Connect concurrency and rollback, authentication on the chosen runtime, App Hosting qualification, and approved production region, domain, capacity, costs, and recovery settings. The earlier stack's compatibility checks are historical. Trial and approval evidence belongs in the corresponding environment guide.
 
 ## Decisions (G01 to G12)
 

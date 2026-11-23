@@ -7,6 +7,7 @@ import { useState } from "react";
 import { AppToaster } from "@/shared/components/modern/app-toaster";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { MockReferenceListRepository } from "@/data/mock/reference-list-repository";
 import { VipProductsAreaPage } from "./pages/vip-products-page";
 
 vi.mock("next/navigation", async (importOriginal) => ({
@@ -16,8 +17,8 @@ vi.mock("next/navigation", async (importOriginal) => ({
 
 beforeEach(() => window.history.replaceState(null, "", "/admin/vip-products?tab=lists"));
 
-function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
-  const [queryClient] = useState(() => new QueryClient());
+function TestWrapper({ identityId = "dev-admin", client }: { identityId?: string; client?: QueryClient }) {
+  const [queryClient] = useState(() => client ?? new QueryClient());
   return (
     <QueryClientProvider client={queryClient}>
       <MockStoreProvider>
@@ -34,6 +35,7 @@ afterEach(() => {
   cleanup();
   toast.dismiss();
   window.history.replaceState(null, "", "/");
+  vi.restoreAllMocks();
 });
 
 type User = ReturnType<typeof userEvent.setup>;
@@ -109,5 +111,16 @@ describe("lists page", () => {
   it("is not available to a role without the lists operation", async () => {
     render(<TestWrapper identityId="dev-finance" />);
     expect(await screen.findByText(/does not have access to Settings/)).toBeInTheDocument();
+  });
+
+  it("shows a load error with retry instead of an empty list when the entries query fails", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockReferenceListRepository.prototype, "list").mockRejectedValueOnce(new Error("Lists failed."));
+    render(<TestWrapper client={new QueryClient({ defaultOptions: { queries: { retry: false } } })} />);
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Lists failed\./)).toBeInTheDocument();
+    expect(screen.queryByRole("table")).toBeNull();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("VIP Privilege Card Holder")).toBeInTheDocument();
   });
 });

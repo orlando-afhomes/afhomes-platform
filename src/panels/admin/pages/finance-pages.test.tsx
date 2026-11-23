@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { createMockStore, type MockStore } from "@/data/mock/seed";
 import { FinanceAreaPage } from "./finance-area-page";
 import { CommissionsAreaPage } from "./commissions-area-page";
 import CollectionsRoute from "@/app/admin/finance/collections/page";
@@ -21,11 +22,11 @@ vi.mock("next/navigation", async (importOriginal) => ({
   redirect: navigation.redirect,
 }));
 
-function Wrapper({ children, identityId }: { children: React.ReactNode; identityId: string }) {
+function Wrapper({ children, identityId, store }: { children: React.ReactNode; identityId: string; store?: MockStore }) {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   return (
     <QueryClientProvider client={queryClient}>
-      <MockStoreProvider>
+      <MockStoreProvider store={store}>
         <DevIdentityProvider initialIdentityId={identityId}>{children}</DevIdentityProvider>
       </MockStoreProvider>
     </QueryClientProvider>
@@ -40,9 +41,9 @@ afterEach(() => {
   window.history.replaceState(null, "", "/");
 });
 
-function show(page: ReactElement, tab = "", identityId = "dev-finance") {
+function show(page: ReactElement, tab = "", identityId = "dev-finance", store?: MockStore) {
   navigation.search = tab ? `tab=${tab}` : "";
-  return render(<Wrapper identityId={identityId}>{page}</Wrapper>);
+  return render(<Wrapper identityId={identityId} store={store}>{page}</Wrapper>);
 }
 
 const tabNames = () => screen.getAllByRole("tab").map((tab) => tab.textContent);
@@ -136,8 +137,60 @@ describe("Finance tables stay short", () => {
   });
 });
 
-describe("Collections on payment hold", () => {
-  it("keeps only memberships on hold with the On payment hold option", async () => {
+describe("Unmatched receipts (G1)", () => {
+  function unmatchedStore() {
+    const store = createMockStore();
+    store.unmatchedReceipts.push({
+      id: "unr-panel-1",
+      amountCentavos: 1550000,
+      method: "Bank Transfer",
+      paidDate: "2026-11-20",
+      orNumber: "BT-PANEL-1",
+      evidenceFileName: null,
+      reason: "Panel test: no matching payment.",
+      submittedBy: "dev-clerk",
+      submittedAt: "2026-11-20T00:00:00.000Z",
+      status: "unmatched",
+      matchedPaymentId: null,
+      decisionReason: null,
+      decidedBy: null,
+      decidedAt: null,
+      history: [{ at: "2026-11-20T00:00:00.000Z", actorId: "dev-clerk", event: "UNMATCHED_RECEIPT_SUBMITTED", note: "Panel test: no matching payment." }],
+    });
+    return store;
+  }
+
+  it("lists unmatched receipts with their reason in the exceptions tab", async () => {
+    const user = userEvent.setup();
+    show(<FinanceAreaPage />, "", "dev-finance", unmatchedStore());
+    await screen.findByRole("table", { name: "All payments" });
+    await user.click(screen.getByRole("combobox", { name: "Show" }));
+    await user.click(await screen.findByRole("option", { name: "Exceptions" }));
+    const table = await screen.findByRole("table", { name: "Unmatched receipts" });
+    expect(within(table).getByRole("row", { name: /BT-PANEL-1/ })).toHaveTextContent("Panel test: no matching payment.");
+    await user.click(within(table).getByRole("button", { name: "Match receipt BT-PANEL-1" }));
+    expect(await screen.findByRole("dialog", { name: "Match Unmatched Receipt" })).toBeInTheDocument();
+  });
+
+  it("records an unmatched receipt from the exceptions tab with one request per click", async () => {
+    const user = userEvent.setup();
+    show(<FinanceAreaPage />, "", "dev-admin", unmatchedStore());
+    await screen.findByRole("table", { name: "All payments" });
+    await user.click(screen.getByRole("combobox", { name: "Show" }));
+    await user.click(await screen.findByRole("option", { name: "Exceptions" }));
+    await screen.findByRole("table", { name: "Unmatched receipts" });
+    await user.click(screen.getByRole("button", { name: "Record unmatched receipt" }));
+    const dialog = await screen.findByRole("dialog", { name: "Record Unmatched Receipt" });
+    await user.type(within(dialog).getByLabelText(/^Amount/), "155");
+    await user.type(within(dialog).getByLabelText(/^OR \/ bank reference number/), "BT-PANEL-2");
+    await user.type(within(dialog).getByLabelText(/^Why no match was found/), "Panel test intake.");
+    const submit = within(dialog).getByRole("button", { name: "Record Receipt" });
+    await user.click(submit);
+    expect(await within(await screen.findByRole("table", { name: "Unmatched receipts" })).findByRole("row", { name: /BT-PANEL-2/ })).toBeInTheDocument();
+  });
+});
+
+describe("Collections on payment hold", () => {  it("keeps only memberships on hold with the On payment hold option", async () => {
     const user = userEvent.setup();
     show(<FinanceAreaPage />, "collections");
     const table = await screen.findByRole("table", { name: "Collections" });

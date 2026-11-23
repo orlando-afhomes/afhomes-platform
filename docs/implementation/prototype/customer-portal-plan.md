@@ -70,10 +70,10 @@
 - Promo use records a reward reference and the points cost used at the time of the transaction. Retain the current ledger history and do not derive rewards from a hard-coded service list.
 - Keep the existing promo earn rate and Grant Stay Points model separate. Do not add numeric sample reward costs.
 
-- [ ] **Step 1: Write failing tests.** Add tests that (a) a reward cannot be used without a configured cost and eligible outlet, (b) a use consumes the configured cost and records its reward reference, and (c) an approved-bill earn/refund still changes only Promo Points and never Grant Stay Points.
+- [x] **Step 1: Write failing tests.** Add tests that (a) a reward cannot be used without a configured cost and eligible outlet, (b) a use consumes the configured cost and records its reward reference, and (c) an approved-bill earn/refund still changes only Promo Points and never Grant Stay Points.
 - [ ] **Step 2: Verify RED.** Run `npx vitest run src/data/mock/promo-repository.test.ts src/modules/promos/rules.test.ts`. Expected: the new reward/cost assertions fail because reward records are not yet modeled.
-- [ ] **Step 3: Implement the minimal reward model and repository behavior.** Keep costs data-driven; require a configured positive whole-point cost before use.
-- [ ] **Step 4: Verify GREEN.** Rerun the targeted tests and preserve the existing tests for approved-bill earning, one earn per bill, refunds, separate wallets, and insufficient balance.
+- [x] **Step 3: Implement the minimal reward model and repository behavior.** Keep costs data-driven; require a configured positive whole-point cost before use.
+- [x] **Step 4: Verify GREEN.** Rerun the targeted tests and preserve the existing tests for approved-bill earning, one earn per bill, refunds, separate wallets, and insufficient balance.
 
 ### Task 2: Add public Promo Offer lifecycle and rendering
 
@@ -86,10 +86,10 @@
 - Promo admin supports Draft, Preview, and explicit Publish. Preview does not publish.
 - A public offer is derived from a published, date-valid promo with complete public terms and configured reward costs. Use a public-field projection; do not expose internal configuration or customer data.
 
-- [ ] **Step 1: Write failing tests.** Assert that draft, expired, or incomplete promos are absent from the public offer list; a valid published promo appears with its named reward and point cost; the preview action does not change public visibility.
+- [x] **Step 1: Write failing tests.** Assert that draft, expired, or incomplete promos are absent from the public offer list; a valid published promo appears with its named reward and point cost; the preview action does not change public visibility.
 - [ ] **Step 2: Verify RED.** Run `npx vitest run src/panels/admin/promo-pages.test.tsx` and the new public-offers test. Expected: publication state and public listing behavior are missing.
-- [ ] **Step 3: Implement the lifecycle and public read projection.** Keep existing Promo CRUD and permission rules; require terms and reward costs before Publish.
-- [ ] **Step 4: Verify GREEN.** Rerun focused tests, including Asia/Manila date-boundary behavior.
+- [x] **Step 3: Implement the lifecycle and public read projection.** Keep existing Promo CRUD and permission rules; require terms and reward costs before Publish.
+- [x] **Step 4: Verify GREEN.** Rerun focused tests, including Asia/Manila date-boundary behavior.
 
 ### Task 3: Add a narrow, development-only GSD QR service flow
 
@@ -104,10 +104,10 @@
 - QR resolution returns only the holder information needed for the operation. Do not reuse the broad staff name/email search for GSD.
 - GSD can record a configured Promo Points use after holder verification. Earns remain driven by an eligible Finance-approved bill; GSD scanning never issues or approves a bill or credits points.
 
-- [ ] **Step 1: Write failing tests.** Assert that the GSD demo identity can resolve a valid QR for the service flow, cannot run full customer search or approve bills, and that scanning alone leaves both balances unchanged. Assert that an eligible reward use requires verification and sufficient Promo Points.
+- [x] **Step 1: Write failing tests.** Assert that the GSD demo identity can resolve a valid QR for the service flow, cannot run full customer search or approve bills, and that scanning alone leaves both balances unchanged. Assert that an eligible reward use requires verification and sufficient Promo Points.
 - [ ] **Step 2: Verify RED.** Run the focused QR/GSD tests. Expected: no GSD demo identity or narrow scan permission exists.
-- [ ] **Step 3: Implement the dev-only identity and scan/use path.** Reuse the camera scanner where practical; preserve manual fallback and current staff permissions.
-- [ ] **Step 4: Verify GREEN.** Rerun focused tests, including invalid/replaced QR and no-balance-change cases.
+- [x] **Step 3: Implement the dev-only identity and scan/use path.** Reuse the camera scanner where practical; preserve manual fallback and current staff permissions.
+- [x] **Step 4: Verify GREEN.** Rerun focused tests, including invalid/replaced QR and no-balance-change cases.
 
 ### Task 4: Add the customer-scoped mock portal
 
@@ -127,10 +127,10 @@
 - Contact update input is limited to `landline`, `mobileNumber`, and `email`, using existing validation. Do not call the broad staff `CustomerRepository.correct()` method.
 - Display Promo Points and Stay Points as separate balances and histories. Show linked bills/rewards/bookings only when they belong to the signed-in customer. Display the issued membership QR read-only; do not expose QR replacement.
 
-- [ ] **Step 1: Write failing tests.** Assert that the portal returns only the signed-in customer’s data; another customer’s profile, points, or QR cannot be requested; only the three contact fields update; and identity changes clear/partition sensitive query data.
+- [x] **Step 1: Write failing tests.** Assert that the portal returns only the signed-in customer’s data; another customer’s profile, points, or QR cannot be requested; only the three contact fields update; and identity changes clear/partition sensitive query data.
 - [ ] **Step 2: Verify RED.** Run the new portal repository/provider tests. Expected: no customer portal repository or session exists.
-- [ ] **Step 3: Implement the mock session, scoped repository, queries, and UI.** Use the synthetic `cust-b1` / `memb-1` relationship. Keep the mock entry unavailable as production authentication.
-- [ ] **Step 4: Verify GREEN.** Rerun focused tests and add page assertions for separate wallets, linked activity, editable contact fields, and read-only QR.
+- [x] **Step 3: Implement the mock session, scoped repository, queries, and UI.** Use the synthetic `cust-b1` / `memb-1` relationship. Keep the mock entry unavailable as production authentication.
+- [x] **Step 4: Verify GREEN.** Rerun focused tests and add page assertions for separate wallets, linked activity, editable contact fields, and read-only QR.
 
 ## Phase 2 — Dynamic Public Experiences
 
@@ -150,10 +150,10 @@
 - Valid Admin/Super Admin saves publish immediately, as selected. Archive/remove records without adding bookings or payment actions.
 - Preserve the three existing public slugs and their current content. New experiences must not require a code change to add a public card/detail page.
 
-- [ ] **Step 1: Write failing tests.** Assert that an Admin/Super Admin can create/update/archive an experience; valid save publishes it; the public listing/detail page renders a newly added slug; and the three existing routes retain their current content.
+- [x] **Step 1: Write failing tests.** Assert that an Admin/Super Admin can create/update/archive an experience; valid save publishes it; the public listing/detail page renders a newly added slug; and the three existing routes retain their current content.
 - [ ] **Step 2: Verify RED.** Run the new repository/admin tests and `npx vitest run src/panels/public/site-pages.test.tsx`. Expected: content remains static and no Experiences editor/repository exists.
-- [ ] **Step 3: Implement the typed mock content repository, Admin CRUD, and data-driven public rendering.**
-- [ ] **Step 4: Verify GREEN.** Rerun focused tests. Confirm no booking/payment/Services controls are introduced.
+- [x] **Step 3: Implement the typed mock content repository, Admin CRUD, and data-driven public rendering.**
+- [x] **Step 4: Verify GREEN.** Rerun focused tests. Confirm no booking/payment/Services controls are introduced.
 
 ## Phase 3 — Dynamic VIP Product Drafts and Public Cards
 
@@ -172,10 +172,10 @@
 - Preserve existing active B1/S1/G1 products. Do not assign a VIP Number at product creation/approval; number issuance remains tied to recording the signed Reservation Agreement.
 - Do not copy internal product values into public cards without an explicit public projection. In particular, do not map product `validityYears` to the existing public `discountYears` text. Do not rewrite finalized contract snapshots or invent terms for a new tier.
 
-- [ ] **Step 1: Write failing tests.** Assert that new products default to Draft; drafts are not selectable by contract creation and do not appear publicly; Admin cannot approve; Super Admin can approve only complete products with a reason; and existing B1/S1/G1 behavior is unchanged.
+- [x] **Step 1: Write failing tests.** Assert that new products default to Draft; drafts are not selectable by contract creation and do not appear publicly; Admin cannot approve; Super Admin can approve only complete products with a reason; and existing B1/S1/G1 behavior is unchanged.
 - [ ] **Step 2: Verify RED.** Run `npx vitest run src/data/mock/product-repository.test.ts src/panels/admin/pages/vip-products-pages.test.tsx src/modules/identity/permissions.test.ts`. Expected: new products are immediately active and no separate approval permission exists.
-- [ ] **Step 3: Implement draft persistence, Super Admin approval, audit recording, and validation.**
-- [ ] **Step 4: Verify GREEN.** Rerun focused tests and the existing product/catalog tests.
+- [x] **Step 3: Implement draft persistence, Super Admin approval, audit recording, and validation.**
+- [x] **Step 4: Verify GREEN.** Rerun focused tests and the existing product/catalog tests.
 
 ### Task 7: Make public VIP cards data-driven and explicitly listed
 
@@ -189,10 +189,10 @@
 - Render only products that are approved, active, and explicitly marked public. Use an allowlisted public projection; drafts and internal-only details remain private.
 - Keep current public B1/S1/G1 presentation and existing direct links stable while removing the fixed three-card data dependency.
 
-- [ ] **Step 1: Write failing tests.** Assert that a listed approved product appears; draft, unapproved, inactive, and unlisted products do not; existing B1/S1/G1 public copy remains unchanged.
+- [x] **Step 1: Write failing tests.** Assert that a listed approved product appears; draft, unapproved, inactive, and unlisted products do not; existing B1/S1/G1 public copy remains unchanged.
 - [ ] **Step 2: Verify RED.** Run `npx vitest run src/panels/public/site-pages.test.tsx`. Expected: the public page still reads the hard-coded `VIP_TIERS` array.
-- [ ] **Step 3: Implement the public product projection and dynamic card rendering.**
-- [ ] **Step 4: Verify GREEN.** Rerun focused tests and product page tests.
+- [x] **Step 3: Implement the public product projection and dynamic card rendering.**
+- [x] **Step 4: Verify GREEN.** Rerun focused tests and product page tests.
 
 ## Final Verification and QA
 

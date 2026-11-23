@@ -21,6 +21,7 @@ import { useCustomers, useMembers } from "@/data/queries";
 import { useAuditEvents } from "@/data/queries";
 import { SelectField } from "@/shared/forms/modern";
 import { InfoNote } from "@/shared/components/modern/detail-list";
+import { ErrorState } from "@/shared/components/modern/error-state";
 import { buttonVariants, Button } from "@/shared/ui/button";
 import { DetailSkeleton } from "@/shared/components/modern/skeletons";
 import { AdminPage } from "@/shared/components/admin";
@@ -102,6 +103,14 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
     return (
       <AdminPage anyOf={["customers"]} title="Customer" crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: "Detail" }]}>
         <DetailSkeleton />
+      </AdminPage>
+    );
+  }
+  // A failed load is never a "not found": the error branch comes first with a retry.
+  if (customers.error && !customer) {
+    return (
+      <AdminPage anyOf={["customers"]} title="Customer Unavailable" crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: "Detail" }]}>
+        <ErrorState text={customers.error instanceof Error ? customers.error.message : undefined} onRetry={() => void customers.refetch()} />
       </AdminPage>
     );
   }

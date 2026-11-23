@@ -23,6 +23,7 @@ import {
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { RoleBadge } from "@/shared/components/business/role-badge";
 import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
+import { QueryState } from "@/shared/components/modern/query-state";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { AdminPage } from "@/shared/components/admin";
 import { RowActionsMenu, type RowActionItem } from "@/shared/components/modern/row-actions-menu";
@@ -360,6 +361,25 @@ export function StaffPage({
     { value: "pending", label: loading ? "Pending Approvals" : `Pending Approvals (${countPendingRows(rows)})` },
   ];
 
+  // A failed directory load reads as a retryable error, never as an empty directory.
+  const listError =
+    staffQuery.error ??
+    departmentsQuery.error ??
+    rolesQuery.error ??
+    staffPoliciesQuery.error ??
+    accountsQuery.error ??
+    accountPoliciesQuery.error;
+  const retryLists = () => {
+    void staffQuery.refetch();
+    void departmentsQuery.refetch();
+    void rolesQuery.refetch();
+    void staffPoliciesQuery.refetch();
+    if (canManageAccounts) {
+      void accountsQuery.refetch();
+      void accountPoliciesQuery.refetch();
+    }
+  };
+
   let profileAccountActions: ProfileAccountActions | undefined;
   const profileAccount = profileStaff?.accountId ? (accounts.find((account) => account.id === profileStaff.accountId) ?? null) : null;
   if (profileAccount) {
@@ -421,16 +441,17 @@ export function StaffPage({
             {sortLabel}
           </Button>
         </FilterBar>
+      <QueryState isLoading={loading} error={listError} onRetry={retryLists}>
       <DataTable<AccessRow>
         caption="Staff and Access"
         data={filtered}
         columns={columns}
         getRowId={(row) => row.id}
         emptyText={chip === "pending" && canManageAccounts ? "No pending accounts." : "No staff or accounts found."}
-        loading={loading}
         onRowOpen={(row) => (row.kind === "employee" ? setProfileStaffId(row.staff.id) : openAccount("view", row.account.id))}
         getRowLabel={(row) => `Open ${row.kind === "employee" ? row.staff.displayName : row.account.displayName}`}
       />
+      </QueryState>
       <StaffDialogs
         open={editDialog || adding}
         editStaff={editStaff}

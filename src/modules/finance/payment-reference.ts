@@ -13,8 +13,8 @@ export function nextPaymentReference(
 
 /**
  * Cash receipts get the system-issued Official Receipt number OR-YYYYMMDD-NNNN
- * (owner instruction 2026-11-20): the entry form shows it disabled and Finance
- * sees the same number when it reviews the payment. Non-cash receipts keep the
+ * (owner instruction 2026-11-20): the repository assigns it when saving and
+ * Finance sees it during review. Non-cash receipts keep the
  * number of the issued document, entered by the Clerk.
  */
 export function nextOfficialReceiptNo(

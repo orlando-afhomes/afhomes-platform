@@ -6,7 +6,7 @@ import type { SeatVacancy } from "@/modules/sales-network/vacancy";
 import type { VipProduct, PaymentScheme, TierLevel } from "@/modules/vip/types";
 import type { Contract } from "@/modules/contracts/types";
 import type { Sale } from "@/modules/sales/types";
-import type { Payment } from "@/modules/finance/types";
+import type { Payment, UnmatchedReceipt } from "@/modules/finance/types";
 import { createIgpState, type IgpState } from "@/modules/igp/types";
 import type { ClosedMonth } from "@/modules/finance/month-close";
 import type { Membership } from "@/modules/membership/types";
@@ -26,6 +26,7 @@ import { seedExperiences } from "@/modules/experiences/sample-seed";
 import type { AuditEvent } from "@/modules/audit/types";
 import type { ReceiptImportBatch } from "@/modules/imports/receipt-import";
 import type { ReconciliationEntry } from "@/modules/reconciliation/rules";
+import type { MonthSwitchSignOff } from "@/modules/reconciliation/switch-signoff";
 import { seedData } from "./seed-data";
 
 export type MockStore = {
@@ -42,6 +43,8 @@ export type MockStore = {
   igp: IgpState;
   payments: Payment[];
   closedMonths: ClosedMonth[];
+  /** Receipts recorded without a matching contract (F6.5); browser memory only. Empty in the seed. */
+  unmatchedReceipts: UnmatchedReceipt[];
   memberQr: Record<string, { holderKey: string; token: string }>;
   memberships: Membership[];
   commissions: Commission[];
@@ -78,6 +81,8 @@ export type MockStore = {
   receiptImportBatches: ReceiptImportBatch[];
   /** Append-only workbook reconciliation decisions (F11.3); browser memory only. Empty in the seed. */
   reconciliationEntries: ReconciliationEntry[];
+  /** Append-only parallel-run switch sign-offs (F11.5); browser memory only. Empty in the seed. */
+  monthSwitchSignOffs: MonthSwitchSignOff[];
   customerSequence: number;
   accountSequence: number;
   departmentSequence: number;
@@ -111,6 +116,7 @@ export function createSeedStore(): MockStore {
     igp: createIgpState(),
     payments: clone(payments),
     closedMonths: [],
+    unmatchedReceipts: [],
     memberQr: {
       [JSON.stringify(["memb-1", "primary"])]: {
         holderKey: JSON.stringify(["cust-b1", "26110200001B1T04S", 0]),
@@ -142,6 +148,7 @@ export function createSeedStore(): MockStore {
     customerImportJobs: customerImportJobs.map((item) => ({ ...item, createdCustomerIds: [...item.createdCustomerIds] })),
     receiptImportBatches: [],
     reconciliationEntries: [],
+    monthSwitchSignOffs: [],
     customerSequence: customers.length + 1,
     accountSequence: accounts.length + 1,
     departmentSequence: departments.length + 1,
@@ -181,6 +188,7 @@ export function createMockStore(seed: MockStore = createSeedStore()): MockStore 
     igp: clone(seed.igp),
     payments: clone(seed.payments),
     closedMonths: clone(seed.closedMonths),
+    unmatchedReceipts: clone(seed.unmatchedReceipts),
     memberQr: clone(seed.memberQr),
     memberships: clone(seed.memberships),
     commissions: clone(seed.commissions),
@@ -207,6 +215,7 @@ export function createMockStore(seed: MockStore = createSeedStore()): MockStore 
     customerImportJobs: seed.customerImportJobs.map((item) => ({ ...item, createdCustomerIds: [...item.createdCustomerIds] })),
     receiptImportBatches: clone(seed.receiptImportBatches),
     reconciliationEntries: clone(seed.reconciliationEntries),
+    monthSwitchSignOffs: clone(seed.monthSwitchSignOffs),
     customerSequence: seed.customerSequence,
     accountSequence: seed.accountSequence,
     departmentSequence: seed.departmentSequence,

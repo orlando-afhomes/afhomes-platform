@@ -42,6 +42,29 @@ export function useRecordReconciliation() {
   });
 }
 
+/** Readiness for the parallel-run switch of one closed month (doc 08 section 16; F11.5). */
+export function useMonthSwitchStatus(period: string, enabled: boolean) {
+  const repositories = useMockRepositories();
+  const { identity } = useDevIdentity();
+  return useQuery({
+    queryKey: [...queryKeys.business.list("month-switch-status", identity.id), period],
+    queryFn: ({ signal }) => repositories.reconciliation.monthSwitchStatus(period, { signal }),
+    enabled: enabled && period.trim().length > 0,
+  });
+}
+
+/** Super Administrator only: signs off the switch after a month closes with no unexplained differences. */
+export function useRecordMonthSwitch() {
+  const repositories = useMockRepositories();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (month: string) => repositories.reconciliation.recordMonthSwitch(month),
+    onSuccess: () => {
+      for (const key of [queryKeys.business.all, queryKeys.audit.all]) queryClient.invalidateQueries({ queryKey: key });
+    },
+  });
+}
+
 export function useReceiptImportBatches(enabled: boolean) {
   const repositories = useMockRepositories();
   const { identity } = useDevIdentity();

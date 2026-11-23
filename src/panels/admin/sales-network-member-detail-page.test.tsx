@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { MockAccreditationRepository } from "@/data/mock/accreditation-repository";
+import { MockMemberRepository } from "@/data/mock/member-repository";
 import { SalesNetworkMemberDetailPage } from "./pages/sales-network-member-detail-page";
 
 vi.mock("next/navigation", async (importOriginal) => ({
@@ -84,5 +86,34 @@ describe("sales network member detail page", () => {
     await user.click(screen.getByRole("tab", { name: /Team Below/ }));
     const downline = await screen.findByRole("tabpanel", { name: /Team Below/ });
     await waitFor(() => expect(within(downline).getAllByText("Ana Mendoza").length).toBeGreaterThan(0), { timeout: 5000 });
+  });
+
+  it("shows a member load error with a retry instead of Member not found", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockMemberRepository.prototype, "getByAaNumber").mockRejectedValueOnce(new Error("Member lookup failed."));
+    render(
+      <Wrapper identityId="dev-super-admin">
+        <SalesNetworkMemberDetailPage />
+      </Wrapper>,
+    );
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Member lookup failed\./)).toBeInTheDocument();
+    expect(screen.queryByText("Member not found or restricted.")).toBeNull();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("region", { name: "Member summary for Jose Reyes Jr." }, { timeout: 5000 })).toBeInTheDocument();
+  });
+
+  it("shows an accreditation load error with a retry instead of incomplete badges", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockAccreditationRepository.prototype, "listByMember").mockRejectedValueOnce(new Error("Accreditation records failed."));
+    render(
+      <Wrapper identityId="dev-super-admin">
+        <SalesNetworkMemberDetailPage />
+      </Wrapper>,
+    );
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText("Accreditation data could not be loaded")).toBeInTheDocument();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("region", { name: "Member summary for Jose Reyes Jr." }, { timeout: 5000 })).toBeInTheDocument();
   });
 });

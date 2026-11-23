@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, type ReactElement } from "react";
+import { useCallback, useRef, useState, type ReactElement } from "react";
 import { toast } from "sonner";
 import type { ConfirmTone } from "./app-alert";
 import { ConfirmDialog } from "./confirm-dialog";
@@ -26,6 +26,8 @@ export type ConfirmRunInput = {
 export function useConfirmRun(): { confirmRun: (input: ConfirmRunInput) => void; dialog: ReactElement } {
   const [input, setInput] = useState<ConfirmRunInput | null>(null);
   const [pending, setPending] = useState(false);
+  // Blocks a second confirm click before React has rendered the pending state.
+  const running = useRef(false);
   // Keeps the last text visible while the dialog animates closed.
   const [last, setLast] = useState<ConfirmRunInput | null>(null);
   const shown = input ?? last;
@@ -36,7 +38,8 @@ export function useConfirmRun(): { confirmRun: (input: ConfirmRunInput) => void;
   }, []);
 
   const run = async () => {
-    if (!input) return;
+    if (!input || running.current) return;
+    running.current = true;
     setPending(true);
     try {
       await input.action();
@@ -46,6 +49,7 @@ export function useConfirmRun(): { confirmRun: (input: ConfirmRunInput) => void;
       setInput(null);
       toast.error(input.errorTitle, { description: error instanceof Error ? error.message : "Request failed." });
     } finally {
+      running.current = false;
       setPending(false);
     }
   };

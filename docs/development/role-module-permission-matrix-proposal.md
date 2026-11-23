@@ -397,7 +397,7 @@ Historical note: this section describes the state before the B05/B06 panel work 
 - No permission resolver modifications.
 - No test modifications.
 - No business-rule changes.
-- No MongoDB or backend work.
+- Database and backend implementation are outside this proposal.
 - No developer-facing UI.
 - No deployment.
 - No prohibited Git operations.

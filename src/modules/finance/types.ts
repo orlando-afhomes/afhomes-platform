@@ -76,3 +76,55 @@ export type ScheduleLineState = {
   allocatedCentavos: number;
   status: ScheduleLineStatus;
 };
+
+/** Lifecycle of a receipt recorded without a matching contract (doc 07 section 11; F6.5). Never deleted. */
+export type UnmatchedReceiptStatus = "unmatched" | "matched" | "rejected";
+
+export type UnmatchedReceiptEvent = {
+  at: string;
+  actorId: string;
+  event: string;
+  note: string | null;
+};
+
+/**
+ * A receipt the Clerk could not link to a contract: money arrived but no
+ * matching payment obligation was found. It waits in the Finance exceptions
+ * queue until Finance matches it to a contract or rejects it with a reason.
+ * Amount, method, date and OR number are frozen at intake; matching only
+ * assigns the contract (and the schedule purpose), never edits the money.
+ */
+export type UnmatchedReceipt = {
+  id: string;
+  amountCentavos: number;
+  method: PaymentMethod;
+  /** Business date on the receipt (YYYY-MM-DD, Asia/Manila). */
+  paidDate: string;
+  /** Clerk-entered OR number or bank reference; system-wide unique (doc 07 section 9.2). */
+  orNumber: string;
+  evidenceFileName: string | null;
+  /** Uploaded receipt image or PDF as a data URL; browser-memory mock evidence only. */
+  evidenceFileDataUrl?: string | null;
+  /** Why no matching contract or payment was found (required). */
+  reason: string;
+  submittedBy: string;
+  submittedAt: string;
+  status: UnmatchedReceiptStatus;
+  /** Payment created by matching; null until matched. The record itself is kept. */
+  matchedPaymentId: string | null;
+  decisionReason: string | null;
+  decidedBy: string | null;
+  decidedAt: string | null;
+  history: UnmatchedReceiptEvent[];
+};
+
+export type SubmitUnmatchedReceiptInput = {
+  amountCentavos: number;
+  method: PaymentMethod;
+  paidDate: string;
+  orNumber: string;
+  reason: string;
+  evidenceFileName?: string | null;
+  /** File content as a data URL; kept in the browser-scoped mock store for the viewer. */
+  evidenceDataUrl?: string | null;
+};

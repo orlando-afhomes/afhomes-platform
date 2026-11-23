@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Contract } from "@/modules/contracts/types";
-import { buildCollectionLedger, buildScheduleState, collectionStateFor, daysPastDue, exceedsContractPrice, findDuplicatePayment, findReferenceConflict, findSuggestedMatch,periodCollections, isFullySettled, meetsRequiredInitial, netVerifiedCentavos, outstandingBalanceCentavos, totalVerifiedCentavos } from "./rules";
+import { buildCollectionLedger, buildScheduleState, collectionStateFor, daysPastDue, exceedsContractPrice, findDocumentConflict, findDuplicatePayment, findReferenceConflict, findSuggestedMatch,periodCollections, isFullySettled, meetsRequiredInitial, netVerifiedCentavos, outstandingBalanceCentavos, totalVerifiedCentavos } from "./rules";
 import type { Payment } from "./types";
 
 const payment = (over: Partial<Payment> = {}): Payment => ({
@@ -143,6 +143,19 @@ describe("findReferenceConflict", () => {
   it("ignores blank numbers and the payment itself", () => {
     expect(findReferenceConflict([payment({ referenceNo: null })], "")).toBeUndefined();
     expect(findReferenceConflict([payment()], "REF-1", "p1")).toBeUndefined();
+  });
+});
+
+describe("findDocumentConflict", () => {
+  it("matches a payment's system reference or issued-document number, ignoring case and spacing", () => {
+    expect(findDocumentConflict([payment({ documentNo: "OR-2026-000123" })], " or-2026-000123 ")?.id).toBe("p1");
+    expect(findDocumentConflict([payment({ referenceNo: "BT-P9" })], "bt-p9")?.id).toBe("p1");
+  });
+
+  it("ignores blank numbers, the payment itself and other numbers", () => {
+    expect(findDocumentConflict([payment()], "")).toBeUndefined();
+    expect(findDocumentConflict([payment()], "REF-1", "p1")).toBeUndefined();
+    expect(findDocumentConflict([payment()], "OR-OTHER-1")).toBeUndefined();
   });
 });
 

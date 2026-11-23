@@ -19,6 +19,7 @@ import { hasOperationPermission } from "@/modules/identity/permissions";
 import { resolveEffectiveModules } from "@/data/mock/authorization";
 import { PageContainer } from "@/shared/components/modern/page-container";
 import { PageHeader } from "@/shared/components/modern/page-header";
+import { QueryState } from "@/shared/components/modern/query-state";
 import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { AdminPage } from "@/shared/components/admin";
@@ -248,16 +249,21 @@ export function SalesNetworkMembersPage({
           {sortLabel}
         </Button>
       </FilterBar>
-      <DataTable<OrgMember>
-        caption="Sales Network Members"
-        orderBy={sort === "newest" ? MEMBER_ORDER : undefined}
-        data={filtered}
-        columns={columns}
-        getRowId={(member) => member.id}
-        emptyText="No members found."
-        loading={membersQuery.isLoading}
-        onRowOpen={(record) => router.push(`/admin/sales-network/members/${record.aaNumber ?? record.id}`)}
-      />
+      <QueryState
+        isLoading={membersQuery.isLoading || accreditationsQuery.isLoading}
+        error={membersQuery.error ?? accreditationsQuery.error}
+        onRetry={() => void Promise.all([membersQuery.refetch(), accreditationsQuery.refetch()])}
+      >
+        <DataTable<OrgMember>
+          caption="Sales Network Members"
+          orderBy={sort === "newest" ? MEMBER_ORDER : undefined}
+          data={filtered}
+          columns={columns}
+          getRowId={(member) => member.id}
+          emptyText="No members found."
+          onRowOpen={(record) => router.push(`/admin/sales-network/members/${record.aaNumber ?? record.id}`)}
+        />
+      </QueryState>
       <SalesNetworkMemberDialogs
         editMember={editMember}
         transferMember={transferMember}

@@ -1,8 +1,16 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
-import type { Payment, PaymentMethod, PaymentPurpose } from "@/modules/finance/types";
+import type { Payment, PaymentMethod, PaymentPurpose, SubmitUnmatchedReceiptInput, UnmatchedReceipt } from "@/modules/finance/types";
 
 export type PaymentView = Payment & { customerName: string; contractLabel: string; submitterName: string; isIgp?: boolean; approvalBlocked?: boolean; referenceConflict?: boolean };
 export type PaymentVerificationOptions = MockAsyncOptions & { exceptionReason?: string };
+export type UnmatchedReceiptView = UnmatchedReceipt & { submitterName: string };
+
+export type MatchUnmatchedReceiptInput = {
+  contractId: string;
+  purpose: PaymentPurpose;
+  /** Optional Finance note recorded on the match; the money fields stay frozen. */
+  note?: string | null;
+};
 
 export type SubmitPaymentInput = {
   contractId: string;
@@ -31,4 +39,17 @@ export interface PaymentRepository {
   returnForCorrection(id: string, reason: string, options?: MockAsyncOptions): Promise<PaymentView>;
   /** Reversal or refund of a verified payment, capped at the remaining verified amount and never deleting the payment. */
   adjust(id: string, input: { kind: "reversal" | "refund"; amountCentavos: number; reason: string }, options?: MockAsyncOptions): Promise<PaymentView>;
+  /** Unmatched receipts waiting in the Finance exceptions queue (F6.5). */
+  listUnmatched(options?: MockAsyncOptions): Promise<UnmatchedReceiptView[]>;
+  /** Records a receipt with no matching contract; it waits in the exceptions queue with its reason. */
+  submitUnmatched(input: SubmitUnmatchedReceiptInput, options?: MockAsyncOptions): Promise<UnmatchedReceiptView>;
+  /**
+   * Links an unmatched receipt to a contract, creating a submitted payment with
+   * the same frozen money (OR kept as the document number). Finance verifies it
+   * separately; a receipt dated in a closed month counts in the first open month
+   * (docs 07 section 9.1, 13 section 4.5). The unmatched record is kept.
+   */
+  matchUnmatched(id: string, input: MatchUnmatchedReceiptInput, options?: MockAsyncOptions): Promise<PaymentView>;
+  /** Rejects an unmatched receipt with a reason; the record is kept, never deleted. */
+  rejectUnmatched(id: string, reason: string, options?: MockAsyncOptions): Promise<UnmatchedReceiptView>;
 }

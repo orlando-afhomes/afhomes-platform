@@ -2,7 +2,7 @@
 
 > Authoritative implementation roadmap for the AFHomes Platform.
 > Read `docs/development/architecture.md` for system architecture and `docs/business-rules/` (01–14) for authoritative business behavior.
-> This document is documentation only; no implementation is authorized here.
+> For numbered work instructions, start at the [Firebase implementation roadmap](../implementation/firebase/README.md). Each phase requires separate project-owner authorization.
 
 ---
 
@@ -14,13 +14,13 @@ This document defines the complete implementation roadmap for the AFHomes Platfo
 
 ## 2. Current Project Status
 
-The repository is a frontend prototype on typed in-memory mock data (Next.js, mock repositories, mock sign-in, Vitest tests); there is no API, database, real authentication or deployment. 14 business-rule documents (01 to 14) and 10 development documents form the documentation baseline. The subphases 4A to 4L below were built as frontend work on mocks; the per-feature status, decisions and blockers are tracked in `docs/implementation/` (feature phases FP1 to FP16), which follows the 4A to 4L order. Every new feature still needs explicit project-owner authorization.
+The repository contains a frontend prototype with typed browser-memory records, mock sign-in, and Vitest tests. Backend handlers, a database schema, real sign-in, and hosted environments are planned. The [feature index](../implementation/README.md) and its FP1–FP16 records give the current per-feature evidence and dependencies. Recheck the code before reporting any implementation status.
 
 ---
 
 ## 3. Approved Technical Architecture
 
-Single-repository, single Next.js application, panel-based and feature-based modular monolith. Next.js App Router, React, TypeScript, shadcn/ui on Base UI, Tailwind CSS 4, namespaced custom CSS, Zod (approved, not yet used in `src/`), TanStack Query (Ant Design removed in commit 22c9b4f; UI standard effective November 8, 2026). Frontend-first development with centralized mock data. REST `/api/v1`. Centralized auth (Better Auth direction, compatibility verification required) and RBAC. Mongoose. Local MongoDB first, then MongoDB Atlas. DigitalOcean Droplet + Docker Compose + HTTPS. Future Customer Portal, future React Native mobile. Redemption staff prototype authorized (2026-11-17) with synthetic data; live Redemption and customer submissions require separate authorization. Services remains disabled.
+Use a single Next.js App Router application with React, TypeScript, shadcn/ui on Base UI, Tailwind CSS 4, TanStack Query, and existing UI conventions. The planned stack uses REST `/api/v1`, Zod, Firebase Auth, centralized authorization, server-only SQL Connect, and PostgreSQL. Use private Firebase Storage in production. Vercel is the approved demo direction. Validate Firebase App Hosting in staging before relying on it, with Cloud Run as fallback. The authorized staff Redemption prototype stays within its separate boundaries. Live Redemption, Services, Customer Portal, and mobile work require their own approvals.
 
 ---
 
@@ -36,11 +36,11 @@ Implementation is governed by: documentation authority (business-rules own busin
 - `docs/business-rules/01–14` — authoritative business behavior.
 - `docs/development/architecture.md` — complete system architecture.
 - `docs/development/frontend.md` — frontend design and implementation conventions.
-- `docs/development/database.md` — local MongoDB, Atlas and data architecture.
+- [Database guide](database.md) — emulators, PostgreSQL, SQL Connect, and data integrity.
 - `docs/development/backend.md` — backend services, API and persistence integration.
 - `docs/development/security.md` — authentication, authorization and security controls.
 - `docs/development/testing.md` — quality assurance and release verification.
-- `docs/development/implementation.md` — this roadmap.
+- [Firebase environment guides](../implementation/firebase/README.md) — executable phase order and acceptance requirements.
 - `docs/development/deployment.md` — production infrastructure, operations and recovery.
 
 ---
@@ -67,146 +67,51 @@ Distinguish Implemented (authorized technical work exists), Verified (required t
 
 ## 8. Phase Dependency Map
 
-```mermaid
-flowchart TD
-    P0["Phase 0 — Documentation"]
-    P1["Phase 1 — Frontend Foundation"]
-    P2["Phase 2 — Local MongoDB"]
-    P3["Phase 3 — Backend Foundation"]
-    P4["Phase 4 — Business Modules"]
-    P5["Phase 5 — Frontend / Backend Integration"]
-    P6["Phase 6 — System Validation"]
-    P7["Phase 7 — Cloud Deployment"]
-    P8["Phase 8 — Stabilization"]
+| Technical phase | Environment guide | What carries forward |
+| --- | --- | --- |
+| 0 Documentation | [Stack alignment](../implementation/firebase/00-update-existing-documentation.md) | Agreed architecture and working documentation |
+| 1 Frontend foundation | [Prototype checklist](../implementation/README.md) and [optional Vercel preview](../implementation/firebase/02-staging/00-vercel-prototype-demo.md) | Working sample-data build |
+| 2 Database foundation | [Localhost database](../implementation/firebase/01-localhost/01-database-and-emulators.md) | Schema, typed connector, and reproducible test data |
+| 3 Backend foundation | [Localhost backend and API](../implementation/firebase/01-localhost/README.md) | Auth, authorization, audit, and first integrated workflow |
+| 4 Business modules | [Module order](../implementation/firebase/01-localhost/05-approved-business-modules.md) | All approved business operations and tests |
+| 5 Frontend and backend integration | [Localhost integration](../implementation/firebase/01-localhost/04-frontend-and-file-storage.md) | Working screens and typed HTTP adapters with private files |
+| 6 System validation | [Local verification](../implementation/firebase/01-localhost/06-local-verification.md) and [Staging](../implementation/firebase/02-staging/README.md) | Tested release candidate, hosted transaction proof, rehearsal evidence |
+| 7 Cloud deployment | [Production](../implementation/firebase/03-production/README.md) | Approved and verified launch of all approved modules together |
+| 8 Stabilization | [Production operations](../implementation/firebase/03-production/06-monitoring-backups-and-recovery.md) | Monitoring and recovery runbook |
 
-    P0 --> P1
-    P1 --> P2
-    P2 --> P3
-    P3 --> P4
-    P4 --> P5
-    P5 --> P6
-    P6 --> P7
-    P7 --> P8
-```
-
-Primary planning sequence. Clarify: testing begins before Phase 6; security begins before Phase 6; audit foundations begin before Phase 4 complete; technical compatibility research can occur before implementation reaches affected phase; cloud staging preparation may require separately authorized overlap with late Phase 6 or early Phase 7; no production deployment may bypass required readiness and acceptance gates. No circular phase dependencies.
+The phase numbers map to existing technical references. The environment guides carry the step sequence. Within a module, finish its schema, backend, API, and frontend together. The optional mock demo can happen early. After the first local workflow passes, run the hosted SQL Connect pilot before expanding financial workflows. Full staging sign-off remains the gate before production.
 
 ---
 
 ## 9. Required Specification for Every Phase
 
-Every Phase 0–8 must contain: Objective, Starting state, Scope, In-scope implementation tasks, Out-of-scope tasks, Required source documents, Business-rule dependencies, Technical dependencies, Deliverables, Security requirements, Testing requirements, Acceptance criteria, Exit conditions, Risks and blockers, Required project-owner authorization, Completion report expectations. Do not write one-line descriptions under these headings.
+Each environment guide documents prerequisites, approvals, implementation sequence, tooling, security and verification, exit conditions, and recorded evidence. The feature checklists and canonical rules provide module-specific acceptance requirements.
 
 ---
 
 ## 10. Phase 0: Documentation Foundation
 
-Objective: establish authoritative business and technical documentation. Starting state: documentation-only repo (historical; the prototype has since been built). Scope: business rules 01–14, project scope, technical architecture, frontend, database, backend, security, testing, implementation, deployment, documentation navigation. Deliverables: 14 canonical business-rule docs, 10 development documents. Validation: file completeness, business-rule references, architecture consistency, correct technology stack, local MongoDB-first strategy, deployment alignment, no contradictory module ownership, no invented commercial rules, working documentation links. Exit: required documentation complete, major contradictions identified, critical dependencies documented, documentation baseline submitted for project-owner acceptance. Restrictions: documentation-only; no scaffolding, DB provisioning, or cloud deployment. Do not claim project-owner approval if not explicitly given.
+Align the active technical guides, project context, and agent instructions with the [Firebase roadmap](../implementation/firebase/README.md). Preserve the business rules and existing prototype evidence. Verify references and clearly label prior stack decisions as historical.
 
 ---
 
 ## 11. Phase 1: Frontend Foundation
 
-Historical phase text. Objective: establish Next.js application foundation and common presentation infrastructure. Starting state: documentation baseline. Approved architecture: single Next.js app, App Router, React, TypeScript, Ant Design 6, regular CSS, Zod, TanStack Query, feature-based panel structure [historical; superseded for UI by the November 8, 2026 decision in `AGENTS.md` section 8]. Core deliverables: application foundation, shared UI, panel shells (Admin/Ops, Public; future Customer documented not scaffolded), role-aware navigation, shared domain contracts, centralized mock store, TanStack Query. Out of scope: production Better Auth integration, live Finance transactions, production Atlas, real membership activation, actual payment verification, cloud deployment, complete Customer Portal, mobile app, enabled Redemption, enabled Services. Testing: manual-first UI verification (page rendering, navigation, component behavior, responsive layouts, forms, mock data relationships, demo role switching, permission-aware UI, loading/error/empty states); incremental component/unit automation where appropriate. Acceptance: Next.js app runs locally; approved panel shells render; shared UI conventions established; TS config valid; central mock data functions; role-aware navigation reflects mock permissions; refresh reset verified; no unauthorized additional frameworks; no production credentials; no hidden modules unintentionally activated. Exit: frontend foundation verified and accepted. Do not require full business workflow implementation for Phase 1 completion.
+Historical Phase 1 established Next.js, panel shells, domain contracts, a centralized browser-memory mock store, and TanStack Query. Use the current UI rules in AGENTS.md section 8 and the [prototype checklists](../implementation/README.md) to verify role-aware navigation, loading and error states, forms, responsive layouts, and refresh reset. Real sessions, database writes, and deployments require authorization in later milestones.
 
 ---
 
-## 12. Phase 2: Local MongoDB Database Foundation
+## 12. Phase 2: Local SQL Connect Database Foundation
 
-### Objective
+Follow the numbered [localhost database guide](../implementation/firebase/01-localhost/01-database-and-emulators.md). Set up the SQL Connect Emulator only after owner approval. Use an explicit demo project, reviewed schema, server-side connector, and repeatable synthetic seed. Verify relationships, indexes, business identifier uniqueness, exact money round trips, Manila dates, and local transaction behavior. Hosted PostgreSQL is used in the subsequent staged pilot to prove concurrent writes and failure rollback.
 
-Establish the first real persistent database foundation using MongoDB on localhost.
-
-### Mandatory correction
-
-Do not title this phase "MongoDB Atlas Database Design." The approved Phase 2 target is **Local MongoDB Database Foundation**. MongoDB Atlas remains the later cloud deployment target.
-
-### Starting state
-
-Documentation baseline complete. Frontend foundation may be in progress or complete.
-
-### Scope
-
-Local MongoDB environment, persistent local storage, local security, transaction support, Mongoose foundation, domain modeling, official identifiers, development seed data.
-
-### In-scope implementation tasks
-
-- Set up authorized local MongoDB (Docker or native; prefer reproducibility).
-- Configure persistent local storage; controlled reset procedures.
-- Configure local auth, loopback-only networking, protected env files, no production secrets.
-- Configure local replica set where transaction tests require it.
-- Establish Mongoose connection, model design, schema validation, controlled indexes, repository interfaces, transaction-session support.
-- Model relevant entities from authoritative business rules.
-- Design authoritative allocation for Customer identity, the VIP Number (one per RA, Grant and Card), accreditation numbers (monthly sequence), financial references.
-- Use synthetic development data; support controlled repeatable seeding; do not import actual legacy production data without separate authorization.
-
-### Out of scope
-
-- MongoDB Atlas provisioning (Phase 7).
-- Production data migration.
-- Legacy Supabase import.
-- Full business workflow implementation.
-- Cloud deployment.
-
-### Required source documents
-
-architecture.md, database.md, backend.md, security.md, testing.md, business-rules 01–14.
-
-### Business-rule dependencies
-
-All entity/identifier/transaction rules from 01–14.
-
-### Technical dependencies
-
-Node.js/MongoDB/Mongoose compatibility; local replica-set support; exact-money representation; official identifier uniqueness.
-
-### Deliverables
-
-Local MongoDB runs in authorized dev environment; persistent records supported; Mongoose connectivity works; core model/repository conventions established; critical uniqueness constraints validated; transaction prerequisites verified; tests use isolated disposable data; production Atlas untouched.
-
-### Security requirements
-
-Server-only DB access; least-privilege local credentials where practical; environment isolation; sensitive field handling; no credentials in browser bundles.
-
-### Testing requirements
-
-Local connection, persistence, validation, unique indexes, references, transaction support, concurrency, data integrity, development seed repeatability.
-
-### Acceptance criteria
-
-- Local MongoDB runs in authorized development environment.
-- Persistent records are supported.
-- Appropriate Mongoose connectivity works.
-- Core model and repository conventions are established.
-- Critical uniqueness constraints are validated.
-- Transaction prerequisites verified.
-- Tests use isolated disposable data.
-- Production Atlas is untouched.
-
-### Exit conditions
-
-Local database foundation verified and approved. Atlas cluster provisioning is not required for Phase 2 acceptance.
-
-### Risks and blockers
-
-- Local replica-set configuration complexity.
-- Mongoose/version compatibility.
-- Official identifier uniqueness scope (RA).
-- Accreditation active-status/expiry evaluation rules.
-
-### Required authorization
-
-Explicit project-owner authorization for Phase 2.
-
-### Completion report expectations
-
-Report local DB setup, persistence verification, schema/index validation, transaction prerequisite verification, seed data approach, security controls, test results, blockers.
+The local task ends with reproducible data, passing schema and seed checks, and isolated credentials. Cloud provisioning, legacy imports, schema deployment to production, and resets of ordinary developer data each follow the separate approval gates.
 
 ---
 
 ## 13. Phase 3: Backend Foundation
 
-(As in earlier version.) Objective: establish secure server-side API and shared backend architecture within single Next.js app. Starting state: documentation baseline; frontend and/or local DB may be in progress. Scope: REST API foundation, domain services, repository integration, authentication, centralized authorization, security infrastructure, audit foundation, transaction foundation. In-scope tasks: `/api/v1` thin route handlers, JSON response conventions, error handling, pagination conventions, Zod request validation, safe API results, request correlation; reusable application-service conventions; repository integration with local MongoDB via Mongoose; Better Auth compatibility verification (do not silently replace if incompatible); centralized auth (account eligibility, multiple-role evaluation, module permissions, record-level restrictions, sensitive-operation boundaries); security infrastructure (session protection, server-side validation, safe error handling, config validation, API access restrictions, rate limiting, sensitive-data protection); audit foundation (reusable audit interfaces and persistence); transaction foundation (transaction and idempotency patterns). Out of scope: full implementation of every business module, cloud production deployment, mobile app, enabled Redemption/Services. Technical dependencies: Node.js/MongoDB/Mongoose/Better Auth compatibility, local DB. Deliverables: backend APIs use approved architecture, server-side validation functions, authentication verified, authorization enforced, local MongoDB repositories operate correctly, error conventions consistent, audit infrastructure usable, test infrastructure verifies critical foundation. Security: as listed. Testing: auth tests, RBAC tests, API contract tests, service tests, local DB integration, transaction behavior, error handling, audit integration. Acceptance: backend APIs use approved architecture; server-side validation functions; authentication verified; authorization enforced; local MongoDB repositories operate correctly; error conventions consistent; audit infrastructure usable by business modules; test infrastructure verifies critical foundation. Exit: backend foundation verified and accepted. Risks: auth compatibility, transaction support, RBAC correctness, API contract drift.
+Use the [localhost backend and authentication guide](../implementation/firebase/01-localhost/02-backend-authentication-and-permissions.md) and [API guide](../implementation/firebase/01-localhost/03-api.md). Establish Firebase Auth session verification, account status, centralized authorization, Zod contracts, typed SQL Connect repositories, a safe error contract, protected transactions, and audit persistence. Verify the first authorized operation and invalid, unauthorized, retry, and rollback cases.
 
 ---
 
@@ -214,21 +119,21 @@ Report local DB setup, persistence verification, schema/index validation, transa
 
 ### Objective
 
-Implement approved AFHomes business workflows using real backend services and local MongoDB. Phase 4 must use a dependency-driven implementation sequence. Do not treat every module as independently implementable.
+Implement approved workflows with real server services and the local SQL Connect integration. Respect the module dependencies in the [ordered module guide](../implementation/firebase/01-localhost/05-approved-business-modules.md). Verify the hosted pilot before expanding financial workflows.
 
 ### Required documents
 
-All 13 business-rule docs + architecture, frontend, backend, database, security, testing.
+Business-rule docs 01–14 and the architecture, frontend, backend, database, security, and testing guides.
 
 ### Recommended implementation sequence (subphases 4A–4L)
 
-As in earlier version: 4A Organization/Staff/Roles; 4B Sales Network/Genealogy; 4C IST/OST Accreditation; 4D Customer Management; 4E VIP Products/Payment Schemes/Contracts; 4F Sales; 4G Finance and Payments; 4H Commission Management; 4I VIP Membership and Card Issuance; 4J Stay Points; 4K Reports and Analytics; 4L Audit and Cross-Module Completion.
+4A Organization/Staff/Roles → 4B Sales Network/Genealogy → 4C IST/OST Accreditation → 4D Customers → 4E VIP Products/Schemes/Contracts → 4F Sales and IGP → 4G Finance and Payments → 4H Commissions → 4I Membership and Cards → 4J Stay Points → 4K Reports and Analytics → 4L Audit and Cross-Module Completion. Build audit coverage into each group.
 
-Each subphase includes dependencies, deliverables, security, tests, acceptance, blockers (as documented earlier). Preserve all.
+Each approved subphase delivers its complete tested flow through data, service, API, and UI, using the current feature checklist and canonical business rules.
 
 ### Phase 4 module dependency matrix
 
-(As in earlier version table.)
+See [module-by-module order and feature checklists](../implementation/firebase/01-localhost/05-approved-business-modules.md).
 
 ### Disabled and deferred modules
 
@@ -236,7 +141,7 @@ The staff Redemption prototype is authorized (2026-11-17) with synthetic data an
 
 ### Phase 4 acceptance
 
-All core business modules functional against local MongoDB with tests, security, audit, and no unauthorized module activation.
+All approved modules operate against the local SQL Connect-backed API with verification of authorization, financial consistency where applicable, and audit. The production scope still needs the staging release walkthrough.
 
 ---
 
@@ -248,7 +153,7 @@ Replace frontend mock integrations with real authenticated API integrations.
 
 ### Dependencies
 
-Phase 1 foundation, local MongoDB, backend foundation, applicable Phase 4 modules.
+Phase 1 frontend foundation, Phase 2 local database, Phase 3 backend foundation, and the applicable Phase 4 module contracts. Integrate and verify each group during implementation.
 
 ### Required documents
 
@@ -262,7 +167,7 @@ frontend.md, backend.md, database.md, security.md, testing.md, relevant business
 - Data mapping: ensure frontend contracts match actual API/domain responses.
 - Query state: configure TanStack Query for auth transitions, permission-sensitive caching, mutations, invalidation, error handling, pagination.
 - Forms: integrate server-side validation, safe submission, loading states, business errors, duplicate-request protection.
-- Business workflows: validate complete flows using local MongoDB and actual backend services.
+- Business workflows: validate the real backend services and SQL Connect repositories using the local emulator and then hosted staging.
 - Audit: ensure relevant business events produce required authoritative audit records.
 
 ### Out of scope
@@ -275,7 +180,7 @@ API integration, frontend/backend contract compatibility, authentication, RBAC, 
 
 ### Acceptance criteria
 
-Frontend and backend communicate correctly; real API adapters used where authorized; mock data no longer treated as authoritative for integrated modules; authentication and permissions effective; module workflows function against local MongoDB; no double financial processing; no sensitive data leaks; critical integration tests pass.
+Authorized screens use the typed API adapters. Authentication, authorization, database state, audit, and error behavior agree. Critical workflows function end to end with no duplicate financial effects or unauthorized data exposure.
 
 ### Exit
 
@@ -291,7 +196,7 @@ Establish sufficient evidence that AFHomes is safe and correct for controlled cl
 
 ### Dependencies
 
-Implemented core modules, integrated frontend/backend, local MongoDB transaction support, test infrastructure.
+Approved modules, integrated frontend and backend, local database verification, and the owner-authorized staging environment for cloud-specific checks.
 
 ### Required documents
 
@@ -302,14 +207,14 @@ testing.md, security.md, database.md, backend.md, frontend.md, all relevant busi
 - Automated tests: unit, integration, API contract, database, end-to-end, regression.
 - Financial integrity: payment verification, correct balances, Confirmed Sales, reversals, commission approval, payout, membership activation, VIP identifier uniqueness, points reconciliation.
 - Security: authentication, session revocation, RBAC, record-level access, IDOR/BOLA protection, public data privacy, direct API access, disabled feature protection, sensitive file handling.
-- Database: MongoDB transactions, concurrent writes, indexes, exact-money behavior, Mongoose validation, data consistency.
+- Database: SQL Connect transactions, hosted concurrent writes and rollback, indexes, exact money handling, Manila-date behavior, validation, and data consistency.
 - Frontend: usability, responsive layout, accessibility, errors, loading states, permission-sensitive navigation.
 - Performance: query performance, pagination, reporting, application resource usage, selected realistic load testing.
-- Import and migration tests: CSV/JSON/XLSX validation, duplicate prevention, historical reconciliation, controlled import behavior, local-to-Atlas migration procedure rehearsal when a separately authorized staging destination is available.
+- Approved imports: validate supported inputs, duplicates, historical identifiers, reconciliation, and failure handling. Rehearse the production procedure in isolated staging.
 
 ### Staging sequencing clarification
 
-The original roadmap mentions staging acceptance in Phase 6 but Atlas provisioning in Phase 7. Avoid creating a dependency contradiction. Define: Phase 6 complete local-system and release-candidate validation; prepare staging acceptance criteria. Phase 7 provision or finalize authorized cloud staging, execute cloud-specific verification, perform migration rehearsal, and only then authorize production cutover. If staging infrastructure is authorized during late Phase 6, document that as a separately approved overlapping readiness activity, not as an automatic requirement.
+Start the SQL Connect Spark pilot after the first local workflow passes. Prove hosted transactions before expanding financial workflows. Complete local acceptance for the full scope before the full hosting and staging rehearsal. Paid staging setup and production cutover each need owner approval.
 
 ### Acceptance criteria
 
@@ -329,7 +234,7 @@ Prepare, validate and release AFHomes into its approved cloud infrastructure.
 
 ### Approved production architecture
 
-DigitalOcean Droplet + Docker Compose + Single Next.js Application Container + HTTPS Reverse Proxy + MongoDB Atlas Cloud.
+One Next.js application on Firebase App Hosting if verified in staging, or Cloud Run in the same Google project. Use Firebase Auth, SQL Connect with Cloud SQL for PostgreSQL, private Firebase Storage, and managed HTTPS. Production uses its own company-owned Blaze project.
 
 ### Required documents
 
@@ -337,18 +242,15 @@ deployment.md, database.md, security.md, testing.md, architecture.md, backend.md
 
 ### Core deliverables
 
-- Cloud infrastructure plan: resolve required Droplet region, sizing, OS, DNS, reverse proxy, Atlas tier, Atlas region, secure networking, storage requirements, monitoring, backup/recovery.
-- DigitalOcean provisioning: with authorization create Droplet, configure SSH, firewall, OS hardening, install Docker, install Compose, configure application hosting.
-- MongoDB Atlas preparation: with authorization create/configure Atlas, separate staging and production, configure DB users, configure access restrictions, verify transaction support, configure backup/monitoring.
-- Production application image: reproducible build, correct Node runtime, Next.js production configuration, safe container settings, traceable release artifact.
-- Reverse proxy and HTTPS: domain and DNS, HTTPS, certificate renewal, internal networking, safe proxy configuration.
-- Database migration: if real authorized source data exists locally and is intended for cloud transfer: create backup, inventory source, rehearse migration, verify indexes, reconcile identifiers, reconcile financial records, reconcile membership and points data, plan cutover. If local data is purely synthetic, do not automatically promote it into production; production may instead require authorized production reference-data initialization.
-- Staging verification: execute cloud-specific tests against isolated staging environment. Validate application startup, authentication, API connectivity, Atlas integration, transactions, file access, logging, feature flags, recovery, critical workflows.
-- Production release: require separate project-owner approval. Document release artifact, configuration, quality evidence, recovery readiness, production execution, smoke testing, monitoring, acceptance.
+- [Qualify the host and runtime in staging](../implementation/firebase/02-staging/04-hosting-and-deployment.md). Identify the build, approved location, domain, SQL Connect service, secrets, hosted logs, and recovery setup.
+- [Provision the production project and PostgreSQL](../implementation/firebase/03-production/01-firebase-project-and-database.md) only after owner authorization. Apply reviewed schema changes and verify backups.
+- Configure real staff access, least-privilege runtime identity, private files, approved feature exposure, and the validated Next.js production release.
+- [Rehearse and then execute approved imports](../implementation/firebase/03-production/04-approved-imports-and-readiness.md) under owner control. Reconcile before opening the release.
+- [Launch all approved modules together](../implementation/firebase/03-production/05-deployment-and-launch.md) after the full review and production approval.
 
 ### Security
 
-Host hardening, least privilege, secrets, HTTPS, firewall, Atlas connectivity, account/session protection, secure logs.
+Verify HTTPS, least-privilege cloud identity, protected server credentials, isolated environments, current sessions and record permissions, private files, and safe logs.
 
 ### Testing
 
@@ -360,7 +262,7 @@ Approved infrastructure provisioned; cloud database secure and functional; corre
 
 ### Exit
 
-Production deployment accepted by the project owner. Do not assume that provisioning a Droplet alone completes this phase.
+The owner accepts the complete release after required verification. Provisioning a cloud service or passing a single pilot does not complete this phase.
 
 ---
 
@@ -376,10 +278,10 @@ Accepted production deployment.
 
 ### Scope
 
-- Monitoring: application health, API errors, database health, container resource usage, security events, backup status.
-- Incident handling: detection, investigation, containment, recovery, post-incident review.
-- Performance improvements: slow queries, large reports, application responsiveness, container resource usage, index optimization.
-- Security maintenance: OS updates, dependencies, session security, credential rotation, access reviews, vulnerability remediation.
+- Monitor app health, errors, database and runtime usage, security events, cost, and backup state.
+- Detect, contain, and recover from incidents using the [production recovery guide](../implementation/firebase/03-production/06-monitoring-backups-and-recovery.md).
+- Validate performance changes against real staging measurements and approved needs.
+- Review supported runtime and dependency updates, session security, credentials, access, and vulnerabilities.
 - Business-rule changes: future approved changes may require updated canonical documents, domain changes, database migration, backward compatibility, regression testing, release approval.
 - Future modules: potential future additions Customer Portal, mobile application, Redemption reactivation, Services reactivation, public website/CMS expansion where not already included in an earlier authorized scope, future integrations. Do not automatically activate these merely because Phase 8 exists.
 
@@ -395,167 +297,169 @@ Stable, monitored production operation under approved business and operational p
 
 ## 19. Business Module Coverage Matrix
 
-(As in earlier version table.)
+Use the [FP1–FP16 implementation index](../implementation/README.md) to map modules to feature records and canonical business rules.
 
 ---
 
 ## 20. Business Workflow Implementation Map
 
-(As in earlier version, with sequences 21.1–21.7.)
+Use the [module sequence](../implementation/firebase/01-localhost/05-approved-business-modules.md) and the associated feature checklists for dependent workflows and acceptance criteria.
 
 ---
 
 ## 21. Implementation Task Standard for AI Agents
 
-(As in earlier version, sections 22.1–22.3.)
+For each authorized task, identify source rules, current state, dependencies, implementation boundary, tests, and evidence. Follow AGENTS.md for permission and Git constraints.
 
 ---
 
 ## 22. Definition of Ready
 
-(As in earlier version.)
+A task is ready when the owner authorizes the scope, applicable rules and inputs are confirmed, prerequisites are verified, and a test method is defined.
 
 ---
 
 ## 23. Definition of Done
 
-(As in earlier version.)
+A task is done when approved behavior works through its normal entry point, required tests and review are complete, and actual results and remaining limitations are recorded.
 
 ---
 
 ## 24. Code Quality and Development Standards
 
-(As in earlier version.)
+Follow [architecture.md](architecture.md), [frontend.md](frontend.md), and AGENTS.md. Reuse typed boundaries and existing code and keep changes focused.
 
 ---
 
 ## 25. Security Requirements Throughout Implementation
 
-(As in earlier version, Frontend/Database/Backend/Business Modules/Deployment.)
+Apply the [security guide](security.md) throughout the work. Protect sessions, server credentials, record access, private files, and audit history.
 
 ---
 
 ## 26. Testing Throughout Implementation
 
-(As in earlier version table.)
+Use the [testing guide](testing.md) and local, staging, and production acceptance checks. Report executed checks separately from planned tests.
 
 ---
 
 ## 27. Data Safety and Migration Control
 
-(As in earlier version.)
+Keep environments distinct. Use only approved import sources, validate and rehearse, record rejections, prevent duplicate effects, and reconcile before cutover.
 
 ---
 
 ## 28. Critical Business and Technical Blockers
 
-(As in earlier version, with blocker table and scope-specific blocking.)
+Check the [decision register](../implementation/decisions-and-gaps.md) for business gaps and the Firebase phase guides for hosting, billing, data, and access prerequisites. Report only a specific blocker and the workflows it affects.
 
 ---
 
 ## 29. Decision and Change Control
 
-(As in earlier version.)
+Record owner decisions in the decision register. Reconcile affected documents and tests before acting on an approved change.
 
 ---
 
 ## 30. Git and Branch Workflow
 
-(As in earlier version.)
+Follow [AGENTS.md](../../AGENTS.md). The project owner controls Git staging, commits, pushes, and releases.
 
 ---
 
 ## 31. Release Management and Version Compatibility
 
-(As in earlier version.)
+Pin and record the reviewed build, Node.js and Next.js versions, host configuration, schema/connector version, and rollback compatibility. Verify the exact release in staging.
 
 ---
 
 ## 32. CI/CD Implementation Roadmap
 
-(As in earlier version.)
+Use the [deployment guide](deployment.md) for owner-approved build checks and releases. Production release settings must preserve the owner's control.
 
 ---
 
 ## 33. Implementation Progress Reporting
 
-(As in earlier version.)
+Record phase, environment, revision, approvals, checks run, actual results, blockers, and the next gate in the applicable phase guide or linked evidence.
 
 ---
 
 ## 34. Delivery Order and Milestone Gates
 
-(As in earlier version table M0–M8.)
+Use the [numbered Firebase phase indexes](../implementation/firebase/README.md) to move from Localhost to Staging to Production. Complete approved module and import sign-off before the single production launch.
 
 ---
 
 ## 35. Scope Control and Non-Goals
 
-(As in earlier version.)
+Keep the approved runtime and module boundaries. Mobile, Customer Portal, Live Redemption, Services, and unapproved legacy data migration require separate approval.
 
 ---
 
 ## 36. Phase Acceptance Test Examples
 
-(As in earlier version, Examples A–H.)
+Use the acceptance cases in [testing.md](testing.md) and the step-specific checks in the Firebase guides.
 
 ---
 
 ## 37. Risk Management
 
-(As in earlier version.)
+Track SQL Connect guarantees, hosted compatibility, data quality, permissions, operating cost, and recovery as testable risks. Stop an affected phase if its critical guarantees fail.
 
 ---
 
 ## 38. Production Release Blockers
 
-(As in earlier version.)
+Incomplete approved functionality, unverified authorization or financial guarantees, unresolved import reconciliation, missing recovery evidence, unresolved hosting compatibility, or absent release approval blocks opening production.
 
 ---
 
 ## 39. Operations and Post-Launch Governance
 
-(As in earlier version.)
+Follow the [production operations guide](../implementation/firebase/03-production/06-monitoring-backups-and-recovery.md) for monitoring, access, rollback, backup verification, and recovery.
 
 ---
 
 ## 40. Critical Implementation Invariants
 
-(As in earlier version, 54 items.)
+Use AGENTS.md and the canonical business rules for binding invariants. A plan cannot change business behavior or authorize implementation.
 
 ---
 
 ## 41. Required Final implementation.md Structure
 
-(See Part 42 of task prompt; document covers all major sections.)
+Maintain the phase-to-environment mapping here and detailed instructions under the [Firebase roadmap](../implementation/firebase/README.md).
 
 ---
 
 ## 42. Cross-Document Consistency
 
-After rewriting, compare implementation.md with architecture.md, frontend.md, database.md, backend.md, security.md, testing.md, deployment.md, business-rules 01–14. If another document remains inconsistent, report the precise mismatch. Do not modify that file.
+Keep this mapping, the technical guides, and the Firebase environment sequence consistent. Canonical business rules govern business behavior.
 
 ---
 
 ## 43. Acceptance Checklist
 
-(As in earlier version.)
+Use each phase index's exit checks and the [staging sign-off guide](../implementation/firebase/02-staging/05-release-rehearsal-and-sign-off.md).
 
 ---
 
 ## 44. Strict Execution Scope
 
-This task authorizes modification of `docs/development/implementation.md` only. Do not modify any other file. Do not create extra development documents. The development directory must retain exactly ten approved files. Do not modify application code, package manifests, environment files, Mongoose schemas, database configuration, Docker configuration, CI/CD workflows, Git configuration. Do not scaffold Next.js, install packages, start MongoDB, create databases, connect to production Atlas, create test suites, create API routes, implement authentication, provision DigitalOcean, run migrations, import customer records, commit, push, merge, deploy. If another document requires correction, report the mismatch for a separate authorized task.
+This roadmap authorizes planning only. Follow AGENTS.md for approvals of code, database changes, data, environment configuration, billing, and releases. The owner controls Git.
 
 ---
 
 ## 45. Final Verification
 
-After writing implementation.md: re-read the complete document; verify all nine phases; verify the Phase 2 local MongoDB correction; verify Atlas is not mandatory in Phase 2; verify phase dependencies; verify the Phase 4 dependency sequence; verify all 14 business-rule areas are covered; verify the Finance authority safeguards; verify the official identifier dependencies; verify the Membership activation rules; verify Stay Points integrity; verify Genealogy history; verify live Redemption and Services remain disabled and the staff Redemption prototype is authorized; verify future Customer/Mobile scope; verify migration controls; verify the Phase 6/7 staging boundary; verify deployment approval requirements; verify Definition of Ready/Done; verify critical blockers; verify no invented business approvals; check Markdown links; check Mermaid diagrams; compare with all development documents; confirm only implementation.md changed; inspect the final Git diff. Use read-only commands: `git status --short`, `git diff --stat`, `git diff --check`. Inspect untracked Markdown directly. Do not stage or commit.
+Verify phase dependencies, approvals, prototype boundaries, technical and feature cross-references, documentation links, and actual evidence. Treat historic reports as evidence of their own tasks and dates.
 
 ---
 
-## 46. Completion Report
+## 46. Historical Completion Report
+
+> The earlier documentation work below used the superseded stack and original phase text. The current sequence is the Firebase roadmap.
 
 ### A. Repository Verification
 

@@ -22,11 +22,11 @@
 | Current Phase | Phase 1 frontend prototype on typed in-memory mock data; backend, database, authentication and deployment not started |
 | Primary Deliverable | Functional Web-Based Platform |
 | Initial Development Environment | Local Development |
-| Target Local Database | MongoDB (localhost) |
-| Target Cloud Database | MongoDB Atlas |
-| Target Application Hosting | DigitalOcean Droplet |
-| Target Deployment | Docker Compose + HTTPS |
-| Authentication Direction | Better Auth (subject to compatibility verification) |
+| Target local database | Firebase SQL Connect Emulator |
+| Target cloud database | SQL Connect with Cloud SQL for PostgreSQL |
+| Target demo hosting | Vercel for the authorized sample-data demo |
+| Target production hosting | Verified Firebase App Hosting or Cloud Run fallback |
+| Authentication direction | Firebase Auth with server-verified sessions |
 
 AFHomes Platform is a new implementation built from scratch. An earlier AFHomes system exists, but its architecture must not dictate the new project's structure. The previous system may be consulted only as a reference for verified business rules, operational workflows, and domain knowledge. Do not automatically copy legacy architecture, implementation patterns, or unverified behavior.
 
@@ -60,8 +60,8 @@ AFHomes requires a centralized platform for managing business operations, organi
 18. Support reporting and analytics.
 19. Preserve audit history.
 20. Enable local database-backed development.
-21. Support controlled MongoDB Atlas migration.
-22. Prepare secure DigitalOcean deployment.
+21. Support reviewed PostgreSQL schema releases and approved business imports.
+22. Prepare a secure Firebase/Google Cloud release after staging verification.
 23. Preserve architectural support for future Customer and Mobile interfaces.
 24. Preserve the authorized Redemption staff prototype and the disabled Services module for separately authorized future activation.
 
@@ -103,7 +103,7 @@ This high-level role description is not the definitive permission matrix. See `d
 
 ### 8. Single Next.js Modular Monolith
 
-Primary logical layers: App Router; Panels and presentation; Shared UI; Domain modules; Typed repository contracts; API adapters; Server-side authentication and authorization; Application services; Mongoose persistence; MongoDB. See `docs/development/architecture.md` for complete technical design.
+Primary logical layers: App Router, panels, shared UI, domain modules, typed repository contracts, HTTP adapters, server authentication and authorization, application services, typed SQL Connect repositories, and PostgreSQL. See [architecture.md](development/architecture.md).
 
 ### 9. Approved Technology Stack
 
@@ -120,19 +120,19 @@ Primary logical layers: App Router; Panels and presentation; Shared UI; Domain m
 | Client asynchronous state | TanStack Query |
 | API architecture | REST `/api/v1` |
 | Backend architecture | Domain services inside Next.js |
-| Authentication | Better Auth direction (subject to compatibility verification) |
+| Authentication | Firebase Auth with server-verified sessions |
 | Authorization | Centralized RBAC and record-level policies |
-| ODM | Mongoose |
-| Development database | Local MongoDB |
-| Production database | MongoDB Atlas |
-| Application hosting | DigitalOcean Droplet |
-| Container deployment | Docker Compose |
-| Production transport | HTTPS |
-| Reverse proxy | Appropriate approved HTTPS reverse proxy |
+| Server persistence | Firebase Admin SDK and typed SQL Connect repositories |
+| Development data services | Firebase SQL Connect, Auth, and Storage emulators |
+| Production database | Cloud SQL for PostgreSQL through SQL Connect |
+| Production files | Private Cloud Storage for Firebase |
+| Online demo | Vercel preview with sample data and appropriate plan approval |
+| Production hosting | Firebase App Hosting if verified, Cloud Run fallback |
+| Transport | Managed HTTPS on the approved host |
 | Future Customer Portal | Planned, separately authorized |
 | Future mobile application | React Native + Expo direction |
 
-Better Auth is the target authentication solution; compatibility with selected Next.js, Node.js, MongoDB, and integration packages must be verified before implementation. Do not claim compatibility has been tested or deployment configured without evidence.
+Verify Firebase Auth sessions, SDK compatibility, SQL Connect operations, and the Next.js runtime in the relevant environment. The target stack does not establish that any cloud service is already configured.
 
 Vitest and Testing Library are installed and used. Playwright and database or end-to-end tooling are not installed. Check `package.json` before claiming any package is installed.
 
@@ -144,33 +144,22 @@ The project begins with frontend-first development after documentation approval.
 
 Required behavior: one centralized in-memory mock business data store; synthetic records; shared domain identifiers; consistent relationships; mock repository adapters; development-only simulated identities; mock business workflows; appropriate loading/errors; full browser refresh resets mock data. The mock store is not a production database. Do not persist mock business records in localStorage or IndexedDB. Do not allow every feature to maintain conflicting copies of the same business records. Do not present mock approval as real financial verification.
 
-### 12. Local MongoDB Development
+### 12. Local SQL Connect Development
 
-This is a major approved project decision. Before the cloud database, AFHomes will use real MongoDB running locally.
-
-- **Local development:** Next.js backend connects to local MongoDB (Docker-hosted or native).
-- **Data persistence:** local MongoDB development records persist across browser refreshes and application restarts.
-- **Transaction support:** appropriate replica-set configuration required for realistic MongoDB multi-document transaction integration tests.
-- **Data isolation:** local development must not accidentally connect to production Atlas.
-- **Detailed reference:** `docs/development/database.md`
-
-Do not include full Docker configuration or database commands in the master project document.
+Start in the SQL Connect Emulator with the Firebase Auth and Storage emulators. Keep a repeatable schema and synthetic seed. Local backend records survive a browser refresh, while browser-memory prototype data resets. Verify the staged PostgreSQL pilot for concurrency and rollback. See [database.md](development/database.md).
 
 ### 13. Cloud and Deployment Strategy
 
-Approved production architecture: DigitalOcean Droplet + Docker Compose + Next.js Application + HTTPS Reverse Proxy + MongoDB Atlas Cloud.
-
-- **DigitalOcean responsibilities:** hosts the Next.js application (frontend rendering, backend REST API, authentication integration, domain services).
-- **MongoDB Atlas responsibilities:** hosts the managed production database. Do not deploy a second standalone production MongoDB server on the Droplet by default.
-- **Production architecture:** one Next.js application container as standard application runtime; reverse proxy manages HTTPS access; optional background worker may be justified separately.
-- **Deployment security:** production requires firewall, restricted SSH, HTTPS, secrets, Atlas network access control, monitoring, backups, recovery planning, release approval.
-- **Hosting details that may remain open:** final Droplet region, Droplet size, domain, reverse proxy choice, Atlas tier, Atlas region, object storage, monitoring provider. Do not confuse those remaining implementation choices with an undecided overall hosting architecture.
+- **Online prototype:** Vercel, sample data, and owner-approved deployment.
+- **Staging:** Separate Firebase project. Start the SQL Connect Spark trial after the local pilot. Rehearse the complete release with approved hosted services.
+- **Production:** Company-owned Firebase project on Blaze with Firebase Auth, SQL Connect and PostgreSQL, private Firebase Storage, and Firebase App Hosting if qualified. Cloud Run is the fallback in the same Google project.
+- Approve the service location, domain, capacity, cost, and recovery settings before provisioning. Use the [Firebase roadmap](implementation/firebase/README.md) and [deployment guide](development/deployment.md) for the environment steps.
 
 ### 14. Data Import and Migration Policy
 
 Distinguish two different data movement requirements.
 
-- **Local MongoDB to Atlas:** approved planned technical capability. A future authorized process may use source backup, migration rehearsal, database compatibility checks, index validation, business reconciliation, controlled cutover, rollback planning. Do not automatically migrate synthetic local records into production.
+- **Schema promotion:** Carry reviewed schema and connector versions from localhost through staging to production. Rehearse configuration, constraints, tests, backup, and rollback. Use approved application imports for real records.
 - **Historical or legacy data import:** future application-level imports may be supported. However, **no automatic migration of the earlier Supabase production records is authorized.** Any future legacy import requires separate project-owner approval. The old production database must remain untouched unless specifically authorized.
 - **Historical data integrity:** preserve customer identity, official identifiers, historical contracts, sales attribution, verified financial history, membership dates, Stay Points ledger, audit history. Do not fabricate missing historical payments or membership activation facts. See `docs/development/database.md`.
 
@@ -192,7 +181,7 @@ Manages canonical customer identity, profiles, applications, drafts, and authori
 
 ### 18. Sales and Finance
 
-Sales records qualifying customer purchases, seller attribution, sale state, and reporting recognition. Confirmed Sale follows the authoritative Sales Performance Reporting rules. Finance manages payment submissions, monetary verification, balances, refunds, reversals, and reconciliation. Only authorized Finance personnel verify actual monetary payments. Payment submission is not Finance verification. Contract finalization is not verified payment. Confirmed Sale is not necessarily Fully Paid. Finance collections and Confirmed Sales are different reporting measures. Fully Paid settlement and official VIP Membership activation are separate states. Reversals must be traceable and must not erase original valid transaction history. Sensitive Finance state changes must be attributable to authorized actors.
+Sales records qualifying customer purchases, seller attribution, sale state, and reporting recognition. Confirmed Sale follows the authoritative Sales Performance Reporting rules. Finance manages payment submissions, monetary verification, balances, refunds, reversals, and reconciliation. Finance, the Administrator, or the Super Administrator can approve receipts under doc 07. Payment submission is not Finance verification. Contract finalization is not verified payment. Confirmed Sale is not necessarily Fully Paid. Finance collections and Confirmed Sales are different reporting measures. Fully Paid settlement and official VIP Membership activation are separate states. Reversals must be traceable and must not erase original valid transaction history. Sensitive Finance state changes must be attributable to authorized actors.
 
 ### 19. Commissions
 
@@ -204,7 +193,7 @@ VIP Membership manages official membership activation, the issued VIP Number, va
 
 ### 21. Official Identifiers
 
-The master document identifies distinct categories: MongoDB internal identity, Customer ID, RA number/reference, VIP Number, AAI/AAO accreditation number, Sale reference, Payment or financial transaction reference.
+Keep database keys distinct from business identifiers such as Customer ID, VIP Number and related agreement references, AAI/AAO accreditation number, Sale reference, and Payment reference. Follow the canonical rules for each identifier's scope.
 
 - **Customer identity:** use the authoritative Customer Management definition. Do not automatically use RA numbers as Customer IDs.
 - **RA reference:** preserve approved RA scope and uniqueness rules. If RA uniqueness remains unresolved, flag the exact dependency.
@@ -235,15 +224,15 @@ Preserve customer identity, official identifiers, historical contracts, sales at
 |---|---|---|
 | 0 | Documentation Foundation | Complete and reconcile authoritative documentation |
 | 1 | Frontend Foundation | Next.js, UI foundations, panels, mock data |
-| 2 | Local MongoDB Database Foundation | Persistent development database, modeling and indexes |
+| 2 | Local SQL Connect Database Foundation | Emulated schema, indexes, and synthetic test records |
 | 3 | Backend Foundation | API, authentication, authorization and repositories |
 | 4 | Core Business Modules | Implement domain workflows in dependency order |
 | 5 | Frontend/Backend Integration | Replace mocks with real services |
 | 6 | Testing and System Validation | Verify correctness, security, and financial integrity |
-| 7 | Cloud Deployment and Production Readiness | Atlas, DigitalOcean, HTTPS, monitoring and recovery |
+| 7 | Cloud Deployment and Production Readiness | Verified Google host, managed PostgreSQL, HTTPS, backups, and recovery |
 | 8 | Stabilization and Future Enhancements | Maintain and improve the accepted system |
 
-No phase is automatically authorized by documentation. AI agent implementation completion is not the same as project-owner acceptance. Phase 1 does not automatically authorize every business module. Phase 2 does not require Atlas production provisioning. Phase 7 requires separate cloud and deployment approvals. Use `docs/development/implementation.md` as the authoritative roadmap. Do not duplicate its full subphase matrix in `project.md`.
+Use the [technical phase mapping](development/implementation.md) and the [Firebase environment roadmap](implementation/firebase/README.md). Progress through Localhost, Staging, and Production with separate owner authorization. A local test or a published demo does not authorize production.
 
 ### 25. Approved Decisions
 
@@ -253,29 +242,29 @@ No phase is automatically authorized by documentation. AI agent implementation c
 | Frontend | React/TypeScript |
 | Frontend development | Frontend-first |
 | Initial mock data | Browser-scoped in-memory |
-| Real development database | Local MongoDB |
-| Cloud database | MongoDB Atlas |
-| ORM/ODM | Mongoose |
+| Local database | SQL Connect Emulator |
+| Hosted database | PostgreSQL on Cloud SQL, through SQL Connect |
+| Persistence boundary | Server-only typed SQL Connect repositories |
 | API | REST `/api/v1` |
-| Authentication | Better Auth target, verify compatibility |
+| Authentication | Firebase Auth |
 | Authorization | Centralized RBAC and record-level access |
-| Production hosting | DigitalOcean Droplet |
-| Deployment | Docker Compose |
+| Production hosting | Verified Firebase App Hosting or Cloud Run fallback |
+| File storage | Private Cloud Storage for Firebase |
 | HTTPS | Required |
 | Core modules | Included in phased roadmap |
 | Redemption | Staff QR/Stay Points prototype authorized 2026-11-17; live use separately unauthorized |
 | Services | Preserved but disabled |
 | Customer Portal | Future authorized phase |
 | Mobile | Future authorized phase |
-| Local-to-Atlas migration | Planned capability |
+| Production data preparation | Reviewed schema and approved imports only |
 | Legacy Supabase migration | Not automatically authorized |
 | Production release | Explicit approval required |
 
-Do not repeat the old "hosting selection deferred" decision.
+See the [Firebase stack decision](implementation/decisions-and-gaps.md#firebase-stack-transition) for the supersession record.
 
 ### 26. Critical Dependencies
 
-Review `implementation.md` and the actual business documents. Potential examples: Better Auth/MongoDB compatibility; Atlas tier capabilities; formal audit retention; production domain and infrastructure sizing; backup and recovery objectives; the signed AFHomes/JA&D terms, the band code above ₱9M and the definition of `SUPERSEDED`; the IST Commission and Clawback Addendum; the Admin points-per-night table and holiday calendar. The Gold and Silver prices, Non-Standard terms, Move A/B schemes, RA numbering and accreditation expiry were resolved by the 2026-11-10/12 rulings and are not open. Scope-specific blocking: an Atlas tier decision does not block local MongoDB development; a missing signed term blocks only the feature that depends on it. No invented approvals: do not resolve commercial, financial, or security-sensitive conflicts by guessing.
+Verify server authentication, hosted SQL Connect transaction behavior, hosting compatibility, and approved domain, location, capacity, backup, and recovery settings. Use the [decision register](implementation/decisions-and-gaps.md) and canonical rules for actual open business decisions. A provider sizing question need not delay localhost work. Missing rule approval blocks the affected operation.
 
 ### 27. Business-Policy Change Governance
 
@@ -285,7 +274,7 @@ AFHomes policies may evolve. Future authorized changes can affect product terms,
 
 Distinguish two different data movement requirements.
 
-- **Local MongoDB to Atlas:** approved planned technical capability. A future authorized process may use source backup, migration rehearsal, database compatibility checks, index validation, business reconciliation, controlled cutover, rollback planning. Do not automatically migrate synthetic local records into production.
+- **Schema promotion and imported records:** follow the procedure in section 14. Keep ordinary synthetic data out of production.
 - **Historical or legacy data import:** future application-level imports may be supported. However, **no automatic migration of the earlier Supabase production records is authorized.** Any future legacy import requires separate project-owner approval. The old production database must remain untouched unless specifically authorized.
 - **Historical data integrity:** preserve customer identity, official identifiers, historical contracts, sales attribution, verified financial history, membership dates, Stay Points ledger, audit history. Do not fabricate missing historical payments or membership activation facts. See `docs/development/database.md`.
 
@@ -300,7 +289,7 @@ The master context must briefly explain the approved quality strategy.
 
 ### 30. Project-Owner Approval
 
-No phase is automatically authorized by documentation. Every implementation phase, major architecture change, production database change, actual data migration, production deployment, enabling disabled modules, sensitive policy change, or Git operation requires explicit project-owner authorization. Do not invent blanket permission to commit/push.
+The project owner must separately authorize implementation phases, architecture changes, production database changes, migrations, production deployments, disabled feature activation, and sensitive policy changes. The absolute owner-only Git policy in [AGENTS.md](../AGENTS.md) applies to all tasks.
 
 ---
 
@@ -319,7 +308,7 @@ No phase is automatically authorized by documentation. Every implementation phas
 | `docs/development/README.md` | Documentation entry point |
 | `docs/development/architecture.md` | Full technical architecture |
 | `docs/development/frontend.md` | Frontend design |
-| `docs/development/database.md` | MongoDB architecture |
+| [Database guide](development/database.md) | PostgreSQL, SQL Connect, and controlled imports |
 | `docs/development/backend.md` | Backend/API architecture |
 | `docs/development/security.md` | Security |
 | `docs/development/testing.md` | Quality assurance |
@@ -361,7 +350,7 @@ Before making changes, AI coding agents must:
 9. Confirm authorization.
 10. Identify dependencies.
 
-For deployment tasks, also read `docs/development/deployment.md`. For MongoDB work, read `docs/development/database.md`. For frontend work, read `docs/development/frontend.md`. For backend/API work, read `docs/development/backend.md`.
+For database work, read [database.md](development/database.md). For API and UI work, read [backend.md](development/backend.md) and [frontend.md](development/frontend.md). For hosted work, read [deployment.md](development/deployment.md) and the [environment roadmap](implementation/firebase/README.md).
 
 Do not treat reading documentation as permission to edit every file. Only the explicitly authorized task scope may be changed.
 
@@ -373,7 +362,7 @@ Agents must:
 - Do not introduce separate frontend/backend applications.
 - Do not introduce unapproved frameworks.
 - Keep domain business rules outside UI components.
-- Keep MongoDB access server-only.
+- Keep privileged SQL Connect and PostgreSQL access server-only.
 - Follow the authoritative business-rule documents.
 - Do not invent missing commercial policies.
 - Do not bypass server-side RBAC.
@@ -392,7 +381,7 @@ Agents must:
 - Keep live Redemption and Services disabled; the staff Redemption prototype is authorized.
 - Do not automatically migrate legacy production data.
 - Do not deploy without authorization.
-- Do not commit or push without authorization.
+- Use read-only Git inspection allowed by AGENTS.md. The project owner controls Git staging, commits, and pushes.
 - Do not overwrite unrelated user work.
 - Run applicable authorized tests.
 - Report tests honestly.
@@ -417,11 +406,8 @@ Do not use these statuses interchangeably.
 
 ### 37. Repository Protection
 
-- No destructive Git commands without approval.
-- Preserve untracked work.
-- Do not overwrite coworker changes.
-- No unauthorized force-push.
-- No unauthorized merges.
+- Follow the absolute Git rules in [AGENTS.md](../AGENTS.md). The owner performs all Git writes reserved there.
+- Preserve untracked work and existing collaborator changes.
 
 ### 38. Database Protection
 
@@ -440,7 +426,7 @@ Do not use these statuses interchangeably.
 ### 40. Deployment Protection
 
 - Production release requires explicit project-owner authorization.
-- Docker configuration changes and cloud provisioning require appropriate task scope.
+- Hosting configuration, cloud provisioning, and billing each require explicit owner authorization.
 
 ### 41. Historical Integrity
 
@@ -454,7 +440,7 @@ Do not use these statuses interchangeably.
 
 ## Part VIII — What Does Not Belong in project.md
 
-The master project document is not the correct place for complete database schemas, every customer field definition, full role permission matrix, detailed commission percentages, complex VIP contract clauses, MongoDB connection commands, Docker Compose configuration, API endpoint implementation examples, large test-case catalogs, complete daily developer schedules, previous coding-agent completion reports, or one-time task execution instructions. Those belong in the appropriate business-rule, technical, implementation, or operational documents. The project context must provide accurate orientation and references. Do not make this file another duplicate 1,000-line technical specification merely to preserve its historical length.
+Keep detailed schemas, deployment commands, API contracts, test catalogs, and operating procedures in the relevant development and implementation guides. This file provides project orientation and authoritative source references.
 
 ---
 
@@ -470,17 +456,17 @@ The master project document is not the correct place for complete database schem
 8. TanStack Query is the client asynchronous-state solution.
 9. REST APIs use `/api/v1`.
 10. Backend domain services are inside the Next.js project.
-11. Better Auth is the target authentication solution subject to verification.
+11. Firebase Auth is the identity provider. Verify the server session and account scope.
 12. RBAC is centralized.
 13. Record-level authorization is required.
 14. Frontend-first development is approved.
 15. Mock business data is in-memory and resets on refresh.
-16. Local MongoDB is the first real persistent database.
-17. Local MongoDB development data persists across refreshes.
-18. Mongoose is server-only.
-19. MongoDB Atlas is the target managed production database.
-20. DigitalOcean Droplet is the application host.
-21. Docker Compose is the selected deployment method.
+16. Database-backed work begins with the SQL Connect Emulator.
+17. Local database-backed data survives browser refreshes.
+18. Privileged SQL Connect access stays server-only.
+19. Separate hosted Cloud SQL for PostgreSQL instances back SQL Connect in staging and production.
+20. Vercel may host the approved online demo.
+21. Firebase App Hosting is the first production choice after verification, with Cloud Run as fallback.
 22. HTTPS is required for production.
 23. No separate backend application by default.
 24. Sales Network relationships follow approved genealogy.
@@ -504,7 +490,7 @@ The master project document is not the correct place for complete database schem
 42. Services remains disabled.
 43. Future Customer Portal remains separately authorized.
 44. Future mobile application remains separately authorized.
-45. Local-to-Atlas migration is a planned capability.
+45. Reviewed schemas and approved import procedures are rehearsed in staging.
 46. Synthetic development data is not automatically production data.
 47. Legacy Supabase production migration is not automatically authorized.
 48. Commercial policies may change through authorized decisions.
@@ -517,7 +503,9 @@ The master project document is not the correct place for complete database schem
 
 ---
 
-## Part X — Completion Report
+## Part X — Historical Completion Report
+
+> The findings below describe the earlier Phase 0 documentation review and its superseded infrastructure decisions.
 
 - **File created/updated:** `docs/project.md`
 - **Major sections included:** Part I Project Overview; Part II Business and Application Scope; Part III Approved Technical Architecture; Part IV Critical Business Principles; Part V Project Delivery and Governance; Part VI Documentation and AI Agents; Part VII Execution Safety; Part VIII What Does Not Belong in project.md; Part IX Critical Project Invariants; Part X Completion Report.

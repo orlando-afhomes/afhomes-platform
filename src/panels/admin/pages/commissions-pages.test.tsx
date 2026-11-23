@@ -228,4 +228,68 @@ describe("Allowance review form", () => {
     expect(button).toHaveAttribute("aria-busy", "true");
     expect(button).toHaveAttribute("aria-disabled", "true");
   });
+
+  it("assembles month figures from business data and copies one leader into the form", async () => {
+    const user = userEvent.setup();
+    show(<><CommissionsAreaPage /><AppToaster /></>, "allowances");
+    await screen.findByRole("region", { name: "Step 1: Month and Leader" });
+    fireEvent.change(screen.getByLabelText(/^Month/), { target: { value: "2026-09" } });
+    const table = await screen.findByRole("table", { name: "Assembled Month Figures" });
+    expect(within(table).getAllByRole("button", { name: "Copy" }).length).toBeGreaterThan(0);
+    expect(screen.getByText(/split the figures into the Qualifying and Extended stretches/i)).toBeInTheDocument();
+    await user.click(within(table).getAllByRole("button", { name: "Copy" })[0]);
+    expect(await screen.findByText(/Assembled month figures copied/)).toBeInTheDocument();
+  });
+
+  it("blocks saving copied figures until the Qualifying/Extended split is confirmed", async () => {
+    const user = userEvent.setup();
+    show(<CommissionsAreaPage />, "allowances");
+    await screen.findByRole("region", { name: "Step 1: Month and Leader" });
+    fireEvent.change(screen.getByLabelText(/^Month/), { target: { value: "2026-09" } });
+    const table = await screen.findByRole("table", { name: "Assembled Month Figures" });
+    await user.click(within(table).getAllByRole("button", { name: "Copy" })[0]);
+    await screen.findByRole("switch", { name: "The Qualifying/Extended split above is correct" });
+    await user.click(screen.getByRole("button", { name: "Save Review" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Confirm the Qualifying\/Extended split/);
+    await user.click(screen.getByRole("switch", { name: "The Qualifying/Extended split above is correct" }));
+    await user.click(screen.getByRole("button", { name: "Save Review" }));
+    expect(await screen.findByRole("row", { name: /Open allowance review/ })).toBeInTheDocument();
+  });
+
+  it("requires fresh split confirmation after editing a copied collection amount", async () => {
+    const user = userEvent.setup();
+    show(<CommissionsAreaPage />, "allowances");
+    await screen.findByRole("region", { name: "Step 1: Month and Leader" });
+    fireEvent.change(screen.getByLabelText(/^Month/), { target: { value: "2026-09" } });
+    const table = await screen.findByRole("table", { name: "Assembled Month Figures" });
+    await user.click(within(table).getAllByRole("button", { name: "Copy" })[0]);
+    const confirmation = await screen.findByRole("switch", { name: "The Qualifying/Extended split above is correct" });
+    await user.click(confirmation);
+    fireEvent.change(screen.getAllByLabelText("Collections")[0], { target: { value: "100" } });
+    expect(screen.getByRole("switch", { name: "The Qualifying/Extended split above is correct" })).not.toBeChecked();
+    await user.click(screen.getByRole("button", { name: "Save Review" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Confirm the Qualifying\/Extended split/);
+    await user.click(confirmation);
+    await user.click(screen.getByRole("button", { name: "Save Review" }));
+    expect(await screen.findByRole("row", { name: /Open allowance review/ })).toBeInTheDocument();
+  });
+
+  it.each(["month", "leader"])("clears a confirmed copied draft when the %s changes", async (field) => {
+    const user = userEvent.setup();
+    show(<CommissionsAreaPage />, "allowances");
+    const month = await screen.findByLabelText(/^Month/);
+    fireEvent.change(month, { target: { value: "2026-09" } });
+    const table = await screen.findByRole("table", { name: "Assembled Month Figures" });
+    await user.click(within(table).getAllByRole("button", { name: "Copy" })[0]);
+    const confirmation = await screen.findByRole("switch", { name: "The Qualifying/Extended split above is correct" });
+    await user.click(confirmation);
+    if (field === "month") {
+      fireEvent.change(month, { target: { value: "2026-08" } });
+    } else {
+      await user.click(screen.getByRole("combobox", { name: /Internal Seller \(IST\) leader/ }));
+      await user.click(screen.getAllByRole("option", { selected: false })[0]);
+    }
+    expect(confirmation).not.toBeInTheDocument();
+    for (const input of screen.getAllByLabelText("Eligible days")) expect(input).toHaveValue("");
+  });
 });

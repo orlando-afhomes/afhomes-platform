@@ -68,12 +68,12 @@ Routes (from the atlas):
 | Field | Value |
 |---|---|
 | Journey | J09 |
-| Current | The recovery ledger and direct collection are implemented; automatic deduction waits for the signed addendum. |
+| Current | The recovery ledger and direct collection are implemented; automatic offset from payouts then allowances applies once the Administrator records the IST signing date (2026-11-22 decision, built in the mock). |
 | Target | Per R9 and follow-up 2 (doc 08 section 14): a clawback is recorded as owed (five triggers of OCT R32), collected directly by the office, and written off by an Administrator or the Super Administrator; a Defaulted sale's clawback is written off on reinstatement, except a returned-cheque clawback. Only automatic deduction from future pay waits for the signed IST Commission and Clawback Addendum (and a signed OST agreement for OST sellers). History is never deleted. |
 | Layer | Frontend (mock) |
-| Blocked by | none for recording, direct collection and write-off. Automatic deduction waits for the signed addendum (open item). |
-| Acceptance | A clawback can be raised, recorded as recovered and written off, with actor and reason. No automatic offset happens without signed authority. Reinstatement writes off the owed amount except for a returned cheque. |
-| Status | Recovery ledger and direct collection implemented; automatic deductions await signed terms |
+| Blocked by | none in the mock. Signed addendum terms and Legal confirmation remain for real payouts. |
+| Acceptance | A clawback can be raised, recorded as recovered and written off, with actor and reason. Automatic offset applies only to paybacks raised on or after the recorded signing date, capped at the amount payable; others are collected directly. Reinstatement writes off the owed amount except for a returned cheque. |
+| Status | Mock offset flow implemented 2026-11-22; signed terms and Legal confirmation remain for production |
 
 ## F8.6 Allowance (BA, PA, PB) calculation review
 

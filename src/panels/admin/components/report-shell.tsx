@@ -107,6 +107,7 @@ export function ReportExport<T>({ report, fileName, columns, rows, range, printa
   const record = useRecordReportExport();
   const [busy, setBusy] = useState(false);
   const run = async (format: "xlsx" | "csv") => {
+    if (busy) return;
     setBusy(true);
     try {
       await record.mutateAsync({ report, format, range, rowCount: rows.length });
@@ -123,7 +124,7 @@ export function ReportExport<T>({ report, fileName, columns, rows, range, printa
   };
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="info" disabled={busy} className={cn("report-print__hide tw:h-11 tw:w-full tw:md:w-auto tw:md:flex-none", className)} />}>
+      <DropdownMenuTrigger render={<Button variant="info" loading={busy} className={cn("report-print__hide tw:h-11 tw:w-full tw:md:w-auto tw:md:flex-none", className)} />}>
         <Download aria-hidden /> Export <ChevronDown aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="tw:min-w-40">

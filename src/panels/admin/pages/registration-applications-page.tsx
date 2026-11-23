@@ -18,6 +18,7 @@ import { programCategoryLabel } from "@/modules/sales-network/accredited-seller"
 import { useProgramCategoryLabels } from "@/data/settings-queries";
 import { AdminPage } from "@/shared/components/admin";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
+import { QueryState } from "@/shared/components/modern/query-state";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { RecordDetailsSheet, type DetailSection } from "@/shared/components/modern/record-details-sheet";
@@ -211,18 +212,19 @@ export function RegistrationApplicationsPage({ embedded = false }: { embedded?: 
       crumbs={[{ label: "Sales Network" }, { label: "Seller Applications" }]}
     >
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search applications" filters={[{ label: "Status filter", value: status, onChange: setStatus, options: STATUS_FILTER }]} />
-      <DataTable<RegistrationApplication>
-        caption="Seller Applications"
-        orderBy={APPLICATION_ORDER}
-        data={rows}
-        columns={columns}
-        getRowId={(item) => item.id}
-        emptyText="No applications found."
-        loading={applications.isLoading}
-        onRowOpen={(item) => setDetailId(item.id)}
-        getRowLabel={(item) => `Open application ${item.reference}`}
-        rowActions={(item) => <RowActionsMenu itemName={`application ${item.reference}`} extraItems={actionsFor(item)} />}
-      />
+      <QueryState isLoading={applications.isLoading} error={applications.error} onRetry={() => void applications.refetch()}>
+        <DataTable<RegistrationApplication>
+          caption="Seller Applications"
+          orderBy={APPLICATION_ORDER}
+          data={rows}
+          columns={columns}
+          getRowId={(item) => item.id}
+          emptyText="No applications found."
+          onRowOpen={(item) => setDetailId(item.id)}
+          getRowLabel={(item) => `Open application ${item.reference}`}
+          rowActions={(item) => <RowActionsMenu itemName={`application ${item.reference}`} extraItems={actionsFor(item)} />}
+        />
+      </QueryState>
       <RecordDetailsSheet
         open={detail !== null}
         onClose={() => setDetailId(null)}

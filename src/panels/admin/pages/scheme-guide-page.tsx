@@ -80,7 +80,18 @@ export function SchemeGuidePanel() {
   const schemes = usePaymentSchemes();
   const products = useVipProducts();
   return (
-    <QueryState isLoading={schemes.isLoading || products.isLoading} error={schemes.error ?? products.error} skeleton={<CardGridSkeleton cards={2} className="tw:lg:grid-cols-2" />}>
+    <QueryState
+      isLoading={schemes.isLoading || products.isLoading}
+      error={schemes.error ?? products.error}
+      onRetry={() => {
+        void schemes.refetch();
+        void products.refetch();
+      }}
+      skeleton={<CardGridSkeleton cards={2} className="tw:lg:grid-cols-2" />}
+    >
+    {(schemes.data ?? []).length === 0 ? (
+      <p className="tw:text-sm tw:text-muted-foreground">No payment plans configured.</p>
+    ) : (
       <div className="tw:flex tw:flex-col tw:gap-4">
         {(schemes.data ?? []).map((scheme) => (
           <div key={scheme.id} className="tw:break-inside-avoid">
@@ -112,6 +123,7 @@ export function SchemeGuidePanel() {
           </div>
         ))}
       </div>
+    )}
     </QueryState>
   );
 }

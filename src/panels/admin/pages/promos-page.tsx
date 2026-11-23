@@ -10,6 +10,7 @@ import type { TableOrder } from "@/shared/lib/table-order";
 import { useDeletePromo, useEndPromo, usePromoPreview, usePromos, useSavePromo } from "@/data/promo-queries";
 import { useActiveOutlets, useOutlets } from "@/data/settings-queries";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
+import { QueryState } from "@/shared/components/modern/query-state";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
@@ -76,6 +77,13 @@ export function PromosPanel() {
   const { mutateAsync: end } = endPromo;
   const { mutateAsync: remove } = deletePromo;
 
+  // Outlet names label the rows, so a failed outlets load blocks the table like a failed promos load.
+  const listError = promos.error ?? outlets.error;
+  const retryLists = () => {
+    void promos.refetch();
+    void outlets.refetch();
+  };
+
   const columns = useMemo<ColumnDef<PromoView, unknown>[]>(() => [
     {
       id: "name", header: "Name",
@@ -120,8 +128,10 @@ export function PromosPanel() {
   return (
     <>
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search promos" filters={[{ label: "Status filter", value: status, onChange: setStatus, options: STATUS_ITEMS }]} />
-      <DataTable<PromoView> caption="Promos" orderBy={PROMO_ORDER} data={rows} columns={columns} getRowId={(row) => row.id} emptyText="No promos found." loading={promos.isLoading}
+      <QueryState isLoading={promos.isLoading || outlets.isLoading} error={listError} onRetry={retryLists}>
+      <DataTable<PromoView> caption="Promos" orderBy={PROMO_ORDER} data={rows} columns={columns} getRowId={(row) => row.id} emptyText="No promos found."
         onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open ${row.name}`} />
+      </QueryState>
       <RecordDetailsSheet
         open={detail !== null}
         onClose={() => setDetailId(null)}

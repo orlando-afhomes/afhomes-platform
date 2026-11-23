@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BadgeCheck, Crown, History, Info, Receipt } from "lucide-react";
+import { BadgeCheck, Crown, History, Info, Receipt, Upload } from "lucide-react";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { matchesSearch } from "@/shared/lib/search";
 import { useOperation, usePayments } from "@/data/business-queries";
@@ -9,7 +9,7 @@ import type { IgpSaleView } from "@/data/contracts/igp-repository";
 import type { TableOrder } from "@/shared/lib/table-order";
 import { useIgpAction, useIgpRegister } from "@/data/igp-queries";
 import { useEffectiveModuleIds } from "@/data/queries";
-import { IGP_DOCUMENT_LABELS } from "@/modules/igp/rules";
+import { IGP_DOCUMENT_LABELS, IGP_BUYER_NO_POINTS_COPY } from "@/modules/igp/rules";
 import type { IgpDocumentKey, IgpStatus } from "@/modules/igp/types";
 import { AdminPage } from "@/shared/components/admin";
 import { BizBadge } from "@/shared/components/business/biz-badge";
@@ -22,6 +22,7 @@ import { EMPTY, displayValue } from "@/shared/lib/empty-value";
 import { formatDate } from "@/shared/lib/format-date";
 import { Button } from "@/shared/ui/button";
 import { IgpRecordDetailDialog, IgpSaleDialog, IgpSettingsDialog } from "../components/igp-dialogs";
+import { IgpHistoryDialog } from "../components/igp-history-import";
 import { PaymentSubmitDialog, usePaymentActions } from "../components/payment-actions";
 
 const STATUS_LABELS: Record<IgpStatus, string> = {
@@ -32,7 +33,7 @@ const STATUS_LABELS: Record<IgpStatus, string> = {
 type IgpDialog = "reissue" | "correct" | "cancel" | "default" | "document" | "receipt";
 
 /** Dialogs opened from the page heading buttons; the Sales area page owns their open state. */
-export type IgpHeaderDialog = "record" | "accredit" | "threshold" | "grant-tiers";
+export type IgpHeaderDialog = "record" | "accredit" | "threshold" | "grant-tiers" | "import-history";
 
 function statusLabel(sale: IgpSaleView): string {
   return sale.defaultReviewDue ? "Due for stopped-paying review" : sale.status === "approved" && sale.closedDealDate ? "Confirmed Sale" : STATUS_LABELS[sale.status];
@@ -64,6 +65,7 @@ export function IgpActions({ onOpen, onOpenHistory }: { onOpen: (dialog: IgpHead
     {canManage && <Button variant="info" onClick={() => onOpen("accredit")}><BadgeCheck aria-hidden="true" /> Record JA&D Accreditation</Button>}
     {canManage && <Button variant="warning" onClick={() => onOpen("threshold")}><Info aria-hidden="true" /> When a Sale Counts</Button>}
     {canManage && <Button variant="outline" onClick={() => onOpen("grant-tiers")}><Crown aria-hidden="true" /> VIP Card Levels</Button>}
+    {canManage && <Button variant="outline" onClick={() => onOpen("import-history")}><Upload aria-hidden="true" /> Import History</Button>}
     {canManage && register.accreditations.length > 0 && <Button variant="outline" onClick={onOpenHistory}><History aria-hidden="true" /> JA&D Approval History</Button>}
   </>;
 }
@@ -97,6 +99,7 @@ export function IgpTab({ headerDialog, onHeaderDialogClose, historyOpen, onHisto
   const receipts = sale ? (paymentQuery.data ?? []).filter(({ contractId }) => contractId === sale.id) : [];
   const sellerAccreditations = canManage && sale ? (register?.accreditations ?? []).filter(({ memberId }) => memberId === sale.sellerMemberId) : [];
   const sellerName = (memberId: string) => register?.sellers.find(({ value }) => value === memberId)?.label ?? "Former seller";
+  const membership = sale ? register?.buyerMemberships.find(({ saleId }) => saleId === sale.id) : undefined;
 
   const saleActions = sale && !closed ? <>
     {canManage && sale.status === "pending" && <Button variant="success" onClick={() => confirmRun({
@@ -162,6 +165,16 @@ export function IgpTab({ headerDialog, onHeaderDialogClose, historyOpen, onHisto
                   ...(sale.commissionReviewReason ? [{ label: "Commission needs review", value: sale.commissionReviewReason }] : []),
                 ],
               }] : []),
+              ...(membership ? [{
+                title: "IGP Buyer Membership",
+                rows: [
+                  { label: "Series Number", value: membership.seriesNumber },
+                  { label: "Card level", value: membership.tier ?? "None (below the lowest price)" },
+                  { label: "Grant signed", value: formatDate(membership.grantSignedDate) },
+                  { label: "Status", value: "Recorded" },
+                  { label: "Stay Points", value: `None. ${IGP_BUYER_NO_POINTS_COPY}` },
+                ],
+              }] : []),
               ...(sellerAccreditations.length > 0 ? [{
                 title: "JA&D Accreditation History",
                 rows: sellerAccreditations.map((item) => ({
@@ -202,6 +215,7 @@ export function IgpTab({ headerDialog, onHeaderDialogClose, historyOpen, onHisto
           {headerDialog === "record" && <IgpSaleDialog mode="record" register={register} onClose={onHeaderDialogClose} />}
           {(dialog === "correct" || dialog === "reissue") && sale && <IgpSaleDialog mode={dialog} register={register} sale={sale} onClose={close} />}
           {(headerDialog === "accredit" || headerDialog === "threshold" || headerDialog === "grant-tiers") && <IgpSettingsDialog mode={headerDialog} register={register} onClose={onHeaderDialogClose} />}
+          {headerDialog === "import-history" && <IgpHistoryDialog register={register} onClose={onHeaderDialogClose} />}
           {sale && (dialog === "cancel" || dialog === "default" || dialog === "document") &&
             <IgpRecordDetailDialog sale={sale} mode={dialog} documentKey={document} onClose={close} />}
           {sale && dialog === "receipt" && <PaymentSubmitDialog contractId={sale.id} open onClose={close} />}

@@ -3,7 +3,7 @@
 Atlas version: `2026-11-13.1`
 Historical atlas baseline: `develop @ a0cba09 · reviewed working copy · 13 Nov 2026`
 Historical docs baseline: `develop @ a0cba09` plus local changes, with owner rulings R1 to R13 and answers A1 to A8.
-Status refresh: 2026-11-18 against `develop @ ff41c1f`; feature statuses and current-state text were updated. The atlas baseline above is historical.
+Status refresh: 2026-11-23 against `develop @ 6ea21df` plus the uncommitted Stages 1–6 working copy; feature statuses and current-state text were updated. The atlas baseline above is historical.
 
 ## Prototype working-copy update (2026-11-13)
 
@@ -11,19 +11,20 @@ Reviewed against `develop @ a0cba09` plus the local working copy. The atlas vers
 
 | Milestone | Prototype status |
 |---|---|
-| M5 | Separate sale approval, 25/40/100 receipt milestones, 90-day default review, month close, receipt exceptions, unified VIP Number and card claim are implemented. The receipt exceptions tab handles posted receipts with possible matches or approval/reference issues. Unmatched receipt intake remains open. |
-| M6 | Issuance freezes the approved seller/referrer rates. Payout lists, hold resolution, recovery tracking and workbook-based allowance reviews exist. Automatic deductions await signed terms. Full automatic allowance input assembly and payroll reconciliation remain open. |
-| M7 | Annual Welcome Gift, resort bill review, refund, waiver, Redemption check-in, and card servicing use the mock store. The points-per-night table still uses sample rows. |
-| M8 | IGP intake, shared receipts, JA&D accreditation, Series Number and reissue, staged commission and Grant checklist exist. Grant benefits and prices over ₱9 million remain restricted by doc 14. |
-| M10–M11 | Period close snapshots preserve sales, collections, commissions and saved allowance review totals in browser memory. Sales Performance includes IGP. Reconciliation and historical receipt import remain available. Final role-by-role browser sign-off and workbook comparison with official period totals are pending. |
+| M5 | Separate sale approval, 25/40/100 receipt milestones, 90-day default review, month close, receipt exceptions, unified VIP Number and card claim are implemented. The receipt exceptions tab handles posted receipts, closed-month exceptions with clawback escalation, and unmatched receipts (Finance match/reject, duplicate-OR refusal, clerk intake from the contract Payments tab) — built 2026-11-23 (G1/G2). |
+| M6 | Issuance freezes the approved seller/referrer rates. Payout lists, hold resolution, recovery tracking and workbook-based allowance reviews exist. Mock per-IST offset on the recorded signing date built 2026-11-22 (signed terms and Legal confirmation remain for production). Full allowance input assembly and the spreadsheet-switch sign-off built 2026-11-23 (G3/G4). |
+| M7 | Annual Welcome Gift, resort bill review, refund, waiver, Redemption check-in, and card servicing use the mock store. The starting points-per-night table, holiday calendar and venue cut-offs were adopted 2026-11-22 (owner decision). |
+| M8 | IGP intake, shared receipts, JA&D accreditation, Series Number and reissue, staged commission and Grant checklist exist. Band digit 0 above ₱9M, SUPERSEDED=Replaced and grant card level by price built 2026-11-22; IGP buyer membership record on Formal VIP Grant signing built 2026-11-23 (IGP-1/IGP-2, no Stay Points). Grant Stay-Point benefits remain undefined by company papers. |
+| M10–M11 | Period close snapshots preserve sales, collections, commissions and saved allowance review totals in browser memory. Sales Performance includes IGP. Reconciliation and historical receipt import remain available. Browser matrix and role walkthroughs run 2026-11-23 (Stage 5): 4 owner-manual items remain (throttled nav, browser forced-error, dirty-form Back, focus-ring visual); F11.3 comparison procedure run on synthetic data against the official Sales Collections workbook. |
 
-This folder turns the AFHomes Workflow Atlas into an implementation roadmap. It lists what exists, what is missing and what is blocked, one feature at a time, grouped into feature phases.
+This folder turns the AFHomes Workflow Atlas into a feature roadmap. Use the [Firebase implementation roadmap](firebase/README.md) for the numbered Localhost → Staging → Production guides. Use the FP1–FP16 records below for feature scope, existing prototype evidence, and dependencies.
 
 It does not authorize any work. Per `AGENTS.md` section 7, every feature still needs explicit project-owner authorization before implementation starts.
 
 ## Folder layout
 
 - `README.md` — this roadmap index.
+- [`firebase/`](firebase/README.md) — environment-specific build, test, and release guides.
 - `decisions-and-gaps.md` — the decision register; not prototype-only.
 - `prototype/` — all FP1–FP16 phase records, the admin UI-state audit, and the customer-portal plan. These are frontend-mock prototype records; backend, database and live-service work still require separate authorization.
 
@@ -36,7 +37,7 @@ It does not authorize any work. Per `AGENTS.md` section 7, every feature still n
 
 ## Not the same as the technical phases
 
-`docs/development/implementation.md` defines technical Phases 0 to 8 (documentation, frontend foundation, MongoDB, backend, business modules, integration, validation, deployment). This folder indexes **feature phases FP1 to FP16**, recorded under `prototype/`. A feature phase groups the features of one business area. Its features move through the technical phases: frontend mock first, then backend and database only when separately authorized.
+[The technical roadmap](../development/implementation.md) maps technical Phases 0–8 to the [Firebase environment guides](firebase/README.md). This folder also indexes **feature phases FP1 to FP16**, recorded under `prototype/`. A feature phase groups the features of one business area. Its features move from frontend mocks to backend and database only when separately authorized.
 
 ## Feature phases
 
@@ -104,19 +105,19 @@ flowchart LR
 
 The public route skeletons require the route group in FP13. Without it, a route `loading.tsx` renders outside `PublicLayout` and the header/footer disappear while loading. The admin work is deliberately audit-first: FP15 changes no admin page, and any fixes require a separate approved Phase 2 plan.
 
-**Build status (2026-11-18):** FP12–FP14 implemented, FP15 audit complete, FP16 verification complete with recorded limitations. The production build passes. The only failing test is a pre-existing admin drawer logout expectation recorded in FP16; the three full-run timeouts pass when run alone. Browser checks covered 375, 768 and 1280 px; 320/1100 px, reduced-motion and no-JavaScript checks remain open.
+**Build status (2026-11-23):** FP12–FP16 implemented including admin Batches 1–4, G1–G5 and the IGP leftovers (uncommitted working copy; the owner commits). Drawer logout resolved 2026-11-22 (T2). Browser checks covered all five widths (320/375/768/1100/1280), page loads, double-click single-request, reduced motion and the no-JS proxy; 4 owner-manual items remain (throttled nav, browser forced-error, dirty-form Back, focus-ring visual). Full-suite timeouts pass in isolation (see 16-state-verification.md).
 
 ## November 12 rule alignment
 
-Start by verifying the contracts list, duplicate Customer ID recovery, dashboard activity, and pagination. Then align customer registration and seller attribution, VIP number issuance and commission month close, and the Annual Welcome Gift. Verify each approved slice before the next. Use synthetic data and preserve issued numbers and paid amounts. IGP planning may cover approved sale and receipt handling and the document checklist while the signed grant terms, the definition of `SUPERSEDED` and the band code above ₱9,000,000 remain open (the numbering questions are decided in doc 14 section 5). Live Redemption stays disabled; the staff prototype is authorized under the 2026-11-17 status. See the [decision register](decisions-and-gaps.md) for the pending company, Finance, and legal inputs.
+Start by verifying the contracts list, duplicate Customer ID recovery, dashboard activity, and pagination. Then align customer registration and seller attribution, VIP number issuance and commission month close, and the Annual Welcome Gift. Verify each approved slice before the next. Use synthetic data and preserve issued numbers and paid amounts. IGP planning covers approved sale and receipt handling and the document checklist; band 0 above ₱9,000,000, SUPERSEDED=Replaced and the grant card level are decided in doc 14 section 5, the buyer membership record is built, and only grant Stay-Point benefits remain undefined by company papers. Live Redemption stays disabled; the staff prototype is authorized under the 2026-11-17 status. See the [decision register](decisions-and-gaps.md) for the pending company, Finance, and legal inputs.
 
 ### IGP prototype build sequence
 
-1. **Seller and sale intake.** Add separate JA&D accreditation for the closing seller and any referrer. Record buyer, project, unit or lot, property owner, contract price, cash or terms, term, and clause classification. Scope records to the AFhomes channel (`A`). Reject prices above ₱9,000,000 and ineligible seller references before allocating a number. Expired accreditation remains eligible with the documented reminder. See [IGP rules §5–6](../business-rules/14-igp-sales.md#5-igp-series-number-jad-rev-7-3-to-8-ops-42-oct-r38).
-2. **Numbering and receipts.** Allocate the 16-character Series Number once when recording the reservation payment or the documented Contract to Sell alternative. Use a separate monthly sequence starting at `0001`, and keep all issued numbers in history. On the documented reissue path, mark the old record Replaced, link both numbers, move the existing receipts once, and recalculate commission under the correction rules. Keep imported `SUPERSEDED` values pending review. Reuse the approval and system-wide receipt reference checks. Freeze the sale threshold and the parties' approved IGP rates when the number is issued.
+1. **Seller and sale intake.** Add separate JA&D accreditation for the closing seller and any referrer. Record buyer, project, unit or lot, property owner, contract price, cash or terms, term, and clause classification. Scope records to the AFhomes channel (`A`). Allocate band digit 0 for prices above ₱9,000,000; reject ineligible seller references before allocating a number. Expired accreditation remains eligible with the documented reminder. See [IGP rules §5–6](../business-rules/14-igp-sales.md#5-igp-series-number-jad-rev-7-3-to-8-ops-42-oct-r38).
+2. **Numbering and receipts.** Allocate the 16-character Series Number once when recording the reservation payment or the documented Contract to Sell alternative. Use a separate monthly sequence starting at `0001`, and keep all issued numbers in history. On the documented reissue path, mark the old record Replaced, link both numbers, move the existing receipts once, and recalculate commission under the correction rules. Keep imported `SUPERSEDED` rows only when they name their replacing Series Number (rejected otherwise). Reuse the approval and system-wide receipt reference checks. Freeze the sale threshold and the parties' approved IGP rates when the number is issued.
 3. **Sales and month-end commission.** Count only approved collections. Track the Closed Deal at its frozen threshold (initially 10%), 40% Stage 1 and full-payment dates separately. Release 40% of the commission in the Stage 1 month and the balance at full payment. Use the first open month for receipts admitted after close. Retain cancellation, refund and clawback history. Record refund amounts supplied by the Property Owner or JA&D. Use the same payout confirmation and audit controls as VIP.
-4. **Document checklist.** Track paperwork status, date and signer under the Series Number. Include the Goodwill and Formal VIP Grant documents. Membership creation and benefits wait for signed terms.
-5. **Acceptance checks.** With synthetic records, verify ₱9,000,000 succeeds and ₱9,000,000.01 is rejected without consuming a number. Verify month rollover, repeat issue and reissue requests, receipt transfer without duplication, the two commission releases, and grant checklist updates without issuing a membership. Verify office and seller visibility, including own-record limits for OST.
+4. **Document checklist.** Track paperwork status, date and signer under the Series Number. Include the Goodwill and Formal VIP Grant documents. The buyer membership record is created on Formal VIP Grant signing with the frozen price tier and no Stay Points (2026-11-23 owner-authorized recommendation); other grant benefits remain undefined.
+5. **Acceptance checks.** With synthetic records, verify a TCP above ₱9,000,000 is recorded with band digit 0. Verify month rollover, repeat issue and reissue requests, receipt transfer without duplication, the two commission releases, and grant checklist updates with membership creation on signing and no Stay Points. Verify office and seller visibility, including own-record limits for OST.
 
 ## How to read a feature card
 

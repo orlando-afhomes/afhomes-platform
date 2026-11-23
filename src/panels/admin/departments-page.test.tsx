@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { MockDepartmentRepository } from "@/data/mock/department-repository";
 import { OrganizationAreaPage } from "./pages/organization-area-page";
 
 // M1-B: Departments on shadcn/ui + Base UI + TanStack Table. Behavior under
@@ -20,8 +21,8 @@ vi.mock("next/navigation", async (importOriginal) => ({
 
 beforeEach(() => window.history.replaceState(null, "", "/admin?tab=departments"));
 
-function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
-  const [queryClient] = useState(() => new QueryClient());
+function TestWrapper({ identityId = "dev-admin", client }: { identityId?: string; client?: QueryClient }) {
+  const [queryClient] = useState(() => client ?? new QueryClient());
   return (
     <QueryClientProvider client={queryClient}>
       <MockStoreProvider>
@@ -39,6 +40,7 @@ afterEach(() => {
   cleanup();
   toast.dismiss();
   window.history.replaceState(null, "", "/");
+  vi.restoreAllMocks();
 });
 
 type User = ReturnType<typeof userEvent.setup>;
@@ -237,6 +239,17 @@ describe("departments page", () => {
     expect(screen.getByText("Human Resources")).toBeInTheDocument();
     fireEvent.change(search, { target: { value: "zzzz-nothing" } });
     expect(await screen.findByText("No departments found.")).toBeInTheDocument();
+  });
+
+  it("shows a load error with retry instead of an empty table when the departments query fails", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockDepartmentRepository.prototype, "list").mockRejectedValueOnce(new Error("Departments failed."));
+    render(<TestWrapper client={new QueryClient({ defaultOptions: { queries: { retry: false } } })} />);
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Departments failed\./)).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "Departments" })).toBeNull();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Human Resources")).toBeInTheDocument();
   });
 
   it("sorts departments A-Z and Z-A", async () => {

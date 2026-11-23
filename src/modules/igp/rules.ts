@@ -53,6 +53,50 @@ export const IGP_DOCUMENT_LABELS: Record<IgpDocumentKey, { name: string; signedB
   spa: { name: "Special Power of Attorney", signedBy: "AFhomes" },
 };
 
+/** Plain exclusion shown on every IGP buyer membership (owner ruling 2026-11-23; doc 09 belongs to VIP memberships). */
+export const IGP_BUYER_NO_POINTS_COPY =
+  "No Stay Points are credited to this membership. The Formal VIP Grant benefits are not defined in any company paper; Stay Points (doc 09) belong to VIP memberships only.";
+
+export type IgpSeriesSegments = {
+  datePart: string;
+  sequence: number;
+  band: number;
+  scheme: IgpScheme;
+  termMonths: number;
+  clauses: IgpClauses;
+};
+
+/**
+ * Parses a 16-character IGP Series Number into its segments (doc 14 section 5.1; band 0 above ₱9,000,000).
+ * Throws a plain message naming the faulty segment. Accepts surrounding spaces; the number itself has none.
+ */
+export function parseIgpSeriesNumber(raw: string): IgpSeriesSegments {
+  const value = raw.trim().toUpperCase();
+  if (value.length !== 16) throw new Error(`Enter a 16-character Series Number (got ${value.length} characters).`);
+  if (!value.startsWith("A")) throw new Error("A platform Series Number starts with A (JA&D's own-channel sales stay in JA&D's books).");
+  const datePart = `20${value.slice(1, 3)}-${value.slice(3, 5)}-${value.slice(5, 7)}`;
+  if (!parseManilaDateOnly(datePart)) throw new Error(`The date part ${value.slice(1, 7)} is not a real YYMMDD date.`);
+  if (!/^\d{4}$/.test(value.slice(7, 11)) || value.slice(7, 11) === "0000") throw new Error("The monthly sequence must be digits from 0001 to 9999.");
+  if (!/^[0-9]$/.test(value[11])) throw new Error("The price band must be one digit (0 stands for a price above ₱9,000,000).");
+  if (value[12] !== "C" && value[12] !== "T") throw new Error("The payment scheme must be C (Cash) or T (Terms).");
+  const termMonths = Number(value.slice(13, 15));
+  if (!Number.isInteger(termMonths) || termMonths < 1 || termMonths > 36 || (value[12] === "C" && termMonths !== 1)) {
+    throw new Error("Cash uses one month (01). Terms must be from 01 to 36.");
+  }
+  if (value[15] !== "S" && value[15] !== "N") throw new Error("The clause flag must be S (Standard) or N (Non-Standard).");
+  return { datePart, sequence: Number(value.slice(7, 11)), band: Number(value[11]), scheme: value[12], termMonths, clauses: value[15] };
+}
+
+/** Plain-language reason a Series Number is not acceptable, or null when it is. */
+export function igpSeriesNumberProblem(raw: string): string | null {
+  try {
+    parseIgpSeriesNumber(raw);
+    return null;
+  } catch (error) {
+    return error instanceof Error ? error.message : "Enter a valid Series Number.";
+  }
+}
+
 export function igpChecklist(scheme: IgpScheme, entry: IgpEntry): IgpDocument[] {
   return (Object.keys(IGP_DOCUMENT_LABELS) as IgpDocumentKey[])
     .filter((key) => (key !== "reservation" || entry === "reservation") && (!(key === "cts" || key === "goodwill_grant") || scheme === "T"))

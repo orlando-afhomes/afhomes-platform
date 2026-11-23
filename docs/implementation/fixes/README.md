@@ -16,11 +16,12 @@ Created 2026-11-22 from the roadmap review (`docs/implementation/README.md`, `pr
 
 | File | Scope | Status |
 |---|---|---|
-| [01-admin-ui-state-fixes.md](01-admin-ui-state-fixes.md) | 25 Partial admin routes: error, retry and busy states, in 4 batches | Batch 1 built 2026-11-22; batches 2 to 4 open |
-| [02-test-and-qa-fixes.md](02-test-and-qa-fixes.md) | Slow test, 320 px overflow, open browser checks, role walkthroughs | T1, T2 and R1 built 2026-11-22; browser checks and role walkthroughs open |
-| [03-mock-feature-gaps.md](03-mock-feature-gaps.md) | F6.5, F7.4, F8.6, F11.5, portal plan audit | Open, awaiting approval |
-| [04-doc-drift.md](04-doc-drift.md) | Documents that disagree with each other or the code | Open |
+| [01-admin-ui-state-fixes.md](01-admin-ui-state-fixes.md) | 25 Partial admin routes: error, retry and busy states, in 4 batches | All 4 batches built 2026-11-23 (Batch 2: 53/53; Batch 4: 109/109; uncommitted) |
+| [02-test-and-qa-fixes.md](02-test-and-qa-fixes.md) | Slow test, 320 px overflow, open browser checks, role walkthroughs | T1, T2 and R1 built; browser matrix + walkthroughs run 2026-11-23; 4 owner-manual items remain (throttled nav, browser forced-error, dirty-form Back, focus-ring visual) |
+| [03-mock-feature-gaps.md](03-mock-feature-gaps.md) | F6.5, F7.4, F8.6, F11.5, portal plan audit | Built 2026-11-23 (G1/G2: 187/187; G3/G4: 53/53; IGP: 41/41; G5: 21/28 boxes ticked; uncommitted) |
+| [04-doc-drift.md](04-doc-drift.md) | Documents that disagree with each other or the code | Reconciled 2026-11-23 (Stage 6: D1–D7 done; D8 owner-only note untouched) |
 | [05-owner-decisions-2026-11-22.md](05-owner-decisions-2026-11-22.md) | Eight items that were "waiting on others", now decided and built | Decided, built in the mock |
+| [06-prototype-completion-plan.md](06-prototype-completion-plan.md) | Roll-up and staged sequence to finish the prototype (stages 0 to 7) | Stages 0–6 built 2026-11-23 (uncommitted); owner review and commit pending; Stage 7 separately authorized |
 
 ## Status legend
 

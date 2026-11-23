@@ -8,6 +8,7 @@ import { useState, type ReactElement } from "react";
 import type { ProductCreateInput } from "@/data/contracts/product-repository";
 import { getDevIdentity } from "@/data/mock/dev-identities";
 import { createMockRepositories } from "@/data/mock/repositories";
+import { MockCustomerRepository } from "@/data/mock/customer-repository";
 import { createMockStore, type MockStore } from "@/data/mock/seed";
 import { pesos } from "@/shared/lib/money";
 import { AppToaster } from "@/shared/components/modern/app-toaster";
@@ -217,5 +218,55 @@ describe("customer registration review pages (doc 04 sections 5 and 10)", () => 
     expect(await screen.findByText("This card is no longer available. Choose another card.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /continue/i })).toBeDisabled();
     expect(screen.queryByRole("radio", { checked: true })).toBeNull();
+  });
+});
+
+describe("customer error states (Batch 2)", () => {
+  it("shows a load error with a retry instead of Not Found on the detail page", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockCustomerRepository.prototype, "list").mockRejectedValueOnce(new Error("Customer list failed."));
+    show("dev-admin", <CustomerDetailPage customerId={SUBMITTED} />);
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Customer list failed\./)).toBeInTheDocument();
+    expect(screen.queryByText("Customer Not Found")).toBeNull();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("button", { name: /^approve$/i })).toBeInTheDocument();
+  });
+
+  it("shows a load error with a retry instead of Not Found on the edit page", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockCustomerRepository.prototype, "list").mockRejectedValueOnce(new Error("Customer list failed."));
+    show("dev-admin", <CustomerFormPage customerId={SUBMITTED} />);
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Customer list failed\./)).toBeInTheDocument();
+    expect(screen.queryByText("Customer Not Found")).toBeNull();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    expect(screen.queryByText("Customer Not Found")).toBeNull();
+  });
+
+  it("shows a load error with a retry instead of an empty table on the customers list", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockCustomerRepository.prototype, "list").mockRejectedValueOnce(new Error("Customer list failed."));
+    show("dev-admin", <CustomersRoute />);
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Customer list failed\./)).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "Customers" })).toBeNull();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Noel Pascual")).toBeInTheDocument();
+  });
+
+  it("distinguishes an empty directory from a search with no matches", async () => {
+    const user = userEvent.setup();
+    const empty = createMockStore();
+    empty.customers = [];
+    show("dev-admin", <CustomersRoute />, empty);
+    expect(await screen.findByText("No customers yet.")).toBeInTheDocument();
+    cleanup();
+
+    show("dev-admin", <CustomersRoute />);
+    await screen.findByText("Noel Pascual");
+    await user.type(screen.getByRole("searchbox", { name: "Search customers" }), "zzzz-no-such-customer");
+    expect(await screen.findByText("No customers match the current search or filter.")).toBeInTheDocument();
   });
 });

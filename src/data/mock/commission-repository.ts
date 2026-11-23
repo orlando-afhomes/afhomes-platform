@@ -14,6 +14,7 @@ import { getDescendantIds } from "./scope";
 import { applyCommissionTrigger, buildPayoutList } from "./commission-effects";
 import { nextId } from "./ids";
 import { calculateAllowances, SHIPPED_ALLOWANCE_TERMS, type AllowanceReview, type AllowanceReviewInput } from "@/modules/commissions/allowances";
+import { assembleAllowanceInputs } from "@/modules/commissions/allowance-assembly";
 
 
 export class MockCommissionRepository extends BusinessRepository implements CommissionRepository {
@@ -240,6 +241,19 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
           position === "OST" ? [] : [{ id, name, position }],
         ),
       });
+    });
+  }
+
+  async assembleAllowanceInputs(month: string, options?: MockAsyncOptions) {
+    return this.run(options, (identity) => {
+      this.require(identity, "commission.approve", "Assembling allowance inputs is restricted to authorized staff.");
+      return structuredClone(assembleAllowanceInputs({
+        members: this.store.members,
+        vacancies: this.store.seatVacancies,
+        sales: this.store.sales,
+        igpSales: this.store.igp.sales,
+        payments: this.store.payments,
+      }, month.trim()));
     });
   }
 

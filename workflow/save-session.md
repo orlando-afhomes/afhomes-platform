@@ -111,52 +111,64 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved 2026-11-22. AFHomes Platform, branch develop, HEAD 41e4e2f (verified with read-only Git).
-- Tool and model: Claude Code, Sonnet 5.5 (Opus 5.5 was used briefly for planning). Context was not compacted.
-- Objective: review the roadmap, run a health check, write the detailed fixes register, and settle the four items listed as "waiting on others". Phase: frontend prototype, QA and owner decisions.
+- Saved at: 2026-11-23 (Asia/Manila business date; exact time not recorded).
+- Repository: AFHomes Platform; branch `develop`; HEAD `6ea21df` (verified in this run).
+- Tool and model: OpenCode, DeepSeek V4.1 Flash 1017 (from the session environment).
+- Session objective: implement `docs/implementation/fixes/06-prototype-completion-plan.md`, one stage per session.
+- Development phase: frontend mock prototype; UI-state hardening and QA. Backend, real authentication, database and deployment remain deferred.
+- Context note: the conversation was not compacted. Everything below was read or run in this session unless marked otherwise.
 
 ## 2. Current Project State
-- Frontend mock prototype on browser-memory data. Backend, real auth, database and deployment are not started and need separate authorization.
-- Health check at 50d6143 (verified): tsc, lint and build pass; full suite 1,990 of 1,991 passed, the one failure a 15 s timeout that passes alone.
-- Commit 41e4e2f ("apply 2026-11-22 owner decisions on IGP, clawback and privacy") now holds the work of this session. Commit 02a053e promoted Customer Login (header and footer). The commit actor was not investigated.
+- The plan's Stage 0 was partially run, and Stage 1 (Admin Batch 3) is implemented but uncommitted.
+- Stage 1: period close shows `Button loading`; the shared `useConfirmRun` now blocks a duplicate confirm with a ref; report export shows a spinner/`aria-busy` and ignores a second export while recording.
+- The fixes register now shows Batch 3 built and Stage 0 partial. The user-added `docs/implementation/fixes/06-prototype-completion-plan.md` remains untracked.
+- Mock feature gaps G1–G5, Batches 2 and 4, the browser and role acceptance, and document drift remain open.
 
 ## 3. Important Decisions
-- Owner decisions 2026-11-22, recorded in docs/implementation/fixes/05-owner-decisions-2026-11-22.md and in dated amendments to docs 03, 04, 08, 10, 12, 14, decisions-and-gaps.md and AGENTS.md section 5:
-  - IGP band digit 0 above PHP 9M; SUPERSEDED means Replaced; Formal VIP Grant card level by price (B1 from 1M, S1 from 2M, G1 from 4M), editable and frozen at signing.
-  - Clawback offset per IST once the Administrator records the signed addendum date (payouts first, then allowances, capped, carry forward). OST and unsigned ISTs: direct collection.
-  - Starting points-per-night table, holiday calendar to Dec 2027, venue cut-offs (Hotel 48 h, Resort 72 h).
-  - Working ten-year retention schedule and a public Privacy Policy at /privacy.
-- Header: Customer Login (/portal) plus Join VIP; Verify Accreditation sits in the Explore menu; footer Access note applies to the staff and seller links only; the portal sign-in page says it is a preview.
-- Git writes are owner-only. These rules are working defaults, not legal advice.
+- The completion plan governs the order: Stage 0 browser close-out, Stage 1 Batch 3, Stage 2 Batch 2, Stage 3 Batch 4, Stage 4 G1–G5 plus IGP leftovers, Stage 5 QA, Stage 6 docs, Stage 7 outside the prototype. One stage per session.
+- Batch 3 went before Batch 2 because month close is irreversible and had no busy guard.
+- Report export uses a spinner; the plan allowed either a spinner or a documented "keep disabled" choice.
+- `useConfirmRun` now guards every confirm action against a second click, not only month close.
+- No business rule changed. Git writes remain reserved for the owner.
 
 ## 4. Completed Work
-- Fixes register: docs/implementation/fixes/ (README and files 01 to 05).
-- Code: src/modules/igp (rules, types), src/data/mock/igp-repository.ts, src/modules/commissions (rules, types, allowances), src/data/mock/commission-repository.ts, src/modules/redemption/sample-seed.ts, src/modules/audit/retention.ts, src/panels/public/pages/privacy-page.tsx, src/panels/admin/components/clawback-addendum-dialog.tsx, footer legal links, matching tests.
-- Verification of the final tree (this session, before the commit): tsc, lint and build pass. Full suite: 4 tests timed out under load and pass alone; one real regression (extra Allowance Review column) was fixed and its file passes. The full suite was not re-run after that fix. /privacy loaded in the browser pane with no console errors at a narrow width.
+- Stage 1 files: `src/panels/admin/pages/period-close-page.tsx`, `src/shared/components/modern/use-confirm-run.tsx`, `src/panels/admin/components/report-shell.tsx`.
+- Stage 1 tests: `src/panels/admin/components/confirm-tones.test.tsx` (month close double-click sends one request; the page button shows `aria-busy`/`aria-disabled`) and `src/panels/admin/reports-pages.test.tsx` (Export trigger busy while the export is recorded).
+- Docs: `docs/implementation/prototype/16-state-verification.md` records the 2026-11-23 browser pass; `docs/implementation/fixes/README.md` marks Batch 3 built, Stage 0 partial, and adds the plan row.
+- Stage 0 browser pass: the home page at 320/375/768/1100/1280 px has no document-level horizontal overflow; at 768 px one tier-card image paints 10 px into its clipped card. `/admin/membership` (both tabs), `/admin/commissions/allowances`, `/admin/finance/collections/ctr-1`, `/admin/finance/cancellations/ctr-1` and `/admin/reports/period-close` loaded with data and no application console errors.
 
 ## 5. Git Working Tree
-- Staged: none (verified).
-- Unstaged, modified: docs/implementation/prototype/16-state-verification.md and src/panels/admin/business-pages.test.tsx. Origin unknown; they were not edited in this save and may be the owner's slow-test fix (fixes/02 T1).
-- Untracked: none. No deletions or renames.
-- This save modifies only the snapshot body in workflow/save-session.md.
+- Branch `develop`, HEAD `6ea21df`, nothing staged.
+- Unstaged, this session: the seven Stage 1 source and documentation files in section 4.
+- Unstaged, this save: `workflow/save-session.md` held the previous handoff; this save replaces only its snapshot block.
+- Untracked, pre-existing/user: `docs/implementation/fixes/06-prototype-completion-plan.md`.
+- No deleted or renamed tracked files.
 
 ## 6. Pending Tasks
-- Fixes register files 01 to 04: admin state fixes (25 Partial routes, four batches), slow-test fix and open browser checks, mock feature gaps (F6.5, F7.4, F8.6, F11.5, portal plan audit), document drift. None is authorized yet.
-- Not built: membership record for IGP buyers, IGP history import, any retention deletion, an admin view of the retention schedule.
-- Legal and the Data Protection Officer should review retention, privacy wording and the clawback addendum before real payouts.
-- Doc 07 was modified by someone else earlier in the session (not by this work); its status is now unknown.
+- Stage 0 manual checks: reduced motion, no JavaScript, throttled navigation, keyboard and focus order, forced query error with retry, and double-click on every mutating button.
+- Stage 2 (Batch 2): customer detail and edit error branches, customer empty-versus-no-match wording, sales-network list `QueryState`, member detail errors, genealogy error branch. Stage 3 (Batch 4): organization, staff, departments, roles, Lists, scheme-guide empty state, account error, promos, and the S6 decision.
+- Stage 4: G1 unmatched receipts, G2 linked effects, G3 allowance assembly and workbook comparison, G4 historical sign-off, G5 portal-plan audit. IGP buyer membership and IGP history import need owner decisions.
+- Stage 5: the browser matrix and the F5.5, F5.7, F9.4, F1.5a, F3.2, F4.2 and F11.3 walkthroughs. Stage 6: D1–D8 and the README status refresh.
 
 ## 7. Verification State
-- tsc, lint, build: passed before commit 41e4e2f (this session). Not re-run in this save.
-- Tests: see section 4. Browser QA: only /privacy checked, narrow width. 320 and 1100 px, reduced motion, no-JS and role walkthroughs: not performed.
+- Targeted Stage 1 suites (confirm-tones, reports-pages, finance-pages, audit-logs-page, reconciliation-import-pages): 51/51 passed.
+- `npx tsc --noEmit`: passed. `npm run lint`: passed (ESLint and the architecture check, 677 files). `npm run build`: passed, 101 pages.
+- Full `npm test`: 2,013 passed, 5 failed of 2,018. All five were 15 s timeouts under load (`business-pages` 3, `staff-page` 2); both files pass alone, 123/123 in 211 s. The dev server was running, which raises load.
+- Browser QA: the width and page-load checks above; no application console errors (one Next.js dev HMR socket entry after a back-forward navigation).
+- Not performed: reduced motion, no JavaScript, throttled navigation, keyboard and focus, forced-error retry, and the full double-click sweep. The office-address test still times out under full load despite `delay: null`; it passes alone in about 3.9 s.
 
 ## 8. Next Session Instructions
-- Run /load, then check git status; the two modified files above may be unfinished owner work. Preserve them.
-- Read docs/implementation/fixes/README.md and ask the owner which file to plan next. Recommended: the slow-test fix first (small), then admin state fixes Batch 1.
-- Keep Git operations read-only. Obtain explicit authorization for each batch.
+- Run `/load`, verify HEAD, and review the uncommitted Stage 1 changes before building on them; the owner commits.
+- Then run Stage 2 from `06-prototype-completion-plan.md` and `01-admin-ui-state-fixes.md` (Batch 2). Stage 2 needs owner approval; do not start Stage 3 in the same change set.
+- Inspect `src/panels/admin/pages/customer-detail-page.tsx` (it still shows "Customer Not Found" without a query-error branch), `customers-page.tsx`, the sales-network pages, `sales-network-member-detail-page.tsx` and the genealogy page.
+- Run the full suite with the dev server stopped to separate real failures from load timeouts.
 
 ## 9. Execution Recommendation
-- Phase: Plan. Recommended next mode: Plan. Recommended model: Sonnet 5.5. Effort: medium. Ultracode: OFF.
-- Token optimization: load only the fixes file for the chosen batch and its listed tests; run targeted tests first.
-- Reason: ordinary frontend state fixes and test hardening.
+- Phase: Build, paused between stages.
+- Recommended next mode: default, for Stage 2 after the owner reviews and commits Stage 1.
+- Recommended model: Sonnet 5.5.
+- Effort: medium.
+- Ultracode: OFF.
+- Token optimization: one stage per pass, targeted suites first; run the full suite once with the dev server stopped.
+- Reason: Stage 1 is verified; the remaining risk is the unbuilt stages and the manual browser acceptance.
 <!-- SESSION_SNAPSHOT_END -->

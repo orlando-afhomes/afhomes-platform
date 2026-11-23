@@ -6,6 +6,7 @@ import { useState, type ReactElement } from "react";
 import type { ProductCreateInput } from "@/data/contracts/product-repository";
 import { getDevIdentity } from "@/data/mock/dev-identities";
 import { createMockRepositories } from "@/data/mock/repositories";
+import { MockProductRepository } from "@/data/mock/product-repository";
 import { createMockStore, type MockStore } from "@/data/mock/seed";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
@@ -35,6 +36,7 @@ function Wrapper({ children, identityId, store }: { children: React.ReactNode; i
 afterEach(() => {
   cleanup();
   window.history.replaceState(null, "", "/");
+  vi.restoreAllMocks();
 });
 function show(page: ReactElement, tab = "products", identityId = "dev-super-admin", store?: MockStore) {
   window.history.replaceState(null, "", `/admin/vip-products?tab=${tab}`);
@@ -169,6 +171,23 @@ describe("VIP products pages split by process", () => {
     const [first] = screen.getAllByRole("table");
     expect(within(first).getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual(["Card Level", "Total", "Reservation fee", "Balance"]);
     expect(within(first).getByText("Bronze VIP")).toBeInTheDocument();
+  });
+
+  it("scheme guide shows an empty state when no payment plans are configured", async () => {
+    vi.spyOn(MockProductRepository.prototype, "listSchemes").mockResolvedValueOnce([]);
+    show(<SalesAreaPage />, "scheme-guide");
+    expect(await screen.findByText("No payment plans configured.")).toBeInTheDocument();
+    expect(screen.queryByRole("table")).toBeNull();
+  });
+
+  it("scheme guide shows a load error with retry when the schemes query fails", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockProductRepository.prototype, "listSchemes").mockRejectedValueOnce(new Error("Schemes failed."));
+    show(<SalesAreaPage />, "scheme-guide");
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Schemes failed\./)).toBeInTheDocument();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Spot Cash")).toBeInTheDocument();
   });
 
   it("new scheme dialog groups each ticked tier into one card of three fields", async () => {

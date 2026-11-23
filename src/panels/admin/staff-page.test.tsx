@@ -1,4 +1,4 @@
-import { describe, expect, it, afterEach, beforeAll } from "vitest";
+import { describe, expect, it, afterEach, beforeAll, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { MockStaffRepository } from "@/data/mock/staff-repository";
 import { OrganizationAreaPage } from "./pages/organization-area-page";
 
 // StaffPage lazy-loads its dialogs (next/dynamic). Under a loaded full run the cold
@@ -16,8 +17,8 @@ beforeAll(async () => {
   await import("./pages/staff-dialogs");
 }, 60_000);
 
-function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
-  const [queryClient] = useState(() => new QueryClient());
+function TestWrapper({ identityId = "dev-admin", client }: { identityId?: string; client?: QueryClient }) {
+  const [queryClient] = useState(() => client ?? new QueryClient());
   return (
     <QueryClientProvider client={queryClient}>
       <MockStoreProvider>
@@ -33,6 +34,7 @@ function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
 afterEach(() => {
   cleanup();
   toast.dismiss();
+  vi.restoreAllMocks();
 });
 
 async function confirmInAlertDialog(user: ReturnType<typeof userEvent.setup>, name: string | RegExp) {
@@ -263,6 +265,17 @@ describe("staff page", () => {
     fireEvent.change(search, { target: { value: "Finance" } });
     await waitFor(() => expect(screen.queryByRole("button", { name: /^HR Staff/ })).not.toBeInTheDocument());
     expect(screen.getByRole("row", { name: "Open Finance Staff" })).toBeInTheDocument();
+  });
+
+  it("shows a load error with retry instead of an empty directory when the staff query fails", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(MockStaffRepository.prototype, "list").mockRejectedValueOnce(new Error("Staff list failed."));
+    render(<TestWrapper client={new QueryClient({ defaultOptions: { queries: { retry: false } } })} />);
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Staff list failed\./)).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "Staff and Access" })).toBeNull();
+    await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("row", { name: /^Open HR Staff/ }, { timeout: 5000 })).toBeInTheDocument();
   });
 });
 

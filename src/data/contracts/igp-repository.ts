@@ -1,4 +1,5 @@
-import type { IgpDocumentKey, IgpGrantTierRule, IgpIntake, IgpSale, JadAccreditation } from "@/modules/igp/types";
+import type { IgpBuyerMembership, IgpDocumentKey, IgpGrantTierRule, IgpHistoryBatch, IgpIntake, IgpSale, JadAccreditation } from "@/modules/igp/types";
+import type { IgpHistoryRecord } from "@/modules/igp/history-import";
 import type { Designation } from "@/modules/organization/types";
 import type { MockAsyncOptions } from "./async-options";
 import type { SubmitPaymentInput } from "./payment-repository";
@@ -11,6 +12,10 @@ export type IgpRegister = {
   accreditations: JadAccreditation[];
   thresholdBp: number;
   grantTierRules: IgpGrantTierRule[];
+  /** IGP buyer memberships, created when each Formal VIP Grant is first signed. No Stay Points, no VIP Numbers. */
+  buyerMemberships: IgpBuyerMembership[];
+  /** Imported IGP history batches. Their Series Numbers are reserved and never reused. */
+  historyBatches: IgpHistoryBatch[];
 };
 
 /** The project, unit and owner names are copied from the catalog when the sale is saved. */
@@ -33,4 +38,9 @@ export type IgpAction =
 export interface IgpRepository {
   list(options?: MockAsyncOptions): Promise<IgpRegister>;
   act(action: IgpAction, options?: MockAsyncOptions): Promise<IgpSale | null>;
+  /**
+   * IGP history import (IGP-2). Validates again on Confirm; ready rows are stored as a history batch.
+   * Imported rows never become live sales and never issue a VIP Number; their numbers are reserved.
+   */
+  importHistory(input: { fileName: string; records: IgpHistoryRecord[]; declaration: boolean }, options?: MockAsyncOptions): Promise<IgpHistoryBatch>;
 }

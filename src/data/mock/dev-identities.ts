@@ -1,7 +1,7 @@
 import type { DevIdentity } from "@/modules/identity/types";
 
 export const DEV_IDENTITIES: DevIdentity[] = [
-  { id: "dev-super-admin", displayName: "Victoria Salazar · Super Administrator", roles: ["super_admin"], memberId: null, branchId: null, status: "active", staffId: "staff-super" },
+  { id: "dev-super-admin", displayName: "Orlando Dela Cruz", roles: ["super_admin"], memberId: null, branchId: null, status: "active", staffId: "staff-super" },
   { id: "dev-admin", displayName: "Eduardo Ocampo · Administrator", roles: ["admin"], memberId: null, branchId: null, status: "active", staffId: "staff-admin" },
   { id: "dev-clerk", displayName: "Marites Gonzales · Clerk", roles: ["clerk"], memberId: null, branchId: null, status: "active", staffId: "staff-clerk" },
   { id: "dev-gsd", displayName: "Joel Fernandez · GSD Counter", roles: ["gsd"], memberId: null, branchId: null, status: "active" },

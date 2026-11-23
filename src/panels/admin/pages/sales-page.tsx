@@ -154,7 +154,7 @@ export function SalesTab() {
         <AdminStatCard label="Confirmed" value={<Money value={totals.confirmed} />} icon={BadgeCheck} tone="brand" description={`${totals.confirmedCount} sale(s)`} />
         <AdminStatCard label="Pending" value={<Money value={totals.pending} />} icon={Clock} tone="warning" description={`${totals.pendingCount} sale(s)`} />
         <AdminStatCard label="Overall Recorded" value={<Money value={totals.overall} />} icon={Receipt} tone="info" />
-        <AdminStatCard label="Period Confirmed" value={<Money value={inPeriod} />} icon={CalendarCheck} tone="violet" description="After undone payments" />
+        <AdminStatCard label="Confirmed This Period" value={<Money value={inPeriod} />} icon={CalendarCheck} tone="violet" description="After refunds and reversals" />
       </AdminStatGrid>}
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search sales" filters={[...(scopes.length > 1 ? [{ label: "Show", value: scope, onChange: (value: string) => setScope(value as SalesScope), options: scopes }] : []), { label: "Sale status filter", value: status, onChange: setStatus, options: canApprove ? [...STATUS_OPTIONS, { value: "no-payment", label: "No approved receipt for 90 days" }] : STATUS_OPTIONS }]}>
         <StandardDateField label="Period from" value={from} onChange={setFrom} className="tw:md:min-w-0 tw:md:flex-1" />

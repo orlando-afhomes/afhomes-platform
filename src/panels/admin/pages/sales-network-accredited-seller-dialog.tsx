@@ -412,7 +412,7 @@ export function AccreditedSellerDialog({
     <Dialog open={open} onOpenChange={(next) => (!next ? onClose() : undefined)}>
       <DialogContent className="tw:max-h-[calc(100dvh-2rem)] tw:overflow-y-auto tw:sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{mode === "IST" ? "Add Internal Seller" : "Add Outsourced Seller"}</DialogTitle>
+          <DialogTitle>{mode === "IST" ? "Add IST" : "Add OST"}</DialogTitle>
           <DialogDescription>{mode === "IST" ? "Create an Internal Seller (IST) member." : "Create an Outsourced Seller (OST) member."}</DialogDescription>
         </DialogHeader>
         <div ref={bodyRef} className="tw:flex tw:flex-col tw:gap-4">

@@ -132,7 +132,8 @@ describe("Month-end payout bar", () => {
     const form = within(await screen.findByRole("dialog", { name: `Record Payout for ${count} commissions` }));
     expect(form.getByText(/To leave a commission out/)).toBeInTheDocument();
     await user.type(form.getByLabelText(/^Payment reference/), "BATCH-SEP");
-    await user.type(form.getByLabelText(/^Payment method/), "Bank Transfer");
+    await user.click(form.getByLabelText(/^Payment method/));
+    await user.click(await screen.findByRole("option", { name: "Bank Transfer" }));
     await user.upload(form.getByLabelText(/^Payment proof/), new File(["proof"], "batch.pdf", { type: "application/pdf" }));
     // jsdom keeps a required file input invalid after upload, so submit the form directly.
     fireEvent.submit(form.getByRole("button", { name: "Record Payout" }).closest("form")!);

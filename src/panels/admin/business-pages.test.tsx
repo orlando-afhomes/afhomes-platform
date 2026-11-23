@@ -430,8 +430,8 @@ describe("business pages render for the intended roles", () => {
     expect(screen.queryByRole("table", { name: "Yearly Gifts" })).toBeNull();
     await pickFilteredOption(user, search, "Jerome", new RegExp(escapeRegExp(CUSTOMER_B1)));
     expect(await screen.findByRole("table", { name: "Yearly Gifts" })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("tab", { name: "Resort Bills" }));
-    const bills = await screen.findByRole("table", { name: "Resort Bills" });
+    await userEvent.click(screen.getByRole("tab", { name: "Bills to Review" }));
+    const bills = await screen.findByRole("table", { name: "Bills to Review" });
     expect(screen.getByRole("button", { name: "Earn Points" })).toBeInTheDocument();
     expect(screen.queryByText(/Awaiting first redemption/)).toBeNull();
     // Refunds are recorded from a verified bill's details.
@@ -456,7 +456,7 @@ describe("business pages render for the intended roles", () => {
 
   it("renders role-scoped reports", async () => {
     show("dev-finance", <CollectionsReportPage />);
-    expect(await screen.findByText("Verified Collections")).toBeInTheDocument();
+    expect(await screen.findByText("Confirmed Payments")).toBeInTheDocument();
   });
 
   it("denies the audit viewer to non-administrators", async () => {
@@ -1361,6 +1361,8 @@ describe("customer application new fields and secondary holder", () => {
     });
     const update = vi.spyOn(MockCustomerRepository.prototype, "updateDraft");
     show("dev-clerk", <CustomerFormPage customerId="cust-a2" />);
+    // An incomplete draft opens on the first step with missing data; go back to the card choice to start from the top.
+    await user.click(await screen.findByRole("button", { name: /change card/i }));
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await choosePlanAndContinue(user);
@@ -1860,7 +1862,10 @@ describe("public accreditation verification", () => {
 
 describe("customer edit reuses the application wizard", () => {
   it("renders the wizard for an existing draft instead of the old single-page form", async () => {
+    const user = userEvent.setup();
     show("dev-clerk", <CustomerFormPage customerId="cust-a2" />);
+    // The saved draft is incomplete, so the wizard resumes after the card choice; "Change Card" returns to it.
+    await user.click(await screen.findByRole("button", { name: /change card/i }));
     expect(await screen.findByRole("heading", { name: "Choose a VIP Card" })).toBeInTheDocument();
     expect(await screen.findByRole("radiogroup", { name: "VIP card" })).toBeInTheDocument();
     // The old single-page CustomerForm opened with this SectionBlock heading.
@@ -1883,6 +1888,7 @@ describe("customer edit reuses the application wizard", () => {
         <CustomerFormPage customerId="cust-a2" />
       </>,
     );
+    await user.click(await screen.findByRole("button", { name: /change card/i }));
     await screen.findByRole("heading", { name: "Choose a VIP Card" });
     const probe = () => screen.getByTestId("customer-record-probe");
     await waitFor(() => expect(probe().getAttribute("data-count")).not.toBe("0"));

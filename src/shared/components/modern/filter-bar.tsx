@@ -18,8 +18,10 @@ export type FilterBarFilter = {
  * controls passed as children. The optional `header` (view chips) sits on its
  * own full-width line above the controls. Layout follows the width of the bar
  * itself (container query), not the screen: from 28rem wide the controls share
- * one row of equal-height (44px) fields (search takes twice the space of a
- * select, long values truncate); narrower bars stack the controls full width.
+ * one row of equal-height (44px) fields when they fit (search takes twice the
+ * space of a select, and no field gets narrower than 8rem so its value stays
+ * readable); when they do not all fit, the row wraps. Narrower bars stack the
+ * controls full width.
  * Extra children should be 44px tall and may carry `tw:md:flex-1` (or
  * `tw:md:flex-none` for buttons, which keep their natural width).
  */
@@ -44,10 +46,10 @@ export function FilterBar({
     <Card className="tw:@container tw:rounded-2xl">
       {header ? <div className="tw:w-full">{header}</div> : null}
       {hasControls ? (
-        <div className="tw:flex tw:flex-col tw:gap-3 tw:@md:flex-row tw:@md:flex-nowrap tw:@md:items-end tw:@md:[&>*:not([data-slot=button])]:min-w-0">
-          {onSearch ? <SearchInput value={search ?? ""} onChange={onSearch} label={searchLabel ?? "Search"} className="tw:@md:max-w-none tw:@md:min-w-0 tw:@md:flex-[2_1_0%]" /> : null}
+        <div className="tw:flex tw:flex-col tw:gap-3 tw:@md:flex-row tw:@md:flex-wrap tw:@md:items-end tw:@md:[&>*:not([data-slot=button])]:min-w-36!">
+          {onSearch ? <SearchInput value={search ?? ""} onChange={onSearch} label={searchLabel ?? "Search"} className="tw:@md:max-w-none tw:@md:min-w-40 tw:@md:flex-[2_1_10rem]" /> : null}
           {filters.map((filter) => (
-            <div key={filter.label} className="tw:w-full tw:@md:min-w-0 tw:@md:flex-[1_1_0%]">
+            <div key={filter.label} className="tw:w-full tw:@md:min-w-32 tw:@md:flex-[1_1_8rem]">
               <SearchSelect
                 aria-label={filter.label}
                 items={filter.options}

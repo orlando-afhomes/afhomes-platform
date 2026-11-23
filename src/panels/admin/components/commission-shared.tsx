@@ -9,7 +9,7 @@ import { manilaToday } from "@/shared/lib/dates";
 import { MAX_UPLOAD_BYTES, readFileAsDataUrl } from "@/shared/lib/file-data";
 import type { ColumnDef } from "@/shared/components/modern/data-table";
 import { FieldShell, PercentField, SelectField, StandardDateField, TextField, describedBy, useFieldIds } from "@/shared/forms/modern";
-import { HandCoins } from "lucide-react";
+import { Banknote, FileText, HandCoins, Landmark, Smartphone, Upload, WalletCards, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -20,7 +20,7 @@ import { Money } from "@/shared/components/modern/money";
 import { ImagePreview } from "@/shared/components/modern/image-preview";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { PAYOUT_RELEASE_THRESHOLD_BP } from "@/modules/commissions/rules";
-import { commissionRoleLabel } from "@/modules/commissions/types";
+import { PAYOUT_METHODS, commissionRoleLabel, type PayoutMethod } from "@/modules/commissions/types";
 import { formatDate } from "@/shared/lib/format-date";
 import { designationLabel } from "@/modules/sales-network/display";
 
@@ -164,6 +164,14 @@ export function bulkSummary(result: BulkCommissionResult, verb: string): string 
   return `${done}, ${result.failed.length} not ${verb}: ${reasons}`;
 }
 
+const PAYOUT_METHOD_ICONS: Record<PayoutMethod, LucideIcon> = {
+  "Bank Transfer": Landmark,
+  GCash: Smartphone,
+  Maya: WalletCards,
+  Cash: Banknote,
+  Cheque: FileText,
+};
+
 /**
  * Records one payout for each commission with the same date, method, reference and proof
  * (doc 08 §11.3). Each commission is recorded on its own, with its own checks and audit entry.
@@ -203,15 +211,35 @@ export function PayoutDialog({ commissions, onClose }: { commissions: Commission
   const total = commissions.reduce((sum, item) => sum + item.amountCentavos, 0);
   return (
     <FormDialog open title={single ? "Record Payout" : `Record Payout for ${commissions.length} commissions`}
-      description={single ? commissions[0].recipientName : `Total ${formatPeso(total)}. To leave a commission out, close this and use Record payout on each row you want to pay.`}
       submitText="Record Payout" pending={bulk.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+      <div className="tw:flex tw:items-center tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-muted/40 tw:p-3">
+        <span aria-hidden="true" className="tw:flex tw:size-11 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-lg tw:bg-(--color-brand-soft) tw:text-primary"><HandCoins className="tw:size-5" /></span>
+        <div className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col">
+          <span className="tw:truncate tw:text-sm tw:font-medium">{single ? commissions[0].recipientName : `${commissions.length} commissions`}</span>
+          <span className="tw:text-xs tw:text-muted-foreground">{single ? "Payout total" : "Total payout"}</span>
+        </div>
+        <strong className="tw:text-lg tw:tabular-nums">{formatPeso(total)}</strong>
+      </div>
+      {!single ? <p className="tw:text-xs tw:text-muted-foreground">To leave a commission out, close this and use Record payout on each row you want to pay.</p> : null}
       <TextField label="Payment reference" required value={reference} onChange={setReference} />
-      <TextField label="Payment method" required={proofRequired} value={method} onChange={setMethod} />
-      <StandardDateField label="Payout date" required value={date} onChange={setDate} />
+      <div className="tw:grid tw:gap-3 tw:sm:grid-cols-2">
+        <SelectField label="Payment method" required={proofRequired} value={method} placeholder="Search or choose a method"
+          options={PAYOUT_METHODS.map((item) => ({ value: item, label: item, icon: PAYOUT_METHOD_ICONS[item] }))} onChange={setMethod} />
+        <StandardDateField label="Payout date" required value={date} onChange={setDate} />
+      </div>
       <div className="tw:grid tw:gap-2">
         <Label htmlFor="commission-payout-evidence">Payment proof</Label>
+        <label htmlFor="commission-payout-evidence" className="tw:flex tw:min-h-14 tw:cursor-pointer tw:items-center tw:gap-3 tw:rounded-xl tw:border tw:border-dashed tw:border-input tw:bg-card tw:p-3 tw:transition-colors tw:hover:border-primary/40 tw:hover:bg-muted/40 tw:focus-within:ring-3 tw:focus-within:ring-ring/40">
+          <span aria-hidden="true" className="tw:flex tw:size-9 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-lg tw:bg-primary/10 tw:text-primary"><Upload className="tw:size-4" /></span>
+          <span className="tw:min-w-0 tw:flex-1 tw:truncate tw:text-sm">{proofFile ? proofFile.name : "Choose an image or PDF"}</span>
+          {proofFile ? (
+            <button type="button" aria-label="Remove payment proof" className="tw:flex tw:size-8 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-md tw:text-muted-foreground tw:hover:bg-muted"
+              onClick={(event) => { event.preventDefault(); setProofFile(null); }}><X aria-hidden="true" className="tw:size-4" /></button>
+          ) : null}
+        </label>
         <Input
           id="commission-payout-evidence"
+          className="tw:sr-only"
           type="file"
           required={proofRequired}
           accept="image/*,application/pdf"

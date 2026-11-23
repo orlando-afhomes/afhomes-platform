@@ -52,7 +52,8 @@ export function FieldShell({
   );
   return (
     <div className={cn("tw:flex tw:min-w-0 tw:flex-col tw:gap-2", className)}>
-      <div className="tw:flex tw:min-w-0 tw:items-center tw:gap-1.5">
+      {/* Same height with or without the field-guide icon (size-5), so side-by-side fields line up. */}
+      <div className="tw:flex tw:min-h-5 tw:min-w-0 tw:items-center tw:gap-1.5">
         {labelFor ? <Label id={`${ids.id}-label`} htmlFor={ids.id}>{caption}</Label> : <Label id={`${ids.id}-label`}>{caption}</Label>}
         {hint ? <HintTip labelId={`${ids.id}-label`} text={hint} /> : null}
       </div>

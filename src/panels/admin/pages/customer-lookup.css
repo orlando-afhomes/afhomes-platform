@@ -87,6 +87,12 @@
 
 .dark .customer-lookup__accent-icon { background: var(--lookup-tile); }
 
+/* A person tile in the brand green, so the cardholder heading reads as a profile and not as a warning. */
+.customer-lookup__accent-icon.customer-lookup__accent-icon--member {
+  color: var(--lookup-icon);
+  background: color-mix(in srgb, var(--lookup-sage) 72%, var(--lookup-icon) 10%);
+}
+
 .customer-lookup [data-slot="card"].customer-lookup__search,
 .customer-lookup [data-slot="card"].customer-lookup__summary,
 .customer-lookup [data-slot="card"].customer-lookup__loyalty {
@@ -348,7 +354,17 @@
 .customer-lookup__loyalty-detail svg { flex: none; width: 19px; height: 19px; color: var(--lookup-icon); }
 .customer-lookup__loyalty-membership { display: block; color: var(--muted-foreground); font-size: 13px; }
 .customer-lookup__loyalty-membership::first-letter { text-transform: uppercase; }
-.customer-lookup__loyalty-buttons { display: flex; flex-wrap: wrap; gap: 12px 21px; }
+/* The action buttons follow the width of their own card: one column when narrow, two when there is room, then three (or two stretched) when wide. */
+.customer-lookup__loyalty { container-type: inline-size; }
+.customer-lookup__loyalty-buttons { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@container (min-width: 24rem) {
+  .customer-lookup__loyalty-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .customer-lookup__loyalty-buttons > button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+@container (min-width: 40rem) {
+  .customer-lookup__loyalty-buttons { grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); }
+  .customer-lookup__loyalty-buttons > button:last-child:nth-child(odd) { grid-column: auto; }
+}
 
 .customer-lookup__bookings {
   display: grid;
@@ -362,9 +378,7 @@
 .customer-lookup__bookings-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
 .customer-lookup__bookings-heading h3 { font-size: 17px; font-weight: 700; }
 .customer-lookup__bookings-heading > button { min-height: 36px; }
-.customer-lookup__loyalty-buttons > button { width: auto; min-width: min(100%, 16rem); }
-.customer-lookup__loyalty-buttons > button:has(.lucide-receipt-text) { min-width: min(100%, 16.875rem); }
-.customer-lookup__loyalty-buttons > button.customer-lookup__manage-bookings { min-width: min(100%, 18.25rem); border-color: var(--color-accent-light); background: var(--lookup-paper); color: var(--foreground); }
+.customer-lookup__loyalty-buttons > button.customer-lookup__manage-bookings { border-color: var(--color-accent-light); background: var(--lookup-paper); color: var(--foreground); }
 .customer-lookup__loyalty-buttons > button.customer-lookup__manage-bookings:enabled:hover {
   background-color: var(--lookup-tile);
   border-color: var(--lookup-icon);

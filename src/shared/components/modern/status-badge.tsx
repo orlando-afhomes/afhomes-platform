@@ -3,7 +3,7 @@ import { Badge } from "@/shared/ui/badge";
 import { cn } from "@/shared/lib/utils";
 import { humanize } from "@/shared/lib/humanize";
 
-export type BadgeTone = "success" | "warning" | "danger" | "info" | "neutral";
+export type BadgeTone = "success" | "warning" | "danger" | "info" | "neutral" | "violet";
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
   success: "tw:bg-success/10 tw:text-success",
@@ -11,6 +11,7 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   danger: "tw:bg-destructive/10 tw:text-destructive",
   info: "tw:bg-info/10 tw:text-info",
   neutral: "tw:bg-muted tw:text-muted-foreground",
+  violet: "tw:bg-(--color-dashboard-violet-soft) tw:text-(--color-dashboard-violet)",
 };
 
 /** Shared Tailwind tone classes so business and account badges never duplicate strings. */

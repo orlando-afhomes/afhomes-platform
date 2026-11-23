@@ -10,7 +10,7 @@ export type MockAccount = { email: string; password: string; identityId: string;
 const PASSWORD = "Afhomes@2026";
 
 const ACCOUNT_ROWS: Array<[string, string, MockPortal]> = [
-  ["victoria.salazar@afhomes.com.ph", "dev-super-admin", "admin"],
+  ["orlandodelacruz@afhomes.com.ph", "dev-super-admin", "admin"],
   ["eduardo.ocampo@afhomes.com.ph", "dev-admin", "admin"],
   ["rosalinda.tan@afhomes.com.ph", "dev-finance", "staff"],
   ["carmela.rivera@afhomes.com.ph", "dev-hr", "staff"],

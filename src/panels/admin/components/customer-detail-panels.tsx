@@ -40,7 +40,6 @@ import { Money } from "@/shared/components/modern/money";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { ImagePreview } from "@/shared/components/modern/image-preview";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
-import { buttonVariants } from "@/shared/ui/button";
 import { StatusBadge, ToneBadge } from "@/shared/components/modern/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 
@@ -303,58 +302,57 @@ function LinkedBadge({ value }: { value: string }) {
   return isMissingValue(value) ? null : <ToneBadge tone="success">Linked</ToneBadge>;
 }
 
+export type LinkedRecordTab = "contract" | "sales" | "membership";
+
+function LinkedRow({ icon: Icon, title, value, last, onOpen }: { icon: LucideIcon; title: string; value: string; last?: boolean; onOpen: () => void }) {
+  return (
+    <li className="customer-detail__linked-row">
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={`Open ${title}`}
+        className={cn(
+          "tw:flex tw:min-h-14 tw:w-full tw:cursor-pointer tw:items-center tw:gap-3 tw:rounded-lg tw:px-2 tw:py-3 tw:text-left tw:transition-colors tw:hover:bg-muted/60 tw:focus-visible:ring-3 tw:focus-visible:ring-ring/40 tw:focus-visible:outline-none",
+          !last && "tw:border-b tw:border-border",
+        )}
+      >
+        <Icon aria-hidden="true" className="tw:size-5 tw:shrink-0 tw:text-primary" />
+        <span className="tw:w-32 tw:shrink-0 tw:text-sm tw:font-semibold tw:text-foreground">{title}</span>
+        <span className="tw:min-w-0 tw:flex-1 tw:truncate tw:text-sm tw:text-muted-foreground">{value}</span>
+        <LinkedBadge value={value} />
+        <ChevronRight aria-hidden="true" className="tw:size-4 tw:shrink-0 tw:text-muted-foreground" />
+      </button>
+    </li>
+  );
+}
+
+/** Each row opens the matching tab of this customer, whether or not a record exists yet (the tab then says what is missing). */
 export function LinkedRecordsCard({
   contractLabel,
-  contractHref,
   saleLabel,
   membershipLabel,
   saleValueCentavos,
   showSaleValue,
+  onOpen,
 }: {
   contractLabel: string;
-  /** Null when there is no contract to open; the row still renders without the link. */
-  contractHref: string | null;
   saleLabel: string;
   membershipLabel: string;
   /** Integer centavos; Money never receives floating-point amounts. */
   saleValueCentavos: number | null;
   /** Parent hides the value for viewers without finance visibility. */
   showSaleValue: boolean;
+  onOpen: (tab: LinkedRecordTab) => void;
 }) {
   return (
     <Card className="customer-detail__card tw:rounded-2xl">
       <CardHeading icon={Link2} title="Linked Records" />
       <CardContent>
-        <CardDescription className="tw:-mt-2">Contract, sale and membership connected to this customer.</CardDescription>
+        <CardDescription className="tw:-mt-2">Contract, sale and membership connected to this customer. Select one to open it.</CardDescription>
         <ul className="tw:m-0 tw:flex tw:list-none tw:flex-col tw:p-0">
-          <li className="customer-detail__linked-row tw:flex tw:items-center tw:gap-3 tw:border-b tw:border-border tw:py-3">
-            <FileText aria-hidden="true" className="tw:size-5 tw:shrink-0 tw:text-primary" />
-            <span className="tw:w-32 tw:shrink-0 tw:text-sm tw:font-semibold tw:text-foreground">Contract</span>
-            <span className="tw:min-w-0 tw:flex-1 tw:truncate tw:text-sm tw:text-muted-foreground">
-              {contractLabel}{" "}
-              {contractHref ? (
-                <Link href={contractHref} className={buttonVariants({ variant: "info", size: "xs", className: "tw:ml-1 tw:no-underline" })}>
-                  Open Contract
-                </Link>
-              ) : null}
-            </span>
-            <LinkedBadge value={contractLabel} />
-            <ChevronRight aria-hidden="true" className="tw:size-4 tw:shrink-0 tw:text-muted-foreground" />
-          </li>
-          <li className="customer-detail__linked-row tw:flex tw:items-center tw:gap-3 tw:border-b tw:border-border tw:py-3">
-            <ShoppingCart aria-hidden="true" className="tw:size-5 tw:shrink-0 tw:text-primary" />
-            <span className="tw:w-32 tw:shrink-0 tw:text-sm tw:font-semibold tw:text-foreground">Sale</span>
-            <span className="tw:min-w-0 tw:flex-1 tw:truncate tw:text-sm tw:text-muted-foreground">{saleLabel}</span>
-            <LinkedBadge value={saleLabel} />
-            <ChevronRight aria-hidden="true" className="tw:size-4 tw:shrink-0 tw:text-muted-foreground" />
-          </li>
-          <li className="customer-detail__linked-row tw:flex tw:items-center tw:gap-3 tw:py-3">
-            <Crown aria-hidden="true" className="tw:size-5 tw:shrink-0 tw:text-primary" />
-            <span className="tw:w-32 tw:shrink-0 tw:text-sm tw:font-semibold tw:text-foreground">VIP Membership</span>
-            <span className="tw:min-w-0 tw:flex-1 tw:truncate tw:text-sm tw:text-muted-foreground">{membershipLabel}</span>
-            <LinkedBadge value={membershipLabel} />
-            <ChevronRight aria-hidden="true" className="tw:size-4 tw:shrink-0 tw:text-muted-foreground" />
-          </li>
+          <LinkedRow icon={FileText} title="Contract" value={contractLabel} onOpen={() => onOpen("contract")} />
+          <LinkedRow icon={ShoppingCart} title="Sale" value={saleLabel} onOpen={() => onOpen("sales")} />
+          <LinkedRow icon={Crown} title="VIP Membership" value={membershipLabel} last onOpen={() => onOpen("membership")} />
         </ul>
         {showSaleValue && saleValueCentavos != null ? (
           <p className="customer-detail__valuebar tw:m-0 tw:mt-1 tw:flex tw:items-center tw:gap-2 tw:rounded-xl tw:px-4 tw:py-3">

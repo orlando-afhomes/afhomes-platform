@@ -2,6 +2,7 @@ import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { CommissionRateDirectory, CommissionRepository, CommissionView } from "@/data/contracts/commission-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { ApplyVipPositionRateInput, Commission, CommissionClawback, CommissionPayoutList, CommissionRateSetting, VipPositionRate } from "@/modules/commissions/types";
+import { PAYOUT_METHODS } from "@/modules/commissions/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { parseManilaDateOnly } from "@/shared/lib/dates";
 import { firstOpenDate } from "@/modules/finance/month-close";
@@ -455,6 +456,7 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
         throw new Error(`Commission payout opens on ${releaseDate}, after the month it became ready to pay.`);
       }
       if (!input.reference.trim()) throw new Error("Enter the payment reference.");
+      if (input.method?.trim() && !(PAYOUT_METHODS as readonly string[]).includes(input.method.trim())) throw new Error("Choose a payment method from the list.");
       if (!parseManilaDateOnly(input.payoutDate)) throw new Error("Enter a valid payout date.");
       if (input.payoutDate < releaseDate) throw new Error("The payout date must be on or after the ready-to-pay date.");
       if (input.payoutDate > today()) throw new Error("The payout date cannot be in the future.");

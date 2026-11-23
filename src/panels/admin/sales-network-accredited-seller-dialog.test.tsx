@@ -88,7 +88,7 @@ describe("accredited seller wizard", () => {
   it("blocks Next with inline errors until the personal step is complete", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    const dialog = await screen.findByRole("dialog", { name: "Add Outsourced Seller" });
+    const dialog = await screen.findByRole("dialog", { name: "Add OST" });
     await user.click(within(dialog).getByRole("button", { name: /next/i }));
     expect(await within(dialog).findByText("Profile photo is required.")).toBeInTheDocument();
     expect(within(dialog).getByText("First name is required.")).toBeInTheDocument();
@@ -98,7 +98,7 @@ describe("accredited seller wizard", () => {
   it("selects a sponsor on the assignment step without throwing", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    const dialog = await screen.findByRole("dialog", { name: "Add Outsourced Seller" });
+    const dialog = await screen.findByRole("dialog", { name: "Add OST" });
 
     await fillPersonalStep(user, dialog);
     await user.click(within(dialog).getByRole("button", { name: /next/i }));
@@ -120,7 +120,7 @@ describe("accredited seller wizard", () => {
 
   it("restricts completion to a Super Administrator", async () => {
     render(<TestWrapper identityId="dev-admin" />);
-    const dialog = await screen.findByRole("dialog", { name: "Add Outsourced Seller" });
+    const dialog = await screen.findByRole("dialog", { name: "Add OST" });
     expect(within(dialog).getByText("Super Administrator Completion Required")).toBeInTheDocument();
   });
 });

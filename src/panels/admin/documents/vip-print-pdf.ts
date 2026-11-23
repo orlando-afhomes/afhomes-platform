@@ -1,5 +1,5 @@
 import fontkit from "@pdf-lib/fontkit";
-import { PDFDocument, degrees, rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { buildCollectionLedger } from "@/modules/finance/rules";
 import { firstPaymentSummary, printHolderName, printHomeAddress, supportedPrintTier, templateKeyFor, canPrintGrant, type PrintCustomer, type PrintDocumentInput, type TemplateKey } from "@/modules/contracts/print-data";
 
@@ -293,22 +293,6 @@ function financeSummary(pdf: PDFDocument, writer: Writer, input: Extract<PrintDo
   }
 }
 
-const SAMPLE_STAMP = "SAMPLE - NOT FOR SIGNING";
-
-// Every page of every output says it is a sample. The stamp is pale and diagonal so signature areas stay readable.
-function stampSample(pages: PDFPage[], font: PDFFont) {
-  for (const page of pages) {
-    const size = Math.min(54, page.getWidth() * 0.075);
-    const width = font.widthOfTextAtSize(SAMPLE_STAMP, size);
-    const angle = Math.PI / 4 * 0.75;
-    page.drawText(SAMPLE_STAMP, {
-      x: page.getWidth() / 2 - Math.cos(angle) * width / 2,
-      y: page.getHeight() / 2 - Math.sin(angle) * width / 2,
-      size, font, color: rgb(0.75, 0.1, 0.1), opacity: 0.16, rotate: degrees(33.75),
-    });
-  }
-}
-
 export async function renderVipDocument(input: PrintDocumentInput, sources: Sources = browserSources) {
   if (input.kind === "application" && !supportedPrintTier(input.tierCode)) throw new Error("The sample application has no selection for this card level.");
   const key = input.kind === "application" ? "application" : input.kind === "finance" ? null : templateKeyFor(input.kind, input.contract);
@@ -322,7 +306,6 @@ export async function renderVipDocument(input: PrintDocumentInput, sources: Sour
   else if (input.kind === "reservation") fillReservation(pdf, writer, input);
   else if (input.kind === "grant") fillGrant(writer, pdf.getPages(), input);
   else if (input.kind === "finance") financeSummary(pdf, writer, input);
-  stampSample(pdf.getPages(), embedded[0]);
   pdf.setTitle(`AFHomes sample ${input.kind}`);
   return { bytes: await pdf.save(), revision: key ? TEMPLATE_REVISIONS[key] : "Finance summary 1", label: key ?? "finance-summary" };
 }

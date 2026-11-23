@@ -52,6 +52,9 @@
   /* Dashboard KPI accent (fourth card tone in the dashboard design). */
   --color-dashboard-violet: #6d4fc2;
   --color-dashboard-violet-soft: #f0ebfa;
+  /* Extra action colors so neighbouring buttons can each look different. */
+  --color-teal: #17796f;
+  --color-rose: #b23a63;
   /* VIP tier metals (each at least 3:1 against white for chart marks). */
   --color-tier-gold: #b8891f;
   --color-tier-silver: #8a939c;

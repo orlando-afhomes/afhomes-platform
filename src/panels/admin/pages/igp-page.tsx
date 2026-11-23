@@ -64,9 +64,9 @@ export function IgpActions({ onOpen, onOpenHistory }: { onOpen: (dialog: IgpHead
     {canEnter && <Button onClick={() => onOpen("record")}><Receipt aria-hidden="true" /> Record Sale</Button>}
     {canManage && <Button variant="info" onClick={() => onOpen("accredit")}><BadgeCheck aria-hidden="true" /> Record JA&D Accreditation</Button>}
     {canManage && <Button variant="warning" onClick={() => onOpen("threshold")}><Info aria-hidden="true" /> When a Sale Counts</Button>}
-    {canManage && <Button variant="outline" onClick={() => onOpen("grant-tiers")}><Crown aria-hidden="true" /> VIP Card Levels</Button>}
-    {canManage && <Button variant="outline" onClick={() => onOpen("import-history")}><Upload aria-hidden="true" /> Import History</Button>}
-    {canManage && register.accreditations.length > 0 && <Button variant="outline" onClick={onOpenHistory}><History aria-hidden="true" /> JA&D Approval History</Button>}
+    {canManage && <Button variant="violet" onClick={() => onOpen("grant-tiers")}><Crown aria-hidden="true" /> VIP Card Levels</Button>}
+    {canManage && <Button variant="teal" onClick={() => onOpen("import-history")}><Upload aria-hidden="true" /> Import History</Button>}
+    {canManage && register.accreditations.length > 0 && <Button variant="rose" onClick={onOpenHistory}><History aria-hidden="true" /> JA&D Approval History</Button>}
   </>;
 }
 

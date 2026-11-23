@@ -34,7 +34,7 @@ export function MembershipsPanel() {
     <>
       <AdminStatGrid>
         <AdminStatCard label="Active" value={all.filter((item) => item.status === "active").length} icon={BadgeCheck} tone="success" />
-        <AdminStatCard label="Pending Activation" value={pending.length} icon={Clock} tone="warning" />
+        <AdminStatCard label="Pending Activation" value={pending.length} icon={Clock} tone="violet" />
         <AdminStatCard label="Ready" value={pending.filter((item) => item.eligible).length} icon={CircleCheck} tone="info" />
         <AdminStatCard label="Payment Holds" value={all.filter((item) => item.financialHold).length} icon={Hourglass} tone="warning" />
       </AdminStatGrid>

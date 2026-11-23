@@ -111,43 +111,45 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved 2026-11-23 (Asia/Manila). AFHomes Platform, branch `develop`, HEAD `12c7518` (`feat: issue VIP Numbers on qualifying payment and defer membership creation`, made by the owner during this session; the session began at `cd10b3e`).
-- Tool: Claude Code desktop, Sonnet 5.5, permission mode not verified. Context was not compacted.
-- Objective: continue `docs/implementation/01-prototype/plans/vip-contract-printing-plan.md`, then browser-walk the print flows. Phase: frontend prototype with sample data, QA.
+- Saved 2026-11-24 (Asia/Manila). AFHomes Platform, branch `develop`, HEAD `ed9ceb8` (`feat: add restaurant reservations and polish shared table controls`, made by the owner during the session; the session began at `cd10b3e`, with `12c7518` and `22160bf` committed by the owner in between).
+- Tool: Claude Code desktop. Model switched between Sonnet 5.5 and Opus 5.5 by the owner; permission mode not verified. Context was not compacted. The owner used the in-app browser pane in parallel, so some browser checks were interrupted.
+- Objectives this session (in order): continue the VIP contract printing plan and verify it; a 16-item admin UI polish list; Earn Points / Redeem Points / booking polish; many small follow-up UI fixes; a final 9-item batch (colors, terms, Linked Records, Edit Draft, tab bar). Phase: frontend prototype with sample data, QA.
 
 ## 2. Current Project State
-- The printing feature is mostly built (found already in the working tree): `src/modules/contracts/print-data.ts` (template choice, Grant eligibility, receipt summary), `src/panels/admin/documents/vip-print-pdf.ts` (PDF-LIB fill for application, reservation, grant, Finance summary), `vip-print-controls.tsx` (dialog, per-session archive, signed-sample attach, reprint), seven supplied templates in `public/vip-print-templates/`, wired into the customer wizard, customer detail, sales contract detail and Finance collection detail pages. Packages `pdf-lib` and `@pdf-lib/fontkit` were added to `package.json`.
-- The owner commit `12c7518` changed VIP Number issuance (docs 04–07, `business-effects.ts`). The printing code was not re-checked against it.
+- Printing feature (plan `docs/implementation/01-prototype/plans/vip-contract-printing-plan.md`) is built and committed by the owner: `src/modules/contracts/print-data.ts`, `src/panels/admin/documents/` (PDF fill, controls, tests), seven templates in `public/vip-print-templates/`. Diagonal watermark was removed at the owner's request; the templates keep their own header label.
+- Restaurant table reservations exist (committed in `ed9ceb8`): `src/modules/reservations/`, `src/data/mock/reservation-repository.ts`, `src/panels/admin/components/new-booking-flow.tsx`, `restaurant-reservation-dialog.tsx`, `restaurant-reservations-table.tsx`. They record the guest only, no points or money.
+- Shared UI changed this session: select with optional icon and description, container-query filter bar, modern record details sheet, pagination, field shell, tab bar, status pills, extra button styles.
 
 ## 3. Important Decisions
-- Owner said "continue the implementation" of the printing plan, then approved the browser walkthrough and the application/access check.
-- Plan limits stand: sample PDFs only, browser memory only, official signing copies unavailable until the owner clears original wording, variants and prices. Printing changes no workflow status. Git writes are reserved for the owner.
+- Owner choices: action names Earn Points / Redeem Points / View Bookings; receipt number auto-issued `OR-YYYYMMDD-NNNN`; amount labels Total Bill Amount and Amount Not Eligible for Points; reconciliation section "Complete Spreadsheet Comparison"; menu group Finance with inner link Payments; Stay Points tabs Annual Points / Bills to Review / Special Cases / Promotions / Promo History; restaurant is reservation only (website says no walk-ins), with no points; the three PDF packages (`pdf-lib`, `@pdf-lib/fontkit`, `@fontsource/noto-sans`) were approved to keep.
+- Claude choices awaiting owner confirmation: Reports tab "Payments Received" with cards Confirmed Payments / Refunds and Reversals / Total After Refunds; "Confirmed This Period"; tab "Programs, IDs & Banks"; payout method list (Bank Transfer, GCash, Maya, Cash, Cheque); restaurant party-size ceiling of 20 (placeholder, no capacity rule exists); the Sales performance report column "Period Confirmed" and the Finance page cards were not renamed.
+- Prototype only, browser-memory sample data. Live redemption, Services, real sign-in, database work and deployment still need separate authorization. Git writes are reserved for the owner.
 
 ## 4. Completed Work
-- Added the missing per-page sample stamp "SAMPLE - NOT FOR SIGNING" (pale diagonal) in `vip-print-pdf.ts` (`stampSample`, called in `renderVipDocument`), plus test "stamps every page of every output as a sample" in `vip-print-pdf.test.ts`.
-- Browser walkthrough on localhost with sample accounts: Bronze Reservation Agreement (2 pages), Grant (9 pages) and Finance summary (receipts total ₱25,500, balance ₱46,500 as on the contract page) rendered filled and stamped. Application form from the wizard rendered 2 pages filled and stamped. Saving as draft linked the prepared copy ("Print filed application sample" on the customer). The Clerk saw it (has manage access). An unrelated seller could not list or open that customer and saw no print button. No console errors.
+- Final batch (not yet committed): Net Collections card blue on Reports and Finance; plain terms above; Draft grey vs Returned/Sent Back violet in `src/shared/components/admin/status-pill.tsx` with a new `violet` tone in `status-badge.tsx`; new `violet`, `teal`, `rose` button variants and tokens (`src/theme/tokens.css`) used on Property Sales (IGP) actions; Linked Records rows are buttons that open the matching customer tab (`customer-detail-panels.tsx`, `customer-detail-page.tsx`); Edit Draft resumes at the first step with missing data via an effect in `customer-application-wizard.tsx` (the View Only guard moved below the hooks); tab bar restyled in `src/shared/components/modern/tab-bar.tsx`; filter bar keeps readable minimum widths and wraps when needed.
+- Earlier this session (some now committed): modern shared dropdown, receipt auto-number, Redeem Points dialog, booking chooser, lookup keyboard and QR image upload, Finance menu rename, GSD tab removal, payout dialog redesign with a fixed searchable method list (validated in `commission-repository.ts`), Add IST / Add OST button names, field label alignment, Stay Points and Membership stat card colors, Payment icon, Annual Points card colors, person icon on the lookup heading, responsive lookup action buttons.
 
 ## 5. Git Working Tree
-- Staged: none. Unstaged (modified): `docs/implementation/01-prototype/README.md`, `package.json`, `package-lock.json`, `src/modules/customers/types.ts`, `src/panels/admin/contract-detail-pages.test.tsx`, `customer-application-wizard.tsx`, `customer-detail-page.tsx`, `finance-collection-detail-page.tsx`, `sales-contract-detail-page.tsx` (111 insertions, 28 deletions). Most predate this session (the printing work found in the tree); this session edited only the stamp and its test in the untracked files below.
-- Untracked: `docs/implementation/01-prototype/plans/vip-contract-printing-plan.md`, `public/vip-print-templates/` (7 PDFs), `src/modules/contracts/print-data.ts` and `.test.ts`, `src/panels/admin/documents/` (3 files). No deletions or renames. The earlier hover fix in `customer-lookup.css` and the old snapshot are no longer in the working tree (owner committed them).
+- Staged: none. Untracked: none. Stash: one older entry (`stash@{0}`, "sales-network cleanup + member detail redesign"), not made by this session.
+- Unstaged: 37 modified files (225 insertions, 153 deletions). Most are this session's final batch and follow-ups; `src/data/mock/dev-identities.ts` and `src/data/mock/mock-credentials.ts` are modified but were not edited by this session (pre-existing or the owner's; not inspected). No deleted or renamed files.
 
 ## 6. Pending Tasks
-- Browser-untested variants: Silver, Gold, Gold with supplementary holder, Non-Standard, and the signed-sample attach path. Unit tests cover the tiers, not the browser.
-- Re-verify printing against owner commit `12c7518` (VIP Number now issued on qualifying payment; membership deferred). Check the "Pending issuance" text and Grant eligibility still match.
-- Owner clearance before official signing copies: legacy Reservation No. field, payment deadlines, ambiguous referral labels, Grant wording and prices.
-- Prior open items: doc 14 amendment, G3/G4 allowance questions, G5 process checks, live camera GSD demo, full-suite confirmation.
+- Browser check not done after the last edits for: Customers table badges (seen once), Reports Collections page, Sales page colors, payout dialog, restaurant pass at 375px, Earn Points venue dropdown icons, real QR image decode (only unit-tested with a mock).
+- Failures in the last full run (2134 tests, 6 failed before fixes): two `business-flow.test.ts` tests depend on today's calendar date (seed clock; VIP Number date part `261103…` vs `261102…`) and likely failed because the date rolled to 2026-11-24; one `staff-page.test.tsx` test timed out under load (passes alone). The three wizard-edit tests were fixed after that run. These were not rerun as one full suite afterwards.
+- Owner items still open: confirm Claude's term choices above; clearance of original wording before official PDF signing copies; restaurant capacity, hours, deposit and cancellation rules; doc 14 amendment; G3/G4 allowance questions; seven G5 process checks.
 
 ## 7. Verification State
-- Run this session (before `12c7518` was seen): focused tests passed (11 across `print-data.test.ts` and `vip-print-pdf.test.ts`, plus 14 in `contract-detail-pages.test.tsx`), `npx tsc --noEmit` clean, ESLint on the changed files clean, `npm run build` completed (tail only checked).
-- Browser QA: as above. Not performed: full test suite, visual check of every PDF page, Silver/Gold/Non-Standard browser runs.
+- Last run: `npx tsc --noEmit` clean; `npx eslint src` clean after removing one unused import; `npm run build` compiled successfully; targeted suites passed (commissions pages 14, promo and staff pages, navigation, print tests, wizard edit tests 5, filter-bar and shared component tests).
+- Browser (sample Super Administrator on port 3000) confirmed during the session: Sales IGP button colors and tab bar, Linked Records row opening the Sales tab, Edit Draft landing on Step 2 for the Florencia Mallari draft, lookup arrow-and-Enter, booking chooser and restaurant reservation, Earn Points locked receipt field, 375px filter stacking.
+- Not performed: full-suite rerun after the final fixes, visual check of the payout dialog, a clean-checkout run of the two date-dependent tests.
 
 ## 8. Next Session Instructions
-- Run `/load`, confirm HEAD, then rerun the focused print tests and `npx tsc --noEmit` against `12c7518`.
-- Inspect `src/panels/admin/documents/`, `src/modules/contracts/print-data.ts`, and the plan file. Keep sample data only; never use real customer data.
-- Dev server may already run on port 3000; sample sign-in accounts are in `src/data/mock/mock-credentials.ts`. A full page reload resets the in-memory data and signs out, so navigate by clicks.
+- Run `/load`, confirm HEAD `ed9ceb8` and the unstaged list. Rerun `npx tsc --noEmit`, then the two date-dependent business-flow tests and the staff-page test on their own to confirm the cause.
+- Do one browser pass: Customers table, Customer detail Linked Records and Edit Draft, Reports Collections, Sales, payout dialog at desktop and 375px. Sample accounts are in `src/data/mock/mock-credentials.ts` (check it first, it is modified); a full page reload resets the in-memory data.
+- Keep sample data only. Ask the owner to confirm the term choices before treating them as final.
 
 ## 9. Execution Recommendation
 - Phase: QA. Recommended next mode: Default. Model: Sonnet 5.5, medium effort. Ultracode: OFF.
-- Token optimization: targeted print tests first; one full-suite run only if asked.
-- Reason: remaining work is regression checks against the new commit and a few browser variants.
+- Token optimization: run only the failing tests alone, one browser pass, then one full-suite run with the dev server stopped.
+- Reason: the remaining work is verifying already-built UI and a few date-dependent tests.
 <!-- SESSION_SNAPSHOT_END -->

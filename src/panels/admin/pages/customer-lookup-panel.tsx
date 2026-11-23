@@ -18,7 +18,7 @@ import { RecordPromoUseButton } from "./promo-points-page";
 import { RedemptionBookingsPanel } from "./redemption-page";
 import { GsdRewardForm } from "./gsd-points-page";
 import { CheckboxField } from "@/shared/forms/modern";
-import { BadgeCheck, BedDouble, CalendarDays, ChevronDown, ChevronRight, Coins, CreditCard, Crown, Gift, IdCard, Info, Layers3, Search, UserRound, type LucideIcon } from "lucide-react";
+import { BadgeCheck, BedDouble, CalendarDays, ChevronDown, ChevronRight, Coins, CreditCard, Crown, Gift, IdCard, Layers3, Search, UserRound, type LucideIcon } from "lucide-react";
 import { useCustomerLookup, useOperation, useVipProducts } from "@/data/business-queries";
 import { CUSTOMER_LOOKUP_MIN_LENGTH, type CustomerLookupResult } from "@/data/contracts/membership-repository";
 import { SearchInput } from "@/shared/components/modern/search-input";
@@ -263,7 +263,7 @@ function LoyaltyActions({ holder }: { holder: MemberQrHolder }) {
           <AvatarImage src={holder.photoUrl} alt={`Profile picture of ${holder.holderName}`} />
           <AvatarFallback>{holder.holderName.slice(0, 2).toUpperCase()}</AvatarFallback>
         </Avatar>
-      ) : <span className="customer-lookup__accent-icon"><Info aria-hidden="true" /></span>}
+      ) : <span className="customer-lookup__accent-icon customer-lookup__accent-icon--member"><UserRound aria-hidden="true" /></span>}
       <h2>{holder.holderName}</h2>
     </div>
     <dl className="customer-lookup__loyalty-details">
@@ -282,12 +282,12 @@ function LoyaltyActions({ holder }: { holder: MemberQrHolder }) {
     <div className="customer-lookup__loyalty-buttons">
       <EnterResortBillButton selected={holder} />
       <RecordPromoUseButton selected={holder} />
-      {canBook ? <Button type="button" variant="outline" className="customer-lookup__manage-bookings" aria-expanded={bookings} onClick={() => setBookings(!bookings)}><BedDouble aria-hidden="true" />{bookings ? "Hide Stay Bookings" : "Stay Bookings"}</Button> : null}
+      {canBook ? <Button type="button" variant="outline" className="customer-lookup__manage-bookings" aria-expanded={bookings} onClick={() => setBookings(!bookings)}><CalendarDays aria-hidden="true" />{bookings ? "Hide Bookings" : "View Bookings"}</Button> : null}
     </div>
     {canBook && bookings ? (
-      <section className="customer-lookup__bookings" aria-label="Stay bookings">
+      <section className="customer-lookup__bookings" aria-label="Bookings">
         <div className="customer-lookup__bookings-heading">
-          <h3>Stay Bookings</h3>
+          <h3>Bookings</h3>
           <Button type="button" onClick={() => setCreate(true)}>New Booking</Button>
         </div>
         <RedemptionBookingsPanel selected={holder} createOpen={create} onCreateClose={() => setCreate(false)} />

@@ -285,7 +285,6 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const steps = canManage ? STEPS : STEPS.slice(0, STEP_SALES + 1);
   const lastStep = canManage ? STEP_REVIEW : STEP_SALES;
 
-  if (!canDraft) return <InfoNote title="View Only">This account cannot create or edit customers.</InfoNote>;
 
   const attributionErrors = customerAttributionErrors(draft, pendingOstIds);
   const nonStandardErrors = (): CustomerErrors => {
@@ -396,6 +395,29 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   };
 
   const next = () => goTo(step + 1);
+
+  // Opening a saved draft (or a registration sent back) lands on the first step that still has missing or invalid data,
+  // with that step's fields highlighted, instead of always starting at the card choice.
+  const resumedAt = useRef(false);
+  useEffect(() => {
+    if (!existing || isSubmitted || resumedAt.current) return;
+    if (!products.data || !customers.data || pendingOstIds === null) return;
+    resumedAt.current = true;
+    const all = allErrors();
+    const owner = (key: string) => Number(Object.keys(STEP_KEYS).find((index) => STEP_KEYS[Number(index)].includes(key)));
+    const owners = Object.keys(all).map(owner).filter((index) => Number.isFinite(index));
+    const target = owners.length > 0 ? Math.min(...owners) : Object.keys(all).length > 0 ? Math.min(STEP_RESERVATION, lastStep) : lastStep;
+    if (target <= STEP_CARD) return;
+    if (sidebarBefore.current === null) sidebarBefore.current = sidebarCollapsed;
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time jump once the loaded data shows where the draft is incomplete */
+    setSidebarCollapsed(true);
+    setErrors(pick(all, STEP_KEYS[target] ?? []));
+    setStep(target);
+    setFocusTick((tick) => tick + 1);
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // Runs once when the data it needs has loaded.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existing, isSubmitted, products.data, customers.data, pendingOstIds]);
 
   const applicationPrintInput = () => product && supportedPrintTier(product.code) && scheme && Object.keys(allErrors()).length === 0 ? {
     kind: "application" as const,
@@ -579,6 +601,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   const reviewErrorList = Object.values(reviewErrors).filter(Boolean) as string[];
   const priceConflict = product != null && applicablePriceStatus(product, scheme) === "conflict";
 
+  if (!canDraft) return <InfoNote title="View Only">This account cannot create or edit customers.</InfoNote>;
   return (
     <div ref={rootRef} className={cn("customer-application tw:scroll-mt-20 tw:gap-6", step > STEP_CARD ? "tw:grid tw:grid-cols-1 tw:lg:grid-cols-[20rem_minmax(0,1fr)] tw:lg:items-start" : "tw:flex tw:flex-col")}>
       {step > STEP_CARD && product ? <PlanSummary product={product} scheme={scheme} onChange={() => setStep(STEP_CARD)} onPlanChange={() => setStep(STEP_PLAN)} /> : null}

@@ -56,9 +56,9 @@ export function CollectionsReportPanel() {
   return (
     <ReportFrame range={range}>
       <AdminStatGrid columns={3}>
-        <AdminStatCard loading={payments.isLoading} error={payments.error} label="Verified Collections" value={<Money value={collected} />} icon={BadgeCheck} tone="success" />
-        <AdminStatCard loading={payments.isLoading} error={payments.error} label="Undone payments" value={<Money value={adjusted} />} icon={RotateCcw} tone="danger" />
-        <AdminStatCard loading={payments.isLoading} error={payments.error} label="Net Collections" value={<Money value={net} />} icon={Wallet} tone="brand" />
+        <AdminStatCard loading={payments.isLoading} error={payments.error} label="Confirmed Payments" value={<Money value={collected} />} icon={BadgeCheck} tone="success" />
+        <AdminStatCard loading={payments.isLoading} error={payments.error} label="Refunds and Reversals" value={<Money value={adjusted} />} icon={RotateCcw} tone="danger" />
+        <AdminStatCard loading={payments.isLoading} error={payments.error} label="Total After Refunds" value={<Money value={net} />} icon={Wallet} tone="info" />
       </AdminStatGrid>
       <ReportTable report="Collections Report" fileName="collections" range={range} columns={columns} rows={rows} getRowId={(row) => row.id} getRowTitle={(row) => row.customerName} loading={payments.isLoading} error={payments.error} emptyText="No collections match."
         filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search collections" filters={[

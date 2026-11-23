@@ -208,7 +208,7 @@ The owner asked for fewer steps and clicks (keep it simple). Every business even
 | Payment Plan Guide, Payment Plans, Payment plan | Scheme Guide, Payment Schemes (docs 05, 07) |
 | Card Levels, Card level | Tier levels (doc 05 item 21) |
 | Points per Night | Points table (doc 10) |
-| Dropdown Choices | Lists |
+| Programs, IDs & Banks | Lists |
 | Import Old Records | Historical import (doc 11 §26) |
 | Close the Month | Month-end close (doc 13) |
 | Compare with Spreadsheet, difference, Confirm | Reconciliation, variance, sign-off |

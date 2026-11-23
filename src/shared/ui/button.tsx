@@ -18,6 +18,13 @@ const WARNING =
   "tw:border-warning/40 tw:bg-warning/10 tw:text-warning tw:hover:border-warning/60 tw:hover:bg-warning/20 tw:focus-visible:border-warning tw:focus-visible:ring-warning/30 tw:dark:bg-warning/20 tw:dark:text-[color-mix(in_oklch,var(--warning),white_45%)] tw:dark:hover:bg-warning/30";
 const INFO =
   "tw:border-info/40 tw:bg-info/10 tw:text-info tw:hover:border-info/60 tw:hover:bg-info/20 tw:focus-visible:border-info tw:focus-visible:ring-info/30 tw:dark:bg-info/20 tw:dark:text-[color-mix(in_oklch,var(--info),white_45%)] tw:dark:hover:bg-info/30";
+// Soft colored actions beside each other (for example a row of page actions) each get their own hue.
+const VIOLET =
+  "tw:border-(--color-dashboard-violet)/40 tw:bg-(--color-dashboard-violet-soft) tw:text-(--color-dashboard-violet) tw:hover:border-(--color-dashboard-violet)/60 tw:hover:brightness-95 tw:focus-visible:border-(--color-dashboard-violet) tw:focus-visible:ring-(--color-dashboard-violet)/30 tw:dark:bg-(--color-dashboard-violet)/20 tw:dark:text-[color-mix(in_oklch,var(--color-dashboard-violet),white_45%)]";
+const TEAL =
+  "tw:border-(--color-teal)/40 tw:bg-(--color-teal)/10 tw:text-(--color-teal) tw:hover:border-(--color-teal)/60 tw:hover:bg-(--color-teal)/20 tw:focus-visible:border-(--color-teal) tw:focus-visible:ring-(--color-teal)/30 tw:dark:bg-(--color-teal)/20 tw:dark:text-[color-mix(in_oklch,var(--color-teal),white_45%)]";
+const ROSE =
+  "tw:border-(--color-rose)/40 tw:bg-(--color-rose)/10 tw:text-(--color-rose) tw:hover:border-(--color-rose)/60 tw:hover:bg-(--color-rose)/20 tw:focus-visible:border-(--color-rose) tw:focus-visible:ring-(--color-rose)/30 tw:dark:bg-(--color-rose)/20 tw:dark:text-[color-mix(in_oklch,var(--color-rose),white_45%)]";
 // Secondary actions (Cancel, Details, filters): soft brand wash so they read as
 // real buttons without competing with the solid primary action (owner choice,
 // 2026-11-20). `secondary` is kept as a deprecated alias of this same style.
@@ -48,6 +55,9 @@ const buttonVariantsBase = cva(
         success: SUCCESS,
         warning: WARNING,
         info: INFO,
+        violet: VIOLET,
+        teal: TEAL,
+        rose: ROSE,
         link: "tw:font-medium tw:text-primary tw:underline-offset-4 tw:hover:underline",
       },
       size: {

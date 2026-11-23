@@ -225,11 +225,11 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
             <CustomerInfoCard customer={viewCustomer} vipPlanName={tierName(viewCustomer.vipPlan)} ownerName={ownerName} recommenderName={recommenderName} referralReference={ownRecord ? customer.referralReference : null} />
             <LinkedRecordsCard
               contractLabel={contract ? recordLabel(tierName(contract.productCode) ?? EMPTY, contract.schemeLabel, humanize(contract.status)) : "—"}
-              contractHref={contract ? contractHref(contract.id) : null}
               saleLabel={sale ? recordLabel(humanize(sale.status), customer.displayName, tierName(contract?.productCode)) : "—"}
               membershipLabel={membership ? humanize(membership.status) : "—"}
               saleValueCentavos={sale?.valueCentavos ?? null}
               showSaleValue={ownRecord && sale != null}
+              onOpen={setTab}
             />
           </div>
           <div className="tw:min-w-0 tw:lg:col-span-2 tw:flex tw:flex-col tw:gap-6">

@@ -80,7 +80,7 @@ export function TabBar({
       <div
         role="tablist"
         aria-label={label}
-        className="tw:hidden tw:gap-1 tw:overflow-x-auto tw:rounded-xl tw:border tw:border-border tw:bg-muted/60 tw:p-1 tw:[scrollbar-width:thin] tw:md:flex"
+        className="tw:hidden tw:gap-1.5 tw:overflow-x-auto tw:rounded-xl tw:border tw:border-border tw:bg-muted/60 tw:p-1.5 tw:[scrollbar-width:thin] tw:md:flex"
       >
         {tabs.map((tab, index) => {
           const selected = tab.value === value;
@@ -106,8 +106,11 @@ export function TabBar({
                 moveTo(keys[event.key]);
               }}
               className={cn(
-                "tw:inline-flex tw:min-h-10 tw:shrink-0 tw:items-center tw:gap-2 tw:rounded-lg tw:border tw:px-3 tw:text-sm tw:font-medium tw:whitespace-nowrap tw:focus-visible:ring-2 tw:focus-visible:ring-ring tw:focus-visible:outline-none",
-                selected ? "tw:border-border tw:bg-card tw:font-semibold tw:text-primary" : "tw:border-transparent tw:text-muted-foreground tw:hover:bg-card/70 tw:hover:text-foreground",
+                // Every tab looks like a button: a visible border and pointer cursor, a tinted hover, and a solid brand fill for the open one.
+                "tw:inline-flex tw:min-h-10 tw:shrink-0 tw:cursor-pointer tw:items-center tw:gap-2 tw:rounded-lg tw:border tw:px-3.5 tw:text-sm tw:font-medium tw:whitespace-nowrap tw:transition-[background-color,border-color,color,box-shadow] tw:duration-150 tw:motion-reduce:transition-none tw:focus-visible:ring-2 tw:focus-visible:ring-ring tw:focus-visible:outline-none",
+                selected
+                  ? "tw:border-primary tw:bg-primary tw:font-semibold tw:text-primary-foreground tw:shadow-sm"
+                  : "tw:border-border tw:bg-card tw:text-foreground/80 tw:shadow-xs tw:hover:border-primary/40 tw:hover:bg-primary/10 tw:hover:text-primary",
               )}
             >
               {Icon ? <Icon aria-hidden="true" className="tw:size-4 tw:shrink-0" /> : null}
@@ -130,7 +133,7 @@ function unreadLabel(count: number) {
 }
 
 function CountBadge({ count }: { count: number }) {
-  return <span className="tw:rounded-full tw:bg-muted tw:px-1.5 tw:text-xs tw:tabular-nums">{count}</span>;
+  return <span className="tw:rounded-full tw:bg-foreground/10 tw:px-1.5 tw:text-xs tw:tabular-nums">{count}</span>;
 }
 
 function UnreadBadge({ count = 0 }: { count?: number }) {

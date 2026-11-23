@@ -98,7 +98,7 @@ function ReceiptsPanel({ initialShow }: { initialShow: string }) {
           <>
             <AdminStatCard label="Verified" value={<Money value={verifiedInPeriod} />} icon={BadgeCheck} tone="success" />
             <AdminStatCard label="Reversals and Refunds" value={<Money value={adjustedInPeriod} />} icon={Undo2} tone="danger" />
-            <AdminStatCard label="Net Collections" value={<Money value={verifiedInPeriod - adjustedInPeriod} />} icon={Scale} tone="brand" />
+            <AdminStatCard label="Net Collections" value={<Money value={verifiedInPeriod - adjustedInPeriod} />} icon={Scale} tone="info" />
           </>
         ) : (
           <AdminStatCard label="Awaiting Verification" value={queue.length} icon={Hourglass} tone="warning" />

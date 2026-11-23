@@ -54,7 +54,7 @@ function show(identityId: string, page: ReactElement) {
 const TILES = {
   sales: "Period Sales",
   growth: "New Customers",
-  collections: "Verified Collections",
+  collections: "Confirmed Payments",
   commissions: "Approved",
   membership: "Activated",
   points: "Points Given",
@@ -187,7 +187,7 @@ describe("reports area page", () => {
   it("shows every report tab, Collections included, to Finance", async () => {
     show("dev-finance", <ReportsAreaPage />);
     await screen.findByRole("tablist", { name: "Reports" });
-    expect(tabNames()).toEqual(["Summary", "Sales", "Customers", "Collections", "Commissions", "Membership", "Stay Points", "Promo Points"]);
+    expect(tabNames()).toEqual(["Summary", "Sales", "Customers", "Payments Received", "Commissions", "Membership", "Stay Points", "Promo Points"]);
   });
 
   it("hides the Collections tab from an OST and falls back from ?tab=collections", async () => {

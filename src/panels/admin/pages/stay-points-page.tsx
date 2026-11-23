@@ -249,10 +249,10 @@ export function WelcomeGiftPanel() {
   return (
     <>
       <AdminStatGrid columns={4}>
-        <AdminStatCard label="Weekday Points Available" value={count(balances?.spendableWeekday)} icon={Wallet} tone="success" />
-        <AdminStatCard label="Weekend Points Available" value={count(balances?.spendableWeekend)} icon={Coins} tone="success" />
-        <AdminStatCard label="Gifts Given" value={count(balances?.released)} icon={Gift} />
-        <AdminStatCard label="Points Used" value={count(balances?.redeemed)} icon={Clock} />
+        <AdminStatCard label="Weekday Points Available" value={count(balances?.spendableWeekday)} icon={Wallet} tone="info" />
+        <AdminStatCard label="Weekend Points Available" value={count(balances?.spendableWeekend)} icon={Coins} tone="violet" />
+        <AdminStatCard label="Gifts Given" value={count(balances?.released)} icon={Gift} tone="success" />
+        <AdminStatCard label="Points Used" value={count(balances?.redeemed)} icon={Clock} tone="accent" />
       </AdminStatGrid>
       <Card aria-label="Other points">
         <InfoGrid label="Other points" columns={3}>
@@ -303,7 +303,7 @@ export function ResortBillsPanel() {
 
   return (
     <>
-      <DataTable data={current.spends} columns={billColumns} getRowId={(row) => row.id} emptyText="No resort bills recorded." caption="Resort Bills"
+      <DataTable data={current.spends} columns={billColumns} getRowId={(row) => row.id} emptyText="No resort bills recorded." caption="Bills to Review"
         onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open ${billName(row)}`}
         rowActions={(row) => <RowActionsMenu itemName={billName(row)}
           extraItems={mayApprove(row) ? [{ key: "approve", label: "Approve Bill", tone: "success", onClick: () => approve(row) }] : []} />} />
@@ -364,7 +364,7 @@ export function WaiversPanel() {
 
   return (
     <>
-      <DataTable data={current.waivers} columns={waiverColumns} getRowId={(row) => row.id} caption="Gift Exceptions" emptyText="No exception requests."
+      <DataTable data={current.waivers} columns={waiverColumns} getRowId={(row) => row.id} caption="Special Cases" emptyText="No exception requests."
         onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open exception request for year ${row.tranche}`}
         rowActions={(row) => <RowActionsMenu itemName={`exception request for year ${row.tranche}`}
           extraItems={canWaive && !row.decision ? [
@@ -472,11 +472,11 @@ export function StayPointsAreaPage() {
         title="Stay Points"
         actions={(tab) => STAY_TAB_ACTIONS[tab]?.() ?? null}
         tabs={[
-          { value: "welcome-gift", label: "Welcome Gift", allowed: access["welcome-gift"], render: () => withPicker(<WelcomeGiftPanel />) },
-          { value: "resort-bills", label: "Resort Bills", allowed: access["resort-bills"], render: () => withPicker(<ResortBillsPanel />) },
-          { value: "waivers", label: "Gift Exceptions", allowed: access.waivers, render: () => withPicker(<WaiversPanel />) },
-          { value: "promos", label: "Promos", allowed: access.promos, render: () => <PromosPanel /> },
-          { value: "promo-points", label: "Promo Points", allowed: access["promo-points"], render: () => <PromoPointsPanel /> },
+          { value: "welcome-gift", label: "Annual Points", allowed: access["welcome-gift"], render: () => withPicker(<WelcomeGiftPanel />) },
+          { value: "resort-bills", label: "Bills to Review", allowed: access["resort-bills"], render: () => withPicker(<ResortBillsPanel />) },
+          { value: "waivers", label: "Special Cases", allowed: access.waivers, render: () => withPicker(<WaiversPanel />) },
+          { value: "promos", label: "Promotions", allowed: access.promos, render: () => <PromosPanel /> },
+          { value: "promo-points", label: "Promo History", allowed: access["promo-points"], render: () => <PromoPointsPanel /> },
         ]}
       />
     </StayPointsMembershipProvider>

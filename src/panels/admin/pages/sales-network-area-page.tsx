@@ -33,10 +33,10 @@ export function SalesNetworkAreaPage() {
         active === "members" && canManage ? (
           <>
             <Button type="button" onClick={() => setAccreditedMode("IST")}>
-              <UserPlus aria-hidden="true" /> Add Internal Seller
+              <UserPlus aria-hidden="true" /> Add IST
             </Button>
             <Button type="button" variant="info" onClick={() => setAccreditedMode("OST")}>
-              <Handshake aria-hidden="true" /> Add Outsourced Seller
+              <Handshake aria-hidden="true" /> Add OST
             </Button>
           </>
         ) : null

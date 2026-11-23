@@ -7,7 +7,7 @@ import {
   Search,
   Settings,
   ShoppingCart,
-  Landmark,
+  CreditCard,
   Percent,
   IdCard,
   Coins,
@@ -24,7 +24,8 @@ export const ADMIN_NAV_ICONS: Partial<Record<AdminNavKey, LucideIcon>> = {
   customers: Contact,
   "customer-lookup": Search,
   sales: ShoppingCart,
-  finance: Landmark,
+  // Payments gets its own icon; the Finance group above it keeps the bank (Landmark).
+  finance: CreditCard,
   commissions: Percent,
   membership: IdCard,
   "stay-points": Coins,

@@ -47,9 +47,9 @@ describe("sales network members page", () => {
     expect(screen.getByRole("table", { name: "Sales Network Members" })).toBeInTheDocument();
     // The add buttons sit in the page header (outside the tab panel) and open the add dialog.
     const tabPanel = screen.getByRole("tabpanel");
-    expect(within(tabPanel).queryByRole("button", { name: "Add Internal Seller" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Add Outsourced Seller" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Add Internal Seller" }));
+    expect(within(tabPanel).queryByRole("button", { name: "Add IST" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Add OST" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Add IST" }));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     await user.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());

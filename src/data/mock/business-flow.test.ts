@@ -578,6 +578,16 @@ describe("contract, payment, sale and membership workflow", () => {
     await expect(clerk.payments.resubmit("pay-4", { paidDate: "2026-11-06" })).rejects.toThrow(/submitter/i);
   });
 
+  it("accepts a payout method only from the fixed list", async () => {
+    const store = createMockStore();
+    const finance = as(store, "dev-finance");
+    const commission = historicalCommission(store);
+    await collectMa2(store);
+    await expect(finance.commissions.recordPayout(commission.id, { reference: "PAYREF", method: "Wire", payoutDate: manilaToday() })).rejects.toThrow(/method from the list/);
+    await finance.commissions.recordPayout(commission.id, { reference: "PAYREF", method: "GCash", payoutDate: manilaToday() });
+    expect(store.commissions.find((item) => item.id === commission.id)!.payout?.method).toBe("GCash");
+  });
+
   it("pays a commission only after confirmed disbursement and never twice", async () => {
     const store = createMockStore();
     const finance = as(store, "dev-finance");

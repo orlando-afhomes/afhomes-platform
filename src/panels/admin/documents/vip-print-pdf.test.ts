@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { describe, expect, it, vi } from "vitest";
-import { PDFDocument, PDFPage } from "pdf-lib";
+import { describe, expect, it } from "vitest";
+import { PDFDocument } from "pdf-lib";
 import type { PrintContract, PrintCustomer, TemplateKey } from "@/modules/contracts/print-data";
 import type { Payment } from "@/modules/finance/types";
 import { renderVipDocument } from "./vip-print-pdf";
@@ -71,25 +71,6 @@ describe("fixed-layout VIP print samples", () => {
     const data = { customer, contacts: { director: "Director Sample", manager: "Manager Sample", referrer: "Referrer Sample" }, payments: [payment], date };
     await checkPdf(await renderVipDocument({ ...data, kind: "reservation", contract: { ...contract, vipNumber: undefined } }, sources), 2, 936);
     await checkPdf(await renderVipDocument({ ...data, kind: "grant", contract }, sources), 9, tier.code === "B1" ? 1008 : 936);
-  });
-
-  it("stamps every page of every output as a sample", async () => {
-    const contract = purchase(tierContracts[2]);
-    const data = { customer, contacts: {}, payments: [payment], date };
-    const draw = vi.spyOn(PDFPage.prototype, "drawText");
-    const outputs = await Promise.all([
-      renderVipDocument({ kind: "application", customer, tierCode: "G1", schemeLabel: "Four-Month Installment", priceCentavos: contract.priceCentavos, contacts: {}, date }, sources),
-      renderVipDocument({ ...data, kind: "reservation", contract }, sources),
-      renderVipDocument({ ...data, kind: "grant", contract }, sources),
-      renderVipDocument({ kind: "finance", contract, payments: [payment], customerName: customer.displayName, date }, sources),
-    ]);
-    for (const output of outputs) {
-      expect((await PDFDocument.load(output.bytes)).getPageCount()).toBeGreaterThan(0);
-    }
-    const stamped = draw.mock.calls.filter(([text]) => text === "SAMPLE - NOT FOR SIGNING").length;
-    const total = (await Promise.all(outputs.map(async (output) => (await PDFDocument.load(output.bytes)).getPageCount()))).reduce((sum, count) => sum + count, 0);
-    expect(stamped).toBe(total);
-    draw.mockRestore();
   });
 
   it("reports excess text with the offending field name rather than clipping", async () => {

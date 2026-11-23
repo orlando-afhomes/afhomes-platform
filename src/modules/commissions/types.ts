@@ -13,6 +13,10 @@ export const COMMISSION_ROLE_LABELS: Readonly<Record<CommissionRole, string>> = 
 };
 
 /** Display label of a stored commission role; unknown values pass through unchanged. */
+/** How Finance can pay a commission out. A fixed list so every payout record uses the same names. */
+export const PAYOUT_METHODS = ["Bank Transfer", "GCash", "Maya", "Cash", "Cheque"] as const;
+export type PayoutMethod = (typeof PAYOUT_METHODS)[number];
+
 export function commissionRoleLabel(role: string): string {
   return COMMISSION_ROLE_LABELS[role as CommissionRole] ?? role;
 }

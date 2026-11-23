@@ -265,7 +265,7 @@ Draft contracts may be incomplete. Submitted contracts require appropriate infor
 
 ## 13. Sales Confirmation vs Contract Finalization
 
-A Finalized contract does not automatically mean a receipt was approved, the customer fully paid, VIP membership activated, or VIP benefits usable. The VIP Number is issued earlier, when the signed Reservation Agreement is recorded (doc 06).
+A Finalized contract does not automatically mean a receipt was approved, the customer fully paid, VIP membership activated, or VIP benefits usable. VIP Number issuance is a separate step. It requires the signed Reservation Agreement on file and approval of the first scheduled payment after the reservation fee (doc 06).
 
 A sale is Confirmed (Closed Deal) when approved receipts reach 25% of the contract price, once an Administrator has approved the sale record (doc 13 §4; workbook OPS §4.2, §4.3). Formal contract finalization is tracked separately and is not required for the count (owner follow-up ruling 3, 2026-11-12). Receipts are approved by Finance, an Administrator or the Super Administrator (doc 07).
 
@@ -288,7 +288,7 @@ Restrictions: do not claim points are guaranteed immediately on activation, are 
 These are distinct business concepts:
 
 - **Customer** — permanent customer identity.
-- **VIP Number** — the single 17-character number of the Reservation Agreement, the Grant and the card, issued when the signed Reservation Agreement is recorded (doc 06, owner ruling R2, 2026-11-12). It replaces the former separate RA No. and Card ID.
+- **VIP Number** — the single 17-character number of the Reservation Agreement, the Grant and the card, issued after recording the signed Reservation Agreement and approval of the qualifying scheduled payment (doc 06, 2026-11-23 owner ruling). It replaces the former separate RA No. and Card ID.
 - **VIP Product** — configurable catalog offering.
 - **VIP Application / Purchase** — customer's intended or actual VIP transaction.
 - **VIP Contract** — finalized legal and commercial terms.
@@ -335,10 +335,10 @@ Audit requirements: record authorized actor, time of change, previous value, new
 | Payment schemes | Official workbook options vs Admin-configurable offers | Spot Cash, Move A, 4-Month Installment, Move B (B1/B2 merged, item 7); plus Admin-configured schemes |
 | Contract classification | S/N selection vs legacy Non-Standard restriction | Both selectable; Non-Standard finalization follows the §10.2 policy (2026-11-12) |
 | Contract prices | Gold and Silver source inconsistencies | Gold resolved by owner ruling item 11 (2026-11-10); Silver resolved by item 13 (2026-11-12, updated contract, Php 240,000) |
-| VIP number | NUM unified number vs separate RA No. and activation-based Card ID | NUM v6.2 adopted (R2, 2026-11-12): one number, YYMMDD = Reservation Agreement recording date |
+| VIP number | NUM unified number vs separate RA No. and activation-based Card ID | One number under NUM v6.2. YYMMDD uses the Manila issue date under the 2026-11-23 owner ruling (doc 06). |
 | VIP sequence | Monthly sequence vs RA-derived sequence | Monthly company-wide sequence, reset each month (NUM) |
 | RA scope | RA uniqueness and possible collision scenarios | Superseded (R2, 2026-11-12): the RA carries the VIP Number from one company-wide allocator, so collisions are prevented, not flagged (doc 06) |
-| Card issuance | Final activated ID vs earlier contract-stage issuance proposal | Superseded by R2 (2026-11-12): the VIP Number is issued when the signed Reservation Agreement is recorded; activation and card claim never create a number (doc 06) |
+| Card issuance | Final activated ID vs earlier contract-stage issuance proposal | The VIP Number is issued once the signed agreement and qualifying payment requirements are met. Activation and card claim never create a number (doc 06). |
 | VIP activation | Full Finance-verified payment prerequisite | Required |
 | Validity start | Activation date vs signed Grant Card Claim Date | Card Claim Date, or first anniversary of full settlement if unclaimed (R2, 2026-11-12) |
 | Customer form | VIP dropdowns and blank Draft behavior | Three dropdowns; blank Draft preserved |
@@ -360,11 +360,11 @@ Given / When / Then for core scenarios (key scenarios; the full list is in the p
 8. Unauthorized users cannot finalize contracts.
 9. Returned contracts can be corrected and resubmitted.
 10. Contract finalization preserves approved commercial terms.
-11. The VIP Number is issued when the signed Reservation Agreement is recorded, not at finalization or activation.
+11. The VIP Number is issued when the signed Reservation Agreement is on file and approved collections meet the first scheduled payment after the reservation fee (doc 06).
 12. Partial payment does not activate membership.
 13. Full payment without Finance verification does not activate membership.
 14. Finance-verified full settlement satisfies financial activation prerequisite.
-15. The Reservation Agreement recording date is the date source for YYMMDD.
+15. The Manila VIP Number issue date is the date source for YYMMDD.
 16. The monthly sequence restarts at 00001 each month.
 17. No independently incremented VIP sequence is used.
 18. The Reservation Agreement, Grant and card carry the same VIP Number.
@@ -460,7 +460,7 @@ These rulings refine section 11 and items 9 and 12 and take precedence over earl
 27. **Due dates are not typed at preparation.** Due dates always follow the reservation date (item 9). They can be changed only while the contract is Draft or Returned.
 28. **Customer acceptance is captured once,** in the application Review step or in the Prepare contract dialog. The edit dialog asks for it only while it is still missing.
 29. **Standard is the default.** New applications default to Standard (S). Non-Standard (N) remains selectable and is handled under §10.2.
-30. **Approve deal (§11, §12).** The Administrator's review is one "Approve deal" action. It approves the customer and the sale, records the signed Reservation Agreement (issuing the VIP Number) and finalizes the contract when no hold remains. Each step is recorded and audited on its own. A held contract keeps its VIP Number and is finalized by running Approve deal again once the hold clears. Approve deal is refused, with nothing changed, while a commission rate is missing or a cancellation is open.
+30. **Approve deal (§11, §12).** The Administrator's review is one "Approve deal" action. It approves the customer and the sale, records the signed Reservation Agreement and finalizes the contract when no hold remains. The VIP Number is issued when the agreement and qualifying payment requirements in doc 06 are met. Each step is recorded and audited on its own. A held contract keeps any VIP Number already issued and is finalized by running Approve deal again once the hold clears. Approve deal is refused, with nothing changed, while a commission rate is missing or a cancellation is open.
 31. **No separate review step.** The "Start review" step is removed. Submitted means waiting for the Administrator. The Under Review status stays readable for older records. Non-Standard (N) contracts stay held at finalization until both §10.2 approvals (Administrator, then Finance) are recorded, as built under item 32.
 
 ## Owner rulings amendment (2026-11-16, Non-Standard approval)

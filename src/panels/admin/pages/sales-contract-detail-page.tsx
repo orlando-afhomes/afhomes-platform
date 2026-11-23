@@ -103,6 +103,9 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
           ) : null}
           {canApprove && contract.cancellation?.status === "requested" ? <InfoNote title="Cancellation Awaiting Finance Confirmation">Finance confirms or declines this request.</InfoNote> : null}
           <ContractCommissionRateNotice {...record} />
+          {canApprove && contract.vipNumberIssueBlocker && contract.missingCommissionRates.length === 0 ? (
+            <InfoNote title="VIP Number Issuance Is on Hold">{contract.vipNumberIssueBlocker}</InfoNote>
+          ) : null}
           <ContractTiles contract={record.contract} payments={record.payments} />
           <ContractDetailTabs value={tab} onChange={setTab} />
           {tab === "overview" ? (

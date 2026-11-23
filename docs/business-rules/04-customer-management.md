@@ -153,13 +153,13 @@ Fields: Occupation / Business, Office / Business Address, Business / Industry, E
 
 ### 7.7 Section G — Customer ID
 
-**Owner ruling (A2, 2026-11-12): keep the Customer ID `YYYY-NNNN`, assigned when the customer application is submitted.** It identifies the person only. It is never the Reservation Agreement, Grant or card number; that is the VIP Number, issued when the signed Reservation Agreement is recorded (doc 06). The two identifiers are independent and neither is derived from the other.
+**Owner ruling (A2, 2026-11-12): keep the Customer ID `YYYY-NNNN`, assigned when the customer application is submitted.** It identifies the person only. It is never the Reservation Agreement, Grant or card number; that is the VIP Number, issued once the signed Reservation Agreement is on file and the qualifying scheduled payment is approved (doc 06). The two identifiers are independent and neither is derived from the other.
 
 The official identifier is the Customer ID. Support two methods: Automatic (system generates the next unique Customer ID in the format `YYYY-NNNN` when the application is submitted) and Manual (the Clerk, the Administrator or the Super Administrator, according to permissions, may manually enter; sellers do not, because sellers view only, doc 01 §3.7).
 
 Validation: every officially established Customer ID must be unique; duplicates prohibited; manual IDs must satisfy official company identifier format. A Customer ID belongs to its customer and does not change when a customer buys another VIP product, when a salesperson transfers teams, or when VIP membership expires.
 
-The Reservation Agreement has no separate RA Number pattern: it carries the VIP Number issued when the signed agreement is recorded (doc 06, owner ruling R2, 2026-11-12), and the Customer ID format above is not reused for it. Do not reuse the IST/OST `AAI`/`AAO` accreditation number format for customers. Do not confuse Customer ID with the VIP Number, VIP Control Number, VIP Contract Number, IST/OST Accreditation Number, or Sales Transaction Number.
+The Reservation Agreement has no separate RA Number pattern: it uses the VIP Number issued when the agreement and qualifying payment requirements in doc 06 are met, and the Customer ID format above is not reused for it. Do not reuse the IST/OST `AAI`/`AAO` accreditation number format for customers. Do not confuse Customer ID with the VIP Number, VIP Control Number, VIP Contract Number, IST/OST Accreditation Number, or Sales Transaction Number.
 
 Blank drafts must be possible without requiring a finalized Customer ID. Separate technical draft identification from official customer identity. Because the Customer ID is assigned at submission, blank or abandoned drafts never consume a Customer ID sequence number.
 

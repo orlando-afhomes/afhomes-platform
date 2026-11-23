@@ -29,15 +29,15 @@ export function CardServiceDialog({ membership, onClose }: { membership: Members
         : { ...references, kind, nextCustomerId, inheritanceReference, acknowledgementReference };
     try {
       await action.mutateAsync({ id: membership.id, service });
-      toast.success("Card service recorded.");
+      toast.success(kind === "replacement" ? "Card replaced." : "Card transferred.");
       onClose();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Could not record card service.");
+      setError(failure instanceof Error ? failure.message : "Could not save the card change.");
     }
   };
   return (
-    <FormDialog open title="Service VIP Card" description={membership.customerName} submitText="Record Service" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
-      <SelectField label="Service" value={kind} onChange={setKind} options={[{ value: "replacement", label: "Replace card" }, { value: "transfer", label: "Transfer to another holder" }, { value: "inheritance", label: "Transfer to an heir" }]} />
+    <FormDialog open title="Replace or Transfer VIP Card" description={membership.customerName} submitText={kind === "replacement" ? "Replace Card" : "Transfer Card"} pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void submit()}>
+      <SelectField label="Card action" value={kind} onChange={setKind} options={[{ value: "replacement", label: "Replace card" }, { value: "transfer", label: "Transfer to another holder" }, { value: "inheritance", label: "Transfer to an heir" }]} />
       <TextField label="Written request reference" required value={requestReference} onChange={setRequest} />
       <TextField label="Management approval reference" required value={approvalReference} onChange={setApproval} />
       {kind === "replacement" ? <SelectField label="Former card" value={custody} onChange={setCustody} options={[{ value: "voided", label: "Voided" }, { value: "recalled", label: "Recalled" }]} />

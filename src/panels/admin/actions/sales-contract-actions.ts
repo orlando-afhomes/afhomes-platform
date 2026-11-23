@@ -33,7 +33,7 @@ export type SalesMenuProps = {
 export function approveDealConfirm(approve: () => Promise<ApproveDealOutcome>): ConfirmRunInput {
   return {
     title: "Approve This Deal?",
-    description: "This confirms the signed Reservation Agreement is on file. It approves the customer and the sale, issues the VIP Number, and finalizes the contract when nothing is on hold.",
+    description: "This confirms the signed Reservation Agreement is on file and approves the customer and sale. The VIP Number is issued once the first scheduled payment after the reservation fee is approved. The contract is finalized when nothing is on hold.",
     confirmText: "Approve Deal",
     tone: "success",
     action: async () => reportHeldDeal(await approve()),
@@ -140,7 +140,7 @@ export type ContractMenuCallbacks = {
 
 export type ContractMenuContract = Pick<
   ContractView,
-  "status" | "customerName" | "productCode" | "paymentCode" | "vipNumber" | "cancellation" | "arrangement" | "holds" | "sale" | "classification" | "nonStandard"
+  "status" | "customerName" | "productCode" | "paymentCode" | "vipNumber" | "signedAgreementRecordedDate" | "cancellation" | "arrangement" | "holds" | "sale" | "classification" | "nonStandard"
 > & {
   /** Full sale record when the caller can see it; drives the sale-level dispositions on detail pages. */
   saleView?: Pick<SaleView, "status" | "approval" | "defaultEligible"> | null;
@@ -166,10 +166,10 @@ export function buildContractMenuProps(contract: ContractMenuContract, perms: Co
   const pendingCancel = contract.cancellation?.status === "requested";
   const moneyLocked = perms.hasVerifiedMoney;
   const sale = contract.saleView ?? null;
-  // "Approve deal" stays while a step can still run: the sale approval, the VIP Number, or a finalization nothing holds.
+  // A signed deal awaiting its first approved payment needs no additional approval here.
   const saleUnapproved = sale?.status === "pending" && !sale.approval;
-  const vipPending = !contract.vipNumber && !perms.hasCard;
-  const dealOpen = (inReview || contract.status === "finalized") && (vipPending || saleUnapproved || (inReview && contract.holds.length === 0) || needsNonStandardApproval(contract));
+  const agreementPending = !contract.signedAgreementRecordedDate && !contract.vipNumber && !perms.hasCard;
+  const dealOpen = (inReview || contract.status === "finalized") && (agreementPending || saleUnapproved || (inReview && contract.holds.length === 0) || needsNonStandardApproval(contract));
 
   if (perms.canSubmitPayment && contract.status !== "cancelled" && contract.status !== "returned" && cb.onSubmitPayment) {
     add(extraItems, { key: "submit-payment", label: "Submit Payment", tone: "info", onClick: cb.onSubmitPayment });

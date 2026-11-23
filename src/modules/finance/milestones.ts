@@ -18,6 +18,7 @@ export function deriveMilestones(input: {
   activationDate: string | null;
   cardId: string | null;
   vipNumber?: string;
+  vipNumberIssuedDate?: string;
   signedAgreementRecordedDate?: string;
   includePaymentReference?: boolean;
 }): Milestone[] {
@@ -34,6 +35,6 @@ export function deriveMilestones(input: {
     { key: "release", label: "Stage 1 · 40% collected", date: stageOne?.date ?? null, note: paymentReference ? `Payment reference ${paymentReference}` : undefined },
     { key: "paid", label: "Fully paid", date: fullPayment?.date ?? null },
     { key: "activated", label: "Membership activated", date: input.activationDate },
-    { key: "card", label: "VIP Number issued", date: input.signedAgreementRecordedDate ?? (input.cardId ? input.activationDate : null), note: input.vipNumber ?? input.cardId ?? undefined },
+    { key: "card", label: "VIP Number issued", date: input.vipNumberIssuedDate ?? (input.vipNumber ? input.signedAgreementRecordedDate : null) ?? (input.cardId ? input.activationDate : null), note: input.vipNumber ?? input.cardId ?? undefined },
   ];
 }

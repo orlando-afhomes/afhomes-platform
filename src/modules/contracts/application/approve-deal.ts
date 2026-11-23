@@ -26,7 +26,7 @@ const ALREADY_APPROVED_CUSTOMER = new Set(["approved", "active_member"]);
  * One Administrator action for a deal whose signed Reservation Agreement is on file
  * (owner decision 2026-11-16). It runs the existing steps in order, each keeping its
  * own status change and audit entry: approve the customer (doc 04 section 5), approve
- * the sale, record the signed agreement which issues the VIP Number (doc 06), and
+ * the sale, record the signed agreement (doc 06), and
  * finalize the contract when nothing holds it (doc 05). Every step is skipped when
  * already done, so after a failure partway, running it again resumes where it stopped.
  * For a Non-Standard contract not yet approved, it first records step 1 of doc 05 §10.2
@@ -61,8 +61,7 @@ export async function approveDeal(repositories: DealRepositories, contractId: st
   const saleApproved = !sale.approval;
   if (saleApproved) await repositories.sales.approve(sale.id);
 
-  const vipNumberIssued = !current.vipNumber;
-  if (vipNumberIssued) current = await repositories.contracts.recordSignedAgreement(current.id);
+  if (!current.vipNumber) current = await repositories.contracts.recordSignedAgreement(current.id);
 
   let finalized = false;
   let finalizeHeld: string[] = [];
@@ -75,5 +74,5 @@ export async function approveDeal(repositories: DealRepositories, contractId: st
     }
   }
 
-  return { contract: current, customerApproved, saleApproved, vipNumberIssued, nonStandardApproved: needsNonStandardApproval, finalized, finalizeHeld };
+  return { contract: current, customerApproved, saleApproved, vipNumberIssued: !contract.vipNumber && Boolean(current.vipNumber), nonStandardApproved: needsNonStandardApproval, finalized, finalizeHeld };
 }

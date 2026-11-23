@@ -111,64 +111,51 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved at: 2026-11-23 (Asia/Manila business date; exact time not recorded).
-- Repository: AFHomes Platform; branch `develop`; HEAD `5f8a9ef` (owner committed all session work; tree clean at save).
-- Tool and model: OpenCode session (model not verified).
-- Session objective: (a) finish prototype completion plan Stages 0–6 plus two review-verdict fix rounds; (b) continue the realistic-seed-data plan from Claude's start to implementation-complete.
-- Development phase: frontend mock prototype; implementation done, owner review/commit pending. Backend, real authentication, database, deployment remain separately authorized.
-- Context note: built on the prior `/load` snapshot (Stage 1 at `6ea21df`); this save supersedes it. Nothing was compacted; everything below was read or run in this session unless marked otherwise.
+- Saved 2026-11-23 (Asia/Singapore and Asia/Manila). AFHomes Platform, branch `develop`, HEAD `cd10b3e`.
+- Tool: Codex desktop, Default mode. Exact model not verified. Current conversation and preceding saved handoff were available.
+- Objective: verify GSD points rules, build the approved front-desk flow, demonstrate the forms, and fix the reported hover issue. Phase: frontend prototype with sample data.
 
 ## 2. Current Project State
-- Verified implementation status: Stages 1–6 built and verified in the working copy, then committed by the owner as `5f8a9ef` (`refactor: split the seed builder and rename dev identities to realistic names`). Realistic seed (`src/data/mock/seed/`: anchor, people, organization, business, catalog, operations, igp, index) replaced `seed-data.ts` (deleted); dev identities/credentials use realistic names with `@afhomes.com.ph`; import templates use realistic rows; IGP catalog uses generic invented names.
-- Review-verdict fixes (all committed): shared OR/bank-number duplicate check across intake, matching, submission, correction and verification; IGP monthly sequence and uniqueness include imported history; Replaces links validate against existing records or rows that will actually import (two-pass); copied allowance figures require explicit split confirmation; spreadsheet-switch sign-off relabeled comparison-only (doc 08 §16), payout rules unchanged.
-- Two genuine bugs found via the new seed and fixed: wizard Customer-ID step check now excludes the record itself (`customer-application-wizard.tsx`); dashboard KPI sr-only label no longer reads "Down +X%" (`dashboard-kpi.tsx`).
-- Open items kept as-is: Stage 7 (separate authorization); D8 owner-only note; doc-14 IGP-membership amendment proposal (awaiting owner sign-off); blog dates static (no ruling); outlet `sample` flags kept with complete rows (plan default).
+- HEAD `cd10b3e` contains the GSD implementation, on top of `5f8a9ef` (realistic seed and prototype completion work). The working-copy hover fix is separate.
+- Customer Look Up lets GSD check active membership by name and distinguish matches by VIP Number. Scanning the member's current QR opens Earn Points and Redeem Points. GSD actions and booking views are scoped to that scanned holder. GSD cannot retrieve member codes through staff QR display or approve bills/payments.
+- Earn Points collects Service Used, Receipt Number and payment details, then submits for review. Redeem Points asks staff to check ID and offers a reward or overnight stay with the points balance and cost shown.
+- Source review: the external AFHomes VIP Grants describe the Annual Welcome Gift. No QR operating workflow was found in the AFHomes materials reviewed. The platform QR and points rules are in docs 01, 09 and 10. The seed plan still says Planned despite the committed seed implementation.
 
 ## 3. Important Decisions
-- Owner answers this session: do all Stages 0–6 (Stage 7 excluded by the plan); IGP-1/F11.3 — research `AFHomes Document/Business Rules` first, then implement a recommended solution, never leave pending (external folder held no IGP-benefits paper; F11.3 runs against `AFHomes_Sales_Collections_DSC_DRI-v11_0_0-BUILD_2026-10-04a.xlsx` on synthetic data); D1 AGENTS.md narrow fix authorized; S6 stays `useConfirmRun`; all five review fixes approved; IGP import stays Admin + Super Admin; switch fix as record-only copy.
-- IGP-1 owner-authorized recommendation: buyer membership record created on Formal VIP Grant signing, frozen price tier, no VIP Number, no Stay Points (grant benefits beyond tier undefined).
-- One stage per session and one-change-set-per-stage rules were set aside by the explicit "do all remaining phases" instruction; Stages 2/3/4 ran via parallel subagents, coordinator closed cross-scope gaps.
-- Git writes remain reserved for the owner (commits `9796900`, `5f8a9ef` made by the owner). Builder subagents were barred from git writes.
+- Owner approved QR entry for both GSD points actions and requested the labels Earn Points and Redeem Points. Name lookup is for active membership verification.
+- An approved qualifying purchase can earn configured Promo Points and count toward the fixed annual Stay Points gift. A scan identifies the cardholder. Separate balances, receipt uniqueness, existing bill approval, reward eligibility and stay reservation/completion rules still apply.
+- Prototype only, with browser-memory sample data. Live redemption, Services activation, Stage 7, real sign-in, database work and deployment require separate authorization. Git writes are reserved for the project owner.
+- Prior snapshot decision still relevant: IGP Formal VIP Grant signing creates the prototype buyer membership with a frozen tier, Series Number and zero Stay Points. Doc 14 amendment needs owner sign-off before live use.
 
 ## 4. Completed Work
-- Stages 2/3/4 via subagents: Batch 2 error states (53/53), Batch 4 (109/109, S6 recorded in `frontend.md`), G1/G2 finance exceptions (187/187), G3/G4 allowance assembly + switch sign-off (53/53, 5 items honestly reported not invented), IGP-1/IGP-2 (41/41), G5 portal audit (21/28 boxes ticked; 7 Step-2 RED boxes left unticked).
-- Coordinator: G1 clerk intake surface on the contract Payments tab (+2 tests); Stage 5 browser matrix + role walkthroughs (recorded in `16-state-verification.md`); Stage 6 D1–D7 (F5.5, F3.7, F8.5, AGENTS.md narrow fix, implementation README refresh, 63-page route reconcile, D7 verified clean).
-- Review round: 5 fixes + 7 regression tests in `payment-repository.ts`, `igp-repository.ts`, `history-import.ts`, `allowance-review-page.tsx`, `reconciliation-page.tsx`; fallout repaired (self-payment exclusion, `workbook` test convention, toast scoping, seed-balance test data, forced-duplicate cleanup, split-day overflow).
-- Seed continuation: business-pages migrated to seed-derived values (103/103), admin-header identity labels (4/4), commissions Set Rate race fixed, `seed-build.test.ts` determinism/format tests (4/4), plan status line set to Implemented.
-- Browser QA (seed): all admin routes × every tab, 19 public URLs, portal sign-in as cardholder; scoped checks for Finance, Clerk, HR, GSD, SVD-A, OST-A1, OST-B1, OST-C1; 8 screenshots in `/tmp/seed-qa/`; zero placeholders. Owner-manual items recorded, not attempted.
+- GSD implementation in `src/panels/admin/pages/customer-lookup-panel.tsx`, `gsd-points-page.tsx`, related staff forms, `src/data/mock`, `src/modules/identity/permissions.ts` and Business Rule 01. Added UI coverage in `src/panels/admin/customer-lookup.test.tsx` and mock tests for name lookup, QR scope, receipt duplication, approval and balance limits.
+- ChatGPT browser walkthrough opened the purchase and points-use forms for a sample member under the already signed-in Super Administrator. No sample transaction was submitted. The administrator screens use the older labels.
+- Fixed the hover flash on Scan QR, Enter Resort Bill and Record Points Use by preserving the gradient and solid fill through the transition. Manage Stay Bookings now updates its fill and border on hover. Only `src/panels/admin/pages/customer-lookup.css` changed for this fix.
+- Prior handoff reports Stages 0–6, realistic seed, review fixes and role walkthroughs completed with manual exceptions recorded in `docs/implementation/01-prototype/ui-states/16-state-verification.md`. Git confirms the seed commit exists.
 
 ## 5. Git Working Tree
-- Branch `develop`, HEAD `5f8a9ef`, nothing staged, nothing unstaged, no untracked, deleted, or renamed files (verified with read-only Git at save).
-- Previous working copy (Stages 1–6, seed build, review fixes, ~72 entries incl. `src/data/mock/seed/`, deleted `seed-data.ts`) was committed by the owner; this save changes only the snapshot block.
-- No Git write operation was performed by any agent in this session.
+- Before this save: `develop` at `cd10b3e`, no staged changes, no untracked files, and no deletions or renames.
+- Unstaged from this session: `src/panels/admin/pages/customer-lookup.css` (10 insertions, 4 deletions). This save additionally changes the snapshot block of `workflow/save-session.md`.
+- HEAD also contains changes to `commissions-pages.test.tsx` alongside the GSD work. Those test changes were not made or tested in the GSD task described here. No agent Git writes.
 
 ## 6. Pending Tasks
-- Doc-14 IGP buyer-membership amendment proposal (record the 2026-11-23 ruling, supersede "not built" notes) — needs owner sign-off; do not treat prototype behavior as live rule.
-- G3/G4 reported items: Qualifying/Extended split allocation, assumed-credit records, three unattested member filters (surfaced in UI), OCT I1 both-legs reading (needs owner ruling if the workbook treats it differently), post-close entry limit (by design).
-- G5: 7 Step-2 RED boxes left for owner process trust; gap list returned by the audit.
-- Browser/manual: throttled nav, browser forced-error, dirty-form Back, focus-ring visual (standing owner items); blog dates (no ruling); F11.3 live-figure comparison (needs the official workbook figures).
-- Stage 7 (backend, real auth, database, deployment) and D8 remain excluded/separate.
+- A live sample GSD walkthrough with a real camera and customer QR was not performed. The hover fix is local and ready for owner review.
+- Full suite confirmation remains open. The prior snapshot reported 2,091 passed and 11 failed of 2,102, with affected tests passing alone. No post-fix full rerun is recorded. The 11 failures are suspected load-related, not confirmed cleared.
+- Prior open items: doc 14 amendment, G3/G4 allowance questions (including OCT I1), seven G5 owner process checks, manual browser checks, static blog dates and F11.3 comparison against official workbook figures. Stage 7 and D8 remain separate.
 
 ## 7. Verification State
-- This session, real output: `npx tsc --noEmit` clean (repeated); `npm run lint` clean (681 then 687 files); `npm run build` pass (twice); `git diff --check` clean; mock suite 538/538; targeted suites green in isolation (Stage 2: 53/53; Stage 3: 109/109; G1/G2: 187/187; G3/G4: 53/53; IGP: 41/41; clerk surface: 14/14; seed-build: 4/4; business-pages: 103/103; staff: 21/21; commissions/dashboard/promo/finance/contract-detail/reconciliation suites green).
-- Full `npm test`: 2091 passed, 11 failed of 2102 — all in known load-sensitive files (business-pages, staff-page, dashboard, promo) or findBy-expiry under parallel load; every one passes standalone (business-pages 103/103, staff 21/21, promo+dashboard 19/19). Last full run did not include a post-fix whole-suite re-run; rerun once with the dev server stopped to separate load flakes.
-- Browser QA: real-browser pass per section 4 (one tab wedge on dirty-form Back recorded; no console app errors besides noted HMR/dev entries).
-- Not performed: full suite re-run after the final test edits (Gold timeout bump, commissions race fix); owner manual browser items; IGP live-figure workbook comparison.
+- GSD implementation: 82 focused tests passed, including simulated QR input, expired/replaced codes, duplicate receipts and insufficient balances. TypeScript, lint and `git diff --check` passed. Webpack production build passed (101 static pages generated) after restricted attempts hit filesystem and Google Fonts access errors.
+- Hover fix: verified browser hover at the screenshot width on all four controls. The green gradient and readable text survived the transition. Lint and `git diff --check` passed. No production build or automated test suite was rerun for the CSS-only fix.
+- Save command: read-only Git checks and snapshot write/readback only. No product checks rerun.
 
 ## 8. Next Session Instructions
-- Run `/load`, verify HEAD (expect `5f8a9ef`, clean tree), then run the full suite once with the dev server stopped to confirm the 11 load-only failures clear.
-- Then owner review and commit of any further changes; do not start Stage 7, backend, or provisioning without separate explicit authorization.
-- If the owner approves: record the doc-14 amendment, rule on OCT I1, and tick G5 RED boxes on trust. Keep payout-switch and IGP-membership prototype behavior out of live-rule status.
-- Inspect first: `workflow/save-session.md` (this snapshot), `git log --oneline -5`, `docs/implementation/01-prototype/plans/realistic-seed-data-plan.md` (status: Implemented, review/commit pending).
+- Run `/load` and verify HEAD and the working tree. Start with `src/panels/admin/pages/customer-lookup.css`, the lookup screen, and the GSD test if resuming this work.
+- For the requested live demo, use the GSD sample account plus a sample membership QR. Check both actions from the scan. The admin name-lookup shortcut is a different UI. Use sample records only.
+- If the owner authorizes broader QA, rerun the full suite with the dev server stopped, then check any failures separately. Check current canonical docs before any business-rule or launch work.
 
 ## 9. Execution Recommendation
-- Phase: QA (one full-suite confirmation run), then owner review.
-- Current mode: not verified.
-- Recommended next mode: default, for the confirmation run and review.
-- Current model: not verified.
-- Recommended model: Sonnet 5.5.
-- Effort: medium.
-- Ultracode: OFF.
-- Token optimization: single full-suite run with the dev server stopped; targeted suites only for any failure.
-- Reason: everything verifiable is green in isolation; the only open verification is separating full-suite load flakes from real regressions.
+- Phase: QA. Current and recommended next mode: Default in Codex. Current model: not verified.
+- Recommended model: GPT-6.2 Sol, medium effort. Ultracode: OFF.
+- Token optimization: verify only the live GSD path for the demo. Run the full suite once separately if requested.
+- Reason: focused checks cover the implementation. The remaining checks concern live camera handling and broader regression results.
 <!-- SESSION_SNAPSHOT_END -->

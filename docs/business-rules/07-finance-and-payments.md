@@ -409,7 +409,7 @@ The Finance document explains its relationship with existing and planned modules
 | VIP Contracts | Finalized contractual amount and payment obligations |
 | Sales | Finance verification supports Confirmed Sale eligibility |
 | Sales Performance Reporting | Confirmation recognition, reversals, and adjustment periods |
-| VIP Card Issuance | Full-payment eligibility before official activation (the VIP Number is issued earlier, when the signed Reservation Agreement is recorded; doc 06) |
+| VIP Card Issuance | Full-payment eligibility before official activation (VIP Number issuance requires the signed Reservation Agreement and the qualifying approved payment; doc 06) |
 | VIP Membership | Full settlement, activation eligibility, and Financial Hold |
 | IST/OST Sales Network | Payment submission and scoped visibility |
 | Commission Management | Verified-sale and reversal integration; commission policy is defined in doc 08 |
@@ -631,7 +631,7 @@ These rulings are authoritative and take precedence over earlier text in this do
 
 7. **Spot Cash, Move A and Move B (2026-11-09)** are released with the terms recorded in the doc 05 amendment. Finance consumes the finalized contract schedule: the Spot Cash balance is due 7 days after the reservation, Move B has a 40% down payment line that includes the reservation fee, and all lines follow the allocation order in item 3. ~~A Move contract cannot be finalized until a Super Administrator records its written approval.~~ Superseded by doc 05 item 12 (effective 2026-11-09): Move A and Move B are standard approved schemes and need no per-contract written approval.
 8. **Due dates** derive from the reservation date (doc 05 amendment, item 9). The Move B down payment has no documented due date, so it is undated and is not overdue until a date is entered.
-9. **Collection views** show, per contract, a ledger of verified payments and adjustments with running net and balance, and the separate milestones: payment recorded, payment verified, sale confirmed, commission release threshold, fully paid, membership activated, VIP Number issued (at Reservation Agreement recording, doc 06). Overdue days are whole calendar days in Asia/Manila. No penalty, interest or grace period is computed.
+9. **Collection views** show, per contract, a ledger of verified payments and adjustments with running net and balance, and the separate milestones: payment recorded, payment verified, sale confirmed, commission release threshold, fully paid, membership activated, VIP Number issued (once the signed agreement and qualifying payment requirements are met, doc 06). Overdue days are whole calendar days in Asia/Manila. No penalty, interest or grace period is computed.
 
 ## Owner rulings amendment (2026-11-12, rounds R6, R7, R11)
 
@@ -663,3 +663,7 @@ These rulings take precedence over earlier text in this document where they diff
 ## Owner ruling amendment (2026-11-22, external payments)
 
 1. **Payments outside the platform.** Customers make payments through external channels. The AFHomes Platform records and verifies payment information only; it must not accept, initiate, process, route, settle, or automatically verify customer payments through an integration. Section 6.3.
+
+## Owner ruling — 2026-11-23: VIP Number and Pending Activation
+
+Receipt approval remains separate from sale approval and official activation. The first scheduled payment after the reservation fee can satisfy the payment requirement for issuing a VIP Number (doc 06). The full price must be verified and the contract finalized before creating a Pending Activation Membership. If a reversal reopens the balance before activation, the record is hidden from Membership until verified settlement is restored. Receipts, reversals and the membership history remain on file.

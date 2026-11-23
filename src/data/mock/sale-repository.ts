@@ -109,7 +109,7 @@ export class MockSaleRepository extends BusinessRepository implements SaleReposi
         rates = [{ ...closing, rateBp: input.dscRateBp ?? closing.rateBp }, ...(referral ? [{ ...referral, rateBp: input.driRateBp ?? referral.rateBp }] : [])];
         for (const rate of rates) commissionStageAmounts(sale.valueCentavos, rate.rateBp, "VIP");
       } else if (input.dscRateBp !== undefined || input.driRateBp !== undefined) {
-        throw new Error("Record the signed Reservation Agreement before correcting a frozen rate.");
+        throw new Error("The VIP Number must be issued before correcting a frozen rate.");
       }
 
       sale.referrerMemberId = referrer;

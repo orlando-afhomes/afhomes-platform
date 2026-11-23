@@ -182,7 +182,7 @@ describe("Customer Registration workflow", () => {
     const sales = store.sales.filter((record) => record.customerId === result.customerId);
     expect(sales).toMatchObject([{ contractId: result.contractId }]);
     expect(store.contracts.filter((record) => record.customerId === result.customerId)).toMatchObject([{ id: result.contractId }]);
-    expect(store.memberships.filter((record) => record.customerId === result.customerId)).toMatchObject([{ contractId: result.contractId }]);
+    expect(store.memberships.filter((record) => record.customerId === result.customerId)).toEqual([]);
     const receipt = store.payments.find((record) => record.contractId === result.contractId)!;
     expect(receipt).toMatchObject({ saleId: sales[0].id });
     expect(receipt.referenceNo).toMatch(/^PAY-\d{8}-\d{4}$/);
@@ -342,7 +342,11 @@ describe("contract, payment, sale and membership workflow", () => {
     withoutVipDscRate(store, "mem-ost-a2");
     const standard = { designation: "OST", role: "DSC", rateBp: 500, approvalReference: "Test standard approval" } as const;
     await admin.commissions.setPositionRate(standard);
-    await expect(admin.contracts.recordSignedAgreement("ctr-4")).rejects.toThrow(/approved DSC rate/i);
+    await admin.contracts.recordSignedAgreement("ctr-4");
+    await admin.payments.verify("pay-4");
+    const first = await admin.payments.submit({ contractId: "ctr-4", amountCentavos: pesos(15500), purpose: "installment", method: "Cash", paidDate: manilaToday() });
+    await admin.payments.verify(first.id);
+    expect((await admin.contracts.getById("ctr-4"))?.vipNumber).toBeUndefined();
     expect((await admin.contracts.getById("ctr-4"))?.missingCommissionRates).toMatchObject([{ role: "DSC" }]);
 
     await admin.commissions.applyPositionRate({
@@ -351,19 +355,19 @@ describe("contract, payment, sale and membership workflow", () => {
       serviceTermsReference: "Test signed seller terms",
     });
     expect((await admin.contracts.getById("ctr-4"))?.missingCommissionRates).toEqual([]);
-    const issued = await admin.contracts.recordSignedAgreement("ctr-4");
-    expect(issued.vipNumber).toBeTruthy();
+    const issued = await admin.contracts.getById("ctr-4");
+    expect(issued?.vipNumber).toBeTruthy();
 
     await admin.commissions.setPositionRate({ ...standard, rateBp: 600 });
     expect(store.sales.find((sale) => sale.contractId === "ctr-4")?.commissionRates)
       .toEqual([{ memberId: "mem-ost-a2", role: "DSC", rateBp: 500 }]);
-    expect((await admin.contracts.recordSignedAgreement("ctr-4")).vipNumber).toBe(issued.vipNumber);
+    expect((await admin.contracts.recordSignedAgreement("ctr-4")).vipNumber).toBe(issued?.vipNumber);
   });
 
   it("prepares a second purchase for the same customer", async () => {
     const store = createMockStore();
     const admin = as(store, "dev-admin");
-    const input = { customerId: "cust-a3", schemeId: "scheme-spot-cash", customerAccepted: true };
+    const input = { customerId: "cust-a3", schemeId: "scheme-installment-4m", customerAccepted: true };
     const first = await admin.contracts.prepare({ ...input, newPurchaseRequestId: "first-test-purchase" });
     const separatePurchase = { ...input, newPurchaseRequestId: "second-test-purchase" };
     const [second, retry] = await Promise.all([
@@ -373,11 +377,14 @@ describe("contract, payment, sale and membership workflow", () => {
     expect(retry.id).toBe(second.id);
     expect(second.customerId).toBe(first.customerId);
     expect(second.id).not.toBe(first.id);
+    withoutVipDscRate(store, first.sellerMemberId!);
     store.commissionRateSettings.push({ memberId: first.sellerMemberId!, product: "VIP", role: "DSC", rateBp: 500, standardRateBp: null });
     store.customers.find((customer) => customer.id === first.customerId)!.referrerMemberId = null;
     for (const contract of [first, second]) {
       await admin.contracts.submit(contract.id);
       await admin.sales.approve(store.sales.find((sale) => sale.contractId === contract.id)!.id);
+      const payment = await admin.payments.submit({ contractId: contract.id, amountCentavos: contract.requiredInitialCentavos!, purpose: "installment", method: "Cash", paidDate: manilaToday() });
+      await admin.payments.verify(payment.id, { exceptionReason: "Separate purchase" });
     }
     const issuedFirst = await admin.contracts.recordSignedAgreement(first.id);
     const issuedSecond = await admin.contracts.recordSignedAgreement(second.id);
@@ -391,12 +398,12 @@ describe("contract, payment, sale and membership workflow", () => {
     const secondSale = store.sales.find((entry) => entry.contractId === second.id)!;
     expect(secondSale.commissionRates).toMatchObject([{ role: "DSC", rateBp: 500 }]);
     const payment = await admin.payments.submit({
-      contractId: first.id, purpose: first.schedule[0].purpose, amountCentavos: first.priceCentavos,
+      contractId: first.id, purpose: "full", amountCentavos: first.priceCentavos - first.requiredInitialCentavos!,
       method: "Cash", paidDate: manilaToday(), referenceNo: "REPEAT-VIP-ONE",
     });
     await as(store, "dev-finance").payments.verify(payment.id);
     expect(sale.status).toBe("confirmed");
-    expect(secondSale.status).toBe("pending");
+    expect(secondSale.status).toBe("confirmed");
     expect(store.commissions.filter((item) => item.saleId === sale.id)).toEqual([expect.objectContaining({ percentBp: 600, status: "released" })]);
     expect(store.commissions.some((item) => item.saleId === secondSale.id)).toBe(false);
     await expect(admin.sales.correctCommission(sale.id, { referrerMemberId: null, dscRateBp: 700, reason: "Too late" })).rejects.toThrow(/after commission release/);
@@ -598,13 +605,13 @@ describe("contract, payment, sale and membership workflow", () => {
     const finance = as(store, "dev-finance");
     const clerk = as(store, "dev-clerk");
     await admin.contracts.finalize("ctr-4");
-    const membership = store.memberships.find((m) => m.contractId === "ctr-4")!;
-    await expect(admin.memberships.activate(membership.id)).rejects.toThrow();
+    expect(store.memberships.some((m) => m.contractId === "ctr-4")).toBe(false);
     await finance.payments.verify("pay-4");
     for (let index = 0; index < 4; index += 1) {
       const payment = await clerk.payments.submit({ contractId: "ctr-4", purpose: "installment", amountCentavos: pesos(15500), method: "Cash", paidDate: manilaToday(), referenceNo: `MA${index}` });
       await finance.payments.verify(payment.id);
     }
+    const membership = store.memberships.find((m) => m.contractId === "ctr-4")!;
     await expect(admin.memberships.activate(membership.id)).rejects.toThrow(/VIP Number/);
     store.commissionRateSettings.push({ memberId: "mem-ost-a2", product: "VIP", role: "DSC", rateBp: 0, standardRateBp: 0 });
     const issued = await admin.contracts.recordSignedAgreement("ctr-4");
@@ -729,14 +736,18 @@ describe("integrity guards (C1)", () => {
     const store = createMockStore();
     const admin = as(store, "dev-admin");
     withoutVipDscRate(store, "mem-ost-a2");
-    await expect(admin.contracts.recordSignedAgreement("ctr-4")).rejects.toThrow(/approved DSC rate/);
+    await admin.contracts.recordSignedAgreement("ctr-4");
+    await admin.payments.verify("pay-4");
+    const installment = await admin.payments.submit({ contractId: "ctr-4", amountCentavos: pesos(15500), purpose: "installment", method: "Cash", paidDate: manilaToday() });
+    await admin.payments.verify(installment.id);
     expect(store.contracts.find((item) => item.id === "ctr-4")!.vipNumber).toBeUndefined();
     store.commissionRateSettings.push({ memberId: "mem-ost-a2", product: "VIP", role: "DSC", rateBp: 0, standardRateBp: 0 });
     const issued = await admin.contracts.recordSignedAgreement("ctr-4");
     expect(issued.vipNumber).toMatch(/^\d{11}B1T04S$/);
     expect((await admin.contracts.recordSignedAgreement("ctr-4")).vipNumber).toBe(issued.vipNumber);
     const events = store.auditEvents.filter((e) => e.action === "CONTRACT_RA_RECORDED" && e.entityId === "ctr-4");
-    expect(events.map((e) => e.newValue)).toEqual([issued.vipNumber]);
+    expect(events.map((e) => e.newValue)).toEqual([manilaToday()]);
+    expect(store.auditEvents.filter((e) => e.entityId === "ctr-4" && e.action === "VIP_NUMBER_ISSUED").map((e) => e.newValue)).toEqual([issued.vipNumber]);
   });
 
   it("audits the actual previous contract status on finalize and the previous Customer ID on correction", async () => {

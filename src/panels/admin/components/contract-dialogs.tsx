@@ -88,7 +88,7 @@ export function ApproveNonStandardDealDialog({ contract, onClose }: DialogProps)
     }
   };
   return (
-    <FormDialog open title="Approve This Deal?" description="This contract has Non-Standard terms. Approving records your approval of them, approves the customer and the sale, and issues the VIP Number. Finance then confirms the terms before the contract is finalized." submitText="Approve Deal" submitVariant="success" pending={approveDeal.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title="Approve This Deal?" description="This records your approval of the Non-Standard terms and confirms the signed Reservation Agreement is on file. The first scheduled payment after the reservation fee must be approved before the VIP Number is issued. Finance confirms the terms before finalization." submitText="Approve Deal" submitVariant="success" pending={approveDeal.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <NonStandardTermsList contract={contract} />
       <TextField label="Signed approval reference" required value={reference} onChange={setReference} maxLength={120} />
     </FormDialog>

@@ -51,7 +51,7 @@ export function useContractRecord(contractId: string, includePaymentReference = 
   const schedule = useMemo(() => (contract ? buildScheduleState(contract, contractPayments, today) : []), [contract, contractPayments, today]);
   const ledger = useMemo(() => (contract ? buildCollectionLedger(contract, contractPayments) : []), [contract, contractPayments]);
   const milestones = useMemo(
-    () => (contract ? deriveMilestones({ contract, payments: contractPayments, saleConfirmedDate: contract.sale?.confirmedDate ?? null, activationDate: membership?.activationDate ?? null, cardId: membership?.cardId ?? null, vipNumber: contract.vipNumber, signedAgreementRecordedDate: contract.signedAgreementRecordedDate, includePaymentReference }) : []),
+    () => (contract ? deriveMilestones({ contract, payments: contractPayments, saleConfirmedDate: contract.sale?.confirmedDate ?? null, activationDate: membership?.activationDate ?? null, cardId: membership?.cardId ?? null, vipNumber: contract.vipNumber, vipNumberIssuedDate: contract.vipNumberIssuedDate, signedAgreementRecordedDate: contract.signedAgreementRecordedDate, includePaymentReference }) : []),
     [contract, contractPayments, membership?.activationDate, membership?.cardId, includePaymentReference],
   );
   return {
@@ -224,7 +224,7 @@ export function ContractTermsSection({ record }: { record: ContractRecord }) {
       : []),
     { icon: Diamond, term: "Contract type", value: contract.classification === "S" ? "Standard (S)" : "Non-Standard (N)" },
     { icon: Star, term: "Benefits", value: `${contract.benefits.vipDiscountPercent}% VIP discount · ${contract.benefits.lifetimePoints.toLocaleString("en-PH")} lifetime points · ${contract.benefits.pointsPerCycle.toLocaleString("en-PH")} per cycle` },
-    { icon: IdCard, term: "VIP Number", value: contract.vipNumber ?? EMPTY },
+    { icon: IdCard, term: "VIP Number", value: contract.vipNumber ?? (contract.signedAgreementRecordedDate && contract.status !== "cancelled" ? "Pending issuance" : EMPTY) },
     ...(contract.raNumber && contract.raNumber !== contract.vipNumber ? [{ icon: IdCard, term: "Historical Reservation Agreement number", value: contract.raNumber }] : []),
     { icon: Check, term: "Customer accepted", value: contract.customerAccepted ? "Yes" : "No" },
     { icon: CalendarCheck, term: "Finalized", value: formatDate(contract.finalizedAt) },

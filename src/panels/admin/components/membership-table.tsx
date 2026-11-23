@@ -85,8 +85,8 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
     }
     if (item.status !== "active") return [];
     return [
-      ...(canService && item.cardId ? [{ key: "service", label: "Service Card", tone: "default" as const, onClick: () => setServicing(item) }] : []),
-      ...(canActivate && item.fullSettlementDate && !item.cardClaimDate ? [{ key: "claim", label: "Record Card Claim", tone: "success" as const, onClick: () => confirmRun({ title: "Record Card Claim?", description: "Confirm that the cardholder collected the card today.", confirmText: "Record Claim", tone: "success", action: () => claim.mutateAsync(item.id), successTitle: "Card claim recorded.", errorTitle: "Could not record claim" }) }] : []),
+      ...(canService && item.cardId ? [{ key: "service", label: "Replace or Transfer Card", tone: "default" as const, onClick: () => setServicing(item) }] : []),
+      ...(canActivate && item.fullSettlementDate && !item.cardClaimDate ? [{ key: "claim", label: "Mark Card as Picked Up", tone: "success" as const, onClick: () => confirmRun({ title: "Did the member pick up their VIP card today?", description: "This saves today as the pickup date and starts the validity period for the card.", confirmText: "Record Pickup", tone: "success", action: () => claim.mutateAsync(item.id), successTitle: "Card pickup recorded.", errorTitle: "Could not record card pickup" }) }] : []),
     ];
   };
   const detail = detailId ? all.find((item) => item.id === detailId) ?? null : null;
@@ -121,7 +121,7 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
                     ...(detail.financialHold ? [{ label: "Membership status", value: <BizBadge status={detail.status} /> }] : []),
                     { label: "Card number", value: detail.cardId ? <span className="tw:font-mono">{detail.cardId}</span> : null },
                     { label: "Activated", value: detail.activationDate ? formatDate(detail.activationDate) : null },
-                    { label: "Card Claim Date", value: detail.cardClaimDate ? `${formatDate(detail.cardClaimDate)}${detail.cardClaimKind === "deemed" ? " (deemed)" : ""}` : null },
+                    { label: "Card Pickup Date", value: detail.cardClaimDate ? `${formatDate(detail.cardClaimDate)}${detail.cardClaimKind === "deemed" ? " (deemed)" : ""}` : null },
                     { label: "Valid until", value: detail.validityEndDate ? formatDate(detail.validityEndDate) : null },
                   ],
                 },

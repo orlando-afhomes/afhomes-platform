@@ -24,7 +24,7 @@ export function checkActivationEligibility(contract: Contract, payments: readonl
   const reasons: string[] = [];
   if (contract.status !== "finalized") reasons.push("The contract is not finalized.");
   if (!isFullySettled(contract, payments)) reasons.push("Full payment has not been Finance-verified.");
-  if (!contract.vipNumber) reasons.push("Record the signed Reservation Agreement to issue the VIP Number.");
+  if (!contract.vipNumber) reasons.push("The VIP Number must be issued before activation.");
   if (!contract.paymentCode) reasons.push("The payment plan has no documented payment code (part of the VIP Number).");
   return { eligible: reasons.length === 0, reasons };
 }

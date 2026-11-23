@@ -35,9 +35,9 @@ It does not define Finance verification internals, Stay Points calculation, comm
 
 A single 17-character **VIP Number** is the document control number of the VIP Reservation Agreement, the number of the VIP Grant, and the number printed on the physical VIP Card. There is no separate RA No. and no separately generated Card ID.
 
-- **Issuance trigger.** The number is issued when the signed Reservation Agreement is recorded (NUM §6; owner ruling R2). It is not issued for a Draft, a submitted application or a prepared contract. Before issuance, the tier, the payment scheme (for P and MM), the classification (S/N) and the closing salesperson must be recorded.
+- **Issuance trigger.** The number is issued once the signed Reservation Agreement is recorded and approved collections cover the first scheduled payment after the reservation fee (2026-11-23 owner ruling below). Receipt approval requires prior sale approval (doc 07). Before issuance, the tier, the payment scheme (for P and MM), the classification (S/N) and the closing salesperson must be recorded.
 - **Missing-rate pause (owner follow-up, 2026-11-12).** Issuance pauses while an applicable approved commission rate is missing: the closing seller's DSC rate, or a recorded referrer's DRI rate (doc 08 §9.1). The application is kept. Issuance resumes once an Administrator or the Super Administrator records the approved rate. An explicitly approved zero is a rate and does not pause issuance. Where one person is both closing seller and referrer, a dated referral reference verified at customer approval is required before DRI attaches.
-- **Issuance is a separate event from activation.** A number exists from reservation onward. Membership activation (section 4) does not create or change the number.
+- **Issuance is a separate event from activation.** A VIP Number may be issued before the purchase is fully paid. Membership activation (section 4) does not create or change the number.
 - **One transaction, one number.** Each VIP transaction gets exactly one number. An upgrade is a new transaction with a new number (section 9.3).
 - **IGP is separate.** IGP sales never use the VIP Number. They use a separate 16-character IGP Series Number with its own monthly sequence, and carry the seller's JA&D accreditation number (doc 14; owner ruling R13, 2026-11-12). VIP sales use only the AFhomes AA number (section 7).
 
@@ -57,6 +57,8 @@ Membership activation requires:
 4. Successful official membership activation.
 
 Partial payments and installments do not activate VIP membership.
+
+The system creates the Pending Activation Membership record only once the contract is finalized and the whole purchase price is covered by approved payments. A reversal before activation that reopens the balance returns the purchase to Finance and hides it from Membership until it is fully paid again. Preserve the original record and its history. Activated memberships remain visible and follow the Financial Hold rules.
 
 ### 4.2 Actual Activation Date
 
@@ -97,7 +99,7 @@ A customer whose membership expires remains a customer. Preserve the customer re
 
 | Segment | Length | Source |
 |---|---:|---|
-| YYMMDD | 6 | Date the signed Reservation Agreement is recorded (Asia/Manila) |
+| YYMMDD | 6 | Date the VIP Number is issued (Asia/Manila) |
 | NNNNN | 5 | Monthly running sequence, 00001 to 99999, resets on the 1st of each month |
 | VT | 2 | Tier code (B1, S1, G1 active; B2, S2, P1, R1 are historical products and G2, P2, R2 are reserved, per doc 05 §4) |
 | P | 1 | C = Cash, T = Terms/Installment (snapshot at issuance) |
@@ -142,10 +144,10 @@ A cancelled transaction keeps its number with status CANCELLED. The number is ne
 
 1. A seller starts the customer draft, the Clerk completes it, and the Administrator approves it (doc 04 §5); the approved customer is then selected.
 2. The tier, classification, payment scheme and closing salesperson are recorded. The applicable approved commission rates (DSC for the closing seller, DRI for a recorded referrer) must exist; if one is missing, issuance pauses until an Administrator or the Super Administrator records it (section 3; an approved zero is a rate).
-3. The signed Reservation Agreement is recorded. The VIP Number is issued once, at this moment, with status ACTIVE, unless issuance is paused for a missing rate.
-4. The contract (Grant) is prepared and finalized under the same number (doc 05).
-5. The customer pays under the selected scheme. A Clerk enters each receipt; Finance, an Administrator or the Super Administrator approves it (doc 07 §5.2).
-6. The settling receipt is approved, which establishes full settlement. The membership is activated (section 4.1).
+3. The Administrator approves the sale and records the signed Reservation Agreement. The contract can be finalized when its finalization checks pass (doc 05).
+4. A Clerk enters receipts. Finance, the Administrator or the Super Administrator approves them (doc 07 §5.2).
+5. Once approved money covers the first scheduled payment after the reservation fee and the signed agreement is on file, issue the VIP Number once, with status ACTIVE. Its date and monthly sequence use the Manila issue date.
+6. Once the contract is finalized and fully paid with approved money, create the Pending Activation membership. Authorized staff then activate it separately (section 4.1).
 7. The card bearing the same number is claimed. The Card Claim Date is recorded and validity starts (section 4.3). If the card is not claimed within one year, the deemed Card Claim Date applies.
 
 ### 8.1 Integrity Requirement
@@ -257,11 +259,11 @@ Given / When / Then for core scenarios. Key:
 13. Unauthorized users cannot finalize contracts.
 14. Returned contracts can be corrected and resubmitted.
 15. Contract finalization preserves approved commercial terms.
-16. A Draft or a submitted application has no VIP Number; recording the signed Reservation Agreement issues exactly one.
+16. A Draft or submitted application has no VIP Number. Recording the signed Reservation Agreement and verifying the qualifying scheduled payment issue exactly one when both conditions have been met.
 17. Partial payment does not activate membership.
 18. Full payment without approval of the settling receipts (by Finance, an Administrator or the Super Administrator) does not activate membership.
 19. Finance-verified full settlement satisfies the financial activation prerequisite.
-20. The date segment is the Reservation Agreement recording date (Asia/Manila).
+20. The date segment is the VIP Number issuance date (Asia/Manila).
 21. The monthly sequence restarts at 00001 on the 1st of each month and never repeats within a month.
 22. The Reservation Agreement, the Grant and the card show the same number.
 23. Activation and card claim never create or change a number.
@@ -353,3 +355,11 @@ This ruling refines section 8 and takes precedence over earlier text in this doc
 ## Owner clarification — 2026-11-22: conflicting configuration
 
 For newly saved or updated payment-scheme configuration, a single scheme payment code and a per-tier payment code must not conflict. Matching codes or one configured source are allowed, subject to the existing approved mappings and validation. Reject conflicting configuration rather than choosing one source automatically. This decision does not rewrite existing finalized contract snapshots or issued VIP Numbers.
+
+## Owner ruling — 2026-11-23: first payment and Membership entry
+
+This ruling supersedes the signing-only trigger and date in the November 12 and November 16 amendments. Previously issued numbers keep their original value and date.
+
+1. Issue once the sale has been approved, the signed Reservation Agreement is on file, and approved collections net of reversals or refunds cover the first scheduled payment after the reservation fee. Allocate collection to the reservation fee first under doc 07. For Four-Month Installment and Move A, this means installment 1. For Move B, it means completion of the required down payment, including the reservation fee already credited. For Spot Cash, it means payment of the remaining balance. For Non-Standard schedules, it means the first approved scheduled installment after the reservation fee. The reservation fee alone cannot issue a VIP Number.
+2. Use the Asia/Manila issue date and that month's sequence. Signing, receipt approval, issuance and finalization are separately recorded. Existing issuance checks still apply, including approved commission rates and a valid payment code. A later reversal never renumbers the purchase.
+3. Create a Membership record as Pending Activation only after contract finalization and verified full payment. A balance reopened before activation sends the purchase back to Finance and hides it from the Membership list until verified full payment is restored. The existing record and history are retained. An active membership follows Financial Hold.

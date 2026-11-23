@@ -1,14 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { getDevIdentity } from "@/data/mock/dev-identities";
 import { createMockRepositories } from "@/data/mock/repositories";
 import { createMockStore } from "@/data/mock/seed";
 import { registerCustomer } from "@/modules/customers/application/register-customer";
 import type { CustomerDraftInput } from "@/modules/customers/types";
+import { manilaToday } from "@/shared/lib/dates";
 import { approveDeal } from "./approve-deal";
 
 type Store = ReturnType<typeof createMockStore>;
 
-const DEAL_EVENTS = ["CUSTOMER_APPROVED", "SALE_APPROVED", "CONTRACT_RA_RECORDED", "VIP_NUMBER_ISSUED", "CONTRACT_FINALIZED"];
+const DEAL_EVENTS = ["CUSTOMER_APPROVED", "SALE_APPROVED", "CONTRACT_RA_RECORDED", "CONTRACT_FINALIZED"];
 
 const customer: CustomerDraftInput = {
   displayName: "Deal Test",
@@ -30,14 +31,15 @@ const customer: CustomerDraftInput = {
 /** Non-Standard terms used by the N tests: ₱200,000 over 12 monthly payments. */
 const N_TERMS = { priceCentavos: 20_000_000, months: 12, justification: "Long-time partner discount" };
 
-async function registeredDeal(options: { rate?: boolean; classification?: "S" | "N" } = {}) {
+async function registeredDeal(options: { rate?: boolean; classification?: "S" | "N"; schemeId?: string } = {}) {
   const store = createMockStore();
   const as = { id: "dev-admin" };
   const repositories = createMockRepositories(store, () => getDevIdentity(as.id));
   const classification = options.classification ?? "S";
+  const schemeId = options.schemeId ?? "scheme-installment-4m";
   const result = await registerCustomer(repositories, {
-    customer: { ...customer, contractClassification: classification },
-    contract: { schemeId: "scheme-installment-4m", customerAccepted: true, classification, ...(classification === "N" ? { nonStandardTerms: N_TERMS } : {}) },
+    customer: { ...customer, paymentSchemeId: schemeId, contractClassification: classification },
+    contract: { schemeId, customerAccepted: true, classification, ...(classification === "N" ? { nonStandardTerms: N_TERMS } : {}) },
   });
   if (result.status !== "contract-prepared" || result.submitError) throw new Error(`Unexpected registration outcome: ${result.status}`);
   // Start the seller without a VIP DSC rate (the seed gives every active seller one), then add it unless the test needs it missing.
@@ -54,12 +56,89 @@ function dealEvents(store: Store, customerId: string, contractId: string) {
 }
 
 describe("approveDeal", () => {
-  it("approves the customer and the sale, issues the VIP Number and finalizes, with one audit entry per step", async () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("issues once after installment 1 and lists a pending membership only while fully paid", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-30T15:55:00Z"));
+    const { store, repositories, as, contractId } = await registeredDeal();
+    const deal = await approveDeal(repositories, contractId);
+    expect(deal.contract.status).toBe("finalized");
+    expect(deal.contract.signedAgreementRecordedDate).toBe(manilaToday());
+    expect(deal.contract.vipNumber).toBeFalsy();
+    expect(store.memberships.some((membership) => membership.contractId === contractId)).toBe(false);
+
+    const submit = async (purpose: "reservation" | "installment" | "full", amountCentavos: number) => {
+      as.id = "dev-clerk";
+      const receipt = await repositories.payments.submit({ contractId, purpose, amountCentavos, method: "Cash", paidDate: manilaToday() });
+      as.id = "dev-finance";
+      return receipt;
+    };
+    const reservation = await submit("reservation", 1_000_000);
+    await repositories.payments.verify(reservation.id);
+    expect((await repositories.contracts.getById(contractId))?.vipNumber).toBeFalsy();
+    const first = await submit("installment", 5_750_000);
+    expect((await repositories.contracts.getById(contractId))?.vipNumber).toBeFalsy();
+    vi.setSystemTime(new Date("2026-11-30T16:05:00Z"));
+    await repositories.payments.verify(first.id);
+    const numbered = await repositories.contracts.getById(contractId);
+    expect(numbered?.vipNumber).toMatch(/^261201\d{5}S1T04S$/);
+    expect(numbered?.vipNumberIssuedDate).toBe("2026-12-01");
+    expect(numbered?.signedAgreementRecordedDate).toBe("2026-11-30");
+    expect(store.memberships.some((membership) => membership.contractId === contractId)).toBe(false);
+
+    const balance = await submit("full", deal.contract.priceCentavos - 6_750_000);
+    await repositories.payments.verify(balance.id);
+    const pending = (await repositories.memberships.list()).find((membership) => membership.contractId === contractId);
+    expect(pending).toMatchObject({ status: "pending", eligible: true, raNumber: numbered?.vipNumber });
+    await repositories.payments.adjust(balance.id, { kind: "reversal", amountCentavos: 100, reason: "Test correction" });
+    expect((await repositories.memberships.list()).some((membership) => membership.contractId === contractId)).toBe(false);
+    expect(store.memberships.find((membership) => membership.id === pending?.id)).toBeDefined();
+    await repositories.payments.verify((await submit("installment", 100)).id);
+    expect((await repositories.memberships.list()).find((membership) => membership.contractId === contractId)?.id).toBe(pending?.id);
+    expect((await repositories.contracts.getById(contractId))?.vipNumber).toBe(numbered?.vipNumber);
+    expect(store.auditEvents.filter((event) => event.entityId === contractId && event.action === "VIP_NUMBER_ISSUED")).toHaveLength(1);
+  });
+
+  it.each([
+    { schemeId: "scheme-move-a", purpose: "installment", amount: 4_550_000, fullyPaid: false },
+    { schemeId: "scheme-move-b", purpose: "down_payment", amount: 8_600_000, fullyPaid: false },
+    { schemeId: "scheme-spot-cash", purpose: "full", amount: 18_200_000, fullyPaid: true },
+  ] as const)("$schemeId issues only when the first non-reservation line is fully covered", async ({ schemeId, purpose, amount, fullyPaid }) => {
+    const { repositories, contractId } = await registeredDeal({ schemeId });
+    await approveDeal(repositories, contractId);
+    const approveReceipt = async (kind: "reservation" | typeof purpose, amountCentavos: number) => {
+      const receipt = await repositories.payments.submit({ contractId, purpose: kind, amountCentavos, method: "Cash", paidDate: manilaToday() });
+      await repositories.payments.verify(receipt.id);
+    };
+    await approveReceipt("reservation", 1_000_000);
+    await approveReceipt(purpose, amount - 1);
+    expect((await repositories.contracts.getById(contractId))?.vipNumber).toBeUndefined();
+    await approveReceipt(purpose, 1);
+    expect((await repositories.contracts.getById(contractId))?.vipNumber).toMatch(/^\d{11}S1/);
+    expect((await repositories.memberships.list()).some((item) => item.contractId === contractId)).toBe(fullyPaid);
+  });
+
+  it("waits for the signed agreement and finalization when the full price was already approved", async () => {
+    const { store, repositories, contractId } = await registeredDeal({ schemeId: "scheme-spot-cash" });
+    const sale = store.sales.find((item) => item.contractId === contractId)!;
+    await repositories.sales.approve(sale.id);
+    const payment = await repositories.payments.submit({ contractId, amountCentavos: sale.valueCentavos, purpose: "full", method: "Cash", paidDate: manilaToday() });
+    await repositories.payments.verify(payment.id);
+    expect((await repositories.contracts.getById(contractId))?.vipNumber).toBeUndefined();
+    expect(store.memberships.some((item) => item.contractId === contractId)).toBe(false);
+
+    const outcome = await approveDeal(repositories, contractId);
+    expect(outcome).toMatchObject({ vipNumberIssued: true, finalized: true });
+    expect((await repositories.memberships.list()).find((item) => item.contractId === contractId)).toMatchObject({ status: "pending", eligible: true });
+  });
+
+  it("approves the customer and sale, records the agreement and finalizes with one audit per step", async () => {
     const { store, repositories, customerId, contractId } = await registeredDeal();
     const outcome = await approveDeal(repositories, contractId);
 
-    expect(outcome).toMatchObject({ customerApproved: true, saleApproved: true, vipNumberIssued: true, finalized: true, finalizeHeld: [] });
-    expect(outcome.contract).toMatchObject({ status: "finalized", vipNumber: expect.any(String) });
+    expect(outcome).toMatchObject({ customerApproved: true, saleApproved: true, vipNumberIssued: false, finalized: true, finalizeHeld: [] });
+    expect(outcome.contract).toMatchObject({ status: "finalized", signedAgreementRecordedDate: manilaToday() });
     expect(store.customers.find((item) => item.id === customerId)?.status).toBe("approved");
     expect(store.sales.find((item) => item.contractId === contractId)?.approval).toBeTruthy();
     expect(dealEvents(store, customerId, contractId)).toEqual(DEAL_EVENTS);
@@ -76,16 +155,16 @@ describe("approveDeal", () => {
     expect(dealEvents(store, customerId, contractId)).toEqual([]);
   });
 
-  it("records the Administrator step of a Non-Standard deal, issues the VIP Number and waits for Finance", async () => {
+  it("records the Administrator step of a Non-Standard deal and waits for Finance", async () => {
     const { store, repositories, customerId, contractId } = await registeredDeal({ classification: "N" });
     await expect(approveDeal(repositories, contractId)).rejects.toThrow(/signed approval reference/);
     expect(dealEvents(store, customerId, contractId)).toEqual([]);
 
     const outcome = await approveDeal(repositories, contractId, " MEMO-2026-11 ");
-    expect(outcome).toMatchObject({ nonStandardApproved: true, vipNumberIssued: true, finalized: false, finalizeHeld: ["Non-Standard terms need Finance confirmation."] });
+    expect(outcome).toMatchObject({ nonStandardApproved: true, vipNumberIssued: false, finalized: false, finalizeHeld: ["Non-Standard terms need Finance confirmation."] });
     const contract = store.contracts.find((item) => item.id === contractId)!;
     expect(contract).toMatchObject({ status: "submitted", priceCentavos: 20_000_000, paymentCode: "T12" });
-    expect(contract.vipNumber).toMatch(/^\d{11}S1T12N$/);
+    expect(contract.vipNumber).toBeUndefined();
     // The Administrator also prepared it: allowed, and flagged (doc 05 item 17).
     expect(contract.nonStandard).toMatchObject({ approvedBy: "dev-admin", approvalReference: "MEMO-2026-11", selfApproved: true, confirmedBy: null });
     expect(store.auditEvents.some((event) => event.action === "CONTRACT_NONSTANDARD_APPROVED" && event.entityId === contractId)).toBe(true);
@@ -124,7 +203,11 @@ describe("approveDeal", () => {
   it("lets Finance send back waiting terms, which clears both approvals until the terms are approved again", async () => {
     const { store, repositories, as, contractId } = await registeredDeal({ classification: "N" });
     await approveDeal(repositories, contractId, "MEMO-1");
+    const initial = store.contracts.find((item) => item.id === contractId)!.requiredInitialCentavos!;
+    const receipt = await repositories.payments.submit({ contractId, amountCentavos: initial, purpose: "installment", method: "Cash", paidDate: manilaToday() });
     as.id = "dev-finance";
+    await repositories.payments.verify(receipt.id);
+    expect((await repositories.contracts.getById(contractId))?.vipNumber).toMatch(/^\d{11}S1T12N$/);
     const returned = await repositories.contracts.returnForCorrection(contractId, "Price is above the signed memo.");
     expect(returned.status).toBe("returned");
     expect(returned.nonStandard).toMatchObject({ approvedBy: null, approvalReference: null, selfApproved: false, confirmedBy: null });
@@ -158,7 +241,7 @@ describe("approveDeal", () => {
     expect(dealEvents(store, customerId, contractId)).toEqual(["CUSTOMER_APPROVED", "SALE_APPROVED"]);
 
     const outcome = await approveDeal(repositories, contractId);
-    expect(outcome).toMatchObject({ customerApproved: false, saleApproved: false, vipNumberIssued: true, finalized: true });
+    expect(outcome).toMatchObject({ customerApproved: false, saleApproved: false, vipNumberIssued: false, finalized: true });
     expect(dealEvents(store, customerId, contractId)).toEqual(DEAL_EVENTS);
   });
 

@@ -5,10 +5,7 @@ import { buildNonStandardSchedule, buildSchedule, canPrepareVipContract, finaliz
 import { CANCELLATION_GROUNDS, CANCELLATION_GROUND_LABELS, type Contract, type ContractCancellationGround } from "@/modules/contracts/types";
 import { totalVerifiedCentavos } from "@/modules/finance/rules";
 import type { DevIdentity } from "@/modules/identity/types";
-import { VIP_CLOSED_DEAL_THRESHOLD_BP } from "@/modules/sales/rules";
-import { buildVipNumber } from "@/modules/membership/rules";
-import { findApprovedCommissionRate, freezeCommissionRates } from "./commission-effects";
-import { commissionStageAmounts } from "@/modules/commissions/rules";
+import { findApprovedCommissionRate } from "./commission-effects";
 import { evaluateSaleParties, salePartyBlockMessage } from "@/modules/sales/accreditation-standing";
 import { applicablePriceStatus } from "@/modules/vip/pricing";
 import { isSellableProduct } from "@/modules/vip/tier-options";
@@ -230,6 +227,9 @@ export class MockContractRepository extends BusinessRepository implements Contra
     const reservationLine = contract.schedule.find((line) => line.purpose === "reservation");
     const built = nonStandardBuild(input, reservationLine?.amountCentavos ?? 0, reservationLine?.dueDate ?? contract.createdAt);
     const previous = contract.priceCentavos;
+    if (!contract.vipNumber && (previous !== input.priceCentavos || contract.paymentCode !== built.paymentCode)) {
+      delete contract.signedAgreementRecordedDate;
+    }
     contract.priceCentavos = input.priceCentavos;
     contract.schedule = built.schedule;
     contract.requiredInitialCentavos = built.requiredInitialCentavos;
@@ -287,6 +287,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
       // A reservation can be submitted while the contract is still a draft, before any sale exists: link it now.
       const recorded = this.store.sales.find((item) => item.contractId === contract.id);
       if (recorded) for (const payment of this.store.payments) if (payment.contractId === contract.id && !payment.saleId) payment.saleId = recorded.id;
+      if (contract.signedAgreementRecordedDate && !contract.vipNumber) reconcileContract(this.store, contract.id, identity);
       return viewContract(this.store, contract);
     });
   }
@@ -323,25 +324,6 @@ export class MockContractRepository extends BusinessRepository implements Contra
       contract.reviewedBy = identity.id;
       this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_FINALIZED);
       this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_FINALIZED, entityType: "contract", entityId: contract.id, previousValue: previous, newValue: "finalized" });
-      if (!this.store.memberships.some((item) => item.contractId === contract.id)) {
-        const membership = {
-          id: nextId(this.store, "membership", "memb"),
-          customerId: contract.customerId,
-          contractId: contract.id,
-          productCode: contract.productCode,
-          status: "pending" as const,
-          activationDate: null,
-          validityEndDate: null,
-          cardId: null,
-          raNumber: contract.raNumber,
-          financialHold: false,
-          createdAt: today(),
-          history: [],
-        };
-        this.store.memberships.push(membership);
-        this.audit(identity, { module: "membership", action: BUSINESS_AUDIT_ACTIONS.MEMBERSHIP_CREATED, entityType: "membership", entityId: membership.id, newValue: "pending", relatedRecordIds: [contract.id] });
-      }
-      // Reconcile the new membership against any receipts already approved.
       reconcileContract(this.store, contract.id, identity);
       return viewContract(this.store, contract);
     });
@@ -409,6 +391,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
         contract.cancellation = null;
         this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLATION_DECLINED, [reason.trim(), selfNote].filter(Boolean).join(" · "));
         this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_CANCELLATION_DECLINED, entityType: "contract", entityId: contract.id, previousValue: request.ground, newValue: "declined", reason: [reason.trim(), selfNote].filter(Boolean).join(" · ") });
+        reconcileContract(this.store, contract.id, identity);
         return viewContract(this.store, contract);
       }
 
@@ -501,6 +484,7 @@ export class MockContractRepository extends BusinessRepository implements Contra
       contract.paymentCode = code;
       this.event(contract, identity, "CONTRACT_PAYMENT_CODE_RESOLVED", reference);
       this.audit(identity, { module: "contracts", action: "CONTRACT_PAYMENT_CODE_RESOLVED", entityType: "contract", entityId: contract.id, previousValue: "not recorded", newValue: code, reason: reference });
+      reconcileContract(this.store, contract.id, identity);
       return viewContract(this.store, contract);
     });
   }
@@ -517,27 +501,13 @@ export class MockContractRepository extends BusinessRepository implements Contra
         const customer = this.store.customers.find((item) => item.id === sale.customerId);
         if (!customer?.approvedAt || customer.referrerMemberId !== sale.referrerMemberId || !customer.referralReference?.trim()) throw new Error("The Administrator must verify the dated referral reference before VIP Number issuance.");
       }
-      const rates = freezeCommissionRates(this.store, "VIP", sale.sellerMemberId, sale.referrerMemberId);
-      for (const rate of rates) commissionStageAmounts(sale.valueCentavos, rate.rateBp, "VIP");
       const membership = this.store.memberships.find((item) => item.contractId === contract.id);
       if (membership?.cardId) throw new Error("This contract has an existing card number. Keep it for historical review.");
-      const date = today();
-      const prefix = date.slice(2, 7).replace("-", "");
-      const key = `vip-number:${date.slice(0, 7)}`;
-      const issued = [...this.store.contracts.map((item) => item.vipNumber), ...this.store.memberships.map((item) => item.cardId)];
-      const highest = issued.reduce((max, number) => number?.startsWith(prefix) ? Math.max(max, Number(number.slice(6, 11)) || 0) : max, 0);
-      const sequence = Math.max(highest, this.store.counters[key] ?? 0) + 1;
-      const value = buildVipNumber(date, sequence, contract.productCode, contract.paymentCode, contract.classification);
-      this.store.counters[key] = sequence;
-      contract.vipNumber = value;
-      contract.signedAgreementRecordedDate = date;
-      contract.raNumber ??= value;
-      sale.commissionRates = rates;
-      sale.closedDealThresholdBp = VIP_CLOSED_DEAL_THRESHOLD_BP;
-      if (membership) membership.raNumber = contract.raNumber;
-      this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_RA_RECORDED);
-      this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_RA_RECORDED, entityType: "contract", entityId: contract.id, newValue: value });
-      this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.VIP_NUMBER_ISSUED, entityType: "contract", entityId: contract.id, displayReference: value, relatedRecordIds: [sale.id] });
+      if (!contract.signedAgreementRecordedDate) {
+        contract.signedAgreementRecordedDate = today();
+        this.event(contract, identity, BUSINESS_AUDIT_ACTIONS.CONTRACT_RA_RECORDED);
+        this.audit(identity, { module: "contracts", action: BUSINESS_AUDIT_ACTIONS.CONTRACT_RA_RECORDED, entityType: "contract", entityId: contract.id, newValue: contract.signedAgreementRecordedDate });
+      }
       reconcileContract(this.store, contract.id, identity);
       return viewContract(this.store, contract);
     });

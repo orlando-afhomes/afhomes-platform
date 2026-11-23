@@ -8,7 +8,7 @@ import { firstOpenDate } from "@/modules/finance/month-close";
 import { applyBasisPoints } from "@/shared/lib/money";
 import { clawbackBalance, collectedPercent, meetsPayoutRelease, payoutReleaseDate, payoutReleaseDateFor, planClawbackOffsets } from "@/modules/commissions/rules";
 import { BusinessRepository, customerName, nowIso, today } from "./business-base";
-import { paymentsOfContract } from "./business-effects";
+import { paymentsOfContract, reconcileContract } from "./business-effects";
 import type { MockStore } from "./seed";
 import { getDescendantIds } from "./scope";
 import { applyCommissionTrigger, buildPayoutList } from "./commission-effects";
@@ -20,6 +20,17 @@ import { assembleAllowanceInputs } from "@/modules/commissions/allowance-assembl
 export class MockCommissionRepository extends BusinessRepository implements CommissionRepository {
   constructor(store: MockStore, getIdentity: () => DevIdentity, asyncOptions: MockAsyncOptions = {}) {
     super(store, getIdentity, asyncOptions);
+  }
+
+  private retryVipNumbers(memberId: string, role: "DSC" | "DRI", identity: DevIdentity) {
+    const contractIds = new Set(this.store.sales
+      .filter((sale) => (role === "DSC" ? sale.sellerMemberId : sale.referrerMemberId) === memberId)
+      .map((sale) => sale.contractId));
+    for (const contract of this.store.contracts) {
+      if (contractIds.has(contract.id) && contract.signedAgreementRecordedDate && !contract.vipNumber) {
+        reconcileContract(this.store, contract.id, identity);
+      }
+    }
   }
 
   async rateDirectory(options?: MockAsyncOptions): Promise<CommissionRateDirectory> {
@@ -82,6 +93,7 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
         newValue: `VIP ${role}: ${current.rateBp}bp`, reason: `Service terms: ${serviceTermsReference}. Standard approval: ${current.approvalReference}.`,
         relatedRecordIds: [`VIP-${designation}-${role}`],
       });
+      this.retryVipNumbers(memberId, role, identity);
     });
   }
 
@@ -101,6 +113,7 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
       if (existing) Object.assign(existing, next);
       else this.store.commissionRateSettings.push(next);
       this.audit(identity, { module: "commissions", action: "COMMISSION_RATE_SET", entityType: "member", entityId: memberId, previousValue: previous, newValue: `${product} ${role}: ${rateBp}bp / standard ${standardRateBp ?? "unset"}`, reason });
+      if (product === "VIP") this.retryVipNumbers(memberId, role, identity);
     });
   }
 

@@ -1,5 +1,6 @@
 import type { CustomerPortalRepository } from "@/data/contracts/customer-portal-repository";
 import { currentCardHolders, issueHolderCode } from "./member-qr-repository";
+import { visibleMembership } from "./business-effects";
 import { membershipPointsLedger } from "./redemption-points-source";
 import type { MockStore } from "./seed";
 import type { Customer } from "@/modules/customers/types";
@@ -122,7 +123,7 @@ export class MockCustomerPortalRepository implements CustomerPortalRepository {
   }
 
   private membershipsFor(customerId: string): Membership[] {
-    return this.store.memberships.filter((membership) => membership.customerId === customerId);
+    return this.store.memberships.filter((membership) => membership.customerId === customerId && visibleMembership(this.store, membership));
   }
 
   private viewMembership(membership: Membership): PortalMembership {

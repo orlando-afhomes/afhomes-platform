@@ -183,7 +183,8 @@
 
 .customer-lookup__scan > button,
 .customer-lookup__loyalty-buttons > button:not(.customer-lookup__manage-bookings) {
-  background: var(--lookup-green);
+  background-color: var(--color-brand-primary);
+  background-image: var(--lookup-green);
   border-color: transparent;
   color: var(--color-on-dark);
 }
@@ -201,8 +202,10 @@
 .customer-lookup__scan > button svg,
 .customer-lookup__loyalty-buttons > button svg { width: 20px; height: 20px; }
 
-.customer-lookup__scan > button:hover,
-.customer-lookup__loyalty-buttons > button:not(.customer-lookup__manage-bookings):hover { background: var(--color-brand-primary-hover); }
+.customer-lookup__scan > button:enabled:hover,
+.customer-lookup__loyalty-buttons > button:enabled:not(.customer-lookup__manage-bookings):hover {
+  filter: brightness(1.1);
+}
 
 .customer-lookup__search [role="status"]:not(:empty) { margin-top: 12px; }
 .customer-lookup__suggestions { display: grid; gap: 5px; }
@@ -361,7 +364,10 @@
 .customer-lookup__loyalty-buttons > button { width: auto; min-width: min(100%, 16rem); }
 .customer-lookup__loyalty-buttons > button:has(.lucide-receipt-text) { min-width: min(100%, 16.875rem); }
 .customer-lookup__loyalty-buttons > button.customer-lookup__manage-bookings { min-width: min(100%, 18.25rem); border-color: var(--color-accent-light); background: var(--lookup-paper); color: var(--foreground); }
-.customer-lookup__loyalty-buttons > button.customer-lookup__manage-bookings:hover { background: var(--lookup-tile); }
+.customer-lookup__loyalty-buttons > button.customer-lookup__manage-bookings:enabled:hover {
+  background-color: var(--lookup-tile);
+  border-color: var(--lookup-icon);
+}
 
 @media (min-width: 768px) {
   #main-content:has(.customer-lookup) > div { padding-inline: 32px 30px; }

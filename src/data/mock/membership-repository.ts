@@ -14,7 +14,7 @@ import { approvedCollectionMilestone } from "@/modules/finance/rules";
 import { addYearsToDate } from "@/shared/lib/dates";
 import type { CardServiceInput, Membership } from "@/modules/membership/types";
 import { BusinessRepository, canSeeContract, customerName, nowIso, today } from "./business-base";
-import { paymentsOfContract } from "./business-effects";
+import { paymentsOfContract, visibleMembership } from "./business-effects";
 import type { MockStore } from "./seed";
 import { MockRedemptionRepository } from "./redemption-repository";
 import { closeStayPointsForTransfer, membershipPointsLedger } from "./redemption-points-source";
@@ -48,7 +48,7 @@ export class MockMembershipRepository extends BusinessRepository implements Memb
       this.store.memberships
         .filter((membership) => {
           const contract = this.store.contracts.find((item) => item.id === membership.contractId);
-          return Boolean(contract) && canSeeContract(identity, contract!);
+          return Boolean(contract && canSeeContract(identity, contract) && visibleMembership(this.store, membership, contract));
         })
         .map((membership) => this.view(membership)),
     );

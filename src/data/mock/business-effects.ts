@@ -1,28 +1,34 @@
-import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
+import { BUSINESS_AUDIT_ACTIONS, SYSTEM_ACTOR_ID } from "@/modules/audit/types";
 import type { DevIdentity } from "@/modules/identity/types";
+import { commissionStageAmounts } from "@/modules/commissions/rules";
+import { nonStandardStage } from "@/modules/contracts/rules";
+import type { Contract } from "@/modules/contracts/types";
 
 import { reconcileContractState } from "@/modules/finance/application/reconcile-contract";
 import { firstOpenDate } from "@/modules/finance/month-close";
+import { buildScheduleState, isFullySettled } from "@/modules/finance/rules";
 import type { Payment } from "@/modules/finance/types";
+import { buildVipNumber } from "@/modules/membership/rules";
+import type { Membership } from "@/modules/membership/types";
+import { VIP_CLOSED_DEAL_THRESHOLD_BP } from "@/modules/sales/rules";
 import { appendAuditEvent } from "./audit";
 import { today, nowIso } from "./business-base";
 import { nextId } from "./ids";
 import { membershipPointsLedger } from "./redemption-points-source";
-import { SYSTEM_ACTOR_ID } from "@/modules/audit/types";
 import { activeRoles } from "./dev-identities";
 import type { MockStore } from "./seed";
-import { applyCommissionTrigger, holdUnpaidCommissionForReview, releaseSaleCommissions } from "./commission-effects";
+import { applyCommissionTrigger, freezeCommissionRates, holdUnpaidCommissionForReview, releaseSaleCommissions } from "./commission-effects";
 
 type Actor = DevIdentity | "system";
 
 function auditEffect(
   store: MockStore,
   actor: Actor,
-  module: "sales" | "finance" | "commissions" | "membership",
+  module: "sales" | "finance" | "commissions" | "membership" | "contracts",
   action: string,
-  entityType: "sale" | "membership" | "commission",
+  entityType: "sale" | "membership" | "commission" | "contract",
   entityId: string,
-  extra: { previousValue?: string; newValue?: string; reason?: string; relatedRecordIds?: string[] } = {},
+  extra: { previousValue?: string; newValue?: string; reason?: string; relatedRecordIds?: string[]; displayReference?: string } = {},
 ) {
   appendAuditEvent(store, {
     actorId: actor === "system" ? SYSTEM_ACTOR_ID : actor.id,
@@ -58,6 +64,53 @@ export function holdUnpaidCommissions(store: MockStore, saleId: string, reason: 
 
 export function paymentsOfContract(store: MockStore, contractId: string): Payment[] {
   return store.payments.filter((payment) => payment.contractId === contractId);
+}
+
+export function visibleMembership(store: MockStore, membership: Membership, contract?: Contract): boolean {
+  if (membership.status !== "pending") return true;
+  const purchase = contract ?? store.contracts.find((item) => item.id === membership.contractId);
+  return Boolean(purchase?.status === "finalized" && isFullySettled(purchase, paymentsOfContract(store, purchase.id)));
+}
+
+function issueVipNumberIfReady(store: MockStore, contract: Contract, payments: Payment[], actor: Actor, date: string): void {
+  delete contract.vipNumberIssueBlocker;
+  if (contract.vipNumber || !contract.signedAgreementRecordedDate || contract.cancellation?.status === "requested" || nonStandardStage(contract) === "admin") return;
+  const sale = store.sales.find((item) => item.contractId === contract.id);
+  if (!sale?.approval || sale.status === "cancelled" || sale.status === "rejected") return;
+  const firstDue = contract.schedule.find((line) =>
+    line.purpose !== "reservation" && line.amountCentavos > 0
+  );
+  if (!firstDue || !buildScheduleState(contract, payments, date).some((line) => line.seq === firstDue.seq && line.status === "paid")) return;
+  const membership = store.memberships.find((item) => item.contractId === contract.id);
+  if (membership?.cardId) return;
+
+  const prefix = date.slice(2, 7).replace("-", "");
+  const key = `vip-number:${date.slice(0, 7)}`;
+  const issued = [...store.contracts.map((item) => item.vipNumber), ...store.memberships.map((item) => item.cardId)];
+  const highest = issued.reduce((max, number) => number?.startsWith(prefix) ? Math.max(max, Number(number.slice(6, 11)) || 0) : max, 0);
+  const sequence = Math.max(highest, store.counters[key] ?? 0) + 1;
+  let value: string;
+  let rates: ReturnType<typeof freezeCommissionRates>;
+  try {
+    rates = freezeCommissionRates(store, "VIP", sale.sellerMemberId, sale.referrerMemberId);
+    for (const rate of rates) commissionStageAmounts(sale.valueCentavos, rate.rateBp, "VIP");
+    value = buildVipNumber(date, sequence, contract.productCode, contract.paymentCode, contract.classification);
+  } catch (error) {
+    // A number can remain pending when its terms or commission setup need correction. Keep the approved receipt.
+    contract.vipNumberIssueBlocker = error instanceof Error ? error.message : "Review the payment code and commission rates.";
+    return;
+  }
+  store.counters[key] = sequence;
+  contract.vipNumber = value;
+  contract.vipNumberIssuedDate = date;
+  contract.raNumber ??= value;
+  sale.commissionRates = rates;
+  sale.closedDealThresholdBp = VIP_CLOSED_DEAL_THRESHOLD_BP;
+  if (membership) membership.raNumber = contract.raNumber;
+  contract.history.push({ at: nowIso(), actorId: actor === "system" ? SYSTEM_ACTOR_ID : actor.id, event: BUSINESS_AUDIT_ACTIONS.VIP_NUMBER_ISSUED, note: null });
+  auditEffect(store, actor, "contracts", BUSINESS_AUDIT_ACTIONS.VIP_NUMBER_ISSUED, "contract", contract.id, {
+    newValue: value, displayReference: value, relatedRecordIds: [sale.id],
+  });
 }
 
 export function cancelRelatedContractRecords(
@@ -113,6 +166,33 @@ export function cancelRelatedContractRecords(
  * Idempotent: running it twice changes nothing the second time.
  */
 export function reconcileContract(store: MockStore, contractId: string, actor: Actor): void {
+  const contract = store.contracts.find((item) => item.id === contractId);
+  if (!contract) return;
+  if (["submitted", "under_review", "finalized"].includes(contract.status)) {
+    const payments = paymentsOfContract(store, contractId);
+    const date = today();
+    issueVipNumberIfReady(store, contract, payments, actor, date);
+    if (contract.status === "finalized" && isFullySettled(contract, payments) && !store.memberships.some((item) => item.contractId === contractId)) {
+      const membership = {
+        id: nextId(store, "membership", "memb"),
+        customerId: contract.customerId,
+        contractId,
+        productCode: contract.productCode,
+        status: "pending" as const,
+        activationDate: null,
+        validityEndDate: null,
+        cardId: null,
+        raNumber: contract.raNumber,
+        financialHold: false,
+        createdAt: date,
+        history: [],
+      };
+      store.memberships.push(membership);
+      auditEffect(store, actor, "membership", BUSINESS_AUDIT_ACTIONS.MEMBERSHIP_CREATED, "membership", membership.id, {
+        newValue: "pending", relatedRecordIds: [contractId],
+      });
+    }
+  }
   reconcileContractState(store, contractId, actor, {
     today,
     nowIso,

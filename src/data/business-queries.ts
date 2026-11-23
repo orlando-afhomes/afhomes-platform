@@ -163,7 +163,7 @@ export function useContractAction() {
     }
   });
 }
-/** One Administrator action: approve the customer and sale, issue the VIP Number, and finalize when nothing is held. */
+/** Approve the customer and sale, record the signed agreement, and finalize when nothing is held. */
 export function useApproveDeal() {
   const repositories = useMockRepositories();
   const queryClient = useQueryClient();

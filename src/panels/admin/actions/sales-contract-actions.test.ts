@@ -120,6 +120,7 @@ describe("buildContractMenuProps", () => {
     const keys = (overrides: Partial<ContractMenuContract>, perms = reviewerPerms) => keysOf(buildContractMenuProps(contractFixture(overrides), perms, allContractCallbacks()));
     // VIP Number issued and only a held finalization left: nothing the button can do.
     expect(keys({ vipNumber: "26010100001G1T04S", holds: ["Non-Standard"], saleView: approved })).not.toContain("approve-deal");
+    expect(keys({ status: "finalized", signedAgreementRecordedDate: "2026-11-23", saleView: approved })).not.toContain("approve-deal");
     // Same contract with nothing on hold: the button finalizes it.
     expect(keys({ vipNumber: "26010100001G1T04S", saleView: approved })).toContain("approve-deal");
     // A held contract without its VIP Number still offers it, to issue the number.

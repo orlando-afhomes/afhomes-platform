@@ -54,6 +54,8 @@ export type Contract = {
   /** Reservation Agreement reference entered from the signed form. Format pending D2/D11. */
   raNumber: string | null;
   vipNumber?: string;
+  vipNumberIssuedDate?: string;
+  vipNumberIssueBlocker?: string;
   signedAgreementRecordedDate?: string;
   sellerMemberId: string | null;
   referrerMemberId?: string | null;

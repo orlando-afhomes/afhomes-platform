@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AdminHeader } from "./admin-header";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
+import { getDevIdentity } from "@/data/mock/dev-identities";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 
 vi.mock("next/navigation", async (importOriginal) => ({
@@ -27,10 +28,13 @@ function renderHeader(identityId = "dev-admin") {
 }
 
 describe("admin header", () => {
+  // Identity labels read "Name · Role" from the dev identities (see dev-identities.ts).
+  const adminName = getDevIdentity("dev-admin").displayName;
+  const accountOptions = `Account options for ${adminName}`;
   it("shows the profile circle, name, and role on the right side", () => {
     renderHeader();
-    expect(screen.getByRole("button", { name: "Account options for Administrator (Dev)" })).toBeDefined();
-    expect(screen.getByText("Administrator (Dev)")).toBeDefined();
+    expect(screen.getByRole("button", { name: accountOptions })).toBeDefined();
+    expect(screen.getByText(adminName)).toBeDefined();
     expect(screen.getByText("Administrator")).toBeDefined();
     expect(screen.queryByText("Administration")).toBeNull();
   });
@@ -38,7 +42,7 @@ describe("admin header", () => {
   it("opens a dropdown with My Account and Log out", async () => {
     const user = userEvent.setup();
     renderHeader();
-    await user.click(screen.getByRole("button", { name: "Account options for Administrator (Dev)" }));
+    await user.click(screen.getByRole("button", { name: accountOptions }));
     const accountLink = await screen.findByRole("menuitem", { name: "My Account" });
     expect(accountLink.getAttribute("href")).toBe("/admin/account");
     expect(screen.getByRole("menuitem", { name: "Log Out" })).toBeDefined();
@@ -52,7 +56,7 @@ describe("admin header", () => {
   it("asks for confirmation before logging out", async () => {
     const user = userEvent.setup();
     renderHeader();
-    await user.click(screen.getByRole("button", { name: "Account options for Administrator (Dev)" }));
+    await user.click(screen.getByRole("button", { name: accountOptions }));
     await user.click(await screen.findByRole("menuitem", { name: "Log Out" }));
     const dialog = await screen.findByRole("alertdialog", { name: "Log out?" });
     await user.click(within(dialog).getByRole("button", { name: "Cancel" }));

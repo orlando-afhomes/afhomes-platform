@@ -38,9 +38,14 @@ function TrendPill({ trend, scope }: { trend: DashboardKpiTrend; scope: string }
     );
   } else {
     const word = result.direction === "up" ? "Up" : result.direction === "down" ? "Down" : "No change";
+    // The screen-reader label carries the direction in words, so the magnitude
+    // keeps its "+" only on rises ("Up +16.7%"); a fall reads "Down 33.4%".
+    const magnitude = result.direction === "up"
+      ? formatChange(result.percentTenths)
+      : formatChange(result.percentTenths).replace("-", "");
     pill = (
       <KpiDelta direction={result.direction === "up" || result.direction === "down" ? result.direction : "flat"}
-        value={formatChange(result.percentTenths)} label={`${word} ${formatChange(Math.abs(result.percentTenths))} ${compared}`} />
+        value={formatChange(result.percentTenths)} label={`${word} ${magnitude} ${compared}`} />
     );
   }
   return (

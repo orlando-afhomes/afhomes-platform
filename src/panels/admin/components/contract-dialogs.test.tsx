@@ -49,7 +49,11 @@ function Wrapper({ children, store }: { children: React.ReactNode; store?: MockS
 describe("Approve deal", () => {
   it("confirms the signed agreement without a field for a manually assigned number, and stops on a missing rate", async () => {
     const user = userEvent.setup();
-    render(<Wrapper><SalesContractDetailPage contractId="ctr-4" /></Wrapper>);
+    const store = createMockStore();
+    const seller = store.contracts.find((item) => item.id === "ctr-4")!.sellerMemberId;
+    // The seed approves rates for every active seller; remove the closing seller's VIP DSC rate.
+    store.commissionRateSettings = store.commissionRateSettings.filter((item) => !(item.memberId === seller && item.product === "VIP" && item.role === "DSC"));
+    render(<Wrapper store={store}><SalesContractDetailPage contractId="ctr-4" /></Wrapper>);
     await user.click(await screen.findByRole("button", { name: "Approve Deal" }));
     const confirm = await screen.findByRole("alertdialog", { name: "Approve This Deal?" });
     expect(within(confirm).getByText(/signed Reservation Agreement is on file/)).toBeInTheDocument();
@@ -65,7 +69,7 @@ describe("New VIP Purchase", () => {
     const store = await storeWithDraftProduct();
     const customer = store.customers.find((item) => item.id === "cust-b1")!;
     render(<Wrapper store={store}><PrepareContractDialog customer={customer} open onClose={() => {}} repeatPurchase /></Wrapper>);
-    await waitFor(() => expect(screen.getByText(/Customer B One · Bronze VIP/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(`${customer.displayName} · Bronze VIP`)).toBeInTheDocument());
     await user.click(screen.getByRole("combobox", { name: "VIP plan" }));
     expect(await screen.findByRole("option", { name: "Bronze VIP" })).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "Bronze Plus VIP" })).toBeNull();
@@ -77,7 +81,7 @@ describe("New VIP Purchase", () => {
     await createMockRepositories(store, () => getDevIdentity("dev-admin")).products.update("B1", { status: "retired" }, "Stop offering Bronze");
     const customer = store.customers.find((item) => item.id === "cust-b1")!;
     render(<Wrapper store={store}><PrepareContractDialog customer={customer} open onClose={() => {}} repeatPurchase /></Wrapper>);
-    await waitFor(() => expect(screen.getByText(/Customer B One · No plan selected/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(`${customer.displayName} · No plan selected`)).toBeInTheDocument());
     await user.click(screen.getByRole("checkbox", { name: /separate purchase/i }));
     await user.click(screen.getByRole("button", { name: "Create Purchase Contract" }));
     expect(await screen.findByText("Choose a VIP plan.")).toBeInTheDocument();

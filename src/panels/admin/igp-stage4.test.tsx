@@ -2,11 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect, useState, type ReactNode } from "react";
-import { getDevIdentity } from "@/data/mock/dev-identities";
-import { createMockRepositories } from "@/data/mock/repositories";
+import { useState } from "react";
+import { createMockStore } from "@/data/mock/seed";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
-import { MockStoreProvider, useMockStore } from "@/shared/providers/mock-store-provider";
+import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { SalesAreaPage } from "./pages/sales-area-page";
 
 vi.mock("next/navigation", async (importOriginal) => ({
@@ -21,33 +20,11 @@ afterEach(() => {
   window.history.replaceState(null, "", "/");
 });
 
-/** One accredited IGP sale plus its buyer membership (grant signed), before the page loads. */
-function SeededMembership({ children }: { children: ReactNode }) {
-  const store = useMockStore();
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    const admin = createMockRepositories(store, () => getDevIdentity("dev-admin"));
-    store.commissionRateSettings.push({ memberId: "mem-ost-a1", product: "IGP", role: "DSC", rateBp: 500, standardRateBp: null });
-    void (async () => {
-      await admin.igp.act({ type: "accredit", memberId: "mem-ost-a1", number: "JAI23010001", approvedDate: "2023-01-01" });
-      const sale = (await admin.igp.act({
-        type: "record",
-        input: {
-          customerId: "cust-a6", projectId: "igp-prj-1", unitId: "igp-unit-1",
-          priceCentavos: 180_000_000, scheme: "T", termMonths: 12, clauses: "S", date: "2025-01-10",
-          sellerMemberId: "mem-ost-a1", referrerMemberId: null, entry: "reservation",
-          payment: { paidDate: "2025-01-10", method: "Cash", amountCentavos: 18_000_000 },
-        },
-      }))!;
-      store.igp.buyerMemberships.push({
-        id: "igp-mem-1", saleId: sale.id, seriesNumber: sale.seriesNumber, customerId: sale.customerId,
-        tier: "B1", grantSignedDate: "2025-02-13", status: "recorded", stayPoints: "none",
-      });
-      setReady(true);
-    })();
-  }, [store]);
-  return ready ? children : null;
-}
+// The seed holds an accredited IGP cash sale with a signed Formal VIP Grant (its buyer membership)
+// and one imported IGP history batch; both are read from the store.
+const seed = createMockStore();
+const seededMembership = seed.igp.buyerMemberships[0];
+const seededBatch = seed.igp.historyBatches[0];
 
 function show() {
   function Wrapper() {
@@ -56,7 +33,7 @@ function show() {
       <QueryClientProvider client={queryClient}>
         <MockStoreProvider>
           <DevIdentityProvider initialIdentityId="dev-admin">
-            <SeededMembership><SalesAreaPage /></SeededMembership>
+            <SalesAreaPage />
           </DevIdentityProvider>
         </MockStoreProvider>
       </QueryClientProvider>
@@ -72,8 +49,10 @@ describe("IGP buyer membership and history import (Stage 4 UI)", () => {
     show();
     await screen.findByRole("table", { name: "Property Sales (IGP)" });
     await user.click(screen.getByRole("button", { name: "Import History" }));
-    expect(await screen.findByRole("dialog", { name: "Import IGP History" })).toBeInTheDocument();
-    expect(screen.getByText("No IGP history has been imported yet.")).toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog", { name: "Import IGP History" });
+    // The dialog lists the batches already imported.
+    expect(within(dialog).getByRole("row", { name: `Open imported IGP history batch ${seededBatch.fileName}` })).toBeInTheDocument();
+    expect(within(dialog).queryByText("No IGP history has been imported yet.")).toBeNull();
   });
 
   it("shows the IGP buyer membership with the no-Points exclusion on the sale", async () => {
@@ -81,7 +60,8 @@ describe("IGP buyer membership and history import (Stage 4 UI)", () => {
     window.history.replaceState(null, "", "/admin/sales?tab=igp");
     show();
     const table = await screen.findByRole("table", { name: "Property Sales (IGP)" });
-    await user.click(within(table).getAllByRole("row")[1]);
+    expect(seededMembership).toMatchObject({ status: "recorded", stayPoints: "none" });
+    await user.click(within(table).getByRole("row", { name: `Open property sale (IGP) ${seededMembership.seriesNumber}` }));
     const sheet = await screen.findByRole("dialog");
     expect(within(sheet).getByText("IGP Buyer Membership")).toBeInTheDocument();
     expect(within(sheet).getByText(/No Stay Points are credited/)).toBeInTheDocument();

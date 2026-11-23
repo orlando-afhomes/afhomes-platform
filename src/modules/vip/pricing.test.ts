@@ -8,7 +8,7 @@ const bronze = { code: "B1" as const, priceCentavos: peso(72000), priceStatus: "
 const silver = { code: "S1" as const, priceCentavos: peso(240000), priceStatus: "contract_stated" as const };
 const gold = { code: "G1" as const, priceCentavos: peso(390000), priceStatus: "contract_stated" as const };
 
-// Mirrors the four seed payment schemes in src/data/mock/seed-data.ts.
+// Mirrors the four seed payment schemes in src/data/mock/seed/catalog.ts.
 const seedSchemes = [
   { id: "scheme-spot-cash", availability: "available" as const, applicableTiers: ["B1", "S1", "G1"] as ("B1" | "S1" | "G1")[], priceCentavosByTier: { B1: peso(54000), S1: peso(192000), G1: peso(312000) } },
   { id: "scheme-installment-4m", availability: "available" as const, applicableTiers: ["B1", "S1", "G1"] as ("B1" | "S1" | "G1")[], priceCentavosByTier: {} },

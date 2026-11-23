@@ -150,16 +150,20 @@ export type IgpState = {
 
 /** Synthetic sample catalog for the mock phase. */
 export function seedIgpCatalog(): { projects: IgpProject[]; units: IgpUnit[] } {
+  // Invented, generic names for the prototype; they do not refer to any real development or company.
   return {
     projects: [
-      { id: "igp-prj-1", name: "Sample Heights", location: "Sample City", status: "active" },
-      { id: "igp-prj-2", name: "Sample Gardens", location: null, status: "active" },
+      { id: "igp-prj-1", name: "Altamira Ridge Residences", location: "Santa Rosa City, Laguna", status: "active" },
+      { id: "igp-prj-2", name: "Lakeview Narra Estates", location: "Calamba City, Laguna", status: "active" },
+      { id: "igp-prj-3", name: "Casa Sampaguita Townhomes", location: "Biñan City, Laguna", status: "active" },
     ],
     units: [
-      { id: "igp-unit-1", projectId: "igp-prj-1", unitOrLot: "Unit 12A", propertyOwner: "Sample Property Owner", status: "active" },
-      { id: "igp-unit-2", projectId: "igp-prj-1", unitOrLot: "Unit 14B", propertyOwner: "Sample Property Owner", status: "active" },
-      { id: "igp-unit-3", projectId: "igp-prj-2", unitOrLot: "Lot 5", propertyOwner: "Sample Land Holdings", status: "active" },
-      { id: "igp-unit-4", projectId: "igp-prj-2", unitOrLot: "Lot 9", propertyOwner: "Sample Land Holdings", status: "active" },
+      { id: "igp-unit-1", projectId: "igp-prj-1", unitOrLot: "Unit 12A", propertyOwner: "Altamira Land Development Corporation", status: "active" },
+      { id: "igp-unit-2", projectId: "igp-prj-1", unitOrLot: "Unit 14B", propertyOwner: "Altamira Land Development Corporation", status: "active" },
+      { id: "igp-unit-3", projectId: "igp-prj-2", unitOrLot: "Block 3 Lot 5", propertyOwner: "Narra Ridge Realty Inc.", status: "active" },
+      { id: "igp-unit-4", projectId: "igp-prj-2", unitOrLot: "Block 3 Lot 9", propertyOwner: "Narra Ridge Realty Inc.", status: "active" },
+      { id: "igp-unit-5", projectId: "igp-prj-3", unitOrLot: "Phase 2 Unit 7", propertyOwner: "Sampaguita Homes and Properties Inc.", status: "active" },
+      { id: "igp-unit-6", projectId: "igp-prj-3", unitOrLot: "Phase 2 Unit 8 (corner)", propertyOwner: "Sampaguita Homes and Properties Inc.", status: "active" },
     ],
   };
 }

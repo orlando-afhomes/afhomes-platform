@@ -8,7 +8,8 @@ import { AUDIT_ACTIONS, AuditQueryError, type AuditQuery } from "@/modules/audit
 import { DevIdentityProvider, useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider, useMockStore } from "@/shared/providers/mock-store-provider";
 import { AUDIT_READ_RESTRICTION } from "@/data/mock/audit-repository";
-import { SEED_AUDIT_EVENT_COUNT } from "./mock/seed-data";
+import { seedAuditEventCount } from "./mock/seed";
+const SEED_AUDIT_EVENT_COUNT = seedAuditEventCount();
 import { queryKeys } from "@/data/query-keys";
 import { useAuditEvents, useChangeSalesNetworkMemberStatus, useUpdateAccountStatus } from "@/data/queries";
 
@@ -49,7 +50,7 @@ describe("useAuditEvents", () => {
     const { result, rerender } = setup("dev-admin");
     await waitFor(() => expect(result.current.audit.isSuccess).toBe(true));
     expect(result.current.audit.data).toMatchObject({ total: SEED_AUDIT_EVENT_COUNT, page: 1, pageSize: 25 });
-    expect(result.current.audit.data?.items).toHaveLength(SEED_AUDIT_EVENT_COUNT);
+    expect(result.current.audit.data?.items).toHaveLength(Math.min(25, SEED_AUDIT_EVENT_COUNT));
 
     await act(async () => {
       await result.current.accountStatus.mutateAsync({ id: "acct-pending", status: "active" });

@@ -10,6 +10,7 @@ import type { RegistrationApplication } from "@/modules/accreditation/types";
 import { OstCorrectionPage } from "./pages/ost-correction-page";
 
 const TOKEN = "a".repeat(32);
+const FIXTURE_ID = "reg-correction-test";
 let currentStore: MockStore;
 
 function captureStore(store: MockStore) {
@@ -40,7 +41,7 @@ function returnedApplication(): RegistrationApplication {
   };
   const at = "2026-11-10T01:00:00.000Z";
   return {
-    id: "reg-1",
+    id: FIXTURE_ID,
     reference: "OSTA-11111111",
     classification: "OST",
     memberId: null,
@@ -66,9 +67,12 @@ function returnedApplication(): RegistrationApplication {
 function Seeded({ children }: { children: ReactNode }) {
   const store = useMockStore();
   captureStore(store);
-  if (store.registrationApplications.length === 0) store.registrationApplications.push(returnedApplication());
+  // The seed has its own applications; add this returned one once, under its own id and token.
+  if (!store.registrationApplications.some((item) => item.id === FIXTURE_ID)) store.registrationApplications.push(returnedApplication());
   return <>{children}</>;
 }
+
+const fixtureOf = (store: MockStore) => store.registrationApplications.find((item) => item.id === FIXTURE_ID)!;
 
 function Wrapper() {
   const [queryClient] = useState(() => new QueryClient());
@@ -99,7 +103,7 @@ describe("OST correction link", () => {
     await user.click(screen.getByRole("button", { name: "Resend application" }));
     expect(await screen.findByText("Corrected Application Received")).toBeInTheDocument();
     expect(screen.getAllByText("OSTA-11111111").length).toBeGreaterThan(0);
-    const stored = currentStore.registrationApplications[0];
+    const stored = fixtureOf(currentStore);
     expect(stored).toMatchObject({ status: "submitted", version: 2, correctionToken: null });
     expect(stored.applicant.dateOfBirth).toBe("1991-01-15");
   });
@@ -117,7 +121,7 @@ describe("OST correction link", () => {
     render(<Wrapper />);
     expect(await screen.findByText("Birth date is wrong.")).toBeInTheDocument();
     // The office approved or withdrew the application between opening the link and resending.
-    currentStore.registrationApplications[0].status = "submitted";
+    fixtureOf(currentStore).status = "submitted";
     await user.click(screen.getByRole("button", { name: "Resend application" }));
     expect(await screen.findByText("Could not resend")).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent(/could not accept this application online/i);

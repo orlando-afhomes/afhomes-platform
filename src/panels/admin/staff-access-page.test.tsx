@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { createMockStore } from "@/data/mock/seed";
 import { AppToaster } from "@/shared/components/modern/app-toaster";
 import { OrganizationAreaPage } from "./pages/organization-area-page";
 
@@ -37,6 +38,12 @@ afterEach(() => {
 
 type User = ReturnType<typeof userEvent.setup>;
 
+// Seeded names and emails, read from the same seed the provider builds.
+const seed = createMockStore();
+const staffName = (id: string) => seed.staff.find((item) => item.id === id)!.displayName;
+const accountName = (id: string) => seed.accounts.find((item) => item.id === id)!.displayName;
+const HR_ROW = (name: string) => name.startsWith(`Open ${staffName("staff-1")}`);
+
 const row = (key: string) => document.querySelector(`tr[data-row-key="${key}"]`) as HTMLElement | null;
 const dialog = (name: string) => screen.getByRole("dialog", { name });
 const closeDialog = async (user: User, name: string) => {
@@ -46,7 +53,7 @@ const closeDialog = async (user: User, name: string) => {
 
 async function ready(identityId?: string) {
   render(<TestWrapper identityId={identityId} />);
-  await screen.findByRole("row", { name: /^Open HR Staff/ }, { timeout: 5000 });
+  await screen.findByRole("row", { name: HR_ROW }, { timeout: 5000 });
   // Account-only rows appear once account policies load.
   if (identityId !== "dev-hr") await waitFor(() => expect(row("acct-pending")).not.toBeNull());
 }
@@ -105,8 +112,8 @@ describe("staff & access directory", () => {
     const buttonNames = (key: string) =>
       within(row(key)!).getAllByRole("button").map((button) => button.getAttribute("aria-label") ?? button.textContent);
     // Only the menu trigger (the name is plain text; the row opens the record). Activate and Delete live in the menu.
-    expect(buttonNames("staff-1")).toEqual(["Actions for HR Staff"]);
-    expect(buttonNames("acct-pending")).toEqual(["Actions for Pending User"]);
+    expect(buttonNames("staff-1")).toEqual([`Actions for ${staffName("staff-1")}`]);
+    expect(buttonNames("acct-pending")).toEqual([`Actions for ${accountName("acct-pending")}`]);
   });
 
   it("lists linked accounts once, on the employee row, and unlinked accounts as account-only rows", async () => {
@@ -249,18 +256,24 @@ describe("staff & access directory", () => {
     await screen.findByRole("dialog", { name: "Account Details" });
     await closeDialog(user, "Account Details");
     await rowAction(user, "acct-pending", "Edit");
-    const nameInput = await screen.findByDisplayValue("Pending User");
+    const nameInput = await screen.findByDisplayValue(accountName("acct-pending"));
     expect(nameInput).not.toBeDisabled();
-    fireEvent.change(nameInput, { target: { value: "Pending User Updated" } });
+    fireEvent.change(nameInput, { target: { value: `${accountName("acct-pending")} Updated` } });
     await user.click(screen.getByRole("button", { name: /^save$/i }));
-    await waitFor(() => expect(screen.getByText("Pending User Updated")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(`${accountName("acct-pending")} Updated`)).toBeInTheDocument());
   });
 
   it("searches across employees and account-only rows", async () => {
     await ready();
-    fireEvent.change(screen.getByPlaceholderText("Search staff and accounts"), { target: { value: "finance" } });
+    const search = screen.getByPlaceholderText("Search staff and accounts");
+    // An employee's position matches.
+    fireEvent.change(search, { target: { value: "analyst" } });
     await waitFor(() => expect(row("staff-1")).toBeNull());
     expect(row("staff-2")).not.toBeNull();
-    expect(row("acct-finance")).not.toBeNull();
+    expect(row("acct-pending")).toBeNull();
+    // An account-only row's email matches.
+    fireEvent.change(search, { target: { value: seed.accounts.find((item) => item.id === "acct-pending")!.email } });
+    await waitFor(() => expect(row("acct-pending")).not.toBeNull());
+    expect(row("staff-2")).toBeNull();
   });
 });

@@ -7,14 +7,20 @@ import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { MockAccreditationRepository } from "@/data/mock/accreditation-repository";
 import { MockMemberRepository } from "@/data/mock/member-repository";
+import { createMockStore } from "@/data/mock/seed";
 import { SalesNetworkMemberDetailPage } from "./pages/sales-network-member-detail-page";
 
+// AA numbers are dated relative to today: the route uses Jose Reyes Jr.'s number from the seed.
+const route = vi.hoisted(() => ({ aaNumber: "" }));
 vi.mock("next/navigation", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/navigation")>()),
   useRouter: () => ({ push: vi.fn() }),
-  usePathname: () => "/admin/sales-network/members/AAI26100003",
-  useParams: () => ({ id: "AAI26100003" }),
+  usePathname: () => `/admin/sales-network/members/${route.aaNumber}`,
+  useParams: () => ({ id: route.aaNumber }),
 }));
+
+const seedMember = createMockStore().members.find((member) => member.id === "mem-sm-a")!;
+route.aaNumber = seedMember.aaNumber!;
 
 function Wrapper({ identityId, children }: { identityId: string; children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
@@ -40,8 +46,9 @@ describe("sales network member detail page", () => {
     );
     const summary = await screen.findByRole("region", { name: "Member summary for Jose Reyes Jr." }, { timeout: 5000 });
     expect(within(summary).getByRole("heading", { name: "Jose Reyes Jr." })).toBeInTheDocument();
-    expect(within(summary).getByText("AAI26100003")).toBeInTheDocument();
-    expect((await within(summary).findAllByText("Pending", undefined, { timeout: 5000 })).length).toBeGreaterThan(0);
+    expect(within(summary).getByText(route.aaNumber)).toBeInTheDocument();
+    // The seeded IST accreditation is approved.
+    expect((await within(summary).findAllByText("Active", undefined, { timeout: 5000 })).length).toBeGreaterThan(0);
     const overview = screen.getByRole("tabpanel", { name: "Overview" });
     expect(within(overview).getByRole("heading", { name: "Accreditation" })).toBeInTheDocument();
   });
@@ -71,8 +78,9 @@ describe("sales network member detail page", () => {
     const profile = await screen.findByRole("tabpanel", { name: "Profile" });
     expect(within(profile).getByText("Personal")).toBeInTheDocument();
     expect(within(profile).getByText("Government ID Number")).toBeInTheDocument();
-    expect(within(profile).getByText(/567A$/)).toBeInTheDocument();
-    expect(within(profile).getByText("Passport")).toBeInTheDocument();
+    const idNumber = seedMember.sellerProfile!.governmentIdNumber!;
+    expect(within(profile).getByText(new RegExp(`${idNumber.slice(-4)}$`))).toBeInTheDocument();
+    expect(within(profile).getByText(seedMember.sellerProfile!.governmentIdType!)).toBeInTheDocument();
   });
 
   it("lists the direct team on the Team Below tab", async () => {

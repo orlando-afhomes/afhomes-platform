@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { createMockStore } from "@/data/mock/seed";
 import { StaffPage } from "./pages/staff-page";
 
 // The ?view= parameter selects the directory view (used by /admin/accounts).
@@ -38,6 +39,11 @@ afterEach(() => {
   window.history.replaceState(null, "", "/");
 });
 
+// Seeded names and emails, read from the same seed the provider builds.
+const seed = createMockStore();
+const staffOf = (id: string) => seed.staff.find((item) => item.id === id)!;
+const HR_ROW = (name: string) => name.startsWith(`Open ${staffOf("staff-1").displayName}`);
+
 const row = (key: string) => document.querySelector(`tr[data-row-key="${key}"]`);
 const chip = (name: RegExp | string) => screen.getByRole("button", { name });
 
@@ -67,7 +73,7 @@ describe("Staff & Access directory view from the URL", () => {
   it("shows HR employees only, with no chips or account rows, even when view=account", async () => {
     view = "account";
     render(<TestWrapper identityId="dev-hr" />);
-    await screen.findByRole("row", { name: /^Open HR Staff/ }, { timeout: 5000 });
+    await screen.findByRole("row", { name: HR_ROW }, { timeout: 5000 });
     expect(screen.queryByRole("button", { name: "Account only" })).toBeNull();
     expect(screen.queryByRole("group", { name: "Directory view" })).toBeNull();
     expect(row("staff-1")).not.toBeNull();

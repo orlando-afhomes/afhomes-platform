@@ -50,6 +50,11 @@ function repos(store: MockStore, identityId: string | DevIdentity) {
   return createMockRepositories(store, () => identity).registrations;
 }
 
+/** The stored application by id; the seed already holds a few applications in different states. */
+function stored(store: MockStore, id: string) {
+  return store.registrationApplications.find((item) => item.id === id)!;
+}
+
 async function submitted(store: MockStore) {
   const { reference } = await repos(store, "dev-admin").submit({ referralCode: CODE, applicant: APPLICANT });
   const application = store.registrationApplications.find((item) => item.reference === reference)!;
@@ -87,21 +92,23 @@ describe("OST application submission", () => {
 
   it("rejects invalid fields and an unknown referral code with controlled messages", async () => {
     const store = readyStore();
+    const seeded = store.registrationApplications.length;
     const repo = repos(store, "dev-admin");
     await expect(repo.submit({ referralCode: CODE, applicant: { ...APPLICANT, email: "nope" } })).rejects.toThrow(/Email must be valid/);
     await expect(repo.submit({ referralCode: CODE, applicant: { ...APPLICANT, mobileNumber: "123" } })).rejects.toThrow(/Mobile/);
     await expect(repo.submit({ referralCode: "WRONG", applicant: APPLICANT })).rejects.toThrow("Referral code is invalid or currently unavailable.");
-    expect(store.registrationApplications).toHaveLength(0);
+    expect(store.registrationApplications).toHaveLength(seeded);
   });
 
   it("refuses a duplicate applicant with one neutral message", async () => {
     const store = readyStore();
+    const seeded = store.registrationApplications.length;
     const repo = repos(store, "dev-admin");
     await repo.submit({ referralCode: CODE, applicant: APPLICANT });
     await expect(repo.submit({ referralCode: CODE, applicant: { ...APPLICANT, firstName: "Other", mobileNumber: "0999 111 2222" } })).rejects.toThrow(REGISTRATION_NEUTRAL_REFUSAL);
     await expect(repo.submit({ referralCode: CODE, applicant: { ...APPLICANT, email: "other@example.com", mobileNumber: "09175558899" } })).rejects.toThrow(REGISTRATION_NEUTRAL_REFUSAL);
     await expect(repo.submit({ referralCode: CODE, applicant: { ...APPLICANT, email: "other@example.com", mobileNumber: "0999 111 2222" } })).rejects.toThrow(REGISTRATION_NEUTRAL_REFUSAL);
-    expect(store.registrationApplications).toHaveLength(1);
+    expect(store.registrationApplications).toHaveLength(seeded + 1);
   });
 
   it("refuses an email that already belongs to an account", async () => {
@@ -114,9 +121,10 @@ describe("OST application submission", () => {
 describe("OST application review", () => {
   it("lets only reviewers read the queue", async () => {
     const store = readyStore();
+    const seeded = store.registrationApplications.length;
     await submitted(store);
-    expect(await repos(store, "dev-admin").list()).toHaveLength(1);
-    expect(await repos(store, "dev-super-admin").list()).toHaveLength(1);
+    expect(await repos(store, "dev-admin").list()).toHaveLength(seeded + 1);
+    expect(await repos(store, "dev-super-admin").list()).toHaveLength(seeded + 1);
     for (const id of ["dev-finance", "dev-hr", "dev-svd-a", "dev-ost-a1"]) {
       expect(await repos(store, id).list()).toEqual([]);
     }
@@ -139,7 +147,7 @@ describe("OST application review", () => {
     const application = await submitted(store);
     await expect(repos(store, "dev-admin").complete(application.id, { ...COMPLETION, profilePhotoName: "" })).rejects.toThrow(/photo/i);
     await expect(repos(store, "dev-admin").complete(application.id, { ...COMPLETION, governmentIdNumber: "x" })).rejects.toThrow();
-    expect(store.registrationApplications[0].status).toBe("submitted");
+    expect(stored(store, application.id).status).toBe("submitted");
   });
 
   it("denies check, decisions and approval to people outside the office", async () => {
@@ -152,7 +160,7 @@ describe("OST application review", () => {
       await expect(repo.returnForCorrection(application.id, "Fix it")).rejects.toThrow(/not allowed/i);
       await expect(repo.reject(application.id, "No")).rejects.toThrow(/not allowed/i);
     }
-    expect(store.registrationApplications[0].status).toBe("submitted");
+    expect(stored(store, application.id).status).toBe("submitted");
   });
 
   it("returns for correction with a required reason and a private link, and keeps the same application", async () => {
@@ -185,7 +193,7 @@ describe("OST application review", () => {
     await expect(publicRepo.resubmit(returned.correctionToken!, { ...APPLICANT, email: "bad" })).rejects.toThrow(/Email/);
     const receipt = await publicRepo.resubmit(returned.correctionToken!, { ...APPLICANT, dateOfBirth: "1991-04-18" });
     expect(receipt.reference).toBe(application.reference);
-    const updated = store.registrationApplications[0];
+    const updated = stored(store, application.id);
     expect(updated.status).toBe("submitted");
     expect(updated.version).toBe(2);
     expect(updated.versions.map((version) => version.applicant.dateOfBirth)).toEqual(["1992-04-18", "1991-04-18"]);
@@ -253,16 +261,16 @@ describe("OST application review", () => {
     const members = store.members.length;
     await expect(repo.approve(application.id, { approvedStart: "2026-11-13" })).rejects.toThrow();
     expect(store.members).toHaveLength(members);
-    expect(store.registrationApplications[0].status).toBe("pending_review");
+    expect(stored(store, application.id).status).toBe("pending_review");
   });
 
   it("returns only copies of the stored records", async () => {
     const store = readyStore();
-    await submitted(store);
-    const [listed] = await repos(store, "dev-admin").list();
+    const application = await submitted(store);
+    const listed = (await repos(store, "dev-admin").list()).find((item) => item.id === application.id)!;
     listed.applicant.firstName = "Changed";
     listed.versions[0].applicant.firstName = "Changed";
-    expect(store.registrationApplications[0].applicant.firstName).toBe("Liza");
-    expect(store.registrationApplications[0].versions[0].applicant.firstName).toBe("Liza");
+    expect(stored(store, application.id).applicant.firstName).toBe("Liza");
+    expect(stored(store, application.id).versions[0].applicant.firstName).toBe("Liza");
   });
 });

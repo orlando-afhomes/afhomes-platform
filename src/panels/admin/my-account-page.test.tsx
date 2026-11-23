@@ -8,6 +8,7 @@ import { useState } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { MockStaffRepository } from "@/data/mock/staff-repository";
+import { createMockStore } from "@/data/mock/seed";
 import { MyAccountPage } from "./pages/my-account-page";
 
 vi.mock("next/navigation", async (importOriginal) => ({
@@ -15,6 +16,13 @@ vi.mock("next/navigation", async (importOriginal) => ({
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => "/admin/account",
 }));
+
+// Seeded profile values, read from the same seed the provider builds.
+const seed = createMockStore();
+const adminStaff = seed.staff.find((item) => item.id === "staff-admin")!;
+const hrStaff = seed.staff.find((item) => item.id === "staff-1")!;
+const ADMIN_NAME = adminStaff.displayName;
+const ADMIN_ROLE = seed.roles.find((item) => item.id === adminStaff.departmentRoleId)!.name;
 
 function TestWrapper({ identityId = "dev-admin", client }: { identityId?: string; client?: QueryClient }) {
   const [queryClient] = useState(() => client ?? new QueryClient());
@@ -44,7 +52,7 @@ async function confirmSave(user: ReturnType<typeof userEvent.setup>) {
 describe("my account page", () => {
   it("shows profile fields for a linked admin identity", async () => {
     render(<TestWrapper />);
-    expect(await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 })).toBeDefined();
+    expect(await screen.findByDisplayValue(ADMIN_NAME, {}, { timeout: 5000 })).toBeDefined();
     // No password field: nothing is saved here, so the page says who resets passwords.
     expect(screen.queryByPlaceholderText("New Password")).toBeNull();
     expect(screen.getByText("To change your password, ask an Administrator to reset it for you.")).toBeInTheDocument();
@@ -53,19 +61,19 @@ describe("my account page", () => {
   // S3-04/S3-B: department and role are read-only on My Account, including for admins.
   it("shows admins their department and role read-only, with no self-assignment controls", async () => {
     render(<TestWrapper />);
-    await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 });
+    await screen.findByDisplayValue(ADMIN_NAME, {}, { timeout: 5000 });
     expect(screen.queryByRole("combobox", { name: "My account department" })).toBeNull();
     expect(screen.queryByRole("combobox", { name: "My account role" })).toBeNull();
     expect(screen.queryByText("Account Roles")).toBeNull();
     expect(screen.queryByRole("checkbox")).toBeNull();
-    await waitFor(() => expect(screen.getByText("HR Staff", { selector: "dd" })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(ADMIN_ROLE, { selector: "dd" })).toBeInTheDocument());
     expect(screen.getByText("Your department, role, and account status are managed by an authorized administrator.")).toBeInTheDocument();
   });
 
   it("saves only profile fields and keeps the linked account in step", async () => {
     const user = userEvent.setup();
     render(<TestWrapper identityId="dev-hr" />);
-    const emailInput = await screen.findByDisplayValue("hrstaff@afhomes.local", {}, { timeout: 5000 });
+    const emailInput = await screen.findByDisplayValue(hrStaff.email, {}, { timeout: 5000 });
     fireEvent.change(emailInput, { target: { value: "hr.updated@afhomes.local" } });
     await user.click(screen.getByRole("button", { name: "Save Changes" }));
     await confirmSave(user);
@@ -76,18 +84,18 @@ describe("my account page", () => {
   it("saves profile changes after confirmation and reports a toast", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    const nameInput = await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 });
-    fireEvent.change(nameInput, { target: { value: "Admin User Updated" } });
+    const nameInput = await screen.findByDisplayValue(ADMIN_NAME, {}, { timeout: 5000 });
+    fireEvent.change(nameInput, { target: { value: `${ADMIN_NAME} Updated` } });
     await user.click(screen.getByRole("button", { name: "Save Changes" }));
     await confirmSave(user);
     expect(await screen.findByText("Account updated successfully.")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Admin User Updated")).toBeInTheDocument();
+    expect(screen.getByDisplayValue(`${ADMIN_NAME} Updated`)).toBeInTheDocument();
   });
 
   it("requires a name before saving", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    const nameInput = await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 });
+    const nameInput = await screen.findByDisplayValue(ADMIN_NAME, {}, { timeout: 5000 });
     fireEvent.change(nameInput, { target: { value: "" } });
     await user.click(screen.getByRole("button", { name: "Save Changes" }));
     expect(await screen.findByText("Full name is required.")).toBeInTheDocument();
@@ -96,7 +104,7 @@ describe("my account page", () => {
 
   it("rejects non-image and oversized profile pictures", async () => {
     render(<TestWrapper />);
-    await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 });
+    await screen.findByDisplayValue(ADMIN_NAME, {}, { timeout: 5000 });
     const file = await screen.findByLabelText("Profile picture file");
     fireEvent.change(file, { target: { files: [new File(["x"], "a.txt", { type: "text/plain" })] } });
     expect(await screen.findByText("Unsupported image format.")).toBeInTheDocument();
@@ -108,7 +116,7 @@ describe("my account page", () => {
 
   it("shows read-only employment info without admin controls for HR", async () => {
     render(<TestWrapper identityId="dev-hr" />);
-    expect(await screen.findByDisplayValue("HR Staff", {}, { timeout: 5000 })).toBeDefined();
+    expect(await screen.findByDisplayValue(hrStaff.displayName, {}, { timeout: 5000 })).toBeDefined();
     expect(screen.queryByRole("combobox", { name: "My account department" })).toBeNull();
     expect(screen.queryByText("Account Roles")).toBeNull();
     await waitFor(() => expect(screen.getAllByText("Human Resources").length).toBeGreaterThan(0));
@@ -127,7 +135,7 @@ describe("my account page", () => {
     expect(within(alert).getByText(/Profile failed\./)).toBeInTheDocument();
     expect(screen.queryByText("No linked staff or account record found for this identity.")).toBeNull();
     await user.click(within(alert).getByRole("button", { name: "Try again" }));
-    expect(await screen.findByDisplayValue("Admin User", {}, { timeout: 5000 })).toBeDefined();
+    expect(await screen.findByDisplayValue(ADMIN_NAME, {}, { timeout: 5000 })).toBeDefined();
   });
 
   it("restricts inactive identities", async () => {

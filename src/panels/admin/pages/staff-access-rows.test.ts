@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createSeedStore } from "@/data/mock/seed";
 import type { AccountActionPolicy, AccountPolicies } from "@/modules/accounts/types";
 import type { StaffActionPolicy } from "@/modules/organization/types";
-import { buildAccessRows, countPendingRows, filterAccessRows, parseAccessChip, type AccessFilters } from "./staff-access-rows";
+import { accessRowName, buildAccessRows, countPendingRows, filterAccessRows, parseAccessChip, type AccessFilters } from "./staff-access-rows";
 
 const store = createSeedStore();
 const linkedIds = new Set(store.staff.map((member) => member.accountId).filter(Boolean));
@@ -22,7 +22,7 @@ const staffPolicies: Record<string, StaffActionPolicy> = {
     deleteRestriction: null,
     assignmentRestriction: null,
     identityRestriction: null,
-    linkedAccount: { id: "acct-hr", email: "hr@afhomes.local", status: "pending", isProtected: false, allowedStatuses: [] },
+    linkedAccount: { id: "acct-hr", email: store.accounts.find((account) => account.id === "acct-hr")!.email, status: "pending", isProtected: false, allowedStatuses: [] },
   },
 };
 
@@ -64,11 +64,14 @@ describe("staff access rows", () => {
 
   it("applies search, department, role, and employment filters", () => {
     const rows = buildAccessRows(store.staff, store.accounts, accountPolicies, staffPolicies, true);
-    expect(ids(filterAccessRows(rows, { ...noFilters, search: "pending@" }, "asc"))).toEqual(["acct-pending"]);
+    const pendingEmail = store.accounts.find((account) => account.id === "acct-pending")!.email;
+    expect(ids(filterAccessRows(rows, { ...noFilters, search: pendingEmail.toUpperCase() }, "asc"))).toEqual(["acct-pending"]);
     expect(ids(filterAccessRows(rows, { ...noFilters, search: "analyst" }, "asc"))).toEqual(["staff-2"]);
     expect(ids(filterAccessRows(rows, { ...noFilters, departmentId: "dept-finance" }, "asc"))).toEqual(["staff-2"]);
     const byRole = filterAccessRows(rows, { ...noFilters, roleId: "role-ops-staff" }, "asc");
-    expect(ids(byRole)).toEqual(["staff-clerk", "staff-3", "staff-records"]);
+    const opsStaff = store.staff.filter((member) => member.departmentRoleId === "role-ops-staff");
+    expect(ids(byRole).sort()).toEqual(["staff-3", "staff-clerk", "staff-records"]);
+    expect(ids(byRole)).toEqual(opsStaff.sort((a, b) => a.displayName.localeCompare(b.displayName)).map((member) => member.id));
     expect(filterAccessRows(rows, { ...noFilters, status: "active" }, "asc").some((row) => row.kind === "account")).toBe(false);
   });
 
@@ -76,7 +79,10 @@ describe("staff access rows", () => {
     const rows = buildAccessRows(store.staff, store.accounts, accountPolicies, staffPolicies, true);
     const asc = filterAccessRows(rows, noFilters, "asc");
     const desc = filterAccessRows(rows, noFilters, "desc");
-    expect(ids(desc)).toEqual(ids(asc).reverse());
+    // Compare names: rows with the same display name keep their relative order in both directions.
+    const names = (list: typeof rows) => list.map(accessRowName);
+    expect(names(asc)).toEqual([...names(asc)].sort((a, b) => a.localeCompare(b)));
+    expect(names(desc)).toEqual(names(asc).reverse());
   });
 });
 

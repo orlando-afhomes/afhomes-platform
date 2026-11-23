@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { AUDIT_ACTIONS } from "@/modules/audit/types";
 import { OWN_ACCOUNT_RESTRICTION, PROTECTED_ACCOUNT_RESTRICTION } from "@/data/mock/account-repository";
-import type { MockStore } from "@/data/mock/seed";
+import { createMockStore, type MockStore } from "@/data/mock/seed";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider, useMockStore } from "@/shared/providers/mock-store-provider";
 import { StaffPage } from "./pages/staff-page";
@@ -52,6 +52,12 @@ afterEach(() => {
 
 type User = ReturnType<typeof userEvent.setup>;
 
+// Seeded names and emails, read from the same seed the provider builds.
+const seed = createMockStore();
+const staffOf = (id: string) => seed.staff.find((item) => item.id === id)!;
+const HR_ROW = (name: string) => name.startsWith(`Open ${staffOf("staff-1").displayName}`);
+const adminEmail = staffOf("staff-admin").email;
+
 const row = (key: string) => document.querySelector(`tr[data-row-key="${key}"]`) as HTMLElement | null;
 const SECTION_NAMES = { profile: "Profile", employment: "Employment", access: "Account Access" } as const;
 const section = (name: "profile" | "employment" | "access") =>
@@ -59,7 +65,7 @@ const section = (name: "profile" | "employment" | "access") =>
 
 async function ready(identityId: string) {
   render(<TestWrapper identityId={identityId} />);
-  await screen.findByRole("row", { name: /^Open HR Staff/ }, { timeout: 5000 });
+  await screen.findByRole("row", { name: HR_ROW }, { timeout: 5000 });
   if (identityId !== "dev-hr") await waitFor(() => expect(row("acct-pending")).not.toBeNull());
   else await waitFor(() => expect(within(row("staff-admin")!).getAllByText("Active")).toHaveLength(2));
 }
@@ -82,17 +88,18 @@ describe("employee detail sections", () => {
     for (const name of ["Profile", "Employment", "Account Access"]) {
       expect(screen.getByRole("heading", { name })).toBeInTheDocument();
     }
-    expect(within(section("profile")).getByText("admin@afhomes.local")).toBeInTheDocument();
+    expect(within(section("profile")).getByText(adminEmail)).toBeInTheDocument();
     const employment = section("employment");
     const valueOf = (term: string) => within(employment).getByText(term).nextElementSibling?.textContent;
-    expect(valueOf("Department")).toBe("Human Resources");
-    expect(valueOf("Position")).toBe("HR Staff");
-    expect(valueOf("Role")).toBe("HR Staff");
+    const adminStaff = staffOf("staff-admin");
+    expect(valueOf("Department")).toBe(seed.departments.find((item) => item.id === adminStaff.departmentId)!.name);
+    expect(valueOf("Position")).toBe(adminStaff.position);
+    expect(valueOf("Role")).toBe(seed.roles.find((item) => item.id === adminStaff.departmentRoleId)!.name);
     // Employment status is display-only until its lifecycle is approved.
     expect(within(employment).getByText("Read-only")).toBeInTheDocument();
     expect(within(employment).queryByRole("combobox")).toBeNull();
     const access = section("access");
-    expect(within(access).getByText("admin@afhomes.local")).toBeInTheDocument();
+    expect(within(access).getByText(adminEmail)).toBeInTheDocument();
     expect(within(access).getByText("Administrator")).toBeInTheDocument();
     const effective = within(access).getByText("Effective module access").nextElementSibling as HTMLElement;
     expect(effective.textContent).toContain("Accounts and Permissions");
@@ -135,7 +142,7 @@ describe("employee detail sections", () => {
     await ready("dev-hr");
     await openProfile(user, "staff-admin");
     const access = section("access");
-    expect(within(access).getByText("admin@afhomes.local")).toBeInTheDocument();
+    expect(within(access).getByText(adminEmail)).toBeInTheDocument();
     expect(within(access).getByText("Account status")).toBeInTheDocument();
     expect(within(access).queryByText("System roles")).toBeNull();
     expect(within(access).queryByText("Effective module access")).toBeNull();

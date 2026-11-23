@@ -7,6 +7,7 @@ import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { MockContractRepository } from "@/data/mock/contract-repository";
 import { MockPaymentRepository } from "@/data/mock/payment-repository";
+import { createMockStore, type MockStore } from "@/data/mock/seed";
 import { FinanceCancellationDetailPage } from "./pages/finance-cancellation-detail-page";
 import { FinanceCollectionDetailPage } from "./pages/finance-collection-detail-page";
 import { SalesContractDetailPage } from "./pages/sales-contract-detail-page";
@@ -17,19 +18,19 @@ vi.mock("next/navigation", async (importOriginal) => ({
   usePathname: () => "/admin",
 }));
 
-function Wrapper({ identityId, children, client }: { identityId: string; children: React.ReactNode; client?: QueryClient }) {
+function Wrapper({ identityId, children, client, store }: { identityId: string; children: React.ReactNode; client?: QueryClient; store?: MockStore }) {
   const [queryClient] = useState(() => client ?? new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   return (
     <QueryClientProvider client={queryClient}>
-      <MockStoreProvider>
+      <MockStoreProvider store={store}>
         <DevIdentityProvider initialIdentityId={identityId}>{children}</DevIdentityProvider>
       </MockStoreProvider>
     </QueryClientProvider>
   );
 }
 
-function show(identityId: string, page: ReactElement, client?: QueryClient) {
-  return render(<Wrapper identityId={identityId} client={client}>{page}</Wrapper>);
+function show(identityId: string, page: ReactElement, client?: QueryClient, store?: MockStore) {
+  return render(<Wrapper identityId={identityId} client={client} store={store}>{page}</Wrapper>);
 }
 
 afterEach(() => {
@@ -48,7 +49,11 @@ describe("contract details show actions allowed for each viewer", () => {
   });
 
   it("shows a missing VIP rate before issuance and links an Admin to the affected sale", async () => {
-    show("dev-admin", <SalesContractDetailPage contractId="ctr-3" />);
+    const store = createMockStore();
+    const seller = store.contracts.find((item) => item.id === "ctr-3")!.sellerMemberId;
+    // The seed approves rates for every active seller; remove the closing seller's VIP DSC rate.
+    store.commissionRateSettings = store.commissionRateSettings.filter((item) => !(item.memberId === seller && item.product === "VIP" && item.role === "DSC"));
+    show("dev-admin", <SalesContractDetailPage contractId="ctr-3" />, undefined, store);
     expect(await screen.findByText("Approved Commission Rates Needed")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Set Closing Seller Rate" })).toHaveAttribute(
       "href",

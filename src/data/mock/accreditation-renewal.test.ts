@@ -4,9 +4,15 @@ import { createMockStore } from "./seed";
 import { createMockRepositories } from "./repositories";
 import { getDevIdentity } from "./dev-identities";
 import { maskPublicName } from "@/modules/accreditation/public-name";
+import { allocateSharedAaNumber, buildAaNumber, collectReservedAaNumbers } from "@/modules/accreditation/issuance";
 
 function as(store: ReturnType<typeof createMockStore>, id: string) {
   return createMockRepositories(store, () => getDevIdentity(id));
+}
+
+/** The next free shared number of a month, after the seeded (relative-dated) accreditations already in the store. */
+function nextFree(store: ReturnType<typeof createMockStore>, yymm: string) {
+  return allocateSharedAaNumber("AAO", yymm, collectReservedAaNumbers(store.accreditations, store.members));
 }
 
 /** OST accreditation expiring 2025-02-10 (in the past, so renewal dates in 2025 are never in the future). */
@@ -21,30 +27,35 @@ function setup() {
 describe("accreditation renewal (doc 03 section 5)", () => {
   it("issues a new AA number from the renewal month, valid one year from the renewal date", async () => {
     const { store, record, member, oldNumber } = setup();
+    const expected = nextFree(store, "2502").aaNumber;
     const renewed = await as(store, "dev-admin").accreditations.renew(record.id, { renewalDate: "2025-02-18" });
-    expect(renewed.aaNumber).toBe("AAO25020001");
+    expect(renewed.aaNumber).toBe(expected);
     expect(renewed.aaNumber).not.toBe(oldNumber);
     expect(renewed.effectiveDate).toBe("2025-02-18");
     expect(renewed.expiryDate).toBe("2026-02-18");
     expect(renewed.originalAccreditationDate).toBe("2024-02-10");
-    expect(renewed.aaNumberHistory).toEqual([expect.objectContaining({ aaNumber: oldNumber, replacedBy: "AAO25020001", replacedOn: "2025-02-18", actorId: "dev-admin" })]);
-    expect(renewed.history.at(-1)).toMatchObject({ operation: "renewed", previousValue: oldNumber, newValue: "AAO25020001" });
-    expect(member.aaNumber).toBe("AAO25020001");
-    expect(store.auditEvents.at(-1)).toMatchObject({ action: "ACCREDITATION_RENEWED", entityId: record.id, previousValue: oldNumber, newValue: "AAO25020001", actorId: "dev-admin" });
+    expect(renewed.aaNumberHistory).toEqual([expect.objectContaining({ aaNumber: oldNumber, replacedBy: expected, replacedOn: "2025-02-18", actorId: "dev-admin" })]);
+    expect(renewed.history.at(-1)).toMatchObject({ operation: "renewed", previousValue: oldNumber, newValue: expected });
+    expect(member.aaNumber).toBe(expected);
+    expect(store.auditEvents.at(-1)).toMatchObject({ action: "ACCREDITATION_RENEWED", entityId: record.id, previousValue: oldNumber, newValue: expected, actorId: "dev-admin" });
   });
 
   it("shares the monthly sequence with new accreditations and never reissues a history number", async () => {
     const { store, record } = setup();
-    store.accreditations.push({ ...record, id: "accr-other", memberId: "mem-other", aaNumber: "AAI25020001", history: [] });
-    store.accreditations.push({ ...record, id: "accr-hist", memberId: "mem-hist", aaNumber: "AAO25020009", aaNumberHistory: [{ aaNumber: "AAO25020002", replacedBy: "AAO25020009", replacedOn: "2025-02-02", actorId: "x", changedAt: "2025-02-02T00:00:00.000Z" }], history: [] });
+    // Start after any seeded numbers of the month; the seed's monthly sequences have no gaps.
+    const base = nextFree(store, "2502").sequence;
+    store.accreditations.push({ ...record, id: "accr-other", memberId: "mem-other", aaNumber: buildAaNumber("AAI", "2502", base), history: [] });
+    store.accreditations.push({ ...record, id: "accr-hist", memberId: "mem-hist", aaNumber: buildAaNumber("AAO", "2502", base + 8), aaNumberHistory: [{ aaNumber: buildAaNumber("AAO", "2502", base + 1), replacedBy: buildAaNumber("AAO", "2502", base + 8), replacedOn: "2025-02-02", actorId: "x", changedAt: "2025-02-02T00:00:00.000Z" }], history: [] });
     const renewed = await as(store, "dev-super-admin").accreditations.renew(record.id, { renewalDate: "2025-02-18" });
-    expect(renewed.aaNumber).toBe("AAO25020003");
+    expect(renewed.aaNumber).toBe(buildAaNumber("AAO", "2502", base + 2));
   });
 
   it("accepts a late renewal and counts one year from the actual date", async () => {
     const { store, record } = setup();
+    // The renewal month may already hold seeded numbers; the renewal takes the next free one of that month.
+    const expected = nextFree(store, "2506").aaNumber;
     const renewed = await as(store, "dev-admin").accreditations.renew(record.id, { renewalDate: "2025-06-01" });
-    expect(renewed.aaNumber).toBe("AAO25060001");
+    expect(renewed.aaNumber).toBe(expected);
     expect(renewed.expiryDate).toBe("2026-06-01");
   });
 

@@ -13,6 +13,11 @@ const store = createMockStore();
 const members = store.members;
 const existing = store.customers;
 const seedPendingIds = pendingAttributionMemberIds(store.accreditations);
+/** "Name · AA number" as the pickers show it; AA numbers are dated relative to today. */
+const seller = (id: string) => {
+  const member = members.find((item) => item.id === id)!;
+  return `${member.displayName} · ${member.aaNumber}`;
+};
 
 afterEach(cleanup);
 
@@ -110,16 +115,16 @@ describe("sales attribution section", () => {
     render(<Harness />);
 
     await pickSeller(user, "Closing seller", "Ana", /Ana Mendoza/);
-    expect(sellerCombos()[0]).toHaveValue("Ana Mendoza · AAO26100004 (OST)");
+    expect(sellerCombos()[0]).toHaveValue(`${seller("mem-ost-a1")} (OST)`);
     expect(sellerCombos()[1]).toHaveValue("");
-    expect(screen.getByLabelText("Sales Manager")).toHaveValue("Jose Reyes Jr. · AAI26100003");
-    expect(screen.getByLabelText("Senior Sales Manager")).toHaveValue("Maria Santos · AAI26100002");
-    expect(screen.getByLabelText("Sales Vice Director")).toHaveValue("Ramon Del Rosario · AAI26100001");
+    expect(screen.getByLabelText("Sales Manager")).toHaveValue(seller("mem-sm-a"));
+    expect(screen.getByLabelText("Senior Sales Manager")).toHaveValue(seller("mem-ssm-a"));
+    expect(screen.getByLabelText("Sales Vice Director")).toHaveValue(seller("mem-svd-a"));
 
     // Only teammates appear: a same-team referrer is allowed and keeps the closing seller.
     await pickSeller(user, "Referrer / VIP Recommender", "Mark", /Mark Villanueva/);
-    expect(sellerCombos()[1]).toHaveValue("Mark Villanueva · AAO26100005 (OST)");
-    expect(sellerCombos()[0]).toHaveValue("Ana Mendoza · AAO26100004 (OST)");
+    expect(sellerCombos()[1]).toHaveValue(`${seller("mem-ost-a2")} (OST)`);
+    expect(sellerCombos()[0]).toHaveValue(`${seller("mem-ost-a1")} (OST)`);
     expect(screen.queryByLabelText("Dated referral reference")).toBeNull();
   });
 
@@ -138,7 +143,7 @@ describe("sales attribution section", () => {
     await pickSeller(user, "Closing seller", "Mark", /Mark Villanueva/);
     expect(screen.getByLabelText("Sales Manager")).toHaveValue("—");
     expect(screen.getByLabelText("Senior Sales Manager")).toHaveValue("—");
-    expect(screen.getByLabelText("Sales Vice Director")).toHaveValue("Ramon Del Rosario · AAI26100001");
+    expect(screen.getByLabelText("Sales Vice Director")).toHaveValue(seller("mem-svd-a"));
   });
 
   it("asks the office for a dated referral reference when the closing seller is also the referrer", async () => {
@@ -176,6 +181,11 @@ describe("sales attribution section", () => {
 
   it("previews after the highest sequence already issued for the year", () => {
     const year = currentManilaYear();
+    // The seed already issued Customer IDs this year; add one above the highest.
+    const issued = existing.map((customer) => customer.customerNumber ?? "").filter((value) => value.startsWith(`${year}-`)).map((value) => Number(value.slice(5)));
+    expect(issued.length).toBeGreaterThan(0);
+    const highest = Math.max(...issued) + 7;
+    const sequence = (value: number) => `${year}-${String(value).padStart(4, "0")}`;
     const onFile: Customer[] = [
       ...existing,
       {
@@ -184,12 +194,12 @@ describe("sales attribution section", () => {
         branchId: "branch-a",
         ownerMemberId: null,
         status: "submitted",
-        customerNumber: `${year}-0007`,
+        customerNumber: sequence(highest),
       },
     ];
     render(<Harness existing={onFile} />);
 
-    expect(screen.getByLabelText("Customer ID")).toHaveValue(`${year}-0008`);
+    expect(screen.getByLabelText("Customer ID")).toHaveValue(sequence(highest + 1));
   });
 
   it("switches to an editable manual Customer ID with the required format hint", async () => {

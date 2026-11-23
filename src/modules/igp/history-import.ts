@@ -25,7 +25,7 @@ export type IgpHistoryColumn = (typeof IGP_HISTORY_COLUMNS)[number];
 export type IgpHistoryRecord = Partial<Record<IgpHistoryColumn, string>>;
 
 export const IGP_HISTORY_EXAMPLE_ROW = [
-  "A26111500012T12S", "2026-11-15", "1800000.00", "Terms", "12", "Standard", "Sample Buyer", "Active", "",
+  "A26111500012T12S", "2026-11-15", "1800000.00", "Terms", "12", "Standard", "Marissa Baylon", "Active", "",
 ];
 
 export type IgpHistoryRowStatus = "ready" | "invalid";

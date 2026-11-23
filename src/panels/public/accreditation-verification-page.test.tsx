@@ -3,15 +3,24 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { createMockStore } from "@/data/mock/seed";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { AccreditationVerificationPage } from "./pages/accreditation-verification-page";
+
+// AA numbers are dated relative to today: read them from the seed.
+const store = createMockStore();
+const ACTIVE_OST = store.accreditations.find((record) => record.memberId === "mem-ost-a1")!.aaNumber!;
+const pendingIst = store.accreditations.find((record) => record.memberId === "mem-sm-a")!;
+// Every seeded IST is active; make one pending to check it is not shown as valid.
+pendingIst.adminStatus = "pending";
+const PENDING_IST = pendingIst.aaNumber!;
 
 function Wrapper() {
   const [queryClient] = useState(() => new QueryClient());
   return (
     <QueryClientProvider client={queryClient}>
-      <MockStoreProvider>
+      <MockStoreProvider store={store}>
         <DevIdentityProvider>
           <AccreditationVerificationPage />
         </DevIdentityProvider>
@@ -40,7 +49,7 @@ describe("public seller check", () => {
   it("asks for the privacy tick and contact details, then shows the masked result", async () => {
     const user = userEvent.setup();
     render(<Wrapper />);
-    await search(user, "AAO26100004");
+    await search(user, ACTIVE_OST);
 
     const privacy = await screen.findByRole("dialog", { name: "Privacy notice" });
     const next = screen.getByRole("button", { name: "Continue" });
@@ -58,7 +67,7 @@ describe("public seller check", () => {
     await user.click(screen.getByRole("button", { name: "Verify accreditation" }));
 
     const result = await screen.findByRole("region", { name: "Verification result" }, { timeout: 3000 });
-    expect(result).toHaveTextContent("AAO26100004");
+    expect(result).toHaveTextContent(ACTIVE_OST);
     expect(result).toHaveTextContent("Accredited");
     expect(result).not.toHaveTextContent("Valid until");
     expect(result).toHaveTextContent(/\*/);
@@ -67,7 +76,7 @@ describe("public seller check", () => {
     expect(document.body).not.toHaveTextContent("pedro@example.com");
 
     // The contact receipt is reused for the next search in this session.
-    await search(user, "AAI26100001");
+    await search(user, PENDING_IST);
     await user.click(await screen.findByRole("checkbox"));
     await user.click(screen.getByRole("button", { name: "Continue" }));
     expect(await screen.findByText("Your details are already validated for this session.")).toBeInTheDocument();

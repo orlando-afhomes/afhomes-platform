@@ -43,10 +43,13 @@ describe("seat vacancy records (doc 02 section 5.1.1)", () => {
 
   it("lists vacancies within the caller's visible scope", async () => {
     const store = createMockStore();
+    // The seed already holds a team C vacancy (vac-1); team A and team B start with none.
+    const seeded = store.seatVacancies.length;
     await as(store, "dev-admin").members.recordSeatVacancy("mem-ssm-a", "2026-09-30");
-    expect(await as(store, "dev-super-admin").members.listSeatVacancies()).toHaveLength(1);
-    expect(await as(store, "dev-svd-a").members.listSeatVacancies()).toHaveLength(1);
+    expect(await as(store, "dev-super-admin").members.listSeatVacancies()).toHaveLength(seeded + 1);
+    expect((await as(store, "dev-svd-a").members.listSeatVacancies()).map((item) => item.seatMemberId)).toEqual(["mem-ssm-a"]);
     expect(await as(store, "dev-svd-b").members.listSeatVacancies()).toHaveLength(0);
+    expect((await as(store, "dev-svd-c").members.listSeatVacancies()).map((item) => item.id)).toEqual(["vac-1"]);
   });
 });
 

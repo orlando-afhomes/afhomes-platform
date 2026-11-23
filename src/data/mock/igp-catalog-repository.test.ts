@@ -13,6 +13,7 @@ function setup() {
 describe("IGP project and unit catalog", () => {
   it("lets an Administrator add, rename, deactivate, reactivate and delete, and audits each change", async () => {
     const { store, admin } = setup();
+    const seededEvents = store.auditEvents.length;
     const project = await admin.igpCatalog.createProject({ name: "  New   Towers ", location: " Sample Bay " });
     expect(project).toMatchObject({ name: "New Towers", location: "Sample Bay", status: "active", unitCount: 0, inUse: false });
     const unit = await admin.igpCatalog.createUnit({ projectId: project.id, unitOrLot: "Lot 1", propertyOwner: " Sample Owner " });
@@ -23,28 +24,33 @@ describe("IGP project and unit catalog", () => {
     await admin.igpCatalog.updateUnit(unit.id, { propertyOwner: "Other Owner", status: "inactive" });
     await admin.igpCatalog.deleteUnit(unit.id);
     await admin.igpCatalog.deleteProject(project.id);
-    const actions = store.auditEvents.filter(({ action }) => action.startsWith("IGP_PROJECT_") || action.startsWith("IGP_UNIT_")).map(({ action }) => action);
+    const events = store.auditEvents.slice(seededEvents);
+    const actions = events.filter(({ action }) => action.startsWith("IGP_PROJECT_") || action.startsWith("IGP_UNIT_")).map(({ action }) => action);
     expect(actions).toEqual([
       "IGP_PROJECT_CREATED", "IGP_UNIT_CREATED", "IGP_PROJECT_UPDATED", "IGP_PROJECT_DEACTIVATED", "IGP_PROJECT_REACTIVATED",
       "IGP_UNIT_UPDATED", "IGP_UNIT_DEACTIVATED", "IGP_UNIT_DELETED", "IGP_PROJECT_DELETED",
     ]);
-    expect(new Set(store.auditEvents.filter(({ action }) => action.startsWith("IGP_")).map(({ entityType }) => entityType))).toEqual(new Set(["igp-project", "igp-unit"]));
-    expect(JSON.stringify(store.auditEvents)).not.toMatch(/password/i);
+    expect(new Set(events.filter(({ action }) => action.startsWith("IGP_")).map(({ entityType }) => entityType))).toEqual(new Set(["igp-project", "igp-unit"]));
+    expect(JSON.stringify(events)).not.toMatch(/password/i);
   });
 
   it("validates names and keeps them unique", async () => {
-    const { admin } = setup();
-    await expect(admin.igpCatalog.createProject({ name: "sample heights" })).rejects.toThrow(/already exists/);
+    const { store, admin } = setup();
+    const existing = store.igp.projects.find(({ id }) => id === "igp-prj-1")!;
+    await expect(admin.igpCatalog.createProject({ name: ` ${existing.name.toLowerCase()} ` })).rejects.toThrow(/already exists/);
     await expect(admin.igpCatalog.createProject({ name: "   " })).rejects.toThrow(/project name/);
     await expect(admin.igpCatalog.createProject({ name: "x".repeat(81) })).rejects.toThrow(/80 characters/);
-    await expect(admin.igpCatalog.createUnit({ projectId: "igp-prj-1", unitOrLot: "unit 12a", propertyOwner: "Owner" })).rejects.toThrow(/already in the project/);
-    await expect(admin.igpCatalog.createUnit({ projectId: "igp-prj-2", unitOrLot: "unit 12a", propertyOwner: "Owner" })).resolves.toMatchObject({ unitOrLot: "unit 12a" });
+    const takenUnit = store.igp.units.find(({ id }) => id === "igp-unit-1")!.unitOrLot.toLowerCase();
+    await expect(admin.igpCatalog.createUnit({ projectId: "igp-prj-1", unitOrLot: takenUnit, propertyOwner: "Owner" })).rejects.toThrow(/already in the project/);
+    await expect(admin.igpCatalog.createUnit({ projectId: "igp-prj-2", unitOrLot: takenUnit, propertyOwner: "Owner" })).resolves.toMatchObject({ unitOrLot: takenUnit });
     await expect(admin.igpCatalog.createUnit({ projectId: "igp-prj-1", unitOrLot: "Lot 77", propertyOwner: "" })).rejects.toThrow(/property owner/);
     await expect(admin.igpCatalog.createUnit({ projectId: "igp-prj-1", unitOrLot: "y".repeat(41), propertyOwner: "Owner" })).rejects.toThrow(/40 characters/);
   });
 
   it("blocks deleting a project or unit that a sale uses, and only managers change the catalog", async () => {
     const { store, admin, clerk, seller } = setup();
+    // Start with no IGP sales so only the sale recorded below puts catalog entries in use.
+    store.igp.sales = [];
     await admin.igp.act({ type: "accredit", memberId: "mem-ost-a1", number: "JAI23010001", approvedDate: "2023-01-01" });
     store.commissionRateSettings.push({ memberId: "mem-ost-a1", product: "IGP", role: "DSC", rateBp: 500, standardRateBp: null });
     const input: RecordIgpSale = {
@@ -64,7 +70,11 @@ describe("IGP project and unit catalog", () => {
     await expect(clerk.igpCatalog.updateUnit("igp-unit-3", { status: "inactive" })).rejects.toThrow(/Administrator/);
     // Staff who enter sales read active entries only; sellers read nothing.
     const clerkView = await clerk.igpCatalog.list();
-    expect(clerkView.units.map(({ id }) => id)).toEqual(["igp-unit-3", "igp-unit-4"]);
+    const activeUnits = store.igp.units.filter(({ status }) => status === "active").map(({ id }) => id);
+    expect(activeUnits).not.toContain("igp-unit-1");
+    expect(activeUnits).not.toContain("igp-unit-2");
+    expect(activeUnits).toContain("igp-unit-3");
+    expect(clerkView.units.map(({ id }) => id)).toEqual(activeUnits);
     await expect(seller.igpCatalog.list()).resolves.toEqual({ projects: [], units: [] });
   });
 });

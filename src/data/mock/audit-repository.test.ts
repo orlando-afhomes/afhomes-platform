@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { DevIdentity } from "@/modules/identity/types";
 import { AUDIT_ACTIONS, AuditQueryError, type AuditEvent, type AuditQuery } from "@/modules/audit/types";
 import { createMockStore } from "./seed";
-import { SEED_AUDIT_EVENT_COUNT } from "./seed-data";
+import { seedAuditEventCount } from "./seed";
+const SEED_AUDIT_EVENT_COUNT = seedAuditEventCount();
 import { createMockRepositories } from "./repositories";
 import { getDevIdentity } from "./dev-identities";
 import { AUDIT_READ_RESTRICTION } from "./audit-repository";
@@ -17,7 +18,8 @@ function auditAs(store: Store, identity: DevIdentity | string) {
 function pushEvent(store: Store, overrides: Partial<AuditEvent> & Pick<AuditEvent, "action">): AuditEvent {
   const event: AuditEvent = {
     id: `audit-${store.auditSequence}`,
-    timestamp: "2026-01-01T00:00:00.000Z",
+    // Now sorts after the whole seeded history, which ends before today.
+    timestamp: new Date().toISOString(),
     actorId: "dev-admin",
     actorRoles: ["admin"],
     module: "organization",
@@ -81,6 +83,8 @@ describe("audit read authorization", () => {
 describe("audit read filters, ordering, and paging", () => {
   function seeded() {
     const store = createMockStore();
+    // Start from an empty history so only the four events below can match a filter.
+    store.auditEvents = [];
     pushEvent(store, { action: "ACCREDITATION_ISSUED", module: "accreditation", entityType: "accreditation", entityId: "acc-1", timestamp: "2026-01-01T00:00:00.000Z", relatedRecordIds: ["mem-1"], actorId: "dev-admin" });
     pushEvent(store, { action: "MEMBER_STATUS_CHANGED", module: "sales-network", entityType: "member", entityId: "mem-1", timestamp: "2026-01-02T00:00:00.000Z", actorId: "dev-super-admin" });
     pushEvent(store, { action: AUDIT_ACTIONS.ACCOUNT_CREATED, timestamp: "2026-01-02T00:00:00.000Z", entityId: "acct-2", relatedRecordIds: ["mem-1", "other"] });
@@ -104,25 +108,27 @@ describe("audit read filters, ordering, and paging", () => {
 
   it("orders newest first with the audit sequence as a stable tiebreak", async () => {
     const page = await auditAs(seeded(), "dev-admin").list();
-    // Seeded display events (Oct 2026) sort before the pushed Jan-2026 events.
-    expect(page.items.map((item) => item.entityId)).toEqual([
-      "comm-1", "sale-1", "pay-2", "ctr-2", "ctr-1", "ctr-1", "ctr-1", "cust-a1",
-      "staff-9", "acct-2", "mem-1", "acc-1",
-    ]);
-    expect(page.total).toBe(12);
+    // acct-2 and mem-1 share a timestamp; the later sequence (acct-2) comes first.
+    expect(page.items.map((item) => item.entityId)).toEqual(["staff-9", "acct-2", "mem-1", "acc-1"]);
+    expect(page.total).toBe(4);
+    // The full seeded history is newest first too.
+    const history = (await auditAs(createMockStore(), "dev-admin").list({ pageSize: 100 })).items.map((item) => item.timestamp);
+    expect(history).toEqual([...history].sort().reverse());
   });
 
   it("applies the default page size of 25 and the maximum of 100", async () => {
     const store = createMockStore();
     for (let index = 0; index < 120; index += 1) pushEvent(store, { action: AUDIT_ACTIONS.ACCOUNT_CREATED, entityId: `acct-${index}` });
     const repo = auditAs(store, "dev-admin");
+    const total = SEED_AUDIT_EVENT_COUNT + 120;
+    const lastPage = Math.ceil(total / 25);
     const first = await repo.list();
-    expect(first).toMatchObject({ page: 1, pageSize: 25, total: 128 });
+    expect(first).toMatchObject({ page: 1, pageSize: 25, total });
     expect(first.items).toHaveLength(25);
     expect((await repo.list({ pageSize: 100 })).items).toHaveLength(100);
-    const last = await repo.list({ page: 5 });
-    expect(last.items).toHaveLength(25);
-    expect((await repo.list({ page: 6 })).items).toHaveLength(3);
+    expect((await repo.list({ page: lastPage - 1 })).items).toHaveLength(25);
+    expect((await repo.list({ page: lastPage })).items).toHaveLength(total - 25 * (lastPage - 1));
+    expect((await repo.list({ page: lastPage + 1 })).items).toHaveLength(0);
     // Pages are disjoint and continuous.
     const second = await repo.list({ page: 2 });
     expect(new Set([...first.items, ...second.items].map((item) => item.id)).size).toBe(50);
@@ -230,7 +236,7 @@ describe("audit read integrity", () => {
 
   it("starts from the seeded display history and leaves existing S3-C1 events untouched", async () => {
     const store = createMockStore();
-    expect((await auditAs(store, "dev-super-admin").list()).items).toHaveLength(SEED_AUDIT_EVENT_COUNT);
+    expect((await auditAs(store, "dev-super-admin").list()).total).toBe(SEED_AUDIT_EVENT_COUNT);
     const admin = createMockRepositories(store, () => getDevIdentity("dev-admin"));
     await admin.accounts.create({ displayName: "History User", email: "history@afhomes.local", roleIds: ["hr"] });
     const stored = JSON.stringify(store.auditEvents);

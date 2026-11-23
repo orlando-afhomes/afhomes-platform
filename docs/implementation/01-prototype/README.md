@@ -7,7 +7,7 @@ Feature-by-feature records for the frontend mock prototype (FP1 to FP16), the re
 - [`features/`](features/) — FP1 to FP11 feature phase records.
 - [`ui-states/`](ui-states/) — FP12 to FP16 loading, empty, error and busy state phases, and the [admin UI state audit](ui-states/admin-ui-state-audit.md).
 - [`fixes/`](fixes/README.md) — review fixes, gaps and the prototype completion plan.
-- [`plans/`](plans/) — the [customer portal prototype plan](plans/customer-portal-plan.md).
+- [`plans/`](plans/) — the [customer portal prototype plan](plans/customer-portal-plan.md) and the [realistic seed data plan](plans/realistic-seed-data-plan.md).
 
 Atlas version: `2026-11-13.1`
 Historical atlas baseline: `develop @ a0cba09 · reviewed working copy · 13 Nov 2026`

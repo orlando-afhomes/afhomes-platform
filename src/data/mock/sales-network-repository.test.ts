@@ -7,18 +7,19 @@ describe("sales network repository", () => {
   it("creates an SSM under an eligible SVD", async () => {
     const store = createMockStore();
     const adminRepos = createMockRepositories(store, () => getDevIdentity("dev-super-admin"));
-    // Approve the seeded pending accreditation so the SVD is an eligible sponsor.
-    await adminRepos.accreditations.updateStatus("accr-seed-1", "active");
+    // The seeded SVD accreditation (accr-seed-1) is approved and current, so the SVD is an eligible sponsor.
+    expect(store.accreditations.find((record) => record.id === "accr-seed-1")?.adminStatus).toBe("active");
     const repo = adminRepos.members;
+    const sequence = store.memberSequence;
     const created = await repo.create({ displayName: "New SSM", designation: "SSM", parentId: "mem-svd-a" });
-    expect(created.id).toBe("mem-8");
+    expect(created.id).toBe(`mem-${sequence}`);
     expect(created.designation).toBe("SSM");
     expect(created.parentId).toBe("mem-svd-a");
     expect(created.branchId).toBe("branch-a");
     expect(created.status).toBe("active");
     expect(created.accountId).toBeNull();
     expect(created.referralCode).toBeNull();
-    expect(store.memberSequence).toBe(9);
+    expect(store.memberSequence).toBe(sequence + 1);
   });
 
   it("rejects OST creation through the management repository", async () => {
@@ -38,6 +39,8 @@ describe("sales network repository", () => {
     const repo = createMockRepositories(store, () => getDevIdentity("dev-super-admin")).members;
     const parent = store.members.find((member) => member.id === "mem-svd-a")!;
     parent.mockAccreditationEligible = false;
+    // The accreditation record governs eligibility over the fixture flag: make it unapproved.
+    store.accreditations.find((record) => record.memberId === "mem-svd-a")!.adminStatus = "pending";
     await expect(repo.create({ displayName: "SSM", designation: "SSM", parentId: "mem-svd-a" })).rejects.toThrow(/eligib/i);
   });
 
@@ -46,7 +49,6 @@ describe("sales network repository", () => {
     const beforeAccounts = store.accounts.length;
     const beforeStaff = store.staff.length;
     const adminRepos = createMockRepositories(store, () => getDevIdentity("dev-super-admin"));
-    await adminRepos.accreditations.updateStatus("accr-seed-1", "active");
     const repo = adminRepos.members;
     const created = await repo.create({ displayName: "New SSM", designation: "SSM", parentId: "mem-svd-a" });
     expect(store.accounts.length).toBe(beforeAccounts);
@@ -104,10 +106,8 @@ describe("sales network repository", () => {
   it("transfers an IST member to OST under an eligible head", async () => {
     const store = createMockStore();
     const adminRepos = createMockRepositories(store, () => getDevIdentity("dev-super-admin"));
-    await adminRepos.accreditations.updateStatus("accr-seed-1", "active");
     const repo = adminRepos.members;
     const leaf = await repo.create({ displayName: "Temp SSM", designation: "SSM", parentId: "mem-svd-a" });
-    await adminRepos.accreditations.updateStatus("accr-seed-2", "active");
     const moved = await repo.transfer(leaf.id, "mem-ssm-a", { designation: "OST" });
     expect(moved.designation).toBe("OST");
     expect(moved.parentId).toBe("mem-ssm-a");
@@ -118,7 +118,6 @@ describe("sales network repository", () => {
   it("transfers an OST member to IST", async () => {
     const store = createMockStore();
     const adminRepos = createMockRepositories(store, () => getDevIdentity("dev-super-admin"));
-    await adminRepos.accreditations.updateStatus("accr-seed-1", "active");
     const repo = adminRepos.members;
     const moved = await repo.transfer("mem-ost-b1", "mem-svd-a", { designation: "SSM" });
     expect(moved.designation).toBe("SSM");
@@ -129,7 +128,6 @@ describe("sales network repository", () => {
   it("blocks a transfer that would orphan downline members", async () => {
     const store = createMockStore();
     const adminRepos = createMockRepositories(store, () => getDevIdentity("dev-super-admin"));
-    await adminRepos.accreditations.updateStatus("accr-seed-6", "active");
     const repo = adminRepos.members;
     await expect(repo.transfer("mem-ssm-a", "mem-svd-b", { designation: "OST" })).rejects.toThrow(/eligible sponsor/);
     const member = store.members.find((item) => item.id === "mem-ssm-a")!;
@@ -151,8 +149,7 @@ describe("sales network repository", () => {
   it("transfers a branch atomically and preserves descendants", async () => {
     const store = createMockStore();
     const adminRepos = createMockRepositories(store, () => getDevIdentity("dev-super-admin"));
-    // Approve the seeded pending accreditation so SVD Beta is an eligible receiving manager.
-    await adminRepos.accreditations.updateStatus("accr-seed-6", "active");
+    // The seeded SVD Beta accreditation (accr-seed-6) is approved, so SVD Beta is an eligible receiving manager.
     const repo = adminRepos.members;
     const before = store.members.map((member) => ({ ...member }));
     const moved = await repo.transfer("mem-ssm-a", "mem-svd-b");
@@ -186,11 +183,12 @@ describe("sales network repository", () => {
   it("lists eligible parents for a designation", async () => {
     const store = createMockStore();
     const adminRepos = createMockRepositories(store, () => getDevIdentity("dev-super-admin"));
-    await adminRepos.accreditations.updateStatus("accr-seed-1", "active");
-    await adminRepos.accreditations.updateStatus("accr-seed-6", "active");
     const repo = adminRepos.members;
     const parents = await repo.listEligibleParents("SSM");
-    expect(parents.map((member) => member.id)).toEqual(["mem-svd-a", "mem-svd-b"]);
+    // Every active SVD in the seed holds an approved, current accreditation.
+    const activeSvds = store.members.filter((member) => member.designation === "SVD" && member.status === "active").map((member) => member.id);
+    expect(activeSvds.length).toBeGreaterThan(1);
+    expect(parents.map((member) => member.id).sort()).toEqual(activeSvds.sort());
   });
 
   it("returns direct downline and descendants", async () => {
@@ -199,7 +197,10 @@ describe("sales network repository", () => {
     const direct = await repo.getDirectDownline("mem-svd-a");
     expect(direct.map((member) => member.id).sort()).toEqual(["mem-ost-a2", "mem-ssm-a"]);
     const descendants = await repo.getDescendants("mem-svd-a");
-    expect(descendants).toHaveLength(4);
+    const underSvdA = (id: string | null): boolean => id === "mem-svd-a" || (id !== null && underSvdA(store.members.find((member) => member.id === id)?.parentId ?? null));
+    const expected = store.members.filter((member) => member.id !== "mem-svd-a" && underSvdA(member.parentId)).map((member) => member.id);
+    expect(descendants.map((member) => member.id).sort()).toEqual(expected.sort());
+    expect(descendants.map((member) => member.id)).toEqual(expect.arrayContaining(["mem-ssm-a", "mem-sm-a", "mem-ost-a1", "mem-ost-a2"]));
   });
 
   it("scopes reads by identity", async () => {
@@ -242,7 +243,6 @@ describe("sales network repository", () => {
   it("preserves parent history", async () => {
     const store = createMockStore();
     const adminRepos = createMockRepositories(store, () => getDevIdentity("dev-super-admin"));
-    await adminRepos.accreditations.updateStatus("accr-seed-6", "active");
     const repo = adminRepos.members;
     const history = await repo.getParentHistory("mem-ssm-a");
     expect(history.length).toBe(0);

@@ -24,7 +24,7 @@ export const RECEIPT_IMPORT_COLUMNS = [
 export type ReceiptImportColumn = (typeof RECEIPT_IMPORT_COLUMNS)[number];
 export type ReceiptImportRecord = Partial<Record<ReceiptImportColumn, string>>;
 
-export const RECEIPT_IMPORT_EXAMPLE_ROW = ["OR-2026-000123", "2026-10-15", "25000.00", "Cash", "Down Payment", "Sample Customer", "SALE-EXAMPLE-1", "Unfinished", ""];
+export const RECEIPT_IMPORT_EXAMPLE_ROW = ["OR-2026-000123", "2026-10-15", "25000.00", "Cash", "Down Payment", "Leonora Sison", "26-HIST-0141", "Unfinished", ""];
 
 export const IMPORTED_STATUS_LABEL = "Approved (imported)";
 

@@ -40,6 +40,8 @@ async function registeredDeal(options: { rate?: boolean; classification?: "S" | 
     contract: { schemeId: "scheme-installment-4m", customerAccepted: true, classification, ...(classification === "N" ? { nonStandardTerms: N_TERMS } : {}) },
   });
   if (result.status !== "contract-prepared" || result.submitError) throw new Error(`Unexpected registration outcome: ${result.status}`);
+  // Start the seller without a VIP DSC rate (the seed gives every active seller one), then add it unless the test needs it missing.
+  store.commissionRateSettings = store.commissionRateSettings.filter((item) => !(item.memberId === "mem-ost-a1" && item.product === "VIP" && item.role === "DSC"));
   if (options.rate !== false) store.commissionRateSettings.push({ memberId: "mem-ost-a1", product: "VIP", role: "DSC", rateBp: 500, standardRateBp: null });
   return { store, repositories, as, customerId: result.customerId, contractId: result.contractId };
 }

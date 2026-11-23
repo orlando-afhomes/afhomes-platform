@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 import { getDevIdentity } from "@/data/mock/dev-identities";
 import { createMockRepositories } from "@/data/mock/repositories";
+import { createMockStore } from "@/data/mock/seed";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider, useMockStore } from "@/shared/providers/mock-store-provider";
 import { SalesAreaPage } from "./pages/sales-area-page";
@@ -48,6 +49,19 @@ function SeededIgp({ children }: { children: ReactNode }) {
   }, [store]);
   return ready ? children : null;
 }
+
+/** The register row of the sale recorded above (the seed holds other IGP sales too). */
+function recordedSaleRow(table: HTMLElement) {
+  const sale = storeRef.current!.igp.sales.find((item) => item.customerId === "cust-a6" && item.date === "2025-01-10")!;
+  return within(table).getByRole("row", { name: `Open property sale (IGP) ${sale.seriesNumber}` });
+}
+
+// IGP project catalog names come from the seed.
+const catalog = createMockStore().igp;
+const firstProject = catalog.projects.find((item) => item.id === "igp-prj-1")!;
+const firstProjectUnits = catalog.units.filter((item) => item.projectId === firstProject.id);
+const otherProject = catalog.projects.find((item) => item.id === "igp-prj-2")!;
+const otherProjectUnit = catalog.units.find((item) => item.projectId === otherProject.id && item.id === "igp-unit-4")!;
 
 function show(identityId = "dev-admin", page: ReactNode = <SalesAreaPage />) {
   function Wrapper() {
@@ -111,7 +125,7 @@ describe("Property Sales (IGP) page", () => {
     expect(screen.getByRole("button", { name: "When a Sale Counts" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "VIP Card Levels" })).toBeInTheDocument();
     expect(within(table).queryByRole("button", { name: /^Actions for/ })).toBeNull();
-    await user.click(within(table).getAllByRole("row", { name: /^Open property sale \(IGP\)/ })[0]);
+    await user.click(recordedSaleRow(table));
     const sheet = await screen.findByRole("dialog");
     expect(within(sheet).getByText("Approved collections")).toBeInTheDocument();
     const receipt = within(sheet).getAllByRole("button").find((button) => /^PAY-\d{8}-\d{4}$/.test(button.textContent ?? ""));
@@ -136,11 +150,11 @@ describe("IGP sale form and JA&D entry", () => {
     expect(within(dialog).getByRole("textbox", { name: "Property owner" })).toBeDisabled();
     const project = within(dialog).getByRole("combobox", { name: /Project/ });
     await user.click(project);
-    await user.click(await screen.findByRole("option", { name: "Sample Gardens" }));
+    await user.click(await screen.findByRole("option", { name: otherProject.name }));
     expect(unit).toBeEnabled();
     await user.click(unit);
-    await user.click(await screen.findByRole("option", { name: "Lot 9" }));
-    expect(within(dialog).getByRole("textbox", { name: "Property owner" })).toHaveValue("Sample Land Holdings");
+    await user.click(await screen.findByRole("option", { name: otherProjectUnit.unitOrLot }));
+    expect(within(dialog).getByRole("textbox", { name: "Property owner" })).toHaveValue(otherProjectUnit.propertyOwner);
   });
 
   it("shows the editable minimum price for Bronze, Silver and Gold", async () => {
@@ -180,15 +194,17 @@ describe("IGP Projects tab (Settings)", () => {
     const headers = within(table).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter(Boolean);
     expect(headers).toEqual(["Project", "Location", "Units", "Status"]);
     expect(within(table).queryByRole("link")).toBeNull();
-    await user.click(within(table).getByRole("row", { name: "Open project Sample Heights" }));
+    await user.click(within(table).getByRole("row", { name: `Open project ${firstProject.name}` }));
     const sheet = await screen.findByRole("dialog");
     expect(within(sheet).getByText("Unit 12A")).toBeInTheDocument();
-    expect(within(sheet).getAllByText("Sample Property Owner", { selector: "span" })).toHaveLength(2);
+    // Every unit of the project shows its property owner.
+    expect(new Set(firstProjectUnits.map((item) => item.propertyOwner)).size).toBe(1);
+    expect(within(sheet).getAllByText(firstProjectUnits[0].propertyOwner, { selector: "span" })).toHaveLength(firstProjectUnits.length);
     for (const name of ["Add Unit", "Edit Project", "Deactivate Project"]) expect(within(sheet).getByRole("button", { name })).toBeInTheDocument();
     await user.keyboard("{Escape}");
     await user.click(screen.getByRole("button", { name: "Add project" }));
     const dialog = await screen.findByRole("dialog");
-    await user.type(within(dialog).getByRole("textbox", { name: /Project name/ }), "sample gardens");
+    await user.type(within(dialog).getByRole("textbox", { name: /Project name/ }), otherProject.name.toLowerCase());
     await user.click(within(dialog).getByRole("button", { name: "Add Project" }));
     expect(await within(dialog).findByText("A project with this name already exists.")).toBeInTheDocument();
     await user.clear(within(dialog).getByRole("textbox", { name: /Project name/ }));
@@ -204,7 +220,7 @@ describe("IGP Projects tab (Settings)", () => {
     const table = await screen.findByRole("table", { name: "Property Sales (IGP)" });
     const admin = createMockRepositories(storeRef.current!, () => getDevIdentity("dev-admin"));
     await admin.igpCatalog.updateUnit("igp-unit-1", { status: "inactive" });
-    await user.click(within(table).getAllByRole("row", { name: /^Open property sale \(IGP\)/ })[0]);
+    await user.click(recordedSaleRow(table));
     await user.click(await within(await screen.findByRole("dialog")).findByRole("button", { name: "Reissue Number" }));
     const dialogs = await screen.findAllByRole("dialog");
     const form = dialogs[dialogs.length - 1];

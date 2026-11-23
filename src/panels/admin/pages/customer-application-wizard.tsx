@@ -292,7 +292,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
   // A resumed draft may hold a card that was retired or sent back to draft since it was saved.
   const stalePlanErrors = (): CustomerErrors => (draft.vipPlan && products.data && !product ? { vipPlan: "This card is no longer available. Choose another card." } : {});
   const allErrors = (): CustomerErrors => ({
-    ...validateCustomerForSubmit(toInput(draft), customers.data ?? [], undefined, supplementaryAllowed),
+    ...validateCustomerForSubmit(toInput(draft), customers.data ?? [], existing?.id, supplementaryAllowed),
     ...stalePlanErrors(),
     ...attributionErrors,
     ...nonStandardErrors(),

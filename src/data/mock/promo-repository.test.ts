@@ -17,7 +17,9 @@ const promoInput = (over: Partial<PromoInput> = {}): PromoInput => ({
 
 function setup() {
   const store = createMockStore();
+  // Start with no promos and no Promo Points so each test builds its own (the seed has both).
   store.promos.length = 0;
+  store.promoPoints.length = 0;
   const as = (id: string) => createMockRepositories(store, () => getDevIdentity(id));
   let n = 0;
   const bill = async (venueId: string, amount = pesos(1100), date = manilaToday()) => {
@@ -36,6 +38,7 @@ const balanceOf = async (r: ReturnType<typeof setup>["admin"]) => (await r.promo
 describe("Promo Points", () => {
   it("earns on approval at the promo outlet, once per bill, and leaves Grant Stay Points unchanged", async () => {
     const { store, admin, finance, bill } = setup();
+    const seededEvents = store.auditEvents.length;
     await admin.promos.create(promoInput());
     const grantBefore = (await admin.stayPoints.list()).find((m) => m.membershipId === "memb-1")!.ledger;
     const spend = await bill(TEPPAN);
@@ -48,7 +51,7 @@ describe("Promo Points", () => {
     const grantAfter = (await admin.stayPoints.list()).find((m) => m.membershipId === "memb-1")!.ledger;
     expect(grantAfter?.entries).toEqual(grantBefore?.entries);
     expect(grantAfter?.balances).toEqual(grantBefore?.balances);
-    expect(store.auditEvents.some((e) => e.action === "PROMO_POINTS_EARNED")).toBe(true);
+    expect(store.auditEvents.slice(seededEvents).some((e) => e.action === "PROMO_POINTS_EARNED")).toBe(true);
   });
 
   it("does not earn outside the promo outlets, dates, or when the promo is a draft", async () => {
@@ -209,11 +212,15 @@ describe("Promo Points", () => {
 
   it("keeps a used outlet from being deleted", async () => {
     const { store, admin } = setup();
-    expect(outletInUse(store, SPA)).toBe(false);
-    const promo = await admin.promos.create(promoInput({ name: "Spa", earnOutletIds: [SPA], redeemOutletIds: [SPA] }));
+    // Seeded resort bills already use the spa, so it stays protected; a new outlet starts unused.
     expect(outletInUse(store, SPA)).toBe(true);
     await expect(admin.outlets.delete(SPA)).rejects.toThrow(/used by existing records/);
+    const outlet = await admin.outlets.create({ name: "Garden Spa", type: "spa" });
+    expect(outletInUse(store, outlet.id)).toBe(false);
+    const promo = await admin.promos.create(promoInput({ name: "Spa", earnOutletIds: [outlet.id], redeemOutletIds: [outlet.id] }));
+    expect(outletInUse(store, outlet.id)).toBe(true);
+    await expect(admin.outlets.delete(outlet.id)).rejects.toThrow(/used by existing records/);
     await admin.promos.delete(promo.id);
-    expect(outletInUse(store, SPA)).toBe(false);
+    expect(outletInUse(store, outlet.id)).toBe(false);
   });
 });

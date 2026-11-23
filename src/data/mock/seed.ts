@@ -7,27 +7,24 @@ import type { VipProduct, PaymentScheme, TierLevel } from "@/modules/vip/types";
 import type { Contract } from "@/modules/contracts/types";
 import type { Sale } from "@/modules/sales/types";
 import type { Payment, UnmatchedReceipt } from "@/modules/finance/types";
-import { createIgpState, type IgpState } from "@/modules/igp/types";
+import type { IgpState } from "@/modules/igp/types";
 import type { ClosedMonth } from "@/modules/finance/month-close";
 import type { Membership } from "@/modules/membership/types";
 import type { Commission, CommissionRateSetting, CommissionClawback, CommissionPayoutList, VipPositionRate } from "@/modules/commissions/types";
 import type { AllowanceReview } from "@/modules/commissions/allowances";
 import type { ResortSpend, StayPointsState } from "@/modules/stay-points/types";
-import { createStayPointsState } from "@/modules/stay-points/engine";
 import type { RedemptionState } from "@/modules/redemption/types";
-import { createRedemptionSeed } from "@/modules/redemption/sample-seed";
 import { seedOutlets, seedReferenceEntries, type Outlet, type ReferenceEntry } from "@/modules/settings/lists";
 import { seedTierLevels } from "@/modules/vip/tier-levels";
 import type { Account } from "@/modules/accounts/types";
 import type { Promo, PromoPointsEntry } from "@/modules/promos/types";
-import { seedPromos } from "@/modules/promos/sample-seed";
 import type { Experience } from "@/modules/experiences/types";
 import { seedExperiences } from "@/modules/experiences/sample-seed";
 import type { AuditEvent } from "@/modules/audit/types";
 import type { ReceiptImportBatch } from "@/modules/imports/receipt-import";
 import type { ReconciliationEntry } from "@/modules/reconciliation/rules";
 import type { MonthSwitchSignOff } from "@/modules/reconciliation/switch-signoff";
-import { seedData } from "./seed-data";
+import { buildSeed } from "./seed/index";
 
 export type MockStore = {
   members: OrgMember[];
@@ -96,72 +93,72 @@ export type MockStore = {
   counters: Record<string, number>;
 };
 
-// Seed records live in the centralized synthetic seed file (seed-data.ts).
-// They are deep-cloned here into browser-memory state; a refresh restores them.
-const { members, accreditations, customers, products, paymentSchemes, contracts, sales, payments, memberships, commissions, resortSpends, customerImportJobs, auditEvents, accounts, departments, roles, staff } = seedData;
-
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
-export function createSeedStore(): MockStore {
+/**
+ * Builds the browser-memory store from the synthetic seed (./seed/), dated
+ * relative to the Asia/Manila business date. A refresh rebuilds it, so mock
+ * records never persist. `today` is for tests that need a fixed date.
+ */
+export function createSeedStore(today?: string): MockStore {
+  const seed = buildSeed(today);
   return {
-    members: members.map((item) => ({ ...item })),
-    accreditations: accreditations.map((item) => ({ ...item, history: item.history.map((entry) => ({ ...entry })) })),
-    seatVacancies: [],
-    registrationApplications: [],
-    customers: clone(customers),
-    products: clone(products),
-    paymentSchemes: clone(paymentSchemes),
-    contracts: clone(contracts),
-    sales: clone(sales),
-    igp: createIgpState(),
-    payments: clone(payments),
-    closedMonths: [],
-    unmatchedReceipts: [],
-    memberQr: {
-      [JSON.stringify(["memb-1", "primary"])]: {
-        holderKey: JSON.stringify(["cust-b1", "26110200001B1T04S", 0]),
-        token: "c149175c37eb4eaabe092abefce8f47d",
-      },
-    },
-    memberships: clone(memberships),
-    commissions: clone(commissions),
-    commissionRateSettings: [],
-    vipPositionRates: [],
-    commissionClawbacks: [],
-    commissionPayoutLists: [],
-    allowanceReviews: [],
-    resortSpends: clone(resortSpends),
-    stayPoints: createStayPointsState(),
-    redemption: createRedemptionSeed(),
+    members: seed.members,
+    accreditations: seed.accreditations,
+    seatVacancies: seed.seatVacancies,
+    registrationApplications: seed.registrationApplications,
+    customers: seed.customers,
+    products: seed.products,
+    paymentSchemes: seed.paymentSchemes,
+    contracts: seed.contracts,
+    sales: seed.sales,
+    igp: seed.igp,
+    payments: seed.payments,
+    closedMonths: seed.closedMonths,
+    unmatchedReceipts: seed.unmatchedReceipts,
+    memberQr: seed.memberQr,
+    memberships: seed.memberships,
+    commissions: seed.commissions,
+    commissionRateSettings: seed.commissionRateSettings,
+    vipPositionRates: seed.vipPositionRates,
+    commissionClawbacks: seed.commissionClawbacks,
+    commissionPayoutLists: seed.commissionPayoutLists,
+    allowanceReviews: seed.allowanceReviews,
+    resortSpends: seed.resortSpends,
+    stayPoints: seed.stayPoints,
+    redemption: seed.redemption,
     referenceEntries: seedReferenceEntries(),
     tierLevels: seedTierLevels(),
     outlets: seedOutlets(),
-    promos: seedPromos(),
-    promoPoints: [],
+    promos: seed.promos,
+    promoPoints: seed.promoPoints,
     experiences: seedExperiences(),
-    accounts: accounts.map((item) => ({ ...item, roleIds: [...item.roleIds] })),
-    departments: departments.map((item) => ({ ...item })),
-    roles: roles.map((item) => ({ ...item, moduleIds: [...item.moduleIds] })),
-    staff: staff.map((item) => ({ ...item })),
+    accounts: seed.accounts,
+    departments: seed.departments,
+    roles: seed.roles,
+    staff: seed.staff,
     temporaryPasswords: {},
-    auditEvents: clone(auditEvents),
-    customerImportJobs: customerImportJobs.map((item) => ({ ...item, createdCustomerIds: [...item.createdCustomerIds] })),
-    receiptImportBatches: [],
-    reconciliationEntries: [],
-    monthSwitchSignOffs: [],
-    customerSequence: customers.length + 1,
-    accountSequence: accounts.length + 1,
-    departmentSequence: departments.length + 1,
-    roleSequence: roles.length + 1,
-    staffSequence: staff.length + 1,
-    memberSequence: members.length + 1,
-    // Shared AA sequence resumes after the seven seeded reservations (1-7).
-    accreditationSequence: 8,
-    registrationSequence: 1,
-    // Continues after the seeded audit-1..audit-8 display records.
-    auditSequence: 9,
-    counters: { experience: 4, promo: 2, ...seedData.counters },
+    auditEvents: seed.auditEvents,
+    customerImportJobs: seed.customerImportJobs,
+    receiptImportBatches: seed.receiptImportBatches,
+    reconciliationEntries: seed.reconciliationEntries,
+    monthSwitchSignOffs: seed.monthSwitchSignOffs,
+    customerSequence: seed.customers.length + 1,
+    accountSequence: seed.accounts.length + 1,
+    departmentSequence: seed.departments.length + 1,
+    roleSequence: seed.roles.length + 1,
+    staffSequence: seed.staff.length + 1,
+    memberSequence: seed.members.length + 1,
+    accreditationSequence: seed.accreditationSequence,
+    registrationSequence: seed.registrationSequence,
+    auditSequence: seed.auditEvents.length + 1,
+    counters: seed.counters,
   };
+}
+
+/** Number of seeded audit events; tests that assert absolute audit counts add it. */
+export function seedAuditEventCount(today?: string): number {
+  return buildSeed(today).auditEvents.length;
 }
 
 function cloneMember(item: OrgMember): OrgMember {

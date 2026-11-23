@@ -84,7 +84,8 @@ describe("sales network genealogy", () => {
   it("counts direct and total descendants", () => {
     const store = createMockStore();
     expect(getDirectDownlineCount("mem-svd-a", store.members)).toBe(2);
-    expect(getTotalDescendantCount("mem-svd-a", store.members)).toBe(4);
+    // SSM A, SM A, OST A1 to A4.
+    expect(getTotalDescendantCount("mem-svd-a", store.members)).toBe(6);
     expect(getTotalDescendantCount("mem-ost-a1", store.members)).toBe(0);
   });
 });

@@ -13,21 +13,29 @@ describe("staff Customer Look Up (UI21)", () => {
   it("finds an active VIP by part of the name, VIP Number or email, case-insensitive", async () => {
     const store = createMockStore();
     const clerk = as(store, "dev-clerk");
-    const [byName] = await clerk.lookupActiveVip("b one");
-    expect(byName).toMatchObject({ customerName: "Customer B One", productCode: "B1", vipNumber: "26110200001B1T04S", validUntil: "2033-11-02" });
+    // memb-1 is an active, carded membership; its VIP Number and dates are relative to today.
+    const membership = store.memberships.find((item) => item.id === "memb-1")!;
+    const customer = store.customers.find((item) => item.id === membership.customerId)!;
+    const [byName] = await clerk.lookupActiveVip(customer.displayName.slice(2, -2).toUpperCase());
+    expect(byName).toMatchObject({ customerName: customer.displayName, productCode: "B1", vipNumber: membership.cardId, validUntil: membership.validityEndDate });
     expect(byName.totalPoints).toBe(byName.weekdayPoints + byName.weekendPoints);
-    expect(await clerk.lookupActiveVip("26110200001")).toHaveLength(1);
-    expect(await clerk.lookupActiveVip("CUSTOMER.B1@")).toHaveLength(1);
+    expect(await clerk.lookupActiveVip(membership.cardId!.slice(0, 11))).toHaveLength(1);
+    expect(await clerk.lookupActiveVip(customer.email!.split("@")[0].toUpperCase() + "@")).toHaveLength(1);
   });
 
   it("needs at least 2 characters and skips pending or expired memberships", async () => {
     const store = createMockStore();
     const finance = as(store, "dev-finance");
     expect(await finance.lookupActiveVip("C")).toEqual([]);
-    // Customer A One holds only a pending membership.
-    expect(await finance.lookupActiveVip("A One")).toEqual([]);
-    store.memberships[0].validityEndDate = "2020-01-01";
-    expect(await finance.lookupActiveVip("B One")).toEqual([]);
+    // cust-a1 holds only a pending membership.
+    const pending = store.customers.find((item) => item.id === "cust-a1")!;
+    expect(store.memberships.filter((item) => item.customerId === pending.id).map((item) => item.status)).toEqual(["pending"]);
+    expect(await finance.lookupActiveVip(pending.displayName)).toEqual([]);
+    const expiring = store.memberships[0];
+    const holder = store.customers.find((item) => item.id === expiring.customerId)!;
+    expect(await finance.lookupActiveVip(holder.displayName)).toHaveLength(1);
+    expiring.validityEndDate = "2020-01-01";
+    expect(await finance.lookupActiveVip(holder.displayName)).toEqual([]);
   });
 
   it("caps results at 50 and lists names that start with the term first", async () => {

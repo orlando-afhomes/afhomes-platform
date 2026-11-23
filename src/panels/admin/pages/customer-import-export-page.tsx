@@ -30,7 +30,7 @@ import { customerRecordName } from "@/modules/customers/rules";
 
 const SHEET_NAME = "Customers";
 /** One filled-in row for the template; the VIP tier is a product code from the catalog. */
-const exampleRow = (productCode: string) => ["", "Maria", "Reyes", "Santos", "", "1990-05-14", "Female", "Married", "09171234567", "maria.santos@example.com", "123 Rizal Street", "Laguna", "Calauan", "Poblacion", "4012", productCode, "4-Month Installment", "Standard", "Walk-In"];
+const exampleRow = (productCode: string) => ["", "Angela", "Ramos", "Bernardo", "", "1990-05-14", "Female", "Married", "09175820346", "angela.bernardo@gmail.com", "Blk 4 Lot 12, Rizal Street", "Laguna", "Calauan", "Poblacion", "4012", productCode, "4-Month Installment", "Standard", "Walk-In"];
 
 const ROW_BADGE: Record<CustomerImportRow["status"], { status: string; label: string }> = {
   ready: { status: "verified", label: "Ready" },

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createMockStore } from "./seed";
-import { SEED_AUDIT_EVENT_COUNT } from "./seed-data";
+import { seedAuditEventCount } from "./seed";
+const SEED_AUDIT_EVENT_COUNT = seedAuditEventCount();
 import { createMockRepositories } from "./repositories";
 import { AUDIT_ACTIONS } from "@/modules/audit/types";
 import { getDevIdentity } from "./dev-identities";
@@ -10,6 +11,19 @@ import { PROTECTED_ROLE_ERROR, PROTECTED_STAFF_ERROR, SELF_MODIFICATION_ERROR, r
 function staffSnapshot(store: ReturnType<typeof createMockStore>, id: string) {
   const staff = store.staff.find((item) => item.id === id);
   return staff ? { ...staff } : undefined;
+}
+
+type Store = ReturnType<typeof createMockStore>;
+const sameEmail = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+
+/** A seeded login email that belongs to an account only (no staff record uses it). */
+function accountOnlyEmail(store: Store) {
+  return store.accounts.find((account) => !store.staff.some((staff) => staff.accountId === account.id || sameEmail(staff.email, account.email)))!.email;
+}
+
+/** A seeded employee email that belongs to an unlinked staff record only (no account uses it). */
+function staffOnlyEmail(store: Store) {
+  return store.staff.find((staff) => !staff.accountId && !store.accounts.some((account) => sameEmail(account.email, staff.email)))!.email;
 }
 
 describe("staff repository S3-A protections", () => {
@@ -137,8 +151,8 @@ describe("staff repository S3-B workflows", () => {
     const store = createMockStore();
     const repo = createMockRepositories(store, () => getDevIdentity("dev-hr")).staff;
     const counts = { staff: store.staff.length, accounts: store.accounts.length, audit: store.auditEvents.length };
-    await expect(repo.create({ ...newHire, email: "finance@afhomes.local", provisionPendingAccount: true })).rejects.toThrow("An account with this email already exists.");
-    await expect(repo.create({ ...newHire, email: "opsstaff@afhomes.local", provisionPendingAccount: true })).rejects.toThrow("An employee with this email already exists.");
+    await expect(repo.create({ ...newHire, email: accountOnlyEmail(store), provisionPendingAccount: true })).rejects.toThrow("An account with this email already exists.");
+    await expect(repo.create({ ...newHire, email: staffOnlyEmail(store), provisionPendingAccount: true })).rejects.toThrow("An employee with this email already exists.");
     await expect(repo.create({ ...newHire, accountId: "acct-pending", provisionPendingAccount: true })).rejects.toThrow();
     expect({ staff: store.staff.length, accounts: store.accounts.length, audit: store.auditEvents.length }).toEqual(counts);
   });
@@ -211,8 +225,8 @@ describe("staff repository S3-B workflows", () => {
     await repo.update("staff-admin", { displayName: "Admin Renamed", email: "admin.renamed@afhomes.local" });
     expect(store.accounts.find((item) => item.id === "acct-admin")).toMatchObject({ displayName: "Admin Renamed", email: "admin.renamed@afhomes.local" });
     const before = staffSnapshot(store, "staff-admin");
-    await expect(repo.update("staff-admin", { email: "finance@afhomes.local" })).rejects.toThrow("An account with this email already exists.");
-    await expect(repo.update("staff-admin", { email: "OPSSTAFF@afhomes.local" })).rejects.toThrow("An employee with this email already exists.");
+    await expect(repo.update("staff-admin", { email: accountOnlyEmail(store) })).rejects.toThrow("An account with this email already exists.");
+    await expect(repo.update("staff-admin", { email: staffOnlyEmail(store).toUpperCase() })).rejects.toThrow("An employee with this email already exists.");
     expect(staffSnapshot(store, "staff-admin")).toEqual(before);
   });
 
@@ -220,9 +234,10 @@ describe("staff repository S3-B workflows", () => {
     const store = createMockStore();
     const hr = createMockRepositories(store, () => getDevIdentity("dev-hr")).staff;
     const account = { ...store.accounts.find((item) => item.id === "acct-super-admin") };
+    const staffBefore = staffSnapshot(store, "staff-super");
     await expect(hr.update("staff-super", { email: "takeover@afhomes.local" })).rejects.toThrow(PROTECTED_STAFF_ERROR);
     expect(store.accounts.find((item) => item.id === "acct-super-admin")?.email).toBe(account.email);
-    expect(staffSnapshot(store, "staff-super")?.email).toBe("superadmin@afhomes.local");
+    expect(staffSnapshot(store, "staff-super")?.email).toBe(staffBefore?.email);
   });
 });
 
@@ -248,9 +263,11 @@ describe("staff repository S3-B.1 provisioning and identity sync", () => {
   it("leaves existing unlinked staff records unchanged", async () => {
     const store = createMockStore();
     const repo = createMockRepositories(store, () => getDevIdentity("dev-admin")).staff;
+    const accountsBefore = store.accounts.map((item) => ({ ...item, roleIds: [...item.roleIds] }));
     const updated = await repo.update("staff-2", { position: "Finance Analyst II" });
     expect(updated.accountId).toBeNull();
-    expect(store.accounts.some((item) => item.email === "finstaff@afhomes.local")).toBe(false);
+    // No account is provisioned or changed for the unlinked record.
+    expect(store.accounts).toEqual(accountsBefore);
   });
 
   it("locks protected-record identity fields for non-super-admins only", async () => {
@@ -272,7 +289,7 @@ describe("staff repository S3-B.1 provisioning and identity sync", () => {
     const staffBefore = staffSnapshot(store, "staff-admin");
     const accountBefore = { ...store.accounts.find((item) => item.id === "acct-admin") };
     const auditCount = store.auditEvents.length;
-    await expect(repo.update("staff-admin", { email: "finance@afhomes.local" })).rejects.toThrow("already exists");
+    await expect(repo.update("staff-admin", { email: accountOnlyEmail(store) })).rejects.toThrow("already exists");
     expect(staffSnapshot(store, "staff-admin")).toEqual(staffBefore);
     expect(store.accounts.find((item) => item.id === "acct-admin")).toEqual(accountBefore);
     expect(store.auditEvents).toHaveLength(auditCount);

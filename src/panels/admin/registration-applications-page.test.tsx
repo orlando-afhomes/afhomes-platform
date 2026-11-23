@@ -59,11 +59,15 @@ function application(overrides: Partial<RegistrationApplication> & { id: string;
   };
 }
 
+const prepared = new WeakSet<MockStore>();
+
 function Seeded({ prepare, children }: { prepare?: (store: MockStore) => void; children: ReactNode }) {
   const store = useMockStore();
   captureStore(store);
-  if (store.registrationApplications.length === 0) {
-    store.registrationApplications.push(
+  if (!prepared.has(store)) {
+    prepared.add(store);
+    // These tests work on their own two applications instead of the seeded queue.
+    store.registrationApplications.splice(0, store.registrationApplications.length,
       application({ id: "reg-1", reference: "OSTA-11111111", firstName: "Ana" }),
       application({ id: "reg-2", reference: "OSTA-22222222", firstName: "Ben", status: "approved" }),
     );

@@ -8,6 +8,7 @@ import { AppToaster } from "@/shared/components/modern/app-toaster";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { MockPromoRepository } from "@/data/mock/promo-repository";
+import { createMockStore } from "@/data/mock/seed";
 import { PromoPointsReportPage } from "./pages/promo-points-report-page";
 import { StayPointsAreaPage } from "./pages/stay-points-page";
 
@@ -37,6 +38,18 @@ const show = (identityId: string, page: ReactElement) => render(<Wrapper identit
 function showStayPoints(identityId: string, tab: "promos" | "promo-points" | "welcome-gift") {
   window.history.replaceState(null, "", `/admin/stay-points?tab=${tab}`);
   return show(identityId, <StayPointsAreaPage />);
+}
+
+// The seed holds a published promo with rewards, a draft with no public text, and Promo Points entries.
+const seed = createMockStore();
+const draftPromo = seed.promos.find((promo) => !promo.published && !promo.publicTitle)!;
+
+/** The seeded ledger: the table shows entries instead of the empty state. */
+async function expectSeededLedger() {
+  expect(seed.promoPoints.length).toBeGreaterThan(0);
+  const table = await screen.findByRole("table", { name: "Promo Points Ledger" });
+  await waitFor(() => expect(within(table).getAllByRole("row").length).toBeGreaterThan(1));
+  expect(screen.queryByText("No Promo Points entries yet.")).toBeNull();
 }
 
 afterEach(() => {
@@ -98,8 +111,9 @@ describe("promos page", () => {
 
   it("previews the saved public offer without publishing it", async () => {
     showStayPoints("dev-admin", "promos");
-    await screen.findByText(/Teppanyaki Dining Points/);
-    fireEvent.click(screen.getByText(/Teppanyaki Dining Points/).closest("tr")!);
+    // A draft promo that has no public title, summary or terms yet.
+    await screen.findByText(draftPromo.name);
+    fireEvent.click(screen.getByText(draftPromo.name).closest("tr")!);
     const details = await screen.findByRole("dialog");
     fireEvent.click(within(details).getByRole("button", { name: /Preview public offer/ }));
 
@@ -111,17 +125,17 @@ describe("promos page", () => {
 });
 
 describe("promo points page", () => {
-  it("offers Record points use to the Clerk and shows the empty ledger", async () => {
+  it("offers Record points use to the Clerk and shows the ledger", async () => {
     const user = userEvent.setup();
     showStayPoints("dev-clerk", "promo-points");
-    expect(await screen.findByText("No Promo Points entries yet.")).toBeInTheDocument();
+    await expectSeededLedger();
     await user.click(screen.getByRole("button", { name: /record points use/i }));
     expect(await screen.findByRole("dialog", { name: /record points use/i })).toBeInTheDocument();
   });
 
   it("hides Record points use from Finance", async () => {
     showStayPoints("dev-finance", "promo-points");
-    expect(await screen.findByText("No Promo Points entries yet.")).toBeInTheDocument();
+    await expectSeededLedger();
     await waitFor(() => expect(screen.queryByRole("button", { name: /record points use/i })).toBeNull());
   });
 
@@ -139,7 +153,7 @@ describe("promo points page", () => {
     expect(within(alert).getByText(/Ledger failed\./)).toBeInTheDocument();
     expect(screen.queryByRole("table", { name: "Promo Points Ledger" })).toBeNull();
     await user.click(within(alert).getByRole("button", { name: "Try again" }));
-    expect(await screen.findByText("No Promo Points entries yet.")).toBeInTheDocument();
+    await expectSeededLedger();
   });
 });
 

@@ -209,3 +209,55 @@ Run with agent-browser (session `acceptance`) on Chrome against the already-runn
   - Column mapping (export → workbook): Month → `Month` (IST Monthly Summary / DSC and DRI Payout); Recognized Sales → QP own/team closed-deal TCP VIP+IGP; Net Collections → QP/EP collections plus Collections-sheet running totals; Commission Ready to Pay → `TOTAL` / `NET PAYABLE` (DSC and DRI Payout); Reviewed Allowances → BA/PA/PB figures from the separate Allowances workbook (`AFhomes_Allowances_BA_PA_PB-v1_0_0-BUILD_2026-10-04a.xlsx`); Closed on → no workbook equivalent (platform metadata).
   - Comparison run on synthetic data via Compare with Spreadsheet (November 2026, open month): entered synthetic Company Spreadsheet Total 31000 for "Verified receipts (net)" → System ₱31,000.00 vs Spreadsheet ₱31,000.00 → Difference ₱0.00 → status Matches, decision recorded, "Totals match." Records behind the total: BT-PAY-7/BT-PAY-8, ₱15,500.00 × 2, Verified. Open-month system totals observed: Verified receipts (net) ₱31,000.00; Imported receipts ₱0.00; Confirmed sales value (net) ₱0.00; Commissions payable (approved, unpaid) ₱0.00; Commissions paid ₱1,440.00.
   - A full refresh restored the seed (all five measures back to "Not checked yet"), confirming browser-memory-only mock behavior. Value comparison against real company figures was deliberately not run (synthetic data only); with no closed month in the seed, closed-period value comparison is N/A until a month is closed.
+
+## Realistic-seed browser verification (2026-11-23, session 3)
+
+Plan reference: `docs/implementation/01-prototype/plans/realistic-seed-data-plan.md` §8 step 3. Repo `develop @ 9796900` (seed-replacement tree; no agent commits). Dev server was already listening on port 3000, so it was reused; no server was started or stopped by this session. Browser: agent-browser session `task-d97d333eebdc` against `http://localhost:3000`. Identity switching via the mock-session localStorage key; portal via UI sign-in. No application code, test, seed-builder, business-rule, `AGENTS.md` or `workflow/save-session.md` file was touched; the only intended repo change is this section. No Git write operation was performed.
+
+Method: per route, settle-then-inspect eval recording URL, text length, table row counts, `[role=tab]` walk (every tab clicked, stats per tab), no-access markers (`access restricted|not authorized|forbidden|no permission|contact your administrator|sign in to continue`), designed-empty markers (`no ... available|found|yet|recorded`, `nothing here`, `no results`, `no records`, `not checked yet`) and a placeholder scan mirroring `seed-integrity.test.ts` (`randomuser.me`, `example.com`, `@afhomes.local`, `@afhomes.test`, `customer [a-z] one`, `lorem`, `ipsum`, `sample`, `test user`, `dummy`, `john/jane doe`, `foo bar`; each hit reported with context). Verdicts below are per-area across all their tabs. "Rows exist" means at least one data row rendered (header-only tables and designed empty states are called out, not silently passed).
+
+### Super Administrator (full inventory)
+
+- Dashboard `/admin`: PASS. "Welcome Back, Super Admin"; metrics 15 sellers, 40 customers, 3 contracts requiring review, ₱3.5M confirmed sales; 29-row Sales/Collections chart table. No placeholders.
+- Account `/admin/account`, audit `/admin/audit-logs` (10 rows), organization Staff (9 rows, incl. Pending Approvals), Departments (5 rows), Roles (10 rows): PASS. Staff rows show realistic names (e.g. pending Nerissa Aguilar, active Rosalinda Tan).
+- `/admin/accounts`: PASS (compat redirect to `/admin/organization?tab=staff&view=account`, verified: account directory with 2 rows).
+- Customers: list (10 rows), Import (2 batch rows), Export (10 rows), `/admin/customers/new` form, `/admin/customer-lookup` search form, detail `cust-b1` (Overview/Contract/Sales/Membership/Audit Log — Contract tab shows Customer ID `2026-0026`, Bronze, Finalized; draft `cust-b11` renders): PASS.
+- Sales: Sales (10), Contracts (10), IGP register (5 rows: Altamira Ridge Residences, Casa Sampaguita Townhomes, Lakeview Narra Estates; one ₱9.65M band-0 series, one Replaced, statuses Pending approval/Confirmed Sale), Payment Plan Guide (4 scheme tables). Contract-review filter (3 needs-review rows), detail `ctr-3` incl. legitimate "No payments submitted yet" empty state, `ctr-26` detail: PASS. Compat routes (`/admin/sales/igp`, `/admin/sales/contract-review`, `/admin/vip-products/contracts`, `/admin/vip-products/scheme-guide`, `/admin/vip-products/contracts/ctr-2` → sales contract detail, `/admin/finance/contracts/ctr-2` → collections detail) all land on populated targets: PASS.
+- Finance: Receipts (10), Collections (10), Cancellations (1 row — the single cancelled contract `ctr-17`; detail verified), Close the Month (4 rows), Reconciliation (tables + legitimate "Not checked yet" pre-compare states): PASS. `/admin/finance/holds` and `/admin/commissions/payouts` are server-side compat redirects to populated tabs: PASS.
+- Commissions (10 rows), Paybacks (1 clawback row), Rates (10 + 8), Leader Allowances (10). `/admin/commissions/assignment` redirects to Rates: PASS.
+- Membership (10 rows), Ready to Activate (10 rows), IGP buyer-membership behavior unchanged: PASS.
+- Stay Points: Welcome Gift / Resort Bills / Gift Exceptions are cardholder pickers by design ("Pick a cardholder…"); verified with cardholders: Jerome Salvador (B1, payment hold; 3 resort bills incl. 1 voided; "No exception requests" — legitimate per-holder state), Marilou Evangelista (S1 active, no waivers — legitimate), Leonardo Panganiban (Gold; 1 waiver row: Year 2, "Residence outside the Philippines", Pending). Promos (3), Promo Points (8), GSD Point Service ("No customer selected. Scan a QR to begin." — by design): PASS.
+- Redemption Bookings (6), Card Points (8); `/admin/redemption/points-table` redirects to vip-products points table (3 rows): PASS.
+- Experiences directory (3), VIP products (3), schemes (4), tier codes (3 + 7), points table (3), holidays (10), venues (2), lists (3), historical import (1 batch), IGP projects (3): PASS.
+- Sales network: Members (10), Team Tree (3 SVD roots: Team Alab/Sinag/Bagwis), Seller Applications (4: pending/approved/returned/rejected). Member detail `mem-svd-a` (Overview/Profile/Team Below; accreditation history "AAI25060001 replaced by AAI26060001"; masked gov ID, TIN `333-403-681`); `mem-ost-a4` History tab: 2-row Relationship History (Create + Transfer, real names): PASS.
+- Reports: Sales (10), Customers (10), Collections (10), Commissions (3), Membership (6), Stay Points (6), Promo Points (5); Summary shows designed "No comparison available" (no recorded comparison — same legitimate state as Stage 0): PASS. Compat routes (`settings/lists`, `reports/*`) land on populated tabs: PASS.
+- Placeholder scan: zero hits on every admin route and tab.
+
+### Other identities (representative walk: dashboard, customers, sales, finance, commissions, membership, reports, organization/sales-network/redemption/stay-points as applicable)
+
+- Finance: PASS. Finance queues, commissions (10), paybacks, allowances, membership (10), reports incl. scoped Customers (1 row). `/admin/customers` and `/admin/organization` show the no-access state (not empty tables) — legitimate per permissions.
+- Clerk: PASS. To-do dashboard (returned receipts, contracts/customers to fix — real counts), customers (10), sales (all tabs). Finance, commissions, membership, reports, organization all show the no-access state — legitimate.
+- HR: PASS. Organization Staff (7) + Departments; Roles tab correctly absent for HR; sales-network, customers, finance, reports show no-access. Dashboard shows the designed "No operational dashboard metrics are available for this role" state.
+- GSD: PASS. Promos (3), Promo Points scoped view (designed "No Promo Points entries yet" — GSD has no membership), GSD Point Service page. `/admin/redemption` no-access is legitimate (`gsd` modules are BASE + `stay-points` only, `src/modules/identity/permissions.ts:124`). Customers, finance, membership no-access — legitimate.
+- SVD-A: PASS. Customers (10 team), own Sales (1 confirmed Gold row, self as seller) vs team Contracts (10), commissions (10), memberships (10), scoped reports. Finance no-access — legitimate.
+- OST-A1: PASS. Customers (5), sales/contracts (3), commissions (3), memberships (3, incl. carded Marilou Evangelista). Finance no-access — legitimate.
+- OST-B1: PASS. Customers (4), sales/contracts (3), commissions (4), memberships (3, incl. carded Jerome Salvador). Finance no-access — legitimate.
+- OST-C1 (team C): PASS with noted business states. Customers (2), sales/contracts (2), memberships (1). Commissions tab shows designed "No commissions yet" (₱0.00 summaries, 0 records) — the OST's sales have no released commissions; page functions, not a seed gap. Team C coverage confirmed via SVD-C: 5 commission rows and 5 membership rows incl. carded Josephine Macaraeg. Finance no-access — legitimate.
+- Portal customer (jerome.salvador82@gmail.com): PASS. Home (Bronze VIP, card no., Valid until, payment-hold notice, 0/0 points), QR ("Your membership QR"), Activity (2 approved bills), Profile (mobile `09278443039`, email, "Landline Not recorded" — legitimate blank field).
+
+### Public pages (signed out)
+
+PASS (all render, no placeholders, no empty-content failures): `/`, `/about`, `/blog` + article slug, `/compliance` (5-row table), `/contact`, `/experiences/*` (3 fixed pages), `/faq`, `/offers` (published promos render), `/privacy` (7 tables), `/register/ost`, `/register/ost/correct/invalid-token-123` (invalid-link state), `/verify`, `/vip-privilege`, `/login` (Admin/Staff tabs form), `/login/sales` (redirects when signed in; form verified signed out), `/portal` signed-out Customer Login. Note: portal copy "Only test customer accounts can sign in for now." is pre-existing UI text, not seed data (does not match the seed-integrity placeholder pattern).
+
+### Screenshots (under /tmp/seed-qa/, i.e. the Windows temp dir)
+
+`shot-dashboard.png`, `shot-customers.png`, `shot-contract-detail.png`, `shot-finance-queues.png`, `shot-commissions.png`, `shot-membership.png`, `shot-igp-register.png`, `shot-portal.png` (all 100–140 KB; dashboard visually confirmed: 15 members, 40 customers, 3 reviews, ₱3.5M).
+
+### Not done (explicitly owner items per the plan — not attempted)
+
+Throttled-network skeleton observation, forced query error with retry, dirty-form Back navigation, and visible keyboard-focus-ring confirmation remain owner manual-browser items, as recorded in the Stage 0/Stage 5 sections above.
+
+### Incidental notes (not failures)
+
+- `agent-browser close` at session end hit a transient daemon timeout (`os error 10060`); the named session was idle-scoped and exits on its own. No user tabs were touched (all work in session `task-d97d333eebdc`).
+- Raw JSONL probe logs and the probe scripts live only in `/tmp/seed-qa/` (outside the repo); nothing was copied into the repo besides this section.

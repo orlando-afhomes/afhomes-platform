@@ -10,21 +10,23 @@ export type MockAccount = { email: string; password: string; identityId: string;
 const PASSWORD = "Afhomes@2026";
 
 const ACCOUNT_ROWS: Array<[string, string, MockPortal]> = [
-  ["superadmin@afhomes.test", "dev-super-admin", "admin"],
-  ["admin@afhomes.test", "dev-admin", "admin"],
-  ["finance@afhomes.test", "dev-finance", "staff"],
-  ["hr@afhomes.test", "dev-hr", "staff"],
-  ["clerk@afhomes.test", "dev-clerk", "staff"],
-  ["gsd@afhomes.test", "dev-gsd", "staff"],
-  ["svd.alpha@afhomes.test", "dev-svd-a", "sales"],
-  ["ssm.alpha@afhomes.test", "dev-ssm-a", "sales"],
-  ["sm.alpha@afhomes.test", "dev-sm-a", "sales"],
-  ["ost.alpha1@afhomes.test", "dev-ost-a1", "sales"],
-  ["ost.alpha2@afhomes.test", "dev-ost-a2", "sales"],
-  ["svd.beta@afhomes.test", "dev-svd-b", "sales"],
-  ["ost.beta1@afhomes.test", "dev-ost-b1", "sales"],
-  ["inactive@afhomes.test", "dev-inactive", "sales"],
-  ["multirole@afhomes.test", "dev-multi-role", "sales"],
+  ["victoria.salazar@afhomes.com.ph", "dev-super-admin", "admin"],
+  ["eduardo.ocampo@afhomes.com.ph", "dev-admin", "admin"],
+  ["rosalinda.tan@afhomes.com.ph", "dev-finance", "staff"],
+  ["carmela.rivera@afhomes.com.ph", "dev-hr", "staff"],
+  ["marites.gonzales@afhomes.com.ph", "dev-clerk", "staff"],
+  ["joel.fernandez@afhomes.com.ph", "dev-gsd", "staff"],
+  ["ramon.delrosario@afhomes.com.ph", "dev-svd-a", "sales"],
+  ["maria.santos@afhomes.com.ph", "dev-ssm-a", "sales"],
+  ["jose.reyes@afhomes.com.ph", "dev-sm-a", "sales"],
+  ["ana.mendoza@afhomes.com.ph", "dev-ost-a1", "sales"],
+  ["mark.villanueva@afhomes.com.ph", "dev-ost-a2", "sales"],
+  ["liza.aquino@afhomes.com.ph", "dev-svd-b", "sales"],
+  ["paolo.ramos@afhomes.com.ph", "dev-ost-b1", "sales"],
+  ["teresita.navarro@afhomes.com.ph", "dev-svd-c", "sales"],
+  ["rowena.castillo@afhomes.com.ph", "dev-ost-c1", "sales"],
+  ["amendoza.former@afhomes.com.ph", "dev-inactive", "sales"],
+  ["jreyes.multirole@afhomes.com.ph", "dev-multi-role", "sales"],
 ];
 
 export const MOCK_ACCOUNTS: MockAccount[] = ACCOUNT_ROWS.map(([email, identityId, portal]) => ({

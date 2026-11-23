@@ -9,7 +9,8 @@ import { CustomerPortalProvider, useCustomerPortal } from "./customer-portal-pro
 
 afterEach(cleanup);
 
-const SAMPLE_CUSTOMER_EMAIL = "customer.b1@afhomes.local";
+// A cardholder's email read from the seed (cust-b1 holds a card).
+const SAMPLE_CUSTOMER_EMAIL = createMockStore().customers.find((item) => item.id === "cust-b1")!.email!;
 
 function SessionActions() {
   const { signIn, signOut } = useCustomerPortal();

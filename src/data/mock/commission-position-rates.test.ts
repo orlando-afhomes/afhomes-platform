@@ -8,20 +8,26 @@ const standard = { designation: "OST", role: "DSC", rateBp: 500, approvalReferen
 function setup(identityId = "dev-admin") {
   const store = createMockStore();
   const repository = new MockCommissionRepository(store, () => getDevIdentity(identityId), { delayMs: 0 });
+  // OST A1 starts without a VIP DSC rate so it can adopt the standard (the seed gives every active seller one).
+  store.commissionRateSettings = store.commissionRateSettings.filter((item) => !(item.memberId === "mem-ost-a1" && item.product === "VIP" && item.role === "DSC"));
   return { store, repository };
 }
 
 describe("VIP position rates", () => {
   it("copies an approved standard only after confirming a seller's service terms", async () => {
     const { store, repository } = setup();
+    const seededRates = structuredClone(store.commissionRateSettings);
+    const ownDsc = () => store.commissionRateSettings.filter((item) => item.memberId === "mem-ost-a1" && item.product === "VIP" && item.role === "DSC");
     await repository.setPositionRate(standard);
-    expect(store.commissionRateSettings).toEqual([]);
+    expect(store.commissionRateSettings).toEqual(seededRates);
     const adoption = { memberId: "mem-ost-a1", standard, serviceTermsReference: "Signed service terms A" };
     await repository.applyPositionRate(adoption);
     await repository.setPositionRate({ ...standard, rateBp: 700 });
-    expect(store.commissionRateSettings).toEqual([
+    expect(ownDsc()).toEqual([
       { memberId: "mem-ost-a1", product: "VIP", role: "DSC", rateBp: 500, standardRateBp: 500 },
     ]);
+    // Changing the standard never rewrites other sellers' rates.
+    expect(store.commissionRateSettings.filter((item) => !ownDsc().includes(item))).toEqual(seededRates);
     await expect(repository.applyPositionRate(adoption)).rejects.toThrow(/already has/i);
   });
 
@@ -33,7 +39,7 @@ describe("VIP position rates", () => {
     await expect(adopt("mem-ost-a1", standard)).rejects.toThrow(/changed/i);
     await expect(adopt(store.members.find((member) => member.designation !== "OST")!.id)).rejects.toThrow(/position/i);
     await adopt("mem-ost-a1");
-    expect(store.commissionRateSettings[0]).toMatchObject({ rateBp: 0, standardRateBp: 0 });
+    expect(store.commissionRateSettings.find((item) => item.memberId === "mem-ost-a1" && item.product === "VIP" && item.role === "DSC")).toMatchObject({ rateBp: 0, standardRateBp: 0 });
     await expect(adopt("mem-ost-a1")).rejects.toThrow(/already has/i);
   });
 

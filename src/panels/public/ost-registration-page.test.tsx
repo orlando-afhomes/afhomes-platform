@@ -45,6 +45,8 @@ function Wrapper() {
 
 afterEach(cleanup);
 
+const applicationsFor = (email: string) => currentStore.registrationApplications.filter((item) => item.applicant.email === email);
+
 type User = ReturnType<typeof userEvent.setup>;
 
 async function verifyAndConfirm(user: User) {
@@ -128,12 +130,13 @@ describe("OST registration", () => {
 
     expect(await screen.findByText("Application received")).toBeInTheDocument();
     expect(screen.getByText(/office will review your application and contact you/i)).toBeInTheDocument();
-    const reference = currentStore.registrationApplications[0].reference;
-    expect(screen.getByText(reference)).toBeInTheDocument();
-    expect(currentStore.registrationApplications).toHaveLength(1);
-    expect(currentStore.registrationApplications[0]).toMatchObject({ status: "submitted", memberId: null, accountId: null });
+    // The seed holds other applications; this submission is the one with the applicant's email.
+    const created = applicationsFor("ana.cruz@example.com");
+    expect(created).toHaveLength(1);
+    expect(screen.getByText(created[0].reference)).toBeInTheDocument();
+    expect(created[0]).toMatchObject({ status: "submitted", memberId: null, accountId: null });
     // Neutral: nothing internal is shown to the applicant.
-    expect(document.body.textContent ?? "").not.toMatch(/reg-1|mem-sm-a|AAO/);
+    expect(document.body.textContent ?? "").not.toMatch(new RegExp(`${created[0].id}|${created[0].sponsorMemberId}|AAO`));
   }, 30000);
 
   it("shows a submit error state when the application cannot be accepted", async () => {
@@ -142,7 +145,9 @@ describe("OST registration", () => {
     await verifyAndConfirm(user);
     await fillApplicant(user);
     // An email already held by an account is refused neutrally by the repository.
-    fireEvent.change(field("applicant-email"), { target: { value: currentStore.accounts[0].email } });
+    const takenEmail = currentStore.accounts[0].email;
+    const applicationsBefore = currentStore.registrationApplications.length;
+    fireEvent.change(field("applicant-email"), { target: { value: takenEmail } });
     await user.click(await screen.findByRole("button", { name: "Continue" }));
 
     fireEvent.change(await screen.findByRole("textbox", { name: "No./Street/Subdivision" }), { target: { value: "123 Maharlika Street" } });
@@ -157,6 +162,7 @@ describe("OST registration", () => {
 
     expect(await screen.findByText("Could not submit")).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent(/could not accept this application online/i);
-    expect(currentStore.registrationApplications).toHaveLength(0);
+    expect(currentStore.registrationApplications).toHaveLength(applicationsBefore);
+    expect(applicationsFor(takenEmail)).toHaveLength(0);
   }, 30000);
 });

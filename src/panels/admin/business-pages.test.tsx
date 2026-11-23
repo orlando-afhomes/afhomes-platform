@@ -32,10 +32,25 @@ import { currentManilaYear } from "@/modules/customers/customer-number";
 import type { Customer } from "@/modules/customers/types";
 import { MockCustomerRepository } from "@/data/mock/customer-repository";
 import { MockAccreditationRepository } from "@/data/mock/accreditation-repository";
+import { createMockStore } from "@/data/mock/seed";
 import * as registration from "@/modules/customers/application/register-customer";
 import Swal from "sweetalert2";
 
 const navigation = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }));
+
+// Seed-derived names: the mock seed uses realistic relative-date data, so tests
+// read display names from the seed instead of pinning the old placeholder values.
+const seed = createMockStore();
+const CUSTOMER_A1 = seed.customers.find((item) => item.id === "cust-a1")!.displayName;
+const CUSTOMER_B1 = seed.customers.find((item) => item.id === "cust-b1")!.displayName;
+// cust-a2 is a seeded draft that now carries a full base profile (first/last name);
+// the draft-update test reads those names instead of expecting blanks.
+const SEED_DRAFT_A2 = seed.customers.find((item) => item.id === "cust-a2")!;
+const SELLER_SVD_A = seed.members.find((item) => item.id === "mem-svd-a")!.displayName;
+const NEWEST_CONTRACT = [...seed.contracts].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+const NEWEST_CUSTOMER = seed.customers.find((item) => item.id === NEWEST_CONTRACT.customerId)!.displayName;
+const OST_A1_CONTRACT_COUNT = seed.contracts.filter((contract) =>
+  contract.genealogy.some((entry) => entry.memberId === "mem-ost-a1")).length;
 
 vi.mock("next/navigation", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/navigation")>()),
@@ -150,15 +165,15 @@ describe("business pages render for the intended roles", () => {
   it("lists customers for a seller and restricts the OST view of others", async () => {
     show("dev-ssm-a", <CustomersAreaPage />, "customers");
     expect(await screen.findByRole("table", { name: "Customers" })).toBeInTheDocument();
-    expect(await screen.findByText("Customer A One")).toBeInTheDocument();
+    expect(await screen.findByText(CUSTOMER_A1)).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "New Customer" })).toBeInTheDocument();
   });
 
   it("lets an OST start a customer draft but not open another seller's customer", async () => {
     show("dev-ost-a1", <CustomersAreaPage />, "customers");
-    expect(await screen.findByText("Customer A One")).toBeInTheDocument();
+    expect(await screen.findByText(CUSTOMER_A1)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /new customer/i })).toBeInTheDocument();
-    expect(screen.queryByText("Customer B One")).toBeNull();
+    expect(screen.queryByText(CUSTOMER_B1)).toBeNull();
   });
 
   it("shows a summary-only customer detail for downline records", async () => {
@@ -280,18 +295,20 @@ describe("business pages render for the intended roles", () => {
   it("lists contracts for review with a New contract action and a count footer", async () => {
     show("dev-admin", <SalesAreaPage />, "contracts");
     expect(await screen.findByRole("table", { name: "Contracts" })).toBeInTheDocument();
-    expect(await screen.findByText("Rafael Domingo")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Rafael Domingo" })).toBeNull();
+    expect(await screen.findByText(NEWEST_CUSTOMER)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: NEWEST_CUSTOMER })).toBeNull();
     expect(screen.getByRole("link", { name: /new contract/i })).toHaveAttribute("href", "/admin/customers?tab=customers");
-    expect(document.querySelectorAll("tbody tr[data-row-key]")).toHaveLength(4);
-    expect(document.querySelector('p[aria-live="polite"]')).toHaveTextContent("Showing page 1/1");
+    expect(document.querySelectorAll("tbody tr[data-row-key]")).toHaveLength(Math.min(seed.contracts.length, 10));
+    expect(document.querySelector('p[aria-live="polite"]')).toHaveTextContent(
+      `Showing page 1/${Math.max(1, Math.ceil(seed.contracts.length / 10))}`,
+    );
   });
 
   it("hides the New contract action from identities without contracts.prepare", async () => {
     show("dev-ost-a1", <SalesAreaPage />, "contracts");
     expect(await screen.findByRole("table", { name: "Contracts" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /new contract/i })).toBeNull();
-    expect(document.querySelectorAll("tbody tr[data-row-key]")).toHaveLength(1);
+    expect(document.querySelectorAll("tbody tr[data-row-key]")).toHaveLength(OST_A1_CONTRACT_COUNT);
   });
 
   it("gives Finance a verification queue with the pending reservation", async () => {
@@ -340,14 +357,18 @@ describe("business pages render for the intended roles", () => {
     show("dev-ost-a1", <SalesAreaPage />, "sales");
     expect(await screen.findByRole("table", { name: "Sales" })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Team sales" })).toBeNull();
-    expect((await screen.findAllByText("Customer A One")).length).toBeGreaterThan(0);
-    expect(screen.queryByText("Customer B One")).toBeNull();
+    expect((await screen.findAllByText(CUSTOMER_A1)).length).toBeGreaterThan(0);
+    expect(screen.queryByText(CUSTOMER_B1)).toBeNull();
   });
 
   it("lets Administrators open the Commission Rates directory", async () => {
     show("dev-admin", <CommissionsAreaPage />, "rates");
     expect(await screen.findByRole("heading", { name: "Commissions" })).toBeInTheDocument();
-    expect(await screen.findByText("No approved rates recorded.")).toBeInTheDocument();
+    // The seed approves a VIP rate for every active seller, so the directory lists rows.
+    expect(await screen.findByRole("table", { name: "Approved Seller Rates" })).toBeInTheDocument();
+    fireEvent.change(await screen.findByRole("searchbox", { name: "Search sellers" }), { target: { value: SELLER_SVD_A } });
+    expect((await screen.findAllByRole("row", { name: `Open rate for ${SELLER_SVD_A}` })).length).toBeGreaterThan(0);
+    expect(screen.queryByText("No approved rates recorded.")).toBeNull();
   });
 
   it("shows Administrators the customer import steps and templates", async () => {
@@ -407,7 +428,7 @@ describe("business pages render for the intended roles", () => {
     expect(search).toHaveAttribute("placeholder", "Search by name or card number");
     expect(screen.getByText("Pick a cardholder to see their yearly gifts and points.")).toBeInTheDocument();
     expect(screen.queryByRole("table", { name: "Yearly Gifts" })).toBeNull();
-    await pickFilteredOption(user, search, "Customer B", /Customer B One/);
+    await pickFilteredOption(user, search, "Jerome", new RegExp(escapeRegExp(CUSTOMER_B1)));
     expect(await screen.findByRole("table", { name: "Yearly Gifts" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("tab", { name: "Resort Bills" }));
     const bills = await screen.findByRole("table", { name: "Resort Bills" });
@@ -421,11 +442,11 @@ describe("business pages render for the intended roles", () => {
   it("shows the cardholder summary, the payment hold alert and plain balance cards without a details button", async () => {
     const user = userEvent.setup();
     show("dev-finance", <StayPointsAreaPage />, "welcome-gift");
-    await pickFilteredOption(user, await screen.findByRole("combobox", { name: /find a cardholder/i }), "Customer B", /Customer B One/);
+    await pickFilteredOption(user, await screen.findByRole("combobox", { name: /find a cardholder/i }), "Jerome", new RegExp(escapeRegExp(CUSTOMER_B1)));
     const tranches = await screen.findByRole("table", { name: "Yearly Gifts" });
     expect(within(tranches).getAllByRole("columnheader").length).toBeLessThanOrEqual(5);
     const summary = screen.getByLabelText("Cardholder summary");
-    expect(within(summary).getByText("Customer B One")).toBeInTheDocument();
+    expect(within(summary).getByText(CUSTOMER_B1)).toBeInTheDocument();
     expect(within(summary).getByText("Card claim date")).toBeInTheDocument();
     expect(within(summary).getByText("Points start date")).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent("Points are paused: this account has a payment hold. New gifts and stays resume when the hold is cleared.");
@@ -1218,7 +1239,8 @@ describe("customer application new fields and secondary holder", () => {
   });
 
   // Full submit path with combobox address picks; needs headroom over the 15s project default under load.
-  it("submits Gold with a full secondary profile", { timeout: 30_000 }, async () => {
+  // Full Gold wizard with secondary profile: slow by nature (~20 s of typing and step renders on the medium seed).
+  it("submits Gold with a full secondary profile", { timeout: 60_000 }, async () => {
     const submit = vi.spyOn(MockCustomerRepository.prototype, "submit");
     const user = userEvent.setup();
     await reachCustomerStep(user, /gold vip/i);
@@ -1864,7 +1886,7 @@ describe("customer edit reuses the application wizard", () => {
     await waitFor(() => expect(probe().getAttribute("data-count")).not.toBe("0"));
     const initialCount = probe().getAttribute("data-count");
     expect(initialCount).not.toBeNull();
-    expect(probe()).toHaveAttribute("data-first-name", "");
+    expect(probe()).toHaveAttribute("data-first-name", SEED_DRAFT_A2.firstName ?? "");
 
     await user.click(await screen.findByRole("radio", { name: /silver vip/i }));
     await user.click(screen.getByRole("button", { name: /continue/i }));
@@ -1876,7 +1898,11 @@ describe("customer edit reuses the application wizard", () => {
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await screen.findByRole("heading", { name: "Personal Details" });
 
+    // The seeded draft carries its own names; replace them so the saved draft
+    // carries exactly the new name (typing alone would append to the pre-fill).
+    await user.clear(screen.getByLabelText(/first name/i));
     await user.type(screen.getByLabelText(/first name/i), "Maria");
+    await user.clear(screen.getByLabelText(/last name/i));
     await user.type(screen.getByLabelText(/last name/i), "Santos");
     await user.click(screen.getByRole("button", { name: /save as draft/i }));
 
@@ -1897,6 +1923,7 @@ describe("customer edit reuses the application wizard", () => {
     expect(screen.queryByRole("button", { name: /save as draft/i })).toBeNull();
 
     for (let step = 0; step < 4; step += 1) {
+      // Keeping the record's own Customer ID must not count as a duplicate (self-exclusion, doc 04).
       await user.click(screen.getByRole("button", { name: /continue/i }));
     }
     expect(await screen.findByRole("heading", { name: "Review the Application" })).toBeInTheDocument();

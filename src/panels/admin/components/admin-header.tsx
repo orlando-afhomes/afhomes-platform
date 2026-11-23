@@ -29,8 +29,8 @@ export function AdminHeader({
   const user = useAdminUser();
   const { logout, dialog } = useLogout();
   const now = new Date();
-  // The "(Dev)" suffix marks the mock identity; the greeting reads better without it.
-  const shortName = user.name.replace(/\s*\(Dev\)$/, "");
+  // Mock identity labels read "Name · Role"; the greeting uses the name only.
+  const shortName = user.name.replace(/\s*·.*$/, "");
 
   return (
     <header className="tw:sticky tw:top-0 tw:z-20 tw:flex tw:h-16 tw:shrink-0 tw:items-center tw:gap-2 tw:border-b tw:border-border tw:bg-background/80 tw:px-4 tw:shadow-[0_1px_8px_rgba(14,43,32,0.04)] tw:backdrop-blur-md">

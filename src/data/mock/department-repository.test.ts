@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { AUDIT_ACTIONS } from "@/modules/audit/types";
 import { createMockStore } from "./seed";
-import { SEED_AUDIT_EVENT_COUNT } from "./seed-data";
+import { seedAuditEventCount } from "./seed";
+const SEED_AUDIT_EVENT_COUNT = seedAuditEventCount();
 import { createMockRepositories } from "./repositories";
 import { getDevIdentity } from "./dev-identities";
 import { PROTECTED_ROLE_ERROR } from "./authorization";

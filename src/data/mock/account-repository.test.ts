@@ -3,7 +3,8 @@ import type { DevIdentity } from "@/modules/identity/types";
 import { AUDIT_ACTIONS } from "@/modules/audit/types";
 import { ACCOUNT_DELETE_DISABLED } from "@/modules/accounts/types";
 import { createMockStore } from "./seed";
-import { SEED_AUDIT_EVENT_COUNT } from "./seed-data";
+import { seedAuditEventCount } from "./seed";
+const SEED_AUDIT_EVENT_COUNT = seedAuditEventCount();
 import { createMockRepositories } from "./repositories";
 import { getDevIdentity } from "./dev-identities";
 import { LAST_SUPER_ADMIN_ERROR, SELF_MODIFICATION_ERROR } from "./authorization";
@@ -13,6 +14,11 @@ type Store = ReturnType<typeof createMockStore>;
 function snapshot(store: Store, id: string) {
   const account = store.accounts.find((item) => item.id === id);
   return account ? { ...account, roleIds: [...account.roleIds] } : undefined;
+}
+
+/** The seeded login email of an account, read from the store so seed renames do not break the tests. */
+function emailOf(store: Store, id: string) {
+  return store.accounts.find((item) => item.id === id)!.email;
 }
 
 /** Super Admin actor with no linked staff record, so self-modification rules do not apply. */
@@ -50,7 +56,7 @@ describe("account repository", () => {
   it("rejects duplicate email", async () => {
     const store = createMockStore();
     const repo = createMockRepositories(store, () => getDevIdentity("dev-admin")).accounts;
-    await expect(repo.create({ displayName: "Dup", email: "admin@afhomes.local", roleIds: ["hr"] })).rejects.toThrow();
+    await expect(repo.create({ displayName: "Dup", email: emailOf(store, "acct-admin"), roleIds: ["hr"] })).rejects.toThrow();
   });
 
   // S3-02: Finance authority is outside Admin's delegation scope, so the
@@ -176,7 +182,7 @@ describe("account repository S3-A protections", () => {
     expect(snapshot(store, "acct-admin")).toEqual(before);
     expect(store.auditEvents).toHaveLength(auditCount);
     // Resending the current values is a no-op; the department mirror still applies.
-    const mirrored = await admin.update("acct-admin", { displayName: "Administrator", email: "admin@afhomes.local", departmentId: "dept-hr" });
+    const mirrored = await admin.update("acct-admin", { displayName: before!.displayName, email: before!.email, departmentId: "dept-hr" });
     expect(mirrored.departmentId).toBe("dept-hr");
   });
 
@@ -268,7 +274,7 @@ describe("account repository S3-B.1 staff-authoritative identity", () => {
     const store = createMockStore();
     const admin = createMockRepositories(store, () => getDevIdentity("dev-admin")).accounts;
     const before = snapshot(store, "acct-pending");
-    await expect(admin.update("acct-pending", { email: "ADMIN@afhomes.local" })).rejects.toThrow("already exists");
+    await expect(admin.update("acct-pending", { email: emailOf(store, "acct-admin").toUpperCase() })).rejects.toThrow("already exists");
     expect(snapshot(store, "acct-pending")).toEqual(before);
   });
 
@@ -357,7 +363,7 @@ describe("account repository S3-C1 audit events", () => {
   it("creates no success event for rejected operations", async () => {
     const store = createMockStore();
     const admin = createMockRepositories(store, () => getDevIdentity("dev-admin")).accounts;
-    await expect(admin.create({ displayName: "Dup", email: "admin@afhomes.local", roleIds: ["hr"] })).rejects.toThrow();
+    await expect(admin.create({ displayName: "Dup", email: emailOf(store, "acct-admin"), roleIds: ["hr"] })).rejects.toThrow();
     await expect(admin.assignRole("acct-hr", "finance")).rejects.toThrow();
     await expect(admin.updateStatus("acct-super-admin", "suspended")).rejects.toThrow();
     expect(store.auditEvents).toHaveLength(SEED_AUDIT_EVENT_COUNT);

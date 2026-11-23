@@ -2,12 +2,10 @@ import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { SaleRepository, SaleView, VipCommissionCorrection } from "@/data/contracts/sale-repository";
 import type { DevIdentity } from "@/modules/identity/types";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
-import { firstOpenDate } from "@/modules/finance/month-close";
-import { daysPastDue, isFullySettled, periodCollections } from "@/modules/finance/rules";
+import { closedMonthSnapshot, firstOpenDate } from "@/modules/finance/month-close";
+import { daysPastDue, isFullySettled } from "@/modules/finance/rules";
 import { commissionStageAmounts } from "@/modules/commissions/rules";
 import { evaluateSaleParties, salePartyBlockMessage } from "@/modules/sales/accreditation-standing";
-import { confirmedValueInPeriod } from "@/modules/sales/rules";
-import { periodRange } from "@/modules/reconciliation/rules";
 import type { Sale } from "@/modules/sales/types";
 import { activeRoles } from "./dev-identities";
 import { BROAD_BUSINESS_ROLES, BusinessRepository, canSeeContract, customerName, nowIso, today } from "./business-base";
@@ -164,24 +162,10 @@ export class MockSaleRepository extends BusinessRepository implements SaleReposi
       if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || month >= today().slice(0, 7)) throw new Error("Select a month that has ended.");
       const existing = this.store.closedMonths.find((entry) => entry.month === month);
       if (existing) return structuredClone(existing);
-      const range = periodRange(month)!;
-      const { from, to: through } = range;
-      const collections = periodCollections(this.store.payments, from, through);
-      const released = this.store.commissions.filter((item) => item.releaseDate?.startsWith(month));
-      const paid = this.store.commissions.filter((item) => item.payout?.confirmedAt && (item.payout.countedDate ?? item.payout.payoutDate).startsWith(month));
-      const reviews = new Map(this.store.allowanceReviews.filter((item) => item.month === month).map((item) => [item.memberId, item.result]));
-      const allowanceReviewCentavos = reviews.size === 0 ? null : [...reviews.values()].reduce((totals, item) => ({
-        baCentavos: totals.baCentavos + item.baCentavos,
-        paCentavos: totals.paCentavos + item.paCentavos,
-        pbCentavos: totals.pbCentavos + item.pbCentavos,
-      }), { baCentavos: 0, paCentavos: 0, pbCentavos: 0 });
-      const snapshot = { month, closedAt: nowIso(), closedBy: identity.id,
-        recognizedSalesCentavos: confirmedValueInPeriod([...this.store.sales, ...this.store.igp.sales], from, through),
-        grossCollectionsCentavos: collections.gross, adjustedCollectionsCentavos: collections.adjusted,
-        releasedCommissionCentavos: released.reduce((total, item) => total + item.amountCentavos, 0),
-        paidCommissionCentavos: paid.reduce((total, item) => total + item.amountCentavos, 0),
-        allowanceReviewCentavos, allowanceReviewCount: reviews.size,
-        calculationPolicy: "approved-receipt-date-v1" as const };
+      const snapshot = closedMonthSnapshot({
+        sales: [...this.store.sales, ...this.store.igp.sales], payments: this.store.payments,
+        commissions: this.store.commissions, allowanceReviews: this.store.allowanceReviews,
+      }, month, nowIso(), identity.id);
       this.store.closedMonths.push(snapshot);
       this.audit(identity, { module: "finance", action: BUSINESS_AUDIT_ACTIONS.MONTH_CLOSED, entityType: "sale", entityId: month, newValue: "closed" });
       // Doc 08 §11.1(4), §11.5: the system prepares the month's payout list; people approve and pay it.

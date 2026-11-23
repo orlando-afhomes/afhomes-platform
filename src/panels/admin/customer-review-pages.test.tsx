@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
@@ -51,6 +51,11 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+/** The customers list pages its rows; narrow it to one name the way a user would. */
+async function searchCustomers(name: string) {
+  fireEvent.change(await screen.findByRole("searchbox", { name: "Search customers" }), { target: { value: name } });
+}
+
 // cust-a3 is submitted and its closing seller (SM) differs from the referrer (OST), so it can be approved as seeded.
 const SUBMITTED = "cust-a3";
 
@@ -99,6 +104,7 @@ describe("Customers area", () => {
 
   it("lists customers with plain names and no View full details item", async () => {
     show("dev-admin", <CustomersRoute />);
+    await searchCustomers("Noel Pascual");
     expect(await screen.findByText("Noel Pascual")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Noel Pascual/ })).toBeNull();
     expect(screen.getByRole("row", { name: "Open Noel Pascual" })).toBeInTheDocument();
@@ -183,10 +189,18 @@ describe("customer registration review pages (doc 04 sections 5 and 10)", () => 
   });
 
   it("lists the review statuses and filters by them", async () => {
+    const user = userEvent.setup();
     show("dev-admin", <CustomersRoute />);
-    expect(await screen.findByText("Noel Pascual")).toBeInTheDocument();
-    expect(screen.getByText("Gina Soriano")).toBeInTheDocument();
-    expect(screen.getByText("Victor Alcantara")).toBeInTheDocument();
+    await screen.findByRole("table", { name: "Customers" });
+    for (const [status, name] of [["Approved", "Noel Pascual"], ["Sent back", "Gina Soriano"], ["Rejected", "Victor Alcantara"]]) {
+      await user.click(screen.getByRole("combobox", { name: "Customer status filter" }));
+      await user.click(await screen.findByRole("option", { name: status }));
+      await searchCustomers(name);
+      expect(await screen.findByRole("row", { name: `Open ${name}` })).toBeInTheDocument();
+    }
+    // The Rejected filter leaves out an approved customer.
+    await searchCustomers("Noel Pascual");
+    expect(await screen.findByText("No customers match the current search or filter.")).toBeInTheDocument();
   });
 
   it("lets a seller start a draft but ends their wizard at Sales and consent with a draft-only action", async () => {
@@ -253,6 +267,7 @@ describe("customer error states (Batch 2)", () => {
     expect(within(alert).getByText(/Customer list failed\./)).toBeInTheDocument();
     expect(screen.queryByRole("table", { name: "Customers" })).toBeNull();
     await user.click(within(alert).getByRole("button", { name: "Try again" }));
+    await searchCustomers("Noel Pascual");
     expect(await screen.findByText("Noel Pascual")).toBeInTheDocument();
   });
 
@@ -265,7 +280,7 @@ describe("customer error states (Batch 2)", () => {
     cleanup();
 
     show("dev-admin", <CustomersRoute />);
-    await screen.findByText("Noel Pascual");
+    await screen.findByRole("table", { name: "Customers" });
     await user.type(screen.getByRole("searchbox", { name: "Search customers" }), "zzzz-no-such-customer");
     expect(await screen.findByText("No customers match the current search or filter.")).toBeInTheDocument();
   });

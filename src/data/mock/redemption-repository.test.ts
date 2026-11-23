@@ -4,6 +4,7 @@ import { getDevIdentity } from "./dev-identities";
 import { MockRedemptionRepository } from "./redemption-repository";
 import type { PointsSource } from "./redemption-points-source";
 import { createMockStore } from "./seed";
+import { addDaysToDate } from "@/shared/lib/dates";
 
 // 2027-03-04 is a Thursday (weekday night), 2027-03-05 a Friday (weekend night). Adopted table (2026-11-22): Standard 1,000 / 1,500.
 const stay = (overrides: Partial<BookingInput> = {}): BookingInput => ({
@@ -20,6 +21,10 @@ function setup(identity = "dev-admin", gross = { weekday: 10000, weekend: 5000 }
   return { store, source, repo: as(identity), as };
 }
 
+/** memb-1's own redemption ledger; the seed books stays for other cardholders only (memb-1 is on financial hold there). */
+const ledgerOf = (store: ReturnType<typeof createMockStore>) => store.redemption.ledger.filter((entry) => entry.membershipId === "memb-1");
+const bookingsOf = (store: ReturnType<typeof createMockStore>) => store.redemption.bookings.filter((booking) => booking.membershipId === "memb-1");
+
 const memb = async (repo: MockRedemptionRepository) => (await repo.overview()).members.find((m) => m.membershipId === "memb-1")!;
 
 describe("booking with points", () => {
@@ -34,17 +39,17 @@ describe("booking with points", () => {
       const input = stay({ checkOut: "2027-03-05" });
       const booking = await repo.createBooking(input);
       expect(booking.provisional).toBe(true);
-      expect(store.redemption.ledger).toHaveLength(0);
+      expect(ledgerOf(store)).toHaveLength(0);
       expect(store.redemption.pads[member.id]).toBeUndefined();
       vi.setSystemTime(new Date("2027-03-04T06:00:00.000Z"));
       await repo.checkInBooking(booking.id, { holder: 'primary', identityChecked: true });
-      expect(store.redemption.ledger.map((entry) => entry.type)).toEqual(['reserve']);
+      expect(ledgerOf(store).map((entry) => entry.type)).toEqual(['reserve']);
       await expect(repo.completeBooking(booking.id)).rejects.toThrow(/ended/);
       vi.setSystemTime(new Date('2027-03-05T03:00:00.000Z'));
       expect((await repo.completeBooking(booking.id)).status).toBe('completed');
       await repo.completeBooking(booking.id);
       expect(store.redemption.pads[member.id]?.date).toBe("2027-03-04");
-      expect(store.redemption.ledger).toEqual([
+      expect(ledgerOf(store)).toEqual([
         expect.objectContaining({ trancheId: "1", type: "reserve", bucket: "weekday", points: 1000 }),
         expect.objectContaining({ trancheId: "1", type: "consume", bucket: "weekday", points: 1000 }),
       ]);
@@ -67,7 +72,7 @@ describe("booking with points", () => {
       await expect(repo.checkInBooking(booking.id, { holder: 'primary', identityChecked: true })).rejects.toThrow(/Year 1/);
       expect(store.redemption.pads[member.id]).toBeUndefined();
       await repo.cancelBooking(booking.id, "Cancelled");
-      expect(store.redemption.ledger).toHaveLength(0);
+      expect(ledgerOf(store)).toHaveLength(0);
     } finally {
       vi.useRealTimers();
     }
@@ -80,8 +85,8 @@ describe("booking with points", () => {
     expect(booking).toMatchObject({ status: "confirmed", reservedWeekday: 1000, reservedWeekend: 1500, basisVersion: 1 });
     expect((await repo.createBooking(input)).id).toBe(booking.id);
     await expect(repo.createBooking({ ...input, guests: 3 })).rejects.toThrow(/different details/);
-    expect(store.redemption.bookings).toHaveLength(1);
-    expect(store.redemption.ledger.filter((e) => e.type === "reserve")).toHaveLength(2);
+    expect(bookingsOf(store)).toHaveLength(1);
+    expect(ledgerOf(store).filter((e) => e.type === "reserve")).toHaveLength(2);
     const m = await memb(repo);
     expect(m.weekday.available).toBe(9000);
     expect(m.weekend.available).toBe(3500);
@@ -101,7 +106,8 @@ describe("booking with points", () => {
   it("blocks cards that are held, expired, or at a venue that is not open", async () => {
     const { repo, store } = setup();
     await expect(repo.createBooking(stay({ venueId: "venue-hotspring-resort", roomType: "Villa" }))).rejects.toThrow(/not open/i);
-    await expect(repo.createBooking(stay({ checkIn: "2033-11-01", checkOut: "2033-11-04" }))).rejects.toThrow(/validity/i);
+    const validUntil = store.memberships.find((m) => m.id === "memb-1")!.validityEndDate!;
+    await expect(repo.createBooking(stay({ checkIn: addDaysToDate(validUntil, -1)!, checkOut: addDaysToDate(validUntil, 2)! }))).rejects.toThrow(/validity/i);
     store.memberships.find((m) => m.id === "memb-1")!.financialHold = true;
     await expect(repo.createBooking(stay())).rejects.toThrow(/hold/i);
   });
@@ -154,9 +160,9 @@ describe("cancellation, no-show and completion", () => {
     const { repo, store } = setup();
     const booking = await repo.createBooking(stay());
     await expect(repo.recordNoShow(booking.id, "Did not arrive")).rejects.toThrow(/check-in date/);
-    store.redemption.bookings[0].checkIn = "2026-11-01";
+    store.redemption.bookings.find((b) => b.id === booking.id)!.checkIn = "2026-11-01";
     expect((await repo.recordNoShow(booking.id, "Did not arrive")).status).toBe("no_show");
-    expect(store.redemption.ledger.filter((e) => e.type === "forfeit")).toHaveLength(2);
+    expect(ledgerOf(store).filter((e) => e.type === "forfeit")).toHaveLength(2);
   });
 
   it("consumes once on completion and sets the Points Activation Date on the first redemption (scenarios J, L)", async () => {
@@ -173,7 +179,7 @@ describe("cancellation, no-show and completion", () => {
       vi.setSystemTime(new Date("2027-03-06T03:00:00Z"));
       await repo.completeBooking(booking.id);
       await repo.completeBooking(booking.id);
-      expect(store.redemption.ledger.filter((e) => e.type === "consume")).toHaveLength(2);
+      expect(ledgerOf(store).filter((e) => e.type === "consume")).toHaveLength(2);
       expect(store.redemption.pads["memb-1"]).toEqual({ date: "2027-03-04", bookingId: booking.id });
     } finally {
       vi.useRealTimers();
@@ -186,10 +192,10 @@ describe("card transfer (A7a)", () => {
     const { repo, store } = setup();
     const future = await repo.createBooking(stay());
     const past = await repo.createBooking(stay({ checkIn: "2027-03-11", checkOut: "2027-03-12" }));
-    store.redemption.bookings[1].checkIn = "2027-02-01";
+    store.redemption.bookings.find((b) => b.id === past.id)!.checkIn = "2027-02-01";
     const cancelled = await repo.cancelFutureBookingsForTransfer("memb-1", "2027-03-01");
     expect(cancelled.map((b) => b.id)).toEqual([future.id]);
-    expect(store.redemption.bookings.map((b) => b.status)).toEqual(["transfer_cancelled", "confirmed"]);
+    expect(bookingsOf(store).map((b) => b.status)).toEqual(["transfer_cancelled", "confirmed"]);
     expect(past.status).toBe("confirmed");
     expect(await repo.cancelFutureBookingsForTransfer("memb-1", "2027-03-01")).toEqual([]);
     expect(store.redemption.ledger.filter((e) => e.type === "forfeit" && e.bookingId === future.id)).toHaveLength(2);

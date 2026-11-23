@@ -3,6 +3,10 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
+import { getDevIdentity } from "@/data/mock/dev-identities";
+import { createMockRepositories } from "@/data/mock/repositories";
+import { createMockStore } from "@/data/mock/seed";
+import { TABLE_PAGE_SIZE } from "@/shared/components/modern/data-table";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { CommissionsAreaPage } from "./pages/commissions-area-page";
@@ -55,11 +59,15 @@ describe("process pages are separated", () => {
   });
 
   it("Contracts shows the contracts list with a New contract action and a count footer", async () => {
+    // Every contract the Administrator may read, from the seed; the list pages them.
+    const visible = (await createMockRepositories(createMockStore(), () => getDevIdentity("dev-admin")!).contracts.list()).length;
+    expect(visible).toBeGreaterThan(TABLE_PAGE_SIZE);
     show("dev-admin", <SalesAreaPage />, "contracts");
     expect(await screen.findByRole("table", { name: "Contracts" })).toBeInTheDocument();
     expect(screen.queryByRole("table", { name: "Sales" })).toBeNull();
     expect(screen.getByRole("link", { name: /new contract/i })).toHaveAttribute("href", "/admin/customers?tab=customers");
-    expect(document.querySelectorAll("tbody tr[data-row-key]")).toHaveLength(4);
+    expect(document.querySelectorAll("tbody tr[data-row-key]")).toHaveLength(TABLE_PAGE_SIZE);
+    expect(screen.getByText(/Showing page/).textContent).toBe(`Showing page 1/${Math.ceil(visible / TABLE_PAGE_SIZE)}`);
   });
 
   it("opens the Contracts tab prefiltered to contracts needing review", async () => {
@@ -68,7 +76,13 @@ describe("process pages are separated", () => {
     expect(screen.getByRole("tab", { name: "Contracts" })).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByRole("tab", { name: "Contract review" })).not.toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Contract status filter" })).toHaveValue("Needs review");
-    expect(within(table).getAllByText("Under Review")).toHaveLength(2);
+    // Submitted and under-review contracts both need an Administrator decision.
+    const seeded = createMockStore().contracts;
+    const count = (status: string) => seeded.filter((contract) => contract.status === status).length;
+    expect(count("under_review")).toBeGreaterThan(0);
+    expect(within(table).getAllByText("Under Review")).toHaveLength(count("under_review"));
+    expect(within(table).queryAllByText("Submitted")).toHaveLength(count("submitted"));
+    expect(document.querySelectorAll("tbody tr[data-row-key]")).toHaveLength(count("under_review") + count("submitted"));
     expect(within(table).queryByText("Finalized")).not.toBeInTheDocument();
   });
 

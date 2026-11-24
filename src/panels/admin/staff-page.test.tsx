@@ -168,6 +168,25 @@ describe("staff page", () => {
     expect(screen.queryByText("Add staff")).not.toBeInTheDocument();
   });
 
+  it("offers an optional Prefix and a password reveal that triggers no validation", async () => {
+    const user = userEvent.setup();
+    render(<TestWrapper />);
+    await screen.findByRole("row", { name: HR_ROW }, { timeout: 5000 });
+    await openAdd(user);
+
+    const prefix = screen.getByRole("combobox", { name: "Prefix" });
+    await user.click(prefix);
+    await pickOption(user, "Dr.");
+    expect(prefix).toHaveValue("Dr.");
+
+    const password = screen.getByPlaceholderText("Temporary Password");
+    await user.click(password);
+    await user.click(screen.getByRole("button", { name: "Show temporary password" }));
+    expect(password).toHaveAttribute("type", "text");
+    expect(password).toHaveFocus();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("adds staff with cascading department role", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
@@ -253,8 +272,10 @@ describe("staff page", () => {
     const row = screen.getByText("Temp Staff").closest("tr")!;
     await user.click(within(row).getByRole("button", { name: /actions for/i }));
     expect(await screen.findByRole("menuitem", { name: "Delete (unavailable)" })).toBeInTheDocument();
-    expect(screen.getByRole("note")).toHaveTextContent("Staff deletion is unavailable");
-    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("note")).toBeNull();
+    await user.click(screen.getByRole("menuitem", { name: "Delete (unavailable)" }));
+    expect(await screen.findByRole("alertdialog", { name: "Deletion unavailable" })).toHaveTextContent("Staff deletion is unavailable");
+    await user.click(screen.getByRole("button", { name: "OK" }));
     expect(screen.getByText("Temp Staff")).toBeInTheDocument();
   });
 

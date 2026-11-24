@@ -6,7 +6,7 @@ import type { CardHolder, MemberQrHolder } from "@/data/contracts/member-qr-repo
 import { useMockRepositories } from "@/data/queries";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMemo, useState } from "react";
-import { Coins, Gift, IdCard, Link2, ShieldCheck } from "lucide-react";
+import { Ban, Coins, Gift, IdCard, Link2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useOperation, useStayPoints } from "@/data/business-queries";
 import type { PromoLedgerRow } from "@/data/contracts/promo-repository";
@@ -43,7 +43,7 @@ export function RecordPromoUseButton({ selected }: { selected?: MemberQrHolder }
   if (!canUse || identity.roles.includes("gsd")) return null;
   return (
     <>
-      <Button className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setOpen(true)}>
+      <Button variant={selected ? "info" : undefined} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setOpen(true)}>
         {selected ? <Link2 aria-hidden="true" /> : <Coins aria-hidden="true" />} Redeem Points
       </Button>
       {open ? <UseDialog selected={selected} onClose={() => setOpen(false)} /> : null}
@@ -80,7 +80,7 @@ export function PromoPointsPanel() {
       id: "actions", header: "Actions",
       cell: ({ row }) => (
         <RowActionsMenu itemName={`${row.original.customerName} ${ENTRY_TYPE_LABELS[row.original.type].toLowerCase()} entry`}
-          extraItems={canUse && row.original.type === "use" && !row.original.voided ? [{ key: "void", label: "Void Use", danger: true, onClick: () => setVoiding(row.original) }] : []} />
+          extraItems={canUse && row.original.type === "use" && !row.original.voided ? [{ key: "void", label: "Void Use", icon: Ban, danger: true, onClick: () => setVoiding(row.original) }] : []} />
       ),
     },
   ], [canUse]);
@@ -198,10 +198,7 @@ function UseDialog({ onClose, selected }: { onClose: () => void; selected?: Memb
         options={(memberships.data ?? []).filter((item) => item.cardId).map((item) => ({ value: item.membershipId, label: `${item.customerName} · ${item.cardId}` }))}
         onChange={(value) => { setMembershipId(value); setHolder("primary"); setIdentityChecked(false); setError(undefined); }} />}
       {!selected && Boolean(holders.data?.length) ? <SelectField label="Cardholder" required value={holder} options={holders.data!.map((item) => ({ value: item.holder, label: item.holderName }))} onChange={(value) => { setHolder(value === "supplementary" ? value : "primary"); setIdentityChecked(false); }} /> : null}
-      <div className="tw:flex tw:items-start tw:gap-3 tw:rounded-xl tw:border tw:border-primary/25 tw:bg-primary/5 tw:p-3">
-        <ShieldCheck aria-hidden="true" className="tw:mt-0.5 tw:size-5 tw:shrink-0 tw:text-primary" />
-        <CheckboxField label="I checked the cardholder’s ID" checked={identityChecked} onChange={setIdentityChecked} />
-      </div>
+      <CheckboxField variant="card" icon={<ShieldCheck className="tw:size-5" />} label="I checked the cardholder’s ID" checked={identityChecked} onChange={setIdentityChecked} />
       <SelectField label="Promo" required value={promoId} placeholder="Select a promo" options={promoItems}
         onChange={(value) => { setPromoId(value); setOutletId(""); setError(undefined); }} />
       <SelectField label="Outlet" required value={outletId} placeholder="Select an outlet" disabled={!promo}

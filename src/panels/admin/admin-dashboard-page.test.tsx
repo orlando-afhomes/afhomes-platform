@@ -44,7 +44,8 @@ describe("dashboard page role gating (initial render)", () => {
   it.each([
     ["dev-super-admin", "Welcome Back, Super Admin"],
     ["dev-admin", "Welcome Back, Administrator"],
-    ["dev-hr", "Welcome Back, Human Resources"],
+    ["dev-hr", "People Overview"],
+    ["dev-gsd", "Counter Workspace"],
     ["dev-finance", "Finance Overview"],
     ["dev-svd-a", "Welcome Back, Sales Vice Director"],
     ["dev-ssm-a", "Welcome Back, Senior Sales Manager"],
@@ -132,9 +133,15 @@ describe("dashboard page role gating (initial render)", () => {
     expectNone(html, ["Team confirmed sales value", "Team Overview", "My returned contracts", "Outstanding receivables"]);
   });
 
-  it("shows an honest empty dashboard for HR", async () => {
+  it("gives HR head counts only", async () => {
     const html = await renderPage("dev-hr");
-    expect(html).toContain("No Dashboard Metrics");
-    expectNone(html, ["Customers", "Pending Approvals", "Recent Activities", "Dashboard date range"]);
+    expectAll(html, ["Active departments", "Active staff members"]);
+    expectNone(html, ["No Dashboard Metrics", "Customers", "Pending Approvals", "Recent Activities", "Dashboard date range"]);
+  });
+
+  it("gives the GSD Counter shortcuts without record lists", async () => {
+    const html = await renderPage("dev-gsd");
+    expectAll(html, ["Scan Member QR", "Customer Search", "Stay Points"]);
+    expectNone(html, ["No Dashboard Metrics", "Pending Approvals", "Recent Activities", "Dashboard date range"]);
   });
 });

@@ -14,9 +14,9 @@ describe("resolveEmployeeEffectiveModules", () => {
     expect(modules).not.toContain("accounts");
   });
 
-  it("ignores non-delegable department-role modules and an inactive department role", () => {
-    const withInert = resolveEmployeeEffectiveModules({ accountStatus: "active", systemRoles: [], departmentRoleModuleIds: ["accounts", "finance", "unknown", "staff"] });
-    expect(withInert).toEqual(["staff"]);
+  it("ignores unknown and parent-scope department-role modules and an inactive department role", () => {
+    const withInert = resolveEmployeeEffectiveModules({ accountStatus: "active", systemRoles: [], departmentRoleModuleIds: ["accounts", "finance", "unknown", "sales-group", "staff"] });
+    expect(withInert).toEqual(["accounts", "finance", "staff"]);
     expect(resolveEmployeeEffectiveModules({ accountStatus: "active", systemRoles: [], departmentRoleModuleIds: null })).toEqual([]);
   });
 });

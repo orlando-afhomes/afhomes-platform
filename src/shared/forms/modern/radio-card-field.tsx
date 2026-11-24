@@ -15,6 +15,7 @@ export function RadioCardField<T extends string = string>({
   error,
   hint,
   className,
+  groupClassName,
 }: {
   id?: string;
   label: string;
@@ -26,11 +27,13 @@ export function RadioCardField<T extends string = string>({
   error?: string;
   hint?: string;
   className?: string;
+  /** Classes for the option grid itself, for example `tw:md:grid-cols-1` to stack the cards in a dialog. */
+  groupClassName?: string;
 }) {
   const ids = useFieldIds(id);
   return (
     <FieldShell ids={ids} label={label} required={required} error={error} hint={hint} labelFor={false} className={className}>
-      <RadioCardGroup label={label} value={value} onChange={onChange} options={options} variant={variant} describedBy={describedBy(ids, error, hint)} invalid={Boolean(error)} />
+      <RadioCardGroup label={label} value={value} onChange={onChange} options={options} variant={variant} className={groupClassName} describedBy={describedBy(ids, error, hint)} invalid={Boolean(error)} />
     </FieldShell>
   );
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { flushSync } from "react-dom";
-import { ChevronDown, Download, FileSpreadsheet, FileText, Printer } from "lucide-react";
+import { ChevronDown, Download, FileDown, FileSpreadsheet, FileText, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useRecordReportExport } from "@/data/business-queries";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
@@ -10,7 +10,7 @@ import { QueryState } from "@/shared/components/modern/query-state";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { downloadCsv, downloadXlsx } from "@/shared/lib/spreadsheet";
 import { formatDate } from "@/shared/lib/format-date";
-import { Button } from "@/shared/ui/button";
+import { Button, actionMenuClass } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { manilaDateOf, manilaToday } from "@/shared/lib/dates";
 import { displayValue } from "@/shared/lib/empty-value";
@@ -18,6 +18,7 @@ import { DateRangeFields } from "@/shared/components/modern/date-range-fields";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
 import type { BreadcrumbItem } from "@/shared/components/modern/breadcrumbs";
 import { AdminPage } from "@/shared/components/admin";
+import { createReportPdf, downloadReportPdf, ReportPdfPreview } from "../documents/report-pdf-output";
 
 function addDays(dateOnly: string, days: number): string {
   const [year, month, day] = dateOnly.split("-").map(Number);
@@ -68,6 +69,12 @@ export function describeRange(range: { from: string; to: string }): string {
   return `${range.from === OPEN_FROM ? "any date" : formatDate(range.from)} to ${range.to === OPEN_TO ? "any date" : formatDate(range.to)}`;
 }
 
+/** One PDF header line for the filters in effect; empty parts are left out. */
+export function describeFilters(parts: readonly (string | false | null | undefined)[]): string[] {
+  const active = parts.filter(Boolean) as string[];
+  return active.length ? [`Filters: ${active.join(" · ")}`] : [];
+}
+
 /** Body of a report without the page chrome: the printed date range, then the content (each report puts the From/To fields in its own filter bar). Report tabs mount this directly. */
 export function ReportFrame({ range, children }: { range: ReportRange; children: ReactNode }) {
   return (
@@ -99,40 +106,77 @@ export function buildExportRows<T>(columns: ReportColumn<T>[], rows: T[]): strin
   return [columns.map((column) => column.header), ...rows.map((row) => columns.map((column) => column.value(row)))];
 }
 
-/**
- * One "Export" menu with Excel, CSV and Print. An export is audited (report, format, range and row count only)
- * before the file is written. The button is inline, so the caller places it (for example inside a FilterBar).
- */
-export function ReportExport<T>({ report, fileName, columns, rows, range, printable = true, className }: { report: string; fileName: string; columns: ReportColumn<T>[]; rows: T[]; range: { from: string; to: string } | null; /** False on pages that have no print layout. */ printable?: boolean; className?: string }) {
+/** Audits one explicit output action using the same filtered rows as the report. */
+export function ReportExport<T>({
+  report, fileName, columns, rows, range, metadata, printable = true, pdfOnly = false, disabled = false, className,
+}: {
+  report: string;
+  fileName: string;
+  columns: ReportColumn<T>[];
+  rows: T[];
+  range: { from: string; to: string } | null;
+  /** Extra PDF header lines, e.g. the active filters. */
+  metadata?: readonly string[];
+  printable?: boolean;
+  pdfOnly?: boolean;
+  disabled?: boolean;
+  className?: string;
+}) {
   const record = useRecordReportExport();
   const [busy, setBusy] = useState(false);
-  const run = async (format: "xlsx" | "csv") => {
-    if (busy) return;
+  const running = useRef(false);
+  const [preview, setPreview] = useState<Blob>();
+  const run = async (action: "xlsx" | "csv" | "pdf" | "print") => {
+    if (running.current || disabled) return;
+    running.current = true;
     setBusy(true);
     try {
+      const format = action === "print" ? "pdf" : action;
       await record.mutateAsync({ report, format, range, rowCount: rows.length });
-      const data = buildExportRows(columns, rows);
-      const name = `${fileName}-${manilaToday()}.${format}`;
-      if (format === "xlsx") await downloadXlsx(name, [{ name: report.slice(0, 31), rows: data }]);
-      else downloadCsv(name, data);
+      const [headers, ...data] = buildExportRows(columns, rows);
+      const today = manilaToday();
+      const name = `${fileName}-${today}.${format}`;
+      if (format === "pdf") {
+        const file = await createReportPdf({
+          title: report,
+          generated: formatDate(today),
+          metadata: [...(range ? [`Date range: ${describeRange(range)}`] : []), ...(metadata ?? [])],
+          columns: headers,
+          rows: data,
+        });
+        if (action === "print") {
+          setPreview(file);
+          return;
+        }
+        downloadReportPdf(file, name);
+      } else if (format === "xlsx") {
+        await downloadXlsx(name, [{ name: report.slice(0, 31), rows: [headers, ...data] }]);
+      } else downloadCsv(name, [headers, ...data]);
       toast.success(`${rows.length} row(s) exported.`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "The export failed.");
     } finally {
+      running.current = false;
       setBusy(false);
     }
   };
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="info" loading={busy} className={cn("report-print__hide tw:h-11 tw:w-full tw:md:w-auto tw:md:flex-none", className)} />}>
-        <Download aria-hidden /> Export <ChevronDown aria-hidden />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="tw:min-w-40">
-        <DropdownMenuItem className="tw:min-h-11 tw:sm:min-h-8" onClick={() => void run("xlsx")}><FileSpreadsheet aria-hidden /> Excel</DropdownMenuItem>
-        <DropdownMenuItem className="tw:min-h-11 tw:sm:min-h-8" onClick={() => void run("csv")}><FileText aria-hidden /> CSV</DropdownMenuItem>
-        {printable ? <DropdownMenuItem className="tw:min-h-11 tw:sm:min-h-8" onClick={() => window.print()}><Printer aria-hidden /> Print</DropdownMenuItem> : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button variant="teal" disabled={disabled} loading={busy} className={cn("report-print__hide tw:h-11 tw:w-full tw:md:w-auto tw:md:flex-none", className)} />}>
+          <Download aria-hidden /> Export <ChevronDown aria-hidden />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="tw:min-w-40">
+          {!pdfOnly ? <>
+            <DropdownMenuItem className={cn("tw:min-h-11 tw:sm:min-h-8", actionMenuClass("teal"))} onClick={() => void run("xlsx")}><FileSpreadsheet aria-hidden /> Excel</DropdownMenuItem>
+            <DropdownMenuItem className={cn("tw:min-h-11 tw:sm:min-h-8", actionMenuClass("cyan"))} onClick={() => void run("csv")}><FileText aria-hidden /> CSV</DropdownMenuItem>
+          </> : null}
+          <DropdownMenuItem className={cn("tw:min-h-11 tw:sm:min-h-8", actionMenuClass("violet"))} onClick={() => void run("pdf")}><FileDown aria-hidden /> Download PDF</DropdownMenuItem>
+          {printable ? <DropdownMenuItem className={cn("tw:min-h-11 tw:sm:min-h-8", actionMenuClass("info"))} onClick={() => void run("print")}><Printer aria-hidden /> Print</DropdownMenuItem> : null}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {preview ? <ReportPdfPreview file={preview} title={report} onClose={() => setPreview(undefined)} /> : null}
+    </>
   );
 }
 
@@ -157,7 +201,7 @@ function usePrinting(): boolean {
  * The table shows the `screen` columns; opening a row shows every column, and the Excel and CSV files always hold
  * every column. `filters` receives the Export button, so a report places it inside its own filter bar.
  */
-export function ReportTable<T>({ report, fileName, range, columns, rows, getRowId, getRowTitle, filters, loading, error, emptyText }: { report: string; fileName: string; range: { from: string; to: string } | null; columns: ReportColumn<T>[]; rows: T[]; getRowId: (row: T) => string; /** Names a row in its details panel; defaults to the first column's value. */ getRowTitle?: (row: T) => string; filters?: (exportButton: ReactNode) => ReactNode; loading?: boolean; error?: unknown; emptyText: string }) {
+export function ReportTable<T>({ report, fileName, range, metadata, columns, rows, getRowId, getRowTitle, filters, loading, error, emptyText }: { report: string; fileName: string; range: { from: string; to: string } | null; metadata?: readonly string[]; columns: ReportColumn<T>[]; rows: T[]; getRowId: (row: T) => string; /** Names a row in its details panel; defaults to the first column's value. */ getRowTitle?: (row: T) => string; filters?: (exportButton: ReactNode) => ReactNode; loading?: boolean; error?: unknown; emptyText: string }) {
   const printing = usePrinting();
   const [detail, setDetail] = useState<T | null>(null);
   const tableColumns = useMemo<ColumnDef<T, unknown>[]>(
@@ -173,7 +217,7 @@ export function ReportTable<T>({ report, fileName, range, columns, rows, getRowI
     [columns],
   );
   const titleOf = (row: T) => getRowTitle?.(row) ?? columns[0]?.value(row) ?? report;
-  const exportButton = <ReportExport report={report} fileName={fileName} columns={columns} rows={rows} range={range} />;
+  const exportButton = <ReportExport report={report} fileName={fileName} columns={columns} rows={rows} range={range} metadata={metadata} disabled={Boolean(loading || error)} />;
   return (
     <>
       {filters ? <div className="report-print__hide">{filters(exportButton)}</div> : exportButton}

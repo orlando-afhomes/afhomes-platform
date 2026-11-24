@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Menu as MenuIcon } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
 import { AdminBrand } from "./admin-brand";
@@ -40,17 +39,7 @@ export function AdminMobileNav() {
             <AdminNavList items={items} onNavigate={() => setOpen(false)} />
           </nav>
           <div className="tw:shrink-0 tw:border-t tw:border-sidebar-border tw:p-3">
-            <div className="tw:flex tw:items-center tw:gap-2.5 tw:rounded-xl tw:bg-white/[0.06] tw:p-2">
-              <Avatar className="tw:size-9 tw:bg-white/15 tw:text-xs tw:text-white tw:ring-2 tw:ring-white/20">
-                {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt="" /> : null}
-                <AvatarFallback className="tw:bg-white/15 tw:text-white">{user.initials}</AvatarFallback>
-              </Avatar>
-              <span className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:leading-tight">
-                <span className="tw:truncate tw:text-[13px] tw:font-semibold tw:text-white">{user.name}</span>
-                <span className="tw:truncate tw:text-xs tw:text-white/65">{user.roleLabel}</span>
-              </span>
-              <LogoutButton onClick={confirmLogout} />
-            </div>
+            <LogoutButton user={user} onClick={confirmLogout} />
           </div>
         </SheetContent>
       </Sheet>

@@ -2,18 +2,22 @@
 
 import * as React from "react"
 import { Combobox as ComboboxPrimitive } from "@base-ui/react/combobox"
-import { CheckIcon, ChevronDownIcon } from "lucide-react"
+import { CheckIcon, ChevronDownIcon, type LucideIcon } from "lucide-react"
 import { cn } from "@/shared/lib/utils"
 
 const Combobox = ComboboxPrimitive.Root
 
-function ComboboxInput({ className, ...props }: ComboboxPrimitive.Input.Props) {
+function ComboboxInput({ className, wrapperClassName, leadingIcon: LeadingIcon, ...props }: ComboboxPrimitive.Input.Props & { leadingIcon?: LucideIcon; /** Classes for the box around the input and chevron (for example `tw:w-auto` to fit the content). */ wrapperClassName?: string }) {
   return (
-    <div className="tw:relative tw:flex tw:w-full">
+    <div className={cn("tw:relative tw:flex tw:w-full", wrapperClassName)}>
+      {LeadingIcon ? (
+        <LeadingIcon aria-hidden="true" className="tw:pointer-events-none tw:absolute tw:top-1/2 tw:left-3 tw:z-10 tw:size-4 tw:-translate-y-1/2 tw:text-primary" />
+      ) : null}
       <ComboboxPrimitive.Input
         data-slot="combobox-input"
         className={cn(
-          "tw:h-10 tw:w-full tw:min-w-0 tw:rounded-lg tw:border tw:border-input tw:bg-card tw:py-1 tw:pr-8 tw:pl-3 tw:text-sm tw:shadow-(--shadow-soft) tw:transition-[border-color,box-shadow] tw:outline-none tw:hover:border-foreground/30 tw:placeholder:text-muted-foreground tw:focus-visible:border-ring tw:focus-visible:ring-3 tw:focus-visible:ring-ring/30 tw:disabled:cursor-not-allowed tw:disabled:opacity-50 tw:aria-invalid:border-destructive tw:aria-invalid:ring-3 tw:aria-invalid:ring-destructive/20",
+          "tw:h-10 tw:w-full tw:min-w-0 tw:rounded-lg tw:border tw:border-input tw:bg-card tw:py-1 tw:pr-8 tw:pl-3 tw:text-sm tw:shadow-(--shadow-soft) tw:transition-[border-color,box-shadow] tw:outline-none tw:hover:border-foreground/30 tw:placeholder:text-muted-foreground/55 tw:focus-visible:border-ring tw:focus-visible:ring-3 tw:focus-visible:ring-ring/30 tw:disabled:cursor-not-allowed tw:disabled:opacity-50 tw:aria-invalid:border-destructive tw:aria-invalid:ring-3 tw:aria-invalid:ring-destructive/20",
+          LeadingIcon && "tw:pl-9",
           className
         )}
         {...props}

@@ -1,3 +1,4 @@
+import { Check, FileText, RotateCcw, X } from "lucide-react";
 import { customerRecordName } from "@/modules/customers/rules";
 import { canPrepareVipContract } from "@/modules/contracts/rules";
 import { canReviewRegistration } from "@/modules/customers/review";
@@ -59,15 +60,15 @@ export function buildCustomerMenuProps(
 
   const extraItems: RowActionItem[] = [];
   if (perms.canApprove && canReviewRegistration(customer.status)) {
-    if (cb.onApprove) extraItems.push({ key: "approve", label: "Approve", tone: "success", onClick: cb.onApprove });
-    if (cb.onSendBack) extraItems.push({ key: "send-back", label: "Send Back", tone: "warning", onClick: cb.onSendBack });
-    if (cb.onReject) extraItems.push({ key: "reject", label: "Reject", tone: "danger", onClick: cb.onReject });
+    if (cb.onApprove) extraItems.push({ key: "approve", label: "Approve", tone: "success", icon: Check, onClick: cb.onApprove });
+    if (cb.onSendBack) extraItems.push({ key: "send-back", label: "Send Back", tone: "warning", icon: RotateCcw, onClick: cb.onSendBack });
+    if (cb.onReject) extraItems.push({ key: "reject", label: "Reject", tone: "danger", icon: X, onClick: cb.onReject });
   }
   if (perms.canPrepare && perms.ownRecord) {
     if (cb.onOpenContract) {
-      extraItems.push({ key: "open-contract", label: "Open Contract", onClick: cb.onOpenContract });
+      extraItems.push({ key: "open-contract", label: "Open Contract", icon: FileText, onClick: cb.onOpenContract });
     } else if (cb.onPrepare && canPrepareVipContract(customer.status)) {
-      extraItems.push({ key: "prepare-contract", label: "Prepare Contract", onClick: cb.onPrepare });
+      extraItems.push({ key: "prepare-contract", label: "Prepare Contract", icon: FileText, onClick: cb.onPrepare });
     }
   }
 

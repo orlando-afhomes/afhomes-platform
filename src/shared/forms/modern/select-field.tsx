@@ -1,7 +1,7 @@
 "use client";
 
 import type { BaseFieldProps, FieldOption } from "@/shared/forms/types";
-import { SUFFIX_OPTIONS, type NameSuffix } from "@/shared/forms/validation/person-name";
+import { PREFIX_OPTIONS, SUFFIX_OPTIONS, type NamePrefix, type NameSuffix } from "@/shared/forms/validation/person-name";
 import { SearchSelect } from "@/shared/components/modern/search-select";
 import { FieldShell, describedBy, useFieldIds } from "./field-shell";
 
@@ -79,6 +79,29 @@ export function SuffixField({ id = "suffix", label = "Suffix", value, onChange, 
       placeholder="Select suffix"
       allowClear
       clearLabel="No suffix"
+      {...rest}
+    />
+  );
+}
+
+export type PrefixFieldProps = Omit<BaseFieldProps, "inputMode" | "autoComplete" | "maxLength" | "label"> & {
+  label?: string;
+  value: string | undefined;
+  onChange: (value: NamePrefix) => void;
+};
+
+/** Optional name-prefix select (Mr., Ms., Dr., …). Blank means no prefix, stored as null. */
+export function PrefixField({ id = "prefix", label = "Prefix", value, onChange, ...rest }: PrefixFieldProps) {
+  return (
+    <SelectField<NamePrefix>
+      id={id}
+      label={label}
+      value={(value || undefined) as NamePrefix | undefined}
+      options={PREFIX_OPTIONS}
+      onChange={onChange}
+      placeholder="Select prefix"
+      allowClear
+      clearLabel="No prefix"
       {...rest}
     />
   );

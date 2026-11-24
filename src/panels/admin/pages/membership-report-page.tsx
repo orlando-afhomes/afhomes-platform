@@ -11,7 +11,7 @@ import { AdminPage, AdminStatGrid, AdminStatCard } from "@/shared/components/adm
 import { Clock, Medal, UserCheck } from "lucide-react";
 import { tierDisplayName } from "@/modules/vip/tier-options";
 import type { VipProduct } from "@/modules/vip/types";
-import { ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
+import { describeFilters, ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
 
 const reportColumns = (products: VipProduct[] | undefined): ReportColumn<MembershipView>[] => [
   { header: "Customer", value: (item) => item.customerName },
@@ -48,6 +48,11 @@ export function MembershipReportPanel() {
   const [status, setStatus] = useState("all");
   const [tier, setTier] = useState("all");
   const rows = useMemo(() => inPeriod.filter((item) => (status === "all" || item.status === status) && (tier === "all" || item.productCode === tier) && matchesSearch(search, item.customerName, item.cardId)), [inPeriod, status, tier, search]);
+  const metadata = describeFilters([
+    search.trim() ? `Search "${search.trim()}"` : null,
+    status !== "all" ? `Status: ${humanize(status)}` : null,
+    tier !== "all" ? `VIP tier: ${tierDisplayName(tier, products.data) ?? tier}` : null,
+  ]);
   return (
     <ReportFrame range={range}>
       <AdminStatGrid columns={3}>
@@ -55,7 +60,7 @@ export function MembershipReportPanel() {
         <AdminStatCard loading={memberships.isLoading} error={memberships.error} label="Active Members" value={active} icon={Medal} tone="info" />
         <AdminStatCard loading={memberships.isLoading} error={memberships.error} label="Pending Activation" value={pending} icon={Clock} tone="warning" />
       </AdminStatGrid>
-      <ReportTable report="Membership Report" fileName="memberships" range={range} columns={columns} rows={rows} getRowId={(row) => row.id} loading={memberships.isLoading} error={memberships.error} emptyText="No memberships match."
+      <ReportTable report="Membership Report" fileName="memberships" range={range} metadata={metadata} columns={columns} rows={rows} getRowId={(row) => row.id} loading={memberships.isLoading} error={memberships.error} emptyText="No memberships match."
         filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search memberships" filters={[
           { label: "Membership status filter", value: status, onChange: setStatus, options: optionsFrom("All statuses", inPeriod.map((item) => item.status), humanize) },
           { label: "VIP tier filter", value: tier, onChange: setTier, options: optionsFrom("All tiers", tierCodes.filter((code) => tierDisplayName(code, products.data) !== null), (code) => tierDisplayName(code, products.data) ?? "") },

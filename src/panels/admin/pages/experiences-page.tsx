@@ -6,14 +6,14 @@ import { toast } from "sonner";
 import { useExperiences, useSaveExperience, useSetExperiencePublished } from "@/data/experience-queries";
 import type { ExperienceInput } from "@/data/contracts/experience-repository";
 import type { Experience, ExperienceHighlight, ExperienceStatusTone } from "@/modules/experiences/types";
-import { AdminPage } from "@/shared/components/admin";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { QueryState } from "@/shared/components/modern/query-state";
+import { DetailActions } from "@/shared/components/modern/detail-actions";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
-import { ToneBadge } from "@/shared/components/modern/status-badge";
+import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { SelectField, TextAreaField, TextField } from "@/shared/forms/modern";
 import { useOperation } from "@/data/business-queries";
@@ -30,12 +30,11 @@ const TONE_OPTIONS: ReadonlyArray<{ value: ExperienceStatusTone; label: string }
 const toneLabel = (tone: ExperienceStatusTone) => TONE_OPTIONS.find((item) => item.value === tone)?.label ?? tone;
 
 /** Public website Experiences editor. A valid save publishes immediately; archive hides without deleting. */
-export function ExperiencesPage() {
+export function ExperiencesPanel({ creating, onCloseCreate }: { creating: boolean; onCloseCreate: () => void }) {
   const experiences = useExperiences();
   const canManage = useOperation("experiences.manage");
   const setPublished = useSetExperiencePublished();
   const { confirmRun, dialog } = useConfirmRun();
-  const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Experience | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -74,8 +73,8 @@ export function ExperiencesPage() {
         id: "state",
         header: "State",
         cell: ({ row }) => row.original.published
-          ? <ToneBadge tone="success">Published</ToneBadge>
-          : <ToneBadge tone="neutral">Archived</ToneBadge>,
+          ? <StatusBadge status="published" />
+          : <StatusBadge status="archived" />,
       },
       { id: "updated", header: "Last Updated", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => formatDate(row.original.updatedAt.slice(0, 10)) },
     ],
@@ -83,16 +82,7 @@ export function ExperiencesPage() {
   );
 
   return (
-    <AdminPage
-      anyOf={["experiences"]}
-      title="Experiences"
-      crumbs={[{ label: "Experiences" }]}
-      actions={canManage ? (
-        <Button type="button" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setCreating(true)}>
-          <Plus aria-hidden="true" /> New experience
-        </Button>
-      ) : undefined}
-    >
+    <>
       <QueryState isLoading={experiences.isLoading} error={experiences.error}>
         <FilterBar
           search={search}
@@ -120,7 +110,8 @@ export function ExperiencesPage() {
               extraItems={[{
                 key: row.published ? "archive" : "restore",
                 label: row.published ? "Archive" : "Restore",
-                tone: row.published ? "warning" : "success",
+                tone: row.published ? "danger" : "success",
+                icon: row.published ? Archive : RotateCcw,
                 onClick: () => togglePublished(row),
               }]}
             />
@@ -133,7 +124,7 @@ export function ExperiencesPage() {
         title={detail?.title ?? "Experience"}
         subtitle={detail ? `/experiences/${detail.slug}` : undefined}
         icon={<Mountain />}
-        badge={detail ? (detail.published ? <ToneBadge tone="success">Published</ToneBadge> : <ToneBadge tone="neutral">Archived</ToneBadge>) : undefined}
+        badge={detail ? (detail.published ? <StatusBadge status="published" /> : <StatusBadge status="archived" />) : undefined}
         sections={detail ? [
           {
             title: "Public content",
@@ -152,32 +143,22 @@ export function ExperiencesPage() {
           }] : []),
         ] : []}
         history={detail ? [{ key: detail.updatedAt, when: `Last updated ${formatDate(detail.updatedAt.slice(0, 10))}`, text: detail.category }] : []}
-        footer={detail && canManage ? (
-          <>
-            <a
-              href={`/experiences/${detail.slug}`}
-              className="tw:inline-flex tw:min-h-11 tw:items-center tw:gap-2 tw:rounded-md tw:border tw:border-border tw:px-3 tw:text-sm tw:font-semibold tw:text-foreground tw:sm:min-h-8"
-            >
-              <ExternalLink aria-hidden="true" className="tw:size-4" /> Open public page
-            </a>
-            <Button type="button" variant="warning" onClick={() => { setEditing(detail); setDetailId(null); }}><Pencil aria-hidden="true" /> Edit</Button>
-            {detail.published ? (
-              <Button type="button" variant="destructive" onClick={() => togglePublished(detail)}><Archive aria-hidden="true" /> Archive</Button>
-            ) : (
-              <Button type="button" variant="success" onClick={() => togglePublished(detail)}><RotateCcw aria-hidden="true" /> Restore</Button>
-            )}
-          </>
-        ) : undefined}
+        footer={detail && canManage ? <DetailActions actions={[
+          { key: "edit", label: "Edit", next: true, icon: Pencil, variant: "warning", onClick: () => { setEditing(detail); setDetailId(null); } },
+          { key: "public", label: "Open public page", next: true, icon: ExternalLink, variant: "indigo", href: `/experiences/${detail.slug}` },
+          { key: "publication", label: detail.published ? "Archive" : "Restore", icon: detail.published ? Archive : RotateCcw,
+            variant: detail.published ? "destructive" : "success", onClick: () => togglePublished(detail) },
+        ]} /> : undefined}
       />
       {creating || editing ? (
         <ExperienceDialog
           key={editing?.id ?? "new-experience"}
           experience={editing}
-          onClose={() => { setEditing(null); setCreating(false); }}
+          onClose={() => { setEditing(null); onCloseCreate(); }}
         />
       ) : null}
       {dialog}
-    </AdminPage>
+    </>
   );
 }
 

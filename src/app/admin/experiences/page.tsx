@@ -1,8 +1,9 @@
-import { ExperiencesPage } from "@/panels/admin/pages/experiences-page";
+import { redirectToAreaTab, type AreaRedirectPageProps } from "@/panels/admin/area-redirect";
 
-// The staff identity is resolved by the client-side prototype auth gate.
+// shortcut: the client-only mock auth gate drops this page from instant-navigation validation; remove with the mock login.
 export const instant = false;
 
-export default function Page() {
-  return <ExperiencesPage />;
+// Experiences became a Settings tab; the old link still opens it.
+export default async function Page({ searchParams }: AreaRedirectPageProps) {
+  return redirectToAreaTab("vip-products", "experiences", searchParams);
 }

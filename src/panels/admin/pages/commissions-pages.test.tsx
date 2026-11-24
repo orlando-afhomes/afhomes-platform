@@ -75,8 +75,9 @@ describe("Commissions tables and details", () => {
     const drawer = await screen.findByRole("dialog");
     expect(within(drawer).getByRole("region", { name: "Commission" })).toBeInTheDocument();
     expect(within(drawer).getByRole("region", { name: "Payout" })).toBeInTheDocument();
-    expect(within(drawer).getByRole("button", { name: "Adjust" }).className).toContain("tw:text-warning");
-    expect(within(drawer).getByRole("button", { name: "Cancel Commission" }).className).toContain("tw:bg-destructive");
+    await user.click(within(drawer).getByRole("button", { name: "More actions" }));
+    expect(await screen.findByRole("menuitem", { name: "Adjust" })).toBeInTheDocument();
+    expect(await screen.findByRole("menuitem", { name: "Cancel Commission" })).toHaveAttribute("data-variant", "destructive");
     await user.keyboard("{Escape}");
     expect(screen.queryByText("View full details")).toBeNull();
   });
@@ -125,7 +126,7 @@ describe("Month-end payout bar", () => {
 
     // The seed also holds payouts recorded earlier and still waiting for confirmation.
     const awaiting = store!.commissions.filter((item) => item.status === "approved" && item.payout && !item.payout.confirmedAt).length;
-    const recordAll = await screen.findByRole("button", { name: /^Record Payout for All Ready \(\d+\)$/ });
+    const recordAll = await screen.findByRole("button", { name: /^Record Payouts \(\d+\)$/ });
     const count = Number(/\((\d+)\)/.exec(recordAll.textContent ?? "")![1]);
     expect(count).toBeGreaterThanOrEqual(2);
     await user.click(recordAll);
@@ -139,8 +140,8 @@ describe("Month-end payout bar", () => {
     fireEvent.submit(form.getByRole("button", { name: "Record Payout" }).closest("form")!);
     expect(await screen.findByText(`${count} recorded`)).toBeInTheDocument();
 
-    await user.click(await screen.findByRole("button", { name: `Confirm All Paid Out (${count + awaiting})` }));
-    await user.click(within(await screen.findByRole("alertdialog", { name: "Confirm All Paid Out?" })).getByRole("button", { name: "Confirm All" }));
+    await user.click(await screen.findByRole("button", { name: `Confirm Payouts (${count + awaiting})` }));
+    await user.click(within(await screen.findByRole("alertdialog", { name: "Confirm Payouts?" })).getByRole("button", { name: "Confirm All" }));
     expect(await screen.findByText(`${count + awaiting} confirmed. They are now Paid.`)).toBeInTheDocument();
     expect(store!.commissions.filter((item) => item.payout?.reference === "BATCH-SEP").map(({ status }) => status)).toEqual(Array(count).fill("paid"));
     expect(screen.queryByRole("region", { name: "Month-end payout" })).toBeNull();
@@ -182,7 +183,7 @@ describe("Set Rate", () => {
     // The seed approves rates for every active seller; this flow starts from a seller with no VIP rate yet.
     store.commissionRateSettings = store.commissionRateSettings.filter((item) => !(item.memberId === "mem-ost-a1" && item.product === "VIP"));
     show(<CommissionsAreaPage />, "rates", "dev-admin", store);
-    await user.click(await screen.findByRole("button", { name: "Set VIP Standard" }));
+    await user.click(await screen.findByRole("button", { name: "Set Standard" }));
     const setup = within(await screen.findByRole("dialog", { name: "Set Approved VIP Standard" }));
     await user.click(setup.getByRole("combobox", { name: /^Seller position/ }));
     await user.click(await screen.findByRole("option", { name: "Outsourced Seller (OST)" }));
@@ -237,104 +238,96 @@ describe("Set Rate", () => {
 });
 
 describe("Allowance review form", () => {
-  it("shows the three steps, reveals fields only when needed, and validates the month", async () => {
+  async function selectLeader(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(await screen.findByRole("combobox", { name: "Internal Seller (IST) leader" }));
+    await user.click((await screen.findAllByRole("option"))[0]);
+  }
+
+  it("prefills a draft after selecting the month and leader and previews only after confirmation", async () => {
     const user = userEvent.setup();
     show(<CommissionsAreaPage />, "allowances");
-    expect(await screen.findByRole("region", { name: "Step 1: Month and Leader" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Step 3: Company Spreadsheet Figures (Optional)" })).toBeInTheDocument();
-    expect(screen.getByText("Type the amounts from the company Excel file so the system can compare them.")).toBeInTheDocument();
-    expect(screen.getByLabelText(/^Month/)).toHaveAttribute("type", "month");
+    fireEvent.change(await screen.findByLabelText(/^Month/), { target: { value: OPEN_MONTH } });
+    await selectLeader(user);
 
-    expect(screen.queryByLabelText("Explanation of any difference")).toBeNull();
-    expect(screen.queryByLabelText(/Reason for withholding/)).toBeNull();
-    fireEvent.change(screen.getByLabelText("Performance bonus"), { target: { value: "10" } });
-    expect(await screen.findByLabelText("Explanation of any difference")).toBeInTheDocument();
-    await user.click(screen.getByRole("switch", { name: "Withhold basic allowance this month" }));
-    expect(await screen.findByLabelText(/Reason for withholding/)).toBeInTheDocument();
+    const days = await screen.findAllByLabelText("Eligible days");
+    expect(days[0]).not.toHaveValue("");
+    expect(days[1]).toHaveValue("");
+    expect(screen.queryByText(/Company Spreadsheet Figures/)).toBeNull();
+    expect(screen.queryByRole("region", { name: "Calculated allowances" })).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "Calculate Allowances" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Choose the month.");
-    expect(screen.getByRole("button", { name: "Calculate Allowances" }).className).toContain("tw:text-info");
+    const confirm = screen.getByRole("switch", { name: "The figures for both periods are correct" });
+    await user.click(confirm);
+    expect(screen.getByRole("region", { name: "Calculated allowances" })).toBeInTheDocument();
+    fireEvent.change(screen.getAllByLabelText("Collections")[0], { target: { value: "100" } });
+    expect(confirm).not.toBeChecked();
+    expect(screen.queryByRole("region", { name: "Calculated allowances" })).toBeNull();
   });
 
-  it("saves once and shows a busy Save Review while the request is pending", async () => {
+  it("saves only on request and sends no workbook figures", async () => {
     const user = userEvent.setup();
     const save = vi.spyOn(MockCommissionRepository.prototype, "saveAllowanceReview").mockImplementationOnce(() => new Promise(() => {}));
     show(<CommissionsAreaPage />, "allowances");
-    await screen.findByRole("region", { name: "Step 1: Month and Leader" });
-    fireEvent.change(screen.getByLabelText(/^Month/), { target: { value: "2026-11" } });
-    await user.click(screen.getByRole("combobox", { name: "Internal Seller (IST) leader" }));
-    const options = await screen.findAllByRole("option");
-    await user.click(options[0]);
-
+    const month = await screen.findByLabelText(/^Month/);
+    await selectLeader(user);
+    fireEvent.change(month, { target: { value: OPEN_MONTH } });
+    await user.click(await screen.findByRole("switch", { name: "The figures for both periods are correct" }));
+    expect(save).not.toHaveBeenCalled();
     const button = screen.getByRole("button", { name: "Save Review" });
     await user.dblClick(button);
     await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    expect(save.mock.calls[0][0].workbook).toBeNull();
     expect(button).toHaveAttribute("aria-busy", "true");
-    expect(button).toHaveAttribute("aria-disabled", "true");
   });
 
-  it("assembles month figures from business data and copies one leader into the form", async () => {
+  it("reopens saved figures first and leaves the closed-month lock in effect", async () => {
     const user = userEvent.setup();
-    show(<><CommissionsAreaPage /><AppToaster /></>, "allowances");
-    await screen.findByRole("region", { name: "Step 1: Month and Leader" });
-    fireEvent.change(screen.getByLabelText(/^Month/), { target: { value: OPEN_MONTH } });
-    const table = await screen.findByRole("table", { name: "Assembled Month Figures" });
-    expect(within(table).getAllByRole("button", { name: "Copy" }).length).toBeGreaterThan(0);
-    expect(screen.getByText(/split the figures into the Qualifying and Extended stretches/i)).toBeInTheDocument();
-    await user.click(within(table).getAllByRole("button", { name: "Copy" })[0]);
-    expect(await screen.findByText(/Assembled month figures copied/)).toBeInTheDocument();
-  });
-
-  it("blocks saving copied figures until the Qualifying/Extended split is confirmed", async () => {
-    const user = userEvent.setup();
+    const prior = seed.allowanceReviews.find((review) => review.month === LATEST_CLOSED)!;
+    expect(prior).toBeDefined();
+    const assembly = vi.spyOn(MockCommissionRepository.prototype, "assembleAllowanceInputs");
     show(<CommissionsAreaPage />, "allowances");
-    await screen.findByRole("region", { name: "Step 1: Month and Leader" });
-    fireEvent.change(screen.getByLabelText(/^Month/), { target: { value: OPEN_MONTH } });
-    const table = await screen.findByRole("table", { name: "Assembled Month Figures" });
-    await user.click(within(table).getAllByRole("button", { name: "Copy" })[0]);
-    await screen.findByRole("switch", { name: "The Qualifying/Extended split above is correct" });
+    fireEvent.change(await screen.findByLabelText(/^Month/), { target: { value: prior.month } });
+    await user.click(await screen.findByRole("combobox", { name: "Internal Seller (IST) leader" }));
+    // The option starts with the leader's AA number, which is what a search by number matches.
+    await user.type(screen.getByRole("combobox", { name: "Internal Seller (IST) leader" }), seed.members.find((member) => member.id === prior.memberId)!.aaNumber!);
+    await user.click(await screen.findByRole("option", { name: new RegExp(`${prior.memberName} · ${prior.position}$`) }));
+    expect((await screen.findAllByLabelText("Eligible days"))[0]).toHaveValue(String(prior.qualifying.days));
+    expect(assembly).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("switch", { name: "The figures for both periods are correct" }));
     await user.click(screen.getByRole("button", { name: "Save Review" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(/Confirm the Qualifying\/Extended split/);
-    await user.click(screen.getByRole("switch", { name: "The Qualifying/Extended split above is correct" }));
-    await user.click(screen.getByRole("button", { name: "Save Review" }));
-    expect(await screen.findByRole("row", { name: new RegExp(`^Open allowance review for .+, ${OPEN_MONTH}$`) })).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent("This month is closed");
   });
 
-  it("requires fresh split confirmation after editing a copied collection amount", async () => {
+  it("retries a failed load and clears the draft when the selection changes", async () => {
     const user = userEvent.setup();
-    show(<CommissionsAreaPage />, "allowances");
-    await screen.findByRole("region", { name: "Step 1: Month and Leader" });
-    fireEvent.change(screen.getByLabelText(/^Month/), { target: { value: OPEN_MONTH } });
-    const table = await screen.findByRole("table", { name: "Assembled Month Figures" });
-    await user.click(within(table).getAllByRole("button", { name: "Copy" })[0]);
-    const confirmation = await screen.findByRole("switch", { name: "The Qualifying/Extended split above is correct" });
-    await user.click(confirmation);
-    fireEvent.change(screen.getAllByLabelText("Collections")[0], { target: { value: "100" } });
-    expect(screen.getByRole("switch", { name: "The Qualifying/Extended split above is correct" })).not.toBeChecked();
-    await user.click(screen.getByRole("button", { name: "Save Review" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(/Confirm the Qualifying\/Extended split/);
-    await user.click(confirmation);
-    await user.click(screen.getByRole("button", { name: "Save Review" }));
-    expect(await screen.findByRole("row", { name: new RegExp(`^Open allowance review for .+, ${OPEN_MONTH}$`) })).toBeInTheDocument();
-  });
-
-  it.each(["month", "leader"])("clears a confirmed copied draft when the %s changes", async (field) => {
-    const user = userEvent.setup();
+    vi.spyOn(MockCommissionRepository.prototype, "assembleAllowanceInputs").mockRejectedValueOnce(new Error("Could not load figures."));
     show(<CommissionsAreaPage />, "allowances");
     const month = await screen.findByLabelText(/^Month/);
     fireEvent.change(month, { target: { value: OPEN_MONTH } });
-    const table = await screen.findByRole("table", { name: "Assembled Month Figures" });
-    await user.click(within(table).getAllByRole("button", { name: "Copy" })[0]);
-    const confirmation = await screen.findByRole("switch", { name: "The Qualifying/Extended split above is correct" });
-    await user.click(confirmation);
-    if (field === "month") {
-      fireEvent.change(month, { target: { value: LATEST_CLOSED } });
-    } else {
-      await user.click(screen.getByRole("combobox", { name: /Internal Seller \(IST\) leader/ }));
-      await user.click(screen.getAllByRole("option", { selected: false })[0]);
-    }
-    expect(confirmation).not.toBeInTheDocument();
-    for (const input of screen.getAllByLabelText("Eligible days")) expect(input).toHaveValue("");
+    await selectLeader(user);
+    await user.click(await screen.findByRole("button", { name: "Try again" }));
+    await user.click(await screen.findByRole("switch", { name: "The figures for both periods are correct" }));
+    expect(screen.getByRole("region", { name: "Calculated allowances" })).toBeInTheDocument();
+    fireEvent.change(month, { target: { value: "" } });
+    expect(screen.queryByLabelText("Eligible days")).toBeNull();
+    expect(screen.queryByRole("region", { name: "Calculated allowances" })).toBeNull();
+  });
+
+  it("keeps another month's delayed figures out of the current draft", async () => {
+    const user = userEvent.setup();
+    const lateMonth = "2098-02";
+    const original = MockCommissionRepository.prototype.assembleAllowanceInputs;
+    const load = vi.spyOn(MockCommissionRepository.prototype, "assembleAllowanceInputs")
+      .mockImplementation(function (this: MockCommissionRepository, period, options) {
+        return period === lateMonth ? new Promise(() => {}) : original.call(this, period, options);
+      });
+    show(<CommissionsAreaPage />, "allowances");
+    const month = await screen.findByLabelText(/^Month/);
+    await selectLeader(user);
+    fireEvent.change(month, { target: { value: lateMonth } });
+    await waitFor(() => expect(load.mock.calls[0]?.[0]).toBe(lateMonth));
+    expect(screen.queryByLabelText("Eligible days")).toBeNull();
+    fireEvent.change(month, { target: { value: OPEN_MONTH } });
+    expect((await screen.findAllByLabelText("Eligible days"))[0]).not.toHaveValue("");
+    expect(load.mock.calls.some(([period]) => period === OPEN_MONTH)).toBe(true);
   });
 });

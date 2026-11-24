@@ -39,24 +39,27 @@ it("lets GSD verify by name and opens both points actions from the customer's QR
   await user.type(await screen.findByRole("searchbox", { name: "Find customer" }), holder.holderName);
   await user.click(await screen.findByRole("button", { name: new RegExp(holder.vipNumber) }));
   expect(screen.getByText("Active membership")).toBeVisible();
+  // Picking a result hides the list of matches and leaves only that customer's details.
+  expect(screen.queryByRole("list", { name: "Suggested customers" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Earn Points" })).toBeNull();
 
   await user.click(screen.getByRole("button", { name: "Scan QR" }));
+  expect(await screen.findByLabelText("Customer card")).toBeVisible();
   await user.click(await screen.findByRole("button", { name: "Earn Points" }));
   const purchase = await screen.findByRole("dialog", { name: "Earn Points" });
   expect(within(purchase).getByLabelText(/Purchase Date/)).toHaveValue(manilaToday());
   expect(within(purchase).getByRole("textbox", { name: /Total Bill Amount/ })).toBeVisible();
   expect(within(purchase).getByRole("textbox", { name: /Amount Not Eligible for Points/ })).toBeVisible();
-  expect(within(purchase).getByRole("textbox", { name: /Service Used/ })).toBeVisible();
+  expect(within(purchase).getByRole("textbox", { name: /Notes/ })).toBeVisible();
   expect(within(purchase).getByRole("textbox", { name: /Receipt Number/ })).toBeDisabled();
   expect(within(purchase).getByRole("button", { name: "Submit for Review" })).toBeVisible();
   await user.keyboard("{Escape}");
 
   await user.click(screen.getByRole("button", { name: "Redeem Points" }));
-  expect(screen.queryByRole("button", { name: "Use Points for a Reward" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Claim Reward" })).toBeNull();
   await user.click(screen.getByRole("checkbox", { name: /checked the cardholder/ }));
-  await user.click(screen.getByRole("button", { name: "Use Points for a Reward" }));
+  await user.click(screen.getByRole("button", { name: "Claim Reward" }));
   expect(await screen.findByRole("combobox", { name: /Offer/ })).toBeVisible();
-  await user.click(screen.getByRole("button", { name: "Use Points for an Overnight Stay" }));
+  await user.click(screen.getByRole("button", { name: "Book Stay" }));
   expect(await screen.findByRole("table", { name: "Redemption Bookings" })).toBeVisible();
 });

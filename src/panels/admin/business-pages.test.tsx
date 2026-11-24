@@ -282,7 +282,9 @@ describe("business pages render for the intended roles", () => {
   it("asks Admin to request a cancellation with forfeiture when the contract has verified money", async () => {
     const user = userEvent.setup();
     show("dev-admin", <SalesContractDetailPage contractId="ctr-1" />);
-    await user.click(await screen.findByRole("button", { name: "Request Cancellation" }));
+    // The header shows two next-step buttons; the cancellation request is in the More actions menu.
+    await user.click(await screen.findByRole("button", { name: "More actions" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Request Cancellation" }));
     expect(screen.queryByRole("button", { name: "Cancel Contract" })).toBeNull();
     const dialog = await screen.findByRole("dialog");
     await user.type(within(dialog).getByLabelText(/reason/i), "Customer withdrew in writing");
@@ -314,15 +316,17 @@ describe("business pages render for the intended roles", () => {
   it("gives Finance a verification queue with the pending reservation", async () => {
     show("dev-finance", <FinanceAreaPage />, "verification&show=waiting");
     expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
-    expect((await screen.findAllByRole("button", { name: /^Verify payment/ })).length).toBeGreaterThan(0);
-    await openMenuWith("Actions for payment", "Return for Correction");
+    expect(screen.queryByRole("button", { name: /^Verify payment/ })).toBeNull();
+    await openMenuWith("Actions for payment", "Verify");
+    expect(screen.getByRole("menuitem", { name: "Request Fix" })).toBeInTheDocument();
     expect(screen.queryByRole("menuitem", { name: "Start review" })).toBeNull();
   });
 
   it("lets the Administrator open the receipt verification queue", async () => {
     show("dev-admin", <FinanceAreaPage />, "verification&show=waiting");
     expect(await screen.findByRole("table", { name: "Verification queue" })).toBeInTheDocument();
-    expect((await screen.findAllByRole("button", { name: /^Verify payment/ })).length).toBeGreaterThan(0);
+    expect((await screen.findAllByRole("button", { name: /^Actions for payment/ })).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: /^Verify payment/ })).toBeNull();
   });
 
   it("keeps the system payment reference read-only when a returned receipt is fixed", async () => {
@@ -338,9 +342,10 @@ describe("business pages render for the intended roles", () => {
     show("dev-clerk", <ReturnedReceiptFixture />);
     const user = userEvent.setup();
     await user.click(await screen.findByRole("tab", { name: "Payments" }));
-    // A single row action is shown as a direct button, not inside the "..." menu.
-    expect(screen.queryByRole("button", { name: /^Verify payment/ })).toBeNull();
-    await user.click(await screen.findByRole("button", { name: /^Fix and Resend/ }));
+    // Even a single row action sits inside the "..." menu.
+    expect(screen.queryByRole("button", { name: /^Resend/ })).toBeNull();
+    await user.click(await screen.findByRole("button", { name: /^Actions for payment/ }));
+    await user.click(await screen.findByRole("menuitem", { name: "Resend" }));
     expect(await screen.findByRole("textbox", { name: "Payment reference (system)" })).toHaveAttribute("readonly");
     expect(screen.getByText(/Check receipt amount/)).toBeInTheDocument();
   });
@@ -371,12 +376,12 @@ describe("business pages render for the intended roles", () => {
     expect(screen.queryByText("No approved rates recorded.")).toBeNull();
   });
 
-  it("shows Administrators the customer import steps and templates", async () => {
+  it("no longer offers an Import tab on the Customers area", async () => {
     show("dev-admin", <CustomersAreaPage />, "import");
-    expect(await screen.findByRole("region", { name: "Import customers" })).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Export customers" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Download Template" })).toBeInTheDocument();
-    expect(screen.getByLabelText(/Customer file/)).toHaveAttribute("accept", ".xlsx,.csv");
+    expect(await screen.findByRole("table", { name: "Customers" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Import customers" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Import" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "Export" })).toBeInTheDocument();
   });
 
   it("separates customer export into its own tab", async () => {
@@ -418,7 +423,7 @@ describe("business pages render for the intended roles", () => {
 
   it("shows the activation queue to Admin", async () => {
     show("dev-admin", <MembershipAreaPage />, "activation");
-    expect(await screen.findByRole("table", { name: "Ready to Activate" })).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "To Activate" })).toBeInTheDocument();
   });
 
   it("asks staff to pick a cardholder, then shows yearly gifts and resort bill actions to Finance", async () => {
@@ -430,13 +435,15 @@ describe("business pages render for the intended roles", () => {
     expect(screen.queryByRole("table", { name: "Yearly Gifts" })).toBeNull();
     await pickFilteredOption(user, search, "Jerome", new RegExp(escapeRegExp(CUSTOMER_B1)));
     expect(await screen.findByRole("table", { name: "Yearly Gifts" })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("tab", { name: "Bills to Review" }));
-    const bills = await screen.findByRole("table", { name: "Bills to Review" });
+    await userEvent.click(screen.getByRole("tab", { name: "Pending Bills" }));
+    const bills = await screen.findByRole("table", { name: "Pending Bills" });
     expect(screen.getByRole("button", { name: "Earn Points" })).toBeInTheDocument();
     expect(screen.queryByText(/Awaiting first redemption/)).toBeNull();
     // Refunds are recorded from a verified bill's details.
     fireEvent.click(within(bills).getAllByText("Verified")[0].closest("tr")!);
-    expect(await screen.findByRole("button", { name: "Record Refund" })).toBeInTheDocument();
+    const bill = await screen.findByRole("dialog");
+    await user.click(within(bill).getByRole("button", { name: "More actions" }));
+    expect(await screen.findByRole("menuitem", { name: "Record Refund" })).toBeInTheDocument();
   });
 
   it("shows the cardholder summary, the payment hold alert and plain balance cards without a details button", async () => {
@@ -774,7 +781,7 @@ describe("customer application new fields and secondary holder", () => {
     await user.type(screen.getByLabelText(/^first name/i), "Maria");
     selectIdImage("draft-id.png");
     expect(await screen.findByText("draft-id.png")).toBeVisible();
-    await user.click(screen.getByRole("button", { name: /save as draft/i }));
+    await user.click(screen.getByRole("button", { name: /save draft/i }));
     expect(await screen.findByText("Draft saved.")).toBeVisible();
     expect(screen.queryByText("draft-id.png")).toBeNull();
     expect(createDraft.mock.calls[0]?.[0]).toMatchObject({
@@ -1370,13 +1377,13 @@ describe("customer application new fields and secondary holder", () => {
     await user.click(screen.getByRole("button", { name: /continue/i }));
     const recommender = await screen.findByRole("combobox", { name: "Referrer / VIP Recommender" });
     await waitFor(() => expect(recommender).toHaveAccessibleDescription(/pending accreditation/i));
-    await user.click(screen.getByRole("button", { name: "Save as Draft" }));
+    await user.click(screen.getByRole("button", { name: "Save Draft" }));
     expect(update).not.toHaveBeenCalled();
     await user.click(recommender);
     expect(screen.queryByRole("option", { name: /Ana Mendoza/ })).toBeNull();
     expect(screen.getByRole("option", { name: /Mark Villanueva/ })).toBeInTheDocument();
     await user.click(screen.getByRole("option", { name: "No referrer" }));
-    await user.click(screen.getByRole("button", { name: "Save as Draft" }));
+    await user.click(screen.getByRole("button", { name: "Save Draft" }));
     expect(await screen.findByText("Draft saved.")).toBeVisible();
     expect(update.mock.calls[0]?.[1].recommenderMemberId).toBeNull();
   });
@@ -1563,7 +1570,7 @@ describe("customer application realtime field validation", () => {
 
     // Email: syntax check only when the field is filled.
     const email = screen.getByLabelText("Email") as HTMLInputElement;
-    await user.type(email, "not-an-email");
+    await user.type(email, "not@an-email");
     fireEvent.blur(email);
     expect(await screen.findByText("Enter a valid email address.")).toBeInTheDocument();
     await user.clear(email);
@@ -1668,7 +1675,7 @@ describe("customer application realtime field validation", () => {
     expect(screen.queryByText("TIN must be 9 digits.")).toBeNull();
 
     const email = screen.getByLabelText("Email (Extra cardholder)") as HTMLInputElement;
-    await user.type(email, "not-an-email");
+    await user.type(email, "not@an-email");
     fireEvent.blur(email);
     expect(await screen.findByText("Enter a valid email address.")).toBeInTheDocument();
     await user.clear(email);
@@ -1912,7 +1919,7 @@ describe("customer edit reuses the application wizard", () => {
     await user.type(screen.getByLabelText(/first name/i), "Maria");
     await user.clear(screen.getByLabelText(/last name/i));
     await user.type(screen.getByLabelText(/last name/i), "Santos");
-    await user.click(screen.getByRole("button", { name: /save as draft/i }));
+    await user.click(screen.getByRole("button", { name: /save draft/i }));
 
     expect(await screen.findByText("Draft saved.")).toBeInTheDocument();
     // The same seed draft is updated: the list size stays the same and cust-a2 carries the new name.
@@ -1928,7 +1935,7 @@ describe("customer edit reuses the application wizard", () => {
     await user.click(screen.getByRole("button", { name: /continue/i }));
     await screen.findByRole("radiogroup", { name: "Payment plan" });
     // A submitted customer is never saved as a draft.
-    expect(screen.queryByRole("button", { name: /save as draft/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /save draft/i })).toBeNull();
 
     for (let step = 0; step < 4; step += 1) {
       // Keeping the record's own Customer ID must not count as a duplicate (self-exclusion, doc 04).
@@ -1937,6 +1944,6 @@ describe("customer edit reuses the application wizard", () => {
     expect(await screen.findByRole("heading", { name: "Review the Application" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save Correction" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /submit application/i })).toBeNull();
-    expect(screen.queryByRole("button", { name: /save as draft/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /save draft/i })).toBeNull();
   });
 });

@@ -10,7 +10,7 @@ export type RestaurantReservation = {
   reference: string;
   /** Outlet id of the restaurant. */
   venueId: string;
-  /** Set when the reservation was made for a cardholder from Customer Look Up. */
+  /** Set when the reservation was made for a cardholder from Customer Search. */
   membershipId: string | null;
   guestName: string;
   contactNumber: string;

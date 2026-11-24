@@ -22,7 +22,7 @@ export function ActivationQueuePanel() {
         <AdminStatCard label="Ready" value={pending.filter((item) => item.eligible).length} icon={BadgeCheck} tone="success" />
       </AdminStatGrid>
       <QueryState isLoading={memberships.isLoading} error={memberships.error}>
-        <MembershipTable data={pending} caption="Ready to Activate" emptyText="No memberships are waiting for activation." />
+        <MembershipTable data={pending} caption="To Activate" emptyText="No memberships are waiting for activation." />
       </QueryState>
     </>
   );

@@ -10,6 +10,7 @@ export type DetailRowItem = {
   value: ReactNode;
   /** Let the value span both columns (long text, addresses, notes). */
   wide?: boolean;
+  action?: ReactNode;
 };
 
 export type DetailTone = "brand" | "success" | "warning" | "info" | "danger" | "neutral";
@@ -21,6 +22,7 @@ export type DetailSection = {
   /** Colour of the chip. Defaults from the title, else "brand". */
   tone?: DetailTone;
   rows: ReadonlyArray<DetailRowItem>;
+  layout?: "list";
 };
 
 export type DetailHistoryItem = { key: string; when: string; text: string };
@@ -129,24 +131,38 @@ export function RecordDetailsSheet({
             return (
               <section key={section.title ?? index} aria-label={section.title} className={CARD}>
                 {section.title ? <SectionHeading icon={sectionIcon} tone={tone} title={section.title} /> : null}
-                <div className="tw:overflow-hidden">
-                <dl className="tw:m-0 tw:-mb-[11px] tw:grid tw:grid-cols-1 tw:gap-x-6 tw:sm:grid-cols-2">
-                  {section.rows.map((row, rowIndex) => (
-                    <div
-                      key={`${row.label}-${rowIndex}`}
-                      className={cn(
-                        "tw:flex tw:min-w-0 tw:flex-col tw:gap-0.5 tw:border-b tw:border-border/70 tw:py-2.5 tw:first:pt-0",
-                        row.wide && "tw:sm:col-span-2",
-                      )}
-                    >
-                      <dt className="tw:text-xs tw:font-medium tw:text-muted-foreground">{row.label}</dt>
-                      <dd className="tw:m-0 tw:text-sm tw:font-semibold tw:wrap-break-word tw:text-foreground tw:tabular-nums">
-                        {row.value === null || row.value === undefined || row.value === "" ? "—" : row.value}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-                </div>
+                {section.layout === "list" ? (
+                  <ul className="tw:m-0 tw:list-none tw:divide-y tw:divide-border tw:p-0">
+                    {section.rows.map((row) => (
+                      <li key={row.label} className="tw:grid tw:items-center tw:gap-2 tw:py-3 tw:first:pt-0 tw:last:pb-0 tw:sm:grid-cols-[minmax(0,1fr)_auto] tw:sm:gap-4">
+                        <div className="tw:min-w-0 tw:wrap-break-word">
+                          <div className="tw:text-sm tw:font-semibold">{row.label}</div>
+                          <div className="tw:text-xs tw:text-muted-foreground">{row.value}</div>
+                        </div>
+                        {row.action ? <div className="tw:justify-self-start tw:sm:justify-self-end">{row.action}</div> : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="tw:overflow-hidden">
+                    <dl className="tw:m-0 tw:-mb-[11px] tw:grid tw:grid-cols-1 tw:gap-x-6 tw:sm:grid-cols-2">
+                      {section.rows.map((row, rowIndex) => (
+                        <div
+                          key={`${row.label}-${rowIndex}`}
+                          className={cn(
+                            "tw:flex tw:min-w-0 tw:flex-col tw:gap-0.5 tw:border-b tw:border-border/70 tw:py-2.5 tw:first:pt-0",
+                            row.wide && "tw:sm:col-span-2",
+                          )}
+                        >
+                          <dt className="tw:text-xs tw:font-medium tw:text-muted-foreground">{row.label}</dt>
+                          <dd className="tw:m-0 tw:text-sm tw:font-semibold tw:wrap-break-word tw:text-foreground tw:tabular-nums">
+                            {row.value === null || row.value === undefined || row.value === "" ? "—" : row.value}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                )}
               </section>
             );
           })}
@@ -171,7 +187,7 @@ export function RecordDetailsSheet({
         {footer ? (
           <div
             data-slot="sheet-footer"
-            className="tw:flex tw:flex-wrap tw:items-center tw:justify-end tw:gap-2 tw:border-t tw:border-border tw:bg-popover tw:p-4"
+            className="tw:flex tw:items-center tw:justify-end tw:gap-2 tw:empty:hidden tw:border-t tw:border-border tw:bg-popover tw:p-4"
           >
             {footer}
           </div>

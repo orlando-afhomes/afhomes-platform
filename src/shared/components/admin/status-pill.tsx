@@ -1,79 +1,16 @@
 "use client";
 
-import { BadgeCheck, CircleCheck, CircleX, Clock, Hourglass, Minus, Pencil, ShieldAlert, Undo2, type LucideIcon } from "lucide-react";
-import { Badge } from "@/shared/ui/badge";
-import { cn } from "@/shared/lib/utils";
-import { toneClass, type BadgeTone } from "../modern/status-badge";
-import { humanize } from "@/shared/lib/humanize";
+import type { LucideIcon } from "lucide-react";
+import { StatusBadge, ToneBadge, type BadgeTone } from "../modern/status-badge";
 
-/** Icon + label pill. Text always carries the meaning; color only reinforces it. */
-export function StatusPill({
-  tone = "neutral",
-  icon: Icon,
-  children,
-  className,
-}: {
+export function StatusPill({ tone = "neutral", icon, children, className }: {
   tone?: BadgeTone;
   icon?: LucideIcon;
   children: React.ReactNode;
   className?: string;
 }) {
-  return (
-    <Badge variant="secondary" className={cn(toneClass(tone), "tw:gap-1", className)}>
-      {Icon ? <Icon aria-hidden="true" className="tw:size-3.5" /> : null}
-      {children}
-    </Badge>
-  );
+  return <ToneBadge tone={tone} icon={icon} className={className}>{children}</ToneBadge>;
 }
 
-const STATUS_MAP: Record<string, { tone: BadgeTone; icon?: LucideIcon }> = {
-  submitted: { tone: "info", icon: CircleCheck },
-  under_review: { tone: "info", icon: CircleCheck },
-  verified: { tone: "success", icon: CircleCheck },
-  finalized: { tone: "success", icon: BadgeCheck },
-  // Same tone as STATUS_TONES in status-badge.tsx: one badge vocabulary.
-  approved: { tone: "success", icon: CircleCheck },
-  confirmed: { tone: "success", icon: BadgeCheck },
-  active: { tone: "success", icon: BadgeCheck },
-  active_member: { tone: "success", icon: BadgeCheck },
-  paid: { tone: "success", icon: BadgeCheck },
-  // A draft is unfinished work (grey); returned and sent back mean someone must fix it (violet, with a return arrow).
-  draft: { tone: "neutral", icon: Pencil },
-  returned: { tone: "violet", icon: Undo2 },
-  sent_back: { tone: "violet", icon: Undo2 },
-  pending: { tone: "warning", icon: Clock },
-  on_hold: { tone: "warning", icon: Hourglass },
-  due: { tone: "warning", icon: Clock },
-  partial: { tone: "warning", icon: Clock },
-  overdue: { tone: "danger", icon: Clock },
-  cancelled: { tone: "danger", icon: CircleX },
-  rejected: { tone: "danger", icon: CircleX },
-  expired: { tone: "danger", icon: CircleX },
-  voided: { tone: "danger", icon: CircleX },
-  conflict: { tone: "danger", icon: ShieldAlert },
-  suspended: { tone: "warning", icon: Clock },
-  spendable: { tone: "success", icon: BadgeCheck },
-  held: { tone: "warning", icon: Hourglass },
-  blocked_rounding: { tone: "warning", icon: ShieldAlert },
-  pending_owner_decision: { tone: "warning", icon: Hourglass },
-  configured: { tone: "success", icon: BadgeCheck },
-  available: { tone: "success", icon: BadgeCheck },
-  contract_stated: { tone: "neutral" },
-  unavailable: { tone: "neutral" },
-  retired: { tone: "neutral" },
-  outside_cycles: { tone: "neutral" },
-  inactive: { tone: "neutral", icon: Minus },
-};
-
-/** Plain screen words for stored statuses whose default capitalised form is hard to understand. */
-const PLAIN_LABELS: Record<string, string> = { defaulted: "Stopped Paying" };
-
-/** Status pill driven by a record status string. Unknown statuses render neutral text without an icon. */
-export function StatusPillForStatus({ status, label }: { status: string; label?: string }) {
-  const mapped = STATUS_MAP[status];
-  return (
-    <StatusPill tone={mapped?.tone ?? "neutral"} icon={mapped?.icon}>
-      {label ?? PLAIN_LABELS[status] ?? humanize(status)}
-    </StatusPill>
-  );
-}
+/** Compatibility entry point for business badges and existing admin callers. */
+export const StatusPillForStatus = StatusBadge;

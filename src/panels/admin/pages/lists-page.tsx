@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Ban, Power } from "lucide-react";
 import { useOperation } from "@/data/business-queries";
 import {
   useCreateOutlet,
@@ -161,8 +162,8 @@ export function ListsPage({
               }}
               extraItems={[
                 item.status === "active"
-                  ? { key: "deactivate", label: "Deactivate", tone: "warning" as const, onClick: () => setStatus(item, "inactive") }
-                  : { key: "activate", label: "Activate", tone: "success" as const, onClick: () => setStatus(item, "active") },
+                  ? { key: "deactivate", label: "Deactivate", tone: "warning" as const, icon: Ban, onClick: () => setStatus(item, "inactive") }
+                  : { key: "activate", label: "Activate", tone: "success" as const, icon: Power, onClick: () => setStatus(item, "active") },
               ]}
               onDelete={item.inUse ? undefined : () => (isOutlet ? removeOutlet(item.id) : removeEntry(item.id))}
               deleteDisabledReason={item.inUse ? "Existing records use this entry. Deactivate it instead." : null}

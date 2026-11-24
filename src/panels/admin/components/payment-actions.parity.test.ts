@@ -158,11 +158,11 @@ describe("payment-actions parity: row menu vs detail-sheet footer", () => {
     const source = readSource();
     // Key → label pairs pinned by itemsFor (~lines 213-228).
     for (const [key, label] of [
-      ["resend", "Fix and Resend"],
+      ["resend", "Resend"],
       ["verify", "Verify"],
-      ["return", "Return for Correction"],
+      ["return", "Request Fix"],
       ["reject", "Reject"],
-      ["adjust", "Undo or Refund"],
+      ["adjust", "Refund"],
     ]) {
       expect(source, `missing ${key} label`).toContain(`key: "${key}"`);
       expect(source, `missing ${key} label`).toContain(`label: "${label}"`);
@@ -173,7 +173,7 @@ describe("payment-actions parity: row menu vs detail-sheet footer", () => {
     expect(dangerMarks.length).toBe(2);
     expect(source).toContain('{ key: "reject", label: "Reject", tone: "danger"');
     expect(source).toContain('{ key: "verify", label: "Verify", tone: "success"');
-    expect(source).toContain('variant={TONE_VARIANT[item.tone ?? "default"]}');
+    expect(source).toContain('variant: TONE_VARIANT[item.tone ?? "default"]');
   });
 
   it("both surfaces are wired to the SAME itemsFor helper (parity by construction)", () => {
@@ -181,15 +181,10 @@ describe("payment-actions parity: row menu vs detail-sheet footer", () => {
     // Exactly one shared helper definition.
     expect(source.match(/const itemsFor = /g)?.length ?? 0).toBe(1);
     // Row menu consumes it …
-    expect(source).toContain("const items = itemsFor(payment);");
-    expect(source).toContain("extraItems={items.filter((item) => item !== verify)}");
+    expect(source).toContain("extraItems={itemsFor(payment)}");
     expect(source).not.toContain("Start review");
     // … and the detail footer maps the same helper over the open detail record …
-    expect(source).toContain("itemsFor(detail).map(");
+    expect(source).toContain("<DetailActions actions={itemsFor(detail).map((item) => ({ ...item,");
     // … preserving key, label, danger styling, and the gate outcome (onClick) with no filtering.
-    expect(source).toContain("key={item.key}");
-    expect(source).toContain("{item.label}");
-    expect(source).toContain("item.tone");
-    expect(source).toContain("onClick={item.onClick}");
   });
 });

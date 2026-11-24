@@ -10,7 +10,7 @@ export type BreadcrumbItem = {
 /** Breadcrumb trail for migrated screens. Any item with an href is a link, including the current page. */
 export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
   return (
-    <nav aria-label="Breadcrumb">
+    <nav aria-label="Breadcrumb" className="tw:border-b tw:border-border tw:pb-3">
       <ol className="tw:flex tw:flex-wrap tw:items-center tw:gap-1 tw:text-sm tw:text-muted-foreground">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;

@@ -6,7 +6,7 @@ import { PAYOUT_METHODS } from "@/modules/commissions/types";
 import type { DevIdentity } from "@/modules/identity/types";
 import { parseManilaDateOnly } from "@/shared/lib/dates";
 import { firstOpenDate } from "@/modules/finance/month-close";
-import { applyBasisPoints } from "@/shared/lib/money";
+import { applyBasisPoints, formatPeso } from "@/shared/lib/money";
 import { clawbackBalance, collectedPercent, meetsPayoutRelease, payoutReleaseDate, payoutReleaseDateFor, planClawbackOffsets } from "@/modules/commissions/rules";
 import { BusinessRepository, customerName, nowIso, today } from "./business-base";
 import { paymentsOfContract, reconcileContract } from "./business-effects";
@@ -251,8 +251,8 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
       this.require(identity, "commission.approve", "Allowance review is restricted to authorized staff.");
       return structuredClone({
         reviews: this.store.allowanceReviews,
-        members: this.store.members.flatMap(({ id, displayName: name, designation: position }) =>
-          position === "OST" ? [] : [{ id, name, position }],
+        members: this.store.members.flatMap(({ id, displayName: name, designation: position, aaNumber }) =>
+          position === "OST" ? [] : [{ id, name, aaNumber: aaNumber ?? null, position }],
         ),
       });
     });
@@ -386,11 +386,11 @@ export class MockCommissionRepository extends BusinessRepository implements Comm
       if (commission.releaseDate) throw new Error("A commission that is ready to pay cannot change its frozen rate.");
       if (commission.status === "paid" || commission.status === "cancelled") throw new Error("A paid or cancelled commission cannot be adjusted here.");
       if (commission.payout) throw new Error("A commission with a recorded payout cannot be adjusted.");
-      const previous = `${commission.percentBp}bp/${commission.amountCentavos}`;
+      const previous = `${commission.percentBp}bp/${formatPeso(commission.amountCentavos)}`;
       commission.amountCentavos = this.amountFor(commission.basisCentavos, percentBp);
       commission.percentBp = percentBp;
       this.event(commission, identity, BUSINESS_AUDIT_ACTIONS.COMMISSION_ADJUSTED, reason.trim());
-      this.audit(identity, { module: "commissions", action: BUSINESS_AUDIT_ACTIONS.COMMISSION_ADJUSTED, entityType: "commission", entityId: commission.id, previousValue: previous, newValue: `${percentBp}bp/${commission.amountCentavos}`, reason: reason.trim() });
+      this.audit(identity, { module: "commissions", action: BUSINESS_AUDIT_ACTIONS.COMMISSION_ADJUSTED, entityType: "commission", entityId: commission.id, previousValue: previous, newValue: `${percentBp}bp/${formatPeso(commission.amountCentavos)}`, reason: reason.trim() });
       return this.view(commission, false);
     });
   }

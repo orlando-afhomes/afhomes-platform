@@ -9,7 +9,7 @@ function as(store: ReturnType<typeof createMockStore>, id: string) {
   return createMockRepositories(store, () => getDevIdentity(id)).memberships;
 }
 
-describe("staff Customer Look Up (UI21)", () => {
+describe("staff Customer Search (UI21)", () => {
   it("lets GSD verify an active member by name", async () => {
     const store = createMockStore();
     const member = store.memberships.find((item) => item.id === "memb-1")!;

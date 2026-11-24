@@ -42,9 +42,10 @@ export function exportPlanOptions(products: Parameters<typeof tierOptions>[0]) {
   return [{ value: "all", label: "All VIP card levels" }, ...tierOptions(products)];
 }
 
-export const EXPORT_FORMAT_OPTIONS: { value: "xlsx" | "csv"; label: string }[] = [
+export const EXPORT_FORMAT_OPTIONS: { value: "xlsx" | "csv" | "pdf"; label: string }[] = [
   { value: "xlsx", label: "Excel (.xlsx)" },
   { value: "csv", label: "CSV (.csv)" },
+  { value: "pdf", label: "PDF (.pdf)" },
 ];
 
 /**
@@ -73,8 +74,8 @@ export function ExportCustomersCard({
   setStatus: (value: string) => void;
   plan: string;
   setPlan: (value: string) => void;
-  format: "xlsx" | "csv";
-  setFormat: (value: "xlsx" | "csv") => void;
+  format: "xlsx" | "csv" | "pdf";
+  setFormat: (value: "xlsx" | "csv" | "pdf") => void;
   loading: boolean;
   exporting: boolean;
   onExport: () => void;
@@ -106,7 +107,7 @@ export function ExportCustomersCard({
         actions={
           <div className="tw:flex tw:flex-wrap tw:items-end tw:gap-3">
             <SelectField label="Format" value={format} options={EXPORT_FORMAT_OPTIONS} onChange={setFormat} className="tw:w-full tw:sm:w-44" />
-            <Button variant="info" className="tw:min-h-11 tw:sm:min-h-8" loading={exporting} disabled={loading || rows.length === 0} onClick={onExport}>
+            <Button variant="teal" className="tw:min-h-11 tw:sm:min-h-8" loading={exporting} disabled={loading || rows.length === 0} onClick={onExport}>
               {exporting ? null : <Download aria-hidden="true" />} Export
             </Button>
           </div>

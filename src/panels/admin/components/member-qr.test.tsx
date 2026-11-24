@@ -55,7 +55,7 @@ it("offers manual lookup when the camera is denied", async () => {
   render(<ScanMemberQrButton onSelect={vi.fn()} />);
   await user.click(screen.getByRole("button", { name: "Scan QR" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("Camera unavailable");
-  await user.click(screen.getByRole("button", { name: "Use manual lookup" }));
+  await user.click(screen.getByRole("button", { name: "Manual Lookup" }));
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 

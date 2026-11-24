@@ -38,7 +38,7 @@ function fontRuns(text: string, fonts: { font: PDFFont; characters: Set<number> 
   const runs: { font: PDFFont; text: string }[] = [];
   for (const character of text) {
     const font = fonts.find((candidate) => candidate.characters.has(character.codePointAt(0)!))?.font;
-    if (!font) throw new Error(`${label} contains a character this sample template cannot print.`);
+    if (!font) throw new Error(`${label} contains a character this template cannot print.`);
     const previous = runs.at(-1);
     if (previous?.font === font) previous.text += character;
     else runs.push({ font, text: character });
@@ -148,7 +148,6 @@ function fillReservation(pdf: PDFDocument, writer: Writer, { contract, customer,
   const last = installments.at(-1);
   const consistentAmount = installments.every((line) => line.amountCentavos === first?.amountCentavos);
   const consistentDay = installments.every((line) => line.dueDate?.slice(-2) === first?.dueDate?.slice(-2));
-  fill(390, 140, 85, "Sample", "Revision");
   fill(525, 140, 52, displayDate(date), "Prepared date", 7);
   fill(163, 154, 157, displayDate(reservation?.dueDate ?? contract.createdAt), "Reservation date");
   fill(440, 155, 125, contract.vipNumber ?? "Pending issuance", "VIP Number");
@@ -204,7 +203,6 @@ function fillReservation(pdf: PDFDocument, writer: Writer, { contract, customer,
   writer.put(terms, 406, 854, 170, contacts.referrer, "VIP Recommender");
   if (!consistentAmount || !consistentDay) {
     const schedule = pdf.addPage([612, 936]);
-    writer.put(schedule, 42, 37, 528, "SAMPLE - NOT FOR SIGNING", "Sample label", 11);
     writer.put(schedule, 42, 63, 528, "Reservation Agreement · Payment schedule", "Schedule title", 15);
     writer.put(schedule, 42, 85, 528, printHolderName(customer), "Buyer name", 10);
     writer.put(schedule, 42, 105, 528, `VIP Number: ${contract.vipNumber ?? "Pending issuance"}`, "Schedule VIP Number");
@@ -265,7 +263,7 @@ function financeSummary(pdf: PDFDocument, writer: Writer, input: Extract<PrintDo
   const summary = firstPaymentSummary(contract, payments, date);
   const heading = (number: number) => {
     const page = pdf.addPage([612, 936]);
-    writer.put(page, 42, 38, 525, "SAMPLE - FINANCE PAYMENT SUMMARY", "Summary title", 15);
+    writer.put(page, 42, 38, 525, "FINANCE PAYMENT SUMMARY", "Summary title", 15);
     writer.put(page, 42, 63, 525, input.customerName, "Buyer", 12);
     writer.put(page, 42, 83, 525, `VIP Number: ${contract.vipNumber ?? "Pending issuance"}   |   As of: ${displayDate(date)}`, "Summary date", 9);
     writer.put(page, 42, 103, 525, `Agreed price: ${money(contract.priceCentavos)}   |   Net approved: ${money(summary.received)}   |   Balance: ${money(summary.balance)}`, "Totals", 9);
@@ -294,10 +292,10 @@ function financeSummary(pdf: PDFDocument, writer: Writer, input: Extract<PrintDo
 }
 
 export async function renderVipDocument(input: PrintDocumentInput, sources: Sources = browserSources) {
-  if (input.kind === "application" && !supportedPrintTier(input.tierCode)) throw new Error("The sample application has no selection for this card level.");
+  if (input.kind === "application" && !supportedPrintTier(input.tierCode)) throw new Error("The application form has no selection for this card level.");
   const key = input.kind === "application" ? "application" : input.kind === "finance" ? null : templateKeyFor(input.kind, input.contract);
   if (input.kind === "grant" && !canPrintGrant(input.contract)) throw new Error("A finalized, numbered contract with a matching Grant template is required.");
-  if (input.kind !== "finance" && !key) throw new Error("No sample template matches this contract.");
+  if (input.kind !== "finance" && !key) throw new Error("No template matches this contract.");
   const [pdf, fonts] = await Promise.all([key ? sources.template(key).then((bytes) => PDFDocument.load(bytes)) : PDFDocument.create(), sources.fonts()]);
   pdf.registerFontkit(fontkit);
   const embedded = await Promise.all(fonts.map((font) => pdf.embedFont(font, { subset: true })));
@@ -306,6 +304,6 @@ export async function renderVipDocument(input: PrintDocumentInput, sources: Sour
   else if (input.kind === "reservation") fillReservation(pdf, writer, input);
   else if (input.kind === "grant") fillGrant(writer, pdf.getPages(), input);
   else if (input.kind === "finance") financeSummary(pdf, writer, input);
-  pdf.setTitle(`AFHomes sample ${input.kind}`);
+  pdf.setTitle(`AFHomes ${input.kind}`);
   return { bytes: await pdf.save(), revision: key ? TEMPLATE_REVISIONS[key] : "Finance summary 1", label: key ?? "finance-summary" };
 }

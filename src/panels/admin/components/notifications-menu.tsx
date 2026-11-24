@@ -117,7 +117,7 @@ export function NotificationsMenu() {
                 disabled={unreadTotal === 0}
                 className="tw:w-full"
               >
-                Mark All as Read
+                Mark Read
               </Button>
             </div>
           </>

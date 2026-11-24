@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
@@ -25,6 +25,13 @@ vi.mock("next/navigation", async (importOriginal) => ({
   useSearchParams: () => new URLSearchParams(window.location.search),
 }));
 
+const pdf = vi.hoisted(() => ({ create: vi.fn(), download: vi.fn() }));
+vi.mock("@/panels/admin/documents/report-pdf-output", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/panels/admin/documents/report-pdf-output")>()),
+  createReportPdf: pdf.create,
+  downloadReportPdf: pdf.download,
+}));
+
 function Wrapper({ identityId, store, children }: { identityId: string; store?: MockStore; children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   return (
@@ -42,6 +49,13 @@ function Wrapper({ identityId, store, children }: { identityId: string; store?: 
 function show(identityId: string, page: ReactElement, store?: MockStore) {
   return render(<Wrapper identityId={identityId} store={store}>{page}</Wrapper>);
 }
+
+beforeEach(() => {
+  Object.defineProperty(URL, "createObjectURL", { value: vi.fn(() => "blob:report-preview"), configurable: true });
+  Object.defineProperty(URL, "revokeObjectURL", { value: vi.fn(), configurable: true });
+  pdf.create.mockResolvedValue(new Blob(["pdf"], { type: "application/pdf" }));
+  vi.clearAllMocks();
+});
 
 afterEach(() => {
   cleanup();
@@ -70,24 +84,14 @@ async function seedDraftProduct(store: MockStore) {
 }
 
 describe("Customers area", () => {
-  it("opens the Import tab for an Administrator from the URL", async () => {
+  it("opens Customers from an old import tab link and keeps export available", async () => {
     window.history.replaceState(null, "", "/admin/customers?tab=import");
     show("dev-admin", <CustomersRoute />);
-    expect(await screen.findByRole("tab", { name: "Import" })).toHaveAttribute("aria-selected", "true");
-    expect(await screen.findByRole("button", { name: "Download Template" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "New Customer" })).toBeNull();
+    expect(await screen.findByRole("tab", { name: "Customers" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("tab", { name: "Import" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Download Template" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "Export" })).toBeInTheDocument();
   });
-
-  it("offers one Download template menu with Excel and CSV", async () => {
-    const user = userEvent.setup();
-    window.history.replaceState(null, "", "/admin/customers?tab=import");
-    show("dev-admin", <CustomersRoute />);
-    await user.click(await screen.findByRole("button", { name: "Download Template" }));
-    expect(await screen.findByRole("menuitem", { name: "Excel (.xlsx)" })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "CSV (.csv)" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "CSV template" })).toBeNull();
-  });
-
   it("shows the filtered export preview on the Export tab", async () => {
     const user = userEvent.setup();
     window.history.replaceState(null, "", "/admin/customers?tab=export");
@@ -100,6 +104,28 @@ describe("Customers area", () => {
     await user.type(screen.getByRole("searchbox", { name: "Search customers by name" }), "Noel");
     expect(within(preview).queryByText("Gina Soriano")).toBeNull();
     expect(within(preview).getByText("Noel Pascual")).toBeInTheDocument();
+  });
+
+  it("downloads the filtered customers as a PDF with the five preview columns", async () => {
+    const user = userEvent.setup();
+    const store = createMockStore();
+    window.history.replaceState(null, "", "/admin/customers?tab=export");
+    show("dev-admin", <CustomersRoute />, store);
+
+    const preview = await screen.findByRole("table", { name: "Customers to Export" });
+    await within(preview).findByText("Noel Pascual");
+    await user.type(screen.getByRole("searchbox", { name: "Search customers by name" }), "Noel");
+    await user.click(screen.getByRole("combobox", { name: "Format" }));
+    await user.click(await screen.findByRole("option", { name: "PDF (.pdf)" }));
+    await user.click(screen.getByRole("button", { name: "Export" }));
+
+    await waitFor(() => expect(pdf.create).toHaveBeenCalledTimes(1));
+    const data = pdf.create.mock.calls[0][0];
+    expect(data.columns).toEqual(["Customer", "VIP Plan", "Status", "Seller", "Submitted"]);
+    expect(data.rows.length).toBeGreaterThan(0);
+    expect(data.rows.every((row: string[]) => row[0].includes("Noel"))).toBe(true);
+    expect(pdf.download).toHaveBeenCalledWith(expect.any(Blob), expect.stringMatching(/^customers-\d{4}-\d{2}-\d{2}\.pdf$/));
+    expect(store.auditEvents.at(-1)).toMatchObject({ action: "CUSTOMERS_EXPORTED", entityType: "customer-export", entityId: "pdf", newValue: expect.stringMatching(/^rows:\d+$/) });
   });
 
   it("lists customers with plain names and no View full details item", async () => {
@@ -125,7 +151,9 @@ describe("customer registration review pages (doc 04 sections 5 and 10)", () => 
     show("dev-admin", <CustomerDetailPage customerId={SUBMITTED} />);
     expect(await screen.findByRole("button", { name: /^approve$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /send back/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^reject$/i })).toBeInTheDocument();
+    // Two buttons show; Reject sits in the More actions menu.
+    await userEvent.setup().click(screen.getByRole("button", { name: "More actions" }));
+    expect(await screen.findByRole("menuitem", { name: /^reject$/i })).toBeInTheDocument();
     cleanup();
 
     show("dev-clerk", <CustomerDetailPage customerId={SUBMITTED} />);
@@ -134,12 +162,30 @@ describe("customer registration review pages (doc 04 sections 5 and 10)", () => 
     expect(screen.queryByRole("button", { name: /send back/i })).toBeNull();
   });
 
+  it("opens the matching tab from each Linked Records row", async () => {
+    const user = userEvent.setup();
+    show("dev-admin", <CustomerDetailPage customerId={SUBMITTED} />);
+    expect(await screen.findByRole("button", { name: "Open Contract" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Open Contract" }));
+    expect(screen.getByRole("tab", { name: "Contract" })).toHaveAttribute("aria-selected", "true");
+
+    await user.click(screen.getByRole("tab", { name: "Overview" }));
+    await user.click(screen.getByRole("button", { name: "Open Sale" }));
+    expect(screen.getByRole("tab", { name: "Sales" })).toHaveAttribute("aria-selected", "true");
+
+    await user.click(screen.getByRole("tab", { name: "Overview" }));
+    await user.click(screen.getByRole("button", { name: "Open VIP Membership" }));
+    expect(screen.getByRole("tab", { name: "Membership" })).toHaveAttribute("aria-selected", "true");
+  });
+
   it("shows each action once in the header, with no duplicate row menu", async () => {
     show("dev-admin", <CustomerDetailPage customerId={SUBMITTED} />);
     await screen.findByRole("button", { name: /^approve$/i });
     expect(screen.queryByRole("button", { name: /^actions for/i })).toBeNull();
-    expect(screen.getAllByRole("button", { name: /^reject$/i })).toHaveLength(1);
-    expect(screen.getAllByRole("button", { name: /^new vip purchase$/i })).toHaveLength(1);
+    await userEvent.setup().click(screen.getByRole("button", { name: "More actions" }));
+    expect(await screen.findAllByRole("menuitem", { name: /^reject$/i })).toHaveLength(1);
+    expect(screen.getAllByRole("menuitem", { name: /^new vip purchase$/i })).toHaveLength(1);
   });
 
   it("keeps Discard draft as a red header button for a draft", async () => {

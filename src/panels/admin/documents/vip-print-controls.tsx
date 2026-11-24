@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { Download, Printer } from "lucide-react";
+import { Download, ExternalLink, Printer, X } from "lucide-react";
 import { useCustomers, useMembers } from "@/data/queries";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/shared/ui/input";
 import { manilaToday } from "@/shared/lib/dates";
 import { InfoNote } from "@/shared/components/modern/detail-list";
+import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { canPrintGrant, printCustomerData, templateKeyFor, type PrintDocumentInput, type SaleContacts } from "@/modules/contracts/print-data";
 import type { OrgMember } from "@/modules/organization/types";
 import type { GenealogyEntry } from "@/modules/contracts/types";
@@ -110,6 +111,7 @@ function PrintPreview({ file, children }: { file: Blob; children: (url: string) 
 }
 
 type PrintProps = {
+  variant?: "info" | "indigo" | "violet";
   title: string;
   input?: PrintDocumentInput;
   archiveKey?: string;
@@ -122,7 +124,7 @@ export function VipPrintControl(props: PrintProps) {
   return <VipPrintSession key={identity.id} {...props} />;
 }
 
-function VipPrintSession({ title, input, archiveKey, allowSignedSample, currentVipNumber }: PrintProps) {
+function VipPrintSession({ title, variant = "info", input, archiveKey, allowSignedSample, currentVipNumber }: PrintProps) {
   const store = useMockStore();
   const attachId = useId();
   const [open, setOpen] = useState(false);
@@ -130,6 +132,8 @@ function VipPrintSession({ title, input, archiveKey, allowSignedSample, currentV
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const running = useRef(false);
+  const [, refresh] = useState(0);
+  const { confirmRun, dialog: removeDialog } = useConfirmRun();
   const copies = archiveKey ? archiveFor(store).get(archiveKey) ?? [] : [];
   const generate = async () => {
     if (!input || running.current) return;
@@ -166,10 +170,26 @@ function VipPrintSession({ title, input, archiveKey, allowSignedSample, currentV
       setBusy(false);
     }
   };
+  const removeCopy = (target: PreparedCopy, number: number) => confirmRun({
+    title: `Remove Copy ${number}?`,
+    description: "This removes the prepared copy from this list. You can prepare a new copy any time.",
+    confirmText: "Remove",
+    danger: true,
+    successTitle: "Copy removed",
+    errorTitle: "Copy could not be removed",
+    action: () => {
+      if (!archiveKey) return;
+      const archive = archiveFor(store);
+      const remaining = (archive.get(archiveKey) ?? []).filter((item) => item.id !== target.id);
+      archive.set(archiveKey, remaining);
+      if (copy?.id === target.id) setCopy(remaining.at(-1) ?? null);
+      refresh((count) => count + 1);
+    },
+  });
   const attach = async (file: File | undefined) => {
     if (!file || !copy || !allowSignedSample || copy.signed || running.current) return;
     if ((file.type !== "application/pdf" && !(file.type === "" && /\.pdf$/i.test(file.name))) || file.size > 5 * 1024 * 1024) {
-      setError("Choose a sample PDF no larger than 5 MB.");
+      setError("Choose a PDF no larger than 5 MB.");
       return;
     }
     running.current = true;
@@ -186,7 +206,7 @@ function VipPrintSession({ title, input, archiveKey, allowSignedSample, currentV
       }
       setCopy(next);
     } catch {
-      setError("This sample PDF could not be opened. Choose a readable PDF.");
+      setError("This PDF could not be opened. Choose a readable PDF.");
     } finally {
       running.current = false;
       setBusy(false);
@@ -194,10 +214,11 @@ function VipPrintSession({ title, input, archiveKey, allowSignedSample, currentV
   };
   if (!input && copies.length === 0) return null;
   return (
+    <>
     <Dialog open={open} onOpenChange={(next) => {
       if (next || !running.current) setOpen(next);
     }}>
-      <Button variant="info" onClick={() => {
+      <Button variant={variant} onClick={() => {
         setOpen(true);
         setError("");
         setCopy(copies.at(-1) ?? null);
@@ -206,15 +227,20 @@ function VipPrintSession({ title, input, archiveKey, allowSignedSample, currentV
       <DialogContent showCloseButton={!busy} className="tw:sm:max-w-4xl tw:max-h-[94dvh] tw:overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>Sample PDF for review. The print command is available in the PDF viewer.</DialogDescription>
+          <DialogDescription>Review the PDF. Use the print button in the PDF viewer to print it.</DialogDescription>
         </DialogHeader>
         {copies.length > 1 ? (
           <div className="tw:flex tw:flex-wrap tw:gap-2" aria-label="Prepared copies">
             {copies.map((item, index) => (
-              <Button key={item.id} variant={copy?.id === item.id ? "secondary" : "outline"} size="sm" disabled={busy} onClick={() => {
-                setError("");
-                setCopy(item);
-              }}>Copy {index + 1} · {timestamp.format(new Date(item.at))}</Button>
+              <div key={item.id} className="tw:flex tw:items-center tw:gap-0.5">
+                <Button variant={copy?.id === item.id ? "secondary" : "outline"} size="sm" disabled={busy} onClick={() => {
+                  setError("");
+                  setCopy(item);
+                }}>Copy {index + 1} · {timestamp.format(new Date(item.at))}</Button>
+                <Button variant="ghost" size="icon-sm" disabled={busy} aria-label={`Remove copy ${index + 1}`} title={`Remove copy ${index + 1}`} onClick={() => removeCopy(item, index + 1)}>
+                  <X aria-hidden="true" />
+                </Button>
+              </div>
             ))}
           </div>
         ) : null}
@@ -227,10 +253,10 @@ function VipPrintSession({ title, input, archiveKey, allowSignedSample, currentV
             {currentVipNumber ? <p className="tw:text-xs tw:text-muted-foreground">Linked purchase VIP Number: {currentVipNumber}</p> : null}
             {allowSignedSample && archiveKey ? (
               copy.signed ? (
-                <Button variant="outline" onClick={() => downloadPdf(copy.signed!, "afhomes-signed-sample.pdf")}>Download attached signed sample</Button>
+                <Button variant="cyan" onClick={() => downloadPdf(copy.signed!, "afhomes-signed.pdf")}>Download Signed</Button>
               ) : (
                 <div className="tw:grid tw:gap-1">
-                  <label htmlFor={attachId}>Attach signed sample PDF to this copy</label>
+                  <label htmlFor={attachId}>Attach the signed PDF to this copy</label>
                   <Input id={attachId} type="file" accept="application/pdf" disabled={busy} onChange={(event) => {
                     const file = event.currentTarget.files?.[0];
                     event.currentTarget.value = "";
@@ -240,15 +266,17 @@ function VipPrintSession({ title, input, archiveKey, allowSignedSample, currentV
               )
             ) : null}
             <DialogFooter>
-              {input && archiveKey ? <Button variant="outline" onClick={generate} disabled={busy}>Prepare new sample</Button> : null}
-              <a className={buttonVariants({ variant: "outline" })} href={url} target="_blank" rel="noreferrer">Open PDF to print</a>
-              <a className={buttonVariants({ variant: "info" })} href={url} download={`afhomes-${copy.label}-sample.pdf`}><Download aria-hidden="true" />Download PDF</a>
+              {input && archiveKey ? <Button variant="default" onClick={generate} disabled={busy}>New Copy</Button> : null}
+              <a data-action-variant="info" className={buttonVariants({ variant: "info" })} href={url} target="_blank" rel="noreferrer"><ExternalLink aria-hidden="true" />Open PDF to print</a>
+              <a data-action-variant="cyan" className={buttonVariants({ variant: "cyan" })} href={url} download={`afhomes-${copy.label}.pdf`}><Download aria-hidden="true" />Download PDF</a>
             </DialogFooter>
           </>
         )}</PrintPreview> : null}
         {!copy && !busy && input ? <DialogFooter><Button onClick={generate}>Try again</Button></DialogFooter> : null}
       </DialogContent>
     </Dialog>
+    {removeDialog}
+    </>
   );
 }
 
@@ -264,8 +292,8 @@ export function ContractPrintControls({ contract, payments, referrerId }: { cont
   return (
     <div className="tw:space-y-2">
       <div className="tw:flex tw:flex-wrap tw:gap-2">
-        <VipPrintControl title="Print Reservation Agreement" archiveKey={`reservation:${contract.id}`} input={available ? { kind: "reservation", ...data } : undefined} allowSignedSample={Boolean(contract.signedAgreementRecordedDate)} currentVipNumber={contract.vipNumber} />
-        <VipPrintControl title="Print VIP Grant" archiveKey={`grant:${contract.id}`} input={grant ? { kind: "grant", ...data } : undefined} allowSignedSample={grant} />
+        <VipPrintControl title="Print Agreement" archiveKey={`reservation:${contract.id}`} input={available ? { kind: "reservation", ...data } : undefined} allowSignedSample={Boolean(contract.signedAgreementRecordedDate)} currentVipNumber={contract.vipNumber} />
+        <VipPrintControl title="Print Grant" variant="indigo" archiveKey={`grant:${contract.id}`} input={grant ? { kind: "grant", ...data } : undefined} allowSignedSample={grant} />
       </div>
       {contract.status === "finalized" && contract.vipNumber && !grant ? (
         <InfoNote title="Grant template unavailable">This tier and payment schedule need a matching Grant template.</InfoNote>
@@ -279,9 +307,9 @@ export function ContractPrintControls({ contract, payments, referrerId }: { cont
 
 export function FinancePrintControl({ contract, payments }: { contract: ContractView; payments: PaymentView[] }) {
   if (!payments.some((payment) => payment.status === "verified")) return null;
-  return <VipPrintControl title="Print Finance Summary" input={{ kind: "finance", contract, payments, customerName: contract.customerName, date: manilaToday() }} />;
+  return <VipPrintControl title="Print Summary" variant="violet" input={{ kind: "finance", contract, payments, customerName: contract.customerName, date: manilaToday() }} />;
 }
 
 export function ApplicationReprint({ customerId }: { customerId: string }) {
-  return <VipPrintControl title="Print filed application sample" archiveKey={applicationPrintKey(customerId)} allowSignedSample />;
+  return <VipPrintControl title="Print Form" archiveKey={applicationPrintKey(customerId)} allowSignedSample />;
 }

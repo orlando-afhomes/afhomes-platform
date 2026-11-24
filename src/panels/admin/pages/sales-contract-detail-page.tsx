@@ -1,5 +1,6 @@
 "use client";
 
+import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { useApproveDeal, useContractAction, useMarkSaleDefaulted, useOperation, useSales } from "@/data/business-queries";
 import { canCorrectPayment } from "@/data/mock/scope";
@@ -79,11 +80,14 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
         });
         const items = orderActionItems([
           ...menu.extraItems,
-          ...(canPrepare && editable ? [{ key: "edit-details", label: "Edit Details", tone: "warning" as const, onClick: () => setDialogKind("edit") }] : []),
+          ...(canPrepare && editable ? [{ key: "edit-details", label: "Edit Details", tone: "warning" as const, icon: Pencil, onClick: () => setDialogKind("edit") }] : []),
         ]);
         return (
           <>
-            {items.map((item) => <Button key={item.key} variant={actionButtonVariant(item.tone)} className={BUTTON} onClick={item.onClick}>{item.label}</Button>)}
+            {items.map((item) => {
+              const Icon = item.icon;
+              return <Button key={item.key} variant={actionButtonVariant(item.tone)} className={BUTTON} onClick={item.onClick}><Icon aria-hidden="true" />{item.label}</Button>;
+            })}
           </>
         );
       }}
@@ -95,7 +99,7 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
         return (
           <>
             {dialog}
-            <ReasonDialog open={saleDefaultOpen} title="Mark Sale as Stopped Paying" description={sale?.customerName ?? ""} confirmText="Mark as Stopped Paying" tone="warning" successText="Sale marked as Stopped Paying." onClose={() => setSaleDefaultOpen(false)} onSubmit={(reason) => sale ? markDefaulted.mutateAsync({ id: sale.id, reason }) : Promise.resolve()} />
+            <ReasonDialog open={saleDefaultOpen} title="Mark Sale as Stopped Paying" description={sale?.customerName ?? ""} confirmText="Stopped Paying" tone="warning" successText="Sale marked as Stopped Paying." onClose={() => setSaleDefaultOpen(false)} onSubmit={(reason) => sale ? markDefaulted.mutateAsync({ id: sale.id, reason }) : Promise.resolve()} />
           {record.contract.status === "returned" && record.contract.returnReason ? <InfoNote title="Returned for Correction">{record.contract.returnReason}</InfoNote> : null}
           {canApprove && inReview && contract.holds.length > 0 ? (
             <InfoNote title="Finalization Is on Hold">
@@ -146,7 +150,7 @@ export function SalesContractDetailPage({ contractId }: { contractId: string }) 
             <>
               {unmatchedReceipts.canRecord ? (
                 <div className="tw:flex tw:justify-end">
-                  <Button type="button" variant="outline" className={BUTTON} onClick={unmatchedReceipts.openIntake}>Record unmatched receipt</Button>
+                  <Button type="button" variant="outline" className={BUTTON} onClick={unmatchedReceipts.openIntake}>Add Receipt</Button>
                 </div>
               ) : null}
               <ContractPaymentsSection record={record} actions={canSubmitPayment ? {

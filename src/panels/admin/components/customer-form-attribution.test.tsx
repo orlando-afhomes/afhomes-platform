@@ -98,9 +98,9 @@ describe("sales attribution section", () => {
     expect(sellerCombos()[0]).toBeDisabled();
     expect(sellerCombos()[1]).toBeDisabled();
     expect(sellerCombos()[1]).toHaveAccessibleDescription(/could not be checked/i);
-    await user.click(screen.getByRole("button", { name: "Clear Seller Selections" }));
+    await user.click(screen.getByRole("button", { name: "Clear Sellers" }));
     expect(sellerCombos()[1]).not.toHaveAttribute("aria-invalid", "true");
-    expect(screen.queryByRole("button", { name: "Clear Seller Selections" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Clear Sellers" })).toBeNull();
   });
 
   it("labels the pair Closing seller and Referrer / VIP Recommender", () => {

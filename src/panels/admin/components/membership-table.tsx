@@ -1,16 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import { CreditCard, FileText, PackageCheck, Power, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { useActivateMembership, useMemberships, useOperation, useRecordCardClaim } from "@/data/business-queries";
 import type { MembershipView } from "@/data/contracts/membership-repository";
 import type { TableOrder } from "@/shared/lib/table-order";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
-import { Button, buttonVariants } from "@/shared/ui/button";
 import { EMPTY } from "@/shared/lib/empty-value";
-import { MemberQrButton } from "./member-qr";
+import { MemberQrDialog } from "./member-qr";
+import { DetailActions } from "@/shared/components/modern/detail-actions";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu, type RowActionItem } from "@/shared/components/modern/row-actions-menu";
 import { BizBadge } from "@/shared/components/business/biz-badge";
@@ -39,6 +39,8 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
   const memberships = useMemberships();
   const activate = useActivateMembership();
   const claim = useRecordCardClaim();
+  const canShowQr = useOperation("customers.lookup");
+  const [qrMembershipId, setQrMembershipId] = useState<string | null>(null);
   const canActivate = useOperation("membership.activate");
   const canService = useOperation("contracts.approve");
   const { confirmRun, dialog } = useConfirmRun();
@@ -74,6 +76,7 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
         key: "activate",
         label: "Activate",
         tone: "success" as const,
+        icon: Power,
         loading: activating,
         disabled: activate.isPending,
         onClick: () => {
@@ -85,8 +88,8 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
     }
     if (item.status !== "active") return [];
     return [
-      ...(canService && item.cardId ? [{ key: "service", label: "Replace or Transfer Card", tone: "default" as const, onClick: () => setServicing(item) }] : []),
-      ...(canActivate && item.fullSettlementDate && !item.cardClaimDate ? [{ key: "claim", label: "Mark Card as Picked Up", tone: "success" as const, onClick: () => confirmRun({ title: "Did the member pick up their VIP card today?", description: "This saves today as the pickup date and starts the validity period for the card.", confirmText: "Record Pickup", tone: "success", action: () => claim.mutateAsync(item.id), successTitle: "Card pickup recorded.", errorTitle: "Could not record card pickup" }) }] : []),
+      ...(canService && item.cardId ? [{ key: "service", label: "Manage Card", tone: "default" as const, icon: CreditCard, onClick: () => setServicing(item) }] : []),
+      ...(canActivate && item.fullSettlementDate && !item.cardClaimDate ? [{ key: "claim", label: "Card Picked Up", tone: "success" as const, icon: PackageCheck, onClick: () => confirmRun({ title: "Did the member pick up their VIP card today?", description: "This saves today as the pickup date and starts the validity period for the card.", confirmText: "Record Pickup", tone: "success", action: () => claim.mutateAsync(item.id), successTitle: "Card pickup recorded.", errorTitle: "Could not record card pickup" }) }] : []),
     ];
   };
   const detail = detailId ? all.find((item) => item.id === detailId) ?? null : null;
@@ -106,9 +109,10 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
         { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: statusOptions },
       ]} />
       <DataTable data={visible} columns={columns} getRowId={(row) => row.id} emptyText={data.length === 0 ? emptyText : "No memberships match the filters."} caption={caption} orderBy={MEMBERSHIP_ORDER} {...tableProps} />
+      {canShowQr && qrMembershipId && detail?.id === qrMembershipId && detail.status === "active" && detail.cardId ? <MemberQrDialog key={qrMembershipId} membershipId={qrMembershipId} close={() => setQrMembershipId(null)} /> : null}
       <RecordDetailsSheet
         open={detail !== null}
-        onClose={() => setDetailId(null)}
+        onClose={() => { setQrMembershipId(null); setDetailId(null); }}
         title={detail?.customerName ?? "Membership"}
         subtitle={detail?.productName}
         badge={detail ? <MembershipStatusBadge item={detail} /> : undefined}
@@ -131,15 +135,11 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
               ]
             : []
         }
-        footer={
-          detail ? (
-            <>
-              {activateItem(detail).map((item) => <Button key={item.key} type="button" variant={item.tone === "success" ? "success" : "default"} loading={item.loading} disabled={item.disabled} onClick={item.onClick}>{item.label}</Button>)}
-              {detail.status === "active" && detail.cardId ? <MemberQrButton membershipId={detail.id} /> : null}
-              <Link href={contractHref(detail.contractId)} className={buttonVariants({ variant: "info" })}>Open Contract</Link>
-            </>
-          ) : undefined
-        }
+        footer={detail ? <DetailActions actions={[
+          ...activateItem(detail).map((item) => ({ ...item, next: true, variant: item.tone === "success" ? "success" as const : "default" as const })),
+          canShowQr && detail.status === "active" && Boolean(detail.cardId) && { key: "qr", label: "Show QR", next: true, variant: "info", icon: QrCode, onClick: () => setQrMembershipId(detail.id) },
+          { key: "contract", label: "Open Contract", next: true, variant: "indigo", icon: FileText, href: contractHref(detail.contractId) },
+        ]} /> : undefined}
       />
     </>
   );

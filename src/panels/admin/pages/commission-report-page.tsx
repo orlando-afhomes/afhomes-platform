@@ -12,7 +12,7 @@ import { humanize } from "@/shared/lib/humanize";
 import { commissionRoleLabel } from "@/modules/commissions/types";
 import { formatPeso } from "@/shared/lib/money";
 import { matchesSearch, optionsFrom } from "@/shared/lib/search";
-import { ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
+import { describeFilters, ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
 
 const COLUMNS: ReportColumn<CommissionView>[] = [
   { header: "Recipient", value: (item) => item.recipientName },
@@ -47,6 +47,11 @@ export function CommissionReportPanel() {
   const [status, setStatus] = useState("all");
   const [role, setRole] = useState("all");
   const rows = useMemo(() => inPeriod.filter((item) => (status === "all" || item.status === status) && (role === "all" || item.role === role) && matchesSearch(search, item.recipientName, item.customerName)), [inPeriod, status, role, search]);
+  const metadata = describeFilters([
+    search.trim() ? `Search "${search.trim()}"` : null,
+    status !== "all" ? `Status: ${humanize(status)}` : null,
+    role !== "all" ? `Role: ${commissionRoleLabel(role)}` : null,
+  ]);
   return (
     <ReportFrame range={range}>
       <AdminStatGrid columns={3}>
@@ -54,7 +59,7 @@ export function CommissionReportPanel() {
         <AdminStatCard loading={commissions.isLoading} error={commissions.error} label="Paid" value={<Money value={paidInPeriod} />} icon={Banknote} tone="success" />
         <AdminStatCard loading={commissions.isLoading} error={commissions.error} label="Approved, Unpaid" value={<Money value={approvedUnpaid} />} icon={Clock} tone="accent" />
       </AdminStatGrid>
-      <ReportTable report="Commission Report" fileName="commissions" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => row.id} loading={commissions.isLoading} error={commissions.error} emptyText="No commissions match."
+      <ReportTable report="Commission Report" fileName="commissions" range={range} metadata={metadata} columns={COLUMNS} rows={rows} getRowId={(row) => row.id} loading={commissions.isLoading} error={commissions.error} emptyText="No commissions match."
         filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search commissions" filters={[
           { label: "Commission status filter", value: status, onChange: setStatus, options: optionsFrom("All statuses", inPeriod.map((item) => item.status), humanize) },
           { label: "Commission role filter", value: role, onChange: setRole, options: optionsFrom("All roles", inPeriod.map((item) => item.role), commissionRoleLabel) },

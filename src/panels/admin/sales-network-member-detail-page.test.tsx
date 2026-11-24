@@ -61,8 +61,10 @@ describe("sales network member detail page", () => {
     );
     await screen.findByRole("region", { name: "Member summary for Jose Reyes Jr." }, { timeout: 5000 });
     expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Deactivate" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Back" })).toBeInTheDocument();
+    // Two buttons show; the rest, with Back last, are in the More actions menu.
+    await userEvent.setup().click(screen.getByRole("button", { name: "More actions" }));
+    expect(await screen.findByRole("menuitem", { name: "Deactivate" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Back" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Actions for/ })).toBeNull();
   });
 

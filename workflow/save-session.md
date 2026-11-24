@@ -111,45 +111,66 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved 2026-11-24 (Asia/Manila). AFHomes Platform, branch `develop`, HEAD `ed9ceb8` (`feat: add restaurant reservations and polish shared table controls`, made by the owner during the session; the session began at `cd10b3e`, with `12c7518` and `22160bf` committed by the owner in between).
-- Tool: Claude Code desktop. Model switched between Sonnet 5.5 and Opus 5.5 by the owner; permission mode not verified. Context was not compacted. The owner used the in-app browser pane in parallel, so some browser checks were interrupted.
-- Objectives this session (in order): continue the VIP contract printing plan and verify it; a 16-item admin UI polish list; Earn Points / Redeem Points / booking polish; many small follow-up UI fixes; a final 9-item batch (colors, terms, Linked Records, Edit Draft, tab bar). Phase: frontend prototype with sample data, QA.
+- Saved 2026-11-24 (Asia/Manila). AFHomes Platform, branch `develop`, HEAD `b683446`. The session began at `b683446` after `/load`.
+- Tool: OpenCode. Model: DeepSeek V4.1 Flash 1017 (verified from the environment). Permission mode not verified. Context was not compacted.
+- Objectives in order: finish the Codex plan for branded report PDFs and borderless Linked Records buttons; enhance the dashboard date-range filter; remove "e.g." from every input placeholder; audit and fix button icons app-wide; staff page filter icons, two-word status label, password-reveal error and Prefix. Phase: frontend prototype with sample data, QA.
 
 ## 2. Current Project State
-- Printing feature (plan `docs/implementation/01-prototype/plans/vip-contract-printing-plan.md`) is built and committed by the owner: `src/modules/contracts/print-data.ts`, `src/panels/admin/documents/` (PDF fill, controls, tests), seven templates in `public/vip-print-templates/`. Diagonal watermark was removed at the owner's request; the templates keep their own header label.
-- Restaurant table reservations exist (committed in `ed9ceb8`): `src/modules/reservations/`, `src/data/mock/reservation-repository.ts`, `src/panels/admin/components/new-booking-flow.tsx`, `restaurant-reservation-dialog.tsx`, `restaurant-reservations-table.tsx`. They record the guest only, no points or money.
-- Shared UI changed this session: select with optional icon and description, container-query filter bar, modern record details sheet, pagination, field shell, tab bar, status pills, extra button styles.
+- Report PDFs are built: shared report template and export menu; Download PDF on every Reports tab including Summary, Close the Month, Monthly Check, Receipt History Export and Customers -> Export; Customer PDF uses the five preview columns; filter metadata is printed; PDF actions are audited. Linked Records rows are borderless and still open Contract/Sale/Membership tabs.
+- Dashboard date range has a trigger calendar icon, distinct preset icons/descriptions, a resolved date line, a compact custom-range layout, and a focus-safe reveal pattern.
+- Input placeholders no longer contain "e.g." anywhere in `src`.
+- Action buttons and menus require icons. Shared enforcement is in `detail-actions.tsx`, `row-actions-menu.tsx`, `button-icons.ts` and `page-actions.tsx`. Icons are unique within a visible menu/group; duplicate collisions found on Finance, IGP document signatures and staff were fixed.
+- Staff area: the Directory view chips have distinct icons (`LayoutGrid`, `UsersRound`, `KeyRound`, `Clock`); the employment status filter reads "All statuses"; the password reveal no longer blurs/validates; Personal Details has an optional Prefix dropdown stored on the staff record and shown in the profile.
+- Dev server on port 3000. Mock data is browser memory only; reload resets it.
 
 ## 3. Important Decisions
-- Owner choices: action names Earn Points / Redeem Points / View Bookings; receipt number auto-issued `OR-YYYYMMDD-NNNN`; amount labels Total Bill Amount and Amount Not Eligible for Points; reconciliation section "Complete Spreadsheet Comparison"; menu group Finance with inner link Payments; Stay Points tabs Annual Points / Bills to Review / Special Cases / Promotions / Promo History; restaurant is reservation only (website says no walk-ins), with no points; the three PDF packages (`pdf-lib`, `@pdf-lib/fontkit`, `@fontsource/noto-sans`) were approved to keep.
-- Claude choices awaiting owner confirmation: Reports tab "Payments Received" with cards Confirmed Payments / Refunds and Reversals / Total After Refunds; "Confirmed This Period"; tab "Programs, IDs & Banks"; payout method list (Bank Transfer, GCash, Maya, Cash, Cheque); restaurant party-size ceiling of 20 (placeholder, no capacity rule exists); the Sales performance report column "Period Confirmed" and the Finance page cards were not renamed.
-- Prototype only, browser-memory sample data. Live redemption, Services, real sign-in, database work and deployment still need separate authorization. Git writes are reserved for the owner.
+- Owner-approved icon rule: every action button and action menu item has an icon; no two actions in the same visible menu/button group share an icon; structural controls are excluded (page numbers, tabs, sortable headers, navigation links, notification feed rows, invisible report-card overlays). The same action may reuse its icon on another screen.
+- Owner-approved Prefix format: optional title dropdown (Mr., Ms., Mrs., Dr., Engr., Atty., Prof., Rev.) with "No prefix"; stored; shown in profile details; directory display name and sorting remain the legal name.
+- Password reveal: owner reported validation errors on click; fixed with `onMouseDown` prevent-default on the shared reveal button while keeping `type="button"`.
+- Report PDFs: Summary is a table of the visible figures and comparisons; Customer PDF uses Customer, VIP Plan, Status, Seller, Submitted; Excel/CSV keep their existing columns and 5,000-row limit; PDF downloads are audited without row data.
+- Placeholders: remove the "e.g." term, keep the example values.
+- Restrictions kept: sample data only, no persistence, Git writes reserved for the owner, no business-rule changes.
 
 ## 4. Completed Work
-- Final batch (not yet committed): Net Collections card blue on Reports and Finance; plain terms above; Draft grey vs Returned/Sent Back violet in `src/shared/components/admin/status-pill.tsx` with a new `violet` tone in `status-badge.tsx`; new `violet`, `teal`, `rose` button variants and tokens (`src/theme/tokens.css`) used on Property Sales (IGP) actions; Linked Records rows are buttons that open the matching customer tab (`customer-detail-panels.tsx`, `customer-detail-page.tsx`); Edit Draft resumes at the first step with missing data via an effect in `customer-application-wizard.tsx` (the View Only guard moved below the hooks); tab bar restyled in `src/shared/components/modern/tab-bar.tsx`; filter bar keeps readable minimum widths and wraps when needed.
-- Earlier this session (some now committed): modern shared dropdown, receipt auto-number, Redeem Points dialog, booking chooser, lookup keyboard and QR image upload, Finance menu rename, GSD tab removal, payout dialog redesign with a fixed searchable method list (validated in `commission-repository.ts`), Add IST / Add OST button names, field label alignment, Stay Points and Membership stat card colors, Payment icon, Annual Points card colors, person icon on the lookup heading, responsive lookup action buttons.
+- Report PDFs: `src/panels/admin/documents/report-pdf.ts`, `report-pdf-output.tsx` (pre-existing untracked, extended), `report-shell.tsx`, `reports-summary-panel.tsx`, `customer-export-history.tsx`, `customer-import-export-page.tsx`; filter metadata across the seven report pages; `customer-detail-panels.tsx` (restored ProgressStep `last`); tests `report-pdf.test.ts`, `report-shell.test.tsx`, `reports-pages.test.tsx`, `customer-review-pages.test.tsx`.
+- Dashboard filter: `src/shared/components/dashboard/dashboard-date-filter.tsx`, `src/shared/components/modern/search-select.tsx`, `src/shared/ui/combobox.tsx`.
+- Placeholders: `src/shared/forms/example-text.ts` and test, `src/shared/forms/modern/text-field.tsx`, `role-dialogs.tsx`, `roles-page.test.tsx`, `forgot-password-panel.tsx`, `contact-form.tsx`, `faq.ts`.
+- Button icons: shared `button-icons.ts` + test, `detail-actions.tsx` + test, `row-actions-menu.tsx` + test, `page-actions.tsx`, `report-shell.tsx` export menu, `customer-import-steps.tsx`; action builders `customer-actions`, `history-import-actions`, `redemption-actions`, `sales-contract-actions`, `sales-network-actions`; components `commission-shared`, `membership-table`, `payment-actions`, `restaurant-reservations-table`; pages including commissions, experiences, finance collections, IGP page/projects, lists, promo points, promos, redemption points table, registration applications, sales contract detail, sales, staff, staff dialogs, stay points, tier codes, VIP products. IGP document signatures now use seven distinct document icons.
+- Staff: `src/shared/forms/validation/person-name.ts` (`PREFIX_OPTIONS`, `validatePrefix`), `select-field.tsx` (`PrefixField`), `index.ts`, `text-field.tsx`; `modules/organization/types.ts`, `data/contracts/staff-repository.ts`, `data/mock/staff-repository.ts` + test; `pages/staff-dialogs.tsx`, `pages/staff-page.tsx`, `staff-page.test.tsx`, `staff-access-page.test.tsx`, `modern-fields.test.tsx`.
+- The previous snapshot's failing Customers Import test was updated to current behavior (Import tab is gone) and passes.
 
 ## 5. Git Working Tree
-- Staged: none. Untracked: none. Stash: one older entry (`stash@{0}`, "sales-network cleanup + member detail redesign"), not made by this session.
-- Unstaged: 37 modified files (225 insertions, 153 deletions). Most are this session's final batch and follow-ups; `src/data/mock/dev-identities.ts` and `src/data/mock/mock-credentials.ts` are modified but were not edited by this session (pre-existing or the owner's; not inspected). No deleted or renamed files.
+- Staged: none. `git diff --cached --stat` is empty.
+- Unstaged: 192 modified files, 3,059 insertions and 1,822 deletions (`git diff --stat`). This is a large pre-existing uncommitted batch plus this session's work. This session's files are the paths in section 4. Pre-existing or unknown changes include navigation/sidebar/sales-network genealogy, allowance review, dashboards, status pills/badges, button/input/select primitives, tokens, docs and many tests. `workflow/save-session.md` is modified by this save. Not every pre-existing change was inspected.
+- Untracked: 21 files. This session's additions/edits among them: `src/panels/admin/documents/report-pdf.ts`, `report-pdf.test.ts`, `report-pdf-output.tsx`, `src/shared/forms/example-text.ts` + test, `src/shared/ui/button-icons.ts` + test, `src/shared/components/modern/detail-actions.tsx` + test. Other untracked files are pre-existing: `gsd-dashboard.tsx`, `hr-dashboard.tsx`, `tab-icons.ts`, `sonner.test.tsx`, `admin-nav-icons.test.ts`, genealogy fixtures/tests, `status-presentation.test.ts`, `detail-actions-colors.test.ts`, and `docs/implementation/01-prototype/ui-states/button-group-status-audit.md`.
+- Deleted: `src/shared/components/dashboard/page-actions.css` (pre-existing deletion, not this session).
+- No renames.
 
 ## 6. Pending Tasks
-- Browser check not done after the last edits for: Customers table badges (seen once), Reports Collections page, Sales page colors, payout dialog, restaurant pass at 375px, Earn Points venue dropdown icons, real QR image decode (only unit-tested with a mock).
-- Failures in the last full run (2134 tests, 6 failed before fixes): two `business-flow.test.ts` tests depend on today's calendar date (seed clock; VIP Number date part `261103…` vs `261102…`) and likely failed because the date rolled to 2026-11-24; one `staff-page.test.tsx` test timed out under load (passes alone). The three wizard-edit tests were fixed after that run. These were not rerun as one full suite afterwards.
-- Owner items still open: confirm Claude's term choices above; clearance of original wording before official PDF signing copies; restaurant capacity, hours, deposit and cancellation rules; doc 14 amendment; G3/G4 allowance questions; seven G5 process checks.
+- Owner review and commit of the entire uncommitted tree; agents must not stage or commit.
+- Optional browser QA not yet done: report PDF download/print preview, a few rarely opened dialogs/menus, and a clean-checkout run.
+- Earlier open items remain: doc 14 amendment, G3/G4 allowance questions, G5 process checks, live camera demo, full-suite confirmation.
+- Known limitation: Prefix appears in profile details only, not in directory display names or search/sort. The custom dashboard range wraps the title at narrow widths. The two date-dependent `business-flow` tests were not rerun this session.
 
 ## 7. Verification State
-- Last run: `npx tsc --noEmit` clean; `npx eslint src` clean after removing one unused import; `npm run build` compiled successfully; targeted suites passed (commissions pages 14, promo and staff pages, navigation, print tests, wizard edit tests 5, filter-bar and shared component tests).
-- Browser (sample Super Administrator on port 3000) confirmed during the session: Sales IGP button colors and tab bar, Linked Records row opening the Sales tab, Edit Draft landing on Step 2 for the Florencia Mallari draft, lookup arrow-and-Enter, booking chooser and restaurant reservation, Earn Points locked receipt field, 375px filter stacking.
-- Not performed: full-suite rerun after the final fixes, visual check of the payout dialog, a clean-checkout run of the two date-dependent tests.
+- `npx tsc --noEmit` clean (final run).
+- `npx eslint src` clean (final run).
+- `npm run build` clean (final run).
+- Targeted Vitest passed: report shell 12, report PDF 2, reports pages 22, customer pages 21; finance 20, commissions 12; VIP 21, sales 6, sales network 8; IGP 9 + stage 4 2; staff 22, staff access 14, staff repository 54, modern fields 36; button icons 2, row actions 8, detail actions 2, modern components 16; departments/roles/lists/staff access 67 (one business-pages test timed out in an overloaded run but passed alone in 6s).
+- Known heavy-suite behavior: large parallel batches can time out (staff, wizard, lists, business pages); the affected tests pass in smaller groups.
+- Sample PDFs were generated and inspected with `pdftotext -enc UTF-8`: wide report (12 pages, 2 column groups with the identifying column repeated), Summary, empty report, Customer Export; page numbers, repeated headings, peso signs and accented names were correct.
+- Browser QA done: dashboard date filter; Finance Verify/Request Fix/Reject, Refund, and details footer; 41 row menus across admin routes with no missing/duplicate icons; 26 routes with no visible action button without an icon; IGP document icons; staff chips, status label, Prefix field and password toggle. Screenshots were used for visual checks.
+- Not performed: full test suite, clean-checkout run, browser PDF download/print preview, and some dialogs not opened.
 
 ## 8. Next Session Instructions
-- Run `/load`, confirm HEAD `ed9ceb8` and the unstaged list. Rerun `npx tsc --noEmit`, then the two date-dependent business-flow tests and the staff-page test on their own to confirm the cause.
-- Do one browser pass: Customers table, Customer detail Linked Records and Edit Draft, Reports Collections, Sales, payout dialog at desktop and 375px. Sample accounts are in `src/data/mock/mock-credentials.ts` (check it first, it is modified); a full page reload resets the in-memory data.
-- Keep sample data only. Ask the owner to confirm the term choices before treating them as final.
+- Run `/load`, confirm HEAD `b683446` and the 192-file unstaged tree.
+- Do not commit or stage. Ask the owner to review the uncommitted work; the tree includes earlier sessions' changes unrelated to this one.
+- If continuing QA, run only the targeted suites for the touched area and one browser pass over report PDF actions and any unopened menus.
+- Sample accounts are in `src/data/mock/mock-credentials.ts`. Reload resets sample data; the in-app camera is blocked; the dev server runs on port 3000.
+- Check `git status` before editing shared files; other work may be in progress.
 
 ## 9. Execution Recommendation
-- Phase: QA. Recommended next mode: Default. Model: Sonnet 5.5, medium effort. Ultracode: OFF.
-- Token optimization: run only the failing tests alone, one browser pass, then one full-suite run with the dev server stopped.
-- Reason: the remaining work is verifying already-built UI and a few date-dependent tests.
+- Phase: QA. Current mode: not verified (OpenCode). Current model: DeepSeek V4.1 Flash 1017 (verified). Recommended: Claude Sonnet 5.5, medium effort. Ultracode: OFF.
+- Token optimization: owner review plus targeted checks only; no full-suite rerun unless the owner requests it.
+- Reason: the remaining work is review/commit and optional visual QA, not new implementation.
 <!-- SESSION_SNAPSHOT_END -->

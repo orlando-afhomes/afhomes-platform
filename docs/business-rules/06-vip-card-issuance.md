@@ -103,7 +103,7 @@ A customer whose membership expires remains a customer. Preserve the customer re
 | NNNNN | 5 | Monthly running sequence, 00001 to 99999, resets on the 1st of each month |
 | VT | 2 | Tier code (B1, S1, G1 active; B2, S2, P1, R1 are historical products and G2, P2, R2 are reserved, per doc 05 §4) |
 | P | 1 | C = Cash, T = Terms/Installment (snapshot at issuance) |
-| MM | 2 | Months, 01 to 36; Cash uses 01 (snapshot at issuance) |
+| MM | 2 | Months, 01 to 12 (amended by the owner 2026-11-24; earlier issued numbers are never renumbered); Cash uses 01 (snapshot at issuance) |
 | S | 1 | S = Standard, N = Non-Standard |
 
 ### 6.1 Monthly Sequence

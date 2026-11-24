@@ -1,5 +1,6 @@
 "use client";
 
+import { exampleFor } from "@/shared/forms/example-text";
 import type { ClipboardEventHandler, ReactNode } from "react";
 import { formatPartialPhilippineMobile } from "@/shared/forms/formatting/phone";
 import { validateLandline } from "@/shared/forms/validation/contact";
@@ -75,12 +76,14 @@ function MaskedInput({
     typeof prefix === "string" && prefix.length > 0
       ? { paddingLeft: `calc(0.75rem + ${prefix.length}ch + 0.5rem)` }
       : undefined;
+  // With a fixed prefix on screen ("09", an area code) the example is only the digits that follow it.
+  const example = prefix ? (/mobile/i.test(label) ? "171234567" : /landline|telephone/i.test(label) ? "5551234" : undefined) : exampleFor(label);
   const input = (
     <Input
       id={ids.id}
       value={value}
       maxLength={maxLength}
-      placeholder={placeholder}
+      placeholder={placeholder ?? example}
       disabled={disabled}
       autoComplete={autoComplete}
       inputMode={inputMode}

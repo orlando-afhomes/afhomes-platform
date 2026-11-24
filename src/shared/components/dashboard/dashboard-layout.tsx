@@ -30,7 +30,7 @@ export const DASHBOARD_TONE_COLORS: Record<DashboardTone, string> = {
  */
 export function DashboardHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
   return (
-    <div className="tw:mt-1 tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-x-4 tw:gap-y-3">
+    <div className="tw:mt-5 tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-x-4 tw:gap-y-3">
       <div className="tw:min-w-0 tw:flex-[1_1_16rem]">
         <h1 className="tw:text-[1.75rem] tw:leading-tight tw:font-bold tw:tracking-tight tw:text-foreground">{title}</h1>
         {description ? <p className="tw:mt-1.5 tw:text-sm tw:text-muted-foreground">{description}</p> : null}

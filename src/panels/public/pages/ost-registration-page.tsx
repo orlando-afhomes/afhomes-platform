@@ -260,7 +260,7 @@ export function OstRegistrationPage() {
               <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={() => setStep(1)}>
                 Previous step
               </Button>
-              <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={handleChangeCode}>
+              <Button type="button" variant="warning" className={BUTTON_CLASS} onClick={handleChangeCode}>
                 Change code
               </Button>
               <Button type="button" loading={submitApplication.isPending} className={BUTTON_CLASS} onClick={() => void handleSubmit()}>

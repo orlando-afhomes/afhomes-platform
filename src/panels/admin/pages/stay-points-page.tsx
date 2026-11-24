@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import { Clock, Coins, Gift, ReceiptText, Search, TriangleAlert, Wallet } from "lucide-react";
+import { Ban, Check, Clock, Coins, Gift, ReceiptText, Search, TriangleAlert, Undo2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useMemberships, useOperation, useStayPoints, useStayPointsAction, useStayPointsVenues, useVipProducts } from "@/data/business-queries";
 import { useTierDisplayName } from "../components/use-tier-display-name";
@@ -19,9 +19,10 @@ import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { InfoGrid, InfoItem } from "@/shared/components/modern/info-grid";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
+import { DetailActions } from "@/shared/components/modern/detail-actions";
 import { RecordDetailsSheet, type DetailSection } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
-import { ToneBadge, type BadgeTone } from "@/shared/components/modern/status-badge";
+import { ToneBadge, StatusBadge } from "@/shared/components/modern/status-badge";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { MoneyField, SelectField, StandardDateField, TextAreaField, TextField } from "@/shared/forms/modern";
 import { initialsOf } from "@/shared/forms/formatting/text";
@@ -47,19 +48,19 @@ const dayType = (entry: GiftLedgerEntry) => (entry.bucket === "weekday" ? "Weekd
 const entryKey = (entry: GiftLedgerEntry) => `${entry.tranche}:${entry.bucket}:${entry.type}`;
 const count = (value: number | undefined) => (value ?? 0).toLocaleString("en-PH");
 const decisionLabel = (waiver: WaiverRequest) => (waiver.decision ? (waiver.decision.granted ? "Approved" : "Declined") : "Pending");
-const decisionTone = (waiver: WaiverRequest): BadgeTone => (waiver.decision ? (waiver.decision.granted ? "success" : "danger") : "warning");
+const decisionStatus = (waiver: WaiverRequest) => waiver.decision ? (waiver.decision.granted ? "approved" : "declined") : "pending";
 
 /**
  * Plain-word status of a yearly gift. A gift that is due while a payment hold lasts is Paused; it
  * is released when the hold ends (doc 09 section 17.2). "Not earned" is the Non-Activated outcome.
  */
-function giftStatus(tranche: PointsTranche, financialHold: boolean, today: string): { label: string; tone: BadgeTone } {
+function giftStatus(tranche: PointsTranche, financialHold: boolean, today: string): { label: string; status: string } {
   switch (tranche.status) {
-    case "released": return { label: "Given", tone: "success" };
-    case "released_by_waiver": return { label: "Given by exception", tone: "info" };
-    case "forfeited": return { label: "Lost", tone: "neutral" };
-    case "non_activated": return { label: "Not earned", tone: "neutral" };
-    default: return financialHold && tranche.dueDate <= today ? { label: "Paused", tone: "danger" } : { label: "Waiting", tone: "warning" };
+    case "released": return { label: "Given", status: "active" };
+    case "released_by_waiver": return { label: "Given by exception", status: "released_by_waiver" };
+    case "forfeited": return { label: "Lost", status: "forfeited" };
+    case "non_activated": return { label: "Not earned", status: "non_activated" };
+    default: return financialHold && tranche.dueDate <= today ? { label: "Paused", status: "on_hold" } : { label: "Waiting", status: "pending" };
   }
 }
 
@@ -82,7 +83,7 @@ const trancheColumns = (financialHold: boolean, today: string): ColumnDef<Points
   { id: "spend", header: "Spend", cell: ({ row }) => <SpendProgress spent={row.original.qualifyingCentavos} minimum={row.original.minimumCentavos} /> },
   {
     id: "status", header: "Status",
-    cell: ({ row }) => { const status = giftStatus(row.original, financialHold, today); return <ToneBadge tone={status.tone}>{status.label}</ToneBadge>; },
+    cell: ({ row }) => { const status = giftStatus(row.original, financialHold, today); return <StatusBadge status={status.status} label={status.label} />; },
   },
   { id: "released", header: "Given on", cell: ({ row }) => formatDate(row.original.releaseDate) },
 ];
@@ -106,7 +107,7 @@ const waiverColumns: ColumnDef<WaiverRequest, unknown>[] = [
   { id: "year", header: "Year", cell: ({ row }) => <span className="tw:font-semibold">{`Year ${row.original.tranche}`}</span> },
   { id: "date", header: "Request Received", cell: ({ row }) => formatDate(row.original.date) },
   { id: "ground", header: "Ground", cell: ({ row }) => row.original.ground },
-  { id: "status", header: "Decision", cell: ({ row }) => <ToneBadge tone={decisionTone(row.original)}>{decisionLabel(row.original)}</ToneBadge> },
+  { id: "status", header: "Decision", cell: ({ row }) => <StatusBadge status={decisionStatus(row.original)} label={decisionLabel(row.original)} /> },
   { id: "release", header: "Given on", cell: ({ row }) => formatDate(row.original.decision?.releaseDate ?? null) },
 ];
 
@@ -220,7 +221,7 @@ export function WelcomeGiftPanel() {
   if (tranche) {
     const status = giftStatus(tranche, current.financialHold, today);
     sheetTitle = `Year ${tranche.number} gift`;
-    sheetBadge = <ToneBadge tone={status.tone}>{status.label}</ToneBadge>;
+    sheetBadge = <StatusBadge status={status.status} label={status.label} />;
     sections = [{
       rows: [
         { label: "Spend period", value: `${formatDate(tranche.startDate)} to ${formatDate(tranche.endDate)}` },
@@ -303,10 +304,10 @@ export function ResortBillsPanel() {
 
   return (
     <>
-      <DataTable data={current.spends} columns={billColumns} getRowId={(row) => row.id} emptyText="No resort bills recorded." caption="Bills to Review"
+      <DataTable data={current.spends} columns={billColumns} getRowId={(row) => row.id} emptyText="No resort bills recorded." caption="Pending Bills"
         onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open ${billName(row)}`}
         rowActions={(row) => <RowActionsMenu itemName={billName(row)}
-          extraItems={mayApprove(row) ? [{ key: "approve", label: "Approve Bill", tone: "success", onClick: () => approve(row) }] : []} />} />
+          extraItems={mayApprove(row) ? [{ key: "approve", label: "Approve Bill", tone: "success", icon: Check, onClick: () => approve(row) }] : []} />} />
       <RecordDetailsSheet
         open={bill !== undefined}
         onClose={() => setDetailId(null)}
@@ -337,12 +338,10 @@ export function ResortBillsPanel() {
             ],
           })),
         ] : []}
-        footer={bill && (mayApprove(bill) || mayRefund(bill)) ? (
-          <>
-            {mayApprove(bill) ? <Button type="button" variant="success" onClick={() => approve(bill)}>Approve Bill</Button> : null}
-            {mayRefund(bill) ? <Button type="button" variant="warning" onClick={() => { setDetailId(null); setDialog({ kind: "refund", id: bill.id }); }}>Record Refund</Button> : null}
-          </>
-        ) : undefined}
+        footer={bill ? <DetailActions actions={[
+          mayApprove(bill) && { key: "approve", label: "Approve Bill", next: true, variant: "success", icon: Check, onClick: () => approve(bill) },
+          mayRefund(bill) && { key: "refund", label: "Record Refund", variant: "warning", icon: Undo2, onClick: () => { setDetailId(null); setDialog({ kind: "refund", id: bill.id }); } },
+        ]} /> : undefined}
       />
       {dialog ? <StayPointsDialog dialog={dialog} membershipId={current.membershipId} gold={supplementary} venues={venues.data ?? []}
         tranches={[]} pending={action.isPending} submit={action.mutateAsync} onClose={() => setDialog(null)} /> : null}
@@ -368,15 +367,15 @@ export function WaiversPanel() {
         onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open exception request for year ${row.tranche}`}
         rowActions={(row) => <RowActionsMenu itemName={`exception request for year ${row.tranche}`}
           extraItems={canWaive && !row.decision ? [
-            { key: "grant", label: "Approve Exception", tone: "success", onClick: () => setDialog({ kind: "grant", id: row.id }) },
-            { key: "refuse", label: "Decline Exception", tone: "danger", onClick: () => setDialog({ kind: "refuse", id: row.id }) },
+            { key: "grant", label: "Approve Exception", tone: "success", icon: Check, onClick: () => setDialog({ kind: "grant", id: row.id }) },
+            { key: "refuse", label: "Decline Exception", tone: "danger", icon: Ban, onClick: () => setDialog({ kind: "refuse", id: row.id }) },
           ] : []} />} />
       <RecordDetailsSheet
         open={waiver !== undefined}
         onClose={() => setDetailId(null)}
         title={waiver ? `Exception Request · Year ${waiver.tranche}` : "Exception Request"}
         subtitle={current.customerName}
-        badge={waiver ? <ToneBadge tone={decisionTone(waiver)}>{decisionLabel(waiver)}</ToneBadge> : undefined}
+        badge={waiver ? <StatusBadge status={decisionStatus(waiver)} label={decisionLabel(waiver)} /> : undefined}
         sections={waiver ? [
           {
             title: "Request",
@@ -399,12 +398,10 @@ export function WaiversPanel() {
             ],
           },
         ] : []}
-        footer={waiver && canWaive && !waiver.decision ? (
-          <>
-            <Button type="button" variant="success" onClick={() => { setDetailId(null); setDialog({ kind: "grant", id: waiver.id }); }}>Approve Exception</Button>
-            <Button type="button" variant="destructive" onClick={() => { setDetailId(null); setDialog({ kind: "refuse", id: waiver.id }); }}>Decline Exception</Button>
-          </>
-        ) : undefined}
+        footer={waiver && canWaive && !waiver.decision ? <DetailActions actions={[
+          { key: "approve", label: "Approve Exception", next: true, variant: "success", icon: Check, onClick: () => { setDetailId(null); setDialog({ kind: "grant", id: waiver.id }); } },
+          { key: "decline", label: "Decline Exception", variant: "destructive", icon: Ban, onClick: () => { setDetailId(null); setDialog({ kind: "refuse", id: waiver.id }); } },
+        ]} /> : undefined}
       />
       {dialog ? <StayPointsDialog dialog={dialog} membershipId={current.membershipId} gold={supplementary} venues={[]}
         tranches={[]} pending={action.isPending} submit={action.mutateAsync} onClose={() => setDialog(null)} /> : null}
@@ -427,7 +424,7 @@ export function EnterResortBillButton({ selected, earnPoints = false }: { select
   if (!canEnter || !membershipId) return null;
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)}>{selected ? <ReceiptText aria-hidden="true" /> : null}Earn Points</Button>
+      <Button type="button" variant={selected ? "success" : undefined} onClick={() => setOpen(true)}>{selected ? <ReceiptText aria-hidden="true" /> : null}Earn Points</Button>
       {open ? <StayPointsDialog dialog={{ kind: "bill" }} membershipId={membershipId} selectedHolder={selected} gold={supplementary} venues={venues.data ?? []}
         tranches={[]} pending={action.isPending} submit={action.mutateAsync} onClose={() => setOpen(false)} earnPoints={earnPoints} /> : null}
     </>
@@ -444,7 +441,7 @@ export function RecordWaiverRequestButton() {
   if (!canWaive || !current || (!tranches.length && !open)) return null;
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)}>Record Exception Request</Button>
+      <Button type="button" onClick={() => setOpen(true)}>Record Exception</Button>
       {open ? <StayPointsDialog dialog={{ kind: "request" }} membershipId={current.membershipId} gold={supplementary} venues={[]}
         tranches={tranches} pending={action.isPending} submit={action.mutateAsync} onClose={() => setOpen(false)} /> : null}
     </>
@@ -473,7 +470,7 @@ export function StayPointsAreaPage() {
         actions={(tab) => STAY_TAB_ACTIONS[tab]?.() ?? null}
         tabs={[
           { value: "welcome-gift", label: "Annual Points", allowed: access["welcome-gift"], render: () => withPicker(<WelcomeGiftPanel />) },
-          { value: "resort-bills", label: "Bills to Review", allowed: access["resort-bills"], render: () => withPicker(<ResortBillsPanel />) },
+          { value: "resort-bills", label: "Pending Bills", allowed: access["resort-bills"], render: () => withPicker(<ResortBillsPanel />) },
           { value: "waivers", label: "Special Cases", allowed: access.waivers, render: () => withPicker(<WaiversPanel />) },
           { value: "promos", label: "Promotions", allowed: access.promos, render: () => <PromosPanel /> },
           { value: "promo-points", label: "Promo History", allowed: access["promo-points"], render: () => <PromoPointsPanel /> },
@@ -509,7 +506,6 @@ function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pendin
         if (amountCentavos === null) throw new Error("Enter the amount in pesos.");
         if (dialog.kind === "refund") await submit({ action: "refund", spendId: dialog.id, date, amountCentavos, reason });
         else {
-          if (earnPoints && !reason.trim()) throw new Error("Enter the service used.");
           const excludedCentavos = excluded ? parsePesoToCentavos(excluded) : 0;
           if (excludedCentavos === null) throw new Error("Enter exclusions in pesos.");
           await submit({ action: "enter", membershipId, venueId: venue, date, grossCentavos: amountCentavos, excludedCentavos, holder, scannedCode: selectedHolder?.scannedCode, description: reason });
@@ -535,7 +531,7 @@ function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pendin
       <TextField label={earnPoints ? "Receipt Number" : "Official receipt number"} value="Assigned automatically when saved" onChange={() => undefined} disabled hint="The system issues the receipt number. It cannot be edited." />
       <MoneyField label="Total Bill Amount" required value={amount} onChange={setAmount} hint="The full bill before any discount." />
       <MoneyField label="Amount Not Eligible for Points" value={excluded} onChange={setExcluded} hint="Exclude taxes, government fees, gratuities, points, and other amounts that do not qualify." />
-      <TextAreaField label={earnPoints ? "Service Used" : "Notes"} required={earnPoints} value={reason} onChange={setReason} />
+      <TextAreaField label="Notes" value={reason} onChange={setReason} />
     </> : null}
     {dialog.kind === "refund" ? <MoneyField label="Qualifying amount refunded" required value={amount} onChange={setAmount} /> : null}
     {dialog.kind === "refund" || dialog.kind === "grant" || dialog.kind === "refuse" ? <TextAreaField label="Written reason" required value={reason} onChange={setReason} /> : null}

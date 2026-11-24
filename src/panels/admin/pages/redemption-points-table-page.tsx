@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Info } from "lucide-react";
+import { CalendarX, Info } from "lucide-react";
 import { useOperation } from "@/data/business-queries";
 import { useRedemption } from "@/data/redemption-queries";
 import { manilaToday } from "@/modules/accreditation/dates";
@@ -11,13 +11,13 @@ import { BizBadge } from "@/shared/components/business/biz-badge";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { ReasonDialog } from "@/shared/components/modern/form-dialog";
+import { DetailActions } from "@/shared/components/modern/detail-actions";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { SelectField } from "@/shared/forms/modern";
 import { formatDate } from "@/shared/lib/format-date";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { matchesSearch } from "@/shared/lib/search";
-import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { HolidayDialog, PublishVersionDialog, VenueDialog } from "../components/redemption-config-dialogs";
 import { useRedemptionConfigAction } from "@/data/redemption-queries";
@@ -81,7 +81,7 @@ export function RedemptionPointsTablePanel({ createOpen = false, onCreateClose =
                 {shown.note ? <p className="tw:text-muted-foreground">{shown.note}</p> : null}
               </Card>
               <FilterBar search={rowSearch} onSearch={setRowSearch} searchLabel="Search room types" filters={[{ label: "Venue filter", value: rowVenue, onChange: setRowVenue, options: [{ value: "all", label: "All venues" }, ...overview.venues.map((item) => ({ value: item.id, label: item.name }))] }]} />
-              <DataTable data={shown.rows.filter((row) => (rowVenue === "all" || row.venueId === rowVenue) && matchesSearch(rowSearch, row.roomType))} columns={rowColumns} getRowId={(row) => `${row.venueId}-${row.roomType}`} emptyText={shown.rows.length === 0 ? "No rows." : "No rows match the filters."} caption="Points per Night" />
+              <DataTable data={shown.rows.filter((row) => (rowVenue === "all" || row.venueId === rowVenue) && matchesSearch(rowSearch, row.roomType))} columns={rowColumns} getRowId={(row) => `${row.venueId}-${row.roomType}`} emptyText={shown.rows.length === 0 ? "No rows." : "No rows match the filters."} caption="Night Rates" />
             </>
           ) : (
             <p className="tw:text-sm tw:text-muted-foreground">No points tables yet.</p>
@@ -120,7 +120,7 @@ export function RedemptionHolidaysPanel({ createOpen = false, onCreateClose = ()
         {overview ? (
           <>
             <FilterBar search={holidaySearch} onSearch={setHolidaySearch} searchLabel="Search holidays" filters={[{ label: "Holiday status filter", value: holidayStatus, onChange: setHolidayStatus, options: [{ value: "all", label: "All statuses" }, { value: "calendar", label: "In calendar" }, { value: "removed", label: "Removed" }] }]} />
-            <DataTable data={overview.holidays.filter((row) => (holidayStatus === "all" || (holidayStatus === "removed") === Boolean(row.removed)) && matchesSearch(holidaySearch, row.name))} columns={holidayColumns} getRowId={(row) => row.id} emptyText={overview.holidays.length === 0 ? "No holidays." : "No holidays match the filters."} caption="Holiday Calendar" onRowOpen={(row) => setOpenId(row.id)} getRowLabel={(row) => `Open holiday ${row.name}`} rowActions={canConfigure ? (row) => (!row.removed ? <RowActionsMenu itemName={row.name} extraItems={[{ key: "remove", label: "Remove from Calendar", tone: "danger", onClick: () => setRemoving(row) }]} /> : null) : undefined} />
+            <DataTable data={overview.holidays.filter((row) => (holidayStatus === "all" || (holidayStatus === "removed") === Boolean(row.removed)) && matchesSearch(holidaySearch, row.name))} columns={holidayColumns} getRowId={(row) => row.id} emptyText={overview.holidays.length === 0 ? "No holidays." : "No holidays match the filters."} caption="Holiday Calendar" onRowOpen={(row) => setOpenId(row.id)} getRowLabel={(row) => `Open holiday ${row.name}`} rowActions={canConfigure ? (row) => (!row.removed ? <RowActionsMenu itemName={row.name} extraItems={[{ key: "remove", label: "Remove Date", tone: "danger", icon: CalendarX, onClick: () => setRemoving(row) }]} /> : null) : undefined} />
             {createOpen && canConfigure ? <HolidayDialog open onClose={onCreateClose} /> : null}
           </>
         ) : null}
@@ -132,7 +132,7 @@ export function RedemptionHolidaysPanel({ createOpen = false, onCreateClose = ()
         subtitle={detail ? formatDate(detail.date) : undefined}
         badge={detail ? <BizBadge status={detail.removed ? "retired" : "active"} label={detail.removed ? "Removed" : "In calendar"} /> : undefined}
         sections={detail ? [{ title: "Holiday", rows: [{ label: "Name", value: detail.name }, { label: "Date", value: formatDate(detail.date) }, { label: "Status", value: detail.removed ? "Removed" : "In calendar" }] }] : []}
-        footer={detail && !detail.removed && canConfigure ? <Button type="button" variant="destructive" onClick={() => { setRemoving(detail); setOpenId(null); }}>Remove from Calendar</Button> : undefined}
+        footer={detail && !detail.removed && canConfigure ? <DetailActions actions={[{ key: "remove", label: "Remove Date", variant: "destructive", icon: CalendarX, onClick: () => { setRemoving(detail); setOpenId(null); } }]} /> : undefined}
       />
       <ReasonDialog open={removing !== null} title="Remove Holiday" description="The date stops being a holiday for new bookings. Confirmed bookings keep their points." confirmText="Remove" danger successText="Holiday removed." onClose={() => setRemoving(null)} onSubmit={(reason) => (removing ? act.mutateAsync({ action: "remove-holiday", id: removing.id, reason }) : Promise.resolve())} />
     </>

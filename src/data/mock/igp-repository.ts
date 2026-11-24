@@ -1,3 +1,4 @@
+import { formatPeso } from "@/shared/lib/money";
 import type { IgpAction, IgpRepository, RecordIgpSale, ReissueIgpSale } from "@/data/contracts/igp-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import { commissionStageAmounts } from "@/modules/commissions/rules";
@@ -258,7 +259,7 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
         const reason = required(action.reason, "the reason");
         const problem = grantTierRulesProblem(action.rules);
         if (problem) throw new Error(problem);
-        const describe = (rules: readonly { tier: string; minPriceCentavos: number }[]) => rules.map(({ tier, minPriceCentavos }) => `${tier}:${minPriceCentavos}`).join(", ");
+        const describe = (rules: readonly { tier: string; minPriceCentavos: number }[]) => rules.map(({ tier, minPriceCentavos }) => `${tier}:${formatPeso(minPriceCentavos)}`).join(", ");
         const previousValue = describe(this.store.igp.grantTierRules);
         this.store.igp.grantTierRules = action.rules.map(({ tier, minPriceCentavos }) => ({ tier, minPriceCentavos }));
         this.audit(identity, { module: "sales", entityType: "sale", entityId: "igp-grant-tier-rules", action: "IGP_GRANT_TIER_RULES_CHANGED", previousValue, newValue: describe(action.rules), reason });
@@ -316,7 +317,7 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
           rates.push({ memberId: rate.memberId, role: "DRI", rateBp: rate.rateBp });
         }
         rates.forEach(({ rateBp }) => commissionStageAmounts(action.input.priceCentavos, rateBp, "IGP"));
-        const previousValue = `${sale.priceCentavos} / ${sale.referrerMemberId ?? "None"}`;
+        const previousValue = `${formatPeso(sale.priceCentavos)} / ${sale.referrerMemberId ?? "None"}`;
         if (referrerId !== sale.referrerMemberId) {
           sale.expiryReminders = sale.expiryReminders.filter(({ party }) => party !== "Referrer");
           if (referrer?.reminder) sale.expiryReminders.push(referrer.reminder);
@@ -325,7 +326,7 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
         sale.referrerMemberId = referrerId;
         sale.referralReference = action.input.referralReference?.trim();
         sale.commissionRates = rates;
-        this.log(identity, sale, "IGP_SALE_CORRECTED", { previousValue, newValue: `${sale.priceCentavos} / ${referrerId ?? "None"}`, reason });
+        this.log(identity, sale, "IGP_SALE_CORRECTED", { previousValue, newValue: `${formatPeso(sale.priceCentavos)} / ${referrerId ?? "None"}`, reason });
         reconcileIgpCollections(this.store, sale, identity);
       } else {
         const document = sale.documents.find((item) => item.key === action.key);
@@ -360,7 +361,7 @@ export class MockIgpRepository extends BusinessRepository implements IgpReposito
           this.store.igp.buyerMemberships.push(membership);
           this.log(identity, sale, "IGP_GRANT_TIER_FROZEN", {
             newValue: sale.grantTier ?? "none",
-            reason: `Price ${sale.priceCentavos} centavos. ${IGP_BUYER_NO_POINTS_COPY}`,
+            reason: `Price ${formatPeso(sale.priceCentavos)}. ${IGP_BUYER_NO_POINTS_COPY}`,
             relatedRecordIds: [membership.id],
           });
         }

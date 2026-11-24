@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -29,6 +29,13 @@ vi.mock("next/navigation", async (importOriginal) => ({
   redirect: navigation.redirect,
 }));
 
+const pdf = vi.hoisted(() => ({ create: vi.fn(), download: vi.fn() }));
+vi.mock("@/panels/admin/documents/report-pdf-output", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/panels/admin/documents/report-pdf-output")>()),
+  createReportPdf: pdf.create,
+  downloadReportPdf: pdf.download,
+}));
+
 function Wrapper({ identityId, children }: { identityId: string; children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   return (
@@ -40,11 +47,18 @@ function Wrapper({ identityId, children }: { identityId: string; children: React
   );
 }
 
+beforeEach(() => {
+  Object.defineProperty(URL, "createObjectURL", { value: vi.fn(() => "blob:report-preview"), configurable: true });
+  Object.defineProperty(URL, "revokeObjectURL", { value: vi.fn(), configurable: true });
+  pdf.create.mockResolvedValue(new Blob(["pdf"], { type: "application/pdf" }));
+});
+
 afterEach(() => {
   cleanup();
   navigation.search = "";
   navigation.redirect.mockClear();
   window.history.replaceState(null, "", "/");
+  vi.clearAllMocks();
 });
 
 function show(identityId: string, page: ReactElement) {
@@ -178,6 +192,25 @@ describe("reports summary", () => {
     show("dev-ost-a1", <ReportsSummaryPanel onOpen={vi.fn()} />);
     expect(await screen.findByRole("button", { name: "Open the Sales report" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Open the Collections report" })).toBeNull();
+  });
+
+  it("downloads the visible summary figures as a PDF", async () => {
+    const user = userEvent.setup();
+    const record = vi.spyOn(MockReportRepository.prototype, "recordExport");
+    show("dev-finance", <ReportsSummaryPanel onOpen={vi.fn()} />);
+    const trigger = await screen.findByRole("button", { name: /Export/ });
+    await waitFor(() => expect(trigger).toBeEnabled());
+    await user.click(trigger);
+    await user.click(await screen.findByRole("menuitem", { name: "Download PDF" }));
+    await waitFor(() => expect(pdf.create).toHaveBeenCalledTimes(1));
+    const data = pdf.create.mock.calls[0][0];
+    expect(data).toMatchObject({
+      title: "Reports Summary",
+      columns: ["Group", "Measure", "Value", "Compared with Previous Period"],
+    });
+    expect(data.rows).toHaveLength(7);
+    expect(data.rows.map((row: string[]) => row[1])).toContain("Commissions");
+    expect(record).toHaveBeenCalledWith(expect.objectContaining({ report: "Reports Summary", format: "pdf", rowCount: 7 }));
   });
 });
 

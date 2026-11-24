@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { CircleCheck, CircleX, Hourglass, ListOrdered, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useCustomerImportJobs, useExportCustomers, useImportCustomers, useOperation, usePaymentSchemes, useVipProducts } from "@/data/business-queries";
-import { useCustomers } from "@/data/queries";
+import { useCustomers, useMembers } from "@/data/queries";
 import {
   buildImportRows,
   CUSTOMER_IMPORT_COLUMNS,
@@ -23,10 +23,14 @@ import { Label } from "@/shared/ui/label";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
-import { ExportCustomersCard, HistoryCard } from "../components/customer-export-history";
+import { ExportCustomersCard, EXPORT_STATUS_OPTIONS, exportPlanOptions, HistoryCard } from "../components/customer-export-history";
 import { TemplateDownloadMenu, TemplateStep, UploadDropzone } from "../components/customer-import-steps";
 import { defaultProductCode, tierDisplayName } from "@/modules/vip/tier-options";
 import { customerRecordName } from "@/modules/customers/rules";
+import { describeFilters } from "../components/report-shell";
+import { createReportPdf, downloadReportPdf } from "../documents/report-pdf-output";
+import { manilaToday } from "@/shared/lib/dates";
+import { formatDate } from "@/shared/lib/format-date";
 
 const SHEET_NAME = "Customers";
 /** One filled-in row for the template; the VIP tier is a product code from the catalog. */
@@ -202,10 +206,12 @@ function ImportSteps() {
 function ExportSteps() {
   const customers = useCustomers();
   const schemes = usePaymentSchemes();
+  const products = useVipProducts();
+  const members = useMembers();
   const exportCustomers = useExportCustomers();
   const [status, setStatus] = useState("all");
   const [plan, setPlan] = useState("all");
-  const [format, setFormat] = useState<"xlsx" | "csv">("xlsx");
+  const [format, setFormat] = useState<"xlsx" | "csv" | "pdf">("xlsx");
   const [search, setSearch] = useState("");
 
   // The preview table and the export file use these same rows.
@@ -225,10 +231,35 @@ function ExportSteps() {
       // The repository re-reads the records the identity may see; the filters are applied to that result.
       const allowed = new Set(matching.map((customer) => customer.id));
       const records = (await exportCustomers.mutateAsync({ format, count: Math.min(matching.length, MAX_EXPORT_ROWS) })).filter((customer) => allowed.has(customer.id)).slice(0, MAX_EXPORT_ROWS);
-      const rows = [[...CUSTOMER_IMPORT_COLUMNS, "Status"], ...records.map((customer) => [...customerToExportRow(customer, schemes.data ?? []), customer.status])];
-      const fileName = `customers-${new Date().toISOString().slice(0, 10)}.${format}`;
-      if (format === "xlsx") await downloadXlsx(fileName, [{ name: SHEET_NAME, rows }]);
-      else downloadCsv(fileName, rows);
+      const today = manilaToday();
+      if (format === "pdf") {
+        const memberName = new Map((members.data ?? []).map((member) => [member.id, member.displayName]));
+        const statusLabels = new Map(EXPORT_STATUS_OPTIONS.map((option) => [option.value, option.label]));
+        const file = await createReportPdf({
+          title: "Customer Export",
+          generated: formatDate(today),
+          metadata: describeFilters([
+            `Status: ${statusLabels.get(status) ?? "All statuses"}`,
+            `VIP card level: ${exportPlanOptions(products.data).find((option) => option.value === plan)?.label ?? "All VIP card levels"}`,
+            search.trim() ? `Search "${search.trim()}"` : null,
+          ]),
+          // The PDF uses the five preview columns. Excel and CSV keep their import columns and row limit.
+          columns: ["Customer", "VIP Plan", "Status", "Seller", "Submitted"],
+          rows: records.map((customer) => [
+            customerRecordName(customer),
+            tierDisplayName(customer.vipPlan, products.data) ?? "",
+            statusLabels.get(customer.status) ?? customer.status,
+            customer.ownerMemberId ? memberName.get(customer.ownerMemberId) ?? "" : "Company",
+            formatDate(customer.submittedAt),
+          ]),
+        });
+        downloadReportPdf(file, `customers-${today}.pdf`);
+      } else {
+        const rows = [[...CUSTOMER_IMPORT_COLUMNS, "Status"], ...records.map((customer) => [...customerToExportRow(customer, schemes.data ?? []), customer.status])];
+        const fileName = `customers-${today}.${format}`;
+        if (format === "xlsx") await downloadXlsx(fileName, [{ name: SHEET_NAME, rows }]);
+        else downloadCsv(fileName, rows);
+      }
       toast.success(`${records.length} customer(s) exported.`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "The export failed.");

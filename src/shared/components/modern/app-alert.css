@@ -45,3 +45,13 @@
     transition: none !important;
   }
 }
+
+/* SweetAlert sets inline-block on its buttons; keep the icon and label on one row like every other button. */
+.swal2-popup.app-alert__popup .app-alert__actions button:not([style*="display: none"]) {
+  display: inline-flex !important;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}

@@ -27,7 +27,7 @@ export function CustomerQr({ qr }: { qr: PortalQr }) {
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={src} alt={`Membership QR for ${qr.holderName}, ${qr.vipNumber}`} width={360} height={324} className="customer-portal__qr-image" />
-          <Button variant="outline" render={<a href={src} download={`afhomes-${qr.vipNumber}-${qr.holder}.png`} />} nativeButton={false}>Download QR</Button>
+          <Button variant="cyan" render={<a href={src} download={`afhomes-${qr.vipNumber}-${qr.holder}.png`} />} nativeButton={false}>Download QR</Button>
         </>
       ) : <p role="status" className="customer-portal__empty">Creating QR…</p>}
     </div>

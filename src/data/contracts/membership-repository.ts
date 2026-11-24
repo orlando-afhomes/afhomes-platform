@@ -9,7 +9,7 @@ export type MembershipView = Membership & {
   blockers: string[];
 };
 
-/** Staff Customer Look Up card (copied from v2, UI21). Never public (owner ruling R11). */
+/** Staff Customer Search card (copied from v2, UI21). Never public (owner ruling R11). */
 export type CustomerLookupResult = {
   membershipId: string;
   customerName: string;

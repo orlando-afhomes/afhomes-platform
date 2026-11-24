@@ -2,6 +2,7 @@ import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/shared/lib/utils"
 import { Spinner } from "@/shared/ui/spinner"
+import { labelIcon } from "@/shared/ui/button-icons"
 
 // Solid brand fill with a soft top-light gradient and a crisp inner highlight.
 // The fill stays `bg-primary`; the gradient is an overlay, so the token still drives the color.
@@ -58,19 +59,23 @@ const buttonVariantsBase = cva(
         violet: VIOLET,
         teal: TEAL,
         rose: ROSE,
+        indigo: "tw:border-(--color-indigo)/40 tw:bg-(--color-indigo)/10 tw:text-(--color-indigo) tw:hover:bg-(--color-indigo)/20 tw:dark:text-[color-mix(in_oklch,var(--color-indigo),white_55%)]",
+        cyan: "tw:border-(--color-cyan)/40 tw:bg-(--color-cyan)/10 tw:text-(--color-cyan) tw:hover:bg-(--color-cyan)/20 tw:dark:text-[color-mix(in_oklch,var(--color-cyan),white_50%)]",
+        burgundy: "tw:border-(--color-burgundy) tw:bg-(--color-burgundy) tw:text-white tw:hover:brightness-110",
+        orange: "tw:border-(--color-orange)/40 tw:bg-(--color-orange)/10 tw:text-(--color-orange) tw:hover:bg-(--color-orange)/20 tw:dark:text-[color-mix(in_oklch,var(--color-orange),white_55%)]",
         link: "tw:font-medium tw:text-primary tw:underline-offset-4 tw:hover:underline",
       },
       size: {
         default:
           "tw:h-10 tw:gap-2 tw:px-4 tw:has-data-[icon=inline-end]:pr-3.5 tw:has-data-[icon=inline-start]:pl-3.5",
-        xs: "tw:h-7 tw:gap-1 tw:rounded-[min(var(--radius-md),10px)] tw:px-2.5 tw:text-xs tw:in-data-[slot=button-group]:rounded-lg tw:has-data-[icon=inline-end]:pr-2 tw:has-data-[icon=inline-start]:pl-2 tw:[&_svg:not([class*=size-])]:size-3",
-        sm: "tw:h-8 tw:gap-1.5 tw:rounded-[min(var(--radius-md),12px)] tw:px-3 tw:text-[0.8rem] tw:in-data-[slot=button-group]:rounded-lg tw:has-data-[icon=inline-end]:pr-2.5 tw:has-data-[icon=inline-start]:pl-2.5 tw:[&_svg:not([class*=size-])]:size-3.5",
+        xs: "tw:h-7 tw:gap-1 tw:px-2.5 tw:text-xs tw:has-data-[icon=inline-end]:pr-2 tw:has-data-[icon=inline-start]:pl-2 tw:[&_svg:not([class*=size-])]:size-3",
+        sm: "tw:h-8 tw:gap-1.5 tw:px-3 tw:text-[0.8rem] tw:has-data-[icon=inline-end]:pr-2.5 tw:has-data-[icon=inline-start]:pl-2.5 tw:[&_svg:not([class*=size-])]:size-3.5",
         lg: "tw:h-11 tw:gap-2 tw:px-5 tw:has-data-[icon=inline-end]:pr-4 tw:has-data-[icon=inline-start]:pl-4",
         icon: "tw:size-10",
         "icon-xs":
-          "tw:size-7 tw:rounded-[min(var(--radius-md),10px)] tw:in-data-[slot=button-group]:rounded-lg tw:[&_svg:not([class*=size-])]:size-3",
+          "tw:size-7 tw:[&_svg:not([class*=size-])]:size-3",
         "icon-sm":
-          "tw:size-8 tw:rounded-[min(var(--radius-md),12px)] tw:in-data-[slot=button-group]:rounded-lg",
+          "tw:size-8",
         "icon-lg": "tw:size-11",
       },
     },
@@ -99,19 +104,47 @@ function Button({
   /** Shows a spinner, blocks clicks, and keeps the label so the width does not jump. */
   loading?: boolean
 }) {
+  // A plain-text label with no icon of its own gets the icon that matches its meaning.
+  const plain = typeof children === "string" || (Array.isArray(children) && children.every((child) => typeof child === "string" || typeof child === "number"))
+  const autoIcon = plain ? labelIcon([children].flat().join("")) : null
   return (
     <ButtonPrimitive
       data-slot="button"
+      data-action-variant={variant}
       className={buttonVariants({ variant, size, className })}
       disabled={disabled || loading}
       focusableWhenDisabled={loading || undefined}
       aria-busy={loading || undefined}
       {...props}
     >
-      {loading ? <Spinner aria-hidden="true" /> : null}
+      {loading ? <Spinner aria-hidden="true" /> : autoIcon}
       {children}
     </ButtonPrimitive>
   )
+}
+
+export type ActionVariant = NonNullable<VariantProps<typeof buttonVariantsBase>["variant"]>;
+
+const MENU_COLOR: Partial<Record<ActionVariant, string>> = {
+  default: "tw:text-primary", primary: "tw:text-primary",
+  info: "tw:text-info tw:dark:text-[color-mix(in_oklch,var(--info),white_45%)]",
+  success: "tw:text-success tw:dark:text-[color-mix(in_oklch,var(--success),white_45%)]",
+  warning: "tw:text-warning tw:dark:text-[color-mix(in_oklch,var(--warning),white_45%)]",
+  violet: "tw:text-(--color-dashboard-violet) tw:dark:text-[color-mix(in_oklch,var(--color-dashboard-violet),white_50%)]",
+  teal: "tw:text-(--color-teal) tw:dark:text-[color-mix(in_oklch,var(--color-teal),white_45%)]",
+  rose: "tw:text-(--color-rose) tw:dark:text-[color-mix(in_oklch,var(--color-rose),white_45%)]",
+  indigo: "tw:text-(--color-indigo) tw:dark:text-[color-mix(in_oklch,var(--color-indigo),white_55%)]",
+  cyan: "tw:text-(--color-cyan) tw:dark:text-[color-mix(in_oklch,var(--color-cyan),white_50%)]",
+  burgundy: "tw:text-(--color-burgundy) tw:dark:text-[color-mix(in_oklch,var(--color-burgundy),white_60%)]",
+  orange: "tw:text-(--color-orange) tw:dark:text-[color-mix(in_oklch,var(--color-orange),white_55%)]",
+};
+
+export function actionMenuClass(variant: string | null | undefined): string | undefined {
+  return variant && Object.hasOwn(MENU_COLOR, variant) ? MENU_COLOR[variant as ActionVariant] : undefined;
+}
+
+export function isDestructiveAction(variant: string | null | undefined): boolean {
+  return variant === "destructive" || variant === "danger" || variant === "burgundy";
 }
 
 export { Button, buttonVariants }

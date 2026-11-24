@@ -39,6 +39,15 @@ export function cleanEmailInput(value: string): string {
   return value.toLowerCase().replace(/\s/g, "");
 }
 
+/** Domains offered in the email domain dropdown; the first is the default. */
+export const EMAIL_DOMAINS = ["@gmail.com", "@yahoo.com", "@outlook.com", "@hotmail.com", "@icloud.com"] as const;
+
+/** Splits an email at its first "@": the name part and the domain with its "@" ("" when none). */
+export function splitEmail(value: string): { name: string; domain: string } {
+  const at = value.indexOf("@");
+  return at < 0 ? { name: value, domain: "" } : { name: value.slice(0, at), domain: value.slice(at) };
+}
+
 export function isValidEmail(value: string): string | boolean {
   const trimmed = value.trim();
   if (trimmed.length < 6 || trimmed.length > 254) return false;

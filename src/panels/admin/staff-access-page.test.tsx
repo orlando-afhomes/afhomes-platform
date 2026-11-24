@@ -13,7 +13,7 @@ import { AppToaster } from "@/shared/components/modern/app-toaster";
 import { OrganizationAreaPage } from "./pages/organization-area-page";
 
 // Unified Staff & Access directory: account administration merged from the
-// former Accounts and Permissions page (chips, inline activation, system
+// former Staff Access page (chips, inline activation, system
 // roles and status from employee rows, account-only rows).
 
 function TestWrapper({ identityId = "dev-admin" }: { identityId?: string }) {
@@ -103,6 +103,9 @@ describe("staff & access directory", () => {
     for (const name of ["All", "Employees", "Account only", "Pending Approvals (1)"]) {
       expect(within(chips).getByRole("button", { name })).toBeInTheDocument();
     }
+    const icons = ["All", "Employees", "Account only", "Pending Approvals (1)"].map((name) => within(chips).getByRole("button", { name }).querySelector("svg"));
+    expect(icons.every(Boolean)).toBe(true);
+    expect(new Set(icons.map((icon) => icon?.outerHTML)).size).toBe(4);
     expect(screen.getByRole("button", { name: "Add staff" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /create account/i })).toBeNull();
   });
@@ -183,18 +186,16 @@ describe("staff & access directory", () => {
     await ready();
     await rowAction(user, "staff-1", "Change Status");
     await screen.findByRole("dialog", { name: "Account Status" });
-    await user.click(screen.getByRole("combobox", { name: "Account status" }));
-    expect(await screen.findByRole("option", { name: "Deactivated" })).toBeInTheDocument();
-    expect(screen.queryByRole("option", { name: "Pending" })).toBeNull();
-    expect(screen.queryByRole("option", { name: "Active" })).toBeNull();
-    await user.click(screen.getByRole("option", { name: "Suspended" }));
+    expect(await screen.findByRole("radio", { name: /Deactivated/ })).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: /Pending/ })).toBeNull();
+    expect(screen.queryByRole("radio", { name: /^Active/ })).toBeNull();
+    await user.click(screen.getByRole("radio", { name: /Suspended/ }));
     await user.click(screen.getByRole("button", { name: /^save$/i }));
     await waitFor(() => expect(within(row("staff-1")!).getByText("Suspended")).toBeInTheDocument());
     // Reactivation, previously only on the Accounts page.
     await rowAction(user, "staff-1", "Change Status");
     await screen.findByRole("dialog", { name: "Account Status" });
-    await user.click(screen.getByRole("combobox", { name: "Account status" }));
-    await user.click(await screen.findByRole("option", { name: "Active" }));
+    await user.click(await screen.findByRole("radio", { name: /^Active/ }));
     await user.click(screen.getByRole("button", { name: /^save$/i }));
     await waitFor(() => expect(within(row("staff-1")!).queryByText("Suspended")).toBeNull());
   });
@@ -229,15 +230,14 @@ describe("staff & access directory", () => {
     // Focusable (not aria-disabled, so keyboard users reach it) and announced as unavailable.
     const item = await screen.findByRole("menuitem", { name: "Delete (unavailable)" });
     expect(item).not.toHaveAttribute("aria-disabled", "true");
-    // The reason is visible text in the menu, not a hover-only tooltip or title attribute.
-    // Read from this menu only: earlier dropdowns can linger in the DOM while they animate out.
+    // The reason is not printed in the menu; choosing Delete explains it in a pop-up (no hover-only tooltip or title).
     const menu = item.closest("[role='menu']") as HTMLElement;
-    const note = within(menu).getByRole("note");
-    expect(note).toHaveTextContent(reason);
-    // Visible once the open animation finishes (opacity starts at 0).
-    await waitFor(() => expect(note).toBeVisible());
+    expect(within(menu).queryByRole("note")).toBeNull();
     expect(item.querySelector("[title]")).toBeNull();
-    await user.keyboard("{Escape}");
+    await user.click(item);
+    const dialog = await screen.findByRole("alertdialog", { name: "Deletion unavailable" });
+    expect(dialog).toHaveTextContent(reason);
+    await user.click(within(dialog).getByRole("button", { name: "OK" }));
   }
 
   it("always shows Delete disabled with the visible R8 reason for staff and account rows", async () => {

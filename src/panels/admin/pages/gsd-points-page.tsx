@@ -8,6 +8,7 @@ import { useOutlets } from "@/data/settings-queries";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { CheckboxField, SelectField, TextField } from "@/shared/forms/modern";
 import { Button } from "@/shared/ui/button";
+import { Coins, ShieldCheck } from "lucide-react";
 
 /** Prototype GSD counter flow. Staff verify the ID, choose a configured named reward, and record the use. Nothing is credited by scanning alone. */
 export function GsdRewardForm({ holder, idVerified = false }: { holder: MemberQrHolder; idVerified?: boolean }) {
@@ -76,11 +77,11 @@ export function GsdRewardForm({ holder, idVerified = false }: { holder: MemberQr
           {reward ? `${outletName(reward.outletId)} · Points needed: ${reward.pointsCost.toLocaleString("en-PH")} · ` : ""}
           Available: {available.toLocaleString("en-PH")} points
         </p> : null}
-        {!idVerified ? <CheckboxField label="I checked the cardholder’s ID" checked={identityChecked} onChange={(checked) => { setIdentityChecked(checked); setError(undefined); }} /> : null}
+        {!idVerified ? <CheckboxField variant="card" icon={<ShieldCheck className="tw:size-5" />} label="I checked the cardholder’s ID" checked={identityChecked} onChange={(checked) => { setIdentityChecked(checked); setError(undefined); }} /> : null}
         <TextField label="Note" value={note} maxLength={200} onChange={setNote} />
         {error ? <p role="alert" className="tw:text-sm tw:text-destructive">{error}</p> : null}
         <div>
-          <Button type="button" onClick={submit} loading={record.isPending} disabled={!promo || !reward || (!identityChecked && !idVerified)}>Redeem Points</Button>
+          <Button type="button" onClick={submit} loading={record.isPending} disabled={!promo || !reward || (!identityChecked && !idVerified)}><Coins aria-hidden="true" />Redeem Points</Button>
         </div>
       </div>
       {dialog}

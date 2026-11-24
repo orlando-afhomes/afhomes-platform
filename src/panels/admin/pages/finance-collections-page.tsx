@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Wallet } from "lucide-react";
+import { FileText, Wallet } from "lucide-react";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { useContracts, useMemberships, usePayments } from "@/data/business-queries";
 import { useTierDisplayName } from "../components/use-tier-display-name";
@@ -86,7 +86,7 @@ export function FinanceCollectionsPanel() {
       </AdminStatGrid>
       <FilterBar search={search} onSearch={setSearch} searchLabel="Search customers" filters={[{ label: "Status filter", value: collectionState, onChange: setCollectionState, options: COLLECTION_FILTERS }]} />
       <QueryState isLoading={payments.isLoading || contracts.isLoading} error={payments.error ?? contracts.error}>
-        <DataTable data={collections} columns={columns} getRowId={(row) => row.contract.id} emptyText="No contracts match." caption="Collections" onRowOpen={(row) => setDetailId(row.contract.id)} getRowLabel={(row) => `View collection for ${row.contract.customerName}`} rowActions={(row) => <RowActionsMenu itemName={`collection for ${row.contract.customerName}`} extraItems={[{ key: "contract", label: "Open Contract", onClick: () => openContract(row) }]} />} />
+        <DataTable data={collections} columns={columns} getRowId={(row) => row.contract.id} emptyText="No contracts match." caption="Payment Status" onRowOpen={(row) => setDetailId(row.contract.id)} getRowLabel={(row) => `View collection for ${row.contract.customerName}`} rowActions={(row) => <RowActionsMenu itemName={`collection for ${row.contract.customerName}`} extraItems={[{ key: "contract", label: "Open Contract", variant: "indigo", icon: FileText, onClick: () => openContract(row) }]} />} />
       </QueryState>
       <RecordDetailsSheet
         open={detail !== null}
@@ -111,12 +111,12 @@ export function FinanceCollectionsPanel() {
               ]
             : []
         }
-        footer={detail ? <Button type="button" variant="info" onClick={() => openContract(detail)}>Open Contract</Button> : undefined}
+        footer={detail ? <Button type="button" variant="indigo" onClick={() => openContract(detail)}>Open Contract</Button> : undefined}
       />
     </>
   );
 }
 
 function CollectionBadge({ state }: { state: CollectionState["state"] }) {
-  return <BizBadge status={state === "settled" ? "paid" : state === "overdue" ? "overdue" : "partial"} label={state === "settled" ? "Fully Settled" : humanize(state)} />;
+  return <BizBadge status={state === "settled" ? "paid" : state === "overdue" ? "overdue" : "due"} label={state === "settled" ? "Fully Settled" : humanize(state)} />;
 }

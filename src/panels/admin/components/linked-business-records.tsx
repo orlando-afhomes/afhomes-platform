@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Eye } from "lucide-react";
 import { buttonVariants } from "@/shared/ui/button";
 import { ToneBadge, type BadgeTone } from "@/shared/components/modern/status-badge";
 
@@ -25,13 +26,13 @@ const STATE_LABELS: Record<LinkedRecordState, string> = {
 };
 
 const STATE_TONES: Record<LinkedRecordState, BadgeTone> = {
-  linked: "success",
+  linked: "green",
   "not-linked": "neutral",
-  missing: "warning",
-  restricted: "neutral",
-  conflicting: "danger",
-  ambiguous: "warning",
-  incomplete: "warning",
+  missing: "amber",
+  restricted: "violet",
+  conflicting: "red",
+  ambiguous: "orange",
+  incomplete: "indigo",
 };
 
 export type LinkedRecordItem = {
@@ -53,7 +54,7 @@ export function LinkedBusinessRecords({ items }: { items: LinkedRecordItem[] }) 
             {item.content ?? "—"}
             {item.href ? (
               <Link href={item.href} className={buttonVariants({ variant: "info", size: "xs", className: "tw:no-underline" })}>
-                {item.linkLabel ?? "View"}
+                <Eye aria-hidden="true" /> {item.linkLabel ?? "View"}
               </Link>
             ) : null}
           </span>

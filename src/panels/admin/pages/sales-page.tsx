@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BadgeCheck, CalendarCheck, Clock, Receipt } from "lucide-react";
+import { BadgeCheck, CalendarCheck, Clock, Receipt, SlidersHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useApproveDeal, useCorrectVipCommission, useMarkSaleDefaulted, useOperation, useSales } from "@/data/business-queries";
 import { useTierDisplayName } from "../components/use-tier-display-name";
@@ -149,7 +149,7 @@ export function SalesTab() {
     <>
       {dialog}
       {correction ? <VipCommissionCorrectionDialog sale={correction} canApprove={canApprove} onClose={() => setCorrection(null)} /> : null}
-      <ReasonDialog open={defaultSale !== null} title="Mark Sale as Stopped Paying" description={defaultSale?.customerName ?? ""} confirmText="Mark as Stopped Paying" tone="warning" successText="Sale marked as Stopped Paying." onClose={() => setDefaultSale(null)} onSubmit={(reason) => defaultSale ? markDefaulted.mutateAsync({ id: defaultSale.id, reason }) : Promise.resolve()} />
+      <ReasonDialog open={defaultSale !== null} title="Mark Sale as Stopped Paying" description={defaultSale?.customerName ?? ""} confirmText="Stopped Paying" tone="warning" successText="Sale marked as Stopped Paying." onClose={() => setDefaultSale(null)} onSubmit={(reason) => defaultSale ? markDefaulted.mutateAsync({ id: defaultSale.id, reason }) : Promise.resolve()} />
       {referredView ? null : <AdminStatGrid>
         <AdminStatCard label="Confirmed" value={<Money value={totals.confirmed} />} icon={BadgeCheck} tone="brand" description={`${totals.confirmedCount} sale(s)`} />
         <AdminStatCard label="Pending" value={<Money value={totals.pending} />} icon={Clock} tone="warning" description={`${totals.pendingCount} sale(s)`} />
@@ -175,7 +175,7 @@ export function SalesTab() {
               onApproveDeal: () => confirmRun(approveDealConfirm(() => approveDeal.mutateAsync({ contractId: row.contractId }))),
               onMarkDefaulted: () => setDefaultSale(row),
             });
-            return <RowActionsMenu {...menu} extraItems={[...menu.extraItems, ...((canApprove || canPrepare) && (row.status === "pending" || row.status === "confirmed") ? [{ key: "correct-commission", label: "Correct Commission", tone: "warning" as const, onClick: () => setCorrection(row) }] : [])]} />;
+            return <RowActionsMenu {...menu} extraItems={[...menu.extraItems, ...((canApprove || canPrepare) && (row.status === "pending" || row.status === "confirmed") ? [{ key: "correct-commission", label: "Correct Commission", tone: "warning" as const, icon: SlidersHorizontal, onClick: () => setCorrection(row) }] : [])]} />;
           }}
         />
       </QueryState>
@@ -198,7 +198,7 @@ export function SalesTab() {
           },
           ...((detail.expiryReminders ?? []).length > 0 ? [{ title: "Reminders", rows: (detail.expiryReminders ?? []).map((reminder) => ({ label: reminder.role === "seller" ? "Seller" : "Referrer", value: saleExpiryReminderText(reminder) })) }] : []),
         ] : []}
-        footer={detail && !referredView ? <Button className="tw:min-h-11 tw:sm:min-h-8" variant="info" onClick={() => router.push(contractHref(detail.contractId))}>Open Contract</Button> : undefined}
+        footer={detail && !referredView ? <Button className="tw:min-h-11 tw:sm:min-h-8" variant="indigo" onClick={() => router.push(contractHref(detail.contractId))}>Open Contract</Button> : undefined}
       />
     </>
   );

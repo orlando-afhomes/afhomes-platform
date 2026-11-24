@@ -44,6 +44,7 @@ export function ForgotPasswordPanel({ onBack }: { onBack: () => void }) {
         <Input
           id="forgot-email"
           type="email"
+          placeholder="juan.delacruz@example.com"
           autoComplete="email"
           className="login-form__input"
           value={email}

@@ -3,6 +3,7 @@ import {
   capitalizeAfterSpace,
   capitalizeWords,
   cleanBusinessInput,
+  splitEmail,
   cleanBusinessLiveInput,
   cleanEmailInput,
   cleanNameInput,
@@ -304,5 +305,13 @@ describe("govIdMaxLengthFor", () => {
     expect(govIdMaxLengthFor()).toBe(MAX_GOV_ID_LENGTH);
     expect(govIdMaxLengthFor(undefined)).toBe(MAX_GOV_ID_LENGTH);
     expect(govIdMaxLengthFor(null)).toBe(MAX_GOV_ID_LENGTH);
+  });
+});
+
+describe("splitEmail", () => {
+  it("splits at the first @ and keeps the @ with the domain", () => {
+    expect(splitEmail("juan@gmail.com")).toEqual({ name: "juan", domain: "@gmail.com" });
+    expect(splitEmail("juan")).toEqual({ name: "juan", domain: "" });
+    expect(splitEmail("")).toEqual({ name: "", domain: "" });
   });
 });

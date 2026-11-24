@@ -1,6 +1,7 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { exampleFor } from "@/shared/forms/example-text";
 import type { BaseFieldProps } from "@/shared/forms/types";
 import { formatIntegerInput, formatMoneyInput } from "@/shared/lib/money";
 import { cn } from "@/shared/lib/utils";
@@ -41,15 +42,16 @@ function useGroupedInput(format: (raw: string) => string, onChange: (value: stri
 }
 
 /** Peso amount input shown as "10,000" while typing. The value stays text; convert with parsePesoToCentavos. */
-export function MoneyField({ onChange, ...rest }: Omit<BaseFieldProps, "inputMode"> & ValueProps) {
+// A value that arrives already filled in (an edit form, a suggested amount) is grouped too, not only what is typed.
+export function MoneyField({ onChange, value, ...rest }: Omit<BaseFieldProps, "inputMode"> & ValueProps) {
   const { ref, handle } = useGroupedInput(formatMoneyInput, onChange);
-  return <TextField {...rest} inputRef={ref} addonBefore="₱" inputMode="decimal" maxLength={19} onChange={handle} />;
+  return <TextField {...rest} value={formatMoneyInput(value)} inputRef={ref} addonBefore="₱" inputMode="decimal" maxLength={19} onChange={handle} />;
 }
 
 /** Whole-number input with comma grouping, for Stay Points and similar counts. */
-export function PointsField({ onChange, ...rest }: Omit<BaseFieldProps, "inputMode"> & ValueProps) {
+export function PointsField({ onChange, value, ...rest }: Omit<BaseFieldProps, "inputMode"> & ValueProps) {
   const { ref, handle } = useGroupedInput(formatIntegerInput, onChange);
-  return <TextField {...rest} inputRef={ref} inputMode="numeric" maxLength={16} onChange={handle} />;
+  return <TextField {...rest} value={formatIntegerInput(value)} inputRef={ref} inputMode="numeric" maxLength={16} onChange={handle} />;
 }
 
 /** Percentage input (up to two decimals). Convert with parsePercentToBasisPoints. */
@@ -86,7 +88,7 @@ export function TextAreaField({
         id={ids.id}
         value={value}
         maxLength={maxLength}
-        placeholder={placeholder}
+        placeholder={placeholder ?? exampleFor(label)}
         disabled={disabled}
         aria-required={required ? "true" : undefined}
         aria-invalid={error ? true : undefined}
@@ -106,6 +108,7 @@ export function CheckboxField({
   error,
   id,
   variant = "plain",
+  icon,
 }: {
   label: string;
   checked: boolean;
@@ -115,6 +118,8 @@ export function CheckboxField({
   id?: string;
   /** `card` renders a bordered, fully clickable row that highlights when checked. */
   variant?: "plain" | "card";
+  /** Shown before the box in the `card` variant; the whole row, icon included, toggles the box. */
+  icon?: ReactNode;
 }) {
   const ids = useFieldIds(id);
   return (
@@ -122,13 +127,17 @@ export function CheckboxField({
       <label
         className={cn(
           "tw:flex tw:min-h-11 tw:cursor-pointer tw:items-start tw:gap-3 tw:text-sm tw:sm:min-h-8",
+          // Padding centers a one-line label in the 44px (32px from sm) touch row; longer labels simply grow.
+          variant === "plain" && "tw:py-3 tw:sm:py-1.5",
           variant === "card" &&
-            "tw:rounded-lg tw:border tw:bg-card tw:p-3 tw:shadow-(--shadow-soft) tw:transition-colors tw:hover:border-primary/40 tw:has-[[data-checked]]:border-primary tw:has-[[data-checked]]:bg-primary/5",
+            "tw:items-center tw:rounded-lg tw:border tw:bg-card tw:p-3 tw:shadow-(--shadow-soft) tw:transition-colors tw:hover:border-primary/40 tw:has-[[data-checked]]:border-primary tw:has-[[data-checked]]:bg-primary/5",
           variant === "card" && error && "tw:border-destructive",
         )}
       >
-        <Checkbox id={ids.id} checked={checked} disabled={disabled} onCheckedChange={(next) => onChange(next === true)} />
-        <span>{label}</span>
+        {variant === "card" && icon ? <span aria-hidden="true" className="tw:flex tw:shrink-0 tw:text-primary">{icon}</span> : null}
+        {/* The box sits level with the first line of the label (a 20px line is 2px taller than the box). */}
+        <Checkbox id={ids.id} checked={checked} disabled={disabled} onCheckedChange={(next) => onChange(next === true)} className="tw:mt-0.5" />
+        <span className="tw:leading-5">{label}</span>
       </label>
       {error ? (
         <p role="alert" className="tw:text-sm tw:text-destructive">

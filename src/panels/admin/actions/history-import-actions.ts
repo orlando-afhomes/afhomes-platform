@@ -1,3 +1,4 @@
+import { CheckCheck, X } from "lucide-react";
 import type { RowActionItem } from "@/shared/components/modern/row-actions-menu";
 import type { ReceiptImportBatch } from "@/modules/imports/receipt-import";
 
@@ -23,8 +24,8 @@ export function buildImportBatchMenuProps(batch: ReceiptImportBatch, perms: Impo
     batch.status !== "pending_signoff"
       ? []
       : [
-          ...(perms.canSignOff ? [{ key: "signoff", label: "Confirm Batch", tone: "success" as const, onClick: cb.onSignOff }] : []),
-          { key: "reject", label: "Reject Batch", tone: "danger" as const, danger: true, onClick: cb.onReject },
+          ...(perms.canSignOff ? [{ key: "signoff", label: "Confirm Batch", tone: "success" as const, icon: CheckCheck, onClick: cb.onSignOff }] : []),
+          { key: "reject", label: "Reject Batch", tone: "danger" as const, icon: X, danger: true, onClick: cb.onReject },
         ];
   return { itemName: batch.fileName || "this batch", extraItems };
 }

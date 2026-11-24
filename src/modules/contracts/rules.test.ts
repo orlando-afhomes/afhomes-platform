@@ -115,22 +115,23 @@ describe("buildNonStandardSchedule (doc 05 section 10.2)", () => {
     expect(built.requiredInitialCentavos).toBe(7_333_333);
   });
 
-  it("supports 1 and 36 months with an exact total", () => {
+  it("supports 1 and 12 months with an exact total", () => {
     const one = buildNonStandardSchedule(15_000_000, 1_000_000, 1);
     expect(one.schedule.map((line) => line.amountCentavos)).toEqual([1_000_000, 14_000_000]);
-    const many = buildNonStandardSchedule(39_000_000, 0, 36);
-    expect(many.schedule).toHaveLength(36);
+    const many = buildNonStandardSchedule(39_000_000, 0, 12);
+    expect(many.schedule).toHaveLength(12);
     expect(total(many.schedule)).toBe(39_000_000);
     expect(many.schedule[0]).toMatchObject({ label: "MA1", purpose: "installment", dueDate: null });
     expect(nonStandardPaymentCode(1)).toBe("T01");
-    expect(nonStandardPaymentCode(36)).toBe("T36");
+    expect(nonStandardPaymentCode(12)).toBe("T12");
   });
 
-  it("refuses a price at or below the reservation fee, fractional centavos and months outside 1 to 36", () => {
+  it("refuses a price at or below the reservation fee, fractional centavos and months outside 1 to 12", () => {
     expect(buildNonStandardSchedule(1_000_000, 1_000_000, 4).errors).toHaveLength(1);
     expect(buildNonStandardSchedule(10_000_000.5, 0, 4).errors).toHaveLength(1);
     expect(buildNonStandardSchedule(10_000_000, 0, 0).errors).toHaveLength(1);
-    expect(buildNonStandardSchedule(10_000_000, 0, 37).errors).toHaveLength(1);
+    expect(buildNonStandardSchedule(10_000_000, 0, 13).errors).toHaveLength(1);
+    expect(buildNonStandardSchedule(10_000_000, 0, 12).errors).toHaveLength(0);
     expect(buildNonStandardSchedule(10_000_000, 0, 2.5).errors).toHaveLength(1);
     expect(nonStandardTermErrors({ priceCentavos: 10_000_000, months: 4, justification: "  " }, 0)).toEqual({ reason: expect.any(String) });
   });

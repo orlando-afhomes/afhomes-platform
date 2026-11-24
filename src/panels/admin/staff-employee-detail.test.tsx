@@ -102,10 +102,10 @@ describe("employee detail sections", () => {
     expect(within(access).getByText(adminEmail)).toBeInTheDocument();
     expect(within(access).getByText("Administrator")).toBeInTheDocument();
     const effective = within(access).getByText("Effective module access").nextElementSibling as HTMLElement;
-    expect(effective.textContent).toContain("Accounts and Permissions");
+    expect(effective.textContent).toContain("Staff Access");
     expect(effective.textContent).toContain("Roles");
-    expect(within(access).getByRole("button", { name: "System Roles" })).toBeInTheDocument();
-    expect(within(access).getByRole("button", { name: "Change Status" })).toBeInTheDocument();
+    expect(within(screen.getByRole("dialog", { name: "Employee Profile" })).getByRole("button", { name: "System Roles" })).toBeInTheDocument();
+    expect(within(screen.getByRole("dialog", { name: "Employee Profile" })).getByRole("button", { name: "Change Status" })).toBeInTheDocument();
   });
 
   it("shows an empty Account Access state for an employee without a linked account", async () => {
@@ -175,10 +175,9 @@ describe("employee detail audit integrity", () => {
     await ready("dev-super-admin");
     const before = getStore().auditEvents.length;
     await openProfile(user, "staff-1");
-    await user.click(within(section("access")).getByRole("button", { name: "Change Status" }));
+    await user.click(within(screen.getByRole("dialog", { name: "Employee Profile" })).getByRole("button", { name: "Change Status" }));
     await screen.findByRole("dialog", { name: "Account Status" });
-    await user.click(screen.getByRole("combobox", { name: "Account status" }));
-    await user.click(await screen.findByRole("option", { name: "Suspended" }));
+    await user.click(await screen.findByRole("radio", { name: /Suspended/ }));
     await user.click(screen.getByRole("button", { name: /^save$/i }));
     await waitFor(() => expect(getStore().accounts.find((item) => item.id === "acct-hr")?.status).toBe("suspended"));
     const events = getStore().auditEvents.slice(before);

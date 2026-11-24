@@ -4,6 +4,7 @@ import { useId, useRef } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { TAB_ICONS } from "./tab-icons";
 
 export type TabBarTab = { value: string; label: string; Icon?: LucideIcon; count?: number; unreadCount?: number };
 
@@ -60,20 +61,38 @@ export function TabBar({
           <SelectTrigger
             aria-label={`${label} views`}
             aria-description={unreadTotal > 0 ? unreadLabel(unreadTotal) : undefined}
-            className="tw:h-11 tw:w-full tw:rounded-xl tw:font-semibold"
+            className="tw:data-[size=default]:h-16 tw:w-full tw:gap-3.5 tw:rounded-2xl tw:border-primary/25 tw:bg-card tw:px-3.5 tw:py-2 tw:font-semibold tw:shadow-(--shadow-soft) tw:hover:border-primary/50 tw:data-popup-open:border-primary"
           >
-            <SelectValue>{active.label}</SelectValue>
+            <ViewChip Icon={active.Icon ?? TAB_ICONS[active.value]} selected />
+            <span className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:gap-1 tw:text-left tw:leading-none">
+              <span aria-hidden="true" className="tw:text-[11px] tw:font-medium tw:tracking-wide tw:text-muted-foreground tw:uppercase">View</span>
+              <SelectValue className="tw:text-base tw:font-bold">{active.label}</SelectValue>
+            </span>
             {active.count === undefined ? null : <CountBadge count={active.count} />}
             <UnreadBadge count={unreadTotal} />
           </SelectTrigger>
-          <SelectContent alignItemWithTrigger={false}>
-            {tabs.map((tab) => (
-              <SelectItem key={tab.value} value={tab.value} aria-description={tab.unreadCount ? unreadLabel(tab.unreadCount) : undefined} className="tw:min-h-11">
-                {tab.label}
-                {tab.count === undefined ? null : <CountBadge count={tab.count} />}
-                <UnreadBadge count={tab.unreadCount} />
-              </SelectItem>
-            ))}
+          <SelectContent alignItemWithTrigger={false} className="tw:rounded-2xl tw:p-2">
+            <p aria-hidden="true" className="tw:px-3 tw:pt-1.5 tw:pb-2.5 tw:text-xs tw:font-medium tw:tracking-wide tw:text-muted-foreground tw:uppercase">
+              Switch view · {tabs.length} views
+            </p>
+            {tabs.map((tab) => {
+              const selected = tab.value === active.value;
+              return (
+                <SelectItem
+                  key={tab.value}
+                  value={tab.value}
+                  aria-description={tab.unreadCount ? unreadLabel(tab.unreadCount) : undefined}
+                  className={cn("tw:min-h-14 tw:rounded-xl tw:py-2 tw:pr-10 tw:pl-3 tw:text-sm tw:text-foreground tw:focus:bg-primary/10 tw:focus:text-primary tw:focus:**:text-primary", selected ? "tw:bg-primary/10 tw:font-bold tw:text-primary" : "tw:font-medium")}
+                >
+                  <span className="tw:flex tw:w-full tw:items-center tw:gap-3.5">
+                    <ViewChip Icon={tab.Icon ?? TAB_ICONS[tab.value]} selected={selected} />
+                    <span className="tw:flex-1 tw:text-base">{tab.label}</span>
+                    {tab.count === undefined ? null : <CountBadge count={tab.count} />}
+                    <UnreadBadge count={tab.unreadCount} />
+                  </span>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -84,7 +103,7 @@ export function TabBar({
       >
         {tabs.map((tab, index) => {
           const selected = tab.value === value;
-          const Icon = tab.Icon;
+          const Icon = tab.Icon ?? TAB_ICONS[tab.value];
           return (
             <button
               key={tab.value}
@@ -130,6 +149,19 @@ export function TabBar({
 
 function unreadLabel(count: number) {
   return `${count} unread ${count === 1 ? "notification" : "notifications"}`;
+}
+
+// Set inline so no hover, focus or highlight style of the dropdown row can recolor the icon of the open view.
+const SELECTED_ICON = { color: "#ffffff", stroke: "#ffffff" } as const;
+
+/** Rounded icon chip: filled brand color for the open view, soft tint for the others. */
+function ViewChip({ Icon, selected = false }: { Icon?: LucideIcon; selected?: boolean }) {
+  if (!Icon) return null;
+  return (
+    <span aria-hidden="true" className={cn("tw:flex tw:size-9 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-xl", selected ? "tw:bg-primary tw:text-primary-foreground!" : "tw:bg-primary/10 tw:text-primary")}>
+      <Icon className="tw:size-5" style={selected ? SELECTED_ICON : undefined} />
+    </span>
+  );
 }
 
 function CountBadge({ count }: { count: number }) {

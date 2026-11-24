@@ -13,7 +13,7 @@ import { formatDate } from "@/shared/lib/format-date";
 import { humanize } from "@/shared/lib/humanize";
 import { formatPeso } from "@/shared/lib/money";
 import { matchesSearch, optionsFrom } from "@/shared/lib/search";
-import { ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
+import { describeFilters, ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
 import { useTierDisplayName } from "../components/use-tier-display-name";
 
 type SalesRow = { id: string; kind: "VIP" | "IGP"; customer: string; product: string; seller: string; recorded: string; status: string; valueCentavos: number; periodCentavos: number };
@@ -78,6 +78,12 @@ export function SalesReportPanel() {
   const [kind, setKind] = useState("all");
   const [seller, setSeller] = useState("all");
   const rows = useMemo(() => inPeriod.filter((row) => (status === "all" || row.status === status) && (kind === "all" || row.kind === kind) && (seller === "all" || row.seller === seller) && matchesSearch(search, row.customer, row.product, row.seller)), [inPeriod, status, kind, seller, search]);
+  const metadata = describeFilters([
+    search.trim() ? `Search "${search.trim()}"` : null,
+    kind !== "all" ? `Sale type: ${kind}` : null,
+    status !== "all" ? `Status: ${humanize(status)}` : null,
+    seller !== "all" ? `Seller: ${seller}` : null,
+  ]);
   return (
     <ReportFrame range={range}>
       <AdminStatGrid columns={3}>
@@ -85,7 +91,7 @@ export function SalesReportPanel() {
         <AdminStatCard loading={loading} error={error} label="All-Time Confirmed" value={<Money value={figures.confirmedValue} />} icon={BadgeCheck} tone="brand" description={`${figures.confirmedCount} sale(s)`} />
         <AdminStatCard loading={loading} error={error} label="Pending" value={<Money value={figures.pendingValue} />} icon={Clock} tone="warning" description={`${figures.pendingCount} sale(s)`} />
       </AdminStatGrid>
-      <ReportTable report="Sales Performance" fileName="sales-performance" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => `${row.kind}-${row.id}`} getRowTitle={(row) => row.customer} loading={loading} error={error} emptyText="No sales match."
+      <ReportTable report="Sales Performance" fileName="sales-performance" range={range} metadata={metadata} columns={COLUMNS} rows={rows} getRowId={(row) => `${row.kind}-${row.id}`} getRowTitle={(row) => row.customer} loading={loading} error={error} emptyText="No sales match."
         filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search sales" filters={[
           { label: "Sale type filter", value: kind, onChange: setKind, options: optionsFrom("All sale types", inPeriod.map((row) => row.kind)) },
           { label: "Sale status filter", value: status, onChange: setStatus, options: optionsFrom("All statuses", inPeriod.map((row) => row.status), humanize) },

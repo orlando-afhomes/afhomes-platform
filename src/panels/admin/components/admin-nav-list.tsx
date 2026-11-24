@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Building2, ChevronDown, IdCard, Landmark, type LucideIcon } from "lucide-react";
+import { Briefcase, ChevronDown, HeartHandshake, Landmark, ShieldCheck, type LucideIcon } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useNotifications } from "@/shared/providers/notifications-provider";
 import type { AdminNavItem } from "../navigation";
@@ -31,11 +31,12 @@ function formatBadgeCount(count: number): string {
 const BADGE_PILL =
   "tw:ml-auto tw:inline-flex tw:h-5 tw:min-w-5 tw:items-center tw:justify-center tw:rounded-full tw:bg-destructive tw:px-1 tw:text-xs tw:font-semibold tw:text-white tw:ring-2 tw:ring-(--color-brand-deep)";
 
-const NAV_GROUPS: { label: string; icon: LucideIcon; members: readonly AdminNavItem["id"][] }[] = [
+// Group icons never repeat an item icon (see admin-nav-icons.test.ts).
+export const NAV_GROUPS: { label: string; icon: LucideIcon; members: readonly AdminNavItem["id"][] }[] = [
   { label: "Finance", icon: Landmark, members: ["finance", "commissions"] },
-  { label: "Member Services", icon: IdCard, members: ["membership", "stay-points", "redemption"] },
-  { label: "Management", icon: Building2, members: ["vip-products", "sales-network", "organization"] },
-  { label: "Reports and Audit", icon: BarChart3, members: ["reports", "audit-logs"] },
+  { label: "Member Programs", icon: HeartHandshake, members: ["membership", "stay-points", "redemption"] },
+  { label: "Management", icon: Briefcase, members: ["vip-products", "sales-network", "organization"] },
+  { label: "Reports and Audit", icon: ShieldCheck, members: ["reports", "audit-logs"] },
 ];
 
 /** Groups are applied after filtering so they only contain destinations the user can open. */

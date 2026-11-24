@@ -33,7 +33,7 @@ describe("admin nav groups", () => {
     expect(screen.getByRole("button", { name: "Finance" })).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("link", { name: "Payments" })).toHaveAttribute("href", "/admin/finance");
     expect(screen.getByRole("link", { name: "Payments" })).toHaveAttribute("aria-current", "page");
-    const memberServices = screen.getByRole("button", { name: "Member Services" });
+    const memberServices = screen.getByRole("button", { name: "Member Programs" });
     expect(memberServices).toHaveAttribute("aria-expanded", "false");
     await user.click(memberServices);
     expect(memberServices).toHaveAttribute("aria-expanded", "true");
@@ -92,7 +92,7 @@ describe("admin nav list rendering", () => {
     expect(finance).toContain("Commissions");
     expect(finance).not.toContain("Settings");
     const ost = renderNav("dev-ost-a1");
-    // Payment Plan Guide moved to Sales, so a seller holds no Settings tab.
+    // Payment Plans moved to Sales, so a seller holds no Settings tab.
     expect(ost).not.toContain("Settings");
     expect(renderNav("dev-admin")).toContain("Settings");
     expect(ost).not.toContain("Payments");
@@ -102,7 +102,7 @@ describe("admin nav list rendering", () => {
   it("shows Organization instead of a separate Accounts entry", () => {
     for (const identityId of ["dev-admin", "dev-super-admin", "dev-hr"]) {
       const html = renderNav(identityId, "/admin/organization/staff");
-      expect(html).not.toContain("Accounts and Permissions");
+      expect(html).not.toContain("Staff Access");
       expect(html).toContain("Organization");
     }
   });

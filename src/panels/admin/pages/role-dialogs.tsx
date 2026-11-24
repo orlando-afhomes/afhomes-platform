@@ -4,7 +4,8 @@ import { EMPTY } from "@/shared/lib/empty-value";
 import { humanize } from "@/shared/lib/humanize";
 import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { DELEGABLE_MODULES, MODULE_CATALOG, type AdminModuleId } from "@/modules/identity/permissions";
+import { Ban, CircleCheck } from "lucide-react";
+import { DELEGABLE_MODULES, MODULE_CATALOG, MODULE_GROUPS, type AdminModuleId } from "@/modules/identity/permissions";
 import type { DepartmentRole } from "@/modules/organization/types";
 import { cleanTitleInput, isValidName } from "@/shared/utils/input-sanitizers";
 import {
@@ -20,17 +21,18 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
-import { Input } from "@/shared/ui/input";
+import { RadioCardField, TextField } from "@/shared/forms/modern";
 import { Label } from "@/shared/ui/label";
 import { SearchSelect } from "@/shared/components/modern/search-select";
 
-const STATUS_ITEMS = [
-  { value: "active", label: "Active" },
-  { value: "deactivated", label: "Deactivated" },
+const STATUS_OPTIONS = [
+  { value: "active" as const, label: "Active", description: "The role gives its modules to staff.", icon: <CircleCheck className="tw:size-4" /> },
+  { value: "deactivated" as const, label: "Deactivated", description: "The role stays on record but gives no access.", icon: <Ban className="tw:size-4" /> },
 ];
 
 // Long module lists scroll inside the dialog instead of pushing it off screen.
 const DIALOG_CLASS = "tw:max-h-[calc(100dvh-2rem)] tw:overflow-y-auto tw:sm:max-w-md";
+const FORM_DIALOG_CLASS = "tw:max-h-[calc(100dvh-2rem)] tw:overflow-y-auto tw:sm:max-w-2xl";
 
 /** Lazy-loaded department-role dialog group: view, create, edit. */
 export function RoleDialogs({
@@ -50,7 +52,7 @@ export function RoleDialogs({
     <>
       <RoleViewDialog viewRole={viewRole} onClose={onCloseView} />
       <Dialog open={open} onOpenChange={(next) => (!next ? onCloseForm() : undefined)}>
-        <DialogContent className={DIALOG_CLASS}>
+        <DialogContent className={FORM_DIALOG_CLASS}>
           <DialogHeader>
             <DialogTitle>{editRole ? "Edit Role" : "Create Role"}</DialogTitle>
             <DialogDescription>
@@ -93,8 +95,24 @@ function RoleViewDialog({ viewRole, onClose }: { viewRole: DepartmentRole | null
             </dl>
             <section className="tw:flex tw:flex-col tw:gap-2">
               <h3 className="tw:font-semibold">Authorized Modules</h3>
-              <div className="tw:flex tw:flex-wrap tw:gap-1">
-                {viewRole.moduleIds.map((moduleId: string) => (
+              <div className="tw:flex tw:flex-col tw:gap-2">
+                {MODULE_GROUPS.map((group) => {
+                  const inGroup = MODULE_CATALOG.filter((entry) => entry.group === group && viewRole.moduleIds.includes(entry.id));
+                  if (inGroup.length === 0) return null;
+                  return (
+                    <div key={group} className="tw:flex tw:flex-col tw:gap-1">
+                      <span className="tw:text-xs tw:font-semibold tw:tracking-wide tw:text-muted-foreground tw:uppercase">{group}</span>
+                      <div className="tw:flex tw:flex-wrap tw:gap-1">
+                        {inGroup.map((entry) => (
+                          <Badge key={entry.id} variant="outline">
+                            {entry.label}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                {viewRole.moduleIds.filter((moduleId) => !MODULE_CATALOG.some((entry) => entry.id === moduleId)).map((moduleId) => (
                   <Badge key={moduleId} variant="outline">
                     {moduleLabel(moduleId)}
                   </Badge>
@@ -138,8 +156,6 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
   const updateRole = useUpdateDepartmentRole();
   const departmentsQuery = useDepartments();
   const granted = useEffectiveModuleIds();
-  const nameId = useId();
-  const nameErrorId = useId();
   const departmentErrorId = useId();
   const modulesLabelId = useId();
   const modulesErrorId = useId();
@@ -155,9 +171,12 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
   // The creator may only delegate implemented modules they hold themselves.
   const delegableOptions = useMemo(
     () =>
-      MODULE_CATALOG.filter((entry) => DELEGABLE.has(entry.id) && granted.has(entry.id)).map((entry) => ({
+      MODULE_CATALOG.filter((entry) => DELEGABLE.has(entry.id)).map((entry) => ({
         value: entry.id,
         label: entry.label,
+        group: entry.group,
+        // A creator can only give modules they hold; the others show locked.
+        held: granted.has(entry.id),
       })),
     [granted],
   );
@@ -219,37 +238,27 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
     if (errors.modules) setErrors((current) => ({ ...current, modules: undefined }));
   };
 
+  const toggleGroup = (ids: string[], checked: boolean) => {
+    setModuleIds((current) => (checked ? [...new Set([...current, ...ids])] : current.filter((id) => !ids.includes(id))));
+    if (errors.modules) setErrors((current) => ({ ...current, modules: undefined }));
+  };
+
   return (
-    <form onSubmit={handleSubmit} noValidate className="tw:flex tw:flex-col tw:gap-4">
-      <div className="tw:flex tw:flex-col tw:gap-1.5">
-        <Label htmlFor={nameId}>
-          Role Name <span aria-hidden="true">*</span>
-        </Label>
-        <Input
-          id={nameId}
-          placeholder="e.g. HR Staff"
-          value={name}
-          maxLength={80}
-          aria-required="true"
-          aria-invalid={errors.name ? true : undefined}
-          aria-describedby={errors.name ? nameErrorId : undefined}
-          className="tw:h-10 tw:sm:h-8"
-          onChange={(event) => {
-            setName(cleanTitleInput(event.target.value));
-            if (errors.name) setErrors((current) => ({ ...current, name: undefined }));
-          }}
-        />
-        <div className="tw:flex tw:justify-between tw:gap-2">
-          {errors.name ? (
-            <p id={nameErrorId} role="alert" className="tw:text-sm tw:text-destructive">
-              {errors.name}
-            </p>
-          ) : (
-            <span />
-          )}
-          <span className="tw:text-xs tw:text-muted-foreground">{name.length} / 80</span>
-        </div>
-      </div>
+    <form onSubmit={handleSubmit} noValidate className="tw:flex tw:flex-col tw:gap-5">
+      <div className="tw:grid tw:grid-cols-1 tw:gap-4 tw:sm:grid-cols-2">
+      <TextField
+        label="Role Name"
+        placeholder="HR Staff"
+        required
+        value={name}
+        maxLength={80}
+        hint={`${name.length} / 80`}
+        error={errors.name}
+        onChange={(next) => {
+          setName(cleanTitleInput(next));
+          if (errors.name) setErrors((current) => ({ ...current, name: undefined }));
+        }}
+      />
       <div className="tw:flex tw:flex-col tw:gap-1.5">
         <Label>
           Department <span aria-hidden="true">*</span>
@@ -273,25 +282,48 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
           </p>
         ) : null}
       </div>
+      </div>
       <fieldset
         aria-labelledby={modulesLabelId}
         aria-describedby={errors.modules ? modulesErrorId : undefined}
         className="tw:m-0 tw:flex tw:min-w-0 tw:flex-col tw:gap-1.5 tw:border-0 tw:p-0"
       >
-        <legend id={modulesLabelId} className="tw:mb-1.5 tw:p-0 tw:font-medium">
-          Authorized Modules <span aria-hidden="true">*</span>
+        <legend id={modulesLabelId} className="tw:mb-2 tw:flex tw:w-full tw:items-center tw:justify-between tw:p-0 tw:font-medium">
+          <span>
+            Authorized Modules <span aria-hidden="true">*</span>
+          </span>
+          <span className="tw:text-xs tw:font-normal tw:text-muted-foreground">{moduleIds.length} selected</span>
         </legend>
-        <div className="tw:grid tw:grid-cols-1 tw:gap-1 tw:sm:grid-cols-2">
-          {delegableOptions.map((option) => (
-            <label key={option.value} className="tw:flex tw:min-h-11 tw:cursor-pointer tw:items-center tw:gap-2 tw:sm:min-h-8">
-              <Checkbox
-                checked={moduleIds.includes(option.value)}
-                onCheckedChange={(checked) => toggleModule(option.value, checked)}
-                aria-invalid={errors.modules ? true : undefined}
-              />
-              {option.label}
-            </label>
-          ))}
+        <div className="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-2">
+          {MODULE_GROUPS.map((group) => {
+            const options = delegableOptions.filter((option) => option.group === group);
+            if (options.length === 0) return null;
+            const ids: string[] = options.filter((option) => option.held).map((option) => option.value);
+            const chosen = ids.filter((id) => moduleIds.includes(id)).length;
+            return (
+              <div key={group} className="tw:flex tw:flex-col tw:gap-1 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-3">
+                <div className="tw:flex tw:items-center tw:justify-between tw:gap-2 tw:border-b tw:border-border tw:pb-2">
+                  <span className="tw:text-sm tw:font-semibold">{group}</span>
+                  <label className="tw:flex tw:cursor-pointer tw:items-center tw:gap-1.5 tw:text-xs tw:text-muted-foreground">
+                    <Checkbox checked={ids.length > 0 && chosen === ids.length} disabled={ids.length === 0} onCheckedChange={(checked) => toggleGroup(ids, checked)} aria-label={`Select all ${group}`} />
+                    All
+                  </label>
+                </div>
+                {options.map((option) => (
+                  <label key={option.value} className={`tw:flex tw:min-h-11 tw:items-center tw:gap-2 tw:sm:min-h-8 ${option.held ? "tw:cursor-pointer" : "tw:cursor-not-allowed tw:text-muted-foreground"}`}>
+                    <Checkbox
+                      checked={moduleIds.includes(option.value)}
+                      disabled={!option.held}
+                      onCheckedChange={(checked) => toggleModule(option.value, checked)}
+                      aria-invalid={errors.modules ? true : undefined}
+                    />
+                    {option.label}
+                    {option.held ? null : <span className="tw:ml-auto tw:text-xs">Not held</span>}
+                  </label>
+                ))}
+              </div>
+            );
+          })}
         </div>
         {errors.modules ? (
           <p id={modulesErrorId} role="alert" className="tw:text-sm tw:text-destructive">
@@ -299,18 +331,8 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
           </p>
         ) : null}
       </fieldset>
-      <div className="tw:flex tw:flex-col tw:gap-1.5">
-        <Label>
-          Status <span aria-hidden="true">*</span>
-        </Label>
-        <SearchSelect
-          items={STATUS_ITEMS}
-          value={status}
-          onChange={(next) => setStatus(next === "deactivated" ? "deactivated" : "active")}
-          aria-label="Role status"
-        />
-      </div>
-      <DialogFooter>
+      <RadioCardField<"active" | "deactivated"> label="Status" required value={status} options={STATUS_OPTIONS} onChange={setStatus} variant="card" />
+      <DialogFooter className="tw:sticky tw:bottom-0 tw:-mx-4 tw:-mb-4 tw:border-t tw:border-border tw:bg-popover tw:px-4 tw:py-3">
         <Button type="button" variant="outline" onClick={onDone} className="tw:min-h-11 tw:sm:min-h-8">
           Cancel
         </Button>

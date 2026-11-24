@@ -81,12 +81,12 @@ describe("department role repository", () => {
     ).rejects.toThrow("deactivated");
   });
 
-  it("rejects non-delegable and out-of-scope modules", async () => {
+  it("rejects unknown and out-of-scope modules", async () => {
     const store = createMockStore();
-    // "finance" is a real module but not delegable through department roles.
+    // "finance" is delegable, but the Administrator does not hold it, so it cannot be given away.
     await expect(
       adminRepos(store).roles.create({ name: "Bad", departmentId: "dept-hr", moduleIds: ["finance"] }),
-    ).rejects.toThrow("cannot be delegated");
+    ).rejects.toThrow("outside the acting account");
     // "staff" is delegable, but this acting account (linked only to a roles-only
     // department role) does not hold it.
     const scopedStore = createMockStore();
@@ -208,11 +208,10 @@ describe("department role repository S3-A protections", () => {
     return createMockRepositories(store, () => identity);
   }
 
-  it("no longer offers accounts as a delegable module", async () => {
+  it("lets an actor who holds Staff Access give it to a role", async () => {
     const store = createMockStore();
-    await expect(adminRepos(store).roles.create({ name: "Accounts Lead", departmentId: "dept-hr", moduleIds: ["accounts"] })).rejects.toThrow(
-      'Module "Accounts" cannot be delegated through a department role.',
-    );
+    const created = await adminRepos(store).roles.create({ name: "Accounts Lead", departmentId: "dept-hr", moduleIds: ["accounts"] });
+    expect(created.moduleIds).toContain("accounts");
   });
 
   it("reserves the protected Super Admin role for super admins", async () => {
@@ -245,14 +244,14 @@ describe("department role repository S3-A protections", () => {
     expect(roleSnapshot(store, created.id)).toBeDefined();
   });
 
-  it("lets admin edit a role that retains a legacy non-delegable grant", async () => {
+  it("lets admin edit a role that keeps Staff Access, and rejects a module the admin does not hold", async () => {
     const store = createMockStore();
     const updated = await adminRepos(store).roles.update("role-admin", {
       name: "Administrator",
       moduleIds: ["dashboard", "departments", "roles", "staff", "accounts"],
     });
     expect(updated.moduleIds).toContain("accounts");
-    await expect(adminRepos(store).roles.update("role-hr", { moduleIds: ["dashboard", "accounts"] })).rejects.toThrow("cannot be delegated");
+    await expect(adminRepos(store).roles.update("role-hr", { moduleIds: ["dashboard", "finance"] })).rejects.toThrow("outside the acting account");
   });
 
   it("lists role options for staff holders with assign authority, without granting Roles management", async () => {
@@ -263,8 +262,8 @@ describe("department role repository S3-A protections", () => {
     expect(byId.get("role-hr-staff")).toMatchObject({ manageable: true, assignable: true });
     expect(byId.get("role-admin")).toMatchObject({ manageable: false, assignable: false });
     expect(byId.get("role-super-admin")).toMatchObject({ manageable: false, assignable: false });
-    // role-fin-staff only confers dashboard; its stored finance grant is inert.
-    expect(byId.get("role-fin-staff")).toMatchObject({ assignable: true });
+    // role-fin-staff confers finance, which HR does not hold, so HR cannot assign it.
+    expect(byId.get("role-fin-staff")).toMatchObject({ assignable: false });
     await adminRepos(store).roles.update("role-ops-staff", { status: "deactivated" });
     expect((await hrRepos(store).roles.listForAssignment()).find((role) => role.id === "role-ops-staff")).toMatchObject({ manageable: true, assignable: false });
     const finance = createMockRepositories(store, () => getDevIdentity("dev-finance"));

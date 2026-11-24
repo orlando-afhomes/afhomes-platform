@@ -59,7 +59,7 @@ async function confirmInAlertDialog(user: User, name: string | RegExp) {
 
 async function openCreate(user: User) {
   await user.click(await screen.findByRole("button", { name: "Create role" }));
-  return screen.findByPlaceholderText("e.g. HR Staff");
+  return screen.findByPlaceholderText("HR Staff");
 }
 
 async function pickDepartment(user: User, label: string) {
@@ -114,8 +114,8 @@ describe("roles page", () => {
     expect(await screen.findByText("Role name is required.")).toBeInTheDocument();
     expect(screen.getByText("Department is required.")).toBeInTheDocument();
     expect(screen.getByText("Select at least one authorized module.")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("e.g. HR Staff")).toHaveAttribute("aria-invalid", "true");
-    expect(screen.getByPlaceholderText("e.g. HR Staff")).toHaveAccessibleDescription("Role name is required.");
+    expect(screen.getByPlaceholderText("HR Staff")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByPlaceholderText("HR Staff")).toHaveAccessibleDescription("Role name is required.");
     // The dialog stays open until the form is valid.
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
@@ -142,40 +142,51 @@ describe("roles page", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
-  it("only offers delegable implemented modules", async () => {
+  it("lists every module by group and locks the ones the creator does not hold", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
     await openCreate(user);
-    expect(screen.getByRole("checkbox", { name: "Departments" })).toBeInTheDocument();
-    // S3-01: Accounts management is Admin/Super Admin only and not delegable.
-    expect(screen.queryByRole("checkbox", { name: "Accounts" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("checkbox", { name: "Finance" })).not.toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Departments" })).toBeEnabled();
+    expect(screen.getByRole("checkbox", { name: "Sales Network Members" })).toBeEnabled();
+    expect(screen.getByRole("checkbox", { name: "Audit Logs" })).toBeEnabled();
+    // The Administrator does not hold Finance, so it shows but stays locked.
+    expect(screen.getByRole("checkbox", { name: /^Finance/ })).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("selects a whole group with its All checkbox", async () => {
+    const user = userEvent.setup();
+    render(<TestWrapper />);
+    await openCreate(user);
+    await user.click(screen.getByRole("checkbox", { name: "Select all Organization" }));
+    expect(screen.getByRole("checkbox", { name: "Departments" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Staff & Access" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Customers" })).not.toBeChecked();
   });
 
   it("edits a role after confirming the save", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    await screen.findByText("Finance Staff", {}, { timeout: 5000 });
-    await clickRowAction(user, rowFor("Finance Staff"), "Edit");
-    const nameInput = await screen.findByDisplayValue("Finance Staff");
-    fireEvent.change(nameInput, { target: { value: "Finance Staff Updated" } });
+    await screen.findByText("Operations Staff", {}, { timeout: 5000 });
+    await clickRowAction(user, rowFor("Operations Staff"), "Edit");
+    const nameInput = await screen.findByDisplayValue("Operations Staff");
+    fireEvent.change(nameInput, { target: { value: "Operations Staff Updated" } });
     await user.click(screen.getByRole("button", { name: /^save$/i }));
-    expect(await screen.findByText("Save Changes to Finance Staff Updated?")).toBeInTheDocument();
+    expect(await screen.findByText("Save Changes to Operations Staff Updated?")).toBeInTheDocument();
     await confirmInAlertDialog(user, "Save");
     expect(await screen.findByText("Role updated successfully.")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("Finance Staff Updated")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Operations Staff Updated")).toBeInTheDocument());
   });
 
   it("keeps the edit dialog open when the save confirmation is cancelled", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
-    await screen.findByText("Finance Staff", {}, { timeout: 5000 });
-    await clickRowAction(user, rowFor("Finance Staff"), "Edit");
-    await screen.findByDisplayValue("Finance Staff");
+    await screen.findByText("Operations Staff", {}, { timeout: 5000 });
+    await clickRowAction(user, rowFor("Operations Staff"), "Edit");
+    await screen.findByDisplayValue("Operations Staff");
     await user.click(screen.getByRole("button", { name: /^save$/i }));
     await confirmInAlertDialog(user, "Cancel");
     await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
-    expect(screen.getByDisplayValue("Finance Staff")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Operations Staff")).toBeInTheDocument();
     expect(screen.queryByText("Role updated successfully.")).not.toBeInTheDocument();
   });
 

@@ -56,7 +56,7 @@ export function CommissionPayoutBar({ commissions }: { commissions: CommissionVi
   function confirmAll() {
     const ids = toConfirm.map(({ id }) => id);
     confirmRun({
-      title: "Confirm All Paid Out?", description: `Mark ${plural(ids.length, "commission")} as Paid. Do this only after the money has reached each seller.`,
+      title: "Confirm Payouts?", description: `Mark ${plural(ids.length, "commission")} as Paid. Do this only after the money has reached each seller.`,
       confirmText: "Confirm All", tone: "success",
       action: async () => {
         const result = await bulk.mutateAsync({ kind: "confirm", ids });
@@ -84,8 +84,8 @@ export function CommissionPayoutBar({ commissions }: { commissions: CommissionVi
           ))}
           {ready.length || toConfirm.length ? (
             <div className="tw:flex tw:flex-wrap tw:gap-2">
-              {ready.length ? <Button type="button" onClick={() => setRecording(true)}>Record Payout for All Ready ({ready.length})</Button> : null}
-              {toConfirm.length ? <Button type="button" variant="success" onClick={confirmAll}>Confirm All Paid Out ({toConfirm.length})</Button> : null}
+              {ready.length ? <Button type="button" onClick={() => setRecording(true)}>Record Payouts ({ready.length})</Button> : null}
+              {toConfirm.length ? <Button type="button" variant="success" onClick={confirmAll}>Confirm Payouts ({toConfirm.length})</Button> : null}
             </div>
           ) : null}
         </section>

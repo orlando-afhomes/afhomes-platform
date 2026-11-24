@@ -115,9 +115,9 @@ describe("promos page", () => {
     await screen.findByText(draftPromo.name);
     fireEvent.click(screen.getByText(draftPromo.name).closest("tr")!);
     const details = await screen.findByRole("dialog");
-    fireEvent.click(within(details).getByRole("button", { name: /Preview public offer/ }));
+    fireEvent.click(within(details).getByRole("button", { name: /Preview Offer/ }));
 
-    const preview = await screen.findByRole("dialog", { name: "Preview public offer" });
+    const preview = await screen.findByRole("dialog", { name: "Preview Offer" });
     expect(await within(preview).findByText("Not ready to publish")).toBeInTheDocument();
     expect(within(preview).getByText(/This preview never publishes the offer/)).toBeInTheDocument();
     expect(within(preview).getByText("No public title yet")).toBeInTheDocument();

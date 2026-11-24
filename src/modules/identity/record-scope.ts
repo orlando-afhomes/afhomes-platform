@@ -26,15 +26,24 @@ export function canCorrectPayment(identity: DevIdentity, submittedBy: string): b
     activeIdentityRoles(identity).some((role) => role === "super_admin" || role === "admin"));
 }
 
+/** Everyone below `memberId`. One pass groups people by parent, then a walk collects them, so 14,000 sellers stay fast. */
 export function getDescendantIds(memberId: string, members: readonly OrgMember[], visited = new Set<string>()): Set<string> {
+  const childrenByParent = new Map<string, OrgMember[]>();
+  for (const member of members) {
+    if (!member.parentId) continue;
+    const list = childrenByParent.get(member.parentId);
+    if (list) list.push(member);
+    else childrenByParent.set(member.parentId, [member]);
+  }
   const result = new Set<string>();
-  const children = members.filter((member) => member.parentId === memberId);
-  for (const child of children) {
-    if (visited.has(child.id)) continue;
-    visited.add(child.id);
-    result.add(child.id);
-    for (const descendant of getDescendantIds(child.id, members, visited)) {
-      result.add(descendant);
+  const pending = [memberId];
+  while (pending.length > 0) {
+    const current = pending.pop()!;
+    for (const child of childrenByParent.get(current) ?? []) {
+      if (visited.has(child.id)) continue;
+      visited.add(child.id);
+      result.add(child.id);
+      pending.push(child.id);
     }
   }
   return result;

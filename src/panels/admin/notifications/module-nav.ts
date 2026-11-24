@@ -13,7 +13,7 @@ export const MODULE_PRIMARY_NAV: Readonly<Record<AuditModule, AdminAreaKey>> = {
   accreditation: "sales-network",
   customers: "customers",
   "vip-products": "vip-products",
-  experiences: "experiences",
+  experiences: "vip-products",
   contracts: "sales",
   finance: "finance",
   sales: "sales",
@@ -52,7 +52,7 @@ const ACTION_TABS: Partial<Record<AuditModule, Readonly<Record<string, string>>>
     REFERENCE_ENTRY_CREATED: "lists", REFERENCE_ENTRY_UPDATED: "lists", REFERENCE_ENTRY_DELETED: "lists",
     OUTLET_CREATED: "lists", OUTLET_UPDATED: "lists", OUTLET_DELETED: "lists",
   },
-  customers: { CUSTOMER_IMPORT_COMPLETED: "import", CUSTOMERS_EXPORTED: "export" },
+  customers: { CUSTOMER_IMPORT_COMPLETED: "customers", CUSTOMERS_EXPORTED: "export" },
   "vip-products": {
     PAYMENT_SCHEME_CREATED: "schemes", PAYMENT_SCHEME_UPDATED: "schemes",
     TIER_LEVEL_CREATED: "tier-codes", TIER_LEVEL_UPDATED: "tier-codes", TIER_LEVEL_DEACTIVATED: "tier-codes",
@@ -90,7 +90,7 @@ export function notificationDestination({ module, action }: Pick<AuditEventView,
   const redemptionTab = module === "stay-points" ? REDEMPTION_DESTINATIONS[action] : undefined;
   const area = redemptionTab ? "redemption" : MODULE_PRIMARY_NAV[module];
   const tab = redemptionTab ?? ACTION_TABS[module]?.[action] ?? MODULE_PRIMARY_TAB[module];
-  // Setup tabs (points table, holidays, lists, historical import, IGP projects) live in Settings.
+  // Setup tabs (points table, holidays, lists, receipt history export, IGP projects) live in Settings.
   const inArea = (key: AdminAreaKey) => (ADMIN_AREA_TABS[key] as readonly { value: string }[]).some(({ value }) => value === tab);
   return !inArea(area) && inArea("vip-products") ? { area: "vip-products", tab } : { area, tab };
 }

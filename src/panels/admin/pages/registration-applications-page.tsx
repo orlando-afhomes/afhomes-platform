@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, CircleCheck, Copy, Pencil, Wrench, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useRegistrationApplications, useRegistrationReview } from "@/data/queries";
@@ -21,13 +22,13 @@ import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table
 import { QueryState } from "@/shared/components/modern/query-state";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
+import { DetailActions } from "@/shared/components/modern/detail-actions";
 import { RecordDetailsSheet, type DetailSection } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu, type RowActionItem } from "@/shared/components/modern/row-actions-menu";
-import { ToneBadge, type BadgeTone } from "@/shared/components/modern/status-badge";
+import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { StandardDateField } from "@/shared/forms/modern";
 import { formatDate } from "@/shared/lib/format-date";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
-import { Button } from "@/shared/ui/button";
 import { RegistrationCompletionDialog } from "./registration-completion-dialog";
 import type { TableOrder } from "@/shared/lib/table-order";
 
@@ -35,16 +36,6 @@ import type { TableOrder } from "@/shared/lib/table-order";
 const APPLICATION_ORDER: TableOrder<RegistrationApplication> = {
   date: (item) => item.submittedAt ?? item.createdAt,
   attention: (item) => (item.status === "needs_info" ? 3 : item.status === "submitted" || item.status === "pending_review" ? 2 : 0),
-};
-
-const STATUS_TONE: Record<RegistrationStatus, BadgeTone> = {
-  draft: "neutral",
-  submitted: "info",
-  pending_review: "warning",
-  approved: "success",
-  rejected: "danger",
-  withdrawn: "neutral",
-  needs_info: "warning",
 };
 
 const ALL = "all";
@@ -67,7 +58,7 @@ const OPERATION_LABEL: Record<string, string> = {
 type Action = { kind: "complete" | "approve" | "return" | "reject"; id: string };
 
 function StatusTag({ status }: { status: RegistrationStatus }) {
-  return <ToneBadge tone={STATUS_TONE[status]}>{REGISTRATION_STATUS_LABEL[status]}</ToneBadge>;
+  return <StatusBadge status={status} label={REGISTRATION_STATUS_LABEL[status]} />;
 }
 
 function maskedId(value: string): string {
@@ -159,12 +150,12 @@ export function RegistrationApplicationsPage({ embedded = false }: { embedded?: 
   const actionsFor = (item: RegistrationApplication): RowActionItem[] => {
     const awaiting = isAwaitingOffice(item.status);
     return [
-      ...(canReview && awaiting ? [{ key: "complete", label: item.completion ? "Update Seller Details" : "Check and Complete", onClick: () => openAction("complete", item.id) }] : []),
-      ...(canDecide && item.status === "pending_review" ? [{ key: "approve", label: "Approve", tone: "success" as const, onClick: () => openAction("approve", item.id) }] : []),
+      ...(canReview && awaiting ? [{ key: "complete", label: item.completion ? "Update Details" : "Add Details", icon: item.completion ? Pencil : CircleCheck, onClick: () => openAction("complete", item.id) }] : []),
+      ...(canDecide && item.status === "pending_review" ? [{ key: "approve", label: "Approve", tone: "success" as const, icon: Check, onClick: () => openAction("approve", item.id) }] : []),
       ...(canDecide && awaiting
         ? [
-            { key: "return", label: "Return for Correction", tone: "warning" as const, onClick: () => openAction("return", item.id) },
-            { key: "reject", label: "Reject", tone: "danger" as const, onClick: () => openAction("reject", item.id) },
+            { key: "return", label: "Request Fix", tone: "warning" as const, icon: Wrench, onClick: () => openAction("return", item.id) },
+            { key: "reject", label: "Reject", tone: "danger" as const, icon: X, onClick: () => openAction("reject", item.id) },
           ]
         : []),
     ];
@@ -254,31 +245,16 @@ export function RegistrationApplicationsPage({ embedded = false }: { embedded?: 
           when: formatDate(entry.changedAt),
           text: `${OPERATION_LABEL[entry.operation] ?? entry.operation}${entry.note ? `: ${entry.note}` : ""}`,
         }))}
-        footer={
-          detail ? (
-            <>
-              {actionsFor(detail)
-                .filter((item) => item.key !== "reject")
-                .map((item) => (
-                  <Button key={item.key} type="button" variant={FOOTER_VARIANT[item.key as keyof typeof FOOTER_VARIANT]} onClick={item.onClick}>
-                    {item.label}
-                  </Button>
-                ))}
-              {detail.status === "needs_info" && detail.correctionToken ? (
-                <Button type="button" variant="info" onClick={() => void copyLink(detail.correctionToken as string)}>
-                  Copy Correction Link
-                </Button>
-              ) : null}
-              {actionsFor(detail)
-                .filter((item) => item.key === "reject")
-                .map((item) => (
-                  <Button key={item.key} type="button" variant="destructive" onClick={item.onClick}>
-                    {item.label}
-                  </Button>
-                ))}
-            </>
-          ) : undefined
-        }
+        footer={detail ? <DetailActions actions={[
+          ...actionsFor(detail).map((item) => ({
+            ...item, next: item.key === "approve" || item.key === "complete",
+            variant: item.key === "reject" ? "destructive" as const : FOOTER_VARIANT[item.key as keyof typeof FOOTER_VARIANT],
+          })),
+          detail.status === "needs_info" && detail.correctionToken ? {
+            key: "copy", label: "Copy Link", next: true, variant: "violet", icon: Copy,
+            onClick: () => void copyLink(detail.correctionToken as string),
+          } : null,
+        ]} /> : undefined}
       />
       {action?.kind === "complete" ? (
         <RegistrationCompletionDialog
@@ -306,7 +282,7 @@ export function RegistrationApplicationsPage({ embedded = false }: { embedded?: 
       </FormDialog>
       <ReasonDialog
         open={action?.kind === "return"}
-        title="Return for Correction"
+        title="Request Fix"
         description="The applicant gets a private link to fix this same application and send it again. Tell them what to fix."
         label="What the Applicant Should Fix"
         confirmText="Return Application" tone="warning"

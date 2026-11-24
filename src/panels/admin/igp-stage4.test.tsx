@@ -24,7 +24,6 @@ afterEach(() => {
 // and one imported IGP history batch; both are read from the store.
 const seed = createMockStore();
 const seededMembership = seed.igp.buyerMemberships[0];
-const seededBatch = seed.igp.historyBatches[0];
 
 function show() {
   function Wrapper() {
@@ -42,24 +41,22 @@ function show() {
   return render(<Wrapper />);
 }
 
-describe("IGP buyer membership and history import (Stage 4 UI)", () => {
-  it("opens the Import History dialog from the heading button", async () => {
+describe("IGP buyer membership and available actions", () => {
+  it("keeps accreditation history accessible and hides the import action", async () => {
     const user = userEvent.setup();
     window.history.replaceState(null, "", "/admin/sales?tab=igp");
     show();
-    await screen.findByRole("table", { name: "Property Sales (IGP)" });
-    await user.click(screen.getByRole("button", { name: "Import History" }));
-    const dialog = await screen.findByRole("dialog", { name: "Import IGP History" });
-    // The dialog lists the batches already imported.
-    expect(within(dialog).getByRole("row", { name: `Open imported IGP history batch ${seededBatch.fileName}` })).toBeInTheDocument();
-    expect(within(dialog).queryByText("No IGP history has been imported yet.")).toBeNull();
+    await screen.findByRole("table", { name: "Property Sales" });
+    await user.click(screen.getByRole("button", { name: "More actions" }));
+    expect(await screen.findByRole("menuitem", { name: "Approval History" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Import History" })).toBeNull();
   });
 
   it("shows the IGP buyer membership with the no-Points exclusion on the sale", async () => {
     const user = userEvent.setup();
     window.history.replaceState(null, "", "/admin/sales?tab=igp");
     show();
-    const table = await screen.findByRole("table", { name: "Property Sales (IGP)" });
+    const table = await screen.findByRole("table", { name: "Property Sales" });
     expect(seededMembership).toMatchObject({ status: "recorded", stayPoints: "none" });
     await user.click(within(table).getByRole("row", { name: `Open property sale (IGP) ${seededMembership.seriesNumber}` }));
     const sheet = await screen.findByRole("dialog");

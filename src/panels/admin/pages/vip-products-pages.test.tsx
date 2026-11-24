@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
@@ -10,6 +10,7 @@ import { MockProductRepository } from "@/data/mock/product-repository";
 import { createMockStore, type MockStore } from "@/data/mock/seed";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import * as spreadsheet from "@/shared/lib/spreadsheet";
 import { pesos } from "@/shared/lib/money";
 import { NON_ACTIVE_TIER_CODES } from "@/modules/vip/types";
 import { SalesAreaPage } from "./sales-area-page";
@@ -56,6 +57,22 @@ async function storeWithDraftProduct() {
 }
 
 describe("VIP products pages split by process", () => {
+  it("keeps the historical receipt export accessible without import controls", async () => {
+    const excel = vi.spyOn(spreadsheet, "downloadXlsx").mockResolvedValue(undefined);
+    const csv = vi.spyOn(spreadsheet, "downloadCsv").mockImplementation(() => {});
+    show(<VipProductsAreaPage />, "historical-import");
+    const report = await screen.findByRole("region", { name: "Receipt History" });
+    expect(screen.queryByRole("button", { name: "Download Template" })).toBeNull();
+
+    const exportButton = within(report).getByRole("button", { name: "Export" });
+    await userEvent.click(exportButton);
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Excel" }));
+    await waitFor(() => expect(excel).toHaveBeenCalledWith(expect.stringMatching(/\.xlsx$/), expect.any(Array)));
+    await waitFor(() => expect(exportButton).not.toHaveAttribute("aria-busy", "true"));
+    await userEvent.click(exportButton);
+    await userEvent.click(await screen.findByRole("menuitem", { name: "CSV" }));
+    await waitFor(() => expect(csv).toHaveBeenCalledWith(expect.stringMatching(/\.csv$/), expect.any(Array)));
+  });
   it("catalog shows only the product table", async () => {
     show(<VipProductsAreaPage />);
     expect(await screen.findByRole("table", { name: "VIP Product Catalog" })).toBeInTheDocument();
@@ -74,14 +91,16 @@ describe("VIP products pages split by process", () => {
     expect(within(sheet).getByText("Lifetime points")).toBeInTheDocument();
     expect(within(sheet).queryByText(/version|v1/i)).toBeNull();
     expect(within(sheet).getByRole("button", { name: "Edit Product" })).toBeInTheDocument();
-    expect(within(sheet).getByRole("button", { name: "Make Unavailable" })).toBeInTheDocument();
+    await userEvent.click(within(sheet).getByRole("button", { name: "More actions" }));
+    expect(await screen.findByRole("menuitem", { name: "Make Unavailable" })).toBeInTheDocument();
   });
 
   it("Make unavailable asks for a reason before retiring a product", async () => {
     show(<VipProductsAreaPage />);
     fireEvent.click(await screen.findByRole("row", { name: "Open Bronze VIP" }));
     const sheet = await screen.findByRole("dialog", { name: "Bronze VIP" });
-    fireEvent.click(within(sheet).getByRole("button", { name: "Make Unavailable" }));
+    await userEvent.click(within(sheet).getByRole("button", { name: "More actions" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Make Unavailable" }));
     expect(await screen.findByRole("dialog", { name: "Make Bronze VIP unavailable" })).toBeInTheDocument();
   });
 
@@ -110,7 +129,9 @@ describe("VIP products pages split by process", () => {
   it("used products show Delete unavailable with the reason", async () => {
     show(<VipProductsAreaPage />);
     fireEvent.click(await screen.findByRole("button", { name: "Actions for Bronze VIP" }));
-    expect(await screen.findByText(/Delete unavailable: Already used by/)).toBeInTheDocument();
+    expect(screen.queryByRole("note")).toBeNull();
+    fireEvent.click(await screen.findByRole("menuitem", { name: /^Delete/ }));
+    expect(within(await screen.findByRole("alertdialog", { name: "Deletion unavailable" })).getByText(/Already used by/)).toBeInTheDocument();
   });
 
   it("schemes page shows the scheme table with Move schemes", async () => {
@@ -127,7 +148,7 @@ describe("VIP products pages split by process", () => {
     for (const item of NON_ACTIVE_TIER_CODES) expect(within(table).getByRole("cell", { name: item.code })).toBeInTheDocument();
     expect(within(table).getAllByText("Held for future use")).toHaveLength(3);
     expect(screen.queryByText(/\((Historical|Reserved)\)/)).toBeNull();
-    const levels = await screen.findByRole("table", { name: "VIP Card Levels" });
+    const levels = await screen.findByRole("table", { name: "Card Levels" });
     expect(within(levels).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter((text) => text && text !== "Actions")).toEqual(["Name", "Color", "Products", "Status"]);
     for (const name of ["Bronze", "Silver", "Gold"]) expect(await within(levels).findByRole("row", { name: `Open ${name}` })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Card Levels" })).toBeInTheDocument();
@@ -150,7 +171,8 @@ describe("VIP products pages split by process", () => {
   it("a used tier level cannot be deleted", async () => {
     show(<VipProductsAreaPage />, "tier-codes");
     fireEvent.click(await screen.findByRole("button", { name: "Actions for Bronze" }));
-    expect(await screen.findByText(/Delete unavailable: Products use this card level/)).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("menuitem", { name: /^Delete/ }));
+    expect(within(await screen.findByRole("alertdialog", { name: "Deletion unavailable" })).getByText(/Products use this card level/)).toBeInTheDocument();
   });
 
   it("the product form explains why a held or old code cannot be used", async () => {
@@ -247,7 +269,7 @@ describe("VIP products pages split by process", () => {
     show(<SalesAreaPage />, "scheme-guide", "dev-ost-a1");
     expect(await screen.findByText("Spot Cash")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Print Guide" })).toBeInTheDocument();
-    expect(within(screen.getByRole("tablist")).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Sales", "Contracts", "Property Sales (IGP)", "Payment Plan Guide"]);
+    expect(within(screen.getByRole("tablist")).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Sales", "Contracts", "Property Sales", "Payment Plans"]);
     cleanup();
     show(<VipProductsAreaPage />, "products", "dev-ost-a1");
     expect(await screen.findByRole("heading", { name: "Access restricted" })).toBeInTheDocument();

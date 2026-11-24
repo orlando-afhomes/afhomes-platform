@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, type Ref } from "react";
+import { useState, type ReactNode, type Ref } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { MAX_NAME_LENGTH, MAX_PASSWORD_LENGTH, cleanEmailInput } from "@/shared/utils/input-sanitizers";
+import { EMAIL_DOMAINS, MAX_NAME_LENGTH, MAX_PASSWORD_LENGTH, cleanEmailInput, splitEmail } from "@/shared/utils/input-sanitizers";
 import { cleanTitleInput } from "@/shared/forms/formatting/text";
+import { exampleFor } from "@/shared/forms/example-text";
 import type { BaseFieldProps } from "@/shared/forms/types";
+import { SearchSelect } from "@/shared/components/modern/search-select";
 import { Button } from "@/shared/ui/button";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { Input } from "@/shared/ui/input";
@@ -18,11 +20,14 @@ export type TextFieldProps = BaseFieldProps & {
   transform?: (value: string) => string;
   /** Fixed text shown inside the left edge of the input. */
   addonBefore?: string;
+  /** A control shown at the right edge of the input (for example the email domain picker). */
+  addonAfter?: ReactNode;
   /** Lets a wrapper restore the caret after reformatting the value as it is typed. */
   inputRef?: Ref<HTMLInputElement>;
 };
 
 const INPUT_HEIGHT = "tw:h-11";
+const OTHER_DOMAIN = "__other__";
 
 /**
  * Labelled text input (Base UI input). Same props as the legacy field, so a
@@ -47,6 +52,7 @@ export function TextField({
   transform,
   type = "text",
   addonBefore,
+  addonAfter,
   className,
   inputRef,
 }: TextFieldProps) {
@@ -70,17 +76,18 @@ export function TextField({
           type={isPassword && visible ? "text" : type}
           value={value}
           maxLength={maxLength}
-          placeholder={placeholder}
+          placeholder={placeholder ?? exampleFor(label)}
           disabled={disabled}
           autoComplete={autoComplete}
           inputMode={inputMode}
           aria-required={required ? "true" : undefined}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(ids, error, hint)}
-          className={`${INPUT_HEIGHT}${addonBefore !== undefined ? " tw:rounded-l-none" : ""}${isPassword ? " tw:pr-11" : ""}`}
+          className={`${INPUT_HEIGHT}${addonBefore !== undefined ? " tw:rounded-l-none" : ""}${addonAfter ? " tw:rounded-r-none" : ""}${isPassword ? " tw:pr-11" : ""}`}
           onChange={(event) => onChange(transform ? transform(event.target.value) : event.target.value)}
           onBlur={onBlur}
         />
+        {addonAfter}
         {isPassword ? (
           <Button
             type="button"
@@ -89,6 +96,8 @@ export function TextField({
             aria-label={visible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
             aria-pressed={visible}
             disabled={disabled}
+            // Keep focus in the field so toggling never triggers blur validation.
+            onMouseDown={(event) => event.preventDefault()}
             className="tw:absolute tw:top-1/2 tw:right-0.5 tw:size-9 tw:-translate-y-1/2 tw:sm:size-7"
             onClick={() => setVisible((current) => !current)}
           >
@@ -114,9 +123,46 @@ export function ConfirmPasswordField(props: PasswordFieldProps) {
   return <PasswordField {...props} />;
 }
 
-/** Email input: lowercases and strips spaces as typed. */
-export function EmailField({ onChange, ...rest }: Omit<BaseFieldProps, "inputMode"> & ValueProps) {
-  return <TextField {...rest} onChange={(value) => onChange(cleanEmailInput(value))} inputMode="email" />;
+/**
+ * Email input: lowercases and strips spaces as typed. The person types the name and
+ * picks the domain (Gmail first); "Other…" turns it into one box for any full address.
+ * The value stays one full email string, and stays empty until a name is typed.
+ */
+export function EmailField({ onChange, value, ...rest }: Omit<BaseFieldProps, "inputMode"> & ValueProps) {
+  const { name, domain } = splitEmail(value);
+  const [picked, setPicked] = useState<string>(EMAIL_DOMAINS.find((item) => item === domain) ?? EMAIL_DOMAINS[0]);
+  const [forceOther, setForceOther] = useState(false);
+  const known = EMAIL_DOMAINS.find((item) => item === domain);
+  const other = forceOther || (domain !== "" && !known);
+  const current = known ?? picked;
+  const items = [...EMAIL_DOMAINS.map((item) => ({ value: item, label: item })), { value: OTHER_DOMAIN, label: "Other…" }];
+  const typed = (raw: string) => {
+    const clean = cleanEmailInput(raw);
+    if (other) return onChange(clean);
+    if (!clean.includes("@")) return onChange(clean ? clean + current : "");
+    // A pasted or typed "@" means a full address: keep it whole.
+    setForceOther(true);
+    onChange(clean);
+  };
+  const pick = (next: string | null) => {
+    if (next === OTHER_DOMAIN) return setForceOther(true);
+    if (!next) return;
+    setPicked(next);
+    setForceOther(false);
+    onChange(name ? name + next : "");
+  };
+  return (
+    <TextField
+      {...rest}
+      value={other ? value : name}
+      placeholder={rest.placeholder ?? (other ? "juan@example.com" : "juan.delacruz")}
+      onChange={typed}
+      inputMode="email"
+      addonAfter={
+        <SearchSelect items={items} value={other ? OTHER_DOMAIN : current} onChange={pick} aria-label="Email domain" wrapperClassName="tw:w-auto tw:shrink-0" className="tw:w-auto tw:min-w-28 tw:rounded-l-none tw:[field-sizing:content]" />
+      }
+    />
+  );
 }
 
 /** Person-name input with title-case normalization (hyphens, apostrophes, accents, periods allowed). */

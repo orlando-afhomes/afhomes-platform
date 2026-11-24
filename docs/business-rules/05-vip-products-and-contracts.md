@@ -215,7 +215,7 @@ The hold described above is replaced by the policy in §10.2 (owner ruling 2026-
 
 Basis: NUM v6.2 ("Non-Standard (N) transactions require documented justification or approval") and the workbook practice that a deviation from the standard is a logged decision returned for re-approval (AUG R17).
 
-1. **Scope.** A Non-Standard contract may differ from the Standard offering only in its package price (TCP) and its payment schedule (1 to 36 months, per the workbook sale register). Tier benefits, membership validity and all signed contract clauses stay Standard.
+1. **Scope.** A Non-Standard contract may differ from the Standard offering only in its package price (TCP) and its payment schedule (1 to 12 months; amended by the owner on 2026-11-24, the President does not allow 1 to 36 months for a card purchase). Tier benefits, membership validity and all signed contract clauses stay Standard.
 2. **Justification.** The preparer records a written justification. The approval screen shows the difference from the tier's standard price and schedule.
 3. **Approval, two steps, before finalization.**
    1. The Administrator or the Super Administrator approves the terms and records the justification and the signed-approval reference.
@@ -468,7 +468,7 @@ These rulings refine section 11 and items 9 and 12 and take precedence over earl
 This ruling implements §10.2 and items 15, 17 and 20. Where a company workbook only marks a sale Standard or Non-Standard with a 1 to 36 month term, §10.2 governs (item 16).
 
 32. **Non-Standard terms and approval, as built.**
-    1. **Terms.** Staff who prepare an N contract enter the total price, the number of monthly payments (a whole number from 1 to 36) and a written reason. The screen shows the normal price and number of payments of the chosen card level and payment plan, and the contract keeps them as a snapshot. The price is a whole-centavo amount above the plan's reservation fee; there is no minimum price (§10.2 rule 4).
+    1. **Terms.** Staff who prepare an N contract enter the total price, the number of monthly payments (a whole number from 1 to 12, amended 2026-11-24) and a written reason. The screen shows the normal price and number of payments of the chosen card level and payment plan, and the contract keeps them as a snapshot. The price is a whole-centavo amount above the plan's reservation fee; there is no minimum price (§10.2 rule 4).
     2. **Schedule.** The plan's normal reservation fee comes first. The rest of the price is split into equal monthly payments, and the last payment takes the leftover centavos so the total is exact. Due dates follow the reservation date (item 9). The required initial payment is the reservation plus the first monthly payment, as for Standard schedules. A down payment, uneven payments or a cash-only Non-Standard deal are not provided.
     3. **Payment code.** The VIP Number payment code is `T` plus the months in two digits (`T01` to `T36`), and the classification code is N (§10.2 rule 6). Once the VIP Number is issued the number of months can no longer change, because an issued number is never renumbered (doc 06).
     4. **Step 1, Administrator.** For an N contract not yet approved, "Approve deal" (item 30) shows the normal and Non-Standard price and payments and the reason, and requires the signed-approval reference. It records step 1 (approver, time, reference, and whether the approver also prepared the contract) and then runs its usual steps; the contract stays held for Finance.

@@ -105,7 +105,7 @@ describe("OST registration", () => {
     await user.click(await screen.findByRole("button", { name: "Continue" }));
     expect(await screen.findByText("First name is required.")).toBeInTheDocument();
     expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Applicant");
-    fireEvent.change(field("applicant-email"), { target: { value: "not-an-email" } });
+    fireEvent.change(field("applicant-email"), { target: { value: "not@an-email" } });
     await user.click(screen.getByRole("button", { name: "Continue" }));
     expect(await screen.findByText("Email must be valid.")).toBeInTheDocument();
     expect(document.body.textContent ?? "").not.toMatch(/prototype|preview|not yet enabled/i);

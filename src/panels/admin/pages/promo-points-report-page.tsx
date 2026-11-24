@@ -9,7 +9,7 @@ import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { formatDate } from "@/shared/lib/format-date";
 import { humanize } from "@/shared/lib/humanize";
 import { matchesSearch, optionsFrom } from "@/shared/lib/search";
-import { ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
+import { describeFilters, ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
 import { signedPoints } from "./promo-points-page";
 
 const COLUMNS: ReportColumn<PromoLedgerRow>[] = [
@@ -19,7 +19,7 @@ const COLUMNS: ReportColumn<PromoLedgerRow>[] = [
   { header: "Promo", value: (row) => row.promoName },
   { header: "Type", value: (row) => `${humanize(row.type)}${row.voided ? " (voided)" : ""}` },
   { header: "Outlet", value: (row) => row.outletName ?? "", screen: false },
-  { header: "Points", value: (row) => String(signedPoints(row)) },
+  { header: "Points", value: (row) => signedPoints(row).toLocaleString("en-PH", { signDisplay: "exceptZero" }) },
   { header: "Reference", value: (row) => row.sourceBillId ?? row.note ?? "", screen: false },
 ];
 
@@ -54,6 +54,11 @@ export function PromoPointsReportPanel() {
     [inPeriod, type, promo, search],
   );
   const fmt = (value: number) => value.toLocaleString("en-PH");
+  const metadata = describeFilters([
+    search.trim() ? `Search "${search.trim()}"` : null,
+    promo !== "all" ? `Promo: ${promo}` : null,
+    type !== "all" ? `Entry type: ${humanize(type)}` : null,
+  ]);
   return (
     <ReportFrame range={range}>
       <AdminStatGrid columns={3}>
@@ -61,7 +66,7 @@ export function PromoPointsReportPanel() {
         <AdminStatCard loading={ledger.isLoading} error={ledger.error} label="Points Used" value={fmt(used)} icon={Coins} />
         <AdminStatCard loading={balances.isLoading} error={balances.error} label="Outstanding" value={fmt(outstanding)} icon={Wallet} tone="info" />
       </AdminStatGrid>
-      <ReportTable report="Promo Points Report" fileName="promo-points" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => row.id} getRowTitle={(row) => row.customerName} loading={ledger.isLoading} error={ledger.error} emptyText="No Promo Points entries match."
+      <ReportTable report="Promo Points Report" fileName="promo-points" range={range} metadata={metadata} columns={COLUMNS} rows={rows} getRowId={(row) => row.id} getRowTitle={(row) => row.customerName} loading={ledger.isLoading} error={ledger.error} emptyText="No Promo Points entries match."
         filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search Promo Points" filters={[
           { label: "Promo filter", value: promo, onChange: setPromo, options: optionsFrom("All promos", inPeriod.map((row) => row.promoName)) },
           { label: "Entry type filter", value: type, onChange: setType, options: optionsFrom("All entry types", inPeriod.map((row) => row.type), humanize) },

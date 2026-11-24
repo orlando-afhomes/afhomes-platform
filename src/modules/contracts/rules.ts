@@ -88,8 +88,8 @@ export function buildSchedule(product: VipProduct, scheme: PaymentScheme, reserv
   return { schedule, priceCentavos: price, requiredInitialCentavos: first, errors };
 }
 
-/** Most monthly payments a Non-Standard contract may have (doc 05 §10.2: 1 to 36 months). */
-export const NON_STANDARD_MAX_MONTHS = 36;
+/** Most monthly payments a Non-Standard contract may have (doc 05 §10.2: 1 to 12 months, owner amendment 2026-11-24). */
+export const NON_STANDARD_MAX_MONTHS = 12;
 
 export type NonStandardTermsDraft = { priceCentavos: number | null; months: number | null; justification: string };
 
@@ -103,7 +103,7 @@ export function nonStandardTermErrors(terms: NonStandardTermsDraft, reservationC
   return errors;
 }
 
-/** Card ID payment segment for a Non-Standard schedule: T plus the months in two digits (T01 to T36). */
+/** Card ID payment segment for a Non-Standard schedule: T plus the months in two digits (T01 to T12). */
 export function nonStandardPaymentCode(months: number): string {
   return `T${String(months).padStart(2, "0")}`;
 }

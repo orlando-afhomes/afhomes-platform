@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/shared/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { AdminBrand } from "./admin-brand";
 import { AdminNavList } from "./admin-nav-list";
 import { LogoutButton } from "./admin-logout-button";
@@ -29,21 +28,8 @@ export function AdminSidebar({ collapsed }: { collapsed: boolean; onCollapse?: (
       <nav aria-label="Administration" className="tw:min-h-0 tw:flex-1 tw:overflow-y-auto tw:p-3">
         <AdminNavList items={items} collapsed={collapsed} />
       </nav>
-      <div className={cn("tw:shrink-0 tw:border-t tw:border-sidebar-border tw:p-3", collapsed && "tw:flex tw:flex-col tw:items-center tw:gap-2")}>
-        <div className={cn("tw:flex tw:items-center tw:gap-2.5 tw:rounded-xl tw:bg-white/[0.06] tw:p-2", collapsed && "tw:bg-transparent tw:p-0")}>
-          <Avatar className="tw:size-9 tw:bg-white/15 tw:text-xs tw:text-white tw:ring-2 tw:ring-white/20">
-            {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt="" /> : null}
-            <AvatarFallback className="tw:bg-white/15 tw:text-white">{user.initials}</AvatarFallback>
-          </Avatar>
-          {collapsed ? null : (
-            <span className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:leading-tight">
-              <span className="tw:truncate tw:text-[13px] tw:font-semibold tw:text-white">{user.name}</span>
-              <span className="tw:truncate tw:text-xs tw:text-white/65">{user.roleLabel}</span>
-            </span>
-          )}
-          {collapsed ? null : <LogoutButton onClick={logout} />}
-        </div>
-        {collapsed ? <LogoutButton onClick={logout} /> : null}
+      <div className={cn("tw:shrink-0 tw:border-t tw:border-sidebar-border tw:p-3", collapsed && "tw:flex tw:justify-center")}>
+        <LogoutButton user={user} collapsed={collapsed} onClick={logout} />
       </div>
       {dialog}
     </aside>

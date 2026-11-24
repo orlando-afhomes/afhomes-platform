@@ -42,7 +42,7 @@ import { SalesNetworkMemberDialogs } from "./sales-network-member-dialogs";
 import { toast } from "sonner";
 import { AccreditationEligibilityTag } from "../components/accreditation-status";
 import { AccreditationRenewAction } from "../components/accreditation-renew-action";
-import { DesignationBadge, toneFromColor } from "@/shared/components/business/designation-badge";
+import { DesignationBadge } from "@/shared/components/business/designation-badge";
 import { GenealogyTree } from "./sales-network-genealogy-page";
 import { humanize } from "@/shared/lib/humanize";
 import { DEV_IDENTITIES } from "@/data/mock/dev-identities";
@@ -97,9 +97,9 @@ export function SalesNetworkMemberDetailPage() {
   const downlineTree = useMemo(() => {
     if (!member) return [];
     const descendantIds = getDescendantIds(member.id, members);
-    const subset = members.filter((item) => item.id === member.id || descendantIds.has(item.id));
-    const ids = new Set(subset.map((item) => item.id));
-    return buildAuthorizedGenealogyTree(subset, ids).map((root) => ({ ...root, restrictedParent: false }));
+    const ids = new Set<string>([member.id, ...descendantIds]);
+    // The whole member list is passed so each person's Team Name still comes from the real root above this branch.
+    return buildAuthorizedGenealogyTree(members, ids).map((root) => ({ ...root, restrictedParent: false }));
   }, [member, members]);
   // The downline is fully expanded by default; the user can collapse branches.
   const [collapsed, setCollapsed] = useState<string[]>([]);
@@ -149,7 +149,7 @@ export function SalesNetworkMemberDetailPage() {
         />
         <div className="tw:mt-3 tw:flex tw:justify-center">
           <Link href="/admin/sales-network/members" className={cn(buttonVariants({ variant: "outline" }), "tw:min-h-11 tw:sm:min-h-8")}>
-            Back to Members
+            <ArrowLeft aria-hidden="true" /> Back to Members
           </Link>
         </div>
       </PageContainer>
@@ -170,7 +170,7 @@ export function SalesNetworkMemberDetailPage() {
         />
         <div className="tw:mt-3 tw:flex tw:justify-center">
           <Link href="/admin/sales-network/members" className={cn(buttonVariants({ variant: "outline" }), "tw:min-h-11 tw:sm:min-h-8")}>
-            Back to Members
+            <ArrowLeft aria-hidden="true" /> Back to Members
           </Link>
         </div>
       </PageContainer>
@@ -183,7 +183,7 @@ export function SalesNetworkMemberDetailPage() {
         <Card className="tw:p-8 tw:text-center tw:text-muted-foreground">Member not found or restricted.</Card>
         <div className="tw:mt-3 tw:flex tw:justify-center">
           <Link href="/admin/sales-network/members" className={cn(buttonVariants({ variant: "outline" }), "tw:min-h-11 tw:sm:min-h-8")}>
-            Back to Members
+            <ArrowLeft aria-hidden="true" /> Back to Members
           </Link>
         </div>
       </PageContainer>
@@ -255,7 +255,7 @@ export function SalesNetworkMemberDetailPage() {
     ) : display.kind === "ambiguous" ? (
       <StatusBadge status="Review records" tone="warning" />
     ) : display.kind === "static" ? (
-      <StatusBadge status={display.label} tone={display.color ? toneFromColor(display.color) : undefined} />
+      <StatusBadge status={display.label} />
     ) : (
       <StatusBadge status={display.value === "active" ? "Accredited" : "Pending"} />
     );
@@ -281,9 +281,6 @@ export function SalesNetworkMemberDetailPage() {
       ]}
       actions={
         <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
-          <Link href="/admin/sales-network/members" className={cn(buttonVariants({ variant: "outline" }), "tw:min-h-11 tw:sm:min-h-8")}>
-            <ArrowLeft aria-hidden="true" /> Back
-          </Link>
           {menu.onEdit ? (
             <Button type="button" onClick={menu.onEdit}>
               <Pencil aria-hidden="true" /> Edit
@@ -297,6 +294,9 @@ export function SalesNetworkMemberDetailPage() {
               </Button>
             );
           })}
+          <Link href="/admin/sales-network/members" className={cn(buttonVariants({ variant: "outline" }), "tw:min-h-11 tw:sm:min-h-8")}>
+            <ArrowLeft aria-hidden="true" /> Back
+          </Link>
         </div>
       }
     >

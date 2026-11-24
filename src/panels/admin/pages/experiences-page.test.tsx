@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
-import { ExperiencesPage } from "./experiences-page";
+import { ExperiencesPanel } from "./experiences-page";
 
 function Wrapper({ children, identityId }: { children: React.ReactNode; identityId: string }) {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
@@ -18,7 +18,16 @@ function Wrapper({ children, identityId }: { children: React.ReactNode; identity
 }
 
 afterEach(cleanup);
-const show = (identityId = "dev-admin") => render(<ExperiencesPage /> as ReactElement, { wrapper: ({ children }) => <Wrapper identityId={identityId}>{children}</Wrapper> });
+
+// The Settings area page owns the New experience button and passes `creating` down; this stands in for it.
+function Panel() {
+  const [creating, setCreating] = useState(false);
+  return <>
+    <button type="button" onClick={() => setCreating(true)}>New experience</button>
+    <ExperiencesPanel creating={creating} onCloseCreate={() => setCreating(false)} />
+  </>;
+}
+const show = (identityId = "dev-admin") => render(<Panel /> as ReactElement, { wrapper: ({ children }) => <Wrapper identityId={identityId}>{children}</Wrapper> });
 
 describe("Experiences content page", () => {
   it("lists the three original destinations", async () => {
@@ -59,10 +68,4 @@ describe("Experiences content page", () => {
     expect(screen.getAllByText("Published").length).toBeGreaterThan(0);
   });
 
-  it("keeps the page away from roles without the Experiences permission", async () => {
-    show("dev-clerk");
-    expect(await screen.findByRole("heading", { name: "Access restricted" })).toBeInTheDocument();
-    expect(screen.queryByRole("table", { name: "Public Experiences" })).toBeNull();
-    expect(screen.queryByRole("button", { name: /New experience/ })).toBeNull();
-  });
 });

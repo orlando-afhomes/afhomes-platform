@@ -31,7 +31,7 @@ export interface CommissionRepository {
   setClawbackAddendum(memberId: string, signedDate: string | null, options?: MockAsyncOptions): Promise<void>;
   recordRecovery(id: string, input: { amountCentavos: number; reference: string }, options?: MockAsyncOptions): Promise<void>;
   writeOff(id: string, reason: string, options?: MockAsyncOptions): Promise<void>;
-  allowanceReviews(options?: MockAsyncOptions): Promise<{ reviews: AllowanceReview[]; members: { id: string; name: string; position: AllowanceReview["position"] }[] }>;
+  allowanceReviews(options?: MockAsyncOptions): Promise<{ reviews: AllowanceReview[]; members: { id: string; name: string; aaNumber: string | null; position: AllowanceReview["position"] }[] }>;
   /** Month figures per IST leader assembled from the month's business data (doc 08 section 15; F8.6). Read-only. */
   assembleAllowanceInputs(month: string, options?: MockAsyncOptions): Promise<AllowanceAssembly>;
   saveAllowanceReview(input: AllowanceReviewInput, options?: MockAsyncOptions): Promise<AllowanceReview>;

@@ -47,7 +47,7 @@ describe("reconciliation and historical import pages", () => {
     const sheet = await screen.findByRole("dialog", { name: "Verified receipts (net)" });
     expect(within(sheet).getByRole("region", { name: "Records Behind the System Total" })).toBeInTheDocument();
     expect(within(sheet).queryByRole("button", { name: "Record Again" })).toBeNull();
-    await user.click(within(sheet).getByRole("button", { name: "Enter Company Spreadsheet Total" }));
+    await user.click(within(sheet).getByRole("button", { name: "Enter Total" }));
     expect(await screen.findByLabelText(/Company spreadsheet total/)).toBeInTheDocument();
   });
 

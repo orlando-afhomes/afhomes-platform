@@ -62,7 +62,7 @@ export function RequestCancellationDialog({ contract, onClose }: DialogProps) {
 
 export function ReturnContractDialog({ contract, open, onClose }: ReasonProps) {
   const action = useContractAction();
-  return <ReasonDialog open={open} title="Return for Correction" description="The preparer can correct the contract and submit it again." confirmText="Return" tone="warning" successText="Contract returned." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "return", reason })} />;
+  return <ReasonDialog open={open} title="Request Fix" description="The preparer can correct the contract and submit it again." confirmText="Return" tone="warning" successText="Contract returned." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "return", reason })} />;
 }
 
 /** Finance sends back Non-Standard terms; both approvals are cleared (doc 05 §10.2 step 3). */
@@ -107,7 +107,7 @@ export function ApproveArrangementDialog({ contract, open, onClose }: ReasonProp
 
 export function ResolvePaymentCodeDialog({ contract, open, onClose }: ReasonProps) {
   const action = useContractAction();
-  return <ReasonDialog open={open} title="Record Payment Code" description="Finds the payment code (part of the VIP Number) from the approved mapping for this payment plan and card level. Enter the reference of the approval." confirmText="Record Payment Code" successText="Payment code recorded." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "resolvePaymentCode", reference: reason })} />;
+  return <ReasonDialog open={open} title="Set Code" description="Finds the payment code (part of the VIP Number) from the approved mapping for this payment plan and card level. Enter the reference of the approval." confirmText="Set Code" successText="Payment code recorded." onClose={onClose} onSubmit={(reason) => action.mutateAsync({ id: contract.id, action: "resolvePaymentCode", reference: reason })} />;
 }
 
 export function ConfirmCancellationDialog({ contract, open, onClose }: ReasonProps) {

@@ -4,7 +4,7 @@ import { EMPTY } from "@/shared/lib/empty-value";
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, ArrowLeftRight, Banknote, CalendarClock, CreditCard, FileText, FileUp, Landmark, Layers, Pencil, Receipt, ShieldCheck, Smartphone, TriangleAlert, WalletCards, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowLeftRight, Banknote, CalendarClock, CircleCheck, CreditCard, FileText, FileUp, Handshake, Landmark, Layers, Pencil, Receipt, Save, ShieldCheck, Smartphone, TriangleAlert, UserRound, WalletCards, X, type LucideIcon } from "lucide-react";
 import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import { useAccreditations, useCreateCustomerDraft, useCustomers, useMembers } from "@/data/queries";
 import type { Customer } from "@/modules/customers/types";
@@ -61,6 +61,9 @@ import { VipPrintControl, applicationPrintKey, linkPreparedApplication, salePrin
 import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useAdminSidebar } from "../layouts/admin-sidebar-context";
+
+// Back shows no fill: just a border, with a light wash on hover. Save Draft is blue and Continue is green, so the three never share a color.
+const PLAIN_ACTION = "tw:border-border tw:bg-transparent tw:hover:border-foreground/30 tw:hover:bg-muted";
 
 const STEPS = ["VIP card", "Payment plan", "Customer", "Sales and consent", "Reservation", "Review"] as const;
 const STEP_CARD = 0;
@@ -131,26 +134,46 @@ function PriceConflictNote() {
   );
 }
 
-function Row({ label, value }: { label: string; value: ReactNode }) {
+const TONE_CLASSES = {
+  brand: "tw:bg-primary/10 tw:text-primary",
+  info: "tw:bg-info/10 tw:text-info",
+  success: "tw:bg-success/10 tw:text-success",
+  warning: "tw:bg-warning/10 tw:text-warning",
+} as const;
+
+/** One labelled answer in the review. `big` lifts money and other key figures; `status` shows the value as a colored badge. */
+function Row({ label, value, icon: Icon, big, status }: { label: string; value: ReactNode; icon?: LucideIcon; big?: boolean; status?: "good" | "bad" | "info" }) {
+  const statusClass = status === "good" ? "tw:bg-success/10 tw:text-success" : status === "bad" ? "tw:bg-destructive/10 tw:text-destructive" : "tw:bg-info/10 tw:text-info";
   return (
-    <div className="tw:flex tw:flex-col tw:gap-0.5">
-      <dt className="tw:text-xs tw:font-medium tw:tracking-wide tw:text-muted-foreground tw:uppercase">{label}</dt>
-      {value ? <dd className="tw:text-sm tw:font-medium">{value}</dd> : <dd className="tw:text-sm tw:text-muted-foreground">{EMPTY}</dd>}
+    <div className="tw:flex tw:min-w-0 tw:gap-3 tw:rounded-lg tw:bg-muted/40 tw:px-3 tw:py-2.5">
+      {Icon ? <Icon aria-hidden="true" className="tw:mt-0.5 tw:size-4 tw:shrink-0 tw:text-muted-foreground" /> : null}
+      <div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-0.5">
+        <dt className="tw:text-xs tw:font-medium tw:tracking-wide tw:text-muted-foreground tw:uppercase">{label}</dt>
+        {value ? (
+          <dd className={cn("tw:min-w-0 tw:break-words", big ? "tw:text-lg tw:font-bold tw:text-primary" : "tw:text-sm tw:font-medium")}>
+            {status ? <span className={cn("tw:inline-flex tw:items-center tw:rounded-full tw:px-2.5 tw:py-0.5 tw:text-xs tw:font-semibold", statusClass)}>{value}</span> : value}
+          </dd>
+        ) : (
+          <dd className="tw:text-sm tw:text-muted-foreground">{EMPTY}</dd>
+        )}
+      </div>
     </div>
   );
 }
 
-function ReviewBlock({ title, onEdit, children }: { title: string; onEdit: () => void; children: ReactNode }) {
+function ReviewBlock({ title, icon: Icon, tone, onEdit, children }: { title: string; icon: LucideIcon; tone: keyof typeof TONE_CLASSES; onEdit: () => void; children: ReactNode }) {
   return (
     <SectionBlock
       title={title}
+      icon={<Icon className="tw:size-5" />}
+      iconTone={TONE_CLASSES[tone]}
       action={
-        <Button type="button" variant="ghost" size="sm" onClick={onEdit} aria-label={`Edit ${title}`}>
+        <Button type="button" variant="warning" size="sm" onClick={onEdit} aria-label={`Edit ${title}`}>
           <Pencil aria-hidden="true" className="tw:size-3.5" /> Edit
         </Button>
       }
     >
-      <dl className="tw:grid tw:grid-cols-1 tw:gap-x-6 tw:gap-y-4 tw:sm:grid-cols-2">{children}</dl>
+      <dl className="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-2">{children}</dl>
     </SectionBlock>
   );
 }
@@ -702,46 +725,51 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             <h2 className="tw:text-lg tw:font-semibold">Review the Application</h2>
             <p className="tw:text-sm tw:text-muted-foreground">Check every detail before continuing. Use Edit to change a section.</p>
           </div>
+          {reviewErrorList.length === 0 ? (
+            <p role="status" className="tw:flex tw:items-center tw:gap-2 tw:rounded-xl tw:border tw:border-success/30 tw:bg-success/10 tw:px-4 tw:py-3 tw:text-sm tw:font-medium tw:text-success">
+              <CircleCheck aria-hidden="true" className="tw:size-5 tw:shrink-0" /> Everything required is filled in. Check the details, then continue.
+            </p>
+          ) : null}
           {reviewErrorList.length > 0 ? (
             <InfoNote title="Fix These Before Continuing">
               <ul className="tw:list-disc tw:pl-5">{reviewErrorList.map((message) => <li key={message}>{message}</li>)}</ul>
             </InfoNote>
           ) : null}
-          <ReviewBlock title="VIP Card and Payment Plan" onEdit={() => setStep(STEP_CARD)}>
-            <Row label="VIP card" value={product?.name ?? ""} />
-            <Row label="Price" value={product ? formatPeso(displayPriceFor(product, scheme)) : ""} />
-            <Row label="Payment plan" value={scheme?.label} />
-            <Row label="Contract type" value={draft.contractClassification === "N" ? "Non-Standard (N), needs Administrator approval and Finance confirmation" : draft.contractClassification === "S" ? "Standard (S)" : ""} />
+          <ReviewBlock title="VIP Card and Payment Plan" icon={CreditCard} tone="brand" onEdit={() => setStep(STEP_CARD)}>
+            <Row label="VIP card" value={product?.name ?? ""} icon={CreditCard} />
+            <Row label="Price" value={product ? formatPeso(displayPriceFor(product, scheme)) : ""} icon={Banknote} big />
+            <Row label="Payment plan" value={scheme?.label} icon={WalletCards} />
+            <Row label="Contract type" icon={FileText} status={draft.contractClassification === "N" ? "bad" : "info"} value={draft.contractClassification === "N" ? "Non-Standard (N), needs Administrator approval and Finance confirmation" : draft.contractClassification === "S" ? "Standard (S)" : ""} />
             {asksNonStandard ? <Row label="Non-Standard price" value={nonStandardText.price ? `₱${nonStandardText.price}` : ""} /> : null}
             {asksNonStandard ? <Row label="Monthly payments" value={nonStandardText.months} /> : null}
             {asksNonStandard ? <Row label="Reason" value={nonStandardText.reason} /> : null}
           </ReviewBlock>
           {priceConflict ? <PriceConflictNote /> : null}
-          <ReviewBlock title="Customer" onEdit={() => setStep(STEP_CUSTOMER)}>
-            <Row label="Name" value={[draft.firstName, draft.noMiddleName ? "" : draft.middleName, draft.lastName, draft.suffix].filter(Boolean).join(" ")} />
-            <Row label="Gender" value={draft.gender} />
+          <ReviewBlock title="Customer" icon={UserRound} tone="info" onEdit={() => setStep(STEP_CUSTOMER)}>
+            <Row label="Name" icon={UserRound} value={[draft.firstName, draft.noMiddleName ? "" : draft.middleName, draft.lastName, draft.suffix].filter(Boolean).join(" ")} />
+            <Row label="Gender" value={draft.gender} icon={UserRound} />
             <Row label="Civil status" value={draft.civilStatus} />
-            <Row label="Date of birth" value={draft.dateOfBirth} />
-            <Row label="Mobile number" value={draft.mobileNumber} />
+            <Row label="Date of birth" value={draft.dateOfBirth} icon={CalendarClock} />
+            <Row label="Mobile number" value={draft.mobileNumber} icon={Smartphone} />
             <Row label="Email" value={draft.email} />
             <Row label="Address" value={addressLine(draft)} />
-            <Row label="Government ID" value={[draft.governmentIdType, draft.governmentIdNumber].filter(Boolean).join(" · ")} />
+            <Row label="Government ID" icon={ShieldCheck} value={[draft.governmentIdType, draft.governmentIdNumber].filter(Boolean).join(" · ")} />
           </ReviewBlock>
-          <ReviewBlock title="Sales and Consent" onEdit={() => setStep(STEP_SALES)}>
+          <ReviewBlock title="Sales and Consent" icon={Handshake} tone="success" onEdit={() => setStep(STEP_SALES)}>
             {supplementaryAllowed ? <Row label="Extra cardholder" value={[draft.secFirstName, draft.secNoMiddleName ? "" : draft.secMiddleName, draft.secLastName, draft.secSuffix].filter(Boolean).join(" ")} /> : null}
             <Row label="Closing seller" value={sellers.find((item) => item.value === draft.ownerMemberId)?.label} />
             <Row label="Referrer / VIP Recommender" value={sellers.find((item) => item.value === (draft.referrerMemberId || draft.recommenderMemberId))?.label} />
             {draft.referralReference ? <Row label="Dated referral reference" value={draft.referralReference} /> : null}
             <Row label="Acquisition channel" value={draft.acquisitionChannel} />
             <Row label="Customer ID" value={draft.customerNumber} />
-            <Row label="Data privacy consent" value={draft.consentDataPrivacy ? "Certified" : "Not certified"} />
-            <Row label="Government ID received" value={draft.idReceivedCertified ? "Certified" : "Not certified"} />
+            <Row label="Data privacy consent" status={draft.consentDataPrivacy ? "good" : "bad"} value={draft.consentDataPrivacy ? "Certified" : "Not certified"} icon={ShieldCheck} />
+            <Row label="Government ID received" status={draft.idReceivedCertified ? "good" : "bad"} value={draft.idReceivedCertified ? "Certified" : "Not certified"} icon={ShieldCheck} />
           </ReviewBlock>
-          <ReviewBlock title="Reservation and Acceptance" onEdit={() => setStep(STEP_RESERVATION)}>
+          <ReviewBlock title="Reservation and Acceptance" icon={Receipt} tone="warning" onEdit={() => setStep(STEP_RESERVATION)}>
             <Row label="Payment plan" value={scheme?.label} />
-            <Row label="Reservation fee" value={reservationCentavos ? formatPeso(reservationCentavos) : "None for this payment plan"} />
-            <Row label="Payment method" value={reservationCentavos && canPay ? method : "—"} />
-            <Row label="Date on receipt" value={paidDate || "—"} />
+            <Row label="Reservation fee" value={reservationCentavos ? formatPeso(reservationCentavos) : "None for this payment plan"} icon={Banknote} big={Boolean(reservationCentavos)} />
+            <Row label="Payment method" value={reservationCentavos && canPay ? method : "—"} icon={Landmark} />
+            <Row label="Date on receipt" value={paidDate || "—"} icon={CalendarClock} />
             <Row label="Invoice / Receipt no." value={method === "Cash" && reservationCentavos && canPay ? "Assigned on submission" : documentNo || "—"} />
             <Row label="Proof" value={proofName || "—"} />
             <div className="tw:sm:col-span-2">
@@ -849,12 +877,12 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
 
       <Card className="customer-application__actions tw:sticky tw:bottom-2 tw:z-10 tw:flex-col-reverse tw:gap-2 tw:p-3 tw:shadow-md tw:sm:flex-row tw:sm:items-center tw:sm:justify-between tw:lg:static tw:lg:shadow-none">
         <div className="tw:flex tw:gap-2">
-          <Button type="button" variant={step === STEP_CARD ? "ghost" : "outline"} disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => (step === STEP_CARD ? exit.requestExit(() => { allowExit(); router.back(); }) : setStep(step - 1))}>
+          <Button type="button" variant={step === STEP_CARD ? "ghost" : "outline"} disabled={busy} className={`${PLAIN_ACTION} tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none`} onClick={() => (step === STEP_CARD ? exit.requestExit(() => { allowExit(); router.back(); }) : setStep(step - 1))}>
             {step === STEP_CARD ? "Cancel" : (<><ArrowLeft aria-hidden="true" className="tw:size-4" /> Back</>)}
           </Button>
           {!isSubmitted ? (
-            <Button type="button" variant="secondary" loading={saving && action === "draft"} disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => void saveDraft()}>
-              Save as Draft
+            <Button type="button" variant="violet" loading={saving && action === "draft"} disabled={busy} className="tw:min-h-11 tw:flex-1 tw:sm:min-h-8 tw:sm:flex-none" onClick={() => void saveDraft()}>
+              <Save aria-hidden="true" className="tw:size-4" /> Save Draft
             </Button>
           ) : null}
         </div>
@@ -864,7 +892,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
           </Button>
         ) : !canManage ? (
           <Button type="button" loading={saving && action === "draft"} disabled={busy} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => void saveDraft()}>
-            Save Draft for the Office
+            Send to Office
           </Button>
         ) : (
           <Button type="button" loading={saving && action === "submit"} disabled={busy} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => void submitApplication()}>

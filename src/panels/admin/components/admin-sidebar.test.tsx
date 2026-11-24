@@ -34,14 +34,14 @@ describe("admin sidebar", () => {
     expect(screen.getByText("Management Platform")).toBeDefined();
     expect(screen.getByRole("navigation", { name: "Administration" })).toBeDefined();
     expect(await screen.findByText("Organization")).toBeDefined();
-    expect(screen.queryByText("Accounts and Permissions")).toBeNull();
+    expect(screen.queryByText("Staff Access")).toBeNull();
     expect(screen.getByRole("button", { name: "Log out" })).toBeDefined();
   });
 
   it("shows no Accounts entry to HR either", async () => {
     renderSidebar(false, "dev-hr");
     await screen.findByText("Organization");
-    expect(screen.queryByText("Accounts and Permissions")).toBeNull();
+    expect(screen.queryByText("Staff Access")).toBeNull();
   });
 
   it("groups the areas each role can open", async () => {
@@ -50,7 +50,7 @@ describe("admin sidebar", () => {
     await user.click(await screen.findByRole("button", { name: "Finance" }));
     expect(await screen.findByRole("link", { name: "Payments" })).toHaveAttribute("href", "/admin/finance");
     expect(screen.getByRole("link", { name: "Commissions" })).toBeDefined();
-    await user.click(screen.getByRole("button", { name: "Member Services" }));
+    await user.click(screen.getByRole("button", { name: "Member Programs" }));
     for (const name of ["Membership", "Stay Points", "Redemption"]) {
       expect(screen.getByRole("link", { name })).toBeDefined();
     }

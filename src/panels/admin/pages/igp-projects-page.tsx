@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Ban, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useOperation } from "@/data/business-queries";
 import type { IgpProjectView, IgpUnitView } from "@/data/contracts/igp-catalog-repository";
 import {
@@ -19,6 +20,7 @@ import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { QueryState } from "@/shared/components/modern/query-state";
+import { DetailActions } from "@/shared/components/modern/detail-actions";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
@@ -96,8 +98,8 @@ export function IgpProjectsTab({ adding, onAddingClose }: { adding: boolean; onA
         <RowActionsMenu itemName={unit.unitOrLot}
           onEdit={() => setUnitDialog({ unit })}
           extraItems={[unit.status === "active"
-            ? { key: "deactivate", label: "Deactivate", tone: "warning", onClick: () => setUnitStatus(unit, "inactive") }
-            : { key: "reactivate", label: "Reactivate", tone: "success", onClick: () => setUnitStatus(unit, "active") }]}
+            ? { key: "deactivate", label: "Deactivate", tone: "warning", icon: Ban, onClick: () => setUnitStatus(unit, "inactive") }
+            : { key: "reactivate", label: "Reactivate", tone: "success", icon: RotateCcw, onClick: () => setUnitStatus(unit, "active") }]}
           onDelete={unit.inUse ? undefined : () => deleteUnit.mutateAsync(unit.id)}
           deleteDisabledReason={unit.inUse ? "A sale uses this unit or lot. Deactivate it instead." : null}
           deleteTitle={`Delete ${unit.unitOrLot}?`}
@@ -126,18 +128,18 @@ export function IgpProjectsTab({ adding, onAddingClose }: { adding: boolean; onA
               ] },
               { title: "Units and Lots", rows: unitRows },
             ] : []}
-            footer={project ? <div className="tw:flex tw:flex-wrap tw:gap-2">
-              <Button onClick={() => setUnitDialog({ unit: null })}>Add Unit</Button>
-              <Button variant="warning" onClick={() => setEditingProject(true)}>Edit Project</Button>
-              {project.status === "active"
-                ? <Button variant="warning" onClick={() => setProjectStatus(project, "inactive")}>Deactivate Project</Button>
-                : <Button variant="success" onClick={() => setProjectStatus(project, "active")}>Reactivate</Button>}
-              {!project.inUse && <Button variant="destructive" onClick={() => confirmRun({
+            footer={project ? <DetailActions actions={[
+              { key: "add-unit", label: "Add Unit", next: true, icon: Plus, onClick: () => setUnitDialog({ unit: null }) },
+              { key: "edit", label: "Edit Project", variant: "warning", next: true, icon: Pencil, onClick: () => setEditingProject(true) },
+              project.status === "active"
+                ? { key: "deactivate", label: "Deactivate Project", variant: "orange", icon: Ban, onClick: () => setProjectStatus(project, "inactive") }
+                : { key: "reactivate", label: "Reactivate", variant: "success", icon: RotateCcw, onClick: () => setProjectStatus(project, "active") },
+              !project.inUse && { key: "delete", label: "Delete Project", variant: "destructive", icon: Trash2, onClick: () => confirmRun({
                 title: `Delete ${project.name}?`, description: "This removes the project and its units. Only projects that no sale uses can be deleted.",
                 confirmText: "Delete Project", danger: true, action: async () => { await deleteProject.mutateAsync(project.id); setSelectedId(null); },
                 successTitle: `${project.name} deleted.`, errorTitle: "Could not delete the project.",
-              })}>Delete Project</Button>}
-            </div> : undefined} />
+              }) },
+            ]} /> : undefined} />
           {(adding || (editingProject && project)) && (
             <IgpProjectDialog key={adding ? "new" : project?.id} project={adding ? null : project ?? null}
               onClose={() => { onAddingClose(); setEditingProject(false); }} />

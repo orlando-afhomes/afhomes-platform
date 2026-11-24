@@ -91,7 +91,7 @@ export function useImportCustomers() {
   return useBusinessMutation((r, v: { fileName: string; records: CustomerImportRecord[]; declaration: boolean }) => r.customers.importCustomers(v));
 }
 export function useExportCustomers() {
-  return useBusinessMutation((r, v: { format: "xlsx" | "csv"; count: number }) => r.customers.exportCustomers(v));
+  return useBusinessMutation((r, v: { format: "xlsx" | "csv" | "pdf"; count: number }) => r.customers.exportCustomers(v));
 }
 export function useRecordReportExport() {
   return useBusinessMutation((r, v: ReportExportInput) => r.reports.recordExport(v));
@@ -229,7 +229,7 @@ export function usePaymentAction() {
 export function useMemberships() {
   return useBusinessQuery("memberships", (r, signal) => r.memberships.list({ signal }));
 }
-/** Staff Customer Look Up (UI21): runs only from the minimum search length. */
+/** Staff Customer Search (UI21): runs only from the minimum search length. */
 export function useCustomerLookup(term: string) {
   const repositories = useMockRepositories();
   const { identity } = useDevIdentity();

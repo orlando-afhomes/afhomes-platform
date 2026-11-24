@@ -1,3 +1,4 @@
+import { Check, CheckCheck, LogIn, UserX, X } from "lucide-react";
 import type { BookingView } from "@/data/contracts/redemption-repository";
 import type { RowActionItem } from "@/shared/components/modern/row-actions-menu";
 
@@ -40,17 +41,17 @@ export function buildRedemptionBookingMenuProps(
 ): RedemptionBookingMenuProps {
   const extraItems: RowActionItem[] = [];
   if (perms.canApprove && booking.status === "pending_payment" && cb.onApproveCash) {
-    extraItems.push({ key: "approve-cash", label: "Approve Money Part", tone: "success", onClick: cb.onApproveCash });
+    extraItems.push({ key: "approve-cash", label: "Approve Payment", tone: "success", icon: Check, onClick: cb.onApproveCash });
   }
   if (perms.canBook && booking.status === "confirmed") {
-    if (!booking.checkedIn && cb.onCheckIn) extraItems.push({ key: "check-in", label: "Record Check-In", tone: "success", onClick: cb.onCheckIn });
-    if (booking.checkedIn && cb.onComplete) extraItems.push({ key: "complete", label: "Complete Stay", tone: "success", onClick: cb.onComplete });
+    if (!booking.checkedIn && cb.onCheckIn) extraItems.push({ key: "check-in", label: "Record Check-In", tone: "success", icon: LogIn, onClick: cb.onCheckIn });
+    if (booking.checkedIn && cb.onComplete) extraItems.push({ key: "complete", label: "Complete Stay", tone: "success", icon: CheckCheck, onClick: cb.onComplete });
   }
   if (perms.canBook && booking.status === "confirmed" && !booking.checkedIn && cb.onNoShow) {
-    extraItems.push({ key: "no-show", label: "Record No-Show", tone: "warning", onClick: cb.onNoShow });
+    extraItems.push({ key: "no-show", label: "Record No-Show", tone: "warning", icon: UserX, onClick: cb.onNoShow });
   }
   if (perms.canBook && (booking.status === "pending_payment" || booking.status === "confirmed") && !booking.checkedIn && cb.onCancel) {
-    extraItems.push({ key: "cancel", label: "Cancel Booking", tone: "danger", danger: true, onClick: cb.onCancel });
+    extraItems.push({ key: "cancel", label: "Cancel Booking", tone: "danger", icon: X, danger: true, onClick: cb.onCancel });
   }
 
   return {

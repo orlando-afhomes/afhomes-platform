@@ -28,7 +28,7 @@ export interface CustomerRepository {
   importCustomers(input: { fileName: string; records: CustomerImportRecord[]; declaration: boolean }, options?: MockAsyncOptions): Promise<CustomerImportJob>;
   listImportJobs(options?: MockAsyncOptions): Promise<CustomerImportJob[]>;
   /** Audited export of the records visible to the identity (capped at 5,000). */
-  exportCustomers(input: { format: "xlsx" | "csv"; count: number }, options?: MockAsyncOptions): Promise<Customer[]>;
+  exportCustomers(input: { format: "xlsx" | "csv" | "pdf"; count: number }, options?: MockAsyncOptions): Promise<Customer[]>;
 }
 
 /** Thrown by submit with field-level messages so the form can show them. */

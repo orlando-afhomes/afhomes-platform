@@ -8,7 +8,8 @@ import { Money } from "@/shared/components/modern/money";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 import { manilaDateOf } from "@/shared/lib/dates";
-import { OPEN_FROM, OPEN_TO, ReportFrame, useReportRange, type ReportRange } from "./report-shell";
+import { formatPeso } from "@/shared/lib/money";
+import { OPEN_FROM, OPEN_TO, ReportExport, ReportFrame, useReportRange, type ReportColumn, type ReportRange } from "./report-shell";
 import { useCollectionsFigures } from "../pages/collections-report-page";
 import { useCommissionFigures } from "../pages/commission-report-page";
 import { useCustomerGrowthFigures } from "../pages/customer-growth-report-page";
@@ -35,6 +36,8 @@ type SummaryCard = {
   label: string;
   caption: string;
   value: ReactNode;
+  /** The same figure as plain text for the PDF export. */
+  plain: string;
   current: number;
   previous: number;
   icon: LucideIcon;
@@ -42,6 +45,15 @@ type SummaryCard = {
   loading: boolean;
   error: unknown;
 };
+
+type SummaryRow = { group: string; measure: string; value: string; comparison: string };
+
+const SUMMARY_COLUMNS: ReportColumn<SummaryRow>[] = [
+  { header: "Group", value: (row) => row.group },
+  { header: "Measure", value: (row) => row.measure },
+  { header: "Value", value: (row) => row.value },
+  { header: "Compared with Previous Period", value: (row) => row.comparison },
+];
 
 const DAY_MS = 86_400_000;
 const dayNumber = (dateOnly: string) => {
@@ -63,20 +75,36 @@ export function previousPeriod(range: Pick<ReportRange, "from" | "to">) {
   return { from, to, inRange, comparable };
 }
 
-/** Compare the selected period with the immediately preceding period of the same length. */
-function Comparison({ current, previous, comparable }: { current: number; previous: number; comparable: boolean }) {
-  if (!comparable || previous <= 0) {
-    return <p className="tw:m-0 tw:text-xs tw:text-muted-foreground">No comparison available</p>;
-  }
+/** Direction, KpiDelta wording and a plain sentence for the PDF. Null when there is nothing to compare. */
+function comparisonParts(current: number, previous: number, comparable: boolean) {
+  if (!comparable || previous <= 0) return null;
   const percent = Math.round((Math.abs(current - previous) / previous) * 100);
   const formattedPercent = percent.toLocaleString("en-PH");
   const unchanged = current === previous;
   const up = current > previous;
+  return {
+    unchanged,
+    up,
+    value: unchanged ? "No Change" : `${up ? "+" : "−"}${formattedPercent}%`,
+    label: unchanged ? "No change" : `${up ? "Up" : "Down"} ${formattedPercent}%`,
+  };
+}
+
+function comparisonText(current: number, previous: number, comparable: boolean): string {
+  return comparisonParts(current, previous, comparable)?.label ?? "No comparison available";
+}
+
+/** Compare the selected period with the immediately preceding period of the same length. */
+function Comparison({ current, previous, comparable }: { current: number; previous: number; comparable: boolean }) {
+  const parts = comparisonParts(current, previous, comparable);
+  if (!parts) {
+    return <p className="tw:m-0 tw:text-xs tw:text-muted-foreground">No comparison available</p>;
+  }
   return (
     <p className="tw:m-0 tw:flex tw:flex-wrap tw:items-center tw:gap-x-2 tw:gap-y-1 tw:text-xs tw:text-muted-foreground">
-      <KpiDelta direction={unchanged ? "flat" : up ? "up" : "down"}
-        value={unchanged ? "No Change" : `${up ? "+" : "−"}${formattedPercent}%`}
-        label={unchanged ? "No change" : `${up ? "Up" : "Down"} ${formattedPercent}%`} />
+      <KpiDelta direction={parts.unchanged ? "flat" : parts.up ? "up" : "down"}
+        value={parts.value}
+        label={parts.label} />
       <span>vs. previous period</span>
     </p>
   );
@@ -144,33 +172,47 @@ export function ReportsSummaryPanel({ onOpen }: { onOpen: (reportKey: ReportKey)
     {
       title: "Money",
       cards: [
-        { key: "sales", report: "Sales", label: "Sales", caption: "Sales closed in this period", value: <Money value={sales.confirmedInPeriod} />, current: sales.confirmedInPeriod, previous: salesBefore.confirmedInPeriod, icon: TrendingUp, tone: "brand", loading: sales.loading, error: sales.error },
+        { key: "sales", report: "Sales", label: "Sales", caption: "Sales closed in this period", value: <Money value={sales.confirmedInPeriod} />, plain: formatPeso(sales.confirmedInPeriod), current: sales.confirmedInPeriod, previous: salesBefore.confirmedInPeriod, icon: TrendingUp, tone: "brand", loading: sales.loading, error: sales.error },
         ...(collections.allowed
-          ? [{ key: "collections" as const, report: "Collections", label: "Collections", caption: "Verified payments received", value: <Money value={collections.collected} />, current: collections.collected, previous: collectionsBefore.collected, icon: Wallet, tone: "success" as const, loading: collections.payments.isLoading, error: collections.payments.error }]
+          ? [{ key: "collections" as const, report: "Collections", label: "Collections", caption: "Verified payments received", value: <Money value={collections.collected} />, plain: formatPeso(collections.collected), current: collections.collected, previous: collectionsBefore.collected, icon: Wallet, tone: "success" as const, loading: collections.payments.isLoading, error: collections.payments.error }]
           : []),
-        { key: "commissions", report: "Commissions", label: "Commissions", caption: "Commissions approved", value: <Money value={commissions.approvedInPeriod} />, current: commissions.approvedInPeriod, previous: commissionsBefore.approvedInPeriod, icon: BadgeCheck, tone: "brand", loading: commissions.commissions.isLoading, error: commissions.commissions.error },
+        { key: "commissions", report: "Commissions", label: "Commissions", caption: "Commissions approved", value: <Money value={commissions.approvedInPeriod} />, plain: formatPeso(commissions.approvedInPeriod), current: commissions.approvedInPeriod, previous: commissionsBefore.approvedInPeriod, icon: BadgeCheck, tone: "brand", loading: commissions.commissions.isLoading, error: commissions.commissions.error },
       ],
     },
     {
       title: "People",
       cards: [
-        { key: "customers", report: "Customers", label: "New Customers", caption: "Customers added", value: fmt(customers.newCustomers), current: customers.newCustomers, previous: customersBefore.newCustomers, icon: UserPlus, tone: "success", loading: customers.customers.isLoading, error: customers.customers.error },
-        { key: "membership", report: "Membership", label: "Memberships Activated", caption: "Memberships started", value: fmt(membership.activatedInPeriod), current: membership.activatedInPeriod, previous: membershipBefore.activatedInPeriod, icon: UserCheck, tone: "success", loading: membership.memberships.isLoading, error: membership.memberships.error },
+        { key: "customers", report: "Customers", label: "New Customers", caption: "Customers added", value: fmt(customers.newCustomers), plain: fmt(customers.newCustomers), current: customers.newCustomers, previous: customersBefore.newCustomers, icon: UserPlus, tone: "success", loading: customers.customers.isLoading, error: customers.customers.error },
+        { key: "membership", report: "Membership", label: "Memberships Activated", caption: "Memberships started", value: fmt(membership.activatedInPeriod), plain: fmt(membership.activatedInPeriod), current: membership.activatedInPeriod, previous: membershipBefore.activatedInPeriod, icon: UserCheck, tone: "success", loading: membership.memberships.isLoading, error: membership.memberships.error },
       ],
     },
     {
       title: "Points",
       cards: [
-        { key: "stay-points", report: "Stay Points", label: "Stay Points Released", caption: "Points given to members", value: fmt(stayPoints.released), current: stayPoints.released, previous: stayPointsBefore.released, icon: TrendingUp, tone: "info", loading: stayPoints.points.isLoading, error: stayPoints.points.error },
-        { key: "promo-points", report: "Promo Points", label: "Promo Points Earned", caption: "Points earned from promos", value: fmt(promoPoints.earned), current: promoPoints.earned, previous: promoPointsBefore.earned, icon: Gift, tone: "info", loading: promoPoints.ledger.isLoading, error: promoPoints.ledger.error },
+        { key: "stay-points", report: "Stay Points", label: "Stay Points Released", caption: "Points given to members", value: fmt(stayPoints.released), plain: fmt(stayPoints.released), current: stayPoints.released, previous: stayPointsBefore.released, icon: TrendingUp, tone: "info", loading: stayPoints.points.isLoading, error: stayPoints.points.error },
+        { key: "promo-points", report: "Promo Points", label: "Promo Points Earned", caption: "Points earned from promos", value: fmt(promoPoints.earned), plain: fmt(promoPoints.earned), current: promoPoints.earned, previous: promoPointsBefore.earned, icon: Gift, tone: "info", loading: promoPoints.ledger.isLoading, error: promoPoints.ledger.error },
       ],
     },
   ];
 
+  // The PDF carries the same figures and comparisons the cards show for this identity.
+  const exportRows: SummaryRow[] = groups.flatMap((group) =>
+    group.cards.map((card) => ({
+      group: group.title,
+      measure: card.label,
+      value: card.error ? "Unavailable" : card.plain,
+      comparison: card.error ? "No comparison available" : comparisonText(card.current, card.previous, previous.comparable),
+    })),
+  );
+  const loading = groups.some((group) => group.cards.some((card) => card.loading));
+
   return (
     <ReportFrame range={range}>
       <div className="report-print__hide">
-        <FilterBar>{range.dateFields}</FilterBar>
+        <FilterBar>
+          {range.dateFields}
+          <ReportExport report="Reports Summary" fileName="reports-summary" columns={SUMMARY_COLUMNS} rows={exportRows} range={range} pdfOnly printable={false} disabled={loading} />
+        </FilterBar>
       </div>
       {groups.map((group) => (
         <section key={group.title} aria-labelledby={`reports-summary-${group.title.toLowerCase()}`} className="tw:flex tw:flex-col tw:gap-3">

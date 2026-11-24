@@ -1,3 +1,4 @@
+import { Ban, Check, CreditCard, FileCheck, FileSignature, Handshake, Hash, RotateCcw, ShieldAlert, Wrench, X } from "lucide-react";
 import type { RowActionItem, RowActionTone } from "@/shared/components/modern/row-actions-menu";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import type { SaleView } from "@/data/contracts/sale-repository";
@@ -45,9 +46,9 @@ export function approveDealConfirm(approve: () => Promise<ApproveDealOutcome>): 
 /** Finance confirmation of Non-Standard terms (doc 05 §10.2 step 2). */
 export function confirmNonStandardConfirm(confirm: () => Promise<unknown>): ConfirmRunInput {
   return {
-    title: "Confirm Non-Standard Terms?",
+    title: "Confirm Terms?",
     description: "This confirms the Non-Standard price and monthly payments the Administrator approved. The Administrator can then finalize the contract with Approve Deal.",
-    confirmText: "Confirm Non-Standard Terms",
+    confirmText: "Confirm Terms",
     tone: "success",
     action: confirm,
     successTitle: "Non-Standard terms confirmed.",
@@ -99,9 +100,9 @@ export type SaleMenuSale = Pick<SaleView, "status" | "approval" | "defaultEligib
 export function buildSalesMenuProps(sale: SaleMenuSale, perms: SaleMenuPerms, cb: SaleMenuCallbacks): SalesMenuProps {
   const extraItems: RowActionItem[] = [];
   if (perms.canApprove && sale.status === "pending" && !sale.approval) {
-    if (perms.canApproveCustomer && cb.onApproveDeal) extraItems.push({ key: "approve-deal", label: "Approve Deal", tone: "success", onClick: cb.onApproveDeal });
+    if (perms.canApproveCustomer && cb.onApproveDeal) extraItems.push({ key: "approve-deal", label: "Approve Deal", tone: "success", icon: Check, onClick: cb.onApproveDeal });
   } else if (perms.canApprove && sale.defaultEligible) {
-    if (cb.onMarkDefaulted) extraItems.push({ key: "mark-defaulted", label: "Mark as Stopped Paying", tone: "danger", onClick: cb.onMarkDefaulted });
+    if (cb.onMarkDefaulted) extraItems.push({ key: "mark-defaulted", label: "Stopped Paying", tone: "danger", icon: ShieldAlert, onClick: cb.onMarkDefaulted });
   }
   return { itemName: `sale for ${sale.customerName}`, extraItems };
 }
@@ -172,43 +173,43 @@ export function buildContractMenuProps(contract: ContractMenuContract, perms: Co
   const dealOpen = (inReview || contract.status === "finalized") && (agreementPending || saleUnapproved || (inReview && contract.holds.length === 0) || needsNonStandardApproval(contract));
 
   if (perms.canSubmitPayment && contract.status !== "cancelled" && contract.status !== "returned" && cb.onSubmitPayment) {
-    add(extraItems, { key: "submit-payment", label: "Submit Payment", tone: "info", onClick: cb.onSubmitPayment });
+    add(extraItems, { key: "submit-payment", label: "Submit Payment", tone: "info", icon: CreditCard, onClick: cb.onSubmitPayment });
   }
   if (perms.canPrepare && editable && cb.onSubmitContract) {
-    add(extraItems, { key: "submit-contract", label: "Submit Contract", onClick: cb.onSubmitContract });
+    add(extraItems, { key: "submit-contract", label: "Submit Contract", icon: FileCheck, onClick: cb.onSubmitContract });
   }
 
   if (perms.isSuperAdmin && contract.arrangement?.status === "pending" && contract.status !== "cancelled" && cb.onApproveArrangement) {
-    add(extraItems, { key: "approve-arrangement", label: "Approve Arrangement", tone: "success", onClick: cb.onApproveArrangement });
+    add(extraItems, { key: "approve-arrangement", label: "Approve Arrangement", tone: "success", icon: Handshake, onClick: cb.onApproveArrangement });
   }
   if (perms.canApprove && contract.paymentCode == null && contract.status !== "cancelled" && cb.onRecordPaymentCode) {
-    add(extraItems, { key: "record-payment-code", label: "Record Payment Code", tone: "info", onClick: cb.onRecordPaymentCode });
+    add(extraItems, { key: "record-payment-code", label: "Set Code", tone: "info", icon: Hash, onClick: cb.onRecordPaymentCode });
   }
   if (perms.canApprove && perms.canApproveCustomer && dealOpen && !pendingCancel && cb.onApproveDeal) {
-    add(extraItems, { key: "approve-deal", label: "Approve Deal", tone: "success", onClick: cb.onApproveDeal });
+    add(extraItems, { key: "approve-deal", label: "Approve Deal", tone: "success", icon: Check, onClick: cb.onApproveDeal });
   }
   if (perms.canConfirmNonStandard && cb.onConfirmNonStandard) {
-    add(extraItems, { key: "confirm-nonstandard", label: "Confirm Non-Standard Terms", tone: "success", onClick: cb.onConfirmNonStandard });
+    add(extraItems, { key: "confirm-nonstandard", label: "Confirm Terms", tone: "success", icon: FileSignature, onClick: cb.onConfirmNonStandard });
   }
-  // An Administrator already has Return for Correction, which does the same.
+  // An Administrator already has Request Fix, which does the same.
   if (perms.canConfirmNonStandard && !perms.canApprove && cb.onSendBackNonStandard) {
-    add(extraItems, { key: "send-back-nonstandard", label: "Send Back", tone: "warning", onClick: cb.onSendBackNonStandard });
+    add(extraItems, { key: "send-back-nonstandard", label: "Send Back", tone: "warning", icon: RotateCcw, onClick: cb.onSendBackNonStandard });
   }
   if (perms.canApprove && inReview && cb.onReturn) {
-    add(extraItems, { key: "return", label: "Return for Correction", tone: "warning", onClick: cb.onReturn });
+    add(extraItems, { key: "return", label: "Request Fix", tone: "warning", icon: Wrench, onClick: cb.onReturn });
   }
   if (perms.canPrepare && contract.status === "draft" && cancellable && !moneyLocked && cb.onCancel) {
-    add(extraItems, { key: "cancel-contract", label: "Cancel Contract", tone: "danger", onClick: cb.onCancel });
+    add(extraItems, { key: "cancel-contract", label: "Cancel Contract", tone: "danger", icon: X, onClick: cb.onCancel });
   }
   if (perms.canApprove && cancellable && !moneyLocked && cb.onCancel) {
-    add(extraItems, { key: "cancel-contract", label: "Cancel Contract", tone: "danger", onClick: cb.onCancel });
+    add(extraItems, { key: "cancel-contract", label: "Cancel Contract", tone: "danger", icon: X, onClick: cb.onCancel });
   }
   if (perms.canApprove && cancellable && moneyLocked && !pendingCancel && cb.onRequestCancellation) {
-    add(extraItems, { key: "request-cancellation", label: "Request Cancellation", tone: "warning", onClick: cb.onRequestCancellation });
+    add(extraItems, { key: "request-cancellation", label: "Request Cancellation", tone: "warning", icon: Ban, onClick: cb.onRequestCancellation });
   }
 
   if (sale && perms.canApprove && !saleUnapproved && sale.defaultEligible && cb.onMarkDefaulted) {
-    add(extraItems, { key: "mark-defaulted", label: "Mark as Stopped Paying", tone: "danger", onClick: cb.onMarkDefaulted });
+    add(extraItems, { key: "mark-defaulted", label: "Stopped Paying", tone: "danger", icon: ShieldAlert, onClick: cb.onMarkDefaulted });
   }
 
   return {

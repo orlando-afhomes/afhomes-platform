@@ -4,7 +4,7 @@ export const DEV_IDENTITIES: DevIdentity[] = [
   { id: "dev-super-admin", displayName: "Orlando Dela Cruz", roles: ["super_admin"], memberId: null, branchId: null, status: "active", staffId: "staff-super" },
   { id: "dev-admin", displayName: "Eduardo Ocampo · Administrator", roles: ["admin"], memberId: null, branchId: null, status: "active", staffId: "staff-admin" },
   { id: "dev-clerk", displayName: "Marites Gonzales · Clerk", roles: ["clerk"], memberId: null, branchId: null, status: "active", staffId: "staff-clerk" },
-  { id: "dev-gsd", displayName: "Joel Fernandez · GSD Counter", roles: ["gsd"], memberId: null, branchId: null, status: "active" },
+  { id: "dev-gsd", displayName: "Joel Fernandez", roles: ["gsd"], memberId: null, branchId: null, status: "active" },
   { id: "dev-finance", displayName: "Rosalinda Tan · Finance", roles: ["finance"], memberId: null, branchId: null, status: "active" },
   { id: "dev-hr", displayName: "Carmela Rivera · HR", roles: ["hr"], memberId: null, branchId: null, status: "active", staffId: "staff-1" },
   { id: "dev-svd-a", displayName: "Ramon Del Rosario · SVD", roles: ["svd"], memberId: "mem-svd-a", branchId: "branch-a", status: "active" },

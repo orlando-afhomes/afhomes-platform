@@ -67,7 +67,7 @@ export function PeriodClosePanel() {
       <section aria-label="Closed months" className="tw:flex tw:flex-col tw:gap-2">
         <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
           <h2 className="tw:text-base tw:font-semibold">Closed Months</h2>
-          <ReportExport report="Close the Month" fileName="period-close" columns={EXPORT_COLUMNS} rows={months.data ?? []} range={null} printable={false} />
+          <ReportExport report="Month-End" fileName="period-close" columns={EXPORT_COLUMNS} rows={months.data ?? []} range={null} printable={false} />
         </div>
         <QueryState isLoading={months.isLoading} error={months.error}>
           <DataTable data={months.data ?? []} columns={columns} getRowId={(row) => row.month} caption="Closed Months" emptyText="No months have been closed." onRowOpen={(row) => setDetailMonth(row.month)} getRowLabel={(row) => `View closed month ${row.month}`} />

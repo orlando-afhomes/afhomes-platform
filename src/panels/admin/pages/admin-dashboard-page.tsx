@@ -12,10 +12,12 @@ import { getRoleDisplayLabel } from "../role-label";
 import { AdminDashboard } from "../dashboard/admin-dashboard";
 import { ClerkDashboard } from "../dashboard/clerk-dashboard";
 import { FinanceDashboard } from "../dashboard/finance-dashboard";
+import { GsdDashboard } from "../dashboard/gsd-dashboard";
+import { HrDashboard } from "../dashboard/hr-dashboard";
 import { SalesDashboard } from "../dashboard/sales-dashboard";
 import { resolveDashboard } from "../dashboard/resolve-dashboard";
 
-/** Dashboard home: picks the Admin, Finance, or Sales layout. The layout grants nothing by itself. */
+/** Dashboard home: picks the Admin, Finance, Sales, Clerk, GSD, or HR layout. The layout grants nothing by itself. */
 export function AdminDashboardPage() {
   const pathname = usePathname();
   const { identity } = useDevIdentity();
@@ -35,6 +37,10 @@ export function AdminDashboardPage() {
         <SalesDashboard identity={identity} />
       ) : kind === "clerk" ? (
         <ClerkDashboard />
+      ) : kind === "gsd" ? (
+        <GsdDashboard />
+      ) : kind === "hr" ? (
+        <HrDashboard />
       ) : (
         <>
           <PageHeader

@@ -6,10 +6,11 @@ import { designationLabel } from "@/modules/sales-network/display";
 // Presentation of the domain colors (modules/sales-network/display keeps the
 // color names; this maps them to the design system).
 const DESIGNATION_CLASSES: Record<string, string> = {
-  SVD: "tw:bg-purple-100 tw:text-purple-800",
-  SSM: "tw:bg-blue-100 tw:text-blue-800",
-  SM: "tw:bg-cyan-100 tw:text-cyan-800",
-  OST: "tw:bg-orange-100 tw:text-orange-800",
+  // Solid fills, unlike the tinted status badges, so a position never reads as a status of the same hue.
+  SVD: "tw:bg-(--badge-violet) tw:text-white",
+  SSM: "tw:bg-(--badge-blue) tw:text-white",
+  SM: "tw:bg-(--badge-teal) tw:text-white",
+  OST: "tw:bg-(--badge-orange) tw:text-white",
 };
 
 /** Designation as a badge; `full` shows the long position title instead of the code. */

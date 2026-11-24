@@ -166,29 +166,29 @@ describe("display and authorization parity", () => {
     expect(resolveEmployeeEffectiveModules({ accountStatus: null, systemRoles: ["hr"], departmentRoleModuleIds: ["staff"] })).toEqual([]);
   });
 
-  it("keeps Super Admin system-role grants and drops non-delegable department-role ids", () => {
+  it("keeps Super Admin system-role grants and drops unknown department-role ids", () => {
     const display = resolveEmployeeEffectiveModules({ accountStatus: "active", systemRoles: ["super_admin"], departmentRoleModuleIds: ["finance", "legacy"] });
     expect(display).toEqual(expect.arrayContaining(["accounts", "roles", "staff", "vip-products"]));
     // Owner rule 2026-11-10: Super Admin holds the union of every role's grants, so finance arrives via system roles.
     expect(display).toContain("finance");
-    // "legacy" exists in no role's grants, proving non-delegable department-role ids confer nothing on their own.
+    // "legacy" exists in no role's grants, proving unknown department-role ids confer nothing on their own.
     expect(display).not.toContain("legacy");
-    expect(getDelegableGrants(["accounts", "finance", "staff", "staff", "legacy"])).toEqual(["staff"]);
+    expect(getDelegableGrants(["accounts", "finance", "staff", "staff", "legacy", "sales-group"])).toEqual(["accounts", "finance", "staff"]);
   });
 });
 
 describe("S3-A effective access restrictions", () => {
-  it("ignores non-delegable module grants stored on department roles", () => {
+  it("confers every delegable module stored on a department role", () => {
     const store = createMockStore();
-    // staff-2 holds role-fin-staff, which stores the non-delegable "finance" grant.
+    // staff-2 holds role-fin-staff, which stores the "finance" grant (delegable since 2026-11-24).
     const financeStaff = resolveEffectiveModules(store, linkedIdentity({ staffId: "staff-2" }));
-    expect(financeStaff.has("finance")).toBe(false);
+    expect(financeStaff.has("finance")).toBe(true);
     expect(financeStaff.has("dashboard")).toBe(true);
-    // role-admin stores the now non-delegable "accounts" grant.
+    // role-admin stores the "accounts" grant.
     store.staff.find((item) => item.id === "staff-3")!.departmentId = "dept-admin";
     store.staff.find((item) => item.id === "staff-3")!.departmentRoleId = "role-admin";
     const adminRoleHolder = resolveEffectiveModules(store, linkedIdentity({ staffId: "staff-3" }));
-    expect(adminRoleHolder.has("accounts")).toBe(false);
+    expect(adminRoleHolder.has("accounts")).toBe(true);
     expect(adminRoleHolder.has("roles")).toBe(true);
   });
 

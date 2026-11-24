@@ -158,6 +158,13 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
     },
   );
 
+  const editVisible = ownRecord && (canManage || (canDraft && customer.status === "draft")) && customer.status !== "rejected";
+  const editLink = (
+    <Link href={`/admin/customers/${customer.id}/edit`} className={buttonVariants({ variant: "warning", className: "tw:min-h-11 tw:sm:min-h-8" })}>
+      <Pencil aria-hidden="true" /> {customer.status === "draft" ? "Edit Draft" : customer.status === "sent_back" ? "Fix and Resubmit" : "Correct Data"}
+    </Link>
+  );
+
   return (
     <AdminPage
       anyOf={["customers"]}
@@ -165,36 +172,34 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
       crumbs={[{ label: "Customers", href: "/admin/customers" }, { label: customerRecordName(customer) }]}
       actions={
         <>
-          {canManage && ownRecord ? <ApplicationReprint customerId={customer.id} /> : null}
+          {/* The first two buttons are the next steps; the rest go into the "..." menu. */}
           {canPrepare && ownRecord && currentPurchase && isEditableContractStatus(currentPurchase.status) ? (
             <Link href={contractHref(currentPurchase.id)} className={buttonVariants({ className: "tw:min-h-11 tw:sm:min-h-8" })}>
               <FileText aria-hidden="true" /> Continue Contract
             </Link>
-          ) : null}
-          {canStartPurchase ? (
-            <Button variant={currentPurchase ? "outline" : "default"} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setPreparing(hasPurchaseHistory ? "separate" : "initial")}>
-              <FilePlus2 aria-hidden="true" /> {hasPurchaseHistory ? "New VIP Purchase" : "Prepare Contract"}
-            </Button>
           ) : null}
           {canApprove && canReviewRegistration(customer.status) ? (
             <Button variant="success" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setReview("approve")}>
               <Check aria-hidden="true" /> Approve
             </Button>
           ) : null}
-          {ownRecord && (canManage || (canDraft && customer.status === "draft")) && customer.status !== "rejected" ? (
-            <Link href={`/admin/customers/${customer.id}/edit`} className={buttonVariants({ variant: "warning", className: "tw:min-h-11 tw:sm:min-h-8" })}>
-              <Pencil aria-hidden="true" /> {customer.status === "draft" ? "Edit Draft" : customer.status === "sent_back" ? "Fix and Resubmit" : "Correct Data"}
-            </Link>
-          ) : null}
           {canApprove && canReviewRegistration(customer.status) ? (
-            <>
-              <Button variant="warning" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setReview("send_back")}>
-                <RotateCcw aria-hidden="true" /> Send Back
-              </Button>
-              <Button variant="destructive" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setReview("reject")}>
-                <X aria-hidden="true" /> Reject
-              </Button>
-            </>
+            <Button variant="warning" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setReview("send_back")}>
+              <RotateCcw aria-hidden="true" /> Send Back
+            </Button>
+          ) : null}
+          {editVisible && (customer.status === "draft" || customer.status === "sent_back") ? editLink : null}
+          {canStartPurchase ? (
+            <Button variant={currentPurchase ? "outline" : "default"} className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setPreparing(hasPurchaseHistory ? "separate" : "initial")}>
+              <FilePlus2 aria-hidden="true" /> {hasPurchaseHistory ? "New VIP Purchase" : "Prepare Contract"}
+            </Button>
+          ) : null}
+          {editVisible && !(customer.status === "draft" || customer.status === "sent_back") ? editLink : null}
+          {canManage && ownRecord ? <ApplicationReprint customerId={customer.id} /> : null}
+          {canApprove && canReviewRegistration(customer.status) ? (
+            <Button variant="destructive" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setReview("reject")}>
+              <X aria-hidden="true" /> Reject
+            </Button>
           ) : null}
           {actionSet.onDelete ? (
             <Button variant="destructive" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setDiscarding(true)}>

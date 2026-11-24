@@ -190,7 +190,9 @@ Presentation rules only; tokens in `tokens.css` are unchanged (see `docs/impleme
   - `success` (green): Approve, Confirm, Verify.
   - `destructive` (red): Reject, Cancel a record, Delete, Decline.
   - `warning` (amber): Send back, Return, Adjust, Correct, Hold.
-  - `info` (blue): Export, Download, Print, View records.
+  - `info` (blue): Print and guidance. `indigo`: View records. `teal`: Export. `cyan`: Download.
+  - Use an explicit purpose color for each distinct action shown together, and carry it into overflow menus. Use a distinct red treatment for an additional destructive action. Tabs, filters, and pagination communicate selection.
+- **Status badges:** use the shared status presentation for state labels. Keep the pill shape and use distinct colors plus icons or border treatments for different states shown in the same workflow.
   - `outline` (neutral white): Cancel and Close inside pop-ups.
 - **Tables:** use `DataTable` (`src/shared/components/modern/data-table.tsx`) with `onRowOpen` so the whole row opens the record. No underlined links in cells and no "View full details" item in the row menu. Keep the row "..." menu only on table rows; a full details page shows its action buttons once, in the page header.
 - **Empty values:** render `EMPTY` or `displayValue(value)` from `src/shared/lib/empty-value.ts` (a hyphen, `-`); never a blank cell. One value per column; a details view shows every value of the row.

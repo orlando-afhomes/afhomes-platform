@@ -4,6 +4,8 @@ import type { AccountStatus, LinkedAccountSummary } from "@/modules/accounts/typ
 
 export type StaffProfileInput = {
   firstName?: string | null;
+  /** Optional name prefix (Mr., Ms., Dr., …); null when absent. */
+  prefix?: string | null;
   middleName?: string | null;
   lastName?: string | null;
   suffix?: string | null;

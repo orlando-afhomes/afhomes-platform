@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { Info, Layers, Pencil } from "lucide-react";
+import { Ban, Info, Layers, Pencil, Power } from "lucide-react";
 import { toast } from "sonner";
 import { useOperation, useVipProducts } from "@/data/business-queries";
 import { useCreateTierLevel, useDeleteTierLevel, useTierLevels, useUpdateTierLevel } from "@/data/tier-level-queries";
@@ -12,13 +12,13 @@ import { AdminSection } from "@/shared/components/admin";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { QueryState } from "@/shared/components/modern/query-state";
+import { DetailActions } from "@/shared/components/modern/detail-actions";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { SelectField, TextField } from "@/shared/forms/modern";
 import { cn } from "@/shared/lib/utils";
-import { Button } from "@/shared/ui/button";
 import { tierColor, tierLevelColor } from "../dashboard/dashboard-presentation";
 
 type NonActiveTier = (typeof NON_ACTIVE_TIER_CODES)[number];
@@ -103,7 +103,7 @@ export function TierLevelsPanel({ adding, onCloseAdd }: { adding: boolean; onClo
           columns={columns}
           getRowId={(row) => row.id}
           emptyText="No card levels."
-          caption="VIP Card Levels"
+          caption="Card Levels"
           showAllRows
           onRowOpen={(row) => setDetailId(row.id)}
           getRowLabel={(row) => `Open ${row.name}`}
@@ -113,8 +113,8 @@ export function TierLevelsPanel({ adding, onCloseAdd }: { adding: boolean; onClo
               onEdit={() => setEditing(row)}
               extraItems={[
                 row.status === "active"
-                  ? { key: "deactivate", label: "Deactivate", tone: "warning", onClick: () => setStatus(row, "inactive") }
-                  : { key: "activate", label: "Activate", tone: "success", onClick: () => setStatus(row, "active") },
+                  ? { key: "deactivate", label: "Deactivate", tone: "warning", icon: Ban, onClick: () => setStatus(row, "inactive") }
+                  : { key: "activate", label: "Activate", tone: "success", icon: Power, onClick: () => setStatus(row, "active") },
               ]}
               onDelete={row.inUse ? undefined : () => deleteLevel.mutateAsync(row.id)}
               deleteDisabledReason={row.inUse ? "Products use this card level. Deactivate it instead." : null}
@@ -125,7 +125,7 @@ export function TierLevelsPanel({ adding, onCloseAdd }: { adding: boolean; onClo
         />
       </QueryState>
       <AdminSection title="Not Available">
-        <p role="note" className="tw:flex tw:items-start tw:gap-2 tw:rounded-lg tw:bg-info/10 tw:px-3 tw:py-2 tw:text-sm tw:text-foreground">
+        <p role="note" className="tw:mb-4 tw:flex tw:items-start tw:gap-2 tw:rounded-lg tw:bg-info/10 tw:px-3 tw:py-2 tw:text-sm tw:text-foreground">
           <Info aria-hidden="true" className="tw:mt-0.5 tw:size-4 tw:shrink-0 tw:text-info" />
           These codes cannot be used for new products.
         </p>
@@ -146,13 +146,11 @@ export function TierLevelsPanel({ adding, onCloseAdd }: { adding: boolean; onClo
             { label: "Products", value: productsOfDetail.length > 0 ? productsOfDetail.map((item) => `${item.name} (${item.code})`).join(", ") : null, wide: true },
           ],
         }] : []}
-        footer={detail && canManage ? (
-          <>
-            {detail.status === "inactive" ? <Button type="button" variant="success" onClick={() => setStatus(detail, "active")}>Activate</Button> : null}
-            <Button type="button" variant="warning" onClick={() => { setEditing(detail); setDetailId(null); }}><Pencil aria-hidden="true" /> Edit Card Level</Button>
-            {detail.status === "active" ? <Button type="button" variant="destructive" onClick={() => setStatus(detail, "inactive")}>Deactivate</Button> : null}
-          </>
-        ) : undefined}
+        footer={detail && canManage ? <DetailActions actions={[
+          detail.status === "inactive" && { key: "activate", label: "Activate", next: true, variant: "success", icon: Power, onClick: () => setStatus(detail, "active") },
+          { key: "edit", label: "Edit Level", next: true, variant: "warning", icon: Pencil, onClick: () => { setEditing(detail); setDetailId(null); } },
+          detail.status === "active" && { key: "deactivate", label: "Deactivate", variant: "destructive", icon: Ban, onClick: () => setStatus(detail, "inactive") },
+        ]} /> : undefined}
       />
       {adding || editing ? (
         <TierLevelDialog
@@ -194,7 +192,7 @@ function TierLevelDialog({ level, onClose }: { level: TierLevelView | null; onCl
   return (
     <FormDialog
       open
-      title={level ? "Edit Card Level" : "Add Card Level"}
+      title={level ? "Edit Level" : "Add Card Level"}
       description="Products choose one card level, such as Bronze or Platinum."
       submitText={level ? "Save" : "Add"}
       pending={create.isPending || update.isPending}

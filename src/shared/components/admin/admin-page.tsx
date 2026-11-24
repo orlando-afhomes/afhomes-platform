@@ -17,7 +17,7 @@ const SECTION_HREFS: Record<string, string> = {
   Money: "/admin/finance",
   Finance: "/admin/finance",
   Commissions: "/admin/commissions",
-  "Member Services": "/admin/membership",
+  "Member Programs": "/admin/membership",
   Membership: "/admin/membership",
   "Stay Points": "/admin/stay-points",
   Promos: "/admin/promos",

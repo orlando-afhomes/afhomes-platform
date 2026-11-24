@@ -216,7 +216,7 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
   }
 
   /** Full records for export, audited with the row count only (doc 12: no personal data in the audit payload). */
-  async exportCustomers(input: { format: "xlsx" | "csv"; count: number }, options?: MockAsyncOptions): Promise<Customer[]> {
+  async exportCustomers(input: { format: "xlsx" | "csv" | "pdf"; count: number }, options?: MockAsyncOptions): Promise<Customer[]> {
     return this.run(options, (identity) => {
       this.require(identity, "customers.import", "Customer export is not allowed for this identity.");
       const records = this.visible(identity).filter((customer) => !customer.restricted).slice(0, MAX_EXPORT_ROWS);

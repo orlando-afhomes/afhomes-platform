@@ -17,9 +17,12 @@ export const notify = {
     toast.success(message, description ? { description } : undefined);
   },
   error(message: string, description?: string) {
-    toast.error(message, description ? { description } : undefined);
+    toast.error(message, { duration: 8000, ...(description ? { description } : {}) });
+  },
+  warning(message: string, description?: string) {
+    toast.warning(message, { duration: 8000, ...(description ? { description } : {}) });
   },
   info(message: string, description?: string) {
-    toast(message, description ? { description } : undefined);
+    toast.info(message, description ? { description } : undefined);
   },
 };

@@ -21,6 +21,8 @@ export function SearchSelect({
   loading,
   emptyText = "No matches",
   className,
+  wrapperClassName,
+  leadingIcon: LeadingIcon,
   ...aria
 }: {
   items: ReadonlyArray<SearchSelectItem>;
@@ -33,6 +35,10 @@ export function SearchSelect({
   loading?: boolean;
   emptyText?: string;
   className?: string;
+  /** Classes for the box around the input and its chevron. */
+  wrapperClassName?: string;
+  /** Optional icon inside the field, before the value. */
+  leadingIcon?: LucideIcon;
   id?: string;
   "aria-label"?: string;
   "aria-labelledby"?: string;
@@ -48,7 +54,7 @@ export function SearchSelect({
       disabled={disabled || loading}
       onValueChange={(next: SearchSelectItem | null) => onChange(next ? next.value : null)}
     >
-      <ComboboxInput placeholder={loading ? "Loading…" : placeholder ?? "Type to search"} className={`tw:h-11${className ? ` ${className}` : ""}`} {...aria} />
+      <ComboboxInput leadingIcon={LeadingIcon} placeholder={loading ? "Loading…" : placeholder ?? "Type to search"} className={`tw:h-11${className ? ` ${className}` : ""}`} wrapperClassName={wrapperClassName} {...aria} />
       <ComboboxContent>
         <ComboboxEmpty>{emptyText}</ComboboxEmpty>
         <ComboboxList>

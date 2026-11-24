@@ -44,7 +44,7 @@ function renderTable(identityId: string, data: MembershipView[], store: MockStor
     <QueryClientProvider client={client}>
       <MockStoreProvider store={store}>
         <DevIdentityProvider initialIdentityId={identityId}>
-          <MembershipTable data={data} caption="Ready to Activate" emptyText="No memberships are waiting for activation." />
+          <MembershipTable data={data} caption="To Activate" emptyText="No memberships are waiting for activation." />
         </DevIdentityProvider>
       </MockStoreProvider>
     </QueryClientProvider>,
@@ -54,8 +54,8 @@ function renderTable(identityId: string, data: MembershipView[], store: MockStor
 describe("Membership area", () => {
   it("opens the activation queue from a direct link for Finance", async () => {
     openActivationLink("dev-finance");
-    const table = await screen.findByRole("table", { name: "Ready to Activate" });
-    expect(screen.getByRole("tab", { name: "Ready to Activate", selected: true })).toBeInTheDocument();
+    const table = await screen.findByRole("table", { name: "To Activate" });
+    expect(screen.getByRole("tab", { name: "To Activate", selected: true })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Memberships" })).toBeInTheDocument();
     expect(within(table).getAllByRole("columnheader").map((cell) => cell.textContent?.trim())).toEqual([
       "Customer", "Card Number", "Plan", "Status", "Activated", "Actions",
@@ -65,8 +65,8 @@ describe("Membership area", () => {
   it("shows sellers only the membership list when they follow the activation link", async () => {
     openActivationLink("dev-ost-a1");
     expect(await screen.findByRole("table", { name: "Memberships" })).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "Ready to Activate" })).toBeNull();
-    expect(screen.queryByRole("table", { name: "Ready to Activate" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "To Activate" })).toBeNull();
+    expect(screen.queryByRole("table", { name: "To Activate" })).toBeNull();
   });
 
   it("sends one activation request and shows a busy state when Activate is double-clicked", async () => {

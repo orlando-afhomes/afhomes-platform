@@ -12,6 +12,7 @@ import { InfoNote } from "@/shared/components/modern/detail-list";
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
+import { DetailActions } from "@/shared/components/modern/detail-actions";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
@@ -48,6 +49,30 @@ const ROW_COLUMNS: ColumnDef<ReceiptImportRow, unknown>[] = [
       ),
   },
 ];
+
+const RECEIPT_HISTORY_COLUMNS: ReportColumn<ReceiptImportBatch>[] = [
+      { header: "Batch", value: (batch) => batch.id },
+      { header: "File", value: (batch) => batch.fileName },
+      { header: "Receipts", value: (batch) => String(batch.receipts.length) },
+      { header: "Skipped", value: (batch) => String(batch.skipped.length) },
+      { header: "Total", value: (batch) => formatPeso(batch.receipts.reduce((sum, receipt) => sum + receipt.amountCentavos, 0)) },
+      { header: "Status", value: (batch) => (batch.status === "signed_off" ? "Confirmed" : batch.status === "rejected" ? "Rejected" : "Waiting for confirmation") },
+  ];
+
+
+export function ReceiptHistoryExportPanel() {
+  const allowed = useOperation("history-import.manage");
+  const batches = useReceiptImportBatches(allowed);
+  if (!allowed) return <InfoNote title="Access Restricted">Receipt history exports are limited to authorized administrators.</InfoNote>;
+  return (
+    <QueryState isLoading={batches.isLoading} error={batches.error} onRetry={() => void batches.refetch()}>
+      <section aria-label="Receipt History" className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
+        <h2 className="tw:text-base tw:font-semibold">Receipt History</h2>
+        <ReportExport report="Receipt History" fileName="historical-import" columns={RECEIPT_HISTORY_COLUMNS} rows={batches.data ?? []} range={null} printable={false} />
+      </section>
+    </QueryState>
+  );
+}
 
 /** F11.5: Historical import tab of the Finance area. Bring unfinished-sale receipt history in as a batch; it counts only after an Administrator signs the batch off. */
 export function HistoryImportPanel() {
@@ -198,18 +223,6 @@ function BatchesPanel({ batches, isLoading, error }: { batches: ReceiptImportBat
   const [detailId, setDetailId] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<ReceiptImportBatch | null>(null);
   const detail = batches.find((batch) => batch.id === detailId) ?? null;
-  const exportColumns = useMemo<ReportColumn<ReceiptImportBatch>[]>(
-    () => [
-      { header: "Batch", value: (batch) => batch.id },
-      { header: "File", value: (batch) => batch.fileName },
-      { header: "Receipts", value: (batch) => String(batch.receipts.length) },
-      { header: "Skipped", value: (batch) => String(batch.skipped.length) },
-      { header: "Total", value: (batch) => formatPeso(batch.receipts.reduce((sum, receipt) => sum + receipt.amountCentavos, 0)) },
-      { header: "Status", value: (batch) => (batch.status === "signed_off" ? "Confirmed" : batch.status === "rejected" ? "Rejected" : "Waiting for confirmation") },
-    ],
-    [],
-  );
-
   const columns = useMemo<ColumnDef<ReceiptImportBatch, unknown>[]>(
     () => [
       { id: "id", header: "Batch", cell: ({ row }) => <span className="tw:font-semibold">{row.original.id}</span> },
@@ -233,7 +246,7 @@ function BatchesPanel({ batches, isLoading, error }: { batches: ReceiptImportBat
     <QueryState isLoading={isLoading} error={error}>
       {dialog}
       <div className="tw:flex tw:justify-end">
-        <ReportExport report="Old Records Import" fileName="historical-import" columns={exportColumns} rows={batches} range={null} printable={false} />
+        <ReportExport report="Old Records Import" fileName="historical-import" columns={RECEIPT_HISTORY_COLUMNS} rows={batches} range={null} printable={false} />
       </div>
       <DataTable
         data={batches}
@@ -254,7 +267,7 @@ function BatchesPanel({ batches, isLoading, error }: { batches: ReceiptImportBat
         title={detail ? `Batch ${detail.id}` : "Batch"}
         subtitle={detail?.fileName}
         badge={detail ? <BizBadge status={BATCH_BADGE[detail.status]} label={detail.status === "signed_off" ? "Confirmed" : detail.status === "rejected" ? "Rejected" : "Waiting for confirmation"} /> : undefined}
-        footer={detailMenu && detailMenu.extraItems.length > 0 ? detailMenu.extraItems.map((item) => <Button key={item.key} type="button" variant={item.tone === "success" ? "success" : item.danger || item.tone === "danger" ? "destructive" : "outline"} onClick={item.onClick}>{item.label}</Button>) : undefined}
+        footer={detailMenu ? <DetailActions actions={detailMenu.extraItems.map((item) => ({ ...item, next: item.tone === "success", variant: item.tone === "success" ? "success" : item.danger || item.tone === "danger" ? "destructive" : "outline" }))} /> : undefined}
         sections={
           detail
             ? [

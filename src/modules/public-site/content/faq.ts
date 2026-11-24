@@ -192,7 +192,7 @@ export const FAQ_PAGE = {
     titleAccent: "Questions",
     image: { src: "/images/site/resort/amenities-w-pool-with-slides1.webp", alt: "A resort pool with slides" },
     searchLabel: "Search the questions",
-    searchPlaceholder: "Search a question (e.g., amenities, VIP program, payments)",
+    searchPlaceholder: "Search a question about amenities, VIP programs, or payments",
     quickHelpLabel: "Quick help:",
     /** Each chip jumps to (and opens) one question by its id. */
     quickHelp: [

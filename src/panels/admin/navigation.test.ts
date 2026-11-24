@@ -25,11 +25,11 @@ function tabAccess(identityId: string, area: keyof typeof ADMIN_AREA_TABS) {
   return Object.keys(access).filter((tab) => access[tab]);
 }
 
-const ALL_AREAS = ["dashboard", "customers", "customer-lookup", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "vip-products", "experiences", "sales-network", "organization", "reports", "audit-logs"];
+const ALL_AREAS = ["dashboard", "customers", "customer-lookup", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "vip-products", "sales-network", "organization", "reports", "audit-logs"];
 const SELLER_AREAS = ["dashboard", "customers", "sales", "commissions", "membership", "stay-points", "sales-network", "reports"];
 
 describe("admin navigation", () => {
-  it("is a flat list of 15 pages with no groups", () => {
+  it("is a flat list of 14 pages with no groups", () => {
     const items = getAvailableAdminNavigation();
     expect(items.map((item) => item.href)).toEqual([
       "/admin",
@@ -42,7 +42,6 @@ describe("admin navigation", () => {
       "/admin/stay-points",
       "/admin/redemption",
       "/admin/vip-products",
-      "/admin/experiences",
       "/admin/sales-network",
       "/admin/organization",
       "/admin/reports",
@@ -90,10 +89,10 @@ describe("admin navigation", () => {
     expect(tabAccess("dev-finance", "reports")).toContain("collections");
   });
 
-  it("shows the staff Customer Look Up to office roles only, never to sellers", () => {
+  it("shows the staff Customer Search to office roles only, never to sellers", () => {
     for (const identityId of ["dev-super-admin", "dev-admin", "dev-clerk", "dev-finance"]) expect(visibleIds(identityId), identityId).toContain("customer-lookup");
     for (const identityId of ["dev-svd-a", "dev-ost-a1", "dev-hr"]) expect(visibleIds(identityId), identityId).not.toContain("customer-lookup");
-    expect(tabAccess("dev-super-admin", "customers")).toEqual(["customers", "import", "export"]);
+    expect(tabAccess("dev-super-admin", "customers")).toEqual(["customers", "export"]);
   });
 
   it("keeps the former per-page rules for the Administrator", () => {
@@ -109,8 +108,8 @@ describe("admin navigation", () => {
     for (const identityId of ["dev-finance", "dev-clerk", "dev-svd-a", "dev-ost-a1"]) expect(tabAccess(identityId, "vip-products")).not.toContain("igp-projects");
   });
 
-  it("shows Settings only to roles with a setup tab and keeps the Payment Plan Guide in Sales for sellers and the Clerk", () => {
-    const SETTINGS_TABS = ["products", "schemes", "tier-codes", "points-table", "holidays", "venues", "lists", "historical-import", "igp-projects"];
+  it("shows Settings only to roles with a setup tab and keeps the Payment Plans in Sales for sellers and the Clerk", () => {
+    const SETTINGS_TABS = ["products", "schemes", "tier-codes", "points-table", "holidays", "venues", "lists", "historical-import", "igp-projects", "experiences"];
     expect(tabAccess("dev-admin", "vip-products")).toEqual(SETTINGS_TABS);
     expect(tabAccess("dev-super-admin", "vip-products")).toEqual(SETTINGS_TABS);
     for (const identityId of ["dev-svd-a", "dev-ost-a1", "dev-clerk", "dev-finance", "dev-hr"]) {
@@ -159,7 +158,7 @@ describe("admin navigation", () => {
     expect(access(["redemption.configure"])).toMatchObject({ "points-table": true, holidays: true, venues: true });
   });
 
-  it("grants Contracts to sales or vip-products holders and the Payment Plan Guide to either", () => {
+  it("grants Contracts to sales or vip-products holders and the Payment Plans to either", () => {
     expect(getAdminAreaTabAccess("sales", new Set(["vip-products"] as const), new Set())).toMatchObject({ contracts: true, sales: false });
     expect(getAdminAreaTabAccess("sales", new Set(["sales"] as const), new Set())).toMatchObject({ contracts: true, sales: true });
     expect(getAdminAreaTabAccess("sales", new Set(["vip-products"] as const), new Set())).toMatchObject({ "scheme-guide": true });
@@ -197,7 +196,7 @@ describe("admin navigation", () => {
     expect(hrefs).not.toContain("/admin/accounts");
     expect(getAdminBreadcrumbs("/admin/accounts")).toEqual([
       { label: "Dashboard", href: "/admin" },
-      { label: "Accounts and Permissions" },
+      { label: "Staff Access" },
     ]);
   });
 
@@ -206,5 +205,12 @@ describe("admin navigation", () => {
       { label: "Dashboard", href: "/admin" },
       { label: "Page not found" },
     ]);
+  });
+});
+
+describe("Experiences tab in Settings", () => {
+  it("is offered only to roles with the Experiences permission", () => {
+    expect(tabAccess("dev-admin", "vip-products")).toContain("experiences");
+    for (const identityId of ["dev-clerk", "dev-finance", "dev-hr", "dev-svd-a", "dev-ost-a1"]) expect(tabAccess(identityId, "vip-products"), identityId).not.toContain("experiences");
   });
 });

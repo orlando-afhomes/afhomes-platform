@@ -349,6 +349,12 @@ U01 to U13 descriptions are in the atlas `COVERAGE.md` section "Incomplete and u
   - **Sample limit.** The party size ceiling of 20 is a placeholder because no restaurant capacity rule exists. The owner should confirm it, the opening hours and any deposit or cancellation rule before live use.
 - **Earn Points form wording.** "Gross pre-discount amount" is now "Total Bill Amount" and "Excluded amount" is "Amount Not Eligible for Points". The receipt number is issued by the system and the bill date starts at today. The business rules (doc 09) keep their own terms.
 
+### Department role modules (2026-11-24)
+
+- **Every module can be given to a department role (owner, 2026-11-24).** The earlier four-module limit (Dashboard, Departments, Roles, Staff) and the S3-01 limit on Staff Access are replaced. The Create Role checklist lists all modules in groups. Parent navigation scopes are still never granted.
+  - **Still guarded.** A creator can only give modules they hold themselves, so the checklist shows the others locked ("Not held"). A module only opens its page; sensitive actions still need their operation permission from a system role.
+  - **Accreditation changes.** Mark Accredited, Revert Pending and Cancel Accreditation moved from a dropdown in the Members table into the row menu; the Accreditation column is a plain badge. Same rules, reason and confirmation as before.
+
 ### New public website (2026-11-16)
 
 - **UI22, public website rebuilt from the old WordPress site.** The content of afhomes.com.ph is carried over; the design and layout are new.

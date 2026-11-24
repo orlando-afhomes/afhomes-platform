@@ -166,6 +166,8 @@ export type StaffMember = {
   accountId: string | null;
   /** Optional person-profile fields captured by the Add/Edit staff form. */
   firstName?: string | null;
+  /** Optional name prefix (Mr., Ms., Dr., …); null when absent. */
+  prefix?: string | null;
   /** Null when the staff member attested they have no middle name. */
   middleName?: string | null;
   lastName?: string | null;

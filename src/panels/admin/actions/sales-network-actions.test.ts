@@ -139,6 +139,24 @@ describe("buildMemberMenuProps", () => {
     expect(keysOf(noRight)).not.toContain("set-accreditation");
   });
 
+  it("offers the accreditation changes that fit the current status, only with the edit right", () => {
+    const change = vi.fn();
+    const cb = { ...rowCb(), onAccreditationChange: change };
+    const pending = buildMemberMenuProps(member("OST", "active"), { ...FULL_PERMS, accreditationEditable: "pending" }, cb);
+    expect(keysOf(pending)).toEqual(expect.arrayContaining(["accreditation-accredit", "accreditation-cancel"]));
+    expect(keysOf(pending)).not.toContain("accreditation-revert");
+    pending.extraItems.find((item) => item.key === "accreditation-accredit")?.onClick();
+    expect(change).toHaveBeenCalledWith("active");
+    const active = buildMemberMenuProps(member("OST", "active"), { ...FULL_PERMS, accreditationEditable: "active" }, cb);
+    expect(keysOf(active)).toEqual(expect.arrayContaining(["accreditation-revert", "accreditation-cancel"]));
+    expect(keysOf(active)).not.toContain("accreditation-accredit");
+    expect(active.extraItems.find((item) => item.key === "accreditation-cancel")?.danger).toBe(true);
+    const noRight = buildMemberMenuProps(member("OST", "active"), { ...FULL_PERMS, canEditAccreditation: false, accreditationEditable: "active" }, cb);
+    expect(keysOf(noRight).some((key) => key.startsWith("accreditation-"))).toBe(false);
+    const locked = buildMemberMenuProps(member("OST", "active"), { ...FULL_PERMS, accreditationEditable: null }, cb);
+    expect(keysOf(locked).some((key) => key.startsWith("accreditation-"))).toBe(false);
+  });
+
   it("offers renew only with the renew right and an open window", () => {
     const open = buildMemberMenuProps(member("SSM", "active"), { ...FULL_PERMS, renewalAllowed: true }, rowCb());
     expect(keysOf(open)).toContain("renew-accreditation");

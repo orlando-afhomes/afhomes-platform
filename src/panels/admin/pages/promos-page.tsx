@@ -2,7 +2,7 @@
 
 import { EMPTY } from "@/shared/lib/empty-value";
 import { useMemo, useState } from "react";
-import { Eye, Plus } from "lucide-react";
+import { Ban, Eye, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useOperation } from "@/data/business-queries";
 import type { PromoInput, PromoRewardInput, PromoView } from "@/data/contracts/promo-repository";
@@ -103,9 +103,9 @@ export function PromosPanel() {
             itemName={promo.name}
             onEdit={canManagePromo ? () => setEditing(promo) : undefined}
             extraItems={canManagePromo ? [
-              { key: "offer", label: "Public Offer & Rewards", onClick: () => setOfferEditing(promo) },
+              { key: "offer", label: "Public Offer", icon: Eye, onClick: () => setOfferEditing(promo) },
               {
-                key: "end", label: "End Promo", danger: true,
+                key: "end", label: "End Promo", icon: Ban, danger: true,
                 onClick: () => confirmRun({
                   title: `End ${promo.name}?`,
                   description: "No new points are earned after today. Points already earned stay usable until they expire.",
@@ -151,7 +151,7 @@ export function PromosPanel() {
         }] : []}
         footer={detail ? (
           <Button type="button" variant="outline" onClick={() => setPreviewId(detail.id)}>
-            <Eye aria-hidden="true" /> Preview public offer
+            <Eye aria-hidden="true" /> Preview Offer
           </Button>
         ) : undefined}
       />
@@ -186,7 +186,7 @@ function PreviewOfferDialog({ id, name, onClose }: { id: string; name: string; o
     <Dialog open onOpenChange={(next) => (!next ? onClose() : undefined)}>
       <DialogContent className="tw:max-h-[90vh] tw:overflow-y-auto tw:sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Preview public offer</DialogTitle>
+          <DialogTitle>Preview Offer</DialogTitle>
           <DialogDescription>{name}. This preview never publishes the offer.</DialogDescription>
         </DialogHeader>
         {preview.isLoading ? <p role="status" className="tw:text-sm tw:text-muted-foreground">Loading preview…</p> : null}
@@ -280,7 +280,7 @@ function PublicOfferDialog({ editing, onClose }: { editing: PromoView; onClose: 
   return (
     <FormDialog
       open
-      title="Public Offer & Rewards"
+      title="Public Offer"
       size="lg"
       scrollBody
       description="Only a published offer with complete public copy and at least one priced reward appears on the website."

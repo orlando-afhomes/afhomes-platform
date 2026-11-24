@@ -85,10 +85,10 @@ describe("admin mobile nav", () => {
     renderNav();
     await user.click(screen.getByRole("button", { name: "Open navigation" }));
     expect(screen.getByRole("dialog")).toBeDefined();
-    expect(screen.queryByText("Accounts and Permissions")).toBeNull();
+    expect(screen.queryByText("Staff Access")).toBeNull();
     cleanup();
     renderNav("dev-hr");
     await user.click(screen.getByRole("button", { name: "Open navigation" }));
-    expect(screen.queryByText("Accounts and Permissions")).toBeNull();
+    expect(screen.queryByText("Staff Access")).toBeNull();
   });
 });

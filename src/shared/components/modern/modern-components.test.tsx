@@ -26,14 +26,14 @@ async function openByKeyboard(user: User) {
 }
 
 describe("modern RowActionsMenu", () => {
-  it("opens by keyboard, lists items, and keeps an unavailable Delete focusable with a visible reason", async () => {
+  it("opens by keyboard, lists items, and keeps an unavailable Delete focusable", async () => {
     const user = userEvent.setup();
     const onEdit = vi.fn();
     render(<RowActionsMenu itemName="Row One" onEdit={onEdit} deleteDisabledReason={REASON} />);
     await openByKeyboard(user);
     const item = screen.getByRole("menuitem", { name: "Delete (unavailable)" });
     expect(item).not.toHaveAttribute("aria-disabled", "true");
-    expect(screen.getByRole("note")).toHaveTextContent(REASON);
+    expect(screen.queryByRole("note")).toBeNull();
     expect(screen.getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
     item.focus();
     expect(item).toHaveFocus();

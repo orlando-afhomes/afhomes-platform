@@ -32,12 +32,12 @@ const PREFIX_OPTIONS = ["Mr.", "Mrs.", "Ms.", "Miss", "Mx.", "Dr.", "Atty.", "En
 export { toDraft, toInput, type CustomerDraft, type CustomerErrors, type SetDraft } from "./customer-draft";
 
 /** Titled block (own card, icon, short intro) so related inputs read as one unit. */
-export function SectionBlock({ title, description, icon, action, children }: { title: string; description?: string; icon?: ReactNode; action?: ReactNode; children: ReactNode }) {
+export function SectionBlock({ title, description, icon, iconTone, action, children }: { title: string; description?: string; icon?: ReactNode; /** Tailwind classes for the icon chip colors; defaults to the brand tint. */ iconTone?: string; action?: ReactNode; children: ReactNode }) {
   return (
     <Card className="customer-application__block tw:gap-5 tw:p-5 tw:md:p-6">
       <header className="tw:flex tw:items-start tw:gap-3 tw:border-b tw:border-border tw:pb-4">
         {icon ? (
-          <span aria-hidden="true" className="tw:flex tw:size-10 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-xl tw:bg-primary/10 tw:text-primary">
+          <span aria-hidden="true" className={`tw:flex tw:size-10 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-xl ${iconTone ?? "tw:bg-primary/10 tw:text-primary"}`}>
             {icon}
           </span>
         ) : null}
@@ -657,7 +657,7 @@ export function AttributionSection({ draft, set, errors, members, existing, pend
             set("referrerMemberId", "");
             if (office) set("ownerMemberId", "");
           }}>
-            Clear Seller Selections
+            Clear Sellers
           </Button>
         </div>
       ) : null}

@@ -117,6 +117,9 @@ export function ReconciliationPanel() {
     <>
       {canReconcile ? (
         <>
+          <InfoNote title="What this page is for">
+            During the trial months the company spreadsheet is still used. Once a month, enter its totals here to check that they match the system. When a month closes with no unexplained differences, the team can switch fully to this system.
+          </InfoNote>
           <section aria-label="Month to check" className="tw:flex tw:flex-col tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-4">
             <div className="tw:flex tw:flex-wrap tw:items-end tw:justify-between tw:gap-3">
               <SelectField label="Month" value={period} options={options} onChange={setPeriod} className="tw:w-full tw:sm:w-64" />
@@ -196,7 +199,7 @@ export function ReconciliationPanel() {
                 measure.entry ? (
                   <Button type="button" variant="warning" onClick={() => startRecording(measure.total)}>Record Again</Button>
                 ) : (
-                  <Button type="button" variant="info" onClick={() => startRecording(measure.total)}>Enter Company Spreadsheet Total</Button>
+                  <Button type="button" variant="info" onClick={() => startRecording(measure.total)}>Enter Total</Button>
                 )
               ) : undefined
             }

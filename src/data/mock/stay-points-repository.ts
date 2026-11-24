@@ -76,7 +76,6 @@ export class MockStayPointsRepository extends BusinessRepository implements Stay
             || input.excludedCentavos < 0 || input.excludedCentavos >= input.grossCentavos) {
             throw new Error("Enter a positive gross amount and exclusions below the gross amount.");
           }
-          if (counter && !input.description.trim()) throw new Error("Enter the service used.");
           const taken = (candidate: string) => hasResortReceiptReference(this.store, candidate) || hasRedemptionReceiptReference(this.store, candidate)
             || hasImportedReceiptReference(this.store, candidate) || Boolean(findReferenceConflict(this.store.payments, candidate));
           // The staff form never sends a number: the system issues OR-YYYYMMDD-NNNN. A supplied number (imports) still goes through the duplicate check.

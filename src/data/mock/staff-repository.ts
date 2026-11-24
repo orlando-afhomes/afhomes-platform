@@ -94,6 +94,7 @@ function profileFields(input: StaffProfileInput) {
   };
   const patch: Record<string, string | null | undefined> = {
     firstName: text(input.firstName),
+    prefix: text(input.prefix),
     middleName: text(input.middleName),
     lastName: text(input.lastName),
     suffix: text(input.suffix),

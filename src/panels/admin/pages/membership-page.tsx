@@ -18,7 +18,7 @@ export function MembershipAreaPage() {
       title="Membership"
       tabs={[
         { value: "memberships", label: "Memberships", allowed: access.memberships, render: () => <MembershipsPanel /> },
-        { value: "activation", label: "Ready to Activate", allowed: access.activation, render: () => <ActivationQueuePanel /> },
+        { value: "activation", label: "To Activate", allowed: access.activation, render: () => <ActivationQueuePanel /> },
       ]}
     />
   );

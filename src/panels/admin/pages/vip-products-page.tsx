@@ -15,6 +15,7 @@ import { matchesSearch } from "@/shared/lib/search";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { Money } from "@/shared/components/modern/money";
 import { ImagePreview } from "@/shared/components/modern/image-preview";
+import { DetailActions } from "@/shared/components/modern/detail-actions";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
@@ -31,11 +32,12 @@ function SettingsPanelLoading() {
 }
 
 const PaymentSchemesTab = dynamic(() => import("./payment-schemes-page").then((module) => module.PaymentSchemesTab), { loading: SettingsPanelLoading });
-const HistoryImportPanel = dynamic(() => import("./history-import-page").then((module) => module.HistoryImportPanel), { loading: SettingsPanelLoading });
+const ReceiptHistoryExportPanel = dynamic(() => import("./history-import-page").then((module) => module.ReceiptHistoryExportPanel), { loading: SettingsPanelLoading });
+const ExperiencesPanel = dynamic(() => import("./experiences-page").then((module) => module.ExperiencesPanel), { loading: SettingsPanelLoading });
 const IgpProjectsTab = dynamic(() => import("./igp-projects-page").then((module) => module.IgpProjectsTab), { loading: SettingsPanelLoading });
 
 /** Header button per tab: the label and the operation that allows it. */
-const ADD_BUTTONS: Partial<Record<string, { label: string; operation: "vip-products.manage" | "redemption.configure" | "igp.manage" }>> = {
+const ADD_BUTTONS: Partial<Record<string, { label: string; operation: "vip-products.manage" | "redemption.configure" | "igp.manage" | "experiences.manage" }>> = {
   products: { label: "New product", operation: "vip-products.manage" },
   schemes: { label: "New payment plan", operation: "vip-products.manage" },
   "tier-codes": { label: "Add card level", operation: "vip-products.manage" },
@@ -43,6 +45,7 @@ const ADD_BUTTONS: Partial<Record<string, { label: string; operation: "vip-produ
   holidays: { label: "Add holiday", operation: "redemption.configure" },
   venues: { label: "Add venue", operation: "redemption.configure" },
   "igp-projects": { label: "Add project", operation: "igp.manage" },
+  experiences: { label: "New experience", operation: "experiences.manage" },
 };
 
 /**
@@ -56,6 +59,7 @@ export function VipProductsAreaPage() {
     "vip-products.manage": useOperation("vip-products.manage"),
     "redemption.configure": useOperation("redemption.configure"),
     "igp.manage": useOperation("igp.manage"),
+    "experiences.manage": useOperation("experiences.manage"),
   };
   const canManageLists = useOperation("settings.lists.manage");
   const [creating, setCreating] = useState<string | null>(null);
@@ -67,7 +71,7 @@ export function VipProductsAreaPage() {
 
   return (
     <AreaPage
-      anyOf={["vip-products", "redemption", "departments", "reports", "sales", "finance"]}
+      anyOf={["vip-products", "redemption", "departments", "reports", "sales", "finance", "experiences"]}
       title="Settings"
       actions={(tab) => {
         if (tab === "lists" && canManageLists) {
@@ -95,8 +99,9 @@ export function VipProductsAreaPage() {
             case "holidays": return <RedemptionHolidaysPanel {...createProps} />;
             case "venues": return <RedemptionVenuesPanel {...createProps} />;
             case "lists": return <ListsPage embedded list={list} onListChange={setList} adding={addingListItem} onAddingChange={setAddingListItem} />;
-            case "historical-import": return <HistoryImportPanel />;
+            case "historical-import": return <ReceiptHistoryExportPanel />;
             case "igp-projects": return <IgpProjectsTab adding={open(value)} onAddingClose={close} />;
+            case "experiences": return <ExperiencesPanel creating={operations["experiences.manage"] && open(value)} onCloseCreate={close} />;
           }
         },
       }))}
@@ -159,7 +164,7 @@ export function VipProductsTab({ creating, onCloseCreate }: { creating: boolean;
             { label: "Approval filter", value: approvalFilter, onChange: setApprovalFilter, options: [{ value: "all", label: "All approvals" }, { value: "draft", label: "Draft" }, { value: "approved", label: "Approved" }] },
             { label: "Card level filter", value: tierFilter, onChange: setTierFilter, options: [{ value: "all", label: "All card levels" }, ...tierNameOptions] },
           ]} />
-          <DataTable data={visibleProducts} columns={productColumns} getRowId={(row) => row.code} emptyText={(products.data ?? []).length === 0 ? "No products." : "No products match the filters."} caption="VIP Product Catalog" onRowOpen={(row) => setProductCode(row.code)} getRowLabel={(row) => `Open ${row.name}`} rowActions={(row) => <RowActionsMenu itemName={row.name} onEdit={canManage ? () => setEditing(row) : undefined} extraItems={canApprove && row.approvalStatus === "draft" ? [{ key: "approve", label: "Approve product", tone: "success", onClick: () => setApprovalTarget(row) }] : []} onDelete={canManage && blockers.data && blockers.data[row.code] === null ? () => deleteProduct.mutateAsync({ code: row.code, reason: "Unused product removed from the catalog." }) : undefined} deleteDisabledReason={canManage ? blockers.data?.[row.code] : undefined} deleteDescription="This removes the product from the catalog. It has not been used, and the removal is recorded in the audit log." />} />
+          <DataTable data={visibleProducts} columns={productColumns} getRowId={(row) => row.code} emptyText={(products.data ?? []).length === 0 ? "No products." : "No products match the filters."} caption="VIP Product Catalog" onRowOpen={(row) => setProductCode(row.code)} getRowLabel={(row) => `Open ${row.name}`} rowActions={(row) => <RowActionsMenu itemName={row.name} onEdit={canManage ? () => setEditing(row) : undefined} extraItems={canApprove && row.approvalStatus === "draft" ? [{ key: "approve", label: "Approve product", tone: "success", icon: ShieldCheck, onClick: () => setApprovalTarget(row) }] : []} onDelete={canManage && blockers.data && blockers.data[row.code] === null ? () => deleteProduct.mutateAsync({ code: row.code, reason: "Unused product removed from the catalog." }) : undefined} deleteDisabledReason={canManage ? blockers.data?.[row.code] : undefined} deleteDescription="This removes the product from the catalog. It has not been used, and the removal is recorded in the audit log." />} />
         </QueryState>
       <RecordDetailsSheet
         open={productDetail !== null}
@@ -206,22 +211,12 @@ export function VipProductsTab({ creating, onCloseCreate }: { creating: boolean;
             : []
         }
         history={productDetail ? productDetail.changes.map((item) => ({ key: `${item.date}-${item.version}`, when: `Changed on ${formatDate(item.date)}`, text: item.reason })) : []}
-        footer={
-          productDetail && canManage ? (
-            <>
-              {productDetail.approvalStatus === "draft" && canApprove ? (
-                <Button type="button" variant="success" onClick={() => setApprovalTarget(productDetail)}><ShieldCheck aria-hidden="true" /> Approve Product</Button>
-              ) : null}
-              {productDetail.approvalStatus === "approved" && productDetail.status === "retired" ? (
-                <Button type="button" variant="success" onClick={() => setStatusTarget(productDetail)}><CircleCheck aria-hidden="true" /> Make Available</Button>
-              ) : null}
-              <Button type="button" variant="warning" onClick={() => { setEditing(productDetail); setProductCode(null); }}><Pencil aria-hidden="true" /> Edit Product</Button>
-              {productDetail.approvalStatus === "approved" && productDetail.status === "active" ? (
-                <Button type="button" variant="destructive" onClick={() => setStatusTarget(productDetail)}><CircleOff aria-hidden="true" /> Make Unavailable</Button>
-              ) : null}
-            </>
-          ) : undefined
-        }
+        footer={productDetail && canManage ? <DetailActions actions={[
+          productDetail.approvalStatus === "draft" && canApprove && { key: "approve", label: "Approve Product", next: true, icon: ShieldCheck, variant: "success", onClick: () => setApprovalTarget(productDetail) },
+          productDetail.approvalStatus === "approved" && productDetail.status === "retired" && { key: "available", label: "Make Available", next: true, icon: CircleCheck, variant: "success", onClick: () => setStatusTarget(productDetail) },
+          { key: "edit", label: "Edit Product", next: true, icon: Pencil, variant: "warning", onClick: () => { setEditing(productDetail); setProductCode(null); } },
+          productDetail.approvalStatus === "approved" && productDetail.status === "active" && { key: "unavailable", label: "Make Unavailable", icon: CircleOff, variant: "destructive", onClick: () => setStatusTarget(productDetail) },
+        ]} /> : undefined}
       />
       <ReasonDialog
         open={statusTarget !== null}

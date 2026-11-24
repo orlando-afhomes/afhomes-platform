@@ -313,8 +313,9 @@ describe("staff repository", () => {
   it("creates staff", async () => {
     const store = createMockStore();
     const repo = createMockRepositories(store, () => getDevIdentity("dev-admin")).staff;
-    const created = await repo.create({ displayName: "New Staff", position: "Analyst", departmentId: null, email: "new@afhomes.local" });
+    const created = await repo.create({ displayName: "New Staff", position: "Analyst", departmentId: null, email: "new@afhomes.local", prefix: "Dr." });
     expect(created.displayName).toBe("New Staff");
+    expect(created.prefix).toBe("Dr.");
     expect((await repo.list()).some((s) => s.displayName === "New Staff")).toBe(true);
   });
 

@@ -304,17 +304,14 @@ function LinkedBadge({ value }: { value: string }) {
 
 export type LinkedRecordTab = "contract" | "sales" | "membership";
 
-function LinkedRow({ icon: Icon, title, value, last, onOpen }: { icon: LucideIcon; title: string; value: string; last?: boolean; onOpen: () => void }) {
+function LinkedRow({ icon: Icon, title, value, onOpen }: { icon: LucideIcon; title: string; value: string; onOpen: () => void }) {
   return (
     <li className="customer-detail__linked-row">
       <button
         type="button"
         onClick={onOpen}
         aria-label={`Open ${title}`}
-        className={cn(
-          "tw:flex tw:min-h-14 tw:w-full tw:cursor-pointer tw:items-center tw:gap-3 tw:rounded-lg tw:px-2 tw:py-3 tw:text-left tw:transition-colors tw:hover:bg-muted/60 tw:focus-visible:ring-3 tw:focus-visible:ring-ring/40 tw:focus-visible:outline-none",
-          !last && "tw:border-b tw:border-border",
-        )}
+        className="tw:flex tw:min-h-14 tw:w-full tw:cursor-pointer tw:items-center tw:gap-3 tw:rounded-lg tw:px-2 tw:py-3 tw:text-left tw:transition-colors tw:hover:bg-muted/60 tw:focus-visible:ring-3 tw:focus-visible:ring-ring/40 tw:focus-visible:outline-none"
       >
         <Icon aria-hidden="true" className="tw:size-5 tw:shrink-0 tw:text-primary" />
         <span className="tw:w-32 tw:shrink-0 tw:text-sm tw:font-semibold tw:text-foreground">{title}</span>
@@ -352,7 +349,7 @@ export function LinkedRecordsCard({
         <ul className="tw:m-0 tw:flex tw:list-none tw:flex-col tw:p-0">
           <LinkedRow icon={FileText} title="Contract" value={contractLabel} onOpen={() => onOpen("contract")} />
           <LinkedRow icon={ShoppingCart} title="Sale" value={saleLabel} onOpen={() => onOpen("sales")} />
-          <LinkedRow icon={Crown} title="VIP Membership" value={membershipLabel} last onOpen={() => onOpen("membership")} />
+          <LinkedRow icon={Crown} title="VIP Membership" value={membershipLabel} onOpen={() => onOpen("membership")} />
         </ul>
         {showSaleValue && saleValueCentavos != null ? (
           <p className="customer-detail__valuebar tw:m-0 tw:mt-1 tw:flex tw:items-center tw:gap-2 tw:rounded-xl tw:px-4 tw:py-3">

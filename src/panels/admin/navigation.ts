@@ -68,7 +68,7 @@ export type AdminAreaTabRule = {
  * its payout bar only to payout staff); keep those inside the tab panel.
  *
  * Former sidebar rules (grants default to the item id):
- * - Customers: customers [customers]; Customer Import [customers] + customers.import (was hidden).
+ * - Customers: customers [customers]; Export [customers] + customers.import.
  * - Sales: Sales Records [sales]; Contracts (including review) [sales, vip-products];
  *   IGP Sales [sales, finance]; Scheme Guide [vip-products, sales] (moved from VIP Products).
  * - Finance: Payment Verification [finance, sales] + finance.verify; Collections (Financial Holds is
@@ -83,7 +83,7 @@ export type AdminAreaTabRule = {
  * - Redemption: Bookings [redemption] (also cardholder points).
  * - Settings (key "vip-products"): Product Catalog, Payment Schemes, Tier Codes [vip-products]; Points
  *   Table, Holidays and Venues [redemption] + redemption.configure (hidden from Finance and other
- *   read-only holders); Lists [departments] + settings.lists.manage; Historical Import [reports] +
+ *   read-only holders); Lists [departments] + settings.lists.manage; Receipt History [reports] +
  *   history-import.manage; IGP Projects [sales, finance] + igp.manage.
  * - Sales Network: the group itself [sales-network]; Members [sales-network-members]; Genealogy
  *   [sales-network-genealogy]; OST Applications [accreditation-registrations]. Every role holding
@@ -95,22 +95,21 @@ export type AdminAreaTabRule = {
 export const ADMIN_AREA_TABS = {
   customers: [
     { value: "customers", label: "Customers", formerHref: "/admin/customers", rule: { grants: ["customers"] } },
-    { value: "import", label: "Import", formerHref: "/admin/customers/import-export", rule: { grants: ["customers"], operation: "customers.import" } },
     { value: "export", label: "Export", formerHref: "/admin/customers/import-export", rule: { grants: ["customers"], operation: "customers.import" } },
   ],
   sales: [
     { value: "sales", label: "Sales", formerHref: "/admin/sales", rule: { grants: ["sales"] } },
     { value: "contracts", label: "Contracts", formerHref: "/admin/sales/contracts", rule: { grants: ["sales", "vip-products"] } },
-    { value: "igp", label: "Property Sales (IGP)", formerHref: "/admin/sales/igp", rule: { grants: ["sales", "finance"] } },
+    { value: "igp", label: "Property Sales", formerHref: "/admin/sales/igp", rule: { grants: ["sales", "finance"] } },
     // Moved from VIP Products so sellers and the Clerk reach it without the Settings area.
-    { value: "scheme-guide", label: "Payment Plan Guide", formerHref: "/admin/sales", rule: { grants: ["vip-products", "sales"] } },
+    { value: "scheme-guide", label: "Payment Plans", formerHref: "/admin/sales", rule: { grants: ["vip-products", "sales"] } },
   ],
   finance: [
     { value: "verification", label: "Receipts", formerHref: "/admin/finance", rule: { grants: ["finance", "sales"], operation: "finance.verify" } },
-    { value: "collections", label: "Collections", formerHref: "/admin/finance/collections", rule: { grants: ["finance"] } },
+    { value: "collections", label: "Payment Status", formerHref: "/admin/finance/collections", rule: { grants: ["finance"] } },
     { value: "cancellations", label: "Cancellations", formerHref: "/admin/finance/cancellations", rule: { grants: ["finance"] } },
-    { value: "month-end-close", label: "Close the Month", formerHref: "/admin/reports/period-close", rule: { grants: ["reports"], operation: "finance.verify" } },
-    { value: "reconciliation", label: "Compare with Spreadsheet", formerHref: "/admin/reports/reconciliation", rule: { grants: ["reports"], operation: "reconciliation.manage" } },
+    { value: "month-end-close", label: "Month-End", formerHref: "/admin/reports/period-close", rule: { grants: ["reports"], operation: "finance.verify" } },
+    { value: "reconciliation", label: "Monthly Check", formerHref: "/admin/reports/reconciliation", rule: { grants: ["reports"], operation: "reconciliation.manage" } },
   ],
   commissions: [
     { value: "commissions", label: "Commissions", formerHref: "/admin/commissions", rule: { grants: ["commissions"] } },
@@ -120,33 +119,31 @@ export const ADMIN_AREA_TABS = {
   ],
   membership: [
     { value: "memberships", label: "Memberships", formerHref: "/admin/membership", rule: { grants: ["membership"] } },
-    { value: "activation", label: "Ready to Activate", formerHref: "/admin/membership/activation", rule: { grants: ["membership"], operation: "membership.activate" } },
+    { value: "activation", label: "To Activate", formerHref: "/admin/membership/activation", rule: { grants: ["membership"], operation: "membership.activate" } },
   ],
   "stay-points": [
     { value: "welcome-gift", label: "Annual Points", formerHref: "/admin/stay-points", rule: { grants: ["stay-points"] } },
-    { value: "resort-bills", label: "Bills to Review", formerHref: "/admin/stay-points", rule: { grants: ["stay-points"] } },
+    { value: "resort-bills", label: "Pending Bills", formerHref: "/admin/stay-points", rule: { grants: ["stay-points"] } },
     { value: "waivers", label: "Special Cases", formerHref: "/admin/stay-points", rule: { grants: ["stay-points"] } },
     { value: "promos", label: "Promotions", formerHref: "/admin/promos", rule: { grants: ["stay-points"] } },
     { value: "promo-points", label: "Promo History", formerHref: "/admin/promos/points", rule: { grants: ["stay-points"] } },
   ],
   redemption: [
-    { value: "bookings", label: "Bookings", formerHref: "/admin/redemption", rule: { grants: ["redemption"] } },
-    { value: "cardholder-points", label: "Card Points", formerHref: "/admin/redemption", rule: { grants: ["redemption"] } },
+    { value: "bookings", label: "Stay Bookings", formerHref: "/admin/redemption", rule: { grants: ["redemption"] } },
+    { value: "cardholder-points", label: "Points Balance", formerHref: "/admin/redemption", rule: { grants: ["redemption"] } },
   ],
   // Settings: product setup plus the setup tabs moved from Redemption, Organization, Finance and Sales.
   "vip-products": [
     { value: "products", label: "Products", formerHref: "/admin/vip-products", rule: { grants: ["vip-products"] } },
     { value: "schemes", label: "Payment Plans", formerHref: "/admin/vip-products/schemes", rule: { grants: ["vip-products"] } },
     { value: "tier-codes", label: "Card Levels", formerHref: "/admin/vip-products/tier-codes", rule: { grants: ["vip-products"] } },
-    { value: "points-table", label: "Points per Night", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
+    { value: "points-table", label: "Night Rates", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
     { value: "holidays", label: "Holidays", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
     { value: "venues", label: "Venues", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
-    { value: "lists", label: "Programs, IDs & Banks", formerHref: "/admin/settings/lists", rule: { grants: ["departments"], operation: "settings.lists.manage" } },
-    { value: "historical-import", label: "Import Old Records", formerHref: "/admin/reports/historical-import", rule: { grants: ["reports"], operation: "history-import.manage" } },
-    { value: "igp-projects", label: "Property Projects (IGP)", formerHref: "/admin/vip-products", rule: { grants: ["sales", "finance"], operation: "igp.manage" } },
-  ],
-  // One-tab area: the Experiences page is a single view; the entry gives its audit events a notification destination.
-  experiences: [
+    { value: "lists", label: "Reference Lists", formerHref: "/admin/settings/lists", rule: { grants: ["departments"], operation: "settings.lists.manage" } },
+    { value: "historical-import", label: "Receipt History", formerHref: "/admin/reports/historical-import", rule: { grants: ["reports"], operation: "history-import.manage" } },
+    { value: "igp-projects", label: "Projects", formerHref: "/admin/vip-products", rule: { grants: ["sales", "finance"], operation: "igp.manage" } },
+    // Website content moved here from its own menu entry; the page keeps its own permission.
     { value: "experiences", label: "Experiences", formerHref: "/admin/experiences", rule: { grants: ["experiences"] } },
   ],
   "sales-network": [
@@ -206,7 +203,7 @@ export const CUSTOMER_LOOKUP_GRANTS: AdminModuleId[] = ["customers", "membership
 export const adminNavigation: AdminNavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/admin", available: true },
   areaItem("customers", "Customers"),
-  { id: "customer-lookup", label: "Customer Look Up", href: CUSTOMER_LOOKUP_HREF, available: true, grants: CUSTOMER_LOOKUP_GRANTS, operation: "customers.lookup" },
+  { id: "customer-lookup", label: "Customer Search", href: CUSTOMER_LOOKUP_HREF, available: true, grants: CUSTOMER_LOOKUP_GRANTS, operation: "customers.lookup" },
   areaItem("sales", "Sales"),
   areaItem("finance", "Payments"),
   areaItem("commissions", "Commissions"),
@@ -214,12 +211,11 @@ export const adminNavigation: AdminNavItem[] = [
   areaItem("stay-points", "Stay Points"),
   areaItem("redemption", "Redemption"),
   areaItem("vip-products", "Settings"),
-  areaItem("experiences", "Experiences"),
   areaItem("sales-network", "Sales Network"),
   areaItem("organization", "Organization"),
   // Compatibility entry point only: /admin/accounts forwards authorized users to
   // the Account-only view of Staff & Access. Never listed in the sidebar or Drawer.
-  { id: "accounts", label: "Accounts and Permissions", href: "/admin/accounts", available: true, hideFromNav: true },
+  { id: "accounts", label: "Staff Access", href: "/admin/accounts", available: true, hideFromNav: true },
   areaItem("reports", "Reports"),
   { id: "audit-logs", label: "Audit Logs", href: "/admin/audit-logs", available: true },
 ];

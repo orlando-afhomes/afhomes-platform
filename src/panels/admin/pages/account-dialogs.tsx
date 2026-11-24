@@ -3,13 +3,13 @@
 import { EMPTY } from "@/shared/lib/empty-value";
 import { useState } from "react";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { Ban, CircleCheck, Clock, LockKeyhole, X } from "lucide-react";
 import type { Account, AccountActionPolicy, AccountStatus } from "@/modules/accounts/types";
 import { LINKED_ACCOUNT_RESTRICTION } from "@/data/mock/account-repository";
 import { getSystemRoleLabel } from "@/panels/admin/role-label";
 import { DetailList, DetailRow, InfoNote } from "@/shared/components/modern/detail-list";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
-import { TextField } from "@/shared/forms/modern";
+import { RadioCardField, TextField } from "@/shared/forms/modern";
 import { isValidEmail } from "@/shared/utils/input-sanitizers";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -17,6 +17,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { SearchSelect } from "@/shared/components/modern/search-select";
 
 export type AccountDialogMode = "view" | "edit" | "role" | "status" | null;
+
+const STATUS_HELP: Record<AccountStatus, { text: string; icon: React.ReactNode }> = {
+  pending: { text: "Waiting to be activated.", icon: <Clock className="tw:size-4" /> },
+  active: { text: "Can sign in and use the modules it is allowed.", icon: <CircleCheck className="tw:size-4" /> },
+  suspended: { text: "Cannot sign in until it is reactivated.", icon: <LockKeyhole className="tw:size-4" /> },
+  deactivated: { text: "Closed. Cannot sign in.", icon: <Ban className="tw:size-4" /> },
+};
 
 const STATUS_LABELS: Record<AccountStatus, string> = {
   pending: "Pending",
@@ -312,7 +319,7 @@ function StatusEditor({
   const [status, setStatus] = useState<AccountStatus | null>(null);
   const [saving, setSaving] = useState(false);
   const allowed = policy?.allowedStatuses ?? [];
-  const statusItems = allowed.map((value) => ({ value, label: STATUS_LABELS[value] }));
+  const statusOptions = allowed.map((value) => ({ value, label: STATUS_LABELS[value], description: STATUS_HELP[value].text, icon: STATUS_HELP[value].icon }));
 
   const handleSave = async () => {
     if (!status) return;
@@ -332,9 +339,7 @@ function StatusEditor({
         Current status: <StatusBadge status={account.status} />
       </p>
       {allowed.length > 0 ? (
-        <div className="tw:w-full">
-          <SearchSelect items={statusItems} value={status} onChange={(next) => setStatus(next as AccountStatus | null)} placeholder="Select new status" aria-label="Account status" />
-        </div>
+        <RadioCardField<AccountStatus> label="New status" required variant="card" groupClassName="tw:md:grid-cols-1 tw:xl:grid-cols-1" value={status ?? undefined} options={statusOptions} onChange={setStatus} />
       ) : (
         <InfoNote>{policy?.restriction ?? "No status change is available for this account."}</InfoNote>
       )}

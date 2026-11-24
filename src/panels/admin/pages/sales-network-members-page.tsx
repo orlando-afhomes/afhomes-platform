@@ -27,7 +27,7 @@ import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { Button } from "@/shared/ui/button";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
-import { AccreditationStatusAction } from "../components/accreditation-status-action";
+import { AccreditationBadge, AccreditationChangeHost, type AccreditationChangeTarget } from "../components/accreditation-status-action";
 import { DesignationBadge } from "@/shared/components/business/designation-badge";
 import { AccreditedSellerDialog } from "./sales-network-accredited-seller-dialog";
 
@@ -89,6 +89,7 @@ export function SalesNetworkMembersPage({
   const [editMember, setEditMember] = useState<OrgMember | null>(null);
   const [transferMember, setTransferMember] = useState<OrgMember | null>(null);
   const [accreditMember, setAccreditMember] = useState<OrgMember | null>(null);
+  const [accreditationChange, setAccreditationChange] = useState<AccreditationChangeTarget | null>(null);
   const [renewTarget, setRenewTarget] = useState<{ record: AccreditationRecord; memberName: string } | null>(null);
   const { mutateAsync: changeStatus } = useChangeSalesNetworkMemberStatus();
   const issuePending = useIssuePendingAccreditation();
@@ -157,15 +158,7 @@ export function SalesNetworkMembersPage({
         errorTitle: "Status update failed.",
       });
     };
-    const accreditation = (record: OrgMember) => (
-      <AccreditationStatusAction
-        records={accreditationRecordsByMember.get(record.id)}
-        aaNumber={record.aaNumber ?? null}
-        canEdit={canEditAccreditation}
-        memberId={record.id}
-        memberName={record.displayName}
-      />
-    );
+    const accreditation = (record: OrgMember) => <AccreditationBadge records={accreditationRecordsByMember.get(record.id)} />;
     return [
       {
         id: "displayName",
@@ -190,6 +183,7 @@ export function SalesNetworkMembersPage({
           const record = row.original;
           const records = accreditationRecordsByMember.get(record.id);
           const renew = resolveRenewTarget(records);
+          const display = resolveAccreditationDisplay(records);
           const menu = buildMemberMenuProps(
             record,
             {
@@ -199,14 +193,18 @@ export function SalesNetworkMembersPage({
               canReactivate: isAdmin,
               canEditAccreditation,
               canRenew,
-              accreditationNone: resolveAccreditationDisplay(records).kind === "none",
+              accreditationNone: display.kind === "none",
               renewalAllowed: renew.open,
+              accreditationEditable: display.kind === "action" ? display.value : null,
             },
             {
               onEdit: () => setEditMember(record),
               onTransfer: () => setTransferMember(record),
               onChangeStatus: () => toggleStatus(record),
               onSetAccreditation: () => setAccreditMember(record),
+              onAccreditationChange: display.kind === "action"
+                ? (requested) => setAccreditationChange({ recordId: display.recordId, current: display.value, requested, memberName: record.displayName, aaNumber: record.aaNumber ?? null })
+                : undefined,
               onRenew: renew.record ? () => setRenewTarget({ record: renew.record as AccreditationRecord, memberName: record.displayName }) : undefined,
             },
           );
@@ -214,7 +212,7 @@ export function SalesNetworkMembersPage({
         },
       },
     ];
-  }, [members, accreditationRecordsByMember, canEditAccreditation, canRenew, canManage, canTransfer, canChangeStatus, isAdmin, changeStatus, confirmRun, setEditMember, setTransferMember, setAccreditMember, setRenewTarget]);
+  }, [members, accreditationRecordsByMember, canEditAccreditation, canRenew, canManage, canTransfer, canChangeStatus, isAdmin, changeStatus, confirmRun, setEditMember, setTransferMember, setAccreditMember, setRenewTarget, setAccreditationChange]);
 
   if (!granted.has("sales-network-members")) {
     return (
@@ -282,6 +280,7 @@ export function SalesNetworkMembersPage({
         />
       ) : null}
       {confirmDialog}
+      <AccreditationChangeHost target={accreditationChange} onClose={() => setAccreditationChange(null)} />
       <ConfirmDialog
         open={accreditMember !== null}
         title="Create Pending Accreditation"

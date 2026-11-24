@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { UtensilsCrossed } from "lucide-react";
+import { CalendarX, UtensilsCrossed } from "lucide-react";
 import { useOperation } from "@/data/business-queries";
 import type { MemberQrHolder } from "@/data/contracts/member-qr-repository";
 import { useCancelRestaurantReservation, useRestaurantReservations } from "@/data/reservation-queries";
@@ -11,7 +11,7 @@ import { BizBadge } from "@/shared/components/business/biz-badge";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { formatDate } from "@/shared/lib/format-date";
-import { Button } from "@/shared/ui/button";
+import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 
 /** Restaurant reservations under the bookings list. Hidden until one exists; for a cardholder it shows only theirs. */
 export function RestaurantReservationsTable({ selected }: { selected?: MemberQrHolder }) {
@@ -33,7 +33,7 @@ export function RestaurantReservationsTable({ selected }: { selected?: MemberQrH
     {
       id: "actions", header: "Actions",
       cell: ({ row }) => row.original.status === "reserved"
-        ? <Button type="button" variant="outline" size="sm" onClick={() => setCancelling(row.original)}>Cancel</Button>
+        ? <RowActionsMenu itemName={`reservation for ${row.original.guestName}`} extraItems={[{ key: "cancel", label: "Cancel Reservation", tone: "danger", icon: CalendarX, onClick: () => setCancelling(row.original) }]} />
         : null,
     },
   ], [names]);

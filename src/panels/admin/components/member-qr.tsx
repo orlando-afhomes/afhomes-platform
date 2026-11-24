@@ -27,7 +27,7 @@ export function MemberQrButton({ membershipId, lookupShortcut = false }: { membe
   </>;
 }
 
-function MemberQrDialog({ membershipId, close }: { membershipId: string; close: () => void }) {
+export function MemberQrDialog({ membershipId, close }: { membershipId: string; close: () => void }) {
   const { memberQr } = useMockRepositories();
   const { identity } = useDevIdentity();
   const queryClient = useQueryClient();
@@ -94,10 +94,10 @@ function QrImage({ holder, replace }: { holder: MemberQrCode; replace?: () => vo
       {/* The canvas image is local to this browser session. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={image} alt={`Membership QR for ${holder.holderName}, ${holder.vipNumber}`} width={360} height={324} className="tw:h-auto tw:max-w-full" />
-      <div className="tw:flex tw:flex-wrap tw:gap-2">
-        <Button variant="outline" render={<a href={image} download={`afhomes-${holder.vipNumber}-${holder.holder}.png`} />} nativeButton={false}>Download QR</Button>
-        <Button type="button" variant="info" onClick={print}>Print QR</Button>
-        {replace ? <Button type="button" variant="outline" onClick={replace}>Replace QR</Button> : null}
+      <div className="tw:flex tw:flex-nowrap tw:gap-2">
+        <Button variant="cyan" className="tw:min-w-0 tw:flex-1 tw:gap-1 tw:px-1.5 tw:text-xs tw:sm:gap-1.5 tw:sm:px-3 tw:sm:text-sm" render={<a href={image} download={`afhomes-${holder.vipNumber}-${holder.holder}.png`} />} nativeButton={false}>Download QR</Button>
+        <Button type="button" variant="info" className="tw:min-w-0 tw:flex-1 tw:gap-1 tw:px-1.5 tw:text-xs tw:sm:gap-1.5 tw:sm:px-3 tw:sm:text-sm" onClick={print}>Print QR</Button>
+        {replace ? <Button type="button" variant="warning" className="tw:min-w-0 tw:flex-1 tw:gap-1 tw:px-1.5 tw:text-xs tw:sm:gap-1.5 tw:sm:px-3 tw:sm:text-sm" onClick={replace}>Replace QR</Button> : null}
       </div>
     </> : null}
   </section>;
@@ -197,7 +197,7 @@ function Scanner({ close, select }: { close: () => void; select: (holder: Member
       <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" hidden aria-label="QR image file"
         onChange={(event) => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; void readImage(file); }} />
       <Button type="button" variant="info" disabled={reading} onClick={() => fileInput.current?.click()}><ImageUp aria-hidden="true" /> {reading ? "Reading image…" : "Upload QR image"}</Button>
-      <Button type="button" variant="outline" onClick={close}>Use manual lookup</Button>
+      <Button type="button" variant="outline" onClick={close}>Manual Lookup</Button>
     </DialogContent>
   </Dialog>;
 }

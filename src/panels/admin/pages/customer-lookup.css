@@ -187,8 +187,7 @@
   content: "";
 }
 
-.customer-lookup__scan > button,
-.customer-lookup__loyalty-buttons > button:not(.customer-lookup__manage-bookings) {
+.customer-lookup__scan > button {
   background-color: var(--color-brand-primary);
   background-image: var(--lookup-green);
   border-color: transparent;
@@ -208,8 +207,17 @@
 .customer-lookup__scan > button svg,
 .customer-lookup__loyalty-buttons > button svg { width: 20px; height: 20px; }
 
-.customer-lookup__scan > button:enabled:hover,
-.customer-lookup__loyalty-buttons > button:enabled:not(.customer-lookup__manage-bookings):hover {
+/* Overnight stay uses the violet dashboard token so it differs from Scan QR, Earn, Redeem and Reward. */
+.customer-lookup__loyalty-buttons > button.customer-lookup__stay-choice {
+  background-color: var(--color-dashboard-violet);
+  background-image: none;
+  border-color: transparent;
+  color: var(--color-on-dark);
+}
+
+.customer-lookup__loyalty-buttons > button.customer-lookup__stay-choice:enabled:hover { filter: brightness(1.1); }
+
+.customer-lookup__scan > button:enabled:hover {
   filter: brightness(1.1);
 }
 

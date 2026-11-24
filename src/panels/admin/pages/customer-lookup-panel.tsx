@@ -1,7 +1,7 @@
 "use client";
 
 import { Collapsible } from "@base-ui/react/collapsible";
-import { useEffect, useId, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { MemberQrHolder } from "@/data/contracts/member-qr-repository";
 import { useMockRepositories } from "@/data/queries";
@@ -18,7 +18,7 @@ import { RecordPromoUseButton } from "./promo-points-page";
 import { RedemptionBookingsPanel } from "./redemption-page";
 import { GsdRewardForm } from "./gsd-points-page";
 import { CheckboxField } from "@/shared/forms/modern";
-import { BadgeCheck, BedDouble, CalendarDays, ChevronDown, ChevronRight, Coins, CreditCard, Crown, Gift, IdCard, Layers3, Search, UserRound, type LucideIcon } from "lucide-react";
+import { BadgeCheck, ShieldCheck, BedDouble, CalendarDays, CalendarPlus, ChevronDown, ChevronRight, Coins, CreditCard, Crown, Gift, IdCard, Layers3, Search, UserRound, type LucideIcon } from "lucide-react";
 import { useCustomerLookup, useOperation, useVipProducts } from "@/data/business-queries";
 import { CUSTOMER_LOOKUP_MIN_LENGTH, type CustomerLookupResult } from "@/data/contracts/membership-repository";
 import { SearchInput } from "@/shared/components/modern/search-input";
@@ -38,8 +38,8 @@ export function CustomerLookupPage() {
     <AdminPage
       anyOf={CUSTOMER_LOOKUP_GRANTS}
       allowed={allowed}
-      title="Customer Look Up"
-      crumbs={[{ label: "Customer Look Up" }]}
+      title="Customer Search"
+      crumbs={[{ label: "Customer Search" }]}
     >
       <CustomerLookupPanel />
     </AdminPage>
@@ -47,7 +47,7 @@ export function CustomerLookupPage() {
 }
 
 /**
- * Staff Customer Look Up, copied from the v2 process (UI21): live search from 2 characters, up to
+ * Staff Customer Search, copied from the v2 process (UI21): live search from 2 characters, up to
  * 6 suggestions, then the card. Staff only; there is no public customer or card lookup (R11).
  * shortcut: the v2 government ID side of the card is left out; v3 stores no ID images yet.
  */
@@ -76,7 +76,9 @@ function CustomerLookupSession({ counter }: { counter: boolean }) {
   const detailsId = useId();
   const suggestions = results.slice(0, SUGGESTION_LIMIT);
   const listId = useId();
-  const showingList = !tooShort && !scanned && !lookup.isLoading && !lookup.error && suggestions.length > 0;
+  // Once a customer is picked, the list of matches is hidden and only that customer's details show.
+  const picked = suggestions.some((item) => item.membershipId === selectedId);
+  const showingList = !tooShort && !scanned && !picked && !lookup.isLoading && !lookup.error && suggestions.length > 0;
   const activeIndex = showingList ? Math.min(active, suggestions.length - 1) : -1;
   // Arrow keys move through the suggestions and Enter opens the highlighted customer, so search needs no mouse.
   const onSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -131,11 +133,11 @@ function CustomerLookupSession({ counter }: { counter: boolean }) {
           /></div>
         </div>
         <div role="status" aria-live="polite" className="tw:text-sm">
-          {tooShort || scanned ? null : lookup.isLoading ? (
+          {tooShort || scanned || picked ? null : lookup.isLoading ? (
             <TextLinesSkeleton lines={2} />
           ) : lookup.error ? (
             <div role="alert" className="tw:rounded-lg tw:border tw:border-destructive/40 tw:p-3 tw:text-destructive">
-              <p className="tw:font-medium">Customer Look Up is unavailable right now.</p>
+              <p className="tw:font-medium">Customer Search is unavailable right now.</p>
               <p>{lookup.error instanceof Error ? lookup.error.message : "Please try again. If this continues, contact AFhomes support."}</p>
             </div>
           ) : results.length === 0 ? (
@@ -150,8 +152,7 @@ function CustomerLookupSession({ counter }: { counter: boolean }) {
               activeIndex={activeIndex}
               detailsId={detailsId}
               selectedId={selectedId}
-              tierName={tierName}
-              onPick={(id) => setSelectedId((current) => current === id ? null : id)}
+              onPick={setSelectedId}
             />
           )}
         </div>
@@ -164,6 +165,7 @@ function CustomerLookupSession({ counter }: { counter: boolean }) {
           </div>
         </LookupDisclosure>
       )) : <div className="customer-lookup__selected">
+        <ScannedCard key={`card-${scan}`} holder={scanned} counter={counter} />
         {counter ? <GsdScanActions key={scan} holder={scanned} /> : <LoyaltyActions key={scan} holder={scanned} />}
       </div>}
     </div>
@@ -176,7 +178,6 @@ function SuggestionList({
   activeIndex,
   detailsId,
   selectedId,
-  tierName,
   onPick,
 }: {
   items: CustomerLookupResult[];
@@ -184,7 +185,6 @@ function SuggestionList({
   activeIndex: number;
   detailsId: string;
   selectedId: string | null;
-  tierName: (code: CustomerLookupResult["productCode"]) => string | null;
   onPick: (id: string) => void;
 }) {
   return (
@@ -203,7 +203,7 @@ function SuggestionList({
           >
             <span>
               <strong>{item.customerName}</strong>
-              <small>{tierName(item.productCode) ?? item.productCode} · VIP No. {item.vipNumber ?? "—"} · Valid until {item.validUntil ? formatDate(item.validUntil) : "—"}</small>
+              <small>VIP No. {item.vipNumber ?? "—"}</small>
             </span>
             <ChevronDown aria-hidden="true" />
           </Button>
@@ -214,9 +214,23 @@ function SuggestionList({
 }
 
 function LookupDisclosure({ open, id, children }: { open: boolean; id: string; children: ReactNode }) {
+  const content = useRef<HTMLDivElement>(null);
+  // Opening a section scrolls it into view once it has expanded, so the person sees what opened.
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setTimeout(() => {
+      const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      const element = content.current;
+      if (!element) return;
+      // Content taller than most of the screen starts at the top (below the header); shorter content only needs to be fully visible.
+      const tall = element.getBoundingClientRect().height > window.innerHeight * 0.6;
+      element.scrollIntoView?.({ block: tall ? "start" : "nearest", behavior: reduce ? "auto" : "smooth" });
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [open]);
   return <Collapsible.Root open={open}>
     <Collapsible.Panel id={id} className="customer-lookup__disclosure" inert={!open}>
-      <div className="customer-lookup__disclosure-content">{children}</div>
+      <div ref={content} className="customer-lookup__disclosure-content tw:scroll-mt-24">{children}</div>
     </Collapsible.Panel>
   </Collapsible.Root>;
 }
@@ -288,7 +302,7 @@ function LoyaltyActions({ holder }: { holder: MemberQrHolder }) {
       <section className="customer-lookup__bookings" aria-label="Bookings">
         <div className="customer-lookup__bookings-heading">
           <h3>Bookings</h3>
-          <Button type="button" onClick={() => setCreate(true)}>New Booking</Button>
+          <Button type="button" onClick={() => setCreate(true)}><CalendarPlus aria-hidden="true" />New Booking</Button>
         </div>
         <RedemptionBookingsPanel selected={holder} createOpen={create} onCreateClose={() => setCreate(false)} />
       </section>
@@ -325,24 +339,24 @@ function GsdScanActions({ holder }: { holder: MemberQrHolder }) {
     </div>
     <div className="customer-lookup__loyalty-buttons">
       <EnterResortBillButton selected={holder} earnPoints />
-      <Button type="button" variant="outline" aria-expanded={redeem} aria-controls={redemptionId}
+      <Button type="button" variant="info" aria-expanded={redeem} aria-controls={redemptionId}
         onClick={() => { setRedeem(!redeem); setVerified(false); setUse(undefined); setCreate(false); }}>
-        Redeem Points
+        <Coins aria-hidden="true" />Redeem Points
       </Button>
     </div>
     <section id={redemptionId} hidden={!redeem} aria-label="Redeem Points">
       {redeem ? <div className="tw:flex tw:flex-col tw:gap-4">
-        <CheckboxField label="I checked the cardholder’s ID" checked={verified} onChange={(checked) => { setVerified(checked); setUse(undefined); setCreate(false); }} />
+        <CheckboxField variant="card" icon={<ShieldCheck className="tw:size-5" />} label="I checked the cardholder’s ID" checked={verified} onChange={(checked) => { setVerified(checked); setUse(undefined); setCreate(false); }} />
         {verified ? <>
           <div className="customer-lookup__loyalty-buttons">
-            <Button type="button" variant="outline" aria-pressed={use === "reward"} onClick={() => { setUse("reward"); setCreate(false); }}>Use Points for a Reward</Button>
-            <Button type="button" variant="outline" aria-pressed={use === "stay"} onClick={() => setUse("stay")}>Use Points for an Overnight Stay</Button>
+            <Button type="button" variant="warning" aria-pressed={use === "reward"} onClick={() => { setUse("reward"); setCreate(false); }}><Gift aria-hidden="true" />Claim Reward</Button>
+            <Button type="button" className="customer-lookup__stay-choice" aria-pressed={use === "stay"} onClick={() => setUse("stay")}><BedDouble aria-hidden="true" />Book Stay</Button>
           </div>
           {use === "reward" ? <GsdRewardForm holder={holder} idVerified /> : null}
           {use === "stay" ? <section className="customer-lookup__bookings" aria-label="Overnight stays">
             <div className="customer-lookup__bookings-heading">
               <h3>Overnight Stays</h3>
-              <Button type="button" onClick={() => setCreate(true)}>New Booking</Button>
+              <Button type="button" onClick={() => setCreate(true)}><CalendarPlus aria-hidden="true" />New Booking</Button>
             </div>
             <RedemptionBookingsPanel selected={holder} createOpen={create} onCreateClose={() => setCreate(false)} />
           </section> : null}
@@ -350,6 +364,16 @@ function GsdScanActions({ holder }: { holder: MemberQrHolder }) {
       </div> : null}
     </section>
   </Card>;
+}
+
+/** The same card image and active badge as a search result, shown after a QR scan. */
+function ScannedCard({ holder, counter }: { holder: MemberQrHolder; counter: boolean }) {
+  const lookup = useCustomerLookup(holder.vipNumber);
+  const tierName = useTierDisplayName();
+  const item = lookup.data?.find((entry) => entry.membershipId === holder.membershipId);
+  if (lookup.isPending) return <TextLinesSkeleton lines={3} />;
+  if (!item) return null;
+  return <LookupCard item={item} tierName={tierName(item.productCode) ?? item.productCode} counter={counter} />;
 }
 
 function LookupCard({ item, tierName, counter }: { item: CustomerLookupResult; tierName: string; counter: boolean }) {

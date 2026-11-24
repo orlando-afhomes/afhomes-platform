@@ -121,6 +121,9 @@ export function getTotalDescendantCount(memberId: string, members: readonly OrgM
   return getDescendantIds(memberId, members).size;
 }
 
+/** People below a node, by position. */
+export type LevelCounts = { ssm: number; sm: number; ost: number };
+
 export type GenealogyTreeNode = {
   key: string;
   member: OrgMember;
@@ -128,6 +131,10 @@ export type GenealogyTreeNode = {
   restrictedParent: boolean;
   directCount: number;
   totalDescendantCount: number;
+  /** Team Name inherited from the root, looked up once for the whole network (null when none is set). */
+  teamName: string | null;
+  /** Everyone below this node, split by position. */
+  levels: LevelCounts;
 };
 
 export function getAuthorizedGenealogyMemberIds(identity: DevIdentity, store: MemberScope): Set<string> {
@@ -151,11 +158,48 @@ export function buildAuthorizedGenealogyTree(members: readonly OrgMember[], auth
     }
   }
 
+  // Team Name of each person's real root, found once per person and remembered (the root may sit above what this user may see).
+  const byId = new Map(members.map((member) => [member.id, member]));
+  const rootTeam = new Map<string, string | null>();
+  const teamOf = (member: OrgMember): string | null => {
+    const trail: OrgMember[] = [];
+    const seen = new Set<string>();
+    let current: OrgMember | undefined = member;
+    let found: string | null | undefined;
+    while (current && found === undefined) {
+      if (rootTeam.has(current.id)) {
+        found = rootTeam.get(current.id);
+      } else if (seen.has(current.id)) {
+        found = null;
+      } else {
+        seen.add(current.id);
+        trail.push(current);
+        const parent: OrgMember | undefined = current.parentId ? byId.get(current.parentId) : undefined;
+        if (parent) {
+          current = parent;
+        } else {
+          found = current.teamName?.trim() || null;
+          current = undefined;
+        }
+      }
+    }
+    for (const item of trail) rootTeam.set(item.id, found ?? null);
+    return found ?? null;
+  };
   const build = (member: OrgMember): GenealogyTreeNode => {
     const children = (childrenByParent.get(member.id) ?? [])
       .slice()
       .sort((a, b) => a.displayName.localeCompare(b.displayName))
       .map(build);
+    const levels: LevelCounts = { ssm: 0, sm: 0, ost: 0 };
+    for (const child of children) {
+      if (child.member.designation === "SSM") levels.ssm += 1;
+      else if (child.member.designation === "SM") levels.sm += 1;
+      else if (child.member.designation === "OST") levels.ost += 1;
+      levels.ssm += child.levels.ssm;
+      levels.sm += child.levels.sm;
+      levels.ost += child.levels.ost;
+    }
     return {
       key: member.id,
       member,
@@ -163,6 +207,8 @@ export function buildAuthorizedGenealogyTree(members: readonly OrgMember[], auth
       restrictedParent: Boolean(member.parentId && !authorizedIds.has(member.parentId)),
       directCount: children.length,
       totalDescendantCount: children.reduce((sum, child) => sum + 1 + child.totalDescendantCount, 0),
+      teamName: teamOf(member),
+      levels,
     };
   };
 
@@ -170,6 +216,67 @@ export function buildAuthorizedGenealogyTree(members: readonly OrgMember[], auth
     .filter((member) => !member.parentId || !authorizedIds.has(member.parentId))
     .sort((a, b) => a.displayName.localeCompare(b.displayName))
     .map(build);
+}
+
+/** The tree plus lookups, built once, so rows, paths and search never walk the whole network again. */
+export type GenealogyIndex = {
+  roots: GenealogyTreeNode[];
+  byKey: Map<string, GenealogyTreeNode>;
+  parentOf: Map<string, string | null>;
+  /** Everyone in the tree, by position. */
+  totals: { svd: number; ssm: number; sm: number; ost: number };
+};
+
+export function buildGenealogyIndex(members: readonly OrgMember[], authorizedIds: Set<string>): GenealogyIndex {
+  const roots = buildAuthorizedGenealogyTree(members, authorizedIds);
+  const byKey = new Map<string, GenealogyTreeNode>();
+  const parentOf = new Map<string, string | null>();
+  const totals = { svd: 0, ssm: 0, sm: 0, ost: 0 };
+  const stack: Array<{ node: GenealogyTreeNode; parent: string | null }> = roots.map((node) => ({ node, parent: null }));
+  while (stack.length > 0) {
+    const { node, parent } = stack.pop()!;
+    byKey.set(node.key, node);
+    parentOf.set(node.key, parent);
+    const position = node.member.designation;
+    if (position === "SVD") totals.svd += 1;
+    else if (position === "SSM") totals.ssm += 1;
+    else if (position === "SM") totals.sm += 1;
+    else totals.ost += 1;
+    for (const child of node.children) stack.push({ node: child, parent: node.key });
+  }
+  return { roots, byKey, parentOf, totals };
+}
+
+/** Keys from the top of the tree down to `key` (inclusive); empty when the person is not in the tree. */
+export function genealogyPath(index: GenealogyIndex, key: string): string[] {
+  const path: string[] = [];
+  let current: string | null | undefined = key;
+  while (current && index.byKey.has(current) && path.length < 50) {
+    path.unshift(current);
+    current = index.parentOf.get(current);
+  }
+  return path;
+}
+
+export type GenealogySearchResult = { node: GenealogyTreeNode; path: string[] };
+
+/** AA number first (exact, then starts with, then contains), then name. A person never appears twice. */
+export function searchGenealogy(index: GenealogyIndex, term: string, limit = 20): GenealogySearchResult[] {
+  const needle = term.trim().toLowerCase();
+  if (!needle) return [];
+  const exact: GenealogyTreeNode[] = [];
+  const starts: GenealogyTreeNode[] = [];
+  const contains: GenealogyTreeNode[] = [];
+  const byName: GenealogyTreeNode[] = [];
+  for (const node of index.byKey.values()) {
+    const aa = (node.member.aaNumber ?? "").toLowerCase();
+    if (aa && aa === needle) exact.push(node);
+    else if (aa && aa.startsWith(needle)) starts.push(node);
+    else if (aa && aa.includes(needle)) contains.push(node);
+    else if (node.member.displayName.toLowerCase().includes(needle)) byName.push(node);
+  }
+  byName.sort((a, b) => a.member.displayName.localeCompare(b.member.displayName));
+  return [...exact, ...starts, ...contains, ...byName].slice(0, limit).map((node) => ({ node, path: genealogyPath(index, node.key) }));
 }
 
 export type AttributionPerson = {

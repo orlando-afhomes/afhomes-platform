@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type ComponentProps } from "react";
+import { createElement, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ChevronRight, MoreHorizontal, Pencil, Trash2, type LucideIcon } from "lucide-react";
-import { Button } from "@/shared/ui/button";
+import { MoreHorizontal, Pencil, Trash2, type LucideIcon } from "lucide-react";
+import { Button, actionMenuClass, isDestructiveAction, type ActionVariant } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/spinner";
 import {
   DropdownMenu,
@@ -27,36 +27,14 @@ const TONE_CLASS: Record<Exclude<RowActionTone, "default" | "danger">, string> =
   info: "tw:text-info tw:focus:bg-info/10 tw:focus:text-info tw:focus:**:text-info tw:dark:text-[color-mix(in_oklch,var(--info),white_45%)] tw:dark:focus:bg-info/20",
 };
 
-/** Button color for a tone (same meaning as the menu item colors). */
-export function toneButtonVariant(tone: RowActionTone | undefined): "outline" | "success" | "warning" | "info" | "destructive" {
-  return tone === "danger" ? "destructive" : tone && tone !== "default" ? tone : "outline";
-}
-
-type RowActionButtonProps = Omit<ComponentProps<typeof Button>, "size" | "variant"> & {
-  tone?: RowActionTone;
-  icon?: LucideIcon;
-};
-
-export function RowActionButton({ tone, icon: Icon = ChevronRight, children, className, ...props }: RowActionButtonProps) {
-  return (
-    <Button
-      type="button"
-      size="sm"
-      variant={toneButtonVariant(tone)}
-      className={cn("tw:min-h-11 tw:gap-2 tw:rounded-lg tw:px-2.5 tw:sm:min-h-8", (!tone || tone === "default") && "tw:border-primary/20 tw:bg-card tw:text-primary tw:hover:border-primary/40 tw:hover:bg-(--color-brand-soft)", className)}
-      {...props}
-    >
-      {children}
-      <Icon aria-hidden="true" className="tw:size-3.5" />
-    </Button>
-  );
-}
-
 export type RowActionItem = {
   key: string;
   label: string;
   /** Colors the item: danger red, warning amber, success green, info blue. */
   tone?: RowActionTone;
+  variant?: ActionVariant;
+  /** Required: every menu item shows its own icon. */
+  icon: LucideIcon;
   /** Same as `tone: "danger"`; kept for existing callers. */
   danger?: boolean;
   /** Blocks the action, for example while the same mutation is still running. */
@@ -135,9 +113,6 @@ export function RowActionsMenu({
   const hasDeleteEntry = Boolean(onDelete || deleteDisabledReason);
   if (!hasLeadingItems && !hasDeleteEntry) return null;
   const itemClass = "tw:min-h-11 tw:sm:min-h-8";
-  const entryCount = (onEdit ? 1 : 0) + extraItems.length + (hasDeleteEntry ? 1 : 0);
-  const single = extraItems[0];
-  const singleTone = single ? (single.tone ?? (single.danger ? "danger" : "default")) : "default";
 
   const runDelete = async () => {
     if (!onDelete) return;
@@ -156,20 +131,6 @@ export function RowActionsMenu({
 
   return (
     <div className="tw:flex tw:justify-end">
-      {entryCount === 1 ? (
-        // One action only: show it directly instead of hiding it behind "...".
-        <RowActionButton
-          id={triggerId}
-          tone={onEdit ? "default" : single ? singleTone : "danger"}
-          icon={onEdit ? Pencil : single ? undefined : Trash2}
-          loading={single?.loading}
-          disabled={single?.disabled}
-          aria-label={`${onEdit ? "Edit" : single ? single.label : "Delete"} ${itemName}`}
-          onClick={onEdit ?? single?.onClick ?? (() => (onDelete ? setConfirmOpen(true) : setNoticeOpen(true)))}
-        >
-          {onEdit ? "Edit" : single ? single.label : "Delete"}
-        </RowActionButton>
-      ) : (
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
@@ -186,7 +147,7 @@ export function RowActionsMenu({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="tw:min-w-44">
           {onEdit ? (
-            <DropdownMenuItem onClick={onEdit} className={itemClass}>
+            <DropdownMenuItem onClick={onEdit} className={cn(itemClass, actionMenuClass("warning"))}>
               <Pencil aria-hidden="true" /> Edit
             </DropdownMenuItem>
           ) : null}
@@ -195,13 +156,13 @@ export function RowActionsMenu({
             return (
               <DropdownMenuItem
                 key={extra.key}
-                variant={tone === "danger" ? "destructive" : "default"}
+                variant={tone === "danger" || isDestructiveAction(extra.variant) ? "destructive" : "default"}
                 disabled={extra.disabled}
                 aria-busy={extra.loading || undefined}
                 onClick={extra.onClick}
-                className={tone === "default" || tone === "danger" ? itemClass : `${itemClass} ${TONE_CLASS[tone]}`}
+                className={cn(itemClass, extra.variant ? actionMenuClass(extra.variant) : tone !== "default" && tone !== "danger" && TONE_CLASS[tone])}
               >
-                {extra.loading ? <Spinner aria-hidden="true" /> : null}
+                {extra.loading ? <Spinner aria-hidden="true" /> : createElement(extra.icon, { "aria-hidden": true })}
                 {extra.label}
               </DropdownMenuItem>
             );
@@ -212,18 +173,13 @@ export function RowActionsMenu({
               <Trash2 aria-hidden="true" /> Delete
             </DropdownMenuItem>
           ) : deleteDisabledReason ? (
-            <>
-              <DropdownMenuItem variant="destructive" onClick={() => setNoticeOpen(true)} className={itemClass}>
-                <Trash2 aria-hidden="true" /> Delete <span className="tw:sr-only">(unavailable)</span>
-              </DropdownMenuItem>
-              <p role="note" className="tw:max-w-64 tw:px-2 tw:pb-1.5 tw:text-xs tw:text-muted-foreground">
-                Delete unavailable: {deleteDisabledReason}
-              </p>
-            </>
+            // The reason is not printed in the menu; choosing Delete explains it in a pop-up.
+            <DropdownMenuItem variant="destructive" onClick={() => setNoticeOpen(true)} className={itemClass}>
+              <Trash2 aria-hidden="true" /> Delete <span className="tw:sr-only">(unavailable)</span>
+            </DropdownMenuItem>
           ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
-      )}
       {onDelete ? (
         <ConfirmDialog
           open={confirmOpen}
@@ -248,3 +204,4 @@ export function RowActionsMenu({
     </div>
   );
 }
+

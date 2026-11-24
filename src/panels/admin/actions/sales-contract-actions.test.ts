@@ -66,7 +66,7 @@ describe("buildSalesMenuProps", () => {
     expect(keysOf(buildSalesMenuProps(saleFixture(), { canApprove: true, canApproveCustomer: false }, saleCallbacks()))).toEqual([]);
   });
 
-  it("offers Mark as Stopped Paying for an eligible sale and hides both without the permission", () => {
+  it("offers Stopped Paying for an eligible sale and hides both without the permission", () => {
     const eligible = saleFixture({ status: "confirmed", approval: { approvedAt: "2026-01-01", approvedBy: "dev-admin" }, defaultEligible: true });
     expect(keysOf(buildSalesMenuProps(eligible, approver, saleCallbacks()))).toEqual(["mark-defaulted"]);
     expect(keysOf(buildSalesMenuProps(eligible, viewer, saleCallbacks()))).toEqual([]);

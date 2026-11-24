@@ -33,7 +33,7 @@ export function CommissionPositionRateSettings({ rates }: { rates: VipPositionRa
           <p className="tw:text-sm tw:text-muted-foreground">Save a company-approved standard, then apply it to sellers whose service terms use it.</p>
         </div>
 
-        <Button type="button" variant="outline" onClick={() => setEditing(true)}>Set VIP Standard</Button>
+        <Button type="button" variant="outline" onClick={() => setEditing(true)}>Set Standard</Button>
       </div>
       <DataTable data={rates} columns={columns} caption="Approved VIP Position Rates"
         emptyText="No approved VIP position rates recorded." getRowId={(row) => `${row.designation}-${row.role}`} showAllRows />

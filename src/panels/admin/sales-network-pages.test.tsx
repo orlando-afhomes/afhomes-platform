@@ -134,6 +134,25 @@ describe("sales network genealogy page", () => {
     expect(within(summary).getByRole("link", { name: "View Profile" })).toHaveAttribute("href", expect.stringContaining("/admin/sales-network/members/"));
   });
 
+  it("selects a person from the summary's Direct team rows and from Reports to", async () => {
+    const user = userEvent.setup();
+    render(
+      <Wrapper identityId="dev-super-admin">
+        <SalesNetworkGenealogyPage />
+      </Wrapper>,
+    );
+    await user.click(await screen.findByRole("button", { name: "Show Leaders" }));
+    const tree = await screen.findByRole("region", { name: "Team tree" });
+    await user.click((await within(tree).findAllByRole("button", { pressed: false }, { timeout: 5000 }))[0]);
+    const summary = screen.getByRole("complementary", { name: "Member summary" });
+    const rowsInSummary = within(within(summary).getByRole("region", { name: /^Direct team/ })).queryAllByRole("button");
+    if (rowsInSummary.length === 0) return; // the first person has no direct team
+    const name = within(rowsInSummary[0]).getAllByText(/./)[0].textContent ?? "";
+    await user.click(rowsInSummary[0]);
+    expect(within(screen.getByRole("complementary", { name: "Member summary" })).getAllByText(name).length).toBeGreaterThan(0);
+    expect(screen.getByRole("navigation", { name: "Where this person sits" })).toBeInTheDocument();
+  });
+
   it("expands and collapses branches", async () => {
     const user = userEvent.setup();
     render(
@@ -144,7 +163,7 @@ describe("sales network genealogy page", () => {
     await user.click(await screen.findByRole("button", { name: "Collapse All" }));
     const toggles = await screen.findAllByRole("button", { name: /^Expand (?!All)/ });
     expect(toggles[0]).toHaveAttribute("aria-expanded", "false");
-    await user.click(screen.getByRole("button", { name: "Expand All" }));
+    await user.click(screen.getByRole("button", { name: "Show Leaders" }));
     await waitFor(() => expect(screen.getAllByRole("button", { name: /^Collapse (?!All)/ }).length).toBeGreaterThan(0));
   });
 

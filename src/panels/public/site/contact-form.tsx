@@ -37,7 +37,7 @@ export function ContactForm() {
       <TextField label="Subject" required value={value.subject} onChange={set("subject")} error={errors.subject} maxLength={150} />
       <div className="site-form__field">
         <label htmlFor="contact-message" className="site-form__label">Your message (optional)</label>
-        <Textarea id="contact-message" rows={5} value={value.message} maxLength={2000} onChange={(event) => set("message")(event.target.value)} aria-invalid={errors.message ? true : undefined} />
+        <Textarea id="contact-message" rows={5} placeholder="I would like to ask about VIP membership options." value={value.message} maxLength={2000} onChange={(event) => set("message")(event.target.value)} aria-invalid={errors.message ? true : undefined} />
         {errors.message ? <p role="alert" className="site-form__error">{errors.message}</p> : null}
       </div>
       <Button type="submit" className="tw:min-h-11 tw:sm:min-h-9">Open email</Button>

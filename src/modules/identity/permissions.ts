@@ -76,7 +76,7 @@ export type AdminOperation =
   | "customers.approve"
   /** Customer import and export (personal data in bulk): Admin and Super Administrator only. */
   | "customers.import"
-  /** Staff Customer Look Up of active VIP cards (Super Administrator, Administrator, Clerk, Finance; UI21). Never public (R11). */
+  /** Staff Customer Search of active VIP cards (Super Administrator, Administrator, Clerk, Finance; UI21). Never public (R11). */
   | "customers.lookup"
   | "contracts.prepare"
   | "payments.submit"
@@ -139,16 +139,34 @@ export function getRoleModuleGrants(role: DevRole): readonly AdminModuleId[] {
   return ROLE_MODULE_GRANTS[role] ?? [];
 }
 
-// Modules a department role may grant. Only implemented, separately
-// authorized pages are delegable: no disabled modules, no Finance-controlled
-// operations, and no protected Super Administrator equivalence exist here.
-// Accounts management is restricted to Admin/Super Admin (owner decision S3-01)
-// and is therefore not delegable.
+// Modules a department role may grant: every real module (owner decision 2026-11-24,
+// replacing the earlier four-module limit and S3-01). Parent navigation scopes and the
+// legacy "accreditation" id are never granted. A module only opens its page; sensitive
+// actions still need their operation permission from a system role, and protected
+// Super Administrator equivalence does not exist here.
 export const DELEGABLE_MODULES: readonly AdminModuleId[] = [
   "dashboard",
   "departments",
   "roles",
   "staff",
+  "accounts",
+  "sales-network",
+  "sales-network-members",
+  "sales-network-genealogy",
+  "accreditation-registrations",
+  "accreditation-records",
+  "accreditation-renewals",
+  "customers",
+  "vip-products",
+  "experiences",
+  "sales",
+  "finance",
+  "commissions",
+  "membership",
+  "stay-points",
+  "redemption",
+  "reports",
+  "audit-logs",
 ] as const;
 
 /**
@@ -173,19 +191,33 @@ export function departmentRoleConfersAccess(chain: {
   return chain.staffStatus === "active" && chain.roleStatus === "active" && chain.departmentStatus === "active";
 }
 
-export const MODULE_CATALOG: ReadonlyArray<{ id: AdminModuleId; label: string }> = [
-  { id: "dashboard", label: "Dashboard" },
-  { id: "accounts", label: "Accounts and Permissions" },
-  { id: "departments", label: "Departments" },
-  { id: "roles", label: "Roles & Permissions" },
-  { id: "staff", label: "Staff & Access" },
-  { id: "vip-products", label: "VIP Products and Contracts" },
-  { id: "sales-network", label: "Sales Network" },
-  { id: "sales-network-members", label: "Sales Network Members" },
-  { id: "sales-network-genealogy", label: "Sales Network Genealogy" },
-  { id: "accreditation-registrations", label: "Accreditation Registrations" },
-  { id: "accreditation-records", label: "Accreditation Records" },
-  { id: "accreditation-renewals", label: "Accreditation Renewals" },
+/** Display groups for the module checklist, in order. */
+export const MODULE_GROUPS = ["Organization", "Sales Network", "Customers and Sales", "Finance", "Member Programs", "Reports and Audit"] as const;
+export type ModuleGroup = (typeof MODULE_GROUPS)[number];
+
+export const MODULE_CATALOG: ReadonlyArray<{ id: AdminModuleId; label: string; group: ModuleGroup }> = [
+  { id: "dashboard", label: "Dashboard", group: "Organization" },
+  { id: "departments", label: "Departments", group: "Organization" },
+  { id: "roles", label: "Roles & Permissions", group: "Organization" },
+  { id: "staff", label: "Staff & Access", group: "Organization" },
+  { id: "accounts", label: "Staff Access", group: "Organization" },
+  { id: "sales-network", label: "Sales Network", group: "Sales Network" },
+  { id: "sales-network-members", label: "Sales Network Members", group: "Sales Network" },
+  { id: "sales-network-genealogy", label: "Sales Network Genealogy", group: "Sales Network" },
+  { id: "accreditation-registrations", label: "Accreditation Registrations", group: "Sales Network" },
+  { id: "accreditation-records", label: "Accreditation Records", group: "Sales Network" },
+  { id: "accreditation-renewals", label: "Accreditation Renewals", group: "Sales Network" },
+  { id: "customers", label: "Customers", group: "Customers and Sales" },
+  { id: "sales", label: "Sales", group: "Customers and Sales" },
+  { id: "vip-products", label: "VIP Products and Contracts", group: "Customers and Sales" },
+  { id: "experiences", label: "Experiences", group: "Customers and Sales" },
+  { id: "finance", label: "Finance", group: "Finance" },
+  { id: "commissions", label: "Commissions", group: "Finance" },
+  { id: "membership", label: "Membership", group: "Member Programs" },
+  { id: "stay-points", label: "Stay Points", group: "Member Programs" },
+  { id: "redemption", label: "Redemption", group: "Member Programs" },
+  { id: "reports", label: "Reports", group: "Reports and Audit" },
+  { id: "audit-logs", label: "Audit Logs", group: "Reports and Audit" },
 ];
 
 // Runtime mirror of the AdminModuleId union for validating persisted grants.

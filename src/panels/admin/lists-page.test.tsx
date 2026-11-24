@@ -90,7 +90,10 @@ describe("lists page", () => {
     await pickList(user, "Outlets");
     const row = await waitFor(() => rowFor("AFhomes Smart Wellness Hotel"));
     await user.click(within(row).getByRole("button", { name: /actions for/i }));
-    expect(await screen.findByText(/Delete unavailable: Existing records use this entry/)).toBeInTheDocument();
+    expect(screen.queryByRole("note")).toBeNull();
+    await user.click(await screen.findByRole("menuitem", { name: /^Delete/ }));
+    expect(within(await screen.findByRole("alertdialog", { name: "Deletion unavailable" })).getByText(/Existing records use this entry/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "OK" }));
     expect(screen.getByText("Teppanyaki Restaurant")).toBeInTheDocument();
   });
 

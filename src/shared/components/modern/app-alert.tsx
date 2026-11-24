@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { createElement, useEffect, useRef } from "react";
+import { createRoot, type Root } from "react-dom/client";
 import Swal, { type SweetAlertOptions } from "sweetalert2";
 import { buttonVariants } from "@/shared/ui/button";
+import { iconForLabel } from "@/shared/ui/button-icons";
 import "./app-alert.css";
 
 /**
@@ -73,6 +75,7 @@ export function AppAlert(props: AppAlertProps) {
     const first = latest.current;
     let closedByApp = false;
     const blocked = () => latest.current.pending === true;
+    const iconRoots: Root[] = [];
     const base = appAlertOptions(first.danger, first.tone);
     const result = Swal.fire({
       ...base,
@@ -99,6 +102,17 @@ export function AppAlert(props: AppAlertProps) {
       didOpen: (popup) => {
         // A confirmation interrupts the user, so announce it as an alert dialog.
         popup.setAttribute("role", "alertdialog");
+        // Each pop-up button shows the icon that matches its label, like every other button.
+        for (const button of [Swal.getConfirmButton(), Swal.getCancelButton(), Swal.getDenyButton()]) {
+          const Icon = button ? iconForLabel(button.textContent ?? "") : undefined;
+          if (!button || !Icon) continue;
+          const holder = document.createElement("span");
+          holder.style.display = "contents";
+          button.prepend(holder);
+          const root = createRoot(holder);
+          root.render(createElement(Icon, { "aria-hidden": true }));
+          iconRoots.push(root);
+        }
       },
     });
     const popup = Swal.getPopup();
@@ -107,6 +121,7 @@ export function AppAlert(props: AppAlertProps) {
     });
     return () => {
       closedByApp = true;
+      setTimeout(() => iconRoots.forEach((root) => root.unmount()));
       if (popup && Swal.getPopup() === popup) Swal.close();
     };
   }, [open]);

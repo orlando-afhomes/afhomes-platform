@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
+import { ArrowDownAZ, ArrowUpAZ, Ban, Clock, KeyRound, LayoutGrid, Power, ShieldCheck, SlidersHorizontal, UsersRound, type LucideIcon } from "lucide-react";
 import type { Account, AccountStatus } from "@/modules/accounts/types";
 import {
   useAccountPolicies,
@@ -61,7 +61,7 @@ const SHOW_FROM_SM: DataTableColumnMeta = { className: "tw:hidden tw:sm:table-ce
 const SHOW_FROM_LG: DataTableColumnMeta = { className: "tw:hidden tw:lg:table-cell" };
 
 const STATUS_FILTER_ITEMS = [
-  { value: "all", label: "All employment statuses" },
+  { value: "all", label: "All statuses" },
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
   { value: "suspended", label: "Suspended" },
@@ -176,9 +176,9 @@ export function StaffPage({
       const policy = account ? accountPolicyFor(account.id) : null;
       if (!account || !policy) return [];
       const items: RowActionItem[] = [];
-      if (policy.canManageRoles) items.push({ key: "roles", label: "System Roles", onClick: () => openAccount("role", account.id) });
-      if (policy.allowedStatuses.length > 0) items.push({ key: "status", label: "Change Status", onClick: () => openAccount("status", account.id) });
-      if (policy.canResetPassword) items.push({ key: "password", label: "Set Temporary Password", onClick: () => resetPassword(account) });
+      if (policy.canManageRoles) items.push({ key: "roles", label: "System Roles", icon: ShieldCheck, onClick: () => openAccount("role", account.id) });
+      if (policy.allowedStatuses.length > 0) items.push({ key: "status", label: "Change Status", icon: SlidersHorizontal, onClick: () => openAccount("status", account.id) });
+      if (policy.canResetPassword) items.push({ key: "password", label: "Reset Password", icon: KeyRound, onClick: () => resetPassword(account) });
       return items;
     };
 
@@ -213,7 +213,7 @@ export function StaffPage({
       const policy = account ? accountPolicyFor(account.id) : null;
       const activateItems: RowActionItem[] =
         account && account.status === "pending" && (policy?.allowedStatuses.includes("active") ?? false)
-          ? [{ key: "activate", label: "Activate", tone: "success", onClick: () => activate(account) }]
+          ? [{ key: "activate", label: "Activate", tone: "success", icon: Power, onClick: () => activate(account) }]
           : [];
       let menu = null;
       if (row.kind === "employee") {
@@ -227,6 +227,7 @@ export function StaffPage({
               key: status,
               label: LINKED_ACCOUNT_ACTION_LABELS[status],
               tone: status === "active" ? "success" : "danger",
+              icon: status === "active" ? Power : Ban,
               onClick: () => confirmLinkedAccountStatus(confirmRun, member.displayName, status, () => setLinkedStatus({ staffId: member.id, status })),
             });
           }
@@ -353,12 +354,12 @@ export function StaffPage({
     departmentsQuery.isLoading ||
     rolesQuery.isLoading ||
     (canManageAccounts && (accountsQuery.isLoading || accountPoliciesQuery.isLoading));
-  const chips: Array<{ value: AccessChip; label: string }> = [
-    { value: "all", label: "All" },
-    { value: "employees", label: "Employees" },
-    { value: "account", label: "Account only" },
+  const chips: Array<{ value: AccessChip; label: string; icon: LucideIcon }> = [
+    { value: "all", label: "All", icon: LayoutGrid },
+    { value: "employees", label: "Employees", icon: UsersRound },
+    { value: "account", label: "Account only", icon: KeyRound },
     // No count until accounts load, so the chip never shows a false zero.
-    { value: "pending", label: loading ? "Pending Approvals" : `Pending Approvals (${countPendingRows(rows)})` },
+    { value: "pending", label: loading ? "Pending Approvals" : `Pending Approvals (${countPendingRows(rows)})`, icon: Clock },
   ];
 
   // A failed directory load reads as a retryable error, never as an empty directory.
@@ -410,9 +411,10 @@ export function StaffPage({
                     size="sm"
                     variant={chip === item.value ? "default" : "outline"}
                     aria-pressed={chip === item.value}
-                    className="tw:min-h-11 tw:rounded-full tw:sm:min-h-7"
+                    className="tw:min-h-11 tw:gap-1.5 tw:rounded-full tw:px-3 tw:sm:min-h-8"
                     onClick={() => selectChip(item.value)}
                   >
+                    <item.icon aria-hidden="true" className="tw:size-4" />
                     {item.label}
                   </Button>
                 ))}

@@ -10,7 +10,6 @@ import { MAX_UPLOAD_BYTES, readFileAsDataUrl } from "@/shared/lib/file-data";
 import type { ColumnDef } from "@/shared/components/modern/data-table";
 import { FieldShell, PercentField, SelectField, StandardDateField, TextField, describedBy, useFieldIds } from "@/shared/forms/modern";
 import { Banknote, FileText, HandCoins, Landmark, Smartphone, Upload, WalletCards, X, type LucideIcon } from "lucide-react";
-import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { BizBadge } from "@/shared/components/business/biz-badge";
@@ -18,6 +17,7 @@ import { FormDialog } from "@/shared/components/modern/form-dialog";
 import type { RowActionTone } from "@/shared/components/modern/row-actions-menu";
 import { Money } from "@/shared/components/modern/money";
 import { ImagePreview } from "@/shared/components/modern/image-preview";
+import { DetailActions } from "@/shared/components/modern/detail-actions";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { PAYOUT_RELEASE_THRESHOLD_BP } from "@/modules/commissions/rules";
 import { PAYOUT_METHODS, commissionRoleLabel, type PayoutMethod } from "@/modules/commissions/types";
@@ -27,7 +27,7 @@ import { designationLabel } from "@/modules/sales-network/display";
 export const RELEASE_PERCENT = PAYOUT_RELEASE_THRESHOLD_BP / 100;
 
 /** A workflow action, shown in the row menu and as a footer button; `tone` colors both (rule: success approves or pays, warning adjusts, danger cancels). */
-export type CommissionMenuItem = { key: string; label: string; tone?: RowActionTone; onClick: () => void };
+export type CommissionMenuItem = { key: string; label: string; tone?: RowActionTone; icon: LucideIcon; onClick: () => void };
 
 const TONE_VARIANT: Record<RowActionTone, "default" | "destructive" | "warning" | "success" | "info"> = {
   default: "default",
@@ -38,12 +38,12 @@ const TONE_VARIANT: Record<RowActionTone, "default" | "destructive" | "warning" 
 };
 
 /** Footer buttons for a details sheet, one per action, colored by purpose. */
-export function menuItemButtons(items: CommissionMenuItem[]): ReactNode[] {
-  return items.map((item) => (
-    <Button key={item.key} type="button" variant={TONE_VARIANT[item.tone ?? "default"]} onClick={item.onClick}>
-      {item.label}
-    </Button>
-  ));
+export function menuItemButtons(items: CommissionMenuItem[]): ReactNode {
+  return <DetailActions actions={items.map((item) => ({
+    ...item,
+    next: ["payout", "confirm", "hold", "collect"].includes(item.key),
+    variant: TONE_VARIANT[item.tone ?? "default"],
+  }))} />;
 }
 
 /** Month input (value stays YYYY-MM). Browsers without a month picker fall back to typing the same format. */

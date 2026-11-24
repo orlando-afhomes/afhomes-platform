@@ -86,14 +86,14 @@ describe("process pages are separated", () => {
     expect(within(table).queryByText("Finalized")).not.toBeInTheDocument();
   });
 
-  it("Memberships and Ready to Activate show different records", async () => {
+  it("Memberships and To Activate show different records", async () => {
     const all = show("dev-admin", <MembershipAreaPage />, "memberships");
     expect(await screen.findByRole("table", { name: "Memberships" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Ready to Activate" })).toBeInTheDocument();
-    expect(screen.queryByRole("table", { name: "Ready to Activate" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "To Activate" })).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "To Activate" })).toBeNull();
     all.unmount();
     show("dev-admin", <MembershipAreaPage />, "activation");
-    expect(await screen.findByRole("table", { name: "Ready to Activate" })).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "To Activate" })).toBeInTheDocument();
   });
 
   it("keeps payouts on the Commissions tab, with no separate Payouts tab", async () => {

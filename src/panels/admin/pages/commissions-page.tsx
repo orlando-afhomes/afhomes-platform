@@ -12,7 +12,7 @@ import { Money } from "@/shared/components/modern/money";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { QueryState } from "@/shared/components/modern/query-state";
 import { AdminStatGrid, AdminStatCard } from "@/shared/components/admin";
-import { BadgeCheck, Clock, CircleCheck, ReceiptText, RotateCcw } from "lucide-react";
+import { Ban, BadgeCheck, Check, CircleCheck, CircleSlash, Clock, HandCoins, ReceiptText, RotateCcw, SlidersHorizontal, X } from "lucide-react";
 import { AdjustDialog, awaitingConfirmation, COMMISSION_COLUMNS, CommissionDetailsSheet, HoldDialog, menuItemButtons, PayoutDialog, readyToPay, type CommissionMenuItem } from "../components/commission-shared";
 import { CommissionPayoutBar } from "./commission-payouts-page";
 import { clawbackBalance } from "@/modules/commissions/rules";
@@ -63,15 +63,15 @@ export function CommissionsPanel() {
   /** Workflow actions for a commission, in the row menu and the details sheet footer. */
   const itemsFor = (item: CommissionView): CommissionMenuItem[] => {
     const items: CommissionMenuItem[] = [];
-    if (canPayout && readyToPay(item)) items.push({ key: "payout", label: "Record Payout", onClick: () => setState({ kind: "payout", commission: item }) });
+    if (canPayout && readyToPay(item)) items.push({ key: "payout", label: "Record Payout", icon: HandCoins, onClick: () => setState({ kind: "payout", commission: item }) });
     if (canPayout && awaitingConfirmation(item)) {
-      items.push({ key: "confirm", label: "Confirm Paid Out", tone: "success", onClick: () => confirmRun({ title: "Confirm Paid Out?", description: `Mark ${item.recipientName}'s commission as paid.`, confirmText: "Confirm", tone: "success", action: () => action.mutateAsync({ id: item.id, action: "confirm" }), successTitle: "Commission marked as Paid.", errorTitle: "Could not confirm" }) });
-      if (item.status === "on_hold") items.push({ key: "void", label: "Void Payout", tone: "danger", onClick: () => setState({ kind: "void", commission: item }) });
+      items.push({ key: "confirm", label: "Mark Paid", tone: "success", icon: Check, onClick: () => confirmRun({ title: "Mark Paid?", description: `Mark ${item.recipientName}'s commission as paid.`, confirmText: "Confirm", tone: "success", action: () => action.mutateAsync({ id: item.id, action: "confirm" }), successTitle: "Commission marked as Paid.", errorTitle: "Could not confirm" }) });
+      if (item.status === "on_hold") items.push({ key: "void", label: "Void Payout", tone: "danger", icon: Ban, onClick: () => setState({ kind: "void", commission: item }) });
     }
     if (!canApprove) return items;
-    if (item.status === "approved" && !item.payout && !item.releaseDate) items.push({ key: "adjust", label: "Adjust", tone: "warning", onClick: () => setState({ kind: "adjust", commission: item }) });
-    if (item.status === "on_hold") items.push({ key: "hold", label: "Resolve Hold", tone: "warning", onClick: () => setState({ kind: "hold", commission: item }) });
-    if ((item.status === "approved" || item.status === "on_hold") && !(item.payout && !item.payout.confirmedAt)) items.push({ key: "cancel", label: "Cancel Commission", tone: "danger", onClick: () => setState({ kind: "cancel", commission: item }) });
+    if (item.status === "approved" && !item.payout && !item.releaseDate) items.push({ key: "adjust", label: "Adjust", tone: "warning", icon: SlidersHorizontal, onClick: () => setState({ kind: "adjust", commission: item }) });
+    if (item.status === "on_hold") items.push({ key: "hold", label: "Resolve Hold", tone: "warning", icon: Clock, onClick: () => setState({ kind: "hold", commission: item }) });
+    if ((item.status === "approved" || item.status === "on_hold") && !(item.payout && !item.payout.confirmedAt)) items.push({ key: "cancel", label: "Cancel Commission", tone: "danger", icon: X, onClick: () => setState({ kind: "cancel", commission: item }) });
     return items;
   };
   const detail = detailId ? all.find((item) => item.id === detailId) ?? null : null;
@@ -191,14 +191,14 @@ export function CommissionRecoveryPanel() {
   const itemsFor = (row: CommissionClawback): CommissionMenuItem[] => {
     if (clawbackBalance(row) <= 0) return [];
     const items: CommissionMenuItem[] = [];
-    if (canCollect) items.push({ key: "collect", label: "Record Payback Received", tone: "success", onClick: () => { setDetailId(null); setError(undefined); setAmount(""); setReference(""); setCollecting(row); } });
-    if (canWriteOff) items.push({ key: "writeOff", label: "Mark Not Collected", tone: "danger", onClick: () => { setDetailId(null); setWriteOff(row); } });
+    if (canCollect) items.push({ key: "collect", label: "Payback Received", tone: "success", icon: HandCoins, onClick: () => { setDetailId(null); setError(undefined); setAmount(""); setReference(""); setCollecting(row); } });
+    if (canWriteOff) items.push({ key: "writeOff", label: "Not Collected", tone: "danger", icon: CircleSlash, onClick: () => { setDetailId(null); setWriteOff(row); } });
     return items;
   };
   const detail = detailId ? (query.data ?? []).find((row) => row.id === detailId) ?? null : null;
   return (
     <section className="tw:grid tw:gap-3" aria-label="Commission paybacks">
-      {canManageRates ? <div><Button type="button" variant="outline" onClick={() => setAddendumOpen(true)}>Signed Addendum Dates</Button></div> : null}
+      {canManageRates ? <div><Button type="button" variant="outline" onClick={() => setAddendumOpen(true)}>Addendum Dates</Button></div> : null}
       <QueryState isLoading={query.isLoading} error={query.error}>
         <DataTable data={query.data ?? []} caption="Commission Paybacks" emptyText="No payback records." getRowId={(row) => row.id}
           onRowOpen={(row) => setDetailId(row.id)} getRowLabel={(row) => `Open payback for ${sellerOf(row)}`}
@@ -235,7 +235,7 @@ export function CommissionRecoveryPanel() {
         footer={detail && itemsFor(detail).length > 0 ? menuItemButtons(itemsFor(detail)) : undefined}
       />
       {addendumOpen ? <ClawbackAddendumDialog onClose={() => setAddendumOpen(false)} /> : null}
-      {collecting ? <FormDialog open title="Record Payback Received" submitText="Record Payback" pending={action.isPending} error={error}
+      {collecting ? <FormDialog open title="Payback Received" submitText="Record Payback" pending={action.isPending} error={error}
         onClose={() => setCollecting(null)} onSubmit={() => {
           const amountCentavos = parsePesoToCentavos(amount);
           if (!amountCentavos) { setError("Enter the amount received."); return; }
@@ -245,7 +245,7 @@ export function CommissionRecoveryPanel() {
         <MoneyField label="Amount received" required value={amount} onChange={setAmount} />
         <TextField label="Payback reference" required value={reference} onChange={setReference} />
       </FormDialog> : null}
-      <ReasonDialog open={writeOff !== null} title="Mark Balance as Not Collected" description="The original amount and collections stay in history." confirmText="Mark Not Collected" danger
+      <ReasonDialog open={writeOff !== null} title="Mark Balance as Not Collected" description="The original amount and collections stay in history." confirmText="Not Collected" danger
         successText="Marked as not collected." onClose={() => setWriteOff(null)}
         onSubmit={(reason) => writeOff ? action.mutateAsync({ kind: "writeOff", id: writeOff.id, reason }) : Promise.resolve()} />
     </section>

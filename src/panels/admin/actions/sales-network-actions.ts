@@ -1,3 +1,4 @@
+import { ArrowLeftRight, BadgeCheck, Ban, CircleCheck, CircleX, Power, RefreshCw, Undo2 } from "lucide-react";
 import { getCurrentAccreditationRecord } from "@/modules/accreditation/eligibility";
 import { isRenewalAllowed, manilaToday } from "@/modules/accreditation/dates";
 import type { AccreditationRecord } from "@/modules/accreditation/types";
@@ -28,6 +29,8 @@ export type MemberMenuPerms = {
   canRenew: boolean;
   accreditationNone: boolean;
   renewalAllowed: boolean;
+  /** Current status of an editable (Pending or Accredited) record; omit or null when the status cannot be changed here. */
+  accreditationEditable?: "pending" | "active" | null;
 };
 
 /** Callbacks wired by the page; the bundle only plugs them into the gated slots. */
@@ -37,6 +40,7 @@ export type MemberMenuCallbacks = {
   onChangeStatus?: () => void;
   onSetAccreditation?: () => void;
   onRenew?: () => void;
+  onAccreditationChange?: (requested: "pending" | "active" | "cancel") => void;
   onDelete?: () => void | Promise<unknown>;
   deleteTitle?: string;
   deleteDescription?: string;
@@ -82,7 +86,7 @@ export function buildMemberMenuProps(
 ): MemberMenuProps {
   const extraItems: RowActionItem[] = [];
   if (perms.canTransfer && member.designation !== "SVD" && cb.onTransfer) {
-    extraItems.push({ key: "transfer", label: transferLabelFor(member.designation), onClick: cb.onTransfer });
+    extraItems.push({ key: "transfer", label: transferLabelFor(member.designation), icon: ArrowLeftRight, onClick: cb.onTransfer });
   }
   if (perms.canChangeStatus && (member.status === "active" || perms.canReactivate) && cb.onChangeStatus) {
     const reactivate = member.status !== "active";
@@ -90,15 +94,24 @@ export function buildMemberMenuProps(
       key: reactivate ? "reactivate" : "deactivate",
       label: reactivate ? "Reactivate" : "Deactivate",
       tone: reactivate ? "success" : "danger",
+      icon: reactivate ? Power : Ban,
       danger: !reactivate,
       onClick: cb.onChangeStatus,
     });
   }
   if (perms.canEditAccreditation && perms.accreditationNone && cb.onSetAccreditation) {
-    extraItems.push({ key: "set-accreditation", label: "Set Accreditation", onClick: cb.onSetAccreditation });
+    extraItems.push({ key: "set-accreditation", label: "Set Accreditation", icon: BadgeCheck, onClick: cb.onSetAccreditation });
   }
   if (perms.canRenew && perms.renewalAllowed && cb.onRenew) {
-    extraItems.push({ key: "renew-accreditation", label: "Renew Accreditation", onClick: cb.onRenew });
+    extraItems.push({ key: "renew-accreditation", label: "Renew Accreditation", icon: RefreshCw, onClick: cb.onRenew });
+  }
+
+  const current = perms.accreditationEditable;
+  if (perms.canEditAccreditation && current && cb.onAccreditationChange) {
+    const change = cb.onAccreditationChange;
+    if (current === "pending") extraItems.push({ key: "accreditation-accredit", label: "Mark Accredited", tone: "success", icon: CircleCheck, onClick: () => change("active") });
+    if (current === "active") extraItems.push({ key: "accreditation-revert", label: "Revert Pending", tone: "warning", icon: Undo2, onClick: () => change("pending") });
+    extraItems.push({ key: "accreditation-cancel", label: "Cancel Accreditation", tone: "danger", icon: CircleX, danger: true, onClick: () => change("cancel") });
   }
 
   return {

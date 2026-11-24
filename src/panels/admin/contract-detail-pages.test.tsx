@@ -44,8 +44,8 @@ describe("contract details show actions allowed for each viewer", () => {
   it("lets an authorized reviewer approve the deal on the approved Gold terms from Contracts", async () => {
     show("dev-admin", <SalesContractDetailPage contractId="ctr-3" />);
     expect(await screen.findByRole("button", { name: "Approve Deal" })).toBeEnabled();
-    expect(await screen.findByRole("button", { name: "Print Reservation Agreement" })).toBeEnabled();
-    expect(button("Print VIP Grant")).toBeNull();
+    expect(await screen.findByRole("button", { name: "Print Agreement" })).toBeEnabled();
+    expect(button("Print Grant")).toBeNull();
     for (const name of ["Start review", "Finalize", "Record signed agreement", "Approve Sale"]) expect(button(name)).toBeNull();
     expect(button("Edit details")).toBeNull();
   });
@@ -80,7 +80,8 @@ describe("contract details show actions allowed for each viewer", () => {
     expect(screen.getByRole("heading", { name: "Contract Status" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Contract Summary" })).toBeInTheDocument();
     expect(button("Approve Deal")).toBeEnabled();
-    expect(button("Return for Correction")).toBeEnabled();
+    await userEvent.setup().click(screen.getByRole("button", { name: "More actions" }));
+    expect(await screen.findByRole("menuitem", { name: "Request Fix" })).toBeEnabled();
     expect(button("Confirm cancellation")).toBeNull();
   });
 
@@ -90,13 +91,13 @@ describe("contract details show actions allowed for each viewer", () => {
     contract.vipNumber = undefined;
     show("dev-admin", <SalesContractDetailPage contractId={contract.id} />, undefined, store);
     expect(await screen.findByText(/available once the VIP Number is issued after the qualifying payment/)).toBeInTheDocument();
-    expect(button("Print VIP Grant")).toBeNull();
+    expect(button("Print Grant")).toBeNull();
   });
 
   it("keeps review actions hidden from the seller on a contract assigned to them", async () => {
     show("dev-ost-a2", <SalesContractDetailPage contractId="ctr-4" />);
     await screen.findByRole("group", { name: "Contract summary" });
-    for (const name of ["Approve Deal", "Return for Correction", "Print Reservation Agreement", "Print VIP Grant", "Print Finance Summary"]) expect(button(name)).toBeNull();
+    for (const name of ["Approve Deal", "Request Fix", "Print Agreement", "Print Grant", "Print Summary"]) expect(button(name)).toBeNull();
   });
 
   it("Sales contract Payment Schedule tab shows the schedule and opens the MA1 sheet on row click", async () => {
@@ -132,8 +133,8 @@ describe("contract details show actions allowed for each viewer", () => {
     show("dev-finance", <FinanceCollectionDetailPage contractId="ctr-1" />);
     expect(await screen.findByRole("table", { name: "Payment Ledger" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Payments" })).toBeInTheDocument();
-    expect(await screen.findByRole("button", { name: "Print Finance Summary" })).toBeEnabled();
-    for (const name of ["Approve Deal", "Edit Details", "Submit Contract", "Submit Payment", "Cancel Contract", "Confirm Cancellation", "Print Reservation Agreement", "Print VIP Grant"]) expect(button(name)).toBeNull();
+    expect(await screen.findByRole("button", { name: "Print Summary" })).toBeEnabled();
+    for (const name of ["Approve Deal", "Edit Details", "Submit Contract", "Submit Payment", "Cancel Contract", "Confirm Cancellation", "Print Agreement", "Print Grant"]) expect(button(name)).toBeNull();
   });
 
   it("Finance collection ledger rows keep 5 columns and open details with the running Net verified value", async () => {
@@ -204,7 +205,7 @@ describe("unmatched receipt intake from the contract Payments tab (G1 clerk surf
     await screen.findByRole("tablist", { name: "Contract detail views" });
     await user.click(screen.getByRole("tab", { name: "Payments" }));
     await screen.findByRole("table", { name: "Payments" });
-    await user.click(screen.getByRole("button", { name: "Record unmatched receipt" }));
+    await user.click(screen.getByRole("button", { name: "Add Receipt" }));
     const dialog = await screen.findByRole("dialog", { name: "Record Unmatched Receipt" });
     await user.type(within(dialog).getByLabelText(/^Amount/), "77");
     await user.type(within(dialog).getByLabelText(/^OR \/ bank reference number/), "BT-CTR1-CLERK-UNMATCHED-01");
@@ -221,6 +222,6 @@ describe("unmatched receipt intake from the contract Payments tab (G1 clerk surf
     await screen.findByRole("tablist", { name: "Contract detail views" });
     await user.click(screen.getByRole("tab", { name: "Payments" }));
     await screen.findByRole("table", { name: "Payments" });
-    expect(screen.queryByRole("button", { name: "Record unmatched receipt" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add Receipt" })).toBeNull();
   });
 });

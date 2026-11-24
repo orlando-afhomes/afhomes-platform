@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BadgeCheck, Crown, History, Info, Receipt, Upload } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Ban, Check, Crown, FileSignature, FileText, Gift, History, Info, KeyRound, Landmark, Plus, Receipt, ReceiptText, RefreshCw, ScrollText, ShieldAlert, Wrench, type LucideIcon } from "lucide-react";
+import { DetailActions } from "@/shared/components/modern/detail-actions";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { matchesSearch } from "@/shared/lib/search";
 import { useOperation, usePayments } from "@/data/business-queries";
@@ -22,7 +23,6 @@ import { EMPTY, displayValue } from "@/shared/lib/empty-value";
 import { formatDate } from "@/shared/lib/format-date";
 import { Button } from "@/shared/ui/button";
 import { IgpRecordDetailDialog, IgpSaleDialog, IgpSettingsDialog } from "../components/igp-dialogs";
-import { IgpHistoryDialog } from "../components/igp-history-import";
 import { PaymentSubmitDialog, usePaymentActions } from "../components/payment-actions";
 
 const STATUS_LABELS: Record<IgpStatus, string> = {
@@ -30,13 +30,29 @@ const STATUS_LABELS: Record<IgpStatus, string> = {
   cancelled: "Cancelled", replaced: "Replaced", pending_review: "Pending review",
 };
 
+/** A different icon for each document action, so the checklist buttons are distinguishable at a glance. */
+const DOCUMENT_ICONS: Record<IgpDocumentKey, LucideIcon> = {
+  reservation: FileText,
+  cts: ScrollText,
+  goodwill_grant: Gift,
+  deed: Landmark,
+  formal_grant: Crown,
+  lease: KeyRound,
+  spa: FileSignature,
+};
+
 type IgpDialog = "reissue" | "correct" | "cancel" | "default" | "document" | "receipt";
 
 /** Dialogs opened from the page heading buttons; the Sales area page owns their open state. */
-export type IgpHeaderDialog = "record" | "accredit" | "threshold" | "grant-tiers" | "import-history";
+export type IgpHeaderDialog = "record" | "accredit" | "threshold" | "grant-tiers";
 
 function statusLabel(sale: IgpSaleView): string {
   return sale.defaultReviewDue ? "Due for stopped-paying review" : sale.status === "approved" && sale.closedDealDate ? "Confirmed Sale" : STATUS_LABELS[sale.status];
+}
+
+function SaleStatusBadge({ sale }: { sale: IgpSaleView }) {
+  const status = sale.defaultReviewDue ? "on_hold" : sale.status === "approved" && sale.closedDealDate ? "confirmed" : sale.status;
+  return <BizBadge status={status} label={statusLabel(sale)} />;
 }
 
 const REGISTER_COLUMNS: ColumnDef<IgpSaleView, unknown>[] = [
@@ -44,7 +60,7 @@ const REGISTER_COLUMNS: ColumnDef<IgpSaleView, unknown>[] = [
   { accessorKey: "buyerName", header: "Buyer" },
   { id: "project", header: "Project", meta: { className: "tw:hidden tw:md:table-cell" }, cell: ({ row }) => displayValue(row.original.project) },
   { id: "price", header: "Contract Price", meta: { className: "tw:hidden tw:sm:table-cell" }, cell: ({ row }) => <Money value={row.original.priceCentavos} /> },
-  { id: "status", header: "Status", cell: ({ row }) => statusLabel(row.original) },
+  { id: "status", header: "Status", cell: ({ row }) => <SaleStatusBadge sale={row.original} /> },
 ];
 
 /** Heading buttons of the IGP tab (Sales area). Same permissions as before; the area page opens the dialogs. */
@@ -60,14 +76,13 @@ export function IgpActions({ onOpen, onOpenHistory }: { onOpen: (dialog: IgpHead
   const canManage = useOperation("igp.manage");
   const register = useIgpRegister(modules.has("sales") || modules.has("finance")).data;
   if (!register) return null;
-  return <>
-    {canEnter && <Button onClick={() => onOpen("record")}><Receipt aria-hidden="true" /> Record Sale</Button>}
-    {canManage && <Button variant="info" onClick={() => onOpen("accredit")}><BadgeCheck aria-hidden="true" /> Record JA&D Accreditation</Button>}
-    {canManage && <Button variant="warning" onClick={() => onOpen("threshold")}><Info aria-hidden="true" /> When a Sale Counts</Button>}
-    {canManage && <Button variant="violet" onClick={() => onOpen("grant-tiers")}><Crown aria-hidden="true" /> VIP Card Levels</Button>}
-    {canManage && <Button variant="teal" onClick={() => onOpen("import-history")}><Upload aria-hidden="true" /> Import History</Button>}
-    {canManage && register.accreditations.length > 0 && <Button variant="rose" onClick={onOpenHistory}><History aria-hidden="true" /> JA&D Approval History</Button>}
-  </>;
+  return <DetailActions header actions={[
+    canEnter && { key: "record", label: "Record Sale", next: true, icon: Receipt, onClick: () => onOpen("record") },
+    canManage && { key: "accredit", label: "Record Accreditation", variant: "teal", icon: BadgeCheck, onClick: () => onOpen("accredit") },
+    canManage && register.accreditations.length > 0 && { key: "history", label: "Approval History", variant: "indigo", icon: History, onClick: onOpenHistory },
+    canManage && { key: "threshold", label: "Sale Rules", variant: "info", icon: Info, onClick: () => onOpen("threshold") },
+    canManage && { key: "grant", label: "Card Levels", variant: "violet", icon: Crown, onClick: () => onOpen("grant-tiers") },
+  ]} />;
 }
 
 export function IgpTab({ headerDialog, onHeaderDialogClose, historyOpen, onHistoryClose }: {
@@ -101,28 +116,26 @@ export function IgpTab({ headerDialog, onHeaderDialogClose, historyOpen, onHisto
   const sellerName = (memberId: string) => register?.sellers.find(({ value }) => value === memberId)?.label ?? "Former seller";
   const membership = sale ? register?.buyerMemberships.find(({ saleId }) => saleId === sale.id) : undefined;
 
-  const saleActions = sale && !closed ? <>
-    {canManage && sale.status === "pending" && <Button variant="success" onClick={() => confirmRun({
+  const footer = sale ? <DetailActions actions={[
+    !closed && canManage && sale.status === "pending" && { key: "approve", label: "Approve Sale", next: true, variant: "success", icon: Check, onClick: () => confirmRun({
       title: "Approve Property Sale (IGP)?", description: "Finance can approve receipts after the sale is approved.", confirmText: "Approve Sale", tone: "success",
       action: () => action.mutateAsync({ type: "approve", id: sale.id }), successTitle: "Property sale (IGP) approved.", errorTitle: "Could not approve the property sale (IGP).",
-    })}>Approve Sale</Button>}
-    {canSubmit && <Button onClick={() => setDialog("receipt")}>Enter Receipt</Button>}
-    {canEnter && !sale.stage1Date && (canManage || sale.collectedCentavos === 0) && <Button variant="warning" onClick={() => setDialog("correct")}>Correct Sale</Button>}
-    {canManage && <Button variant="warning" onClick={() => setDialog("reissue")}>Reissue Number</Button>}
-    {canManage && sale.defaultReviewDue && <Button variant="destructive" onClick={() => setDialog("default")}>Mark as Stopped Paying</Button>}
-    {canManage && <Button variant="destructive" onClick={() => setDialog("cancel")}>Cancel Sale</Button>}
-  </> : null;
-  const linkActions = sale && (sale.replacesId || sale.replacedById) ? <>
-    {sale.replacesId && <Button variant="info" onClick={() => setSelected(sale.replacesId)}>View Previous Number</Button>}
-    {sale.replacedById && <Button variant="info" onClick={() => setSelected(sale.replacedById)}>View Replacement Number</Button>}
-  </> : null;
+    }) },
+    !closed && canSubmit && { key: "receipt", label: "Enter Receipt", next: true, icon: ReceiptText, onClick: () => setDialog("receipt") },
+    !closed && canEnter && !sale.stage1Date && (canManage || sale.collectedCentavos === 0) && { key: "correct", label: "Correct Sale", variant: "warning", icon: Wrench, onClick: () => setDialog("correct") },
+    !closed && canManage && { key: "reissue", label: "Reissue Number", variant: "rose", icon: RefreshCw, onClick: () => setDialog("reissue") },
+    sale.replacesId ? { key: "previous", label: "Previous Number", variant: "indigo", icon: ArrowLeft, onClick: () => setSelected(sale.replacesId) } : null,
+    sale.replacedById ? { key: "replacement", label: "New Number", next: closed, variant: "violet", icon: Plus, onClick: () => setSelected(sale.replacedById) } : null,
+    !closed && canManage && sale.defaultReviewDue && { key: "default", label: "Stopped Paying", variant: "burgundy", icon: ShieldAlert, onClick: () => setDialog("default") },
+    !closed && canManage && { key: "cancel", label: "Cancel Sale", variant: "destructive", icon: Ban, onClick: () => setDialog("cancel") },
+  ]} /> : undefined;
 
   return (
-    <AdminPage anyOf={["sales", "finance"]} title="Property Sales (IGP)" crumbs={[{ label: "Sales" }, { label: "Property Sales (IGP)" }]} embedded>
+    <AdminPage anyOf={["sales", "finance"]} title="Property Sales" crumbs={[{ label: "Sales" }, { label: "Property Sales" }]} embedded>
       <QueryState isLoading={registerQuery.isLoading} error={registerQuery.error}>
         {register && <>
           <FilterBar search={search} onSearch={setSearch} searchLabel="Search property sales (IGP)" filters={[{ label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: statusOptions }]} />
-          <DataTable data={visibleSales} columns={REGISTER_COLUMNS} getRowId={({ id }) => id} caption="Property Sales (IGP)" orderBy={IGP_SALE_ORDER}
+          <DataTable data={visibleSales} columns={REGISTER_COLUMNS} getRowId={({ id }) => id} caption="Property Sales" orderBy={IGP_SALE_ORDER}
             emptyText={register.sales.length === 0 ? "No property sales (IGP) are available." : "No property sales (IGP) match the filters."}
             onRowOpen={(row) => setSelected(row.id)}
             getRowLabel={(row) => `Open property sale (IGP) ${row.seriesNumber}`} />
@@ -139,7 +152,7 @@ export function IgpTab({ headerDialog, onHeaderDialogClose, historyOpen, onHisto
           <RecordDetailsSheet open={sale !== undefined} onClose={() => setSelected(null)} size="lg"
             title={sale?.seriesNumber ?? "Property sale (IGP)"}
             subtitle={sale?.buyerName}
-            badge={sale ? statusLabel(sale) : undefined}
+            badge={sale ? <SaleStatusBadge sale={sale} /> : undefined}
             sections={sale ? [
               {
                 title: "Sale",
@@ -199,23 +212,22 @@ export function IgpTab({ headerDialog, onHeaderDialogClose, historyOpen, onHisto
               },
               {
                 title: "Document Checklist",
+                layout: "list",
                 rows: sale.documents.map(({ key, signedDate, signers }) => {
                   const { name, signedBy } = IGP_DOCUMENT_LABELS[key];
+                  const DocumentIcon = DOCUMENT_ICONS[key];
                   return {
                     label: name,
-                    value: <span className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
-                      <span>{signedDate ? `Signed ${formatDate(signedDate)} by ${signers}` : `Waiting for ${signedBy}`}</span>
-                      {canEnter && !closed && <Button variant="outline" size="sm" onClick={() => { setDocument(key); setDialog("document"); }}>{signedDate ? "Edit Signature" : "Record Signature"}</Button>}
-                    </span>,
+                    value: signedDate ? `Signed ${formatDate(signedDate)} by ${signers}` : `Waiting for ${signedBy}`,
+                      action: canEnter && !closed ? <Button variant={signedDate ? "warning" : "default"} size="sm" className="tw:min-h-11 tw:sm:min-h-8" aria-label={`${signedDate ? "Edit" : "Record"} Signature for ${name}`} onClick={() => { setDocument(key); setDialog("document"); }}><DocumentIcon aria-hidden="true" />{signedDate ? "Edit Signature" : "Record Signature"}</Button> : null,
                   };
                 }),
               },
             ] : []}
-            footer={saleActions || linkActions ? <div className="tw:flex tw:flex-wrap tw:gap-2">{saleActions}{linkActions}</div> : undefined} />
+            footer={footer} />
           {headerDialog === "record" && <IgpSaleDialog mode="record" register={register} onClose={onHeaderDialogClose} />}
           {(dialog === "correct" || dialog === "reissue") && sale && <IgpSaleDialog mode={dialog} register={register} sale={sale} onClose={close} />}
           {(headerDialog === "accredit" || headerDialog === "threshold" || headerDialog === "grant-tiers") && <IgpSettingsDialog mode={headerDialog} register={register} onClose={onHeaderDialogClose} />}
-          {headerDialog === "import-history" && <IgpHistoryDialog register={register} onClose={onHeaderDialogClose} />}
           {sale && (dialog === "cancel" || dialog === "default" || dialog === "document") &&
             <IgpRecordDetailDialog sale={sale} mode={dialog} documentKey={document} onClose={close} />}
           {sale && dialog === "receipt" && <PaymentSubmitDialog contractId={sale.id} open onClose={close} />}

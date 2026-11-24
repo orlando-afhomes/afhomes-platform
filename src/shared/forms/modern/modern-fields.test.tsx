@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { MoneyField, PointsField, PasswordField, PhilippineAddressFields, PhilippineLandlineField, PhilippineMobileField, SelectField, SuffixField, TextField, TIN_DISPLAY_LENGTH, TinField } from ".";
+import { CheckboxField, EmailField, MoneyField, PointsField, PasswordField, PhilippineAddressFields, PhilippineLandlineField, PhilippineMobileField, PrefixField, SelectField, SuffixField, TextField, TIN_DISPLAY_LENGTH, TinField } from ".";
 import { GovernmentIdFields, OfficeAddressFields } from "./structured-fields";
 import { validateTinNumber } from "@/shared/forms/validation/identification";
 
@@ -54,14 +54,25 @@ describe("modern text, password and select fields", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Name is required.");
   });
 
-  it("toggles password visibility with an accessible button", async () => {
+  it("toggles password visibility with an accessible button without submitting the form", async () => {
     const user = userEvent.setup();
-    render(<PasswordField id="p" label="Password" value="secret" onChange={() => {}} />);
+    const submitted = vi.fn();
+    render(<form onSubmit={(event) => { event.preventDefault(); submitted(); }}><PasswordField id="p" label="Password" value="secret" onChange={() => {}} /></form>);
     const input = screen.getByLabelText("Password");
     expect(input).toHaveAttribute("type", "password");
     await user.click(screen.getByRole("button", { name: "Show password" }));
     expect(input).toHaveAttribute("type", "text");
     expect(screen.getByRole("button", { name: "Hide password" })).toHaveAttribute("aria-pressed", "true");
+    expect(submitted).not.toHaveBeenCalled();
+  });
+
+  it("offers a clearable prefix list", async () => {
+    const user = userEvent.setup();
+    let picked = "";
+    render(<PrefixField id="pre" value={undefined} onChange={(value) => (picked = value)} />);
+    await user.click(screen.getByRole("combobox", { name: "Prefix" }));
+    await user.click(await screen.findByRole("option", { name: "Dr." }));
+    expect(picked).toBe("Dr.");
   });
 
   it("selects an option and reports its value", async () => {
@@ -497,5 +508,72 @@ describe("address field shells", () => {
     expect(street).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: /subdivision/i })).toBe(street);
     expect(screen.getByRole("textbox", { name: "ZIP Code" })).toBeDisabled();
+  });
+});
+
+describe("EmailField", () => {
+  function EmailHarness({ initial = "" }: { initial?: string }) {
+    const [value, setValue] = useState(initial);
+    return (
+      <>
+        <EmailField id="email" label="Email" value={value} onChange={setValue} />
+        <output data-testid="email-value">{value}</output>
+      </>
+    );
+  }
+
+  it("adds @gmail.com to a typed name and keeps the value empty with no name", async () => {
+    const user = userEvent.setup();
+    render(<EmailHarness />);
+    expect(screen.getByTestId("email-value").textContent).toBe("");
+    await user.type(screen.getByRole("textbox", { name: "Email" }), "Juan");
+    expect(screen.getByTestId("email-value").textContent).toBe("juan@gmail.com");
+  });
+
+  it("keeps a full address typed with its own domain", async () => {
+    const user = userEvent.setup();
+    render(<EmailHarness />);
+    await user.type(screen.getByRole("textbox", { name: "Email" }), "ana@company.ph");
+    expect(screen.getByTestId("email-value").textContent).toBe("ana@company.ph");
+  });
+
+  it("keeps the domain list visible after choosing Other and can go back to a listed domain", async () => {
+    const user = userEvent.setup();
+    render(<EmailHarness />);
+    await user.type(screen.getByRole("textbox", { name: "Email" }), "ana@company.ph");
+    expect(screen.getByRole("combobox", { name: "Email domain" })).toBeVisible();
+    await user.click(screen.getByRole("combobox", { name: "Email domain" }));
+    await user.click(await screen.findByRole("option", { name: "@yahoo.com" }));
+    expect(screen.getByTestId("email-value").textContent).toBe("ana@yahoo.com");
+  });
+
+  it("shows the name part for a stored Gmail address", () => {
+    render(<EmailHarness initial="maria@gmail.com" />);
+    expect((screen.getByRole("textbox", { name: "Email" }) as HTMLInputElement).value).toBe("maria");
+  });
+});
+
+describe("CheckboxField card variant", () => {
+  it("toggles when anywhere on the row is clicked, icon included", async () => {
+    const user = userEvent.setup();
+    function Harness() {
+      const [checked, setChecked] = useState(false);
+      return <CheckboxField variant="card" icon={<svg data-testid="row-icon" />} label="I checked the cardholder’s ID" checked={checked} onChange={setChecked} />;
+    }
+    render(<Harness />);
+    const box = screen.getByRole("checkbox", { name: "I checked the cardholder’s ID" });
+    expect(box).toHaveAttribute("aria-checked", "false");
+    await user.click(screen.getByTestId("row-icon"));
+    expect(box).toHaveAttribute("aria-checked", "true");
+    await user.click(screen.getByText("I checked the cardholder’s ID"));
+    expect(box).toHaveAttribute("aria-checked", "false");
+  });
+});
+
+describe("money and points fields group thousands", () => {
+  it("shows a value that arrives already filled in with separators", () => {
+    render(<><MoneyField id="m" label="Amount" value="25000.5" onChange={() => {}} /><PointsField id="p" label="Points to use" value="1250000" onChange={() => {}} /></>);
+    expect((screen.getByLabelText("Amount") as HTMLInputElement).value).toBe("25,000.5");
+    expect((screen.getByLabelText("Points to use") as HTMLInputElement).value).toBe("1,250,000");
   });
 });

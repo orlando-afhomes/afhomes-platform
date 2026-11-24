@@ -1,7 +1,7 @@
 import { getEffectiveRoles } from "@/modules/identity/permissions";
 import type { DevIdentity } from "@/modules/identity/types";
 
-export type DashboardKind = "restricted" | "admin" | "finance" | "sales" | "clerk" | "none";
+export type DashboardKind = "restricted" | "admin" | "finance" | "sales" | "clerk" | "gsd" | "hr" | "none";
 
 const SALES_ROLES = ["svd", "ssm", "sm", "ost"];
 
@@ -18,6 +18,8 @@ export function resolveDashboard(identity: DevIdentity): DashboardKind {
   if (roles.includes("finance")) return "finance";
   if (roles.some((role) => SALES_ROLES.includes(role))) return "sales";
   if (roles.includes("clerk")) return "clerk";
+  if (roles.includes("gsd")) return "gsd";
+  if (roles.includes("hr")) return "hr";
   return "none";
 }
 

@@ -13,7 +13,7 @@ import { matchesSearch, optionsFrom } from "@/shared/lib/search";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { Money } from "@/shared/components/modern/money";
 import { AdminPage, AdminStatCard, AdminStatGrid } from "@/shared/components/admin";
-import { ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
+import { describeFilters, ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
 
 const collectionColumns = (from: string, to: string): ReportColumn<PaymentView>[] => [
   { header: "Counted Date", value: (payment) => formatDate(paymentCountedDate(payment)) },
@@ -52,6 +52,11 @@ export function CollectionsReportPanel() {
   const [method, setMethod] = useState("all");
   const [purpose, setPurpose] = useState("all");
   const rows = useMemo(() => inPeriod.filter((payment) => (method === "all" || payment.method === method) && (purpose === "all" || payment.purpose === purpose) && matchesSearch(search, payment.customerName, payment.contractLabel, payment.referenceNo)), [inPeriod, method, purpose, search]);
+  const metadata = describeFilters([
+    search.trim() ? `Search "${search.trim()}"` : null,
+    method !== "all" ? `Payment method: ${method}` : null,
+    purpose !== "all" ? `Payment purpose: ${humanize(purpose)}` : null,
+  ]);
   if (!allowed) return <InfoNote>Access restricted. Your role may not view Finance collections reports.</InfoNote>;
   return (
     <ReportFrame range={range}>
@@ -60,7 +65,7 @@ export function CollectionsReportPanel() {
         <AdminStatCard loading={payments.isLoading} error={payments.error} label="Refunds and Reversals" value={<Money value={adjusted} />} icon={RotateCcw} tone="danger" />
         <AdminStatCard loading={payments.isLoading} error={payments.error} label="Total After Refunds" value={<Money value={net} />} icon={Wallet} tone="info" />
       </AdminStatGrid>
-      <ReportTable report="Collections Report" fileName="collections" range={range} columns={columns} rows={rows} getRowId={(row) => row.id} getRowTitle={(row) => row.customerName} loading={payments.isLoading} error={payments.error} emptyText="No collections match."
+      <ReportTable report="Collections Report" fileName="collections" range={range} metadata={metadata} columns={columns} rows={rows} getRowId={(row) => row.id} getRowTitle={(row) => row.customerName} loading={payments.isLoading} error={payments.error} emptyText="No collections match."
         filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search collections" filters={[
           { label: "Payment method filter", value: method, onChange: setMethod, options: optionsFrom("All methods", inPeriod.map((payment) => payment.method)) },
           { label: "Payment purpose filter", value: purpose, onChange: setPurpose, options: optionsFrom("All purposes", inPeriod.map((payment) => payment.purpose), humanize) },

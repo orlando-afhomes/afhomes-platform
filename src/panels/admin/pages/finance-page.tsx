@@ -98,7 +98,7 @@ function ReceiptsPanel({ initialShow }: { initialShow: string }) {
           <>
             <AdminStatCard label="Verified" value={<Money value={verifiedInPeriod} />} icon={BadgeCheck} tone="success" />
             <AdminStatCard label="Reversals and Refunds" value={<Money value={adjustedInPeriod} />} icon={Undo2} tone="danger" />
-            <AdminStatCard label="Net Collections" value={<Money value={verifiedInPeriod - adjustedInPeriod} />} icon={Scale} tone="info" />
+            <AdminStatCard label="Total Received" description="After refunds and reversals" value={<Money value={verifiedInPeriod - adjustedInPeriod} />} icon={Scale} tone="info" />
           </>
         ) : (
           <AdminStatCard label="Awaiting Verification" value={queue.length} icon={Hourglass} tone="warning" />
@@ -125,7 +125,7 @@ function ReceiptsPanel({ initialShow }: { initialShow: string }) {
           <section aria-label="Unmatched receipts" className="tw:mt-6">
             <div className="tw:mb-3 tw:flex tw:items-center tw:justify-between tw:gap-3">
               <h2 className="tw:text-lg tw:font-semibold">Unmatched Receipts</h2>
-              {unmatchedActions.canRecord ? <Button type="button" variant="outline" onClick={unmatchedActions.openIntake}>Record unmatched receipt</Button> : null}
+              {unmatchedActions.canRecord ? <Button type="button" variant="outline" onClick={unmatchedActions.openIntake}>Add Receipt</Button> : null}
             </div>
             <DataTable data={visibleUnmatched} columns={unmatchedColumns} getRowId={(row) => row.id} emptyText={openUnmatched.length > 0 ? "No unmatched receipts match the search." : "No unmatched receipts waiting for Finance review."} caption="Unmatched receipts" rowActions={unmatchedActions.rowActions} getRowLabel={(row) => `Unmatched receipt ${row.orNumber}`} />
           </section>

@@ -76,10 +76,10 @@ describe("Finance area", () => {
     const user = userEvent.setup();
     show(<FinanceAreaPage />);
     expect(await screen.findByRole("heading", { name: "Finance", level: 1 })).toBeInTheDocument();
-    expect(tabNames()).toEqual(["Receipts", "Collections", "Cancellations", "Close the Month", "Compare with Spreadsheet"]);
+    expect(tabNames()).toEqual(["Receipts", "Payment Status", "Cancellations", "Month-End", "Monthly Check"]);
     expect(await screen.findByRole("table", { name: "All payments" })).toBeInTheDocument();
-    await user.click(screen.getByRole("tab", { name: "Collections" }));
-    expect(await screen.findByRole("table", { name: "Collections" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Payment Status" }));
+    expect(await screen.findByRole("table", { name: "Payment Status" })).toBeInTheDocument();
     expect(screen.queryByRole("table", { name: "All payments" })).toBeNull();
     expect(window.location.search).toBe("?tab=collections");
     expect(screen.getAllByRole("tablist")).toHaveLength(1);
@@ -129,7 +129,7 @@ describe("Finance tables stay short", () => {
   it("shows collections as Customer, Balance, Overdue, Status, Next due and opens full details", async () => {
     const user = userEvent.setup();
     show(<FinanceAreaPage />, "collections");
-    const table = await screen.findByRole("table", { name: "Collections" });
+    const table = await screen.findByRole("table", { name: "Payment Status" });
     expect(headers(table)).toEqual(["Customer", "Balance", "Overdue", "Status", "Next Due"]);
     await user.click(within(table).getAllByRole("row")[1]);
     expect(await screen.findByRole("region", { name: "Collection" })).toBeInTheDocument();
@@ -168,7 +168,10 @@ describe("Unmatched receipts (G1)", () => {
     await user.click(await screen.findByRole("option", { name: "Exceptions" }));
     const table = await screen.findByRole("table", { name: "Unmatched receipts" });
     expect(within(table).getByRole("row", { name: /BT-PANEL-1/ })).toHaveTextContent("Panel test: no matching payment.");
-    await user.click(within(table).getByRole("button", { name: "Match receipt BT-PANEL-1" }));
+    // Every row action, Match included, is inside the "..." menu.
+    expect(within(table).queryByRole("button", { name: "Match receipt BT-PANEL-1" })).toBeNull();
+    await user.click(within(table).getByRole("button", { name: "Actions for unmatched receipt BT-PANEL-1" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Match" }));
     expect(await screen.findByRole("dialog", { name: "Match Unmatched Receipt" })).toBeInTheDocument();
   });
 
@@ -179,7 +182,7 @@ describe("Unmatched receipts (G1)", () => {
     await user.click(screen.getByRole("combobox", { name: "Show" }));
     await user.click(await screen.findByRole("option", { name: "Exceptions" }));
     await screen.findByRole("table", { name: "Unmatched receipts" });
-    await user.click(screen.getByRole("button", { name: "Record unmatched receipt" }));
+    await user.click(screen.getByRole("button", { name: "Add Receipt" }));
     const dialog = await screen.findByRole("dialog", { name: "Record Unmatched Receipt" });
     await user.type(within(dialog).getByLabelText(/^Amount/), "155");
     await user.type(within(dialog).getByLabelText(/^OR \/ bank reference number/), "BT-PANEL-2");
@@ -193,11 +196,11 @@ describe("Unmatched receipts (G1)", () => {
 describe("Collections on payment hold", () => {  it("keeps only memberships on hold with the On payment hold option", async () => {
     const user = userEvent.setup();
     show(<FinanceAreaPage />, "collections");
-    const table = await screen.findByRole("table", { name: "Collections" });
+    const table = await screen.findByRole("table", { name: "Payment Status" });
     const rows = within(table).getAllByRole("row").length;
     await user.click(screen.getByRole("combobox", { name: "Status filter" }));
     await user.click(await screen.findByRole("option", { name: "On payment hold" }));
-    const held = within(await screen.findByRole("table", { name: "Collections" })).queryAllByRole("row").length;
+    const held = within(await screen.findByRole("table", { name: "Payment Status" })).queryAllByRole("row").length;
     expect(held).toBeLessThan(rows);
   });
 });
@@ -214,14 +217,14 @@ describe("Commissions area", () => {
   it("lets an Administrator record the signed addendum from Commission Paybacks, and nobody else", async () => {
     const user = userEvent.setup();
     const admin = show(<CommissionsAreaPage />, "recovery", "dev-admin");
-    await user.click(await screen.findByRole("button", { name: "Signed Addendum Dates" }));
+    await user.click(await screen.findByRole("button", { name: "Addendum Dates" }));
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByRole("combobox", { name: /Seller/ })).toBeInTheDocument();
     expect(within(dialog).getByText(/Only Internal Sellers \(IST\) sign this/)).toBeInTheDocument();
     admin.unmount();
     show(<CommissionsAreaPage />, "recovery", "dev-finance");
     await screen.findByRole("table", { name: "Commission Paybacks" });
-    expect(screen.queryByRole("button", { name: "Signed Addendum Dates" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Addendum Dates" })).toBeNull();
   });
 
   it("gives a Clerk no Commissions area now that month close prepares the payout list", async () => {

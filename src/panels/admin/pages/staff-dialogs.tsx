@@ -1,6 +1,7 @@
 "use client";
 
 import { humanize } from "@/shared/lib/humanize";
+import { Briefcase, ShieldCheck, SlidersHorizontal, UserRound, type LucideIcon } from "lucide-react";
 import { EMPTY } from "@/shared/lib/empty-value";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ import {
   validateMobileNumber,
   validatePassword,
   validatePersonName,
+  validatePrefix,
   validatePostalCode,
   validateProvince,
   validateStreet,
@@ -37,6 +39,7 @@ import {
   PersonNameField,
   PhilippineAddressFields,
   PhilippineMobileField,
+  PrefixField,
   ProfilePhotoUploader,
   SelectField,
   SuffixField,
@@ -178,6 +181,7 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
   const identityLocked = identityRestriction !== null;
 
   const splitName = splitDisplayName(editStaff?.displayName ?? "");
+  const [prefix, setPrefix] = useState(editStaff?.prefix ?? "");
   const [firstName, setFirstName] = useState(editStaff?.firstName ?? splitName.first);
   const [middleName, setMiddleName] = useState(editStaff?.middleName ?? splitName.middle);
   const [noMiddleName, setNoMiddleName] = useState(editStaff ? !(editStaff.middleName ?? splitName.middle).trim() : false);
@@ -260,6 +264,7 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
     tempPassword: canProvisionAccounts ? (!tempPassword ? "Temporary password is required." : validatePassword(tempPassword)) ?? undefined : undefined,
     confirmPassword: canProvisionAccounts && tempPassword ? (validateConfirmPassword(tempPassword, confirmPassword) ?? undefined) : undefined,
     firstName: validatePersonName(firstName, "First name") ?? undefined,
+    prefix: validatePrefix(prefix) ?? undefined,
     middleName: validateMiddleName(middleName, noMiddleName) ?? undefined,
     lastName: validatePersonName(lastName, "Last name") ?? undefined,
     suffix: validateSuffix(suffix) ?? undefined,
@@ -292,6 +297,7 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
 
   const profilePayload = () => ({
     firstName: firstName.trim(),
+    prefix: prefix.trim() ? prefix.trim() : null,
     middleName: noMiddleName ? null : middleName.trim(),
     lastName: lastName.trim(),
     suffix: suffix.trim() ? suffix.trim() : null,
@@ -402,6 +408,7 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
       <FormSection title="Personal Details">
         {identityLocked ? <InfoNote>{identityRestriction}</InfoNote> : null}
         <FormGrid>
+          <PrefixField id="staff-prefix" value={prefix || undefined} onChange={setPrefix} disabled={identityLocked} error={visible("prefix")} />
           <PersonNameField id="staff-first-name" label="First Name" required value={firstName} onChange={setFirstName} placeholder="First Name" disabled={identityLocked} error={visible("firstName")} />
           <PersonNameField id="staff-last-name" label="Last Name" required value={lastName} onChange={setLastName} placeholder="Last Name" disabled={identityLocked} error={visible("lastName")} />
           <MiddleNameField
@@ -651,22 +658,29 @@ function StaffProfileDialog({
           <DialogDescription>Read-only profile, employment, and account access.</DialogDescription>
         </DialogHeader>
         {profileStaff ? (
-          <div className="tw:flex tw:flex-col tw:gap-5">
-            <div className="tw:flex tw:items-center tw:gap-3">
-              <Avatar className="tw:size-16 tw:text-lg">
-                {profileStaff.avatarUrl ? <AvatarImage src={profileStaff.avatarUrl} alt="" /> : null}
-                <AvatarFallback>{initials(profileStaff.displayName)}</AvatarFallback>
-              </Avatar>
-              <div className="tw:min-w-0">
-                <div className="tw:text-lg tw:font-semibold">{profileStaff.displayName}</div>
-                <div className="tw:text-muted-foreground">{profileStaff.position}</div>
+          <div className="tw:flex tw:flex-col tw:gap-4">
+            <div className="tw:flex tw:items-center tw:gap-4 tw:rounded-xl tw:bg-primary/5 tw:p-4 tw:ring-1 tw:ring-primary/10">
+              <span className="tw:inline-flex tw:shrink-0 tw:rounded-full tw:bg-card tw:p-0.5 tw:ring-2 tw:ring-primary/30">
+                <Avatar className="tw:size-16 tw:text-lg">
+                  {profileStaff.avatarUrl ? <AvatarImage src={profileStaff.avatarUrl} alt="" /> : null}
+                  <AvatarFallback>{initials(profileStaff.displayName)}</AvatarFallback>
+                </Avatar>
+              </span>
+              <div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-1.5">
+                <div className="tw:text-xl tw:leading-tight tw:font-bold">{profileStaff.displayName}</div>
+                <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-x-2 tw:gap-y-1 tw:text-muted-foreground">
+                  <span>{profileStaff.position}</span>
+                  {departments.find((item) => item.id === profileStaff.departmentId) ? <span aria-hidden="true">·</span> : null}
+                  <span>{departments.find((item) => item.id === profileStaff.departmentId)?.name}</span>
+                </div>
               </div>
             </div>
 
-            <ProfileSection title="Profile">
+            <ProfileSection title="Profile" icon={UserRound}>
               {staffPolicy?.identityRestriction ? <InfoNote>{staffPolicy.identityRestriction}</InfoNote> : null}
               <DetailList>
                 <DetailRow term="Email">{profileStaff.email}</DetailRow>
+                {profileStaff.prefix ? <DetailRow term="Prefix">{profileStaff.prefix}</DetailRow> : null}
                 {profileStaff.suffix ? <DetailRow term="Suffix">{profileStaff.suffix}</DetailRow> : null}
                 {profileStaff.mobileNumber ? <DetailRow term="Mobile Number">{profileStaff.mobileNumber}</DetailRow> : null}
                 {profileStaff.street ? (
@@ -691,7 +705,7 @@ function StaffProfileDialog({
               </DetailList>
             </ProfileSection>
 
-            <ProfileSection title="Employment">
+            <ProfileSection title="Employment" icon={Briefcase}>
               {staffPolicy?.assignmentRestriction ? <InfoNote>{staffPolicy.assignmentRestriction}</InfoNote> : null}
               <DetailList>
                 <DetailRow term="Department">{departments.find((item) => item.id === profileStaff.departmentId)?.name ?? EMPTY}</DetailRow>
@@ -709,7 +723,7 @@ function StaffProfileDialog({
               </DetailList>
             </ProfileSection>
 
-            <ProfileSection title="Account Access">
+            <ProfileSection title="Account Access" icon={ShieldCheck}>
               {linkedAccount ? (
                 <>
                   {accountPolicy?.restriction ? <InfoNote>{accountPolicy.restriction}</InfoNote> : null}
@@ -733,20 +747,6 @@ function StaffProfileDialog({
                       </>
                     ) : null}
                   </DetailList>
-                  {accountActions?.onManageRoles || accountActions?.onChangeStatus ? (
-                    <div className="tw:flex tw:flex-wrap tw:gap-2">
-                      {accountActions.onManageRoles ? (
-                        <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={accountActions.onManageRoles}>
-                          System Roles
-                        </Button>
-                      ) : null}
-                      {accountActions.onChangeStatus ? (
-                        <Button type="button" variant="outline" className={BUTTON_CLASS} onClick={accountActions.onChangeStatus}>
-                          Change Status
-                        </Button>
-                      ) : null}
-                    </div>
-                  ) : null}
                   {/* The full status dialog supersedes the Staff suspend/deactivate shortcut. */}
                   {!accountActions?.onChangeStatus ? (
                     <LinkedAccountActions
@@ -763,10 +763,23 @@ function StaffProfileDialog({
               )}
             </ProfileSection>
 
-            <DialogFooter>
-              <Button type="button" className={BUTTON_CLASS} onClick={() => onEdit(profileStaff)}>
-                Edit
-              </Button>
+            <DialogFooter className="tw:sticky tw:bottom-0 tw:-mx-4 tw:-mb-4 tw:border-t tw:border-border tw:bg-popover tw:px-4 tw:py-3">
+              {/* All profile actions in one row; on a phone each button shrinks and the labels stay on one line. */}
+              <div className="tw:flex tw:w-full tw:flex-nowrap tw:gap-2 tw:sm:w-auto">
+                {accountActions?.onManageRoles ? (
+                  <Button type="button" variant="indigo" className={`${BUTTON_CLASS} tw:min-w-0 tw:flex-1 tw:px-2 tw:sm:flex-none tw:sm:px-4`} onClick={accountActions.onManageRoles}>
+                    <ShieldCheck aria-hidden="true" /> System Roles
+                  </Button>
+                ) : null}
+                {accountActions?.onChangeStatus ? (
+                  <Button type="button" variant="warning" className={`${BUTTON_CLASS} tw:min-w-0 tw:flex-1 tw:px-2 tw:sm:flex-none tw:sm:px-4`} onClick={accountActions.onChangeStatus}>
+                    <SlidersHorizontal aria-hidden="true" /> Change Status
+                  </Button>
+                ) : null}
+                <Button type="button" className={`${BUTTON_CLASS} tw:min-w-0 tw:flex-1 tw:px-2 tw:sm:flex-none tw:sm:px-4`} onClick={() => onEdit(profileStaff)}>
+                  Edit
+                </Button>
+              </div>
             </DialogFooter>
           </div>
         ) : null}
@@ -775,10 +788,15 @@ function StaffProfileDialog({
   );
 }
 
-function ProfileSection({ title, children }: { title: string; children: React.ReactNode }) {
+function ProfileSection({ title, icon: Icon, children }: { title: string; icon: LucideIcon; children: React.ReactNode }) {
   return (
-    <section aria-label={title} className="tw:flex tw:flex-col tw:gap-2">
-      <h3 className="tw:text-sm tw:font-semibold">{title}</h3>
+    <section aria-label={title} className="tw:flex tw:flex-col tw:gap-3 tw:rounded-xl tw:border tw:border-border tw:bg-card tw:p-4">
+      <h3 className="tw:flex tw:items-center tw:gap-2.5 tw:text-sm tw:font-semibold">
+        <span aria-hidden="true" className="tw:flex tw:size-8 tw:items-center tw:justify-center tw:rounded-lg tw:bg-primary/10 tw:text-primary">
+          <Icon className="tw:size-4" />
+        </span>
+        {title}
+      </h3>
       {children}
     </section>
   );

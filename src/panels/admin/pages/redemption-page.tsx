@@ -17,6 +17,7 @@ import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table
 import { FormDialog } from "@/shared/components/modern/form-dialog";
 import { Money } from "@/shared/components/modern/money";
 import { QueryState } from "@/shared/components/modern/query-state";
+import { DetailActions } from "@/shared/components/modern/detail-actions";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu, type RowActionTone } from "@/shared/components/modern/row-actions-menu";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
@@ -40,15 +41,15 @@ const fmt = (n: number) => n.toLocaleString("en-PH");
 const STATUS: Record<BookingStatus, { key: string; label: string }> = {
   pending_payment: { key: "pending", label: "Pending Payment" },
   confirmed: { key: "confirmed", label: "Confirmed" },
-  completed: { key: "finalized", label: "Completed" },
+  completed: { key: "completed", label: "Completed" },
   cancelled: { key: "cancelled", label: "Cancelled, points returned" },
-  late_cancelled: { key: "overdue", label: "Late cancellation, points lost" },
+  late_cancelled: { key: "late_cancelled", label: "Late cancellation, points lost" },
   no_show: { key: "rejected", label: "No-show, points lost" },
-  transfer_cancelled: { key: "cancelled", label: "Cancelled for card transfer" },
+  transfer_cancelled: { key: "transfer_cancelled", label: "Cancelled for card transfer" },
 };
 const statusBadge = (booking: BookingView) => booking.provisional && (booking.status === "confirmed" || booking.status === "pending_payment")
-  ? <BizBadge status="pending" label={booking.status === "confirmed" ? "Provisional hold" : "Provisional · Pending Payment"} />
-  : <BizBadge status={STATUS[booking.status].key} label={booking.status === "confirmed" && booking.checkedIn ? "Checked In" : STATUS[booking.status].label} />;
+  ? <BizBadge status={booking.status === "confirmed" ? "provisional" : "pending_payment"} label={booking.status === "confirmed" ? "Provisional hold" : "Provisional · Pending Payment"} />
+  : <BizBadge status={booking.status === "confirmed" && booking.checkedIn ? "checked_in" : STATUS[booking.status].key} label={booking.status === "confirmed" && booking.checkedIn ? "Checked In" : STATUS[booking.status].label} />;
 
 /** Button and menu color per booking action (rule: confirm and check-in green, no-show amber, cancel red). */
 const ACTION_TONE: Record<string, { tone: RowActionTone; variant: "success" | "warning" | "destructive" | "outline" }> = {
@@ -166,15 +167,9 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
         onCancel: () => open("cancel", detail),
       })
     : null;
-  const footer = detail ? (
-    <>
-      {sheetMenu?.extraItems.map((item) => (
-        <Button key={item.key} type="button" variant={ACTION_TONE[item.key]?.variant ?? "outline"} onClick={item.onClick}>
-          {item.label}
-        </Button>
-      ))}
-    </>
-  ) : undefined;
+  const footer = sheetMenu ? <DetailActions actions={sheetMenu.extraItems.map((item) => ({
+    ...item, next: ACTION_TONE[item.key]?.tone === "success", variant: ACTION_TONE[item.key]?.variant ?? "outline",
+  }))} /> : undefined;
 
   const deadline = detail && venueOf(detail.venueId) ? `${venueOf(detail.venueId)!.cutoffHours} hours before check-in at ${venueOf(detail.venueId)!.checkInTime}` : null;
 
@@ -237,7 +232,7 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
       />
       <FormDialog
         open={dialog !== null}
-        title={dialog?.kind === "cancel" ? "Cancel Booking" : dialog?.kind === "no-show" ? "Record No-Show" : "Approve Money Part"}
+        title={dialog?.kind === "cancel" ? "Cancel Booking" : dialog?.kind === "no-show" ? "Record No-Show" : "Approve Payment"}
         description={dialog?.kind === "cancel" ? "Cancelled by the venue cut-off, the points return to the same buckets. After it, they are lost." : dialog?.kind === "no-show" ? "The reserved points are lost." : "Enter the approved receipt reference. The booking becomes Confirmed."}
         submitText={dialog?.kind === "approve-cash" ? "Approve" : "Confirm"}
         submitVariant={dialog?.kind === "approve-cash" ? "success" : dialog?.kind === "cancel" ? "destructive" : "warning"}

@@ -10,7 +10,7 @@ import { customerRecordName } from "@/modules/customers/rules";
 import { formatDate } from "@/shared/lib/format-date";
 import { humanize } from "@/shared/lib/humanize";
 import { matchesSearch, optionsFrom } from "@/shared/lib/search";
-import { ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
+import { describeFilters, ReportFrame, ReportTable, useReportRange, type ReportColumn } from "../components/report-shell";
 
 const COLUMNS: ReportColumn<Customer>[] = [
   { header: "Customer", value: (customer) => customerRecordName(customer) },
@@ -36,13 +36,18 @@ export function CustomerGrowthReportPanel() {
   const [status, setStatus] = useState("all");
   const [plan, setPlan] = useState("all");
   const rows = useMemo(() => inPeriod.filter((item) => (status === "all" || item.status === status) && (plan === "all" || item.vipPlan === plan) && matchesSearch(search, item.displayName, item.customerNumber)), [inPeriod, status, plan, search]);
+  const metadata = describeFilters([
+    search.trim() ? `Search "${search.trim()}"` : null,
+    status !== "all" ? `Status: ${humanize(status)}` : null,
+    plan !== "all" ? `VIP plan: ${plan}` : null,
+  ]);
   return (
     <ReportFrame range={range}>
       <AdminStatGrid columns={2}>
         <AdminStatCard loading={customers.isLoading} error={customers.error} label="New Customers" value={newCustomers} icon={UserPlus} tone="success" />
         <AdminStatCard loading={customers.isLoading} error={customers.error} label="All Customers" value={customerList.length} icon={Users} tone="info" />
       </AdminStatGrid>
-      <ReportTable report="Customer Growth" fileName="customer-growth" range={range} columns={COLUMNS} rows={rows} getRowId={(row) => row.id} loading={customers.isLoading} error={customers.error} emptyText="No customers match."
+      <ReportTable report="Customer Growth" fileName="customer-growth" range={range} metadata={metadata} columns={COLUMNS} rows={rows} getRowId={(row) => row.id} loading={customers.isLoading} error={customers.error} emptyText="No customers match."
         filters={(exportButton) => <FilterBar search={search} onSearch={setSearch} searchLabel="Search customers" filters={[
           { label: "Status filter", value: status, onChange: setStatus, options: optionsFrom("All statuses", inPeriod.map((item) => item.status), humanize) },
           { label: "VIP plan filter", value: plan, onChange: setPlan, options: optionsFrom("All VIP plans", inPeriod.map((item) => item.vipPlan)) },

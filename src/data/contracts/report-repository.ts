@@ -3,7 +3,7 @@ import type { MockAsyncOptions } from "@/data/contracts/async-options";
 export type ReportExportInput = {
   /** Report name, e.g. "Customer Growth". */
   report: string;
-  format: "xlsx" | "csv";
+  format: "xlsx" | "csv" | "pdf";
   /** Inclusive date range of the report, or null when the report has no range. */
   range: { from: string; to: string } | null;
   rowCount: number;

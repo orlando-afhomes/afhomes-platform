@@ -144,8 +144,8 @@ describe("OST applications queue", () => {
       </Wrapper>,
     );
     await openActions(user, "OSTA-11111111");
-    expect(await screen.findByRole("menuitem", { name: "Check and Complete" })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "Return for Correction" })).toBeInTheDocument();
+    expect(await screen.findByRole("menuitem", { name: "Add Details" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Request Fix" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Reject" })).toBeInTheDocument();
     // Approve waits for the check.
     expect(screen.queryByRole("menuitem", { name: "Approve" })).not.toBeInTheDocument();
@@ -178,8 +178,8 @@ describe("OST applications queue", () => {
       </Wrapper>,
     );
     await openActions(user, "OSTA-11111111");
-    await user.click(await screen.findByRole("menuitem", { name: "Return for Correction" }));
-    const dialog = await screen.findByRole("dialog", { name: "Return for Correction" });
+    await user.click(await screen.findByRole("menuitem", { name: "Request Fix" }));
+    const dialog = await screen.findByRole("dialog", { name: "Request Fix" });
     fireEvent.change(within(dialog).getByRole("textbox", { name: /What the Applicant Should Fix/ }), { target: { value: "Birth date is wrong." } });
     await user.click(within(dialog).getByRole("button", { name: "Return Application" }));
     await waitFor(() => expect(currentStore.registrationApplications[0].status).toBe("needs_info"));
@@ -190,7 +190,7 @@ describe("OST applications queue", () => {
     await user.click(row);
     expect(await screen.findByText(`/register/ost/correct/${token}`)).toBeInTheDocument();
     expect(screen.getByText(/Email and text delivery is not available yet/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Copy Correction Link" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copy Link" })).toBeInTheDocument();
   });
 
   it("approves a checked application into an Outsourced Seller record with an accreditation number", async () => {

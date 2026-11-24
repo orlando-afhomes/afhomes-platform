@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactElement, type ReactNode } from "react";
+import { Link2, Send, ShieldCheck, Undo2, Wrench, X, type LucideIcon } from "lucide-react";
 import { useContracts, useOperation, usePaymentAction, usePayments, useSubmitPayment, useSubmitUnmatchedReceipt } from "@/data/business-queries";
 import type { PaymentView, UnmatchedReceiptView } from "@/data/contracts/payment-repository";
 import { canCorrectPayment } from "@/data/mock/scope";
@@ -12,13 +13,13 @@ import { manilaToday } from "@/shared/lib/dates";
 import { centavosToInputText, formatPeso, parsePesoToCentavos } from "@/shared/lib/money";
 import { MAX_UPLOAD_BYTES, readFileAsDataUrl } from "@/shared/lib/file-data";
 import { MoneyField, SelectField, StandardDateField, TextAreaField, TextField } from "@/shared/forms/modern";
-import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { ImagePreview } from "@/shared/components/modern/image-preview";
 import { toast } from "sonner";
 import { FormDialog, ReasonDialog } from "@/shared/components/modern/form-dialog";
-import { RowActionButton, RowActionsMenu, type RowActionTone } from "@/shared/components/modern/row-actions-menu";
+import { RowActionsMenu, type RowActionTone } from "@/shared/components/modern/row-actions-menu";
+import { DetailActions } from "@/shared/components/modern/detail-actions";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { formatDate } from "@/shared/lib/format-date";
@@ -286,7 +287,7 @@ function MatchUnmatchedDialog({ record, onClose }: { record: UnmatchedReceiptVie
   };
 
   return (
-    <FormDialog open title="Fix and Resend Payment" description={`Finance returned this payment${payment.decisionReason ? `: ${payment.decisionReason}` : "."} Correct it and resend it for verification. The original entry stays in history.`} submitText="Resend Payment" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title="Resend Payment" description={`Finance returned this payment${payment.decisionReason ? `: ${payment.decisionReason}` : "."} Correct it and resend it for verification. The original entry stays in history.`} submitText="Resend Payment" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <MoneyField label="Amount" required value={amount} onChange={setAmount} />
       <SelectField label="Method" required value={method} options={PAYMENT_METHODS.map((value) => ({ value, label: value }))} onChange={setMethod} />
       <StandardDateField label="Date on the receipt" required value={paidDate} onChange={setPaidDate} />
@@ -337,7 +338,7 @@ function AdjustDialog({ payment, onClose }: { payment: PaymentView | null; onClo
     }
   };
   return (
-    <FormDialog open title="Undo or Refund Payment" description={`The original payment stays on record. Up to ${formatPeso(adjustableCentavos(payment))} can still be adjusted.`} submitText="Record" submitVariant="warning" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
+    <FormDialog open title="Refund Payment" description={`The original payment stays on record. Up to ${formatPeso(adjustableCentavos(payment))} can still be adjusted.`} submitText="Record" submitVariant="warning" pending={action.isPending} error={error} onClose={onClose} onSubmit={() => void send()}>
       <SelectField
         label="Type"
         required
@@ -352,7 +353,7 @@ function AdjustDialog({ payment, onClose }: { payment: PaymentView | null; onClo
 }
 
 /** A single payment-row action; the same list feeds the row menu and the details sheet footer. */
-type PaymentItem = { key: string; label: string; tone?: RowActionTone; onClick: () => void };
+type PaymentItem = { key: string; label: string; tone?: RowActionTone; icon: LucideIcon; onClick: () => void };
 
 /** Footer button color for each row-menu tone: success green, warning amber, danger red, otherwise neutral. */
 const TONE_VARIANT = { success: "success", warning: "warning", danger: "destructive", info: "info", default: "outline" } as const;
@@ -383,11 +384,11 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
     const open = payment.status === "submitted" || payment.status === "under_review";
     const items: PaymentItem[] = [];
     if (canSubmit && payment.status === "returned" && canCorrectPayment(identity, payment.submittedBy)) {
-      items.push({ key: "resend", label: "Fix and Resend", tone: "warning", onClick: () => setResending(payment) });
+      items.push({ key: "resend", label: "Resend", tone: "warning", icon: Send, onClick: () => setResending(payment) });
     }
     if (canVerify && open) {
       if (!payment.approvalBlocked && !payment.referenceConflict) {
-        items.push({ key: "verify", label: "Verify", tone: "success", onClick: () => {
+        items.push({ key: "verify", label: "Verify", tone: "success", icon: ShieldCheck, onClick: () => {
           if (findSuggestedMatch(payments.data ?? [], payment)) {
             setReasonFor({ payment, kind: "verify" });
             return;
@@ -397,35 +398,22 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
         } });
       }
       items.push(
-        { key: "return", label: "Return for Correction", tone: "warning", onClick: () => setReasonFor({ payment, kind: "return" }) },
-        { key: "reject", label: "Reject", tone: "danger", onClick: () => setReasonFor({ payment, kind: "reject" }) },
+        { key: "return", label: "Request Fix", tone: "warning", icon: Wrench, onClick: () => setReasonFor({ payment, kind: "return" }) },
+        { key: "reject", label: "Reject", tone: "danger", icon: X, onClick: () => setReasonFor({ payment, kind: "reject" }) },
       );
     }
     if (canRefund && payment.status === "verified" && adjustableCentavos(payment) > 0) {
-      items.push({ key: "adjust", label: "Undo or Refund", tone: "warning", onClick: () => setAdjusting(payment) });
+      items.push({ key: "adjust", label: "Refund", tone: "warning", icon: Undo2, onClick: () => setAdjusting(payment) });
     }
     return items;
   };
 
-  // Verify stays visible on the row; the other actions share the menu.
-  const rowActions = (payment: PaymentView): ReactNode => {
-    const items = itemsFor(payment);
-    const verify = items.find((item) => item.key === "verify");
-    return (
-      <div className="tw:flex tw:items-center tw:justify-end tw:gap-1">
-        {verify ? <RowActionButton tone="success" aria-label={`Verify payment for ${payment.customerName}`} onClick={verify.onClick}>Verify</RowActionButton> : null}
-        <RowActionsMenu itemName={`payment for ${payment.customerName}`} extraItems={items.filter((item) => item !== verify)} />
-      </div>
-    );
-  };
+  // Every action, Verify included, lives in the row menu.
+  const rowActions = (payment: PaymentView): ReactNode => (
+    <RowActionsMenu itemName={`payment for ${payment.customerName}`} extraItems={itemsFor(payment)} />
+  );
 
-  const detailFooter = detail
-    ? itemsFor(detail).map((item) => (
-        <Button key={item.key} type="button" variant={TONE_VARIANT[item.tone ?? "default"]} onClick={item.onClick}>
-          {item.label}
-        </Button>
-      ))
-    : null;
+  const detailFooter = detail ? <DetailActions actions={itemsFor(detail).map((item) => ({ ...item, next: item.key === "verify" || item.key === "resend", variant: TONE_VARIANT[item.tone ?? "default"] }))} /> : undefined;
 
   const dialogs = (
     <>
@@ -487,7 +475,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
             : item.note;
           return { key: `${item.at}-${index}`, when: formatDate(item.at), text: `${humanize(item.event)}${note ? `: ${note}` : ""}` };
         })}
-        footer={detailFooter && detailFooter.length > 0 ? detailFooter : undefined}
+        footer={detailFooter}
       />
     </>
   );
@@ -515,13 +503,13 @@ export function useUnmatchedReceiptActions(): {
   const rowActions = (record: UnmatchedReceiptView): ReactNode => {
     if (record.status !== "unmatched" || !canVerify) return null;
     return (
-      <div className="tw:flex tw:items-center tw:justify-end tw:gap-1">
-        <RowActionButton tone="success" aria-label={`Match receipt ${record.orNumber}`} onClick={() => setMatching(record)}>Match</RowActionButton>
-        <RowActionsMenu
-          itemName={`unmatched receipt ${record.orNumber}`}
-          extraItems={[{ key: "reject", label: "Reject", tone: "danger", onClick: () => setRejecting(record) }]}
-        />
-      </div>
+      <RowActionsMenu
+        itemName={`unmatched receipt ${record.orNumber}`}
+        extraItems={[
+          { key: "match", label: "Match", tone: "success", icon: Link2, onClick: () => setMatching(record) },
+          { key: "reject", label: "Reject", tone: "danger", icon: X, onClick: () => setRejecting(record) },
+        ]}
+      />
     );
   };
 

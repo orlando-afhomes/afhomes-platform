@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useRef, useState, type DragEvent, type ReactNode } from "react";
-import { ChevronDown, CloudUpload, Download, FileText } from "lucide-react";
+import { ChevronDown, CloudUpload, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
@@ -16,10 +16,10 @@ export function TemplateDownloadMenu({ onExcel, onCsv }: { onExcel: () => void; 
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="tw:min-w-44">
         <DropdownMenuItem onClick={onExcel} className="tw:min-h-11 tw:sm:min-h-8">
-          Excel (.xlsx)
+          <FileSpreadsheet aria-hidden="true" /> Excel (.xlsx)
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onCsv} className="tw:min-h-11 tw:sm:min-h-8">
-          CSV (.csv)
+          <FileText aria-hidden="true" /> CSV (.csv)
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

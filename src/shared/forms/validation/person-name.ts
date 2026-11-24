@@ -13,6 +13,27 @@ export const SUFFIX_OPTIONS: ReadonlyArray<FieldOption<NameSuffix>> = [
   { value: "V", label: "V" },
 ];
 
+/** Optional name prefix shared by person-name forms. */
+export type NamePrefix = "Mr." | "Ms." | "Mrs." | "Dr." | "Engr." | "Atty." | "Prof." | "Rev.";
+
+export const PREFIX_OPTIONS: ReadonlyArray<FieldOption<NamePrefix>> = [
+  { value: "Mr.", label: "Mr." },
+  { value: "Ms.", label: "Ms." },
+  { value: "Mrs.", label: "Mrs." },
+  { value: "Dr.", label: "Dr." },
+  { value: "Engr.", label: "Engr." },
+  { value: "Atty.", label: "Atty." },
+  { value: "Prof.", label: "Prof." },
+  { value: "Rev.", label: "Rev." },
+];
+
+/** Optional prefix: blank or one of the shared prefix options. */
+export function validatePrefix(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return PREFIX_OPTIONS.some((option) => option.value === trimmed) ? null : "Prefix is invalid.";
+}
+
 /** Optional suffix: blank or one of the shared suffix options. */
 export function validateSuffix(value: string): string | null {
   const trimmed = value.trim();

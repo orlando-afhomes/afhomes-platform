@@ -15,7 +15,7 @@ import { ContractLedgerSection, ContractMilestonesSection, ContractNonStandardSe
 import { FinancePrintControl } from "../documents/vip-print-controls";
 import { usePaymentActions } from "../components/payment-actions";
 
-const CRUMBS = [{ label: "Finance" }, { label: "Collections", href: "/admin/finance?tab=collections" }];
+const CRUMBS = [{ label: "Finance" }, { label: "Payment Status", href: "/admin/finance?tab=collections" }];
 const BUTTON = "tw:min-h-11 tw:sm:min-h-8";
 
 /** Finance view of a contract's collection: balances, schedule, milestones, ledger and payment actions. No contract editing. */
@@ -37,7 +37,7 @@ export function FinanceCollectionDetailPage({ contractId }: { contractId: string
         // Doc 05 §10.2 step 2: Finance confirms or sends back the Non-Standard terms.
         canConfirmNonStandard(contract, { id: identity.id, canVerify, isSuperAdmin }) ? (
           <>
-            <Button variant="success" className={BUTTON} onClick={() => confirmRun(confirmNonStandardConfirm(() => action.mutateAsync({ id: contract.id, action: "confirmNonStandard" })))}>Confirm Non-Standard Terms</Button>
+            <Button variant="success" className={BUTTON} onClick={() => confirmRun(confirmNonStandardConfirm(() => action.mutateAsync({ id: contract.id, action: "confirmNonStandard" })))}>Confirm Terms</Button>
             <Button variant="warning" className={BUTTON} onClick={() => setSendBackOpen(true)}>Send Back</Button>
           </>
         ) : null

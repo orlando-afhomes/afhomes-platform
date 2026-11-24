@@ -58,7 +58,7 @@ describe("redemption pages", () => {
 
   it("shows the points table and the update action to the Administrator, in plain words, with no sample labels", async () => {
     showSettings("dev-admin", "points-table");
-    expect(await screen.findByRole("table", { name: "Points per Night" })).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "Night Rates" })).toBeInTheDocument();
     expect(screen.queryByText(/Sample table|Sample values|\(sample\)/)).toBeNull();
     expect(screen.getByRole("button", { name: /Update points table/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /New version/ })).toBeNull();
@@ -73,7 +73,7 @@ describe("redemption pages", () => {
     const bookings = await screen.findByRole("table", { name: "Redemption Bookings" });
     const bookingHeaders = within(bookings).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter((text) => text && text !== "Actions");
     expect(bookingHeaders).toEqual(["Booking no.", "Cardholder", "Venue", "Stay Dates", "Status"]);
-    await userEvent.click(screen.getByRole("tab", { name: "Card Points" }));
+    await userEvent.click(screen.getByRole("tab", { name: "Points Balance" }));
     expect(screen.queryByRole("table", { name: "Redemption Bookings" })).toBeNull();
     const members = await screen.findByRole("table", { name: "Points by Cardholder" });
     const memberHeaders = within(members).getAllByRole("columnheader").map((cell) => cell.textContent?.trim()).filter((text) => text && text !== "Actions");
@@ -95,8 +95,8 @@ describe("redemption pages", () => {
   it("hides the points table, holidays and venues tabs from Finance", async () => {
     show("dev-finance", "venues");
     expect(await screen.findByRole("table", { name: "Redemption Bookings" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Bookings" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Card Points" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Stay Bookings" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Points Balance" })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Points table" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "Holidays" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "Venues" })).toBeNull();

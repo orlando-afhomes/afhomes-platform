@@ -1,6 +1,6 @@
 "use client";
 
-import { StatusBadge, ToneBadge, type BadgeTone } from "@/shared/components/modern/status-badge";
+import { StatusBadge } from "@/shared/components/modern/status-badge";
 import type { AccreditationAdminStatus } from "@/modules/accreditation/types";
 import type { AccreditationExpiryState as ExpiryState } from "@/modules/accreditation/dates";
 
@@ -11,19 +11,12 @@ const EXPIRY_LABELS: Record<ExpiryState, string> = {
   incomplete: "Incomplete dates",
 };
 
-const EXPIRY_TONES: Record<ExpiryState, BadgeTone> = {
-  valid: "success",
-  expires_today: "warning",
-  expired: "danger",
-  incomplete: "neutral",
-};
-
 export function AccreditationStatusTag({ status }: { status: AccreditationAdminStatus }) {
   return <StatusBadge status={status} />;
 }
 
 export function AccreditationExpiryTag({ state }: { state: ExpiryState }) {
-  return <ToneBadge tone={EXPIRY_TONES[state]}>{EXPIRY_LABELS[state]}</ToneBadge>;
+  return <StatusBadge status={state} label={EXPIRY_LABELS[state]} />;
 }
 
 /** An expired seller stays eligible to sell, refer and sponsor, with a renewal reminder (doc 03 section 9). */

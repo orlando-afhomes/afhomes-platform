@@ -5,6 +5,7 @@ import type { AuditEvent } from "@/modules/audit/types";
 import { SYSTEM_ACTOR_ID } from "@/modules/audit/types";
 import { hasOperationPermission, type AdminOperation } from "@/modules/identity/permissions";
 import type { DevIdentity } from "@/modules/identity/types";
+import { canSeeContractRecord } from "@/modules/identity/record-scope";
 import { manilaToday } from "@/shared/lib/dates";
 import { appendAuditEvent } from "./audit";
 import { resolveMockIdentity } from "./authorization";
@@ -84,15 +85,13 @@ export function genealogyFor(store: MockStore, memberId: string | null): Genealo
   return chain;
 }
 
-export const BROAD_BUSINESS_ROLES = new Set(["super_admin", "admin", "finance", "clerk"]);
+export { BROAD_BUSINESS_ROLES } from "@/modules/identity/record-scope";
 /** Date-only business dates (YYYY-MM-DD, Asia/Manila). */
 export const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Admin, Super Admin and Finance see every contract; sellers see contracts whose recorded team includes them. */
 export function canSeeContract(identity: DevIdentity, contract: Pick<Contract, "genealogy">): boolean {
-  if (!isActiveIdentity(identity)) return false;
-  if (activeRoles(identity).some((role) => BROAD_BUSINESS_ROLES.has(role))) return true;
-  return Boolean(identity.memberId) && contract.genealogy.some((entry) => entry.memberId === identity.memberId);
+  return canSeeContractRecord(identity, contract);
 }
 
 export function customerName(store: MockStore, customerId: string): string {

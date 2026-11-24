@@ -36,6 +36,12 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# firebase emulators
+firebase-debug.log
+dataconnect-debug.log
+pglite-debug.log
+.firebase/
+
 # vercel
 .vercel
 

@@ -1,0 +1,9 @@
+query ListUserAccounts @auth(level: NO_ACCESS) {
+  userAccounts(orderBy: [{ email: ASC }]) {
+    id
+    email
+    displayName
+    status
+    portal
+  }
+}

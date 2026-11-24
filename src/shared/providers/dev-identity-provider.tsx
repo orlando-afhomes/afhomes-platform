@@ -8,7 +8,7 @@ import { DEV_IDENTITIES } from "@/data/mock/dev-identities";
 import { clearProtectedQueries } from "@/data/protected-cache";
 import { clearSession, readSession, writeSession } from "@/shared/providers/mock-session";
 
-type DevIdentityContextValue = {
+export type DevIdentityContextValue = {
   identity: DevIdentity;
   identities: DevIdentity[];
   setIdentityId: (id: string) => void;
@@ -16,9 +16,13 @@ type DevIdentityContextValue = {
   status: "loading" | "signed-in" | "signed-out";
   signIn: (identityId: string) => void;
   signOut: () => void;
+  /** api mode: re-read the server session after sign-in. Nothing to do in mock mode. */
+  reload: () => Promise<void>;
 };
 
-const DevIdentityContext = createContext<DevIdentityContextValue | null>(null);
+export const DevIdentityContext = createContext<DevIdentityContextValue | null>(null);
+
+const reloadNothing = async () => undefined;
 
 export function DevIdentityProvider({ children, initialIdentityId }: { children: ReactNode; initialIdentityId?: string }) {
   const [identityId, setIdentityIdState] = useState(initialIdentityId ?? DEV_IDENTITIES[0].id);
@@ -57,7 +61,7 @@ export function DevIdentityProvider({ children, initialIdentityId }: { children:
   }, [queryClient]);
 
   return (
-    <DevIdentityContext.Provider value={{ identity, identities: DEV_IDENTITIES, setIdentityId, status, signIn, signOut }}>
+    <DevIdentityContext.Provider value={{ identity, identities: DEV_IDENTITIES, setIdentityId, status, signIn, signOut, reload: reloadNothing }}>
       {children}
     </DevIdentityContext.Provider>
   );

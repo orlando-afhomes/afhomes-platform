@@ -11,6 +11,16 @@ export type CustomerScope = { customers: readonly Pick<Customer, "id" | "ownerMe
 /** Roles with unrestricted record scope in the mock repositories. */
 export const BROAD_ROLES = new Set(["super_admin", "admin", "clerk"]);
 
+/** Contracts, sales and payments are also visible to Finance without being in the sales team. */
+export const BROAD_BUSINESS_ROLES = new Set(["super_admin", "admin", "finance", "clerk"]);
+
+/** Admin, Super Admin, Finance and Clerk see every contract; sellers see contracts whose recorded team includes them. */
+export function canSeeContractRecord(identity: DevIdentity, contract: { genealogy: ReadonlyArray<{ memberId: string }> }): boolean {
+  if (!isActiveIdentity(identity)) return false;
+  if (activeRoles(identity).some((role) => BROAD_BUSINESS_ROLES.has(role))) return true;
+  return Boolean(identity.memberId) && contract.genealogy.some((entry) => entry.memberId === identity.memberId);
+}
+
 export function isActiveIdentity(identity: DevIdentity) {
   return identity.status === "active";
 }

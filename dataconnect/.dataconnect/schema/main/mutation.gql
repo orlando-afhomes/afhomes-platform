@@ -1,0 +1,1102 @@
+extend type Mutation {
+  """
+  ✨ Insert a single `AuditEvent` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  auditEvent_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: AuditEvent_Data!
+  ): AuditEvent_KeyOutput! @fdc_generated(from: "AuditEvent", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Contract` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  contract_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Contract_Data!
+  ): Contract_KeyOutput! @fdc_generated(from: "Contract", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Customer` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  customer_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Customer_Data!
+  ): Customer_KeyOutput! @fdc_generated(from: "Customer", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `IdempotencyRecord` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  idempotencyRecord_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: IdempotencyRecord_Data!
+  ): IdempotencyRecord_KeyOutput! @fdc_generated(from: "IdempotencyRecord", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Member` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  member_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Member_Data!
+  ): Member_KeyOutput! @fdc_generated(from: "Member", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Payment` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  payment_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Payment_Data!
+  ): Payment_KeyOutput! @fdc_generated(from: "Payment", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `RoleAssignment` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  roleAssignment_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: RoleAssignment_Data!
+  ): RoleAssignment_KeyOutput! @fdc_generated(from: "RoleAssignment", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Sale` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  sale_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Sale_Data!
+  ): Sale_KeyOutput! @fdc_generated(from: "Sale", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `SaleAdjustment` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  saleAdjustment_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: SaleAdjustment_Data!
+  ): SaleAdjustment_KeyOutput! @fdc_generated(from: "SaleAdjustment", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `UserAccount` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  userAccount_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: UserAccount_Data!
+  ): UserAccount_KeyOutput! @fdc_generated(from: "UserAccount", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert `AuditEvent` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  auditEvent_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [AuditEvent_Data!]!
+  ): [AuditEvent_KeyOutput!]! @fdc_generated(from: "AuditEvent", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Contract` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  contract_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Contract_Data!]!
+  ): [Contract_KeyOutput!]! @fdc_generated(from: "Contract", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Customer` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  customer_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Customer_Data!]!
+  ): [Customer_KeyOutput!]! @fdc_generated(from: "Customer", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `IdempotencyRecord` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  idempotencyRecord_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [IdempotencyRecord_Data!]!
+  ): [IdempotencyRecord_KeyOutput!]! @fdc_generated(from: "IdempotencyRecord", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Member` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  member_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Member_Data!]!
+  ): [Member_KeyOutput!]! @fdc_generated(from: "Member", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Payment` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  payment_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Payment_Data!]!
+  ): [Payment_KeyOutput!]! @fdc_generated(from: "Payment", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `RoleAssignment` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  roleAssignment_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [RoleAssignment_Data!]!
+  ): [RoleAssignment_KeyOutput!]! @fdc_generated(from: "RoleAssignment", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Sale` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  sale_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Sale_Data!]!
+  ): [Sale_KeyOutput!]! @fdc_generated(from: "Sale", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `SaleAdjustment` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  saleAdjustment_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [SaleAdjustment_Data!]!
+  ): [SaleAdjustment_KeyOutput!]! @fdc_generated(from: "SaleAdjustment", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `UserAccount` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  userAccount_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [UserAccount_Data!]!
+  ): [UserAccount_KeyOutput!]! @fdc_generated(from: "UserAccount", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert or update a single `AuditEvent` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `AuditEvent`.
+  """
+  auditEvent_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: AuditEvent_Data!
+  ): AuditEvent_KeyOutput! @fdc_generated(from: "AuditEvent", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Contract` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Contract`.
+  """
+  contract_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Contract_Data!
+  ): Contract_KeyOutput! @fdc_generated(from: "Contract", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Customer` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Customer`.
+  """
+  customer_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Customer_Data!
+  ): Customer_KeyOutput! @fdc_generated(from: "Customer", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `IdempotencyRecord` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IdempotencyRecord`.
+  """
+  idempotencyRecord_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: IdempotencyRecord_Data!
+  ): IdempotencyRecord_KeyOutput! @fdc_generated(from: "IdempotencyRecord", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Member` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Member`.
+  """
+  member_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Member_Data!
+  ): Member_KeyOutput! @fdc_generated(from: "Member", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Payment` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Payment`.
+  """
+  payment_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Payment_Data!
+  ): Payment_KeyOutput! @fdc_generated(from: "Payment", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `RoleAssignment` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `RoleAssignment`.
+  """
+  roleAssignment_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: RoleAssignment_Data!
+  ): RoleAssignment_KeyOutput! @fdc_generated(from: "RoleAssignment", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Sale` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Sale`.
+  """
+  sale_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Sale_Data!
+  ): Sale_KeyOutput! @fdc_generated(from: "Sale", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `SaleAdjustment` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `SaleAdjustment`.
+  """
+  saleAdjustment_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: SaleAdjustment_Data!
+  ): SaleAdjustment_KeyOutput! @fdc_generated(from: "SaleAdjustment", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `UserAccount` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `UserAccount`.
+  """
+  userAccount_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: UserAccount_Data!
+  ): UserAccount_KeyOutput! @fdc_generated(from: "UserAccount", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update `AuditEvent` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `AuditEvent`.
+  """
+  auditEvent_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [AuditEvent_Data!]!
+  ): [AuditEvent_KeyOutput!]! @fdc_generated(from: "AuditEvent", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Contract` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Contract`.
+  """
+  contract_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Contract_Data!]!
+  ): [Contract_KeyOutput!]! @fdc_generated(from: "Contract", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Customer` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Customer`.
+  """
+  customer_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Customer_Data!]!
+  ): [Customer_KeyOutput!]! @fdc_generated(from: "Customer", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `IdempotencyRecord` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IdempotencyRecord`.
+  """
+  idempotencyRecord_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [IdempotencyRecord_Data!]!
+  ): [IdempotencyRecord_KeyOutput!]! @fdc_generated(from: "IdempotencyRecord", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Member` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Member`.
+  """
+  member_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Member_Data!]!
+  ): [Member_KeyOutput!]! @fdc_generated(from: "Member", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Payment` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Payment`.
+  """
+  payment_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Payment_Data!]!
+  ): [Payment_KeyOutput!]! @fdc_generated(from: "Payment", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `RoleAssignment` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `RoleAssignment`.
+  """
+  roleAssignment_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [RoleAssignment_Data!]!
+  ): [RoleAssignment_KeyOutput!]! @fdc_generated(from: "RoleAssignment", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Sale` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Sale`.
+  """
+  sale_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Sale_Data!]!
+  ): [Sale_KeyOutput!]! @fdc_generated(from: "Sale", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `SaleAdjustment` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `SaleAdjustment`.
+  """
+  saleAdjustment_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [SaleAdjustment_Data!]!
+  ): [SaleAdjustment_KeyOutput!]! @fdc_generated(from: "SaleAdjustment", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `UserAccount` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `UserAccount`.
+  """
+  userAccount_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [UserAccount_Data!]!
+  ): [UserAccount_KeyOutput!]! @fdc_generated(from: "UserAccount", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Update a single `AuditEvent` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `AuditEvent` or `null` if not found.
+  """
+  auditEvent_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: AuditEvent_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: AuditEvent_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: AuditEvent_Data!
+  ): AuditEvent_KeyOutput @fdc_generated(from: "AuditEvent", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Contract` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Contract` or `null` if not found.
+  """
+  contract_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Contract_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Contract_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Contract_Data!
+  ): Contract_KeyOutput @fdc_generated(from: "Contract", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Customer` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Customer` or `null` if not found.
+  """
+  customer_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Customer_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Customer_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Customer_Data!
+  ): Customer_KeyOutput @fdc_generated(from: "Customer", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `IdempotencyRecord` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `IdempotencyRecord` or `null` if not found.
+  """
+  idempotencyRecord_update(
+    """
+    The key used to identify the object.
+    """
+    key: IdempotencyRecord_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IdempotencyRecord_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: IdempotencyRecord_Data!
+  ): IdempotencyRecord_KeyOutput @fdc_generated(from: "IdempotencyRecord", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Member` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Member` or `null` if not found.
+  """
+  member_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Member_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Member_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Member_Data!
+  ): Member_KeyOutput @fdc_generated(from: "Member", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Payment` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Payment` or `null` if not found.
+  """
+  payment_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Payment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Payment_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Payment_Data!
+  ): Payment_KeyOutput @fdc_generated(from: "Payment", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `RoleAssignment` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `RoleAssignment` or `null` if not found.
+  """
+  roleAssignment_update(
+    """
+    The key used to identify the object.
+    """
+    key: RoleAssignment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: RoleAssignment_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: RoleAssignment_Data!
+  ): RoleAssignment_KeyOutput @fdc_generated(from: "RoleAssignment", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Sale` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Sale` or `null` if not found.
+  """
+  sale_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Sale_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Sale_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Sale_Data!
+  ): Sale_KeyOutput @fdc_generated(from: "Sale", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `SaleAdjustment` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `SaleAdjustment` or `null` if not found.
+  """
+  saleAdjustment_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SaleAdjustment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SaleAdjustment_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: SaleAdjustment_Data!
+  ): SaleAdjustment_KeyOutput @fdc_generated(from: "SaleAdjustment", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `UserAccount` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `UserAccount` or `null` if not found.
+  """
+  userAccount_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: UserAccount_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: UserAccount_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: UserAccount_Data!
+  ): UserAccount_KeyOutput @fdc_generated(from: "UserAccount", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update `AuditEvent` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  auditEvent_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: AuditEvent_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: AuditEvent_Data!
+  ): Int! @fdc_generated(from: "AuditEvent", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Contract` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  contract_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Contract_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Contract_Data!
+  ): Int! @fdc_generated(from: "Contract", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Customer` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  customer_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Customer_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Customer_Data!
+  ): Int! @fdc_generated(from: "Customer", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `IdempotencyRecord` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  idempotencyRecord_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: IdempotencyRecord_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: IdempotencyRecord_Data!
+  ): Int! @fdc_generated(from: "IdempotencyRecord", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Member` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  member_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Member_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Member_Data!
+  ): Int! @fdc_generated(from: "Member", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Payment` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  payment_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Payment_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Payment_Data!
+  ): Int! @fdc_generated(from: "Payment", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `RoleAssignment` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  roleAssignment_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: RoleAssignment_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: RoleAssignment_Data!
+  ): Int! @fdc_generated(from: "RoleAssignment", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Sale` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  sale_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Sale_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Sale_Data!
+  ): Int! @fdc_generated(from: "Sale", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `SaleAdjustment` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  saleAdjustment_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: SaleAdjustment_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: SaleAdjustment_Data!
+  ): Int! @fdc_generated(from: "SaleAdjustment", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `UserAccount` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  userAccount_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: UserAccount_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: UserAccount_Data!
+  ): Int! @fdc_generated(from: "UserAccount", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Delete a single `AuditEvent` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  auditEvent_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: AuditEvent_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: AuditEvent_FirstRow
+  ): AuditEvent_KeyOutput @fdc_generated(from: "AuditEvent", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Contract` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  contract_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Contract_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Contract_FirstRow
+  ): Contract_KeyOutput @fdc_generated(from: "Contract", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Customer` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  customer_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Customer_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Customer_FirstRow
+  ): Customer_KeyOutput @fdc_generated(from: "Customer", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `IdempotencyRecord` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  idempotencyRecord_delete(
+    """
+    The key used to identify the object.
+    """
+    key: IdempotencyRecord_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IdempotencyRecord_FirstRow
+  ): IdempotencyRecord_KeyOutput @fdc_generated(from: "IdempotencyRecord", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Member` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  member_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Member_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Member_FirstRow
+  ): Member_KeyOutput @fdc_generated(from: "Member", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Payment` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  payment_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Payment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Payment_FirstRow
+  ): Payment_KeyOutput @fdc_generated(from: "Payment", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `RoleAssignment` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  roleAssignment_delete(
+    """
+    The key used to identify the object.
+    """
+    key: RoleAssignment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: RoleAssignment_FirstRow
+  ): RoleAssignment_KeyOutput @fdc_generated(from: "RoleAssignment", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Sale` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  sale_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Sale_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Sale_FirstRow
+  ): Sale_KeyOutput @fdc_generated(from: "Sale", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `SaleAdjustment` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  saleAdjustment_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SaleAdjustment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SaleAdjustment_FirstRow
+  ): SaleAdjustment_KeyOutput @fdc_generated(from: "SaleAdjustment", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `UserAccount` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  userAccount_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: UserAccount_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: UserAccount_FirstRow
+  ): UserAccount_KeyOutput @fdc_generated(from: "UserAccount", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete `AuditEvent` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  auditEvent_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: AuditEvent_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "AuditEvent", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Contract` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  contract_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Contract_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Contract", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Customer` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  customer_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Customer_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Customer", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `IdempotencyRecord` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  idempotencyRecord_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: IdempotencyRecord_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "IdempotencyRecord", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Member` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  member_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Member_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Member", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Payment` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  payment_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Payment_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Payment", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `RoleAssignment` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  roleAssignment_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: RoleAssignment_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "RoleAssignment", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Sale` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  sale_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Sale_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Sale", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `SaleAdjustment` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  saleAdjustment_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: SaleAdjustment_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "SaleAdjustment", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `UserAccount` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  userAccount_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: UserAccount_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "UserAccount", purpose: DELETE_MULTIPLE)
+}

@@ -14,6 +14,8 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { RadioGroup } from "@/shared/ui/radio-group";
 import { safeReturnPath } from "@/shared/lib/safe-return-path";
+import { DATA_MODE } from "@/shared/lib/data-mode";
+import { signInThroughApi } from "@/shared/lib/api-sign-in";
 import { ForgotPasswordPanel } from "./forgot-password-panel";
 import { validateEmail } from "./login-validation";
 
@@ -36,7 +38,7 @@ export function LoginForm({ portals, defaultPortal, description, extraLinks }: P
   const queryClient = useQueryClient();
   // Page the user asked for before being sent to sign in; the 403 view covers a page their role cannot open.
   const returnTo = safeReturnPath(useSearchParams()?.get("next"));
-  const { status, signIn } = useDevIdentity();
+  const { status, signIn, reload } = useDevIdentity();
   const store = useMockStore();
   const id = useId();
   const [view, setView] = useState<"login" | "forgot">("login");
@@ -81,6 +83,19 @@ export function LoginForm({ portals, defaultPortal, description, extraLinks }: P
     if (next.email || next.password) return;
 
     setSubmitting(true);
+    if (DATA_MODE === "api") {
+      const outcome = await signInThroughApi(email.trim(), password, portal);
+      if (!outcome.ok) {
+        setAuthError(outcome.error);
+        setSubmitting(false);
+        return;
+      }
+      setPassword("");
+      await reload();
+      queryClient.clear();
+      router.replace(returnTo);
+      return;
+    }
     await new Promise((resolve) => setTimeout(resolve, MOCK_LATENCY_MS));
     const result = authenticateMock(email.trim(), password, portal, store);
     if (!result.ok) {

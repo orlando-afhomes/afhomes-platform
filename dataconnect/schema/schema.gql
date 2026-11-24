@@ -1,0 +1,163 @@
+# AFHomes pilot schema (localhost Step A): sign-in identities, sales network,
+# customer, contract, receipt, audit, idempotency and official-number sequences.
+#
+# Conventions
+# - Every table has an internal UUID `id`. Official numbers (customer number, VIP
+#   Number, receipt reference and document number) are separate unique columns.
+# - Money is whole centavos in Int64 (`*Centavos`). Int64 travels as a string, so
+#   it stays exact end to end. Never use Float for money.
+# - Business dates (`Date`) are Asia/Manila calendar days. Action times
+#   (`Timestamp`) are real instants and are kept separately.
+# - shortcut: lifecycle values (status, role, purpose, method) are plain strings
+#   validated in the server services. Move them to database enums or check
+#   constraints once the pilot rules settle.
+# - shortcut: nested snapshots (benefits, schedule, genealogy, history,
+#   adjustments) live in a jsonb `details` column. Normalize a part into its own
+#   table when a report or rule has to query inside it.
+# - Every operation is marked @auth(level: NO_ACCESS) in the connector, so only
+#   the trusted server (Firebase Admin SDK) can call it.
+
+type UserAccount @table {
+  # Linked to the Firebase user at first sign-in (Step B). Null until then.
+  firebaseUid: String @unique
+  email: String! @unique
+  displayName: String!
+  # active | pending | suspended | deactivated
+  status: String!
+  # admin | staff | sales (which sign-in page the account uses)
+  portal: String!
+  # Sales-network members sign in too. Staff-only accounts have no member.
+  member: Member
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type RoleAssignment @table(key: ["user", "role"]) {
+  user: UserAccount!
+  # super_admin | admin | finance | hr | clerk | gsd | svd | ssm | sm | ost
+  role: String!
+  # active | inactive
+  status: String!
+}
+
+type Member @table {
+  displayName: String!
+  # SVD | SSM | SM | OST
+  designation: String!
+  branchId: String!
+  # Sponsor or parent in the genealogy. Null only for a root (SVD).
+  parent: Member
+  status: String!
+  teamName: String
+  referralCode: String
+  aaNumber: String
+  details: Any
+}
+
+type Customer @table {
+  displayName: String!
+  branchId: String!
+  # Closing seller who owns the record.
+  ownerMember: Member
+  status: String!
+  # Official Customer ID, YYYY-NNNN. Null while the record is a draft.
+  customerNumber: String @unique
+  profile: Any
+}
+
+type Contract @table {
+  customer: Customer!
+  productCode: String!
+  priceCentavos: Int64!
+  classification: String!
+  status: String!
+  # Reservation Agreement reference from the signed form.
+  raNumber: String
+  # Official VIP Number, issued once and never reused.
+  vipNumber: String @unique
+  signedAgreementRecordedDate: Date
+  sellerMember: Member
+  createdAt: Timestamp!
+  # Bumped by every receipt decision on this contract. A decision commits only if the
+  # version it read is still current, so two approvals never act on stale totals.
+  collectionVersion: Int! @default(value: 0)
+  details: Any
+}
+
+# One sale per contract, created when the contract is submitted (doc 13).
+type Sale @table {
+  contract: Contract! @unique
+  customer: Customer!
+  productCode: String!
+  branchId: String!
+  valueCentavos: Int64!
+  recordedDate: Date!
+  sellerMember: Member
+  referrerMember: Member
+  # pending | confirmed | defaulted | cancelled | rejected
+  status: String!
+  approvedBy: UserAccount
+  approvedAt: Timestamp
+  confirmedDate: Date
+  details: Any
+}
+
+# Append-only dated ledger of a sale's confirmation, reversal and reconfirmation.
+type SaleAdjustment @table {
+  sale: Sale!
+  date: Date!
+  amountCentavos: Int64!
+  # confirmation | reversal | reconfirmation | amendment
+  kind: String!
+  reason: String!
+  actor: UserAccount
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type Payment @table {
+  contract: Contract!
+  customer: Customer!
+  # reservation | down_payment | installment | full
+  purpose: String!
+  amountCentavos: Int64!
+  method: String!
+  # Business date on the receipt.
+  paidDate: Date!
+  # Accounting date for a receipt admitted after its own month closed.
+  countedDate: Date
+  # System payment reference, PAY-YYYYMMDD-NNNN.
+  referenceNo: String @unique
+  # Number printed on the issued document (OR, invoice, collection receipt).
+  documentNo: String @unique
+  # submitted | under_review | verified | rejected | returned
+  status: String!
+  submittedBy: UserAccount
+  submittedAt: Timestamp!
+  verifiedBy: UserAccount
+  verifiedAt: Timestamp
+  # Business date of Finance verification. Collections are dated by this.
+  verifiedDate: Date
+  decisionReason: String
+  details: Any
+}
+
+# Append-only. The connector exposes insert operations only, never update or delete.
+type AuditEvent @table {
+  actor: UserAccount
+  action: String!
+  entityType: String!
+  # Internal id of the affected record (polymorphic, so not a foreign key).
+  entityId: String!
+  occurredAt: Timestamp! @default(expr: "request.time")
+  correlationId: String
+  details: Any
+}
+
+type IdempotencyRecord @table(key: ["user", "operation", "requestKey"]) {
+  user: UserAccount!
+  operation: String!
+  requestKey: String!
+  requestHash: String!
+  responseStatus: Int!
+  response: Any
+  createdAt: Timestamp! @default(expr: "request.time")
+}

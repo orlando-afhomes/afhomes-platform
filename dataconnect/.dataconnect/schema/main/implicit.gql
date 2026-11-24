@@ -1,0 +1,128 @@
+extend type AuditEvent {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "AuditEvent", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `AuditEvent`.`actor`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  actorId: UUID @fdc_generated(from: "AuditEvent.actor", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Contract {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Contract", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Contract`.`customer`. It must match the value of `Customer`.`id`. See `@ref` for how to customize it.
+  """
+  customerId: UUID! @fdc_generated(from: "Contract.customer", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Contract`.`sellerMember`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  sellerMemberId: UUID @fdc_generated(from: "Contract.sellerMember", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Customer {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Customer", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Customer`.`ownerMember`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  ownerMemberId: UUID @fdc_generated(from: "Customer.ownerMember", purpose: IMPLICIT_REF_FIELD)
+}
+extend type IdempotencyRecord {
+  """
+  ✨ Implicit foreign key field based on `IdempotencyRecord`.`user`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  userId: UUID! @fdc_generated(from: "IdempotencyRecord.user", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Member {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Member", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Member`.`parent`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  parentId: UUID @fdc_generated(from: "Member.parent", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Payment {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Payment", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Payment`.`contract`. It must match the value of `Contract`.`id`. See `@ref` for how to customize it.
+  """
+  contractId: UUID! @fdc_generated(from: "Payment.contract", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Payment`.`customer`. It must match the value of `Customer`.`id`. See `@ref` for how to customize it.
+  """
+  customerId: UUID! @fdc_generated(from: "Payment.customer", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Payment`.`submittedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  submittedById: UUID @fdc_generated(from: "Payment.submittedBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Payment`.`verifiedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  verifiedById: UUID @fdc_generated(from: "Payment.verifiedBy", purpose: IMPLICIT_REF_FIELD)
+}
+extend type RoleAssignment {
+  """
+  ✨ Implicit foreign key field based on `RoleAssignment`.`user`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  userId: UUID! @fdc_generated(from: "RoleAssignment.user", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Sale {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Sale", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Sale`.`approvedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  approvedById: UUID @fdc_generated(from: "Sale.approvedBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Sale`.`contract`. It must match the value of `Contract`.`id`. See `@ref` for how to customize it.
+  """
+  contractId: UUID! @fdc_generated(from: "Sale.contract", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Sale`.`customer`. It must match the value of `Customer`.`id`. See `@ref` for how to customize it.
+  """
+  customerId: UUID! @fdc_generated(from: "Sale.customer", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Sale`.`referrerMember`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  referrerMemberId: UUID @fdc_generated(from: "Sale.referrerMember", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Sale`.`sellerMember`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  sellerMemberId: UUID @fdc_generated(from: "Sale.sellerMember", purpose: IMPLICIT_REF_FIELD)
+}
+extend type SaleAdjustment {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "SaleAdjustment", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `SaleAdjustment`.`actor`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  actorId: UUID @fdc_generated(from: "SaleAdjustment.actor", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `SaleAdjustment`.`sale`. It must match the value of `Sale`.`id`. See `@ref` for how to customize it.
+  """
+  saleId: UUID! @fdc_generated(from: "SaleAdjustment.sale", purpose: IMPLICIT_REF_FIELD)
+}
+extend type UserAccount {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "UserAccount", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `UserAccount`.`member`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  memberId: UUID @fdc_generated(from: "UserAccount.member", purpose: IMPLICIT_REF_FIELD)
+}

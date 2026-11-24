@@ -4,6 +4,8 @@ import "./globals.css";
 import { QueryProvider } from "@/shared/providers/query-provider";
 import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
+import { SessionIdentityProvider } from "@/shared/providers/session-identity-provider";
+import { DATA_MODE } from "@/shared/lib/data-mode";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="root-body">
         <QueryProvider>
           <MockStoreProvider>
-            <DevIdentityProvider>{children}</DevIdentityProvider>
+            {DATA_MODE === "api" ? <SessionIdentityProvider>{children}</SessionIdentityProvider> : <DevIdentityProvider>{children}</DevIdentityProvider>}
           </MockStoreProvider>
         </QueryProvider>
       </body>

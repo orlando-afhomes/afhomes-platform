@@ -1,0 +1,11 @@
+rules_version = '2';
+
+// Every file is private. Only the trusted server (Firebase Admin SDK) reads or
+// writes, so browsers and other clients are denied here.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

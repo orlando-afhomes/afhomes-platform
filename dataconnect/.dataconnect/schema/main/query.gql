@@ -1,0 +1,522 @@
+extend type Query {
+  """
+  ✨ Look up a single `AuditEvent` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  auditEvent(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: AuditEvent_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: AuditEvent_FirstRow
+  ): AuditEvent @fdc_generated(from: "AuditEvent", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Contract` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  contract(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Contract_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Contract_FirstRow
+  ): Contract @fdc_generated(from: "Contract", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Customer` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  customer(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Customer_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Customer_FirstRow
+  ): Customer @fdc_generated(from: "Customer", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `IdempotencyRecord` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  idempotencyRecord(
+    """
+    The key used to identify the object.
+    """
+    key: IdempotencyRecord_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IdempotencyRecord_FirstRow
+  ): IdempotencyRecord @fdc_generated(from: "IdempotencyRecord", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Member` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  member(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Member_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Member_FirstRow
+  ): Member @fdc_generated(from: "Member", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Payment` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  payment(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Payment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Payment_FirstRow
+  ): Payment @fdc_generated(from: "Payment", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `RoleAssignment` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  roleAssignment(
+    """
+    The key used to identify the object.
+    """
+    key: RoleAssignment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: RoleAssignment_FirstRow
+  ): RoleAssignment @fdc_generated(from: "RoleAssignment", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Sale` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  sale(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Sale_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Sale_FirstRow
+  ): Sale @fdc_generated(from: "Sale", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `SaleAdjustment` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  saleAdjustment(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SaleAdjustment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SaleAdjustment_FirstRow
+  ): SaleAdjustment @fdc_generated(from: "SaleAdjustment", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `UserAccount` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  userAccount(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: UserAccount_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: UserAccount_FirstRow
+  ): UserAccount @fdc_generated(from: "UserAccount", purpose: QUERY_SINGLE)
+  """
+  ✨ List `AuditEvent` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  auditEvents(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: AuditEvent_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [AuditEvent_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: AuditEvent_Having
+  ): [AuditEvent!]! @fdc_generated(from: "AuditEvent", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Contract` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  contracts(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Contract_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Contract_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Contract_Having
+  ): [Contract!]! @fdc_generated(from: "Contract", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Customer` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  customers(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Customer_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Customer_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Customer_Having
+  ): [Customer!]! @fdc_generated(from: "Customer", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `IdempotencyRecord` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  idempotencyRecords(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IdempotencyRecord_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IdempotencyRecord_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IdempotencyRecord_Having
+  ): [IdempotencyRecord!]! @fdc_generated(from: "IdempotencyRecord", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Member` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  members(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Member_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Member_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Member_Having
+  ): [Member!]! @fdc_generated(from: "Member", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Payment` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  payments(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Payment_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Payment_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Payment_Having
+  ): [Payment!]! @fdc_generated(from: "Payment", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `RoleAssignment` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  roleAssignments(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: RoleAssignment_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [RoleAssignment_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: RoleAssignment_Having
+  ): [RoleAssignment!]! @fdc_generated(from: "RoleAssignment", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Sale` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  sales(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Sale_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Sale_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Sale_Having
+  ): [Sale!]! @fdc_generated(from: "Sale", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `SaleAdjustment` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  saleAdjustments(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SaleAdjustment_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SaleAdjustment_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SaleAdjustment_Having
+  ): [SaleAdjustment!]! @fdc_generated(from: "SaleAdjustment", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `UserAccount` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  userAccounts(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: UserAccount_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [UserAccount_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: UserAccount_Having
+  ): [UserAccount!]! @fdc_generated(from: "UserAccount", purpose: QUERY_MULTIPLE)
+}

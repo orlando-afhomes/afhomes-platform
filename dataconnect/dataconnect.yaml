@@ -1,0 +1,11 @@
+specVersion: "v1"
+serviceId: "afhomes"
+location: "asia-southeast1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "afhomes"
+      cloudSql:
+        instanceId: "afhomes-local"
+connectorDirs: ["./connector"]

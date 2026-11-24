@@ -5,6 +5,7 @@ import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import { customerAttributionErrors, pendingAttributionMemberIds } from "@/modules/customers/attribution";
 import { approvalErrors, canReviewRegistration, isEditableRegistration } from "@/modules/customers/review";
 import { buildImportRows, MAX_EXPORT_ROWS, MAX_IMPORT_ROWS, type CustomerImportJob, type CustomerImportRecord } from "@/modules/customers/import";
+import { applyCustomerInput } from "@/modules/customers/apply-input";
 import { currentManilaYear, nextCustomerId } from "@/modules/customers/customer-number";
 import { composeCustomerName, restrictCustomer, validateCustomerForSubmit } from "@/modules/customers/rules";
 import type { Customer, CustomerDraftInput, CustomerStatus } from "@/modules/customers/types";
@@ -15,16 +16,6 @@ import { nextId, randomNumericId } from "./ids";
 import type { MockStore } from "./seed";
 import { BROAD_ROLES, getVisibleCustomerIds, getVisibleMemberIds, isActiveIdentity, activeIdentityRoles } from "./scope";
 
-
-const COPY_KEYS = [
-  "customerNumber", "firstName", "middleName", "lastName", "suffix", "gender", "civilStatus", "dateOfBirth", "mobileNumber",
-  "email", "address", "governmentIdType", "governmentIdNumber", "vipPlan", "supplementaryHolder", "paymentSchemeId", "contractClassification",
-  "recommenderMemberId", "referralReference", "acquisitionChannel", "consentDataPrivacy", "idReceivedCertified",
-] as const;
-const DRAFT_COPY_KEYS = [
-  ...COPY_KEYS, "referrerMemberId", "customerIdMode", "noMiddleName", "citizenship", "landline", "tinNumber",
-  "occupation", "businessIndustry", "employedPosition", "officeAddress", "governmentIdImage",
-] as const;
 
 export class MockCustomerRepository extends BusinessRepository implements CustomerRepository {
   constructor(store: MockStore, getIdentity: () => DevIdentity, asyncOptions: MockAsyncOptions = {}) {
@@ -110,15 +101,7 @@ export class MockCustomerRepository extends BusinessRepository implements Custom
   }
 
   private apply(customer: Customer, input: CustomerDraftInput) {
-    const target = customer as unknown as Record<string, unknown>;
-    const keys = isEditableRegistration(customer.status) ? DRAFT_COPY_KEYS : COPY_KEYS;
-    for (const key of keys) {
-      const value = (input as Record<string, unknown>)[key];
-      if (value !== undefined) target[key] = value;
-    }
-    const composed = composeCustomerName(customer);
-    const clearsDraftName = customer.status === "draft" && (input.firstName !== undefined || input.lastName !== undefined);
-    customer.displayName = composed || input.displayName.trim() || (clearsDraftName ? "" : customer.displayName);
+    applyCustomerInput(customer, input);
   }
 
   async list(options?: MockAsyncOptions): Promise<Customer[]> {

@@ -7,7 +7,7 @@ Index of the implementation records, organized by phase. It does not authorize a
 | Phase | Folder | Status | What it holds |
 |---|---|---|---|
 | 1 | [`01-prototype/`](01-prototype/README.md) | Built, owner checks remain | Frontend mock prototype: feature phases FP1 to FP16, review fixes and the customer-portal plan. Typed in-memory data only. |
-| 2 | [`02-full-stack/`](02-full-stack/README.md) | Planned, not authorized | The real application: Localhost, then Staging, then Production, with numbered steps in each environment. The [implementation plan](02-full-stack/implementation-plan.md) holds the detailed steps still to build. |
+| 2 | [`02-full-stack/`](02-full-stack/README.md) | Planned, not authorized | The real application: Localhost, then Staging, then Production, with numbered steps in each environment. The [delivery plan](02-full-stack/delivery-plan.md) holds the detailed steps still to build; the [full-stack phase plan](02-full-stack/full-stack-phase-plan.md) holds the branch model, seed modes and phase order. |
 
 Shared record: [`decisions-and-gaps.md`](decisions-and-gaps.md), the decision register for all phases.
 

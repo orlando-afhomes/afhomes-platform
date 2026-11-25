@@ -1,6 +1,6 @@
-# Implementation Plan
+# Delivery Plan
 
-[Roadmap](README.md) · Written 2026-11-25 · Status: **Planned, not authorized**
+[Roadmap](README.md) · [Full-stack phase plan](full-stack-phase-plan.md) · Written 2026-11-25 · Status: **Planned, not authorized**
 
 This is the detailed plan for everything still to build after the verified localhost pilot (Steps A to C). It does not authorize any work. Each numbered step needs separate owner approval under [AGENTS.md](../../../AGENTS.md) section 7. It follows the [pilot implementation plan](01-localhost/pilot-implementation-plan.md), which records what was built and verified.
 
@@ -52,6 +52,12 @@ These came out of Steps A to C. Each module step applies them without re-decidin
 Goal: the customer, contract, sale, receipt and collections screens work against the real local backend, with files in private storage.
 
 **Prerequisites:** Steps A to C verified. Install Java 21 for the Storage emulator and add `storage` back to `npm run emulators` (`firebase.json` already has the rules file).
+
+**Step D status (2026-11-25, revision `8c62a31` plus uncommitted D work): built and locally verified.** D1 adds the read endpoints for contracts, payments, sales and customers (plus members, products and payment schemes for the pilot screens); 7 emulator tests pass. D2 adds `src/data/http/`, the `DATA_MODE` repository switch, the not-connected proxy, 422 field mapping, the session-expired event and the audited `POST /reports/export`; 2 emulator tests pass. D3 adds `modules` and `operations` to `GET`/`POST /session`, reads them from the access snapshot in api mode, and shows the sign-in page for an expired session instead of a 403.
+D4 is built with Java 21 and the Storage emulator: receipt files are JPEG, PNG or PDF up to 5 MB, checked by their bytes, stored privately under `payments/{paymentId}/{uuid}`, downloaded only after the same record-scope check as the receipt, audited, and replaced atomically with the payment details. Verification now preserves the file pointer (a regression test covers it). A seller outside the payment's team receives 404 for both the receipt and its file.
+D5 was exercised in api mode: a receipt with a file was submitted, verified, previewed from the private address, and appeared in Finance collections; Finance could open the file and the out-of-scope seller could not. The server suite passes 35 of 35 (seven files, twice in a row). Not repeated through the UI: customer and contract creation (covered by the pilot API tests), and the mock-mode reset check. One transient full-suite failure in the read-endpoint file was not reproduced.
+
+Limits: the list endpoints read complete tables and then apply record scope and paging in memory; add indexed database filters when the pilot data grows. The Reports other than Summary/Collections depend on modules that are still outside the pilot, so their figures read "Unavailable" in api mode. The contract detail page shows a membership notice because that module is outside the pilot.
 
 ### D1. Read endpoints
 The screens need views the pilot did not build. Add them as `GET` routes using `route({ write: false })`:

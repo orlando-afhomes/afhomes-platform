@@ -9,7 +9,8 @@ import { SESSION_COOKIE } from "@/server/auth/session-constants";
 export type RouteContext = { actor: Actor; params: Record<string, string>; body: unknown; request: NextRequest };
 type Handler = (context: RouteContext) => Promise<{ status?: number; body: unknown }>;
 
-const KEY_PATTERN = /^[A-Za-z0-9._:-]{8,128}$/;
+export const KEY_PATTERN = /^[A-Za-z0-9._:-]{8,128}$/;
+export const KEY_MESSAGE = "Send an Idempotency-Key header of 8 to 128 letters, digits or - _ . :";
 
 /**
  * Thin Route Handler wrapper: session and account checks, cross-site protection and the
@@ -40,7 +41,7 @@ export function route(options: { write: boolean; template: string }, handler: Ha
         return NextResponse.json(result.body, { status: result.status, headers: { "Cache-Control": "no-store" } });
       }
       const key = request.headers.get("idempotency-key") ?? "";
-      if (!KEY_PATTERN.test(key)) throw new ApiError(400, "idempotency_key_required", "Send an Idempotency-Key header of 8 to 128 letters, digits or - _ . :");
+      if (!KEY_PATTERN.test(key)) throw new ApiError(400, "idempotency_key_required", KEY_MESSAGE);
       const result = await runIdempotent({ userId: actor.userId, operation: `${options.template}:${JSON.stringify(params)}`, key, body: raw }, run);
       return NextResponse.json(result.body, { status: result.status, headers: result.replayed ? { "Idempotent-Replay": "true" } : undefined });
     } catch (error) {

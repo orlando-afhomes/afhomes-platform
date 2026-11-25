@@ -13,7 +13,7 @@ This is the entry point for work from localhost through production. The reposito
 
 Two staging checkpoints can happen before every local module is finished. The [prototype preview](02-staging/00-vercel-prototype-demo.md) uses sample data and can run once the owner approves its release. The [hosted database pilot](02-staging/01-firebase-project-and-database-trial.md) begins after the first workflow works locally. Finish local module checks before rehearsing the complete release.
 
-The [implementation plan](implementation-plan.md) holds the detailed steps still to build after the verified localhost pilot, with the rules every step follows, the open owner decisions, and the approvals each step needs.
+The [delivery plan](delivery-plan.md) holds the detailed steps still to build after the verified localhost pilot, with the rules every step follows, the open owner decisions, and the approvals each step needs. The [full-stack phase plan](full-stack-phase-plan.md) gives the branch model, the seed modes and the phase-by-phase order from the frozen prototype to the no-mock application.
 
 ## Tools by environment
 

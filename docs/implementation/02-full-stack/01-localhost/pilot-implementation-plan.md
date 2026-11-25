@@ -92,6 +92,8 @@ Decisions and limits taken in Step B:
 
 **Verify:** in the browser (api mode), sign in, create a customer, prepare a contract, submit and approve a receipt, and check the collections report. A refresh keeps the data. In mock mode a refresh still resets it. A second staff account cannot open the receipt file.
 
+**Step D status (2026-11-25):** the read endpoints, HTTP repositories, repository mode switch, server access snapshot and private receipt-file storage are built and verified; the receipt submission, verification, evidence preview and Finance collections were exercised in api mode. The server suite passes 35 of 35. See the status block in the [delivery plan](../delivery-plan.md) section 3 for evidence and limits.
+
 ## Checks for every step
 
 Run targeted Vitest first, then `npx tsc --noEmit`, `npm run lint` (includes the architecture check) and `npm run build`. Mock-mode suites that the change touches must still pass. Report in the [AGENTS.md](../../../../AGENTS.md) section 9 format.

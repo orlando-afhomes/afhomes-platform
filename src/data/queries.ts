@@ -13,16 +13,26 @@ import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
 import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { useAccessSnapshot } from "@/data/access-snapshot";
 import { createMockRepositories } from "@/data/mock/repositories";
+import { createHttpRepositories } from "@/data/http/repositories";
+import { DATA_MODE } from "@/shared/lib/data-mode";
 import { canReadAuditHistory } from "@/data/mock/audit-repository";
 import { queryKeys } from "@/data/query-keys";
 import type { AuditQuery } from "@/modules/audit/types";
 
+/**
+ * The repositories every screen reads. In mock mode (default) they run on the browser-memory sample store.
+ * In api mode (NEXT_PUBLIC_DATA_MODE=api) the pilot repositories call the real backend and the rest report "not connected yet".
+ * The name is kept so no screen has to change.
+ */
 export function useMockRepositories() {
   const store = useMockStore();
   const { identity } = useDevIdentity();
   // Opt-in latency to see loaders in the browser: NEXT_PUBLIC_MOCK_DELAY_MS=800. Unset = instant.
   const delayMs = Number(process.env.NEXT_PUBLIC_MOCK_DELAY_MS) || 0;
-  return useMemo(() => createMockRepositories(store, () => identity, delayMs > 0 ? { delayMs } : undefined), [store, identity, delayMs]);
+  return useMemo(
+    () => (DATA_MODE === "api" ? createHttpRepositories() : createMockRepositories(store, () => identity, delayMs > 0 ? { delayMs } : undefined)),
+    [store, identity, delayMs],
+  );
 }
 
 export function useMembers() {

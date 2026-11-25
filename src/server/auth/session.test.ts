@@ -3,7 +3,7 @@
 // Skipped automatically when the emulators are not running.
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
-import { hasOperationPermission } from "@/modules/identity/permissions";
+import { getGrantedModuleIds, getGrantedOperations, hasOperationPermission } from "@/modules/identity/permissions";
 import type { DevIdentity } from "@/modules/identity/types";
 
 process.env.FIREBASE_PROJECT_ID = "demo-afhomes";
@@ -83,7 +83,11 @@ describe.skipIf(!emulatorsUp)("server sign-in, session and permissions (emulator
     expect(header).toMatch(/SameSite=strict/i);
     const me = await route.GET(request("GET", { cookie }));
     expect(me.status).toBe(200);
-    expect(((await me.json()) as { identity: { roles: string[] } }).identity.roles).toEqual(["admin"]);
+    const body = (await me.json()) as { identity: DevIdentity & { roles: string[] }; modules: string[]; operations: string[] };
+    expect(body.identity.roles).toEqual(["admin"]);
+    // The browser gate reads exactly what the server enforces.
+    expect(new Set(body.modules)).toEqual(getGrantedModuleIds(body.identity));
+    expect(new Set(body.operations)).toEqual(getGrantedOperations(body.identity));
   }, 30_000);
 
   it("rejects a sign-in that does not come from this site", async () => {

@@ -16,5 +16,5 @@ export function getAdminApp(): App {
   if (!projectId.startsWith("demo-") && (process.env.FIREBASE_AUTH_EMULATOR_HOST || process.env.DATA_CONNECT_EMULATOR_HOST)) {
     throw new Error("Emulator hosts are set for a non-demo project. Refusing to start.");
   }
-  return getApps().length ? getApp() : initializeApp({ projectId });
+  return getApps().length ? getApp() : initializeApp({ projectId, storageBucket: process.env.FIREBASE_STORAGE_BUCKET ?? `${projectId}.appspot.com` });
 }

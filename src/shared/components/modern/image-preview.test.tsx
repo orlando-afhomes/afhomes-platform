@@ -27,6 +27,18 @@ describe("ImagePreview", () => {
     expect(link).toHaveAttribute("target", "_blank");
   });
 
+  it("shows a private API image address as a thumbnail", () => {
+    const src = "/api/v1/payments/p1/evidence/f1";
+    render(<ImagePreview src={src} fileName="receipt.png" contentType="image/png" label="Receipt file" />);
+    expect(screen.getByRole("img", { name: "Receipt file thumbnail" })).toHaveAttribute("src", src);
+  });
+
+  it("links a private API PDF address", () => {
+    const src = "/api/v1/payments/p1/evidence/f1";
+    render(<ImagePreview src={src} fileName="receipt.pdf" contentType="application/pdf" label="Receipt file" />);
+    expect(screen.getByRole("link", { name: "receipt.pdf" })).toHaveAttribute("href", src);
+  });
+
   it("falls back to the stored file name when no file data is kept", () => {
     render(<ImagePreview src={null} fileName="seed-receipt.jpg" label="Receipt file" />);
     expect(screen.getByText("seed-receipt.jpg")).toBeInTheDocument();

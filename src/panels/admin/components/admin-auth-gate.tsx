@@ -2,6 +2,7 @@
 
 // shortcut: mock login only, remove when real authentication (Better Auth/API) is implemented
 import { useAccessSnapshot } from "@/data/access-snapshot";
+import { ApiRequestError } from "@/data/http/client";
 import { Button } from "@/shared/ui/button";
 import type { ReactNode } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -35,6 +36,19 @@ export function AdminAuthGate({ children }: { children: ReactNode }) {
 /** Keeps protected portals and page siblings inside the same access boundary. */
 function AdminAccessGate({ children }: { children: ReactNode }) {
   const access = useAccessSnapshot();
+  const pathname = usePathname();
+  const search = useSearchParams()?.toString();
+  // An expired session asks for a sign-in, not for a permission it can never grant.
+  if (access.isError && access.error instanceof ApiRequestError && access.error.status === 401) {
+    const requested = safeReturnPath(`${pathname ?? "/admin"}${search ? `?${search}` : ""}`);
+    const query = requested === "/admin" ? "" : `?next=${encodeURIComponent(requested)}`;
+    return (
+      <StatusPage variant="401">
+        <StatusLink href={`/login${query}`} primary>Sign in</StatusLink>
+        <StatusLink href={`/login/sales${query}`}>Sales sign in</StatusLink>
+      </StatusPage>
+    );
+  }
   if (access.isError) return <StatusPage variant="403" description="Access could not be verified."><Button onClick={() => void access.refetch()}>Try again</Button></StatusPage>;
   if (!access.ready) return <AdminShellSkeleton />;
   if (access.modules.size === 0) return <StatusPage variant="403" />;

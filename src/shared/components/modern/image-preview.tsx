@@ -15,21 +15,29 @@ export function ImagePreview({
   src,
   fileName,
   label,
+  contentType,
   className,
 }: {
   src?: string | null;
   fileName?: string | null;
   /** Name of the document, used in the viewer title and button label. */
   label: string;
+  /** Media type of a private API address; data URLs carry their own type. */
+  contentType?: string | null;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [zoomed, setZoomed] = useState(false);
+  const href = src ?? null;
+  // api mode serves a private same-origin address; mock mode keeps a data URL.
+  const remote = href !== null && (href.startsWith("/api/") || /^https?:\/\//.test(href));
+  const pdf = isPdfDataUrl(href) || (remote && (contentType === "application/pdf" || /\.pdf$/i.test(fileName ?? "")));
+  const image = isImageDataUrl(href) || (remote && (Boolean(contentType?.startsWith("image/")) || /\.(png|jpe?g|gif|webp)$/i.test(fileName ?? "")));
 
-  if (isPdfDataUrl(src)) {
+  if (pdf && href) {
     return (
       <a
-        href={src}
+        href={href}
         target="_blank"
         rel="noreferrer"
         className="tw:inline-flex tw:items-center tw:gap-1.5 tw:text-sm tw:font-medium tw:text-primary tw:underline-offset-4 tw:hover:underline"
@@ -39,7 +47,7 @@ export function ImagePreview({
       </a>
     );
   }
-  if (!isImageDataUrl(src)) {
+  if (!image || !href) {
     return <span className="tw:text-sm">{fileName ?? "—"}</span>;
   }
   return (
@@ -53,9 +61,9 @@ export function ImagePreview({
         )}
         onClick={() => setOpen(true)}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element -- in-memory data URL, not a remote asset */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- private API route or in-memory data URL, never a public asset */}
         <img
-          src={src}
+          src={href}
           alt={`${label} thumbnail`}
           className="tw:h-16 tw:w-24 tw:object-cover tw:transition-transform tw:group-hover:scale-[1.03]"
         />
@@ -70,9 +78,9 @@ export function ImagePreview({
         <DialogContent className="tw:max-w-[min(64rem,calc(100%-2rem))] tw:gap-2 tw:p-2">
           <DialogTitle className="tw:px-2 tw:pt-1 tw:text-sm">{label}</DialogTitle>
           <div className="tw:flex tw:max-h-[78vh] tw:items-center tw:justify-center tw:overflow-auto tw:rounded-md tw:bg-muted/60">
-            {/* eslint-disable-next-line @next/next/no-img-element -- in-memory data URL, not a remote asset */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- private API route or in-memory data URL, never a public asset */}
             <img
-              src={src}
+              src={href}
               alt={label}
               title={zoomed ? "Click to fit the window" : "Click to view at full size"}
               onClick={() => setZoomed((current) => !current)}

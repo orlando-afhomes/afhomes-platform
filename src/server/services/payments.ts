@@ -10,7 +10,7 @@ import type { Sale } from "@/modules/sales/types";
 import { parseManilaDateOnly } from "@/shared/lib/dates";
 import type { Actor } from "@/server/auth/actor";
 import { requireOperation } from "@/server/auth/authorize";
-import { uniqueViolation } from "@/server/db";
+import { dbRead, uniqueViolation } from "@/server/db";
 import { centavosToInt64 } from "@/server/money";
 import { loadContract, loadNumberHolders, loadNumbersWithPrefix, loadPayment, loadPaymentsOfContract, loadSaleForContract } from "@/server/repositories/records";
 import { conflict, invalid, newId, notFound, nowIso, today, transact, type AuditSpec } from "@/server/services/common";
@@ -138,13 +138,16 @@ ${adjustment ? `  s: sale(id: $sale) @check(expr: "response.confirmSale == 1", m
 }`;
     const audit: AuditSpec[] = [{ action: BUSINESS_AUDIT_ACTIONS.PAYMENT_VERIFIED, entityType: "payment", entityId: payment.id, details: { module: "finance", previousValue: payment.status, newValue: String(payment.amountCentavos), ...(approvalNote ? { reason: approvalNote } : {}), relatedRecordIds: [contract.id] } }];
     if (adjustment) audit.push({ action: BUSINESS_AUDIT_ACTIONS.SALE_CONFIRMED, entityType: "sale", entityId: sale.id, details: { module: "sales", previousValue: "pending", newValue: "confirmed", relatedRecordIds: [contract.id] } });
+    // The details column also holds the receipt evidence pointer. Keep whatever the row already stores.
+    const stored = await dbRead<{ payment: { details: Record<string, unknown> | null } | null }>(`query($id: UUID!) { payment(id: $id) { details } }`, { id: payment.id });
+    const details = { ...(stored.payment?.details ?? {}), ...detailsOf(verified) };
 
     try {
       await transact(actor, {
         variableDefinitions: definitions,
         fields,
         variables: {
-          payment: payment.id, contract: contract.id, version, verifier: actor.userId, verifiedAt, verifiedDate: verified.verifiedDate, countedDate: verified.countedDate, details: detailsOf(verified),
+          payment: payment.id, contract: contract.id, version, verifier: actor.userId, verifiedAt, verifiedDate: verified.verifiedDate, countedDate: verified.countedDate, details,
           ...(adjustment ? { sale: sale.id, confirmedDate: adjustment.confirmedDate, adjDate: adjustment.date, adjAmount: centavosToInt64(adjustment.amountCentavos), adjKind: adjustment.kind, adjReason: adjustment.reason } : {}),
         },
         audit,

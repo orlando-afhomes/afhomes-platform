@@ -61,3 +61,14 @@ export const VerifyPaymentBody = z.strictObject({ exceptionReason: z.string().ma
 
 export const CustomerListQuery = z.object({ limit: z.coerce.number().int().min(1).max(100).default(50), after: idField.optional() });
 export const CollectionsQuery = z.object({ from: dateOnly, to: dateOnly }).refine((value) => value.from <= value.to, "The start date must not be after the end date.");
+
+/** Paging for lists of views: up to 500 per page, cursor = the last id of the previous page. */
+export const PageQuery = z.object({ limit: z.coerce.number().int().min(1).max(500).default(100), after: idField.optional() });
+
+/** One report export audit event: name, format, range and row count only, never row data. */
+export const ReportExportBody = z.strictObject({
+  report: z.string().min(1).max(120),
+  format: z.enum(["xlsx", "csv", "pdf"]),
+  range: z.object({ from: dateOnly, to: dateOnly }).refine((value) => value.from <= value.to, "The start date must not be after the end date.").nullable(),
+  rowCount: z.number().int().min(0).max(100_000),
+});

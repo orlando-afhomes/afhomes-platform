@@ -11,6 +11,8 @@ export function configureEmulatorEnv() {
   process.env.FIREBASE_PROJECT_ID = "demo-afhomes";
   process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
   process.env.DATA_CONNECT_EMULATOR_HOST = "127.0.0.1:9399";
+  process.env.FIREBASE_STORAGE_EMULATOR_HOST = "127.0.0.1:9199";
+  process.env.FIREBASE_STORAGE_BUCKET = "demo-afhomes.appspot.com";
 }
 
 async function reachable(url: string) {
@@ -23,6 +25,11 @@ async function reachable(url: string) {
 }
 export async function emulatorsUp() {
   return (await reachable(AUTH)) && (await reachable(DB));
+}
+
+/** The Storage emulator is only needed by the evidence tests. */
+export async function storageEmulatorUp() {
+  return reachable("http://127.0.0.1:9199");
 }
 
 type RouteHandler = (request: NextRequest, context: { params: Promise<Record<string, string>> }) => Promise<Response>;

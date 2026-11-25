@@ -10,7 +10,7 @@
     "test": "vitest run",
     "check:architecture": "node scripts/check-architecture.mjs",
     "test:architecture": "node --test scripts/check-architecture.test.mjs",
-    "emulators": "firebase emulators:start --only auth,dataconnect --project demo-afhomes",
+    "emulators": "firebase emulators:start --only auth,dataconnect,storage --project demo-afhomes",
     "db:seed": "node --env-file=scripts/api-local.env node_modules/vite-node/vite-node.mjs -c vitest.config.ts scripts/seed-local-db.ts",
     "dev:api": "node scripts/dev-api.mjs"
   },

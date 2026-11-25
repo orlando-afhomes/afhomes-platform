@@ -15,6 +15,6 @@ Build and test on your computer with Firebase emulators and synthetic records. K
 | 05 | [Approved business modules](05-approved-business-modules.md) | Every approved module has an implemented and tested local workflow. |
 | 06 | [Local verification](06-local-verification.md) | The evidence is ready for complete staging rehearsal. |
 
-The [pilot implementation plan](pilot-implementation-plan.md) breaks Steps 01 to 04 into four build milestones for the first workflow and records the verified status of Steps A to C. The [implementation plan](../implementation-plan.md) details Step D, the eight module groups, staging and production.
+The [pilot implementation plan](pilot-implementation-plan.md) breaks Steps 01 to 04 into four build milestones for the first workflow and records the verified status of Steps A to C. The [delivery plan](../delivery-plan.md) details Step D, the eight module groups, staging and production.
 
 Obtain owner authorization for the local backend/database foundation and for each module before implementation. After Step 04 passes the pilot checks, take the first workflow to [staging SQL Connect](../02-staging/01-firebase-project-and-database-trial.md). Prove its hosted transaction behavior before expanding financial workflows. Continue the remaining local modules against the same approved rules and typed contracts.

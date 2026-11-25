@@ -50,8 +50,10 @@ export type Payment = {
   /** Invoice, Official Receipt, Collection Receipt, or Acknowledgment Receipt number of the issued document. */
   documentNo?: string | null;
   evidenceFileName: string | null;
-  /** Uploaded receipt image or PDF as a data URL; browser-memory mock evidence only. */
+  /** Uploaded receipt image or PDF as a data URL (mock) or a private API address (api mode). */
   evidenceFileDataUrl?: string | null;
+  /** Media type of the stored file, so the preview knows whether to show an image or a PDF link. */
+  evidenceContentType?: string | null;
   /** Optional bank (list entry id) for bank transfers and cheques; absent on older receipts. */
   bankId?: string | null;
   submittedBy: string;
@@ -103,8 +105,10 @@ export type UnmatchedReceipt = {
   /** Clerk-entered OR number or bank reference; system-wide unique (doc 07 section 9.2). */
   orNumber: string;
   evidenceFileName: string | null;
-  /** Uploaded receipt image or PDF as a data URL; browser-memory mock evidence only. */
+  /** Uploaded receipt image or PDF as a data URL (mock) or a private API address (api mode). */
   evidenceFileDataUrl?: string | null;
+  /** Media type of the stored file, so the preview knows whether to show an image or a PDF link. */
+  evidenceContentType?: string | null;
   /** Why no matching contract or payment was found (required). */
   reason: string;
   submittedBy: string;

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { useQueryClient } from "@tanstack/react-query";
 import type { DevIdentity } from "@/modules/identity/types";
 import { clearProtectedQueries } from "@/data/protected-cache";
+import { SESSION_EXPIRED_EVENT } from "@/data/http/client";
 import { DevIdentityContext, type DevIdentityContextValue } from "@/shared/providers/dev-identity-provider";
 
 /** Holds no roles and no access. Shown while loading and after sign-out. */
@@ -37,6 +38,13 @@ export function SessionIdentityProvider({ children }: { children: ReactNode }) {
     // Read the session once on load.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void reload();
+  }, [reload]);
+
+  useEffect(() => {
+    // A 401 from any repository means the cookie expired or was revoked: re-read the session, which signs out.
+    const onExpired = () => void reload();
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
   }, [reload]);
 
   const signOut = useCallback(() => {

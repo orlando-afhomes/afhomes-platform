@@ -4,6 +4,7 @@ import { useId, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Award, Calendar, CalendarCheck, CalendarDays, Check, Clock, CreditCard, Diamond, FileText, Hourglass, IdCard, Layers, Receipt, Scale, Star, Tag, User, UserCheck, type LucideIcon } from "lucide-react";
 import { useContracts, useMemberships, usePayments } from "@/data/business-queries";
+import { NotConnectedError } from "@/data/http/client";
 import { DEV_IDENTITIES } from "@/data/mock/dev-identities";
 import { nonStandardStage } from "@/modules/contracts/rules";
 import type { ContractView } from "@/data/contracts/contract-repository";
@@ -40,7 +41,10 @@ export function useContractRecord(contractId: string, includePaymentReference = 
   // A first-load failure of payments or memberships leaves no data to render, so the page
   // must not show an empty ledger or balances. A failed background refetch keeps its data
   // and is allowed to stay on screen.
-  const dataError = (payments.isError && payments.data === undefined) || (memberships.isError && memberships.data === undefined);
+  // The membership module is outside the pilot, so its "not connected" error hides membership
+  // details with a notice instead of blocking the contract and receipts that are connected.
+  const membershipUnavailable = memberships.isError && memberships.error instanceof NotConnectedError;
+  const dataError = (payments.isError && payments.data === undefined) || (memberships.isError && !membershipUnavailable && memberships.data === undefined);
   const error = contracts.error ?? payments.error ?? memberships.error;
   const refetch = () => Promise.all([contracts.refetch(), payments.refetch(), memberships.refetch()]);
   const contract = contracts.data?.find((item) => item.id === contractId);
@@ -58,6 +62,7 @@ export function useContractRecord(contractId: string, includePaymentReference = 
     isLoading: contracts.isLoading || payments.isLoading || memberships.isLoading,
     contractError: contracts.isError,
     dataError,
+    membershipUnavailable,
     error,
     refetch,
     contract,
@@ -154,6 +159,13 @@ export function ContractPageFrame({
   const title = recordLabel("Contract", contract.customerName, record.planName);
   return (
     <AdminPage anyOf={anyOf} title={title} crumbs={[...parentCrumbs, { label: title }]} actions={actions?.(full)}>
+      {record.membershipUnavailable ? (
+        <div className="tw:mb-4">
+          <InfoNote title="Membership data is not connected">
+            Membership and card details are omitted until the membership module is connected. Contract and receipt balances are unaffected.
+          </InfoNote>
+        </div>
+      ) : null}
       {children(full)}
     </AdminPage>
   );
@@ -421,7 +433,7 @@ export function ContractLedgerSection({ record }: { record: ContractRecord }) {
                   rows: [
                     { label: "Reference no.", value: entryPayment?.referenceNo ?? null },
                     { label: "Invoice / Receipt no.", value: entryPayment?.documentNo ?? null },
-                    { label: "Receipt file", value: <ImagePreview src={entryPayment?.evidenceFileDataUrl} fileName={entryPayment?.evidenceFileName} label="Receipt file" /> },
+                    { label: "Receipt file", value: <ImagePreview src={entryPayment?.evidenceFileDataUrl} fileName={entryPayment?.evidenceFileName} contentType={entryPayment?.evidenceContentType} label="Receipt file" /> },
                     { label: "Status", value: entryPayment ? <BizBadge status={entryPayment.status} /> : null },
                   ],
                 },

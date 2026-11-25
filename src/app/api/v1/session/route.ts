@@ -3,7 +3,8 @@ import { getAuth } from "firebase-admin/auth";
 import { z } from "zod";
 import { errorResponse, ApiError } from "@/server/api/errors";
 import { assertSameOrigin } from "@/server/api/origin";
-import { loadActorByUid, requireActor, resolveActorFromSessionCookie } from "@/server/auth/actor";
+import { loadActorByUid, requireActor, resolveActorFromSessionCookie, type Actor } from "@/server/auth/actor";
+import { getGrantedModuleIds, getGrantedOperations } from "@/modules/identity/permissions";
 import { RECENT_SIGN_IN_SECONDS, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS } from "@/server/auth/session-constants";
 import { recordAudit } from "@/server/audit";
 import { getAdminApp } from "@/server/firebase-admin";
@@ -26,11 +27,23 @@ const PORTAL_MESSAGE: Record<string, string> = {
 
 const cookieOptions = { httpOnly: true, secure: true, sameSite: "strict" as const, path: "/" };
 
-/** Current session: the signed-in person's identity, or 401. */
+/**
+ * What the screens may show: the identity plus the modules and operations the same
+ * grant tables give the server, so the sidebar and page gates match its decisions.
+ */
+function sessionBody(actor: Actor) {
+  return {
+    identity: actor.identity,
+    modules: [...getGrantedModuleIds(actor.identity)],
+    operations: [...getGrantedOperations(actor.identity)],
+  };
+}
+
+/** Current session: the signed-in person's identity and access, or 401. */
 export async function GET(request: NextRequest) {
   try {
     const actor = await requireActor(request.cookies.get(SESSION_COOKIE)?.value);
-    return NextResponse.json({ identity: actor.identity }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json(sessionBody(actor), { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return errorResponse(error);
   }
@@ -69,7 +82,7 @@ export async function POST(request: NextRequest) {
     const cookie = await auth.createSessionCookie(idToken, { expiresIn: SESSION_MAX_AGE_SECONDS * 1000 });
     await recordAudit({ actorUserId: actor.userId, action: "session.sign_in", entityType: "session", entityId: actor.userId, correlationId, details: { portal: actor.portal } });
 
-    const response = NextResponse.json({ identity: actor.identity }, { headers: { "Cache-Control": "no-store" } });
+    const response = NextResponse.json(sessionBody(actor), { headers: { "Cache-Control": "no-store" } });
     response.cookies.set(SESSION_COOKIE, cookie, { ...cookieOptions, maxAge: SESSION_MAX_AGE_SECONDS });
     return response;
   } catch (error) {

@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/query-keys";
 import { simulateAsync } from "@/data/contracts/async-options";
+import { apiFetch } from "@/data/http/client";
+import { DATA_MODE } from "@/shared/lib/data-mode";
 import { resolveEffectiveModules, hasBlockedLinkedAccount, resolveMockIdentity } from "@/data/mock/authorization";
 import { getAuthorizedGenealogyMemberIds } from "@/modules/sales-network/genealogy";
 import { getGrantedOperations, type AdminModuleId, type AdminOperation } from "@/modules/identity/permissions";
@@ -20,15 +22,20 @@ export function useAccessSnapshot() {
  const store = useMockStore();
  const { identity } = useDevIdentity();
  const query = useQuery({
-  queryKey: [...ACCESS_QUERY_KEY, identity.id, identity.status, identity.roles, identity.roleAssignments ?? null],
+  queryKey: [...ACCESS_QUERY_KEY, DATA_MODE, identity.id, identity.status, identity.roles, identity.roleAssignments ?? null],
   queryFn: async ({ signal }) => {
+   if (DATA_MODE === "api") {
+    // The server session already answers with the grant tables it enforces; the genealogy page is outside the pilot.
+    const session = await apiFetch<{ modules: AdminModuleId[]; operations: AdminOperation[] }>("/session", { signal });
+    return { modules: session.modules, operations: session.operations, genealogyIds: [] as string[] };
+   }
    await simulateAsync({signal, delayMs:Number(process.env.NEXT_PUBLIC_MOCK_DELAY_MS)||0});
    const effectiveIdentity = resolveMockIdentity(store, identity);
    const blocked = effectiveIdentity.status !== "active" || hasBlockedLinkedAccount(store, identity);
    return {
     modules: [...resolveEffectiveModules(store, identity)],
     operations: blocked ? [] : [...getGrantedOperations(effectiveIdentity)],
-    genealogyIds: blocked ? [] : [...getAuthorizedGenealogyMemberIds(effectiveIdentity, store)],
+    genealogyIds: blocked ? [] as string[] : [...getAuthorizedGenealogyMemberIds(effectiveIdentity, store)],
    };
   },
   retry:false,

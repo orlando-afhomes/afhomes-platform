@@ -2,6 +2,7 @@ import "server-only";
 import type { Contract } from "@/modules/contracts/types";
 import type { Customer, CustomerStatus } from "@/modules/customers/types";
 import type { Payment } from "@/modules/finance/types";
+import type { OrgMember } from "@/modules/organization/types";
 import type { Sale } from "@/modules/sales/types";
 import { dbRead, listAll } from "@/server/db";
 import { centavosToInt64, int64ToCentavos } from "@/server/money";
@@ -82,10 +83,22 @@ export type PaymentRow = {
 };
 export const PAYMENT_FIELDS = "id purpose amountCentavos method paidDate countedDate referenceNo documentNo status submittedAt verifiedAt verifiedDate decisionReason details contract { id } customer { id } submittedBy { id } verifiedBy { id }";
 
+/** Where a receipt file lives. Server-only: the storage path never leaves the API. */
+export type PaymentEvidenceMeta = { fileId: string; storagePath: string; fileName: string; size: number; contentType: string; uploadedBy: string; uploadedAt: string };
+
+export function paymentEvidenceOf(details: Json | null): PaymentEvidenceMeta | null {
+  const evidence = (details as { evidence?: Partial<PaymentEvidenceMeta> } | null)?.evidence;
+  if (!evidence?.fileId || !evidence.storagePath || !evidence.contentType) return null;
+  return evidence as PaymentEvidenceMeta;
+}
+
 export function toPayment(row: PaymentRow, saleId: string | null): Payment {
+  // The internal evidence pointer stays on the server; the view builds its private URL separately.
+  const { evidence: _evidence, ...details } = (row.details ?? {}) as Record<string, unknown>;
+  void _evidence;
   return {
     adjustments: [], history: [], evidenceFileName: null,
-    ...(row.details ?? {}),
+    ...details,
     id: row.id, contractId: row.contract?.id, customerId: row.customer?.id, saleId, purpose: row.purpose, amountCentavos: int64ToCentavos(row.amountCentavos),
     method: row.method, paidDate: row.paidDate, ...(row.countedDate ? { countedDate: row.countedDate } : {}), referenceNo: row.referenceNo, documentNo: row.documentNo,
     status: row.status, submittedBy: row.submittedBy?.id ?? "", submittedAt: row.submittedAt, verifiedBy: row.verifiedBy?.id ?? null, verifiedAt: row.verifiedAt,
@@ -159,4 +172,16 @@ export async function loadNumberHolders(number: string): Promise<Array<{ id: str
   const result = await dbRead<{ payments: Array<{ id: string; referenceNo: string | null; documentNo: string | null }> }>(
     `query($n: String!) { payments(where: { _or: [{ referenceNo: { eq: $n } }, { documentNo: { eq: $n } }] }) { id referenceNo documentNo } }`, { n: number });
   return result.payments;
+}
+
+// ---------------------------------------------------------------- members (full record)
+type FullMemberRow = { id: string; displayName: string; designation: string; branchId: string; status: string; teamName: string | null; referralCode: string | null; aaNumber: string | null; details: Json | null; parent: Ref };
+
+/** Complete member records as the screens expect them. Record scope uses the lighter `loadScopeMembers`. */
+export async function loadMembersFull(): Promise<OrgMember[]> {
+  const rows = await listAll<FullMemberRow>("members", "id displayName designation branchId status teamName referralCode aaNumber details parent { id }");
+  return rows.map((row) => ({
+    ...(row.details ?? {}), id: row.id, displayName: row.displayName, designation: row.designation, branchId: row.branchId, status: row.status, parentId: row.parent?.id ?? null,
+    teamName: row.teamName, referralCode: row.referralCode, aaNumber: row.aaNumber,
+  })) as unknown as OrgMember[];
 }

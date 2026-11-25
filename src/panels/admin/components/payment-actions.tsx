@@ -303,6 +303,7 @@ function MatchUnmatchedDialog({ record, onClose }: { record: UnmatchedReceiptVie
           <ImagePreview
             src={payment.evidenceFileDataUrl}
             fileName={payment.evidenceFileName}
+            contentType={payment.evidenceContentType}
             label="Current receipt file"
           />
         ) : null}
@@ -450,7 +451,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
                     { label: "Date on receipt", value: formatDate(detail.paidDate) },
                     { label: "Payment reference", value: detail.referenceNo },
                     { label: "Invoice / Receipt no.", value: detail.documentNo ?? null },
-                    { label: "Receipt file", value: <ImagePreview src={detail.evidenceFileDataUrl} fileName={detail.evidenceFileName} label="Receipt file" /> },
+                    { label: "Receipt file", value: <ImagePreview src={detail.evidenceFileDataUrl} fileName={detail.evidenceFileName} contentType={detail.evidenceContentType} label="Receipt file" /> },
                     { label: "Submitted by", value: detail.submitterName },
                     { label: "Submitted", value: formatDate(detail.submittedAt) },
                   ],

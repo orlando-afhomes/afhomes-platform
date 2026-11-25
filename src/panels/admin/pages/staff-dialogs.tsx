@@ -14,14 +14,12 @@ import {
   maskGovIdNumber,
   validateBarangay,
   validateCity,
-  validateConfirmPassword,
   validateEmailAddress,
   validateFacebook,
   validateGovIdNumber,
   validateLandline,
   validateMiddleName,
   validateMobileNumber,
-  validatePassword,
   validatePersonName,
   validatePrefix,
   validatePostalCode,
@@ -31,11 +29,9 @@ import {
   validateTinNumber,
 } from "@/shared/forms";
 import {
-  ConfirmPasswordField,
   EmailField,
   GovernmentIdFields,
   MiddleNameField,
-  PasswordField,
   PersonNameField,
   PhilippineAddressFields,
   PhilippineMobileField,
@@ -204,8 +200,6 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
   const [governmentIdNumber, setGovernmentIdNumber] = useState(editStaff?.governmentIdNumber ?? "");
   const [departmentId, setDepartmentId] = useState(editStaff?.departmentId ?? "");
   const [departmentRoleId, setDepartmentRoleId] = useState(editStaff?.departmentRoleId ?? "");
-  const [tempPassword, setTempPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [systemRoleIds, setSystemRoleIds] = useState<string[]>([]);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(editStaff?.avatarUrl ?? null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -261,8 +255,6 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
 
   /** Every rule runs on each render; messages appear live for filled fields and for all fields after a failed submit. */
   const rules: Errors = {
-    tempPassword: canProvisionAccounts ? (!tempPassword ? "Temporary password is required." : validatePassword(tempPassword)) ?? undefined : undefined,
-    confirmPassword: canProvisionAccounts && tempPassword ? (validateConfirmPassword(tempPassword, confirmPassword) ?? undefined) : undefined,
     firstName: validatePersonName(firstName, "First name") ?? undefined,
     prefix: validatePrefix(prefix) ?? undefined,
     middleName: validateMiddleName(middleName, noMiddleName) ?? undefined,
@@ -532,27 +524,9 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
       </FormSection>
       {canProvisionAccounts ? (
         <FormSection title="Account Credentials">
-          <FormGrid>
-            <PasswordField
-              id="staff-temp-password"
-              label="Temporary Password"
-              required
-              value={tempPassword}
-              onChange={setTempPassword}
-              placeholder="Temporary Password"
-              hint="Minimum 12 characters."
-              error={visible("tempPassword")}
-            />
-            <ConfirmPasswordField
-              id="staff-confirm-password"
-              label="Confirm Password"
-              required
-              value={confirmPassword}
-              onChange={setConfirmPassword}
-              placeholder="Confirm Password"
-              error={visible("confirmPassword")}
-            />
-          </FormGrid>
+          <p className="tw:text-sm tw:text-muted-foreground">
+            The account starts Pending. After activating it in Staff &amp; Access, send the person a password reset email so they can set their own password.
+          </p>
         </FormSection>
       ) : null}
       {canGrantSystemRoles ? (

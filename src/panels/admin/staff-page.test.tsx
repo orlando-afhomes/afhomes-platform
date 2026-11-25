@@ -93,8 +93,6 @@ async function pickAddressOption(user: ReturnType<typeof userEvent.setup>, label
   await user.click(await screen.findByRole("option", { name: option }));
 }
 
-const TEST_PASSWORD = "password1234";
-
 async function fillProfileFields(user: ReturnType<typeof userEvent.setup>) {
   fireEvent.change(screen.getByPlaceholderText("Mobile Number"), { target: { value: "09171234567" } });
   const street = screen.getByRole("textbox", { name: "No./Street/Subdivision" }) as HTMLInputElement;
@@ -126,8 +124,6 @@ async function fillNewStaffForm(user: ReturnType<typeof userEvent.setup>, overri
   await pickSharedSelect(user, "Select department", "Human Resources");
   await user.click(screen.getByRole("combobox", { name: "Role" }));
   await pickOption(user, "HR Staff");
-  fireEvent.change(screen.getByPlaceholderText("Temporary Password"), { target: { value: TEST_PASSWORD } });
-  fireEvent.change(screen.getByPlaceholderText("Confirm Password"), { target: { value: TEST_PASSWORD } });
 }
 
 async function pickOption(user: ReturnType<typeof userEvent.setup>, label: string) {
@@ -168,7 +164,7 @@ describe("staff page", () => {
     expect(screen.queryByText("Add staff")).not.toBeInTheDocument();
   });
 
-  it("offers an optional Prefix and a password reveal that triggers no validation", async () => {
+  it("offers an optional Prefix", async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
     await screen.findByRole("row", { name: HR_ROW }, { timeout: 5000 });
@@ -178,13 +174,6 @@ describe("staff page", () => {
     await user.click(prefix);
     await pickOption(user, "Dr.");
     expect(prefix).toHaveValue("Dr.");
-
-    const password = screen.getByPlaceholderText("Temporary Password");
-    await user.click(password);
-    await user.click(screen.getByRole("button", { name: "Show temporary password" }));
-    expect(password).toHaveAttribute("type", "text");
-    expect(password).toHaveFocus();
-    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("adds staff with cascading department role", async () => {
@@ -208,8 +197,6 @@ describe("staff page", () => {
     await fillProfileFields(user);
     fireEvent.change(screen.getByPlaceholderText("Email"), { target: { value: "roleless@afhomes.local" } });
     await pickSharedSelect(user, "Select department", "Human Resources");
-    fireEvent.change(screen.getByPlaceholderText("Temporary Password"), { target: { value: TEST_PASSWORD } });
-    fireEvent.change(screen.getByPlaceholderText("Confirm Password"), { target: { value: TEST_PASSWORD } });
     await user.click(screen.getByRole("button", { name: /^add$/i }));
     expect(await screen.findByText("Department role is required.")).toBeInTheDocument();
   });
@@ -230,8 +217,6 @@ describe("staff page", () => {
     // Switch departments: the HR role must not carry over.
     await user.click(within(screen.getByRole("dialog")).getByRole("combobox", { name: "Department" }));
     await pickOption(user, "Finance");
-    fireEvent.change(screen.getByPlaceholderText("Temporary Password"), { target: { value: TEST_PASSWORD } });
-    fireEvent.change(screen.getByPlaceholderText("Confirm Password"), { target: { value: TEST_PASSWORD } });
     await user.click(screen.getByRole("button", { name: /^add$/i }));
     expect(await screen.findByText("Department role is required.")).toBeInTheDocument();
   });

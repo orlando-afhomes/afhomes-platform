@@ -72,3 +72,73 @@ export const ReportExportBody = z.strictObject({
   range: z.object({ from: dateOnly, to: dateOnly }).refine((value) => value.from <= value.to, "The start date must not be after the end date.").nullable(),
   rowCount: z.number().int().min(0).max(100_000),
 });
+
+// ---------------------------------------------------------------- organization (F1)
+const orgName = z.string().min(1).max(120);
+const orgEmail = z.string().min(3).max(200);
+const profileFields = {
+  firstName: optText, prefix: optText, middleName: optText, lastName: optText, suffix: optText,
+  mobileNumber: optText, street: optText, province: optText, city: optText, barangay: optText,
+  postalCode: optText, telephone: optText, facebook: optText, tin: optText, gender: optText,
+  civilStatus: optText, governmentIdType: optText, governmentIdNumber: optText,
+};
+
+export const DepartmentBody = z.strictObject({
+  name: orgName,
+  code: z.string().max(20).optional(),
+  description: z.string().max(500).optional(),
+  headStaffId: idField.nullable().optional(),
+  status: z.enum(["active", "deactivated"]).optional(),
+});
+export const DepartmentPatch = DepartmentBody.partial();
+
+export const DepartmentRoleBody = z.strictObject({
+  name: orgName,
+  departmentId: idField,
+  moduleIds: z.array(z.string().max(50)).min(1).max(50),
+  status: z.enum(["active", "deactivated"]).optional(),
+});
+export const DepartmentRolePatch = z.strictObject({
+  name: orgName.optional(),
+  departmentId: idField.optional(),
+  moduleIds: z.array(z.string().max(50)).min(1).max(50).optional(),
+  status: z.enum(["active", "deactivated"]).optional(),
+});
+
+export const StaffBody = z.strictObject({
+  displayName: orgName,
+  position: z.string().max(120),
+  departmentId: idField.nullable().optional(),
+  departmentRoleId: idField.nullable().optional(),
+  email: orgEmail,
+  avatarUrl: z.string().max(500).nullable().optional(),
+  accountId: idField.nullable().optional(),
+  provisionPendingAccount: z.boolean().optional(),
+  systemRoleIds: z.array(z.string().max(30)).max(20).optional(),
+  ...profileFields,
+});
+export const StaffPatch = z.strictObject({
+  displayName: orgName.optional(),
+  position: z.string().max(120).optional(),
+  departmentId: idField.nullable().optional(),
+  departmentRoleId: idField.nullable().optional(),
+  email: orgEmail.optional(),
+  avatarUrl: z.string().max(500).nullable().optional(),
+  accountId: idField.nullable().optional(),
+  ...profileFields,
+});
+
+export const AccountBody = z.strictObject({
+  displayName: orgName,
+  email: orgEmail,
+  roleIds: z.array(z.string().max(30)).max(20),
+  departmentId: idField.nullable().optional(),
+});
+export const AccountPatch = z.strictObject({
+  displayName: orgName.optional(),
+  email: orgEmail.optional(),
+  departmentId: idField.nullable().optional(),
+});
+export const AccountRoleBody = z.strictObject({ role: z.string().min(1).max(30) });
+export const AccountStatusBody = z.strictObject({ status: z.enum(["pending", "active", "suspended", "deactivated"]) });
+export const StaffStatusBody = z.strictObject({ status: z.enum(["active", "suspended", "deactivated"]) });

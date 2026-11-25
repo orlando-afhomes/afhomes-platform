@@ -1,5 +1,24 @@
 extend type Query {
   """
+  ✨ Look up a single `AccountStatusEvent` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  accountStatusEvent(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: AccountStatusEvent_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: AccountStatusEvent_FirstRow
+  ): AccountStatusEvent @fdc_generated(from: "AccountStatusEvent", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `AuditEvent` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   auditEvent(
@@ -57,6 +76,63 @@ extend type Query {
     first: Customer_FirstRow
   ): Customer @fdc_generated(from: "Customer", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `Department` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  department(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Department_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Department_FirstRow
+  ): Department @fdc_generated(from: "Department", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `DepartmentRole` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  departmentRole(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: DepartmentRole_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: DepartmentRole_FirstRow
+  ): DepartmentRole @fdc_generated(from: "DepartmentRole", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Experience` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  experience(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Experience_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Experience_FirstRow
+  ): Experience @fdc_generated(from: "Experience", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `IdempotencyRecord` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   idempotencyRecord(
@@ -90,6 +166,25 @@ extend type Query {
     first: Member_FirstRow
   ): Member @fdc_generated(from: "Member", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `Outlet` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  outlet(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Outlet_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Outlet_FirstRow
+  ): Outlet @fdc_generated(from: "Outlet", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `Payment` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   payment(
@@ -108,6 +203,82 @@ extend type Query {
     """
     first: Payment_FirstRow
   ): Payment @fdc_generated(from: "Payment", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `PaymentScheme` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  paymentScheme(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PaymentScheme_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PaymentScheme_FirstRow
+  ): PaymentScheme @fdc_generated(from: "PaymentScheme", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `PrintTemplate` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  printTemplate(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PrintTemplate_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PrintTemplate_FirstRow
+  ): PrintTemplate @fdc_generated(from: "PrintTemplate", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Product` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  product(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Product_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Product_FirstRow
+  ): Product @fdc_generated(from: "Product", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `ReferenceEntry` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  referenceEntry(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ReferenceEntry_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ReferenceEntry_FirstRow
+  ): ReferenceEntry @fdc_generated(from: "ReferenceEntry", purpose: QUERY_SINGLE)
   """
   ✨ Look up a single `RoleAssignment` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
@@ -161,6 +332,44 @@ extend type Query {
     first: SaleAdjustment_FirstRow
   ): SaleAdjustment @fdc_generated(from: "SaleAdjustment", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `StaffMember` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  staffMember(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: StaffMember_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: StaffMember_FirstRow
+  ): StaffMember @fdc_generated(from: "StaffMember", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `TierLevel` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  tierLevel(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: TierLevel_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: TierLevel_FirstRow
+  ): TierLevel @fdc_generated(from: "TierLevel", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `UserAccount` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   userAccount(
@@ -179,6 +388,40 @@ extend type Query {
     """
     first: UserAccount_FirstRow
   ): UserAccount @fdc_generated(from: "UserAccount", purpose: QUERY_SINGLE)
+  """
+  ✨ List `AccountStatusEvent` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  accountStatusEvents(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: AccountStatusEvent_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [AccountStatusEvent_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: AccountStatusEvent_Having
+  ): [AccountStatusEvent!]! @fdc_generated(from: "AccountStatusEvent", purpose: QUERY_MULTIPLE)
   """
   ✨ List `AuditEvent` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
@@ -282,6 +525,108 @@ extend type Query {
     having: Customer_Having
   ): [Customer!]! @fdc_generated(from: "Customer", purpose: QUERY_MULTIPLE)
   """
+  ✨ List `Department` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  departments(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Department_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Department_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Department_Having
+  ): [Department!]! @fdc_generated(from: "Department", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `DepartmentRole` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  departmentRoles(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: DepartmentRole_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [DepartmentRole_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: DepartmentRole_Having
+  ): [DepartmentRole!]! @fdc_generated(from: "DepartmentRole", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Experience` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  experiences(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Experience_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Experience_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Experience_Having
+  ): [Experience!]! @fdc_generated(from: "Experience", purpose: QUERY_MULTIPLE)
+  """
   ✨ List `IdempotencyRecord` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
   idempotencyRecords(
@@ -350,6 +695,40 @@ extend type Query {
     having: Member_Having
   ): [Member!]! @fdc_generated(from: "Member", purpose: QUERY_MULTIPLE)
   """
+  ✨ List `Outlet` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  outlets(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Outlet_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Outlet_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Outlet_Having
+  ): [Outlet!]! @fdc_generated(from: "Outlet", purpose: QUERY_MULTIPLE)
+  """
   ✨ List `Payment` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
   payments(
@@ -383,6 +762,142 @@ extend type Query {
     """
     having: Payment_Having
   ): [Payment!]! @fdc_generated(from: "Payment", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `PaymentScheme` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  paymentSchemes(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: PaymentScheme_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [PaymentScheme_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: PaymentScheme_Having
+  ): [PaymentScheme!]! @fdc_generated(from: "PaymentScheme", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `PrintTemplate` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  printTemplates(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: PrintTemplate_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [PrintTemplate_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: PrintTemplate_Having
+  ): [PrintTemplate!]! @fdc_generated(from: "PrintTemplate", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Product` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  products(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Product_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Product_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Product_Having
+  ): [Product!]! @fdc_generated(from: "Product", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `ReferenceEntry` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  referenceEntries(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ReferenceEntry_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ReferenceEntry_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ReferenceEntry_Having
+  ): [ReferenceEntry!]! @fdc_generated(from: "ReferenceEntry", purpose: QUERY_MULTIPLE)
   """
   ✨ List `RoleAssignment` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
@@ -485,6 +1000,74 @@ extend type Query {
     """
     having: SaleAdjustment_Having
   ): [SaleAdjustment!]! @fdc_generated(from: "SaleAdjustment", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `StaffMember` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  staffMembers(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: StaffMember_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [StaffMember_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: StaffMember_Having
+  ): [StaffMember!]! @fdc_generated(from: "StaffMember", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `TierLevel` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  tierLevels(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: TierLevel_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [TierLevel_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: TierLevel_Having
+  ): [TierLevel!]! @fdc_generated(from: "TierLevel", purpose: QUERY_MULTIPLE)
   """
   ✨ List `UserAccount` objects in the table and return selected fields, optionally filtered by `where` conditions
   """

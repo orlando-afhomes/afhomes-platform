@@ -1,4 +1,10 @@
 """
+✨ `AccountStatusEvent_KeyOutput` returns the primary key fields of table type `AccountStatusEvent`.
+
+It has the same format as `AccountStatusEvent_Key`, but is only used as mutation return value.
+"""
+scalar AccountStatusEvent_KeyOutput
+"""
 ✨ `AuditEvent_KeyOutput` returns the primary key fields of table type `AuditEvent`.
 
 It has the same format as `AuditEvent_Key`, but is only used as mutation return value.
@@ -17,6 +23,24 @@ It has the same format as `Customer_Key`, but is only used as mutation return va
 """
 scalar Customer_KeyOutput
 """
+✨ `Department_KeyOutput` returns the primary key fields of table type `Department`.
+
+It has the same format as `Department_Key`, but is only used as mutation return value.
+"""
+scalar Department_KeyOutput
+"""
+✨ `DepartmentRole_KeyOutput` returns the primary key fields of table type `DepartmentRole`.
+
+It has the same format as `DepartmentRole_Key`, but is only used as mutation return value.
+"""
+scalar DepartmentRole_KeyOutput
+"""
+✨ `Experience_KeyOutput` returns the primary key fields of table type `Experience`.
+
+It has the same format as `Experience_Key`, but is only used as mutation return value.
+"""
+scalar Experience_KeyOutput
+"""
 ✨ `IdempotencyRecord_KeyOutput` returns the primary key fields of table type `IdempotencyRecord`.
 
 It has the same format as `IdempotencyRecord_Key`, but is only used as mutation return value.
@@ -29,11 +53,41 @@ It has the same format as `Member_Key`, but is only used as mutation return valu
 """
 scalar Member_KeyOutput
 """
+✨ `Outlet_KeyOutput` returns the primary key fields of table type `Outlet`.
+
+It has the same format as `Outlet_Key`, but is only used as mutation return value.
+"""
+scalar Outlet_KeyOutput
+"""
 ✨ `Payment_KeyOutput` returns the primary key fields of table type `Payment`.
 
 It has the same format as `Payment_Key`, but is only used as mutation return value.
 """
 scalar Payment_KeyOutput
+"""
+✨ `PaymentScheme_KeyOutput` returns the primary key fields of table type `PaymentScheme`.
+
+It has the same format as `PaymentScheme_Key`, but is only used as mutation return value.
+"""
+scalar PaymentScheme_KeyOutput
+"""
+✨ `PrintTemplate_KeyOutput` returns the primary key fields of table type `PrintTemplate`.
+
+It has the same format as `PrintTemplate_Key`, but is only used as mutation return value.
+"""
+scalar PrintTemplate_KeyOutput
+"""
+✨ `Product_KeyOutput` returns the primary key fields of table type `Product`.
+
+It has the same format as `Product_Key`, but is only used as mutation return value.
+"""
+scalar Product_KeyOutput
+"""
+✨ `ReferenceEntry_KeyOutput` returns the primary key fields of table type `ReferenceEntry`.
+
+It has the same format as `ReferenceEntry_Key`, but is only used as mutation return value.
+"""
+scalar ReferenceEntry_KeyOutput
 """
 ✨ `RoleAssignment_KeyOutput` returns the primary key fields of table type `RoleAssignment`.
 
@@ -53,11 +107,334 @@ It has the same format as `SaleAdjustment_Key`, but is only used as mutation ret
 """
 scalar SaleAdjustment_KeyOutput
 """
+✨ `StaffMember_KeyOutput` returns the primary key fields of table type `StaffMember`.
+
+It has the same format as `StaffMember_Key`, but is only used as mutation return value.
+"""
+scalar StaffMember_KeyOutput
+"""
+✨ `TierLevel_KeyOutput` returns the primary key fields of table type `TierLevel`.
+
+It has the same format as `TierLevel_Key`, but is only used as mutation return value.
+"""
+scalar TierLevel_KeyOutput
+"""
 ✨ `UserAccount_KeyOutput` returns the primary key fields of table type `UserAccount`.
 
 It has the same format as `UserAccount_Key`, but is only used as mutation return value.
 """
 scalar UserAccount_KeyOutput
+"""
+✨ Generated data input type for table 'AccountStatusEvent'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input AccountStatusEvent_Data {
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `AccountStatusEvent`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`accountId` of type `UUID!`
+  """
+  accountId: UUID
+  """
+  ✨ `_expr` server value variant of `accountId` (✨ Generated from Field `AccountStatusEvent`.`accountId` of type `UUID!`)
+  """
+  accountId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`actorId` of type `UUID`
+  """
+  actorId: UUID
+  """
+  ✨ `_expr` server value variant of `actorId` (✨ Generated from Field `AccountStatusEvent`.`actorId` of type `UUID`)
+  """
+  actorId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`account` of type `UserAccount!`
+  """
+  account: UserAccount_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`actor` of type `UserAccount`
+  """
+  actor: UserAccount_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`newStatus` of type `String!`
+  """
+  newStatus: String
+  """
+  ✨ `_expr` server value variant of `newStatus` (✨ Generated from Field `AccountStatusEvent`.`newStatus` of type `String!`)
+  """
+  newStatus_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`occurredAt` of type `Timestamp!`
+  """
+  occurredAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `occurredAt` (✨ Generated from Field `AccountStatusEvent`.`occurredAt` of type `Timestamp!`)
+  """
+  occurredAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `occurredAt` (✨ Generated from Field `AccountStatusEvent`.`occurredAt` of type `Timestamp!`)
+  """
+  occurredAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `occurredAt` (✨ Generated from Field `AccountStatusEvent`.`occurredAt` of type `Timestamp!`)
+  """
+  occurredAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`previousStatus` of type `String`
+  """
+  previousStatus: String
+  """
+  ✨ `_expr` server value variant of `previousStatus` (✨ Generated from Field `AccountStatusEvent`.`previousStatus` of type `String`)
+  """
+  previousStatus_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`reason` of type `String`
+  """
+  reason: String
+  """
+  ✨ `_expr` server value variant of `reason` (✨ Generated from Field `AccountStatusEvent`.`reason` of type `String`)
+  """
+  reason_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'AccountStatusEvent'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input AccountStatusEvent_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [AccountStatusEvent_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: AccountStatusEvent_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [AccountStatusEvent_Filter!]
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`accountId` of type `UUID!`
+  """
+  accountId: UUID_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`actorId` of type `UUID`
+  """
+  actorId: UUID_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`account` of type `UserAccount!`
+  """
+  account: UserAccount_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`actor` of type `UserAccount`
+  """
+  actor: UserAccount_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`newStatus` of type `String!`
+  """
+  newStatus: String_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`occurredAt` of type `Timestamp!`
+  """
+  occurredAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`previousStatus` of type `String`
+  """
+  previousStatus: String_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`reason` of type `String`
+  """
+  reason: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'AccountStatusEvent'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input AccountStatusEvent_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [AccountStatusEvent_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: AccountStatusEvent_Filter
+}
+"""
+✨ Generated having input type for table 'AccountStatusEvent'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input AccountStatusEvent_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [AccountStatusEvent_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: AccountStatusEvent_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [AccountStatusEvent_Having!]
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`accountId_count` of type `Int!`
+  """
+  accountId_count: Int_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`actorId_count` of type `Int!`
+  """
+  actorId_count: Int_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`newStatus_count` of type `Int!`
+  """
+  newStatus_count: Int_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`occurredAt_count` of type `Int!`
+  """
+  occurredAt_count: Int_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`previousStatus_count` of type `Int!`
+  """
+  previousStatus_count: Int_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`reason_count` of type `Int!`
+  """
+  reason_count: Int_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`occurredAt_min` of type `Timestamp`
+  """
+  occurredAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`occurredAt_max` of type `Timestamp`
+  """
+  occurredAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'AccountStatusEvent'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input AccountStatusEvent_Key {
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `AccountStatusEvent`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'AccountStatusEvent'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input AccountStatusEvent_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: AccountStatusEvent_Filter
+}
+"""
+✨ Generated order input type for table 'AccountStatusEvent'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input AccountStatusEvent_Order {
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`accountId` of type `UUID!`
+  """
+  accountId: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`actorId` of type `UUID`
+  """
+  actorId: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`account` of type `UserAccount!`
+  """
+  account: UserAccount_Order
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`actor` of type `UserAccount`
+  """
+  actor: UserAccount_Order
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`newStatus` of type `String!`
+  """
+  newStatus: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`occurredAt` of type `Timestamp!`
+  """
+  occurredAt: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`previousStatus` of type `String`
+  """
+  previousStatus: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`reason` of type `String`
+  """
+  reason: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`accountId_count` of type `Int!`
+  """
+  accountId_count: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`actorId_count` of type `Int!`
+  """
+  actorId_count: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`newStatus_count` of type `Int!`
+  """
+  newStatus_count: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`occurredAt_count` of type `Int!`
+  """
+  occurredAt_count: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`previousStatus_count` of type `Int!`
+  """
+  previousStatus_count: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`reason_count` of type `Int!`
+  """
+  reason_count: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`occurredAt_min` of type `Timestamp`
+  """
+  occurredAt_min: OrderDirection
+  """
+  ✨ Generated from Field `AccountStatusEvent`.`occurredAt_max` of type `Timestamp`
+  """
+  occurredAt_max: OrderDirection
+}
 """
 ✨ Generated data input type for table 'AuditEvent'. It includes all necessary fields for creating or upserting rows into table.
 """
@@ -1296,6 +1673,1071 @@ input Customer_Order {
   profile_max: OrderDirection
 }
 """
+✨ Generated data input type for table 'Department'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Department_Data {
+  """
+  ✨ Generated from Field `Department`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Department`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Department`.`code` of type `String!`
+  """
+  code: String
+  """
+  ✨ `_expr` server value variant of `code` (✨ Generated from Field `Department`.`code` of type `String!`)
+  """
+  code_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Department`.`description` of type `String!`
+  """
+  description: String
+  """
+  ✨ `_expr` server value variant of `description` (✨ Generated from Field `Department`.`description` of type `String!`)
+  """
+  description_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Department`.`headStaffId` of type `String`
+  """
+  headStaffId: String
+  """
+  ✨ `_expr` server value variant of `headStaffId` (✨ Generated from Field `Department`.`headStaffId` of type `String`)
+  """
+  headStaffId_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Department`.`name` of type `String!`
+  """
+  name: String
+  """
+  ✨ `_expr` server value variant of `name` (✨ Generated from Field `Department`.`name` of type `String!`)
+  """
+  name_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Department`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `Department`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Department`.`departmentRoles_on_department` of type `[DepartmentRole!]!`
+  """
+  departmentRoles_on_department: [DepartmentRole_Data!]
+  """
+  ✨ Generated from Field `Department`.`staffMembers_on_department` of type `[StaffMember!]!`
+  """
+  staffMembers_on_department: [StaffMember_Data!]
+}
+"""
+✨ Generated filter input type for table 'Department'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Department_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Department_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Department_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Department_Filter!]
+  """
+  ✨ Generated from Field `Department`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Department`.`code` of type `String!`
+  """
+  code: String_Filter
+  """
+  ✨ Generated from Field `Department`.`description` of type `String!`
+  """
+  description: String_Filter
+  """
+  ✨ Generated from Field `Department`.`headStaffId` of type `String`
+  """
+  headStaffId: String_Filter
+  """
+  ✨ Generated from Field `Department`.`name` of type `String!`
+  """
+  name: String_Filter
+  """
+  ✨ Generated from Field `Department`.`status` of type `String!`
+  """
+  status: String_Filter
+  """
+  ✨ Generated from Field `Department`.`departmentRoles_on_department` of type `[DepartmentRole!]!`
+  """
+  departmentRoles_on_department: DepartmentRole_ListFilter
+  """
+  ✨ Generated from Field `Department`.`staffMembers_on_department` of type `[StaffMember!]!`
+  """
+  staffMembers_on_department: StaffMember_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'Department'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Department_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Department_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Department_Filter
+}
+"""
+✨ Generated having input type for table 'Department'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Department_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Department_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Department_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Department_Having!]
+  """
+  ✨ Generated from Field `Department`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Department`.`code_count` of type `Int!`
+  """
+  code_count: Int_Filter
+  """
+  ✨ Generated from Field `Department`.`description_count` of type `Int!`
+  """
+  description_count: Int_Filter
+  """
+  ✨ Generated from Field `Department`.`headStaffId_count` of type `Int!`
+  """
+  headStaffId_count: Int_Filter
+  """
+  ✨ Generated from Field `Department`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Department`.`name_count` of type `Int!`
+  """
+  name_count: Int_Filter
+  """
+  ✨ Generated from Field `Department`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+}
+"""
+✨ Generated key input type for table 'Department'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Department_Key {
+  """
+  ✨ Generated from Field `Department`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Department`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Department'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Department_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Department_Filter
+}
+"""
+✨ Generated order input type for table 'Department'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Department_Order {
+  """
+  ✨ Generated from Field `Department`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Department`.`code` of type `String!`
+  """
+  code: OrderDirection
+  """
+  ✨ Generated from Field `Department`.`description` of type `String!`
+  """
+  description: OrderDirection
+  """
+  ✨ Generated from Field `Department`.`headStaffId` of type `String`
+  """
+  headStaffId: OrderDirection
+  """
+  ✨ Generated from Field `Department`.`name` of type `String!`
+  """
+  name: OrderDirection
+  """
+  ✨ Generated from Field `Department`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `Department`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Department`.`code_count` of type `Int!`
+  """
+  code_count: OrderDirection
+  """
+  ✨ Generated from Field `Department`.`description_count` of type `Int!`
+  """
+  description_count: OrderDirection
+  """
+  ✨ Generated from Field `Department`.`headStaffId_count` of type `Int!`
+  """
+  headStaffId_count: OrderDirection
+  """
+  ✨ Generated from Field `Department`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Department`.`name_count` of type `Int!`
+  """
+  name_count: OrderDirection
+  """
+  ✨ Generated from Field `Department`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+}
+"""
+✨ Generated data input type for table 'DepartmentRole'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input DepartmentRole_Data {
+  """
+  ✨ Generated from Field `DepartmentRole`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `DepartmentRole`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `DepartmentRole`.`departmentId` of type `UUID!`
+  """
+  departmentId: UUID
+  """
+  ✨ `_expr` server value variant of `departmentId` (✨ Generated from Field `DepartmentRole`.`departmentId` of type `UUID!`)
+  """
+  departmentId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `DepartmentRole`.`department` of type `Department!`
+  """
+  department: Department_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `DepartmentRole`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `DepartmentRole`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `DepartmentRole`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `DepartmentRole`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `DepartmentRole`.`isProtected` of type `Boolean!`
+  """
+  isProtected: Boolean
+  """
+  ✨ `_expr` server value variant of `isProtected` (✨ Generated from Field `DepartmentRole`.`isProtected` of type `Boolean!`)
+  """
+  isProtected_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `DepartmentRole`.`moduleIds` of type `Any`
+  """
+  moduleIds: Any
+  """
+  ✨ `_expr` server value variant of `moduleIds` (✨ Generated from Field `DepartmentRole`.`moduleIds` of type `Any`)
+  """
+  moduleIds_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `DepartmentRole`.`name` of type `String!`
+  """
+  name: String
+  """
+  ✨ `_expr` server value variant of `name` (✨ Generated from Field `DepartmentRole`.`name` of type `String!`)
+  """
+  name_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `DepartmentRole`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `DepartmentRole`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `DepartmentRole`.`staffMembers_on_departmentRole` of type `[StaffMember!]!`
+  """
+  staffMembers_on_departmentRole: [StaffMember_Data!]
+}
+"""
+✨ Generated filter input type for table 'DepartmentRole'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input DepartmentRole_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [DepartmentRole_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: DepartmentRole_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [DepartmentRole_Filter!]
+  """
+  ✨ Generated from Field `DepartmentRole`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`departmentId` of type `UUID!`
+  """
+  departmentId: UUID_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`department` of type `Department!`
+  """
+  department: Department_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`isProtected` of type `Boolean!`
+  """
+  isProtected: Boolean_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`moduleIds` of type `Any`
+  """
+  moduleIds: Any_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`name` of type `String!`
+  """
+  name: String_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`status` of type `String!`
+  """
+  status: String_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`staffMembers_on_departmentRole` of type `[StaffMember!]!`
+  """
+  staffMembers_on_departmentRole: StaffMember_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'DepartmentRole'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input DepartmentRole_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [DepartmentRole_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: DepartmentRole_Filter
+}
+"""
+✨ Generated having input type for table 'DepartmentRole'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input DepartmentRole_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [DepartmentRole_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: DepartmentRole_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [DepartmentRole_Having!]
+  """
+  ✨ Generated from Field `DepartmentRole`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`departmentId_count` of type `Int!`
+  """
+  departmentId_count: Int_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`isProtected_count` of type `Int!`
+  """
+  isProtected_count: Int_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`moduleIds_count` of type `Int!`
+  """
+  moduleIds_count: Int_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`name_count` of type `Int!`
+  """
+  name_count: Int_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`moduleIds_min` of type `Any`
+  """
+  moduleIds_min: Any_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `DepartmentRole`.`moduleIds_max` of type `Any`
+  """
+  moduleIds_max: Any_Filter
+}
+"""
+✨ Generated key input type for table 'DepartmentRole'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input DepartmentRole_Key {
+  """
+  ✨ Generated from Field `DepartmentRole`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `DepartmentRole`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'DepartmentRole'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input DepartmentRole_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: DepartmentRole_Filter
+}
+"""
+✨ Generated order input type for table 'DepartmentRole'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input DepartmentRole_Order {
+  """
+  ✨ Generated from Field `DepartmentRole`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`departmentId` of type `UUID!`
+  """
+  departmentId: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`department` of type `Department!`
+  """
+  department: Department_Order
+  """
+  ✨ Generated from Field `DepartmentRole`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`isProtected` of type `Boolean!`
+  """
+  isProtected: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`moduleIds` of type `Any`
+  """
+  moduleIds: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`name` of type `String!`
+  """
+  name: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`departmentId_count` of type `Int!`
+  """
+  departmentId_count: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`isProtected_count` of type `Int!`
+  """
+  isProtected_count: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`moduleIds_count` of type `Int!`
+  """
+  moduleIds_count: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`name_count` of type `Int!`
+  """
+  name_count: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`moduleIds_min` of type `Any`
+  """
+  moduleIds_min: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `DepartmentRole`.`moduleIds_max` of type `Any`
+  """
+  moduleIds_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'Experience'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Experience_Data {
+  """
+  ✨ Generated from Field `Experience`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Experience`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Experience`.`category` of type `String!`
+  """
+  category: String
+  """
+  ✨ `_expr` server value variant of `category` (✨ Generated from Field `Experience`.`category` of type `String!`)
+  """
+  category_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Experience`.`createdAt` of type `String!`
+  """
+  createdAt: String
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Experience`.`createdAt` of type `String!`)
+  """
+  createdAt_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Experience`.`highlights` of type `Any`
+  """
+  highlights: Any
+  """
+  ✨ `_expr` server value variant of `highlights` (✨ Generated from Field `Experience`.`highlights` of type `Any`)
+  """
+  highlights_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Experience`.`image` of type `Any`
+  """
+  image: Any
+  """
+  ✨ `_expr` server value variant of `image` (✨ Generated from Field `Experience`.`image` of type `Any`)
+  """
+  image_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Experience`.`key` of type `String!`
+  """
+  key: String
+  """
+  ✨ `_expr` server value variant of `key` (✨ Generated from Field `Experience`.`key` of type `String!`)
+  """
+  key_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Experience`.`overview` of type `String!`
+  """
+  overview: String
+  """
+  ✨ `_expr` server value variant of `overview` (✨ Generated from Field `Experience`.`overview` of type `String!`)
+  """
+  overview_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Experience`.`published` of type `Boolean!`
+  """
+  published: Boolean
+  """
+  ✨ `_expr` server value variant of `published` (✨ Generated from Field `Experience`.`published` of type `Boolean!`)
+  """
+  published_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Experience`.`slug` of type `String!`
+  """
+  slug: String
+  """
+  ✨ `_expr` server value variant of `slug` (✨ Generated from Field `Experience`.`slug` of type `String!`)
+  """
+  slug_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Experience`.`standard` of type `Boolean!`
+  """
+  standard: Boolean
+  """
+  ✨ `_expr` server value variant of `standard` (✨ Generated from Field `Experience`.`standard` of type `Boolean!`)
+  """
+  standard_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Experience`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `Experience`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Experience`.`statusTone` of type `String!`
+  """
+  statusTone: String
+  """
+  ✨ `_expr` server value variant of `statusTone` (✨ Generated from Field `Experience`.`statusTone` of type `String!`)
+  """
+  statusTone_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Experience`.`summary` of type `String!`
+  """
+  summary: String
+  """
+  ✨ `_expr` server value variant of `summary` (✨ Generated from Field `Experience`.`summary` of type `String!`)
+  """
+  summary_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Experience`.`title` of type `String!`
+  """
+  title: String
+  """
+  ✨ `_expr` server value variant of `title` (✨ Generated from Field `Experience`.`title` of type `String!`)
+  """
+  title_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Experience`.`updatedAt` of type `String!`
+  """
+  updatedAt: String
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `Experience`.`updatedAt` of type `String!`)
+  """
+  updatedAt_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'Experience'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Experience_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Experience_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Experience_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Experience_Filter!]
+  """
+  ✨ Generated from Field `Experience`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Experience`.`category` of type `String!`
+  """
+  category: String_Filter
+  """
+  ✨ Generated from Field `Experience`.`createdAt` of type `String!`
+  """
+  createdAt: String_Filter
+  """
+  ✨ Generated from Field `Experience`.`highlights` of type `Any`
+  """
+  highlights: Any_Filter
+  """
+  ✨ Generated from Field `Experience`.`image` of type `Any`
+  """
+  image: Any_Filter
+  """
+  ✨ Generated from Field `Experience`.`key` of type `String!`
+  """
+  key: String_Filter
+  """
+  ✨ Generated from Field `Experience`.`overview` of type `String!`
+  """
+  overview: String_Filter
+  """
+  ✨ Generated from Field `Experience`.`published` of type `Boolean!`
+  """
+  published: Boolean_Filter
+  """
+  ✨ Generated from Field `Experience`.`slug` of type `String!`
+  """
+  slug: String_Filter
+  """
+  ✨ Generated from Field `Experience`.`standard` of type `Boolean!`
+  """
+  standard: Boolean_Filter
+  """
+  ✨ Generated from Field `Experience`.`status` of type `String!`
+  """
+  status: String_Filter
+  """
+  ✨ Generated from Field `Experience`.`statusTone` of type `String!`
+  """
+  statusTone: String_Filter
+  """
+  ✨ Generated from Field `Experience`.`summary` of type `String!`
+  """
+  summary: String_Filter
+  """
+  ✨ Generated from Field `Experience`.`title` of type `String!`
+  """
+  title: String_Filter
+  """
+  ✨ Generated from Field `Experience`.`updatedAt` of type `String!`
+  """
+  updatedAt: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'Experience'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Experience_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Experience_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Experience_Filter
+}
+"""
+✨ Generated having input type for table 'Experience'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Experience_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Experience_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Experience_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Experience_Having!]
+  """
+  ✨ Generated from Field `Experience`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`category_count` of type `Int!`
+  """
+  category_count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`highlights_count` of type `Int!`
+  """
+  highlights_count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`image_count` of type `Int!`
+  """
+  image_count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`key_count` of type `Int!`
+  """
+  key_count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`overview_count` of type `Int!`
+  """
+  overview_count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`published_count` of type `Int!`
+  """
+  published_count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`slug_count` of type `Int!`
+  """
+  slug_count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`standard_count` of type `Int!`
+  """
+  standard_count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`statusTone_count` of type `Int!`
+  """
+  statusTone_count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`summary_count` of type `Int!`
+  """
+  summary_count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`title_count` of type `Int!`
+  """
+  title_count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Experience`.`highlights_min` of type `Any`
+  """
+  highlights_min: Any_Filter
+  """
+  ✨ Generated from Field `Experience`.`image_min` of type `Any`
+  """
+  image_min: Any_Filter
+  """
+  ✨ Generated from Field `Experience`.`highlights_max` of type `Any`
+  """
+  highlights_max: Any_Filter
+  """
+  ✨ Generated from Field `Experience`.`image_max` of type `Any`
+  """
+  image_max: Any_Filter
+}
+"""
+✨ Generated key input type for table 'Experience'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Experience_Key {
+  """
+  ✨ Generated from Field `Experience`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Experience`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Experience'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Experience_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Experience_Filter
+}
+"""
+✨ Generated order input type for table 'Experience'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Experience_Order {
+  """
+  ✨ Generated from Field `Experience`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`category` of type `String!`
+  """
+  category: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`createdAt` of type `String!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`highlights` of type `Any`
+  """
+  highlights: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`image` of type `Any`
+  """
+  image: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`key` of type `String!`
+  """
+  key: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`overview` of type `String!`
+  """
+  overview: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`published` of type `Boolean!`
+  """
+  published: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`slug` of type `String!`
+  """
+  slug: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`standard` of type `Boolean!`
+  """
+  standard: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`statusTone` of type `String!`
+  """
+  statusTone: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`summary` of type `String!`
+  """
+  summary: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`title` of type `String!`
+  """
+  title: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`updatedAt` of type `String!`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`category_count` of type `Int!`
+  """
+  category_count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`highlights_count` of type `Int!`
+  """
+  highlights_count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`image_count` of type `Int!`
+  """
+  image_count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`key_count` of type `Int!`
+  """
+  key_count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`overview_count` of type `Int!`
+  """
+  overview_count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`published_count` of type `Int!`
+  """
+  published_count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`slug_count` of type `Int!`
+  """
+  slug_count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`standard_count` of type `Int!`
+  """
+  standard_count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`statusTone_count` of type `Int!`
+  """
+  statusTone_count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`summary_count` of type `Int!`
+  """
+  summary_count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`title_count` of type `Int!`
+  """
+  title_count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`highlights_min` of type `Any`
+  """
+  highlights_min: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`image_min` of type `Any`
+  """
+  image_min: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`highlights_max` of type `Any`
+  """
+  highlights_max: OrderDirection
+  """
+  ✨ Generated from Field `Experience`.`image_max` of type `Any`
+  """
+  image_max: OrderDirection
+}
+"""
 ✨ Generated data input type for table 'IdempotencyRecord'. It includes all necessary fields for creating or upserting rows into table.
 """
 input IdempotencyRecord_Data {
@@ -2074,6 +3516,245 @@ input Member_Order {
   details_max: OrderDirection
 }
 """
+✨ Generated data input type for table 'Outlet'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Outlet_Data {
+  """
+  ✨ Generated from Field `Outlet`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Outlet`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Outlet`.`key` of type `String!`
+  """
+  key: String
+  """
+  ✨ `_expr` server value variant of `key` (✨ Generated from Field `Outlet`.`key` of type `String!`)
+  """
+  key_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Outlet`.`name` of type `String!`
+  """
+  name: String
+  """
+  ✨ `_expr` server value variant of `name` (✨ Generated from Field `Outlet`.`name` of type `String!`)
+  """
+  name_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Outlet`.`sample` of type `Boolean!`
+  """
+  sample: Boolean
+  """
+  ✨ `_expr` server value variant of `sample` (✨ Generated from Field `Outlet`.`sample` of type `Boolean!`)
+  """
+  sample_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Outlet`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `Outlet`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Outlet`.`type` of type `String!`
+  """
+  type: String
+  """
+  ✨ `_expr` server value variant of `type` (✨ Generated from Field `Outlet`.`type` of type `String!`)
+  """
+  type_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'Outlet'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Outlet_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Outlet_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Outlet_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Outlet_Filter!]
+  """
+  ✨ Generated from Field `Outlet`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Outlet`.`key` of type `String!`
+  """
+  key: String_Filter
+  """
+  ✨ Generated from Field `Outlet`.`name` of type `String!`
+  """
+  name: String_Filter
+  """
+  ✨ Generated from Field `Outlet`.`sample` of type `Boolean!`
+  """
+  sample: Boolean_Filter
+  """
+  ✨ Generated from Field `Outlet`.`status` of type `String!`
+  """
+  status: String_Filter
+  """
+  ✨ Generated from Field `Outlet`.`type` of type `String!`
+  """
+  type: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'Outlet'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Outlet_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Outlet_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Outlet_Filter
+}
+"""
+✨ Generated having input type for table 'Outlet'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Outlet_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Outlet_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Outlet_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Outlet_Having!]
+  """
+  ✨ Generated from Field `Outlet`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Outlet`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Outlet`.`key_count` of type `Int!`
+  """
+  key_count: Int_Filter
+  """
+  ✨ Generated from Field `Outlet`.`name_count` of type `Int!`
+  """
+  name_count: Int_Filter
+  """
+  ✨ Generated from Field `Outlet`.`sample_count` of type `Int!`
+  """
+  sample_count: Int_Filter
+  """
+  ✨ Generated from Field `Outlet`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `Outlet`.`type_count` of type `Int!`
+  """
+  type_count: Int_Filter
+}
+"""
+✨ Generated key input type for table 'Outlet'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Outlet_Key {
+  """
+  ✨ Generated from Field `Outlet`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Outlet`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Outlet'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Outlet_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Outlet_Filter
+}
+"""
+✨ Generated order input type for table 'Outlet'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Outlet_Order {
+  """
+  ✨ Generated from Field `Outlet`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Outlet`.`key` of type `String!`
+  """
+  key: OrderDirection
+  """
+  ✨ Generated from Field `Outlet`.`name` of type `String!`
+  """
+  name: OrderDirection
+  """
+  ✨ Generated from Field `Outlet`.`sample` of type `Boolean!`
+  """
+  sample: OrderDirection
+  """
+  ✨ Generated from Field `Outlet`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `Outlet`.`type` of type `String!`
+  """
+  type: OrderDirection
+  """
+  ✨ Generated from Field `Outlet`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Outlet`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Outlet`.`key_count` of type `Int!`
+  """
+  key_count: OrderDirection
+  """
+  ✨ Generated from Field `Outlet`.`name_count` of type `Int!`
+  """
+  name_count: OrderDirection
+  """
+  ✨ Generated from Field `Outlet`.`sample_count` of type `Int!`
+  """
+  sample_count: OrderDirection
+  """
+  ✨ Generated from Field `Outlet`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `Outlet`.`type_count` of type `Int!`
+  """
+  type_count: OrderDirection
+}
+"""
 ✨ Generated data input type for table 'Payment'. It includes all necessary fields for creating or upserting rows into table.
 """
 input Payment_Data {
@@ -2819,6 +4500,2718 @@ input Payment_Order {
   ✨ Generated from Field `Payment`.`verifiedDate_max` of type `Date`
   """
   verifiedDate_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'PaymentScheme'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input PaymentScheme_Data {
+  """
+  ✨ Generated from Field `PaymentScheme`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `PaymentScheme`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`applicableTiers` of type `Any`
+  """
+  applicableTiers: Any
+  """
+  ✨ `_expr` server value variant of `applicableTiers` (✨ Generated from Field `PaymentScheme`.`applicableTiers` of type `Any`)
+  """
+  applicableTiers_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`availability` of type `String!`
+  """
+  availability: String
+  """
+  ✨ `_expr` server value variant of `availability` (✨ Generated from Field `PaymentScheme`.`availability` of type `String!`)
+  """
+  availability_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`category` of type `String!`
+  """
+  category: String
+  """
+  ✨ `_expr` server value variant of `category` (✨ Generated from Field `PaymentScheme`.`category` of type `String!`)
+  """
+  category_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`changes` of type `Any`
+  """
+  changes: Any
+  """
+  ✨ `_expr` server value variant of `changes` (✨ Generated from Field `PaymentScheme`.`changes` of type `Any`)
+  """
+  changes_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`commercialStatus` of type `String!`
+  """
+  commercialStatus: String
+  """
+  ✨ `_expr` server value variant of `commercialStatus` (✨ Generated from Field `PaymentScheme`.`commercialStatus` of type `String!`)
+  """
+  commercialStatus_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`configVersion` of type `Int!`
+  """
+  configVersion: Int
+  """
+  ✨ `_expr` server value variant of `configVersion` (✨ Generated from Field `PaymentScheme`.`configVersion` of type `Int!`)
+  """
+  configVersion_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `configVersion` (✨ Generated from Field `PaymentScheme`.`configVersion` of type `Int!`)
+  """
+  configVersion_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`downPaymentBasisPoints` of type `Int`
+  """
+  downPaymentBasisPoints: Int
+  """
+  ✨ `_expr` server value variant of `downPaymentBasisPoints` (✨ Generated from Field `PaymentScheme`.`downPaymentBasisPoints` of type `Int`)
+  """
+  downPaymentBasisPoints_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `downPaymentBasisPoints` (✨ Generated from Field `PaymentScheme`.`downPaymentBasisPoints` of type `Int`)
+  """
+  downPaymentBasisPoints_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`effectiveDate` of type `Date`
+  """
+  effectiveDate: Date
+  """
+  ✨ `_date` server value variant of `effectiveDate` (✨ Generated from Field `PaymentScheme`.`effectiveDate` of type `Date`)
+  """
+  effectiveDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `effectiveDate` (✨ Generated from Field `PaymentScheme`.`effectiveDate` of type `Date`)
+  """
+  effectiveDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `effectiveDate` (✨ Generated from Field `PaymentScheme`.`effectiveDate` of type `Date`)
+  """
+  effectiveDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`historicalLabel` of type `String`
+  """
+  historicalLabel: String
+  """
+  ✨ `_expr` server value variant of `historicalLabel` (✨ Generated from Field `PaymentScheme`.`historicalLabel` of type `String`)
+  """
+  historicalLabel_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCentavosByTier` of type `Any`
+  """
+  installmentCentavosByTier: Any
+  """
+  ✨ `_expr` server value variant of `installmentCentavosByTier` (✨ Generated from Field `PaymentScheme`.`installmentCentavosByTier` of type `Any`)
+  """
+  installmentCentavosByTier_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCount` of type `Int`
+  """
+  installmentCount: Int
+  """
+  ✨ `_expr` server value variant of `installmentCount` (✨ Generated from Field `PaymentScheme`.`installmentCount` of type `Int`)
+  """
+  installmentCount_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `installmentCount` (✨ Generated from Field `PaymentScheme`.`installmentCount` of type `Int`)
+  """
+  installmentCount_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCountByTier` of type `Any`
+  """
+  installmentCountByTier: Any
+  """
+  ✨ `_expr` server value variant of `installmentCountByTier` (✨ Generated from Field `PaymentScheme`.`installmentCountByTier` of type `Any`)
+  """
+  installmentCountByTier_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`key` of type `String!`
+  """
+  key: String
+  """
+  ✨ `_expr` server value variant of `key` (✨ Generated from Field `PaymentScheme`.`key` of type `String!`)
+  """
+  key_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`label` of type `String!`
+  """
+  label: String
+  """
+  ✨ `_expr` server value variant of `label` (✨ Generated from Field `PaymentScheme`.`label` of type `String!`)
+  """
+  label_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`ownerHold` of type `String`
+  """
+  ownerHold: String
+  """
+  ✨ `_expr` server value variant of `ownerHold` (✨ Generated from Field `PaymentScheme`.`ownerHold` of type `String`)
+  """
+  ownerHold_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`paymentCode` of type `String`
+  """
+  paymentCode: String
+  """
+  ✨ `_expr` server value variant of `paymentCode` (✨ Generated from Field `PaymentScheme`.`paymentCode` of type `String`)
+  """
+  paymentCode_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`paymentCodeByTier` of type `Any`
+  """
+  paymentCodeByTier: Any
+  """
+  ✨ `_expr` server value variant of `paymentCodeByTier` (✨ Generated from Field `PaymentScheme`.`paymentCodeByTier` of type `Any`)
+  """
+  paymentCodeByTier_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`priceCentavosByTier` of type `Any`
+  """
+  priceCentavosByTier: Any
+  """
+  ✨ `_expr` server value variant of `priceCentavosByTier` (✨ Generated from Field `PaymentScheme`.`priceCentavosByTier` of type `Any`)
+  """
+  priceCentavosByTier_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`reservationCentavos` of type `Int64`
+  """
+  reservationCentavos: Int64
+  """
+  ✨ `_expr` server value variant of `reservationCentavos` (✨ Generated from Field `PaymentScheme`.`reservationCentavos` of type `Int64`)
+  """
+  reservationCentavos_expr: Int64_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `reservationCentavos` (✨ Generated from Field `PaymentScheme`.`reservationCentavos` of type `Int64`)
+  """
+  reservationCentavos_update: [Int64_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`sortOrder` of type `Int!`
+  """
+  sortOrder: Int
+  """
+  ✨ `_expr` server value variant of `sortOrder` (✨ Generated from Field `PaymentScheme`.`sortOrder` of type `Int!`)
+  """
+  sortOrder_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `sortOrder` (✨ Generated from Field `PaymentScheme`.`sortOrder` of type `Int!`)
+  """
+  sortOrder_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PaymentScheme`.`source` of type `String!`
+  """
+  source: String
+  """
+  ✨ `_expr` server value variant of `source` (✨ Generated from Field `PaymentScheme`.`source` of type `String!`)
+  """
+  source_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'PaymentScheme'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input PaymentScheme_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [PaymentScheme_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: PaymentScheme_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [PaymentScheme_Filter!]
+  """
+  ✨ Generated from Field `PaymentScheme`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`applicableTiers` of type `Any`
+  """
+  applicableTiers: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`availability` of type `String!`
+  """
+  availability: String_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`category` of type `String!`
+  """
+  category: String_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`changes` of type `Any`
+  """
+  changes: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`commercialStatus` of type `String!`
+  """
+  commercialStatus: String_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`configVersion` of type `Int!`
+  """
+  configVersion: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`downPaymentBasisPoints` of type `Int`
+  """
+  downPaymentBasisPoints: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`effectiveDate` of type `Date`
+  """
+  effectiveDate: Date_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`historicalLabel` of type `String`
+  """
+  historicalLabel: String_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCentavosByTier` of type `Any`
+  """
+  installmentCentavosByTier: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCount` of type `Int`
+  """
+  installmentCount: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCountByTier` of type `Any`
+  """
+  installmentCountByTier: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`key` of type `String!`
+  """
+  key: String_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`label` of type `String!`
+  """
+  label: String_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`ownerHold` of type `String`
+  """
+  ownerHold: String_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`paymentCode` of type `String`
+  """
+  paymentCode: String_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`paymentCodeByTier` of type `Any`
+  """
+  paymentCodeByTier: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`priceCentavosByTier` of type `Any`
+  """
+  priceCentavosByTier: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`reservationCentavos` of type `Int64`
+  """
+  reservationCentavos: Int64_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`sortOrder` of type `Int!`
+  """
+  sortOrder: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`source` of type `String!`
+  """
+  source: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'PaymentScheme'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input PaymentScheme_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [PaymentScheme_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: PaymentScheme_Filter
+}
+"""
+✨ Generated having input type for table 'PaymentScheme'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input PaymentScheme_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [PaymentScheme_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: PaymentScheme_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [PaymentScheme_Having!]
+  """
+  ✨ Generated from Field `PaymentScheme`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`applicableTiers_count` of type `Int!`
+  """
+  applicableTiers_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`availability_count` of type `Int!`
+  """
+  availability_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`category_count` of type `Int!`
+  """
+  category_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`changes_count` of type `Int!`
+  """
+  changes_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`commercialStatus_count` of type `Int!`
+  """
+  commercialStatus_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`configVersion_count` of type `Int!`
+  """
+  configVersion_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`downPaymentBasisPoints_count` of type `Int!`
+  """
+  downPaymentBasisPoints_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`effectiveDate_count` of type `Int!`
+  """
+  effectiveDate_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`historicalLabel_count` of type `Int!`
+  """
+  historicalLabel_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCentavosByTier_count` of type `Int!`
+  """
+  installmentCentavosByTier_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCountByTier_count` of type `Int!`
+  """
+  installmentCountByTier_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCount_count` of type `Int!`
+  """
+  installmentCount_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`key_count` of type `Int!`
+  """
+  key_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`label_count` of type `Int!`
+  """
+  label_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`ownerHold_count` of type `Int!`
+  """
+  ownerHold_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`paymentCodeByTier_count` of type `Int!`
+  """
+  paymentCodeByTier_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`paymentCode_count` of type `Int!`
+  """
+  paymentCode_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`priceCentavosByTier_count` of type `Int!`
+  """
+  priceCentavosByTier_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`reservationCentavos_count` of type `Int!`
+  """
+  reservationCentavos_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`sortOrder_count` of type `Int!`
+  """
+  sortOrder_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`source_count` of type `Int!`
+  """
+  source_count: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`configVersion_sum` of type `Int`
+  """
+  configVersion_sum: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`downPaymentBasisPoints_sum` of type `Int`
+  """
+  downPaymentBasisPoints_sum: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCount_sum` of type `Int`
+  """
+  installmentCount_sum: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`reservationCentavos_sum` of type `Int64`
+  """
+  reservationCentavos_sum: Int64_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`sortOrder_sum` of type `Int`
+  """
+  sortOrder_sum: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`configVersion_avg` of type `Float`
+  """
+  configVersion_avg: Float_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`downPaymentBasisPoints_avg` of type `Float`
+  """
+  downPaymentBasisPoints_avg: Float_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCount_avg` of type `Float`
+  """
+  installmentCount_avg: Float_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`reservationCentavos_avg` of type `Float`
+  """
+  reservationCentavos_avg: Float_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`sortOrder_avg` of type `Float`
+  """
+  sortOrder_avg: Float_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`applicableTiers_min` of type `Any`
+  """
+  applicableTiers_min: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`changes_min` of type `Any`
+  """
+  changes_min: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`configVersion_min` of type `Int`
+  """
+  configVersion_min: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`downPaymentBasisPoints_min` of type `Int`
+  """
+  downPaymentBasisPoints_min: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`effectiveDate_min` of type `Date`
+  """
+  effectiveDate_min: Date_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCentavosByTier_min` of type `Any`
+  """
+  installmentCentavosByTier_min: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCountByTier_min` of type `Any`
+  """
+  installmentCountByTier_min: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCount_min` of type `Int`
+  """
+  installmentCount_min: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`paymentCodeByTier_min` of type `Any`
+  """
+  paymentCodeByTier_min: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`priceCentavosByTier_min` of type `Any`
+  """
+  priceCentavosByTier_min: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`reservationCentavos_min` of type `Int64`
+  """
+  reservationCentavos_min: Int64_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`sortOrder_min` of type `Int`
+  """
+  sortOrder_min: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`applicableTiers_max` of type `Any`
+  """
+  applicableTiers_max: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`changes_max` of type `Any`
+  """
+  changes_max: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`configVersion_max` of type `Int`
+  """
+  configVersion_max: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`downPaymentBasisPoints_max` of type `Int`
+  """
+  downPaymentBasisPoints_max: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`effectiveDate_max` of type `Date`
+  """
+  effectiveDate_max: Date_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCentavosByTier_max` of type `Any`
+  """
+  installmentCentavosByTier_max: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCountByTier_max` of type `Any`
+  """
+  installmentCountByTier_max: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCount_max` of type `Int`
+  """
+  installmentCount_max: Int_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`paymentCodeByTier_max` of type `Any`
+  """
+  paymentCodeByTier_max: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`priceCentavosByTier_max` of type `Any`
+  """
+  priceCentavosByTier_max: Any_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`reservationCentavos_max` of type `Int64`
+  """
+  reservationCentavos_max: Int64_Filter
+  """
+  ✨ Generated from Field `PaymentScheme`.`sortOrder_max` of type `Int`
+  """
+  sortOrder_max: Int_Filter
+}
+"""
+✨ Generated key input type for table 'PaymentScheme'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input PaymentScheme_Key {
+  """
+  ✨ Generated from Field `PaymentScheme`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `PaymentScheme`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'PaymentScheme'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input PaymentScheme_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: PaymentScheme_Filter
+}
+"""
+✨ Generated order input type for table 'PaymentScheme'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input PaymentScheme_Order {
+  """
+  ✨ Generated from Field `PaymentScheme`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`applicableTiers` of type `Any`
+  """
+  applicableTiers: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`availability` of type `String!`
+  """
+  availability: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`category` of type `String!`
+  """
+  category: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`changes` of type `Any`
+  """
+  changes: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`commercialStatus` of type `String!`
+  """
+  commercialStatus: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`configVersion` of type `Int!`
+  """
+  configVersion: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`downPaymentBasisPoints` of type `Int`
+  """
+  downPaymentBasisPoints: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`effectiveDate` of type `Date`
+  """
+  effectiveDate: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`historicalLabel` of type `String`
+  """
+  historicalLabel: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCentavosByTier` of type `Any`
+  """
+  installmentCentavosByTier: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCount` of type `Int`
+  """
+  installmentCount: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCountByTier` of type `Any`
+  """
+  installmentCountByTier: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`key` of type `String!`
+  """
+  key: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`label` of type `String!`
+  """
+  label: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`ownerHold` of type `String`
+  """
+  ownerHold: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`paymentCode` of type `String`
+  """
+  paymentCode: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`paymentCodeByTier` of type `Any`
+  """
+  paymentCodeByTier: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`priceCentavosByTier` of type `Any`
+  """
+  priceCentavosByTier: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`reservationCentavos` of type `Int64`
+  """
+  reservationCentavos: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`sortOrder` of type `Int!`
+  """
+  sortOrder: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`source` of type `String!`
+  """
+  source: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`applicableTiers_count` of type `Int!`
+  """
+  applicableTiers_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`availability_count` of type `Int!`
+  """
+  availability_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`category_count` of type `Int!`
+  """
+  category_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`changes_count` of type `Int!`
+  """
+  changes_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`commercialStatus_count` of type `Int!`
+  """
+  commercialStatus_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`configVersion_count` of type `Int!`
+  """
+  configVersion_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`downPaymentBasisPoints_count` of type `Int!`
+  """
+  downPaymentBasisPoints_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`effectiveDate_count` of type `Int!`
+  """
+  effectiveDate_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`historicalLabel_count` of type `Int!`
+  """
+  historicalLabel_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCentavosByTier_count` of type `Int!`
+  """
+  installmentCentavosByTier_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCountByTier_count` of type `Int!`
+  """
+  installmentCountByTier_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCount_count` of type `Int!`
+  """
+  installmentCount_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`key_count` of type `Int!`
+  """
+  key_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`label_count` of type `Int!`
+  """
+  label_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`ownerHold_count` of type `Int!`
+  """
+  ownerHold_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`paymentCodeByTier_count` of type `Int!`
+  """
+  paymentCodeByTier_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`paymentCode_count` of type `Int!`
+  """
+  paymentCode_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`priceCentavosByTier_count` of type `Int!`
+  """
+  priceCentavosByTier_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`reservationCentavos_count` of type `Int!`
+  """
+  reservationCentavos_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`sortOrder_count` of type `Int!`
+  """
+  sortOrder_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`source_count` of type `Int!`
+  """
+  source_count: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`configVersion_sum` of type `Int`
+  """
+  configVersion_sum: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`downPaymentBasisPoints_sum` of type `Int`
+  """
+  downPaymentBasisPoints_sum: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCount_sum` of type `Int`
+  """
+  installmentCount_sum: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`reservationCentavos_sum` of type `Int64`
+  """
+  reservationCentavos_sum: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`sortOrder_sum` of type `Int`
+  """
+  sortOrder_sum: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`configVersion_avg` of type `Float`
+  """
+  configVersion_avg: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`downPaymentBasisPoints_avg` of type `Float`
+  """
+  downPaymentBasisPoints_avg: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCount_avg` of type `Float`
+  """
+  installmentCount_avg: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`reservationCentavos_avg` of type `Float`
+  """
+  reservationCentavos_avg: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`sortOrder_avg` of type `Float`
+  """
+  sortOrder_avg: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`applicableTiers_min` of type `Any`
+  """
+  applicableTiers_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`changes_min` of type `Any`
+  """
+  changes_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`configVersion_min` of type `Int`
+  """
+  configVersion_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`downPaymentBasisPoints_min` of type `Int`
+  """
+  downPaymentBasisPoints_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`effectiveDate_min` of type `Date`
+  """
+  effectiveDate_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCentavosByTier_min` of type `Any`
+  """
+  installmentCentavosByTier_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCountByTier_min` of type `Any`
+  """
+  installmentCountByTier_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCount_min` of type `Int`
+  """
+  installmentCount_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`paymentCodeByTier_min` of type `Any`
+  """
+  paymentCodeByTier_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`priceCentavosByTier_min` of type `Any`
+  """
+  priceCentavosByTier_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`reservationCentavos_min` of type `Int64`
+  """
+  reservationCentavos_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`sortOrder_min` of type `Int`
+  """
+  sortOrder_min: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`applicableTiers_max` of type `Any`
+  """
+  applicableTiers_max: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`changes_max` of type `Any`
+  """
+  changes_max: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`configVersion_max` of type `Int`
+  """
+  configVersion_max: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`downPaymentBasisPoints_max` of type `Int`
+  """
+  downPaymentBasisPoints_max: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`effectiveDate_max` of type `Date`
+  """
+  effectiveDate_max: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCentavosByTier_max` of type `Any`
+  """
+  installmentCentavosByTier_max: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCountByTier_max` of type `Any`
+  """
+  installmentCountByTier_max: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`installmentCount_max` of type `Int`
+  """
+  installmentCount_max: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`paymentCodeByTier_max` of type `Any`
+  """
+  paymentCodeByTier_max: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`priceCentavosByTier_max` of type `Any`
+  """
+  priceCentavosByTier_max: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`reservationCentavos_max` of type `Int64`
+  """
+  reservationCentavos_max: OrderDirection
+  """
+  ✨ Generated from Field `PaymentScheme`.`sortOrder_max` of type `Int`
+  """
+  sortOrder_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'PrintTemplate'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input PrintTemplate_Data {
+  """
+  ✨ Generated from Field `PrintTemplate`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `PrintTemplate`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PrintTemplate`.`assetPath` of type `String`
+  """
+  assetPath: String
+  """
+  ✨ `_expr` server value variant of `assetPath` (✨ Generated from Field `PrintTemplate`.`assetPath` of type `String`)
+  """
+  assetPath_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PrintTemplate`.`key` of type `String!`
+  """
+  key: String
+  """
+  ✨ `_expr` server value variant of `key` (✨ Generated from Field `PrintTemplate`.`key` of type `String!`)
+  """
+  key_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PrintTemplate`.`kind` of type `String!`
+  """
+  kind: String
+  """
+  ✨ `_expr` server value variant of `kind` (✨ Generated from Field `PrintTemplate`.`kind` of type `String!`)
+  """
+  kind_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PrintTemplate`.`name` of type `String!`
+  """
+  name: String
+  """
+  ✨ `_expr` server value variant of `name` (✨ Generated from Field `PrintTemplate`.`name` of type `String!`)
+  """
+  name_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PrintTemplate`.`revision` of type `String!`
+  """
+  revision: String
+  """
+  ✨ `_expr` server value variant of `revision` (✨ Generated from Field `PrintTemplate`.`revision` of type `String!`)
+  """
+  revision_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PrintTemplate`.`sortOrder` of type `Int!`
+  """
+  sortOrder: Int
+  """
+  ✨ `_expr` server value variant of `sortOrder` (✨ Generated from Field `PrintTemplate`.`sortOrder` of type `Int!`)
+  """
+  sortOrder_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `sortOrder` (✨ Generated from Field `PrintTemplate`.`sortOrder` of type `Int!`)
+  """
+  sortOrder_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `PrintTemplate`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `PrintTemplate`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'PrintTemplate'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input PrintTemplate_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [PrintTemplate_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: PrintTemplate_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [PrintTemplate_Filter!]
+  """
+  ✨ Generated from Field `PrintTemplate`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`assetPath` of type `String`
+  """
+  assetPath: String_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`key` of type `String!`
+  """
+  key: String_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`kind` of type `String!`
+  """
+  kind: String_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`name` of type `String!`
+  """
+  name: String_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`revision` of type `String!`
+  """
+  revision: String_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`sortOrder` of type `Int!`
+  """
+  sortOrder: Int_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`status` of type `String!`
+  """
+  status: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'PrintTemplate'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input PrintTemplate_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [PrintTemplate_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: PrintTemplate_Filter
+}
+"""
+✨ Generated having input type for table 'PrintTemplate'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input PrintTemplate_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [PrintTemplate_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: PrintTemplate_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [PrintTemplate_Having!]
+  """
+  ✨ Generated from Field `PrintTemplate`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`assetPath_count` of type `Int!`
+  """
+  assetPath_count: Int_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`key_count` of type `Int!`
+  """
+  key_count: Int_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`kind_count` of type `Int!`
+  """
+  kind_count: Int_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`name_count` of type `Int!`
+  """
+  name_count: Int_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`revision_count` of type `Int!`
+  """
+  revision_count: Int_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`sortOrder_count` of type `Int!`
+  """
+  sortOrder_count: Int_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`sortOrder_sum` of type `Int`
+  """
+  sortOrder_sum: Int_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`sortOrder_avg` of type `Float`
+  """
+  sortOrder_avg: Float_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`sortOrder_min` of type `Int`
+  """
+  sortOrder_min: Int_Filter
+  """
+  ✨ Generated from Field `PrintTemplate`.`sortOrder_max` of type `Int`
+  """
+  sortOrder_max: Int_Filter
+}
+"""
+✨ Generated key input type for table 'PrintTemplate'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input PrintTemplate_Key {
+  """
+  ✨ Generated from Field `PrintTemplate`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `PrintTemplate`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'PrintTemplate'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input PrintTemplate_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: PrintTemplate_Filter
+}
+"""
+✨ Generated order input type for table 'PrintTemplate'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input PrintTemplate_Order {
+  """
+  ✨ Generated from Field `PrintTemplate`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`assetPath` of type `String`
+  """
+  assetPath: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`key` of type `String!`
+  """
+  key: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`kind` of type `String!`
+  """
+  kind: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`name` of type `String!`
+  """
+  name: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`revision` of type `String!`
+  """
+  revision: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`sortOrder` of type `Int!`
+  """
+  sortOrder: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`assetPath_count` of type `Int!`
+  """
+  assetPath_count: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`key_count` of type `Int!`
+  """
+  key_count: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`kind_count` of type `Int!`
+  """
+  kind_count: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`name_count` of type `Int!`
+  """
+  name_count: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`revision_count` of type `Int!`
+  """
+  revision_count: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`sortOrder_count` of type `Int!`
+  """
+  sortOrder_count: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`sortOrder_sum` of type `Int`
+  """
+  sortOrder_sum: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`sortOrder_avg` of type `Float`
+  """
+  sortOrder_avg: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`sortOrder_min` of type `Int`
+  """
+  sortOrder_min: OrderDirection
+  """
+  ✨ Generated from Field `PrintTemplate`.`sortOrder_max` of type `Int`
+  """
+  sortOrder_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'Product'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Product_Data {
+  """
+  ✨ Generated from Field `Product`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Product`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`tierLevelId` of type `UUID!`
+  """
+  tierLevelId: UUID
+  """
+  ✨ `_expr` server value variant of `tierLevelId` (✨ Generated from Field `Product`.`tierLevelId` of type `UUID!`)
+  """
+  tierLevelId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`tierLevel` of type `TierLevel!`
+  """
+  tierLevel: TierLevel_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`approvalStatus` of type `String!`
+  """
+  approvalStatus: String
+  """
+  ✨ `_expr` server value variant of `approvalStatus` (✨ Generated from Field `Product`.`approvalStatus` of type `String!`)
+  """
+  approvalStatus_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`benefitsSummary` of type `String`
+  """
+  benefitsSummary: String
+  """
+  ✨ `_expr` server value variant of `benefitsSummary` (✨ Generated from Field `Product`.`benefitsSummary` of type `String`)
+  """
+  benefitsSummary_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`changes` of type `Any`
+  """
+  changes: Any
+  """
+  ✨ `_expr` server value variant of `changes` (✨ Generated from Field `Product`.`changes` of type `Any`)
+  """
+  changes_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`code` of type `String!`
+  """
+  code: String
+  """
+  ✨ `_expr` server value variant of `code` (✨ Generated from Field `Product`.`code` of type `String!`)
+  """
+  code_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`configVersion` of type `Int!`
+  """
+  configVersion: Int
+  """
+  ✨ `_expr` server value variant of `configVersion` (✨ Generated from Field `Product`.`configVersion` of type `Int!`)
+  """
+  configVersion_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `configVersion` (✨ Generated from Field `Product`.`configVersion` of type `Int!`)
+  """
+  configVersion_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`description` of type `String`
+  """
+  description: String
+  """
+  ✨ `_expr` server value variant of `description` (✨ Generated from Field `Product`.`description` of type `String`)
+  """
+  description_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`earningCycles` of type `Int!`
+  """
+  earningCycles: Int
+  """
+  ✨ `_expr` server value variant of `earningCycles` (✨ Generated from Field `Product`.`earningCycles` of type `Int!`)
+  """
+  earningCycles_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `earningCycles` (✨ Generated from Field `Product`.`earningCycles` of type `Int!`)
+  """
+  earningCycles_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`effectiveDate` of type `Date`
+  """
+  effectiveDate: Date
+  """
+  ✨ `_date` server value variant of `effectiveDate` (✨ Generated from Field `Product`.`effectiveDate` of type `Date`)
+  """
+  effectiveDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `effectiveDate` (✨ Generated from Field `Product`.`effectiveDate` of type `Date`)
+  """
+  effectiveDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `effectiveDate` (✨ Generated from Field `Product`.`effectiveDate` of type `Date`)
+  """
+  effectiveDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`imageFileName` of type `String`
+  """
+  imageFileName: String
+  """
+  ✨ `_expr` server value variant of `imageFileName` (✨ Generated from Field `Product`.`imageFileName` of type `String`)
+  """
+  imageFileName_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`imageUrl` of type `String`
+  """
+  imageUrl: String
+  """
+  ✨ `_expr` server value variant of `imageUrl` (✨ Generated from Field `Product`.`imageUrl` of type `String`)
+  """
+  imageUrl_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`lifetimePoints` of type `Int!`
+  """
+  lifetimePoints: Int
+  """
+  ✨ `_expr` server value variant of `lifetimePoints` (✨ Generated from Field `Product`.`lifetimePoints` of type `Int!`)
+  """
+  lifetimePoints_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `lifetimePoints` (✨ Generated from Field `Product`.`lifetimePoints` of type `Int!`)
+  """
+  lifetimePoints_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`minSpendPerCycleCentavos` of type `Int64!`
+  """
+  minSpendPerCycleCentavos: Int64
+  """
+  ✨ `_expr` server value variant of `minSpendPerCycleCentavos` (✨ Generated from Field `Product`.`minSpendPerCycleCentavos` of type `Int64!`)
+  """
+  minSpendPerCycleCentavos_expr: Int64_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `minSpendPerCycleCentavos` (✨ Generated from Field `Product`.`minSpendPerCycleCentavos` of type `Int64!`)
+  """
+  minSpendPerCycleCentavos_update: [Int64_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`name` of type `String!`
+  """
+  name: String
+  """
+  ✨ `_expr` server value variant of `name` (✨ Generated from Field `Product`.`name` of type `String!`)
+  """
+  name_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`pointsPerCycle` of type `Int!`
+  """
+  pointsPerCycle: Int
+  """
+  ✨ `_expr` server value variant of `pointsPerCycle` (✨ Generated from Field `Product`.`pointsPerCycle` of type `Int!`)
+  """
+  pointsPerCycle_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `pointsPerCycle` (✨ Generated from Field `Product`.`pointsPerCycle` of type `Int!`)
+  """
+  pointsPerCycle_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`priceCentavos` of type `Int64!`
+  """
+  priceCentavos: Int64
+  """
+  ✨ `_expr` server value variant of `priceCentavos` (✨ Generated from Field `Product`.`priceCentavos` of type `Int64!`)
+  """
+  priceCentavos_expr: Int64_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `priceCentavos` (✨ Generated from Field `Product`.`priceCentavos` of type `Int64!`)
+  """
+  priceCentavos_update: [Int64_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`priceNote` of type `String`
+  """
+  priceNote: String
+  """
+  ✨ `_expr` server value variant of `priceNote` (✨ Generated from Field `Product`.`priceNote` of type `String`)
+  """
+  priceNote_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`priceStatus` of type `String!`
+  """
+  priceStatus: String
+  """
+  ✨ `_expr` server value variant of `priceStatus` (✨ Generated from Field `Product`.`priceStatus` of type `String!`)
+  """
+  priceStatus_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`publiclyListed` of type `Boolean!`
+  """
+  publiclyListed: Boolean
+  """
+  ✨ `_expr` server value variant of `publiclyListed` (✨ Generated from Field `Product`.`publiclyListed` of type `Boolean!`)
+  """
+  publiclyListed_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `Product`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`supplementaryHolders` of type `Int!`
+  """
+  supplementaryHolders: Int
+  """
+  ✨ `_expr` server value variant of `supplementaryHolders` (✨ Generated from Field `Product`.`supplementaryHolders` of type `Int!`)
+  """
+  supplementaryHolders_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `supplementaryHolders` (✨ Generated from Field `Product`.`supplementaryHolders` of type `Int!`)
+  """
+  supplementaryHolders_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`validityYears` of type `Int!`
+  """
+  validityYears: Int
+  """
+  ✨ `_expr` server value variant of `validityYears` (✨ Generated from Field `Product`.`validityYears` of type `Int!`)
+  """
+  validityYears_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `validityYears` (✨ Generated from Field `Product`.`validityYears` of type `Int!`)
+  """
+  validityYears_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`vipDiscountPercent` of type `Int!`
+  """
+  vipDiscountPercent: Int
+  """
+  ✨ `_expr` server value variant of `vipDiscountPercent` (✨ Generated from Field `Product`.`vipDiscountPercent` of type `Int!`)
+  """
+  vipDiscountPercent_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `vipDiscountPercent` (✨ Generated from Field `Product`.`vipDiscountPercent` of type `Int!`)
+  """
+  vipDiscountPercent_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`weekdayPointsPerCycle` of type `Int!`
+  """
+  weekdayPointsPerCycle: Int
+  """
+  ✨ `_expr` server value variant of `weekdayPointsPerCycle` (✨ Generated from Field `Product`.`weekdayPointsPerCycle` of type `Int!`)
+  """
+  weekdayPointsPerCycle_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `weekdayPointsPerCycle` (✨ Generated from Field `Product`.`weekdayPointsPerCycle` of type `Int!`)
+  """
+  weekdayPointsPerCycle_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Product`.`weekendPointsPerCycle` of type `Int!`
+  """
+  weekendPointsPerCycle: Int
+  """
+  ✨ `_expr` server value variant of `weekendPointsPerCycle` (✨ Generated from Field `Product`.`weekendPointsPerCycle` of type `Int!`)
+  """
+  weekendPointsPerCycle_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `weekendPointsPerCycle` (✨ Generated from Field `Product`.`weekendPointsPerCycle` of type `Int!`)
+  """
+  weekendPointsPerCycle_update: [Int_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'Product'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Product_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Product_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Product_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Product_Filter!]
+  """
+  ✨ Generated from Field `Product`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Product`.`tierLevelId` of type `UUID!`
+  """
+  tierLevelId: UUID_Filter
+  """
+  ✨ Generated from Field `Product`.`tierLevel` of type `TierLevel!`
+  """
+  tierLevel: TierLevel_Filter
+  """
+  ✨ Generated from Field `Product`.`approvalStatus` of type `String!`
+  """
+  approvalStatus: String_Filter
+  """
+  ✨ Generated from Field `Product`.`benefitsSummary` of type `String`
+  """
+  benefitsSummary: String_Filter
+  """
+  ✨ Generated from Field `Product`.`changes` of type `Any`
+  """
+  changes: Any_Filter
+  """
+  ✨ Generated from Field `Product`.`code` of type `String!`
+  """
+  code: String_Filter
+  """
+  ✨ Generated from Field `Product`.`configVersion` of type `Int!`
+  """
+  configVersion: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`description` of type `String`
+  """
+  description: String_Filter
+  """
+  ✨ Generated from Field `Product`.`earningCycles` of type `Int!`
+  """
+  earningCycles: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`effectiveDate` of type `Date`
+  """
+  effectiveDate: Date_Filter
+  """
+  ✨ Generated from Field `Product`.`imageFileName` of type `String`
+  """
+  imageFileName: String_Filter
+  """
+  ✨ Generated from Field `Product`.`imageUrl` of type `String`
+  """
+  imageUrl: String_Filter
+  """
+  ✨ Generated from Field `Product`.`lifetimePoints` of type `Int!`
+  """
+  lifetimePoints: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`minSpendPerCycleCentavos` of type `Int64!`
+  """
+  minSpendPerCycleCentavos: Int64_Filter
+  """
+  ✨ Generated from Field `Product`.`name` of type `String!`
+  """
+  name: String_Filter
+  """
+  ✨ Generated from Field `Product`.`pointsPerCycle` of type `Int!`
+  """
+  pointsPerCycle: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`priceCentavos` of type `Int64!`
+  """
+  priceCentavos: Int64_Filter
+  """
+  ✨ Generated from Field `Product`.`priceNote` of type `String`
+  """
+  priceNote: String_Filter
+  """
+  ✨ Generated from Field `Product`.`priceStatus` of type `String!`
+  """
+  priceStatus: String_Filter
+  """
+  ✨ Generated from Field `Product`.`publiclyListed` of type `Boolean!`
+  """
+  publiclyListed: Boolean_Filter
+  """
+  ✨ Generated from Field `Product`.`status` of type `String!`
+  """
+  status: String_Filter
+  """
+  ✨ Generated from Field `Product`.`supplementaryHolders` of type `Int!`
+  """
+  supplementaryHolders: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`validityYears` of type `Int!`
+  """
+  validityYears: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`vipDiscountPercent` of type `Int!`
+  """
+  vipDiscountPercent: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`weekdayPointsPerCycle` of type `Int!`
+  """
+  weekdayPointsPerCycle: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`weekendPointsPerCycle` of type `Int!`
+  """
+  weekendPointsPerCycle: Int_Filter
+}
+"""
+✨ Generated first-row input type for table 'Product'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Product_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Product_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Product_Filter
+}
+"""
+✨ Generated having input type for table 'Product'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Product_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Product_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Product_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Product_Having!]
+  """
+  ✨ Generated from Field `Product`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`approvalStatus_count` of type `Int!`
+  """
+  approvalStatus_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`benefitsSummary_count` of type `Int!`
+  """
+  benefitsSummary_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`changes_count` of type `Int!`
+  """
+  changes_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`code_count` of type `Int!`
+  """
+  code_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`configVersion_count` of type `Int!`
+  """
+  configVersion_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`description_count` of type `Int!`
+  """
+  description_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`earningCycles_count` of type `Int!`
+  """
+  earningCycles_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`effectiveDate_count` of type `Int!`
+  """
+  effectiveDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`imageFileName_count` of type `Int!`
+  """
+  imageFileName_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`imageUrl_count` of type `Int!`
+  """
+  imageUrl_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`lifetimePoints_count` of type `Int!`
+  """
+  lifetimePoints_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`minSpendPerCycleCentavos_count` of type `Int!`
+  """
+  minSpendPerCycleCentavos_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`name_count` of type `Int!`
+  """
+  name_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`pointsPerCycle_count` of type `Int!`
+  """
+  pointsPerCycle_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`priceCentavos_count` of type `Int!`
+  """
+  priceCentavos_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`priceNote_count` of type `Int!`
+  """
+  priceNote_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`priceStatus_count` of type `Int!`
+  """
+  priceStatus_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`publiclyListed_count` of type `Int!`
+  """
+  publiclyListed_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`supplementaryHolders_count` of type `Int!`
+  """
+  supplementaryHolders_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`tierLevelId_count` of type `Int!`
+  """
+  tierLevelId_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`validityYears_count` of type `Int!`
+  """
+  validityYears_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`vipDiscountPercent_count` of type `Int!`
+  """
+  vipDiscountPercent_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`weekdayPointsPerCycle_count` of type `Int!`
+  """
+  weekdayPointsPerCycle_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`weekendPointsPerCycle_count` of type `Int!`
+  """
+  weekendPointsPerCycle_count: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`configVersion_sum` of type `Int`
+  """
+  configVersion_sum: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`earningCycles_sum` of type `Int`
+  """
+  earningCycles_sum: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`lifetimePoints_sum` of type `Int`
+  """
+  lifetimePoints_sum: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`minSpendPerCycleCentavos_sum` of type `Int64`
+  """
+  minSpendPerCycleCentavos_sum: Int64_Filter
+  """
+  ✨ Generated from Field `Product`.`pointsPerCycle_sum` of type `Int`
+  """
+  pointsPerCycle_sum: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`priceCentavos_sum` of type `Int64`
+  """
+  priceCentavos_sum: Int64_Filter
+  """
+  ✨ Generated from Field `Product`.`supplementaryHolders_sum` of type `Int`
+  """
+  supplementaryHolders_sum: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`validityYears_sum` of type `Int`
+  """
+  validityYears_sum: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`vipDiscountPercent_sum` of type `Int`
+  """
+  vipDiscountPercent_sum: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`weekdayPointsPerCycle_sum` of type `Int`
+  """
+  weekdayPointsPerCycle_sum: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`weekendPointsPerCycle_sum` of type `Int`
+  """
+  weekendPointsPerCycle_sum: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`configVersion_avg` of type `Float`
+  """
+  configVersion_avg: Float_Filter
+  """
+  ✨ Generated from Field `Product`.`earningCycles_avg` of type `Float`
+  """
+  earningCycles_avg: Float_Filter
+  """
+  ✨ Generated from Field `Product`.`lifetimePoints_avg` of type `Float`
+  """
+  lifetimePoints_avg: Float_Filter
+  """
+  ✨ Generated from Field `Product`.`minSpendPerCycleCentavos_avg` of type `Float`
+  """
+  minSpendPerCycleCentavos_avg: Float_Filter
+  """
+  ✨ Generated from Field `Product`.`pointsPerCycle_avg` of type `Float`
+  """
+  pointsPerCycle_avg: Float_Filter
+  """
+  ✨ Generated from Field `Product`.`priceCentavos_avg` of type `Float`
+  """
+  priceCentavos_avg: Float_Filter
+  """
+  ✨ Generated from Field `Product`.`supplementaryHolders_avg` of type `Float`
+  """
+  supplementaryHolders_avg: Float_Filter
+  """
+  ✨ Generated from Field `Product`.`validityYears_avg` of type `Float`
+  """
+  validityYears_avg: Float_Filter
+  """
+  ✨ Generated from Field `Product`.`vipDiscountPercent_avg` of type `Float`
+  """
+  vipDiscountPercent_avg: Float_Filter
+  """
+  ✨ Generated from Field `Product`.`weekdayPointsPerCycle_avg` of type `Float`
+  """
+  weekdayPointsPerCycle_avg: Float_Filter
+  """
+  ✨ Generated from Field `Product`.`weekendPointsPerCycle_avg` of type `Float`
+  """
+  weekendPointsPerCycle_avg: Float_Filter
+  """
+  ✨ Generated from Field `Product`.`changes_min` of type `Any`
+  """
+  changes_min: Any_Filter
+  """
+  ✨ Generated from Field `Product`.`configVersion_min` of type `Int`
+  """
+  configVersion_min: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`earningCycles_min` of type `Int`
+  """
+  earningCycles_min: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`effectiveDate_min` of type `Date`
+  """
+  effectiveDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Product`.`lifetimePoints_min` of type `Int`
+  """
+  lifetimePoints_min: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`minSpendPerCycleCentavos_min` of type `Int64`
+  """
+  minSpendPerCycleCentavos_min: Int64_Filter
+  """
+  ✨ Generated from Field `Product`.`pointsPerCycle_min` of type `Int`
+  """
+  pointsPerCycle_min: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`priceCentavos_min` of type `Int64`
+  """
+  priceCentavos_min: Int64_Filter
+  """
+  ✨ Generated from Field `Product`.`supplementaryHolders_min` of type `Int`
+  """
+  supplementaryHolders_min: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`validityYears_min` of type `Int`
+  """
+  validityYears_min: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`vipDiscountPercent_min` of type `Int`
+  """
+  vipDiscountPercent_min: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`weekdayPointsPerCycle_min` of type `Int`
+  """
+  weekdayPointsPerCycle_min: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`weekendPointsPerCycle_min` of type `Int`
+  """
+  weekendPointsPerCycle_min: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`changes_max` of type `Any`
+  """
+  changes_max: Any_Filter
+  """
+  ✨ Generated from Field `Product`.`configVersion_max` of type `Int`
+  """
+  configVersion_max: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`earningCycles_max` of type `Int`
+  """
+  earningCycles_max: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`effectiveDate_max` of type `Date`
+  """
+  effectiveDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Product`.`lifetimePoints_max` of type `Int`
+  """
+  lifetimePoints_max: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`minSpendPerCycleCentavos_max` of type `Int64`
+  """
+  minSpendPerCycleCentavos_max: Int64_Filter
+  """
+  ✨ Generated from Field `Product`.`pointsPerCycle_max` of type `Int`
+  """
+  pointsPerCycle_max: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`priceCentavos_max` of type `Int64`
+  """
+  priceCentavos_max: Int64_Filter
+  """
+  ✨ Generated from Field `Product`.`supplementaryHolders_max` of type `Int`
+  """
+  supplementaryHolders_max: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`validityYears_max` of type `Int`
+  """
+  validityYears_max: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`vipDiscountPercent_max` of type `Int`
+  """
+  vipDiscountPercent_max: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`weekdayPointsPerCycle_max` of type `Int`
+  """
+  weekdayPointsPerCycle_max: Int_Filter
+  """
+  ✨ Generated from Field `Product`.`weekendPointsPerCycle_max` of type `Int`
+  """
+  weekendPointsPerCycle_max: Int_Filter
+}
+"""
+✨ Generated key input type for table 'Product'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Product_Key {
+  """
+  ✨ Generated from Field `Product`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Product`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Product'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Product_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Product_Filter
+}
+"""
+✨ Generated order input type for table 'Product'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Product_Order {
+  """
+  ✨ Generated from Field `Product`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`tierLevelId` of type `UUID!`
+  """
+  tierLevelId: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`tierLevel` of type `TierLevel!`
+  """
+  tierLevel: TierLevel_Order
+  """
+  ✨ Generated from Field `Product`.`approvalStatus` of type `String!`
+  """
+  approvalStatus: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`benefitsSummary` of type `String`
+  """
+  benefitsSummary: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`changes` of type `Any`
+  """
+  changes: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`code` of type `String!`
+  """
+  code: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`configVersion` of type `Int!`
+  """
+  configVersion: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`description` of type `String`
+  """
+  description: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`earningCycles` of type `Int!`
+  """
+  earningCycles: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`effectiveDate` of type `Date`
+  """
+  effectiveDate: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`imageFileName` of type `String`
+  """
+  imageFileName: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`imageUrl` of type `String`
+  """
+  imageUrl: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`lifetimePoints` of type `Int!`
+  """
+  lifetimePoints: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`minSpendPerCycleCentavos` of type `Int64!`
+  """
+  minSpendPerCycleCentavos: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`name` of type `String!`
+  """
+  name: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`pointsPerCycle` of type `Int!`
+  """
+  pointsPerCycle: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`priceCentavos` of type `Int64!`
+  """
+  priceCentavos: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`priceNote` of type `String`
+  """
+  priceNote: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`priceStatus` of type `String!`
+  """
+  priceStatus: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`publiclyListed` of type `Boolean!`
+  """
+  publiclyListed: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`supplementaryHolders` of type `Int!`
+  """
+  supplementaryHolders: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`validityYears` of type `Int!`
+  """
+  validityYears: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`vipDiscountPercent` of type `Int!`
+  """
+  vipDiscountPercent: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`weekdayPointsPerCycle` of type `Int!`
+  """
+  weekdayPointsPerCycle: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`weekendPointsPerCycle` of type `Int!`
+  """
+  weekendPointsPerCycle: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`approvalStatus_count` of type `Int!`
+  """
+  approvalStatus_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`benefitsSummary_count` of type `Int!`
+  """
+  benefitsSummary_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`changes_count` of type `Int!`
+  """
+  changes_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`code_count` of type `Int!`
+  """
+  code_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`configVersion_count` of type `Int!`
+  """
+  configVersion_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`description_count` of type `Int!`
+  """
+  description_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`earningCycles_count` of type `Int!`
+  """
+  earningCycles_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`effectiveDate_count` of type `Int!`
+  """
+  effectiveDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`imageFileName_count` of type `Int!`
+  """
+  imageFileName_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`imageUrl_count` of type `Int!`
+  """
+  imageUrl_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`lifetimePoints_count` of type `Int!`
+  """
+  lifetimePoints_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`minSpendPerCycleCentavos_count` of type `Int!`
+  """
+  minSpendPerCycleCentavos_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`name_count` of type `Int!`
+  """
+  name_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`pointsPerCycle_count` of type `Int!`
+  """
+  pointsPerCycle_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`priceCentavos_count` of type `Int!`
+  """
+  priceCentavos_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`priceNote_count` of type `Int!`
+  """
+  priceNote_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`priceStatus_count` of type `Int!`
+  """
+  priceStatus_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`publiclyListed_count` of type `Int!`
+  """
+  publiclyListed_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`supplementaryHolders_count` of type `Int!`
+  """
+  supplementaryHolders_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`tierLevelId_count` of type `Int!`
+  """
+  tierLevelId_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`validityYears_count` of type `Int!`
+  """
+  validityYears_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`vipDiscountPercent_count` of type `Int!`
+  """
+  vipDiscountPercent_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`weekdayPointsPerCycle_count` of type `Int!`
+  """
+  weekdayPointsPerCycle_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`weekendPointsPerCycle_count` of type `Int!`
+  """
+  weekendPointsPerCycle_count: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`configVersion_sum` of type `Int`
+  """
+  configVersion_sum: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`earningCycles_sum` of type `Int`
+  """
+  earningCycles_sum: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`lifetimePoints_sum` of type `Int`
+  """
+  lifetimePoints_sum: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`minSpendPerCycleCentavos_sum` of type `Int64`
+  """
+  minSpendPerCycleCentavos_sum: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`pointsPerCycle_sum` of type `Int`
+  """
+  pointsPerCycle_sum: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`priceCentavos_sum` of type `Int64`
+  """
+  priceCentavos_sum: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`supplementaryHolders_sum` of type `Int`
+  """
+  supplementaryHolders_sum: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`validityYears_sum` of type `Int`
+  """
+  validityYears_sum: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`vipDiscountPercent_sum` of type `Int`
+  """
+  vipDiscountPercent_sum: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`weekdayPointsPerCycle_sum` of type `Int`
+  """
+  weekdayPointsPerCycle_sum: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`weekendPointsPerCycle_sum` of type `Int`
+  """
+  weekendPointsPerCycle_sum: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`configVersion_avg` of type `Float`
+  """
+  configVersion_avg: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`earningCycles_avg` of type `Float`
+  """
+  earningCycles_avg: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`lifetimePoints_avg` of type `Float`
+  """
+  lifetimePoints_avg: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`minSpendPerCycleCentavos_avg` of type `Float`
+  """
+  minSpendPerCycleCentavos_avg: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`pointsPerCycle_avg` of type `Float`
+  """
+  pointsPerCycle_avg: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`priceCentavos_avg` of type `Float`
+  """
+  priceCentavos_avg: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`supplementaryHolders_avg` of type `Float`
+  """
+  supplementaryHolders_avg: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`validityYears_avg` of type `Float`
+  """
+  validityYears_avg: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`vipDiscountPercent_avg` of type `Float`
+  """
+  vipDiscountPercent_avg: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`weekdayPointsPerCycle_avg` of type `Float`
+  """
+  weekdayPointsPerCycle_avg: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`weekendPointsPerCycle_avg` of type `Float`
+  """
+  weekendPointsPerCycle_avg: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`changes_min` of type `Any`
+  """
+  changes_min: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`configVersion_min` of type `Int`
+  """
+  configVersion_min: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`earningCycles_min` of type `Int`
+  """
+  earningCycles_min: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`effectiveDate_min` of type `Date`
+  """
+  effectiveDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`lifetimePoints_min` of type `Int`
+  """
+  lifetimePoints_min: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`minSpendPerCycleCentavos_min` of type `Int64`
+  """
+  minSpendPerCycleCentavos_min: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`pointsPerCycle_min` of type `Int`
+  """
+  pointsPerCycle_min: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`priceCentavos_min` of type `Int64`
+  """
+  priceCentavos_min: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`supplementaryHolders_min` of type `Int`
+  """
+  supplementaryHolders_min: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`validityYears_min` of type `Int`
+  """
+  validityYears_min: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`vipDiscountPercent_min` of type `Int`
+  """
+  vipDiscountPercent_min: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`weekdayPointsPerCycle_min` of type `Int`
+  """
+  weekdayPointsPerCycle_min: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`weekendPointsPerCycle_min` of type `Int`
+  """
+  weekendPointsPerCycle_min: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`changes_max` of type `Any`
+  """
+  changes_max: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`configVersion_max` of type `Int`
+  """
+  configVersion_max: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`earningCycles_max` of type `Int`
+  """
+  earningCycles_max: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`effectiveDate_max` of type `Date`
+  """
+  effectiveDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`lifetimePoints_max` of type `Int`
+  """
+  lifetimePoints_max: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`minSpendPerCycleCentavos_max` of type `Int64`
+  """
+  minSpendPerCycleCentavos_max: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`pointsPerCycle_max` of type `Int`
+  """
+  pointsPerCycle_max: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`priceCentavos_max` of type `Int64`
+  """
+  priceCentavos_max: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`supplementaryHolders_max` of type `Int`
+  """
+  supplementaryHolders_max: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`validityYears_max` of type `Int`
+  """
+  validityYears_max: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`vipDiscountPercent_max` of type `Int`
+  """
+  vipDiscountPercent_max: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`weekdayPointsPerCycle_max` of type `Int`
+  """
+  weekdayPointsPerCycle_max: OrderDirection
+  """
+  ✨ Generated from Field `Product`.`weekendPointsPerCycle_max` of type `Int`
+  """
+  weekendPointsPerCycle_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'ReferenceEntry'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input ReferenceEntry_Data {
+  """
+  ✨ Generated from Field `ReferenceEntry`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ReferenceEntry`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ReferenceEntry`.`key` of type `String!`
+  """
+  key: String
+  """
+  ✨ `_expr` server value variant of `key` (✨ Generated from Field `ReferenceEntry`.`key` of type `String!`)
+  """
+  key_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ReferenceEntry`.`label` of type `String!`
+  """
+  label: String
+  """
+  ✨ `_expr` server value variant of `label` (✨ Generated from Field `ReferenceEntry`.`label` of type `String!`)
+  """
+  label_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ReferenceEntry`.`list` of type `String!`
+  """
+  list: String
+  """
+  ✨ `_expr` server value variant of `list` (✨ Generated from Field `ReferenceEntry`.`list` of type `String!`)
+  """
+  list_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ReferenceEntry`.`sortOrder` of type `Int!`
+  """
+  sortOrder: Int
+  """
+  ✨ `_expr` server value variant of `sortOrder` (✨ Generated from Field `ReferenceEntry`.`sortOrder` of type `Int!`)
+  """
+  sortOrder_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `sortOrder` (✨ Generated from Field `ReferenceEntry`.`sortOrder` of type `Int!`)
+  """
+  sortOrder_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ReferenceEntry`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `ReferenceEntry`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ReferenceEntry`.`value` of type `String!`
+  """
+  value: String
+  """
+  ✨ `_expr` server value variant of `value` (✨ Generated from Field `ReferenceEntry`.`value` of type `String!`)
+  """
+  value_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'ReferenceEntry'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ReferenceEntry_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [ReferenceEntry_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: ReferenceEntry_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [ReferenceEntry_Filter!]
+  """
+  ✨ Generated from Field `ReferenceEntry`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`key` of type `String!`
+  """
+  key: String_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`label` of type `String!`
+  """
+  label: String_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`list` of type `String!`
+  """
+  list: String_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`sortOrder` of type `Int!`
+  """
+  sortOrder: Int_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`status` of type `String!`
+  """
+  status: String_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`value` of type `String!`
+  """
+  value: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'ReferenceEntry'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input ReferenceEntry_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [ReferenceEntry_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: ReferenceEntry_Filter
+}
+"""
+✨ Generated having input type for table 'ReferenceEntry'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ReferenceEntry_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [ReferenceEntry_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: ReferenceEntry_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [ReferenceEntry_Having!]
+  """
+  ✨ Generated from Field `ReferenceEntry`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`key_count` of type `Int!`
+  """
+  key_count: Int_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`label_count` of type `Int!`
+  """
+  label_count: Int_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`list_count` of type `Int!`
+  """
+  list_count: Int_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`sortOrder_count` of type `Int!`
+  """
+  sortOrder_count: Int_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`value_count` of type `Int!`
+  """
+  value_count: Int_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`sortOrder_sum` of type `Int`
+  """
+  sortOrder_sum: Int_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`sortOrder_avg` of type `Float`
+  """
+  sortOrder_avg: Float_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`sortOrder_min` of type `Int`
+  """
+  sortOrder_min: Int_Filter
+  """
+  ✨ Generated from Field `ReferenceEntry`.`sortOrder_max` of type `Int`
+  """
+  sortOrder_max: Int_Filter
+}
+"""
+✨ Generated key input type for table 'ReferenceEntry'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input ReferenceEntry_Key {
+  """
+  ✨ Generated from Field `ReferenceEntry`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ReferenceEntry`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'ReferenceEntry'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input ReferenceEntry_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: ReferenceEntry_Filter
+}
+"""
+✨ Generated order input type for table 'ReferenceEntry'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input ReferenceEntry_Order {
+  """
+  ✨ Generated from Field `ReferenceEntry`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`key` of type `String!`
+  """
+  key: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`label` of type `String!`
+  """
+  label: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`list` of type `String!`
+  """
+  list: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`sortOrder` of type `Int!`
+  """
+  sortOrder: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`value` of type `String!`
+  """
+  value: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`key_count` of type `Int!`
+  """
+  key_count: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`label_count` of type `Int!`
+  """
+  label_count: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`list_count` of type `Int!`
+  """
+  list_count: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`sortOrder_count` of type `Int!`
+  """
+  sortOrder_count: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`value_count` of type `Int!`
+  """
+  value_count: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`sortOrder_sum` of type `Int`
+  """
+  sortOrder_sum: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`sortOrder_avg` of type `Float`
+  """
+  sortOrder_avg: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`sortOrder_min` of type `Int`
+  """
+  sortOrder_min: OrderDirection
+  """
+  ✨ Generated from Field `ReferenceEntry`.`sortOrder_max` of type `Int`
+  """
+  sortOrder_max: OrderDirection
 }
 """
 ✨ Generated data input type for table 'RoleAssignment'. It includes all necessary fields for creating or upserting rows into table.
@@ -4026,6 +8419,672 @@ input SaleAdjustment_Order {
   date_max: OrderDirection
 }
 """
+✨ Generated data input type for table 'StaffMember'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input StaffMember_Data {
+  """
+  ✨ Generated from Field `StaffMember`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `StaffMember`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StaffMember`.`departmentId` of type `UUID`
+  """
+  departmentId: UUID
+  """
+  ✨ `_expr` server value variant of `departmentId` (✨ Generated from Field `StaffMember`.`departmentId` of type `UUID`)
+  """
+  departmentId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StaffMember`.`departmentRoleId` of type `UUID`
+  """
+  departmentRoleId: UUID
+  """
+  ✨ `_expr` server value variant of `departmentRoleId` (✨ Generated from Field `StaffMember`.`departmentRoleId` of type `UUID`)
+  """
+  departmentRoleId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StaffMember`.`department` of type `Department`
+  """
+  department: Department_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StaffMember`.`departmentRole` of type `DepartmentRole`
+  """
+  departmentRole: DepartmentRole_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StaffMember`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `StaffMember`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `StaffMember`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `StaffMember`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StaffMember`.`displayName` of type `String!`
+  """
+  displayName: String
+  """
+  ✨ `_expr` server value variant of `displayName` (✨ Generated from Field `StaffMember`.`displayName` of type `String!`)
+  """
+  displayName_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StaffMember`.`email` of type `String!`
+  """
+  email: String
+  """
+  ✨ `_expr` server value variant of `email` (✨ Generated from Field `StaffMember`.`email` of type `String!`)
+  """
+  email_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StaffMember`.`position` of type `String!`
+  """
+  position: String
+  """
+  ✨ `_expr` server value variant of `position` (✨ Generated from Field `StaffMember`.`position` of type `String!`)
+  """
+  position_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StaffMember`.`profile` of type `Any`
+  """
+  profile: Any
+  """
+  ✨ `_expr` server value variant of `profile` (✨ Generated from Field `StaffMember`.`profile` of type `Any`)
+  """
+  profile_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StaffMember`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `StaffMember`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StaffMember`.`userAccounts_on_staff` of type `[UserAccount!]!`
+  """
+  userAccounts_on_staff: [UserAccount_Data!]
+}
+"""
+✨ Generated filter input type for table 'StaffMember'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input StaffMember_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [StaffMember_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: StaffMember_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [StaffMember_Filter!]
+  """
+  ✨ Generated from Field `StaffMember`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`departmentId` of type `UUID`
+  """
+  departmentId: UUID_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`departmentRoleId` of type `UUID`
+  """
+  departmentRoleId: UUID_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`department` of type `Department`
+  """
+  department: Department_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`departmentRole` of type `DepartmentRole`
+  """
+  departmentRole: DepartmentRole_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`displayName` of type `String!`
+  """
+  displayName: String_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`email` of type `String!`
+  """
+  email: String_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`position` of type `String!`
+  """
+  position: String_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`profile` of type `Any`
+  """
+  profile: Any_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`status` of type `String!`
+  """
+  status: String_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`userAccounts_on_staff` of type `[UserAccount!]!`
+  """
+  userAccounts_on_staff: UserAccount_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'StaffMember'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input StaffMember_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [StaffMember_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: StaffMember_Filter
+}
+"""
+✨ Generated having input type for table 'StaffMember'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input StaffMember_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [StaffMember_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: StaffMember_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [StaffMember_Having!]
+  """
+  ✨ Generated from Field `StaffMember`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`departmentId_count` of type `Int!`
+  """
+  departmentId_count: Int_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`departmentRoleId_count` of type `Int!`
+  """
+  departmentRoleId_count: Int_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`displayName_count` of type `Int!`
+  """
+  displayName_count: Int_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`email_count` of type `Int!`
+  """
+  email_count: Int_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`position_count` of type `Int!`
+  """
+  position_count: Int_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`profile_count` of type `Int!`
+  """
+  profile_count: Int_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`profile_min` of type `Any`
+  """
+  profile_min: Any_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `StaffMember`.`profile_max` of type `Any`
+  """
+  profile_max: Any_Filter
+}
+"""
+✨ Generated key input type for table 'StaffMember'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input StaffMember_Key {
+  """
+  ✨ Generated from Field `StaffMember`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `StaffMember`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'StaffMember'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input StaffMember_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: StaffMember_Filter
+}
+"""
+✨ Generated order input type for table 'StaffMember'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input StaffMember_Order {
+  """
+  ✨ Generated from Field `StaffMember`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`departmentId` of type `UUID`
+  """
+  departmentId: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`departmentRoleId` of type `UUID`
+  """
+  departmentRoleId: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`department` of type `Department`
+  """
+  department: Department_Order
+  """
+  ✨ Generated from Field `StaffMember`.`departmentRole` of type `DepartmentRole`
+  """
+  departmentRole: DepartmentRole_Order
+  """
+  ✨ Generated from Field `StaffMember`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`displayName` of type `String!`
+  """
+  displayName: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`email` of type `String!`
+  """
+  email: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`position` of type `String!`
+  """
+  position: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`profile` of type `Any`
+  """
+  profile: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`departmentId_count` of type `Int!`
+  """
+  departmentId_count: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`departmentRoleId_count` of type `Int!`
+  """
+  departmentRoleId_count: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`displayName_count` of type `Int!`
+  """
+  displayName_count: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`email_count` of type `Int!`
+  """
+  email_count: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`position_count` of type `Int!`
+  """
+  position_count: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`profile_count` of type `Int!`
+  """
+  profile_count: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`profile_min` of type `Any`
+  """
+  profile_min: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `StaffMember`.`profile_max` of type `Any`
+  """
+  profile_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'TierLevel'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input TierLevel_Data {
+  """
+  ✨ Generated from Field `TierLevel`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `TierLevel`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TierLevel`.`colorKey` of type `String!`
+  """
+  colorKey: String
+  """
+  ✨ `_expr` server value variant of `colorKey` (✨ Generated from Field `TierLevel`.`colorKey` of type `String!`)
+  """
+  colorKey_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TierLevel`.`key` of type `String!`
+  """
+  key: String
+  """
+  ✨ `_expr` server value variant of `key` (✨ Generated from Field `TierLevel`.`key` of type `String!`)
+  """
+  key_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TierLevel`.`name` of type `String!`
+  """
+  name: String
+  """
+  ✨ `_expr` server value variant of `name` (✨ Generated from Field `TierLevel`.`name` of type `String!`)
+  """
+  name_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TierLevel`.`sortOrder` of type `Int!`
+  """
+  sortOrder: Int
+  """
+  ✨ `_expr` server value variant of `sortOrder` (✨ Generated from Field `TierLevel`.`sortOrder` of type `Int!`)
+  """
+  sortOrder_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `sortOrder` (✨ Generated from Field `TierLevel`.`sortOrder` of type `Int!`)
+  """
+  sortOrder_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TierLevel`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `TierLevel`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `TierLevel`.`products_on_tierLevel` of type `[Product!]!`
+  """
+  products_on_tierLevel: [Product_Data!]
+}
+"""
+✨ Generated filter input type for table 'TierLevel'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input TierLevel_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [TierLevel_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: TierLevel_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [TierLevel_Filter!]
+  """
+  ✨ Generated from Field `TierLevel`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`colorKey` of type `String!`
+  """
+  colorKey: String_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`key` of type `String!`
+  """
+  key: String_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`name` of type `String!`
+  """
+  name: String_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`sortOrder` of type `Int!`
+  """
+  sortOrder: Int_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`status` of type `String!`
+  """
+  status: String_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`products_on_tierLevel` of type `[Product!]!`
+  """
+  products_on_tierLevel: Product_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'TierLevel'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input TierLevel_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [TierLevel_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: TierLevel_Filter
+}
+"""
+✨ Generated having input type for table 'TierLevel'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input TierLevel_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [TierLevel_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: TierLevel_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [TierLevel_Having!]
+  """
+  ✨ Generated from Field `TierLevel`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`colorKey_count` of type `Int!`
+  """
+  colorKey_count: Int_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`key_count` of type `Int!`
+  """
+  key_count: Int_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`name_count` of type `Int!`
+  """
+  name_count: Int_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`sortOrder_count` of type `Int!`
+  """
+  sortOrder_count: Int_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`sortOrder_sum` of type `Int`
+  """
+  sortOrder_sum: Int_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`sortOrder_avg` of type `Float`
+  """
+  sortOrder_avg: Float_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`sortOrder_min` of type `Int`
+  """
+  sortOrder_min: Int_Filter
+  """
+  ✨ Generated from Field `TierLevel`.`sortOrder_max` of type `Int`
+  """
+  sortOrder_max: Int_Filter
+}
+"""
+✨ Generated key input type for table 'TierLevel'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input TierLevel_Key {
+  """
+  ✨ Generated from Field `TierLevel`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `TierLevel`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'TierLevel'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input TierLevel_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: TierLevel_Filter
+}
+"""
+✨ Generated order input type for table 'TierLevel'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input TierLevel_Order {
+  """
+  ✨ Generated from Field `TierLevel`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`colorKey` of type `String!`
+  """
+  colorKey: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`key` of type `String!`
+  """
+  key: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`name` of type `String!`
+  """
+  name: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`sortOrder` of type `Int!`
+  """
+  sortOrder: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`colorKey_count` of type `Int!`
+  """
+  colorKey_count: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`key_count` of type `Int!`
+  """
+  key_count: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`name_count` of type `Int!`
+  """
+  name_count: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`sortOrder_count` of type `Int!`
+  """
+  sortOrder_count: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`sortOrder_sum` of type `Int`
+  """
+  sortOrder_sum: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`sortOrder_avg` of type `Float`
+  """
+  sortOrder_avg: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`sortOrder_min` of type `Int`
+  """
+  sortOrder_min: OrderDirection
+  """
+  ✨ Generated from Field `TierLevel`.`sortOrder_max` of type `Int`
+  """
+  sortOrder_max: OrderDirection
+}
+"""
 ✨ Generated data input type for table 'UserAccount'. It includes all necessary fields for creating or upserting rows into table.
 """
 input UserAccount_Data {
@@ -4038,6 +9097,14 @@ input UserAccount_Data {
   """
   id_expr: UUID_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `UserAccount`.`createdById` of type `UUID`
+  """
+  createdById: UUID
+  """
+  ✨ `_expr` server value variant of `createdById` (✨ Generated from Field `UserAccount`.`createdById` of type `UUID`)
+  """
+  createdById_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `UserAccount`.`memberId` of type `UUID`
   """
   memberId: UUID
@@ -4046,9 +9113,25 @@ input UserAccount_Data {
   """
   memberId_expr: UUID_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `UserAccount`.`staffId` of type `UUID`
+  """
+  staffId: UUID
+  """
+  ✨ `_expr` server value variant of `staffId` (✨ Generated from Field `UserAccount`.`staffId` of type `UUID`)
+  """
+  staffId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `UserAccount`.`createdBy` of type `UserAccount`
+  """
+  createdBy: UserAccount_Key @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `UserAccount`.`member` of type `Member`
   """
   member: Member_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `UserAccount`.`staff` of type `StaffMember`
+  """
+  staff: StaffMember_Key @fdc_forbiddenInVariables
   """
   ✨ Generated from Field `UserAccount`.`createdAt` of type `Timestamp!`
   """
@@ -4106,6 +9189,14 @@ input UserAccount_Data {
   """
   status_expr: String_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `UserAccount`.`accountStatusEvents_on_account` of type `[AccountStatusEvent!]!`
+  """
+  accountStatusEvents_on_account: [AccountStatusEvent_Data!]
+  """
+  ✨ Generated from Field `UserAccount`.`accountStatusEvents_on_actor` of type `[AccountStatusEvent!]!`
+  """
+  accountStatusEvents_on_actor: [AccountStatusEvent_Data!]
+  """
   ✨ Generated from Field `UserAccount`.`auditEvents_on_actor` of type `[AuditEvent!]!`
   """
   auditEvents_on_actor: [AuditEvent_Data!]
@@ -4133,6 +9224,10 @@ input UserAccount_Data {
   ✨ Generated from Field `UserAccount`.`saleAdjustments_on_actor` of type `[SaleAdjustment!]!`
   """
   saleAdjustments_on_actor: [SaleAdjustment_Data!]
+  """
+  ✨ Generated from Field `UserAccount`.`userAccounts_on_createdBy` of type `[UserAccount!]!`
+  """
+  userAccounts_on_createdBy: [UserAccount_Data!]
 }
 """
 ✨ Generated filter input type for table 'UserAccount'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -4155,13 +9250,29 @@ input UserAccount_Filter {
   """
   id: UUID_Filter
   """
+  ✨ Generated from Field `UserAccount`.`createdById` of type `UUID`
+  """
+  createdById: UUID_Filter
+  """
   ✨ Generated from Field `UserAccount`.`memberId` of type `UUID`
   """
   memberId: UUID_Filter
   """
+  ✨ Generated from Field `UserAccount`.`staffId` of type `UUID`
+  """
+  staffId: UUID_Filter
+  """
+  ✨ Generated from Field `UserAccount`.`createdBy` of type `UserAccount`
+  """
+  createdBy: UserAccount_Filter
+  """
   ✨ Generated from Field `UserAccount`.`member` of type `Member`
   """
   member: Member_Filter
+  """
+  ✨ Generated from Field `UserAccount`.`staff` of type `StaffMember`
+  """
+  staff: StaffMember_Filter
   """
   ✨ Generated from Field `UserAccount`.`createdAt` of type `Timestamp!`
   """
@@ -4186,6 +9297,14 @@ input UserAccount_Filter {
   ✨ Generated from Field `UserAccount`.`status` of type `String!`
   """
   status: String_Filter
+  """
+  ✨ Generated from Field `UserAccount`.`accountStatusEvents_on_account` of type `[AccountStatusEvent!]!`
+  """
+  accountStatusEvents_on_account: AccountStatusEvent_ListFilter
+  """
+  ✨ Generated from Field `UserAccount`.`accountStatusEvents_on_actor` of type `[AccountStatusEvent!]!`
+  """
+  accountStatusEvents_on_actor: AccountStatusEvent_ListFilter
   """
   ✨ Generated from Field `UserAccount`.`auditEvents_on_actor` of type `[AuditEvent!]!`
   """
@@ -4214,6 +9333,10 @@ input UserAccount_Filter {
   ✨ Generated from Field `UserAccount`.`saleAdjustments_on_actor` of type `[SaleAdjustment!]!`
   """
   saleAdjustments_on_actor: SaleAdjustment_ListFilter
+  """
+  ✨ Generated from Field `UserAccount`.`userAccounts_on_createdBy` of type `[UserAccount!]!`
+  """
+  userAccounts_on_createdBy: UserAccount_ListFilter
 }
 """
 ✨ Generated first-row input type for table 'UserAccount'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
@@ -4257,6 +9380,10 @@ input UserAccount_Having {
   """
   createdAt_count: Int_Filter
   """
+  ✨ Generated from Field `UserAccount`.`createdById_count` of type `Int!`
+  """
+  createdById_count: Int_Filter
+  """
   ✨ Generated from Field `UserAccount`.`displayName_count` of type `Int!`
   """
   displayName_count: Int_Filter
@@ -4280,6 +9407,10 @@ input UserAccount_Having {
   ✨ Generated from Field `UserAccount`.`portal_count` of type `Int!`
   """
   portal_count: Int_Filter
+  """
+  ✨ Generated from Field `UserAccount`.`staffId_count` of type `Int!`
+  """
+  staffId_count: Int_Filter
   """
   ✨ Generated from Field `UserAccount`.`status_count` of type `Int!`
   """
@@ -4328,13 +9459,29 @@ input UserAccount_Order {
   """
   id: OrderDirection
   """
+  ✨ Generated from Field `UserAccount`.`createdById` of type `UUID`
+  """
+  createdById: OrderDirection
+  """
   ✨ Generated from Field `UserAccount`.`memberId` of type `UUID`
   """
   memberId: OrderDirection
   """
+  ✨ Generated from Field `UserAccount`.`staffId` of type `UUID`
+  """
+  staffId: OrderDirection
+  """
+  ✨ Generated from Field `UserAccount`.`createdBy` of type `UserAccount`
+  """
+  createdBy: UserAccount_Order
+  """
   ✨ Generated from Field `UserAccount`.`member` of type `Member`
   """
   member: Member_Order
+  """
+  ✨ Generated from Field `UserAccount`.`staff` of type `StaffMember`
+  """
+  staff: StaffMember_Order
   """
   ✨ Generated from Field `UserAccount`.`createdAt` of type `Timestamp!`
   """
@@ -4368,6 +9515,10 @@ input UserAccount_Order {
   """
   createdAt_count: OrderDirection
   """
+  ✨ Generated from Field `UserAccount`.`createdById_count` of type `Int!`
+  """
+  createdById_count: OrderDirection
+  """
   ✨ Generated from Field `UserAccount`.`displayName_count` of type `Int!`
   """
   displayName_count: OrderDirection
@@ -4391,6 +9542,10 @@ input UserAccount_Order {
   ✨ Generated from Field `UserAccount`.`portal_count` of type `Int!`
   """
   portal_count: OrderDirection
+  """
+  ✨ Generated from Field `UserAccount`.`staffId_count` of type `Int!`
+  """
+  staffId_count: OrderDirection
   """
   ✨ Generated from Field `UserAccount`.`status_count` of type `Int!`
   """

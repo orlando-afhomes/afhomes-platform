@@ -12,7 +12,9 @@ import type { Actor } from "@/server/auth/actor";
 import { loadScopeMembers, requireOperation } from "@/server/auth/authorize";
 import { uniqueViolation } from "@/server/db";
 import { customerColumns, loadCustomer, loadCustomers } from "@/server/repositories/records";
-import { CATALOG, conflict, invalid, newId, notFound, nowIso, today, transact } from "@/server/services/common";
+import { loadPaymentSchemes, loadProducts } from "@/server/repositories/catalog";
+import type { PaymentScheme, VipProduct } from "@/modules/vip/types";
+import { conflict, invalid, newId, notFound, nowIso, today, transact } from "@/server/services/common";
 import type { OrgMember } from "@/modules/organization/types";
 
 const isBroad = (actor: Actor) => activeIdentityRoles(actor.identity).some((role) => BROAD_ROLES.has(role));
@@ -43,15 +45,15 @@ async function ownRecord(actor: Actor, id: string): Promise<Customer> {
   return customer;
 }
 
-function assertReferences(members: OrgMember[], input: CustomerDraftInput): void {
+function assertReferences(members: OrgMember[], input: CustomerDraftInput, products: readonly VipProduct[], schemes: readonly PaymentScheme[]): void {
   if (input.recommenderMemberId && !members.some((item) => item.id === input.recommenderMemberId)) throw invalid("The referrer must be a Sales Network seller.");
-  if (input.vipPlan && !CATALOG.products.some((item) => item.code === input.vipPlan && isSellableProduct(item))) throw invalid("The selected VIP plan is not approved and active.");
-  if (input.paymentSchemeId && !CATALOG.paymentSchemes.some((item) => item.id === input.paymentSchemeId)) throw invalid("The selected payment plan does not exist.");
-  if (input.supplementaryHolder && !supplementaryAllowed(input.vipPlan)) throw invalid("The selected VIP plan does not allow an extra cardholder.");
+  if (input.vipPlan && !products.some((item) => item.code === input.vipPlan && isSellableProduct(item))) throw invalid("The selected VIP plan is not approved and active.");
+  if (input.paymentSchemeId && !schemes.some((item) => item.id === input.paymentSchemeId)) throw invalid("The selected payment plan does not exist.");
+  if (input.supplementaryHolder && !supplementaryAllowed(input.vipPlan, products)) throw invalid("The selected VIP plan does not allow an extra cardholder.");
 }
 
-function supplementaryAllowed(plan: CustomerDraftInput["vipPlan"]): boolean {
-  return (CATALOG.products.find((item) => item.code === plan)?.supplementaryHolders ?? 0) > 0;
+function supplementaryAllowed(plan: CustomerDraftInput["vipPlan"], products: readonly VipProduct[]): boolean {
+  return (products.find((item) => item.code === plan)?.supplementaryHolders ?? 0) > 0;
 }
 
 // shortcut: accreditation records are not in the pilot schema, so no seller is held back as "pending" or judged by standing.
@@ -76,8 +78,9 @@ function step(customer: Customer, actor: Actor, status: Customer["status"], reas
 export async function createCustomerDraft(actor: Actor, input: CustomerDraftInput): Promise<Customer> {
   requireOperation(actor, "customers.draft");
   const members = await loadScopeMembers();
+  const [products, schemes] = await Promise.all([loadProducts(), loadPaymentSchemes()]);
   assertAttribution(actor, members, input);
-  assertReferences(members, input);
+  assertReferences(members, input, products, schemes);
   const ownerFromInput = !actor.identity.memberId && input.ownerMemberId ? members.find((member) => member.id === input.ownerMemberId) : undefined;
   const ownerMemberId = actor.identity.memberId ?? ownerFromInput?.id ?? null;
   const owner = members.find((member) => member.id === ownerMemberId);
@@ -115,6 +118,7 @@ export async function submitCustomer(actor: Actor, id: string, input: CustomerDr
     if (!isEditableRegistration(customer.status)) throw conflict("not_submittable", "Only draft or sent-back customers can be submitted.");
     const previousStatus = customer.status;
     const members = await loadScopeMembers();
+    const [products, schemes] = await Promise.all([loadProducts(), loadPaymentSchemes()]);
     const merged: CustomerDraftInput = {
       ...customer, ...input,
       displayName: input.displayName || customer.displayName,
@@ -128,10 +132,10 @@ export async function submitCustomer(actor: Actor, id: string, input: CustomerDr
     const requestedNumber = typeof merged.customerNumber === "string" ? merged.customerNumber.trim() : "";
     const assignsNumber = !customer.customerNumber && (merged.customerIdMode === "auto" || (merged.customerIdMode === undefined && requestedNumber === ""));
     if (assignsNumber) merged.customerNumber = nextCustomerId(all, currentManilaYear());
-    const errors = validateCustomerForSubmit(merged, all, customer.id, supplementaryAllowed(merged.vipPlan));
+    const errors = validateCustomerForSubmit(merged, all, customer.id, supplementaryAllowed(merged.vipPlan, products));
     if (Object.keys(errors).length > 0) failValidation(errors as Record<string, string>);
     assertAttribution(actor, members, merged);
-    assertReferences(members, merged);
+    assertReferences(members, merged, products, schemes);
     assignClosingSeller(members, customer, input);
     applyCustomerInput(customer, input);
     if (assignsNumber) customer.customerNumber = merged.customerNumber;

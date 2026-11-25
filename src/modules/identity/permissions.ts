@@ -394,6 +394,8 @@ export function getGrantedModuleIds(identity: DevIdentity): Set<AdminModuleId> {
       granted.add(moduleId);
     }
   }
+  // A department role opens its page; sensitive operations still need a system-role grant.
+  for (const moduleId of getDelegableGrants(identity.departmentRoleModuleIds ?? [])) granted.add(moduleId);
   return granted;
 }
 

@@ -28,7 +28,55 @@ type UserAccount @table {
   portal: String!
   # Sales-network members sign in too. Staff-only accounts have no member.
   member: Member
+  # Office employee linked to this account. Department-role module grants come through this link.
+  staff: StaffMember
+  # Who requested the account; lets activation record a self-approval note when the requester approves it.
+  createdBy: UserAccount
   createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type Department @table {
+  name: String!
+  code: String! @unique
+  description: String!
+  # Internal staff id of the head; no foreign key so department/staff can be seeded in any order.
+  headStaffId: String
+  # active | deactivated
+  status: String!
+}
+
+type DepartmentRole @table {
+  name: String!
+  department: Department!
+  # Delegable module grants, stored as a string array in jsonb.
+  moduleIds: Any
+  # active | deactivated
+  status: String!
+  # Protected Super Admin role: only a Super Administrator may assign or change it.
+  isProtected: Boolean!
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type StaffMember @table {
+  displayName: String!
+  position: String!
+  department: Department
+  departmentRole: DepartmentRole
+  # active | inactive | suspended
+  status: String!
+  email: String! @unique
+  createdAt: Timestamp! @default(expr: "request.time")
+  # Person-profile fields (prefix, names, contact, address, government ID).
+  profile: Any
+}
+
+type AccountStatusEvent @table {
+  account: UserAccount!
+  previousStatus: String
+  newStatus: String!
+  reason: String
+  actor: UserAccount
+  occurredAt: Timestamp! @default(expr: "request.time")
 }
 
 type RoleAssignment @table(key: ["user", "role"]) {
@@ -160,4 +208,138 @@ type IdempotencyRecord @table(key: ["user", "operation", "requestKey"]) {
   responseStatus: Int!
   response: Any
   createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# ---------------------------------------------------------------- confirmed reference data
+# Configuration the business rules already settle. It is not sample data: the clean seed
+# loads it, and contracts and forms read it from here (doc 05 sections 3 to 8).
+
+type TierLevel @table {
+  # Stable sample/import key, e.g. tier-level-bronze. Products resolve their level through this.
+  key: String! @unique
+  name: String!
+  # bronze | silver | gold | neutral
+  colorKey: String!
+  sortOrder: Int!
+  # active | inactive. A level used by a product is deactivated, never deleted.
+  status: String!
+}
+
+type Product @table {
+  # Exactly two characters, one uppercase letter and one digit (doc 05 section 4.1).
+  code: String! @unique
+  name: String!
+  tierLevel: TierLevel!
+  # Whole centavos. Int64 travels as a string.
+  priceCentavos: Int64!
+  # contract_stated | conflict
+  priceStatus: String!
+  priceNote: String
+  validityYears: Int!
+  earningCycles: Int!
+  vipDiscountPercent: Int!
+  lifetimePoints: Int!
+  pointsPerCycle: Int!
+  weekdayPointsPerCycle: Int!
+  weekendPointsPerCycle: Int!
+  minSpendPerCycleCentavos: Int64!
+  supplementaryHolders: Int!
+  description: String
+  benefitsSummary: String
+  imageUrl: String
+  imageFileName: String
+  # active | retired
+  status: String!
+  # draft | approved
+  approvalStatus: String!
+  publiclyListed: Boolean!
+  configVersion: Int!
+  effectiveDate: Date
+  changes: Any
+}
+
+type Experience @table {
+  # Stable screen key, e.g. exp-1.
+  key: String! @unique
+  slug: String! @unique
+  title: String!
+  category: String!
+  summary: String!
+  status: String!
+  # progress | upcoming | live
+  statusTone: String!
+  # Public image object (url, alt, width and height fields as the site needs them).
+  image: Any
+  overview: String!
+  highlights: Any
+  standard: Boolean!
+  published: Boolean!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Outlet @table {
+  key: String! @unique
+  name: String!
+  # accommodation | restaurant | spa | shop | other
+  type: String!
+  # active | inactive
+  status: String!
+  # Marked sample until the owner supplies the real outlet.
+  sample: Boolean!
+}
+
+type ReferenceEntry @table {
+  key: String! @unique
+  # program-category | gov-id-type | bank
+  list: String!
+  # Stable value stored on records; never changes after creation.
+  value: String!
+  label: String!
+  # active | inactive
+  status: String!
+  sortOrder: Int!
+}
+
+type PrintTemplate @table {
+  # application | reservation-<tier> | grant-<tier> | vip-card
+  key: String! @unique
+  name: String!
+  # application | reservation | grant | card
+  kind: String!
+  # The supplied form's revision label.
+  revision: String!
+  # Supplied PDF asset path; null for a design rendered by the app.
+  assetPath: String
+  status: String!
+  sortOrder: Int!
+}
+
+type PaymentScheme @table {
+  # Stable key the screens use, e.g. scheme-spot-cash.
+  key: String! @unique
+  label: String!
+  historicalLabel: String
+  # cash | installment | move
+  category: String!
+  paymentCode: String
+  paymentCodeByTier: Any
+  applicableTiers: Any
+  reservationCentavos: Int64
+  installmentCount: Int
+  # Centavos per tier stay safe-integer numbers inside jsonb.
+  installmentCentavosByTier: Any
+  priceCentavosByTier: Any
+  installmentCountByTier: Any
+  downPaymentBasisPoints: Int
+  # configured | pending_owner_decision
+  commercialStatus: String!
+  source: String!
+  # available | unavailable
+  availability: String!
+  ownerHold: String
+  configVersion: Int!
+  effectiveDate: Date
+  changes: Any
+  sortOrder: Int!
 }

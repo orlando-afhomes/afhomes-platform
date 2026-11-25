@@ -14,7 +14,8 @@ import type { Actor } from "@/server/auth/actor";
 import { loadScopeMembers, requireOperation } from "@/server/auth/authorize";
 import { centavosToInt64 } from "@/server/money";
 import { contractColumns, loadContract, loadContractsOfCustomer, loadCustomer, loadSaleForContract } from "@/server/repositories/records";
-import { CATALOG, conflict, invalid, newId, notFound, nowIso, today, transact } from "@/server/services/common";
+import { loadPaymentSchemes, loadProducts } from "@/server/repositories/catalog";
+import { conflict, invalid, newId, notFound, nowIso, today, transact } from "@/server/services/common";
 import { ApiError } from "@/server/api/errors";
 
 const isBroad = (actor: Actor) => activeIdentityRoles(actor.identity).some((role) => BROAD_ROLES.has(role));
@@ -72,9 +73,10 @@ export async function prepareContract(actor: Actor, input: PrepareContractInput)
   const sellerMemberId = input.sellerMemberId ?? customer.ownerMemberId;
   if (input.sellerMemberId !== undefined && !members.some((item) => item.id === sellerMemberId)) throw invalid("Choose a valid closing seller.");
   if (input.referrerMemberId && !members.some((item) => item.id === input.referrerMemberId)) throw invalid("Choose a valid referrer.");
-  const product = CATALOG.products.find((item) => item.code === productCode && isSellableProduct(item));
+  const [products, schemes] = await Promise.all([loadProducts(), loadPaymentSchemes()]);
+  const product = products.find((item) => item.code === productCode && isSellableProduct(item));
   if (!product) throw invalid("The customer has no approved, active VIP plan.");
-  const scheme = CATALOG.paymentSchemes.find((item) => item.id === input.schemeId);
+  const scheme = schemes.find((item) => item.id === input.schemeId);
   if (!scheme || scheme.availability !== "available") throw invalid("The selected payment plan is not available.");
   const reservationDate = input.reservationDate ?? today();
   if (!DATE_ONLY.test(reservationDate) || !parseManilaDateOnly(reservationDate)) throw invalid("The reservation date must be a valid date.");

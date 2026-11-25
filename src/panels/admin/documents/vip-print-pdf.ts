@@ -2,16 +2,9 @@ import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { buildCollectionLedger } from "@/modules/finance/rules";
 import { firstPaymentSummary, printHolderName, printHomeAddress, supportedPrintTier, templateKeyFor, canPrintGrant, type PrintCustomer, type PrintDocumentInput, type TemplateKey } from "@/modules/contracts/print-data";
+import { TEMPLATE_REVISIONS } from "@/modules/contracts/print-templates";
 
-export const TEMPLATE_REVISIONS = {
-  application: "VPCAF 1.6 · 2026-09-25",
-  "reservation-bronze": "Bronze RA · supplied template",
-  "reservation-silver": "Silver RA · supplied template",
-  "reservation-gold": "Gold RA · supplied template",
-  "grant-bronze": "Bronze standard pricing · supplied Grant",
-  "grant-silver": "Silver standard pricing · supplied Grant",
-  "grant-gold": "Gold standard pricing · supplied Grant",
-} satisfies Record<TemplateKey, string>;
+export { TEMPLATE_REVISIONS };
 
 const ink = rgb(0.08, 0.14, 0.19);
 const white = rgb(1, 1, 1);

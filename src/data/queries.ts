@@ -403,13 +403,13 @@ export function useUpdateAccountStatus() {
   });
 }
 
-/** Interim account recovery: returns the one-time temporary password; it is never cached or audited. */
-export function useSetTemporaryPassword() {
+/** Requests a Firebase password-reset email; no password is cached or shown. */
+export function useRequestPasswordReset() {
   const repositories = useMockRepositories();
   const queryClient = useQueryClient();
   return useMutation({
-    // No affectsAccess: a credential reset changes no one's authority, and refreshing access would unmount the page before the password is shown.
-    mutationFn: (id: string) => repositories.accounts.setTemporaryPassword(id),
+    // No affectsAccess: a reset request changes no one's authority.
+    mutationFn: (id: string) => repositories.accounts.requestPasswordReset(id),
     onSuccess: () => invalidateAudit(queryClient),
   });
 }

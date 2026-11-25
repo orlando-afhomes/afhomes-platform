@@ -4,6 +4,7 @@ import { z } from "zod";
 import { errorResponse, ApiError } from "@/server/api/errors";
 import { assertSameOrigin } from "@/server/api/origin";
 import { loadActorByUid, requireActor, resolveActorFromSessionCookie, type Actor } from "@/server/auth/actor";
+import { mfaRequirementFor } from "@/server/auth/mfa";
 import { getGrantedModuleIds, getGrantedOperations } from "@/modules/identity/permissions";
 import { RECENT_SIGN_IN_SECONDS, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS } from "@/server/auth/session-constants";
 import { recordAudit } from "@/server/audit";
@@ -78,6 +79,8 @@ export async function POST(request: NextRequest) {
     if (!actor) return await deny("This account has no access. Contact your administrator.", "no_linked_account");
     if (actor.accountStatus !== "active") return await deny(STATUS_MESSAGE[actor.accountStatus] ?? "This account is not active. Contact your administrator.", `status_${actor.accountStatus}`);
     if (portal && portal !== actor.portal) return await deny(PORTAL_MESSAGE[actor.portal] ?? "Use the correct login page.", "wrong_portal");
+    // MFA enforcement is deferred (owner decision 2026-11-25); the hook answers "not required" today.
+    if (mfaRequirementFor(actor.identity.roles).required) return await deny("Multi-factor authentication is required for this account.", "mfa_required");
 
     const cookie = await auth.createSessionCookie(idToken, { expiresIn: SESSION_MAX_AGE_SECONDS * 1000 });
     await recordAudit({ actorUserId: actor.userId, action: "session.sign_in", entityType: "session", entityId: actor.userId, correlationId, details: { portal: actor.portal } });

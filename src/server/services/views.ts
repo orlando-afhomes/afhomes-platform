@@ -11,7 +11,9 @@ import { tierDisplayName } from "@/modules/vip/tier-options";
 import type { Actor } from "@/server/auth/actor";
 import { listAll, dbRead } from "@/server/db";
 import { CONTRACT_FIELDS, PAYMENT_FIELDS, SALE_FIELDS, loadCustomer, loadMembersFull, paymentEvidenceOf, toContract, toPayment, toSale, type ContractRow, type PaymentRow, type SaleRow } from "@/server/repositories/records";
-import { CATALOG, notFound } from "@/server/services/common";
+import { loadPaymentSchemes, loadProducts, loadTierLevels } from "@/server/repositories/catalog";
+import type { VipProduct } from "@/modules/vip/types";
+import { notFound } from "@/server/services/common";
 import { activeRoles } from "@/modules/identity/active-roles";
 
 /** One page of a list, ordered by id, with the id of the last row as the cursor for the next page. */
@@ -70,12 +72,12 @@ type PaymentViewJoin = PaymentRow & { customer: { id: string; displayName: strin
 /** Where a receipt's evidence is served. The file stays private: this address answers only to a signed-in person who may see the receipt. */
 export const evidenceUrl = (paymentId: string, fileId: string) => `/api/v1/payments/${paymentId}/evidence/${fileId}`;
 
-function paymentViewOf(row: PaymentViewJoin, sales: Awaited<ReturnType<typeof salesByContract>>): PaymentView & { genealogy: ReadonlyArray<{ memberId: string }> } {
+function paymentViewOf(row: PaymentViewJoin, sales: Awaited<ReturnType<typeof salesByContract>>, products: readonly VipProduct[]): PaymentView & { genealogy: ReadonlyArray<{ memberId: string }> } {
   const sale = row.contract ? sales.get(row.contract.id) : undefined;
   const payment = toPayment(row, sale?.id ?? null);
   const evidence = paymentEvidenceOf(row.details);
   const details = row.contract?.details ?? {};
-  const label = `${tierDisplayName(row.contract?.productCode as never, CATALOG.products) ?? "VIP"} · ${(details.schemeLabel as string | undefined) ?? ""}`;
+  const label = `${tierDisplayName(row.contract?.productCode as never, products) ?? "VIP"} · ${(details.schemeLabel as string | undefined) ?? ""}`;
   return {
     ...payment,
     customerName: row.customer?.displayName ?? "Unknown customer",
@@ -94,15 +96,16 @@ const withoutScope = ({ genealogy: _genealogy, ...view }: ReturnType<typeof paym
 };
 
 export async function listPaymentViews(actor: Actor, query: { limit: number; afterId?: string }) {
-  const [rows, sales] = await Promise.all([listAll<PaymentViewJoin>("payments", PAYMENT_VIEW_FIELDS), salesByContract()]);
-  const visible = rows.map((row) => paymentViewOf(row, sales)).filter((view) => canSeeContractRecord(actor.identity, view));
+  const [rows, sales, products] = await Promise.all([listAll<PaymentViewJoin>("payments", PAYMENT_VIEW_FIELDS), salesByContract(), loadProducts()]);
+  const visible = rows.map((row) => paymentViewOf(row, sales, products)).filter((view) => canSeeContractRecord(actor.identity, view));
   const page = pageOf(visible, query);
   return { ...page, items: page.items.map(withoutScope) };
 }
 
 export async function getPaymentView(actor: Actor, id: string): Promise<PaymentView> {
   const result = await dbRead<{ payment: PaymentViewJoin | null }>(`query($id: UUID!) { payment(id: $id) { ${PAYMENT_VIEW_FIELDS} } }`, { id });
-  const view = result.payment ? paymentViewOf(result.payment, await salesByContract()) : null;
+  const [sales, products] = await Promise.all([salesByContract(), loadProducts()]);
+  const view = result.payment ? paymentViewOf(result.payment, sales, products) : null;
   if (!view || !canSeeContractRecord(actor.identity, view)) throw notFound("Payment");
   return withoutScope(view);
 }
@@ -179,5 +182,6 @@ export async function listMemberViews(actor: Actor): Promise<OrgMember[]> {
   return members.filter((member) => visible.has(member.id));
 }
 
-export const listProducts = () => CATALOG.products;
-export const listPaymentSchemes = () => CATALOG.paymentSchemes;
+export const listProducts = () => loadProducts();
+export const listPaymentSchemes = () => loadPaymentSchemes();
+export const listTierLevels = () => loadTierLevels();

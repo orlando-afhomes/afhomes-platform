@@ -9,11 +9,18 @@ export type Actor = { identity: DevIdentity; userId: string; portal: string; acc
 
 const KNOWN_ROLES = new Set<string>(["super_admin", "admin", "finance", "hr", "clerk", "gsd", "svd", "ssm", "sm", "ost"]);
 
-type UserRow = { id: string; displayName: string; status: string; portal: string; member: { id: string; branchId: string } | null };
+type DepartmentRoleRow = { id: string; status: string; moduleIds: string[] | null; department: { id: string; status: string } | null };
+type StaffRow = { id: string; status: string; departmentRole: DepartmentRoleRow | null };
+type UserRow = { id: string; displayName: string; status: string; portal: string; member: { id: string; branchId: string } | null; staff: StaffRow | null };
 type RoleRow = { role: string; status: string };
 
-// shortcut: system roles only. Department-role module grants need the staff and department
-// tables, which are outside the pilot schema. Add them with the staff module.
+/** Department-role module grants count only while the staff member, role and department are all active. */
+function departmentModuleIds(staff: StaffRow | null): string[] {
+  const role = staff?.departmentRole;
+  const active = staff?.status === "active" && role?.status === "active" && role.department?.status === "active";
+  return active ? (role.moduleIds ?? []) : [];
+}
+
 function toIdentity(user: UserRow, roleRows: RoleRow[]): DevIdentity {
   const assignments = roleRows
     .filter((row) => KNOWN_ROLES.has(row.role))
@@ -27,13 +34,15 @@ function toIdentity(user: UserRow, roleRows: RoleRow[]): DevIdentity {
     memberId: user.member?.id ?? null,
     branchId: user.member?.branchId ?? null,
     status,
+    staffId: user.staff?.id ?? null,
+    departmentRoleModuleIds: departmentModuleIds(user.staff),
   };
 }
 
 /** Loads the account linked to a verified Firebase user, with its current status and roles. Null when none is linked. */
 export async function loadActorByUid(uid: string): Promise<Actor | null> {
   const users = await dbRead<{ userAccounts: UserRow[] }>(
-    `query($uid: String!) { userAccounts(where: { firebaseUid: { eq: $uid } }, limit: 1) { id displayName status portal member { id branchId } } }`,
+    `query($uid: String!) { userAccounts(where: { firebaseUid: { eq: $uid } }, limit: 1) { id displayName status portal member { id branchId } staff { id status departmentRole { id status moduleIds department { id status } } } } }`,
     { uid },
   );
   const user = users.userAccounts[0];

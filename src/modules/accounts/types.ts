@@ -20,7 +20,7 @@ export const ACCOUNT_DELETE_DISABLED = "Account deletion is unavailable until th
 export type AccountActionPolicy = {
   canEdit: boolean;
   canManageRoles: boolean;
-  /** Administrator and Super Administrator may issue a temporary password (doc 01 section 6.2.1). */
+  /** Administrator and Super Administrator may request a password reset email (owner decision 2026-11-25). */
   canResetPassword: boolean;
   assignableRoles: DevRole[];
   revocableRoles: DevRole[];

@@ -12,8 +12,8 @@ import {
   useDepartments,
   useEffectiveModuleIds,
   useRevokeAccountRole,
+  useRequestPasswordReset,
   useRoleOptions,
-  useSetTemporaryPassword,
   useStaff,
   useStaffPolicies,
   useUpdateAccount,
@@ -94,8 +94,8 @@ export function StaffPage({
   const assignRole = useAssignAccountRole();
   const revokeRole = useRevokeAccountRole();
   const updateAccountStatus = useUpdateAccountStatus();
-  const setTemporaryPassword = useSetTemporaryPassword();
-  const [issuedPassword, setIssuedPassword] = useState<{ name: string; value: string } | null>(null);
+  const requestPasswordReset = useRequestPasswordReset();
+  const [resetNotice, setResetNotice] = useState<{ name: string; message: string } | null>(null);
   const { confirmRun, dialog: confirmDialog } = useConfirmRun();
 
   // The directory view is addressable: ?view=account opens the Account-only view
@@ -184,15 +184,15 @@ export function StaffPage({
 
     const resetPassword = (account: Account) =>
       confirmRun({
-        title: `Set a Temporary Password for ${account.displayName}?`,
-        description: "The current password stops working. The new password is shown once, so give it to the user in person or by phone.",
-        confirmText: "Set Password",
+        title: `Send a password reset email to ${account.displayName}?`,
+        description: "Firebase sends a reset link to the account's email. The current password keeps working until the link is used.",
+        confirmText: "Send Reset Email",
         action: async () => {
-          const { temporaryPassword } = await setTemporaryPassword.mutateAsync(account.id);
-          setIssuedPassword({ name: account.displayName, value: temporaryPassword });
+          const { message } = await requestPasswordReset.mutateAsync(account.id);
+          setResetNotice({ name: account.displayName, message });
         },
-        successTitle: "Temporary password set.",
-        errorTitle: "Password was not changed.",
+        successTitle: "Password reset requested.",
+        errorTitle: "Password reset failed.",
       });
 
     const activate = (account: Account) =>
@@ -331,7 +331,7 @@ export function StaffPage({
     );
     return cols;
     // openAccount and the state setters are stable enough: they only call setState.
-  }, [accountPolicies, roles, departments, staffPolicies, identity.staffId, confirmRun, setAccountStatus, setTemporaryPassword, setLinkedStatus]);
+  }, [accountPolicies, roles, departments, staffPolicies, identity.staffId, confirmRun, setAccountStatus, requestPasswordReset, setLinkedStatus]);
 
   const filtered = useMemo(
     () =>
@@ -486,12 +486,12 @@ export function StaffPage({
       ) : null}
       {confirmDialog}
       <AppAlert
-        open={issuedPassword !== null}
-        title="Temporary password"
-        description={issuedPassword ? `Password for ${issuedPassword.name}: ${issuedPassword.value}. It is shown only once and is not recorded in the audit history.` : ""}
+        open={resetNotice !== null}
+        title="Password reset requested"
+        description={resetNotice ? `${resetNotice.name}: ${resetNotice.message}` : ""}
         confirmText="Done"
-        onConfirm={() => setIssuedPassword(null)}
-        onClose={() => setIssuedPassword(null)}
+        onConfirm={() => setResetNotice(null)}
+        onClose={() => setResetNotice(null)}
       />
     </AdminPage>
   );

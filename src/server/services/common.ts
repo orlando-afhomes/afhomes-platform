@@ -4,16 +4,11 @@ import type { Actor } from "@/server/auth/actor";
 import { ApiError } from "@/server/api/errors";
 import { dbWrite, failedCheck, uniqueViolation } from "@/server/db";
 import { manilaToday } from "@/shared/lib/dates";
-import { buildPaymentSchemes, buildProducts } from "@/data/mock/seed/catalog";
 
 export const nowIso = () => new Date().toISOString();
 export const today = () => manilaToday();
 /** A fresh internal id in the database's own format (32 hex digits, no hyphens). */
 export const newId = () => randomUUID().replaceAll("-", "");
-
-// shortcut: the product and payment-plan catalog is read from the same sample constants the screens use.
-// Move it to database tables with the products module.
-export const CATALOG = { products: buildProducts(), paymentSchemes: buildPaymentSchemes() };
 
 export type AuditSpec = { action: string; entityType: string; entityId: string; details?: Record<string, unknown> };
 

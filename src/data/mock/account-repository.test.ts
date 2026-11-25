@@ -451,27 +451,27 @@ describe("account repository delete (disabled pending R8)", () => {
     }
   });
 
-  describe("temporary password and audit flags", () => {
-    it("lets an Administrator set a temporary password, audited without the value", async () => {
+  describe("password reset request and audit flags", () => {
+    it("lets an Administrator request a reset email, audited without credential material", async () => {
       const store = createMockStore();
       const repo = createMockRepositories(store, () => getDevIdentity("dev-admin")).accounts;
-      const { temporaryPassword } = await repo.setTemporaryPassword("acct-hr");
-      expect(temporaryPassword).toMatch(/^Tmp-/);
-      expect(store.temporaryPasswords["acct-hr"]).toBe(temporaryPassword);
+      const { message } = await repo.requestPasswordReset("acct-hr");
+      expect(message).toMatch(/reset/i);
+      expect(store.temporaryPasswords).toEqual({});
       const event = store.auditEvents.at(-1)!;
       expect(event.action).toBe(AUDIT_ACTIONS.ACCOUNT_PASSWORD_RESET);
       expect(event.entityId).toBe("acct-hr");
-      expect(JSON.stringify(event)).not.toContain(temporaryPassword);
+      expect(JSON.stringify(event)).not.toMatch(/Tmp-/);
     });
 
     it("denies HR, Finance and a non-Super-Administrator on a protected account", async () => {
       const store = createMockStore();
       for (const id of ["dev-hr", "dev-finance"]) {
         const repo = createMockRepositories(store, () => getDevIdentity(id)).accounts;
-        await expect(repo.setTemporaryPassword("acct-pending")).rejects.toThrow();
+        await expect(repo.requestPasswordReset("acct-pending")).rejects.toThrow();
       }
       const admin = createMockRepositories(store, () => getDevIdentity("dev-admin")).accounts;
-      await expect(admin.setTemporaryPassword("acct-super-admin")).rejects.toThrow();
+      await expect(admin.requestPasswordReset("acct-super-admin")).rejects.toThrow();
       expect(store.temporaryPasswords).toEqual({});
     });
 

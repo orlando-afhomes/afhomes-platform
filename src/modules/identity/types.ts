@@ -27,6 +27,8 @@ export type DevIdentity = {
   status: AccountStatus;
   /** Optional link to a staff record for department-role module grants. */
   staffId?: string | null;
+  /** Delegable module grants from the linked department role, only while staff, role and department are active. */
+  departmentRoleModuleIds?: readonly string[] | null;
   roleAssignments?: Array<{ role: DevRole; status: "active" | "inactive" | "archived" }>;
 };
 

@@ -24,16 +24,7 @@ export const PROTECTED_ACCOUNT_RESTRICTION = "Protected Super Administrator acco
 export const OWN_ACCOUNT_RESTRICTION = "This is your own account. Another administrator must change its roles or status.";
 export const LINKED_ACCOUNT_RESTRICTION = "Linked to a staff record. Name and email are managed in Staff Management.";
 export const SELF_APPROVED_NOTE = "Self-approved: the approver also requested this account.";
-export const PASSWORD_RESET_ERROR = "Only an Administrator or Super Administrator can set a temporary password.";
-
-const TEMP_PASSWORD_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-
-/** One-time mock password shown to the Administrator once; never stored in audit history. */
-function generateTemporaryPassword(): string {
-  const bytes = new Uint8Array(10);
-  globalThis.crypto.getRandomValues(bytes);
-  return `Tmp-${Array.from(bytes, (byte) => TEMP_PASSWORD_ALPHABET[byte % TEMP_PASSWORD_ALPHABET.length]).join("")}`;
-}
+export const PASSWORD_RESET_ERROR = "Only an Administrator or Super Administrator can request a password reset.";
 
 function canManageAccounts(store: MockStore, identity: DevIdentity) {
   return hasModuleAccess(store, identity, "accounts");
@@ -349,11 +340,10 @@ export class MockAccountRepository {
   }
 
   /**
-   * Interim account recovery (doc 01 section 6.2.1): an Administrator or Super
-   * Administrator issues a temporary password the mock sign-in then honors. The
-   * password is returned once and never written to the audit history.
+   * Simulated password-reset request (owner decision 2026-11-25): the mock cannot send email,
+   * so it records the request and returns a confirmation message. No credential is produced.
    */
-  async setTemporaryPassword(id: string, options?: MockAsyncOptions): Promise<{ temporaryPassword: string }> {
+  async requestPasswordReset(id: string, options?: MockAsyncOptions): Promise<{ message: string }> {
     const merged = this.mergeOptions(options);
     await simulateAsync(merged);
     const identity = this.getIdentity();
@@ -365,8 +355,6 @@ export class MockAccountRepository {
     }
     // Own account: the self-modification ban applies except to the Super Administrator (owner rule 2026-11-10).
     if (this.isSelf(identity, id) && !isSuperAdmin(this.store, identity)) throw new Error(SELF_MODIFICATION_ERROR);
-    const temporaryPassword = generateTemporaryPassword();
-    this.store.temporaryPasswords[id] = temporaryPassword;
     appendAuditEvent(this.store, {
       actorId: identity.id,
       actorRoles: activeRoles(identity),
@@ -376,7 +364,7 @@ export class MockAccountRepository {
       entityId: id,
       outcome: "success",
     });
-    return { temporaryPassword };
+    return { message: `Password reset requested for ${account.email}. Firebase sends the reset link to that address.` };
   }
 
   /**

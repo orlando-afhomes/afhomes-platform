@@ -1,14 +1,24 @@
 import type { MockAsyncOptions } from "@/data/contracts/async-options";
+import type { AccountRepository } from "@/data/contracts/account-repository";
 import { CustomerValidationError, type CustomerPage, type CustomerRepository } from "@/data/contracts/customer-repository";
 import type { ContractRepository, ContractView } from "@/data/contracts/contract-repository";
+import type { DepartmentRepository } from "@/data/contracts/department-repository";
+import type { ExperienceRepository } from "@/data/contracts/experience-repository";
 import type { MemberRepository } from "@/data/contracts/member-repository";
+import type { OutletRepository, OutletView } from "@/data/contracts/outlet-repository";
 import type { PaymentRepository, PaymentView, SubmitPaymentInput } from "@/data/contracts/payment-repository";
+import type { ReferenceEntryView, ReferenceListRepository } from "@/data/contracts/reference-list-repository";
 import type { ProductRepository } from "@/data/contracts/product-repository";
 import type { ReportRepository } from "@/data/contracts/report-repository";
 import type { Repositories } from "@/data/contracts/repositories";
+import type { DepartmentRoleRepository } from "@/data/contracts/role-repository";
 import type { SaleRepository, SaleView } from "@/data/contracts/sale-repository";
+import type { StaffRepository } from "@/data/contracts/staff-repository";
+import type { Account, AccountPolicies, AccountStatus } from "@/modules/accounts/types";
 import type { Customer, CustomerDraftInput } from "@/modules/customers/types";
-import type { OrgMember } from "@/modules/organization/types";
+import type { Experience } from "@/modules/experiences/types";
+import type { Department, DepartmentRole, DepartmentRoleOption, OrgMember, StaffMember } from "@/modules/organization/types";
+import type { Outlet, ReferenceEntry } from "@/modules/settings/lists";
 import type { PaymentScheme, VipProduct } from "@/modules/vip/types";
 import { ApiRequestError, NotConnectedError, apiFetch, fetchAllPages, fetchOrNull } from "./client";
 
@@ -130,6 +140,80 @@ const products = (): Partial<ProductRepository> => ({
   listSchemes: async (options) => (await apiFetch<{ items: PaymentScheme[] }>("/payment-schemes", { signal: signalOf(options) })).items,
 });
 
+const experiences = (): Partial<ExperienceRepository> => {
+  const list = async (options?: MockAsyncOptions) => (await apiFetch<{ items: Experience[] }>("/experiences", { signal: signalOf(options) })).items;
+  return {
+    list,
+    listPublic: async (options) => (await list(options)).filter((item) => item.published),
+  };
+};
+
+// shortcut: usage tracking (inUse) arrives with the modules that own the references (F3/F7).
+const referenceLists = (): Partial<ReferenceListRepository> => ({
+  list: async (options) =>
+    (await apiFetch<{ items: ReferenceEntry[] }>("/reference-lists", { signal: signalOf(options) })).items.map((item) => ({ ...item, inUse: false }) as ReferenceEntryView),
+});
+
+const outlets = (): Partial<OutletRepository> => ({
+  list: async (options) =>
+    (await apiFetch<{ items: Outlet[] }>("/outlets", { signal: signalOf(options) })).items.map((item) => ({ ...item, inUse: false }) as OutletView),
+});
+
+const departments = (): Partial<DepartmentRepository> => ({
+  list: async (options) => (await apiFetch<{ items: Department[] }>("/departments", { signal: signalOf(options) })).items,
+  getById: async (id, options) => (await fetchOrNull<{ department: Department }>(`/departments/${id}`, signalOf(options)))?.department ?? null,
+  create: async (input) => (await apiFetch<{ department: Department }>("/departments", { method: "POST", body: input })).department,
+  update: async (id, input) => (await apiFetch<{ department: Department }>(`/departments/${id}`, { method: "POST", body: input })).department,
+  delete: async (id) => {
+    await apiFetch(`/departments/${id}/delete`, { method: "POST" });
+  },
+});
+
+const roles = (): Partial<DepartmentRoleRepository> => ({
+  list: async (options) => (await apiFetch<{ items: DepartmentRole[] }>("/roles", { signal: signalOf(options) })).items,
+  listForAssignment: async (options) => (await apiFetch<{ items: DepartmentRoleOption[] }>("/roles/options", { signal: signalOf(options) })).items,
+  getById: async (id, options) => (await fetchOrNull<{ role: DepartmentRole }>(`/roles/${id}`, signalOf(options)))?.role ?? null,
+  create: async (input) => (await apiFetch<{ role: DepartmentRole }>("/roles", { method: "POST", body: input })).role,
+  update: async (id, input) => (await apiFetch<{ role: DepartmentRole }>(`/roles/${id}`, { method: "POST", body: input })).role,
+  delete: async (id) => {
+    await apiFetch(`/roles/${id}/delete`, { method: "POST" });
+  },
+});
+
+const staff = (): Partial<StaffRepository> => ({
+  list: async (options) => (await apiFetch<{ items: StaffMember[] }>("/staff", { signal: signalOf(options) })).items,
+  getById: async (id, options) => (await fetchOrNull<{ staff: StaffMember }>(`/staff/${id}`, signalOf(options)))?.staff ?? null,
+  getSelf: async (options) => (await apiFetch<{ profile: Awaited<ReturnType<StaffRepository["getSelf"]>> }>("/staff/self", { signal: signalOf(options) })).profile,
+  listPolicies: async (options) => (await apiFetch<{ policies: Awaited<ReturnType<StaffRepository["listPolicies"]>> }>("/staff/policies", { signal: signalOf(options) })).policies,
+  create: async (input) => (await apiFetch<{ staff: StaffMember }>("/staff", { method: "POST", body: input })).staff,
+  update: async (id, input) => (await apiFetch<{ staff: StaffMember }>(`/staff/${id}`, { method: "POST", body: input })).staff,
+  updateLinkedAccountStatus: async (staffId, status: AccountStatus, options) =>
+    (await apiFetch<{ linkedAccount: Awaited<ReturnType<StaffRepository["updateLinkedAccountStatus"]>> }>(`/staff/${staffId}/status`, { method: "POST", body: { status }, signal: signalOf(options) })).linkedAccount,
+  delete: async (id) => {
+    await apiFetch(`/staff/${id}/delete`, { method: "POST" });
+  },
+});
+
+const accounts = (): Partial<AccountRepository> => ({
+  list: async (options) => (await apiFetch<{ items: Account[] }>("/accounts", { signal: signalOf(options) })).items,
+  getPolicies: async (options) => (await apiFetch<{ policies: AccountPolicies }>("/accounts/policies", { signal: signalOf(options) })).policies,
+  getById: async (id, options) => (await fetchOrNull<{ account: Account }>(`/accounts/${id}`, signalOf(options)))?.account ?? null,
+  create: async (input) => (await apiFetch<{ account: Account }>("/accounts", { method: "POST", body: input })).account,
+  update: async (id, input) => (await apiFetch<{ account: Account }>(`/accounts/${id}`, { method: "POST", body: input })).account,
+  assignRole: async (id, role, options) => (await apiFetch<{ account: Account }>(`/accounts/${id}/roles`, { method: "POST", body: { role }, signal: signalOf(options) })).account,
+  revokeRole: async (id, role, options) => (await apiFetch<{ account: Account }>(`/accounts/${id}/roles/revoke`, { method: "POST", body: { role }, signal: signalOf(options) })).account,
+  updateStatus: async (id, status, options) => (await apiFetch<{ account: Account }>(`/accounts/${id}/status`, { method: "POST", body: { status }, signal: signalOf(options) })).account,
+  requestPasswordReset: async (id, options) => {
+    const result = await apiFetch<{ email: string; resetLink?: string }>(`/accounts/${id}/password-reset`, { method: "POST", signal: signalOf(options) });
+    // Local Auth emulator has no mail delivery, so the generated link is shown instead of sent.
+    if (result.resetLink) return { message: `Password reset requested for ${result.email}. Local emulator link: ${result.resetLink}` };
+    const { getClientAuth } = await import("@/shared/lib/firebase-client");
+    const { sendPasswordResetEmail } = await import("firebase/auth");
+    await sendPasswordResetEmail(getClientAuth(), result.email);
+    return { message: `Password reset email sent to ${result.email}.` };
+  },
+});
+
 const reports = (): Partial<ReportRepository> => ({
   recordExport: async (input) => {
     await apiFetch("/reports/export", { method: "POST", body: input });
@@ -137,11 +221,11 @@ const reports = (): Partial<ReportRepository> => ({
 });
 
 const NOT_IN_PILOT = [
-  "accounts", "departments", "roles", "staff", "accreditations", "registrations", "audit", "memberQr", "memberships", "commissions", "stayPoints", "redemption",
-  "reservations", "referenceLists", "tierLevels", "outlets", "promos", "experiences", "reconciliation", "historyImports", "igp", "igpCatalog",
+  "accreditations", "registrations", "audit", "memberQr", "memberships", "commissions", "stayPoints", "redemption",
+  "reservations", "tierLevels", "promos", "reconciliation", "historyImports", "igp", "igpCatalog",
 ] as const;
 
-/** The repositories the real local backend serves (customer, contract, sale, receipt, members, catalog and export audit); the rest report "not connected yet". */
+/** The repositories the real local backend serves (organization/access, customer, contract, sale, receipt, members, catalog and export audit); the rest report "not connected yet". */
 export function createHttpRepositories(): Repositories {
   const rest = Object.fromEntries(NOT_IN_PILOT.map((name) => [name, partial(name, {})]));
   return {
@@ -153,5 +237,12 @@ export function createHttpRepositories(): Repositories {
     members: partial("members", members()),
     products: partial("products", products()),
     reports: partial("reports", reports()),
+    experiences: partial("experiences", experiences()),
+    referenceLists: partial("referenceLists", referenceLists()),
+    outlets: partial("outlets", outlets()),
+    departments: partial("departments", departments()),
+    roles: partial("roles", roles()),
+    staff: partial("staff", staff()),
+    accounts: partial("accounts", accounts()),
   } as unknown as Repositories;
 }

@@ -111,66 +111,64 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved 2026-11-24 (Asia/Manila). AFHomes Platform, branch `develop`, HEAD `b683446`. The session began at `b683446` after `/load`.
-- Tool: OpenCode. Model: DeepSeek V4.1 Flash 1017 (verified from the environment). Permission mode not verified. Context was not compacted.
-- Objectives in order: finish the Codex plan for branded report PDFs and borderless Linked Records buttons; enhance the dashboard date-range filter; remove "e.g." from every input placeholder; audit and fix button icons app-wide; staff page filter icons, two-word status label, password-reveal error and Prefix. Phase: frontend prototype with sample data, QA.
+- Saved 2026-11-25 (Asia/Manila). AFHomes Platform, branch `full-stack`, HEAD `fbe3e7e`. `prototype` is at `4a64b44`; `develop` is at `fbe3e7e`.
+- Tool: OpenCode. Model: DeepSeek V4.1 Flash 1017 (verified from the environment). Permission mode not verified beyond the Build agent. Context was not compacted.
+- Objectives: split the frozen prototype from the clean full-stack line; remove mock/static data from the runtime by seeding confirmed business configuration; start F1 organization access.
+- Phase: full-stack local build, F0 complete (data layer), F1 foundation built.
 
 ## 2. Current Project State
-- Report PDFs are built: shared report template and export menu; Download PDF on every Reports tab including Summary, Close the Month, Monthly Check, Receipt History Export and Customers -> Export; Customer PDF uses the five preview columns; filter metadata is printed; PDF actions are audited. Linked Records rows are borderless and still open Contract/Sale/Membership tabs.
-- Dashboard date range has a trigger calendar icon, distinct preset icons/descriptions, a resolved date line, a compact custom-range layout, and a focus-safe reveal pattern.
-- Input placeholders no longer contain "e.g." anywhere in `src`.
-- Action buttons and menus require icons. Shared enforcement is in `detail-actions.tsx`, `row-actions-menu.tsx`, `button-icons.ts` and `page-actions.tsx`. Icons are unique within a visible menu/group; duplicate collisions found on Finance, IGP document signatures and staff were fixed.
-- Staff area: the Directory view chips have distinct icons (`LayoutGrid`, `UsersRound`, `KeyRound`, `Clock`); the employment status filter reads "All statuses"; the password reveal no longer blurs/validates; Personal Details has an optional Prefix dropdown stored on the staff record and shown in the profile.
-- Dev server on port 3000. Mock data is browser memory only; reload resets it.
+- Branch model: `prototype` is the frozen pre-backend sample-data demo and is never merged; `full-stack` is the primary line; `develop` holds the pilot plus Step D. Mock removal is planned only at F9, after every group connects.
+- F0 data layer is complete. Confirmed configuration is in the database: tier levels, products, payment schemes, experiences, outlets, reference lists and the print-template registry. `db:seed` loads fixtures; `db:seed:clean` loads one Super Admin plus the same confirmed configuration and no business records, and clears receipt files.
+- Server catalog/content reads replace the static `CATALOG`; routes exist for products, payment schemes, tier levels, experiences, outlets, reference lists and print templates. The Experiences, Settings and customer forms read them in api mode.
+- F1 foundation: `Department`, `DepartmentRole`, `StaffMember`, `AccountStatusEvent` and `UserAccount.staff` exist. The actor resolves delegable department-role modules only while staff, role and department are active. Session modules include those grants; operations remain system-role only; parent navigation scopes are filtered out.
+- Local environment: Auth 9099, SQL Connect 9399, Storage 9199 and UI 4400 are running. Java 21 is installed at `C:\Program Files\Eclipse Adoptium\jdk-21.0.13.10002-hotspot`. The database is on the clean seed. Port 3100 is stopped; the mock dev server on 3000 is running.
 
 ## 3. Important Decisions
-- Owner-approved icon rule: every action button and action menu item has an icon; no two actions in the same visible menu/button group share an icon; structural controls are excluded (page numbers, tabs, sortable headers, navigation links, notification feed rows, invisible report-card overlays). The same action may reuse its icon on another screen.
-- Owner-approved Prefix format: optional title dropdown (Mr., Ms., Mrs., Dr., Engr., Atty., Prof., Rev.) with "No prefix"; stored; shown in profile details; directory display name and sorting remain the legal name.
-- Password reveal: owner reported validation errors on click; fixed with `onMouseDown` prevent-default on the shared reveal button while keeping `type="button"`.
-- Report PDFs: Summary is a table of the visible figures and comparisons; Customer PDF uses Customer, VIP Plan, Status, Seller, Submitted; Excel/CSV keep their existing columns and 5,000-row limit; PDF downloads are audited without row data.
-- Placeholders: remove the "e.g." term, keep the example values.
-- Restrictions kept: sample data only, no persistence, Git writes reserved for the owner, no business-rule changes.
+- Owner: `prototype` frozen; `full-stack` primary; remove the mock layer only after all groups; clean seed is Super Admin-only for business records; confirmed reference/configuration data is allowed in that seed.
+- Owner decisions for F1: MFA enforcement deferred with hooks, 8-hour production sessions, Firebase email password reset, CAPTCHA deferred to staging.
+- Print templates: the confirmed registry (key, name, revision, asset path) is in the database; the supplied PDF forms and app-rendered card design stay as files, with private storage planned later.
+- Seed fix: contract and sale genealogy now store inserted member UUIDs, so sellers see seeded records. The previous views-test failure was fixed at the root.
+- Restrictions kept: owner-only Git; synthetic local data; no business-rule changes.
 
 ## 4. Completed Work
-- Report PDFs: `src/panels/admin/documents/report-pdf.ts`, `report-pdf-output.tsx` (pre-existing untracked, extended), `report-shell.tsx`, `reports-summary-panel.tsx`, `customer-export-history.tsx`, `customer-import-export-page.tsx`; filter metadata across the seven report pages; `customer-detail-panels.tsx` (restored ProgressStep `last`); tests `report-pdf.test.ts`, `report-shell.test.tsx`, `reports-pages.test.tsx`, `customer-review-pages.test.tsx`.
-- Dashboard filter: `src/shared/components/dashboard/dashboard-date-filter.tsx`, `src/shared/components/modern/search-select.tsx`, `src/shared/ui/combobox.tsx`.
-- Placeholders: `src/shared/forms/example-text.ts` and test, `src/shared/forms/modern/text-field.tsx`, `role-dialogs.tsx`, `roles-page.test.tsx`, `forgot-password-panel.tsx`, `contact-form.tsx`, `faq.ts`.
-- Button icons: shared `button-icons.ts` + test, `detail-actions.tsx` + test, `row-actions-menu.tsx` + test, `page-actions.tsx`, `report-shell.tsx` export menu, `customer-import-steps.tsx`; action builders `customer-actions`, `history-import-actions`, `redemption-actions`, `sales-contract-actions`, `sales-network-actions`; components `commission-shared`, `membership-table`, `payment-actions`, `restaurant-reservations-table`; pages including commissions, experiences, finance collections, IGP page/projects, lists, promo points, promos, redemption points table, registration applications, sales contract detail, sales, staff, staff dialogs, stay points, tier codes, VIP products. IGP document signatures now use seven distinct document icons.
-- Staff: `src/shared/forms/validation/person-name.ts` (`PREFIX_OPTIONS`, `validatePrefix`), `select-field.tsx` (`PrefixField`), `index.ts`, `text-field.tsx`; `modules/organization/types.ts`, `data/contracts/staff-repository.ts`, `data/mock/staff-repository.ts` + test; `pages/staff-dialogs.tsx`, `pages/staff-page.tsx`, `staff-page.test.tsx`, `staff-access-page.test.tsx`, `modern-fields.test.tsx`.
-- The previous snapshot's failing Customers Import test was updated to current behavior (Import tab is gone) and passes.
+- Schema: reference tables `TierLevel`, `Product`, `PaymentScheme`, `Experience`, `Outlet`, `ReferenceEntry`, `PrintTemplate`; F1 tables `Department`, `DepartmentRole`, `StaffMember`, `AccountStatusEvent`; `UserAccount.staff`.
+- Seed: `scripts/seed-local-db.ts` now supports `--clean`, seeds the confirmed configuration in both modes, maps member UUIDs in JSON snapshots, and wipes the new tables and receipt files. `package.json` has `db:seed:clean`.
+- Server: `src/server/repositories/catalog.ts`, `content.ts`; `src/modules/contracts/print-templates.ts`; routes for experiences, outlets, reference lists, print templates and tier levels; HTTP repositories for experiences, reference lists and outlets.
+- Access: `src/modules/identity/types.ts` (`departmentRoleModuleIds`), `permissions.ts` (department grants in `getGrantedModuleIds`), `src/server/auth/actor.ts` (staff/role/department resolution), `src/server/auth/department-access.test.ts`.
+- Docs: `docs/implementation/02-full-stack/full-stack-phase-plan.md` has the branch/seed model, F0-F9 phases and current status blocks. F0 is complete for the data layer; F1 is in progress.
 
 ## 5. Git Working Tree
 - Staged: none. `git diff --cached --stat` is empty.
-- Unstaged: 192 modified files, 3,059 insertions and 1,822 deletions (`git diff --stat`). This is a large pre-existing uncommitted batch plus this session's work. This session's files are the paths in section 4. Pre-existing or unknown changes include navigation/sidebar/sales-network genealogy, allowance review, dashboards, status pills/badges, button/input/select primitives, tokens, docs and many tests. `workflow/save-session.md` is modified by this save. Not every pre-existing change was inspected.
-- Untracked: 21 files. This session's additions/edits among them: `src/panels/admin/documents/report-pdf.ts`, `report-pdf.test.ts`, `report-pdf-output.tsx`, `src/shared/forms/example-text.ts` + test, `src/shared/ui/button-icons.ts` + test, `src/shared/components/modern/detail-actions.tsx` + test. Other untracked files are pre-existing: `gsd-dashboard.tsx`, `hr-dashboard.tsx`, `tab-icons.ts`, `sonner.test.tsx`, `admin-nav-icons.test.ts`, genealogy fixtures/tests, `status-presentation.test.ts`, `detail-actions-colors.test.ts`, and `docs/implementation/01-prototype/ui-states/button-group-status-audit.md`.
-- Deleted: `src/shared/components/dashboard/page-actions.css` (pre-existing deletion, not this session).
-- No renames.
+- Unstaged: 22 modified files after this save (21 before it), 11,642 insertions and 2,139 deletions. This session's work includes the schema and regenerated `dataconnect/.dataconnect/schema/main/*.gql`, the seed, the new server repositories/routes, identity/actor access changes, print registry, tests and docs. `workflow/save-session.md` is the extra modified file from this save.
+- Untracked: 9 files: the five new API routes (`experiences`, `outlets`, `print-templates`, `reference-lists`, `tier-levels`), `src/modules/contracts/print-templates.ts`, `src/server/auth/department-access.test.ts`, `src/server/repositories/catalog.ts` and `content.ts`.
+- No deletions or renames this session.
+- The owner has not committed F0/F1 yet.
 
 ## 6. Pending Tasks
-- Owner review and commit of the entire uncommitted tree; agents must not stage or commit.
-- Optional browser QA not yet done: report PDF download/print preview, a few rarely opened dialogs/menus, and a clean-checkout run.
-- Earlier open items remain: doc 14 amendment, G3/G4 allowance questions, G5 process checks, live camera demo, full-suite confirmation.
-- Known limitation: Prefix appears in profile details only, not in directory display names or search/sort. The custom dashboard range wraps the title at narrow widths. The two date-dependent `business-flow` tests were not rerun this session.
+- Owner review and commit of F0/F1. Agents must not stage or commit.
+- F1 remaining: accounts/departments/roles/staff routes and screens; last-Super-Admin and delegation guards; password-reset request; MFA hooks; apply the 8-hour session length; organization seed fixtures.
+- F2 Group 2 through F9 as written in the phase plan.
+- Print screen still labels revisions from the shared constant; wire it to `/print-templates` later. Supplied PDFs/card art move to private storage later.
+- The clean start cannot create a seller, customer or contract until F1/F2.
 
 ## 7. Verification State
-- `npx tsc --noEmit` clean (final run).
-- `npx eslint src` clean (final run).
-- `npm run build` clean (final run).
-- Targeted Vitest passed: report shell 12, report PDF 2, reports pages 22, customer pages 21; finance 20, commissions 12; VIP 21, sales 6, sales network 8; IGP 9 + stage 4 2; staff 22, staff access 14, staff repository 54, modern fields 36; button icons 2, row actions 8, detail actions 2, modern components 16; departments/roles/lists/staff access 67 (one business-pages test timed out in an overloaded run but passed alone in 6s).
-- Known heavy-suite behavior: large parallel batches can time out (staff, wizard, lists, business pages); the affected tests pass in smaller groups.
-- Sample PDFs were generated and inspected with `pdftotext -enc UTF-8`: wide report (12 pages, 2 column groups with the identifying column repeated), Summary, empty report, Customer Export; page numbers, repeated headings, peso signs and accented names were correct.
-- Browser QA done: dashboard date filter; Finance Verify/Request Fix/Reject, Refund, and details footer; 41 row menus across admin routes with no missing/duplicate icons; 26 routes with no visible action button without an icon; IGP document icons; staff chips, status label, Prefix field and password toggle. Screenshots were used for visual checks.
-- Not performed: full test suite, clean-checkout run, browser PDF download/print preview, and some dialogs not opened.
+- `npx vitest run src/server`: 36 of 36 passed across 8 files after a fresh fixture seed. This includes the new department-access test.
+- `npx tsc --noEmit`: clean. `npm run lint`: clean, architecture check 768 files. `npm run build`: clean.
+- `npm run db:seed`: 28 contracts, 40 customers, 15 members, 84 payments, 3 tier levels, 3 products, 4 schemes, 3 experiences, 5 outlets, 20 reference entries, 8 print templates.
+- `npm run db:seed:clean`: one user account and one role, zero business records, with the confirmed configuration rows.
+- Known behavior: the Data Connect emulator did not always hot-reload a schema change; restarting the emulators and reseeding fixed it. Always restart after schema edits.
+- Not performed: full `npm test`, browser api-mode QA for F0/F1, staging checks.
 
 ## 8. Next Session Instructions
-- Run `/load`, confirm HEAD `b683446` and the 192-file unstaged tree.
-- Do not commit or stage. Ask the owner to review the uncommitted work; the tree includes earlier sessions' changes unrelated to this one.
-- If continuing QA, run only the targeted suites for the touched area and one browser pass over report PDF actions and any unopened menus.
-- Sample accounts are in `src/data/mock/mock-credentials.ts`. Reload resets sample data; the in-app camera is blocked; the dev server runs on port 3000.
-- Check `git status` before editing shared files; other work may be in progress.
+- Run `/load`; confirm branch `full-stack`, HEAD `fbe3e7e`, and the 21-file unstaged tree plus 9 untracked files.
+- Do not commit or stage. Ask the owner to review and commit F0/F1 first.
+- Continue F1 by reading `src/data/mock/role-repository.ts`, `staff-repository.ts`, `account-repository.ts`, `src/modules/identity/permissions.ts`, `src/server/auth/actor.ts` and the schema.
+- After any schema edit, restart the emulators and run `npm run db:seed` before tests. Leave the database on `db:seed:clean` when handing back.
+- Run the targeted suites and the 36-test server suite; do not run the full `npm test` unless asked.
 
 ## 9. Execution Recommendation
-- Phase: QA. Current mode: not verified (OpenCode). Current model: DeepSeek V4.1 Flash 1017 (verified). Recommended: Claude Sonnet 5.5, medium effort. Ultracode: OFF.
-- Token optimization: owner review plus targeted checks only; no full-suite rerun unless the owner requests it.
-- Reason: the remaining work is review/commit and optional visual QA, not new implementation.
+- Phase: Build (F1 continues). Current mode: Build (OpenCode), verified. Model: DeepSeek V4.1 Flash 1017 (verified).
+- Recommended: Claude Opus 5.5, high effort. Ultracode: OFF.
+- Token optimization: next slice is the organization routes plus seed fixtures, then screens and guards; targeted tests only.
+- Reason: the permission foundation is verified; the remaining F1 work is CRUD, protection rules and UI wiring.
 <!-- SESSION_SNAPSHOT_END -->

@@ -12,6 +12,30 @@ extend type AccountStatusEvent {
   """
   actorId: UUID @fdc_generated(from: "AccountStatusEvent.actor", purpose: IMPLICIT_REF_FIELD)
 }
+extend type Accreditation {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Accreditation", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Accreditation`.`member`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  memberId: UUID! @fdc_generated(from: "Accreditation.member", purpose: IMPLICIT_REF_FIELD)
+}
+extend type AccreditationNumber {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "AccreditationNumber", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `AccreditationNumber`.`accreditation`. It must match the value of `Accreditation`.`id`. See `@ref` for how to customize it.
+  """
+  accreditationId: UUID! @fdc_generated(from: "AccreditationNumber.accreditation", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `AccreditationNumber`.`member`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  memberId: UUID! @fdc_generated(from: "AccreditationNumber.member", purpose: IMPLICIT_REF_FIELD)
+}
 extend type AuditEvent {
   """
   ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
@@ -45,6 +69,26 @@ extend type Customer {
   ✨ Implicit foreign key field based on `Customer`.`ownerMember`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
   """
   ownerMemberId: UUID @fdc_generated(from: "Customer.ownerMember", purpose: IMPLICIT_REF_FIELD)
+}
+extend type CustomerImportJob {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "CustomerImportJob", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `CustomerImportJob`.`actor`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  actorId: UUID @fdc_generated(from: "CustomerImportJob.actor", purpose: IMPLICIT_REF_FIELD)
+}
+extend type CustomerImportRow {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "CustomerImportRow", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `CustomerImportRow`.`job`. It must match the value of `CustomerImportJob`.`id`. See `@ref` for how to customize it.
+  """
+  jobId: UUID! @fdc_generated(from: "CustomerImportRow.job", purpose: IMPLICIT_REF_FIELD)
 }
 extend type Department {
   """
@@ -140,6 +184,28 @@ extend type ReferenceEntry {
   """
   id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "ReferenceEntry", purpose: IMPLICIT_KEY_FIELD)
 }
+extend type RegistrationApplication {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "RegistrationApplication", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `RegistrationApplication`.`account`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  accountId: UUID @fdc_generated(from: "RegistrationApplication.account", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `RegistrationApplication`.`member`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  memberId: UUID @fdc_generated(from: "RegistrationApplication.member", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `RegistrationApplication`.`reviewer`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  reviewerId: UUID @fdc_generated(from: "RegistrationApplication.reviewer", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `RegistrationApplication`.`sponsorMember`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  sponsorMemberId: UUID @fdc_generated(from: "RegistrationApplication.sponsorMember", purpose: IMPLICIT_REF_FIELD)
+}
 extend type RoleAssignment {
   """
   ✨ Implicit foreign key field based on `RoleAssignment`.`user`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
@@ -185,6 +251,24 @@ extend type SaleAdjustment {
   ✨ Implicit foreign key field based on `SaleAdjustment`.`sale`. It must match the value of `Sale`.`id`. See `@ref` for how to customize it.
   """
   saleId: UUID! @fdc_generated(from: "SaleAdjustment.sale", purpose: IMPLICIT_REF_FIELD)
+}
+extend type SeatVacancy {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "SeatVacancy", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `SeatVacancy`.`filledByMember`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  filledByMemberId: UUID @fdc_generated(from: "SeatVacancy.filledByMember", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `SeatVacancy`.`recordedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  recordedById: UUID @fdc_generated(from: "SeatVacancy.recordedBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `SeatVacancy`.`seatMember`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  seatMemberId: UUID! @fdc_generated(from: "SeatVacancy.seatMember", purpose: IMPLICIT_REF_FIELD)
 }
 extend type StaffMember {
   """

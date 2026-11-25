@@ -7,6 +7,7 @@ import type { Sale } from "@/modules/sales/types";
 import { dbRead, listAll } from "@/server/db";
 import { centavosToInt64, int64ToCentavos } from "@/server/money";
 import { manilaDateOf } from "@/shared/lib/dates";
+import { normalizePhilippineMobile } from "@/shared/utils/input-sanitizers";
 
 type Json = Record<string, unknown>;
 type Ref = { id: string } | null;
@@ -18,18 +19,53 @@ export function normalizeId(value: string): string | null {
 }
 
 // ---------------------------------------------------------------- customers
-export type CustomerRow = { id: string; displayName: string; branchId: string; status: string; customerNumber: string | null; profile: Json | null; ownerMember: Ref };
-export const CUSTOMER_FIELDS = "id displayName branchId status customerNumber profile ownerMember { id }";
+export type CustomerRow = {
+  id: string; displayName: string; branchId: string; status: string; customerNumber: string | null; profile: Json | null; ownerMember: Ref;
+  normalizedEmail: string | null; normalizedMobile: string | null; normalizedName: string | null; dateOfBirth: string | null;
+};
+export const CUSTOMER_FIELDS = "id displayName branchId status customerNumber profile normalizedEmail normalizedMobile normalizedName dateOfBirth ownerMember { id }";
 
 export function toCustomer(row: CustomerRow): Customer {
-  return { ...(row.profile ?? {}), id: row.id, displayName: row.displayName, branchId: row.branchId, ownerMemberId: row.ownerMember?.id ?? null, status: row.status as CustomerStatus, customerNumber: row.customerNumber } as Customer;
+  const profile = row.profile ?? {};
+  return {
+    ...profile,
+    id: row.id,
+    displayName: row.displayName,
+    branchId: row.branchId,
+    ownerMemberId: row.ownerMember?.id ?? null,
+    status: row.status as CustomerStatus,
+    // A draft keeps its requested manual ID in the profile so it never occupies the official unique column.
+    customerNumber: row.customerNumber ?? (typeof profile.customerNumber === "string" ? profile.customerNumber : null),
+  } as Customer;
 }
 
 /** Splits a customer into the indexed columns and the jsonb `profile` for everything else. */
 export function customerColumns(customer: Customer) {
-  const { id: _id, displayName, branchId, ownerMemberId, status, customerNumber, ...profile } = customer;
+  const { id: _id, displayName, branchId, ownerMemberId, status, customerNumber, ...rest } = customer;
   void _id;
-  return { columns: { displayName, branchId, ownerMemberId: ownerMemberId ?? undefined, status, customerNumber: customerNumber ?? undefined }, profile };
+  const profile: Record<string, unknown> = { ...rest };
+  // A draft's requested number stays in the profile; only submission consumes the official Customer ID column.
+  if (status === "draft") profile.customerNumber = customerNumber ?? undefined;
+  // The primary ID image is stored as server-side metadata (`identityFile`); the client URL never enters jsonb.
+  profile.governmentIdImage = undefined;
+  const email = typeof profile.email === "string" ? profile.email.trim().toLowerCase() : "";
+  const mobile = typeof profile.mobileNumber === "string" ? profile.mobileNumber.trim() : "";
+  const firstName = typeof profile.firstName === "string" ? profile.firstName.trim().toLowerCase() : "";
+  const lastName = typeof profile.lastName === "string" ? profile.lastName.trim().toLowerCase() : "";
+  return {
+    columns: {
+      displayName,
+      branchId,
+      ownerMemberId: ownerMemberId ?? undefined,
+      status,
+      customerNumber: status === "draft" ? undefined : customerNumber ?? undefined,
+      normalizedEmail: email || undefined,
+      normalizedMobile: mobile ? normalizePhilippineMobile(mobile) : undefined,
+      normalizedName: firstName && lastName ? `${firstName}|${lastName}` : undefined,
+      dateOfBirth: typeof profile.dateOfBirth === "string" && profile.dateOfBirth.trim() ? profile.dateOfBirth.trim() : undefined,
+    },
+    profile: Object.fromEntries(Object.entries(profile).filter(([, value]) => value !== undefined)),
+  };
 }
 
 export async function loadCustomers(): Promise<Customer[]> {
@@ -39,6 +75,46 @@ export async function loadCustomers(): Promise<Customer[]> {
 export async function loadCustomer(id: string): Promise<Customer | null> {
   const result = await dbRead<{ customer: CustomerRow | null }>(`query($id: UUID!) { customer(id: $id) { ${CUSTOMER_FIELDS} } }`, { id });
   return result.customer ? toCustomer(result.customer) : null;
+}
+
+/** Customers holding one of these official Customer IDs (manual duplicate validation). */
+export async function loadCustomersByNumbers(numbers: readonly string[]): Promise<Customer[]> {
+  const wanted = numbers.map((number) => number.trim()).filter(Boolean);
+  if (wanted.length === 0) return [];
+  return (await listAll<CustomerRow>("customers", CUSTOMER_FIELDS, { where: "{ customerNumber: { in: $numbers } }", variableDefinitions: "$numbers: [String!]!", variables: { numbers: wanted } })).map(toCustomer);
+}
+
+/**
+ * Customers that may be the same person as an import row, found through the indexed identity
+ * columns (doc 04 section 14). Only candidates are returned; the import classifier makes the
+ * final flag, so a shared name with a different birth date is harmless.
+ */
+export async function loadCustomerDuplicateCandidates(input: { emails: readonly string[]; mobiles: readonly string[]; names: readonly string[] }): Promise<Customer[]> {
+  const conditions: string[] = [];
+  const variables: Record<string, unknown> = {};
+  if (input.emails.length > 0) { conditions.push("normalizedEmail: { in: $emails }"); variables.emails = [...input.emails]; }
+  if (input.mobiles.length > 0) { conditions.push("normalizedMobile: { in: $mobiles }"); variables.mobiles = [...input.mobiles]; }
+  if (input.names.length > 0) { conditions.push("normalizedName: { in: $names }"); variables.names = [...input.names]; }
+  if (conditions.length === 0) return [];
+  const definitions = [
+    input.emails.length > 0 ? "$emails: [String!]!" : "",
+    input.mobiles.length > 0 ? "$mobiles: [String!]!" : "",
+    input.names.length > 0 ? "$names: [String!]!" : "",
+  ].filter(Boolean).join(", ");
+  return (await listAll<CustomerRow>("customers", CUSTOMER_FIELDS, {
+    where: `{ _or: [${conditions.map((condition) => `{ ${condition} }`).join(", ")}] }`,
+    variableDefinitions: definitions,
+    variables,
+  })).map(toCustomer);
+}
+
+/** Highest official Customer ID already issued for a year, as text (`YYYY-NNNN`). */
+export async function highestCustomerNumberForYear(year: string): Promise<string | null> {
+  const result = await dbRead<{ customers: Array<{ customerNumber: string | null }> }>(
+    `query($prefix: String!) { customers(where: { customerNumber: { startsWith: $prefix } }, orderBy: [{ customerNumber: DESC }], limit: 1) { customerNumber } }`,
+    { prefix: `${year}-` },
+  );
+  return result.customers[0]?.customerNumber ?? null;
 }
 
 // ---------------------------------------------------------------- contracts

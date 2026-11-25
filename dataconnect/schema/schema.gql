@@ -99,6 +99,10 @@ type Member @table {
   referralCode: String
   aaNumber: String
   details: Any
+  # Append-only create/transfer/status history for this member (doc 02 section 6).
+  parentHistory: Any
+  # Bumped by every hierarchy write; a guarded transfer commits only against the row version it read.
+  rowVersion: Int! @default(value: 0)
 }
 
 type Customer @table {
@@ -110,6 +114,12 @@ type Customer @table {
   # Official Customer ID, YYYY-NNNN. Null while the record is a draft.
   customerNumber: String @unique
   profile: Any
+  # Normalized identity keys for duplicate checks (doc 04 section 14); never displayed.
+  normalizedEmail: String
+  normalizedMobile: String
+  # first|last, lowercase, for an indexed name + birth-date duplicate query.
+  normalizedName: String
+  dateOfBirth: Date
 }
 
 type Contract @table {
@@ -342,4 +352,99 @@ type PaymentScheme @table {
   effectiveDate: Date
   changes: Any
   sortOrder: Int!
+}
+
+# ---------------------------------------------------------------- F2: accreditation and network
+type Accreditation @table {
+  member: Member!
+  # IST | OST
+  classification: String!
+  # pending | active | suspended | revoked | cancelled
+  adminStatus: String!
+  originalAccreditationDate: Date
+  effectiveDate: Date
+  expiryDate: Date
+  # Current number. Every issued number is also in AccreditationNumber, which is unique.
+  aaNumber: String @unique
+  suspensionEffectiveDate: Date
+  endDate: Date
+  # Append-only history entries (operation, values, actor, time).
+  history: Any
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# One row per issued AA number. The unique column is the never-reuse guarantee
+# and the allocation lock; renewal marks the old row replacedOn.
+type AccreditationNumber @table {
+  aaNumber: String! @unique
+  member: Member!
+  accreditation: Accreditation!
+  # YYMM the number belongs to.
+  month: String!
+  sequence: Int!
+  issuedOn: Date!
+  replacedOn: Date
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type RegistrationApplication @table {
+  # OST (only OST applications are submitted publicly in this phase).
+  classification: String!
+  member: Member
+  account: UserAccount
+  sponsorMember: Member
+  # draft | submitted | pending_review | needs_info | approved | rejected | withdrawn
+  status: String!
+  # Sponsor name and designation as submitted, for the office queue.
+  sponsorLabel: String!
+  reference: String! @unique
+  applicant: Any
+  version: Int! @default(value: 1)
+  versions: Any
+  completion: Any
+  # Private correction link token; set only while the application is returned.
+  correctionToken: String @unique
+  decisionReason: String
+  history: Any
+  reviewer: UserAccount
+  submittedAt: Timestamp
+  decidedAt: Timestamp
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# Effective-dated vacant leader seat (doc 02 section 5.1.1). The team stays in place.
+type SeatVacancy @table {
+  seatMember: Member!
+  holderEndDate: Date!
+  startDate: Date!
+  filledOn: Date
+  # promotion | transfer
+  filledMethod: String
+  filledByMember: Member
+  recordedBy: UserAccount
+  recordedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ---------------------------------------------------------------- F3: customer imports
+type CustomerImportJob @table {
+  fileName: String!
+  actor: UserAccount
+  totalRows: Int!
+  createdCount: Int!
+  needsReviewCount: Int!
+  invalidCount: Int!
+  # Internal ids of the drafts created by this job.
+  createdCustomerIds: Any
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# Diagnostics only: no applicant fields are copied here.
+type CustomerImportRow @table {
+  job: CustomerImportJob!
+  rowNumber: Int!
+  # ready | needs_review | invalid
+  status: String!
+  errors: Any
+  warnings: Any
 }

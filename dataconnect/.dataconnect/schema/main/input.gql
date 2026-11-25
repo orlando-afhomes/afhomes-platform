@@ -5,6 +5,18 @@ It has the same format as `AccountStatusEvent_Key`, but is only used as mutation
 """
 scalar AccountStatusEvent_KeyOutput
 """
+✨ `Accreditation_KeyOutput` returns the primary key fields of table type `Accreditation`.
+
+It has the same format as `Accreditation_Key`, but is only used as mutation return value.
+"""
+scalar Accreditation_KeyOutput
+"""
+✨ `AccreditationNumber_KeyOutput` returns the primary key fields of table type `AccreditationNumber`.
+
+It has the same format as `AccreditationNumber_Key`, but is only used as mutation return value.
+"""
+scalar AccreditationNumber_KeyOutput
+"""
 ✨ `AuditEvent_KeyOutput` returns the primary key fields of table type `AuditEvent`.
 
 It has the same format as `AuditEvent_Key`, but is only used as mutation return value.
@@ -22,6 +34,18 @@ scalar Contract_KeyOutput
 It has the same format as `Customer_Key`, but is only used as mutation return value.
 """
 scalar Customer_KeyOutput
+"""
+✨ `CustomerImportJob_KeyOutput` returns the primary key fields of table type `CustomerImportJob`.
+
+It has the same format as `CustomerImportJob_Key`, but is only used as mutation return value.
+"""
+scalar CustomerImportJob_KeyOutput
+"""
+✨ `CustomerImportRow_KeyOutput` returns the primary key fields of table type `CustomerImportRow`.
+
+It has the same format as `CustomerImportRow_Key`, but is only used as mutation return value.
+"""
+scalar CustomerImportRow_KeyOutput
 """
 ✨ `Department_KeyOutput` returns the primary key fields of table type `Department`.
 
@@ -89,6 +113,12 @@ It has the same format as `ReferenceEntry_Key`, but is only used as mutation ret
 """
 scalar ReferenceEntry_KeyOutput
 """
+✨ `RegistrationApplication_KeyOutput` returns the primary key fields of table type `RegistrationApplication`.
+
+It has the same format as `RegistrationApplication_Key`, but is only used as mutation return value.
+"""
+scalar RegistrationApplication_KeyOutput
+"""
 ✨ `RoleAssignment_KeyOutput` returns the primary key fields of table type `RoleAssignment`.
 
 It has the same format as `RoleAssignment_Key`, but is only used as mutation return value.
@@ -106,6 +136,12 @@ scalar Sale_KeyOutput
 It has the same format as `SaleAdjustment_Key`, but is only used as mutation return value.
 """
 scalar SaleAdjustment_KeyOutput
+"""
+✨ `SeatVacancy_KeyOutput` returns the primary key fields of table type `SeatVacancy`.
+
+It has the same format as `SeatVacancy_Key`, but is only used as mutation return value.
+"""
+scalar SeatVacancy_KeyOutput
 """
 ✨ `StaffMember_KeyOutput` returns the primary key fields of table type `StaffMember`.
 
@@ -434,6 +470,1012 @@ input AccountStatusEvent_Order {
   ✨ Generated from Field `AccountStatusEvent`.`occurredAt_max` of type `Timestamp`
   """
   occurredAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'Accreditation'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Accreditation_Data {
+  """
+  ✨ Generated from Field `Accreditation`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Accreditation`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Accreditation`.`memberId` of type `UUID!`
+  """
+  memberId: UUID
+  """
+  ✨ `_expr` server value variant of `memberId` (✨ Generated from Field `Accreditation`.`memberId` of type `UUID!`)
+  """
+  memberId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Accreditation`.`member` of type `Member!`
+  """
+  member: Member_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Accreditation`.`aaNumber` of type `String`
+  """
+  aaNumber: String
+  """
+  ✨ `_expr` server value variant of `aaNumber` (✨ Generated from Field `Accreditation`.`aaNumber` of type `String`)
+  """
+  aaNumber_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Accreditation`.`adminStatus` of type `String!`
+  """
+  adminStatus: String
+  """
+  ✨ `_expr` server value variant of `adminStatus` (✨ Generated from Field `Accreditation`.`adminStatus` of type `String!`)
+  """
+  adminStatus_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Accreditation`.`classification` of type `String!`
+  """
+  classification: String
+  """
+  ✨ `_expr` server value variant of `classification` (✨ Generated from Field `Accreditation`.`classification` of type `String!`)
+  """
+  classification_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Accreditation`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Accreditation`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `Accreditation`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `Accreditation`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Accreditation`.`effectiveDate` of type `Date`
+  """
+  effectiveDate: Date
+  """
+  ✨ `_date` server value variant of `effectiveDate` (✨ Generated from Field `Accreditation`.`effectiveDate` of type `Date`)
+  """
+  effectiveDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `effectiveDate` (✨ Generated from Field `Accreditation`.`effectiveDate` of type `Date`)
+  """
+  effectiveDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `effectiveDate` (✨ Generated from Field `Accreditation`.`effectiveDate` of type `Date`)
+  """
+  effectiveDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Accreditation`.`endDate` of type `Date`
+  """
+  endDate: Date
+  """
+  ✨ `_date` server value variant of `endDate` (✨ Generated from Field `Accreditation`.`endDate` of type `Date`)
+  """
+  endDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `endDate` (✨ Generated from Field `Accreditation`.`endDate` of type `Date`)
+  """
+  endDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `endDate` (✨ Generated from Field `Accreditation`.`endDate` of type `Date`)
+  """
+  endDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Accreditation`.`expiryDate` of type `Date`
+  """
+  expiryDate: Date
+  """
+  ✨ `_date` server value variant of `expiryDate` (✨ Generated from Field `Accreditation`.`expiryDate` of type `Date`)
+  """
+  expiryDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `expiryDate` (✨ Generated from Field `Accreditation`.`expiryDate` of type `Date`)
+  """
+  expiryDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `expiryDate` (✨ Generated from Field `Accreditation`.`expiryDate` of type `Date`)
+  """
+  expiryDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Accreditation`.`history` of type `Any`
+  """
+  history: Any
+  """
+  ✨ `_expr` server value variant of `history` (✨ Generated from Field `Accreditation`.`history` of type `Any`)
+  """
+  history_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Accreditation`.`originalAccreditationDate` of type `Date`
+  """
+  originalAccreditationDate: Date
+  """
+  ✨ `_date` server value variant of `originalAccreditationDate` (✨ Generated from Field `Accreditation`.`originalAccreditationDate` of type `Date`)
+  """
+  originalAccreditationDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `originalAccreditationDate` (✨ Generated from Field `Accreditation`.`originalAccreditationDate` of type `Date`)
+  """
+  originalAccreditationDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `originalAccreditationDate` (✨ Generated from Field `Accreditation`.`originalAccreditationDate` of type `Date`)
+  """
+  originalAccreditationDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Accreditation`.`suspensionEffectiveDate` of type `Date`
+  """
+  suspensionEffectiveDate: Date
+  """
+  ✨ `_date` server value variant of `suspensionEffectiveDate` (✨ Generated from Field `Accreditation`.`suspensionEffectiveDate` of type `Date`)
+  """
+  suspensionEffectiveDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `suspensionEffectiveDate` (✨ Generated from Field `Accreditation`.`suspensionEffectiveDate` of type `Date`)
+  """
+  suspensionEffectiveDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `suspensionEffectiveDate` (✨ Generated from Field `Accreditation`.`suspensionEffectiveDate` of type `Date`)
+  """
+  suspensionEffectiveDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Accreditation`.`accreditationNumbers_on_accreditation` of type `[AccreditationNumber!]!`
+  """
+  accreditationNumbers_on_accreditation: [AccreditationNumber_Data!]
+}
+"""
+✨ Generated filter input type for table 'Accreditation'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Accreditation_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Accreditation_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Accreditation_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Accreditation_Filter!]
+  """
+  ✨ Generated from Field `Accreditation`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`memberId` of type `UUID!`
+  """
+  memberId: UUID_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`member` of type `Member!`
+  """
+  member: Member_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`aaNumber` of type `String`
+  """
+  aaNumber: String_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`adminStatus` of type `String!`
+  """
+  adminStatus: String_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`classification` of type `String!`
+  """
+  classification: String_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`effectiveDate` of type `Date`
+  """
+  effectiveDate: Date_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`endDate` of type `Date`
+  """
+  endDate: Date_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`expiryDate` of type `Date`
+  """
+  expiryDate: Date_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`history` of type `Any`
+  """
+  history: Any_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`originalAccreditationDate` of type `Date`
+  """
+  originalAccreditationDate: Date_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`suspensionEffectiveDate` of type `Date`
+  """
+  suspensionEffectiveDate: Date_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`accreditationNumbers_on_accreditation` of type `[AccreditationNumber!]!`
+  """
+  accreditationNumbers_on_accreditation: AccreditationNumber_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'Accreditation'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Accreditation_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Accreditation_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Accreditation_Filter
+}
+"""
+✨ Generated having input type for table 'Accreditation'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Accreditation_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Accreditation_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Accreditation_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Accreditation_Having!]
+  """
+  ✨ Generated from Field `Accreditation`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`aaNumber_count` of type `Int!`
+  """
+  aaNumber_count: Int_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`adminStatus_count` of type `Int!`
+  """
+  adminStatus_count: Int_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`classification_count` of type `Int!`
+  """
+  classification_count: Int_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`effectiveDate_count` of type `Int!`
+  """
+  effectiveDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`endDate_count` of type `Int!`
+  """
+  endDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`expiryDate_count` of type `Int!`
+  """
+  expiryDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`history_count` of type `Int!`
+  """
+  history_count: Int_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`memberId_count` of type `Int!`
+  """
+  memberId_count: Int_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`originalAccreditationDate_count` of type `Int!`
+  """
+  originalAccreditationDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`suspensionEffectiveDate_count` of type `Int!`
+  """
+  suspensionEffectiveDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`effectiveDate_min` of type `Date`
+  """
+  effectiveDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`endDate_min` of type `Date`
+  """
+  endDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`expiryDate_min` of type `Date`
+  """
+  expiryDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`history_min` of type `Any`
+  """
+  history_min: Any_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`originalAccreditationDate_min` of type `Date`
+  """
+  originalAccreditationDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`suspensionEffectiveDate_min` of type `Date`
+  """
+  suspensionEffectiveDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`effectiveDate_max` of type `Date`
+  """
+  effectiveDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`endDate_max` of type `Date`
+  """
+  endDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`expiryDate_max` of type `Date`
+  """
+  expiryDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`history_max` of type `Any`
+  """
+  history_max: Any_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`originalAccreditationDate_max` of type `Date`
+  """
+  originalAccreditationDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Accreditation`.`suspensionEffectiveDate_max` of type `Date`
+  """
+  suspensionEffectiveDate_max: Date_Filter
+}
+"""
+✨ Generated key input type for table 'Accreditation'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Accreditation_Key {
+  """
+  ✨ Generated from Field `Accreditation`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Accreditation`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Accreditation'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Accreditation_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Accreditation_Filter
+}
+"""
+✨ Generated order input type for table 'Accreditation'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Accreditation_Order {
+  """
+  ✨ Generated from Field `Accreditation`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`memberId` of type `UUID!`
+  """
+  memberId: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`member` of type `Member!`
+  """
+  member: Member_Order
+  """
+  ✨ Generated from Field `Accreditation`.`aaNumber` of type `String`
+  """
+  aaNumber: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`adminStatus` of type `String!`
+  """
+  adminStatus: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`classification` of type `String!`
+  """
+  classification: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`effectiveDate` of type `Date`
+  """
+  effectiveDate: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`endDate` of type `Date`
+  """
+  endDate: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`expiryDate` of type `Date`
+  """
+  expiryDate: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`history` of type `Any`
+  """
+  history: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`originalAccreditationDate` of type `Date`
+  """
+  originalAccreditationDate: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`suspensionEffectiveDate` of type `Date`
+  """
+  suspensionEffectiveDate: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`aaNumber_count` of type `Int!`
+  """
+  aaNumber_count: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`adminStatus_count` of type `Int!`
+  """
+  adminStatus_count: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`classification_count` of type `Int!`
+  """
+  classification_count: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`effectiveDate_count` of type `Int!`
+  """
+  effectiveDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`endDate_count` of type `Int!`
+  """
+  endDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`expiryDate_count` of type `Int!`
+  """
+  expiryDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`history_count` of type `Int!`
+  """
+  history_count: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`memberId_count` of type `Int!`
+  """
+  memberId_count: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`originalAccreditationDate_count` of type `Int!`
+  """
+  originalAccreditationDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`suspensionEffectiveDate_count` of type `Int!`
+  """
+  suspensionEffectiveDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`effectiveDate_min` of type `Date`
+  """
+  effectiveDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`endDate_min` of type `Date`
+  """
+  endDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`expiryDate_min` of type `Date`
+  """
+  expiryDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`history_min` of type `Any`
+  """
+  history_min: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`originalAccreditationDate_min` of type `Date`
+  """
+  originalAccreditationDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`suspensionEffectiveDate_min` of type `Date`
+  """
+  suspensionEffectiveDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`effectiveDate_max` of type `Date`
+  """
+  effectiveDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`endDate_max` of type `Date`
+  """
+  endDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`expiryDate_max` of type `Date`
+  """
+  expiryDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`history_max` of type `Any`
+  """
+  history_max: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`originalAccreditationDate_max` of type `Date`
+  """
+  originalAccreditationDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Accreditation`.`suspensionEffectiveDate_max` of type `Date`
+  """
+  suspensionEffectiveDate_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'AccreditationNumber'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input AccreditationNumber_Data {
+  """
+  ✨ Generated from Field `AccreditationNumber`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `AccreditationNumber`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccreditationNumber`.`accreditationId` of type `UUID!`
+  """
+  accreditationId: UUID
+  """
+  ✨ `_expr` server value variant of `accreditationId` (✨ Generated from Field `AccreditationNumber`.`accreditationId` of type `UUID!`)
+  """
+  accreditationId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccreditationNumber`.`memberId` of type `UUID!`
+  """
+  memberId: UUID
+  """
+  ✨ `_expr` server value variant of `memberId` (✨ Generated from Field `AccreditationNumber`.`memberId` of type `UUID!`)
+  """
+  memberId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccreditationNumber`.`accreditation` of type `Accreditation!`
+  """
+  accreditation: Accreditation_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccreditationNumber`.`member` of type `Member!`
+  """
+  member: Member_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccreditationNumber`.`aaNumber` of type `String!`
+  """
+  aaNumber: String
+  """
+  ✨ `_expr` server value variant of `aaNumber` (✨ Generated from Field `AccreditationNumber`.`aaNumber` of type `String!`)
+  """
+  aaNumber_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccreditationNumber`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `AccreditationNumber`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `AccreditationNumber`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `AccreditationNumber`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccreditationNumber`.`issuedOn` of type `Date!`
+  """
+  issuedOn: Date
+  """
+  ✨ `_date` server value variant of `issuedOn` (✨ Generated from Field `AccreditationNumber`.`issuedOn` of type `Date!`)
+  """
+  issuedOn_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `issuedOn` (✨ Generated from Field `AccreditationNumber`.`issuedOn` of type `Date!`)
+  """
+  issuedOn_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `issuedOn` (✨ Generated from Field `AccreditationNumber`.`issuedOn` of type `Date!`)
+  """
+  issuedOn_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccreditationNumber`.`month` of type `String!`
+  """
+  month: String
+  """
+  ✨ `_expr` server value variant of `month` (✨ Generated from Field `AccreditationNumber`.`month` of type `String!`)
+  """
+  month_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccreditationNumber`.`replacedOn` of type `Date`
+  """
+  replacedOn: Date
+  """
+  ✨ `_date` server value variant of `replacedOn` (✨ Generated from Field `AccreditationNumber`.`replacedOn` of type `Date`)
+  """
+  replacedOn_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `replacedOn` (✨ Generated from Field `AccreditationNumber`.`replacedOn` of type `Date`)
+  """
+  replacedOn_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `replacedOn` (✨ Generated from Field `AccreditationNumber`.`replacedOn` of type `Date`)
+  """
+  replacedOn_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AccreditationNumber`.`sequence` of type `Int!`
+  """
+  sequence: Int
+  """
+  ✨ `_expr` server value variant of `sequence` (✨ Generated from Field `AccreditationNumber`.`sequence` of type `Int!`)
+  """
+  sequence_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `sequence` (✨ Generated from Field `AccreditationNumber`.`sequence` of type `Int!`)
+  """
+  sequence_update: [Int_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'AccreditationNumber'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input AccreditationNumber_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [AccreditationNumber_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: AccreditationNumber_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [AccreditationNumber_Filter!]
+  """
+  ✨ Generated from Field `AccreditationNumber`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`accreditationId` of type `UUID!`
+  """
+  accreditationId: UUID_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`memberId` of type `UUID!`
+  """
+  memberId: UUID_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`accreditation` of type `Accreditation!`
+  """
+  accreditation: Accreditation_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`member` of type `Member!`
+  """
+  member: Member_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`aaNumber` of type `String!`
+  """
+  aaNumber: String_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`issuedOn` of type `Date!`
+  """
+  issuedOn: Date_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`month` of type `String!`
+  """
+  month: String_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`replacedOn` of type `Date`
+  """
+  replacedOn: Date_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`sequence` of type `Int!`
+  """
+  sequence: Int_Filter
+}
+"""
+✨ Generated first-row input type for table 'AccreditationNumber'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input AccreditationNumber_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [AccreditationNumber_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: AccreditationNumber_Filter
+}
+"""
+✨ Generated having input type for table 'AccreditationNumber'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input AccreditationNumber_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [AccreditationNumber_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: AccreditationNumber_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [AccreditationNumber_Having!]
+  """
+  ✨ Generated from Field `AccreditationNumber`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`aaNumber_count` of type `Int!`
+  """
+  aaNumber_count: Int_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`accreditationId_count` of type `Int!`
+  """
+  accreditationId_count: Int_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`issuedOn_count` of type `Int!`
+  """
+  issuedOn_count: Int_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`memberId_count` of type `Int!`
+  """
+  memberId_count: Int_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`month_count` of type `Int!`
+  """
+  month_count: Int_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`replacedOn_count` of type `Int!`
+  """
+  replacedOn_count: Int_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`sequence_count` of type `Int!`
+  """
+  sequence_count: Int_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`sequence_sum` of type `Int`
+  """
+  sequence_sum: Int_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`sequence_avg` of type `Float`
+  """
+  sequence_avg: Float_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`issuedOn_min` of type `Date`
+  """
+  issuedOn_min: Date_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`replacedOn_min` of type `Date`
+  """
+  replacedOn_min: Date_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`sequence_min` of type `Int`
+  """
+  sequence_min: Int_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`issuedOn_max` of type `Date`
+  """
+  issuedOn_max: Date_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`replacedOn_max` of type `Date`
+  """
+  replacedOn_max: Date_Filter
+  """
+  ✨ Generated from Field `AccreditationNumber`.`sequence_max` of type `Int`
+  """
+  sequence_max: Int_Filter
+}
+"""
+✨ Generated key input type for table 'AccreditationNumber'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input AccreditationNumber_Key {
+  """
+  ✨ Generated from Field `AccreditationNumber`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `AccreditationNumber`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'AccreditationNumber'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input AccreditationNumber_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: AccreditationNumber_Filter
+}
+"""
+✨ Generated order input type for table 'AccreditationNumber'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input AccreditationNumber_Order {
+  """
+  ✨ Generated from Field `AccreditationNumber`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`accreditationId` of type `UUID!`
+  """
+  accreditationId: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`memberId` of type `UUID!`
+  """
+  memberId: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`accreditation` of type `Accreditation!`
+  """
+  accreditation: Accreditation_Order
+  """
+  ✨ Generated from Field `AccreditationNumber`.`member` of type `Member!`
+  """
+  member: Member_Order
+  """
+  ✨ Generated from Field `AccreditationNumber`.`aaNumber` of type `String!`
+  """
+  aaNumber: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`issuedOn` of type `Date!`
+  """
+  issuedOn: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`month` of type `String!`
+  """
+  month: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`replacedOn` of type `Date`
+  """
+  replacedOn: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`sequence` of type `Int!`
+  """
+  sequence: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`aaNumber_count` of type `Int!`
+  """
+  aaNumber_count: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`accreditationId_count` of type `Int!`
+  """
+  accreditationId_count: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`issuedOn_count` of type `Int!`
+  """
+  issuedOn_count: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`memberId_count` of type `Int!`
+  """
+  memberId_count: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`month_count` of type `Int!`
+  """
+  month_count: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`replacedOn_count` of type `Int!`
+  """
+  replacedOn_count: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`sequence_count` of type `Int!`
+  """
+  sequence_count: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`sequence_sum` of type `Int`
+  """
+  sequence_sum: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`sequence_avg` of type `Float`
+  """
+  sequence_avg: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`issuedOn_min` of type `Date`
+  """
+  issuedOn_min: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`replacedOn_min` of type `Date`
+  """
+  replacedOn_min: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`sequence_min` of type `Int`
+  """
+  sequence_min: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`issuedOn_max` of type `Date`
+  """
+  issuedOn_max: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`replacedOn_max` of type `Date`
+  """
+  replacedOn_max: OrderDirection
+  """
+  ✨ Generated from Field `AccreditationNumber`.`sequence_max` of type `Int`
+  """
+  sequence_max: OrderDirection
 }
 """
 ✨ Generated data input type for table 'AuditEvent'. It includes all necessary fields for creating or upserting rows into table.
@@ -1398,6 +2440,22 @@ input Customer_Data {
   """
   customerNumber_expr: String_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `Customer`.`dateOfBirth` of type `Date`
+  """
+  dateOfBirth: Date
+  """
+  ✨ `_date` server value variant of `dateOfBirth` (✨ Generated from Field `Customer`.`dateOfBirth` of type `Date`)
+  """
+  dateOfBirth_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `dateOfBirth` (✨ Generated from Field `Customer`.`dateOfBirth` of type `Date`)
+  """
+  dateOfBirth_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `dateOfBirth` (✨ Generated from Field `Customer`.`dateOfBirth` of type `Date`)
+  """
+  dateOfBirth_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `Customer`.`displayName` of type `String!`
   """
   displayName: String
@@ -1405,6 +2463,30 @@ input Customer_Data {
   ✨ `_expr` server value variant of `displayName` (✨ Generated from Field `Customer`.`displayName` of type `String!`)
   """
   displayName_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Customer`.`normalizedEmail` of type `String`
+  """
+  normalizedEmail: String
+  """
+  ✨ `_expr` server value variant of `normalizedEmail` (✨ Generated from Field `Customer`.`normalizedEmail` of type `String`)
+  """
+  normalizedEmail_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Customer`.`normalizedMobile` of type `String`
+  """
+  normalizedMobile: String
+  """
+  ✨ `_expr` server value variant of `normalizedMobile` (✨ Generated from Field `Customer`.`normalizedMobile` of type `String`)
+  """
+  normalizedMobile_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Customer`.`normalizedName` of type `String`
+  """
+  normalizedName: String
+  """
+  ✨ `_expr` server value variant of `normalizedName` (✨ Generated from Field `Customer`.`normalizedName` of type `String`)
+  """
+  normalizedName_expr: String_Expr @fdc_forbiddenInVariables
   """
   ✨ Generated from Field `Customer`.`profile` of type `Any`
   """
@@ -1471,9 +2553,25 @@ input Customer_Filter {
   """
   customerNumber: String_Filter
   """
+  ✨ Generated from Field `Customer`.`dateOfBirth` of type `Date`
+  """
+  dateOfBirth: Date_Filter
+  """
   ✨ Generated from Field `Customer`.`displayName` of type `String!`
   """
   displayName: String_Filter
+  """
+  ✨ Generated from Field `Customer`.`normalizedEmail` of type `String`
+  """
+  normalizedEmail: String_Filter
+  """
+  ✨ Generated from Field `Customer`.`normalizedMobile` of type `String`
+  """
+  normalizedMobile: String_Filter
+  """
+  ✨ Generated from Field `Customer`.`normalizedName` of type `String`
+  """
+  normalizedName: String_Filter
   """
   ✨ Generated from Field `Customer`.`profile` of type `Any`
   """
@@ -1541,6 +2639,10 @@ input Customer_Having {
   """
   customerNumber_count: Int_Filter
   """
+  ✨ Generated from Field `Customer`.`dateOfBirth_count` of type `Int!`
+  """
+  dateOfBirth_count: Int_Filter
+  """
   ✨ Generated from Field `Customer`.`displayName_count` of type `Int!`
   """
   displayName_count: Int_Filter
@@ -1548,6 +2650,18 @@ input Customer_Having {
   ✨ Generated from Field `Customer`.`id_count` of type `Int!`
   """
   id_count: Int_Filter
+  """
+  ✨ Generated from Field `Customer`.`normalizedEmail_count` of type `Int!`
+  """
+  normalizedEmail_count: Int_Filter
+  """
+  ✨ Generated from Field `Customer`.`normalizedMobile_count` of type `Int!`
+  """
+  normalizedMobile_count: Int_Filter
+  """
+  ✨ Generated from Field `Customer`.`normalizedName_count` of type `Int!`
+  """
+  normalizedName_count: Int_Filter
   """
   ✨ Generated from Field `Customer`.`ownerMemberId_count` of type `Int!`
   """
@@ -1561,9 +2675,17 @@ input Customer_Having {
   """
   status_count: Int_Filter
   """
+  ✨ Generated from Field `Customer`.`dateOfBirth_min` of type `Date`
+  """
+  dateOfBirth_min: Date_Filter
+  """
   ✨ Generated from Field `Customer`.`profile_min` of type `Any`
   """
   profile_min: Any_Filter
+  """
+  ✨ Generated from Field `Customer`.`dateOfBirth_max` of type `Date`
+  """
+  dateOfBirth_max: Date_Filter
   """
   ✨ Generated from Field `Customer`.`profile_max` of type `Any`
   """
@@ -1620,9 +2742,25 @@ input Customer_Order {
   """
   customerNumber: OrderDirection
   """
+  ✨ Generated from Field `Customer`.`dateOfBirth` of type `Date`
+  """
+  dateOfBirth: OrderDirection
+  """
   ✨ Generated from Field `Customer`.`displayName` of type `String!`
   """
   displayName: OrderDirection
+  """
+  ✨ Generated from Field `Customer`.`normalizedEmail` of type `String`
+  """
+  normalizedEmail: OrderDirection
+  """
+  ✨ Generated from Field `Customer`.`normalizedMobile` of type `String`
+  """
+  normalizedMobile: OrderDirection
+  """
+  ✨ Generated from Field `Customer`.`normalizedName` of type `String`
+  """
+  normalizedName: OrderDirection
   """
   ✨ Generated from Field `Customer`.`profile` of type `Any`
   """
@@ -1644,6 +2782,10 @@ input Customer_Order {
   """
   customerNumber_count: OrderDirection
   """
+  ✨ Generated from Field `Customer`.`dateOfBirth_count` of type `Int!`
+  """
+  dateOfBirth_count: OrderDirection
+  """
   ✨ Generated from Field `Customer`.`displayName_count` of type `Int!`
   """
   displayName_count: OrderDirection
@@ -1651,6 +2793,18 @@ input Customer_Order {
   ✨ Generated from Field `Customer`.`id_count` of type `Int!`
   """
   id_count: OrderDirection
+  """
+  ✨ Generated from Field `Customer`.`normalizedEmail_count` of type `Int!`
+  """
+  normalizedEmail_count: OrderDirection
+  """
+  ✨ Generated from Field `Customer`.`normalizedMobile_count` of type `Int!`
+  """
+  normalizedMobile_count: OrderDirection
+  """
+  ✨ Generated from Field `Customer`.`normalizedName_count` of type `Int!`
+  """
+  normalizedName_count: OrderDirection
   """
   ✨ Generated from Field `Customer`.`ownerMemberId_count` of type `Int!`
   """
@@ -1664,13 +2818,855 @@ input Customer_Order {
   """
   status_count: OrderDirection
   """
+  ✨ Generated from Field `Customer`.`dateOfBirth_min` of type `Date`
+  """
+  dateOfBirth_min: OrderDirection
+  """
   ✨ Generated from Field `Customer`.`profile_min` of type `Any`
   """
   profile_min: OrderDirection
   """
+  ✨ Generated from Field `Customer`.`dateOfBirth_max` of type `Date`
+  """
+  dateOfBirth_max: OrderDirection
+  """
   ✨ Generated from Field `Customer`.`profile_max` of type `Any`
   """
   profile_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'CustomerImportJob'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input CustomerImportJob_Data {
+  """
+  ✨ Generated from Field `CustomerImportJob`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `CustomerImportJob`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportJob`.`actorId` of type `UUID`
+  """
+  actorId: UUID
+  """
+  ✨ `_expr` server value variant of `actorId` (✨ Generated from Field `CustomerImportJob`.`actorId` of type `UUID`)
+  """
+  actorId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportJob`.`actor` of type `UserAccount`
+  """
+  actor: UserAccount_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `CustomerImportJob`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `CustomerImportJob`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `CustomerImportJob`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCount` of type `Int!`
+  """
+  createdCount: Int
+  """
+  ✨ `_expr` server value variant of `createdCount` (✨ Generated from Field `CustomerImportJob`.`createdCount` of type `Int!`)
+  """
+  createdCount_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdCount` (✨ Generated from Field `CustomerImportJob`.`createdCount` of type `Int!`)
+  """
+  createdCount_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCustomerIds` of type `Any`
+  """
+  createdCustomerIds: Any
+  """
+  ✨ `_expr` server value variant of `createdCustomerIds` (✨ Generated from Field `CustomerImportJob`.`createdCustomerIds` of type `Any`)
+  """
+  createdCustomerIds_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportJob`.`fileName` of type `String!`
+  """
+  fileName: String
+  """
+  ✨ `_expr` server value variant of `fileName` (✨ Generated from Field `CustomerImportJob`.`fileName` of type `String!`)
+  """
+  fileName_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportJob`.`invalidCount` of type `Int!`
+  """
+  invalidCount: Int
+  """
+  ✨ `_expr` server value variant of `invalidCount` (✨ Generated from Field `CustomerImportJob`.`invalidCount` of type `Int!`)
+  """
+  invalidCount_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `invalidCount` (✨ Generated from Field `CustomerImportJob`.`invalidCount` of type `Int!`)
+  """
+  invalidCount_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportJob`.`needsReviewCount` of type `Int!`
+  """
+  needsReviewCount: Int
+  """
+  ✨ `_expr` server value variant of `needsReviewCount` (✨ Generated from Field `CustomerImportJob`.`needsReviewCount` of type `Int!`)
+  """
+  needsReviewCount_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `needsReviewCount` (✨ Generated from Field `CustomerImportJob`.`needsReviewCount` of type `Int!`)
+  """
+  needsReviewCount_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportJob`.`totalRows` of type `Int!`
+  """
+  totalRows: Int
+  """
+  ✨ `_expr` server value variant of `totalRows` (✨ Generated from Field `CustomerImportJob`.`totalRows` of type `Int!`)
+  """
+  totalRows_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `totalRows` (✨ Generated from Field `CustomerImportJob`.`totalRows` of type `Int!`)
+  """
+  totalRows_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportJob`.`customerImportRows_on_job` of type `[CustomerImportRow!]!`
+  """
+  customerImportRows_on_job: [CustomerImportRow_Data!]
+}
+"""
+✨ Generated filter input type for table 'CustomerImportJob'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input CustomerImportJob_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [CustomerImportJob_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: CustomerImportJob_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [CustomerImportJob_Filter!]
+  """
+  ✨ Generated from Field `CustomerImportJob`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`actorId` of type `UUID`
+  """
+  actorId: UUID_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`actor` of type `UserAccount`
+  """
+  actor: UserAccount_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCount` of type `Int!`
+  """
+  createdCount: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCustomerIds` of type `Any`
+  """
+  createdCustomerIds: Any_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`fileName` of type `String!`
+  """
+  fileName: String_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`invalidCount` of type `Int!`
+  """
+  invalidCount: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`needsReviewCount` of type `Int!`
+  """
+  needsReviewCount: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`totalRows` of type `Int!`
+  """
+  totalRows: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`customerImportRows_on_job` of type `[CustomerImportRow!]!`
+  """
+  customerImportRows_on_job: CustomerImportRow_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'CustomerImportJob'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input CustomerImportJob_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [CustomerImportJob_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: CustomerImportJob_Filter
+}
+"""
+✨ Generated having input type for table 'CustomerImportJob'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input CustomerImportJob_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [CustomerImportJob_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: CustomerImportJob_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [CustomerImportJob_Having!]
+  """
+  ✨ Generated from Field `CustomerImportJob`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`actorId_count` of type `Int!`
+  """
+  actorId_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCount_count` of type `Int!`
+  """
+  createdCount_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCustomerIds_count` of type `Int!`
+  """
+  createdCustomerIds_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`fileName_count` of type `Int!`
+  """
+  fileName_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`invalidCount_count` of type `Int!`
+  """
+  invalidCount_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`needsReviewCount_count` of type `Int!`
+  """
+  needsReviewCount_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`totalRows_count` of type `Int!`
+  """
+  totalRows_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCount_sum` of type `Int`
+  """
+  createdCount_sum: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`invalidCount_sum` of type `Int`
+  """
+  invalidCount_sum: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`needsReviewCount_sum` of type `Int`
+  """
+  needsReviewCount_sum: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`totalRows_sum` of type `Int`
+  """
+  totalRows_sum: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCount_avg` of type `Float`
+  """
+  createdCount_avg: Float_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`invalidCount_avg` of type `Float`
+  """
+  invalidCount_avg: Float_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`needsReviewCount_avg` of type `Float`
+  """
+  needsReviewCount_avg: Float_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`totalRows_avg` of type `Float`
+  """
+  totalRows_avg: Float_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCount_min` of type `Int`
+  """
+  createdCount_min: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCustomerIds_min` of type `Any`
+  """
+  createdCustomerIds_min: Any_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`invalidCount_min` of type `Int`
+  """
+  invalidCount_min: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`needsReviewCount_min` of type `Int`
+  """
+  needsReviewCount_min: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`totalRows_min` of type `Int`
+  """
+  totalRows_min: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCount_max` of type `Int`
+  """
+  createdCount_max: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCustomerIds_max` of type `Any`
+  """
+  createdCustomerIds_max: Any_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`invalidCount_max` of type `Int`
+  """
+  invalidCount_max: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`needsReviewCount_max` of type `Int`
+  """
+  needsReviewCount_max: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportJob`.`totalRows_max` of type `Int`
+  """
+  totalRows_max: Int_Filter
+}
+"""
+✨ Generated key input type for table 'CustomerImportJob'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input CustomerImportJob_Key {
+  """
+  ✨ Generated from Field `CustomerImportJob`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `CustomerImportJob`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'CustomerImportJob'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input CustomerImportJob_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: CustomerImportJob_Filter
+}
+"""
+✨ Generated order input type for table 'CustomerImportJob'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input CustomerImportJob_Order {
+  """
+  ✨ Generated from Field `CustomerImportJob`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`actorId` of type `UUID`
+  """
+  actorId: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`actor` of type `UserAccount`
+  """
+  actor: UserAccount_Order
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCount` of type `Int!`
+  """
+  createdCount: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCustomerIds` of type `Any`
+  """
+  createdCustomerIds: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`fileName` of type `String!`
+  """
+  fileName: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`invalidCount` of type `Int!`
+  """
+  invalidCount: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`needsReviewCount` of type `Int!`
+  """
+  needsReviewCount: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`totalRows` of type `Int!`
+  """
+  totalRows: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`actorId_count` of type `Int!`
+  """
+  actorId_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCount_count` of type `Int!`
+  """
+  createdCount_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCustomerIds_count` of type `Int!`
+  """
+  createdCustomerIds_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`fileName_count` of type `Int!`
+  """
+  fileName_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`invalidCount_count` of type `Int!`
+  """
+  invalidCount_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`needsReviewCount_count` of type `Int!`
+  """
+  needsReviewCount_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`totalRows_count` of type `Int!`
+  """
+  totalRows_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCount_sum` of type `Int`
+  """
+  createdCount_sum: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`invalidCount_sum` of type `Int`
+  """
+  invalidCount_sum: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`needsReviewCount_sum` of type `Int`
+  """
+  needsReviewCount_sum: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`totalRows_sum` of type `Int`
+  """
+  totalRows_sum: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCount_avg` of type `Float`
+  """
+  createdCount_avg: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`invalidCount_avg` of type `Float`
+  """
+  invalidCount_avg: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`needsReviewCount_avg` of type `Float`
+  """
+  needsReviewCount_avg: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`totalRows_avg` of type `Float`
+  """
+  totalRows_avg: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCount_min` of type `Int`
+  """
+  createdCount_min: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCustomerIds_min` of type `Any`
+  """
+  createdCustomerIds_min: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`invalidCount_min` of type `Int`
+  """
+  invalidCount_min: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`needsReviewCount_min` of type `Int`
+  """
+  needsReviewCount_min: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`totalRows_min` of type `Int`
+  """
+  totalRows_min: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCount_max` of type `Int`
+  """
+  createdCount_max: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`createdCustomerIds_max` of type `Any`
+  """
+  createdCustomerIds_max: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`invalidCount_max` of type `Int`
+  """
+  invalidCount_max: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`needsReviewCount_max` of type `Int`
+  """
+  needsReviewCount_max: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportJob`.`totalRows_max` of type `Int`
+  """
+  totalRows_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'CustomerImportRow'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input CustomerImportRow_Data {
+  """
+  ✨ Generated from Field `CustomerImportRow`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `CustomerImportRow`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportRow`.`jobId` of type `UUID!`
+  """
+  jobId: UUID
+  """
+  ✨ `_expr` server value variant of `jobId` (✨ Generated from Field `CustomerImportRow`.`jobId` of type `UUID!`)
+  """
+  jobId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportRow`.`job` of type `CustomerImportJob!`
+  """
+  job: CustomerImportJob_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportRow`.`errors` of type `Any`
+  """
+  errors: Any
+  """
+  ✨ `_expr` server value variant of `errors` (✨ Generated from Field `CustomerImportRow`.`errors` of type `Any`)
+  """
+  errors_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportRow`.`rowNumber` of type `Int!`
+  """
+  rowNumber: Int
+  """
+  ✨ `_expr` server value variant of `rowNumber` (✨ Generated from Field `CustomerImportRow`.`rowNumber` of type `Int!`)
+  """
+  rowNumber_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `rowNumber` (✨ Generated from Field `CustomerImportRow`.`rowNumber` of type `Int!`)
+  """
+  rowNumber_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportRow`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `CustomerImportRow`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomerImportRow`.`warnings` of type `Any`
+  """
+  warnings: Any
+  """
+  ✨ `_expr` server value variant of `warnings` (✨ Generated from Field `CustomerImportRow`.`warnings` of type `Any`)
+  """
+  warnings_expr: Any_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'CustomerImportRow'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input CustomerImportRow_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [CustomerImportRow_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: CustomerImportRow_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [CustomerImportRow_Filter!]
+  """
+  ✨ Generated from Field `CustomerImportRow`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`jobId` of type `UUID!`
+  """
+  jobId: UUID_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`job` of type `CustomerImportJob!`
+  """
+  job: CustomerImportJob_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`errors` of type `Any`
+  """
+  errors: Any_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`rowNumber` of type `Int!`
+  """
+  rowNumber: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`status` of type `String!`
+  """
+  status: String_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`warnings` of type `Any`
+  """
+  warnings: Any_Filter
+}
+"""
+✨ Generated first-row input type for table 'CustomerImportRow'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input CustomerImportRow_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [CustomerImportRow_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: CustomerImportRow_Filter
+}
+"""
+✨ Generated having input type for table 'CustomerImportRow'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input CustomerImportRow_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [CustomerImportRow_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: CustomerImportRow_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [CustomerImportRow_Having!]
+  """
+  ✨ Generated from Field `CustomerImportRow`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`errors_count` of type `Int!`
+  """
+  errors_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`jobId_count` of type `Int!`
+  """
+  jobId_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`rowNumber_count` of type `Int!`
+  """
+  rowNumber_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`warnings_count` of type `Int!`
+  """
+  warnings_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`rowNumber_sum` of type `Int`
+  """
+  rowNumber_sum: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`rowNumber_avg` of type `Float`
+  """
+  rowNumber_avg: Float_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`errors_min` of type `Any`
+  """
+  errors_min: Any_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`rowNumber_min` of type `Int`
+  """
+  rowNumber_min: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`warnings_min` of type `Any`
+  """
+  warnings_min: Any_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`errors_max` of type `Any`
+  """
+  errors_max: Any_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`rowNumber_max` of type `Int`
+  """
+  rowNumber_max: Int_Filter
+  """
+  ✨ Generated from Field `CustomerImportRow`.`warnings_max` of type `Any`
+  """
+  warnings_max: Any_Filter
+}
+"""
+✨ Generated key input type for table 'CustomerImportRow'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input CustomerImportRow_Key {
+  """
+  ✨ Generated from Field `CustomerImportRow`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `CustomerImportRow`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'CustomerImportRow'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input CustomerImportRow_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: CustomerImportRow_Filter
+}
+"""
+✨ Generated order input type for table 'CustomerImportRow'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input CustomerImportRow_Order {
+  """
+  ✨ Generated from Field `CustomerImportRow`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`jobId` of type `UUID!`
+  """
+  jobId: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`job` of type `CustomerImportJob!`
+  """
+  job: CustomerImportJob_Order
+  """
+  ✨ Generated from Field `CustomerImportRow`.`errors` of type `Any`
+  """
+  errors: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`rowNumber` of type `Int!`
+  """
+  rowNumber: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`warnings` of type `Any`
+  """
+  warnings: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`errors_count` of type `Int!`
+  """
+  errors_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`jobId_count` of type `Int!`
+  """
+  jobId_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`rowNumber_count` of type `Int!`
+  """
+  rowNumber_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`warnings_count` of type `Int!`
+  """
+  warnings_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`rowNumber_sum` of type `Int`
+  """
+  rowNumber_sum: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`rowNumber_avg` of type `Float`
+  """
+  rowNumber_avg: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`errors_min` of type `Any`
+  """
+  errors_min: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`rowNumber_min` of type `Int`
+  """
+  rowNumber_min: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`warnings_min` of type `Any`
+  """
+  warnings_min: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`errors_max` of type `Any`
+  """
+  errors_max: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`rowNumber_max` of type `Int`
+  """
+  rowNumber_max: OrderDirection
+  """
+  ✨ Generated from Field `CustomerImportRow`.`warnings_max` of type `Any`
+  """
+  warnings_max: OrderDirection
 }
 """
 ✨ Generated data input type for table 'Department'. It includes all necessary fields for creating or upserting rows into table.
@@ -3169,6 +5165,14 @@ input Member_Data {
   """
   displayName_expr: String_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `Member`.`parentHistory` of type `Any`
+  """
+  parentHistory: Any
+  """
+  ✨ `_expr` server value variant of `parentHistory` (✨ Generated from Field `Member`.`parentHistory` of type `Any`)
+  """
+  parentHistory_expr: Any_Expr @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `Member`.`referralCode` of type `String`
   """
   referralCode: String
@@ -3176,6 +5180,18 @@ input Member_Data {
   ✨ `_expr` server value variant of `referralCode` (✨ Generated from Field `Member`.`referralCode` of type `String`)
   """
   referralCode_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Member`.`rowVersion` of type `Int!`
+  """
+  rowVersion: Int
+  """
+  ✨ `_expr` server value variant of `rowVersion` (✨ Generated from Field `Member`.`rowVersion` of type `Int!`)
+  """
+  rowVersion_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `rowVersion` (✨ Generated from Field `Member`.`rowVersion` of type `Int!`)
+  """
+  rowVersion_update: [Int_Update!] @fdc_forbiddenInVariables
   """
   ✨ Generated from Field `Member`.`status` of type `String!`
   """
@@ -3193,6 +5209,14 @@ input Member_Data {
   """
   teamName_expr: String_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `Member`.`accreditations_on_member` of type `[Accreditation!]!`
+  """
+  accreditations_on_member: [Accreditation_Data!]
+  """
+  ✨ Generated from Field `Member`.`accreditationNumbers_on_member` of type `[AccreditationNumber!]!`
+  """
+  accreditationNumbers_on_member: [AccreditationNumber_Data!]
+  """
   ✨ Generated from Field `Member`.`contracts_on_sellerMember` of type `[Contract!]!`
   """
   contracts_on_sellerMember: [Contract_Data!]
@@ -3205,6 +5229,14 @@ input Member_Data {
   """
   members_on_parent: [Member_Data!]
   """
+  ✨ Generated from Field `Member`.`registrationApplications_on_member` of type `[RegistrationApplication!]!`
+  """
+  registrationApplications_on_member: [RegistrationApplication_Data!]
+  """
+  ✨ Generated from Field `Member`.`registrationApplications_on_sponsorMember` of type `[RegistrationApplication!]!`
+  """
+  registrationApplications_on_sponsorMember: [RegistrationApplication_Data!]
+  """
   ✨ Generated from Field `Member`.`sales_on_referrerMember` of type `[Sale!]!`
   """
   sales_on_referrerMember: [Sale_Data!]
@@ -3212,6 +5244,14 @@ input Member_Data {
   ✨ Generated from Field `Member`.`sales_on_sellerMember` of type `[Sale!]!`
   """
   sales_on_sellerMember: [Sale_Data!]
+  """
+  ✨ Generated from Field `Member`.`seatVacancies_on_filledByMember` of type `[SeatVacancy!]!`
+  """
+  seatVacancies_on_filledByMember: [SeatVacancy_Data!]
+  """
+  ✨ Generated from Field `Member`.`seatVacancies_on_seatMember` of type `[SeatVacancy!]!`
+  """
+  seatVacancies_on_seatMember: [SeatVacancy_Data!]
   """
   ✨ Generated from Field `Member`.`userAccounts_on_member` of type `[UserAccount!]!`
   """
@@ -3266,9 +5306,17 @@ input Member_Filter {
   """
   displayName: String_Filter
   """
+  ✨ Generated from Field `Member`.`parentHistory` of type `Any`
+  """
+  parentHistory: Any_Filter
+  """
   ✨ Generated from Field `Member`.`referralCode` of type `String`
   """
   referralCode: String_Filter
+  """
+  ✨ Generated from Field `Member`.`rowVersion` of type `Int!`
+  """
+  rowVersion: Int_Filter
   """
   ✨ Generated from Field `Member`.`status` of type `String!`
   """
@@ -3277,6 +5325,14 @@ input Member_Filter {
   ✨ Generated from Field `Member`.`teamName` of type `String`
   """
   teamName: String_Filter
+  """
+  ✨ Generated from Field `Member`.`accreditations_on_member` of type `[Accreditation!]!`
+  """
+  accreditations_on_member: Accreditation_ListFilter
+  """
+  ✨ Generated from Field `Member`.`accreditationNumbers_on_member` of type `[AccreditationNumber!]!`
+  """
+  accreditationNumbers_on_member: AccreditationNumber_ListFilter
   """
   ✨ Generated from Field `Member`.`contracts_on_sellerMember` of type `[Contract!]!`
   """
@@ -3290,6 +5346,14 @@ input Member_Filter {
   """
   members_on_parent: Member_ListFilter
   """
+  ✨ Generated from Field `Member`.`registrationApplications_on_member` of type `[RegistrationApplication!]!`
+  """
+  registrationApplications_on_member: RegistrationApplication_ListFilter
+  """
+  ✨ Generated from Field `Member`.`registrationApplications_on_sponsorMember` of type `[RegistrationApplication!]!`
+  """
+  registrationApplications_on_sponsorMember: RegistrationApplication_ListFilter
+  """
   ✨ Generated from Field `Member`.`sales_on_referrerMember` of type `[Sale!]!`
   """
   sales_on_referrerMember: Sale_ListFilter
@@ -3297,6 +5361,14 @@ input Member_Filter {
   ✨ Generated from Field `Member`.`sales_on_sellerMember` of type `[Sale!]!`
   """
   sales_on_sellerMember: Sale_ListFilter
+  """
+  ✨ Generated from Field `Member`.`seatVacancies_on_filledByMember` of type `[SeatVacancy!]!`
+  """
+  seatVacancies_on_filledByMember: SeatVacancy_ListFilter
+  """
+  ✨ Generated from Field `Member`.`seatVacancies_on_seatMember` of type `[SeatVacancy!]!`
+  """
+  seatVacancies_on_seatMember: SeatVacancy_ListFilter
   """
   ✨ Generated from Field `Member`.`userAccounts_on_member` of type `[UserAccount!]!`
   """
@@ -3364,6 +5436,10 @@ input Member_Having {
   """
   id_count: Int_Filter
   """
+  ✨ Generated from Field `Member`.`parentHistory_count` of type `Int!`
+  """
+  parentHistory_count: Int_Filter
+  """
   ✨ Generated from Field `Member`.`parentId_count` of type `Int!`
   """
   parentId_count: Int_Filter
@@ -3371,6 +5447,10 @@ input Member_Having {
   ✨ Generated from Field `Member`.`referralCode_count` of type `Int!`
   """
   referralCode_count: Int_Filter
+  """
+  ✨ Generated from Field `Member`.`rowVersion_count` of type `Int!`
+  """
+  rowVersion_count: Int_Filter
   """
   ✨ Generated from Field `Member`.`status_count` of type `Int!`
   """
@@ -3380,13 +5460,37 @@ input Member_Having {
   """
   teamName_count: Int_Filter
   """
+  ✨ Generated from Field `Member`.`rowVersion_sum` of type `Int`
+  """
+  rowVersion_sum: Int_Filter
+  """
+  ✨ Generated from Field `Member`.`rowVersion_avg` of type `Float`
+  """
+  rowVersion_avg: Float_Filter
+  """
   ✨ Generated from Field `Member`.`details_min` of type `Any`
   """
   details_min: Any_Filter
   """
+  ✨ Generated from Field `Member`.`parentHistory_min` of type `Any`
+  """
+  parentHistory_min: Any_Filter
+  """
+  ✨ Generated from Field `Member`.`rowVersion_min` of type `Int`
+  """
+  rowVersion_min: Int_Filter
+  """
   ✨ Generated from Field `Member`.`details_max` of type `Any`
   """
   details_max: Any_Filter
+  """
+  ✨ Generated from Field `Member`.`parentHistory_max` of type `Any`
+  """
+  parentHistory_max: Any_Filter
+  """
+  ✨ Generated from Field `Member`.`rowVersion_max` of type `Int`
+  """
+  rowVersion_max: Int_Filter
 }
 """
 ✨ Generated key input type for table 'Member'. It represents the primary key fields used to uniquely identify a row in the table.
@@ -3451,9 +5555,17 @@ input Member_Order {
   """
   displayName: OrderDirection
   """
+  ✨ Generated from Field `Member`.`parentHistory` of type `Any`
+  """
+  parentHistory: OrderDirection
+  """
   ✨ Generated from Field `Member`.`referralCode` of type `String`
   """
   referralCode: OrderDirection
+  """
+  ✨ Generated from Field `Member`.`rowVersion` of type `Int!`
+  """
+  rowVersion: OrderDirection
   """
   ✨ Generated from Field `Member`.`status` of type `String!`
   """
@@ -3491,6 +5603,10 @@ input Member_Order {
   """
   id_count: OrderDirection
   """
+  ✨ Generated from Field `Member`.`parentHistory_count` of type `Int!`
+  """
+  parentHistory_count: OrderDirection
+  """
   ✨ Generated from Field `Member`.`parentId_count` of type `Int!`
   """
   parentId_count: OrderDirection
@@ -3498,6 +5614,10 @@ input Member_Order {
   ✨ Generated from Field `Member`.`referralCode_count` of type `Int!`
   """
   referralCode_count: OrderDirection
+  """
+  ✨ Generated from Field `Member`.`rowVersion_count` of type `Int!`
+  """
+  rowVersion_count: OrderDirection
   """
   ✨ Generated from Field `Member`.`status_count` of type `Int!`
   """
@@ -3507,13 +5627,37 @@ input Member_Order {
   """
   teamName_count: OrderDirection
   """
+  ✨ Generated from Field `Member`.`rowVersion_sum` of type `Int`
+  """
+  rowVersion_sum: OrderDirection
+  """
+  ✨ Generated from Field `Member`.`rowVersion_avg` of type `Float`
+  """
+  rowVersion_avg: OrderDirection
+  """
   ✨ Generated from Field `Member`.`details_min` of type `Any`
   """
   details_min: OrderDirection
   """
+  ✨ Generated from Field `Member`.`parentHistory_min` of type `Any`
+  """
+  parentHistory_min: OrderDirection
+  """
+  ✨ Generated from Field `Member`.`rowVersion_min` of type `Int`
+  """
+  rowVersion_min: OrderDirection
+  """
   ✨ Generated from Field `Member`.`details_max` of type `Any`
   """
   details_max: OrderDirection
+  """
+  ✨ Generated from Field `Member`.`parentHistory_max` of type `Any`
+  """
+  parentHistory_max: OrderDirection
+  """
+  ✨ Generated from Field `Member`.`rowVersion_max` of type `Int`
+  """
+  rowVersion_max: OrderDirection
 }
 """
 ✨ Generated data input type for table 'Outlet'. It includes all necessary fields for creating or upserting rows into table.
@@ -7214,6 +9358,825 @@ input ReferenceEntry_Order {
   sortOrder_max: OrderDirection
 }
 """
+✨ Generated data input type for table 'RegistrationApplication'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input RegistrationApplication_Data {
+  """
+  ✨ Generated from Field `RegistrationApplication`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `RegistrationApplication`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`accountId` of type `UUID`
+  """
+  accountId: UUID
+  """
+  ✨ `_expr` server value variant of `accountId` (✨ Generated from Field `RegistrationApplication`.`accountId` of type `UUID`)
+  """
+  accountId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`memberId` of type `UUID`
+  """
+  memberId: UUID
+  """
+  ✨ `_expr` server value variant of `memberId` (✨ Generated from Field `RegistrationApplication`.`memberId` of type `UUID`)
+  """
+  memberId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`reviewerId` of type `UUID`
+  """
+  reviewerId: UUID
+  """
+  ✨ `_expr` server value variant of `reviewerId` (✨ Generated from Field `RegistrationApplication`.`reviewerId` of type `UUID`)
+  """
+  reviewerId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`sponsorMemberId` of type `UUID`
+  """
+  sponsorMemberId: UUID
+  """
+  ✨ `_expr` server value variant of `sponsorMemberId` (✨ Generated from Field `RegistrationApplication`.`sponsorMemberId` of type `UUID`)
+  """
+  sponsorMemberId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`account` of type `UserAccount`
+  """
+  account: UserAccount_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`member` of type `Member`
+  """
+  member: Member_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`reviewer` of type `UserAccount`
+  """
+  reviewer: UserAccount_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`sponsorMember` of type `Member`
+  """
+  sponsorMember: Member_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`applicant` of type `Any`
+  """
+  applicant: Any
+  """
+  ✨ `_expr` server value variant of `applicant` (✨ Generated from Field `RegistrationApplication`.`applicant` of type `Any`)
+  """
+  applicant_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`classification` of type `String!`
+  """
+  classification: String
+  """
+  ✨ `_expr` server value variant of `classification` (✨ Generated from Field `RegistrationApplication`.`classification` of type `String!`)
+  """
+  classification_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`completion` of type `Any`
+  """
+  completion: Any
+  """
+  ✨ `_expr` server value variant of `completion` (✨ Generated from Field `RegistrationApplication`.`completion` of type `Any`)
+  """
+  completion_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`correctionToken` of type `String`
+  """
+  correctionToken: String
+  """
+  ✨ `_expr` server value variant of `correctionToken` (✨ Generated from Field `RegistrationApplication`.`correctionToken` of type `String`)
+  """
+  correctionToken_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `RegistrationApplication`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `RegistrationApplication`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `RegistrationApplication`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`decidedAt` of type `Timestamp`
+  """
+  decidedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `decidedAt` (✨ Generated from Field `RegistrationApplication`.`decidedAt` of type `Timestamp`)
+  """
+  decidedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `decidedAt` (✨ Generated from Field `RegistrationApplication`.`decidedAt` of type `Timestamp`)
+  """
+  decidedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `decidedAt` (✨ Generated from Field `RegistrationApplication`.`decidedAt` of type `Timestamp`)
+  """
+  decidedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`decisionReason` of type `String`
+  """
+  decisionReason: String
+  """
+  ✨ `_expr` server value variant of `decisionReason` (✨ Generated from Field `RegistrationApplication`.`decisionReason` of type `String`)
+  """
+  decisionReason_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`history` of type `Any`
+  """
+  history: Any
+  """
+  ✨ `_expr` server value variant of `history` (✨ Generated from Field `RegistrationApplication`.`history` of type `Any`)
+  """
+  history_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`reference` of type `String!`
+  """
+  reference: String
+  """
+  ✨ `_expr` server value variant of `reference` (✨ Generated from Field `RegistrationApplication`.`reference` of type `String!`)
+  """
+  reference_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`sponsorLabel` of type `String!`
+  """
+  sponsorLabel: String
+  """
+  ✨ `_expr` server value variant of `sponsorLabel` (✨ Generated from Field `RegistrationApplication`.`sponsorLabel` of type `String!`)
+  """
+  sponsorLabel_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `RegistrationApplication`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`submittedAt` of type `Timestamp`
+  """
+  submittedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `submittedAt` (✨ Generated from Field `RegistrationApplication`.`submittedAt` of type `Timestamp`)
+  """
+  submittedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `submittedAt` (✨ Generated from Field `RegistrationApplication`.`submittedAt` of type `Timestamp`)
+  """
+  submittedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `submittedAt` (✨ Generated from Field `RegistrationApplication`.`submittedAt` of type `Timestamp`)
+  """
+  submittedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `RegistrationApplication`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `updatedAt` (✨ Generated from Field `RegistrationApplication`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `RegistrationApplication`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`version` of type `Int!`
+  """
+  version: Int
+  """
+  ✨ `_expr` server value variant of `version` (✨ Generated from Field `RegistrationApplication`.`version` of type `Int!`)
+  """
+  version_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `version` (✨ Generated from Field `RegistrationApplication`.`version` of type `Int!`)
+  """
+  version_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `RegistrationApplication`.`versions` of type `Any`
+  """
+  versions: Any
+  """
+  ✨ `_expr` server value variant of `versions` (✨ Generated from Field `RegistrationApplication`.`versions` of type `Any`)
+  """
+  versions_expr: Any_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'RegistrationApplication'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input RegistrationApplication_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [RegistrationApplication_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: RegistrationApplication_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [RegistrationApplication_Filter!]
+  """
+  ✨ Generated from Field `RegistrationApplication`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`accountId` of type `UUID`
+  """
+  accountId: UUID_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`memberId` of type `UUID`
+  """
+  memberId: UUID_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`reviewerId` of type `UUID`
+  """
+  reviewerId: UUID_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`sponsorMemberId` of type `UUID`
+  """
+  sponsorMemberId: UUID_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`account` of type `UserAccount`
+  """
+  account: UserAccount_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`member` of type `Member`
+  """
+  member: Member_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`reviewer` of type `UserAccount`
+  """
+  reviewer: UserAccount_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`sponsorMember` of type `Member`
+  """
+  sponsorMember: Member_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`applicant` of type `Any`
+  """
+  applicant: Any_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`classification` of type `String!`
+  """
+  classification: String_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`completion` of type `Any`
+  """
+  completion: Any_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`correctionToken` of type `String`
+  """
+  correctionToken: String_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`decidedAt` of type `Timestamp`
+  """
+  decidedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`decisionReason` of type `String`
+  """
+  decisionReason: String_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`history` of type `Any`
+  """
+  history: Any_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`reference` of type `String!`
+  """
+  reference: String_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`sponsorLabel` of type `String!`
+  """
+  sponsorLabel: String_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`status` of type `String!`
+  """
+  status: String_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`submittedAt` of type `Timestamp`
+  """
+  submittedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`version` of type `Int!`
+  """
+  version: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`versions` of type `Any`
+  """
+  versions: Any_Filter
+}
+"""
+✨ Generated first-row input type for table 'RegistrationApplication'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input RegistrationApplication_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [RegistrationApplication_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: RegistrationApplication_Filter
+}
+"""
+✨ Generated having input type for table 'RegistrationApplication'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input RegistrationApplication_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [RegistrationApplication_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: RegistrationApplication_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [RegistrationApplication_Having!]
+  """
+  ✨ Generated from Field `RegistrationApplication`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`accountId_count` of type `Int!`
+  """
+  accountId_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`applicant_count` of type `Int!`
+  """
+  applicant_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`classification_count` of type `Int!`
+  """
+  classification_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`completion_count` of type `Int!`
+  """
+  completion_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`correctionToken_count` of type `Int!`
+  """
+  correctionToken_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`decidedAt_count` of type `Int!`
+  """
+  decidedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`decisionReason_count` of type `Int!`
+  """
+  decisionReason_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`history_count` of type `Int!`
+  """
+  history_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`memberId_count` of type `Int!`
+  """
+  memberId_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`reference_count` of type `Int!`
+  """
+  reference_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`reviewerId_count` of type `Int!`
+  """
+  reviewerId_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`sponsorLabel_count` of type `Int!`
+  """
+  sponsorLabel_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`sponsorMemberId_count` of type `Int!`
+  """
+  sponsorMemberId_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`submittedAt_count` of type `Int!`
+  """
+  submittedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`version_count` of type `Int!`
+  """
+  version_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`versions_count` of type `Int!`
+  """
+  versions_count: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`version_sum` of type `Int`
+  """
+  version_sum: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`version_avg` of type `Float`
+  """
+  version_avg: Float_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`applicant_min` of type `Any`
+  """
+  applicant_min: Any_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`completion_min` of type `Any`
+  """
+  completion_min: Any_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`decidedAt_min` of type `Timestamp`
+  """
+  decidedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`history_min` of type `Any`
+  """
+  history_min: Any_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`submittedAt_min` of type `Timestamp`
+  """
+  submittedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`version_min` of type `Int`
+  """
+  version_min: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`versions_min` of type `Any`
+  """
+  versions_min: Any_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`applicant_max` of type `Any`
+  """
+  applicant_max: Any_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`completion_max` of type `Any`
+  """
+  completion_max: Any_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`decidedAt_max` of type `Timestamp`
+  """
+  decidedAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`history_max` of type `Any`
+  """
+  history_max: Any_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`submittedAt_max` of type `Timestamp`
+  """
+  submittedAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`version_max` of type `Int`
+  """
+  version_max: Int_Filter
+  """
+  ✨ Generated from Field `RegistrationApplication`.`versions_max` of type `Any`
+  """
+  versions_max: Any_Filter
+}
+"""
+✨ Generated key input type for table 'RegistrationApplication'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input RegistrationApplication_Key {
+  """
+  ✨ Generated from Field `RegistrationApplication`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `RegistrationApplication`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'RegistrationApplication'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input RegistrationApplication_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: RegistrationApplication_Filter
+}
+"""
+✨ Generated order input type for table 'RegistrationApplication'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input RegistrationApplication_Order {
+  """
+  ✨ Generated from Field `RegistrationApplication`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`accountId` of type `UUID`
+  """
+  accountId: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`memberId` of type `UUID`
+  """
+  memberId: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`reviewerId` of type `UUID`
+  """
+  reviewerId: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`sponsorMemberId` of type `UUID`
+  """
+  sponsorMemberId: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`account` of type `UserAccount`
+  """
+  account: UserAccount_Order
+  """
+  ✨ Generated from Field `RegistrationApplication`.`member` of type `Member`
+  """
+  member: Member_Order
+  """
+  ✨ Generated from Field `RegistrationApplication`.`reviewer` of type `UserAccount`
+  """
+  reviewer: UserAccount_Order
+  """
+  ✨ Generated from Field `RegistrationApplication`.`sponsorMember` of type `Member`
+  """
+  sponsorMember: Member_Order
+  """
+  ✨ Generated from Field `RegistrationApplication`.`applicant` of type `Any`
+  """
+  applicant: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`classification` of type `String!`
+  """
+  classification: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`completion` of type `Any`
+  """
+  completion: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`correctionToken` of type `String`
+  """
+  correctionToken: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`decidedAt` of type `Timestamp`
+  """
+  decidedAt: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`decisionReason` of type `String`
+  """
+  decisionReason: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`history` of type `Any`
+  """
+  history: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`reference` of type `String!`
+  """
+  reference: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`sponsorLabel` of type `String!`
+  """
+  sponsorLabel: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`submittedAt` of type `Timestamp`
+  """
+  submittedAt: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`version` of type `Int!`
+  """
+  version: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`versions` of type `Any`
+  """
+  versions: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`accountId_count` of type `Int!`
+  """
+  accountId_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`applicant_count` of type `Int!`
+  """
+  applicant_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`classification_count` of type `Int!`
+  """
+  classification_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`completion_count` of type `Int!`
+  """
+  completion_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`correctionToken_count` of type `Int!`
+  """
+  correctionToken_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`decidedAt_count` of type `Int!`
+  """
+  decidedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`decisionReason_count` of type `Int!`
+  """
+  decisionReason_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`history_count` of type `Int!`
+  """
+  history_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`memberId_count` of type `Int!`
+  """
+  memberId_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`reference_count` of type `Int!`
+  """
+  reference_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`reviewerId_count` of type `Int!`
+  """
+  reviewerId_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`sponsorLabel_count` of type `Int!`
+  """
+  sponsorLabel_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`sponsorMemberId_count` of type `Int!`
+  """
+  sponsorMemberId_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`submittedAt_count` of type `Int!`
+  """
+  submittedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`version_count` of type `Int!`
+  """
+  version_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`versions_count` of type `Int!`
+  """
+  versions_count: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`version_sum` of type `Int`
+  """
+  version_sum: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`version_avg` of type `Float`
+  """
+  version_avg: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`applicant_min` of type `Any`
+  """
+  applicant_min: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`completion_min` of type `Any`
+  """
+  completion_min: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`decidedAt_min` of type `Timestamp`
+  """
+  decidedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`history_min` of type `Any`
+  """
+  history_min: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`submittedAt_min` of type `Timestamp`
+  """
+  submittedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`version_min` of type `Int`
+  """
+  version_min: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`versions_min` of type `Any`
+  """
+  versions_min: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`applicant_max` of type `Any`
+  """
+  applicant_max: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`completion_max` of type `Any`
+  """
+  completion_max: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`decidedAt_max` of type `Timestamp`
+  """
+  decidedAt_max: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`history_max` of type `Any`
+  """
+  history_max: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`submittedAt_max` of type `Timestamp`
+  """
+  submittedAt_max: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`version_max` of type `Int`
+  """
+  version_max: OrderDirection
+  """
+  ✨ Generated from Field `RegistrationApplication`.`versions_max` of type `Any`
+  """
+  versions_max: OrderDirection
+}
+"""
 ✨ Generated data input type for table 'RoleAssignment'. It includes all necessary fields for creating or upserting rows into table.
 """
 input RoleAssignment_Data {
@@ -8419,6 +11382,449 @@ input SaleAdjustment_Order {
   date_max: OrderDirection
 }
 """
+✨ Generated data input type for table 'SeatVacancy'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input SeatVacancy_Data {
+  """
+  ✨ Generated from Field `SeatVacancy`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `SeatVacancy`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledByMemberId` of type `UUID`
+  """
+  filledByMemberId: UUID
+  """
+  ✨ `_expr` server value variant of `filledByMemberId` (✨ Generated from Field `SeatVacancy`.`filledByMemberId` of type `UUID`)
+  """
+  filledByMemberId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedById` of type `UUID`
+  """
+  recordedById: UUID
+  """
+  ✨ `_expr` server value variant of `recordedById` (✨ Generated from Field `SeatVacancy`.`recordedById` of type `UUID`)
+  """
+  recordedById_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SeatVacancy`.`seatMemberId` of type `UUID!`
+  """
+  seatMemberId: UUID
+  """
+  ✨ `_expr` server value variant of `seatMemberId` (✨ Generated from Field `SeatVacancy`.`seatMemberId` of type `UUID!`)
+  """
+  seatMemberId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledByMember` of type `Member`
+  """
+  filledByMember: Member_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedBy` of type `UserAccount`
+  """
+  recordedBy: UserAccount_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SeatVacancy`.`seatMember` of type `Member!`
+  """
+  seatMember: Member_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledMethod` of type `String`
+  """
+  filledMethod: String
+  """
+  ✨ `_expr` server value variant of `filledMethod` (✨ Generated from Field `SeatVacancy`.`filledMethod` of type `String`)
+  """
+  filledMethod_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledOn` of type `Date`
+  """
+  filledOn: Date
+  """
+  ✨ `_date` server value variant of `filledOn` (✨ Generated from Field `SeatVacancy`.`filledOn` of type `Date`)
+  """
+  filledOn_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `filledOn` (✨ Generated from Field `SeatVacancy`.`filledOn` of type `Date`)
+  """
+  filledOn_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `filledOn` (✨ Generated from Field `SeatVacancy`.`filledOn` of type `Date`)
+  """
+  filledOn_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SeatVacancy`.`holderEndDate` of type `Date!`
+  """
+  holderEndDate: Date
+  """
+  ✨ `_date` server value variant of `holderEndDate` (✨ Generated from Field `SeatVacancy`.`holderEndDate` of type `Date!`)
+  """
+  holderEndDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `holderEndDate` (✨ Generated from Field `SeatVacancy`.`holderEndDate` of type `Date!`)
+  """
+  holderEndDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `holderEndDate` (✨ Generated from Field `SeatVacancy`.`holderEndDate` of type `Date!`)
+  """
+  holderEndDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedAt` of type `Timestamp!`
+  """
+  recordedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `recordedAt` (✨ Generated from Field `SeatVacancy`.`recordedAt` of type `Timestamp!`)
+  """
+  recordedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `recordedAt` (✨ Generated from Field `SeatVacancy`.`recordedAt` of type `Timestamp!`)
+  """
+  recordedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `recordedAt` (✨ Generated from Field `SeatVacancy`.`recordedAt` of type `Timestamp!`)
+  """
+  recordedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SeatVacancy`.`startDate` of type `Date!`
+  """
+  startDate: Date
+  """
+  ✨ `_date` server value variant of `startDate` (✨ Generated from Field `SeatVacancy`.`startDate` of type `Date!`)
+  """
+  startDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `startDate` (✨ Generated from Field `SeatVacancy`.`startDate` of type `Date!`)
+  """
+  startDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `startDate` (✨ Generated from Field `SeatVacancy`.`startDate` of type `Date!`)
+  """
+  startDate_update: [Date_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'SeatVacancy'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input SeatVacancy_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [SeatVacancy_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: SeatVacancy_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [SeatVacancy_Filter!]
+  """
+  ✨ Generated from Field `SeatVacancy`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledByMemberId` of type `UUID`
+  """
+  filledByMemberId: UUID_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedById` of type `UUID`
+  """
+  recordedById: UUID_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`seatMemberId` of type `UUID!`
+  """
+  seatMemberId: UUID_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledByMember` of type `Member`
+  """
+  filledByMember: Member_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedBy` of type `UserAccount`
+  """
+  recordedBy: UserAccount_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`seatMember` of type `Member!`
+  """
+  seatMember: Member_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledMethod` of type `String`
+  """
+  filledMethod: String_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledOn` of type `Date`
+  """
+  filledOn: Date_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`holderEndDate` of type `Date!`
+  """
+  holderEndDate: Date_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedAt` of type `Timestamp!`
+  """
+  recordedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`startDate` of type `Date!`
+  """
+  startDate: Date_Filter
+}
+"""
+✨ Generated first-row input type for table 'SeatVacancy'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input SeatVacancy_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [SeatVacancy_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: SeatVacancy_Filter
+}
+"""
+✨ Generated having input type for table 'SeatVacancy'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input SeatVacancy_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [SeatVacancy_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: SeatVacancy_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [SeatVacancy_Having!]
+  """
+  ✨ Generated from Field `SeatVacancy`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledByMemberId_count` of type `Int!`
+  """
+  filledByMemberId_count: Int_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledMethod_count` of type `Int!`
+  """
+  filledMethod_count: Int_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledOn_count` of type `Int!`
+  """
+  filledOn_count: Int_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`holderEndDate_count` of type `Int!`
+  """
+  holderEndDate_count: Int_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedAt_count` of type `Int!`
+  """
+  recordedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedById_count` of type `Int!`
+  """
+  recordedById_count: Int_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`seatMemberId_count` of type `Int!`
+  """
+  seatMemberId_count: Int_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`startDate_count` of type `Int!`
+  """
+  startDate_count: Int_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledOn_min` of type `Date`
+  """
+  filledOn_min: Date_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`holderEndDate_min` of type `Date`
+  """
+  holderEndDate_min: Date_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedAt_min` of type `Timestamp`
+  """
+  recordedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`startDate_min` of type `Date`
+  """
+  startDate_min: Date_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledOn_max` of type `Date`
+  """
+  filledOn_max: Date_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`holderEndDate_max` of type `Date`
+  """
+  holderEndDate_max: Date_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedAt_max` of type `Timestamp`
+  """
+  recordedAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `SeatVacancy`.`startDate_max` of type `Date`
+  """
+  startDate_max: Date_Filter
+}
+"""
+✨ Generated key input type for table 'SeatVacancy'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input SeatVacancy_Key {
+  """
+  ✨ Generated from Field `SeatVacancy`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `SeatVacancy`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'SeatVacancy'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input SeatVacancy_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: SeatVacancy_Filter
+}
+"""
+✨ Generated order input type for table 'SeatVacancy'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input SeatVacancy_Order {
+  """
+  ✨ Generated from Field `SeatVacancy`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledByMemberId` of type `UUID`
+  """
+  filledByMemberId: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedById` of type `UUID`
+  """
+  recordedById: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`seatMemberId` of type `UUID!`
+  """
+  seatMemberId: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledByMember` of type `Member`
+  """
+  filledByMember: Member_Order
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedBy` of type `UserAccount`
+  """
+  recordedBy: UserAccount_Order
+  """
+  ✨ Generated from Field `SeatVacancy`.`seatMember` of type `Member!`
+  """
+  seatMember: Member_Order
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledMethod` of type `String`
+  """
+  filledMethod: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledOn` of type `Date`
+  """
+  filledOn: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`holderEndDate` of type `Date!`
+  """
+  holderEndDate: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedAt` of type `Timestamp!`
+  """
+  recordedAt: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`startDate` of type `Date!`
+  """
+  startDate: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledByMemberId_count` of type `Int!`
+  """
+  filledByMemberId_count: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledMethod_count` of type `Int!`
+  """
+  filledMethod_count: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledOn_count` of type `Int!`
+  """
+  filledOn_count: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`holderEndDate_count` of type `Int!`
+  """
+  holderEndDate_count: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedAt_count` of type `Int!`
+  """
+  recordedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedById_count` of type `Int!`
+  """
+  recordedById_count: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`seatMemberId_count` of type `Int!`
+  """
+  seatMemberId_count: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`startDate_count` of type `Int!`
+  """
+  startDate_count: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledOn_min` of type `Date`
+  """
+  filledOn_min: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`holderEndDate_min` of type `Date`
+  """
+  holderEndDate_min: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedAt_min` of type `Timestamp`
+  """
+  recordedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`startDate_min` of type `Date`
+  """
+  startDate_min: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`filledOn_max` of type `Date`
+  """
+  filledOn_max: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`holderEndDate_max` of type `Date`
+  """
+  holderEndDate_max: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`recordedAt_max` of type `Timestamp`
+  """
+  recordedAt_max: OrderDirection
+  """
+  ✨ Generated from Field `SeatVacancy`.`startDate_max` of type `Date`
+  """
+  startDate_max: OrderDirection
+}
+"""
 ✨ Generated data input type for table 'StaffMember'. It includes all necessary fields for creating or upserting rows into table.
 """
 input StaffMember_Data {
@@ -9201,6 +12607,10 @@ input UserAccount_Data {
   """
   auditEvents_on_actor: [AuditEvent_Data!]
   """
+  ✨ Generated from Field `UserAccount`.`customerImportJobs_on_actor` of type `[CustomerImportJob!]!`
+  """
+  customerImportJobs_on_actor: [CustomerImportJob_Data!]
+  """
   ✨ Generated from Field `UserAccount`.`idempotencyRecords_on_user` of type `[IdempotencyRecord!]!`
   """
   idempotencyRecords_on_user: [IdempotencyRecord_Data!]
@@ -9213,6 +12623,14 @@ input UserAccount_Data {
   """
   payments_on_verifiedBy: [Payment_Data!]
   """
+  ✨ Generated from Field `UserAccount`.`registrationApplications_on_account` of type `[RegistrationApplication!]!`
+  """
+  registrationApplications_on_account: [RegistrationApplication_Data!]
+  """
+  ✨ Generated from Field `UserAccount`.`registrationApplications_on_reviewer` of type `[RegistrationApplication!]!`
+  """
+  registrationApplications_on_reviewer: [RegistrationApplication_Data!]
+  """
   ✨ Generated from Field `UserAccount`.`roleAssignments_on_user` of type `[RoleAssignment!]!`
   """
   roleAssignments_on_user: [RoleAssignment_Data!]
@@ -9224,6 +12642,10 @@ input UserAccount_Data {
   ✨ Generated from Field `UserAccount`.`saleAdjustments_on_actor` of type `[SaleAdjustment!]!`
   """
   saleAdjustments_on_actor: [SaleAdjustment_Data!]
+  """
+  ✨ Generated from Field `UserAccount`.`seatVacancies_on_recordedBy` of type `[SeatVacancy!]!`
+  """
+  seatVacancies_on_recordedBy: [SeatVacancy_Data!]
   """
   ✨ Generated from Field `UserAccount`.`userAccounts_on_createdBy` of type `[UserAccount!]!`
   """
@@ -9310,6 +12732,10 @@ input UserAccount_Filter {
   """
   auditEvents_on_actor: AuditEvent_ListFilter
   """
+  ✨ Generated from Field `UserAccount`.`customerImportJobs_on_actor` of type `[CustomerImportJob!]!`
+  """
+  customerImportJobs_on_actor: CustomerImportJob_ListFilter
+  """
   ✨ Generated from Field `UserAccount`.`idempotencyRecords_on_user` of type `[IdempotencyRecord!]!`
   """
   idempotencyRecords_on_user: IdempotencyRecord_ListFilter
@@ -9322,6 +12748,14 @@ input UserAccount_Filter {
   """
   payments_on_verifiedBy: Payment_ListFilter
   """
+  ✨ Generated from Field `UserAccount`.`registrationApplications_on_account` of type `[RegistrationApplication!]!`
+  """
+  registrationApplications_on_account: RegistrationApplication_ListFilter
+  """
+  ✨ Generated from Field `UserAccount`.`registrationApplications_on_reviewer` of type `[RegistrationApplication!]!`
+  """
+  registrationApplications_on_reviewer: RegistrationApplication_ListFilter
+  """
   ✨ Generated from Field `UserAccount`.`roleAssignments_on_user` of type `[RoleAssignment!]!`
   """
   roleAssignments_on_user: RoleAssignment_ListFilter
@@ -9333,6 +12767,10 @@ input UserAccount_Filter {
   ✨ Generated from Field `UserAccount`.`saleAdjustments_on_actor` of type `[SaleAdjustment!]!`
   """
   saleAdjustments_on_actor: SaleAdjustment_ListFilter
+  """
+  ✨ Generated from Field `UserAccount`.`seatVacancies_on_recordedBy` of type `[SeatVacancy!]!`
+  """
+  seatVacancies_on_recordedBy: SeatVacancy_ListFilter
   """
   ✨ Generated from Field `UserAccount`.`userAccounts_on_createdBy` of type `[UserAccount!]!`
   """

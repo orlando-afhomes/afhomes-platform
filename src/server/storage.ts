@@ -104,3 +104,83 @@ export async function downloadPaymentEvidence(paymentId: string, fileId: string)
     throw error;
   }
 }
+
+// ---------------------------------------------------------------- customer identity images
+const IMAGE_EXTENSIONS = { "image/jpeg": "jpg", "image/png": "png" } as const;
+export const MAX_CUSTOMER_ID_BYTES = 5 * 1024 * 1024;
+
+/** Server-only metadata for the private government ID image. The client sees an authenticated URL, never the path. */
+export type CustomerIdentityFile = { fileId: string; storagePath: string; fileName: string; size: number; contentType: string; uploadedAt: string; uploadedBy: string };
+
+export function customerIdentityFileOf(profile: Record<string, unknown> | null | undefined): CustomerIdentityFile | null {
+  const file = profile?.identityFile as Partial<CustomerIdentityFile> | undefined;
+  if (!file || typeof file.fileId !== "string" || typeof file.storagePath !== "string") return null;
+  return {
+    fileId: file.fileId,
+    storagePath: file.storagePath,
+    fileName: typeof file.fileName === "string" ? file.fileName : "government-id.jpg",
+    size: typeof file.size === "number" ? file.size : 0,
+    contentType: typeof file.contentType === "string" ? file.contentType : "image/jpeg",
+    uploadedAt: typeof file.uploadedAt === "string" ? file.uploadedAt : "",
+    uploadedBy: typeof file.uploadedBy === "string" ? file.uploadedBy : "",
+  };
+}
+
+/**
+ * Stores the customer's government ID image in the private bucket and records only its metadata on the
+ * customer in the same transaction as the audit entry. The caller has already checked record access.
+ */
+export async function attachCustomerIdentityImage(actor: Actor, customerId: string, profile: Record<string, unknown> | null, bytes: Buffer, originalName: string | null) {
+  if (bytes.length === 0) throw invalid("The file is empty.");
+  if (bytes.length > MAX_CUSTOMER_ID_BYTES) throw new ApiError(413, "file_too_large", "Attach an image of 5 MB or less.");
+  const detected = detectEvidenceType(bytes);
+  if (!detected || !(detected in IMAGE_EXTENSIONS)) throw invalid("Attach a JPEG or PNG image.");
+  const contentType = detected as keyof typeof IMAGE_EXTENSIONS;
+  const previous = customerIdentityFileOf(profile);
+  const fileId = randomUUID();
+  const storagePath = `customers/${customerId}/identity/${fileId}.${IMAGE_EXTENSIONS[contentType]}`;
+  const meta: CustomerIdentityFile = {
+    fileId,
+    storagePath,
+    fileName: displayName(originalName, IMAGE_EXTENSIONS[contentType]),
+    size: bytes.length,
+    contentType,
+    uploadedAt: nowIso(),
+    uploadedBy: actor.userId,
+  };
+  const file = bucket().file(storagePath);
+  await file.save(bytes, { contentType, resumable: false, metadata: { metadata: { customerId, uploaderId: actor.userId } } });
+  try {
+    await transact(actor, {
+      variableDefinitions: "$id: UUID!, $profile: Any!",
+      fields: "customer: customer_update(id: $id, data: { profile: $profile })",
+      variables: { id: customerId, profile: { ...(profile ?? {}), identityFile: meta } },
+      audit: [{ action: BUSINESS_AUDIT_ACTIONS.CUSTOMER_ID_IMAGE_UPLOADED, entityType: "customer", entityId: customerId, details: { module: "customers", newValue: contentType } }],
+    });
+  } catch (error) {
+    await file.delete().catch(() => undefined);
+    throw error;
+  }
+  if (previous && previous.storagePath !== storagePath) await bucket().file(previous.storagePath).delete().catch(() => undefined);
+  return { fileId: meta.fileId, fileName: meta.fileName, size: meta.size, contentType: meta.contentType, uploadedAt: meta.uploadedAt };
+}
+
+/** Reads the private ID image after the route checked that the actor may see the customer. */
+export async function downloadCustomerIdentityImage(customerId: string, profile: Record<string, unknown> | null, fileId: string): Promise<{ bytes: Buffer; meta: CustomerIdentityFile }> {
+  const meta = customerIdentityFileOf(profile);
+  if (!meta || meta.fileId !== fileId) throw notFound("Identity image");
+  try {
+    const [bytes] = await bucket().file(meta.storagePath).download();
+    return { bytes, meta };
+  } catch (error) {
+    if ((error as { code?: number }).code === 404) throw notFound("Identity image");
+    throw error;
+  }
+}
+
+/** Best effort cleanup when a draft that never had a file is discarded; an unreferenced object is harmless. */
+export async function deleteCustomerIdentityFile(profile: Record<string, unknown> | null): Promise<void> {
+  const meta = customerIdentityFileOf(profile);
+  if (!meta) return;
+  await bucket().file(meta.storagePath).delete().catch(() => undefined);
+}

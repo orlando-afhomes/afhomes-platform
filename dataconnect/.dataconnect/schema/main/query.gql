@@ -19,6 +19,44 @@ extend type Query {
     first: AccountStatusEvent_FirstRow
   ): AccountStatusEvent @fdc_generated(from: "AccountStatusEvent", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `Accreditation` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  accreditation(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Accreditation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Accreditation_FirstRow
+  ): Accreditation @fdc_generated(from: "Accreditation", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `AccreditationNumber` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  accreditationNumber(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: AccreditationNumber_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: AccreditationNumber_FirstRow
+  ): AccreditationNumber @fdc_generated(from: "AccreditationNumber", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `AuditEvent` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   auditEvent(
@@ -75,6 +113,44 @@ extend type Query {
     """
     first: Customer_FirstRow
   ): Customer @fdc_generated(from: "Customer", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `CustomerImportJob` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  customerImportJob(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: CustomerImportJob_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CustomerImportJob_FirstRow
+  ): CustomerImportJob @fdc_generated(from: "CustomerImportJob", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `CustomerImportRow` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  customerImportRow(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: CustomerImportRow_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CustomerImportRow_FirstRow
+  ): CustomerImportRow @fdc_generated(from: "CustomerImportRow", purpose: QUERY_SINGLE)
   """
   ✨ Look up a single `Department` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
@@ -280,6 +356,25 @@ extend type Query {
     first: ReferenceEntry_FirstRow
   ): ReferenceEntry @fdc_generated(from: "ReferenceEntry", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `RegistrationApplication` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  registrationApplication(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: RegistrationApplication_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: RegistrationApplication_FirstRow
+  ): RegistrationApplication @fdc_generated(from: "RegistrationApplication", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `RoleAssignment` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   roleAssignment(
@@ -331,6 +426,25 @@ extend type Query {
     """
     first: SaleAdjustment_FirstRow
   ): SaleAdjustment @fdc_generated(from: "SaleAdjustment", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `SeatVacancy` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  seatVacancy(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SeatVacancy_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SeatVacancy_FirstRow
+  ): SeatVacancy @fdc_generated(from: "SeatVacancy", purpose: QUERY_SINGLE)
   """
   ✨ Look up a single `StaffMember` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
@@ -422,6 +536,74 @@ extend type Query {
     """
     having: AccountStatusEvent_Having
   ): [AccountStatusEvent!]! @fdc_generated(from: "AccountStatusEvent", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Accreditation` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  accreditations(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Accreditation_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Accreditation_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Accreditation_Having
+  ): [Accreditation!]! @fdc_generated(from: "Accreditation", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `AccreditationNumber` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  accreditationNumbers(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: AccreditationNumber_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [AccreditationNumber_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: AccreditationNumber_Having
+  ): [AccreditationNumber!]! @fdc_generated(from: "AccreditationNumber", purpose: QUERY_MULTIPLE)
   """
   ✨ List `AuditEvent` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
@@ -524,6 +706,74 @@ extend type Query {
     """
     having: Customer_Having
   ): [Customer!]! @fdc_generated(from: "Customer", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `CustomerImportJob` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  customerImportJobs(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: CustomerImportJob_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [CustomerImportJob_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: CustomerImportJob_Having
+  ): [CustomerImportJob!]! @fdc_generated(from: "CustomerImportJob", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `CustomerImportRow` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  customerImportRows(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: CustomerImportRow_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [CustomerImportRow_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: CustomerImportRow_Having
+  ): [CustomerImportRow!]! @fdc_generated(from: "CustomerImportRow", purpose: QUERY_MULTIPLE)
   """
   ✨ List `Department` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
@@ -899,6 +1149,40 @@ extend type Query {
     having: ReferenceEntry_Having
   ): [ReferenceEntry!]! @fdc_generated(from: "ReferenceEntry", purpose: QUERY_MULTIPLE)
   """
+  ✨ List `RegistrationApplication` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  registrationApplications(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: RegistrationApplication_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [RegistrationApplication_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: RegistrationApplication_Having
+  ): [RegistrationApplication!]! @fdc_generated(from: "RegistrationApplication", purpose: QUERY_MULTIPLE)
+  """
   ✨ List `RoleAssignment` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
   roleAssignments(
@@ -1000,6 +1284,40 @@ extend type Query {
     """
     having: SaleAdjustment_Having
   ): [SaleAdjustment!]! @fdc_generated(from: "SaleAdjustment", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `SeatVacancy` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  seatVacancies(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SeatVacancy_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SeatVacancy_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SeatVacancy_Having
+  ): [SeatVacancy!]! @fdc_generated(from: "SeatVacancy", purpose: QUERY_MULTIPLE)
   """
   ✨ List `StaffMember` objects in the table and return selected fields, optionally filtered by `where` conditions
   """

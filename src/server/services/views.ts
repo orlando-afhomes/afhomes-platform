@@ -14,6 +14,7 @@ import { CONTRACT_FIELDS, PAYMENT_FIELDS, SALE_FIELDS, loadCustomer, loadMembers
 import { loadPaymentSchemes, loadProducts, loadTierLevels } from "@/server/repositories/catalog";
 import type { VipProduct } from "@/modules/vip/types";
 import { notFound } from "@/server/services/common";
+import { clientCustomer } from "@/server/services/customers";
 import { activeRoles } from "@/modules/identity/active-roles";
 
 /** One page of a list, ordered by id, with the id of the last row as the cursor for the next page. */
@@ -167,7 +168,7 @@ export async function getCustomerView(actor: Actor, id: string): Promise<Custome
   const customer = await loadCustomer(id);
   const broad = activeIdentityRoles(actor.identity).some((role) => BROAD_ROLES.has(role));
   if (!customer) throw notFound("Customer");
-  if (broad || customer.ownerMemberId === actor.identity.memberId) return customer;
+  if (broad || customer.ownerMemberId === actor.identity.memberId) return clientCustomer(customer);
   // Downline view: name, plan and status only (doc 04 section 11), and only for a seller in the person's scope.
   const members = await loadMembersFull();
   const visible = getVisibleMemberIds(actor.identity, { members });

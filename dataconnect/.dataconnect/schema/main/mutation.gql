@@ -9,6 +9,24 @@ extend type Mutation {
     data: AccountStatusEvent_Data!
   ): AccountStatusEvent_KeyOutput! @fdc_generated(from: "AccountStatusEvent", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `Accreditation` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  accreditation_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Accreditation_Data!
+  ): Accreditation_KeyOutput! @fdc_generated(from: "Accreditation", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `AccreditationNumber` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  accreditationNumber_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: AccreditationNumber_Data!
+  ): AccreditationNumber_KeyOutput! @fdc_generated(from: "AccreditationNumber", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `AuditEvent` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   auditEvent_insert(
@@ -35,6 +53,24 @@ extend type Mutation {
     """
     data: Customer_Data!
   ): Customer_KeyOutput! @fdc_generated(from: "Customer", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `CustomerImportJob` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  customerImportJob_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: CustomerImportJob_Data!
+  ): CustomerImportJob_KeyOutput! @fdc_generated(from: "CustomerImportJob", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `CustomerImportRow` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  customerImportRow_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: CustomerImportRow_Data!
+  ): CustomerImportRow_KeyOutput! @fdc_generated(from: "CustomerImportRow", purpose: INSERT_SINGLE)
   """
   ✨ Insert a single `Department` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -135,6 +171,15 @@ extend type Mutation {
     data: ReferenceEntry_Data!
   ): ReferenceEntry_KeyOutput! @fdc_generated(from: "ReferenceEntry", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `RegistrationApplication` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  registrationApplication_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: RegistrationApplication_Data!
+  ): RegistrationApplication_KeyOutput! @fdc_generated(from: "RegistrationApplication", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `RoleAssignment` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   roleAssignment_insert(
@@ -161,6 +206,15 @@ extend type Mutation {
     """
     data: SaleAdjustment_Data!
   ): SaleAdjustment_KeyOutput! @fdc_generated(from: "SaleAdjustment", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `SeatVacancy` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  seatVacancy_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: SeatVacancy_Data!
+  ): SeatVacancy_KeyOutput! @fdc_generated(from: "SeatVacancy", purpose: INSERT_SINGLE)
   """
   ✨ Insert a single `StaffMember` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -198,6 +252,24 @@ extend type Mutation {
     data: [AccountStatusEvent_Data!]!
   ): [AccountStatusEvent_KeyOutput!]! @fdc_generated(from: "AccountStatusEvent", purpose: INSERT_MULTIPLE)
   """
+  ✨ Insert `Accreditation` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  accreditation_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Accreditation_Data!]!
+  ): [Accreditation_KeyOutput!]! @fdc_generated(from: "Accreditation", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `AccreditationNumber` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  accreditationNumber_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [AccreditationNumber_Data!]!
+  ): [AccreditationNumber_KeyOutput!]! @fdc_generated(from: "AccreditationNumber", purpose: INSERT_MULTIPLE)
+  """
   ✨ Insert `AuditEvent` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   auditEvent_insertMany(
@@ -224,6 +296,24 @@ extend type Mutation {
     """
     data: [Customer_Data!]!
   ): [Customer_KeyOutput!]! @fdc_generated(from: "Customer", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `CustomerImportJob` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  customerImportJob_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [CustomerImportJob_Data!]!
+  ): [CustomerImportJob_KeyOutput!]! @fdc_generated(from: "CustomerImportJob", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `CustomerImportRow` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  customerImportRow_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [CustomerImportRow_Data!]!
+  ): [CustomerImportRow_KeyOutput!]! @fdc_generated(from: "CustomerImportRow", purpose: INSERT_MULTIPLE)
   """
   ✨ Insert `Department` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -324,6 +414,15 @@ extend type Mutation {
     data: [ReferenceEntry_Data!]!
   ): [ReferenceEntry_KeyOutput!]! @fdc_generated(from: "ReferenceEntry", purpose: INSERT_MULTIPLE)
   """
+  ✨ Insert `RegistrationApplication` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  registrationApplication_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [RegistrationApplication_Data!]!
+  ): [RegistrationApplication_KeyOutput!]! @fdc_generated(from: "RegistrationApplication", purpose: INSERT_MULTIPLE)
+  """
   ✨ Insert `RoleAssignment` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   roleAssignment_insertMany(
@@ -350,6 +449,15 @@ extend type Mutation {
     """
     data: [SaleAdjustment_Data!]!
   ): [SaleAdjustment_KeyOutput!]! @fdc_generated(from: "SaleAdjustment", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `SeatVacancy` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  seatVacancy_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [SeatVacancy_Data!]!
+  ): [SeatVacancy_KeyOutput!]! @fdc_generated(from: "SeatVacancy", purpose: INSERT_MULTIPLE)
   """
   ✨ Insert `StaffMember` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -387,6 +495,24 @@ extend type Mutation {
     data: AccountStatusEvent_Data!
   ): AccountStatusEvent_KeyOutput! @fdc_generated(from: "AccountStatusEvent", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `Accreditation` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Accreditation`.
+  """
+  accreditation_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Accreditation_Data!
+  ): Accreditation_KeyOutput! @fdc_generated(from: "Accreditation", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `AccreditationNumber` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `AccreditationNumber`.
+  """
+  accreditationNumber_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: AccreditationNumber_Data!
+  ): AccreditationNumber_KeyOutput! @fdc_generated(from: "AccreditationNumber", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `AuditEvent` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `AuditEvent`.
   """
   auditEvent_upsert(
@@ -413,6 +539,24 @@ extend type Mutation {
     """
     data: Customer_Data!
   ): Customer_KeyOutput! @fdc_generated(from: "Customer", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `CustomerImportJob` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `CustomerImportJob`.
+  """
+  customerImportJob_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: CustomerImportJob_Data!
+  ): CustomerImportJob_KeyOutput! @fdc_generated(from: "CustomerImportJob", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `CustomerImportRow` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `CustomerImportRow`.
+  """
+  customerImportRow_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: CustomerImportRow_Data!
+  ): CustomerImportRow_KeyOutput! @fdc_generated(from: "CustomerImportRow", purpose: UPSERT_SINGLE)
   """
   ✨ Insert or update a single `Department` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Department`.
   """
@@ -513,6 +657,15 @@ extend type Mutation {
     data: ReferenceEntry_Data!
   ): ReferenceEntry_KeyOutput! @fdc_generated(from: "ReferenceEntry", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `RegistrationApplication` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `RegistrationApplication`.
+  """
+  registrationApplication_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: RegistrationApplication_Data!
+  ): RegistrationApplication_KeyOutput! @fdc_generated(from: "RegistrationApplication", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `RoleAssignment` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `RoleAssignment`.
   """
   roleAssignment_upsert(
@@ -539,6 +692,15 @@ extend type Mutation {
     """
     data: SaleAdjustment_Data!
   ): SaleAdjustment_KeyOutput! @fdc_generated(from: "SaleAdjustment", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `SeatVacancy` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `SeatVacancy`.
+  """
+  seatVacancy_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: SeatVacancy_Data!
+  ): SeatVacancy_KeyOutput! @fdc_generated(from: "SeatVacancy", purpose: UPSERT_SINGLE)
   """
   ✨ Insert or update a single `StaffMember` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `StaffMember`.
   """
@@ -576,6 +738,24 @@ extend type Mutation {
     data: [AccountStatusEvent_Data!]!
   ): [AccountStatusEvent_KeyOutput!]! @fdc_generated(from: "AccountStatusEvent", purpose: UPSERT_MULTIPLE)
   """
+  ✨ Insert or update `Accreditation` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Accreditation`.
+  """
+  accreditation_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Accreditation_Data!]!
+  ): [Accreditation_KeyOutput!]! @fdc_generated(from: "Accreditation", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `AccreditationNumber` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `AccreditationNumber`.
+  """
+  accreditationNumber_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [AccreditationNumber_Data!]!
+  ): [AccreditationNumber_KeyOutput!]! @fdc_generated(from: "AccreditationNumber", purpose: UPSERT_MULTIPLE)
+  """
   ✨ Insert or update `AuditEvent` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `AuditEvent`.
   """
   auditEvent_upsertMany(
@@ -602,6 +782,24 @@ extend type Mutation {
     """
     data: [Customer_Data!]!
   ): [Customer_KeyOutput!]! @fdc_generated(from: "Customer", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `CustomerImportJob` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `CustomerImportJob`.
+  """
+  customerImportJob_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [CustomerImportJob_Data!]!
+  ): [CustomerImportJob_KeyOutput!]! @fdc_generated(from: "CustomerImportJob", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `CustomerImportRow` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `CustomerImportRow`.
+  """
+  customerImportRow_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [CustomerImportRow_Data!]!
+  ): [CustomerImportRow_KeyOutput!]! @fdc_generated(from: "CustomerImportRow", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `Department` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Department`.
   """
@@ -702,6 +900,15 @@ extend type Mutation {
     data: [ReferenceEntry_Data!]!
   ): [ReferenceEntry_KeyOutput!]! @fdc_generated(from: "ReferenceEntry", purpose: UPSERT_MULTIPLE)
   """
+  ✨ Insert or update `RegistrationApplication` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `RegistrationApplication`.
+  """
+  registrationApplication_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [RegistrationApplication_Data!]!
+  ): [RegistrationApplication_KeyOutput!]! @fdc_generated(from: "RegistrationApplication", purpose: UPSERT_MULTIPLE)
+  """
   ✨ Insert or update `RoleAssignment` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `RoleAssignment`.
   """
   roleAssignment_upsertMany(
@@ -728,6 +935,15 @@ extend type Mutation {
     """
     data: [SaleAdjustment_Data!]!
   ): [SaleAdjustment_KeyOutput!]! @fdc_generated(from: "SaleAdjustment", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `SeatVacancy` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `SeatVacancy`.
+  """
+  seatVacancy_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [SeatVacancy_Data!]!
+  ): [SeatVacancy_KeyOutput!]! @fdc_generated(from: "SeatVacancy", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `StaffMember` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `StaffMember`.
   """
@@ -779,6 +995,54 @@ extend type Mutation {
     """
     data: AccountStatusEvent_Data!
   ): AccountStatusEvent_KeyOutput @fdc_generated(from: "AccountStatusEvent", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Accreditation` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Accreditation` or `null` if not found.
+  """
+  accreditation_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Accreditation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Accreditation_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Accreditation_Data!
+  ): Accreditation_KeyOutput @fdc_generated(from: "Accreditation", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `AccreditationNumber` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `AccreditationNumber` or `null` if not found.
+  """
+  accreditationNumber_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: AccreditationNumber_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: AccreditationNumber_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: AccreditationNumber_Data!
+  ): AccreditationNumber_KeyOutput @fdc_generated(from: "AccreditationNumber", purpose: UPDATE_SINGLE)
   """
   ✨ Update a single `AuditEvent` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `AuditEvent` or `null` if not found.
   """
@@ -851,6 +1115,54 @@ extend type Mutation {
     """
     data: Customer_Data!
   ): Customer_KeyOutput @fdc_generated(from: "Customer", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `CustomerImportJob` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `CustomerImportJob` or `null` if not found.
+  """
+  customerImportJob_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: CustomerImportJob_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CustomerImportJob_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: CustomerImportJob_Data!
+  ): CustomerImportJob_KeyOutput @fdc_generated(from: "CustomerImportJob", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `CustomerImportRow` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `CustomerImportRow` or `null` if not found.
+  """
+  customerImportRow_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: CustomerImportRow_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CustomerImportRow_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: CustomerImportRow_Data!
+  ): CustomerImportRow_KeyOutput @fdc_generated(from: "CustomerImportRow", purpose: UPDATE_SINGLE)
   """
   ✨ Update a single `Department` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Department` or `null` if not found.
   """
@@ -1111,6 +1423,30 @@ extend type Mutation {
     data: ReferenceEntry_Data!
   ): ReferenceEntry_KeyOutput @fdc_generated(from: "ReferenceEntry", purpose: UPDATE_SINGLE)
   """
+  ✨ Update a single `RegistrationApplication` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `RegistrationApplication` or `null` if not found.
+  """
+  registrationApplication_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: RegistrationApplication_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: RegistrationApplication_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: RegistrationApplication_Data!
+  ): RegistrationApplication_KeyOutput @fdc_generated(from: "RegistrationApplication", purpose: UPDATE_SINGLE)
+  """
   ✨ Update a single `RoleAssignment` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `RoleAssignment` or `null` if not found.
   """
   roleAssignment_update(
@@ -1177,6 +1513,30 @@ extend type Mutation {
     """
     data: SaleAdjustment_Data!
   ): SaleAdjustment_KeyOutput @fdc_generated(from: "SaleAdjustment", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `SeatVacancy` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `SeatVacancy` or `null` if not found.
+  """
+  seatVacancy_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SeatVacancy_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SeatVacancy_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: SeatVacancy_Data!
+  ): SeatVacancy_KeyOutput @fdc_generated(from: "SeatVacancy", purpose: UPDATE_SINGLE)
   """
   ✨ Update a single `StaffMember` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `StaffMember` or `null` if not found.
   """
@@ -1269,6 +1629,44 @@ extend type Mutation {
     data: AccountStatusEvent_Data!
   ): Int! @fdc_generated(from: "AccountStatusEvent", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `Accreditation` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  accreditation_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Accreditation_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Accreditation_Data!
+  ): Int! @fdc_generated(from: "Accreditation", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `AccreditationNumber` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  accreditationNumber_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: AccreditationNumber_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: AccreditationNumber_Data!
+  ): Int! @fdc_generated(from: "AccreditationNumber", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `AuditEvent` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   auditEvent_updateMany(
@@ -1325,6 +1723,44 @@ extend type Mutation {
     """
     data: Customer_Data!
   ): Int! @fdc_generated(from: "Customer", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `CustomerImportJob` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  customerImportJob_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: CustomerImportJob_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: CustomerImportJob_Data!
+  ): Int! @fdc_generated(from: "CustomerImportJob", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `CustomerImportRow` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  customerImportRow_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: CustomerImportRow_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: CustomerImportRow_Data!
+  ): Int! @fdc_generated(from: "CustomerImportRow", purpose: UPDATE_MULTIPLE)
   """
   ✨ Update `Department` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
@@ -1535,6 +1971,25 @@ extend type Mutation {
     data: ReferenceEntry_Data!
   ): Int! @fdc_generated(from: "ReferenceEntry", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `RegistrationApplication` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  registrationApplication_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: RegistrationApplication_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: RegistrationApplication_Data!
+  ): Int! @fdc_generated(from: "RegistrationApplication", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `RoleAssignment` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   roleAssignment_updateMany(
@@ -1591,6 +2046,25 @@ extend type Mutation {
     """
     data: SaleAdjustment_Data!
   ): Int! @fdc_generated(from: "SaleAdjustment", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `SeatVacancy` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  seatVacancy_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: SeatVacancy_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: SeatVacancy_Data!
+  ): Int! @fdc_generated(from: "SeatVacancy", purpose: UPDATE_MULTIPLE)
   """
   ✨ Update `StaffMember` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
@@ -1668,6 +2142,44 @@ extend type Mutation {
     first: AccountStatusEvent_FirstRow
   ): AccountStatusEvent_KeyOutput @fdc_generated(from: "AccountStatusEvent", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `Accreditation` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  accreditation_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Accreditation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Accreditation_FirstRow
+  ): Accreditation_KeyOutput @fdc_generated(from: "Accreditation", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `AccreditationNumber` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  accreditationNumber_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: AccreditationNumber_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: AccreditationNumber_FirstRow
+  ): AccreditationNumber_KeyOutput @fdc_generated(from: "AccreditationNumber", purpose: DELETE_SINGLE)
+  """
   ✨ Delete a single `AuditEvent` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   auditEvent_delete(
@@ -1724,6 +2236,44 @@ extend type Mutation {
     """
     first: Customer_FirstRow
   ): Customer_KeyOutput @fdc_generated(from: "Customer", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `CustomerImportJob` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  customerImportJob_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: CustomerImportJob_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CustomerImportJob_FirstRow
+  ): CustomerImportJob_KeyOutput @fdc_generated(from: "CustomerImportJob", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `CustomerImportRow` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  customerImportRow_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: CustomerImportRow_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CustomerImportRow_FirstRow
+  ): CustomerImportRow_KeyOutput @fdc_generated(from: "CustomerImportRow", purpose: DELETE_SINGLE)
   """
   ✨ Delete a single `Department` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
@@ -1929,6 +2479,25 @@ extend type Mutation {
     first: ReferenceEntry_FirstRow
   ): ReferenceEntry_KeyOutput @fdc_generated(from: "ReferenceEntry", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `RegistrationApplication` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  registrationApplication_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: RegistrationApplication_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: RegistrationApplication_FirstRow
+  ): RegistrationApplication_KeyOutput @fdc_generated(from: "RegistrationApplication", purpose: DELETE_SINGLE)
+  """
   ✨ Delete a single `RoleAssignment` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   roleAssignment_delete(
@@ -1980,6 +2549,25 @@ extend type Mutation {
     """
     first: SaleAdjustment_FirstRow
   ): SaleAdjustment_KeyOutput @fdc_generated(from: "SaleAdjustment", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `SeatVacancy` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  seatVacancy_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SeatVacancy_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SeatVacancy_FirstRow
+  ): SeatVacancy_KeyOutput @fdc_generated(from: "SeatVacancy", purpose: DELETE_SINGLE)
   """
   ✨ Delete a single `StaffMember` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
@@ -2052,6 +2640,34 @@ extend type Mutation {
     all: Boolean = false
   ): Int! @fdc_generated(from: "AccountStatusEvent", purpose: DELETE_MULTIPLE)
   """
+  ✨ Delete `Accreditation` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  accreditation_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Accreditation_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Accreditation", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `AccreditationNumber` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  accreditationNumber_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: AccreditationNumber_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "AccreditationNumber", purpose: DELETE_MULTIPLE)
+  """
   ✨ Delete `AuditEvent` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
   auditEvent_deleteMany(
@@ -2093,6 +2709,34 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "Customer", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `CustomerImportJob` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  customerImportJob_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: CustomerImportJob_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "CustomerImportJob", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `CustomerImportRow` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  customerImportRow_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: CustomerImportRow_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "CustomerImportRow", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `Department` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
@@ -2248,6 +2892,20 @@ extend type Mutation {
     all: Boolean = false
   ): Int! @fdc_generated(from: "ReferenceEntry", purpose: DELETE_MULTIPLE)
   """
+  ✨ Delete `RegistrationApplication` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  registrationApplication_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: RegistrationApplication_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "RegistrationApplication", purpose: DELETE_MULTIPLE)
+  """
   ✨ Delete `RoleAssignment` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
   roleAssignment_deleteMany(
@@ -2289,6 +2947,20 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "SaleAdjustment", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `SeatVacancy` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  seatVacancy_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: SeatVacancy_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "SeatVacancy", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `StaffMember` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """

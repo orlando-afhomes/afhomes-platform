@@ -136,6 +136,8 @@ Safety stays as built: only `127.0.0.1`/`localhost` hosts and `demo-` projects, 
 
 **Size:** large. Opus 5.5, high.
 
+**F2 status (2026-11-25):** F2 is built. The schema adds `Accreditation`, `AccreditationNumber` (the unique per-number ledger), `RegistrationApplication`, `SeatVacancy`, and `Member.parentHistory`/`rowVersion`. Server services and routes cover member create/edit/transfer/status, eligible parents, downline and history, referral checks, seat vacancies, accreditation issue/renew/status, scoped accreditation reads, public verification, and the full public OST application lifecycle (submit, correction link, complete, approve, return, reject). AA numbers are allocated through the unique ledger with bounded retry; the transfer write is row-version guarded, with the residual race window recorded for the staging transaction review. The rich seed loads 15 accreditations with 19 issued numbers, four applications and one vacancy; the clean seed stays one Super Admin. Verified: 49 server tests across 10 files (the 6-test F2 suite covers scope, hierarchy refusal, seller creation and renewal, the public projection with no validity date, the full registration approval, and Super-Admin-only status changes), `npx tsc --noEmit`, `npm run lint`, `npm run build`, and the 24 sales-network/registration screen tests. Not performed: a browser api-mode walkthrough; serializable cycle prevention and public rate limiting/CAPTCHA remain staging items.
+
 ## 8. F3 — Group 3: customer applications and record access
 
 **Goal:** the complete customer lifecycle runs on the database, including imports and private ID images.
@@ -153,6 +155,8 @@ Safety stays as built: only `127.0.0.1`/`localhost` hosts and `demo-` projects, 
 **Exit:** create, submit, approve, correct, import and export customers in api mode; only the owner sees the full record, a downline sees the restricted view.
 
 **Size:** medium to large. Sonnet 5.5, high.
+
+**F3 status (2026-11-25):** F3 is built. Customer rows carry indexed identity columns (`normalizedEmail`, `normalizedMobile`, `normalizedName`, `dateOfBirth`) used for duplicate candidate queries. A draft keeps its requested Customer ID in the profile so it never occupies the unique column until submission; automatic allocation reads the year's highest number. The service covers update, discard, send back, reject and reasoned correction, plus import (job and diagnostics tables, ready rows only, duplicates flagged), import history and audited export (row count only, 5,000 cap). The government ID image is stored privately and served through an authenticated, record-scoped endpoint; downline views stay restricted. The staff VIP card lookup is deferred to F7 because it needs active memberships. Verified: 56 server tests across 11 files (the 7-test F3 suite covers the lifecycle, duplicate manual ID, send back/resubmit/reject, import counts and audit hygiene, export audit, ID image scope and the downline projection), 124 customer screen tests, `npx tsc --noEmit`, `npm run lint` and `npm run build`. Not performed: a browser api-mode walkthrough; import row diagnostics keep counts/errors only.
 
 ## 9. F4 — Group 4: products, contracts, sales, IGP
 

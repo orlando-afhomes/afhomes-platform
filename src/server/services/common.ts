@@ -13,8 +13,8 @@ export const newId = () => randomUUID().replaceAll("-", "");
 export type AuditSpec = { action: string; entityType: string; entityId: string; details?: Record<string, unknown> };
 
 /** Audit row for one change. Never put credentials, tokens or unnecessary personal data in `details`. */
-export function auditData(actor: Actor, spec: AuditSpec, correlationId?: string) {
-  return { actorId: actor.userId, action: spec.action, entityType: spec.entityType, entityId: spec.entityId, correlationId, details: spec.details ?? {} };
+export function auditData(actor: Actor | null, spec: AuditSpec, correlationId?: string) {
+  return { actorId: actor?.userId ?? undefined, action: spec.action, entityType: spec.entityType, entityId: spec.entityId, correlationId, details: spec.details ?? {} };
 }
 
 /**
@@ -23,7 +23,7 @@ export function auditData(actor: Actor, spec: AuditSpec, correlationId?: string)
  * back; `markers` turns each guard's message into the API error to return.
  */
 export async function transact(
-  actor: Actor,
+  actor: Actor | null,
   input: { variableDefinitions: string; fields: string; variables: Record<string, unknown>; audit: AuditSpec[]; markers?: Record<string, ApiError> },
 ): Promise<void> {
   const audits = input.audit.map((spec, index) => ({ alias: `audit${index}`, variable: `$audit${index}`, data: auditData(actor, spec) }));

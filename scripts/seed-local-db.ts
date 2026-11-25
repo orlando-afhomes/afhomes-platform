@@ -11,6 +11,7 @@ import { PRINT_TEMPLATES } from "@/modules/contracts/print-templates";
 import { seedExperiences } from "@/modules/experiences/sample-seed";
 import { activeRoles } from "@/modules/identity/active-roles";
 import { seedOutlets, seedReferenceEntries } from "@/modules/settings/lists";
+import { normalizePhilippineMobile } from "@/shared/utils/input-sanitizers";
 import { seedTierLevels } from "@/modules/vip/tier-levels";
 import { centavosToInt64 } from "@/server/money";
 import { getAuth } from "firebase-admin/auth";
@@ -100,7 +101,7 @@ if (DRY) {
   process.exit(0);
 }
 
-const TABLES_TO_WIPE = ["product", "paymentScheme", "tierLevel", "experience", "outlet", "referenceEntry", "printTemplate", "payment", "saleAdjustment", "sale", "contract", "customer", "auditEvent", "idempotencyRecord", "roleAssignment", "accountStatusEvent", "userAccount", "staffMember", "departmentRole", "department"];
+const TABLES_TO_WIPE = ["accreditationNumber", "accreditation", "registrationApplication", "seatVacancy", "product", "paymentScheme", "tierLevel", "experience", "outlet", "referenceEntry", "printTemplate", "payment", "saleAdjustment", "sale", "contract", "customer", "auditEvent", "idempotencyRecord", "roleAssignment", "accountStatusEvent", "userAccount", "staffMember", "departmentRole", "department"];
 for (const table of TABLES_TO_WIPE) await gql(`mutation { ${table}_deleteMany(all: true) }`);
 // Members reference themselves, so break the parent links before deleting them.
 await gql(`mutation { member_updateMany(all: true, data: { parentId: null }) }`);
@@ -216,7 +217,7 @@ while (pending.length) {
   const ready = pending.filter((member) => !member.parentId || memberIds.has(member.parentId));
   if (!ready.length) throw new Error("Member genealogy has a cycle or a missing parent.");
   for (const member of ready) {
-    const { picked, rest } = pick(member as unknown as Json, ["id", "displayName", "designation", "branchId", "parentId", "status", "teamName", "referralCode", "aaNumber"]);
+    const { picked, rest } = pick(member as unknown as Json, ["id", "displayName", "designation", "branchId", "parentId", "status", "teamName", "referralCode", "aaNumber", "parentHistory"]);
     const id = await insert("Member", "member", clean({
       displayName: picked.displayName,
       designation: picked.designation,
@@ -226,6 +227,7 @@ while (pending.length) {
       teamName: picked.teamName ?? undefined,
       referralCode: picked.referralCode ?? undefined,
       aaNumber: picked.aaNumber ?? undefined,
+      parentHistory: picked.parentHistory ?? undefined,
       details: rest,
     }));
     memberIds.set(member.id, id!);
@@ -325,17 +327,105 @@ if (!CLEAN) {
       profile: {},
     });
   }
+
+  // Sales network accreditation, applications and vacant seats. AA numbers are mirrored into the
+  // AccreditationNumber ledger, which is the never-reuse record.
+  const aaMonth = (aaNumber: string) => aaNumber.slice(3, 7);
+  const aaSequence = (aaNumber: string) => Number(aaNumber.slice(7));
+  for (const record of seed.accreditations) {
+    const memberId = memberIds.get(record.memberId);
+    if (!memberId) continue;
+    const accreditationId = await insert("Accreditation", "accreditation", clean({
+      memberId,
+      classification: record.classification,
+      adminStatus: record.adminStatus,
+      originalAccreditationDate: record.originalAccreditationDate ?? undefined,
+      effectiveDate: record.effectiveDate ?? undefined,
+      expiryDate: record.expiryDate ?? undefined,
+      aaNumber: record.aaNumber ?? undefined,
+      suspensionEffectiveDate: record.suspensionEffectiveDate ?? undefined,
+      endDate: record.endDate ?? undefined,
+      history: record.history,
+    }));
+    if (record.aaNumber && accreditationId) {
+      await insert("AccreditationNumber", "accreditationNumber", clean({
+        aaNumber: record.aaNumber,
+        memberId,
+        accreditationId,
+        month: aaMonth(record.aaNumber),
+        sequence: aaSequence(record.aaNumber),
+        issuedOn: record.effectiveDate ?? record.originalAccreditationDate ?? undefined,
+      }));
+    }
+    for (const entry of record.aaNumberHistory ?? []) {
+      if (!accreditationId) continue;
+      await insert("AccreditationNumber", "accreditationNumber", clean({
+        aaNumber: entry.aaNumber,
+        memberId,
+        accreditationId,
+        month: aaMonth(entry.aaNumber),
+        sequence: aaSequence(entry.aaNumber),
+        issuedOn: entry.replacedOn,
+        replacedOn: entry.replacedOn,
+      }));
+    }
+  }
+  for (const application of seed.registrationApplications) {
+    await insert("RegistrationApplication", "registrationApplication", clean({
+      classification: application.classification,
+      memberId: application.memberId ? memberIds.get(application.memberId) : undefined,
+      sponsorMemberId: application.sponsorMemberId ? memberIds.get(application.sponsorMemberId) : undefined,
+      status: application.status,
+      sponsorLabel: application.sponsorLabel,
+      reference: application.reference,
+      applicant: application.applicant,
+      version: application.version,
+      versions: application.versions,
+      completion: application.completion ?? undefined,
+      correctionToken: application.correctionToken ?? undefined,
+      decisionReason: application.decisionReason ?? undefined,
+      history: application.history,
+      reviewerId: application.reviewerId ? userIds.get(application.reviewerId) : undefined,
+      submittedAt: ts(application.submittedAt) ?? undefined,
+      decidedAt: ts(application.decidedAt) ?? undefined,
+      createdAt: ts(application.createdAt),
+      updatedAt: ts(application.updatedAt),
+    }));
+  }
+  for (const vacancy of seed.seatVacancies) {
+    await insert("SeatVacancy", "seatVacancy", clean({
+      seatMemberId: memberIds.get(vacancy.seatMemberId),
+      holderEndDate: vacancy.holderEndDate,
+      startDate: vacancy.startDate,
+      filledOn: vacancy.filledOn ?? undefined,
+      filledMethod: vacancy.filledMethod ?? undefined,
+      filledByMemberId: vacancy.filledByMemberId ? memberIds.get(vacancy.filledByMemberId) : undefined,
+      recordedById: userIds.get(vacancy.recordedBy) ?? undefined,
+      recordedAt: ts(vacancy.recordedAt),
+    }));
+  }
 }
 
 const customerIds = new Map<string, string>();
 for (const customer of customers) {
   const { picked, rest } = pick(customer as unknown as Json, ["id", "displayName", "branchId", "ownerMemberId", "status", "customerNumber"]);
+  const profile = rest as Json;
+  const textOf = (value: unknown) => (typeof value === "string" ? value.trim() : "");
+  const email = textOf(profile.email).toLowerCase();
+  const mobile = textOf(profile.mobileNumber);
+  const firstName = textOf(profile.firstName).toLowerCase();
+  const lastName = textOf(profile.lastName).toLowerCase();
+  const dateOfBirth = textOf(profile.dateOfBirth);
   const id = await insert("Customer", "customer", clean({
     displayName: picked.displayName,
     branchId: picked.branchId,
     ownerMemberId: picked.ownerMemberId ? memberIds.get(picked.ownerMemberId as string) : undefined,
     status: picked.status,
     customerNumber: picked.customerNumber ?? undefined,
+    normalizedEmail: email || undefined,
+    normalizedMobile: mobile ? normalizePhilippineMobile(mobile) : undefined,
+    normalizedName: firstName && lastName ? `${firstName}|${lastName}` : undefined,
+    dateOfBirth: dateOfBirth || undefined,
     profile: rest,
   }));
   customerIds.set(customer.id, id!);

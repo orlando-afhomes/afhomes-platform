@@ -76,6 +76,25 @@ extend type Query {
     first: AuditEvent_FirstRow
   ): AuditEvent @fdc_generated(from: "AuditEvent", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `ClosedMonth` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  closedMonth(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ClosedMonth_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ClosedMonth_FirstRow
+  ): ClosedMonth @fdc_generated(from: "ClosedMonth", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `Contract` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   contract(
@@ -223,6 +242,139 @@ extend type Query {
     first: IdempotencyRecord_FirstRow
   ): IdempotencyRecord @fdc_generated(from: "IdempotencyRecord", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `IgpAccreditation` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  igpAccreditation(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpAccreditation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpAccreditation_FirstRow
+  ): IgpAccreditation @fdc_generated(from: "IgpAccreditation", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `IgpBuyerMembership` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  igpBuyerMembership(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpBuyerMembership_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpBuyerMembership_FirstRow
+  ): IgpBuyerMembership @fdc_generated(from: "IgpBuyerMembership", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `IgpHistoryBatch` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  igpHistoryBatch(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpHistoryBatch_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpHistoryBatch_FirstRow
+  ): IgpHistoryBatch @fdc_generated(from: "IgpHistoryBatch", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `IgpProject` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  igpProject(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpProject_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpProject_FirstRow
+  ): IgpProject @fdc_generated(from: "IgpProject", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `IgpSale` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  igpSale(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpSale_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpSale_FirstRow
+  ): IgpSale @fdc_generated(from: "IgpSale", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `IgpSettings` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  igpSettings(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpSettings_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpSettings_FirstRow
+  ): IgpSettings @fdc_generated(from: "IgpSettings", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `IgpUnit` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  igpUnit(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpUnit_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpUnit_FirstRow
+  ): IgpUnit @fdc_generated(from: "IgpUnit", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `Member` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   member(
@@ -280,6 +432,25 @@ extend type Query {
     first: Payment_FirstRow
   ): Payment @fdc_generated(from: "Payment", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `PaymentAdjustment` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  paymentAdjustment(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PaymentAdjustment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PaymentAdjustment_FirstRow
+  ): PaymentAdjustment @fdc_generated(from: "PaymentAdjustment", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `PaymentScheme` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   paymentScheme(
@@ -336,6 +507,25 @@ extend type Query {
     """
     first: Product_FirstRow
   ): Product @fdc_generated(from: "Product", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `ReceiptImportBatch` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  receiptImportBatch(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ReceiptImportBatch_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ReceiptImportBatch_FirstRow
+  ): ReceiptImportBatch @fdc_generated(from: "ReceiptImportBatch", purpose: QUERY_SINGLE)
   """
   ✨ Look up a single `ReferenceEntry` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
@@ -483,6 +673,25 @@ extend type Query {
     """
     first: TierLevel_FirstRow
   ): TierLevel @fdc_generated(from: "TierLevel", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `UnmatchedReceipt` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  unmatchedReceipt(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: UnmatchedReceipt_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: UnmatchedReceipt_FirstRow
+  ): UnmatchedReceipt @fdc_generated(from: "UnmatchedReceipt", purpose: QUERY_SINGLE)
   """
   ✨ Look up a single `UserAccount` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
@@ -638,6 +847,40 @@ extend type Query {
     """
     having: AuditEvent_Having
   ): [AuditEvent!]! @fdc_generated(from: "AuditEvent", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `ClosedMonth` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  closedMonths(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ClosedMonth_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ClosedMonth_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ClosedMonth_Having
+  ): [ClosedMonth!]! @fdc_generated(from: "ClosedMonth", purpose: QUERY_MULTIPLE)
   """
   ✨ List `Contract` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
@@ -911,6 +1154,244 @@ extend type Query {
     having: IdempotencyRecord_Having
   ): [IdempotencyRecord!]! @fdc_generated(from: "IdempotencyRecord", purpose: QUERY_MULTIPLE)
   """
+  ✨ List `IgpAccreditation` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  igpAccreditations(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpAccreditation_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpAccreditation_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpAccreditation_Having
+  ): [IgpAccreditation!]! @fdc_generated(from: "IgpAccreditation", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `IgpBuyerMembership` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  igpBuyerMemberships(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpBuyerMembership_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpBuyerMembership_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpBuyerMembership_Having
+  ): [IgpBuyerMembership!]! @fdc_generated(from: "IgpBuyerMembership", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `IgpHistoryBatch` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  igpHistoryBatches(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpHistoryBatch_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpHistoryBatch_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpHistoryBatch_Having
+  ): [IgpHistoryBatch!]! @fdc_generated(from: "IgpHistoryBatch", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `IgpProject` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  igpProjects(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpProject_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpProject_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpProject_Having
+  ): [IgpProject!]! @fdc_generated(from: "IgpProject", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `IgpSale` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  igpSales(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpSale_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpSale_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpSale_Having
+  ): [IgpSale!]! @fdc_generated(from: "IgpSale", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `IgpSettings` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  igpSettingss(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpSettings_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpSettings_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpSettings_Having
+  ): [IgpSettings!]! @fdc_generated(from: "IgpSettings", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `IgpUnit` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  igpUnits(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpUnit_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpUnit_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpUnit_Having
+  ): [IgpUnit!]! @fdc_generated(from: "IgpUnit", purpose: QUERY_MULTIPLE)
+  """
   ✨ List `Member` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
   members(
@@ -1013,6 +1494,40 @@ extend type Query {
     having: Payment_Having
   ): [Payment!]! @fdc_generated(from: "Payment", purpose: QUERY_MULTIPLE)
   """
+  ✨ List `PaymentAdjustment` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  paymentAdjustments(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: PaymentAdjustment_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [PaymentAdjustment_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: PaymentAdjustment_Having
+  ): [PaymentAdjustment!]! @fdc_generated(from: "PaymentAdjustment", purpose: QUERY_MULTIPLE)
+  """
   ✨ List `PaymentScheme` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
   paymentSchemes(
@@ -1114,6 +1629,40 @@ extend type Query {
     """
     having: Product_Having
   ): [Product!]! @fdc_generated(from: "Product", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `ReceiptImportBatch` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  receiptImportBatches(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ReceiptImportBatch_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ReceiptImportBatch_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ReceiptImportBatch_Having
+  ): [ReceiptImportBatch!]! @fdc_generated(from: "ReceiptImportBatch", purpose: QUERY_MULTIPLE)
   """
   ✨ List `ReferenceEntry` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
@@ -1386,6 +1935,40 @@ extend type Query {
     """
     having: TierLevel_Having
   ): [TierLevel!]! @fdc_generated(from: "TierLevel", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `UnmatchedReceipt` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  unmatchedReceipts(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: UnmatchedReceipt_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [UnmatchedReceipt_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: UnmatchedReceipt_Having
+  ): [UnmatchedReceipt!]! @fdc_generated(from: "UnmatchedReceipt", purpose: QUERY_MULTIPLE)
   """
   ✨ List `UserAccount` objects in the table and return selected fields, optionally filtered by `where` conditions
   """

@@ -12,6 +12,15 @@ const text = z.string().max(200);
 const optText = text.nullable().optional();
 const flatObject = z.record(z.string(), z.union([z.string().max(200), z.boolean(), z.null(), z.array(z.string().max(20))]).optional());
 const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use the date format YYYY-MM-DD.");
+const money = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
+const positiveMoney = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
+
+/** Non-Standard price, number of monthly payments (1 to 12, owner amendment 2026-11-24) and reason. */
+const NonStandardTermsBody = z.strictObject({
+  priceCentavos: positiveMoney,
+  months: z.number().int().min(1).max(12),
+  justification: z.string().min(1).max(500),
+});
 
 // Unknown keys are refused. The government ID image is uploaded through its own file endpoint.
 const customerFields = {
@@ -58,8 +67,77 @@ export const PrepareContractBody = z.strictObject({
   reservationDate: dateOnly.optional(),
   dueDates: z.record(z.string().regex(/^\d+$/), dateOnly.or(z.literal(""))).optional(),
   customerAccepted: z.boolean(),
-  nonStandardTerms: z.unknown().optional(),
+  nonStandardTerms: NonStandardTermsBody.optional(),
 }).transform((value) => value as unknown as PrepareContractInput);
+
+export const UpdateContractBody = z.strictObject({
+  dueDates: z.record(z.string().regex(/^\d+$/), dateOnly.or(z.literal(""))).optional(),
+  customerAccepted: z.boolean().optional(),
+  nonStandardTerms: NonStandardTermsBody.optional(),
+});
+
+export const CancellationRequestBody = z.strictObject({
+  ground: z.enum(["non_payment", "false_information", "voluntary_withdrawal"]),
+  reason: z.string().min(1).max(500),
+});
+
+export const CancellationDecisionBody = z.strictObject({
+  decision: z.enum(["confirm", "decline"]),
+  reason: z.string().min(1).max(500),
+});
+
+export const ReferenceBody = z.strictObject({ reference: z.string().min(1).max(200) });
+
+export const SaleCommissionCorrectionBody = z.strictObject({
+  referrerMemberId: idField.nullable().optional(),
+  dscRateBp: z.number().int().min(0).max(10_000).optional(),
+  driRateBp: z.number().int().min(0).max(10_000).optional(),
+  reason: z.string().min(1).max(500),
+});
+
+// ---------------------------------------------------------------- finance lifecycle (F5)
+const paymentMethod = z.enum(PAYMENT_METHODS as unknown as [string, ...string[]]);
+const paymentPurpose = z.enum(PAYMENT_PURPOSES as unknown as [string, ...string[]]);
+
+export const PaymentResubmitBody = z.strictObject({
+  purpose: paymentPurpose.optional(),
+  amountCentavos: positiveMoney.optional(),
+  method: paymentMethod.optional(),
+  paidDate: dateOnly.optional(),
+  referenceNo: z.string().max(60).nullable().optional(),
+  documentNo: z.string().max(60).nullable().optional(),
+  evidenceFileName: z.string().max(200).nullable().optional(),
+  bankId: z.string().max(60).nullable().optional(),
+});
+
+export const PaymentAdjustBody = z.strictObject({
+  kind: z.enum(["reversal", "refund"]),
+  amountCentavos: positiveMoney,
+  reason: z.string().min(1).max(500),
+});
+
+export const UnmatchedReceiptBody = z.strictObject({
+  amountCentavos: positiveMoney,
+  method: paymentMethod,
+  paidDate: dateOnly,
+  orNumber: z.string().min(1).max(60),
+  reason: z.string().min(1).max(500),
+  evidenceFileName: z.string().max(200).nullable().optional(),
+});
+
+export const MatchUnmatchedBody = z.strictObject({
+  contractId: idField,
+  purpose: paymentPurpose,
+  note: z.string().max(500).nullable().optional(),
+});
+
+export const ClosedMonthBody = z.strictObject({ month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Use the month format YYYY-MM.") });
+
+export const ReceiptImportCreateBody = z.strictObject({
+  fileName: z.string().min(1).max(200),
+  records: z.array(z.record(z.string(), z.string().max(500))).min(1).max(1_000),
+  declaration: z.boolean(),
+});
 
 export const SubmitPaymentBody = z.strictObject({
   contractId: idField,
@@ -238,6 +316,171 @@ export const AccreditationStatusBody = z.strictObject({
   reason: z.string().max(500).optional(),
 });
 export const AccreditationRenewBody = z.strictObject({ renewalDate: dateOnly.optional(), expectedAaNumber: z.string().max(20).optional() });
+
+// ---------------------------------------------------------------- catalog (F4)
+const tierCodeMap = z.record(z.string().max(10), z.string().max(10));
+const tierCodeAmounts = z.record(z.string().max(10), money);
+const tierCodeCounts = z.record(z.string().max(10), z.number().int().min(1).max(60));
+
+export const TierLevelBody = z.strictObject({
+  name: z.string().min(1).max(80),
+  colorKey: z.enum(["bronze", "silver", "gold", "neutral"]),
+  sortOrder: z.number().int().min(1).max(1000).optional(),
+});
+
+export const TierLevelPatch = z.strictObject({
+  name: z.string().min(1).max(80).optional(),
+  colorKey: z.enum(["bronze", "silver", "gold", "neutral"]).optional(),
+  sortOrder: z.number().int().min(1).max(1000).optional(),
+  status: z.enum(["active", "inactive"]).optional(),
+});
+
+const productTermFields = {
+  name: z.string().min(1).max(120),
+  tierLevelId: z.string().min(1).max(100),
+  priceCentavos: positiveMoney,
+  validityYears: z.number().int().min(1).max(50),
+  earningCycles: z.number().int().min(1).max(50),
+  vipDiscountPercent: z.number().int().min(0).max(100),
+  lifetimePoints: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  pointsPerCycle: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  weekdayPointsPerCycle: money,
+  weekendPointsPerCycle: money,
+  minSpendPerCycleCentavos: money,
+  supplementaryHolders: z.number().int().min(0).max(20),
+};
+
+export const ProductBody = z.strictObject({
+  code: z.string().min(1).max(10),
+  ...productTermFields,
+  description: z.string().max(500).nullable().optional(),
+  benefitsSummary: z.string().max(500).nullable().optional(),
+  imageUrl: z.string().max(500).nullable().optional(),
+  imageFileName: z.string().max(200).nullable().optional(),
+  publiclyListed: z.boolean().optional(),
+});
+
+export const ProductPatch = z.strictObject({
+  name: productTermFields.name.optional(),
+  tierLevelId: productTermFields.tierLevelId.optional(),
+  priceCentavos: productTermFields.priceCentavos.optional(),
+  validityYears: productTermFields.validityYears.optional(),
+  earningCycles: productTermFields.earningCycles.optional(),
+  vipDiscountPercent: productTermFields.vipDiscountPercent.optional(),
+  lifetimePoints: productTermFields.lifetimePoints.optional(),
+  pointsPerCycle: productTermFields.pointsPerCycle.optional(),
+  weekdayPointsPerCycle: productTermFields.weekdayPointsPerCycle.optional(),
+  weekendPointsPerCycle: productTermFields.weekendPointsPerCycle.optional(),
+  minSpendPerCycleCentavos: productTermFields.minSpendPerCycleCentavos.optional(),
+  supplementaryHolders: productTermFields.supplementaryHolders.optional(),
+  description: z.string().max(500).nullable().optional(),
+  benefitsSummary: z.string().max(500).nullable().optional(),
+  imageUrl: z.string().max(500).nullable().optional(),
+  imageFileName: z.string().max(200).nullable().optional(),
+  publiclyListed: z.boolean().optional(),
+  status: z.enum(["active", "retired"]).optional(),
+  priceStatus: z.enum(["contract_stated", "conflict"]).optional(),
+});
+
+export const PaymentSchemeBody = z.strictObject({
+  label: z.string().min(1).max(120),
+  paymentCode: z.string().max(10).nullable().optional(),
+  paymentCodeByTier: tierCodeMap.optional(),
+  applicableTiers: z.array(z.string().max(10)).max(50).optional(),
+  reservationCentavos: positiveMoney.nullable().optional(),
+  installmentCount: z.number().int().min(1).max(60).nullable().optional(),
+  installmentCentavosByTier: tierCodeAmounts.optional(),
+  priceCentavosByTier: tierCodeAmounts.optional(),
+  installmentCountByTier: tierCodeCounts.optional(),
+  downPaymentBasisPoints: z.number().int().min(1).max(9_999).nullable().optional(),
+  availability: z.enum(["available", "unavailable"]).optional(),
+});
+
+export const PaymentSchemePatch = z.strictObject({
+  label: z.string().min(1).max(120).optional(),
+  paymentCode: z.string().max(10).nullable().optional(),
+  paymentCodeByTier: tierCodeMap.optional(),
+  applicableTiers: z.array(z.string().max(10)).max(50).optional(),
+  reservationCentavos: positiveMoney.nullable().optional(),
+  installmentCount: z.number().int().min(1).max(60).nullable().optional(),
+  installmentCentavosByTier: tierCodeAmounts.optional(),
+  priceCentavosByTier: tierCodeAmounts.optional(),
+  installmentCountByTier: tierCodeCounts.optional(),
+  downPaymentBasisPoints: z.number().int().min(1).max(9_999).nullable().optional(),
+  availability: z.enum(["available", "unavailable"]).optional(),
+});
+
+export const ReasonBody = z.strictObject({ reason: z.string().min(1).max(500) });
+
+// ---------------------------------------------------------------- property sales (IGP; F4)
+const igpPayment = z.strictObject({
+  amountCentavos: positiveMoney,
+  method: z.enum(PAYMENT_METHODS as unknown as [string, ...string[]]),
+  paidDate: dateOnly,
+  documentNo: optText,
+});
+
+const igpIntake = {
+  projectId: idField,
+  unitId: idField,
+  priceCentavos: positiveMoney,
+  scheme: z.enum(["C", "T"]),
+  termMonths: z.number().int().min(1).max(36),
+  clauses: z.enum(["S", "N"]),
+  sellerMemberId: idField,
+  referrerMemberId: idField.nullable(),
+  referralReference: z.string().max(200).optional(),
+  entry: z.enum(["reservation", "cts"]),
+  date: dateOnly,
+};
+
+const cashTermMonths = (value: { scheme: string; termMonths: number }, ctx: z.RefinementCtx) => {
+  if (value.scheme === "C" && value.termMonths !== 1) ctx.addIssue({ code: "custom", path: ["termMonths"], message: "Cash uses one month." });
+};
+
+const IgpRecordBody = z.strictObject({ customerId: idField, ...igpIntake, payment: igpPayment }).superRefine(cashTermMonths);
+
+const IgpReissueBody = z.strictObject({
+  projectId: idField,
+  unitId: idField,
+  priceCentavos: positiveMoney,
+  scheme: z.enum(["C", "T"]),
+  termMonths: z.number().int().min(1).max(36),
+  clauses: z.enum(["S", "N"]),
+  date: dateOnly,
+  reason: z.string().min(1).max(500),
+}).superRefine(cashTermMonths);
+
+const IgpCorrectBody = z.strictObject({
+  priceCentavos: positiveMoney,
+  referrerMemberId: idField.nullable(),
+  referralReference: z.string().max(200).optional(),
+  reason: z.string().min(1).max(500),
+});
+
+export const IgpActionBody = z.discriminatedUnion("type", [
+  z.strictObject({ type: z.literal("record"), input: IgpRecordBody }),
+  z.strictObject({ type: z.literal("accredit"), memberId: idField, number: z.string().min(1).max(20), approvedDate: dateOnly }),
+  z.strictObject({ type: z.literal("threshold"), basisPoints: z.number().int().positive().max(10_000), reason: z.string().min(1).max(500) }),
+  z.strictObject({ type: z.literal("grantTierRules"), rules: z.array(z.strictObject({ tier: z.string().min(1).max(10), minPriceCentavos: positiveMoney })).min(1).max(20), reason: z.string().min(1).max(500) }),
+  z.strictObject({ type: z.literal("approve"), id: idField }),
+  z.strictObject({ type: z.literal("default"), id: idField, reason: z.string().min(1).max(500) }),
+  z.strictObject({ type: z.literal("cancel"), id: idField, refundCentavos: money, refundDate: dateOnly.nullable(), reason: z.string().min(1).max(500) }),
+  z.strictObject({ type: z.literal("reissue"), id: idField, input: IgpReissueBody }),
+  z.strictObject({ type: z.literal("correct"), id: idField, input: IgpCorrectBody }),
+  z.strictObject({ type: z.literal("document"), id: idField, key: z.enum(["reservation", "cts", "goodwill_grant", "deed", "formal_grant", "lease", "spa"]), signedDate: dateOnly, signers: z.string().min(1).max(200) }),
+]);
+
+export const IgpHistoryImportBody = z.strictObject({
+  fileName: z.string().min(1).max(200),
+  records: z.array(z.record(z.string(), z.string().max(500))).min(1).max(1_000),
+  declaration: z.boolean(),
+});
+
+export const IgpProjectBody = z.strictObject({ name: z.string().min(1).max(80), location: z.string().max(80).optional() });
+export const IgpProjectPatch = z.strictObject({ name: z.string().min(1).max(80).optional(), location: z.string().max(80).optional(), status: z.enum(["active", "inactive"]).optional() });
+export const IgpUnitBody = z.strictObject({ projectId: idField, unitOrLot: z.string().min(1).max(40), propertyOwner: z.string().min(1).max(80) });
+export const IgpUnitPatch = z.strictObject({ unitOrLot: z.string().min(1).max(40).optional(), propertyOwner: z.string().min(1).max(80).optional(), status: z.enum(["active", "inactive"]).optional() });
 
 export const AccreditedSellerBody = z.strictObject({
   mode: z.enum(["IST", "OST"]),

@@ -13,6 +13,8 @@ import { activeRoles } from "@/modules/identity/active-roles";
 import { seedOutlets, seedReferenceEntries } from "@/modules/settings/lists";
 import { normalizePhilippineMobile } from "@/shared/utils/input-sanitizers";
 import { seedTierLevels } from "@/modules/vip/tier-levels";
+import { DEFAULT_IGP_GRANT_TIER_RULES, seedIgpCatalog } from "@/modules/igp/types";
+import { addYearsToDate, manilaToday } from "@/shared/lib/dates";
 import { centavosToInt64 } from "@/server/money";
 import { getAuth } from "firebase-admin/auth";
 import { getStorage } from "firebase-admin/storage";
@@ -101,7 +103,7 @@ if (DRY) {
   process.exit(0);
 }
 
-const TABLES_TO_WIPE = ["accreditationNumber", "accreditation", "registrationApplication", "seatVacancy", "product", "paymentScheme", "tierLevel", "experience", "outlet", "referenceEntry", "printTemplate", "payment", "saleAdjustment", "sale", "contract", "customer", "auditEvent", "idempotencyRecord", "roleAssignment", "accountStatusEvent", "userAccount", "staffMember", "departmentRole", "department"];
+const TABLES_TO_WIPE = ["paymentAdjustment", "closedMonth", "unmatchedReceipt", "receiptImportBatch", "igpBuyerMembership", "igpHistoryBatch", "igpSale", "igpAccreditation", "igpUnit", "igpProject", "igpSettings", "accreditationNumber", "accreditation", "registrationApplication", "seatVacancy", "product", "paymentScheme", "tierLevel", "experience", "outlet", "referenceEntry", "printTemplate", "payment", "saleAdjustment", "sale", "contract", "customer", "auditEvent", "idempotencyRecord", "roleAssignment", "accountStatusEvent", "userAccount", "staffMember", "departmentRole", "department"];
 for (const table of TABLES_TO_WIPE) await gql(`mutation { ${table}_deleteMany(all: true) }`);
 // Members reference themselves, so break the parent links before deleting them.
 await gql(`mutation { member_updateMany(all: true, data: { parentId: null }) }`);
@@ -210,6 +212,22 @@ for (const [index, template] of printTemplates.entries()) {
   }));
 }
 
+// Property sales (IGP): settings are configuration (both seeds); projects and units are sample records.
+await insert("IgpSettings", "igpSettings", {
+  key: "igp", thresholdBp: 1_000,
+  grantTierRules: DEFAULT_IGP_GRANT_TIER_RULES.map((rule) => ({ ...rule })),
+});
+if (!CLEAN) {
+  const igpCatalog = seedIgpCatalog();
+  const igpProjectIds = new Map<string, string>();
+  for (const project of igpCatalog.projects) {
+    igpProjectIds.set(project.id, (await insert("IgpProject", "igpProject", clean({ name: project.name, location: project.location ?? undefined, status: project.status })))!);
+  }
+  for (const unit of igpCatalog.units) {
+    await insert("IgpUnit", "igpUnit", { projectId: igpProjectIds.get(unit.projectId), unitOrLot: unit.unitOrLot, propertyOwner: unit.propertyOwner, status: unit.status });
+  }
+}
+
 // Members: parents first so every parent id exists.
 const memberIds = new Map<string, string>();
 const pending = [...members];
@@ -232,6 +250,19 @@ while (pending.length) {
     }));
     memberIds.set(member.id, id!);
     pending.splice(pending.indexOf(member), 1);
+  }
+}
+
+// JA&D accreditations for the seeded IGP sellers, so a property sale (IGP) can be entered.
+if (!CLEAN) {
+  const approvedDate = manilaToday();
+  const yymm = `${approvedDate.slice(2, 4)}${approvedDate.slice(5, 7)}`;
+  const jadMembers = ["mem-svd-a", "mem-svd-b", "mem-ssm-b", "mem-svd-c"];
+  for (const [index, memberId] of jadMembers.entries()) {
+    await insert("IgpAccreditation", "igpAccreditation", {
+      memberId: memberIds.get(memberId), number: `JAI${yymm}${String(index + 1).padStart(4, "0")}`,
+      approvedDate, validUntil: addYearsToDate(approvedDate, 1),
+    });
   }
 }
 
@@ -477,9 +508,9 @@ for (const sale of sales) {
   }
 }
 
-// IGP receipts point at IGP projects (doc 14), which are not part of the pilot schema.
+// IGP receipts belong to the IGP sale (doc 14) and stay on it until F5 unifies the receipt table.
 const pilotPayments = payments.filter((payment) => contractIds.has(payment.contractId));
-console.log(`Skipping ${payments.length - pilotPayments.length} IGP receipts (IGP is not in the pilot).`);
+console.log(`Skipping ${payments.length - pilotPayments.length} IGP receipts (kept on the IGP sale until F5).`);
 for (const payment of pilotPayments) {
   const { picked, rest } = pick(payment as unknown as Json, ["id", "contractId", "customerId", "purpose", "amountCentavos", "method", "paidDate", "countedDate", "referenceNo", "documentNo", "status", "submittedBy", "submittedAt", "verifiedBy", "verifiedAt", "verifiedDate", "decisionReason"]);
   await insert("Payment", "payment", clean({

@@ -127,7 +127,7 @@ Common to every group: schema additions with unique constraints and foreign keys
 - **Add:** product, payment scheme and tier level tables with versioned configuration (finalized contracts never rewrite), reference lists and outlets; IGP project, sale and catalog tables.
 - **Move the catalog** from the sample constants to these tables, with Admin screens for products, schemes and tier codes.
 - **Routes still missing:** update contract, return, cancel, request and decide cancellation (two steps with forfeiture), Non-Standard contracts (two approvals), reject sale, correct sale commission, IGP enter, approve, sign documents, cancel.
-- **Decide first:** Non-Standard monthly payments 1 to 36 ([decision register UI20](../decisions-and-gaps.md)) against 1 to 12 ([doc 05](../../business-rules/05-vip-products-and-contracts.md), amended 2026-11-24). Do not build Non-Standard until settled.
+- **Decided 2026-11-24:** Non-Standard monthly payments are 1 to 12 (doc 05 §10.2 and item 32). The earlier UI20 "1 to 36" figure is superseded; build Non-Standard at 1 to 12.
 - **VIP Number issuance** (`YYMMDDNNNNNVTPMMS`, one number for the Reservation Agreement, Grant and Card) needs an approved sale, a recorded signed agreement, the first scheduled payment paid, and frozen commission rates. Build it at the start of group 6, because the rates come from there. Use unique index and retry, a monthly sequence per `YYMM`, and a blocker message on the contract when terms or rates need correction (as the sample code does).
 - **Size:** large. Opus 5.5, high.
 

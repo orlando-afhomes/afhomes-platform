@@ -5,7 +5,7 @@ import { int64ToCentavos } from "@/server/money";
 
 /** Confirmed VIP configuration (docs 05 and 06) read from the database, never from sample constants. */
 
-type TierLevelRow = { id: string; key: string; name: string; colorKey: string; sortOrder: number; status: string };
+type TierLevelRow = { id: string; key: string; name: string; colorKey: string; sortOrder: number; status: string; configVersion: number; effectiveDate: string | null; changes: ProductChange[] | null };
 
 type ProductRow = {
   code: string; name: string; tierLevel: TierLevelRow | null;
@@ -25,7 +25,7 @@ type PaymentSchemeRow = {
   configVersion: number; effectiveDate: string | null; changes: ProductChange[] | null; sortOrder: number;
 };
 
-const TIER_LEVEL_FIELDS = "id key name colorKey sortOrder status";
+const TIER_LEVEL_FIELDS = "id key name colorKey sortOrder status configVersion effectiveDate changes";
 const PRODUCT_FIELDS = `code name tierLevel { ${TIER_LEVEL_FIELDS} } priceCentavos priceStatus priceNote validityYears earningCycles vipDiscountPercent lifetimePoints pointsPerCycle weekdayPointsPerCycle weekendPointsPerCycle minSpendPerCycleCentavos supplementaryHolders description benefitsSummary imageUrl imageFileName status approvalStatus publiclyListed configVersion effectiveDate changes`;
 const SCHEME_FIELDS = "key label historicalLabel category paymentCode paymentCodeByTier applicableTiers reservationCentavos installmentCount installmentCentavosByTier priceCentavosByTier installmentCountByTier downPaymentBasisPoints commercialStatus source availability ownerHold configVersion effectiveDate changes sortOrder";
 
@@ -39,6 +39,9 @@ export async function loadTierLevels(): Promise<TierLevel[]> {
       colorKey: row.colorKey as TierColorKey,
       sortOrder: row.sortOrder,
       status: row.status === "active" ? "active" : "inactive",
+      configVersion: row.configVersion,
+      effectiveDate: row.effectiveDate,
+      changes: row.changes ?? [],
     }));
 }
 

@@ -3,7 +3,7 @@ import type { MockAsyncOptions } from "@/data/contracts/async-options";
 import type { PaymentSchemeInput, ProductCreateInput, ProductRepository, ProductUpdateInput } from "@/data/contracts/product-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import type { DevIdentity } from "@/modules/identity/types";
-import { installmentCountFor, productCodeError, schemeTermErrors } from "@/modules/vip/rules";
+import { benefitsLostError, productCodeError, PRODUCT_ECONOMIC_KEYS, productTermErrors, schemeTermErrors, schemeTermsComplete } from "@/modules/vip/rules";
 import type { PaymentScheme, PublicVipProduct, VipProduct, VipTierCode } from "@/modules/vip/types";
 import { BusinessRepository, today } from "./business-base";
 import { nextId } from "./ids";
@@ -11,54 +11,6 @@ import type { MockStore } from "./seed";
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
-}
-
-/** Resolves the Card ID payment code for a tier: per-tier entry, else the single code. */
-// TODO: replace with paymentCodeFor from "@/modules/vip/rules" once the sibling worker lands it.
-function paymentCodeFor(scheme: Pick<PaymentScheme, "paymentCode" | "paymentCodeByTier">, tier: VipTierCode): string | null {
-  return scheme.paymentCodeByTier?.[tier] ?? scheme.paymentCode;
-}
-
-/** Scheme terms are complete only when every documented field for its category is present. */
-function termsComplete(scheme: PaymentScheme): boolean {
-  if (scheme.ownerHold) return false;
-  if (scheme.applicableTiers.length === 0) return false;
-  // Card ID payment code (06 section 6.3) must resolve for every applicable tier via the
-  // single code or a per-tier entry; schemes without full tier coverage stay pending.
-  if (!scheme.applicableTiers.every((tier) => paymentCodeFor(scheme, tier))) return false;
-  if (scheme.category === "cash") return true;
-  return scheme.applicableTiers.every((tier) => (installmentCountFor(scheme, tier) ?? 0) > 0 && (scheme.installmentCentavosByTier[tier] ?? 0) > 0);
-}
-
-const TEXT_MAX = 500;
-
-/** Terms that set what a customer pays or earns; on an approved product only the approver may change them. */
-const ECONOMIC_KEYS: ReadonlyArray<keyof VipProduct> = [
-  "priceCentavos", "validityYears", "earningCycles", "pointsPerCycle", "lifetimePoints",
-  "weekdayPointsPerCycle", "weekendPointsPerCycle", "minSpendPerCycleCentavos", "vipDiscountPercent", "supplementaryHolders", "tierLevelId",
-];
-
-/** Approval required stated benefits; an approved product keeps them so its public card cannot lose the custom perks. */
-function benefitsLostError(before: VipProduct, next: VipProduct): string | null {
-  if (before.approvalStatus !== "approved" || !before.benefitsSummary?.trim() || next.benefitsSummary?.trim()) return null;
-  return "An approved product keeps its stated benefits. Enter the benefits or retire the product instead of clearing them.";
-}
-
-function productTermErrors(next: VipProduct): string | null {
-  if ((next.description ?? "").length > TEXT_MAX) return `The description must be ${TEXT_MAX} characters or fewer.`;
-  if ((next.benefitsSummary ?? "").length > TEXT_MAX) return `The benefits summary must be ${TEXT_MAX} characters or fewer.`;
-  if (!Number.isInteger(next.priceCentavos) || next.priceCentavos <= 0) return "The price must be a positive amount.";
-  if (!Number.isInteger(next.validityYears) || next.validityYears < 1) return "Validity must be at least one year.";
-  if (!Number.isInteger(next.earningCycles) || next.earningCycles < 1) return "Earning cycles must be at least one.";
-  if (!Number.isInteger(next.pointsPerCycle) || next.pointsPerCycle <= 0) return "Points per cycle must be positive.";
-  if (!Number.isInteger(next.lifetimePoints) || next.lifetimePoints <= 0) return "Lifetime points must be positive.";
-  if (!Number.isInteger(next.weekdayPointsPerCycle) || next.weekdayPointsPerCycle < 0 || !Number.isInteger(next.weekendPointsPerCycle) || next.weekendPointsPerCycle < 0) return "Weekday and weekend points cannot be negative.";
-  if (!Number.isInteger(next.vipDiscountPercent) || next.vipDiscountPercent < 0 || next.vipDiscountPercent > 100) return "The VIP discount must be between 0 and 100 percent.";
-  if (!Number.isInteger(next.supplementaryHolders) || next.supplementaryHolders < 0) return "Extra cardholders cannot be negative.";
-  if (next.weekdayPointsPerCycle + next.weekendPointsPerCycle !== next.pointsPerCycle) return "Weekday and weekend points must add up to the points per cycle.";
-  if (next.pointsPerCycle * next.earningCycles !== next.lifetimePoints) return "Lifetime points must equal points per cycle times earning cycles.";
-  if (next.earningCycles > next.validityYears) return "Earning cycles cannot exceed the validity years.";
-  return null;
 }
 
 export class MockProductRepository extends BusinessRepository implements ProductRepository {
@@ -101,7 +53,7 @@ export class MockProductRepository extends BusinessRepository implements Product
       if (invalidTerms) throw new Error(invalidTerms);
       const changed =(Object.keys(input) as Array<keyof ProductUpdateInput>).filter((key) => input[key] !== undefined && input[key] !== product[key]);
       if (changed.length === 0) throw new Error("Nothing was changed.");
-      if (product.approvalStatus === "approved" && changed.some((key) => ECONOMIC_KEYS.includes(key)) && !this.can(identity, "vip-products.approve")) {
+      if (product.approvalStatus === "approved" && changed.some((key) => PRODUCT_ECONOMIC_KEYS.includes(key)) && !this.can(identity, "vip-products.approve")) {
         throw new Error("Changing the price, points or discount of an approved product needs Super Administrator approval.");
       }
       if (input.priceStatus !== undefined && input.priceStatus !== "contract_stated" && input.priceStatus !== "conflict") throw new Error("The price status must be contract_stated or conflict.");
@@ -277,7 +229,7 @@ export class MockProductRepository extends BusinessRepository implements Product
       };
       const invalid = schemeTermErrors(scheme, this.store.products);
       if (invalid.length > 0) throw new Error(invalid[0]);
-      scheme.commercialStatus = termsComplete(scheme) ? "configured" : "pending_owner_decision";
+      scheme.commercialStatus = schemeTermsComplete(scheme) ? "configured" : "pending_owner_decision";
       if (scheme.commercialStatus === "configured") scheme.availability = input.availability ?? "available";
       this.store.paymentSchemes.push(scheme);
       this.audit(identity, { module: "vip-products", action: BUSINESS_AUDIT_ACTIONS.PAYMENT_SCHEME_CREATED, entityType: "payment-scheme", entityId: scheme.id, newValue: scheme.commercialStatus });
@@ -300,7 +252,7 @@ export class MockProductRepository extends BusinessRepository implements Product
       const invalid = schemeTermErrors(next, this.store.products);
       if (invalid.length > 0) throw new Error(invalid[0]);
       Object.assign(scheme, next);
-      scheme.commercialStatus = termsComplete(scheme) ? "configured" : "pending_owner_decision";
+      scheme.commercialStatus = schemeTermsComplete(scheme) ? "configured" : "pending_owner_decision";
       if (scheme.commercialStatus !== "configured") scheme.availability = "unavailable";
       scheme.configVersion += 1;
       // Contracts already prepared keep their snapshot; the new version applies from today.

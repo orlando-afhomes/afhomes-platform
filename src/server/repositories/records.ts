@@ -1,7 +1,7 @@
 import "server-only";
 import type { Contract } from "@/modules/contracts/types";
 import type { Customer, CustomerStatus } from "@/modules/customers/types";
-import type { Payment } from "@/modules/finance/types";
+import type { Payment, PaymentAdjustment } from "@/modules/finance/types";
 import type { OrgMember } from "@/modules/organization/types";
 import type { Sale } from "@/modules/sales/types";
 import { dbRead, listAll } from "@/server/db";
@@ -141,7 +141,7 @@ export function contractColumns(contract: Contract) {
   const { id: _id, customerId, productCode, priceCentavos, classification, status, raNumber, vipNumber, signedAgreementRecordedDate, sellerMemberId, createdAt: _created, ...details } = contract;
   void _id; void _created;
   return {
-    columns: { customerId, productCode, priceCentavos: centavosToInt64(priceCentavos), classification, status, raNumber: raNumber ?? undefined, vipNumber: vipNumber ?? undefined, signedAgreementRecordedDate: signedAgreementRecordedDate ?? undefined, sellerMemberId: sellerMemberId ?? undefined },
+    columns: { customerId, productCode, priceCentavos: centavosToInt64(priceCentavos), classification, status, raNumber: raNumber ?? null, vipNumber: vipNumber ?? null, signedAgreementRecordedDate: signedAgreementRecordedDate ?? null, sellerMemberId: sellerMemberId ?? null },
     details,
   };
 }
@@ -168,12 +168,13 @@ export function paymentEvidenceOf(details: Json | null): PaymentEvidenceMeta | n
   return evidence as PaymentEvidenceMeta;
 }
 
-export function toPayment(row: PaymentRow, saleId: string | null): Payment {
+export function toPayment(row: PaymentRow, saleId: string | null, adjustments: PaymentAdjustment[] = []): Payment {
   // The internal evidence pointer stays on the server; the view builds its private URL separately.
-  const { evidence: _evidence, ...details } = (row.details ?? {}) as Record<string, unknown>;
-  void _evidence;
+  // `adjustments` are read from their insert-only table, not from older `details` copies.
+  const { evidence: _evidence, adjustments: _detailsAdjustments, ...details } = (row.details ?? {}) as Record<string, unknown>;
+  void _evidence; void _detailsAdjustments;
   return {
-    adjustments: [], history: [], evidenceFileName: null,
+    adjustments, history: [], evidenceFileName: null,
     ...details,
     id: row.id, contractId: row.contract?.id, customerId: row.customer?.id, saleId, purpose: row.purpose, amountCentavos: int64ToCentavos(row.amountCentavos),
     method: row.method, paidDate: row.paidDate, ...(row.countedDate ? { countedDate: row.countedDate } : {}), referenceNo: row.referenceNo, documentNo: row.documentNo,
@@ -182,24 +183,44 @@ export function toPayment(row: PaymentRow, saleId: string | null): Payment {
   } as unknown as Payment;
 }
 
+type PaymentAdjustmentRow = { id: string; payment: Ref; kind: string; amountCentavos: string; date: string; reason: string; actor: Ref };
+const PAYMENT_ADJUSTMENT_FIELDS = "id payment { id } kind amountCentavos date reason actor { id }";
+const toPaymentAdjustment = (row: PaymentAdjustmentRow): PaymentAdjustment => ({
+  id: row.id, kind: row.kind === "refund" ? "refund" : "reversal", amountCentavos: int64ToCentavos(row.amountCentavos), date: row.date, reason: row.reason, actorId: row.actor?.id ?? "",
+});
+
+/** Reversals and refunds grouped by payment; one query for a list, one for a single payment. */
+export async function loadPaymentAdjustments(paymentIds?: readonly string[]): Promise<Map<string, PaymentAdjustment[]>> {
+  const rows = await listAll<PaymentAdjustmentRow>("paymentAdjustments", PAYMENT_ADJUSTMENT_FIELDS, { orderBy: "[{ createdAt: ASC }, { id: ASC }]" });
+  const grouped = new Map<string, PaymentAdjustment[]>();
+  for (const row of rows) {
+    const paymentId = row.payment?.id;
+    if (!paymentId || (paymentIds && !paymentIds.includes(paymentId))) continue;
+    grouped.set(paymentId, [...(grouped.get(paymentId) ?? []), toPaymentAdjustment(row)]);
+  }
+  return grouped;
+}
+
 export async function loadPayment(id: string): Promise<Payment | null> {
   const result = await dbRead<{ payment: PaymentRow | null }>(`query($id: UUID!) { payment(id: $id) { ${PAYMENT_FIELDS} } }`, { id });
   if (!result.payment) return null;
   const sale = await loadSaleForContract(result.payment.contract!.id);
-  return toPayment(result.payment, sale?.sale.id ?? null);
+  const adjustments = (await loadPaymentAdjustments([id])).get(id) ?? [];
+  return toPayment(result.payment, sale?.sale.id ?? null, adjustments);
 }
 
 export async function loadPaymentsOfContract(contractId: string, saleId: string | null): Promise<Payment[]> {
   const rows = await listAll<PaymentRow>("payments", PAYMENT_FIELDS, { where: "{ contract: { id: { eq: $c } } }", orderBy: "[{ submittedAt: ASC }, { id: ASC }]", variableDefinitions: "$c: UUID!", variables: { c: contractId } });
-  return rows.map((row) => toPayment(row, saleId));
+  const adjustments = await loadPaymentAdjustments(rows.map((row) => row.id));
+  return rows.map((row) => toPayment(row, saleId, adjustments.get(row.id) ?? []));
 }
 
 // ---------------------------------------------------------------- sales
 export type SaleRow = {
-  id: string; productCode: string; branchId: string; valueCentavos: string; recordedDate: string; status: string; approvedAt: string | null; confirmedDate: string | null;
+  id: string; productCode: string; branchId: string; valueCentavos: string; recordedDate: string; status: string; approvedAt: string | null; confirmedDate: string | null; financialHold: boolean;
   details: Json | null; contract: Ref; customer: Ref; sellerMember: Ref; referrerMember: Ref; approvedBy: Ref;
 };
-export const SALE_FIELDS = "id productCode branchId valueCentavos recordedDate status approvedAt confirmedDate details contract { id } customer { id } sellerMember { id } referrerMember { id } approvedBy { id }";
+export const SALE_FIELDS = "id productCode branchId valueCentavos recordedDate status approvedAt confirmedDate financialHold details contract { id } customer { id } sellerMember { id } referrerMember { id } approvedBy { id }";
 type AdjustmentRow = { id: string; date: string; amountCentavos: string; kind: string; reason: string; actor: Ref };
 
 export function toSale(row: SaleRow, adjustments: AdjustmentRow[]): Sale {
@@ -209,6 +230,7 @@ export function toSale(row: SaleRow, adjustments: AdjustmentRow[]): Sale {
     id: row.id, contractId: row.contract?.id, customerId: row.customer?.id, productCode: row.productCode, branchId: row.branchId, valueCentavos: int64ToCentavos(row.valueCentavos),
     recordedDate: row.recordedDate, approval: row.approvedAt && row.approvedBy ? { approvedAt: row.approvedAt, approvedBy: row.approvedBy.id } : null,
     sellerMemberId: row.sellerMember?.id ?? null, referrerMemberId: row.referrerMember?.id ?? null, status: row.status, confirmedDate: row.confirmedDate,
+    financialHold: row.financialHold,
     adjustments: adjustments.map((item) => ({ id: item.id, date: item.date, amountCentavos: int64ToCentavos(item.amountCentavos), kind: item.kind, reason: item.reason, actorId: item.actor?.id ?? "" })),
   } as unknown as Sale;
 }
@@ -235,7 +257,8 @@ export async function loadContractsOfCustomer(customerId: string): Promise<Contr
 
 export async function loadVerifiedPayments(): Promise<Payment[]> {
   const rows = await listAll<PaymentRow>("payments", PAYMENT_FIELDS, { where: `{ status: { eq: "verified" } }` });
-  return rows.map((row) => toPayment(row, null));
+  const adjustments = await loadPaymentAdjustments(rows.map((row) => row.id));
+  return rows.map((row) => toPayment(row, null, adjustments.get(row.id) ?? []));
 }
 
 /** Payments whose reference or document number starts with a prefix (used to find the next free number). */

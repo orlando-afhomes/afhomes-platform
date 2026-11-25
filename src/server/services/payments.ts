@@ -2,17 +2,19 @@ import "server-only";
 import type { SubmitPaymentInput } from "@/data/contracts/payment-repository";
 import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import { collectionState } from "@/modules/finance/application/collection-state";
+import { closedMonthSnapshot, firstOpenDate, type ClosedMonth } from "@/modules/finance/month-close";
 import { nextOfficialReceiptNo, nextPaymentReference } from "@/modules/finance/payment-reference";
-import { exceedsContractPrice, findDuplicatePayment, findReferenceConflict, findSuggestedMatch } from "@/modules/finance/rules";
-import { PAYMENT_METHODS, PAYMENT_PURPOSES, type Payment } from "@/modules/finance/types";
-import { canSeeContractRecord } from "@/modules/identity/record-scope";
+import { adjustableCentavos, exceedsContractPrice, findDuplicatePayment, findReferenceConflict, findSuggestedMatch } from "@/modules/finance/rules";
+import { PAYMENT_METHODS, PAYMENT_PURPOSES, type Payment, type PaymentAdjustment, type SubmitUnmatchedReceiptInput, type UnmatchedReceipt } from "@/modules/finance/types";
+import { buildReceiptImportRows, type ReceiptImportBatch, type ReceiptImportRecord } from "@/modules/imports/receipt-import";
+import { canCorrectPayment, canSeeContractRecord } from "@/modules/identity/record-scope";
 import type { Sale } from "@/modules/sales/types";
 import { parseManilaDateOnly } from "@/shared/lib/dates";
 import type { Actor } from "@/server/auth/actor";
 import { requireOperation } from "@/server/auth/authorize";
-import { dbRead, uniqueViolation } from "@/server/db";
-import { centavosToInt64 } from "@/server/money";
-import { loadContract, loadNumberHolders, loadNumbersWithPrefix, loadPayment, loadPaymentsOfContract, loadSaleForContract } from "@/server/repositories/records";
+import { dbRead, listAll, uniqueViolation } from "@/server/db";
+import { centavosToInt64, int64ToCentavos } from "@/server/money";
+import { loadContract, loadNumbersWithPrefix, loadPayment, loadPaymentsOfContract, loadSaleForContract, loadVerifiedPayments } from "@/server/repositories/records";
 import { conflict, invalid, newId, notFound, nowIso, today, transact, type AuditSpec } from "@/server/services/common";
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
@@ -25,7 +27,28 @@ async function visibleContract(actor: Actor, contractId: string) {
   return found;
 }
 
-const detailsOf = (payment: Payment) => ({ adjustments: payment.adjustments, history: payment.history, evidenceFileName: payment.evidenceFileName, ...(payment.bankId ? { bankId: payment.bankId } : {}) });
+async function assertActiveBank(method: string, bankId: string | null | undefined): Promise<void> {
+  if (!bankId) return;
+  if (method !== "Bank Transfer" && method !== "Cheque") throw invalid("A bank applies only to bank transfers and cheques.");
+  const banks = await listAll<{ key: string; status: string }>("referenceEntries", "key status", { where: `{ list: { eq: "bank" } }` });
+  if (!banks.some((bank) => bank.key === bankId && bank.status === "active")) throw invalid("Select an active bank.", { bankId: "Select an active bank." });
+}
+
+/** The next Cash OR number that is free across payments, unmatched receipts and import batches. */
+/** The next Cash OR number that is free across payments, unmatched receipts, import batches and IGP receipts. */
+async function nextFreeCashDocumentNo(paidDate: string): Promise<string> {
+  const datePrefix = paidDate.replaceAll("-", "");
+  const payments = [...(await loadNumbersWithPrefix(`PAY-${datePrefix}`)), ...(await loadNumbersWithPrefix(`OR-${datePrefix}`))];
+  const unmatched = (await listAll<{ orNumber: string }>("unmatchedReceipts", "orNumber", { where: `{ status: { eq: "unmatched" } }` }))
+    .map((row) => ({ documentNo: row.orNumber }));
+  const batches = await listAll<{ status: string; receipts: Array<{ referenceNo: string }> | null }>("receiptImportBatches", "status receipts");
+  const imported = batches.filter((batch) => batch.status !== "rejected").flatMap((batch) => (batch.receipts ?? []).map((receipt) => ({ documentNo: receipt.referenceNo })));
+  const igp = await listAll<{ details: { receipts?: Array<{ documentNo: string | null }> } | null }>("igpSales", "details");
+  const igpNumbers = igp.flatMap((sale) => (sale.details?.receipts ?? []).map((receipt) => ({ documentNo: receipt.documentNo })));
+  return nextOfficialReceiptNo([...payments, ...unmatched, ...imported, ...igpNumbers], paidDate);
+}
+
+const detailsOf = (payment: Payment) => ({ history: payment.history, evidenceFileName: payment.evidenceFileName, ...(payment.bankId ? { bankId: payment.bankId } : {}) });
 
 /** Submits a receipt for Finance review. The system issues the payment reference, and a Cash receipt gets an Official Receipt number. */
 export async function submitPayment(actor: Actor, input: SubmitPaymentInput): Promise<Payment> {
@@ -40,11 +63,10 @@ export async function submitPayment(actor: Actor, input: SubmitPaymentInput): Pr
   if (!DATE_ONLY.test(input.paidDate) || !parseManilaDateOnly(input.paidDate)) throw invalid("Enter the date on the receipt.", { paidDate: "Enter the date on the receipt." });
   if (input.paidDate > today()) throw invalid("The payment date cannot be in the future.", { paidDate: "The payment date cannot be in the future." });
   if (exceedsContractPrice(contract, existing, input.amountCentavos)) throw conflict("exceeds_balance", "This amount exceeds the outstanding balance of the contract.");
-  // The Reservation Agreement bank list is not in the pilot schema.
-  if (input.bankId) throw invalid("Choosing a bank is not part of the pilot yet.");
+  await assertActiveBank(input.method, input.bankId);
 
   const typed = input.documentNo?.trim() || null;
-  if (typed && (await loadNumberHolders(typed)).length > 0) throw conflict("duplicate_number", "This OR or reference number is already used by another payment. A duplicate is not accepted.");
+  if (typed && (await paperNumberTaken(typed))) throw conflict("duplicate_number", "This OR or reference number is already used by another payment. A duplicate is not accepted.");
 
   const id = newId();
   const submittedAt = nowIso();
@@ -53,9 +75,9 @@ export async function submitPayment(actor: Actor, input: SubmitPaymentInput): Pr
     const datePrefix = input.paidDate.replaceAll("-", "");
     const taken = [...(await loadNumbersWithPrefix(`PAY-${datePrefix}`)), ...(await loadNumbersWithPrefix(`OR-${datePrefix}`))];
     const referenceNo = nextPaymentReference(taken, input.paidDate);
-    const documentNo = typed ?? (input.method === "Cash" ? nextOfficialReceiptNo(taken, input.paidDate) : null);
+    const documentNo = typed ?? (input.method === "Cash" ? await nextFreeCashDocumentNo(input.paidDate) : null);
     const history = [{ at: submittedAt, actorId: actor.userId, event: BUSINESS_AUDIT_ACTIONS.PAYMENT_SUBMITTED, note: null }];
-    const details = { adjustments: [], history, evidenceFileName: input.evidenceFileName?.trim() || null };
+    const details = { history, evidenceFileName: input.evidenceFileName?.trim() || null, ...(input.bankId ? { bankId: input.bankId } : {}) };
     try {
       await transact(actor, {
         variableDefinitions: "$d: Payment_Data!",
@@ -86,6 +108,8 @@ type VerifyOutcome = { payment: Payment; saleStatus: Sale["status"] | null };
 export async function verifyPayment(actor: Actor, id: string, options: { exceptionReason?: string } = {}): Promise<VerifyOutcome> {
   requireOperation(actor, "finance.verify");
   for (let attempt = 0; attempt < 3; attempt += 1) {
+    // Re-read the closed months on every attempt so a month closed meanwhile is honoured.
+    const closed = await closedMonths();
     const read = await loadPayment(id);
     if (!read) throw notFound("Payment");
     const { contract, version } = await visibleContract(actor, read.contractId).catch(() => {
@@ -104,6 +128,7 @@ export async function verifyPayment(actor: Actor, id: string, options: { excepti
     if (contract.status === "cancelled") throw conflict("contract_closed", "This sale is closed. Its payment cannot be verified.");
     if (!sale?.approval) throw conflict("sale_not_approved", "The sale must be approved before its receipts can be verified.");
     if (findReferenceConflict(all, payment.referenceNo, payment.id)) throw conflict("duplicate_number", "This receipt or reference number is already used by another payment. A duplicate is never verified.");
+    if (payment.documentNo?.trim() && (await paperNumberTaken(payment.documentNo, { paymentId: payment.id }))) throw conflict("duplicate_number", "This receipt or reference number is already used by another payment. A duplicate is never verified.");
     const others = all.filter((item) => item.id !== payment.id && item.status === "verified");
     if (findDuplicatePayment(others, payment)) throw conflict("duplicate_payment", "A matching verified payment already exists for this contract. A duplicate is never verified twice.");
     const exceptionReason = options.exceptionReason?.trim();
@@ -114,30 +139,39 @@ export async function verifyPayment(actor: Actor, id: string, options: { excepti
     const approvalNote = [selfNote, exceptionReason].filter(Boolean).join(" ");
     const verified: Payment = {
       ...payment, status: "verified", verifiedBy: actor.userId, verifiedAt, verifiedDate: today(),
-      // shortcut: month close is not in the pilot, so a receipt is counted on its own receipt date.
-      countedDate: payment.paidDate,
+      // A receipt dated in a closed month is admitted into the first open month (doc 07 section 9.1 item 8).
+      countedDate: firstOpenDate(closed, payment.paidDate),
       history: [...payment.history, { at: verifiedAt, actorId: actor.userId, event: BUSINESS_AUDIT_ACTIONS.PAYMENT_VERIFIED, note: approvalNote || null }],
     };
 
-    // A Pending, approved sale is confirmed when net approved receipts reach 25% (doc 07, 13).
-    const milestone = sale.status === "pending" ? collectionState(contract, [...others, verified], sale).confirmation : null;
+    // A Pending (or reinstated Defaulted), approved sale is confirmed when net approved receipts reach 25% (doc 07, 13).
+    const reinstated = sale.status === "defaulted";
+    const workingStatus = reinstated ? "pending" : sale.status;
+    const milestone = workingStatus === "pending" ? collectionState(contract, [...others, verified], sale).confirmation : null;
     const reconfirmation = sale.adjustments.some((adjustment) => adjustment.kind === "reversal");
     const adjustment = milestone
-      ? { date: reconfirmation ? today() : milestone.countedDate, amountCentavos: sale.valueCentavos, kind: reconfirmation ? "reconfirmation" : "confirmation", reason: "Approved collection reached 25%", confirmedDate: milestone.date }
+      ? { date: reconfirmation ? firstOpenDate(closed, today()) : milestone.countedDate, amountCentavos: sale.valueCentavos, kind: reconfirmation ? "reconfirmation" : "confirmation", reason: "Approved collection reached 25%", confirmedDate: milestone.date }
       : null;
+    const confirmSale = Boolean(adjustment) && !reinstated;
 
-    const definitions = ["$payment: UUID!", "$contract: UUID!", "$version: Int!", "$verifier: UUID!", "$verifiedAt: Timestamp!", "$verifiedDate: Date!", "$countedDate: Date!", "$details: Any!", adjustment ? "$sale: UUID!, $confirmedDate: Date!, $adjDate: Date!, $adjAmount: Int64!, $adjKind: String!, $adjReason: String!" : ""].filter(Boolean).join(", ");
+    const definitions = [
+      "$payment: UUID!", "$contract: UUID!", "$version: Int!", "$verifier: UUID!", "$verifiedAt: Timestamp!", "$verifiedDate: Date!", "$countedDate: Date!", "$details: Any!",
+      (confirmSale || reinstated) ? "$sale: UUID!, $confirmedDate: Date!" : "", adjustment ? "$adjDate: Date!, $adjAmount: Int64!, $adjKind: String!, $adjReason: String!" : "",
+    ].filter(Boolean).join(", ");
     const fields = `bump: contract_updateMany(where: { id: { eq: $contract }, collectionVersion: { eq: $version } }, data: { collectionVersion_update: { inc: 1 } })
 verified: payment_updateMany(where: { id: { eq: $payment }, status: { in: ["submitted", "under_review"] } }, data: { status: "verified", verifiedById: $verifier, verifiedAt: $verifiedAt, verifiedDate: $verifiedDate, countedDate: $countedDate, details: $details })
-${adjustment ? `confirmSale: sale_updateMany(where: { id: { eq: $sale }, status: { eq: "pending" } }, data: { status: "confirmed", confirmedDate: $confirmedDate })
-adjustment: saleAdjustment_insert(data: { saleId: $sale, date: $adjDate, amountCentavos: $adjAmount, kind: $adjKind, reason: $adjReason, actorId: $verifier })` : ""}
+${confirmSale ? `confirmSale: sale_updateMany(where: { id: { eq: $sale }, status: { eq: "pending" } }, data: { status: "confirmed", confirmedDate: $confirmedDate, financialHold: false })` : ""}
+${reinstated ? `reinstate: sale_updateMany(where: { id: { eq: $sale }, status: { eq: "defaulted" } }, data: { status: ${adjustment ? '"confirmed"' : '"pending"'}, ${adjustment ? "confirmedDate: $confirmedDate, " : ""}financialHold: false })` : ""}
+${adjustment ? `adjustment: saleAdjustment_insert(data: { saleId: $sale, date: $adjDate, amountCentavos: $adjAmount, kind: $adjKind, reason: $adjReason, actorId: $verifier })` : ""}
 query @redact {
   c: contract(id: $contract) @check(expr: "response.bump == 1", message: "STALE_CONTRACT") { id }
   p: payment(id: $payment) @check(expr: "response.verified == 1", message: "NOT_VERIFIABLE") { id }
-${adjustment ? `  s: sale(id: $sale) @check(expr: "response.confirmSale == 1", message: "STALE_SALE") { id }` : ""}
+${confirmSale ? `  s: sale(id: $sale) @check(expr: "response.confirmSale == 1", message: "STALE_SALE") { id }` : ""}
+${reinstated ? `  r: sale(id: $sale) @check(expr: "response.reinstate == 1", message: "STALE_SALE") { id }` : ""}
 }`;
     const audit: AuditSpec[] = [{ action: BUSINESS_AUDIT_ACTIONS.PAYMENT_VERIFIED, entityType: "payment", entityId: payment.id, details: { module: "finance", previousValue: payment.status, newValue: String(payment.amountCentavos), ...(approvalNote ? { reason: approvalNote } : {}), relatedRecordIds: [contract.id] } }];
-    if (adjustment) audit.push({ action: BUSINESS_AUDIT_ACTIONS.SALE_CONFIRMED, entityType: "sale", entityId: sale.id, details: { module: "sales", previousValue: "pending", newValue: "confirmed", relatedRecordIds: [contract.id] } });
+    if (reinstated) audit.push({ action: BUSINESS_AUDIT_ACTIONS.SALE_REINSTATED, entityType: "sale", entityId: sale.id, details: { module: "sales", previousValue: "defaulted", newValue: adjustment ? "confirmed" : "pending", relatedRecordIds: [payment.id] } });
+    if (adjustment) audit.push({ action: reconfirmation ? BUSINESS_AUDIT_ACTIONS.SALE_RECONFIRMED : BUSINESS_AUDIT_ACTIONS.SALE_CONFIRMED, entityType: "sale", entityId: sale.id, details: { module: "sales", previousValue: "pending", newValue: "confirmed", relatedRecordIds: [contract.id] } });
     // The details column also holds the receipt evidence pointer. Keep whatever the row already stores.
     const stored = await dbRead<{ payment: { details: Record<string, unknown> | null } | null }>(`query($id: UUID!) { payment(id: $id) { details } }`, { id: payment.id });
     const details = { ...(stored.payment?.details ?? {}), ...detailsOf(verified) };
@@ -148,7 +182,8 @@ ${adjustment ? `  s: sale(id: $sale) @check(expr: "response.confirmSale == 1", m
         fields,
         variables: {
           payment: payment.id, contract: contract.id, version, verifier: actor.userId, verifiedAt, verifiedDate: verified.verifiedDate, countedDate: verified.countedDate, details,
-          ...(adjustment ? { sale: sale.id, confirmedDate: adjustment.confirmedDate, adjDate: adjustment.date, adjAmount: centavosToInt64(adjustment.amountCentavos), adjKind: adjustment.kind, adjReason: adjustment.reason } : {}),
+          ...((confirmSale || reinstated) ? { sale: sale.id, confirmedDate: adjustment?.confirmedDate ?? milestone?.date ?? today() } : {}),
+          ...(adjustment ? { adjDate: adjustment.date, adjAmount: centavosToInt64(adjustment.amountCentavos), adjKind: adjustment.kind, adjReason: adjustment.reason } : {}),
         },
         audit,
         markers: {
@@ -157,7 +192,7 @@ ${adjustment ? `  s: sale(id: $sale) @check(expr: "response.confirmSale == 1", m
           STALE_SALE: conflict("retry", "The sale changed at the same time."),
         },
       });
-      return { payment: verified, saleStatus: adjustment ? "confirmed" : sale.status };
+      return { payment: verified, saleStatus: adjustment ? "confirmed" : reinstated ? "pending" : sale.status };
     } catch (error) {
       // A receipt on the same contract was decided at the same moment: read the totals again and decide again.
       if (error instanceof Error && "code" in error && (error as { code: string }).code === "retry" && attempt < 2) continue;
@@ -165,4 +200,400 @@ ${adjustment ? `  s: sale(id: $sale) @check(expr: "response.confirmSale == 1", m
     }
   }
   throw conflict("busy", "This contract is busy. Try again in a moment.");
+}
+
+// ---------------------------------------------------------------- F5: receipt decisions, adjustments, closed months, unmatched receipts and imports
+async function closedMonths(): Promise<Array<{ month: string }>> {
+  return listAll<{ month: string }>("closedMonths", "month");
+}
+
+async function loadVisiblePayment(actor: Actor, id: string): Promise<Payment> {
+  const payment = await loadPayment(id);
+  if (!payment) throw notFound("Payment");
+  const contract = await loadContract(payment.contractId);
+  if (!contract || !canSeeContractRecord(actor.identity, contract.contract)) throw notFound("Payment");
+  return payment;
+}
+
+/** Return-for-correction and rejection share one decision path; the receipt is never deleted. */
+async function decidePayment(actor: Actor, id: string, reason: string, status: "rejected" | "returned", action: string): Promise<Payment> {
+  requireOperation(actor, "finance.verify");
+  const text = reason.trim();
+  if (!text) throw invalid("A reason is required.", { reason: "A reason is required." });
+  const payment = await loadVisiblePayment(actor, id);
+  if (payment.status !== "submitted" && payment.status !== "under_review") throw conflict("not_decidable", "Only a submitted payment can be rejected or returned.");
+  const event = { at: nowIso(), actorId: actor.userId, event: action, note: text };
+  const stored = await dbRead<{ payment: { details: Record<string, unknown> | null } | null }>(`query($id: UUID!) { payment(id: $id) { details } }`, { id });
+  const details = { ...(stored.payment?.details ?? {}), ...detailsOf(payment), history: [...payment.history, event] };
+  await transact(actor, {
+    variableDefinitions: "$id: UUID!, $status: String!, $reason: String!, $details: Any!",
+    fields: "payment: payment_updateMany(where: { id: { eq: $id }, status: { in: [\"submitted\", \"under_review\"] } }, data: { status: $status, decisionReason: $reason, details: $details })\nquery @redact { p: payment(id: $id) @check(expr: \"response.payment == 1\", message: \"ALREADY_DECIDED\") { id } }",
+    variables: { id: payment.id, status, reason: text, details },
+    audit: [{ action, entityType: "payment", entityId: payment.id, details: { module: "finance", previousValue: payment.status, newValue: status, reason: text, relatedRecordIds: [payment.contractId] } }],
+    markers: { ALREADY_DECIDED: conflict("already_decided", "This payment was already decided.") },
+  });
+  return (await loadPayment(payment.id))!;
+}
+
+export async function rejectPayment(actor: Actor, id: string, reason: string): Promise<Payment> {
+  return decidePayment(actor, id, reason, "rejected", BUSINESS_AUDIT_ACTIONS.PAYMENT_REJECTED);
+}
+
+export async function returnPayment(actor: Actor, id: string, reason: string): Promise<Payment> {
+  return decidePayment(actor, id, reason, "returned", BUSINESS_AUDIT_ACTIONS.PAYMENT_RETURNED);
+}
+
+export async function resubmitPayment(actor: Actor, id: string, input: Partial<Omit<SubmitPaymentInput, "contractId">>): Promise<Payment> {
+  requireOperation(actor, "payments.submit");
+  const payment = await loadVisiblePayment(actor, id);
+  if (!canCorrectPayment(actor.identity, payment.submittedBy)) throw conflict("not_submitter", "Only the submitter or an administrator can correct this payment.");
+  if (payment.status !== "returned") throw conflict("not_returned", "Only a payment returned for correction can be resubmitted.");
+  const { contract } = await visibleContract(actor, payment.contractId);
+  if (contract.status === "cancelled") throw conflict("contract_closed", "Payments cannot be resubmitted for this contract.");
+  const purpose = input.purpose ?? payment.purpose;
+  const amountCentavos = input.amountCentavos ?? payment.amountCentavos;
+  const method = input.method ?? payment.method;
+  const paidDate = input.paidDate ?? payment.paidDate;
+  if (!(PAYMENT_PURPOSES as readonly string[]).includes(purpose)) throw invalid("Select a valid payment purpose.", { purpose: "Select a valid payment purpose." });
+  if (!(PAYMENT_METHODS as readonly string[]).includes(method)) throw invalid("Select a valid payment method.", { method: "Select a valid payment method." });
+  if (!Number.isSafeInteger(amountCentavos) || amountCentavos <= 0) throw invalid("Enter an amount greater than zero.", { amountCentavos: "Enter an amount greater than zero." });
+  if (!DATE_ONLY.test(paidDate) || !parseManilaDateOnly(paidDate) || paidDate > today()) throw invalid("Enter a valid payment date on or before today.", { paidDate: "Enter a valid payment date." });
+  const bankId = input.bankId === undefined ? payment.bankId ?? null : input.bankId?.trim() || null;
+  await assertActiveBank(method, bankId);
+  const all = await loadPaymentsOfContract(contract.id, payment.saleId);
+  if (exceedsContractPrice(contract, all.filter((item) => item.id !== payment.id), amountCentavos)) throw conflict("exceeds_balance", "This amount exceeds the outstanding balance of the contract.");
+  if (input.referenceNo !== undefined && input.referenceNo?.trim() !== payment.referenceNo) throw conflict("reference_change", "A resent receipt must keep its original payment reference.");
+  let documentNo = input.documentNo !== undefined ? input.documentNo?.trim() || null : payment.documentNo ?? null;
+  if (method === "Cash" && !documentNo) {
+    documentNo = await nextFreeCashDocumentNo(paidDate);
+  }
+  if (documentNo && (await paperNumberTaken(documentNo, { paymentId: payment.id }))) {
+    throw conflict("duplicate_number", "This OR or reference number is already used by another payment. A duplicate is not accepted.");
+  }
+  const previousVersion = { purpose: payment.purpose, amountCentavos: payment.amountCentavos, method: payment.method, paidDate: payment.paidDate, referenceNo: payment.referenceNo, documentNo: payment.documentNo ?? null, evidenceFileName: payment.evidenceFileName };
+  const event = { at: nowIso(), actorId: actor.userId, event: BUSINESS_AUDIT_ACTIONS.PAYMENT_RESUBMITTED, note: null, previousVersion };
+  const stored = await dbRead<{ payment: { details: Record<string, unknown> | null } | null }>(`query($id: UUID!) { payment(id: $id) { details } }`, { id });
+  const details = { ...(stored.payment?.details ?? {}), ...detailsOf(payment), history: [...payment.history, event], ...(input.bankId !== undefined ? { bankId } : {}), ...(input.evidenceFileName !== undefined ? { evidenceFileName: input.evidenceFileName?.trim() || null } : {}) };
+  await transact(actor, {
+    variableDefinitions: "$id: UUID!, $purpose: String!, $amount: Int64!, $method: String!, $paidDate: Date!, $documentNo: String, $details: Any!",
+    fields: "payment: payment_updateMany(where: { id: { eq: $id }, status: { eq: \"returned\" } }, data: { purpose: $purpose, amountCentavos: $amount, method: $method, paidDate: $paidDate, documentNo: $documentNo, status: \"submitted\", decisionReason: null, details: $details })\nquery @redact { p: payment(id: $id) @check(expr: \"response.payment == 1\", message: \"NOT_RETURNED\") { id } }",
+    variables: { id: payment.id, purpose, amount: centavosToInt64(amountCentavos), method, paidDate, documentNo: documentNo ?? undefined, details },
+    audit: [{ action: BUSINESS_AUDIT_ACTIONS.PAYMENT_RESUBMITTED, entityType: "payment", entityId: payment.id, details: { module: "finance", previousValue: "returned", newValue: "submitted", relatedRecordIds: [contract.id] } }],
+    markers: { NOT_RETURNED: conflict("not_returned", "This payment was already decided.") },
+  });
+  return (await loadPayment(payment.id))!;
+}
+
+/** Reversal or refund of a verified receipt; the original receipt is never deleted (doc 07 section 14). */
+export async function adjustPayment(actor: Actor, id: string, input: { kind: "reversal" | "refund"; amountCentavos: number; reason: string }): Promise<Payment> {
+  requireOperation(actor, "finance.refund");
+  const reason = input.reason.trim();
+  if (!reason) throw invalid("A reason is required.", { reason: "A reason is required." });
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const payment = await loadVisiblePayment(actor, id);
+    if (payment.status !== "verified") throw conflict("not_verified", "Only a verified payment can be undone or refunded.");
+    if (input.kind === "refund" && payment.purpose === "reservation") throw conflict("reservation_non_refundable", "The Reservation Fee is non-refundable. Record an undo only to correct an error.");
+    if (!Number.isInteger(input.amountCentavos) || input.amountCentavos <= 0) throw invalid("Enter an amount greater than zero.", { amountCentavos: "Enter an amount greater than zero." });
+    if (input.amountCentavos > adjustableCentavos(payment)) throw invalid("The amount exceeds the remaining verified amount of this payment.");
+    const closed = await closedMonths();
+    const date = firstOpenDate(closed, today());
+    if (payment.adjustments.some((item) => item.kind === input.kind && item.amountCentavos === input.amountCentavos && item.reason === reason && item.date === date)) {
+      throw conflict("duplicate_adjustment", "This adjustment was already recorded. Repeating it would duplicate it.");
+    }
+    const adjustment: PaymentAdjustment = { id: newId(), kind: input.kind, amountCentavos: input.amountCentavos, date, reason, actorId: actor.userId };
+    const adjusted: Payment = { ...payment, adjustments: [...payment.adjustments, adjustment] };
+    const { contract, version } = await visibleContract(actor, payment.contractId);
+    const sale = (await loadSaleForContract(contract.id))?.sale ?? null;
+    const all = await loadPaymentsOfContract(contract.id, sale?.id ?? null);
+    const after = all.map((item) => (item.id === payment.id ? adjusted : item));
+    const state = sale ? collectionState(contract, after, sale) : null;
+    const dropToPending = Boolean(sale && sale.status === "confirmed" && state && !state.confirmation);
+    const releaseHold = Boolean(sale && sale.financialHold && state?.confirmation);
+    const stored = await dbRead<{ payment: { details: Record<string, unknown> | null } | null }>(`query($id: UUID!) { payment(id: $id) { details } }`, { id });
+    const event = { at: nowIso(), actorId: actor.userId, event: input.kind === "reversal" ? BUSINESS_AUDIT_ACTIONS.PAYMENT_REVERSED : BUSINESS_AUDIT_ACTIONS.PAYMENT_REFUNDED, note: reason };
+    const details = { ...(stored.payment?.details ?? {}), ...detailsOf(adjusted), history: [...payment.history, event] };
+    const action = input.kind === "reversal" ? BUSINESS_AUDIT_ACTIONS.PAYMENT_REVERSED : BUSINESS_AUDIT_ACTIONS.PAYMENT_REFUNDED;
+    // The contract version commits only if no other receipt decision or adjustment ran since the read,
+    // so two simultaneous reversals can never both use the same remaining amount (doc 07 section 14).
+    const fields = [
+      "bump: contract_updateMany(where: { id: { eq: $contract }, collectionVersion: { eq: $version } }, data: { collectionVersion_update: { inc: 1 } })",
+      "adjustment: paymentAdjustment_insert(data: $adj)",
+      "payment: payment_update(id: $id, data: { details: $details })",
+      ...(sale ? [`saleState: sale_updateMany(where: { id: { eq: $sale } }, data: { financialHold: $hold${dropToPending ? ', status: "pending"' : ""} })`] : []),
+      ...(dropToPending ? ["saleAdjustment: saleAdjustment_insert(data: { saleId: $sale, date: $adjDate, amountCentavos: $adjAmount, kind: \"reversal\", reason: $adjReason, actorId: $actor })"] : []),
+      "query @redact { c: contract(id: $contract) @check(expr: \"response.bump == 1\", message: \"STALE_CONTRACT\") { id } }",
+    ].join("\n");
+    const definitions = ["$contract: UUID!", "$version: Int!", "$adj: PaymentAdjustment_Data!", "$id: UUID!", "$details: Any!", sale ? "$sale: UUID!, $hold: Boolean!" : "", dropToPending ? "$adjDate: Date!, $adjAmount: Int64!, $adjReason: String!, $actor: UUID!" : ""].filter(Boolean).join(", ");
+    const audit: AuditSpec[] = [{ action, entityType: "payment", entityId: payment.id, details: { module: "finance", newValue: String(input.amountCentavos), reason, relatedRecordIds: [contract.id] } }];
+    if (dropToPending && sale) {
+      audit.push({ action: BUSINESS_AUDIT_ACTIONS.SALE_REVERSED, entityType: "sale", entityId: sale.id, details: { module: "sales", previousValue: "confirmed", newValue: "pending", relatedRecordIds: [contract.id] } });
+      if (!sale.financialHold) audit.push({ action: BUSINESS_AUDIT_ACTIONS.FINANCIAL_HOLD_APPLIED, entityType: "sale", entityId: sale.id, details: { module: "finance", previousValue: "no_hold", newValue: "financial_hold", relatedRecordIds: [contract.id] } });
+    }
+    if (releaseHold && sale) audit.push({ action: BUSINESS_AUDIT_ACTIONS.FINANCIAL_HOLD_RELEASED, entityType: "sale", entityId: sale.id, details: { module: "finance", previousValue: "financial_hold", newValue: "no_hold", relatedRecordIds: [contract.id] } });
+    try {
+      await transact(actor, {
+        variableDefinitions: definitions,
+        fields,
+        variables: {
+          contract: contract.id, version,
+          adj: { id: adjustment.id, paymentId: payment.id, kind: adjustment.kind, amountCentavos: centavosToInt64(adjustment.amountCentavos), date: adjustment.date, reason: adjustment.reason, actorId: actor.userId },
+          id: payment.id, details,
+          ...(sale ? { sale: sale.id, hold: Boolean(dropToPending || (sale.financialHold && !releaseHold)) } : {}),
+          ...(dropToPending ? { adjDate: date, adjAmount: centavosToInt64(-(sale?.valueCentavos ?? 0)), adjReason: "Required payment reversed or refunded", actor: actor.userId } : {}),
+        },
+        audit,
+        markers: { STALE_CONTRACT: conflict("retry", "Another receipt decision changed this contract. Try again.") },
+      });
+      return (await loadPayment(payment.id))!;
+    } catch (error) {
+      if (error instanceof Error && "code" in error && (error as { code: string }).code === "retry" && attempt < 2) continue;
+      throw error;
+    }
+  }
+  throw conflict("busy", "This contract is busy. Try again in a moment.");
+}
+
+export async function listClosedMonths(actor: Actor): Promise<ClosedMonth[]> {
+  requireOperation(actor, "finance.verify");
+  const rows = await listAll<{ month: string; snapshot: ClosedMonth | null }>("closedMonths", "month snapshot");
+  return rows.map((row) => row.snapshot).filter((snapshot): snapshot is ClosedMonth => Boolean(snapshot));
+}
+
+/** Closes a past month and freezes its totals; later receipts dated in it count in the first open month. */
+export async function closeMonth(actor: Actor, month: string): Promise<ClosedMonth> {
+  requireOperation(actor, "contracts.approve");
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || month >= today().slice(0, 7)) throw invalid("Select a month that has ended.", { month: "Select a month that has ended." });
+  const existing = await dbRead<{ closedMonths: Array<{ snapshot: ClosedMonth | null }> }>(`query($m: String!) { closedMonths(where: { month: { eq: $m } }, limit: 1) { snapshot } }`, { m: month });
+  if (existing.closedMonths[0]?.snapshot) return existing.closedMonths[0].snapshot;
+  const [payments, adjustmentRows] = await Promise.all([
+    loadVerifiedPayments(),
+    listAll<{ id: string; date: string; amountCentavos: string; kind: string; reason: string; actor: { id: string } | null }>("saleAdjustments", "id date amountCentavos kind reason actor { id }"),
+  ]);
+  const adjustments = adjustmentRows.map((row) => ({ id: row.id, date: row.date, amountCentavos: int64ToCentavos(row.amountCentavos), kind: row.kind as "confirmation" | "reversal" | "reconfirmation" | "amendment", reason: row.reason, actorId: row.actor?.id ?? "" }));
+  const snapshot = closedMonthSnapshot({ sales: [{ adjustments }], payments, commissions: [], allowanceReviews: [] }, month, nowIso(), actor.userId);
+  await transact(actor, {
+    variableDefinitions: "$d: ClosedMonth_Data!",
+    fields: "month: closedMonth_insert(data: $d)",
+    variables: { d: { id: newId(), month, closedAt: snapshot.closedAt, closedById: actor.userId, snapshot } },
+    audit: [{ action: BUSINESS_AUDIT_ACTIONS.MONTH_CLOSED, entityType: "closed-month", entityId: month, details: { module: "finance", newValue: "closed" } }],
+  });
+  return snapshot;
+}
+
+// ---------------------------------------------------------------- unmatched receipts
+type UnmatchedRow = {
+  id: string; amountCentavos: string; method: string; paidDate: string; orNumber: string; reason: string; evidenceFileName: string | null;
+  status: string; matchedPayment: { id: string } | null; submittedBy: { id: string } | null; submittedAt: string;
+  decidedBy: { id: string } | null; decidedAt: string | null; decisionReason: string | null; details: Record<string, unknown> | null;
+};
+const UNMATCHED_FIELDS = "id amountCentavos method paidDate orNumber reason evidenceFileName status matchedPayment { id } submittedBy { id } submittedAt decidedBy { id } decidedAt decisionReason details";
+
+function toUnmatched(row: UnmatchedRow, names: Map<string, string>): UnmatchedReceipt & { submitterName: string } {
+  const details = (row.details ?? {}) as { history?: UnmatchedReceipt["history"] };
+  return {
+    id: row.id, amountCentavos: int64ToCentavos(row.amountCentavos), method: row.method as UnmatchedReceipt["method"], paidDate: row.paidDate, orNumber: row.orNumber,
+    reason: row.reason, evidenceFileName: row.evidenceFileName, status: row.status as UnmatchedReceipt["status"], matchedPaymentId: row.matchedPayment?.id ?? null,
+    submittedBy: row.submittedBy?.id ?? "", submittedAt: row.submittedAt, decisionReason: row.decisionReason, decidedBy: row.decidedBy?.id ?? null,
+    decidedAt: row.decidedAt, history: details.history ?? [], submitterName: names.get(row.submittedBy?.id ?? "") ?? "",
+  };
+}
+
+async function userNames(): Promise<Map<string, string>> {
+  const rows = await listAll<{ id: string; displayName: string }>("userAccounts", "id displayName");
+  return new Map(rows.map((row) => [row.id, row.displayName]));
+}
+
+/** A paper OR/reference must be unused across payments, unmatched receipts, import batches and IGP receipts (doc 07 §9.2). */
+export async function paperNumberTaken(number: string, self?: { paymentId?: string; unmatchedId?: string; batchId?: string }): Promise<boolean> {
+  const wanted = number.trim().toLowerCase();
+  if (!wanted) return false;
+  const holders = await listAll<{ id: string; referenceNo: string | null; documentNo: string | null }>("payments", "id referenceNo documentNo");
+  if (holders.some((row) => row.id !== self?.paymentId && ((row.referenceNo ?? "").trim().toLowerCase() === wanted || (row.documentNo ?? "").trim().toLowerCase() === wanted))) return true;
+  const open = await listAll<{ id: string; orNumber: string }>("unmatchedReceipts", "id orNumber", { where: `{ status: { eq: "unmatched" } }` });
+  if (open.some((row) => row.id !== self?.unmatchedId && row.orNumber.trim().toLowerCase() === wanted)) return true;
+  const batches = await listAll<{ id: string; status: string; receipts: Array<{ referenceNo: string }> | null }>("receiptImportBatches", "id status receipts");
+  if (batches.some((batch) => batch.id !== self?.batchId && batch.status !== "rejected" && (batch.receipts ?? []).some((receipt) => receipt.referenceNo.trim().toLowerCase() === wanted))) return true;
+  const igp = await listAll<{ details: { receipts?: Array<{ documentNo: string | null }> } | null }>("igpSales", "details");
+  return igp.some((sale) => (sale.details?.receipts ?? []).some((receipt) => (receipt.documentNo ?? "").trim().toLowerCase() === wanted));
+}
+
+export async function submitUnmatchedReceipt(actor: Actor, input: SubmitUnmatchedReceiptInput): Promise<UnmatchedReceipt> {
+  requireOperation(actor, "payments.submit");
+  if (!Number.isSafeInteger(input.amountCentavos) || input.amountCentavos <= 0) throw invalid("Enter an amount greater than zero.");
+  if (!(PAYMENT_METHODS as readonly string[]).includes(input.method)) throw invalid("Select a valid payment method.");
+  if (!DATE_ONLY.test(input.paidDate) || !parseManilaDateOnly(input.paidDate) || input.paidDate > today()) throw invalid("Enter a valid payment date on or before today.");
+  const orNumber = (input.orNumber ?? "").trim();
+  if (!orNumber) throw invalid("Enter the OR or bank reference number.");
+  if (await paperNumberTaken(orNumber)) throw conflict("duplicate_number", "This OR or reference number is already used by another payment. A duplicate is not accepted.");
+  const reason = (input.reason ?? "").trim();
+  if (!reason) throw invalid("Explain why no matching contract or payment was found.");
+  const submittedAt = nowIso();
+  const id = newId();
+  const history = [{ at: submittedAt, actorId: actor.userId, event: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_SUBMITTED, note: reason }];
+  await transact(actor, {
+    variableDefinitions: "$d: UnmatchedReceipt_Data!",
+    fields: "receipt: unmatchedReceipt_insert(data: $d)",
+    variables: { d: { id, amountCentavos: centavosToInt64(input.amountCentavos), method: input.method, paidDate: input.paidDate, orNumber, reason, evidenceFileName: input.evidenceFileName?.trim() || undefined, status: "unmatched", submittedById: actor.userId, submittedAt, details: { history } } },
+    audit: [{ action: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_SUBMITTED, entityType: "unmatched-receipt", entityId: id, details: { module: "finance", newValue: "unmatched", reason, displayReference: orNumber } }],
+  });
+  return (await loadUnmatched(id))!;
+}
+
+async function loadUnmatched(id: string): Promise<UnmatchedReceipt | null> {
+  const result = await dbRead<{ unmatchedReceipt: UnmatchedRow | null }>(`query($id: UUID!) { unmatchedReceipt(id: $id) { ${UNMATCHED_FIELDS} } }`, { id });
+  return result.unmatchedReceipt ? toUnmatched(result.unmatchedReceipt, await userNames()) : null;
+}
+
+export async function listUnmatchedReceipts(actor: Actor): Promise<UnmatchedReceipt[]> {
+  requireOperation(actor, "finance.verify");
+  const [rows, names] = await Promise.all([listAll<UnmatchedRow>("unmatchedReceipts", UNMATCHED_FIELDS), userNames()]);
+  return rows.map((row) => toUnmatched(row, names));
+}
+
+export async function matchUnmatchedReceipt(actor: Actor, id: string, input: { contractId: string; purpose: Payment["purpose"]; note?: string | null }): Promise<Payment> {
+  requireOperation(actor, "finance.verify");
+  const record = await loadUnmatched(id);
+  if (!record) throw notFound("Unmatched receipt");
+  if (record.status !== "unmatched") throw conflict("already_resolved", "This receipt was already resolved and cannot be matched again.");
+  const { contract } = await visibleContract(actor, input.contractId);
+  if (contract.status === "cancelled") throw conflict("contract_closed", "Payments cannot be submitted for this contract.");
+  if (!(PAYMENT_PURPOSES as readonly string[]).includes(input.purpose)) throw invalid("Select a valid payment purpose.");
+  if (await paperNumberTaken(record.orNumber, { unmatchedId: record.id })) throw conflict("duplicate_number", "This OR or reference number is already used by another payment. A duplicate is not accepted.");
+  const sale = (await loadSaleForContract(contract.id))?.sale ?? null;
+  const all = await loadPaymentsOfContract(contract.id, sale?.id ?? null);
+  if (exceedsContractPrice(contract, all.filter((item) => item.status === "verified"), record.amountCentavos)) throw conflict("exceeds_balance", "This amount exceeds the outstanding balance of the contract.");
+  const paymentId = newId();
+  const submittedAt = nowIso();
+  let referenceNo = "";
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const datePrefix = record.paidDate.replaceAll("-", "");
+    const taken = [...(await loadNumbersWithPrefix(`PAY-${datePrefix}`)), ...(await loadNumbersWithPrefix(`OR-${datePrefix}`))];
+    referenceNo = nextPaymentReference(taken, record.paidDate);
+    try {
+      const history = [
+        { at: record.submittedAt, actorId: record.submittedBy, event: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_SUBMITTED, note: record.reason },
+        { at: submittedAt, actorId: actor.userId, event: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_MATCHED, note: input.note?.trim() || `Matched to ${contract.id}.` },
+      ];
+      await transact(actor, {
+        variableDefinitions: "$p: Payment_Data!, $id: UUID!, $payment: UUID!, $decider: UUID!, $decidedAt: Timestamp!, $note: String, $details: Any!",
+        fields: "payment: payment_insert(data: $p)\nreceipt: unmatchedReceipt_updateMany(where: { id: { eq: $id }, status: { eq: \"unmatched\" } }, data: { status: \"matched\", matchedPaymentId: $payment, decidedById: $decider, decidedAt: $decidedAt, decisionReason: $note, details: $details })",
+        variables: {
+          p: { id: paymentId, contractId: contract.id, customerId: contract.customerId, purpose: input.purpose, amountCentavos: centavosToInt64(record.amountCentavos), method: record.method, paidDate: record.paidDate, referenceNo, documentNo: record.orNumber, status: "submitted", submittedById: record.submittedBy, submittedAt: record.submittedAt, details: { history, evidenceFileName: record.evidenceFileName } },
+          id: record.id, payment: paymentId, decider: actor.userId, decidedAt: submittedAt, note: input.note?.trim() || undefined,
+          details: { history: [...record.history, { at: submittedAt, actorId: actor.userId, event: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_MATCHED, note: input.note?.trim() || null }] },
+        },
+        audit: [{ action: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_MATCHED, entityType: "unmatched-receipt", entityId: record.id, details: { module: "finance", previousValue: "unmatched", newValue: paymentId, reason: input.note?.trim() || undefined, relatedRecordIds: [contract.id], displayReference: record.orNumber } }],
+      });
+      return (await loadPayment(paymentId))!;
+    } catch (error) {
+      const index = uniqueViolation(error);
+      if (index === REFERENCE_INDEX && attempt < 4) continue;
+      throw error;
+    }
+  }
+  throw conflict("number_busy", "Could not assign a receipt number. Try again.");
+}
+
+export async function rejectUnmatchedReceipt(actor: Actor, id: string, reason: string): Promise<UnmatchedReceipt> {
+  requireOperation(actor, "finance.verify");
+  const text = reason.trim();
+  if (!text) throw invalid("A reason is required.");
+  const record = await loadUnmatched(id);
+  if (!record) throw notFound("Unmatched receipt");
+  if (record.status !== "unmatched") throw conflict("already_resolved", "This receipt was already resolved and cannot be rejected again.");
+  const decidedAt = nowIso();
+  await transact(actor, {
+    variableDefinitions: "$id: UUID!, $reason: String!, $decider: UUID!, $at: Timestamp!, $details: Any!",
+    fields: "receipt: unmatchedReceipt_updateMany(where: { id: { eq: $id }, status: { eq: \"unmatched\" } }, data: { status: \"rejected\", decisionReason: $reason, decidedById: $decider, decidedAt: $at, details: $details })",
+    variables: { id: record.id, reason: text, decider: actor.userId, at: decidedAt, details: { history: [...record.history, { at: decidedAt, actorId: actor.userId, event: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_REJECTED, note: text }] } },
+    audit: [{ action: BUSINESS_AUDIT_ACTIONS.UNMATCHED_RECEIPT_REJECTED, entityType: "unmatched-receipt", entityId: record.id, details: { module: "finance", previousValue: "unmatched", newValue: "rejected", reason: text, displayReference: record.orNumber } }],
+  });
+  return (await loadUnmatched(record.id))!;
+}
+
+// ---------------------------------------------------------------- historical receipt imports
+type BatchRow = {
+  id: string; fileName: string; status: string; totalRows: number; receipts: ReceiptImportBatch["receipts"] | null; skipped: ReceiptImportBatch["skipped"] | null;
+  decidedBy: { id: string } | null; decidedAt: string | null; decisionReason: string | null; details: Record<string, unknown> | null; createdAt: string;
+};
+const BATCH_FIELDS = "id fileName status totalRows receipts skipped decidedBy { id } decidedAt decisionReason details createdAt";
+
+function toBatch(row: BatchRow): ReceiptImportBatch {
+  const details = (row.details ?? {}) as { selfSignedOff?: boolean };
+  return {
+    id: row.id, fileName: row.fileName, createdAt: row.createdAt, createdBy: (row.details as { createdBy?: string } | null)?.createdBy ?? "",
+    status: row.status as ReceiptImportBatch["status"], totalRows: row.totalRows, receipts: row.receipts ?? [], skipped: row.skipped ?? [],
+    decidedBy: row.decidedBy?.id ?? null, decidedAt: row.decidedAt, decisionReason: row.decisionReason, selfSignedOff: details.selfSignedOff ?? false,
+  };
+}
+
+async function loadBatch(id: string): Promise<ReceiptImportBatch | null> {
+  const result = await dbRead<{ receiptImportBatch: BatchRow | null }>(`query($id: UUID!) { receiptImportBatch(id: $id) { ${BATCH_FIELDS} } }`, { id });
+  return result.receiptImportBatch ? toBatch(result.receiptImportBatch) : null;
+}
+
+export async function listReceiptImportBatches(actor: Actor): Promise<ReceiptImportBatch[]> {
+  requireOperation(actor, "history-import.manage");
+  const rows = await listAll<BatchRow>("receiptImportBatches", BATCH_FIELDS, { orderBy: "[{ createdAt: DESC }, { id: DESC }]" });
+  return rows.map(toBatch);
+}
+
+export async function createReceiptImportBatch(actor: Actor, input: { fileName: string; records: ReceiptImportRecord[]; declaration: boolean }): Promise<ReceiptImportBatch> {
+  requireOperation(actor, "history-import.manage");
+  if (!input.declaration) throw invalid("Confirm that the rows come from official company records.");
+  if (input.records.length === 0) throw invalid("The file has no rows to import.");
+  const [payments, batches] = await Promise.all([
+    listAll<{ id: string; referenceNo: string | null; documentNo: string | null }>("payments", "id referenceNo documentNo"),
+    listReceiptImportBatches(actor),
+  ]);
+  const rows = buildReceiptImportRows(input.records, { payments: payments.map((row) => ({ id: row.id, referenceNo: row.referenceNo })) as never, batches, today: today() });
+  const ready = rows.filter((row) => row.status === "ready");
+  if (ready.length === 0) throw invalid("No row can be imported. Fix the file and try again.");
+  const id = newId();
+  const receipts = ready.map((row, index) => ({ ...row.receipt!, id: `${id}-r${index + 1}`, batchId: id }));
+  const skipped = rows.filter((row) => row.status === "invalid").map((row) => ({ rowNumber: row.rowNumber, reason: row.errors.join(" ") }));
+  await transact(actor, {
+    variableDefinitions: "$d: ReceiptImportBatch_Data!",
+    fields: "batch: receiptImportBatch_insert(data: $d)",
+    variables: { d: { id, fileName: input.fileName.trim().slice(0, 200) || "upload", createdById: actor.userId, status: "pending_signoff", totalRows: rows.length, receipts, skipped, details: { selfSignedOff: false, createdBy: actor.userId } } },
+    audit: [{ action: BUSINESS_AUDIT_ACTIONS.RECEIPT_IMPORT_CREATED, entityType: "receipt-import", entityId: id, details: { module: "finance", newValue: `pending_signoff;receipts:${receipts.length};skipped:${skipped.length}` } }],
+  });
+  return (await loadBatch(id))!;
+}
+
+export async function signOffReceiptImportBatch(actor: Actor, id: string): Promise<ReceiptImportBatch> {
+  requireOperation(actor, "history-import.signoff");
+  const batch = await loadBatch(id);
+  if (!batch) throw notFound("Import batch");
+  if (batch.status !== "pending_signoff") throw conflict("not_pending", "Only a batch waiting for confirmation can be confirmed.");
+  const selfSignedOff = batch.createdBy === actor.userId;
+  const decidedAt = nowIso();
+  for (const receipt of batch.receipts) {
+    if (await paperNumberTaken(receipt.referenceNo, { batchId: batch.id })) {
+      throw conflict("duplicate_number", "A receipt reference is already on record. Reject this batch and prepare a corrected copy.");
+    }
+  }
+  await transact(actor, {
+    variableDefinitions: "$id: UUID!, $decider: UUID!, $at: Timestamp!, $details: Any!",
+    fields: "batch: receiptImportBatch_updateMany(where: { id: { eq: $id }, status: { eq: \"pending_signoff\" } }, data: { status: \"signed_off\", decidedById: $decider, decidedAt: $at, details: $details })",
+    variables: { id: batch.id, decider: actor.userId, at: decidedAt, details: { selfSignedOff, createdBy: batch.createdBy } },
+    audit: [{ action: BUSINESS_AUDIT_ACTIONS.RECEIPT_IMPORT_SIGNED_OFF, entityType: "receipt-import", entityId: batch.id, details: { module: "finance", previousValue: "pending_signoff", newValue: `signed_off;receipts:${batch.receipts.length}`, reason: selfSignedOff ? "Self-confirmed: the person who confirmed also prepared this batch." : undefined } }],
+  });
+  return (await loadBatch(batch.id))!;
+}
+
+export async function rejectReceiptImportBatch(actor: Actor, id: string, reason: string): Promise<ReceiptImportBatch> {
+  requireOperation(actor, "history-import.manage");
+  const text = reason.trim();
+  if (!text) throw invalid("A reason is required.");
+  const batch = await loadBatch(id);
+  if (!batch) throw notFound("Import batch");
+  if (batch.status !== "pending_signoff") throw conflict("not_pending", "Only a batch waiting for confirmation can be rejected.");
+  await transact(actor, {
+    variableDefinitions: "$id: UUID!, $reason: String!, $decider: UUID!, $at: Timestamp!, $details: Any!",
+    fields: "batch: receiptImportBatch_updateMany(where: { id: { eq: $id }, status: { eq: \"pending_signoff\" } }, data: { status: \"rejected\", decidedById: $decider, decidedAt: $at, decisionReason: $reason, details: $details })",
+    variables: { id: batch.id, reason: text.slice(0, 500), decider: actor.userId, at: nowIso(), details: { selfSignedOff: batch.selfSignedOff, createdBy: batch.createdBy } },
+    audit: [{ action: BUSINESS_AUDIT_ACTIONS.RECEIPT_IMPORT_REJECTED, entityType: "receipt-import", entityId: batch.id, details: { module: "finance", previousValue: "pending_signoff", newValue: "rejected", reason: text } }],
+  });
+  return (await loadBatch(batch.id))!;
 }

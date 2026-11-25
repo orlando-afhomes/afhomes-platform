@@ -7,14 +7,18 @@ import type { DepartmentRepository } from "@/data/contracts/department-repositor
 import type { ExperienceRepository } from "@/data/contracts/experience-repository";
 import type { MemberRepository, UplineSummary } from "@/data/contracts/member-repository";
 import type { OutletRepository, OutletView } from "@/data/contracts/outlet-repository";
-import type { PaymentRepository, PaymentView, SubmitPaymentInput } from "@/data/contracts/payment-repository";
+import type { PaymentRepository, PaymentView, SubmitPaymentInput, UnmatchedReceiptView } from "@/data/contracts/payment-repository";
 import type { ReferenceEntryView, ReferenceListRepository } from "@/data/contracts/reference-list-repository";
 import type { ProductRepository } from "@/data/contracts/product-repository";
+import type { TierLevelRepository, TierLevelView } from "@/data/contracts/tier-level-repository";
+import type { HistoryImportRepository } from "@/data/contracts/history-import-repository";
+import type { ReceiptImportBatch } from "@/modules/imports/receipt-import";
 import type { RegistrationRepository, RegistrationCorrectionView } from "@/data/contracts/registration-repository";
 import type { ReportRepository } from "@/data/contracts/report-repository";
 import type { Repositories } from "@/data/contracts/repositories";
 import type { DepartmentRoleRepository } from "@/data/contracts/role-repository";
 import type { SaleRepository, SaleView } from "@/data/contracts/sale-repository";
+import type { ClosedMonth } from "@/modules/finance/month-close";
 import type { StaffRepository } from "@/data/contracts/staff-repository";
 import { getCurrentAccreditationRecord } from "@/modules/accreditation/eligibility";
 import type { AccreditationRecord, RegistrationApplication } from "@/modules/accreditation/types";
@@ -22,6 +26,9 @@ import type { Account, AccountPolicies, AccountStatus } from "@/modules/accounts
 import type { Customer, CustomerDraftInput } from "@/modules/customers/types";
 import type { CustomerImportJob } from "@/modules/customers/import";
 import type { Experience } from "@/modules/experiences/types";
+import type { IgpCatalogRepository, IgpCatalog, IgpProjectView, IgpUnitView } from "@/data/contracts/igp-catalog-repository";
+import type { IgpRegister, IgpRepository } from "@/data/contracts/igp-repository";
+import type { IgpHistoryBatch, IgpSale } from "@/modules/igp/types";
 import type { Department, DepartmentRole, DepartmentRoleOption, OrgMember, StaffMember } from "@/modules/organization/types";
 import type { AccreditedSellerResult, ReferralSponsorVerificationResult } from "@/modules/sales-network/types";
 import type { SeatVacancy } from "@/modules/sales-network/vacancy";
@@ -151,6 +158,46 @@ const contracts = (): Partial<ContractRepository> => ({
     await apiFetch(`/contracts/${id}/finalize`, { method: "POST" });
     return contractView(id);
   },
+  update: async (id, input) => {
+    await apiFetch(`/contracts/${id}/update`, { method: "POST", body: input });
+    return contractView(id);
+  },
+  returnForCorrection: async (id, reason) => {
+    await apiFetch(`/contracts/${id}/return`, { method: "POST", body: { reason } });
+    return contractView(id);
+  },
+  cancel: async (id, reason) => {
+    await apiFetch(`/contracts/${id}/cancel`, { method: "POST", body: { reason } });
+    return contractView(id);
+  },
+  requestCancellation: async (id, ground, reason) => {
+    await apiFetch(`/contracts/${id}/cancellation-request`, { method: "POST", body: { ground, reason } });
+    return contractView(id);
+  },
+  decideCancellation: async (id, decision, reason) => {
+    await apiFetch(`/contracts/${id}/cancellation-decision`, { method: "POST", body: { decision, reason } });
+    return contractView(id);
+  },
+  approveArrangement: async (id, reference) => {
+    await apiFetch(`/contracts/${id}/arrangement`, { method: "POST", body: { reference } });
+    return contractView(id);
+  },
+  approveNonStandard: async (id, reference) => {
+    await apiFetch(`/contracts/${id}/non-standard-approve`, { method: "POST", body: { reference } });
+    return contractView(id);
+  },
+  confirmNonStandard: async (id) => {
+    await apiFetch(`/contracts/${id}/non-standard-confirm`, { method: "POST" });
+    return contractView(id);
+  },
+  resolvePaymentCode: async (id, reference) => {
+    await apiFetch(`/contracts/${id}/payment-code`, { method: "POST", body: { reference } });
+    return contractView(id);
+  },
+  recordSignedAgreement: async (id) => {
+    await apiFetch(`/contracts/${id}/signed-agreement`, { method: "POST" });
+    return contractView(id);
+  },
 });
 
 const sales = (): Partial<SaleRepository> => ({
@@ -160,8 +207,23 @@ const sales = (): Partial<SaleRepository> => ({
     await apiFetch(`/sales/${id}/approve`, { method: "POST" });
     return saleView(id);
   },
-  // Month close is not part of the pilot, so no month has been closed.
-  listClosedMonths: async () => [],
+  correctCommission: async (id, input) => {
+    await apiFetch(`/sales/${id}/correct-commission`, { method: "POST", body: input });
+    return saleView(id);
+  },
+  markDefaulted: async (id, reason) => {
+    await apiFetch(`/sales/${id}/default`, { method: "POST", body: { reason } });
+    return saleView(id);
+  },
+  listClosedMonths: async (options) => (await apiFetch<{ items: ClosedMonth[] }>("/closed-months", { signal: signalOf(options) })).items,
+  closeMonth: async (month) => (await apiFetch<{ month: ClosedMonth }>("/closed-months", { method: "POST", body: { month } })).month,
+});
+
+const historyImports = (): Partial<HistoryImportRepository> => ({
+  listBatches: async (options) => (await apiFetch<{ items: ReceiptImportBatch[] }>("/history-import", { signal: signalOf(options) })).items,
+  createBatch: async (input) => (await apiFetch<{ batch: ReceiptImportBatch }>("/history-import", { method: "POST", body: input })).batch,
+  signOff: async (id) => (await apiFetch<{ batch: ReceiptImportBatch }>(`/history-import/${id}/sign-off`, { method: "POST" })).batch,
+  reject: async (id, reason) => (await apiFetch<{ batch: ReceiptImportBatch }>(`/history-import/${id}/reject`, { method: "POST", body: { reason } })).batch,
 });
 
 /** Turns a receipt's data URL into a file and sends it to the private evidence endpoint. */
@@ -193,8 +255,65 @@ const payments = (): Partial<PaymentRepository> => ({
     await apiFetch(`/payments/${id}/verify`, { method: "POST", body: options?.exceptionReason ? { exceptionReason: options.exceptionReason } : {} });
     return paymentView(id);
   },
-  // Receipts without a matching contract are not part of the pilot, so none are waiting.
-  listUnmatched: async () => [],
+  reject: async (id, reason) => {
+    await apiFetch(`/payments/${id}/reject`, { method: "POST", body: { reason } });
+    return paymentView(id);
+  },
+  returnForCorrection: async (id, reason) => {
+    await apiFetch(`/payments/${id}/return`, { method: "POST", body: { reason } });
+    return paymentView(id);
+  },
+  resubmit: async (id, input) => {
+    // The corrected receipt keeps its stored reference; a new proof file replaces the old one.
+    const { evidenceDataUrl, ...body } = input;
+    await apiFetch(`/payments/${id}/resubmit`, { method: "POST", body });
+    if (evidenceDataUrl) {
+      try {
+        await uploadEvidence(id, evidenceDataUrl, input.evidenceFileName);
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : "The upload failed.";
+        throw new Error(`The receipt was corrected, but its new file could not be uploaded: ${reason}`);
+      }
+    }
+    return paymentView(id);
+  },
+  adjust: async (id, input) => {
+    await apiFetch(`/payments/${id}/adjust`, { method: "POST", body: input });
+    return paymentView(id);
+  },
+  listUnmatched: async (options) => (await apiFetch<{ items: UnmatchedReceiptView[] }>("/unmatched-receipts", { signal: signalOf(options) })).items,
+  submitUnmatched: async (input) => {
+    if (input.evidenceDataUrl?.startsWith("data:")) throw new Error("Receipt files for unmatched receipts are not connected to the real backend yet. Record the receipt without a file, or match it to a contract first.");
+    return (await apiFetch<{ receipt: UnmatchedReceiptView }>("/unmatched-receipts", {
+      method: "POST",
+      body: { amountCentavos: input.amountCentavos, method: input.method, paidDate: input.paidDate, orNumber: input.orNumber, reason: input.reason, evidenceFileName: input.evidenceFileName ?? undefined },
+    })).receipt;
+  },
+  matchUnmatched: async (id, input) => {
+    const { payment } = await apiFetch<{ payment: { id: string } }>(`/unmatched-receipts/${id}/match`, { method: "POST", body: input });
+    return paymentView(payment.id);
+  },
+  rejectUnmatched: async (id, reason) => (await apiFetch<{ receipt: UnmatchedReceiptView }>(`/unmatched-receipts/${id}/reject`, { method: "POST", body: { reason } })).receipt,
+});
+
+const igp = (): Partial<IgpRepository> => ({
+  list: async (options) => apiFetch<IgpRegister>("/igp", { signal: signalOf(options) }),
+  act: async (action) => (await apiFetch<{ sale: IgpSale | null }>("/igp/actions", { method: "POST", body: action })).sale,
+  importHistory: async (input) => (await apiFetch<{ batch: IgpHistoryBatch }>("/igp/history-import", { method: "POST", body: input })).batch,
+});
+
+const igpCatalog = (): Partial<IgpCatalogRepository> => ({
+  list: async (options) => apiFetch<IgpCatalog>("/igp-catalog", { signal: signalOf(options) }),
+  createProject: async (input) => (await apiFetch<{ project: IgpProjectView }>("/igp-catalog/projects", { method: "POST", body: input })).project,
+  updateProject: async (id, input) => (await apiFetch<{ project: IgpProjectView }>(`/igp-catalog/projects/${encodeURIComponent(id)}`, { method: "POST", body: input })).project,
+  deleteProject: async (id) => {
+    await apiFetch(`/igp-catalog/projects/${encodeURIComponent(id)}/delete`, { method: "POST" });
+  },
+  createUnit: async (input) => (await apiFetch<{ unit: IgpUnitView }>("/igp-catalog/units", { method: "POST", body: input })).unit,
+  updateUnit: async (id, input) => (await apiFetch<{ unit: IgpUnitView }>(`/igp-catalog/units/${encodeURIComponent(id)}`, { method: "POST", body: input })).unit,
+  deleteUnit: async (id) => {
+    await apiFetch(`/igp-catalog/units/${encodeURIComponent(id)}/delete`, { method: "POST" });
+  },
 });
 
 const members = (): Partial<MemberRepository> => ({
@@ -250,6 +369,25 @@ const registrations = (): Partial<RegistrationRepository> => ({
 const products = (): Partial<ProductRepository> => ({
   list: async (options) => (await apiFetch<{ items: VipProduct[] }>("/products", { signal: signalOf(options) })).items,
   listSchemes: async (options) => (await apiFetch<{ items: PaymentScheme[] }>("/payment-schemes", { signal: signalOf(options) })).items,
+  create: async (input, reason) => (await apiFetch<{ product: VipProduct }>("/products", { method: "POST", body: { input, reason } })).product,
+  update: async (code, input, reason) => (await apiFetch<{ product: VipProduct }>(`/products/${encodeURIComponent(code)}`, { method: "POST", body: { input, reason } })).product,
+  approve: async (code, reason) => (await apiFetch<{ product: VipProduct }>(`/products/${encodeURIComponent(code)}/approve`, { method: "POST", body: { reason } })).product,
+  delete: async (code, reason) => {
+    await apiFetch(`/products/${encodeURIComponent(code)}/delete`, { method: "POST", body: { reason } });
+  },
+  deleteBlockers: async (options) => (await apiFetch<{ blockers: Record<string, string | null> }>("/products/delete-blockers", { signal: signalOf(options) })).blockers,
+  createScheme: async (input) => (await apiFetch<{ scheme: PaymentScheme }>("/payment-schemes", { method: "POST", body: input })).scheme,
+  updateScheme: async (id, input, reason) => (await apiFetch<{ scheme: PaymentScheme }>(`/payment-schemes/${encodeURIComponent(id)}`, { method: "POST", body: { input, reason } })).scheme,
+});
+
+const tierLevels = (): Partial<TierLevelRepository> => ({
+  list: async (options) => (await apiFetch<{ items: TierLevelView[] }>("/tier-levels", { signal: signalOf(options) })).items,
+  create: async (input) => (await apiFetch<{ level: TierLevelView }>("/tier-levels", { method: "POST", body: input })).level,
+  update: async (id, input) => (await apiFetch<{ level: TierLevelView }>(`/tier-levels/${encodeURIComponent(id)}`, { method: "POST", body: input })).level,
+  deactivate: async (id) => (await apiFetch<{ level: TierLevelView }>(`/tier-levels/${encodeURIComponent(id)}/deactivate`, { method: "POST" })).level,
+  delete: async (id) => {
+    await apiFetch(`/tier-levels/${encodeURIComponent(id)}/delete`, { method: "POST" });
+  },
 });
 
 const experiences = (): Partial<ExperienceRepository> => {
@@ -334,7 +472,7 @@ const reports = (): Partial<ReportRepository> => ({
 
 const NOT_IN_PILOT = [
   "audit", "memberQr", "memberships", "commissions", "stayPoints", "redemption",
-  "reservations", "tierLevels", "promos", "reconciliation", "historyImports", "igp", "igpCatalog",
+  "reservations", "promos", "reconciliation",
 ] as const;
 
 /** The repositories the real local backend serves (organization/access, sales network, accreditation, registration, customers, contracts, sales, receipts, members, catalog and export audit); the rest report "not connected yet". */
@@ -350,6 +488,10 @@ export function createHttpRepositories(): Repositories {
     accreditations: partial("accreditations", accreditations()),
     registrations: partial("registrations", registrations()),
     products: partial("products", products()),
+    tierLevels: partial("tierLevels", tierLevels()),
+    igp: partial("igp", igp()),
+    igpCatalog: partial("igpCatalog", igpCatalog()),
+    historyImports: partial("historyImports", historyImports()),
     reports: partial("reports", reports()),
     experiences: partial("experiences", experiences()),
     referenceLists: partial("referenceLists", referenceLists()),

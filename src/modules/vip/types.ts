@@ -24,6 +24,10 @@ export type TierLevel = {
   colorKey: TierColorKey;
   sortOrder: number;
   status: "active" | "inactive";
+  /** Present when read from the configured catalog; seed fixtures omit them. */
+  configVersion?: number;
+  effectiveDate?: string | null;
+  changes?: ProductChange[];
 };
 
 export type ProductChange = {

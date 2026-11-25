@@ -46,6 +46,16 @@ extend type AuditEvent {
   """
   actorId: UUID @fdc_generated(from: "AuditEvent.actor", purpose: IMPLICIT_REF_FIELD)
 }
+extend type ClosedMonth {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "ClosedMonth", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ClosedMonth`.`closedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  closedById: UUID @fdc_generated(from: "ClosedMonth.closedBy", purpose: IMPLICIT_REF_FIELD)
+}
 extend type Contract {
   """
   ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
@@ -118,6 +128,96 @@ extend type IdempotencyRecord {
   """
   userId: UUID! @fdc_generated(from: "IdempotencyRecord.user", purpose: IMPLICIT_REF_FIELD)
 }
+extend type IgpAccreditation {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "IgpAccreditation", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `IgpAccreditation`.`member`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  memberId: UUID! @fdc_generated(from: "IgpAccreditation.member", purpose: IMPLICIT_REF_FIELD)
+}
+extend type IgpBuyerMembership {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "IgpBuyerMembership", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `IgpBuyerMembership`.`customer`. It must match the value of `Customer`.`id`. See `@ref` for how to customize it.
+  """
+  customerId: UUID! @fdc_generated(from: "IgpBuyerMembership.customer", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `IgpBuyerMembership`.`sale`. It must match the value of `IgpSale`.`id`. See `@ref` for how to customize it.
+  """
+  saleId: UUID! @fdc_generated(from: "IgpBuyerMembership.sale", purpose: IMPLICIT_REF_FIELD)
+}
+extend type IgpHistoryBatch {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "IgpHistoryBatch", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `IgpHistoryBatch`.`createdBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  createdById: UUID @fdc_generated(from: "IgpHistoryBatch.createdBy", purpose: IMPLICIT_REF_FIELD)
+}
+extend type IgpProject {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "IgpProject", purpose: IMPLICIT_KEY_FIELD)
+}
+extend type IgpSale {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "IgpSale", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `IgpSale`.`approvedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  approvedById: UUID @fdc_generated(from: "IgpSale.approvedBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `IgpSale`.`createdBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  createdById: UUID @fdc_generated(from: "IgpSale.createdBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `IgpSale`.`customer`. It must match the value of `Customer`.`id`. See `@ref` for how to customize it.
+  """
+  customerId: UUID! @fdc_generated(from: "IgpSale.customer", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `IgpSale`.`project`. It must match the value of `IgpProject`.`id`. See `@ref` for how to customize it.
+  """
+  projectId: UUID @fdc_generated(from: "IgpSale.project", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `IgpSale`.`referrerMember`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  referrerMemberId: UUID @fdc_generated(from: "IgpSale.referrerMember", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `IgpSale`.`sellerMember`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  sellerMemberId: UUID! @fdc_generated(from: "IgpSale.sellerMember", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `IgpSale`.`unit`. It must match the value of `IgpUnit`.`id`. See `@ref` for how to customize it.
+  """
+  unitId: UUID @fdc_generated(from: "IgpSale.unit", purpose: IMPLICIT_REF_FIELD)
+}
+extend type IgpSettings {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "IgpSettings", purpose: IMPLICIT_KEY_FIELD)
+}
+extend type IgpUnit {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "IgpUnit", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `IgpUnit`.`project`. It must match the value of `IgpProject`.`id`. See `@ref` for how to customize it.
+  """
+  projectId: UUID! @fdc_generated(from: "IgpUnit.project", purpose: IMPLICIT_REF_FIELD)
+}
 extend type Member {
   """
   ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
@@ -156,6 +256,20 @@ extend type Payment {
   """
   verifiedById: UUID @fdc_generated(from: "Payment.verifiedBy", purpose: IMPLICIT_REF_FIELD)
 }
+extend type PaymentAdjustment {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "PaymentAdjustment", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `PaymentAdjustment`.`actor`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  actorId: UUID @fdc_generated(from: "PaymentAdjustment.actor", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `PaymentAdjustment`.`payment`. It must match the value of `Payment`.`id`. See `@ref` for how to customize it.
+  """
+  paymentId: UUID! @fdc_generated(from: "PaymentAdjustment.payment", purpose: IMPLICIT_REF_FIELD)
+}
 extend type PaymentScheme {
   """
   ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
@@ -177,6 +291,20 @@ extend type Product {
   ✨ Implicit foreign key field based on `Product`.`tierLevel`. It must match the value of `TierLevel`.`id`. See `@ref` for how to customize it.
   """
   tierLevelId: UUID! @fdc_generated(from: "Product.tierLevel", purpose: IMPLICIT_REF_FIELD)
+}
+extend type ReceiptImportBatch {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "ReceiptImportBatch", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ReceiptImportBatch`.`createdBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  createdById: UUID @fdc_generated(from: "ReceiptImportBatch.createdBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ReceiptImportBatch`.`decidedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  decidedById: UUID @fdc_generated(from: "ReceiptImportBatch.decidedBy", purpose: IMPLICIT_REF_FIELD)
 }
 extend type ReferenceEntry {
   """
@@ -289,6 +417,24 @@ extend type TierLevel {
   ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
   """
   id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "TierLevel", purpose: IMPLICIT_KEY_FIELD)
+}
+extend type UnmatchedReceipt {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "UnmatchedReceipt", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `UnmatchedReceipt`.`decidedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  decidedById: UUID @fdc_generated(from: "UnmatchedReceipt.decidedBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `UnmatchedReceipt`.`matchedPayment`. It must match the value of `Payment`.`id`. See `@ref` for how to customize it.
+  """
+  matchedPaymentId: UUID @fdc_generated(from: "UnmatchedReceipt.matchedPayment", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `UnmatchedReceipt`.`submittedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  submittedById: UUID @fdc_generated(from: "UnmatchedReceipt.submittedBy", purpose: IMPLICIT_REF_FIELD)
 }
 extend type UserAccount {
   """

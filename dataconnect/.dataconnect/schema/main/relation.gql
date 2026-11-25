@@ -542,6 +542,81 @@ extend type AuditEvent {
   """
   _id: ID! @fdc_generated(from: "AuditEvent.id", purpose: ENTITY_ID)
 }
+extend type ClosedMonth {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "ClosedMonth", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `ClosedMonth` table.
+  """
+  _count: Int! @fdc_generated(from: "ClosedMonth.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ClosedMonth` table where the `closedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  closedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ClosedMonth.closedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ClosedMonth` table where the `closedById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  closedById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ClosedMonth.closedById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ClosedMonth` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ClosedMonth.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ClosedMonth` table where the `month` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  month_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ClosedMonth.month", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ClosedMonth` table where the `snapshot` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  snapshot_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ClosedMonth.snapshot", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `closedAt` field in the `ClosedMonth` table.
+  """
+  closedAt_min: Timestamp @fdc_generated(from: "ClosedMonth.closedAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `snapshot` field in the `ClosedMonth` table.
+  """
+  snapshot_min: Any @fdc_generated(from: "ClosedMonth.snapshot", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `closedAt` field in the `ClosedMonth` table.
+  """
+  closedAt_max: Timestamp @fdc_generated(from: "ClosedMonth.closedAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `snapshot` field in the `ClosedMonth` table.
+  """
+  snapshot_max: Any @fdc_generated(from: "ClosedMonth.snapshot", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "ClosedMonth.id", purpose: ENTITY_ID)
+}
 extend type Contract {
   """
   ✨ List `Payment` objects in a one-to-many relationship (where `Payment`.`contract` is this object).
@@ -822,6 +897,74 @@ extend type Customer {
     """
     having: Contract_Having
   ): [Contract!]! @fdc_generated(from: "Contract.customer", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `IgpBuyerMembership` objects in a one-to-many relationship (where `IgpBuyerMembership`.`customer` is this object).
+  """
+  igpBuyerMemberships_on_customer(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpBuyerMembership_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpBuyerMembership_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpBuyerMembership_Having
+  ): [IgpBuyerMembership!]! @fdc_generated(from: "IgpBuyerMembership.customer", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `IgpSale` objects in a one-to-many relationship (where `IgpSale`.`customer` is this object).
+  """
+  igpSales_on_customer(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpSale_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpSale_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpSale_Having
+  ): [IgpSale!]! @fdc_generated(from: "IgpSale.customer", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   ✨ List `Payment` objects in a one-to-many relationship (where `Payment`.`customer` is this object).
   """
@@ -1924,6 +2067,935 @@ extend type IdempotencyRecord {
   """
   _id: ID! @fdc_generated(from: "IdempotencyRecord.userId,operation,requestKey", purpose: ENTITY_ID)
 }
+extend type IgpAccreditation {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "IgpAccreditation", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `IgpAccreditation` table.
+  """
+  _count: Int! @fdc_generated(from: "IgpAccreditation.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpAccreditation` table where the `approvedDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  approvedDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpAccreditation.approvedDate", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpAccreditation` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpAccreditation.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpAccreditation` table where the `memberId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  memberId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpAccreditation.memberId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpAccreditation` table where the `number` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  number_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpAccreditation.number", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpAccreditation` table where the `replaces` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  replaces_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpAccreditation.replaces", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpAccreditation` table where the `validUntil` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  validUntil_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpAccreditation.validUntil", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `approvedDate` field in the `IgpAccreditation` table.
+  """
+  approvedDate_min: Date @fdc_generated(from: "IgpAccreditation.approvedDate", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `validUntil` field in the `IgpAccreditation` table.
+  """
+  validUntil_min: Date @fdc_generated(from: "IgpAccreditation.validUntil", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `approvedDate` field in the `IgpAccreditation` table.
+  """
+  approvedDate_max: Date @fdc_generated(from: "IgpAccreditation.approvedDate", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `validUntil` field in the `IgpAccreditation` table.
+  """
+  validUntil_max: Date @fdc_generated(from: "IgpAccreditation.validUntil", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "IgpAccreditation.id", purpose: ENTITY_ID)
+}
+extend type IgpBuyerMembership {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "IgpBuyerMembership", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `IgpBuyerMembership` table.
+  """
+  _count: Int! @fdc_generated(from: "IgpBuyerMembership.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpBuyerMembership` table where the `customerId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  customerId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpBuyerMembership.customerId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpBuyerMembership` table where the `grantSignedDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  grantSignedDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpBuyerMembership.grantSignedDate", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpBuyerMembership` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpBuyerMembership.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpBuyerMembership` table where the `saleId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  saleId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpBuyerMembership.saleId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpBuyerMembership` table where the `seriesNumber` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  seriesNumber_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpBuyerMembership.seriesNumber", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpBuyerMembership` table where the `status` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  status_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpBuyerMembership.status", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpBuyerMembership` table where the `stayPoints` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  stayPoints_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpBuyerMembership.stayPoints", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpBuyerMembership` table where the `tier` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  tier_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpBuyerMembership.tier", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `grantSignedDate` field in the `IgpBuyerMembership` table.
+  """
+  grantSignedDate_min: Date @fdc_generated(from: "IgpBuyerMembership.grantSignedDate", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `grantSignedDate` field in the `IgpBuyerMembership` table.
+  """
+  grantSignedDate_max: Date @fdc_generated(from: "IgpBuyerMembership.grantSignedDate", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "IgpBuyerMembership.id", purpose: ENTITY_ID)
+}
+extend type IgpHistoryBatch {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "IgpHistoryBatch", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `IgpHistoryBatch` table.
+  """
+  _count: Int! @fdc_generated(from: "IgpHistoryBatch.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpHistoryBatch` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpHistoryBatch.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpHistoryBatch` table where the `createdById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpHistoryBatch.createdById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpHistoryBatch` table where the `fileName` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  fileName_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpHistoryBatch.fileName", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpHistoryBatch` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpHistoryBatch.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpHistoryBatch` table where the `rows` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  rows_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpHistoryBatch.rows", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpHistoryBatch` table where the `skipped` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  skipped_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpHistoryBatch.skipped", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpHistoryBatch` table where the `totalRows` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  totalRows_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpHistoryBatch.totalRows", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `totalRows` field in the `IgpHistoryBatch` table.
+  """
+  totalRows_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "IgpHistoryBatch.totalRows", purpose: QUERY_SUM)
+  """
+  ✨ Average the `totalRows` field in the `IgpHistoryBatch` table.
+  """
+  totalRows_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "IgpHistoryBatch.totalRows", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `createdAt` field in the `IgpHistoryBatch` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "IgpHistoryBatch.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `rows` field in the `IgpHistoryBatch` table.
+  """
+  rows_min: Any @fdc_generated(from: "IgpHistoryBatch.rows", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `skipped` field in the `IgpHistoryBatch` table.
+  """
+  skipped_min: Any @fdc_generated(from: "IgpHistoryBatch.skipped", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `totalRows` field in the `IgpHistoryBatch` table.
+  """
+  totalRows_min: Int @fdc_generated(from: "IgpHistoryBatch.totalRows", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `IgpHistoryBatch` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "IgpHistoryBatch.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `rows` field in the `IgpHistoryBatch` table.
+  """
+  rows_max: Any @fdc_generated(from: "IgpHistoryBatch.rows", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `skipped` field in the `IgpHistoryBatch` table.
+  """
+  skipped_max: Any @fdc_generated(from: "IgpHistoryBatch.skipped", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `totalRows` field in the `IgpHistoryBatch` table.
+  """
+  totalRows_max: Int @fdc_generated(from: "IgpHistoryBatch.totalRows", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "IgpHistoryBatch.id", purpose: ENTITY_ID)
+}
+extend type IgpProject {
+  """
+  ✨ List `IgpSale` objects in a one-to-many relationship (where `IgpSale`.`project` is this object).
+  """
+  igpSales_on_project(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpSale_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpSale_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpSale_Having
+  ): [IgpSale!]! @fdc_generated(from: "IgpSale.project", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `IgpUnit` objects in a one-to-many relationship (where `IgpUnit`.`project` is this object).
+  """
+  igpUnits_on_project(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpUnit_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpUnit_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpUnit_Having
+  ): [IgpUnit!]! @fdc_generated(from: "IgpUnit.project", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "IgpProject", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `IgpProject` table.
+  """
+  _count: Int! @fdc_generated(from: "IgpProject.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpProject` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpProject.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpProject` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpProject.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpProject` table where the `location` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  location_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpProject.location", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpProject` table where the `name` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  name_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpProject.name", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpProject` table where the `status` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  status_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpProject.status", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `createdAt` field in the `IgpProject` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "IgpProject.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `IgpProject` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "IgpProject.createdAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "IgpProject.id", purpose: ENTITY_ID)
+}
+extend type IgpSale {
+  """
+  ✨ List `IgpBuyerMembership` objects in a one-to-many relationship (where `IgpBuyerMembership`.`sale` is this object).
+  """
+  igpBuyerMemberships_on_sale(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpBuyerMembership_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpBuyerMembership_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpBuyerMembership_Having
+  ): [IgpBuyerMembership!]! @fdc_generated(from: "IgpBuyerMembership.sale", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "IgpSale", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `IgpSale` table.
+  """
+  _count: Int! @fdc_generated(from: "IgpSale.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `approvedById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  approvedById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.approvedById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `clauses` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  clauses_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.clauses", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `createdById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.createdById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `customerId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  customerId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.customerId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `date` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  date_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.date", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `details` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  details_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.details", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `priceCentavos` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  priceCentavos_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.priceCentavos", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `projectId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  projectId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.projectId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `referrerMemberId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  referrerMemberId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.referrerMemberId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `scheme` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  scheme_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.scheme", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `sellerMemberId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  sellerMemberId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.sellerMemberId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `sequence` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  sequence_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.sequence", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `seriesNumber` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  seriesNumber_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.seriesNumber", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `status` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  status_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.status", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `termMonths` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  termMonths_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.termMonths", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSale` table where the `unitId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  unitId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale.unitId", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `priceCentavos` field in the `IgpSale` table.
+  """
+  priceCentavos_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int64 @fdc_generated(from: "IgpSale.priceCentavos", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `sequence` field in the `IgpSale` table.
+  """
+  sequence_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "IgpSale.sequence", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `termMonths` field in the `IgpSale` table.
+  """
+  termMonths_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "IgpSale.termMonths", purpose: QUERY_SUM)
+  """
+  ✨ Average the `priceCentavos` field in the `IgpSale` table.
+  """
+  priceCentavos_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "IgpSale.priceCentavos", purpose: QUERY_AVG)
+  """
+  ✨ Average the `sequence` field in the `IgpSale` table.
+  """
+  sequence_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "IgpSale.sequence", purpose: QUERY_AVG)
+  """
+  ✨ Average the `termMonths` field in the `IgpSale` table.
+  """
+  termMonths_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "IgpSale.termMonths", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `date` field in the `IgpSale` table.
+  """
+  date_min: Date @fdc_generated(from: "IgpSale.date", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `details` field in the `IgpSale` table.
+  """
+  details_min: Any @fdc_generated(from: "IgpSale.details", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `priceCentavos` field in the `IgpSale` table.
+  """
+  priceCentavos_min: Int64 @fdc_generated(from: "IgpSale.priceCentavos", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `sequence` field in the `IgpSale` table.
+  """
+  sequence_min: Int @fdc_generated(from: "IgpSale.sequence", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `termMonths` field in the `IgpSale` table.
+  """
+  termMonths_min: Int @fdc_generated(from: "IgpSale.termMonths", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `date` field in the `IgpSale` table.
+  """
+  date_max: Date @fdc_generated(from: "IgpSale.date", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `details` field in the `IgpSale` table.
+  """
+  details_max: Any @fdc_generated(from: "IgpSale.details", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `priceCentavos` field in the `IgpSale` table.
+  """
+  priceCentavos_max: Int64 @fdc_generated(from: "IgpSale.priceCentavos", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `sequence` field in the `IgpSale` table.
+  """
+  sequence_max: Int @fdc_generated(from: "IgpSale.sequence", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `termMonths` field in the `IgpSale` table.
+  """
+  termMonths_max: Int @fdc_generated(from: "IgpSale.termMonths", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "IgpSale.id", purpose: ENTITY_ID)
+}
+extend type IgpSettings {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "IgpSettings", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `IgpSettings` table.
+  """
+  _count: Int! @fdc_generated(from: "IgpSettings.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSettings` table where the `grantTierRules` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  grantTierRules_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSettings.grantTierRules", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSettings` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSettings.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSettings` table where the `key` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  key_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSettings.key", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpSettings` table where the `thresholdBp` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  thresholdBp_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSettings.thresholdBp", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `thresholdBp` field in the `IgpSettings` table.
+  """
+  thresholdBp_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "IgpSettings.thresholdBp", purpose: QUERY_SUM)
+  """
+  ✨ Average the `thresholdBp` field in the `IgpSettings` table.
+  """
+  thresholdBp_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "IgpSettings.thresholdBp", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `grantTierRules` field in the `IgpSettings` table.
+  """
+  grantTierRules_min: Any @fdc_generated(from: "IgpSettings.grantTierRules", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `thresholdBp` field in the `IgpSettings` table.
+  """
+  thresholdBp_min: Int @fdc_generated(from: "IgpSettings.thresholdBp", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `grantTierRules` field in the `IgpSettings` table.
+  """
+  grantTierRules_max: Any @fdc_generated(from: "IgpSettings.grantTierRules", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `thresholdBp` field in the `IgpSettings` table.
+  """
+  thresholdBp_max: Int @fdc_generated(from: "IgpSettings.thresholdBp", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "IgpSettings.id", purpose: ENTITY_ID)
+}
+extend type IgpUnit {
+  """
+  ✨ List `IgpSale` objects in a one-to-many relationship (where `IgpSale`.`unit` is this object).
+  """
+  igpSales_on_unit(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpSale_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpSale_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpSale_Having
+  ): [IgpSale!]! @fdc_generated(from: "IgpSale.unit", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "IgpUnit", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `IgpUnit` table.
+  """
+  _count: Int! @fdc_generated(from: "IgpUnit.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpUnit` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpUnit.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpUnit` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpUnit.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpUnit` table where the `projectId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  projectId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpUnit.projectId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpUnit` table where the `propertyOwner` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  propertyOwner_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpUnit.propertyOwner", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpUnit` table where the `status` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  status_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpUnit.status", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `IgpUnit` table where the `unitOrLot` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  unitOrLot_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "IgpUnit.unitOrLot", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `createdAt` field in the `IgpUnit` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "IgpUnit.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `IgpUnit` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "IgpUnit.createdAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "IgpUnit.id", purpose: ENTITY_ID)
+}
 extend type Member {
   """
   ✨ List `Accreditation` objects in a one-to-many relationship (where `Accreditation`.`member` is this object).
@@ -2061,6 +3133,108 @@ extend type Member {
     """
     having: Customer_Having
   ): [Customer!]! @fdc_generated(from: "Customer.ownerMember", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `IgpAccreditation` objects in a one-to-many relationship (where `IgpAccreditation`.`member` is this object).
+  """
+  igpAccreditations_on_member(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpAccreditation_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpAccreditation_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpAccreditation_Having
+  ): [IgpAccreditation!]! @fdc_generated(from: "IgpAccreditation.member", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `IgpSale` objects in a one-to-many relationship (where `IgpSale`.`referrerMember` is this object).
+  """
+  igpSales_on_referrerMember(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpSale_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpSale_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpSale_Having
+  ): [IgpSale!]! @fdc_generated(from: "IgpSale.referrerMember", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `IgpSale` objects in a one-to-many relationship (where `IgpSale`.`sellerMember` is this object).
+  """
+  igpSales_on_sellerMember(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpSale_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpSale_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpSale_Having
+  ): [IgpSale!]! @fdc_generated(from: "IgpSale.sellerMember", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   ✨ List `Member` objects in a one-to-many relationship (where `Member`.`parent` is this object).
   """
@@ -2566,6 +3740,74 @@ extend type Outlet {
 }
 extend type Payment {
   """
+  ✨ List `PaymentAdjustment` objects in a one-to-many relationship (where `PaymentAdjustment`.`payment` is this object).
+  """
+  paymentAdjustments_on_payment(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: PaymentAdjustment_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [PaymentAdjustment_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: PaymentAdjustment_Having
+  ): [PaymentAdjustment!]! @fdc_generated(from: "PaymentAdjustment.payment", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `UnmatchedReceipt` objects in a one-to-many relationship (where `UnmatchedReceipt`.`matchedPayment` is this object).
+  """
+  unmatchedReceipts_on_matchedPayment(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: UnmatchedReceipt_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [UnmatchedReceipt_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: UnmatchedReceipt_Having
+  ): [UnmatchedReceipt!]! @fdc_generated(from: "UnmatchedReceipt.matchedPayment", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   Implicit metadata field that cannot be written. It provides extra information about query results.
   """
   _metadata: _Metadata @fdc_generated(from: "Payment", purpose: METADATA_FIELD)
@@ -2813,6 +4055,134 @@ extend type Payment {
   A generated field that is used for caching results in SDKs.
   """
   _id: ID! @fdc_generated(from: "Payment.id", purpose: ENTITY_ID)
+}
+extend type PaymentAdjustment {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "PaymentAdjustment", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `PaymentAdjustment` table.
+  """
+  _count: Int! @fdc_generated(from: "PaymentAdjustment.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentAdjustment` table where the `actorId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  actorId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentAdjustment.actorId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentAdjustment` table where the `amountCentavos` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  amountCentavos_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentAdjustment.amountCentavos", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentAdjustment` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentAdjustment.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentAdjustment` table where the `date` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  date_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentAdjustment.date", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentAdjustment` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentAdjustment.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentAdjustment` table where the `kind` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  kind_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentAdjustment.kind", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentAdjustment` table where the `paymentId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  paymentId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentAdjustment.paymentId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PaymentAdjustment` table where the `reason` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  reason_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentAdjustment.reason", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `amountCentavos` field in the `PaymentAdjustment` table.
+  """
+  amountCentavos_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int64 @fdc_generated(from: "PaymentAdjustment.amountCentavos", purpose: QUERY_SUM)
+  """
+  ✨ Average the `amountCentavos` field in the `PaymentAdjustment` table.
+  """
+  amountCentavos_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "PaymentAdjustment.amountCentavos", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `amountCentavos` field in the `PaymentAdjustment` table.
+  """
+  amountCentavos_min: Int64 @fdc_generated(from: "PaymentAdjustment.amountCentavos", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `createdAt` field in the `PaymentAdjustment` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "PaymentAdjustment.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `date` field in the `PaymentAdjustment` table.
+  """
+  date_min: Date @fdc_generated(from: "PaymentAdjustment.date", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `amountCentavos` field in the `PaymentAdjustment` table.
+  """
+  amountCentavos_max: Int64 @fdc_generated(from: "PaymentAdjustment.amountCentavos", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `createdAt` field in the `PaymentAdjustment` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "PaymentAdjustment.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `date` field in the `PaymentAdjustment` table.
+  """
+  date_max: Date @fdc_generated(from: "PaymentAdjustment.date", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "PaymentAdjustment.id", purpose: ENTITY_ID)
 }
 extend type PaymentScheme {
   """
@@ -3874,6 +5244,194 @@ extend type Product {
   """
   _id: ID! @fdc_generated(from: "Product.id", purpose: ENTITY_ID)
 }
+extend type ReceiptImportBatch {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "ReceiptImportBatch", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `ReceiptImportBatch` table.
+  """
+  _count: Int! @fdc_generated(from: "ReceiptImportBatch.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReceiptImportBatch` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReceiptImportBatch.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReceiptImportBatch` table where the `createdById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReceiptImportBatch.createdById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReceiptImportBatch` table where the `decidedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  decidedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReceiptImportBatch.decidedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReceiptImportBatch` table where the `decidedById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  decidedById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReceiptImportBatch.decidedById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReceiptImportBatch` table where the `decisionReason` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  decisionReason_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReceiptImportBatch.decisionReason", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReceiptImportBatch` table where the `details` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  details_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReceiptImportBatch.details", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReceiptImportBatch` table where the `fileName` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  fileName_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReceiptImportBatch.fileName", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReceiptImportBatch` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReceiptImportBatch.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReceiptImportBatch` table where the `receipts` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  receipts_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReceiptImportBatch.receipts", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReceiptImportBatch` table where the `skipped` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  skipped_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReceiptImportBatch.skipped", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReceiptImportBatch` table where the `status` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  status_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReceiptImportBatch.status", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReceiptImportBatch` table where the `totalRows` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  totalRows_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReceiptImportBatch.totalRows", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `totalRows` field in the `ReceiptImportBatch` table.
+  """
+  totalRows_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "ReceiptImportBatch.totalRows", purpose: QUERY_SUM)
+  """
+  ✨ Average the `totalRows` field in the `ReceiptImportBatch` table.
+  """
+  totalRows_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "ReceiptImportBatch.totalRows", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `createdAt` field in the `ReceiptImportBatch` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "ReceiptImportBatch.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `decidedAt` field in the `ReceiptImportBatch` table.
+  """
+  decidedAt_min: Timestamp @fdc_generated(from: "ReceiptImportBatch.decidedAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `details` field in the `ReceiptImportBatch` table.
+  """
+  details_min: Any @fdc_generated(from: "ReceiptImportBatch.details", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `receipts` field in the `ReceiptImportBatch` table.
+  """
+  receipts_min: Any @fdc_generated(from: "ReceiptImportBatch.receipts", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `skipped` field in the `ReceiptImportBatch` table.
+  """
+  skipped_min: Any @fdc_generated(from: "ReceiptImportBatch.skipped", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `totalRows` field in the `ReceiptImportBatch` table.
+  """
+  totalRows_min: Int @fdc_generated(from: "ReceiptImportBatch.totalRows", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `ReceiptImportBatch` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "ReceiptImportBatch.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `decidedAt` field in the `ReceiptImportBatch` table.
+  """
+  decidedAt_max: Timestamp @fdc_generated(from: "ReceiptImportBatch.decidedAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `details` field in the `ReceiptImportBatch` table.
+  """
+  details_max: Any @fdc_generated(from: "ReceiptImportBatch.details", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `receipts` field in the `ReceiptImportBatch` table.
+  """
+  receipts_max: Any @fdc_generated(from: "ReceiptImportBatch.receipts", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `skipped` field in the `ReceiptImportBatch` table.
+  """
+  skipped_max: Any @fdc_generated(from: "ReceiptImportBatch.skipped", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `totalRows` field in the `ReceiptImportBatch` table.
+  """
+  totalRows_max: Int @fdc_generated(from: "ReceiptImportBatch.totalRows", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "ReceiptImportBatch.id", purpose: ENTITY_ID)
+}
 extend type ReferenceEntry {
   """
   Implicit metadata field that cannot be written. It provides extra information about query results.
@@ -4408,6 +5966,15 @@ extend type Sale {
     """
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Sale.details", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Sale` table where the `financialHold` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  financialHold_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Sale.financialHold", purpose: QUERY_COUNT)
   """
   ✨ Count the number of rows in the `Sale` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
@@ -4978,6 +6545,15 @@ extend type TierLevel {
   """
   _count: Int! @fdc_generated(from: "TierLevel.", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `TierLevel` table where the `changes` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  changes_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "TierLevel.changes", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `TierLevel` table where the `colorKey` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   colorKey_count(
@@ -4986,6 +6562,24 @@ extend type TierLevel {
     """
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "TierLevel.colorKey", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `TierLevel` table where the `configVersion` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  configVersion_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "TierLevel.configVersion", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `TierLevel` table where the `effectiveDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  effectiveDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "TierLevel.effectiveDate", purpose: QUERY_COUNT)
   """
   ✨ Count the number of rows in the `TierLevel` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
@@ -5032,6 +6626,15 @@ extend type TierLevel {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "TierLevel.status", purpose: QUERY_COUNT)
   """
+  ✨ Sum the `configVersion` field in the `TierLevel` table.
+  """
+  configVersion_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "TierLevel.configVersion", purpose: QUERY_SUM)
+  """
   ✨ Sum the `sortOrder` field in the `TierLevel` table.
   """
   sortOrder_sum(
@@ -5040,6 +6643,15 @@ extend type TierLevel {
     """
     distinct: Boolean = false
   ): Int @fdc_generated(from: "TierLevel.sortOrder", purpose: QUERY_SUM)
+  """
+  ✨ Average the `configVersion` field in the `TierLevel` table.
+  """
+  configVersion_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "TierLevel.configVersion", purpose: QUERY_AVG)
   """
   ✨ Average the `sortOrder` field in the `TierLevel` table.
   """
@@ -5050,9 +6662,33 @@ extend type TierLevel {
     distinct: Boolean = false
   ): Float @fdc_generated(from: "TierLevel.sortOrder", purpose: QUERY_AVG)
   """
+  ✨ Minimum of the `changes` field in the `TierLevel` table.
+  """
+  changes_min: Any @fdc_generated(from: "TierLevel.changes", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `configVersion` field in the `TierLevel` table.
+  """
+  configVersion_min: Int @fdc_generated(from: "TierLevel.configVersion", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `effectiveDate` field in the `TierLevel` table.
+  """
+  effectiveDate_min: Date @fdc_generated(from: "TierLevel.effectiveDate", purpose: QUERY_MIN)
+  """
   ✨ Minimum of the `sortOrder` field in the `TierLevel` table.
   """
   sortOrder_min: Int @fdc_generated(from: "TierLevel.sortOrder", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `changes` field in the `TierLevel` table.
+  """
+  changes_max: Any @fdc_generated(from: "TierLevel.changes", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `configVersion` field in the `TierLevel` table.
+  """
+  configVersion_max: Int @fdc_generated(from: "TierLevel.configVersion", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `effectiveDate` field in the `TierLevel` table.
+  """
+  effectiveDate_max: Date @fdc_generated(from: "TierLevel.effectiveDate", purpose: QUERY_MAX)
   """
   ✨ Maximum of the `sortOrder` field in the `TierLevel` table.
   """
@@ -5061,6 +6697,213 @@ extend type TierLevel {
   A generated field that is used for caching results in SDKs.
   """
   _id: ID! @fdc_generated(from: "TierLevel.id", purpose: ENTITY_ID)
+}
+extend type UnmatchedReceipt {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "UnmatchedReceipt", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table.
+  """
+  _count: Int! @fdc_generated(from: "UnmatchedReceipt.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table where the `amountCentavos` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  amountCentavos_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt.amountCentavos", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table where the `decidedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  decidedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt.decidedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table where the `decidedById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  decidedById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt.decidedById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table where the `decisionReason` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  decisionReason_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt.decisionReason", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table where the `details` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  details_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt.details", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table where the `evidenceFileName` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  evidenceFileName_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt.evidenceFileName", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table where the `matchedPaymentId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  matchedPaymentId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt.matchedPaymentId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table where the `method` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  method_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt.method", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table where the `orNumber` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  orNumber_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt.orNumber", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table where the `paidDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  paidDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt.paidDate", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table where the `reason` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  reason_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt.reason", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table where the `status` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  status_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt.status", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table where the `submittedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  submittedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt.submittedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UnmatchedReceipt` table where the `submittedById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  submittedById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt.submittedById", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `amountCentavos` field in the `UnmatchedReceipt` table.
+  """
+  amountCentavos_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int64 @fdc_generated(from: "UnmatchedReceipt.amountCentavos", purpose: QUERY_SUM)
+  """
+  ✨ Average the `amountCentavos` field in the `UnmatchedReceipt` table.
+  """
+  amountCentavos_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "UnmatchedReceipt.amountCentavos", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `amountCentavos` field in the `UnmatchedReceipt` table.
+  """
+  amountCentavos_min: Int64 @fdc_generated(from: "UnmatchedReceipt.amountCentavos", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `decidedAt` field in the `UnmatchedReceipt` table.
+  """
+  decidedAt_min: Timestamp @fdc_generated(from: "UnmatchedReceipt.decidedAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `details` field in the `UnmatchedReceipt` table.
+  """
+  details_min: Any @fdc_generated(from: "UnmatchedReceipt.details", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `paidDate` field in the `UnmatchedReceipt` table.
+  """
+  paidDate_min: Date @fdc_generated(from: "UnmatchedReceipt.paidDate", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `submittedAt` field in the `UnmatchedReceipt` table.
+  """
+  submittedAt_min: Timestamp @fdc_generated(from: "UnmatchedReceipt.submittedAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `amountCentavos` field in the `UnmatchedReceipt` table.
+  """
+  amountCentavos_max: Int64 @fdc_generated(from: "UnmatchedReceipt.amountCentavos", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `decidedAt` field in the `UnmatchedReceipt` table.
+  """
+  decidedAt_max: Timestamp @fdc_generated(from: "UnmatchedReceipt.decidedAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `details` field in the `UnmatchedReceipt` table.
+  """
+  details_max: Any @fdc_generated(from: "UnmatchedReceipt.details", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `paidDate` field in the `UnmatchedReceipt` table.
+  """
+  paidDate_max: Date @fdc_generated(from: "UnmatchedReceipt.paidDate", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `submittedAt` field in the `UnmatchedReceipt` table.
+  """
+  submittedAt_max: Timestamp @fdc_generated(from: "UnmatchedReceipt.submittedAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "UnmatchedReceipt.id", purpose: ENTITY_ID)
 }
 extend type UserAccount {
   """
@@ -5166,6 +7009,40 @@ extend type UserAccount {
     having: AuditEvent_Having
   ): [AuditEvent!]! @fdc_generated(from: "AuditEvent.actor", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `ClosedMonth` objects in a one-to-many relationship (where `ClosedMonth`.`closedBy` is this object).
+  """
+  closedMonths_on_closedBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ClosedMonth_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ClosedMonth_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ClosedMonth_Having
+  ): [ClosedMonth!]! @fdc_generated(from: "ClosedMonth.closedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `CustomerImportJob` objects in a one-to-many relationship (where `CustomerImportJob`.`actor` is this object).
   """
   customerImportJobs_on_actor(
@@ -5234,6 +7111,108 @@ extend type UserAccount {
     having: IdempotencyRecord_Having
   ): [IdempotencyRecord!]! @fdc_generated(from: "IdempotencyRecord.user", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `IgpHistoryBatch` objects in a one-to-many relationship (where `IgpHistoryBatch`.`createdBy` is this object).
+  """
+  igpHistoryBatches_on_createdBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpHistoryBatch_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpHistoryBatch_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpHistoryBatch_Having
+  ): [IgpHistoryBatch!]! @fdc_generated(from: "IgpHistoryBatch.createdBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `IgpSale` objects in a one-to-many relationship (where `IgpSale`.`approvedBy` is this object).
+  """
+  igpSales_on_approvedBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpSale_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpSale_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpSale_Having
+  ): [IgpSale!]! @fdc_generated(from: "IgpSale.approvedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `IgpSale` objects in a one-to-many relationship (where `IgpSale`.`createdBy` is this object).
+  """
+  igpSales_on_createdBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IgpSale_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IgpSale_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IgpSale_Having
+  ): [IgpSale!]! @fdc_generated(from: "IgpSale.createdBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `Payment` objects in a one-to-many relationship (where `Payment`.`submittedBy` is this object).
   """
   payments_on_submittedBy(
@@ -5301,6 +7280,108 @@ extend type UserAccount {
     """
     having: Payment_Having
   ): [Payment!]! @fdc_generated(from: "Payment.verifiedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `PaymentAdjustment` objects in a one-to-many relationship (where `PaymentAdjustment`.`actor` is this object).
+  """
+  paymentAdjustments_on_actor(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: PaymentAdjustment_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [PaymentAdjustment_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: PaymentAdjustment_Having
+  ): [PaymentAdjustment!]! @fdc_generated(from: "PaymentAdjustment.actor", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `ReceiptImportBatch` objects in a one-to-many relationship (where `ReceiptImportBatch`.`createdBy` is this object).
+  """
+  receiptImportBatches_on_createdBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ReceiptImportBatch_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ReceiptImportBatch_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ReceiptImportBatch_Having
+  ): [ReceiptImportBatch!]! @fdc_generated(from: "ReceiptImportBatch.createdBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `ReceiptImportBatch` objects in a one-to-many relationship (where `ReceiptImportBatch`.`decidedBy` is this object).
+  """
+  receiptImportBatches_on_decidedBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ReceiptImportBatch_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ReceiptImportBatch_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ReceiptImportBatch_Having
+  ): [ReceiptImportBatch!]! @fdc_generated(from: "ReceiptImportBatch.decidedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   ✨ List `RegistrationApplication` objects in a one-to-many relationship (where `RegistrationApplication`.`account` is this object).
   """
@@ -5505,6 +7586,74 @@ extend type UserAccount {
     """
     having: SeatVacancy_Having
   ): [SeatVacancy!]! @fdc_generated(from: "SeatVacancy.recordedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `UnmatchedReceipt` objects in a one-to-many relationship (where `UnmatchedReceipt`.`decidedBy` is this object).
+  """
+  unmatchedReceipts_on_decidedBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: UnmatchedReceipt_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [UnmatchedReceipt_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: UnmatchedReceipt_Having
+  ): [UnmatchedReceipt!]! @fdc_generated(from: "UnmatchedReceipt.decidedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `UnmatchedReceipt` objects in a one-to-many relationship (where `UnmatchedReceipt`.`submittedBy` is this object).
+  """
+  unmatchedReceipts_on_submittedBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: UnmatchedReceipt_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [UnmatchedReceipt_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: UnmatchedReceipt_Having
+  ): [UnmatchedReceipt!]! @fdc_generated(from: "UnmatchedReceipt.submittedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   ✨ List `UserAccount` objects in a one-to-many relationship (where `UserAccount`.`createdBy` is this object).
   """

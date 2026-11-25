@@ -36,6 +36,15 @@ extend type Mutation {
     data: AuditEvent_Data!
   ): AuditEvent_KeyOutput! @fdc_generated(from: "AuditEvent", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `ClosedMonth` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  closedMonth_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: ClosedMonth_Data!
+  ): ClosedMonth_KeyOutput! @fdc_generated(from: "ClosedMonth", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `Contract` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   contract_insert(
@@ -108,6 +117,69 @@ extend type Mutation {
     data: IdempotencyRecord_Data!
   ): IdempotencyRecord_KeyOutput! @fdc_generated(from: "IdempotencyRecord", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `IgpAccreditation` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  igpAccreditation_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: IgpAccreditation_Data!
+  ): IgpAccreditation_KeyOutput! @fdc_generated(from: "IgpAccreditation", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `IgpBuyerMembership` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  igpBuyerMembership_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: IgpBuyerMembership_Data!
+  ): IgpBuyerMembership_KeyOutput! @fdc_generated(from: "IgpBuyerMembership", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `IgpHistoryBatch` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  igpHistoryBatch_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: IgpHistoryBatch_Data!
+  ): IgpHistoryBatch_KeyOutput! @fdc_generated(from: "IgpHistoryBatch", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `IgpProject` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  igpProject_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: IgpProject_Data!
+  ): IgpProject_KeyOutput! @fdc_generated(from: "IgpProject", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `IgpSale` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  igpSale_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: IgpSale_Data!
+  ): IgpSale_KeyOutput! @fdc_generated(from: "IgpSale", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `IgpSettings` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  igpSettings_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: IgpSettings_Data!
+  ): IgpSettings_KeyOutput! @fdc_generated(from: "IgpSettings", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `IgpUnit` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  igpUnit_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: IgpUnit_Data!
+  ): IgpUnit_KeyOutput! @fdc_generated(from: "IgpUnit", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `Member` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   member_insert(
@@ -135,6 +207,15 @@ extend type Mutation {
     data: Payment_Data!
   ): Payment_KeyOutput! @fdc_generated(from: "Payment", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `PaymentAdjustment` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  paymentAdjustment_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: PaymentAdjustment_Data!
+  ): PaymentAdjustment_KeyOutput! @fdc_generated(from: "PaymentAdjustment", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `PaymentScheme` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   paymentScheme_insert(
@@ -161,6 +242,15 @@ extend type Mutation {
     """
     data: Product_Data!
   ): Product_KeyOutput! @fdc_generated(from: "Product", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `ReceiptImportBatch` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  receiptImportBatch_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: ReceiptImportBatch_Data!
+  ): ReceiptImportBatch_KeyOutput! @fdc_generated(from: "ReceiptImportBatch", purpose: INSERT_SINGLE)
   """
   ✨ Insert a single `ReferenceEntry` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -234,6 +324,15 @@ extend type Mutation {
     data: TierLevel_Data!
   ): TierLevel_KeyOutput! @fdc_generated(from: "TierLevel", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `UnmatchedReceipt` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  unmatchedReceipt_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: UnmatchedReceipt_Data!
+  ): UnmatchedReceipt_KeyOutput! @fdc_generated(from: "UnmatchedReceipt", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `UserAccount` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   userAccount_insert(
@@ -278,6 +377,15 @@ extend type Mutation {
     """
     data: [AuditEvent_Data!]!
   ): [AuditEvent_KeyOutput!]! @fdc_generated(from: "AuditEvent", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `ClosedMonth` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  closedMonth_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [ClosedMonth_Data!]!
+  ): [ClosedMonth_KeyOutput!]! @fdc_generated(from: "ClosedMonth", purpose: INSERT_MULTIPLE)
   """
   ✨ Insert `Contract` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -351,6 +459,69 @@ extend type Mutation {
     data: [IdempotencyRecord_Data!]!
   ): [IdempotencyRecord_KeyOutput!]! @fdc_generated(from: "IdempotencyRecord", purpose: INSERT_MULTIPLE)
   """
+  ✨ Insert `IgpAccreditation` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  igpAccreditation_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [IgpAccreditation_Data!]!
+  ): [IgpAccreditation_KeyOutput!]! @fdc_generated(from: "IgpAccreditation", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `IgpBuyerMembership` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  igpBuyerMembership_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [IgpBuyerMembership_Data!]!
+  ): [IgpBuyerMembership_KeyOutput!]! @fdc_generated(from: "IgpBuyerMembership", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `IgpHistoryBatch` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  igpHistoryBatch_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [IgpHistoryBatch_Data!]!
+  ): [IgpHistoryBatch_KeyOutput!]! @fdc_generated(from: "IgpHistoryBatch", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `IgpProject` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  igpProject_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [IgpProject_Data!]!
+  ): [IgpProject_KeyOutput!]! @fdc_generated(from: "IgpProject", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `IgpSale` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  igpSale_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [IgpSale_Data!]!
+  ): [IgpSale_KeyOutput!]! @fdc_generated(from: "IgpSale", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `IgpSettings` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  igpSettings_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [IgpSettings_Data!]!
+  ): [IgpSettings_KeyOutput!]! @fdc_generated(from: "IgpSettings", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `IgpUnit` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  igpUnit_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [IgpUnit_Data!]!
+  ): [IgpUnit_KeyOutput!]! @fdc_generated(from: "IgpUnit", purpose: INSERT_MULTIPLE)
+  """
   ✨ Insert `Member` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   member_insertMany(
@@ -378,6 +549,15 @@ extend type Mutation {
     data: [Payment_Data!]!
   ): [Payment_KeyOutput!]! @fdc_generated(from: "Payment", purpose: INSERT_MULTIPLE)
   """
+  ✨ Insert `PaymentAdjustment` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  paymentAdjustment_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [PaymentAdjustment_Data!]!
+  ): [PaymentAdjustment_KeyOutput!]! @fdc_generated(from: "PaymentAdjustment", purpose: INSERT_MULTIPLE)
+  """
   ✨ Insert `PaymentScheme` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   paymentScheme_insertMany(
@@ -404,6 +584,15 @@ extend type Mutation {
     """
     data: [Product_Data!]!
   ): [Product_KeyOutput!]! @fdc_generated(from: "Product", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `ReceiptImportBatch` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  receiptImportBatch_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [ReceiptImportBatch_Data!]!
+  ): [ReceiptImportBatch_KeyOutput!]! @fdc_generated(from: "ReceiptImportBatch", purpose: INSERT_MULTIPLE)
   """
   ✨ Insert `ReferenceEntry` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -477,6 +666,15 @@ extend type Mutation {
     data: [TierLevel_Data!]!
   ): [TierLevel_KeyOutput!]! @fdc_generated(from: "TierLevel", purpose: INSERT_MULTIPLE)
   """
+  ✨ Insert `UnmatchedReceipt` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  unmatchedReceipt_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [UnmatchedReceipt_Data!]!
+  ): [UnmatchedReceipt_KeyOutput!]! @fdc_generated(from: "UnmatchedReceipt", purpose: INSERT_MULTIPLE)
+  """
   ✨ Insert `UserAccount` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   userAccount_insertMany(
@@ -521,6 +719,15 @@ extend type Mutation {
     """
     data: AuditEvent_Data!
   ): AuditEvent_KeyOutput! @fdc_generated(from: "AuditEvent", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `ClosedMonth` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ClosedMonth`.
+  """
+  closedMonth_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: ClosedMonth_Data!
+  ): ClosedMonth_KeyOutput! @fdc_generated(from: "ClosedMonth", purpose: UPSERT_SINGLE)
   """
   ✨ Insert or update a single `Contract` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Contract`.
   """
@@ -594,6 +801,69 @@ extend type Mutation {
     data: IdempotencyRecord_Data!
   ): IdempotencyRecord_KeyOutput! @fdc_generated(from: "IdempotencyRecord", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `IgpAccreditation` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IgpAccreditation`.
+  """
+  igpAccreditation_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: IgpAccreditation_Data!
+  ): IgpAccreditation_KeyOutput! @fdc_generated(from: "IgpAccreditation", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `IgpBuyerMembership` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IgpBuyerMembership`.
+  """
+  igpBuyerMembership_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: IgpBuyerMembership_Data!
+  ): IgpBuyerMembership_KeyOutput! @fdc_generated(from: "IgpBuyerMembership", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `IgpHistoryBatch` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IgpHistoryBatch`.
+  """
+  igpHistoryBatch_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: IgpHistoryBatch_Data!
+  ): IgpHistoryBatch_KeyOutput! @fdc_generated(from: "IgpHistoryBatch", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `IgpProject` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IgpProject`.
+  """
+  igpProject_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: IgpProject_Data!
+  ): IgpProject_KeyOutput! @fdc_generated(from: "IgpProject", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `IgpSale` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IgpSale`.
+  """
+  igpSale_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: IgpSale_Data!
+  ): IgpSale_KeyOutput! @fdc_generated(from: "IgpSale", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `IgpSettings` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IgpSettings`.
+  """
+  igpSettings_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: IgpSettings_Data!
+  ): IgpSettings_KeyOutput! @fdc_generated(from: "IgpSettings", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `IgpUnit` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IgpUnit`.
+  """
+  igpUnit_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: IgpUnit_Data!
+  ): IgpUnit_KeyOutput! @fdc_generated(from: "IgpUnit", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `Member` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Member`.
   """
   member_upsert(
@@ -621,6 +891,15 @@ extend type Mutation {
     data: Payment_Data!
   ): Payment_KeyOutput! @fdc_generated(from: "Payment", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `PaymentAdjustment` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PaymentAdjustment`.
+  """
+  paymentAdjustment_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: PaymentAdjustment_Data!
+  ): PaymentAdjustment_KeyOutput! @fdc_generated(from: "PaymentAdjustment", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `PaymentScheme` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PaymentScheme`.
   """
   paymentScheme_upsert(
@@ -647,6 +926,15 @@ extend type Mutation {
     """
     data: Product_Data!
   ): Product_KeyOutput! @fdc_generated(from: "Product", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `ReceiptImportBatch` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ReceiptImportBatch`.
+  """
+  receiptImportBatch_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: ReceiptImportBatch_Data!
+  ): ReceiptImportBatch_KeyOutput! @fdc_generated(from: "ReceiptImportBatch", purpose: UPSERT_SINGLE)
   """
   ✨ Insert or update a single `ReferenceEntry` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ReferenceEntry`.
   """
@@ -720,6 +1008,15 @@ extend type Mutation {
     data: TierLevel_Data!
   ): TierLevel_KeyOutput! @fdc_generated(from: "TierLevel", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `UnmatchedReceipt` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `UnmatchedReceipt`.
+  """
+  unmatchedReceipt_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: UnmatchedReceipt_Data!
+  ): UnmatchedReceipt_KeyOutput! @fdc_generated(from: "UnmatchedReceipt", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `UserAccount` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `UserAccount`.
   """
   userAccount_upsert(
@@ -764,6 +1061,15 @@ extend type Mutation {
     """
     data: [AuditEvent_Data!]!
   ): [AuditEvent_KeyOutput!]! @fdc_generated(from: "AuditEvent", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `ClosedMonth` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ClosedMonth`.
+  """
+  closedMonth_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [ClosedMonth_Data!]!
+  ): [ClosedMonth_KeyOutput!]! @fdc_generated(from: "ClosedMonth", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `Contract` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Contract`.
   """
@@ -837,6 +1143,69 @@ extend type Mutation {
     data: [IdempotencyRecord_Data!]!
   ): [IdempotencyRecord_KeyOutput!]! @fdc_generated(from: "IdempotencyRecord", purpose: UPSERT_MULTIPLE)
   """
+  ✨ Insert or update `IgpAccreditation` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IgpAccreditation`.
+  """
+  igpAccreditation_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [IgpAccreditation_Data!]!
+  ): [IgpAccreditation_KeyOutput!]! @fdc_generated(from: "IgpAccreditation", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `IgpBuyerMembership` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IgpBuyerMembership`.
+  """
+  igpBuyerMembership_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [IgpBuyerMembership_Data!]!
+  ): [IgpBuyerMembership_KeyOutput!]! @fdc_generated(from: "IgpBuyerMembership", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `IgpHistoryBatch` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IgpHistoryBatch`.
+  """
+  igpHistoryBatch_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [IgpHistoryBatch_Data!]!
+  ): [IgpHistoryBatch_KeyOutput!]! @fdc_generated(from: "IgpHistoryBatch", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `IgpProject` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IgpProject`.
+  """
+  igpProject_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [IgpProject_Data!]!
+  ): [IgpProject_KeyOutput!]! @fdc_generated(from: "IgpProject", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `IgpSale` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IgpSale`.
+  """
+  igpSale_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [IgpSale_Data!]!
+  ): [IgpSale_KeyOutput!]! @fdc_generated(from: "IgpSale", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `IgpSettings` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IgpSettings`.
+  """
+  igpSettings_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [IgpSettings_Data!]!
+  ): [IgpSettings_KeyOutput!]! @fdc_generated(from: "IgpSettings", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `IgpUnit` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IgpUnit`.
+  """
+  igpUnit_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [IgpUnit_Data!]!
+  ): [IgpUnit_KeyOutput!]! @fdc_generated(from: "IgpUnit", purpose: UPSERT_MULTIPLE)
+  """
   ✨ Insert or update `Member` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Member`.
   """
   member_upsertMany(
@@ -864,6 +1233,15 @@ extend type Mutation {
     data: [Payment_Data!]!
   ): [Payment_KeyOutput!]! @fdc_generated(from: "Payment", purpose: UPSERT_MULTIPLE)
   """
+  ✨ Insert or update `PaymentAdjustment` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PaymentAdjustment`.
+  """
+  paymentAdjustment_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [PaymentAdjustment_Data!]!
+  ): [PaymentAdjustment_KeyOutput!]! @fdc_generated(from: "PaymentAdjustment", purpose: UPSERT_MULTIPLE)
+  """
   ✨ Insert or update `PaymentScheme` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PaymentScheme`.
   """
   paymentScheme_upsertMany(
@@ -890,6 +1268,15 @@ extend type Mutation {
     """
     data: [Product_Data!]!
   ): [Product_KeyOutput!]! @fdc_generated(from: "Product", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `ReceiptImportBatch` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ReceiptImportBatch`.
+  """
+  receiptImportBatch_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [ReceiptImportBatch_Data!]!
+  ): [ReceiptImportBatch_KeyOutput!]! @fdc_generated(from: "ReceiptImportBatch", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `ReferenceEntry` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ReferenceEntry`.
   """
@@ -962,6 +1349,15 @@ extend type Mutation {
     """
     data: [TierLevel_Data!]!
   ): [TierLevel_KeyOutput!]! @fdc_generated(from: "TierLevel", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `UnmatchedReceipt` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `UnmatchedReceipt`.
+  """
+  unmatchedReceipt_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [UnmatchedReceipt_Data!]!
+  ): [UnmatchedReceipt_KeyOutput!]! @fdc_generated(from: "UnmatchedReceipt", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `UserAccount` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `UserAccount`.
   """
@@ -1067,6 +1463,30 @@ extend type Mutation {
     """
     data: AuditEvent_Data!
   ): AuditEvent_KeyOutput @fdc_generated(from: "AuditEvent", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `ClosedMonth` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ClosedMonth` or `null` if not found.
+  """
+  closedMonth_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ClosedMonth_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ClosedMonth_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: ClosedMonth_Data!
+  ): ClosedMonth_KeyOutput @fdc_generated(from: "ClosedMonth", purpose: UPDATE_SINGLE)
   """
   ✨ Update a single `Contract` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Contract` or `null` if not found.
   """
@@ -1255,6 +1675,174 @@ extend type Mutation {
     data: IdempotencyRecord_Data!
   ): IdempotencyRecord_KeyOutput @fdc_generated(from: "IdempotencyRecord", purpose: UPDATE_SINGLE)
   """
+  ✨ Update a single `IgpAccreditation` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `IgpAccreditation` or `null` if not found.
+  """
+  igpAccreditation_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpAccreditation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpAccreditation_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: IgpAccreditation_Data!
+  ): IgpAccreditation_KeyOutput @fdc_generated(from: "IgpAccreditation", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `IgpBuyerMembership` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `IgpBuyerMembership` or `null` if not found.
+  """
+  igpBuyerMembership_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpBuyerMembership_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpBuyerMembership_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: IgpBuyerMembership_Data!
+  ): IgpBuyerMembership_KeyOutput @fdc_generated(from: "IgpBuyerMembership", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `IgpHistoryBatch` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `IgpHistoryBatch` or `null` if not found.
+  """
+  igpHistoryBatch_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpHistoryBatch_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpHistoryBatch_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: IgpHistoryBatch_Data!
+  ): IgpHistoryBatch_KeyOutput @fdc_generated(from: "IgpHistoryBatch", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `IgpProject` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `IgpProject` or `null` if not found.
+  """
+  igpProject_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpProject_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpProject_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: IgpProject_Data!
+  ): IgpProject_KeyOutput @fdc_generated(from: "IgpProject", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `IgpSale` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `IgpSale` or `null` if not found.
+  """
+  igpSale_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpSale_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpSale_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: IgpSale_Data!
+  ): IgpSale_KeyOutput @fdc_generated(from: "IgpSale", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `IgpSettings` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `IgpSettings` or `null` if not found.
+  """
+  igpSettings_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpSettings_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpSettings_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: IgpSettings_Data!
+  ): IgpSettings_KeyOutput @fdc_generated(from: "IgpSettings", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `IgpUnit` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `IgpUnit` or `null` if not found.
+  """
+  igpUnit_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpUnit_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpUnit_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: IgpUnit_Data!
+  ): IgpUnit_KeyOutput @fdc_generated(from: "IgpUnit", purpose: UPDATE_SINGLE)
+  """
   ✨ Update a single `Member` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Member` or `null` if not found.
   """
   member_update(
@@ -1327,6 +1915,30 @@ extend type Mutation {
     data: Payment_Data!
   ): Payment_KeyOutput @fdc_generated(from: "Payment", purpose: UPDATE_SINGLE)
   """
+  ✨ Update a single `PaymentAdjustment` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `PaymentAdjustment` or `null` if not found.
+  """
+  paymentAdjustment_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PaymentAdjustment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PaymentAdjustment_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: PaymentAdjustment_Data!
+  ): PaymentAdjustment_KeyOutput @fdc_generated(from: "PaymentAdjustment", purpose: UPDATE_SINGLE)
+  """
   ✨ Update a single `PaymentScheme` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `PaymentScheme` or `null` if not found.
   """
   paymentScheme_update(
@@ -1398,6 +2010,30 @@ extend type Mutation {
     """
     data: Product_Data!
   ): Product_KeyOutput @fdc_generated(from: "Product", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `ReceiptImportBatch` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ReceiptImportBatch` or `null` if not found.
+  """
+  receiptImportBatch_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ReceiptImportBatch_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ReceiptImportBatch_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: ReceiptImportBatch_Data!
+  ): ReceiptImportBatch_KeyOutput @fdc_generated(from: "ReceiptImportBatch", purpose: UPDATE_SINGLE)
   """
   ✨ Update a single `ReferenceEntry` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ReferenceEntry` or `null` if not found.
   """
@@ -1586,6 +2222,30 @@ extend type Mutation {
     data: TierLevel_Data!
   ): TierLevel_KeyOutput @fdc_generated(from: "TierLevel", purpose: UPDATE_SINGLE)
   """
+  ✨ Update a single `UnmatchedReceipt` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `UnmatchedReceipt` or `null` if not found.
+  """
+  unmatchedReceipt_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: UnmatchedReceipt_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: UnmatchedReceipt_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: UnmatchedReceipt_Data!
+  ): UnmatchedReceipt_KeyOutput @fdc_generated(from: "UnmatchedReceipt", purpose: UPDATE_SINGLE)
+  """
   ✨ Update a single `UserAccount` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `UserAccount` or `null` if not found.
   """
   userAccount_update(
@@ -1685,6 +2345,25 @@ extend type Mutation {
     """
     data: AuditEvent_Data!
   ): Int! @fdc_generated(from: "AuditEvent", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `ClosedMonth` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  closedMonth_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: ClosedMonth_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: ClosedMonth_Data!
+  ): Int! @fdc_generated(from: "ClosedMonth", purpose: UPDATE_MULTIPLE)
   """
   ✨ Update `Contract` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
@@ -1838,6 +2517,139 @@ extend type Mutation {
     data: IdempotencyRecord_Data!
   ): Int! @fdc_generated(from: "IdempotencyRecord", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `IgpAccreditation` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  igpAccreditation_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: IgpAccreditation_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: IgpAccreditation_Data!
+  ): Int! @fdc_generated(from: "IgpAccreditation", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `IgpBuyerMembership` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  igpBuyerMembership_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: IgpBuyerMembership_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: IgpBuyerMembership_Data!
+  ): Int! @fdc_generated(from: "IgpBuyerMembership", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `IgpHistoryBatch` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  igpHistoryBatch_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: IgpHistoryBatch_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: IgpHistoryBatch_Data!
+  ): Int! @fdc_generated(from: "IgpHistoryBatch", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `IgpProject` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  igpProject_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: IgpProject_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: IgpProject_Data!
+  ): Int! @fdc_generated(from: "IgpProject", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `IgpSale` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  igpSale_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: IgpSale_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: IgpSale_Data!
+  ): Int! @fdc_generated(from: "IgpSale", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `IgpSettings` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  igpSettings_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: IgpSettings_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: IgpSettings_Data!
+  ): Int! @fdc_generated(from: "IgpSettings", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `IgpUnit` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  igpUnit_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: IgpUnit_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: IgpUnit_Data!
+  ): Int! @fdc_generated(from: "IgpUnit", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `Member` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   member_updateMany(
@@ -1895,6 +2707,25 @@ extend type Mutation {
     data: Payment_Data!
   ): Int! @fdc_generated(from: "Payment", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `PaymentAdjustment` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  paymentAdjustment_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: PaymentAdjustment_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: PaymentAdjustment_Data!
+  ): Int! @fdc_generated(from: "PaymentAdjustment", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `PaymentScheme` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   paymentScheme_updateMany(
@@ -1951,6 +2782,25 @@ extend type Mutation {
     """
     data: Product_Data!
   ): Int! @fdc_generated(from: "Product", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `ReceiptImportBatch` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  receiptImportBatch_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: ReceiptImportBatch_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: ReceiptImportBatch_Data!
+  ): Int! @fdc_generated(from: "ReceiptImportBatch", purpose: UPDATE_MULTIPLE)
   """
   ✨ Update `ReferenceEntry` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
@@ -2104,6 +2954,25 @@ extend type Mutation {
     data: TierLevel_Data!
   ): Int! @fdc_generated(from: "TierLevel", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `UnmatchedReceipt` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  unmatchedReceipt_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: UnmatchedReceipt_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: UnmatchedReceipt_Data!
+  ): Int! @fdc_generated(from: "UnmatchedReceipt", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `UserAccount` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   userAccount_updateMany(
@@ -2198,6 +3067,25 @@ extend type Mutation {
     """
     first: AuditEvent_FirstRow
   ): AuditEvent_KeyOutput @fdc_generated(from: "AuditEvent", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `ClosedMonth` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  closedMonth_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ClosedMonth_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ClosedMonth_FirstRow
+  ): ClosedMonth_KeyOutput @fdc_generated(from: "ClosedMonth", purpose: DELETE_SINGLE)
   """
   ✨ Delete a single `Contract` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
@@ -2346,6 +3234,139 @@ extend type Mutation {
     first: IdempotencyRecord_FirstRow
   ): IdempotencyRecord_KeyOutput @fdc_generated(from: "IdempotencyRecord", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `IgpAccreditation` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  igpAccreditation_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpAccreditation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpAccreditation_FirstRow
+  ): IgpAccreditation_KeyOutput @fdc_generated(from: "IgpAccreditation", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `IgpBuyerMembership` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  igpBuyerMembership_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpBuyerMembership_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpBuyerMembership_FirstRow
+  ): IgpBuyerMembership_KeyOutput @fdc_generated(from: "IgpBuyerMembership", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `IgpHistoryBatch` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  igpHistoryBatch_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpHistoryBatch_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpHistoryBatch_FirstRow
+  ): IgpHistoryBatch_KeyOutput @fdc_generated(from: "IgpHistoryBatch", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `IgpProject` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  igpProject_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpProject_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpProject_FirstRow
+  ): IgpProject_KeyOutput @fdc_generated(from: "IgpProject", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `IgpSale` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  igpSale_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpSale_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpSale_FirstRow
+  ): IgpSale_KeyOutput @fdc_generated(from: "IgpSale", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `IgpSettings` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  igpSettings_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpSettings_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpSettings_FirstRow
+  ): IgpSettings_KeyOutput @fdc_generated(from: "IgpSettings", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `IgpUnit` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  igpUnit_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IgpUnit_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IgpUnit_FirstRow
+  ): IgpUnit_KeyOutput @fdc_generated(from: "IgpUnit", purpose: DELETE_SINGLE)
+  """
   ✨ Delete a single `Member` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   member_delete(
@@ -2403,6 +3424,25 @@ extend type Mutation {
     first: Payment_FirstRow
   ): Payment_KeyOutput @fdc_generated(from: "Payment", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `PaymentAdjustment` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  paymentAdjustment_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PaymentAdjustment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PaymentAdjustment_FirstRow
+  ): PaymentAdjustment_KeyOutput @fdc_generated(from: "PaymentAdjustment", purpose: DELETE_SINGLE)
+  """
   ✨ Delete a single `PaymentScheme` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   paymentScheme_delete(
@@ -2459,6 +3499,25 @@ extend type Mutation {
     """
     first: Product_FirstRow
   ): Product_KeyOutput @fdc_generated(from: "Product", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `ReceiptImportBatch` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  receiptImportBatch_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ReceiptImportBatch_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ReceiptImportBatch_FirstRow
+  ): ReceiptImportBatch_KeyOutput @fdc_generated(from: "ReceiptImportBatch", purpose: DELETE_SINGLE)
   """
   ✨ Delete a single `ReferenceEntry` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
@@ -2607,6 +3666,25 @@ extend type Mutation {
     first: TierLevel_FirstRow
   ): TierLevel_KeyOutput @fdc_generated(from: "TierLevel", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `UnmatchedReceipt` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  unmatchedReceipt_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: UnmatchedReceipt_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: UnmatchedReceipt_FirstRow
+  ): UnmatchedReceipt_KeyOutput @fdc_generated(from: "UnmatchedReceipt", purpose: DELETE_SINGLE)
+  """
   ✨ Delete a single `UserAccount` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   userAccount_delete(
@@ -2681,6 +3759,20 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "AuditEvent", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `ClosedMonth` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  closedMonth_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: ClosedMonth_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "ClosedMonth", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `Contract` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
@@ -2794,6 +3886,104 @@ extend type Mutation {
     all: Boolean = false
   ): Int! @fdc_generated(from: "IdempotencyRecord", purpose: DELETE_MULTIPLE)
   """
+  ✨ Delete `IgpAccreditation` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  igpAccreditation_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: IgpAccreditation_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "IgpAccreditation", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `IgpBuyerMembership` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  igpBuyerMembership_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: IgpBuyerMembership_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "IgpBuyerMembership", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `IgpHistoryBatch` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  igpHistoryBatch_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: IgpHistoryBatch_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "IgpHistoryBatch", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `IgpProject` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  igpProject_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: IgpProject_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "IgpProject", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `IgpSale` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  igpSale_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: IgpSale_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSale", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `IgpSettings` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  igpSettings_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: IgpSettings_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "IgpSettings", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `IgpUnit` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  igpUnit_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: IgpUnit_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "IgpUnit", purpose: DELETE_MULTIPLE)
+  """
   ✨ Delete `Member` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
   member_deleteMany(
@@ -2836,6 +4026,20 @@ extend type Mutation {
     all: Boolean = false
   ): Int! @fdc_generated(from: "Payment", purpose: DELETE_MULTIPLE)
   """
+  ✨ Delete `PaymentAdjustment` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  paymentAdjustment_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: PaymentAdjustment_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "PaymentAdjustment", purpose: DELETE_MULTIPLE)
+  """
   ✨ Delete `PaymentScheme` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
   paymentScheme_deleteMany(
@@ -2877,6 +4081,20 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "Product", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `ReceiptImportBatch` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  receiptImportBatch_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: ReceiptImportBatch_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "ReceiptImportBatch", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `ReferenceEntry` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
@@ -2989,6 +4207,20 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "TierLevel", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `UnmatchedReceipt` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  unmatchedReceipt_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: UnmatchedReceipt_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "UnmatchedReceipt", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `UserAccount` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """

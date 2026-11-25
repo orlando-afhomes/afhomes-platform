@@ -47,6 +47,8 @@ export type Sale = {
   team: GenealogyEntry[];
   status: SaleStatus;
   confirmedDate: string | null;
+  /** Interim contract-level financial hold when a confirmed sale falls below the required collection (doc 07 §19); memberships take it over in F7. */
+  financialHold?: boolean;
   adjustments: SaleAdjustment[];
   /** Expiry reminders recorded when the sale was created; absent or empty when none applied. */
   expiryReminders?: SaleExpiryReminder[];

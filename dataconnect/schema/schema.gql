@@ -156,7 +156,64 @@ type Sale @table {
   approvedBy: UserAccount
   approvedAt: Timestamp
   confirmedDate: Date
+  # Interim contract-level financial hold (doc 07 section 19); memberships take it over in F7.
+  financialHold: Boolean! @default(value: false)
   details: Any
+}
+
+# Append-only ledger of verified-payment reversals and refunds (doc 07 section 14).
+type PaymentAdjustment @table {
+  payment: Payment!
+  # reversal | refund
+  kind: String!
+  amountCentavos: Int64!
+  date: Date!
+  reason: String!
+  actor: UserAccount
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# A month whose totals were frozen; receipts dated in it are counted in the first open month.
+type ClosedMonth @table {
+  month: String! @unique
+  closedAt: Timestamp!
+  closedBy: UserAccount
+  snapshot: Any
+}
+
+# Receipt with no matching contract; waits in the Finance exceptions queue (doc 07 section 11).
+type UnmatchedReceipt @table {
+  amountCentavos: Int64!
+  method: String!
+  paidDate: Date!
+  orNumber: String!
+  reason: String!
+  evidenceFileName: String
+  # unmatched | matched | rejected
+  status: String!
+  matchedPayment: Payment
+  submittedBy: UserAccount
+  submittedAt: Timestamp!
+  decidedBy: UserAccount
+  decidedAt: Timestamp
+  decisionReason: String
+  details: Any
+}
+
+# Historical receipt import batch (doc 07 section 20); counts only after Administrator sign-off.
+type ReceiptImportBatch @table {
+  fileName: String!
+  createdBy: UserAccount
+  # pending_signoff | signed_off | rejected
+  status: String!
+  totalRows: Int!
+  receipts: Any
+  skipped: Any
+  decidedBy: UserAccount
+  decidedAt: Timestamp
+  decisionReason: String
+  details: Any
+  createdAt: Timestamp! @default(expr: "request.time")
 }
 
 # Append-only dated ledger of a sale's confirmation, reversal and reconfirmation.
@@ -233,6 +290,10 @@ type TierLevel @table {
   sortOrder: Int!
   # active | inactive. A level used by a product is deactivated, never deleted.
   status: String!
+  # Bumped by every configuration change; finalized contracts keep their own snapshot.
+  configVersion: Int! @default(value: 1)
+  effectiveDate: Date
+  changes: Any
 }
 
 type Product @table {
@@ -447,4 +508,83 @@ type CustomerImportRow @table {
   status: String!
   errors: Any
   warnings: Any
+}
+
+# ---------------------------------------------------------------- F4: property sales (IGP)
+# Admin-managed project list; sale copies of the names stay on the sale.
+type IgpProject @table {
+  name: String! @unique
+  location: String
+  # active | inactive
+  status: String!
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type IgpUnit @table {
+  project: IgpProject!
+  unitOrLot: String!
+  propertyOwner: String!
+  # active | inactive
+  status: String!
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# One property sale (IGP). The Series Number is unique and never reused; receipts live in
+# `details` until F5 unifies them with the VIP receipt table (recorded shortcut).
+type IgpSale @table {
+  customer: Customer!
+  project: IgpProject
+  unit: IgpUnit
+  priceCentavos: Int64!
+  # C | T
+  scheme: String!
+  termMonths: Int!
+  # S | N
+  clauses: String!
+  date: Date!
+  sellerMember: Member!
+  referrerMember: Member
+  seriesNumber: String! @unique
+  sequence: Int!
+  # pending | approved | defaulted | cancelled | replaced | pending_review
+  status: String!
+  createdBy: UserAccount
+  approvedBy: UserAccount
+  details: Any
+}
+
+type IgpAccreditation @table {
+  member: Member!
+  number: String! @unique
+  approvedDate: Date!
+  validUntil: Date!
+  replaces: String
+}
+
+# Singleton settings row (key "igp"): collection threshold and grant card-level minimums.
+type IgpSettings @table {
+  key: String! @unique
+  thresholdBp: Int!
+  grantTierRules: Any
+}
+
+# IGP buyer membership: created when the Formal VIP Grant is first signed. No Stay Points, no VIP Number.
+type IgpBuyerMembership @table {
+  sale: IgpSale!
+  seriesNumber: String!
+  customer: Customer!
+  tier: String
+  grantSignedDate: Date!
+  status: String!
+  stayPoints: String!
+}
+
+# Imported IGP history kept for reference; its Series Numbers are reserved and never reused.
+type IgpHistoryBatch @table {
+  fileName: String!
+  createdBy: UserAccount
+  totalRows: Int!
+  rows: Any
+  skipped: Any
+  createdAt: Timestamp! @default(expr: "request.time")
 }

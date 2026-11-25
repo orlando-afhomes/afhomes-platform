@@ -2,6 +2,7 @@
 // F2: sales network hierarchy, accreditation numbers and the OST registration flow on the local emulators.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { call, configureEmulatorEnv, emulatorsUp, sessionCookieFor } from "@/server/testing/emulator";
+import { manilaToday } from "@/shared/lib/dates";
 
 configureEmulatorEnv();
 const up = await emulatorsUp();
@@ -100,7 +101,7 @@ describe.skipIf(!up)("sales network and accreditation (emulators)", () => {
     const renewed = await accreditation.renewAccreditation(admin, seller.accreditationId);
     expect(renewed.aaNumber).not.toBe(seller.aaNumber);
     expect(renewed.effectiveDate).not.toBeNull();
-    expect((renewed.effectiveDate ?? "") <= "2026-11-25").toBe(true);
+    expect((renewed.effectiveDate ?? "") <= manilaToday()).toBe(true);
     expect(renewed.history.some((entry) => entry.operation === "renewed")).toBe(true);
 
     const oldNumber = await accreditation.resolveAaNumberForActor(admin, seller.aaNumber);

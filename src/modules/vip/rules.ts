@@ -88,6 +88,46 @@ export function schemeHowItWorks(scheme: Pick<PaymentScheme, "category" | "reser
 
 const positiveInteger =(value: number | null | undefined) => value == null || (Number.isInteger(value) && value > 0);
 
+/** Plain-words problem with a product's terms, or null when they are complete and consistent (05 section 18). */
+export function productTermErrors(next: VipProduct): string | null {
+  if ((next.description ?? "").length > 500) return "The description must be 500 characters or fewer.";
+  if ((next.benefitsSummary ?? "").length > 500) return "The benefits summary must be 500 characters or fewer.";
+  if (!Number.isInteger(next.priceCentavos) || next.priceCentavos <= 0) return "The price must be a positive amount.";
+  if (!Number.isInteger(next.validityYears) || next.validityYears < 1) return "Validity must be at least one year.";
+  if (!Number.isInteger(next.earningCycles) || next.earningCycles < 1) return "Earning cycles must be at least one.";
+  if (!Number.isInteger(next.pointsPerCycle) || next.pointsPerCycle <= 0) return "Points per cycle must be positive.";
+  if (!Number.isInteger(next.lifetimePoints) || next.lifetimePoints <= 0) return "Lifetime points must be positive.";
+  if (!Number.isInteger(next.weekdayPointsPerCycle) || next.weekdayPointsPerCycle < 0 || !Number.isInteger(next.weekendPointsPerCycle) || next.weekendPointsPerCycle < 0) return "Weekday and weekend points cannot be negative.";
+  if (!Number.isInteger(next.vipDiscountPercent) || next.vipDiscountPercent < 0 || next.vipDiscountPercent > 100) return "The VIP discount must be between 0 and 100 percent.";
+  if (!Number.isInteger(next.supplementaryHolders) || next.supplementaryHolders < 0) return "Extra cardholders cannot be negative.";
+  if (next.weekdayPointsPerCycle + next.weekendPointsPerCycle !== next.pointsPerCycle) return "Weekday and weekend points must add up to the points per cycle.";
+  if (next.pointsPerCycle * next.earningCycles !== next.lifetimePoints) return "Lifetime points must equal points per cycle times earning cycles.";
+  if (next.earningCycles > next.validityYears) return "Earning cycles cannot exceed the validity years.";
+  return null;
+}
+
+/** Terms that set what a customer pays or earns; on an approved product only the approver may change them. */
+export const PRODUCT_ECONOMIC_KEYS: ReadonlyArray<keyof VipProduct> = [
+  "priceCentavos", "validityYears", "earningCycles", "pointsPerCycle", "lifetimePoints",
+  "weekdayPointsPerCycle", "weekendPointsPerCycle", "minSpendPerCycleCentavos", "vipDiscountPercent", "supplementaryHolders", "tierLevelId",
+];
+
+/** An approved product keeps its stated benefits so its public card cannot lose the custom perks. */
+export function benefitsLostError(before: VipProduct, next: VipProduct): string | null {
+  if (before.approvalStatus !== "approved" || !before.benefitsSummary?.trim() || next.benefitsSummary?.trim()) return null;
+  return "An approved product keeps its stated benefits. Enter the benefits or retire the product instead of clearing them.";
+}
+
+/** Scheme terms are complete only when every documented field for its category is present (05 section 8). */
+export function schemeTermsComplete(scheme: PaymentScheme): boolean {
+  if (scheme.ownerHold) return false;
+  if (scheme.applicableTiers.length === 0) return false;
+  const codeFor = (tier: VipTierCode) => scheme.paymentCodeByTier?.[tier] ?? scheme.paymentCode ?? null;
+  if (!scheme.applicableTiers.every((tier) => codeFor(tier))) return false;
+  if (scheme.category === "cash") return true;
+  return scheme.applicableTiers.every((tier) => (installmentCountFor(scheme, tier) ?? 0) > 0 && (scheme.installmentCentavosByTier[tier] ?? 0) > 0);
+}
+
 type SchemeTerms = Pick<
   PaymentScheme,
   "category" | "applicableTiers" | "reservationCentavos" | "installmentCount" | "installmentCountByTier" | "installmentCentavosByTier" | "priceCentavosByTier" | "downPaymentBasisPoints"

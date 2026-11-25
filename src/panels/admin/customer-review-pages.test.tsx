@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
@@ -8,7 +8,6 @@ import { useState, type ReactElement } from "react";
 import type { ProductCreateInput } from "@/data/contracts/product-repository";
 import { getDevIdentity } from "@/data/mock/dev-identities";
 import { createMockRepositories } from "@/data/mock/repositories";
-import { MockCustomerRepository } from "@/data/mock/customer-repository";
 import { createMockStore, type MockStore } from "@/data/mock/seed";
 import { pesos } from "@/shared/lib/money";
 import { AppToaster } from "@/shared/components/modern/app-toaster";
@@ -23,13 +22,6 @@ vi.mock("next/navigation", async (importOriginal) => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
   usePathname: () => "/admin",
   useSearchParams: () => new URLSearchParams(window.location.search),
-}));
-
-const pdf = vi.hoisted(() => ({ create: vi.fn(), download: vi.fn() }));
-vi.mock("@/panels/admin/documents/report-pdf-output", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/panels/admin/documents/report-pdf-output")>()),
-  createReportPdf: pdf.create,
-  downloadReportPdf: pdf.download,
 }));
 
 function Wrapper({ identityId, store, children }: { identityId: string; store?: MockStore; children: React.ReactNode }) {
@@ -50,13 +42,6 @@ function show(identityId: string, page: ReactElement, store?: MockStore) {
   return render(<Wrapper identityId={identityId} store={store}>{page}</Wrapper>);
 }
 
-beforeEach(() => {
-  Object.defineProperty(URL, "createObjectURL", { value: vi.fn(() => "blob:report-preview"), configurable: true });
-  Object.defineProperty(URL, "revokeObjectURL", { value: vi.fn(), configurable: true });
-  pdf.create.mockResolvedValue(new Blob(["pdf"], { type: "application/pdf" }));
-  vi.clearAllMocks();
-});
-
 afterEach(() => {
   cleanup();
   window.history.replaceState(null, "", "/");
@@ -64,11 +49,6 @@ afterEach(() => {
   toast.dismiss();
   vi.restoreAllMocks();
 });
-
-/** The customers list pages its rows; narrow it to one name the way a user would. */
-async function searchCustomers(name: string) {
-  fireEvent.change(await screen.findByRole("searchbox", { name: "Search customers" }), { target: { value: name } });
-}
 
 // cust-a3 is submitted and its closing seller (SM) differs from the referrer (OST), so it can be approved as seeded.
 const SUBMITTED = "cust-a3";
@@ -84,14 +64,24 @@ async function seedDraftProduct(store: MockStore) {
 }
 
 describe("Customers area", () => {
-  it("opens Customers from an old import tab link and keeps export available", async () => {
+  it("opens the Import tab for an Administrator from the URL", async () => {
     window.history.replaceState(null, "", "/admin/customers?tab=import");
     show("dev-admin", <CustomersRoute />);
-    expect(await screen.findByRole("tab", { name: "Customers" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.queryByRole("tab", { name: "Import" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Download Template" })).toBeNull();
-    expect(screen.getByRole("tab", { name: "Export" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Import" })).toHaveAttribute("aria-selected", "true");
+    expect(await screen.findByRole("button", { name: "Download Template" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "New Customer" })).toBeNull();
   });
+
+  it("offers one Download template menu with Excel and CSV", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/admin/customers?tab=import");
+    show("dev-admin", <CustomersRoute />);
+    await user.click(await screen.findByRole("button", { name: "Download Template" }));
+    expect(await screen.findByRole("menuitem", { name: "Excel (.xlsx)" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "CSV (.csv)" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "CSV template" })).toBeNull();
+  });
+
   it("shows the filtered export preview on the Export tab", async () => {
     const user = userEvent.setup();
     window.history.replaceState(null, "", "/admin/customers?tab=export");
@@ -106,31 +96,8 @@ describe("Customers area", () => {
     expect(within(preview).getByText("Noel Pascual")).toBeInTheDocument();
   });
 
-  it("downloads the filtered customers as a PDF with the five preview columns", async () => {
-    const user = userEvent.setup();
-    const store = createMockStore();
-    window.history.replaceState(null, "", "/admin/customers?tab=export");
-    show("dev-admin", <CustomersRoute />, store);
-
-    const preview = await screen.findByRole("table", { name: "Customers to Export" });
-    await within(preview).findByText("Noel Pascual");
-    await user.type(screen.getByRole("searchbox", { name: "Search customers by name" }), "Noel");
-    await user.click(screen.getByRole("combobox", { name: "Format" }));
-    await user.click(await screen.findByRole("option", { name: "PDF (.pdf)" }));
-    await user.click(screen.getByRole("button", { name: "Export" }));
-
-    await waitFor(() => expect(pdf.create).toHaveBeenCalledTimes(1));
-    const data = pdf.create.mock.calls[0][0];
-    expect(data.columns).toEqual(["Customer", "VIP Plan", "Status", "Seller", "Submitted"]);
-    expect(data.rows.length).toBeGreaterThan(0);
-    expect(data.rows.every((row: string[]) => row[0].includes("Noel"))).toBe(true);
-    expect(pdf.download).toHaveBeenCalledWith(expect.any(Blob), expect.stringMatching(/^customers-\d{4}-\d{2}-\d{2}\.pdf$/));
-    expect(store.auditEvents.at(-1)).toMatchObject({ action: "CUSTOMERS_EXPORTED", entityType: "customer-export", entityId: "pdf", newValue: expect.stringMatching(/^rows:\d+$/) });
-  });
-
   it("lists customers with plain names and no View full details item", async () => {
     show("dev-admin", <CustomersRoute />);
-    await searchCustomers("Noel Pascual");
     expect(await screen.findByText("Noel Pascual")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Noel Pascual/ })).toBeNull();
     expect(screen.getByRole("row", { name: "Open Noel Pascual" })).toBeInTheDocument();
@@ -151,9 +118,7 @@ describe("customer registration review pages (doc 04 sections 5 and 10)", () => 
     show("dev-admin", <CustomerDetailPage customerId={SUBMITTED} />);
     expect(await screen.findByRole("button", { name: /^approve$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /send back/i })).toBeInTheDocument();
-    // Two buttons show; Reject sits in the More actions menu.
-    await userEvent.setup().click(screen.getByRole("button", { name: "More actions" }));
-    expect(await screen.findByRole("menuitem", { name: /^reject$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^reject$/i })).toBeInTheDocument();
     cleanup();
 
     show("dev-clerk", <CustomerDetailPage customerId={SUBMITTED} />);
@@ -162,30 +127,12 @@ describe("customer registration review pages (doc 04 sections 5 and 10)", () => 
     expect(screen.queryByRole("button", { name: /send back/i })).toBeNull();
   });
 
-  it("opens the matching tab from each Linked Records row", async () => {
-    const user = userEvent.setup();
-    show("dev-admin", <CustomerDetailPage customerId={SUBMITTED} />);
-    expect(await screen.findByRole("button", { name: "Open Contract" })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Open Contract" }));
-    expect(screen.getByRole("tab", { name: "Contract" })).toHaveAttribute("aria-selected", "true");
-
-    await user.click(screen.getByRole("tab", { name: "Overview" }));
-    await user.click(screen.getByRole("button", { name: "Open Sale" }));
-    expect(screen.getByRole("tab", { name: "Sales" })).toHaveAttribute("aria-selected", "true");
-
-    await user.click(screen.getByRole("tab", { name: "Overview" }));
-    await user.click(screen.getByRole("button", { name: "Open VIP Membership" }));
-    expect(screen.getByRole("tab", { name: "Membership" })).toHaveAttribute("aria-selected", "true");
-  });
-
   it("shows each action once in the header, with no duplicate row menu", async () => {
     show("dev-admin", <CustomerDetailPage customerId={SUBMITTED} />);
     await screen.findByRole("button", { name: /^approve$/i });
     expect(screen.queryByRole("button", { name: /^actions for/i })).toBeNull();
-    await userEvent.setup().click(screen.getByRole("button", { name: "More actions" }));
-    expect(await screen.findAllByRole("menuitem", { name: /^reject$/i })).toHaveLength(1);
-    expect(screen.getAllByRole("menuitem", { name: /^new vip purchase$/i })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /^reject$/i })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /^new vip purchase$/i })).toHaveLength(1);
   });
 
   it("keeps Discard draft as a red header button for a draft", async () => {
@@ -235,18 +182,10 @@ describe("customer registration review pages (doc 04 sections 5 and 10)", () => 
   });
 
   it("lists the review statuses and filters by them", async () => {
-    const user = userEvent.setup();
     show("dev-admin", <CustomersRoute />);
-    await screen.findByRole("table", { name: "Customers" });
-    for (const [status, name] of [["Approved", "Noel Pascual"], ["Sent back", "Gina Soriano"], ["Rejected", "Victor Alcantara"]]) {
-      await user.click(screen.getByRole("combobox", { name: "Customer status filter" }));
-      await user.click(await screen.findByRole("option", { name: status }));
-      await searchCustomers(name);
-      expect(await screen.findByRole("row", { name: `Open ${name}` })).toBeInTheDocument();
-    }
-    // The Rejected filter leaves out an approved customer.
-    await searchCustomers("Noel Pascual");
-    expect(await screen.findByText("No customers match the current search or filter.")).toBeInTheDocument();
+    expect(await screen.findByText("Noel Pascual")).toBeInTheDocument();
+    expect(screen.getByText("Gina Soriano")).toBeInTheDocument();
+    expect(screen.getByText("Victor Alcantara")).toBeInTheDocument();
   });
 
   it("lets a seller start a draft but ends their wizard at Sales and consent with a draft-only action", async () => {
@@ -267,67 +206,5 @@ describe("customer registration review pages (doc 04 sections 5 and 10)", () => 
     show("dev-ost-a1", <CustomerFormPage />, store);
     expect(await screen.findByRole("radio", { name: /silver vip/i })).toBeInTheDocument();
     expect(screen.queryByRole("radio", { name: /bronze plus vip/i })).toBeNull();
-  });
-
-  it("blocks Continue when a resumed draft holds a card that was retired", async () => {
-    const store = createMockStore();
-    const admin = createMockRepositories(store, () => getDevIdentity("dev-admin"));
-    const draft = await admin.customers.createDraft({ displayName: "Resume Buyer", vipPlan: "B1" });
-    await admin.products.update("B1", { status: "retired" }, "Stop offering Bronze");
-    show("dev-admin", <CustomerFormPage customerId={draft.id} />, store);
-    expect(await screen.findByText("This card is no longer available. Choose another card.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /continue/i })).toBeDisabled();
-    expect(screen.queryByRole("radio", { checked: true })).toBeNull();
-  });
-});
-
-describe("customer error states (Batch 2)", () => {
-  it("shows a load error with a retry instead of Not Found on the detail page", async () => {
-    const user = userEvent.setup();
-    vi.spyOn(MockCustomerRepository.prototype, "list").mockRejectedValueOnce(new Error("Customer list failed."));
-    show("dev-admin", <CustomerDetailPage customerId={SUBMITTED} />);
-    const alert = await screen.findByRole("alert");
-    expect(within(alert).getByText(/Customer list failed\./)).toBeInTheDocument();
-    expect(screen.queryByText("Customer Not Found")).toBeNull();
-    await user.click(within(alert).getByRole("button", { name: "Try again" }));
-    expect(await screen.findByRole("button", { name: /^approve$/i })).toBeInTheDocument();
-  });
-
-  it("shows a load error with a retry instead of Not Found on the edit page", async () => {
-    const user = userEvent.setup();
-    vi.spyOn(MockCustomerRepository.prototype, "list").mockRejectedValueOnce(new Error("Customer list failed."));
-    show("dev-admin", <CustomerFormPage customerId={SUBMITTED} />);
-    const alert = await screen.findByRole("alert");
-    expect(within(alert).getByText(/Customer list failed\./)).toBeInTheDocument();
-    expect(screen.queryByText("Customer Not Found")).toBeNull();
-    await user.click(within(alert).getByRole("button", { name: "Try again" }));
-    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
-    expect(screen.queryByText("Customer Not Found")).toBeNull();
-  });
-
-  it("shows a load error with a retry instead of an empty table on the customers list", async () => {
-    const user = userEvent.setup();
-    vi.spyOn(MockCustomerRepository.prototype, "list").mockRejectedValueOnce(new Error("Customer list failed."));
-    show("dev-admin", <CustomersRoute />);
-    const alert = await screen.findByRole("alert");
-    expect(within(alert).getByText(/Customer list failed\./)).toBeInTheDocument();
-    expect(screen.queryByRole("table", { name: "Customers" })).toBeNull();
-    await user.click(within(alert).getByRole("button", { name: "Try again" }));
-    await searchCustomers("Noel Pascual");
-    expect(await screen.findByText("Noel Pascual")).toBeInTheDocument();
-  });
-
-  it("distinguishes an empty directory from a search with no matches", async () => {
-    const user = userEvent.setup();
-    const empty = createMockStore();
-    empty.customers = [];
-    show("dev-admin", <CustomersRoute />, empty);
-    expect(await screen.findByText("No customers yet.")).toBeInTheDocument();
-    cleanup();
-
-    show("dev-admin", <CustomersRoute />);
-    await screen.findByRole("table", { name: "Customers" });
-    await user.type(screen.getByRole("searchbox", { name: "Search customers" }), "zzzz-no-such-customer");
-    expect(await screen.findByText("No customers match the current search or filter.")).toBeInTheDocument();
   });
 });

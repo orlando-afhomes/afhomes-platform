@@ -106,6 +106,6 @@ Staging, Vercel, hosting, billing, any real Firebase project, modules other than
 
 - **Money storage:** resolved. Whole centavos in `Int64` (see Owner decisions).
 - **Transaction strength:** the guarded receipt approval may be hard to express inside one SQL Connect mutation. If it cannot be guaranteed locally, stop and report. This is the roadmap's open check (`decisions-and-gaps.md`, Firebase stack transition).
-- **Rule conflict:** UI20 in `decisions-and-gaps.md` allows 1 to 36 Non-Standard monthly payments, while `docs/business-rules/05-vip-products-and-contracts.md` (amended 2026-11-24) allows 1 to 12. The pilot uses standard tiers only. The owner should settle this before contract endpoints cover Non-Standard.
+- **Rule conflict resolved (owner, 2026-11-24):** UI20 in `decisions-and-gaps.md` originally allowed 1 to 36 Non-Standard monthly payments; doc 05 (amended 2026-11-24) allows 1 to 12. The owner settled it at 1 to 12. The pilot uses standard tiers only; F4 connects Non-Standard at 1 to 12.
 - **Stale comments:** the mock-login shortcut comments still name Better Auth. Update them when the mock login is switched off in `api` mode. Do not delete the files, because mock mode stays the default.
 - **Tools:** the Firebase CLI is not installed yet. Java is installed only if the emulators ask for it.

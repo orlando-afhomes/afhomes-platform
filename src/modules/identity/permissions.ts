@@ -310,6 +310,8 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "contracts.approve",
     // Owner ruling R6 (2026-11-12): the Administrator approves receipts alongside Finance and the Super Administrator.
     "finance.verify",
+    // Doc 07 section 5.3: Finance, the Administrator or the Super Administrator may reverse or refund.
+    "finance.refund",
     "commission.approve",
     "commission.payout",
     "commission.payout.prepare",

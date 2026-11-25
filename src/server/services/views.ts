@@ -3,6 +3,7 @@ import type { ContractView } from "@/data/contracts/contract-repository";
 import type { PaymentView } from "@/data/contracts/payment-repository";
 import type { SaleView } from "@/data/contracts/sale-repository";
 import { finalizationHolds } from "@/modules/contracts/rules";
+import type { PaymentAdjustment } from "@/modules/finance/types";
 import { BROAD_BUSINESS_ROLES, BROAD_ROLES, activeIdentityRoles, canSeeContractRecord, getVisibleMemberIds } from "@/modules/identity/record-scope";
 import type { Customer } from "@/modules/customers/types";
 import { restrictCustomer } from "@/modules/customers/rules";
@@ -10,7 +11,7 @@ import type { OrgMember } from "@/modules/organization/types";
 import { tierDisplayName } from "@/modules/vip/tier-options";
 import type { Actor } from "@/server/auth/actor";
 import { listAll, dbRead } from "@/server/db";
-import { CONTRACT_FIELDS, PAYMENT_FIELDS, SALE_FIELDS, loadCustomer, loadMembersFull, paymentEvidenceOf, toContract, toPayment, toSale, type ContractRow, type PaymentRow, type SaleRow } from "@/server/repositories/records";
+import { CONTRACT_FIELDS, PAYMENT_FIELDS, SALE_FIELDS, loadCustomer, loadMembersFull, loadPaymentAdjustments, paymentEvidenceOf, toContract, toPayment, toSale, type ContractRow, type PaymentRow, type SaleRow } from "@/server/repositories/records";
 import { loadPaymentSchemes, loadProducts, loadTierLevels } from "@/server/repositories/catalog";
 import type { VipProduct } from "@/modules/vip/types";
 import { notFound } from "@/server/services/common";
@@ -73,9 +74,9 @@ type PaymentViewJoin = PaymentRow & { customer: { id: string; displayName: strin
 /** Where a receipt's evidence is served. The file stays private: this address answers only to a signed-in person who may see the receipt. */
 export const evidenceUrl = (paymentId: string, fileId: string) => `/api/v1/payments/${paymentId}/evidence/${fileId}`;
 
-function paymentViewOf(row: PaymentViewJoin, sales: Awaited<ReturnType<typeof salesByContract>>, products: readonly VipProduct[]): PaymentView & { genealogy: ReadonlyArray<{ memberId: string }> } {
+function paymentViewOf(row: PaymentViewJoin, sales: Awaited<ReturnType<typeof salesByContract>>, products: readonly VipProduct[], adjustments: Map<string, PaymentAdjustment[]>): PaymentView & { genealogy: ReadonlyArray<{ memberId: string }> } {
   const sale = row.contract ? sales.get(row.contract.id) : undefined;
-  const payment = toPayment(row, sale?.id ?? null);
+  const payment = toPayment(row, sale?.id ?? null, adjustments.get(row.id) ?? []);
   const evidence = paymentEvidenceOf(row.details);
   const details = row.contract?.details ?? {};
   const label = `${tierDisplayName(row.contract?.productCode as never, products) ?? "VIP"} · ${(details.schemeLabel as string | undefined) ?? ""}`;
@@ -86,7 +87,8 @@ function paymentViewOf(row: PaymentViewJoin, sales: Awaited<ReturnType<typeof sa
     submitterName: row.submittedBy?.displayName ?? payment.submittedBy,
     approvalBlocked: !row.contract || row.contract.status === "cancelled" || !sale?.approved,
     referenceConflict: false, // the database refuses a duplicate reference, so one can never exist here
-    ...(payment.evidenceFileName && evidence ? { evidenceFileDataUrl: evidenceUrl(row.id, evidence.fileId), evidenceContentType: evidence.contentType } : {}),
+    // The uploaded file's own name is the display name when the receipt did not capture one at entry.
+    ...(evidence ? { evidenceFileDataUrl: evidenceUrl(row.id, evidence.fileId), evidenceContentType: evidence.contentType, evidenceFileName: payment.evidenceFileName ?? evidence.fileName } : {}),
     genealogy: ((details.genealogy as Array<{ memberId: string }> | undefined) ?? []),
   };
 }
@@ -97,16 +99,16 @@ const withoutScope = ({ genealogy: _genealogy, ...view }: ReturnType<typeof paym
 };
 
 export async function listPaymentViews(actor: Actor, query: { limit: number; afterId?: string }) {
-  const [rows, sales, products] = await Promise.all([listAll<PaymentViewJoin>("payments", PAYMENT_VIEW_FIELDS), salesByContract(), loadProducts()]);
-  const visible = rows.map((row) => paymentViewOf(row, sales, products)).filter((view) => canSeeContractRecord(actor.identity, view));
+  const [rows, sales, products, adjustments] = await Promise.all([listAll<PaymentViewJoin>("payments", PAYMENT_VIEW_FIELDS), salesByContract(), loadProducts(), loadPaymentAdjustments()]);
+  const visible = rows.map((row) => paymentViewOf(row, sales, products, adjustments)).filter((view) => canSeeContractRecord(actor.identity, view));
   const page = pageOf(visible, query);
   return { ...page, items: page.items.map(withoutScope) };
 }
 
 export async function getPaymentView(actor: Actor, id: string): Promise<PaymentView> {
   const result = await dbRead<{ payment: PaymentViewJoin | null }>(`query($id: UUID!) { payment(id: $id) { ${PAYMENT_VIEW_FIELDS} } }`, { id });
-  const [sales, products] = await Promise.all([salesByContract(), loadProducts()]);
-  const view = result.payment ? paymentViewOf(result.payment, sales, products) : null;
+  const [sales, products, adjustments] = await Promise.all([salesByContract(), loadProducts(), loadPaymentAdjustments([id])]);
+  const view = result.payment ? paymentViewOf(result.payment, sales, products, adjustments) : null;
   if (!view || !canSeeContractRecord(actor.identity, view)) throw notFound("Payment");
   return withoutScope(view);
 }
